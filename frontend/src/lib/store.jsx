@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { api } from "./api.js";
 import { emitAck, getSocket } from "./socket.js";
+import { BACKEND_URL } from "./config.js";
 
 const AppContext = createContext(null);
 
@@ -157,7 +158,7 @@ export function AppProvider({ children }) {
         } catch (e) {
           console.warn("API google login failed, falling back to direct auth redirect", e);
         }
-        window.location.href = `/auth/google?returnTo=${encodeURIComponent(returnTo)}&purpose=login`;
+        window.location.href = `${BACKEND_URL}/auth/google?returnTo=${encodeURIComponent(returnTo)}&purpose=login`;
       },
 
       async linkGoogle(returnTo = "/profile") {
@@ -170,7 +171,7 @@ export function AppProvider({ children }) {
         } catch (e) {
           console.warn("API google link failed, falling back to direct auth redirect", e);
         }
-        window.location.href = `/auth/google?returnTo=${encodeURIComponent(returnTo)}&purpose=link`;
+        window.location.href = `${BACKEND_URL}/auth/google?returnTo=${encodeURIComponent(returnTo)}&purpose=link`;
       },
 
       async unlinkGoogle() {

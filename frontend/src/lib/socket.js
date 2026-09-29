@@ -1,10 +1,15 @@
 import { io } from "socket.io-client";
+import { BACKEND_URL } from "./config.js";
 
 let socket;
 
 export function getSocket() {
   if (!socket) {
-    socket = io("/", { transports: ["websocket"] });
+    const socketUrl = BACKEND_URL || "/";
+    socket = io(socketUrl, {
+      transports: ["websocket", "polling"],
+      withCredentials: true,
+    });
   }
   return socket;
 }

@@ -229,8 +229,10 @@ export function createApiRouter({ catalog, store }) {
 
 export function handleGoogleRedirect(req, res) {
   const host = req.headers.host || "";
-  const defaultOrigin = host.includes("127.0.0.1") ? "http://127.0.0.1:5173" : "http://localhost:5173";
-  const origin = process.env.CLIENT_ORIGIN || defaultOrigin;
+  const defaultOrigin = host.includes("127.0.0.1") || host.includes("localhost")
+    ? (host.includes("127.0.0.1") ? "http://127.0.0.1:5173" : "http://localhost:5173")
+    : "https://triviallyonline.vercel.app";
+  const origin = (process.env.CLIENT_ORIGIN || defaultOrigin).replace(/\/$/, "");
   try {
     const returnTo = req.query.returnTo || "/play";
     const purpose = req.query.purpose || "login";
@@ -244,8 +246,10 @@ export function handleGoogleRedirect(req, res) {
 
 export async function handleGoogleCallback(req, res, store) {
   const host = req.headers.host || "";
-  const defaultOrigin = host.includes("127.0.0.1") ? "http://127.0.0.1:5173" : "http://localhost:5173";
-  const origin = process.env.CLIENT_ORIGIN || defaultOrigin;
+  const defaultOrigin = host.includes("127.0.0.1") || host.includes("localhost")
+    ? (host.includes("127.0.0.1") ? "http://127.0.0.1:5173" : "http://localhost:5173")
+    : "https://triviallyonline.vercel.app";
+  const origin = (process.env.CLIENT_ORIGIN || defaultOrigin).replace(/\/$/, "");
   let returnTo = "/play";
   try {
     const { code, state } = req.query;

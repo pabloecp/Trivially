@@ -25,7 +25,7 @@ export function createGoogleAuthUrl(returnTo = "/play", purpose = "login") {
   }
 
   const redirectUri =
-    process.env.GOOGLE_REDIRECT_URI || "http://127.0.0.1:8787/auth/google/callback";
+    process.env.GOOGLE_REDIRECT_URI || "https://trivially-production.up.railway.app/auth/google/callback";
 
   const params = new URLSearchParams({
     client_id: process.env.GOOGLE_CLIENT_ID,
@@ -44,7 +44,7 @@ export async function exchangeGoogleCode(code, state) {
   pendingGoogleStates.delete(state);
 
   const redirectUri =
-    process.env.GOOGLE_REDIRECT_URI || "http://127.0.0.1:8787/auth/google/callback";
+    process.env.GOOGLE_REDIRECT_URI || "https://trivially-production.up.railway.app/auth/google/callback";
 
   const tokenRes = await fetch(GOOGLE_TOKEN_URL, {
     method: "POST",
