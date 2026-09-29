@@ -64,7 +64,7 @@ export default function ModeSelect() {
             color: "var(--text)",
           }}
         >
-          Reconoce la canción antes de que se acabe el tiempo
+          Adivina antes de que acabe
         </h1>
         <p
           className="muted"

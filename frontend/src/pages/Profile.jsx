@@ -242,11 +242,6 @@ export default function Profile() {
         </div>
 
         <div className="row" style={{ gap: 10 }}>
-          {isOtherUser && (
-            <Link to="/leaderboard" className="btn ghost sm">
-              ← Volver al Leaderboard
-            </Link>
-          )}
           <Link to="/play" className="btn primary sm">
             + Jugar Partida
           </Link>
@@ -448,15 +443,15 @@ export default function Profile() {
 
           {/* Guest Conversion Card (Create account or Login directly without logout!) */}
           {!isOtherUser && isGuest && (
-            <div className="card grid" style={{ gap: 16, padding: 22, background: "var(--brand-subtle)", borderColor: "var(--brand)" }}>
+            <div className="card grid" style={{ gap: 16, padding: 22, background: "var(--bg-surface)", border: "1px solid var(--border)" }}>
               <div>
-                <span className="chip active" style={{ fontSize: 11, marginBottom: 8 }}>
+                <span className="chip" style={{ fontSize: 11, background: "var(--brand-subtle)", color: "var(--brand)", fontWeight: 700, marginBottom: 8 }}>
                   💡 Conserva tus estadísticas
                 </span>
-                <h3 style={{ margin: "4px 0 6px", fontSize: 17, color: "var(--brand)" }}>
+                <h3 style={{ margin: "6px 0 6px", fontSize: 17, color: "var(--text)" }}>
                   ¿Quieres guardar tu progreso permanentemente?
                 </h3>
-                <p className="muted" style={{ margin: 0, fontSize: 13 }}>
+                <p className="muted" style={{ margin: 0, fontSize: 13, lineHeight: 1.5 }}>
                   No necesitas cerrar sesión. Puedes crear una cuenta o iniciar sesión para vincular todas tus victorias y puntos actuales.
                 </p>
               </div>
@@ -506,11 +501,11 @@ export default function Profile() {
               </div>
 
               {/* Subtabs */}
-              <div style={{ display: "flex", gap: 6, background: "rgba(255,255,255,0.7)", padding: 4, borderRadius: "var(--radius-sm)" }}>
+              <div style={{ display: "flex", gap: 6, background: "var(--bg)", border: "1px solid var(--border)", padding: 4, borderRadius: "var(--radius-sm)" }}>
                 <button
                   type="button"
                   className={`btn ${authMode === "register" ? "primary" : "ghost"} sm`}
-                  style={{ flex: 1, border: "none", fontSize: 12 }}
+                  style={{ flex: 1, border: "none", fontSize: 12, fontWeight: 700 }}
                   onClick={() => setAuthMode("register")}
                 >
                   Crear cuenta
@@ -518,7 +513,7 @@ export default function Profile() {
                 <button
                   type="button"
                   className={`btn ${authMode === "login" ? "primary" : "ghost"} sm`}
-                  style={{ flex: 1, border: "none", fontSize: 12 }}
+                  style={{ flex: 1, border: "none", fontSize: 12, fontWeight: 700 }}
                   onClick={() => setAuthMode("login")}
                 >
                   Ya tengo cuenta
@@ -627,16 +622,20 @@ export default function Profile() {
                       flexDirection: "column",
                       alignItems: "center",
                       gap: 10,
-                      background: isFirst ? "var(--brand-subtle)" : "#FFFFFF",
-                      borderColor: isFirst ? "var(--brand)" : "var(--border)",
+                      background: isFirst
+                        ? "linear-gradient(180deg, var(--brand-tint) 0%, var(--bg-surface) 100%)"
+                        : "var(--bg-surface)",
+                      border: isFirst ? "1.5px solid var(--brand)" : "1px solid var(--border)",
+                      boxShadow: isFirst ? "0 4px 16px rgba(29, 185, 84, 0.15)" : "var(--shadow-sm)",
                       position: "relative",
+                      borderRadius: 16,
                     }}
                   >
                     <span
                       style={{
                         fontSize: 11,
                         fontWeight: 800,
-                        color: isFirst ? "var(--brand)" : "var(--text-muted)",
+                        color: isFirst ? "var(--brand)" : "var(--text-secondary)",
                         textTransform: "uppercase",
                         letterSpacing: "0.05em",
                       }}
@@ -652,8 +651,8 @@ export default function Profile() {
                         height: 72,
                         borderRadius: "50%",
                         objectFit: "cover",
-                        border: isFirst ? "3px solid var(--brand)" : "2px solid var(--border)",
-                        boxShadow: isFirst ? "0 4px 12px rgba(123, 115, 246, 0.2)" : "var(--shadow-sm)",
+                        border: isFirst ? "2.5px solid var(--brand)" : "2px solid var(--border)",
+                        boxShadow: isFirst ? "0 4px 12px rgba(29, 185, 84, 0.2)" : "var(--shadow-sm)",
                       }}
                       onError={(e) => {
                         e.currentTarget.src = "/artists/bad-bunny.jpg";
@@ -672,13 +671,13 @@ export default function Profile() {
                     <div
                       style={{
                         marginTop: "auto",
-                        background: isFirst ? "#FFFFFF" : "var(--bg)",
+                        background: isFirst ? "var(--brand-subtle)" : "var(--bg-subtle)",
                         padding: "6px 14px",
                         borderRadius: "var(--radius-full)",
                         fontSize: 13,
                         fontWeight: 800,
-                        color: isFirst ? "var(--brand)" : "var(--text)",
-                        border: "1px solid var(--border)",
+                        color: isFirst ? "var(--brand)" : "var(--text-secondary)",
+                        border: isFirst ? "1px solid rgba(29, 185, 84, 0.3)" : "1px solid var(--border)",
                       }}
                     >
                       {artist.hits > 0 ? `${artist.hits} aciertos` : "0 aciertos"}

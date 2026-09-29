@@ -7,7 +7,6 @@ import Join from "./pages/Join.jsx";
 import Setup from "./pages/Setup.jsx";
 import Lobby from "./pages/Lobby.jsx";
 import Game from "./pages/Game.jsx";
-import LeaderboardPage from "./pages/LeaderboardPage.jsx";
 import Profile from "./pages/Profile.jsx";
 import { useApp } from "./lib/store.jsx";
 
@@ -23,7 +22,7 @@ export default function App() {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
-        <Route path="/leaderboard" element={<LeaderboardPage />} />
+        <Route path="/leaderboard" element={<Navigate to="/play" replace />} />
         <Route path="/play" element={<ModeSelect />} />
         <Route path="/play/join" element={<Join />} />
         <Route path="/play/setup" element={<Setup />} />

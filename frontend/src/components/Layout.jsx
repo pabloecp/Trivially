@@ -28,7 +28,6 @@ export default function Layout({ children }) {
 
           <div className="nav-links">
             <NavLink to="/play">Jugar</NavLink>
-            <NavLink to="/leaderboard">Leaderboard</NavLink>
 
             {/* Theme Toggle Button */}
             <button

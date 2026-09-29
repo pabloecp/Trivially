@@ -27,10 +27,6 @@ export default function Home() {
             <Link className="btn primary lg" to="/play">
               Jugar ahora →
             </Link>
-
-            <Link className="btn ghost lg" to="/leaderboard">
-              Leaderboard
-            </Link>
           </div>
         </div>
 
