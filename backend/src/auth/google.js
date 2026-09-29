@@ -27,6 +27,8 @@ export function createGoogleAuthUrl(returnTo = "/play", purpose = "login") {
   const redirectUri =
     process.env.GOOGLE_REDIRECT_URI || "https://trivially-production.up.railway.app/auth/google/callback";
 
+  console.log(`[Google OAuth] redirect_uri utilizado: ${redirectUri}`);
+
   const params = new URLSearchParams({
     client_id: process.env.GOOGLE_CLIENT_ID,
     redirect_uri: redirectUri,
@@ -45,6 +47,8 @@ export async function exchangeGoogleCode(code, state) {
 
   const redirectUri =
     process.env.GOOGLE_REDIRECT_URI || "https://trivially-production.up.railway.app/auth/google/callback";
+
+  console.log(`[Google OAuth] Intercambiando token con redirect_uri: ${redirectUri}`);
 
   const tokenRes = await fetch(GOOGLE_TOKEN_URL, {
     method: "POST",
