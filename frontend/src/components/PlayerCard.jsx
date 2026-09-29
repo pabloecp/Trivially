@@ -1,3 +1,5 @@
+import UserAvatar from "./UserAvatar.jsx";
+
 export default function PlayerCard({
   player,
   hostId,
@@ -9,13 +11,14 @@ export default function PlayerCard({
   const isHost = player.id === hostId;
   const statusLabel = {
     conectado: "Conectado",
-    listo: "Listo",
+    listo: "Conectado",
     jugando: "En juego",
     respondió: "Respondió",
     desconectado: "Desconectado",
   }[player.status] || player.status;
 
   const statusColor = {
+    conectado: "var(--ok)",
     listo: "var(--ok)",
     respondió: "var(--brand)",
     jugando: "var(--brand)",
@@ -35,19 +38,11 @@ export default function PlayerCard({
         boxShadow: isMe ? "0 4px 16px var(--brand-subtle)" : "var(--shadow-sm)",
       }}
     >
-      <div
-        className="avatar"
-        style={{
-          background: player.avatar || "var(--brand)",
-          width: 44,
-          height: 44,
-          fontSize: 18,
-          border: "2px solid var(--border)",
-          flexShrink: 0,
-        }}
-      >
-        {(player.name || "?").slice(0, 1).toUpperCase()}
-      </div>
+      <UserAvatar
+        avatar={player.avatar}
+        name={player.name}
+        size={44}
+      />
 
       <div style={{ flex: 1, minWidth: 0 }}>
         <div className="row" style={{ gap: 6, marginBottom: 4, flexWrap: "wrap", alignItems: "center" }}>

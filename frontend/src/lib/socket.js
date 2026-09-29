@@ -5,7 +5,10 @@ let socket;
 
 export function getSocket() {
   if (!socket) {
-    const socketUrl = BACKEND_URL || "/";
+    // Socket.IO needs a direct connection to Railway — Vercel rewrites don't support WebSockets.
+    // In dev, BACKEND_URL is "" so we connect to "/" (same-origin proxy via Vite).
+    // In production, we must connect directly to Railway.
+    const socketUrl = BACKEND_URL || (import.meta.env.DEV ? "/" : "https://trivially-production.up.railway.app");
     socket = io(socketUrl, {
       transports: ["websocket", "polling"],
       withCredentials: true,

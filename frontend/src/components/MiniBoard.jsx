@@ -1,3 +1,5 @@
+import UserAvatar from "./UserAvatar.jsx";
+
 export default function MiniBoard({ players, currentUserId }) {
   const ranked = [...(players || [])].sort((a, b) => b.score - a.score);
 
@@ -46,18 +48,11 @@ export default function MiniBoard({ players, currentUserId }) {
                 {getPosBadge(i)}
               </span>
 
-              <div
-                className="avatar"
-                style={{
-                  background: p.avatar || "var(--brand)",
-                  width: 30,
-                  height: 30,
-                  fontSize: 12,
-                  border: "none",
-                }}
-              >
-                {(p.name || "?").slice(0, 1).toUpperCase()}
-              </div>
+              <UserAvatar
+                avatar={p.avatar}
+                name={p.name}
+                size={30}
+              />
 
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div

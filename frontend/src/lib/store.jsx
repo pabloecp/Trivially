@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { api } from "./api.js";
 import { emitAck, getSocket } from "./socket.js";
 import { BACKEND_URL } from "./config.js";
@@ -6,9 +6,9 @@ import { BACKEND_URL } from "./config.js";
 const AppContext = createContext(null);
 
 export const AVATAR_COLORS = [
-  "#7B73F6", // YOAVLLY Violet
-  "#37352F", // Charcoal
+  "#1DB954", // Spotify Green
   "#10B981", // Emerald
+  "#37352F", // Charcoal
   "#F59E0B", // Amber
   "#6366F1", // Indigo
   "#EC4899", // Rose
@@ -89,27 +89,66 @@ export function AppProvider({ children }) {
     setRoom(null);
   }
 
+  const refreshCatalog = useCallback(async () => {
+    try {
+      const data = await api("/api/catalog");
+      setCatalog(data);
+      return data;
+    } catch {
+      return null;
+    }
+  }, []);
+
   useEffect(() => {
-    api("/api/catalog").then(setCatalog).catch(() => {});
+    refreshCatalog();
 
     const params = new URLSearchParams(window.location.search);
     const googleStatus = params.get("google");
     const userIdParam = params.get("userId");
+    const userDataParam = params.get("userData");
 
-    if (googleStatus === "success" && userIdParam) {
-      api(`/api/users/${userIdParam}`)
-        .then((res) => {
-          if (res.user) applyUser(res.user);
+    let googleJustLoaded = false;
+
+    if (googleStatus === "success") {
+      let loadedUser = null;
+      if (userDataParam) {
+        try {
+          loadedUser = JSON.parse(decodeURIComponent(userDataParam));
+        } catch {}
+      }
+
+      if (loadedUser) {
+        googleJustLoaded = true;
+        applyUser(loadedUser);
+        api("/api/session", { method: "POST", body: loadedUser }).catch(() => {});
+      } else if (userIdParam) {
+        googleJustLoaded = true;
+        api(`/api/users/${userIdParam}`)
+          .then((res) => {
+            if (res.user) applyUser(res.user);
+          })
+          .catch(() => {});
+      }
+
+      try {
+        const url = new URL(window.location.href);
+        url.searchParams.delete("google");
+        url.searchParams.delete("userId");
+        url.searchParams.delete("userData");
+        window.history.replaceState({}, document.title, url.pathname + (url.search ? url.search : ""));
+      } catch {}
+    }
+
+    // Only fetch /api/me if we didn't just load from Google params
+    // to avoid overwriting the freshly-loaded Google user with null
+    if (!googleJustLoaded) {
+      api("/api/me")
+        .then((d) => {
+          setLinkingStatus(d.linkingStatus || null);
+          if (d.user) applyUser(d.user);
         })
         .catch(() => {});
     }
-
-    api("/api/me")
-      .then((d) => {
-        setLinkingStatus(d.linkingStatus || null);
-        if (d.user) applyUser(d.user);
-      })
-      .catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -170,7 +209,10 @@ export function AppProvider({ children }) {
         const clean = (newName || "").trim();
         if (!clean) throw new Error("Por favor introduce un nombre de usuario");
         const res = await api(`/api/users/${current.id}/name`, { method: "PATCH", body: { name: clean } });
-        if (res.user) applyUser(res.user);
+        if (res.user) {
+          localStorage.setItem("yoavlly_guest_name", res.user.name);
+          applyUser(res.user);
+        }
         return res.user;
       },
 
@@ -182,7 +224,11 @@ export function AppProvider({ children }) {
           method: "POST",
           body: { id: nextId, name, email, password, guestId, avatar: current?.avatar || AVATAR_COLORS[0] },
         });
-        if (res.user) applyUser(res.user);
+        if (res.user) {
+          localStorage.setItem("yoavlly_guest_name", res.user.name);
+          localStorage.removeItem("yoavlly_guest_id");
+          applyUser(res.user);
+        }
         return res.user;
       },
 
@@ -190,13 +236,18 @@ export function AppProvider({ children }) {
         const current = userRef.current;
         const guestId = current?.isGuest ? current.id : localStorage.getItem("yoavlly_guest_id");
         const res = await api("/api/auth/login", { method: "POST", body: { identifier, password, guestId } });
-        if (res.user) applyUser(res.user);
+        if (res.user) {
+          localStorage.setItem("yoavlly_guest_name", res.user.name);
+          localStorage.removeItem("yoavlly_guest_id");
+          applyUser(res.user);
+        }
         return res.user;
       },
 
       async loginWithGoogle(returnTo = "/play") {
+        const origin = window.location.origin;
         try {
-          const { url } = await api(`/api/google/login?returnTo=${encodeURIComponent(returnTo)}&purpose=login`);
+          const { url } = await api(`/api/google/login?returnTo=${encodeURIComponent(returnTo)}&purpose=login&origin=${encodeURIComponent(origin)}`);
           if (url) {
             window.location.href = url;
             return;
@@ -204,12 +255,13 @@ export function AppProvider({ children }) {
         } catch (e) {
           console.warn("API google login failed, falling back to direct auth redirect", e);
         }
-        window.location.href = `${BACKEND_URL}/auth/google?returnTo=${encodeURIComponent(returnTo)}&purpose=login`;
+        window.location.href = `${BACKEND_URL}/auth/google?returnTo=${encodeURIComponent(returnTo)}&purpose=login&origin=${encodeURIComponent(origin)}`;
       },
 
       async linkGoogle(returnTo = "/profile") {
+        const origin = window.location.origin;
         try {
-          const { url } = await api(`/api/google/login?returnTo=${encodeURIComponent(returnTo)}&purpose=link`);
+          const { url } = await api(`/api/google/login?returnTo=${encodeURIComponent(returnTo)}&purpose=link&origin=${encodeURIComponent(origin)}`);
           if (url) {
             window.location.href = url;
             return;
@@ -217,7 +269,7 @@ export function AppProvider({ children }) {
         } catch (e) {
           console.warn("API google link failed, falling back to direct auth redirect", e);
         }
-        window.location.href = `${BACKEND_URL}/auth/google?returnTo=${encodeURIComponent(returnTo)}&purpose=link`;
+        window.location.href = `${BACKEND_URL}/auth/google?returnTo=${encodeURIComponent(returnTo)}&purpose=link&origin=${encodeURIComponent(origin)}`;
       },
 
       async unlinkGoogle() {
@@ -248,16 +300,17 @@ export function AppProvider({ children }) {
       },
 
       // `game` is where the room starts: null for the Home screen, or a game id such as "musica".
-      async createRoom(mode, config, game = "musica") {
-        const current = userRef.current;
+      // `explicitUser` is for callers that just created the user and want to be sure it's the one sent.
+      async createRoom(mode, config, game = "musica", explicitUser) {
+        const current = explicitUser || userRef.current;
         if (!current?.name) throw new Error("Debes identificarte antes de crear una sala");
         const res = await emitAck("room:create", { user: current, mode, config, game });
         if (!res.ok) throw new Error(res.error);
         return enterRoom(res.state);
       },
 
-      async joinRoom(code) {
-        const current = userRef.current;
+      async joinRoom(code, explicitUser) {
+        const current = explicitUser || userRef.current;
         if (!current?.name) throw new Error("Debes identificarte antes de unirte");
         const res = await emitAck("room:join", { user: current, code: code.toUpperCase() });
         if (!res.ok) throw new Error(res.error);
@@ -295,7 +348,10 @@ export function AppProvider({ children }) {
         if (res.state) setRoom(res.state);
       },
 
-      leaveRoom() { emitAck("room:leave"); clearRoom(); },
+      leaveRoom() {
+        emitAck("room:leave").catch(() => {});
+        clearRoom();
+      },
 
       async logout() {
         try { await api("/api/auth/logout", { method: "POST" }); } catch {}
@@ -312,7 +368,7 @@ export function AppProvider({ children }) {
   const spotify = useMemo(() => ({ configured: false, connected: false }), []);
 
   return (
-    <AppContext.Provider value={{ user, catalog, room, setRoom, spotify, linkingStatus, error, setError, ...actions }}>
+    <AppContext.Provider value={{ user, catalog, refreshCatalog, room, setRoom, spotify, linkingStatus, error, setError, ...actions }}>
       {children}
     </AppContext.Provider>
   );

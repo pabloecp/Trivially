@@ -54,27 +54,29 @@ Plataforma interactiva de trivia musical en tiempo real con buscador predictivo 
    ```
 
 3. **Variables de entorno:**
-   Copia el archivo `.env.example` tanto en la raíz como en `backend/.env`:
+   Copia el archivo `.env.example` tanto en la raíz como en `backend/.env` y `frontend/.env`:
    ```bash
    cp .env.example .env
    cp backend/.env.example backend/.env
+   cp frontend/.env.example frontend/.env
    ```
 
-   **Configuración para Backend (`.env` o `backend/.env`):**
+   **Configuración para Backend local (`.env` o `backend/.env`):**
    ```env
    PORT=8080
-   CLIENT_ORIGIN=https://triviallyonline.vercel.app
-   SESSION_SECRET=tu-clave-secreta-de-sesion
+   CLIENT_ORIGIN=http://localhost:5173
+   SESSION_SECRET=yoavlly-dev-secret-key-trivially
 
    # Google OAuth (Opcional)
    GOOGLE_CLIENT_ID=tu_google_client_id
    GOOGLE_CLIENT_SECRET=tu_google_client_secret
-   GOOGLE_REDIRECT_URI=https://triviallyonline.vercel.app/auth/google/callback
+   GOOGLE_REDIRECT_URI=http://localhost:8080/auth/google/callback
    ```
 
-   **Configuración para Frontend (`frontend/.env`):**
+   **Configuración para Frontend local (`frontend/.env`):**
    ```env
-   VITE_API_URL=https://trivially-production.up.railway.app
+   # En local se deja vacío para usar el proxy automático de Vite a http://127.0.0.1:8080
+   VITE_API_URL=
    ```
 
 4. **Iniciar en modo desarrollo:**

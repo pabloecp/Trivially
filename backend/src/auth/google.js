@@ -10,13 +10,20 @@ export function googleConfigured() {
   return Boolean(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET);
 }
 
-export function createGoogleAuthUrl(returnTo = "/play", purpose = "login") {
+export function createGoogleAuthUrl(returnTo = "/play", purpose = "login", clientOrigin = "") {
   if (!googleConfigured()) {
     throw new Error("Google OAuth no está configurado (GOOGLE_CLIENT_ID o GOOGLE_CLIENT_SECRET ausente)");
   }
 
-  const state = crypto.randomBytes(16).toString("hex");
-  pendingGoogleStates.set(state, { returnTo, purpose, at: Date.now() });
+  const statePayload = {
+    nonce: crypto.randomBytes(12).toString("hex"),
+    returnTo,
+    purpose,
+    origin: clientOrigin || "",
+    at: Date.now(),
+  };
+  const state = Buffer.from(JSON.stringify(statePayload)).toString("base64url");
+  pendingGoogleStates.set(state, statePayload);
 
   // Clean old entries after 10 minutes
   const now = Date.now();
@@ -24,8 +31,17 @@ export function createGoogleAuthUrl(returnTo = "/play", purpose = "login") {
     if (now - data.at > 600000) pendingGoogleStates.delete(s);
   }
 
-  const redirectUri =
-    process.env.GOOGLE_REDIRECT_URI || "https://triviallyonline.vercel.app/auth/google/callback";
+  // Dynamic redirect_uri: derive from the client's origin so it works on both
+  // localhost (http://localhost:5173/auth/google/callback) and production
+  // (https://triviallyonline.vercel.app/auth/google/callback).
+  let redirectUri;
+  if (clientOrigin && (clientOrigin.includes("localhost") || clientOrigin.includes("127.0.0.1"))) {
+    // In dev, callback goes directly to the backend (port 8080)
+    const backendPort = process.env.PORT || 8080;
+    redirectUri = `http://localhost:${backendPort}/auth/google/callback`;
+  } else {
+    redirectUri = process.env.GOOGLE_REDIRECT_URI || "https://triviallyonline.vercel.app/auth/google/callback";
+  }
 
   console.log(`[Google OAuth] redirect_uri utilizado: ${redirectUri}`);
 
@@ -42,11 +58,29 @@ export function createGoogleAuthUrl(returnTo = "/play", purpose = "login") {
 }
 
 export async function exchangeGoogleCode(code, state) {
-  const stateData = pendingGoogleStates.get(state);
+  let stateData = pendingGoogleStates.get(state);
   pendingGoogleStates.delete(state);
 
-  const redirectUri =
-    process.env.GOOGLE_REDIRECT_URI || "https://triviallyonline.vercel.app/auth/google/callback";
+  // If state was created by another server/worker, decode from the state payload
+  if (!stateData && state) {
+    try {
+      stateData = JSON.parse(Buffer.from(state, "base64url").toString("utf8"));
+    } catch {
+      try {
+        stateData = JSON.parse(Buffer.from(state, "base64").toString("utf8"));
+      } catch {}
+    }
+  }
+
+  // Use the same dynamic logic as createGoogleAuthUrl based on state origin
+  const originFromState = stateData?.origin || "";
+  let redirectUri;
+  if (originFromState && (originFromState.includes("localhost") || originFromState.includes("127.0.0.1"))) {
+    const backendPort = process.env.PORT || 8080;
+    redirectUri = `http://localhost:${backendPort}/auth/google/callback`;
+  } else {
+    redirectUri = process.env.GOOGLE_REDIRECT_URI || "https://triviallyonline.vercel.app/auth/google/callback";
+  }
 
   console.log(`[Google OAuth] Intercambiando token con redirect_uri: ${redirectUri}`);
 
@@ -91,5 +125,6 @@ export async function exchangeGoogleCode(code, state) {
     },
     returnTo: stateData?.returnTo || "/play",
     purpose: stateData?.purpose || "login",
+    origin: stateData?.origin || "",
   };
 }

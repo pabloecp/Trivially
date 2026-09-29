@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { api } from "../lib/api.js";
 import { useApp } from "../lib/store.jsx";
 import { YoavllySymbol } from "../components/YoavllySymbol.jsx";
+import UserAvatar from "../components/UserAvatar.jsx";
 
 const SORTS = [
   { id: "totalScore", label: "Puntuación Total", icon: "🏆" },
@@ -128,25 +129,17 @@ export default function LeaderboardPage() {
                         }}
                         title={`Ver perfil de ${e.name}`}
                       >
-                        <div
-                          className="avatar"
-                          style={{
-                            background: e.avatar || "var(--brand)",
-                            width: 34,
-                            height: 34,
-                            fontSize: 14,
-                            border: "none",
-                            transition: "transform 0.15s ease",
-                          }}
-                        >
-                          {(e.name || "?").slice(0, 1).toUpperCase()}
-                        </div>
+                        <UserAvatar
+                          avatar={e.avatar}
+                          name={e.name}
+                          size={34}
+                          style={{ transition: "transform 0.15s ease" }}
+                        />
                         <div>
                           <div className="row" style={{ gap: 6, alignItems: "center" }}>
                             <strong style={{ fontSize: 15 }} className="user-name-link">
                               {e.name}
                             </strong>
-                            <span style={{ fontSize: 12, opacity: 0.5 }}>→</span>
                           </div>
                           <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
                             {isMe && <span className="chip sm" style={{ fontSize: 10 }}>Tú</span>}

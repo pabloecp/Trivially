@@ -2,6 +2,7 @@ import { Link, NavLink } from "react-router-dom";
 import { useApp } from "../lib/store.jsx";
 import { useTheme } from "../lib/theme.js";
 import { YoavllyLogo } from "./YoavllySymbol.jsx";
+import UserAvatar from "./UserAvatar.jsx";
 
 export default function Layout({ children }) {
   const { user, error } = useApp();
@@ -16,8 +17,7 @@ export default function Layout({ children }) {
           </NavLink>
 
           <div className="nav-links">
-            <NavLink to="/play">Jugar</NavLink>
-            <NavLink to="/leaderboard">Leaderboard</NavLink>
+            <NavLink to="/">Jugar</NavLink>
 
             {/* Theme Toggle Button */}
             <button
@@ -29,65 +29,17 @@ export default function Layout({ children }) {
               {theme === "dark" ? "🌙" : "☀️"}
             </button>
 
-            {user ? (
-              <div className="row" style={{ gap: 8, alignItems: "center" }}>
-                <NavLink to="/profile" className="user-nav-chip">
-                  {user.avatar?.startsWith("http") ? (
-                    <img
-                      src={user.avatar}
-                      alt={user.name}
-                      style={{
-                        width: 26,
-                        height: 26,
-                        borderRadius: "50%",
-                        objectFit: "cover",
-                      }}
-                      referrerPolicy="no-referrer"
-                    />
-                  ) : (
-                    <div
-                      className="avatar"
-                      style={{
-                        background: user.avatar || "#7B73F6",
-                        width: 26,
-                        height: 26,
-                        fontSize: 12,
-                        border: "none",
-                      }}
-                    >
-                      {(user.name || "U").slice(0, 1).toUpperCase()}
-                    </div>
-                  )}
-                  <span style={{ fontWeight: 700, fontSize: 13, color: "var(--text)" }}>
-                    {user.name}
-                  </span>
-                  {user.isGuest && (
-                    <span
-                      style={{
-                        fontSize: 10,
-                        fontWeight: 700,
-                        color: "var(--brand)",
-                        background: "var(--brand-subtle)",
-                        padding: "2px 6px",
-                        borderRadius: 6,
-                      }}
-                    >
-                      Invitado
-                    </span>
-                  )}
-                </NavLink>
-
-                {user.isGuest && (
-                  <NavLink
-                    to="/login"
-                    className="btn primary sm"
-                    style={{ fontSize: 11, padding: "5px 10px", whiteSpace: "nowrap" }}
-                    title="Crea una cuenta o inicia sesión para guardar tus estadísticas de invitado"
-                  >
-                    Crear cuenta / Iniciar sesión
-                  </NavLink>
-                )}
-              </div>
+            {user && !user.isGuest ? (
+              <NavLink to="/profile" className="user-nav-chip">
+                <UserAvatar
+                  avatar={user.avatar}
+                  name={user.name}
+                  size={26}
+                />
+                <span style={{ fontWeight: 700, fontSize: 13, color: "var(--text)" }}>
+                  {user.name}
+                </span>
+              </NavLink>
             ) : (
               <NavLink to="/login" className="btn ghost sm">
                 Entrar

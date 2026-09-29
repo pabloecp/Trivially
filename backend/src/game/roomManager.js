@@ -30,9 +30,9 @@ function defaultConfig() {
   return {
     rounds: 5,
     roundMs: ROUND_MS,
-    enabledCategories: ["artist", "genre"],
-    artistIds: ["bad-bunny", "mora", "rauw-alejandro"],
-    genreIds: ["reggaeton", "urbano", "trap", "pop-latino", "pop"],
+    enabledCategories: ["artist"],
+    artistIds: ["bad-bunny", "mora", "rauw-alejandro", "travis-scott", "drake", "jvke"],
+    genreIds: [],
     albumIds: [],
     playlistIds: [],
     yearFrom: null,
@@ -102,10 +102,12 @@ export class RoomManager {
 
   addPlayer(room, user, isHost = false) {
     const existing = room.players.get(user.id);
+    const isGuest = Boolean(user.isGuest ?? (user.id?.startsWith("gst_") || !user.email));
     const player = existing || {
       id: user.id,
       name: user.name,
       avatar: user.avatar,
+      isGuest,
       score: 0,
       correct: 0,
       streak: 0,
@@ -122,6 +124,7 @@ export class RoomManager {
     player.dropTimer = null;
     player.name = user.name;
     player.avatar = user.avatar;
+    player.isGuest = isGuest;
     player.connected = true;
     player.socketId = user.socketId;
     player.status = room.phase === "lobby" ? "conectado" : "jugando";
@@ -438,12 +441,26 @@ export class RoomManager {
 
 
   submitAnswer(room, userId, answerText) {
-    if (room.phase !== "playing") throw new Error("No se aceptan respuestas ahora");
     const player = room.players.get(userId);
     if (!player) throw new Error("Jugador no encontrado");
-    if (player.lastAnswer) throw new Error("Ya respondiste esta ronda");
+
+    // If already answered this round, gracefully accept without throwing duplicate error
+    if (player.lastAnswer) {
+      return player.lastAnswer;
+    }
+
+    // Grace period for network latency if reveal just started
+    const isPlaying = room.phase === "playing";
+    const isRecentReveal = room.phase === "reveal" && Date.now() - (room.phaseStartedAt || 0) < 2000;
+
+    if (!isPlaying && !isRecentReveal) {
+      throw new Error("No se aceptan respuestas ahora");
+    }
+
     const track = room.tracks[room.currentRound];
-    const remainingMs = Math.max(0, room.phaseEndsAt - Date.now());
+    if (!track) throw new Error("No hay canción activa");
+
+    const remainingMs = Math.max(0, (room.phaseEndsAt || Date.now()) - Date.now());
 
     // Check if the answer matches
     const correct = answerText === track.id || isCorrectAnswer(answerText, track);

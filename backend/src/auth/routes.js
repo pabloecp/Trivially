@@ -218,7 +218,8 @@ export function createApiRouter({ catalog, store }) {
     try {
       const returnTo = req.query.returnTo || "/play";
       const purpose = req.query.purpose || "login";
-      res.json({ url: createGoogleAuthUrl(returnTo, purpose) });
+      const origin = req.query.origin || "";
+      res.json({ url: createGoogleAuthUrl(returnTo, purpose, origin) });
     } catch (err) {
       res.status(400).json({ error: err.message });
     }
@@ -232,15 +233,16 @@ export function handleGoogleRedirect(req, res) {
   const defaultOrigin = host.includes("127.0.0.1") || host.includes("localhost")
     ? (host.includes("127.0.0.1") ? "http://127.0.0.1:5173" : "http://localhost:5173")
     : "https://triviallyonline.vercel.app";
-  const origin = (process.env.CLIENT_ORIGIN || defaultOrigin).replace(/\/$/, "");
+  const originParam = req.query.origin || req.headers.referer || "";
+  const clientOrigin = originParam ? new URL(originParam, defaultOrigin).origin : defaultOrigin;
   try {
     const returnTo = req.query.returnTo || "/play";
     const purpose = req.query.purpose || "login";
-    const url = createGoogleAuthUrl(returnTo, purpose);
+    const url = createGoogleAuthUrl(returnTo, purpose, clientOrigin);
     res.redirect(url);
   } catch (err) {
     console.error("Google redirect error:", err);
-    res.redirect(`${origin}/login?google=error&msg=${encodeURIComponent(err.message)}`);
+    res.redirect(`${clientOrigin}/login?google=error&msg=${encodeURIComponent(err.message)}`);
   }
 }
 
@@ -249,13 +251,18 @@ export async function handleGoogleCallback(req, res, store) {
   const defaultOrigin = host.includes("127.0.0.1") || host.includes("localhost")
     ? (host.includes("127.0.0.1") ? "http://127.0.0.1:5173" : "http://localhost:5173")
     : "https://triviallyonline.vercel.app";
-  const origin = (process.env.CLIENT_ORIGIN || defaultOrigin).replace(/\/$/, "");
   let returnTo = "/play";
+  let origin = defaultOrigin;
   try {
     const { code, state } = req.query;
     if (!code) throw new Error("Código de autenticación ausente");
-    const { profile, returnTo: stateReturnTo, purpose } = await exchangeGoogleCode(code, state);
+    const { profile, returnTo: stateReturnTo, purpose, origin: originFromState } = await exchangeGoogleCode(code, state);
     if (stateReturnTo) returnTo = stateReturnTo;
+    if (originFromState) {
+      origin = originFromState.replace(/\/$/, "");
+    } else {
+      origin = (host.includes("localhost") || host.includes("127.0.0.1") ? defaultOrigin : process.env.CLIENT_ORIGIN || defaultOrigin).replace(/\/$/, "");
+    }
 
     if (purpose === "link") {
       // Linking Google to existing account
@@ -275,7 +282,8 @@ export async function handleGoogleCallback(req, res, store) {
       const guestId = req.session?.userId || null;
       const user = upsertGoogleUser(store, profile, guestId);
       req.session.userId = user.id;
-      res.redirect(`${origin}${returnTo}?google=success&userId=${encodeURIComponent(user.id)}`);
+      const userParam = encodeURIComponent(JSON.stringify(user));
+      res.redirect(`${origin}${returnTo}?google=success&userId=${encodeURIComponent(user.id)}&userData=${userParam}`);
     }
   } catch (err) {
     console.error("Google callback error:", err);

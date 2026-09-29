@@ -3,7 +3,6 @@ import { Navigate, Outlet, Route, Routes, useLocation, useNavigate } from "react
 import Layout from "./components/Layout.jsx";
 import Home from "./pages/Home.jsx";
 import Login from "./pages/Login.jsx";
-import LeaderboardPage from "./pages/LeaderboardPage.jsx";
 import Profile from "./pages/Profile.jsx";
 import MusicHome from "./modes/music/MusicHome.jsx";
 import ModeSelect from "./modes/music/ModeSelect.jsx";
@@ -68,7 +67,8 @@ export default function App() {
         <Route path="/sala/:code" element={<Home />} />
         <Route element={<LegacyShell />}>
           <Route path="/login" element={<Login />} />
-          <Route path="/leaderboard" element={<LeaderboardPage />} />
+          {/* The leaderboard is hidden for now; its page is still in pages/LeaderboardPage.jsx. */}
+          <Route path="/leaderboard" element={<Navigate to="/" replace />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/profile/:userId" element={<Profile />} />
 
