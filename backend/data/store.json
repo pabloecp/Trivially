@@ -1,0 +1,59 @@
+{
+  "users": {
+    "gst_3yqnrlco": {
+      "id": "gst_3yqnrlco",
+      "name": "denis",
+      "avatar": "#F59E0B",
+      "isGuest": true,
+      "email": null,
+      "stats": {
+        "totalScore": 1641,
+        "bestScore": 1641,
+        "gamesPlayed": 1,
+        "wins": 1,
+        "bestStreak": 1,
+        "correctAnswers": 2,
+        "artistHits": {
+          "bad-bunny": 2
+        }
+      }
+    },
+    "gst_3tgcl6mw": {
+      "id": "gst_3tgcl6mw",
+      "name": "67",
+      "avatar": "#7B73F6",
+      "isGuest": true,
+      "email": null,
+      "stats": {
+        "totalScore": 4299,
+        "bestScore": 2277,
+        "gamesPlayed": 3,
+        "wins": 2,
+        "bestStreak": 2,
+        "correctAnswers": 4,
+        "artistHits": {
+          "bad-bunny": 3,
+          "rauw-alejandro": 1
+        }
+      }
+    },
+    "gst_kpgl53lq": {
+      "id": "gst_kpgl53lq",
+      "name": "adsa",
+      "avatar": "#7B73F6",
+      "isGuest": true,
+      "email": null,
+      "stats": {
+        "totalScore": 813,
+        "bestScore": 813,
+        "gamesPlayed": 1,
+        "wins": 0,
+        "bestStreak": 1,
+        "correctAnswers": 1,
+        "artistHits": {
+          "bad-bunny": 1
+        }
+      }
+    }
+  }
+}
