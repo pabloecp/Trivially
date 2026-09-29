@@ -281,8 +281,14 @@ export function claimGuestStats(store, targetUserId, guestId) {
 export function applyMatchStats(store, players) {
   const ranked = [...players].sort((a, b) => b.score - a.score);
   ranked.forEach((player, index) => {
-    const user = upsertUser(store, player);
+    // Only registered users get stats saved (never guests)
+    if (player.isGuest || player.id?.startsWith("gst_")) return;
+
+    const user = store.users[player.id];
+    if (!user || user.isGuest) return;
+
     const s = user.stats;
+    if (!s) return;
     s.gamesPlayed += 1;
     s.totalScore += player.score;
     s.bestScore = Math.max(s.bestScore, player.score);
@@ -311,14 +317,14 @@ export function leaderboard(store, sort = "totalScore") {
   };
   const cmp = allowed[sort] || allowed.totalScore;
   return Object.values(store.users)
-    .filter((u) => u.stats.gamesPlayed > 0)
+    .filter((u) => !u.isGuest && u.stats && u.stats.gamesPlayed > 0)
     .sort(cmp)
     .map((u, i) => ({
       position: i + 1,
       id: u.id,
       name: u.name,
       avatar: u.avatar,
-      isGuest: Boolean(u.isGuest),
+      isGuest: false,
       ...u.stats,
     }));
 }

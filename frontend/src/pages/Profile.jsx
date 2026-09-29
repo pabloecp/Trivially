@@ -1,26 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { Link, Navigate, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { api } from "../lib/api.js";
 import { AVATAR_COLORS, useApp } from "../lib/store.jsx";
 import { YoavllySymbol } from "../components/YoavllySymbol.jsx";
-
-const ARTIST_METADATA = {
-  "bad-bunny": {
-    name: "Bad Bunny",
-    image: "/artists/bad-bunny.jpg",
-    genre: "Reggaetón / Urbano",
-  },
-  "mora": {
-    name: "Mora",
-    image: "/artists/mora.jpg",
-    genre: "Reggaetón / Trap",
-  },
-  "rauw-alejandro": {
-    name: "Rauw Alejandro",
-    image: "/artists/rauw-alejandro.jpg",
-    genre: "Reggaetón / Pop",
-  },
-};
 
 export default function Profile() {
   const {
@@ -91,42 +73,6 @@ export default function Profile() {
         .catch(() => {});
     }
   }, [userId, currentUser?.id, isOtherUser]);
-
-  // Derive Top 3 Artists from stats.artistHits
-  const topArtists = useMemo(() => {
-    const hits = stats?.artistHits || {};
-    const entries = Object.entries(hits);
-
-    if (!entries.length) {
-      // Default top 3 artists with 0 hits
-      return [
-        { id: "bad-bunny", hits: 0, ...ARTIST_METADATA["bad-bunny"] },
-        { id: "mora", hits: 0, ...ARTIST_METADATA["mora"] },
-        { id: "rauw-alejandro", hits: 0, ...ARTIST_METADATA["rauw-alejandro"] },
-      ];
-    }
-
-    const sorted = entries
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 3)
-      .map(([id, count]) => {
-        const meta = ARTIST_METADATA[id] || {
-          name: id.replace(/-/g, " ").replace(/\b\w/g, (l) => l.toUpperCase()),
-          image: "/artists/bad-bunny.jpg",
-          genre: "Música YOAVLLY",
-        };
-        return { id, hits: count, ...meta };
-      });
-
-    // Pad to 3 if less than 3
-    const defaultIds = ["bad-bunny", "mora", "rauw-alejandro"];
-    while (sorted.length < 3) {
-      const nextId = defaultIds.find((d) => !sorted.some((s) => s.id === d)) || "bad-bunny";
-      sorted.push({ id: nextId, hits: 0, ...ARTIST_METADATA[nextId] });
-    }
-
-    return sorted;
-  }, [stats]);
 
   async function onSaveProfile(e) {
     e.preventDefault();
@@ -207,17 +153,8 @@ export default function Profile() {
     );
   }
 
-  if (!isOtherUser && !currentUser) {
-    return (
-      <div className="card page-container" style={{ margin: "40px auto", textAlign: "center", padding: 48 }}>
-        <YoavllySymbol size={48} />
-        <h2 style={{ margin: "16px 0 8px" }}>Identifícate en YOAVLLY</h2>
-        <p className="muted" style={{ maxWidth: 440, margin: "0 auto 24px" }}>
-          Juega como invitado instantáneo o crea tu cuenta para guardar tus victorias y consultar tu perfil musical.
-        </p>
-        <Link to="/login" className="btn primary lg">Ir a Iniciar Sesión / Jugar como Invitado →</Link>
-      </div>
-    );
+  if (!isOtherUser && (!currentUser || currentUser.isGuest)) {
+    return <Navigate to="/login" replace />;
   }
 
   const activeUser = isOtherUser ? profileData : currentUser;
@@ -286,26 +223,39 @@ export default function Profile() {
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "minmax(320px, 380px) 1fr",
+          gridTemplateColumns: "repeat(auto-fit, minmax(350px, 1fr))",
           gap: 24,
-          alignItems: "start",
+          alignItems: "stretch",
         }}
       >
-        {/* Left Column: Identity, Spotify, Guest Link */}
-        <div className="grid" style={{ gap: 20 }}>
+        {/* Left Column: Identity, Guest Link */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 20, height: "100%" }}>
           {/* Identity Card */}
-          <div className="card grid" style={{ gap: 18, padding: 24 }}>
+          <div
+            className="card"
+            style={{
+              padding: 32,
+              borderRadius: 20,
+              boxShadow: "var(--shadow-lg)",
+              height: "100%",
+              boxSizing: "border-box",
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "space-between",
+              gap: 22,
+            }}
+          >
             <div className="row" style={{ gap: 16, alignItems: "center" }}>
               {activeUser?.avatar?.startsWith("http") ? (
                 <img
                   src={activeUser.avatar}
                   alt={activeUser.name}
                   style={{
-                    width: 68,
-                    height: 68,
+                    width: 72,
+                    height: 72,
                     borderRadius: "50%",
                     objectFit: "cover",
-                    boxShadow: "0 6px 16px rgba(0, 0, 0, 0.15)",
+                    boxShadow: "0 6px 16px rgba(0, 0, 0, 0.25)",
                     border: "2px solid #FFFFFF",
                   }}
                   referrerPolicy="no-referrer"
@@ -315,9 +265,9 @@ export default function Profile() {
                   className="avatar"
                   style={{
                     background: activeUser?.avatar || "var(--brand)",
-                    width: 68,
-                    height: 68,
-                    fontSize: 28,
+                    width: 72,
+                    height: 72,
+                    fontSize: 30,
                     boxShadow: "0 6px 16px rgba(123, 115, 246, 0.25)",
                   }}
                 >
@@ -326,8 +276,8 @@ export default function Profile() {
               )}
 
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div className="row" style={{ gap: 8, alignItems: "center", marginBottom: 4 }}>
-                  <h2 style={{ margin: 0, fontSize: 22, wordBreak: "break-word" }}>
+                <div className="row" style={{ gap: 8, alignItems: "center", marginBottom: 6 }}>
+                  <h2 style={{ margin: 0, fontSize: 24, wordBreak: "break-word" }}>
                     {activeUser?.name || "Jugador"}
                   </h2>
                 </div>
@@ -363,20 +313,20 @@ export default function Profile() {
 
             {/* Quick Name Changer */}
             {!isOtherUser && (
-              <div style={{ borderTop: "1px solid var(--border)", paddingTop: 14 }}>
-                <label style={{ fontSize: 11, fontWeight: 800, display: "block", marginBottom: 6, textTransform: "uppercase", color: "var(--text-muted)", letterSpacing: "0.05em" }}>
+              <div style={{ borderTop: "1px solid var(--border)", paddingTop: 16 }}>
+                <label style={{ fontSize: 11, fontWeight: 800, display: "block", marginBottom: 8, textTransform: "uppercase", color: "var(--text-muted)", letterSpacing: "0.05em" }}>
                   Cambiar Nombre de Usuario
                 </label>
                 <form onSubmit={onUpdateUsername} className="row" style={{ gap: 8 }}>
                   <input
-                    className="field sm"
-                    style={{ flex: 1 }}
+                    className="field"
+                    style={{ flex: 1, height: 44, fontSize: 14 }}
                     value={newUserName}
                     onChange={(e) => setNewUserName(e.target.value)}
                     placeholder={activeUser?.name || "Escribe tu nuevo nombre..."}
                     maxLength={24}
                   />
-                  <button className="btn primary sm" type="submit" disabled={savingName || !newUserName.trim()}>
+                  <button className="btn primary" type="submit" disabled={savingName || !newUserName.trim()} style={{ height: 44, padding: "0 22px", fontWeight: 800 }}>
                     {savingName ? "..." : "Guardar"}
                   </button>
                 </form>
@@ -384,7 +334,7 @@ export default function Profile() {
             )}
 
             {!isOtherUser && (
-              <div className="row" style={{ justifyContent: "space-between", borderTop: "1px solid var(--border)", paddingTop: 14 }}>
+              <div className="row" style={{ justifyContent: "space-between", borderTop: "1px solid var(--border)", paddingTop: 16, marginTop: "auto" }}>
                 <button
                   type="button"
                   className="btn ghost sm"
@@ -501,19 +451,17 @@ export default function Profile() {
               </div>
 
               {/* Subtabs */}
-              <div style={{ display: "flex", gap: 6, background: "var(--bg)", border: "1px solid var(--border)", padding: 4, borderRadius: "var(--radius-sm)" }}>
+              <div className="tab-group" style={{ marginBottom: 12 }}>
                 <button
                   type="button"
-                  className={`btn ${authMode === "register" ? "primary" : "ghost"} sm`}
-                  style={{ flex: 1, border: "none", fontSize: 12, fontWeight: 700 }}
+                  className={`tab-btn ${authMode === "register" ? "active" : ""}`}
                   onClick={() => setAuthMode("register")}
                 >
                   Crear cuenta
                 </button>
                 <button
                   type="button"
-                  className={`btn ${authMode === "login" ? "primary" : "ghost"} sm`}
-                  style={{ flex: 1, border: "none", fontSize: 12, fontWeight: 700 }}
+                  className={`tab-btn ${authMode === "login" ? "active" : ""}`}
                   onClick={() => setAuthMode("login")}
                 >
                   Ya tengo cuenta
@@ -547,7 +495,7 @@ export default function Profile() {
                     required
                   />
                   <button className="btn primary sm" type="submit" disabled={authLoading || !convertEmail.trim() || !convertPassword}>
-                    {authLoading ? "Guardando..." : "Crear cuenta y vincular puntos →"}
+                    {authLoading ? "Guardando..." : "Crear cuenta y vincular puntos"}
                   </button>
                 </form>
               ) : (
@@ -569,7 +517,7 @@ export default function Profile() {
                     required
                   />
                   <button className="btn primary sm" type="submit" disabled={authLoading || !loginIdentifier.trim() || !loginPassword}>
-                    {authLoading ? "Iniciando..." : "Iniciar sesión y sincronizar →"}
+                    {authLoading ? "Iniciando..." : "Iniciar sesión y sincronizar"}
                   </button>
                 </form>
               )}
@@ -577,116 +525,102 @@ export default function Profile() {
           )}
         </div>
 
-        {/* Right Column: Stats Grid & Top 3 Artistas Más Acertados */}
-        <div className="grid" style={{ gap: 24 }}>
-          {/* Stats Cards Grid */}
-          <div>
-            <h3 style={{ margin: "0 0 14px", fontSize: 18 }}>Rendimiento y Puntos</h3>
-            <div className="grid grid-3" style={{ gap: 14 }}>
-              <Stat label="PUNTUACIÓN TOTAL" value={stats?.totalScore || 0} isBrand />
-              <Stat label="MEJOR PARTIDA" value={stats?.bestScore || 0} />
-              <Stat label="VICTORIAS" value={stats?.wins || 0} />
-              <Stat label="PARTIDAS JUGADAS" value={stats?.gamesPlayed || 0} />
-              <Stat label="ACIERTOS" value={stats?.correctAnswers || 0} />
-              <Stat label="MEJOR RACHA" value={`🔥 ${stats?.bestStreak || 0}`} />
-            </div>
-          </div>
-
-          {/* Top 3 Artistas Más Acertados */}
-          <div className="card grid" style={{ gap: 16, padding: 24 }}>
-            <div className="row" style={{ justifyContent: "space-between", alignItems: "center" }}>
+        {/* Right Column: Stats Card */}
+        <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
+          {isGuest ? (
+            <div
+              className="card grid"
+              style={{
+                gap: 16,
+                padding: 36,
+                textAlign: "center",
+                alignItems: "center",
+                borderRadius: 20,
+                boxShadow: "var(--shadow-lg)",
+                height: "100%",
+                boxSizing: "border-box",
+                justifyContent: "center",
+              }}
+            >
+              <div
+                style={{
+                  width: 56,
+                  height: 56,
+                  borderRadius: "50%",
+                  background: "var(--brand-subtle)",
+                  color: "var(--brand)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: 26,
+                  margin: "0 auto",
+                }}
+              >
+                📊
+              </div>
               <div>
-                <h3 style={{ margin: "0 0 2px", fontSize: 18 }}>Top 3 Artistas Más Acertados</h3>
-                <span className="muted" style={{ fontSize: 13 }}>
-                  Los artistas cuyas canciones has reconocido más rápido y con mayor precisión.
+                <h3 style={{ margin: "0 0 8px", fontSize: 20 }}>Estadísticas solo para usuarios registrados</h3>
+                <p className="muted" style={{ margin: "0 auto", maxWidth: 440, fontSize: 14, lineHeight: 1.6 }}>
+                  Las estadísticas, puntos, rachas y récords solo se acumulan para usuarios con sesión iniciada. Al jugar en modo invitado las estadísticas no se guardan.
+                </p>
+              </div>
+              <Link to="/login?returnTo=/profile" className="btn primary" style={{ fontWeight: 800 }}>
+                Iniciar Sesión o Crear Cuenta
+              </Link>
+            </div>
+          ) : (
+            <div
+              className="card"
+              style={{
+                padding: 32,
+                borderRadius: 20,
+                boxShadow: "var(--shadow-lg)",
+                height: "100%",
+                boxSizing: "border-box",
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "space-between",
+                gap: 20,
+              }}
+            >
+              {/* Header */}
+              <div className="row" style={{ justifyContent: "space-between", alignItems: "center" }}>
+                <h3 style={{ margin: 0, fontSize: 22, color: "var(--text)" }}>
+                  Rendimiento y Puntos
+                </h3>
+                <span
+                  className="chip"
+                  style={{
+                    fontSize: 11,
+                    fontWeight: 700,
+                    background: "var(--brand-subtle)",
+                    color: "var(--brand)",
+                    border: "1px solid rgba(29, 185, 84, 0.25)",
+                  }}
+                >
+                  En Vivo
                 </span>
               </div>
-              <span className="chip" style={{ fontSize: 12 }}>
-                Podio Musical 🎧
-              </span>
+
+              {/* 6 Stats Grid */}
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(2, 1fr)",
+                  gap: 14,
+                  flex: 1,
+                  alignContent: "center",
+                }}
+              >
+                <Stat label="PUNTUACIÓN TOTAL" value={stats?.totalScore || 0} isBrand />
+                <Stat label="MEJOR PARTIDA" value={stats?.bestScore || 0} />
+                <Stat label="VICTORIAS" value={stats?.wins || 0} />
+                <Stat label="PARTIDAS JUGADAS" value={stats?.gamesPlayed || 0} />
+                <Stat label="ACIERTOS" value={stats?.correctAnswers || 0} />
+                <Stat label="MEJOR RACHA" value={`🔥 ${stats?.bestStreak || 0}`} />
+              </div>
             </div>
-
-            <div className="grid grid-3" style={{ gap: 14 }}>
-              {topArtists.map((artist, index) => {
-                const rankLabels = ["🥇 #1 Artista", "🥈 #2 Artista", "🥉 #3 Artista"];
-                const isFirst = index === 0;
-
-                return (
-                  <div
-                    key={artist.id}
-                    className="card"
-                    style={{
-                      padding: 16,
-                      textAlign: "center",
-                      display: "flex",
-                      flexDirection: "column",
-                      alignItems: "center",
-                      gap: 10,
-                      background: isFirst
-                        ? "linear-gradient(180deg, var(--brand-tint) 0%, var(--bg-surface) 100%)"
-                        : "var(--bg-surface)",
-                      border: isFirst ? "1.5px solid var(--brand)" : "1px solid var(--border)",
-                      boxShadow: isFirst ? "0 4px 16px rgba(29, 185, 84, 0.15)" : "var(--shadow-sm)",
-                      position: "relative",
-                      borderRadius: 16,
-                    }}
-                  >
-                    <span
-                      style={{
-                        fontSize: 11,
-                        fontWeight: 800,
-                        color: isFirst ? "var(--brand)" : "var(--text-secondary)",
-                        textTransform: "uppercase",
-                        letterSpacing: "0.05em",
-                      }}
-                    >
-                      {rankLabels[index]}
-                    </span>
-
-                    <img
-                      src={artist.image}
-                      alt={artist.name}
-                      style={{
-                        width: 72,
-                        height: 72,
-                        borderRadius: "50%",
-                        objectFit: "cover",
-                        border: isFirst ? "2.5px solid var(--brand)" : "2px solid var(--border)",
-                        boxShadow: isFirst ? "0 4px 12px rgba(29, 185, 84, 0.2)" : "var(--shadow-sm)",
-                      }}
-                      onError={(e) => {
-                        e.currentTarget.src = "/artists/bad-bunny.jpg";
-                      }}
-                    />
-
-                    <div>
-                      <strong style={{ fontSize: 16, display: "block", color: "var(--text)" }}>
-                        {artist.name}
-                      </strong>
-                      <span className="muted" style={{ fontSize: 12 }}>
-                        {artist.genre}
-                      </span>
-                    </div>
-
-                    <div
-                      style={{
-                        marginTop: "auto",
-                        background: isFirst ? "var(--brand-subtle)" : "var(--bg-subtle)",
-                        padding: "6px 14px",
-                        borderRadius: "var(--radius-full)",
-                        fontSize: 13,
-                        fontWeight: 800,
-                        color: isFirst ? "var(--brand)" : "var(--text-secondary)",
-                        border: isFirst ? "1px solid rgba(29, 185, 84, 0.3)" : "1px solid var(--border)",
-                      }}
-                    >
-                      {artist.hits > 0 ? `${artist.hits} aciertos` : "0 aciertos"}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
+          )}
         </div>
       </div>
     </div>
@@ -695,7 +629,17 @@ export default function Profile() {
 
 function Stat({ label, value, isBrand = false }) {
   return (
-    <div className="card" style={{ padding: 18 }}>
+    <div
+      style={{
+        background: "var(--bg-subtle)",
+        border: "1px solid var(--border)",
+        borderRadius: 14,
+        padding: "18px 20px",
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "center",
+      }}
+    >
       <div
         style={{
           fontSize: 11,
@@ -703,6 +647,7 @@ function Stat({ label, value, isBrand = false }) {
           letterSpacing: "0.08em",
           color: "var(--text-muted)",
           marginBottom: 6,
+          textTransform: "uppercase",
         }}
       >
         {label}
@@ -713,6 +658,7 @@ function Stat({ label, value, isBrand = false }) {
           fontSize: 26,
           fontWeight: 900,
           color: isBrand ? "var(--brand)" : "var(--text)",
+          lineHeight: 1.1,
         }}
       >
         {value}

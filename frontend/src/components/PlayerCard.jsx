@@ -9,13 +9,14 @@ export default function PlayerCard({
   const isHost = player.id === hostId;
   const statusLabel = {
     conectado: "Conectado",
-    listo: "Listo",
+    listo: "Conectado",
     jugando: "En juego",
     respondió: "Respondió",
     desconectado: "Desconectado",
   }[player.status] || player.status;
 
   const statusColor = {
+    conectado: "var(--ok)",
     listo: "var(--ok)",
     respondió: "var(--brand)",
     jugando: "var(--brand)",

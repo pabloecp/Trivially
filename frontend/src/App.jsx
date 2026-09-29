@@ -1,6 +1,5 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 import Layout from "./components/Layout.jsx";
-import Home from "./pages/Home.jsx";
 import Login from "./pages/Login.jsx";
 import ModeSelect from "./pages/ModeSelect.jsx";
 import Join from "./pages/Join.jsx";
@@ -20,10 +19,10 @@ export default function App() {
   return (
     <Layout>
       <Routes>
-        <Route path="/" element={<Home />} />
+        <Route path="/" element={<ModeSelect />} />
+        <Route path="/play" element={<Navigate to="/" replace />} />
         <Route path="/login" element={<Login />} />
-        <Route path="/leaderboard" element={<Navigate to="/play" replace />} />
-        <Route path="/play" element={<ModeSelect />} />
+        <Route path="/leaderboard" element={<Navigate to="/" replace />} />
         <Route path="/play/join" element={<Join />} />
         <Route path="/play/setup" element={<Setup />} />
         <Route path="/lobby/:code" element={<Lobby />} />

@@ -146,7 +146,6 @@ export default function LeaderboardPage() {
                             <strong style={{ fontSize: 15 }} className="user-name-link">
                               {e.name}
                             </strong>
-                            <span style={{ fontSize: 12, opacity: 0.5 }}>→</span>
                           </div>
                           <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
                             {isMe && <span className="chip sm" style={{ fontSize: 10 }}>Tú</span>}

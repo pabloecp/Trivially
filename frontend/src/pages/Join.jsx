@@ -19,13 +19,12 @@ export default function Join() {
     setLoading(true);
     setErr("");
     try {
-      if (!user?.name) {
-        if (!guestName.trim()) {
-          throw new Error("Por favor introduce tu nombre de jugador");
-        }
-        await saveGuest(guestName.trim());
+      let currentUser = user;
+      if (!currentUser?.name) {
+        const clean = guestName.trim() || `Jugador${Math.floor(100 + Math.random() * 900)}`;
+        currentUser = await saveGuest(clean);
       }
-      const state = await joinRoom(cleanCode);
+      const state = await joinRoom(cleanCode, currentUser);
       nav(`/lobby/${state.code}`);
     } catch (error) {
       setErr(error.message || "No se pudo conectar a la sala");
@@ -49,7 +48,7 @@ export default function Join() {
 
         <div>
           <label style={{ fontSize: 12, fontWeight: 700, display: "block", marginBottom: 6, textTransform: "uppercase", color: "var(--text-muted)" }}>
-            Código de Sala
+            Código de la sala
           </label>
           <input
             className="field"
@@ -75,11 +74,11 @@ export default function Join() {
         {!user?.name && (
           <div>
             <label style={{ fontSize: 12, fontWeight: 700, display: "block", marginBottom: 6, textTransform: "uppercase", color: "var(--text-muted)" }}>
-              ¿Cómo quieres aparecer en la partida?
+              Nombre de usuario
             </label>
             <input
               className="field"
-              placeholder="Pablo"
+              placeholder="(Ej. Singularity)"
               value={guestName}
               onChange={(e) => setGuestName(e.target.value)}
               maxLength={20}
@@ -96,15 +95,15 @@ export default function Join() {
 
         <button
           className="btn primary lg"
-          disabled={loading || code.trim().length < 4 || (!user?.name && !guestName.trim())}
+          disabled={loading || code.trim().length < 4}
           type="submit"
         >
-          {loading ? "Entrando..." : "Unirse a la Sala →"}
+          {loading ? "Entrando..." : "Unirse a la Sala"}
         </button>
 
         <div style={{ textAlign: "center" }}>
           <Link to="/play" className="btn ghost sm">
-            ← Volver a Modos de Juego
+            Volver a Modos de Juego
           </Link>
         </div>
       </form>

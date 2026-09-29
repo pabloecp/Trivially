@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { api } from "./api.js";
 import { emitAck, getSocket } from "./socket.js";
 import { BACKEND_URL } from "./config.js";
@@ -47,8 +47,18 @@ export function AppProvider({ children }) {
   const [linkingStatus, setLinkingStatus] = useState(null);
   const [error, setError] = useState("");
 
+  const refreshCatalog = useCallback(async () => {
+    try {
+      const data = await api("/api/catalog");
+      setCatalog(data);
+      return data;
+    } catch {
+      return null;
+    }
+  }, []);
+
   useEffect(() => {
-    api("/api/catalog").then(setCatalog).catch(() => {});
+    refreshCatalog();
 
     const params = new URLSearchParams(window.location.search);
     const googleStatus = params.get("google");
@@ -118,6 +128,7 @@ export function AppProvider({ children }) {
         if (!clean) throw new Error("Por favor introduce un nombre de usuario");
         const res = await api(`/api/users/${user.id}/name`, { method: "PATCH", body: { name: clean } });
         if (res.user) {
+          localStorage.setItem("yoavlly_guest_name", res.user.name);
           persistUser(res.user);
           setUser(res.user);
         }
@@ -132,6 +143,8 @@ export function AppProvider({ children }) {
           body: { id: nextId, name, email, password, guestId, avatar: user?.avatar || AVATAR_COLORS[0] },
         });
         if (res.user) {
+          localStorage.setItem("yoavlly_guest_name", res.user.name);
+          localStorage.removeItem("yoavlly_guest_id");
           persistUser(res.user);
           setUser(res.user);
         }
@@ -142,6 +155,8 @@ export function AppProvider({ children }) {
         const guestId = user?.isGuest ? user.id : localStorage.getItem("yoavlly_guest_id");
         const res = await api("/api/auth/login", { method: "POST", body: { identifier, password, guestId } });
         if (res.user) {
+          localStorage.setItem("yoavlly_guest_name", res.user.name);
+          localStorage.removeItem("yoavlly_guest_id");
           persistUser(res.user);
           setUser(res.user);
         }
@@ -203,17 +218,25 @@ export function AppProvider({ children }) {
         return next;
       },
 
-      async createRoom(mode, config) {
-        if (!user) throw new Error("Debes identificarte antes de crear una sala");
-        const res = await emitAck("room:create", { user, mode, config });
+      async createRoom(mode, config, explicitUser) {
+        let u = explicitUser || user || loadSavedUser();
+        if (!u) {
+          const autoName = `Jugador${Math.floor(100 + Math.random() * 900)}`;
+          u = await actions.saveGuest(autoName);
+        }
+        const res = await emitAck("room:create", { user: u, mode, config });
         if (!res.ok) throw new Error(res.error);
         setRoom(res.state);
         return res.state;
       },
 
-      async joinRoom(code) {
-        if (!user) throw new Error("Debes identificarte antes de unirte");
-        const res = await emitAck("room:join", { user, code: code.toUpperCase() });
+      async joinRoom(code, explicitUser) {
+        let u = explicitUser || user || loadSavedUser();
+        if (!u) {
+          const autoName = `Jugador${Math.floor(100 + Math.random() * 900)}`;
+          u = await actions.saveGuest(autoName);
+        }
+        const res = await emitAck("room:join", { user: u, code: code.toUpperCase() });
         if (!res.ok) throw new Error(res.error);
         setRoom(res.state);
         return res.state;
@@ -261,7 +284,7 @@ export function AppProvider({ children }) {
   const spotify = useMemo(() => ({ configured: false, connected: false }), []);
 
   return (
-    <AppContext.Provider value={{ user, catalog, room, setRoom, spotify, linkingStatus, error, setError, ...actions }}>
+    <AppContext.Provider value={{ user, catalog, refreshCatalog, room, setRoom, spotify, linkingStatus, error, setError, ...actions }}>
       {children}
     </AppContext.Provider>
   );

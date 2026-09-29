@@ -12,11 +12,11 @@ export function selectSongs(catalog, filters = {}) {
   const active = new Set(enabledCategories);
   let songs = [...catalog.songs];
 
-  const useArtists = (active.has("artist") || active.has("artistSongs")) && artistIds.length;
-  const useGenres = active.has("genre") && genreIds.length;
-  const useAlbums = active.has("album") && albumIds.length;
+  const useArtists = active.has("artist") || active.has("artistSongs");
+  const useGenres = active.has("genre");
+  const useAlbums = active.has("album");
   const useYear = active.has("year") && (yearFrom || yearTo);
-  const usePlaylists = active.has("playlist") && playlistIds.length;
+  const usePlaylists = active.has("playlist");
 
   if (useGenres) {
     songs = songs.filter((s) => s.genreIds?.some((g) => genreIds.includes(g)));

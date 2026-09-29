@@ -4,6 +4,16 @@ import PlayerCard from "../components/PlayerCard.jsx";
 import RoomConfigModal from "../components/RoomConfigModal.jsx";
 import { useApp } from "../lib/store.jsx";
 import { YoavllySymbol } from "../components/YoavllySymbol.jsx";
+import { api } from "../lib/api.js";
+
+const ARTIST_NAME_MAP = {
+  "bad-bunny": "Bad Bunny",
+  "mora": "Mora",
+  "rauw-alejandro": "Rauw Alejandro",
+  "travis-scott": "Travis Scott",
+  "drake": "Drake",
+  "jvke": "JVKE",
+};
 
 export default function Lobby() {
   const { code } = useParams();
@@ -11,6 +21,7 @@ export default function Lobby() {
     user,
     room,
     catalog,
+    refreshCatalog,
     joinRoom,
     saveGuest,
     setReady,
@@ -27,6 +38,29 @@ export default function Lobby() {
   const [startErr, setStartErr] = useState("");
   const [showConfigModal, setShowConfigModal] = useState(false);
   const [permissionMsg, setPermissionMsg] = useState("");
+
+  const [songCount, setSongCount] = useState(() => {
+    const artistCount = room?.config?.artistIds?.length ?? 6;
+    return artistCount * 50;
+  });
+
+  useEffect(() => {
+    refreshCatalog?.();
+  }, [refreshCatalog]);
+
+  useEffect(() => {
+    if (!room?.config) return;
+    api("/api/catalog/preview", { method: "POST", body: room.config })
+      .then((data) => {
+        if (data?.matchingCount || data?.count) {
+          setSongCount(data.matchingCount || data.count);
+        }
+      })
+      .catch(() => {
+        const artistCount = room?.config?.artistIds?.length ?? 6;
+        setSongCount(artistCount * 50);
+      });
+  }, [room?.config]);
 
   // Join room if not joined yet
   useEffect(() => {
@@ -65,7 +99,7 @@ export default function Lobby() {
           <div>
             <h2 style={{ fontSize: 24, margin: "0 0 8px" }}>¿Cómo quieres aparecer en la partida?</h2>
             <p className="muted" style={{ margin: 0, fontSize: 14 }}>
-              Introduce tu nombre para unirte a la sala {code}. Lo recordaremos para futuras partidas.
+              Introduce tu Nombre para unirte a la sala {code}. Lo recordaremos para futuras partidas.
             </p>
           </div>
 
@@ -84,7 +118,7 @@ export default function Lobby() {
             {guestErr && <p className="error" style={{ margin: 0 }}>{guestErr}</p>}
 
             <button className="btn primary lg" type="submit" disabled={!guestName.trim()}>
-              Entrar a la Sala →
+              Entrar a la Sala
             </button>
           </form>
         </div>
@@ -107,12 +141,13 @@ export default function Lobby() {
   const connectedPlayers = room.players.filter((p) => p.connected);
   const canStart = connectedPlayers.length >= 1;
 
-  // Selected genres & artists labels
-  const selectedGenreNames = (room.config?.genreIds || [])
-    .map((gid) => catalog?.genres?.find((g) => g.id === gid)?.name || gid)
-    .join(", ");
-  const selectedArtistNames = (room.config?.artistIds || [])
-    .map((aid) => catalog?.artists?.find((a) => a.id === aid)?.name || aid)
+  // Selected artists labels
+  const totalArtistCount = Math.max(catalog?.artists?.length || 0, Object.keys(ARTIST_NAME_MAP).length);
+  const selectedArtistIds = room.config?.artistIds || [];
+  const isAllArtists = selectedArtistIds.length >= totalArtistCount;
+
+  const selectedArtistNames = selectedArtistIds
+    .map((aid) => catalog?.artists?.find((a) => a.id === aid)?.name || ARTIST_NAME_MAP[aid] || aid)
     .join(", ");
 
   async function copyLink() {
@@ -275,20 +310,15 @@ export default function Lobby() {
 
             <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
               <span className="muted" style={{ fontSize: 11, textTransform: "uppercase", fontWeight: 700, letterSpacing: "0.05em" }}>Tiempo por ronda</span>
-              <span style={{ fontSize: 14, fontWeight: 700, color: "var(--text)" }}>⏱️ 15 segundos</span>
+              <span style={{ fontSize: 14, fontWeight: 700, color: "var(--text)" }}>
+                ⏱️ {Math.round((room.config?.roundMs || 15000) / 1000)} segundos
+              </span>
             </div>
 
             <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
               <span className="muted" style={{ fontSize: 11, textTransform: "uppercase", fontWeight: 700, letterSpacing: "0.05em" }}>Artistas</span>
               <span style={{ fontSize: 14, fontWeight: 700, color: "var(--text)" }}>
-                🎤 {(room.config?.artistIds || []).length >= (catalog?.artists?.length || 3) ? "Todos los artistas" : selectedArtistNames || "Todos"}
-              </span>
-            </div>
-
-            <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
-              <span className="muted" style={{ fontSize: 11, textTransform: "uppercase", fontWeight: 700, letterSpacing: "0.05em" }}>Géneros</span>
-              <span style={{ fontSize: 14, fontWeight: 700, color: "var(--text)" }}>
-                🎵 {(room.config?.genreIds || []).length >= (catalog?.genres?.length || 5) ? "Todos los géneros" : selectedGenreNames || "Todos"}
+                🎤 {isAllArtists ? "Todos los artistas" : selectedArtistNames || "Ninguno"}
               </span>
             </div>
 
@@ -322,21 +352,31 @@ export default function Lobby() {
                 type="button"
               >
                 {connectedPlayers.length === 1
-                  ? "Comenzar Ronda Solo →"
-                  : `Comenzar Partida (${connectedPlayers.length} jugadores) →`}
+                  ? "Comenzar Ronda Solo"
+                  : `Comenzar Partida (${connectedPlayers.length} jugadores)`}
               </button>
             </div>
           ) : (
-            <div className="grid" style={{ gap: 10 }}>
-              <button
-                className={`btn ${isReady ? "primary" : "secondary"} lg`}
-                onClick={() => setReady(!isReady)}
-                type="button"
-              >
-                {isReady ? "¡Estás Listo!" : "Marcar como Listo"}
-              </button>
-              <p className="muted" style={{ margin: 0, fontSize: 12, textAlign: "center" }}>
-                Esperando a que el Host inicie la partida...
+            <div
+              className="card"
+              style={{
+                padding: "20px 24px",
+                textAlign: "center",
+                background: "var(--bg-elevated)",
+                border: "1px solid var(--border)",
+                borderRadius: 16,
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                gap: 8,
+              }}
+            >
+              <span style={{ fontSize: 24 }}>⏳</span>
+              <strong style={{ fontSize: 16, color: "var(--text)" }}>
+                Esperando al host...
+              </strong>
+              <p className="muted" style={{ margin: 0, fontSize: 13 }}>
+                La partida comenzará automáticamente cuando el anfitrión pulse comenzar.
               </p>
             </div>
           )}

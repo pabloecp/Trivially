@@ -1,51 +1,22 @@
 import { useState } from "react";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { AVATAR_COLORS, useApp } from "../lib/store.jsx";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { useApp } from "../lib/store.jsx";
 import { YoavllySymbol } from "../components/YoavllySymbol.jsx";
 
 export default function Login() {
-  const { user, saveGuest, registerAccount, loginAccount, loginWithGoogle } = useApp();
-  const [tab, setTab] = useState("guest"); // default to guest
-  const [accountMode, setAccountMode] = useState("login");
-  const [guestName, setGuestName] = useState(user?.name || "");
-  const [accName, setAccName] = useState(user?.name || "");
-  const [email, setEmail] = useState(user?.email || "");
+  const { registerAccount, loginAccount, loginWithGoogle } = useApp();
+  const [accountMode, setAccountMode] = useState("register"); // "register" | "login"
+  const [accName, setAccName] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loginIdentifier, setLoginIdentifier] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
-  const [avatar, setAvatar] = useState(user?.avatar || AVATAR_COLORS[0]);
   const [msg, setMsg] = useState("");
   const [loading, setLoading] = useState(false);
 
   const [params] = useSearchParams();
   const nav = useNavigate();
-
-  async function onGuestSubmit(e) {
-    e.preventDefault();
-    if (!guestName.trim()) return;
-    setLoading(true);
-    setMsg("");
-    try {
-      await saveGuest(guestName.trim(), avatar);
-      nav("/play");
-    } catch (err) {
-      setMsg(err.message);
-      setLoading(false);
-    }
-  }
-
-  async function onQuickGuest() {
-    setLoading(true);
-    setMsg("");
-    try {
-      const defaultName = guestName.trim() || `Jugador${Math.floor(100 + Math.random() * 900)}`;
-      await saveGuest(defaultName, avatar);
-      nav("/play");
-    } catch (err) {
-      setMsg(err.message);
-      setLoading(false);
-    }
-  }
+  const returnTo = params.get("returnTo") || "/play";
 
   async function onAccountRegister(e) {
     e.preventDefault();
@@ -62,7 +33,7 @@ export default function Login() {
         email: email.trim(),
         password,
       });
-      nav("/profile?new=1");
+      nav(returnTo);
     } catch (err) {
       setMsg(err.message);
       setLoading(false);
@@ -76,7 +47,7 @@ export default function Login() {
     setMsg("");
     try {
       await loginAccount(loginIdentifier.trim(), loginPassword);
-      nav("/play");
+      nav(returnTo);
     } catch (err) {
       setMsg(err.message);
       setLoading(false);
@@ -84,7 +55,7 @@ export default function Login() {
   }
 
   return (
-    <div className="grid page-compact" style={{ margin: "24px auto", gap: 24 }}>
+    <div className="grid page-compact" style={{ margin: "32px auto", gap: 24, maxWidth: 440 }}>
       <div style={{ textAlign: "center" }}>
         <div style={{ display: "flex", justifyContent: "center", marginBottom: 12 }}>
           <YoavllySymbol size={52} />
@@ -92,7 +63,7 @@ export default function Login() {
         <div className="kicker">Identidad de Jugador</div>
         <h1 style={{ fontSize: 32, margin: "4px 0 8px" }}>Bienvenido a YOAVLLY</h1>
         <p className="muted" style={{ margin: 0, fontSize: 14 }}>
-          Entra como invitado, crea tu cuenta, o inicia con Google.
+          Inicia sesión con Google o ingresa con tu correo.
         </p>
       </div>
 
@@ -113,33 +84,11 @@ export default function Login() {
         </div>
       )}
 
-      {/* Guest alert if already playing as guest */}
-      {user?.isGuest && (
-        <div className="card" style={{ padding: 16, background: "var(--brand-subtle)", borderColor: "var(--brand)" }}>
-          <div className="row" style={{ gap: 12, alignItems: "center" }}>
-            <div
-              className="avatar"
-              style={{ background: user.avatar || "var(--brand)", width: 40, height: 40, fontSize: 16 }}
-            >
-              {(user.name || "U").slice(0, 1).toUpperCase()}
-            </div>
-            <div style={{ flex: 1 }}>
-              <strong style={{ fontSize: 14, display: "block", color: "var(--text)" }}>
-                Jugando actualmente como "{user.name}"
-              </strong>
-              <span className="muted" style={{ fontSize: 12 }}>
-                Inicia sesión o crea tu cuenta para guardar permanentemente tus estadísticas.
-              </span>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Google OAuth Button */}
-      <div className="card" style={{ padding: 18, textAlign: "center" }}>
+      {/* Google OAuth Option */}
+      <div className="card" style={{ padding: 20, textAlign: "center" }}>
         <button
           type="button"
-          onClick={() => loginWithGoogle("/play")}
+          onClick={() => loginWithGoogle(returnTo)}
           className="btn lg"
           style={{
             width: "100%",
@@ -172,7 +121,7 @@ export default function Login() {
           style={{
             display: "flex",
             alignItems: "center",
-            margin: "18px 0 4px",
+            margin: "20px 0 6px",
             color: "var(--text-muted)",
             fontSize: 12,
             fontWeight: 700,
@@ -181,227 +130,132 @@ export default function Login() {
           }}
         >
           <div style={{ flex: 1, height: 1, background: "var(--border)" }} />
-          <span style={{ padding: "0 12px" }}>o con cuenta / invitado</span>
+          <span style={{ padding: "0 12px" }}>o con tu correo</span>
           <div style={{ flex: 1, height: 1, background: "var(--border)" }} />
         </div>
       </div>
 
-      {/* Tabs: Invitado vs Cuenta */}
-      <div className="tab-group" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-        <button
-          type="button"
-          className={`tab-btn ${tab === "guest" ? "active" : ""}`}
-          onClick={() => { setTab("guest"); setMsg(""); }}
-          style={{ padding: "12px", borderRadius: "var(--radius-sm)", fontWeight: 700, cursor: "pointer" }}
-        >
-          ⚡ Modo Invitado (Rápido)
-        </button>
-        <button
-          type="button"
-          className={`tab-btn ${tab === "account" ? "active" : ""}`}
-          onClick={() => { setTab("account"); setMsg(""); }}
-          style={{ padding: "12px", borderRadius: "var(--radius-sm)", fontWeight: 700, cursor: "pointer" }}
-        >
-          👤 Cuenta Permanente
-        </button>
-      </div>
-
-      {/* Tab 1: Modo Invitado */}
-      {tab === "guest" && (
-        <form onSubmit={onGuestSubmit} className="card grid" style={{ gap: 20, padding: 28 }}>
-          <div>
-            <h3 style={{ margin: "0 0 6px", fontSize: 20 }}>Juega al instante</h3>
-            <p className="muted" style={{ margin: 0, fontSize: 14 }}>
-              Sin contraseña ni correo. Tus estadísticas se guardan en tu navegador y podrás asociarlas a una cuenta más tarde.
-            </p>
-          </div>
-
-          <div>
-            <label style={{ fontSize: 13, fontWeight: 700, display: "block", marginBottom: 8 }}>
-              Tu Nombre o Apodo
-            </label>
-            <input
-              className="field"
-              value={guestName}
-              onChange={(e) => setGuestName(e.target.value)}
-              placeholder="Ej: YoavllyPlayer"
-              maxLength={24}
-              required
-              autoFocus
-            />
-          </div>
-
-          <div>
-            <label style={{ fontSize: 13, fontWeight: 700, display: "block", marginBottom: 8 }}>
-              Elige tu Color de Avatar
-            </label>
-            <div className="row" style={{ gap: 10 }}>
-              {AVATAR_COLORS.map((c) => (
-                <button
-                  key={c}
-                  type="button"
-                  onClick={() => setAvatar(c)}
-                  style={{
-                    width: 38,
-                    height: 38,
-                    borderRadius: "50%",
-                    background: c,
-                    border: avatar === c ? "3px solid #FFFFFF" : "2px solid transparent",
-                    boxShadow: avatar === c ? "0 0 0 2px var(--brand)" : "none",
-                    cursor: "pointer",
-                    transition: "transform 0.1s ease",
-                    transform: avatar === c ? "scale(1.15)" : "scale(1)",
-                  }}
-                />
-              ))}
-            </div>
-          </div>
-
-          {msg && <p className="error" style={{ margin: 0 }}>{msg}</p>}
-
-          <div className="grid" style={{ gap: 10 }}>
-            <button className="btn primary lg" type="submit" disabled={loading || !guestName.trim()}>
-              {loading ? "Entrando..." : "Jugar como Invitado →"}
-            </button>
-
-            <button
-              type="button"
-              className="btn ghost sm"
-              onClick={onQuickGuest}
-              disabled={loading}
-              style={{ color: "var(--text-muted)" }}
-            >
-              🎲 Asignar nombre aleatorio y entrar directo
-            </button>
-          </div>
-        </form>
-      )}
-
-      {/* Tab 2: Cuenta Permanente */}
-      {tab === "account" && (
-        <div className="card grid" style={{ gap: 20, padding: 28 }}>
-          <div className="tab-group" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6, background: "var(--bg-subtle)", padding: 4, borderRadius: "var(--radius-sm)" }}>
-            <button
-              type="button"
-              className={`tab-btn ${accountMode === "login" ? "active" : ""}`}
-              onClick={() => { setAccountMode("login"); setMsg(""); }}
-              style={{ padding: "8px", borderRadius: 6, fontWeight: 700, fontSize: 13, cursor: "pointer" }}
-            >
-              Iniciar Sesión
-            </button>
-            <button
-              type="button"
-              className={`tab-btn ${accountMode === "register" ? "active" : ""}`}
-              onClick={() => { setAccountMode("register"); setMsg(""); }}
-              style={{ padding: "8px", borderRadius: 6, fontWeight: 700, fontSize: 13, cursor: "pointer" }}
-            >
-              Crear Cuenta
-            </button>
-          </div>
-
-          {accountMode === "login" ? (
-            <form onSubmit={onAccountLogin} className="grid" style={{ gap: 16 }}>
-              <div>
-                <h3 style={{ fontSize: 18, margin: "0 0 4px" }}>Iniciar Sesión en YOAVLLY</h3>
-                <p className="muted" style={{ margin: 0, fontSize: 13 }}>
-                  Introduce tu correo o nombre de usuario registrado.
-                </p>
-              </div>
-
-              <div>
-                <label style={{ fontSize: 12, fontWeight: 700, display: "block", marginBottom: 6, textTransform: "uppercase", color: "var(--text-muted)" }}>
-                  Correo o Nombre de usuario
-                </label>
-                <input
-                  className="field"
-                  value={loginIdentifier}
-                  onChange={(e) => setLoginIdentifier(e.target.value)}
-                  placeholder="tu@correo.com o tu usuario"
-                  required
-                  autoFocus
-                />
-              </div>
-
-              <div>
-                <label style={{ fontSize: 12, fontWeight: 700, display: "block", marginBottom: 6, textTransform: "uppercase", color: "var(--text-muted)" }}>
-                  Contraseña
-                </label>
-                <input
-                  className="field"
-                  type="password"
-                  value={loginPassword}
-                  onChange={(e) => setLoginPassword(e.target.value)}
-                  placeholder="Tu contraseña"
-                  required
-                />
-              </div>
-
-              {msg && <p className="error" style={{ margin: 0 }}>{msg}</p>}
-
-              <button className="btn primary lg" type="submit" disabled={loading || !loginIdentifier.trim() || !loginPassword}>
-                {loading ? "Iniciando sesión..." : "Iniciar Sesión →"}
-              </button>
-            </form>
-          ) : (
-            <form onSubmit={onAccountRegister} className="grid" style={{ gap: 16 }}>
-              <div>
-                <h3 style={{ fontSize: 18, margin: "0 0 4px" }}>Crear Cuenta YOAVLLY</h3>
-                <p className="muted" style={{ margin: 0, fontSize: 13 }}>
-                  Elige tu nombre y contraseña. Podrás cambiar tu nombre libremente en tu perfil en cualquier momento.
-                </p>
-              </div>
-
-              <div>
-                <label style={{ fontSize: 12, fontWeight: 700, display: "block", marginBottom: 6, textTransform: "uppercase", color: "var(--text-muted)" }}>
-                  Nombre de usuario
-                </label>
-                <input
-                  className="field"
-                  value={accName}
-                  onChange={(e) => setAccName(e.target.value)}
-                  placeholder="Ej: YoavllyMaster"
-                  maxLength={24}
-                  required
-                />
-              </div>
-
-              <div>
-                <label style={{ fontSize: 12, fontWeight: 700, display: "block", marginBottom: 6, textTransform: "uppercase", color: "var(--text-muted)" }}>
-                  Correo electrónico
-                </label>
-                <input
-                  className="field"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="tu@correo.com"
-                  required
-                />
-              </div>
-
-              <div>
-                <label style={{ fontSize: 12, fontWeight: 700, display: "block", marginBottom: 6, textTransform: "uppercase", color: "var(--text-muted)" }}>
-                  Contraseña
-                </label>
-                <input
-                  className="field"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Mínimo 2 caracteres"
-                  required
-                />
-              </div>
-
-              {msg && <p className="error" style={{ margin: 0 }}>{msg}</p>}
-
-              <button className="btn primary lg" type="submit" disabled={loading || !accName.trim() || !email.trim() || !password}>
-                {loading ? "Creando cuenta..." : "Crear Cuenta YOAVLLY →"}
-              </button>
-            </form>
-          )}
+      {/* Email / Password Card */}
+      <div className="card grid" style={{ gap: 20, padding: 28 }}>
+        <div className="tab-group">
+          <button
+            type="button"
+            className={`tab-btn ${accountMode === "register" ? "active" : ""}`}
+            onClick={() => { setAccountMode("register"); setMsg(""); }}
+          >
+            Crear Cuenta
+          </button>
+          <button
+            type="button"
+            className={`tab-btn ${accountMode === "login" ? "active" : ""}`}
+            onClick={() => { setAccountMode("login"); setMsg(""); }}
+          >
+            Iniciar Sesión
+          </button>
         </div>
-      )}
+
+        {accountMode === "login" ? (
+          <form onSubmit={onAccountLogin} className="grid" style={{ gap: 16 }}>
+            <div>
+              <h3 style={{ fontSize: 18, margin: "0 0 4px" }}>Iniciar Sesión con Correo</h3>
+              <p className="muted" style={{ margin: 0, fontSize: 13 }}>
+                Introduce tu correo o nombre de usuario y tu contraseña.
+              </p>
+            </div>
+
+            <div>
+              <label style={{ fontSize: 12, fontWeight: 700, display: "block", marginBottom: 6, textTransform: "uppercase", color: "var(--text-muted)" }}>
+                Correo o Nombre de usuario
+              </label>
+              <input
+                className="field"
+                value={loginIdentifier}
+                onChange={(e) => setLoginIdentifier(e.target.value)}
+                placeholder="tu@correo.com o tu usuario"
+                required
+                autoFocus
+              />
+            </div>
+
+            <div>
+              <label style={{ fontSize: 12, fontWeight: 700, display: "block", marginBottom: 6, textTransform: "uppercase", color: "var(--text-muted)" }}>
+                Contraseña
+              </label>
+              <input
+                className="field"
+                type="password"
+                value={loginPassword}
+                onChange={(e) => setLoginPassword(e.target.value)}
+                placeholder="Tu contraseña"
+                required
+              />
+            </div>
+
+            {msg && <p className="error" style={{ margin: 0 }}>{msg}</p>}
+
+            <button className="btn primary lg" type="submit" disabled={loading || !loginIdentifier.trim() || !loginPassword}>
+              {loading ? "Iniciando sesión..." : "Iniciar Sesión"}
+            </button>
+          </form>
+        ) : (
+          <form onSubmit={onAccountRegister} className="grid" style={{ gap: 16 }}>
+            <div>
+              <h3 style={{ fontSize: 18, margin: "0 0 4px" }}>Crear Cuenta con Correo</h3>
+              <p className="muted" style={{ margin: 0, fontSize: 13 }}>
+                Crea tu cuenta para guardar tus puntos, rachas y récords.
+              </p>
+            </div>
+
+            <div>
+              <label style={{ fontSize: 12, fontWeight: 700, display: "block", marginBottom: 6, textTransform: "uppercase", color: "var(--text-muted)" }}>
+                Nombre de usuario
+              </label>
+              <input
+                className="field"
+                value={accName}
+                onChange={(e) => setAccName(e.target.value)}
+                placeholder="Ej: YoavllyMaster"
+                maxLength={24}
+                required
+              />
+            </div>
+
+            <div>
+              <label style={{ fontSize: 12, fontWeight: 700, display: "block", marginBottom: 6, textTransform: "uppercase", color: "var(--text-muted)" }}>
+                Correo electrónico
+              </label>
+              <input
+                className="field"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="tu@correo.com"
+                required
+              />
+            </div>
+
+            <div>
+              <label style={{ fontSize: 12, fontWeight: 700, display: "block", marginBottom: 6, textTransform: "uppercase", color: "var(--text-muted)" }}>
+                Contraseña
+              </label>
+              <input
+                className="field"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Mínimo 2 caracteres"
+                required
+              />
+            </div>
+
+            {msg && <p className="error" style={{ margin: 0 }}>{msg}</p>}
+
+            <button className="btn primary lg" type="submit" disabled={loading || !accName.trim() || !email.trim() || !password}>
+              {loading ? "Creando cuenta..." : "Crear Cuenta YOAVLLY"}
+            </button>
+          </form>
+        )}
+      </div>
     </div>
   );
 }

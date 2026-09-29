@@ -21,9 +21,9 @@ function defaultConfig() {
   return {
     rounds: 5,
     roundMs: ROUND_MS,
-    enabledCategories: ["artist", "genre"],
-    artistIds: ["bad-bunny", "mora", "rauw-alejandro"],
-    genreIds: ["reggaeton", "urbano", "trap", "pop-latino", "pop"],
+    enabledCategories: ["artist"],
+    artistIds: ["bad-bunny", "mora", "rauw-alejandro", "travis-scott", "drake", "jvke"],
+    genreIds: [],
     albumIds: [],
     playlistIds: [],
     yearFrom: null,
@@ -91,10 +91,12 @@ export class RoomManager {
 
   addPlayer(room, user, isHost = false) {
     const existing = room.players.get(user.id);
+    const isGuest = Boolean(user.isGuest ?? (user.id?.startsWith("gst_") || !user.email));
     const player = existing || {
       id: user.id,
       name: user.name,
       avatar: user.avatar,
+      isGuest,
       score: 0,
       correct: 0,
       streak: 0,
@@ -105,10 +107,10 @@ export class RoomManager {
     };
     player.name = user.name;
     player.avatar = user.avatar;
+    player.isGuest = isGuest;
     player.connected = true;
     player.socketId = user.socketId;
-    player.status = room.phase === "lobby" ? (isHost ? "conectado" : "conectado") : "jugando";
-    if (room.phase === "lobby") player.status = "conectado";
+    player.status = "conectado";
     room.players.set(user.id, player);
     this.socketToRoom.set(user.socketId, { code: room.code, userId: user.id });
     return player;

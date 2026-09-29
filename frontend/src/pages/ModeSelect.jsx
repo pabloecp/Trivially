@@ -1,28 +1,85 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { useApp } from "../lib/store.jsx";
-import { AuthPromptModal } from "../components/AuthPromptModal.jsx";
 import AlbumShowcase from "../components/AlbumShowcase.jsx";
 
+const FEATURED_ARTISTS = [
+  {
+    id: "bad-bunny",
+    name: "Bad Bunny",
+    tag: "ARTISTA OFICIAL",
+    albums: "Un Verano Sin Ti · YHLQMDLG",
+    image: "/artists/bad-bunny.jpg",
+  },
+  {
+    id: "mora",
+    name: "Mora",
+    tag: "ARTISTA OFICIAL",
+    albums: "MICRODOSIS · ESTRELLA",
+    image: "/artists/mora.jpg",
+  },
+  {
+    id: "rauw-alejandro",
+    name: "Rauw Alejandro",
+    tag: "ARTISTA OFICIAL",
+    albums: "SATURNO · VICE VERSA",
+    image: "/artists/rauw-alejandro.jpg",
+  },
+  {
+    id: "travis-scott",
+    name: "Travis Scott",
+    tag: "ARTISTA OFICIAL",
+    albums: "ASTROWORLD · UTOPIA",
+    image: "/artists/travis-scott.jpg",
+  },
+  {
+    id: "drake",
+    name: "Drake",
+    tag: "ARTISTA OFICIAL",
+    albums: "Views · Scorpion",
+    image: "/artists/drake.jpg",
+  },
+  {
+    id: "jvke",
+    name: "JVKE",
+    tag: "ARTISTA OFICIAL",
+    albums: "golden hour · this is what feels like",
+    image: "/artists/jvke.jpg",
+  },
+];
+
 export default function ModeSelect() {
-  const { user, createRoom, joinRoom } = useApp();
+  const { user, saveGuest, updatePlayer, createRoom, joinRoom } = useApp();
   const [code, setCode] = useState("");
+  const [playerName, setPlayerName] = useState(
+    () => user?.name || localStorage.getItem("yoavlly_guest_name") || ""
+  );
   const [joinErr, setJoinErr] = useState("");
   const [joining, setJoining] = useState(false);
   const [creating, setCreating] = useState(false);
-  const [authModalOpen, setAuthModalOpen] = useState(false);
-  const [pendingAction, setPendingAction] = useState(null); // "create" | "join"
   const nav = useNavigate();
 
-  async function handleCreateRoom() {
-    if (!user?.name) {
-      setPendingAction("create");
-      setAuthModalOpen(true);
-      return;
+  useEffect(() => {
+    if (user?.name && !playerName) {
+      setPlayerName(user.name);
     }
+  }, [user?.name]);
+
+  async function handleCreateRoom(e) {
+    if (e) e.preventDefault();
+    setJoinErr("");
     setCreating(true);
     try {
-      const state = await createRoom("multi");
+      const clean = playerName.trim() || user?.name || `Jugador${Math.floor(100 + Math.random() * 900)}`;
+      let currentUser = user;
+      if (!currentUser || currentUser.isGuest || currentUser.name !== clean) {
+        if (!currentUser || currentUser.isGuest) {
+          currentUser = await saveGuest(clean);
+        } else {
+          currentUser = await updatePlayer({ name: clean });
+        }
+      }
+      const state = await createRoom("multi", undefined, currentUser);
       nav(`/lobby/${state.code}`);
     } catch (err) {
       setJoinErr(err.message || "Error al crear la sala");
@@ -34,15 +91,19 @@ export default function ModeSelect() {
     e.preventDefault();
     const cleanCode = code.trim().toUpperCase();
     if (!cleanCode) return;
-    if (!user?.name) {
-      setPendingAction("join");
-      setAuthModalOpen(true);
-      return;
-    }
-    setJoining(true);
     setJoinErr("");
+    setJoining(true);
     try {
-      await joinRoom(cleanCode);
+      const clean = playerName.trim() || user?.name || `Jugador${Math.floor(100 + Math.random() * 900)}`;
+      let currentUser = user;
+      if (!currentUser || currentUser.isGuest || currentUser.name !== clean) {
+        if (!currentUser || currentUser.isGuest) {
+          currentUser = await saveGuest(clean);
+        } else {
+          currentUser = await updatePlayer({ name: clean });
+        }
+      }
+      await joinRoom(cleanCode, currentUser);
       nav(`/lobby/${cleanCode}`);
     } catch (err) {
       setJoinErr(err.message || "No se pudo unir a la sala");
@@ -75,7 +136,7 @@ export default function ModeSelect() {
             color: "var(--text-secondary)",
           }}
         >
-          Identifica canciones en segundos, escribe el título con nuestro buscador predictivo inteligente y compite en salas multijugador sincronizadas o invita a tus amigos a tu sala en tiempo real.
+          Identifica canciones rápidamente y compite con amigos en salas multijugador en tiempo real
         </p>
       </div>
 
@@ -102,35 +163,40 @@ export default function ModeSelect() {
             display: "flex",
             flexDirection: "column",
             justifyContent: "space-between",
-            gap: 26,
+            gap: 24,
             boxShadow: "var(--shadow-lg)",
             borderRadius: 20,
+            height: "100%",
+            boxSizing: "border-box",
           }}
         >
           {/* 1. Crear Sala */}
-          <div style={{ textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", gap: 14 }}>
-            <div
-              style={{
-                width: 56,
-                height: 56,
-                borderRadius: 16,
-                background: "var(--brand)",
-                color: "#FFFFFF",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontSize: 26,
-                boxShadow: "0 8px 24px rgba(123, 115, 246, 0.35)",
-              }}
-            >
-              ⚡
+          <div style={{ textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
+            <div style={{ marginBottom: 4, marginTop: 20 }}>
+              <h2 style={{ fontSize: 22, margin: "0 0 4px" }}>Crear una Nueva Sala</h2>
+              <p className="muted" style={{ fontSize: 14, margin: 0 }}>
+                Crea tu sala privada al instante. Inicia solo o comparte el enlace con tus amigos para jugar juntos en tiempo real
+              </p>
             </div>
 
-            <div>
-              <h2 style={{ fontSize: 22, margin: "0 0 6px" }}>Crear una Nueva Sala</h2>
-              <p className="muted" style={{ fontSize: 14, margin: 0 }}>
-                Genera tu sala privada al instante. Podrás iniciar la ronda solo o compartir el enlace con amigos.
-              </p>
+            <div style={{ width: "100%", maxWidth: 360, textAlign: "left", marginTop: 40 }}>
+              <label style={{ fontSize: 18, fontWeight: 700, display: "block", marginBottom: 8, color: "var(--text)" }}>
+                Nombre de Usuario
+              </label>
+              <input
+                className="field"
+                placeholder="(Ej. Singularity)"
+                value={playerName}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setPlayerName(val);
+                  if (val.trim()) {
+                    localStorage.setItem("yoavlly_guest_name", val.trim());
+                  }
+                }}
+                maxLength={20}
+                style={{ width: "100%", fontSize: 14, fontWeight: 400 }}
+              />
             </div>
 
             <button
@@ -144,9 +210,10 @@ export default function ModeSelect() {
                 padding: "16px 24px",
                 fontSize: 16,
                 fontWeight: 800,
+                marginTop: 8,
               }}
             >
-              {creating ? "Creando sala..." : "⚡ Crear Sala Ahora"}
+              {creating ? "Creando sala..." : "Crear Sala Ahora"}
             </button>
           </div>
 
@@ -160,60 +227,138 @@ export default function ModeSelect() {
           </div>
 
           {/* 2. Unirse con Código */}
-          <div>
-            <form onSubmit={handleJoinSubmit} className="grid" style={{ gap: 12 }}>
-              <label style={{ fontSize: 14, fontWeight: 700, color: "var(--text)" }}>
-                Unirse a una sala existente
-              </label>
-              <div className="row" style={{ gap: 10 }}>
+          <div style={{ textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center" }}>
+            <form onSubmit={handleJoinSubmit} style={{ width: "100%", maxWidth: 360, display: "flex", flexDirection: "column", gap: 14 }}>
+              <div style={{ textAlign: "left" }}>
+                <label style={{ fontSize: 18, fontWeight: 700, display: "block", marginBottom: 8, color: "var(--text)" }}>
+                  Código de Sala
+                </label>
                 <input
                   className="field"
                   value={code}
                   onChange={(e) => setCode(e.target.value.toUpperCase())}
-                  placeholder="Código (ej. XO4K9M)"
+                  placeholder="(Ej. XOYOAV)"
                   maxLength={8}
                   style={{
-                    flex: 1,
-                    fontSize: 16,
-                    fontWeight: 700,
-                    letterSpacing: "0.08em",
-                    textTransform: "uppercase",
+                    width: "100%",
+                    fontSize: 14,
+                    fontWeight: 400,
+                    letterSpacing: code ? "0.08em" : "normal",
+                    textTransform: code ? "uppercase" : "none",
                   }}
                 />
-                <button
-                  type="submit"
-                  className="btn secondary"
-                  disabled={joining || !code.trim()}
-                  style={{ padding: "0 22px", whiteSpace: "nowrap", fontWeight: 700 }}
-                >
-                  {joining ? "Entrando..." : "Unirse →"}
-                </button>
               </div>
+              <button
+                type="submit"
+                className="btn secondary lg"
+                disabled={joining || !code.trim()}
+                style={{
+                  width: "100%",
+                  padding: "16px 24px",
+                  fontSize: 16,
+                  fontWeight: 800,
+                }}
+              >
+                {joining ? "Entrando..." : "Unirse a la Sala"}
+              </button>
+
+              {!user?.name && (
+                <div style={{ textAlign: "center", marginTop: 4 }}>
+                  <span className="muted" style={{ fontSize: 12 }}>
+                    ¿Tienes una cuenta registrada?{" "}
+                    <Link to="/login" style={{ color: "var(--brand)", fontWeight: 700 }}>
+                      Inicia sesión
+                    </Link>
+                  </span>
+                </div>
+              )}
             </form>
           </div>
         </div>
 
         {/* Right Column: Álbumes en Rotación (AlbumShowcase) */}
-        <div style={{ display: "flex", flexDirection: "column" }}>
-          <AlbumShowcase />
-        </div>
+        <AlbumShowcase style={{ height: "100%" }} />
       </div>
 
-      {/* Auth Prompt Modal if user is not logged in */}
-      <AuthPromptModal
-        isOpen={authModalOpen}
-        onClose={() => setAuthModalOpen(false)}
-        onSuccess={() => {
-          setAuthModalOpen(false);
-          if (pendingAction === "create") {
-            handleCreateRoom();
-          } else if (pendingAction === "join" && code.trim()) {
-            nav(`/lobby/${code.trim().toUpperCase()}`);
-          }
-        }}
-        returnTo="/play"
-        title="Elige tu nombre para jugar"
-      />
+      {/* Featured Artists Section */}
+      <div style={{ marginTop: 14 }}>
+        <div style={{ marginBottom: 20 }}>
+          <h2
+            style={{
+              fontSize: 28,
+              fontWeight: 800,
+              margin: "0 0 6px",
+              color: "var(--text)",
+              letterSpacing: "-0.02em",
+            }}
+          >
+            Artistas Destacados
+          </h2>
+          <p
+            style={{
+              fontSize: 15,
+              color: "var(--text-secondary)",
+              margin: 0,
+            }}
+          >
+            Catálogo de canciones con audio de alta calidad
+          </p>
+        </div>
+
+        <div className="featured-artists-grid">
+          {FEATURED_ARTISTS.map((artist) => (
+            <div key={artist.id} className="featured-artist-card">
+              <img
+                src={artist.image}
+                alt={artist.name}
+                className="featured-artist-img"
+                loading="lazy"
+                onError={(e) => {
+                  e.currentTarget.src = "https://is1-ssl.mzstatic.com/image/thumb/Music112/v4/3e/04/eb/3e04ebf6-370f-f59d-ec84-2c2643db92f1/196626945068.jpg/600x600bb.jpg";
+                }}
+              />
+              <div style={{ minWidth: 0, flex: 1 }}>
+                <div
+                  style={{
+                    fontSize: 11,
+                    fontWeight: 800,
+                    color: "var(--brand)",
+                    letterSpacing: "0.08em",
+                    textTransform: "uppercase",
+                    marginBottom: 3,
+                  }}
+                >
+                  {artist.tag}
+                </div>
+                <div
+                  style={{
+                    fontSize: 18,
+                    fontWeight: 800,
+                    color: "var(--text)",
+                    marginBottom: 3,
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                  }}
+                >
+                  {artist.name}
+                </div>
+                <div
+                  style={{
+                    fontSize: 13,
+                    color: "var(--text-secondary)",
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                  }}
+                >
+                  {artist.albums}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }

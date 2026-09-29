@@ -259,7 +259,7 @@ export default function Game() {
           {/* First Place */}
           {winner && (
             <div className="podium-place first">
-              <div className="crown-anim" style={{ fontSize: 36, marginBottom: 6 }}>👑</div>
+              <div style={{ fontSize: 36, marginBottom: 4, lineHeight: 1 }}>👑</div>
               <div
                 className="avatar"
                 style={{
@@ -267,13 +267,15 @@ export default function Game() {
                   width: 68,
                   height: 68,
                   fontSize: 28,
-                  marginBottom: 12,
+                  marginBottom: 10,
                   boxShadow: "0 8px 24px var(--brand-subtle)",
                 }}
               >
                 {(winner.name || "?").slice(0, 1).toUpperCase()}
               </div>
-              <div className="chip active" style={{ fontSize: 11, marginBottom: 6 }}>1º LUGAR</div>
+              <div className="chip active" style={{ fontSize: 11, marginBottom: 8, padding: "4px 12px" }}>
+                1º LUGAR
+              </div>
               <strong style={{ fontSize: 20, display: "block" }}>{winner.name}</strong>
               <div style={{ color: "var(--brand)", fontWeight: 900, fontSize: 30, margin: "6px 0" }}>
                 {winner.score} pts
@@ -361,7 +363,7 @@ export default function Game() {
         <div className="row" style={{ justifyContent: "center", gap: 12, flexWrap: "wrap" }}>
           {isHost ? (
             <button className="btn primary lg" onClick={restartGame}>
-              🔄 Jugar de Nuevo
+              Jugar de Nuevo
             </button>
           ) : (
             <span className="muted">Esperando a que el host reinicie la partida...</span>
