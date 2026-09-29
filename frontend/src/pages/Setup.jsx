@@ -264,7 +264,7 @@ export default function Setup() {
             disabled={loading || availableCount < rounds}
             style={{ fontWeight: 800, minWidth: 220 }}
           >
-            {loading ? "Creando sala..." : "Crear Sala Ahora"}
+            {loading ? "Creando sala..." : "Crear Sala"}
           </button>
         </div>
       </div>

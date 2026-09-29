@@ -71,10 +71,10 @@ export default function Lobby() {
 
   // Navigate to game when game starts
   useEffect(() => {
-    if (room && room.phase !== "lobby" && room.phase !== "finished") {
+    if (room && room.code === code && room.phase !== "lobby" && room.phase !== "finished") {
       nav(`/game/${room.code}`);
     }
-  }, [room?.phase]);
+  }, [room?.phase, room?.code, code]);
 
   // If user does not have a saved name yet, show prompt
   if (!user?.name) {
@@ -249,7 +249,7 @@ export default function Lobby() {
         {/* Connected Players */}
         <div className="card" style={{ padding: 24 }}>
           <div className="row" style={{ justifyContent: "space-between", marginBottom: 16 }}>
-            <h3 style={{ margin: 0 }}>Jugadores en la sala</h3>
+            <h3 style={{ margin: 0 }}>Jugadores en la Sala</h3>
             <span className="chip" style={{ fontSize: 12 }}>
               {connectedPlayers.length} {connectedPlayers.length === 1 ? "jugador" : "jugadores"}
             </span>
@@ -351,9 +351,7 @@ export default function Lobby() {
                 disabled={!canStart}
                 type="button"
               >
-                {connectedPlayers.length === 1
-                  ? "Comenzar Ronda Solo"
-                  : `Comenzar Partida (${connectedPlayers.length} jugadores)`}
+                Comenzar Partida
               </button>
             </div>
           ) : (

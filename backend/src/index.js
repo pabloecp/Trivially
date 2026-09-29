@@ -31,7 +31,8 @@ const app = express();
 app.set("trust proxy", 1);
 
 const clientOrigin = (process.env.CLIENT_ORIGIN || "https://triviallyonline.vercel.app").replace(/\/$/, "");
-const isCrossSite = clientOrigin.startsWith("https://") || process.env.NODE_ENV === "production";
+const isProduction = process.env.NODE_ENV === "production";
+const isCrossSite = isProduction && clientOrigin.startsWith("https://");
 
 app.use(
   cors({
@@ -63,6 +64,27 @@ app.use(
 );
 
 app.get("/health", (_req, res) => res.json({ ok: true, name: "YOAVLLY" }));
+
+// Audio proxy: re-serves iTunes preview URLs with audio/mp4 MIME type
+// Needed because iTunes returns audio/x-m4p which browsers don't play natively
+app.get("/api/audio/proxy", async (req, res) => {
+  const url = req.query.url;
+  if (!url || !url.startsWith("https://audio-ssl.itunes.apple.com/")) {
+    return res.status(400).json({ error: "Invalid URL" });
+  }
+  try {
+    const upstream = await fetch(url);
+    if (!upstream.ok) return res.status(502).json({ error: "Upstream error" });
+    res.setHeader("Content-Type", "audio/mp4");
+    res.setHeader("Cache-Control", "public, max-age=86400");
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    const buf = await upstream.arrayBuffer();
+    res.send(Buffer.from(buf));
+  } catch (e) {
+    res.status(502).json({ error: e.message });
+  }
+});
+
 app.use("/api", createApiRouter({ catalog, store }));
 app.get("/auth/google", handleGoogleRedirect);
 app.get("/auth/google/callback", (req, res) => handleGoogleCallback(req, res, store));

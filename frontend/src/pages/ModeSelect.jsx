@@ -10,6 +10,7 @@ const FEATURED_ARTISTS = [
     tag: "ARTISTA OFICIAL",
     albums: "Un Verano Sin Ti · YHLQMDLG",
     image: "/artists/bad-bunny.jpg",
+    spotifyUrl: "https://open.spotify.com/artist/4q3ewBCX7sLwd24euuV69X",
   },
   {
     id: "mora",
@@ -17,6 +18,7 @@ const FEATURED_ARTISTS = [
     tag: "ARTISTA OFICIAL",
     albums: "MICRODOSIS · ESTRELLA",
     image: "/artists/mora.jpg",
+    spotifyUrl: "https://open.spotify.com/artist/0Q8NcsJwoCbZOHHW63su5S",
   },
   {
     id: "rauw-alejandro",
@@ -24,6 +26,7 @@ const FEATURED_ARTISTS = [
     tag: "ARTISTA OFICIAL",
     albums: "SATURNO · VICE VERSA",
     image: "/artists/rauw-alejandro.jpg",
+    spotifyUrl: "https://open.spotify.com/artist/1mcTU81TzQhprhouKaTkpq",
   },
   {
     id: "travis-scott",
@@ -31,6 +34,7 @@ const FEATURED_ARTISTS = [
     tag: "ARTISTA OFICIAL",
     albums: "ASTROWORLD · UTOPIA",
     image: "/artists/travis-scott.jpg",
+    spotifyUrl: "https://open.spotify.com/artist/0Y5tJX1MQlPlqiwlOH1tJY",
   },
   {
     id: "drake",
@@ -38,6 +42,7 @@ const FEATURED_ARTISTS = [
     tag: "ARTISTA OFICIAL",
     albums: "Views · Scorpion",
     image: "/artists/drake.jpg",
+    spotifyUrl: "https://open.spotify.com/artist/3TVXtAsR1Inumwj472S9r4",
   },
   {
     id: "jvke",
@@ -45,6 +50,7 @@ const FEATURED_ARTISTS = [
     tag: "ARTISTA OFICIAL",
     albums: "golden hour · this is what feels like",
     image: "/artists/jvke.jpg",
+    spotifyUrl: "https://open.spotify.com/artist/164Uj4eKjl6zTBKfJLFKKK",
   },
 ];
 
@@ -213,7 +219,7 @@ export default function ModeSelect() {
                 marginTop: 8,
               }}
             >
-              {creating ? "Creando sala..." : "Crear Sala Ahora"}
+              {creating ? "Creando sala..." : "Crear Sala"}
             </button>
           </div>
 
@@ -306,8 +312,15 @@ export default function ModeSelect() {
         </div>
 
         <div className="featured-artists-grid">
-          {FEATURED_ARTISTS.map((artist) => (
-            <div key={artist.id} className="featured-artist-card">
+                  {FEATURED_ARTISTS.map((artist) => (
+            <a
+              key={artist.id}
+              href={artist.spotifyUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="featured-artist-card"
+              style={{ textDecoration: "none" }}
+            >
               <img
                 src={artist.image}
                 alt={artist.name}
@@ -355,7 +368,7 @@ export default function ModeSelect() {
                   {artist.albums}
                 </div>
               </div>
-            </div>
+            </a>
           ))}
         </div>
       </div>

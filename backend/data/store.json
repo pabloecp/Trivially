@@ -1,3 +1,74 @@
 {
-  "users": {}
+  "users": {
+    "goog_106039905541301968248": {
+      "id": "goog_106039905541301968248",
+      "name": "Pablo Cernuda",
+      "avatar": "https://lh3.googleusercontent.com/a/ACg8ocLEOAxa2QON7H0cO06Y-TzpeTY0_5qqkET4ZzeWyx6RXMiigOAI=s96-c",
+      "isGuest": false,
+      "email": "pablo.ecpx@gmail.com",
+      "stats": {
+        "totalScore": 0,
+        "bestScore": 0,
+        "gamesPlayed": 0,
+        "wins": 0,
+        "bestStreak": 0,
+        "correctAnswers": 0,
+        "artistHits": {}
+      },
+      "googleId": "106039905541301968248"
+    },
+    "goog_108195925483778449167": {
+      "id": "goog_108195925483778449167",
+      "name": "Poollo",
+      "avatar": "https://lh3.googleusercontent.com/a/ACg8ocItU3FUEzUi4c-pixorvMM5FN3RW-tKQ-4fJmaH9fgjm_h8AA=s96-c",
+      "isGuest": false,
+      "email": "pollopokemonmain7@gmail.com",
+      "stats": {
+        "totalScore": 0,
+        "bestScore": 0,
+        "gamesPlayed": 0,
+        "wins": 0,
+        "bestStreak": 0,
+        "correctAnswers": 0,
+        "artistHits": {}
+      },
+      "googleId": "108195925483778449167"
+    },
+    "usr_1790674055390_2ff77cb6": {
+      "id": "usr_1790674055390_2ff77cb6",
+      "name": "EEEE",
+      "avatar": "#7B73F6",
+      "isGuest": false,
+      "email": "ecp@gmail.com",
+      "stats": {
+        "totalScore": 0,
+        "bestScore": 0,
+        "gamesPlayed": 0,
+        "wins": 0,
+        "bestStreak": 0,
+        "correctAnswers": 0,
+        "artistHits": {}
+      },
+      "passwordHash": "221215d31b0b6acb7ef56dfe9dff7fbe356fa91b5e2c1654e4ef8ee9a0c7f5f1900dc499d6c44af9dbd986923d00cb9709e0448a89f39d3b6d22670c56b1fb46",
+      "passwordSalt": "3dee79dfff4a6e6fe66120439c34044a"
+    },
+    "usr_1790674618652_96a125a3": {
+      "id": "usr_1790674618652_96a125a3",
+      "name": "yoav",
+      "avatar": "#7B73F6",
+      "isGuest": false,
+      "email": "yoav@gmail.com",
+      "stats": {
+        "totalScore": 0,
+        "bestScore": 0,
+        "gamesPlayed": 0,
+        "wins": 0,
+        "bestStreak": 0,
+        "correctAnswers": 0,
+        "artistHits": {}
+      },
+      "passwordHash": "bcb2e9bd5923af10c7a23f2832b576698de5b0272aef2df3995d9413829ab828821d7ff74097bf80b9a5da194259b3c46ac1612e697bce828d0ed285dbf3cbd0",
+      "passwordSalt": "15c945d63f1211913419a4bfb6fddad4"
+    }
+  }
 }

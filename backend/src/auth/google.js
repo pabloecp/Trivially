@@ -10,13 +10,20 @@ export function googleConfigured() {
   return Boolean(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET);
 }
 
-export function createGoogleAuthUrl(returnTo = "/play", purpose = "login") {
+export function createGoogleAuthUrl(returnTo = "/play", purpose = "login", clientOrigin = "") {
   if (!googleConfigured()) {
     throw new Error("Google OAuth no está configurado (GOOGLE_CLIENT_ID o GOOGLE_CLIENT_SECRET ausente)");
   }
 
-  const state = crypto.randomBytes(16).toString("hex");
-  pendingGoogleStates.set(state, { returnTo, purpose, at: Date.now() });
+  const statePayload = {
+    nonce: crypto.randomBytes(12).toString("hex"),
+    returnTo,
+    purpose,
+    origin: clientOrigin || "",
+    at: Date.now(),
+  };
+  const state = Buffer.from(JSON.stringify(statePayload)).toString("base64url");
+  pendingGoogleStates.set(state, statePayload);
 
   // Clean old entries after 10 minutes
   const now = Date.now();
@@ -42,8 +49,19 @@ export function createGoogleAuthUrl(returnTo = "/play", purpose = "login") {
 }
 
 export async function exchangeGoogleCode(code, state) {
-  const stateData = pendingGoogleStates.get(state);
+  let stateData = pendingGoogleStates.get(state);
   pendingGoogleStates.delete(state);
+
+  // If state was created by another server/worker, decode from the state payload
+  if (!stateData && state) {
+    try {
+      stateData = JSON.parse(Buffer.from(state, "base64url").toString("utf8"));
+    } catch {
+      try {
+        stateData = JSON.parse(Buffer.from(state, "base64").toString("utf8"));
+      } catch {}
+    }
+  }
 
   const redirectUri =
     process.env.GOOGLE_REDIRECT_URI || "https://triviallyonline.vercel.app/auth/google/callback";
@@ -91,5 +109,6 @@ export async function exchangeGoogleCode(code, state) {
     },
     returnTo: stateData?.returnTo || "/play",
     purpose: stateData?.purpose || "login",
+    origin: stateData?.origin || "",
   };
 }

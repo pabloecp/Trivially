@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import MiniBoard from "../components/MiniBoard.jsx";
+import UserAvatar from "../components/UserAvatar.jsx";
 import { YoavllySymbol } from "../components/YoavllySymbol.jsx";
 import { remainingMs, useApp } from "../lib/store.jsx";
 
@@ -22,7 +23,6 @@ export default function Game() {
   const suggestionsListRef = useRef(null);
 
   const [left, setLeft] = useState(0);
-  const [audioBlocked, setAudioBlocked] = useState(false);
   const [err, setErr] = useState("");
 
   // Search & autocomplete state
@@ -45,6 +45,19 @@ export default function Game() {
     return () => clearInterval(t);
   }, [room]);
 
+  // Convert an iTunes previewUrl to go through our backend proxy
+  // (iTunes serves audio/x-m4p which browsers don't support; proxy re-serves as audio/mp4)
+  function proxyUrl(url) {
+    if (!url) return url;
+    if (url.startsWith("https://audio-ssl.itunes.apple.com/")) {
+      return `/api/audio/proxy?url=${encodeURIComponent(url)}`;
+    }
+    return url;
+  }
+
+  // Track the currently loaded audio source to avoid re-setting it
+  const currentAudioSrc = useRef(null);
+
   // Audio preview playback handling
   useEffect(() => {
     const audio = audioRef.current;
@@ -53,31 +66,59 @@ export default function Game() {
     audio.volume = 0.8;
 
     if (room.phase === "playing" && room.audio?.previewUrl) {
-      if (audio.src !== room.audio.previewUrl) {
-        audio.src = room.audio.previewUrl;
+      const src = proxyUrl(room.audio.previewUrl);
+      if (currentAudioSrc.current !== room.audio.previewUrl) {
+        currentAudioSrc.current = room.audio.previewUrl;
+        audio.src = src;
+        audio.load();
       }
       const elapsed = Math.max(0, (Date.now() - (room.phaseStartedAt || Date.now())) / 1000);
       if (Math.abs(audio.currentTime - elapsed) > 1.2) {
-        audio.currentTime = elapsed;
+        try {
+          audio.currentTime = elapsed;
+        } catch {}
       }
-      audio
-        .play()
-        .then(() => setAudioBlocked(false))
-        .catch(() => setAudioBlocked(true));
+      const p = audio.play();
+      if (p !== undefined) {
+        p.catch((e) => {
+          console.warn("Autoplay waiting for user gesture:", e);
+        });
+      }
     } else {
       audio.pause();
       if (room.phase === "countdown" && room.audio?.previewUrl) {
-        if (audio.src !== room.audio.previewUrl) {
-          audio.src = room.audio.previewUrl;
+        const src = proxyUrl(room.audio.previewUrl);
+        if (currentAudioSrc.current !== room.audio.previewUrl) {
+          currentAudioSrc.current = room.audio.previewUrl;
+          audio.src = src;
           audio.load();
         }
       }
     }
   }, [room?.phase, room?.currentRound, room?.audio?.previewUrl]);
 
+  // Unlock audio on any click/key press if browser blocked initial autoplay
+  useEffect(() => {
+    const unlock = () => {
+      const audio = audioRef.current;
+      if (audio && room?.phase === "playing" && audio.paused) {
+        audio.play().catch(() => {});
+      }
+    };
+    window.addEventListener("click", unlock, { passive: true });
+    window.addEventListener("keydown", unlock, { passive: true });
+    return () => {
+      window.removeEventListener("click", unlock);
+      window.removeEventListener("keydown", unlock);
+    };
+  }, [room?.phase]);
+
+  const isSubmittingRef = useRef(false);
+
   // Reset local state when a new playing round starts
   useEffect(() => {
     if (room?.phase === "playing") {
+      isSubmittingRef.current = false;
       setQuery("");
       setActiveIndex(0);
       setSubmittedSong(null);
@@ -154,17 +195,22 @@ export default function Game() {
   }, [activeIndex]);
 
   async function handleSubmitSong(songOrText) {
-    if (locked) return;
+    if (locked || isSubmittingRef.current) return;
     const titleToDisplay = typeof songOrText === "object" ? songOrText.title : songOrText;
     const valToSend = typeof songOrText === "object" ? (songOrText.id || songOrText.title) : songOrText;
     if (!valToSend || !String(valToSend).trim()) return;
 
+    isSubmittingRef.current = true;
     setSubmittedSong(titleToDisplay);
+    setErr("");
     try {
       await answer(valToSend);
     } catch (e) {
-      setErr(e.message || "Error al enviar respuesta");
-      setSubmittedSong(null);
+      if (room?.phase === "playing") {
+        setErr(e.message || "Error al enviar respuesta");
+        setSubmittedSong(null);
+        isSubmittingRef.current = false;
+      }
     }
   }
 
@@ -183,17 +229,12 @@ export default function Game() {
       }
     } else if (e.key === "Enter") {
       e.preventDefault();
+      e.stopPropagation();
       if (suggestions.length > 0 && suggestions[activeIndex]) {
         handleSubmitSong(suggestions[activeIndex]);
       } else if (query.trim()) {
         handleSubmitSong(query.trim());
       }
-    }
-  }
-
-  function unblockAudio() {
-    if (audioRef.current) {
-      audioRef.current.play().then(() => setAudioBlocked(false)).catch(() => {});
     }
   }
 
@@ -234,17 +275,12 @@ export default function Game() {
           {second ? (
             <div className="podium-place second">
               <div style={{ fontSize: 28, marginBottom: 8 }}>🥈</div>
-              <div
-                className="avatar"
-                style={{
-                  background: second.avatar || "#6B6860",
-                  width: 52,
-                  height: 52,
-                  fontSize: 20,
-                  marginBottom: 10,
-                }}
-              >
-                {(second.name || "?").slice(0, 1).toUpperCase()}
+              <div style={{ marginBottom: 10, display: "flex", justifyContent: "center" }}>
+                <UserAvatar
+                  avatar={second.avatar}
+                  name={second.name}
+                  size={52}
+                />
               </div>
               <strong style={{ fontSize: 16, display: "block" }}>{second.name}</strong>
               <div style={{ color: "var(--brand)", fontWeight: 900, fontSize: 22, margin: "4px 0" }}>
@@ -260,18 +296,13 @@ export default function Game() {
           {winner && (
             <div className="podium-place first">
               <div style={{ fontSize: 36, marginBottom: 4, lineHeight: 1 }}>👑</div>
-              <div
-                className="avatar"
-                style={{
-                  background: winner.avatar || "var(--brand)",
-                  width: 68,
-                  height: 68,
-                  fontSize: 28,
-                  marginBottom: 10,
-                  boxShadow: "0 8px 24px var(--brand-subtle)",
-                }}
-              >
-                {(winner.name || "?").slice(0, 1).toUpperCase()}
+              <div style={{ marginBottom: 10, display: "flex", justifyContent: "center" }}>
+                <UserAvatar
+                  avatar={winner.avatar}
+                  name={winner.name}
+                  size={68}
+                  style={{ boxShadow: "0 8px 24px var(--brand-subtle)" }}
+                />
               </div>
               <div className="chip active" style={{ fontSize: 11, marginBottom: 8, padding: "4px 12px" }}>
                 1º LUGAR
@@ -290,17 +321,12 @@ export default function Game() {
           {third ? (
             <div className="podium-place third">
               <div style={{ fontSize: 28, marginBottom: 8 }}>🥉</div>
-              <div
-                className="avatar"
-                style={{
-                  background: third.avatar || "var(--text-secondary)",
-                  width: 48,
-                  height: 48,
-                  fontSize: 18,
-                  marginBottom: 10,
-                }}
-              >
-                {(third.name || "?").slice(0, 1).toUpperCase()}
+              <div style={{ marginBottom: 10, display: "flex", justifyContent: "center" }}>
+                <UserAvatar
+                  avatar={third.avatar}
+                  name={third.name}
+                  size={48}
+                />
               </div>
               <strong style={{ fontSize: 15, display: "block" }}>{third.name}</strong>
               <div style={{ color: "var(--brand)", fontWeight: 900, fontSize: 20, margin: "4px 0" }}>
@@ -334,17 +360,11 @@ export default function Game() {
                     <td><strong>#{p.position}</strong></td>
                     <td>
                       <div className="row" style={{ gap: 8 }}>
-                        <div
-                          className="avatar"
-                          style={{
-                            background: p.avatar || "var(--brand)",
-                            width: 26,
-                            height: 26,
-                            fontSize: 12,
-                          }}
-                        >
-                          {(p.name || "?").slice(0, 1).toUpperCase()}
-                        </div>
+                        <UserAvatar
+                          avatar={p.avatar}
+                          name={p.name}
+                          size={26}
+                        />
                         <span>{p.name}</span>
                       </div>
                     </td>
@@ -404,12 +424,21 @@ export default function Game() {
             </h2>
           </div>
 
-          <div className="row" style={{ gap: 12 }}>
-            {audioBlocked && (
-              <button className="btn secondary sm" onClick={unblockAudio}>
-                🔊 Activar Audio
-              </button>
-            )}
+          <div className="row" style={{ gap: 12, alignItems: "center" }}>
+            <button
+              type="button"
+              className="btn ghost sm"
+              style={{ fontSize: 12, padding: "5px 12px", color: "var(--text-muted)" }}
+              onClick={() => {
+                if (window.confirm("¿Seguro que deseas salir de la partida?")) {
+                  leaveRoom();
+                  nav("/play");
+                }
+              }}
+              title="Salir de la partida actual"
+            >
+              ✕ Salir
+            </button>
 
             <div
               style={{
@@ -476,7 +505,7 @@ export default function Game() {
                     ref={inputRef}
                     type="text"
                     className="yoavlly-search-input"
-                    placeholder="Escribe la canción... (ej. Buenas, Tití Me Preguntó)"
+                    placeholder="Escribe la canción (Ej. Andrea)"
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
                     onKeyDown={handleKeyDown}

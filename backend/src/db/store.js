@@ -207,7 +207,7 @@ export function linkGoogle(store, userId, { googleId, email, avatar }) {
 
   user.googleId = googleId;
   if (email && !user.email) user.email = email.trim().toLowerCase();
-  if (avatar && !user.avatar?.startsWith("http")) user.avatar = avatar;
+  if (avatar) user.avatar = avatar;
   store.users[userId] = user;
   saveStore(store);
   return sanitizeUser(user);

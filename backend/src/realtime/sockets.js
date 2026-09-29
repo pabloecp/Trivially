@@ -12,6 +12,16 @@ export function attachSockets(io, rooms) {
 
     socket.on("room:create", (payload, ack) => {
       try {
+        // Leave any room this socket is currently in
+        const prev = rooms.leave(socket.id);
+        if (prev?.room) {
+          socket.leave(prev.room.code);
+          io.to(prev.room.code).emit("room:state", rooms.publicState(prev.room));
+        }
+        for (const r of socket.rooms) {
+          if (r !== socket.id) socket.leave(r);
+        }
+
         const user = bindUser(socket, payload?.user);
         const room = rooms.create({
           host: user,
@@ -29,7 +39,21 @@ export function attachSockets(io, rooms) {
     socket.on("room:join", (payload, ack) => {
       try {
         const user = bindUser(socket, payload?.user);
-        const room = rooms.get(payload.code || "");
+        const targetCode = (payload.code || "").toUpperCase();
+
+        const currentRef = rooms.socketToRoom.get(socket.id);
+        if (currentRef && currentRef.code !== targetCode) {
+          const prev = rooms.leave(socket.id);
+          if (prev?.room) {
+            socket.leave(prev.room.code);
+            io.to(prev.room.code).emit("room:state", rooms.publicState(prev.room));
+          }
+        }
+        for (const r of socket.rooms) {
+          if (r !== socket.id && r !== targetCode) socket.leave(r);
+        }
+
+        const room = rooms.get(targetCode);
         if (!room) throw new Error("Sala no encontrada");
         rooms.addPlayer(room, user);
         socket.join(room.code);
@@ -42,7 +66,13 @@ export function attachSockets(io, rooms) {
 
     socket.on("room:leave", (ack) => {
       const result = rooms.leave(socket.id);
-      if (result?.room) io.to(result.room.code).emit("room:state", rooms.publicState(result.room));
+      if (result?.room) {
+        socket.leave(result.room.code);
+        io.to(result.room.code).emit("room:state", rooms.publicState(result.room));
+      }
+      for (const r of socket.rooms) {
+        if (r !== socket.id) socket.leave(r);
+      }
       ack?.({ ok: true });
     });
 

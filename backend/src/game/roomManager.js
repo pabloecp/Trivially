@@ -139,6 +139,12 @@ export class RoomManager {
       player.status = "desconectado";
       player.socketId = null;
       if (room.hostId === ref.userId) this.transferHost(room);
+
+      const anyConnected = [...room.players.values()].some((p) => p.connected);
+      if (!anyConnected) {
+        this.destroy(room);
+        return { room: null, left: true };
+      }
     }
     return { room, left: true };
   }
@@ -370,12 +376,26 @@ export class RoomManager {
 
 
   submitAnswer(room, userId, answerText) {
-    if (room.phase !== "playing") throw new Error("No se aceptan respuestas ahora");
     const player = room.players.get(userId);
     if (!player) throw new Error("Jugador no encontrado");
-    if (player.lastAnswer) throw new Error("Ya respondiste esta ronda");
+
+    // If already answered this round, gracefully accept without throwing duplicate error
+    if (player.lastAnswer) {
+      return player.lastAnswer;
+    }
+
+    // Grace period for network latency if reveal just started
+    const isPlaying = room.phase === "playing";
+    const isRecentReveal = room.phase === "reveal" && Date.now() - (room.phaseStartedAt || 0) < 2000;
+
+    if (!isPlaying && !isRecentReveal) {
+      throw new Error("No se aceptan respuestas ahora");
+    }
+
     const track = room.tracks[room.currentRound];
-    const remainingMs = Math.max(0, room.phaseEndsAt - Date.now());
+    if (!track) throw new Error("No hay canción activa");
+
+    const remainingMs = Math.max(0, (room.phaseEndsAt || Date.now()) - Date.now());
 
     // Check if the answer matches
     const correct = answerText === track.id || isCorrectAnswer(answerText, track);

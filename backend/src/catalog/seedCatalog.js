@@ -1,4 +1,4 @@
-// Auto-generated top 50 songs per artist from Deezer
+// Auto-generated from iTunes Search API — preview URLs never expire
 function song(partial) {
   return {
     source: "seed",
@@ -19,7 +19,7 @@ export const seedCatalog = {
       "urbano",
       "trap"
     ],
-    "spotifyUrl": "https://open.spotify.com/artist/4q3ewBCX7sLwd24euqV69X"
+    "spotifyUrl": "https://open.spotify.com/artist/4q3ewBCX7sLwd24euuV69X"
   },
   {
     "id": "mora",
@@ -30,7 +30,7 @@ export const seedCatalog = {
       "urbano",
       "trap"
     ],
-    "spotifyUrl": "https://open.spotify.com/artist/0eHQ9ooISFiBijPNirAwWW"
+    "spotifyUrl": "https://open.spotify.com/artist/0Q8NcsJwoCbZOHHW63su5S"
   },
   {
     "id": "rauw-alejandro",
@@ -41,7 +41,7 @@ export const seedCatalog = {
       "urbano",
       "pop-latino"
     ],
-    "spotifyUrl": "https://open.spotify.com/artist/1mcTU8FS7v9JeuOY0vYRiB"
+    "spotifyUrl": "https://open.spotify.com/artist/1mcTU81TzQhprhouKaTkpq"
   },
   {
     "id": "travis-scott",
@@ -72,7 +72,7 @@ export const seedCatalog = {
     "genreIds": [
       "pop"
     ],
-    "spotifyUrl": "https://open.spotify.com/artist/164UZZAcFJb6A2OLZ6p786"
+    "spotifyUrl": "https://open.spotify.com/artist/164Uj4eKjl6zTBKfJLFKKK"
   }
 ],
   genres: [
@@ -87,1336 +87,1533 @@ export const seedCatalog = {
   ],
   albums: [
   {
-    "id": "debi-tirar-mas-fotos",
-    "name": "DeBÍ TiRAR MáS FOToS",
+    "id": "invasion-of-privacy",
+    "name": "Invasion of Privacy",
     "artistId": "bad-bunny",
-    "year": 2025,
-    "image": "https://cdn-images.dzcdn.net/images/cover/d98eaccfbb945bdf68241d6de7fe6a49/1000x1000-000000-80-0-0.jpg"
-  },
-  {
-    "id": "cosa-nuestra",
-    "name": "Cosa Nuestra",
-    "artistId": "bad-bunny",
-    "year": 2024,
-    "image": "https://cdn-images.dzcdn.net/images/cover/73ee2e7a43dbeaa119a62d9a15d28670/1000x1000-000000-80-0-0.jpg"
-  },
-  {
-    "id": "un-x100to",
-    "name": "un x100to",
-    "artistId": "bad-bunny",
-    "year": 2023,
-    "image": "https://cdn-images.dzcdn.net/images/cover/8d2a9be13d164862ccb9a10ade01b0cf/1000x1000-000000-80-0-0.jpg"
+    "year": 2018,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music125/v4/6a/f7/6c/6af76c1c-4d8e-c761-8856-34d273b4703b/075679873682.jpg/600x600bb.jpg"
   },
   {
     "id": "un-verano-sin-ti",
     "name": "Un Verano Sin Ti",
     "artistId": "bad-bunny",
     "year": 2022,
-    "image": "https://cdn-images.dzcdn.net/images/cover/b29d1070377b784384c2456093f96a66/1000x1000-000000-80-0-0.jpg"
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music112/v4/3e/04/eb/3e04ebf6-370f-f59d-ec84-2c2643db92f1/196626945068.jpg/600x600bb.jpg"
   },
   {
-    "id": "oasis",
-    "name": "OASIS",
+    "id": "te-bote-remix-feat-darell-nicky-jam-ozuna-single",
+    "name": "Te Boté (Remix) [feat. Darell, Nicky Jam & Ozuna] - Single",
     "artistId": "bad-bunny",
-    "year": 2019,
-    "image": "https://cdn-images.dzcdn.net/images/cover/ef1cb84fc7b70a390d80af20768cf065/1000x1000-000000-80-0-0.jpg"
-  },
-  {
-    "id": "data",
-    "name": "DATA",
-    "artistId": "bad-bunny",
-    "year": 2023,
-    "image": "https://cdn-images.dzcdn.net/images/cover/e73a2afb469cd0f06777b24b156d3f82/1000x1000-000000-80-0-0.jpg"
-  },
-  {
-    "id": "lo-siento-bb",
-    "name": "Lo Siento BB:/",
-    "artistId": "bad-bunny",
-    "year": 2021,
-    "image": "https://cdn-images.dzcdn.net/images/cover/5261151d57457f99099b503e6c56aa0d/1000x1000-000000-80-0-0.jpg"
-  },
-  {
-    "id": "dakiti",
-    "name": "DÁKITI",
-    "artistId": "bad-bunny",
-    "year": 2020,
-    "image": "https://cdn-images.dzcdn.net/images/cover/aa6aa7ac356ad9d6c578cccd1a62c394/1000x1000-000000-80-0-0.jpg"
-  },
-  {
-    "id": "diles",
-    "name": "Diles",
-    "artistId": "bad-bunny",
-    "year": 2016,
-    "image": "https://cdn-images.dzcdn.net/images/cover/bbaf1244f46c20276b04a95ccb79f21b/1000x1000-000000-80-0-0.jpg"
-  },
-  {
-    "id": "yhlqmdlg",
-    "name": "YHLQMDLG",
-    "artistId": "bad-bunny",
-    "year": 2020,
-    "image": "https://cdn-images.dzcdn.net/images/cover/0a6f32569d4785c5ef82f581086f4302/1000x1000-000000-80-0-0.jpg"
-  },
-  {
-    "id": "nadie-sabe-lo-que-va-a-pasar-manana",
-    "name": "nadie sabe lo que va a pasar mañana",
-    "artistId": "bad-bunny",
-    "year": 2023,
-    "image": "https://cdn-images.dzcdn.net/images/cover/f840891b70f6e240b8ecaec49346bd6a/1000x1000-000000-80-0-0.jpg"
-  },
-  {
-    "id": "yonaguni",
-    "name": "Yonaguni",
-    "artistId": "bad-bunny",
-    "year": 2021,
-    "image": "https://cdn-images.dzcdn.net/images/cover/3aa544b9653b10aedcf7eb41d61b22df/1000x1000-000000-80-0-0.jpg"
-  },
-  {
-    "id": "callaita",
-    "name": "Callaita",
-    "artistId": "bad-bunny",
-    "year": 2019,
-    "image": "https://cdn-images.dzcdn.net/images/cover/53812cc43e108be37113c41a0ebdafaf/1000x1000-000000-80-0-0.jpg"
-  },
-  {
-    "id": "la-jumpa",
-    "name": "La Jumpa",
-    "artistId": "bad-bunny",
-    "year": 2022,
-    "image": "https://cdn-images.dzcdn.net/images/cover/a7e2ae00511098f427217faebb5352f9/1000x1000-000000-80-0-0.jpg"
-  },
-  {
-    "id": "adivino",
-    "name": "ADIVINO",
-    "artistId": "bad-bunny",
-    "year": 2024,
-    "image": "https://cdn-images.dzcdn.net/images/cover/7d4bfd96b8744fc8ca9b475c81254418/1000x1000-000000-80-0-0.jpg"
+    "year": 2017,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music114/v4/42/ef/aa/42efaa1c-3045-b26c-add4-37705e118e2b/192562395240.jpg/600x600bb.jpg"
   },
   {
     "id": "el-ultimo-tour-del-mundo",
     "name": "EL ÚLTIMO TOUR DEL MUNDO",
     "artistId": "bad-bunny",
     "year": 2020,
-    "image": "https://cdn-images.dzcdn.net/images/cover/6ea80078f0df08737a7471f3c4cf2afa/1000x1000-000000-80-0-0.jpg"
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/64/70/1c/64701cff-71ed-912f-ce62-71d409f5e6ad/195497640560.jpg/600x600bb.jpg"
   },
   {
-    "id": "gato-de-noche",
-    "name": "Gato de Noche",
+    "id": "callaita-single",
+    "name": "Callaíta - Single",
     "artistId": "bad-bunny",
-    "year": 2022,
-    "image": "https://cdn-images.dzcdn.net/images/cover/7db2ad9c1b84dff597f4c5dc280f9abc/1000x1000-000000-80-0-0.jpg"
+    "year": 2019,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music114/v4/a8/5d/7c/a85d7c43-777a-f2b7-5abc-1e4d59d8fe7c/193483903545.jpg/600x600bb.jpg"
+  },
+  {
+    "id": "oasis",
+    "name": "OASIS",
+    "artistId": "bad-bunny",
+    "year": 2019,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/77/32/74/7732746d-25e5-baae-b921-bad4a07d87b1/19UMGIM55524.rgb.jpg/600x600bb.jpg"
+  },
+  {
+    "id": "nadie-sabe-lo-que-va-a-pasar-manana",
+    "name": "nadie sabe lo que va a pasar mañana",
+    "artistId": "bad-bunny",
+    "year": 2023,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/00/e0/31/00e0311e-9dab-fd0c-fc37-ee3d36aafbf3/197190137897.jpg/600x600bb.jpg"
+  },
+  {
+    "id": "debi-tirar-mas-fotos",
+    "name": "DeBÍ TiRAR MáS FOToS",
+    "artistId": "bad-bunny",
+    "year": 2025,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/90/5e/7e/905e7ed5-a8fa-a8f3-cd06-0028fdf3afaa/199066342442.jpg/600x600bb.jpg"
+  },
+  {
+    "id": "yhlqmdlg",
+    "name": "YHLQMDLG",
+    "artistId": "bad-bunny",
+    "year": 2020,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music114/v4/8c/0f/81/8c0f81f2-9f10-5e3d-b9de-5961a73e8e52/195081078724.jpg/600x600bb.jpg"
+  },
+  {
+    "id": "un-x100to-single",
+    "name": "un x100to - Single",
+    "artistId": "bad-bunny",
+    "year": 2023,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music116/v4/b6/74/4d/b6744dbd-77ed-413a-3777-5ac6a2e780eb/197188732554.jpg/600x600bb.jpg"
+  },
+  {
+    "id": "dura-remix-feat-natti-natasha-becky-g-bad-bunny-single",
+    "name": "Dura (Remix) [feat. Natti Natasha, Becky G. & Bad Bunny] - Single",
+    "artistId": "bad-bunny",
+    "year": 2018,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music124/v4/98/83/65/988365e4-2539-d741-5744-bc8329cee86e/00602567683636.rgb.jpg/600x600bb.jpg"
+  },
+  {
+    "id": "yonaguni-single",
+    "name": "Yonaguni - Single",
+    "artistId": "bad-bunny",
+    "year": 2021,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/b6/12/da/b612daba-6c68-c2ab-7492-fb2e079074d5/196006829308.jpg/600x600bb.jpg"
   },
   {
     "id": "x-100pre",
     "name": "X 100PRE",
     "artistId": "bad-bunny",
     "year": 2018,
-    "image": "https://cdn-images.dzcdn.net/images/cover/72213221ed4529431857d42f6be61d56/1000x1000-000000-80-0-0.jpg"
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music126/v4/cf/3a/db/cf3adbe6-8ea1-f60f-60fd-713eefda3962/193483317984.jpg/600x600bb.jpg"
+  },
+  {
+    "id": "trapxficante",
+    "name": "TrapXficante",
+    "artistId": "bad-bunny",
+    "year": 2017,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/93/33/50/933350d5-0336-8c7e-7291-c329c1facb9e/886446349701.jpg/600x600bb.jpg"
+  },
+  {
+    "id": "sensualidad-feat-mambo-kingz-dj-luian-single",
+    "name": "Sensualidad (feat. Mambo Kingz & DJ Luian) - Single",
+    "artistId": "bad-bunny",
+    "year": 2017,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music125/v4/a3/1a/e9/a31ae99b-9378-d004-a613-e8f7397f7a88/191773843489.jpg/600x600bb.jpg"
+  },
+  {
+    "id": "volvi-single",
+    "name": "Volví - Single",
+    "artistId": "bad-bunny",
+    "year": 2021,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music125/v4/26/f0/00/26f000c0-7e2d-9473-c92e-829727e1470c/196292218404.jpg/600x600bb.jpg"
+  },
+  {
+    "id": "un-dia-one-day-single",
+    "name": "UN DIA (ONE DAY) - Single",
+    "artistId": "bad-bunny",
+    "year": 2020,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music124/v4/c7/93/50/c793507d-c4df-4c05-80bb-3a02d9f95113/20UMGIM38540.rgb.jpg/600x600bb.jpg"
+  },
+  {
+    "id": "solita-feat-bad-bunny-wisin-almighty-single",
+    "name": "Solita (feat. Bad Bunny, Wisin & Almighty) - Single",
+    "artistId": "bad-bunny",
+    "year": 2016,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/8e/2e/fa/8e2efa19-b0c2-fe40-6a4e-563505f4d652/192562129890.jpg/600x600bb.jpg"
+  },
+  {
+    "id": "soltera-remix-single",
+    "name": "Soltera (Remix) - Single",
+    "artistId": "bad-bunny",
+    "year": 2019,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/88/a7/91/88a79117-a14c-7674-f4c9-34e23d8eafdd/192641311772_Cover.jpg/600x600bb.jpg"
+  },
+  {
+    "id": "el-bano-feat-bad-bunny-single",
+    "name": "EL BAÑO (feat. Bad Bunny) - Single",
+    "artistId": "bad-bunny",
+    "year": 2018,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music125/v4/d8/58/41/d8584106-801b-3dd1-a396-c35888619191/886446929262.jpg/600x600bb.jpg"
   },
   {
     "id": "mala-santa",
     "name": "MALA SANTA",
     "artistId": "bad-bunny",
-    "year": 2019,
-    "image": "https://cdn-images.dzcdn.net/images/cover/39fe1c12b2803537b35eec48c9bf5d4e/1000x1000-000000-80-0-0.jpg"
+    "year": 2017,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music125/v4/2b/65/69/2b6569c2-e825-cce3-f94a-c2cbe6e68c1f/886448075417.jpg/600x600bb.jpg"
   },
   {
-    "id": "where-she-goes",
-    "name": "WHERE SHE GOES",
+    "id": "esta-rico-single",
+    "name": "Está Rico - Single",
     "artistId": "bad-bunny",
-    "year": 2023,
-    "image": "https://cdn-images.dzcdn.net/images/cover/70b2fbb08f3b42fcbcd53039b7415d00/1000x1000-000000-80-0-0.jpg"
+    "year": 2018,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/b1/e2/3f/b1e23f6e-29ba-c816-cd4a-2f995c19a25d/886447345481.jpg/600x600bb.jpg"
   },
   {
-    "id": "sensualidad",
-    "name": "Sensualidad",
+    "id": "krippy-kush-remix-feat-21-savage-rvssian-single",
+    "name": "Krippy Kush (Remix) [feat. 21 Savage & Rvssian] - Single",
     "artistId": "bad-bunny",
     "year": 2017,
-    "image": "https://cdn-images.dzcdn.net/images/cover/51da6004b3e2d63652afba61877da386/1000x1000-000000-80-0-0.jpg"
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music118/v4/99/2b/9d/992b9d6b-aa73-ac67-438c-990a3ca932e2/886446848471.jpg/600x600bb.jpg"
   },
   {
-    "id": "primer-dia-de-clases",
-    "name": "Primer Dia de Clases",
-    "artistId": "mora",
+    "id": "tu-no-vive-asi-feat-mambo-kingz-dj-luian-single",
+    "name": "Tú No Vive Así (feat. Mambo Kingz & DJ Luian) - Single",
+    "artistId": "bad-bunny",
+    "year": 2016,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music125/v4/8b/19/44/8b194436-ac9c-6864-d076-8fe75593340f/859718413691_cover.jpg/600x600bb.jpg"
+  },
+  {
+    "id": "where-she-goes-single",
+    "name": "WHERE SHE GOES - Single",
+    "artistId": "bad-bunny",
+    "year": 2023,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music116/v4/ad/b7/0e/adb70ef8-c456-3b31-136c-450d196d7cda/197188909819.jpg/600x600bb.jpg"
+  },
+  {
+    "id": "vete-single",
+    "name": "Vete - Single",
+    "artistId": "bad-bunny",
+    "year": 2019,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/bf/a5/21/bfa521a9-f74e-cd26-c03d-235516ade520/194491632793.jpg/600x600bb.jpg"
+  },
+  {
+    "id": "no-te-hagas-single",
+    "name": "No Te Hagas - Single",
+    "artistId": "bad-bunny",
+    "year": 2017,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music114/v4/20/c4/88/20c488b6-819a-31ba-a87c-00af3a4e9328/050742332501_art.jpg/600x600bb.jpg"
+  },
+  {
+    "id": "lo-siento-bb-single",
+    "name": "Lo Siento BB:/ - Single",
+    "artistId": "bad-bunny",
     "year": 2021,
-    "image": "https://cdn-images.dzcdn.net/images/cover/aeb6974f7292b35f4617720d530a3351/1000x1000-000000-80-0-0.jpg"
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/5d/6a/00/5d6a0054-5145-6011-c638-3e2666d0e8dd/192641833472_Cover.jpg/600x600bb.jpg"
   },
   {
-    "id": "microdosis",
-    "name": "MICRODOSIS",
-    "artistId": "mora",
+    "id": "el-amante-remix-feat-ozuna-bad-bunny-single",
+    "name": "El Amante (Remix) [feat. Ozuna & Bad Bunny] - Single",
+    "artistId": "bad-bunny",
+    "year": 2017,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music117/v4/2e/bd/86/2ebd86fd-0283-a7b8-3ee5-5fc67574ed8d/886446605975.jpg/600x600bb.jpg"
+  },
+  {
+    "id": "am-remix-single",
+    "name": "AM Remix - Single",
+    "artistId": "bad-bunny",
+    "year": 2021,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music125/v4/7c/34/9e/7c349e67-f967-951d-52c4-54e003f50d40/196292004861.jpg/600x600bb.jpg"
+  },
+  {
+    "id": "i-like-it-dillon-francis-remix-single",
+    "name": "I Like It (Dillon Francis Remix) - Single",
+    "artistId": "bad-bunny",
+    "year": 2018,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music124/v4/00/e9/82/00e982d3-cb07-cba0-4a03-7fbe973354ca/075679868282.jpg/600x600bb.jpg"
+  },
+  {
+    "id": "me-mata-feat-arcangel-almighty-bryant-myers-noriel-baby-rasta-brytiago-single",
+    "name": "Me Mata (feat. Arcángel, Almighty, Bryant Myers, Noriel, Baby Rasta & Brytiago) - Single",
+    "artistId": "bad-bunny",
+    "year": 2017,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music122/v4/29/79/f3/2979f357-93aa-c4c3-d874-80491c008a53/191773039967.jpg/600x600bb.jpg"
+  },
+  {
+    "id": "me-acostumbre-feat-bad-bunny-single",
+    "name": "Me Acostumbré (feat. Bad Bunny) - Single",
+    "artistId": "bad-bunny",
+    "year": 2017,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music124/v4/c4/ec/f2/c4ecf24e-2b24-b71f-a885-a6293f830434/654827031824_cover.jpg/600x600bb.jpg"
+  },
+  {
+    "id": "update",
+    "name": "#Update",
+    "artistId": "bad-bunny",
+    "year": 2017,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/75/11/88/7511883c-9c74-fafd-6484-4460af87d285/886446656601.jpg/600x600bb.jpg"
+  },
+  {
+    "id": "k-pop-single",
+    "name": "K-POP - Single",
+    "artistId": "bad-bunny",
+    "year": 2023,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music126/v4/1b/6e/23/1b6e23a2-5c18-2379-70df-52abb55db146/196871325424.jpg/600x600bb.jpg"
+  },
+  {
+    "id": "te-guste-single",
+    "name": "Te Gusté - Single",
+    "artistId": "bad-bunny",
+    "year": 2018,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music118/v4/49/d5/59/49d559f7-536e-48fd-a624-69143b578657/193483172255.jpg/600x600bb.jpg"
+  },
+  {
+    "id": "te-bote-feat-bad-bunny-nicky-jam-ozuna-single",
+    "name": "Te Boté (feat. Bad Bunny, Nicky Jam & Ozuna) - Single",
+    "artistId": "bad-bunny",
+    "year": 2018,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/e4/64/ac/e464ac2f-28a9-6a6b-6e29-23f7cc6b8f67/192562723944.jpg/600x600bb.jpg"
+  },
+  {
+    "id": "diles-feat-arcangel-nengo-flow-dj-luian-mambo-kingz-single",
+    "name": "Diles (feat. Arcángel, Ñengo Flow, DJ Luian & Mambo Kingz) - Single",
+    "artistId": "bad-bunny",
+    "year": 2016,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music125/v4/e3/6b/0b/e36b0bd8-3a60-8466-b034-4ac6652f4110/191079034949.jpg/600x600bb.jpg"
+  },
+  {
+    "id": "si-tu-lo-dejas-feat-bad-bunny-farruko-nicky-jam-king-kosa-single",
+    "name": "Si Tú Lo Dejas (feat. Bad Bunny, Farruko, Nicky Jam & King Kosa) - Single",
+    "artistId": "bad-bunny",
+    "year": 2017,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/e9/ef/21/e9ef2169-c9c2-9e02-1557-9fdc57bb370d/191773573706.jpg/600x600bb.jpg"
+  },
+  {
+    "id": "chambea-single",
+    "name": "Chambea - Single",
+    "artistId": "bad-bunny",
+    "year": 2017,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music124/v4/c4/9e/70/c49e703f-74e4-6aa0-2134-80d38bcd0348/191079942855.jpg/600x600bb.jpg"
+  },
+  {
+    "id": "soy-peor-single",
+    "name": "Soy Peor - Single",
+    "artistId": "bad-bunny",
+    "year": 2016,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music124/v4/1e/dc/8a/1edc8a20-f6e5-4de9-238e-94f09ea6159e/191079205288.jpg/600x600bb.jpg"
+  },
+  {
+    "id": "gangalee",
+    "name": "Gangalee",
+    "artistId": "bad-bunny",
+    "year": 2019,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music125/v4/c7/72/d1/c772d175-a331-e0bd-8cf4-62b7cea7e6c3/886447686447.jpg/600x600bb.jpg"
+  },
+  {
+    "id": "un-polvo-feat-bad-bunny-arcangel-nengo-flow-de-la-ghetto-single",
+    "name": "Un Polvo (feat. Bad Bunny, Arcángel, Ñengo Flow & De La Ghetto) - Single",
+    "artistId": "bad-bunny",
+    "year": 2016,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music124/v4/5c/05/86/5c0586fe-1e29-f0cc-6683-6ce88cd91d86/886446225555.jpg/600x600bb.jpg"
+  },
+  {
+    "id": "solo-de-mi-single",
+    "name": "Solo de Mí - Single",
+    "artistId": "bad-bunny",
+    "year": 2018,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/f0/9e/37/f09e375d-756c-b66f-cabe-2d8d8ce3d860/193483294216.jpg/600x600bb.jpg"
+  },
+  {
+    "id": "47-remix-single",
+    "name": "47 (Remix) - Single",
+    "artistId": "bad-bunny",
+    "year": 2017,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/57/47/ef/5747effe-2fc9-363f-45d6-9e72f9c1bb4c/47_Remix.jpg/600x600bb.jpg"
+  },
+  {
+    "id": "victory",
+    "name": "Victory",
+    "artistId": "bad-bunny",
+    "year": 2017,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music114/v4/5a/12/af/5a12af89-f328-1a03-cc81-effff45acb6f/886444951227.jpg/600x600bb.jpg"
+  },
+  {
+    "id": "for-all-the-dogs",
+    "name": "For All The Dogs",
+    "artistId": "bad-bunny",
+    "year": 2023,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music116/v4/21/50/ee/2150ee84-62c3-4190-7dfa-da30abd98ac8/23UM1IM09862.rgb.jpg/600x600bb.jpg"
+  },
+  {
+    "id": "gato-de-noche-single",
+    "name": "Gato de Noche - Single",
+    "artistId": "bad-bunny",
     "year": 2022,
-    "image": "https://cdn-images.dzcdn.net/images/cover/0385ddab0f03acd721ba2620d122d80a/1000x1000-000000-80-0-0.jpg"
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music122/v4/db/25/4f/db254ff8-ef57-7847-76ad-e437dac0fa32/197187723072.jpg/600x600bb.jpg"
   },
   {
-    "id": "lo-mismo-de-siempre",
-    "name": "LO MISMO DE SIEMPRE",
-    "artistId": "mora",
-    "year": 2025,
-    "image": "https://cdn-images.dzcdn.net/images/cover/44e85c6297e4b37127a97779714db5df/1000x1000-000000-80-0-0.jpg"
+    "id": "las-que-no-iban-a-salir",
+    "name": "LAS QUE NO IBAN A SALIR",
+    "artistId": "bad-bunny",
+    "year": 2020,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/9f/05/24/9f052490-6a7c-cea1-df51-b732a5ff7779/195081580067.jpg/600x600bb.jpg"
+  },
+  {
+    "id": "sr-santos",
+    "name": "SR. SANTOS",
+    "artistId": "bad-bunny",
+    "year": 2022,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music122/v4/c2/48/5a/c2485a96-58d4-5874-c9d6-cf479c06020b/197187400171.jpg/600x600bb.jpg"
+  },
+  {
+    "id": "mia-feat-drake-single",
+    "name": "MIA (feat. Drake) - Single",
+    "artistId": "bad-bunny",
+    "year": 2018,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music123/v4/09/aa/f8/09aaf8da-8eaf-bf60-0c23-48a88d546cbd/26991.jpg/600x600bb.jpg"
+  },
+  {
+    "id": "3men2-kbrn",
+    "name": "3MEN2 KBRN",
+    "artistId": "bad-bunny",
+    "year": 2023,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music116/v4/2d/59/b6/2d59b6d2-bd1a-474c-1ee6-09099dce30d6/197188331313.jpg/600x600bb.jpg"
+  },
+  {
+    "id": "amorfoda-single",
+    "name": "Amorfoda - Single",
+    "artistId": "bad-bunny",
+    "year": 2018,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music124/v4/c2/90/c1/c290c133-ebcf-b08a-c398-c323abb25944/843357117287.jpg/600x600bb.jpg"
+  },
+  {
+    "id": "bailame-remix-single",
+    "name": "Báilame (Remix) - Single",
+    "artistId": "bad-bunny",
+    "year": 2017,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/cd/84/98/cd84989f-a5ea-fe39-b67a-dab4d1c7081c/00602557926132.rgb.jpg/600x600bb.jpg"
+  },
+  {
+    "id": "yo-perreo-sola-remix-single",
+    "name": "Yo Perreo Sola (Remix) - Single",
+    "artistId": "bad-bunny",
+    "year": 2020,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music125/v4/03/23/1d/03231d9c-9416-98a5-06fb-438fd25ae0d0/195497457656.jpg/600x600bb.jpg"
+  },
+  {
+    "id": "de-museo-single",
+    "name": "De Museo - Single",
+    "artistId": "bad-bunny",
+    "year": 2021,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music125/v4/9e/f2/88/9ef288ab-9ab5-630f-255f-26d609cd91f8/196292052268.jpg/600x600bb.jpg"
+  },
+  {
+    "id": "mala-y-peligrosa-single-feat-bad-bunny-single",
+    "name": "Mala y Peligrosa - Single (feat. Bad Bunny) - Single",
+    "artistId": "bad-bunny",
+    "year": 2017,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music124/v4/55/ee/ff/55eeff3e-61cf-54ec-17db-bf4a5f796908/886446693491.jpg/600x600bb.jpg"
+  },
+  {
+    "id": "legendaddy",
+    "name": "LEGENDADDY",
+    "artistId": "bad-bunny",
+    "year": 2022,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music116/v4/9d/60/16/9d6016fd-63f5-eeff-34ff-9804e92f715e/22UMGIM30752.rgb.jpg/600x600bb.jpg"
+  },
+  {
+    "id": "dime-feat-arcangel-de-la-ghetto-single",
+    "name": "Dime (feat. Arcángel & De La Ghetto) - Single",
+    "artistId": "bad-bunny",
+    "year": 2018,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music124/v4/f5/f2/9f/f5f29f9b-6430-13a8-203f-201936213200/00192650100299.rgb.jpg/600x600bb.jpg"
+  },
+  {
+    "id": "emmanuel",
+    "name": "Emmanuel",
+    "artistId": "bad-bunny",
+    "year": 2020,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music113/v4/bb/88/5e/bb885ec5-2fac-b5ad-132d-1c411376de96/195081694092.jpg/600x600bb.jpg"
   },
   {
     "id": "estrella",
     "name": "ESTRELLA",
     "artistId": "mora",
     "year": 2023,
-    "image": "https://cdn-images.dzcdn.net/images/cover/e68252ef53f5b405606ac9029c650120/1000x1000-000000-80-0-0.jpg"
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/ff/e3/6d/ffe36d58-d153-826d-4f7f-7ba38e81c75a/197189639050.jpg/600x600bb.jpg"
   },
   {
-    "id": "hermoso",
-    "name": "Hermoso",
+    "id": "microdosis",
+    "name": "MICRODOSIS",
     "artistId": "mora",
-    "year": 2026,
-    "image": "https://cdn-images.dzcdn.net/images/cover/5c3c52f4b410b1dbf7e009cb7efe2b7d/1000x1000-000000-80-0-0.jpg"
-  },
-  {
-    "id": "rapido",
-    "name": "RÁPIDO",
-    "artistId": "mora",
-    "year": 2023,
-    "image": "https://cdn-images.dzcdn.net/images/cover/d1ee49b1bbe5a91158b7e50a8e9e1c25/1000x1000-000000-80-0-0.jpg"
-  },
-  {
-    "id": "fx-de-la-rose",
-    "name": "FX De La Rose",
-    "artistId": "mora",
-    "year": 2025,
-    "image": "https://cdn-images.dzcdn.net/images/cover/f795e41a1c8d14e6b0cbf6a2bf1adf98/1000x1000-000000-80-0-0.jpg"
+    "year": 2022,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/5b/4f/71/5b4f715a-5323-cc45-382a-7d0b4b69f418/196626706898.jpg/600x600bb.jpg"
   },
   {
     "id": "paraiso",
     "name": "PARAÍSO",
     "artistId": "mora",
     "year": 2022,
-    "image": "https://cdn-images.dzcdn.net/images/cover/1bf2a443d594d066367f30f35c273049/1000x1000-000000-80-0-0.jpg"
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/9b/6d/51/9b6d518e-68bf-c7c5-3a54-cb3c094eeff9/197187249541.jpg/600x600bb.jpg"
   },
   {
-    "id": "pensabas",
-    "name": "Pensabas",
+    "id": "lo-mismo-de-siempre",
+    "name": "LO MISMO DE SIEMPRE",
     "artistId": "mora",
-    "year": 2017,
-    "image": "https://cdn-images.dzcdn.net/images/cover/8dab7d0f45bfbb11f2ad2ab86ef42453/1000x1000-000000-80-0-0.jpg"
-  },
-  {
-    "id": "cabernet",
-    "name": "Cabernet",
-    "artistId": "mora",
-    "year": 2026,
-    "image": "https://cdn-images.dzcdn.net/images/cover/449e7f5cf962d5ae2458494b52fbc996/1000x1000-000000-80-0-0.jpg"
-  },
-  {
-    "id": "algo-asi-remix",
-    "name": "algo así (remix)",
-    "artistId": "mora",
-    "year": 2022,
-    "image": "https://cdn-images.dzcdn.net/images/cover/5a5e4bdf2d4183e8b98e3478c6f44715/1000x1000-000000-80-0-0.jpg"
+    "year": 2025,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/01/a1/3f/01a13ff7-c95c-9cb6-2776-695f8ed829d3/199350474521.jpg/600x600bb.jpg"
   },
   {
     "id": "metro-boomin-presents-spider-man-across-the-spider-verse-soundtrack-from-and-inspired-by-the-motion-picture-deluxe-edition",
     "name": "METRO BOOMIN PRESENTS SPIDER-MAN: ACROSS THE SPIDER-VERSE (SOUNDTRACK FROM AND INSPIRED BY THE MOTION PICTURE / DELUXE EDITION)",
     "artistId": "mora",
     "year": 2023,
-    "image": "https://cdn-images.dzcdn.net/images/cover/909acf24c4e836b2483bee0e8cb939d2/1000x1000-000000-80-0-0.jpg"
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music116/v4/43/3b/ed/433bedaf-fcb0-9c11-cb11-b24d90df7e21/23UMGIM64367.rgb.jpg/600x600bb.jpg"
   },
   {
-    "id": "serotonina",
-    "name": "Serotonina",
+    "id": "hasta-cuando-single",
+    "name": "Hasta Cuándo - Single",
     "artistId": "mora",
-    "year": 2022,
-    "image": "https://cdn-images.dzcdn.net/images/cover/dd82baaf36ec98d5107fe5416bd0a746/1000x1000-000000-80-0-0.jpg"
+    "year": 2018,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music123/v4/54/7d/81/547d81fc-221d-8b80-b214-6d79463ef2fb/843357150925.jpg/600x600bb.jpg"
   },
   {
-    "id": "ia",
-    "name": "IA",
+    "id": "reir-o-llorar-single",
+    "name": "Reír o Llorar - Single",
     "artistId": "mora",
-    "year": 2024,
-    "image": "https://cdn-images.dzcdn.net/images/cover/c2f947072d09666dea3c6eae9951583b/1000x1000-000000-80-0-0.jpg"
+    "year": 2018,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music113/v4/70/53/59/70535927-c127-bc8b-eabc-84dde3bc2f61/193436043670.jpg/600x600bb.jpg"
   },
   {
-    "id": "corsa",
-    "name": "CORSA",
+    "id": "miradas-single",
+    "name": "Miradas - Single",
     "artistId": "mora",
-    "year": 2026,
-    "image": "https://cdn-images.dzcdn.net/images/cover/4be457656a57ebd54c087db80d544fcb/1000x1000-000000-80-0-0.jpg"
-  },
-  {
-    "id": "7-lagrimas-remix",
-    "name": "7 Lágrimas (Remix)",
-    "artistId": "mora",
-    "year": 2022,
-    "image": "https://cdn-images.dzcdn.net/images/cover/e59b0158ab655fbe475418506bc125aa/1000x1000-000000-80-0-0.jpg"
-  },
-  {
-    "id": "apocalipto",
-    "name": "APOCALIPTO",
-    "artistId": "mora",
-    "year": 2026,
-    "image": "https://cdn-images.dzcdn.net/images/cover/45ef2fc3fd81d83c1f52b64c5b441422/1000x1000-000000-80-0-0.jpg"
-  },
-  {
-    "id": "sayonara",
-    "name": "SAYONARA",
-    "artistId": "mora",
-    "year": 2024,
-    "image": "https://cdn-images.dzcdn.net/images/cover/c3bd92e88e7cbf443e5ee99f365ba042/1000x1000-000000-80-0-0.jpg"
-  },
-  {
-    "id": "lacone",
-    "name": "LACONE",
-    "artistId": "mora",
-    "year": 2022,
-    "image": "https://cdn-images.dzcdn.net/images/cover/169e7514efeba45cc593ccbceb91b14e/1000x1000-000000-80-0-0.jpg"
-  },
-  {
-    "id": "musica-buena-para-dias-malos",
-    "name": "Música Buena Para Días Malos",
-    "artistId": "mora",
-    "year": 2024,
-    "image": "https://cdn-images.dzcdn.net/images/cover/2f3593fb3036904074068e225a1fcb62/1000x1000-000000-80-0-0.jpg"
-  },
-  {
-    "id": "tiroteo-remix",
-    "name": "Tiroteo (Remix)",
-    "artistId": "rauw-alejandro",
-    "year": 2021,
-    "image": "https://cdn-images.dzcdn.net/images/cover/e9d1d2b1ceafe3d812b971d31282a6a1/1000x1000-000000-80-0-0.jpg"
-  },
-  {
-    "id": "todo-de-ti",
-    "name": "Todo De Ti",
-    "artistId": "rauw-alejandro",
-    "year": 2025,
-    "image": "https://cdn-images.dzcdn.net/images/cover/7167a61f54a62c453f4d99ee59c151a4/1000x1000-000000-80-0-0.jpg"
-  },
-  {
-    "id": "el-efecto",
-    "name": "El Efecto",
-    "artistId": "rauw-alejandro",
     "year": 2019,
-    "image": "https://cdn-images.dzcdn.net/images/cover/f22008ee7be5b98f5d20de528e297f57/1000x1000-000000-80-0-0.jpg"
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music123/v4/48/7c/b3/487cb34e-8d59-10fd-f823-736d2afdc797/194491207762.jpg/600x600bb.jpg"
   },
   {
-    "id": "desesperados",
-    "name": "Desesperados",
+    "id": "me-niego-single",
+    "name": "Me Niego - Single",
+    "artistId": "mora",
+    "year": 2018,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music123/v4/d8/4f/8a/d84f8ac1-351c-1f7d-2652-a41f9c18188b/193436054287.jpg/600x600bb.jpg"
+  },
+  {
+    "id": "caliente-single",
+    "name": "Caliente - Single",
+    "artistId": "mora",
+    "year": 2020,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music113/v4/45/1e/30/451e307b-906c-db7f-9bd1-a52c9289f0e5/194491874933.jpg/600x600bb.jpg"
+  },
+  {
+    "id": "el-recuerdo-single",
+    "name": "El Recuerdo - Single",
+    "artistId": "mora",
+    "year": 2019,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music123/v4/70/1b/eb/701beb18-c6ca-1d8c-b879-fa2ec050eb60/193872276229.jpg/600x600bb.jpg"
+  },
+  {
+    "id": "dandole-single",
+    "name": "Dandole - Single",
+    "artistId": "mora",
+    "year": 2019,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/3e/ee/52/3eee52a4-6d11-c5ae-f92f-4c797d7d50ec/194491358822.jpg/600x600bb.jpg"
+  },
+  {
+    "id": "te-miento-single",
+    "name": "Te Miento - Single",
+    "artistId": "mora",
+    "year": 2018,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music113/v4/ad/1f/9f/ad1f9f7f-7436-bf52-1010-b9ff20f55e4b/843357168791.jpg/600x600bb.jpg"
+  },
+  {
+    "id": "no-te-creo-single",
+    "name": "No Te Creo - Single",
+    "artistId": "mora",
+    "year": 2019,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music123/v4/5c/69/1a/5c691a21-38c7-a4f6-a61f-c7a822e11c27/194491525989.jpg/600x600bb.jpg"
+  },
+  {
+    "id": "dame-una-senal-single",
+    "name": "Dame una Señal - Single",
+    "artistId": "mora",
+    "year": 2018,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music123/v4/68/2c/51/682c5194-9361-8a6d-b8d8-68a4689efdaa/843357137131.jpg/600x600bb.jpg"
+  },
+  {
+    "id": "se-escapo-single",
+    "name": "Se Escapo - Single",
+    "artistId": "mora",
+    "year": 2019,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music123/v4/67/26/38/672638c8-8b02-623d-23f3-0d9fc62de545/193483940410.jpg/600x600bb.jpg"
+  },
+  {
+    "id": "la-culpa-single",
+    "name": "La Culpa - Single",
+    "artistId": "mora",
+    "year": 2019,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music113/v4/e2/a3/90/e2a390f0-d4d3-7291-21ff-b784b44f2590/193483894164.jpg/600x600bb.jpg"
+  },
+  {
+    "id": "cosa-nuestra",
+    "name": "Cosa Nuestra",
     "artistId": "rauw-alejandro",
-    "year": 2021,
-    "image": "https://cdn-images.dzcdn.net/images/cover/a37d5de6838312531d93af97e3e31463/1000x1000-000000-80-0-0.jpg"
+    "year": 2024,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/ab/e8/09/abe8092d-ef44-61b9-6b50-ab7efb78ca51/196872401516.jpg/600x600bb.jpg"
   },
   {
-    "id": "te-felicito",
-    "name": "Te Felicito",
+    "id": "que-somos-single",
+    "name": "¿Qué Somos? - Single",
     "artistId": "rauw-alejandro",
-    "year": 2022,
-    "image": "https://cdn-images.dzcdn.net/images/cover/28f42c9a3641c18d5cbdd4c5561ecc2a/1000x1000-000000-80-0-0.jpg"
+    "year": 2018,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music114/v4/3d/5e/99/3d5e9985-a522-5ef5-27f8-b9f0cca8d7b7/193483182193.jpg/600x600bb.jpg"
   },
   {
-    "id": "carita-linda",
-    "name": "Carita Linda",
+    "id": "cosa-nuestra-capitulo-0",
+    "name": "Cosa Nuestra: Capítulo 0",
     "artistId": "rauw-alejandro",
     "year": 2025,
-    "image": "https://cdn-images.dzcdn.net/images/cover/aa082cbd3024b62f7fc7027c80ff4a16/1000x1000-000000-80-0-0.jpg"
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/1c/2b/5f/1c2b5fdf-9a6a-9e07-bea3-ff92f7da2796/196873615424.jpg/600x600bb.jpg"
+  },
+  {
+    "id": "saturno",
+    "name": "SATURNO",
+    "artistId": "rauw-alejandro",
+    "year": 2022,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music123/v4/99/0f/ef/990fefcb-db12-0cf0-90f9-44115c095c73/196589764720.jpg/600x600bb.jpg"
+  },
+  {
+    "id": "hayami-hana-single",
+    "name": "Hayami Hana - Single",
+    "artistId": "rauw-alejandro",
+    "year": 2023,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music126/v4/cf/53/2d/cf532d06-3a16-73f3-793a-52e191317625/196871372343.jpg/600x600bb.jpg"
   },
   {
     "id": "vice-versa",
     "name": "VICE VERSA",
     "artistId": "rauw-alejandro",
     "year": 2021,
-    "image": "https://cdn-images.dzcdn.net/images/cover/a37d5de6838312531d93af97e3e31463/1000x1000-000000-80-0-0.jpg"
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music126/v4/58/13/c3/5813c326-a7fa-f792-77e1-8310d9c80742/886449738724.jpg/600x600bb.jpg"
   },
   {
-    "id": "macacoa-2000-from-gtavi-the-album",
-    "name": "Macacoa 2000 (from GTAVI: The Album)",
-    "artistId": "rauw-alejandro",
-    "year": 2026,
-    "image": "https://cdn-images.dzcdn.net/images/cover/dc492b8d028525c713a52713b9bb005d/1000x1000-000000-80-0-0.jpg"
-  },
-  {
-    "id": "lokera",
-    "name": "LOKERA",
-    "artistId": "rauw-alejandro",
-    "year": 2022,
-    "image": "https://cdn-images.dzcdn.net/images/cover/2d50aff19d283eb7b4ddcda9df86edbe/1000x1000-000000-80-0-0.jpg"
-  },
-  {
-    "id": "la-nota",
-    "name": "La Nota",
-    "artistId": "rauw-alejandro",
-    "year": 2020,
-    "image": "https://cdn-images.dzcdn.net/images/cover/a871bc44a406ccead04f94d925ffd959/1000x1000-000000-80-0-0.jpg"
-  },
-  {
-    "id": "error-93",
-    "name": "Error 93",
+    "id": "el-efecto-single",
+    "name": "El Efecto - Single",
     "artistId": "rauw-alejandro",
     "year": 2019,
-    "image": "https://cdn-images.dzcdn.net/images/cover/b64008a045f96fc3e206aa87ebd730fe/1000x1000-000000-80-0-0.jpg"
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music114/v4/8f/b4/86/8fb48663-c2bb-aa02-b69b-406f880d69c1/193483566238.jpg/600x600bb.jpg"
   },
   {
-    "id": "playa-saturno",
-    "name": "PLAYA SATURNO",
+    "id": "fantasias-remix-feat-farruko-lunay-single",
+    "name": "Fantasías (Remix) [feat. Farruko & Lunay] - Single",
     "artistId": "rauw-alejandro",
-    "year": 2023,
-    "image": "https://cdn-images.dzcdn.net/images/cover/00e071a1d8e65037e37e38c3ff673ef0/1000x1000-000000-80-0-0.jpg"
+    "year": 2020,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music125/v4/6e/a1/0c/6ea10ce7-6497-0cb2-f3df-bf23250e01af/195081093802.jpg/600x600bb.jpg"
   },
   {
-    "id": "santa",
-    "name": "Santa",
+    "id": "fantasias-single",
+    "name": "Fantasías - Single",
     "artistId": "rauw-alejandro",
-    "year": 2024,
-    "image": "https://cdn-images.dzcdn.net/images/cover/965eeb50245f3178580ac5bda885e56b/1000x1000-000000-80-0-0.jpg"
+    "year": 2019,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music124/v4/c4/a0/65/c4a0650a-87b0-3514-4e0c-e32e5afbb3a6/194491183394.jpg/600x600bb.jpg"
   },
   {
-    "id": "dejame-entrar",
-    "name": "Déjame Entrar",
+    "id": "tattoo-remix-with-camilo-single",
+    "name": "Tattoo (Remix with Camilo) - Single",
+    "artistId": "rauw-alejandro",
+    "year": 2020,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music123/v4/38/16/47/38164723-5bde-a8a2-5b01-8786571db86b/886448596455.jpg/600x600bb.jpg"
+  },
+  {
+    "id": "carita-linda-single",
+    "name": "Carita Linda - Single",
     "artistId": "rauw-alejandro",
     "year": 2025,
-    "image": "https://cdn-images.dzcdn.net/images/cover/2b65baa6a0f570cde85bbfe85b883e3e/1000x1000-000000-80-0-0.jpg"
-  },
-  {
-    "id": "algo-magico",
-    "name": "Algo Mágico",
-    "artistId": "rauw-alejandro",
-    "year": 2020,
-    "image": "https://cdn-images.dzcdn.net/images/cover/67a980d6f0e68da999109114e0514231/1000x1000-000000-80-0-0.jpg"
-  },
-  {
-    "id": "reloj",
-    "name": "Reloj",
-    "artistId": "rauw-alejandro",
-    "year": 2020,
-    "image": "https://cdn-images.dzcdn.net/images/cover/d582ea50b2178d0c0599ee93628f6e99/1000x1000-000000-80-0-0.jpg"
-  },
-  {
-    "id": "tattoo-remix-with-camilo",
-    "name": "Tattoo Remix with Camilo",
-    "artistId": "rauw-alejandro",
-    "year": 2020,
-    "image": "https://cdn-images.dzcdn.net/images/cover/57e994f9cf091d162589d31e98e3efa2/1000x1000-000000-80-0-0.jpg"
-  },
-  {
-    "id": "fantasias",
-    "name": "Fantasias",
-    "artistId": "rauw-alejandro",
-    "year": 2019,
-    "image": "https://cdn-images.dzcdn.net/images/cover/735a266ec0b5083aaccbf1ae0d3fe45a/1000x1000-000000-80-0-0.jpg"
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/57/66/bd/5766bdb1-b341-210f-0fd5-8278cdc1d0b9/196872986761.jpg/600x600bb.jpg"
   },
   {
     "id": "afrodisiaco",
     "name": "Afrodisíaco",
     "artistId": "rauw-alejandro",
     "year": 2020,
-    "image": "https://cdn-images.dzcdn.net/images/cover/981c0de369542a25a43da5631cf6c722/1000x1000-000000-80-0-0.jpg"
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music125/v4/35/85/36/3585365d-4678-0648-1bfd-76ea49ba8c9c/886448841388.jpg/600x600bb.jpg"
   },
   {
-    "id": "problemon",
-    "name": "Problemón",
-    "artistId": "rauw-alejandro",
-    "year": 2021,
-    "image": "https://cdn-images.dzcdn.net/images/cover/9dc8207002a14d97d36212c674205ec0/1000x1000-000000-80-0-0.jpg"
-  },
-  {
-    "id": "rr",
-    "name": "RR",
-    "artistId": "rauw-alejandro",
-    "year": 2023,
-    "image": "https://cdn-images.dzcdn.net/images/cover/47be3894ae3c7fb4d5e86167eed8cbcd/1000x1000-000000-80-0-0.jpg"
-  },
-  {
-    "id": "mirame",
-    "name": "Mírame",
+    "id": "trap-cake-vol-1",
+    "name": "Trap Cake, Vol. 1",
     "artistId": "rauw-alejandro",
     "year": 2019,
-    "image": "https://cdn-images.dzcdn.net/images/cover/69d93180195a12aad802cbdb59bb3d50/1000x1000-000000-80-0-0.jpg"
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music124/v4/ff/d2/3d/ffd23dae-61d5-ad74-de3a-20ad47058a04/193483867779.jpg/600x600bb.jpg"
   },
   {
-    "id": "pongo",
-    "name": "PONGO",
+    "id": "algo-magico-single",
+    "name": "Algo Mágico - Single",
     "artistId": "rauw-alejandro",
-    "year": 2026,
-    "image": "https://cdn-images.dzcdn.net/images/cover/a3c375742fde996cc7328543e51b42f4/1000x1000-000000-80-0-0.jpg"
+    "year": 2020,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/12/96/69/1296696b-fbe0-6779-1e45-151b58953df1/886448579120.jpg/600x600bb.jpg"
   },
   {
-    "id": "baby-hello",
-    "name": "BABY HELLO",
+    "id": "elegi-feat-dimelo-flow-single",
+    "name": "Elegí (feat. Dímelo Flow) - Single",
+    "artistId": "rauw-alejandro",
+    "year": 2020,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music114/v4/1d/f2/61/1df261a7-2086-8945-07b0-e943323d8c53/886448376453.jpg/600x600bb.jpg"
+  },
+  {
+    "id": "tattoo-single",
+    "name": "Tattoo - Single",
+    "artistId": "rauw-alejandro",
+    "year": 2020,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music125/v4/29/86/a6/2986a6fc-ff17-4384-85ad-10fcd0d8c81e/194491896423.jpg/600x600bb.jpg"
+  },
+  {
+    "id": "playa-saturno",
+    "name": "PLAYA SATURNO",
     "artistId": "rauw-alejandro",
     "year": 2023,
-    "image": "https://cdn-images.dzcdn.net/images/cover/cde16d42c97d7a2ef939683776abf5f3/1000x1000-000000-80-0-0.jpg"
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music126/v4/d2/1a/63/d21a6376-80b9-ce89-e4f3-af3f0b70acf9/196871287098.jpg/600x600bb.jpg"
   },
   {
-    "id": "primera-musa",
-    "name": "PRIMERA MUSA",
-    "artistId": "rauw-alejandro",
-    "year": 2024,
-    "image": "https://cdn-images.dzcdn.net/images/cover/5a276a9d492329afc2d1270105cc379c/1000x1000-000000-80-0-0.jpg"
-  },
-  {
-    "id": "sci-fi",
-    "name": "Sci-Fi",
-    "artistId": "rauw-alejandro",
-    "year": 2022,
-    "image": "https://cdn-images.dzcdn.net/images/cover/4aa9456a6466925d64451488c994ecb2/1000x1000-000000-80-0-0.jpg"
-  },
-  {
-    "id": "elegi-feat-dimelo-flow",
-    "name": "Elegí (feat. Dímelo Flow)",
-    "artistId": "rauw-alejandro",
-    "year": 2020,
-    "image": "https://cdn-images.dzcdn.net/images/cover/26110c54b3f3d89ab94215969102da53/1000x1000-000000-80-0-0.jpg"
-  },
-  {
-    "id": "el-efecto-remix",
-    "name": "El Efecto (Remix)",
+    "id": "detective-single",
+    "name": "Detective - Single",
     "artistId": "rauw-alejandro",
     "year": 2019,
-    "image": "https://cdn-images.dzcdn.net/images/cover/b633661ef86386798a95c1eb55aa416c/1000x1000-000000-80-0-0.jpg"
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music124/v4/29/bc/47/29bc47d2-0d7e-aa63-25f5-290866c76cbb/194491005801.jpg/600x600bb.jpg"
   },
   {
-    "id": "nostalgico",
-    "name": "Nostálgico",
+    "id": "que-le-de-single",
+    "name": "Que Le Dé - Single",
     "artistId": "rauw-alejandro",
-    "year": 2021,
-    "image": "https://cdn-images.dzcdn.net/images/cover/5b5b786af475dd47e745e91680a7f411/1000x1000-000000-80-0-0.jpg"
+    "year": 2019,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music114/v4/a1/a4/fc/a1a4fc45-8fb8-1be8-c20c-f3fd57d2b279/193483246932.jpg/600x600bb.jpg"
   },
   {
-    "id": "tattoo",
-    "name": "Tattoo",
+    "id": "una-noche-single",
+    "name": "Una Noche - Single",
     "artistId": "rauw-alejandro",
-    "year": 2020,
-    "image": "https://cdn-images.dzcdn.net/images/cover/7a3ff432b3b5aaf92a2a35edc5da71ac/1000x1000-000000-80-0-0.jpg"
-  },
-  {
-    "id": "codigos-de-muneka",
-    "name": "CÓDiGOS DE MUÑEKA",
-    "artistId": "rauw-alejandro",
-    "year": 2025,
-    "image": "https://cdn-images.dzcdn.net/images/cover/1958a931af8c47ade28fbc98b12a52e4/1000x1000-000000-80-0-0.jpg"
-  },
-  {
-    "id": "punto-40",
-    "name": "PUNTO 40",
-    "artistId": "rauw-alejandro",
-    "year": 2022,
-    "image": "https://cdn-images.dzcdn.net/images/cover/fed547fa4455f1e9c711cb3d9185b0a1/1000x1000-000000-80-0-0.jpg"
+    "year": 2019,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music124/v4/fb/45/35/fb45350c-d7c5-6144-17ff-a0d635e479e6/194491422653.jpg/600x600bb.jpg"
   },
   {
     "id": "trap-cake-vol-2",
-    "name": "TRAP CAKE VOL. 2",
+    "name": "TRAP CAKE, VOL. 2",
     "artistId": "rauw-alejandro",
     "year": 2022,
-    "image": "https://cdn-images.dzcdn.net/images/cover/80f8f11592054ecf47318fbbff035498/1000x1000-000000-80-0-0.jpg"
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music116/v4/a8/9b/bb/a89bbb29-dd7c-79bb-da24-b3b1d40ec27c/886449955039.jpg/600x600bb.jpg"
   },
   {
-    "id": "do-not-disturb-late-checkout",
-    "name": "Do Not Disturb: Late Checkout",
+    "id": "touching-the-sky-single",
+    "name": "Touching The Sky - Single",
     "artistId": "rauw-alejandro",
-    "year": 2026,
-    "image": "https://cdn-images.dzcdn.net/images/cover/fd1dd93b24597cfb6729e613b040e43e/1000x1000-000000-80-0-0.jpg"
+    "year": 2024,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/81/f5/7d/81f57db7-9574-a914-d6b7-7061ceba2682/196872086287.jpg/600x600bb.jpg"
   },
   {
-    "id": "rosita",
-    "name": "ROSITA",
+    "id": "enchule-single",
+    "name": "Enchule - Single",
     "artistId": "rauw-alejandro",
-    "year": 2026,
-    "image": "https://cdn-images.dzcdn.net/images/cover/41e37ff5386c9b52b246f5a4134ac215/1000x1000-000000-80-0-0.jpg"
+    "year": 2020,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music114/v4/7f/e8/48/7fe8482c-a5f7-630b-7abd-37be61127e8b/886448723660.jpg/600x600bb.jpg"
   },
   {
-    "id": "utopia",
-    "name": "UTOPIA",
-    "artistId": "travis-scott",
-    "year": 2023,
-    "image": "https://cdn-images.dzcdn.net/images/cover/6d7164fecb39ddee0cb15952e750d907/1000x1000-000000-80-0-0.jpg"
-  },
-  {
-    "id": "astroworld",
-    "name": "ASTROWORLD",
-    "artistId": "travis-scott",
+    "id": "tti-single",
+    "name": "T.T.I. - Single",
+    "artistId": "rauw-alejandro",
     "year": 2018,
-    "image": "https://cdn-images.dzcdn.net/images/cover/0b08015216f975dc7fb5be3d5dcc4d88/1000x1000-000000-80-0-0.jpg"
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music124/v4/5c/2b/b0/5c2bb060-3f39-2de6-ee4c-93e6d3659581/192562997802.jpg/600x600bb.jpg"
+  },
+  {
+    "id": "guabansexxx-single",
+    "name": "GuabanSexxx - Single",
+    "artistId": "rauw-alejandro",
+    "year": 2025,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/03/bc/a5/03bca54f-f865-f364-417a-3f11eb6da920/196873561103.jpg/600x600bb.jpg"
+  },
+  {
+    "id": "caprichoso-single",
+    "name": "CAPRICHOSO - Single",
+    "artistId": "rauw-alejandro",
+    "year": 2022,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music116/v4/52/65/a3/5265a352-16ce-deb2-63f9-bd959b8cc3d4/886449896097.jpg/600x600bb.jpg"
+  },
+  {
+    "id": "pasaporte-single",
+    "name": "Pasaporte - Single",
+    "artistId": "rauw-alejandro",
+    "year": 2024,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/16/7d/f9/167df9e0-d1b2-63a1-1e87-7e96fbdaf00f/196872460919.jpg/600x600bb.jpg"
+  },
+  {
+    "id": "mis-dias-sin-ti-single",
+    "name": "Mis Días Sin Ti - Single",
+    "artistId": "rauw-alejandro",
+    "year": 2019,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music123/v4/ea/32/86/ea328664-8387-ae21-35f3-85e9d5745035/194491757748.jpg/600x600bb.jpg"
+  },
+  {
+    "id": "dando-vueltas-single",
+    "name": "Dando Vueltas - Single",
+    "artistId": "rauw-alejandro",
+    "year": 2026,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/92/2b/10/922b10c4-80df-d849-f76e-22b5c8bc2f9b/196874252383.jpg/600x600bb.jpg"
+  },
+  {
+    "id": "fantasias-unplugged-single",
+    "name": "Fantasías (Unplugged) - Single",
+    "artistId": "rauw-alejandro",
+    "year": 2019,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music123/v4/11/06/4a/11064a1f-a0a5-15ad-e23f-2a3304784f1a/194491559601.jpg/600x600bb.jpg"
+  },
+  {
+    "id": "que-le-de-remix-feat-myke-towers-justin-quiles-single",
+    "name": "Que Le Dé (Remix) [feat. Myke Towers & Justin Quiles] - Single",
+    "artistId": "rauw-alejandro",
+    "year": 2019,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music123/v4/a8/f0/10/a8f01063-c0cb-2e06-038b-75ee146fbbfc/194491497385.jpg/600x600bb.jpg"
   },
   {
     "id": "birds-in-the-trap-sing-mcknight",
     "name": "Birds In The Trap Sing McKnight",
     "artistId": "travis-scott",
     "year": 2016,
-    "image": "https://cdn-images.dzcdn.net/images/cover/a2f66f08468fb9897019e82ffb7a5fcb/1000x1000-000000-80-0-0.jpg"
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music125/v4/50/f7/a3/50f7a39d-3bd5-28e9-0264-532f08b5b810/886446074726.jpg/600x600bb.jpg"
   },
   {
-    "id": "highest-in-the-room",
-    "name": "HIGHEST IN THE ROOM",
+    "id": "astroworld",
+    "name": "ASTROWORLD",
+    "artistId": "travis-scott",
+    "year": 2018,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music125/v4/30/66/90/306690d4-2a29-402e-e406-6b319ce7731a/886447227169.jpg/600x600bb.jpg"
+  },
+  {
+    "id": "hollywoods-bleeding",
+    "name": "Hollywood's Bleeding",
     "artistId": "travis-scott",
     "year": 2019,
-    "image": "https://cdn-images.dzcdn.net/images/cover/5fa05e7d74819963577a92a8c6ad4979/1000x1000-000000-80-0-0.jpg"
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/7b/1b/1b/7b1b1b0b-7ce2-b223-f9e0-8e36abe51877/19UMGIM78325.rgb.jpg/600x600bb.jpg"
   },
   {
-    "id": "rhyno-from-gtavi-the-album",
-    "name": "RHYNO (from GTAVI: The Album)",
-    "artistId": "travis-scott",
-    "year": 2026,
-    "image": "https://cdn-images.dzcdn.net/images/cover/dc492b8d028525c713a52713b9bb005d/1000x1000-000000-80-0-0.jpg"
-  },
-  {
-    "id": "k-pop",
-    "name": "K-POP",
-    "artistId": "travis-scott",
-    "year": 2023,
-    "image": "https://cdn-images.dzcdn.net/images/cover/49dd2965ab5ecaeb65061bc21d17075b/1000x1000-000000-80-0-0.jpg"
-  },
-  {
-    "id": "heroes-villains",
-    "name": "HEROES & VILLAINS",
-    "artistId": "travis-scott",
-    "year": 2022,
-    "image": "https://cdn-images.dzcdn.net/images/cover/862ab860ff69c30deeb5979db6e46b62/1000x1000-000000-80-0-0.jpg"
-  },
-  {
-    "id": "hurry-up-tomorrow",
-    "name": "Hurry Up Tomorrow",
-    "artistId": "travis-scott",
-    "year": 2025,
-    "image": "https://cdn-images.dzcdn.net/images/cover/e4b16c1afe136140bba34368357e8f05/1000x1000-000000-80-0-0.jpg"
-  },
-  {
-    "id": "rodeo",
-    "name": "Rodeo",
-    "artistId": "travis-scott",
-    "year": 2015,
-    "image": "https://cdn-images.dzcdn.net/images/cover/c6fe182fb0f3485428906c7b21873046/1000x1000-000000-80-0-0.jpg"
-  },
-  {
-    "id": "know-no-better",
-    "name": "Know No Better",
+    "id": "ctrl",
+    "name": "Ctrl",
     "artistId": "travis-scott",
     "year": 2017,
-    "image": "https://cdn-images.dzcdn.net/images/cover/7cfbdd4afc111238434ab41c05db48c7/1000x1000-000000-80-0-0.jpg"
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/20/28/8f/20288f6f-fbf2-fb0f-6732-e7d334e1ff50/886446548432.jpg/600x600bb.jpg"
   },
   {
-    "id": "jackboys",
-    "name": "JACKBOYS",
+    "id": "sky-walker-feat-travis-scott-single",
+    "name": "Sky Walker (feat. Travis Scott) - Single",
+    "artistId": "travis-scott",
+    "year": 2017,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music124/v4/ae/4a/6e/ae4a6e8b-d8df-7f06-db7b-3e923ba51756/886446674513.jpg/600x600bb.jpg"
+  },
+  {
+    "id": "khalifa",
+    "name": "Khalifa",
+    "artistId": "travis-scott",
+    "year": 2016,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music69/v4/06/fd/ea/06fdea4a-558f-73b1-abc5-8eef0822368d/075679913487.jpg/600x600bb.jpg"
+  },
+  {
+    "id": "the-fate-of-the-furious-the-album",
+    "name": "The Fate of the Furious: The Album",
+    "artistId": "travis-scott",
+    "year": 2017,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music125/v4/ba/77/22/ba772286-cdd8-8925-aa93-784db1836d7b/075679900111.jpg/600x600bb.jpg"
+  },
+  {
+    "id": "highest-in-the-room-single",
+    "name": "HIGHEST IN THE ROOM - Single",
     "artistId": "travis-scott",
     "year": 2019,
-    "image": "https://cdn-images.dzcdn.net/images/cover/d1ed81aebe34697130d8caf2459e0d72/1000x1000-000000-80-0-0.jpg"
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music114/v4/30/5f/c4/305fc4b4-155d-8e67-7c7a-8eb35032fbcb/886448042792.jpg/600x600bb.jpg"
   },
   {
-    "id": "bully",
-    "name": "BULLY",
+    "id": "war-leisure",
+    "name": "War & Leisure",
     "artistId": "travis-scott",
-    "year": 2026,
-    "image": "https://cdn-images.dzcdn.net/images/cover/e6c8292811aac14c1c4d25d768b863ee/1000x1000-000000-80-0-0.jpg"
+    "year": 2017,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/36/b1/91/36b191ad-319e-729e-653a-6590248059e8/886446846248.jpg/600x600bb.jpg"
   },
   {
-    "id": "the-scotts",
-    "name": "THE SCOTTS",
+    "id": "upper-echelon-feat-ti-2-chainz-single",
+    "name": "Upper Echelon (feat. T.I. & 2 Chainz) - Single",
+    "artistId": "travis-scott",
+    "year": 2013,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music124/v4/7d/9f/8b/7d9f8b28-7a2b-f48b-cab3-b43b8edc7a81/886443943636.jpg/600x600bb.jpg"
+  },
+  {
+    "id": "dying-to-live",
+    "name": "Dying to Live",
+    "artistId": "travis-scott",
+    "year": 2018,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music124/v4/f0/3a/ec/f03aec4c-03b2-bdb3-0893-00bd754747ae/075679857286.jpg/600x600bb.jpg"
+  },
+  {
+    "id": "without-warning",
+    "name": "Without Warning",
+    "artistId": "travis-scott",
+    "year": 2017,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/24/25/f6/2425f66c-acda-ef4f-5682-ad543e088507/886446838526.jpg/600x600bb.jpg"
+  },
+  {
+    "id": "goosebumps-remix-single",
+    "name": "Goosebumps (Remix) - Single",
+    "artistId": "travis-scott",
+    "year": 2021,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music114/v4/c2/db/f4/c2dbf458-593f-f672-2629-4559de329be9/886449020270.jpg/600x600bb.jpg"
+  },
+  {
+    "id": "mamacita-feat-rich-homie-quan-young-thug-single",
+    "name": "Mamacita (feat. Rich Homie Quan & Young Thug) - Single",
+    "artistId": "travis-scott",
+    "year": 2014,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music114/v4/c4/60/e7/c460e7dd-5613-9433-fc17-fe5c443451a0/886444946445.jpg/600x600bb.jpg"
+  },
+  {
+    "id": "the-scotts-single",
+    "name": "THE SCOTTS - Single",
     "artistId": "travis-scott",
     "year": 2020,
-    "image": "https://cdn-images.dzcdn.net/images/cover/c960f0b900832a1c8ece116ccc789a27/1000x1000-000000-80-0-0.jpg"
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/e0/a9/f6/e0a9f68b-c5fe-faa4-6ad2-0c12e22bc66c/886448429944.jpg/600x600bb.jpg"
   },
   {
-    "id": "jackboys-2",
-    "name": "JACKBOYS 2",
+    "id": "a-team-single",
+    "name": "A-Team - Single",
     "artistId": "travis-scott",
-    "year": 2025,
-    "image": "https://cdn-images.dzcdn.net/images/cover/2a622e01fb9b1c4717c63ae3caca9826/1000x1000-000000-80-0-0.jpg"
+    "year": 2015,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music125/v4/c9/56/15/c956151b-076b-59c3-8cfc-026e216ca1b9/886445740608.jpg/600x600bb.jpg"
   },
   {
-    "id": "days-before-rodeo",
-    "name": "DAYS BEFORE RODEO",
+    "id": "certified-lover-boy",
+    "name": "Certified Lover Boy",
     "artistId": "travis-scott",
-    "year": 2024,
-    "image": "https://cdn-images.dzcdn.net/images/cover/b8be81921aa5990f1cd3b7499d4d6501/1000x1000-000000-80-0-0.jpg"
+    "year": 2021,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/11/36/38/1136384a-eebc-697a-c005-d890e41c0854/21UM1IM07518.rgb.jpg/600x600bb.jpg"
   },
   {
-    "id": "4x4",
-    "name": "4X4",
+    "id": "utopia",
+    "name": "UTOPIA",
     "artistId": "travis-scott",
-    "year": 2025,
-    "image": "https://cdn-images.dzcdn.net/images/cover/0f37592365f63e65cd7fa4d3c7f10c7c/1000x1000-000000-80-0-0.jpg"
-  },
-  {
-    "id": "parking-lot",
-    "name": "Parking Lot",
-    "artistId": "travis-scott",
-    "year": 2024,
-    "image": "https://cdn-images.dzcdn.net/images/cover/31a3c258adbd198877adfc28c7a4aee6/1000x1000-000000-80-0-0.jpg"
-  },
-  {
-    "id": "tkn",
-    "name": "TKN",
-    "artistId": "travis-scott",
-    "year": 2020,
-    "image": "https://cdn-images.dzcdn.net/images/cover/1f5bb099f460c29fa4c3991431116e17/1000x1000-000000-80-0-0.jpg"
-  },
-  {
-    "id": "the-odyssey-original-motion-picture-soundtrack",
-    "name": "The Odyssey (Original Motion Picture Soundtrack)",
-    "artistId": "travis-scott",
-    "year": 2026,
-    "image": "https://cdn-images.dzcdn.net/images/cover/dd000448a0e2f7f44c0e3150fcc42da9/1000x1000-000000-80-0-0.jpg"
+    "year": 2023,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music126/v4/09/7d/b0/097db06f-8403-3cf7-7510-139e570ca66b/196871341882.jpg/600x600bb.jpg"
   },
   {
     "id": "no6-collaborations-project",
     "name": "No.6 Collaborations Project",
     "artistId": "travis-scott",
     "year": 2019,
-    "image": "https://cdn-images.dzcdn.net/images/cover/1d809f545fb9ecea849cf45fc8bcc681/1000x1000-000000-80-0-0.jpg"
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music123/v4/ba/e2/2a/bae22a5e-c878-da64-0ecc-4a3584a1a139/190295411411.jpg/600x600bb.jpg"
   },
   {
-    "id": "pick-up-the-phone-feat-quavo",
-    "name": "pick up the phone (feat. Quavo)",
+    "id": "jackboys",
+    "name": "JACKBOYS",
     "artistId": "travis-scott",
-    "year": 2016,
-    "image": "https://cdn-images.dzcdn.net/images/cover/bdc55cf166f1be51964f8c0cf58643ac/1000x1000-000000-80-0-0.jpg"
+    "year": 2019,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music125/v4/d8/59/d5/d859d57b-d3a3-04bf-5011-f4e30a8e84a5/886448209393.jpg/600x600bb.jpg"
   },
   {
-    "id": "down-in-atlanta",
-    "name": "Down In Atlanta",
+    "id": "dont-play-feat-the-1975-big-sean-single",
+    "name": "Don't Play (feat. The 1975 & Big Sean) - Single",
     "artistId": "travis-scott",
-    "year": 2022,
-    "image": "https://cdn-images.dzcdn.net/images/cover/e7701e80a53d80b6d0f577b7dc2d0b91/1000x1000-000000-80-0-0.jpg"
+    "year": 2014,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music124/v4/e1/7c/72/e17c7229-e541-beff-854f-2db021565820/886444742108.jpg/600x600bb.jpg"
   },
   {
-    "id": "escape-plan-mafia",
-    "name": "ESCAPE PLAN / MAFIA",
+    "id": "watch-feat-lil-uzi-vert-kanye-west-single",
+    "name": "Watch (feat. Lil Uzi Vert & Kanye West) - Single",
     "artistId": "travis-scott",
-    "year": 2021,
-    "image": "https://cdn-images.dzcdn.net/images/cover/ef2a1dd715dc245a38210ff8c427897d/1000x1000-000000-80-0-0.jpg"
+    "year": 2018,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music124/v4/9e/7b/56/9e7b560d-59ce-dda7-5b8a-99130d4816a6/886447093788.jpg/600x600bb.jpg"
   },
   {
-    "id": "huncho-jack-jack-huncho",
-    "name": "Huncho Jack, Jack Huncho",
+    "id": "rodeo",
+    "name": "Rodeo",
+    "artistId": "travis-scott",
+    "year": 2015,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/71/87/78/7187786f-70af-fd36-fc7f-a4ba61b65d98/886445454987.jpg/600x600bb.jpg"
+  },
+  {
+    "id": "sicko-mode-skrillex-remix-single",
+    "name": "SICKO MODE [Skrillex Remix] - Single",
+    "artistId": "travis-scott",
+    "year": 2018,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music124/v4/54/49/06/54490655-32ac-c6bf-ce71-22b26b0ca02c/886447435809.jpg/600x600bb.jpg"
+  },
+  {
+    "id": "for-the-throne-music-inspired-by-the-hbo-series-game-of-thrones",
+    "name": "For the Throne (Music Inspired by the HBO Series \"Game of Thrones\")",
+    "artistId": "travis-scott",
+    "year": 2019,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music114/v4/c2/28/5c/c2285ce6-2a18-bd39-6649-00255013b33a/886447653814.jpg/600x600bb.jpg"
+  },
+  {
+    "id": "deserve-feat-travis-scott-single",
+    "name": "Deserve (feat. Travis Scott) - Single",
     "artistId": "travis-scott",
     "year": 2017,
-    "image": "https://cdn-images.dzcdn.net/images/cover/6f18c8d5bdd7b675856c86163bed7f10/1000x1000-000000-80-0-0.jpg"
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/55/27/61/55276186-6965-409b-3eae-294372239ebc/888915461884_cover.jpg/600x600bb.jpg"
   },
   {
-    "id": "no-me-arrepiento-de-sentir-tanto",
-    "name": "NO ME ARREPIENTO DE SENTIR TANTO",
-    "artistId": "drake",
-    "year": 2026,
-    "image": "https://cdn-images.dzcdn.net/images/cover/f794dd1931dac42fc13f938850b686c6/1000x1000-000000-80-0-0.jpg"
+    "id": "franchise-feat-young-thug-mia-single",
+    "name": "FRANCHISE (feat. Young Thug & M.I.A.) - Single",
+    "artistId": "travis-scott",
+    "year": 2020,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music124/v4/2c/4b/29/2c4b29b8-9b6b-e5d6-0905-e05a2b9feaed/886448660323.jpg/600x600bb.jpg"
   },
   {
-    "id": "more-life",
-    "name": "More Life",
-    "artistId": "drake",
+    "id": "tha-carter-v",
+    "name": "Tha Carter V",
+    "artistId": "travis-scott",
+    "year": 2018,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/21/69/f7/2169f7b5-ae60-4bb8-2329-49c8f1f5f24b/18UMGIM63096.rgb.jpg/600x600bb.jpg"
+  },
+  {
+    "id": "grateful",
+    "name": "Grateful",
+    "artistId": "travis-scott",
     "year": 2017,
-    "image": "https://cdn-images.dzcdn.net/images/cover/8f0187ad83cdd1f47f1c55420f9df227/1000x1000-000000-80-0-0.jpg"
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/03/5d/32/035d32e9-6fdb-8f08-daf0-c2f208128d06/886446550695.jpg/600x600bb.jpg"
   },
   {
-    "id": "views",
-    "name": "Views",
+    "id": "so-much-fun",
+    "name": "So Much Fun",
+    "artistId": "travis-scott",
+    "year": 2019,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/1f/f3/57/1ff35761-4124-912a-baef-02b236c977df/075679838612.jpg/600x600bb.jpg"
+  },
+  {
+    "id": "the-return-of-east-atlanta-santa",
+    "name": "The Return of East Atlanta Santa",
+    "artistId": "travis-scott",
+    "year": 2016,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music124/v4/12/ae/93/12ae936e-c34f-a03a-0167-ad179482103e/075679903068.jpg/600x600bb.jpg"
+  },
+  {
+    "id": "ds2-deluxe",
+    "name": "DS2 (Deluxe)",
+    "artistId": "drake",
+    "year": 2015,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/0a/46/ab/0a46ab3a-2415-0659-2cc2-f3f173144bd5/886445328530.jpg/600x600bb.jpg"
+  },
+  {
+    "id": "major-key",
+    "name": "Major Key",
     "artistId": "drake",
     "year": 2016,
-    "image": "https://cdn-images.dzcdn.net/images/cover/56bdb7a86a27fadb96332c0c8f1b8e81/1000x1000-000000-80-0-0.jpg"
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music124/v4/02/f6/9e/02f69e64-9f7b-8c15-c0a4-4dec2860fb44/886445975833.jpg/600x600bb.jpg"
+  },
+  {
+    "id": "beyonce",
+    "name": "BEYONCÉ",
+    "artistId": "drake",
+    "year": 2013,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Features4/v4/dc/ca/29/dcca295f-851e-5faf-a3b4-030965fa80f2/dj.jyrlgxlq.jpg/600x600bb.jpg"
+  },
+  {
+    "id": "round-of-applause-feat-drake-single",
+    "name": "Round of Applause (feat. Drake) - Single",
+    "artistId": "drake",
+    "year": 2011,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music/fc/6c/d0/mzi.wnmxvqxa.jpg/600x600bb.jpg"
+  },
+  {
+    "id": "dreams-worth-more-than-money",
+    "name": "Dreams Worth More Than Money",
+    "artistId": "drake",
+    "year": 2015,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/a6/16/25/a6162590-4434-40bf-6390-6e3df46c7bbe/075679923578.jpg/600x600bb.jpg"
+  },
+  {
+    "id": "formula-vol-2-deluxe-edition",
+    "name": "Fórmula, Vol. 2 (Deluxe Edition)",
+    "artistId": "drake",
+    "year": 2014,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/8f/fc/6e/8ffc6efb-353f-46ac-eeb6-8247c01cfc87/886444383691.jpg/600x600bb.jpg"
   },
   {
     "id": "scorpion",
     "name": "Scorpion",
     "artistId": "drake",
     "year": 2018,
-    "image": "https://cdn-images.dzcdn.net/images/cover/b69d3bcbd130ad4cc9259de543889e30/1000x1000-000000-80-0-0.jpg"
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/1f/37/43/1f374304-2e04-2be3-53ea-41dd6f0b6fb8/00602567892410.rgb.jpg/600x600bb.jpg"
   },
   {
-    "id": "nothing-was-the-same-deluxe",
-    "name": "Nothing Was The Same (Deluxe)",
+    "id": "fall-for-your-type-feat-drake-single",
+    "name": "Fall for Your Type (feat. Drake) - Single",
     "artistId": "drake",
-    "year": 2013,
-    "image": "https://cdn-images.dzcdn.net/images/cover/64ec37a4cf512c7810c40ba0d318ff1e/1000x1000-000000-80-0-0.jpg"
+    "year": 2010,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Features114/v4/6c/a3/18/6ca318d6-ce97-4ee7-a16e-2b4e4909db06/dj.tbiwjigr.jpg/600x600bb.jpg"
   },
   {
-    "id": "certified-lover-boy",
-    "name": "Certified Lover Boy",
+    "id": "championships",
+    "name": "Championships",
     "artistId": "drake",
-    "year": 2021,
-    "image": "https://cdn-images.dzcdn.net/images/cover/ea8f80f2edb20885ac8aed8751716794/1000x1000-000000-80-0-0.jpg"
+    "year": 2018,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/ee/39/ad/ee39ad12-b314-f0c8-a285-a49340427e68/075679862440.jpg/600x600bb.jpg"
   },
   {
-    "id": "iceman",
-    "name": "ICEMAN",
+    "id": "deuces-remix-ep",
+    "name": "Deuces Remix - EP",
     "artistId": "drake",
-    "year": 2026,
-    "image": "https://cdn-images.dzcdn.net/images/cover/cccf5e9af10b6aae96f5cdd5a27c2aff/1000x1000-000000-80-0-0.jpg"
+    "year": 2010,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music/1f/88/df/mzi.udvjskao.jpg/600x600bb.jpg"
   },
   {
-    "id": "toosie-slide",
-    "name": "Toosie Slide",
+    "id": "dear-america-ep",
+    "name": "Dear America - EP",
     "artistId": "drake",
-    "year": 2020,
-    "image": "https://cdn-images.dzcdn.net/images/cover/d2216c368d2223ebf839fa09cd90c150/1000x1000-000000-80-0-0.jpg"
+    "year": 2014,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music114/v4/64/c1/36/64c13642-c730-06b9-56b3-4868acdfde6f/886444799867.jpg/600x600bb.jpg"
   },
   {
-    "id": "honestly-nevermind",
-    "name": "Honestly, Nevermind",
+    "id": "harder-than-ever",
+    "name": "Harder Than Ever",
     "artistId": "drake",
-    "year": 2022,
-    "image": "https://cdn-images.dzcdn.net/images/cover/0b26e40653e97c640740ece8e32fc2af/1000x1000-000000-80-0-0.jpg"
+    "year": 2018,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music122/v4/b2/21/04/b22104c5-b230-4e99-2b98-e99c664b88c7/18UMGIM28345.rgb.jpg/600x600bb.jpg"
   },
   {
-    "id": "the-best-in-the-world-pack",
-    "name": "The Best In The World Pack",
+    "id": "un-thinkable-im-ready-remix-feat-drake-single",
+    "name": "Un-thinkable (I'm Ready) [Remix] {feat. Drake} - Single",
+    "artistId": "drake",
+    "year": 2010,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music124/v4/4d/5d/5d/4d5d5db9-94c5-8d29-22ab-23ab947e18ff/884977645149.jpg/600x600bb.jpg"
+  },
+  {
+    "id": "the-best-in-the-world-pack-single",
+    "name": "The Best In The World Pack - Single",
     "artistId": "drake",
     "year": 2019,
-    "image": "https://cdn-images.dzcdn.net/images/cover/4291e5f9bfe723d120fe22fdd74d0e64/1000x1000-000000-80-0-0.jpg"
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music125/v4/5b/31/bf/5b31bf6d-0a7f-ad73-426f-72948846bef2/19UMGIM54644.rgb.jpg/600x600bb.jpg"
   },
   {
-    "id": "dark-lane-demo-tapes",
-    "name": "Dark Lane Demo Tapes",
+    "id": "life-is-good-feat-drake-single",
+    "name": "Life Is Good (feat. Drake) - Single",
     "artistId": "drake",
     "year": 2020,
-    "image": "https://cdn-images.dzcdn.net/images/cover/d46b7a8aa40ef7f09d71a03c2ce8edcd/1000x1000-000000-80-0-0.jpg"
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music125/v4/56/17/2c/56172c37-dc56-6651-1e70-59dc6d2e6e3f/886448218845.jpg/600x600bb.jpg"
+  },
+  {
+    "id": "used-to-this-feat-drake-single",
+    "name": "Used to This (feat. Drake) - Single",
+    "artistId": "drake",
+    "year": 2016,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/72/30/b3/7230b3e9-349d-f3c8-76d9-838e0d3a8842/886446180748.jpg/600x600bb.jpg"
+  },
+  {
+    "id": "100-feat-drake-single",
+    "name": "100 (feat. Drake) - Single",
+    "artistId": "drake",
+    "year": 2015,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/eb/bd/5a/ebbd5ace-1da9-19b4-f3fb-c4ba89a161fc/099923098720.jpg/600x600bb.jpg"
+  },
+  {
+    "id": "i-never-liked-you",
+    "name": "I NEVER LIKED YOU",
+    "artistId": "drake",
+    "year": 2022,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music122/v4/65/f2/06/65f2067b-a8ea-239c-c219-8e0f0282dcea/196589073693.jpg/600x600bb.jpg"
   },
   {
     "id": "ome-exy-ongs-4-u",
     "name": "$ome $exy $ongs 4 U",
     "artistId": "drake",
     "year": 2025,
-    "image": "https://cdn-images.dzcdn.net/images/cover/478562cdbafe4faa1515bd457042cc4a/1000x1000-000000-80-0-0.jpg"
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/34/10/1e/34101e1f-f4b9-907a-ce47-3fba5b3ee5e8/50222.jpg/600x600bb.jpg"
   },
   {
-    "id": "laugh-now-cry-later",
-    "name": "Laugh Now Cry Later",
+    "id": "laugh-now-cry-later-feat-lil-durk-single",
+    "name": "Laugh Now Cry Later (feat. Lil Durk) - Single",
     "artistId": "drake",
     "year": 2020,
-    "image": "https://cdn-images.dzcdn.net/images/cover/9797dfc8af8f1c08653f348b27202d93/1000x1000-000000-80-0-0.jpg"
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/ba/bd/b2/babdb2e9-1fe4-ecaf-034a-d24870fa1811/20UMGIM71041.rgb.jpg/600x600bb.jpg"
   },
   {
-    "id": "habibti",
-    "name": "HABIBTI",
+    "id": "digital-girl-remix-feat-drake-kanye-west-the-dream-single",
+    "name": "Digital Girl (Remix) [feat. Drake, Kanye West & The-Dream] - Single",
     "artistId": "drake",
-    "year": 2026,
-    "image": "https://cdn-images.dzcdn.net/images/cover/a3c0b45062f3987b928b13cd6122f443/1000x1000-000000-80-0-0.jpg"
+    "year": 2009,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music/ee/29/f8/mzi.uzeksaky.jpg/600x600bb.jpg"
   },
   {
-    "id": "popstar-feat-drake",
-    "name": "POPSTAR (feat. Drake)",
+    "id": "popstar-feat-drake-single",
+    "name": "POPSTAR (feat. Drake) - Single",
     "artistId": "drake",
     "year": 2020,
-    "image": "https://cdn-images.dzcdn.net/images/cover/5ef6f56d0f42ad0a38d016bbf3933d6b/1000x1000-000000-80-0-0.jpg"
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/73/8c/64/738c6422-f3e6-c0ab-e073-87ca7c1d49f3/886448646310.jpg/600x600bb.jpg"
+  },
+  {
+    "id": "pluto-3d",
+    "name": "Pluto 3D",
+    "artistId": "drake",
+    "year": 2011,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music114/v4/75/82/5d/75825d28-9f34-bcbc-9fdf-86ec7931d9fe/886443728318.jpg/600x600bb.jpg"
   },
   {
     "id": "her-loss",
     "name": "Her Loss",
     "artistId": "drake",
     "year": 2022,
-    "image": "https://cdn-images.dzcdn.net/images/cover/4599d79a2bea5890737328996e2e7077/1000x1000-000000-80-0-0.jpg"
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music112/v4/c7/00/3f/c7003f83-3a43-1201-4aec-41be71ba64c5/22UM1IM29131.rgb.jpg/600x600bb.jpg"
   },
   {
-    "id": "tha-carter-iv-complete-edition",
-    "name": "Tha Carter IV (Complete Edition)",
+    "id": "honestly-nevermind",
+    "name": "Honestly, Nevermind",
     "artistId": "drake",
-    "year": 2021,
-    "image": "https://cdn-images.dzcdn.net/images/cover/9cd3050aedcb4324e6ffc4477929f2db/1000x1000-000000-80-0-0.jpg"
+    "year": 2022,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music122/v4/84/2c/b4/842cb419-243c-b3f4-4da9-b6b980996062/22UMGIM67371.rgb.jpg/600x600bb.jpg"
   },
   {
-    "id": "drip-harder",
-    "name": "Drip Harder",
+    "id": "now-or-never-deluxe-version",
+    "name": "Now or Never (Deluxe Version)",
     "artistId": "drake",
-    "year": 2018,
-    "image": "https://cdn-images.dzcdn.net/images/cover/3d845a35fd7849630324107baf07657b/1000x1000-000000-80-0-0.jpg"
+    "year": 2010,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music/09/3e/c3/mzi.vuqaqfxh.jpg/600x600bb.jpg"
   },
   {
-    "id": "take-care-deluxe",
-    "name": "Take Care (Deluxe)",
-    "artistId": "drake",
-    "year": 2012,
-    "image": "https://cdn-images.dzcdn.net/images/cover/6e7a6c8f36669dcd11abe7e7c3222e91/1000x1000-000000-80-0-0.jpg"
-  },
-  {
-    "id": "if-youre-reading-this-its-too-late",
-    "name": "If You're Reading This It's Too Late",
-    "artistId": "drake",
-    "year": 2015,
-    "image": "https://cdn-images.dzcdn.net/images/cover/1c1ca5ffababd01e1e7cc090cf296304/1000x1000-000000-80-0-0.jpg"
-  },
-  {
-    "id": "forever",
-    "name": "Forever",
-    "artistId": "drake",
-    "year": 2009,
-    "image": "https://cdn-images.dzcdn.net/images/cover/e1e3e58f8f395010769d435ae3f14bb4/1000x1000-000000-80-0-0.jpg"
-  },
-  {
-    "id": "for-all-the-dogs",
-    "name": "For All The Dogs",
-    "artistId": "drake",
-    "year": 2023,
-    "image": "https://cdn-images.dzcdn.net/images/cover/868162e87da67d647789ed7b6456840c/1000x1000-000000-80-0-0.jpg"
-  },
-  {
-    "id": "so-far-gone",
-    "name": "So Far Gone",
+    "id": "indigo",
+    "name": "Indigo",
     "artistId": "drake",
     "year": 2019,
-    "image": "https://cdn-images.dzcdn.net/images/cover/55fb57cfe1b96220bc9688a1ede36bd4/1000x1000-000000-80-0-0.jpg"
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/6d/73/b7/6d73b73e-dc59-cb79-8322-39842a57aa93/886447789421.jpg/600x600bb.jpg"
   },
   {
-    "id": "this-is-what-falling-in-love-feels-like-554hz",
-    "name": "this is what falling in love feels like (554Hz)",
+    "id": "we-in-this-15-feat-drake-future-single",
+    "name": "We in This 1.5 (feat. Drake & Future) - Single",
+    "artistId": "drake",
+    "year": 2012,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music/v4/5f/0f/15/5f0f1589-dd0a-1c00-b6b0-8ea53b7f708d/DRAMA_WEINTHIS_DIRTY.jpg/600x600bb.jpg"
+  },
+  {
+    "id": "everybody-looking-deluxe",
+    "name": "Everybody Looking (Deluxe)",
+    "artistId": "drake",
+    "year": 2016,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music60/v4/b8/52/e8/b852e8bb-937c-81ce-ae70-4f6a8215fa11/075679906618.jpg/600x600bb.jpg"
+  },
+  {
+    "id": "no-stylist-feat-drake-single",
+    "name": "No Stylist (feat. Drake) - Single",
+    "artistId": "drake",
+    "year": 2018,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music118/v4/d4/03/ea/d403eac9-c6e5-7ae4-f51a-e50290ea90e3/886447310977.jpg/600x600bb.jpg"
+  },
+  {
+    "id": "reincarnated-deluxe-version",
+    "name": "Reincarnated (Deluxe Version)",
+    "artistId": "drake",
+    "year": 2013,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music124/v4/75/a3/5f/75a35fb4-b435-18c7-f311-65722b468841/886443932104.jpg/600x600bb.jpg"
+  },
+  {
+    "id": "toosie-slide-single",
+    "name": "Toosie Slide - Single",
+    "artistId": "drake",
+    "year": 2020,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music125/v4/77/12/f8/7712f8c6-4fb9-e8ef-fd3c-f46877bfbfa4/20UMGIM25453.rgb.jpg/600x600bb.jpg"
+  },
+  {
+    "id": "dark-lane-demo-tapes",
+    "name": "Dark Lane Demo Tapes",
+    "artistId": "drake",
+    "year": 2020,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/a7/36/f6/a736f61f-1a51-e955-78b2-9585bd5849cb/20UMGIM34466.rgb.jpg/600x600bb.jpg"
+  },
+  {
+    "id": "beam-me-up-scotty-remastered",
+    "name": "Beam Me Up Scotty (Remastered)",
+    "artistId": "drake",
+    "year": 2021,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music125/v4/c0/e4/b6/c0e4b6ff-a92c-4886-5135-56d013a4bc3a/21UMGIM42530.rgb.jpg/600x600bb.jpg"
+  },
+  {
+    "id": "lemon-feat-drake-drake-remix-single",
+    "name": "Lemon (feat. Drake) [Drake Remix] - Single",
+    "artistId": "drake",
+    "year": 2018,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music124/v4/d7/8b/07/d78b07f7-6b95-8dcc-2486-fe38102c01d4/886447023662.jpg/600x600bb.jpg"
+  },
+  {
+    "id": "scary-hours-2",
+    "name": "Scary Hours 2",
+    "artistId": "drake",
+    "year": 2021,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music125/v4/63/2a/34/632a3488-d104-3ff1-dc02-4ed86f58ed05/21UMGIM18577.rgb.jpg/600x600bb.jpg"
+  },
+  {
+    "id": "longliveaap",
+    "name": "LONG.LIVE.A$AP",
+    "artistId": "drake",
+    "year": 2012,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music/v4/50/b3/9d/50b39db3-0922-2863-37aa-37b9a47f7ad7/886443325524.jpg/600x600bb.jpg"
+  },
+  {
+    "id": "nothing-was-the-same-deluxe",
+    "name": "Nothing Was the Same (Deluxe)",
+    "artistId": "drake",
+    "year": 2013,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/51/61/f3/5161f3c4-2292-f035-eb68-6f95bbc9edd6/00602537542338.rgb.jpg/600x600bb.jpg"
+  },
+  {
+    "id": "views",
+    "name": "Views",
+    "artistId": "drake",
+    "year": 2016,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/f2/0d/8b/f20d8bff-a927-ae98-6784-20a1f51cb23e/16UMGIM27642.rgb.jpg/600x600bb.jpg"
+  },
+  {
+    "id": "ds2",
+    "name": "DS2",
+    "artistId": "drake",
+    "year": 2015,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/00/89/5e/00895ec1-5731-56ff-b869-7b5aea7a5a06/886445325768.jpg/600x600bb.jpg"
+  },
+  {
+    "id": "this-is-what-heartbreak-feels-like-single",
+    "name": "this is what heartbreak feels like - Single",
     "artistId": "jvke",
     "year": 2022,
-    "image": "https://cdn-images.dzcdn.net/images/cover/845eff477946539849c7291510d61daf/1000x1000-000000-80-0-0.jpg"
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music116/v4/0a/02/7f/0a027f39-2abe-432a-e5d6-bfe6635ba254/5056167171577_1.jpg/600x600bb.jpg"
   },
   {
-    "id": "her",
-    "name": "her",
+    "id": "this-is-what-falling-in-love-feels-like-554hz-single",
+    "name": "this is what falling in love feels like (554Hz) - Single",
+    "artistId": "jvke",
+    "year": 2022,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music122/v4/33/9d/f2/339df25b-1f4c-2715-bc07-eb9c144c96ba/5056167176534_1.jpg/600x600bb.jpg"
+  },
+  {
+    "id": "her-single",
+    "name": "her - Single",
     "artistId": "jvke",
     "year": 2024,
-    "image": "https://cdn-images.dzcdn.net/images/cover/66b9e13e53ca95c833c4fad5029bf434/1000x1000-000000-80-0-0.jpg"
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/9c/0c/88/9c0c883c-0901-60a1-8f4b-6a96c36be366/198846140360.jpg/600x600bb.jpg"
   },
   {
-    "id": "this-is-what-falling-in-love-feels-like-leon-leiden-remix",
-    "name": "this is what falling in love feels like (Leon Leiden Remix)",
+    "id": "this-is-what-falling-in-love-feels-like-single",
+    "name": "this is what falling in love feels like - Single",
     "artistId": "jvke",
-    "year": 2022,
-    "image": "https://cdn-images.dzcdn.net/images/cover/b69c55d0c4b786a8efb97daa0aa5ae6c/1000x1000-000000-80-0-0.jpg"
+    "year": 2021,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/0f/6b/0d/0f6b0d9e-686c-9cca-ae0b-442f649224ac/5056167166535_1.jpg/600x600bb.jpg"
   },
   {
-    "id": "a-thousand-years",
-    "name": "A Thousand Years",
-    "artistId": "jvke",
-    "year": 2026,
-    "image": "https://cdn-images.dzcdn.net/images/cover/f1b759c0179e74fcc8f87070458c7827/1000x1000-000000-80-0-0.jpg"
-  },
-  {
-    "id": "golden-hour-leon-leiden-remix",
-    "name": "golden hour (Leon Leiden Remix)",
+    "id": "this-is-what-autumn-feels-like-single",
+    "name": "this is what autumn feels like - Single",
     "artistId": "jvke",
     "year": 2023,
-    "image": "https://cdn-images.dzcdn.net/images/cover/5c01dcb78005bee09bd0177d20c10efe/1000x1000-000000-80-0-0.jpg"
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music116/v4/24/ec/59/24ec5968-5ed9-23a6-85d5-c892c7250a8a/197189899157.jpg/600x600bb.jpg"
   },
   {
-    "id": "her-feat-leon-leiden-macario-martinez",
-    "name": "her (feat. Leon Leiden & Macario Martínez)",
-    "artistId": "jvke",
-    "year": 2026,
-    "image": "https://cdn-images.dzcdn.net/images/cover/eda7f7f8af9d23968515387835812edf/1000x1000-000000-80-0-0.jpg"
-  },
-  {
-    "id": "this-is-what-autumn-feels-like",
-    "name": "this is what autumn feels like",
-    "artistId": "jvke",
-    "year": 2023,
-    "image": "https://cdn-images.dzcdn.net/images/cover/68ea4f015ec09acb45930000906ae240/1000x1000-000000-80-0-0.jpg"
-  },
-  {
-    "id": "juliet",
-    "name": "juliet",
-    "artistId": "jvke",
-    "year": 2026,
-    "image": "https://cdn-images.dzcdn.net/images/cover/1ca0283b6db61faeaab2bdc9fc636097/1000x1000-000000-80-0-0.jpg"
-  },
-  {
-    "id": "this-is-what-space-feels-like",
-    "name": "this is what space feels like",
-    "artistId": "jvke",
-    "year": 2023,
-    "image": "https://cdn-images.dzcdn.net/images/cover/0350d6572df5c56a98fb434649652caf/1000x1000-000000-80-0-0.jpg"
-  },
-  {
-    "id": "her-feat-annika-wells",
-    "name": "her (feat. Annika Wells)",
-    "artistId": "jvke",
-    "year": 2025,
-    "image": "https://cdn-images.dzcdn.net/images/cover/ac7846047e4502363f2bc4a878aa8705/1000x1000-000000-80-0-0.jpg"
-  },
-  {
-    "id": "made-for-me",
-    "name": "made for me",
-    "artistId": "jvke",
-    "year": 2026,
-    "image": "https://cdn-images.dzcdn.net/images/cover/a9b7a4e2b1bd8c0457c402be41d6e211/1000x1000-000000-80-0-0.jpg"
-  },
-  {
-    "id": "hero",
-    "name": "Hero",
-    "artistId": "jvke",
-    "year": 2022,
-    "image": "https://cdn-images.dzcdn.net/images/cover/7e35e29d49f6013b0f30ea3366cb2c6f/1000x1000-000000-80-0-0.jpg"
-  },
-  {
-    "id": "this-is-what-winter-feels-like",
-    "name": "this is what winter feels like",
+    "id": "this-is-what-winter-feels-like-single",
+    "name": "this is what winter feels like - Single",
     "artistId": "jvke",
     "year": 2024,
-    "image": "https://cdn-images.dzcdn.net/images/cover/5afc34bba9c511e0179d65c609879211/1000x1000-000000-80-0-0.jpg"
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music126/v4/4d/eb/ea/4debeafa-bf39-6673-29b5-23145c024de8/197190797046.jpg/600x600bb.jpg"
   },
   {
-    "id": "butterflies-feat-taehyun-of-tomorrow-x-together-kim-chaewon-of-le-sserafim",
-    "name": "butterflies (feat. TAEHYUN of TOMORROW X TOGETHER & Kim Chaewon of LE SSERAFIM)",
+    "id": "this-is-what-space-feels-like-single",
+    "name": "this is what space feels like - Single",
+    "artistId": "jvke",
+    "year": 2023,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music116/v4/f7/c3/e7/f7c3e778-f4ae-f42f-a875-9762e084165f/197189968631.jpg/600x600bb.jpg"
+  },
+  {
+    "id": "next-to-you-single",
+    "name": "next to you - Single",
+    "artistId": "jvke",
+    "year": 2024,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/46/6f/42/466f4205-6844-4e00-dd97-3d8733998f7f/198846714318.jpg/600x600bb.jpg"
+  },
+  {
+    "id": "pretty-single",
+    "name": "pretty - Single",
     "artistId": "jvke",
     "year": 2025,
-    "image": "https://cdn-images.dzcdn.net/images/cover/f3629674b8a53c5c27fa6c06291bd725/1000x1000-000000-80-0-0.jpg"
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/d6/f5/97/d6f59722-3bd9-aaf8-1ac6-ffd6709d049d/199066778128.jpg/600x600bb.jpg"
   },
   {
-    "id": "upside-down",
-    "name": "Upside Down",
+    "id": "this-is-what-forever-feels-like-single",
+    "name": "this is what forever feels like - Single",
+    "artistId": "jvke",
+    "year": 2024,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/70/00/8f/70008f27-39e2-bed5-75bd-03ba7a3ef339/24UMGIM96359.rgb.jpg/600x600bb.jpg"
+  },
+  {
+    "id": "this-is-what-losing-someone-feels-like-single",
+    "name": "this is what losing someone feels like - Single",
+    "artistId": "jvke",
+    "year": 2023,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music116/v4/fa/f1/cd/faf1cd7c-9e3d-ddf4-8e26-e279fecae59a/197188326906.jpg/600x600bb.jpg"
+  },
+  {
+    "id": "upside-down-single",
+    "name": "Upside Down - Single",
     "artistId": "jvke",
     "year": 2020,
-    "image": "https://cdn-images.dzcdn.net/images/cover/880433d7a3959661c4d3604390463855/1000x1000-000000-80-0-0.jpg"
-  },
-  {
-    "id": "this-is-what-heartbreak-feels-like-432hz",
-    "name": "this is what heartbreak feels like (432Hz)",
-    "artistId": "jvke",
-    "year": 2022,
-    "image": "https://cdn-images.dzcdn.net/images/cover/55f417a91ab97af23e8d63d500151f18/1000x1000-000000-80-0-0.jpg"
-  },
-  {
-    "id": "this-is-what-forever-feels-like",
-    "name": "this is what forever feels like",
-    "artistId": "jvke",
-    "year": 2024,
-    "image": "https://cdn-images.dzcdn.net/images/cover/cfccefa2e0eb0c4f6628da3c7493fa82/1000x1000-000000-80-0-0.jpg"
-  },
-  {
-    "id": "her-feat-zvc",
-    "name": "her (feat. ZVC)",
-    "artistId": "jvke",
-    "year": 2025,
-    "image": "https://cdn-images.dzcdn.net/images/cover/cc1352d4f8ec67864613cacea8fbb75f/1000x1000-000000-80-0-0.jpg"
-  },
-  {
-    "id": "her-feat-john-michael-howell",
-    "name": "her (feat. John Michael Howell)",
-    "artistId": "jvke",
-    "year": 2025,
-    "image": "https://cdn-images.dzcdn.net/images/cover/79a02adcfc86d562169abf94ac0a1c38/1000x1000-000000-80-0-0.jpg"
-  },
-  {
-    "id": "next-to-you",
-    "name": "next to you",
-    "artistId": "jvke",
-    "year": 2024,
-    "image": "https://cdn-images.dzcdn.net/images/cover/7978e13721f60f0438f60091eef89eca/1000x1000-000000-80-0-0.jpg"
-  },
-  {
-    "id": "pretty",
-    "name": "pretty",
-    "artistId": "jvke",
-    "year": 2025,
-    "image": "https://cdn-images.dzcdn.net/images/cover/4f509b07c62f64c2901cbb15da9caca7/1000x1000-000000-80-0-0.jpg"
-  },
-  {
-    "id": "clouds",
-    "name": "clouds",
-    "artistId": "jvke",
-    "year": 2024,
-    "image": "https://cdn-images.dzcdn.net/images/cover/4c6387f381566b1c3a9e95fd77368a93/1000x1000-000000-80-0-0.jpg"
-  },
-  {
-    "id": "this-is-what-falling-out-of-love-feels-like-392hz",
-    "name": "this is what falling out of love feels like (392Hz)",
-    "artistId": "jvke",
-    "year": 2022,
-    "image": "https://cdn-images.dzcdn.net/images/cover/04e9623d3234681a2abd04670aa6f7a7/1000x1000-000000-80-0-0.jpg"
-  },
-  {
-    "id": "this-is-what-sadness-feels-like-214hz",
-    "name": "this is what sadness feels like (214Hz)",
-    "artistId": "jvke",
-    "year": 2022,
-    "image": "https://cdn-images.dzcdn.net/images/cover/d2dbdd6d401de1ed3e7a91408511fce2/1000x1000-000000-80-0-0.jpg"
-  },
-  {
-    "id": "infinity-beyond",
-    "name": "infinity beyond",
-    "artistId": "jvke",
-    "year": 2026,
-    "image": "https://cdn-images.dzcdn.net/images/cover/eab66f5e23947a84ef8ca25cb940fd90/1000x1000-000000-80-0-0.jpg"
-  },
-  {
-    "id": "this-is-what-heartbreak-feels-like-cg5-remix",
-    "name": "this is what heartbreak feels like (CG5 Remix)",
-    "artistId": "jvke",
-    "year": 2022,
-    "image": "https://cdn-images.dzcdn.net/images/cover/95c1a2fc8c5ef0cbc21b3e34d789a7c9/1000x1000-000000-80-0-0.jpg"
-  },
-  {
-    "id": "her-feat-annika-wells-kaden-hawke",
-    "name": "her (feat. Annika Wells & Kaden Hawke)",
-    "artistId": "jvke",
-    "year": 2025,
-    "image": "https://cdn-images.dzcdn.net/images/cover/21c3c5b44bf8e2afd1b31c5495e03fba/1000x1000-000000-80-0-0.jpg"
-  },
-  {
-    "id": "fire-feat-yuqi-gi-dle-jvke",
-    "name": "Fire! (feat. YUQI ((G)I-DLE), JVKE)",
-    "artistId": "jvke",
-    "year": 2023,
-    "image": "https://cdn-images.dzcdn.net/images/cover/e651043be2dd2835b960fc090d07b897/1000x1000-000000-80-0-0.jpg"
-  },
-  {
-    "id": "oh-to-be-loved",
-    "name": "oh to be loved",
-    "artistId": "jvke",
-    "year": 2025,
-    "image": "https://cdn-images.dzcdn.net/images/cover/ccfe1b7b7409336d659fc9399f44c186/1000x1000-000000-80-0-0.jpg"
-  },
-  {
-    "id": "golden-hour-minlee-remix",
-    "name": "golden hour (minlee Remix)",
-    "artistId": "jvke",
-    "year": 2022,
-    "image": "https://cdn-images.dzcdn.net/images/cover/d6c6f8b427162751f4b7a71c73b48023/1000x1000-000000-80-0-0.jpg"
-  },
-  {
-    "id": "i-cant-help-it",
-    "name": "i can't help it",
-    "artistId": "jvke",
-    "year": 2022,
-    "image": "https://cdn-images.dzcdn.net/images/cover/04e9623d3234681a2abd04670aa6f7a7/1000x1000-000000-80-0-0.jpg"
-  },
-  {
-    "id": "defenseless",
-    "name": "DEFENSELESS",
-    "artistId": "jvke",
-    "year": 2025,
-    "image": "https://cdn-images.dzcdn.net/images/cover/650bb613d6a020b3afc8e20dbd86469c/1000x1000-000000-80-0-0.jpg"
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/8e/c2/f0/8ec2f0cf-ea75-cd59-a14c-259632c0c31e/193436230483_01_img001.jpg/600x600bb.jpg"
   },
   {
     "id": "this-is-what-____-feels-like-vol-1-4",
     "name": "this is what ____ feels like (Vol. 1-4)",
     "artistId": "jvke",
     "year": 2022,
-    "image": "https://cdn-images.dzcdn.net/images/cover/ff66669185174ac6f6b7a6342c93fca5/1000x1000-000000-80-0-0.jpg"
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/8d/1a/7b/8d1a7b44-316f-7c7f-4380-935673fb697a/5056167175650.jpg/600x600bb.jpg"
   },
   {
-    "id": "this-is-what-a-new-year-feels-like",
-    "name": "this is what a new year feels like",
+    "id": "butterflies-feat-taehyun-kim-chaewon-single",
+    "name": "butterflies (feat. TAEHYUN & KIM CHAEWON) - Single",
     "artistId": "jvke",
     "year": 2025,
-    "image": "https://cdn-images.dzcdn.net/images/cover/bb2bb1cd80f7fb56bddab4d0963eb2ea/1000x1000-000000-80-0-0.jpg"
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/92/43/14/924314e9-d8ab-5d1e-e973-7e8759423761/5034644795249.jpg/600x600bb.jpg"
   },
   {
-    "id": "lavender",
-    "name": "lavender",
+    "id": "her-feat-annika-wells-single",
+    "name": "her (feat. Annika Wells) - Single",
+    "artistId": "jvke",
+    "year": 2025,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/0e/ef/b3/0eefb350-1a8e-10de-0fbc-c39774aabda0/199806412749.jpg/600x600bb.jpg"
+  },
+  {
+    "id": "upside-down-feat-charlie-puth-single",
+    "name": "Upside Down (feat. Charlie Puth) - Single",
+    "artistId": "jvke",
+    "year": 2020,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music114/v4/72/ca/d7/72cad76c-5499-7098-0e53-5931cd3b6ee9/075679797384.jpg/600x600bb.jpg"
+  },
+  {
+    "id": "oh-to-be-loved-single",
+    "name": "oh to be loved - Single",
+    "artistId": "jvke",
+    "year": 2025,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/94/b3/53/94b353bb-92f9-5247-2a92-45fe7a9af1d5/199538532470.jpg/600x600bb.jpg"
+  },
+  {
+    "id": "clouds-single",
+    "name": "clouds - Single",
     "artistId": "jvke",
     "year": 2024,
-    "image": "https://cdn-images.dzcdn.net/images/cover/83a9b2fe3731f048205e7594b38adb1e/1000x1000-000000-80-0-0.jpg"
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music112/v4/e0/88/9c/e0889cad-608c-d7d2-bcfe-ef27e206f66c/198391334375.jpg/600x600bb.jpg"
   },
   {
-    "id": "the-asia-tour-blooming-season-ep",
-    "name": "the asia tour: blooming season ep",
+    "id": "golden-hour-single",
+    "name": "golden hour - Single",
     "artistId": "jvke",
-    "year": 2025,
-    "image": "https://cdn-images.dzcdn.net/images/cover/81df491bbbda3fc6ac085da9a7c0111c/1000x1000-000000-80-0-0.jpg"
+    "year": 2022,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music113/v4/0c/35/28/0c352801-dc06-3076-cf73-c4ff0fbaf686/5056167174196.jpg/600x600bb.jpg"
   },
   {
-    "id": "this-is-what-losing-someone-feels-like",
-    "name": "this is what losing someone feels like",
+    "id": "this-is-what-slow-dancing-feels-like-single",
+    "name": "this is what slow dancing feels like - Single",
     "artistId": "jvke",
-    "year": 2023,
-    "image": "https://cdn-images.dzcdn.net/images/cover/7ade7fd473734bd4a58043d1816e8a9d/1000x1000-000000-80-0-0.jpg"
+    "year": 2024,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/db/26/61/db2661d8-8df7-0cb1-a1cd-2662455d4c8d/198391807879.jpg/600x600bb.jpg"
   },
   {
-    "id": "this-is-what-floating-feels-like",
-    "name": "this is what floating feels like",
-    "artistId": "jvke",
-    "year": 2025,
-    "image": "https://cdn-images.dzcdn.net/images/cover/9f5231806b00b59ab921b19b72430e3b/1000x1000-000000-80-0-0.jpg"
-  },
-  {
-    "id": "anxiety",
-    "name": "anxiety.",
+    "id": "anxiety-single",
+    "name": "anxiety. - Single",
     "artistId": "jvke",
     "year": 2021,
-    "image": "https://cdn-images.dzcdn.net/images/cover/74ed191d4ca358573d51e08e9fe3688a/1000x1000-000000-80-0-0.jpg"
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music116/v4/02/45/31/0245311e-a817-8c9c-1e62-9f387885397e/5056167168607_1.jpg/600x600bb.jpg"
   },
   {
-    "id": "this-is-what-slow-dancing-feels-like",
-    "name": "this is what slow dancing feels like",
+    "id": "secrets-single",
+    "name": "Secrets - Single",
     "artistId": "jvke",
-    "year": 2024,
-    "image": "https://cdn-images.dzcdn.net/images/cover/249b90387b123b25f7c74dc1c0f1d7bf/1000x1000-000000-80-0-0.jpg"
+    "year": 2021,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music125/v4/26/9a/27/269a2702-c4b0-35e7-7ee7-866e7ada44bc/5056167163428_1.jpg/600x600bb.jpg"
   },
   {
-    "id": "moonboy",
-    "name": "moonboy",
+    "id": "her-feat-zvc-single",
+    "name": "her (feat. ZVC) - Single",
     "artistId": "jvke",
-    "year": 2026,
-    "image": "https://cdn-images.dzcdn.net/images/cover/b5239c06daf5ceb9a79ec3cf396a9763/1000x1000-000000-80-0-0.jpg"
+    "year": 2025,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/db/cb/29/dbcb2966-b66c-1ca8-50ee-226b430c58f3/199806499955.jpg/600x600bb.jpg"
   },
   {
-    "id": "never-get-used-to-this",
-    "name": "NEVER GET USED TO THIS",
+    "id": "her-feat-annika-wells-kaden-hawke-single",
+    "name": "her (feat. Annika Wells & Kaden Hawke) - Single",
     "artistId": "jvke",
-    "year": 2024,
-    "image": "https://cdn-images.dzcdn.net/images/cover/19c357011a30cd8155ac2b4a1b836051/1000x1000-000000-80-0-0.jpg"
+    "year": 2025,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/e2/51/f4/e251f49e-ad52-9fc4-a7ab-c2479f4cf7b7/199806533055.jpg/600x600bb.jpg"
   },
   {
-    "id": "mi-amor-with-jvke-anitta",
-    "name": "Mi Amor (with JVKE & Anitta)",
+    "id": "golden-hour-ruel-remix-single",
+    "name": "golden hour (Ruel Remix) - Single",
     "artistId": "jvke",
-    "year": 2024,
-    "image": "https://cdn-images.dzcdn.net/images/cover/66268aaa55d7ca577d38d9f82c48dd8a/1000x1000-000000-80-0-0.jpg"
+    "year": 2022,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music126/v4/12/fe/12/12fe1268-8f52-ec1c-906a-2162dab9d8f9/197187332304.jpg/600x600bb.jpg"
   },
   {
     "id": "this-is-what-christmas-feels-like",
     "name": "this is what christmas feels like",
     "artistId": "jvke",
     "year": 2025,
-    "image": "https://cdn-images.dzcdn.net/images/cover/b0f148e1d6128c0bb22876f13557e62d/1000x1000-000000-80-0-0.jpg"
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/22/b2/6e/22b26e20-4ba2-270f-2b80-24ef507b8d5a/199806664629.jpg/600x600bb.jpg"
   },
   {
-    "id": "dont-let-me-down",
-    "name": "Don't Let Me Down",
+    "id": "home-single",
+    "name": "Home - Single",
+    "artistId": "jvke",
+    "year": 2021,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music124/v4/ad/41/ba/ad41ba21-1fc3-4c0d-97dc-8b7ad499d5ec/5056167162056_1.jpg/600x600bb.jpg"
+  },
+  {
+    "id": "lavender-feat-pink-sweat-single",
+    "name": "lavender (feat. Pink Sweat$) - Single",
     "artistId": "jvke",
     "year": 2024,
-    "image": "https://cdn-images.dzcdn.net/images/cover/46543edace8ea35d64d60e6a968ff674/1000x1000-000000-80-0-0.jpg"
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music116/v4/9c/2e/2f/9c2e2fa3-4bc3-90fd-22e0-cd56bdd4a661/198391110238.jpg/600x600bb.jpg"
+  },
+  {
+    "id": "this-is-what-floating-feels-like-single",
+    "name": "this is what floating feels like - Single",
+    "artistId": "jvke",
+    "year": 2025,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/97/26/2b/97262bf6-f46f-68dd-ccad-8b46df52f880/199350316654.jpg/600x600bb.jpg"
+  },
+  {
+    "id": "golden-hour-cello-version-single",
+    "name": "golden hour (Cello Version) - Single",
+    "artistId": "jvke",
+    "year": 2022,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music116/v4/d8/6a/74/d86a74b4-7a13-8887-9de2-ebc5a4171533/197188589837.jpg/600x600bb.jpg"
+  },
+  {
+    "id": "golden-hour-r3hab-remix-single",
+    "name": "golden hour (R3HAB Remix) - Single",
+    "artistId": "jvke",
+    "year": 2023,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music116/v4/76/49/d9/7649d92e-311c-e25c-5e14-af5a63a2c4d8/197188720230.jpg/600x600bb.jpg"
+  },
+  {
+    "id": "golden-hour-fujii-kaze-remix-single",
+    "name": "golden hour (Fujii Kaze Remix) - Single",
+    "artistId": "jvke",
+    "year": 2023,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music116/v4/e9/19/1a/e9191aa1-bd40-8f63-fc06-367f02fc2d0c/197188552725.jpg/600x600bb.jpg"
+  },
+  {
+    "id": "juliet-single",
+    "name": "juliet - Single",
+    "artistId": "jvke",
+    "year": 2026,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/9b/7b/59/9b7b59ae-b3dd-441d-765f-8f370d615c4b/820233513579.jpg/600x600bb.jpg"
+  },
+  {
+    "id": "shine-golden-hour-sample-feat-lil-man-j-arden-jones-micah-palace-single",
+    "name": "SHINE (golden hour sample) [feat. Lil Man J, Arden Jones & Micah Palace] - Single",
+    "artistId": "jvke",
+    "year": 2024,
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/9a/5a/cc/9a5acc62-71af-0f5e-05d7-84ed4a27c0fa/198846140513.jpg/600x600bb.jpg"
   }
 ],
   playlists: [],
   songs: [
     song({
-      "id": "bad-bunny-baile-inolvidable",
-      "title": "BAILE INoLVIDABLE",
+      "id": "bad-bunny-i-like-it",
+      "title": "I Like It",
       "artistId": "bad-bunny",
-      "albumId": "debi-tirar-mas-fotos",
-      "year": 2025,
+      "albumId": "invasion-of-privacy",
+      "year": 2018,
       "genreIds": [
             "reggaeton",
             "urbano",
             "trap"
       ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/d98eaccfbb945bdf68241d6de7fe6a49/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/2/3/5/0/23585201254a725a2f1f42a1b9a25686.mp3?hdnea=exp=1790665567~acl=/api/1/1/2/3/5/0/23585201254a725a2f1f42a1b9a25686.mp3*~data=user_id=0,application_id=42~hmac=5fd97b9d8ef050a133a0b2b099b5a59178dad6efb0cb8e93b5a48328e08e1b1f",
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music125/v4/6a/f7/6c/6af76c1c-4d8e-c761-8856-34d273b4703b/075679873682.jpg/600x600bb.jpg",
+      "itunesTrackId": "1368157211",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/2f/32/38/2f323858-2f9f-5bbf-df18-0e197635a79c/mzaf_11306679552261433220.plus.aac.p.m4a",
       "aliases": [
-            "baile inolvidable"
+            "i like it"
       ]
     }),
     song({
-      "id": "bad-bunny-dtmf",
-      "title": "DtMF",
+      "id": "bad-bunny-i-like-it-1368105802",
+      "title": "I Like It",
       "artistId": "bad-bunny",
-      "albumId": "debi-tirar-mas-fotos",
-      "year": 2025,
+      "albumId": "invasion-of-privacy",
+      "year": 2018,
       "genreIds": [
             "reggaeton",
             "urbano",
             "trap"
       ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/d98eaccfbb945bdf68241d6de7fe6a49/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/8/4/2/0/842a0295e03b4657f902d5fb9b3fc931.mp3?hdnea=exp=1790665567~acl=/api/1/1/8/4/2/0/842a0295e03b4657f902d5fb9b3fc931.mp3*~data=user_id=0,application_id=42~hmac=2ddc05420f71c955da7111d2d84bf8c1aeadad4f4f112561a2598ed5c7bb9712",
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/ca/58/e5/ca58e5e3-acb7-8ca3-6af9-ad63af3b71f1/075679873675.jpg/600x600bb.jpg",
+      "itunesTrackId": "1368105802",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/67/82/7c/67827c63-4aa2-7931-9bff-467592cd08dd/mzaf_11836739583341938706.plus.aac.p.m4a",
       "aliases": [
-            "dtmf"
-      ]
-    }),
-    song({
-      "id": "bad-bunny-que-pasaria",
-      "title": "Qué Pasaría...",
-      "artistId": "bad-bunny",
-      "albumId": "cosa-nuestra",
-      "year": 2024,
-      "genreIds": [
-            "reggaeton",
-            "urbano",
-            "trap"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/73ee2e7a43dbeaa119a62d9a15d28670/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/2/4/c/0/24c890f65300d2e8fb506275555feb1c.mp3?hdnea=exp=1790665567~acl=/api/1/1/2/4/c/0/24c890f65300d2e8fb506275555feb1c.mp3*~data=user_id=0,application_id=42~hmac=fb34ce7cea146d7f61f8c3e952938eded03953a630ed6fcf955e6d798fbfc33c",
-      "aliases": [
-            "qué pasaría...",
-            "qué pasaría"
-      ]
-    }),
-    song({
-      "id": "bad-bunny-eoo",
-      "title": "EoO",
-      "artistId": "bad-bunny",
-      "albumId": "debi-tirar-mas-fotos",
-      "year": 2025,
-      "genreIds": [
-            "reggaeton",
-            "urbano",
-            "trap"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/d98eaccfbb945bdf68241d6de7fe6a49/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/5/3/4/0/534f74248f8b341408469f33b3d52830.mp3?hdnea=exp=1790665567~acl=/api/1/1/5/3/4/0/534f74248f8b341408469f33b3d52830.mp3*~data=user_id=0,application_id=42~hmac=707fe3acf8e5058dc2f4326bd732119186446d71800333b0b1188e76c314256c",
-      "aliases": [
-            "eoo"
-      ]
-    }),
-    song({
-      "id": "bad-bunny-un-x100to",
-      "title": "un x100to",
-      "artistId": "bad-bunny",
-      "albumId": "un-x100to",
-      "year": 2023,
-      "genreIds": [
-            "reggaeton",
-            "urbano",
-            "trap"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/8d2a9be13d164862ccb9a10ade01b0cf/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/8/9/1/0/8913598842c511b78ee6dc0c856beb76.mp3?hdnea=exp=1790665567~acl=/api/1/1/8/9/1/0/8913598842c511b78ee6dc0c856beb76.mp3*~data=user_id=0,application_id=42~hmac=75ea61e2abe14806f53041ee418fc1f850768d3ffc635db934fb0b4c2dc71e0a",
-      "aliases": [
-            "un x100to"
-      ]
-    }),
-    song({
-      "id": "bad-bunny-nuevayol",
-      "title": "NUEVAYoL",
-      "artistId": "bad-bunny",
-      "albumId": "debi-tirar-mas-fotos",
-      "year": 2025,
-      "genreIds": [
-            "reggaeton",
-            "urbano",
-            "trap"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/d98eaccfbb945bdf68241d6de7fe6a49/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/f/6/5/0/f65ad0dfd44f0e0d1b47aa1355fcf7bc.mp3?hdnea=exp=1790665567~acl=/api/1/1/f/6/5/0/f65ad0dfd44f0e0d1b47aa1355fcf7bc.mp3*~data=user_id=0,application_id=42~hmac=04bbb4d2fa3e2f82b8716a88148658b1866ce7e560869f432d8afa1a89ba5c6f",
-      "aliases": [
-            "nuevayol"
-      ]
-    }),
-    song({
-      "id": "bad-bunny-ojitos-lindos",
-      "title": "Ojitos Lindos",
-      "artistId": "bad-bunny",
-      "albumId": "un-verano-sin-ti",
-      "year": 2022,
-      "genreIds": [
-            "reggaeton",
-            "urbano",
-            "trap"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/b29d1070377b784384c2456093f96a66/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/3/a/a/0/3aa7fac0a99662098360da4e6fe79d12.mp3?hdnea=exp=1790665567~acl=/api/1/1/3/a/a/0/3aa7fac0a99662098360da4e6fe79d12.mp3*~data=user_id=0,application_id=42~hmac=8fe3a23b00b8c8fa9195104f74f09fa2303af2e0667fc295422bab62d849db23",
-      "aliases": [
-            "ojitos lindos"
-      ]
-    }),
-    song({
-      "id": "bad-bunny-la-cancion",
-      "title": "LA CANCIÓN",
-      "artistId": "bad-bunny",
-      "albumId": "oasis",
-      "year": 2019,
-      "genreIds": [
-            "reggaeton",
-            "urbano",
-            "trap"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/ef1cb84fc7b70a390d80af20768cf065/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/5/c/6/0/5c6aa1b4108d7e432799873671c62c2f.mp3?hdnea=exp=1790665567~acl=/api/1/1/5/c/6/0/5c6aa1b4108d7e432799873671c62c2f.mp3*~data=user_id=0,application_id=42~hmac=46bec98e0fb43a32061e2db7ea1d887a0cde64e268b744f8fcfe619068c84fe6",
-      "aliases": [
-            "la canción"
-      ]
-    }),
-    song({
-      "id": "bad-bunny-mojabi-ghost",
-      "title": "MOJABI GHOST",
-      "artistId": "bad-bunny",
-      "albumId": "data",
-      "year": 2023,
-      "genreIds": [
-            "reggaeton",
-            "urbano",
-            "trap"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/e73a2afb469cd0f06777b24b156d3f82/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/d/a/f/0/daff140001deb12439177887d03b021e.mp3?hdnea=exp=1790665567~acl=/api/1/1/d/a/f/0/daff140001deb12439177887d03b021e.mp3*~data=user_id=0,application_id=42~hmac=1aed73596fec9950bc0b9274d749aef13d7e1bbf54c8145c25d1d52a836d4207",
-      "aliases": [
-            "mojabi ghost"
+            "i like it"
       ]
     }),
     song({
@@ -1430,27 +1627,50 @@ export const seedCatalog = {
             "urbano",
             "trap"
       ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/b29d1070377b784384c2456093f96a66/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/c/4/d/0/c4d8eeec871548b83abe5458fff10fc3.mp3?hdnea=exp=1790665567~acl=/api/1/1/c/4/d/0/c4d8eeec871548b83abe5458fff10fc3.mp3*~data=user_id=0,application_id=42~hmac=54819360cdd5e0613f59554d6c1a2c238675c7cc4478e15ba434282213d76ce0",
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music112/v4/3e/04/eb/3e04ebf6-370f-f59d-ec84-2c2643db92f1/196626945068.jpg/600x600bb.jpg",
+      "itunesTrackId": "1622045635",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/ee/c1/61/eec16130-2d09-e5a6-891e-21178c56436a/mzaf_507894679185476986.plus.aac.p.m4a",
       "aliases": [
             "tití me preguntó"
       ]
     }),
     song({
-      "id": "bad-bunny-moscow-mule",
-      "title": "Moscow Mule",
+      "id": "bad-bunny-te-bote-remix",
+      "title": "Te Boté (feat. Darell, Ozuna & Nicky Jam) [Remix]",
       "artistId": "bad-bunny",
-      "albumId": "un-verano-sin-ti",
-      "year": 2022,
+      "albumId": "te-bote-remix-feat-darell-nicky-jam-ozuna-single",
+      "year": 2017,
       "genreIds": [
             "reggaeton",
             "urbano",
             "trap"
       ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/b29d1070377b784384c2456093f96a66/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/4/8/8/0/488f08cd8e38027da5147e7fcf87fa24.mp3?hdnea=exp=1790665567~acl=/api/1/1/4/8/8/0/488f08cd8e38027da5147e7fcf87fa24.mp3*~data=user_id=0,application_id=42~hmac=88037a3abb5b3103c3fd7c12b6e05489478224628b15ea05d38b41d412aaef44",
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music114/v4/42/ef/aa/42efaa1c-3045-b26c-add4-37705e118e2b/192562395240.jpg/600x600bb.jpg",
+      "itunesTrackId": "1369095480",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/4d/c8/e3/4dc8e338-9a16-5733-dc4e-74c6f63495d9/mzaf_14530763989449878829.plus.aac.p.m4a",
       "aliases": [
-            "moscow mule"
+            "te boté (feat. darell, ozuna & nicky jam) [remix]",
+            "te boté [remix]",
+            "te boté feat darell ozuna nicky jam remix",
+            "te boté remix"
+      ]
+    }),
+    song({
+      "id": "bad-bunny-dakiti",
+      "title": "DÁKITI",
+      "artistId": "bad-bunny",
+      "albumId": "el-ultimo-tour-del-mundo",
+      "year": 2020,
+      "genreIds": [
+            "reggaeton",
+            "urbano",
+            "trap"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/64/70/1c/64701cff-71ed-912f-ce62-71d409f5e6ad/195497640560.jpg/600x600bb.jpg",
+      "itunesTrackId": "1542103620",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/91/ab/b9/91abb91c-4e28-b7ae-6b76-b2257b7ee7c4/mzaf_15037794813217074157.plus.aac.p.m4a",
+      "aliases": [
+            "dákiti"
       ]
     }),
     song({
@@ -1464,215 +1684,47 @@ export const seedCatalog = {
             "urbano",
             "trap"
       ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/b29d1070377b784384c2456093f96a66/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/e/e/e/0/eee1f040af0d93c63ef745d3dfe5aa0d.mp3?hdnea=exp=1790665567~acl=/api/1/1/e/e/e/0/eee1f040af0d93c63ef745d3dfe5aa0d.mp3*~data=user_id=0,application_id=42~hmac=31c95d3a37856549b6be0ac3981071b1e150d774931d501388423506c2f20d08",
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music112/v4/3e/04/eb/3e04ebf6-370f-f59d-ec84-2c2643db92f1/196626945068.jpg/600x600bb.jpg",
+      "itunesTrackId": "1622045634",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/9a/84/a2/9a84a2ea-eb19-12e2-2aaf-627fdee22545/mzaf_17649029454870883985.plus.aac.p.m4a",
       "aliases": [
             "me porto bonito"
       ]
     }),
     song({
-      "id": "bad-bunny-velda",
-      "title": "VeLDÁ",
+      "id": "bad-bunny-callaita",
+      "title": "Callaíta",
       "artistId": "bad-bunny",
-      "albumId": "debi-tirar-mas-fotos",
-      "year": 2025,
+      "albumId": "callaita-single",
+      "year": 2019,
       "genreIds": [
             "reggaeton",
             "urbano",
             "trap"
       ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/d98eaccfbb945bdf68241d6de7fe6a49/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/1/5/d/0/15d0efce36a178ade02773a1a9792e43.mp3?hdnea=exp=1790665567~acl=/api/1/1/1/5/d/0/15d0efce36a178ade02773a1a9792e43.mp3*~data=user_id=0,application_id=42~hmac=82961d665639264020a1d652106819f0f5d04aca1ca0eed7f8aa199f61dd4dd2",
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music114/v4/a8/5d/7c/a85d7c43-777a-f2b7-5abc-1e4d59d8fe7c/193483903545.jpg/600x600bb.jpg",
+      "itunesTrackId": "1465503235",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/93/3e/d7/933ed72c-f24f-ad7a-e91b-8a35ccc75372/mzaf_485263337566130707.plus.aac.p.m4a",
       "aliases": [
-            "veldá"
+            "callaíta"
       ]
     }),
     song({
-      "id": "bad-bunny-kloufrens",
-      "title": "KLOuFRENS",
+      "id": "bad-bunny-la-cancion",
+      "title": "LA CANCIÓN",
       "artistId": "bad-bunny",
-      "albumId": "debi-tirar-mas-fotos",
-      "year": 2025,
+      "albumId": "oasis",
+      "year": 2019,
       "genreIds": [
             "reggaeton",
             "urbano",
             "trap"
       ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/d98eaccfbb945bdf68241d6de7fe6a49/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/5/b/e/0/5becfef7455f92527682bbc8d7b6a2d3.mp3?hdnea=exp=1790665567~acl=/api/1/1/5/b/e/0/5becfef7455f92527682bbc8d7b6a2d3.mp3*~data=user_id=0,application_id=42~hmac=d44d8d05421b4b42dbaf7cd4d997475a248448cccd21e731e80db197099a1506",
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/77/32/74/7732746d-25e5-baae-b921-bad4a07d87b1/19UMGIM55524.rgb.jpg/600x600bb.jpg",
+      "itunesTrackId": "1470146813",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/cf/5f/ef/cf5fef49-8ab0-0d0b-f17a-d820cdca1d88/mzaf_3693019759359818051.plus.aac.p.m4a",
       "aliases": [
-            "kloufrens"
-      ]
-    }),
-    song({
-      "id": "bad-bunny-lo-siento-bb",
-      "title": "Lo Siento BB:/",
-      "artistId": "bad-bunny",
-      "albumId": "lo-siento-bb",
-      "year": 2021,
-      "genreIds": [
-            "reggaeton",
-            "urbano",
-            "trap"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/5261151d57457f99099b503e6c56aa0d/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/f/f/3/0/ff3bd83556bd56bbe01836a1e5b6f351.mp3?hdnea=exp=1790665567~acl=/api/1/1/f/f/3/0/ff3bd83556bd56bbe01836a1e5b6f351.mp3*~data=user_id=0,application_id=42~hmac=788ec03875865ae15f47f1258b24215769a5ac15927e4b08ab09408bdf164055",
-      "aliases": [
-            "lo siento bb:/",
-            "lo siento bb"
-      ]
-    }),
-    song({
-      "id": "bad-bunny-dakiti",
-      "title": "DÁKITI",
-      "artistId": "bad-bunny",
-      "albumId": "dakiti",
-      "year": 2020,
-      "genreIds": [
-            "reggaeton",
-            "urbano",
-            "trap"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/aa6aa7ac356ad9d6c578cccd1a62c394/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/3/e/2/0/3e2cd76ded3d57e923855a7e41a7a9ec.mp3?hdnea=exp=1790665567~acl=/api/1/1/3/e/2/0/3e2cd76ded3d57e923855a7e41a7a9ec.mp3*~data=user_id=0,application_id=42~hmac=111eaafb3ac4b84eef254b7f8aa0f45c903fab2f754591547427292033e9ea85",
-      "aliases": [
-            "dákiti"
-      ]
-    }),
-    song({
-      "id": "bad-bunny-voy-a-llevarte-pa-pr",
-      "title": "VOY A LLeVARTE PA PR",
-      "artistId": "bad-bunny",
-      "albumId": "debi-tirar-mas-fotos",
-      "year": 2025,
-      "genreIds": [
-            "reggaeton",
-            "urbano",
-            "trap"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/d98eaccfbb945bdf68241d6de7fe6a49/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/7/5/6/0/7567182fa78f3ab4ec52b4e67c2cd9fe.mp3?hdnea=exp=1790665567~acl=/api/1/1/7/5/6/0/7567182fa78f3ab4ec52b4e67c2cd9fe.mp3*~data=user_id=0,application_id=42~hmac=2ead2547d9652fc360123f559300a82529e1754108d50cd1a321208374c7f27a",
-      "aliases": [
-            "voy a llevarte pa pr"
-      ]
-    }),
-    song({
-      "id": "bad-bunny-efecto",
-      "title": "Efecto",
-      "artistId": "bad-bunny",
-      "albumId": "un-verano-sin-ti",
-      "year": 2022,
-      "genreIds": [
-            "reggaeton",
-            "urbano",
-            "trap"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/b29d1070377b784384c2456093f96a66/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/5/5/f/0/55f539495f3ba38bcf5065811c76d23f.mp3?hdnea=exp=1790665567~acl=/api/1/1/5/5/f/0/55f539495f3ba38bcf5065811c76d23f.mp3*~data=user_id=0,application_id=42~hmac=0d2e7d59c6100f766ed1aade931fd58eec3e87b0f36e5db817efb0918a6c1494",
-      "aliases": [
-            "efecto"
-      ]
-    }),
-    song({
-      "id": "bad-bunny-diles",
-      "title": "Diles",
-      "artistId": "bad-bunny",
-      "albumId": "diles",
-      "year": 2016,
-      "genreIds": [
-            "reggaeton",
-            "urbano",
-            "trap"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/bbaf1244f46c20276b04a95ccb79f21b/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/b/8/f/0/b8fcae54bd0148b32b8ef063afa2257e.mp3?hdnea=exp=1790665567~acl=/api/1/1/b/8/f/0/b8fcae54bd0148b32b8ef063afa2257e.mp3*~data=user_id=0,application_id=42~hmac=a10711223de279c3b3f5be07954cb0fcffe290332eec3513c643b701584ebf83",
-      "aliases": [
-            "diles"
-      ]
-    }),
-    song({
-      "id": "bad-bunny-la-santa",
-      "title": "La Santa",
-      "artistId": "bad-bunny",
-      "albumId": "yhlqmdlg",
-      "year": 2020,
-      "genreIds": [
-            "reggaeton",
-            "urbano",
-            "trap"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/0a6f32569d4785c5ef82f581086f4302/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/7/e/3/0/7e3c6ab4e2ce7967e8773de35a854360.mp3?hdnea=exp=1790665567~acl=/api/1/1/7/e/3/0/7e3c6ab4e2ce7967e8773de35a854360.mp3*~data=user_id=0,application_id=42~hmac=fe87cb8d08c64cf0e8b18e1c088575cfe2d771f11b3a995bdd770bc15d9a173b",
-      "aliases": [
-            "la santa"
-      ]
-    }),
-    song({
-      "id": "bad-bunny-otro-atardecer",
-      "title": "Otro Atardecer",
-      "artistId": "bad-bunny",
-      "albumId": "un-verano-sin-ti",
-      "year": 2022,
-      "genreIds": [
-            "reggaeton",
-            "urbano",
-            "trap"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/b29d1070377b784384c2456093f96a66/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/b/1/0/0/b102c7bd70852108e989eac6542ab708.mp3?hdnea=exp=1790665567~acl=/api/1/1/b/1/0/0/b102c7bd70852108e989eac6542ab708.mp3*~data=user_id=0,application_id=42~hmac=5d63751a7b8ff2684c3df0679b58c974ebd2c55cbae1f2806ec1556efc516e47",
-      "aliases": [
-            "otro atardecer"
-      ]
-    }),
-    song({
-      "id": "bad-bunny-party",
-      "title": "Party",
-      "artistId": "bad-bunny",
-      "albumId": "un-verano-sin-ti",
-      "year": 2022,
-      "genreIds": [
-            "reggaeton",
-            "urbano",
-            "trap"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/b29d1070377b784384c2456093f96a66/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/d/2/6/0/d269c532ca354df7f96701370fbd0c90.mp3?hdnea=exp=1790665567~acl=/api/1/1/d/2/6/0/d269c532ca354df7f96701370fbd0c90.mp3*~data=user_id=0,application_id=42~hmac=5f4159eff50aec14aefe2f09db17e0f7924383ec8145df9d0eee77e5923bf3db",
-      "aliases": [
-            "party"
-      ]
-    }),
-    song({
-      "id": "bad-bunny-perro-negro",
-      "title": "PERRO NEGRO",
-      "artistId": "bad-bunny",
-      "albumId": "nadie-sabe-lo-que-va-a-pasar-manana",
-      "year": 2023,
-      "genreIds": [
-            "reggaeton",
-            "urbano",
-            "trap"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/f840891b70f6e240b8ecaec49346bd6a/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/4/7/7/0/47705dde793f0f437f2b7481e69c7168.mp3?hdnea=exp=1790665567~acl=/api/1/1/4/7/7/0/47705dde793f0f437f2b7481e69c7168.mp3*~data=user_id=0,application_id=42~hmac=2efc749f14c69aa2ddf996db2ec5cb9be876e52e293835f473f40c0d77bfdf47",
-      "aliases": [
-            "perro negro"
-      ]
-    }),
-    song({
-      "id": "bad-bunny-yonaguni",
-      "title": "Yonaguni",
-      "artistId": "bad-bunny",
-      "albumId": "yonaguni",
-      "year": 2021,
-      "genreIds": [
-            "reggaeton",
-            "urbano",
-            "trap"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/3aa544b9653b10aedcf7eb41d61b22df/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/a/a/d/0/aadd326c25cc04db60ef0e824170ae86.mp3?hdnea=exp=1790665567~acl=/api/1/1/a/a/d/0/aadd326c25cc04db60ef0e824170ae86.mp3*~data=user_id=0,application_id=42~hmac=dda54cfd6c97f872ae1cfe67b086f190116e637b43aa3442922e648d3480bac3",
-      "aliases": [
-            "yonaguni"
+            "la canción"
       ]
     }),
     song({
@@ -1686,100 +1738,16 @@ export const seedCatalog = {
             "urbano",
             "trap"
       ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/f840891b70f6e240b8ecaec49346bd6a/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/c/9/2/0/c92ce490d3fd16ae863e1c8af00991d3.mp3?hdnea=exp=1790665567~acl=/api/1/1/c/9/2/0/c92ce490d3fd16ae863e1c8af00991d3.mp3*~data=user_id=0,application_id=42~hmac=11aaf6f483fd595a014866313f42bf7ba9fad2d2f40b607c7fb2b1866ebbeb3c",
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/00/e0/31/00e0311e-9dab-fd0c-fc37-ee3d36aafbf3/197190137897.jpg/600x600bb.jpg",
+      "itunesTrackId": "1710982872",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/aa/20/e1/aa20e16d-6a31-75d8-f929-b3d15402d014/mzaf_17931258878377910738.plus.aac.p.m4a",
       "aliases": [
             "monaco"
       ]
     }),
     song({
-      "id": "bad-bunny-neverita",
-      "title": "Neverita",
-      "artistId": "bad-bunny",
-      "albumId": "un-verano-sin-ti",
-      "year": 2022,
-      "genreIds": [
-            "reggaeton",
-            "urbano",
-            "trap"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/b29d1070377b784384c2456093f96a66/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/0/d/b/0/0db9b39a81cba738fb10a48fec65dee0.mp3?hdnea=exp=1790665567~acl=/api/1/1/0/d/b/0/0db9b39a81cba738fb10a48fec65dee0.mp3*~data=user_id=0,application_id=42~hmac=8bcbb4142584e8b120d62eb40ae8309c047a8c638d4e86a9f6b5b3933b03b84e",
-      "aliases": [
-            "neverita"
-      ]
-    }),
-    song({
-      "id": "bad-bunny-callaita",
-      "title": "Callaita",
-      "artistId": "bad-bunny",
-      "albumId": "callaita",
-      "year": 2019,
-      "genreIds": [
-            "reggaeton",
-            "urbano",
-            "trap"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/53812cc43e108be37113c41a0ebdafaf/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/6/7/f/0/67f1c39d38e09c3cf9cf539cd7330290.mp3?hdnea=exp=1790665567~acl=/api/1/1/6/7/f/0/67f1c39d38e09c3cf9cf539cd7330290.mp3*~data=user_id=0,application_id=42~hmac=409764a4fc0722bee227036cc8516f05bf3d9d1c3b8cd2919c991fe0837cc91d",
-      "aliases": [
-            "callaita"
-      ]
-    }),
-    song({
-      "id": "bad-bunny-safaera",
-      "title": "Safaera",
-      "artistId": "bad-bunny",
-      "albumId": "yhlqmdlg",
-      "year": 2020,
-      "genreIds": [
-            "reggaeton",
-            "urbano",
-            "trap"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/0a6f32569d4785c5ef82f581086f4302/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/b/8/a/0/b8a056424b83afea8bf564723f467a8f.mp3?hdnea=exp=1790665567~acl=/api/1/1/b/8/a/0/b8a056424b83afea8bf564723f467a8f.mp3*~data=user_id=0,application_id=42~hmac=a0e3d1b247319d234d8cb34d987cdeb3793e1a52baef9433385c7ef1e04d1310",
-      "aliases": [
-            "safaera"
-      ]
-    }),
-    song({
-      "id": "bad-bunny-la-jumpa",
-      "title": "La Jumpa",
-      "artistId": "bad-bunny",
-      "albumId": "la-jumpa",
-      "year": 2022,
-      "genreIds": [
-            "reggaeton",
-            "urbano",
-            "trap"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/a7e2ae00511098f427217faebb5352f9/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/6/4/a/0/64a1c26b45fb9a1d85f876bd9fad92aa.mp3?hdnea=exp=1790665567~acl=/api/1/1/6/4/a/0/64a1c26b45fb9a1d85f876bd9fad92aa.mp3*~data=user_id=0,application_id=42~hmac=dcca9106c4623dea84140f346dc0ada05e5948c2548161ddbe69c76af06627fd",
-      "aliases": [
-            "la jumpa"
-      ]
-    }),
-    song({
-      "id": "bad-bunny-andrea",
-      "title": "Andrea",
-      "artistId": "bad-bunny",
-      "albumId": "un-verano-sin-ti",
-      "year": 2022,
-      "genreIds": [
-            "reggaeton",
-            "urbano",
-            "trap"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/b29d1070377b784384c2456093f96a66/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/4/4/5/0/445801ed1d75a34359ac7028cc1e0e2d.mp3?hdnea=exp=1790665567~acl=/api/1/1/4/4/5/0/445801ed1d75a34359ac7028cc1e0e2d.mp3*~data=user_id=0,application_id=42~hmac=7eaea58e102e5ecfac215a29d97becc297e54cebd444ab0d52c3d94578dd159c",
-      "aliases": [
-            "andrea"
-      ]
-    }),
-    song({
-      "id": "bad-bunny-weltita",
-      "title": "WELTiTA",
+      "id": "bad-bunny-dtmf",
+      "title": "DtMF",
       "artistId": "bad-bunny",
       "albumId": "debi-tirar-mas-fotos",
       "year": 2025,
@@ -1788,197 +1756,11 @@ export const seedCatalog = {
             "urbano",
             "trap"
       ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/d98eaccfbb945bdf68241d6de7fe6a49/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/3/8/c/0/38c3361b3916e1810fa9513004c2c320.mp3?hdnea=exp=1790665567~acl=/api/1/1/3/8/c/0/38c3361b3916e1810fa9513004c2c320.mp3*~data=user_id=0,application_id=42~hmac=c9ec4a0940efba3c51c7fd352f44dd231fa0a16157718a70140eff27413db2b4",
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/90/5e/7e/905e7ed5-a8fa-a8f3-cd06-0028fdf3afaa/199066342442.jpg/600x600bb.jpg",
+      "itunesTrackId": "1787023936",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/d9/ea/9c/d9ea9c1c-4b31-c448-0882-f9bae822e1fd/mzaf_3206041669449949150.plus.aac.p.m4a",
       "aliases": [
-            "weltita"
-      ]
-    }),
-    song({
-      "id": "bad-bunny-me-fui-de-vacaciones",
-      "title": "Me Fui de Vacaciones",
-      "artistId": "bad-bunny",
-      "albumId": "un-verano-sin-ti",
-      "year": 2022,
-      "genreIds": [
-            "reggaeton",
-            "urbano",
-            "trap"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/b29d1070377b784384c2456093f96a66/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/b/5/f/0/b5fae0ef6066cda574cd15deb6aa39f8.mp3?hdnea=exp=1790665567~acl=/api/1/1/b/5/f/0/b5fae0ef6066cda574cd15deb6aa39f8.mp3*~data=user_id=0,application_id=42~hmac=36240ace437de803c78ea303bff68a307311c2e78f3c1a1f5524559991ba12bb",
-      "aliases": [
-            "me fui de vacaciones"
-      ]
-    }),
-    song({
-      "id": "bad-bunny-un-peso",
-      "title": "UN PESO",
-      "artistId": "bad-bunny",
-      "albumId": "oasis",
-      "year": 2019,
-      "genreIds": [
-            "reggaeton",
-            "urbano",
-            "trap"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/ef1cb84fc7b70a390d80af20768cf065/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/2/5/0/0/250cf06900495773a203121307f46aac.mp3?hdnea=exp=1790665567~acl=/api/1/1/2/5/0/0/250cf06900495773a203121307f46aac.mp3*~data=user_id=0,application_id=42~hmac=33fc6d98e08a3983c454413dd72b63e107eae336f510007393319edfa6800a87",
-      "aliases": [
-            "un peso"
-      ]
-    }),
-    song({
-      "id": "bad-bunny-adivino",
-      "title": "ADIVINO",
-      "artistId": "bad-bunny",
-      "albumId": "adivino",
-      "year": 2024,
-      "genreIds": [
-            "reggaeton",
-            "urbano",
-            "trap"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/7d4bfd96b8744fc8ca9b475c81254418/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/1/8/c/0/18c674915ce5038d1788e8b0e3f66eee.mp3?hdnea=exp=1790665567~acl=/api/1/1/1/8/c/0/18c674915ce5038d1788e8b0e3f66eee.mp3*~data=user_id=0,application_id=42~hmac=cdb532a58599bde52664eb884251e17a28ff23c7a386e4763a16d46094260a15",
-      "aliases": [
-            "adivino"
-      ]
-    }),
-    song({
-      "id": "bad-bunny-si-veo-a-tu-mama",
-      "title": "Si Veo a Tu Mamá",
-      "artistId": "bad-bunny",
-      "albumId": "yhlqmdlg",
-      "year": 2020,
-      "genreIds": [
-            "reggaeton",
-            "urbano",
-            "trap"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/0a6f32569d4785c5ef82f581086f4302/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/0/0/e/0/00e7201b277f7ba746bf0231d3bbf302.mp3?hdnea=exp=1790665567~acl=/api/1/1/0/0/e/0/00e7201b277f7ba746bf0231d3bbf302.mp3*~data=user_id=0,application_id=42~hmac=e4cc11bc04ef9c335ccc1c38e602815561f8e56c619cbc69a3f4a701a39f5282",
-      "aliases": [
-            "si veo a tu mamá"
-      ]
-    }),
-    song({
-      "id": "bad-bunny-la-noche-de-anoche",
-      "title": "LA NOCHE DE ANOCHE",
-      "artistId": "bad-bunny",
-      "albumId": "el-ultimo-tour-del-mundo",
-      "year": 2020,
-      "genreIds": [
-            "reggaeton",
-            "urbano",
-            "trap"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/6ea80078f0df08737a7471f3c4cf2afa/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/7/6/1/0/761d369d9d53f6324ca8b5a2abd1d24c.mp3?hdnea=exp=1790665567~acl=/api/1/1/7/6/1/0/761d369d9d53f6324ca8b5a2abd1d24c.mp3*~data=user_id=0,application_id=42~hmac=d576fa88ffe82765ebdde9c045fc303eea80e403192c25b5b07ab63741deb4c3",
-      "aliases": [
-            "la noche de anoche"
-      ]
-    }),
-    song({
-      "id": "bad-bunny-un-coco",
-      "title": "Un Coco",
-      "artistId": "bad-bunny",
-      "albumId": "un-verano-sin-ti",
-      "year": 2022,
-      "genreIds": [
-            "reggaeton",
-            "urbano",
-            "trap"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/b29d1070377b784384c2456093f96a66/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/7/2/b/0/72b720eaf0fb42263b77a0e0cacdb3d2.mp3?hdnea=exp=1790665567~acl=/api/1/1/7/2/b/0/72b720eaf0fb42263b77a0e0cacdb3d2.mp3*~data=user_id=0,application_id=42~hmac=d93702ab50048441cee1550d77f1c06c3df4990b78c45ac0b2e86e4093108820",
-      "aliases": [
-            "un coco"
-      ]
-    }),
-    song({
-      "id": "bad-bunny-ensename-a-bailar",
-      "title": "Enséñame a Bailar",
-      "artistId": "bad-bunny",
-      "albumId": "un-verano-sin-ti",
-      "year": 2022,
-      "genreIds": [
-            "reggaeton",
-            "urbano",
-            "trap"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/b29d1070377b784384c2456093f96a66/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/e/a/6/0/ea61fe884d550ef749884d9b4f6a27f5.mp3?hdnea=exp=1790665567~acl=/api/1/1/e/a/6/0/ea61fe884d550ef749884d9b4f6a27f5.mp3*~data=user_id=0,application_id=42~hmac=ea61533833ea5e265780f684c3d0d395a2f3e7b47b243b2878e561a89066d892",
-      "aliases": [
-            "enséñame a bailar"
-      ]
-    }),
-    song({
-      "id": "bad-bunny-que-pretendes",
-      "title": "QUE PRETENDES",
-      "artistId": "bad-bunny",
-      "albumId": "oasis",
-      "year": 2019,
-      "genreIds": [
-            "reggaeton",
-            "urbano",
-            "trap"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/ef1cb84fc7b70a390d80af20768cf065/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/e/0/2/0/e02bf119f9e728bc1e72d4434a684692.mp3?hdnea=exp=1790665567~acl=/api/1/1/e/0/2/0/e02bf119f9e728bc1e72d4434a684692.mp3*~data=user_id=0,application_id=42~hmac=76f034907c4e69885cd0d4d1abe2231b9587d1cc2cd667c6d0aef5ca6d93c697",
-      "aliases": [
-            "que pretendes"
-      ]
-    }),
-    song({
-      "id": "bad-bunny-gato-de-noche",
-      "title": "Gato de Noche",
-      "artistId": "bad-bunny",
-      "albumId": "gato-de-noche",
-      "year": 2022,
-      "genreIds": [
-            "reggaeton",
-            "urbano",
-            "trap"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/7db2ad9c1b84dff597f4c5dc280f9abc/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/4/0/3/0/40333b913ee680c6fd0febea98f0f048.mp3?hdnea=exp=1790665567~acl=/api/1/1/4/0/3/0/40333b913ee680c6fd0febea98f0f048.mp3*~data=user_id=0,application_id=42~hmac=433d8250c780ef2b1ff10066b1fb07e83285030206af4eb20af5091595968dc2",
-      "aliases": [
-            "gato de noche"
-      ]
-    }),
-    song({
-      "id": "bad-bunny-otra-noche-en-miami",
-      "title": "Otra Noche en Miami",
-      "artistId": "bad-bunny",
-      "albumId": "x-100pre",
-      "year": 2018,
-      "genreIds": [
-            "reggaeton",
-            "urbano",
-            "trap"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/72213221ed4529431857d42f6be61d56/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/0/f/1/0/0f1cd8ca675a475d77942c289e43c047.mp3?hdnea=exp=1790665567~acl=/api/1/1/0/f/1/0/0f1cd8ca675a475d77942c289e43c047.mp3*~data=user_id=0,application_id=42~hmac=69d547ce27987b553ab495d411d07406dc0bfb46e50529e2877725fc2120357f",
-      "aliases": [
-            "otra noche en miami"
-      ]
-    }),
-    song({
-      "id": "bad-bunny-dos-mil-16",
-      "title": "Dos Mil 16",
-      "artistId": "bad-bunny",
-      "albumId": "un-verano-sin-ti",
-      "year": 2022,
-      "genreIds": [
-            "reggaeton",
-            "urbano",
-            "trap"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/b29d1070377b784384c2456093f96a66/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/5/4/e/0/54e30c2d3e3c84b0dbf338e6439322b9.mp3?hdnea=exp=1790665567~acl=/api/1/1/5/4/e/0/54e30c2d3e3c84b0dbf338e6439322b9.mp3*~data=user_id=0,application_id=42~hmac=5c4b06ff5ed4eed1566d43a80375124defbf42d6237a3518314f82a58971c5b4",
-      "aliases": [
-            "dos mil 16"
+            "dtmf"
       ]
     }),
     song({
@@ -1992,15 +1774,93 @@ export const seedCatalog = {
             "urbano",
             "trap"
       ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/0a6f32569d4785c5ef82f581086f4302/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/8/3/3/0/833050d88f3aa1aedf4d32bfa154a846.mp3?hdnea=exp=1790665567~acl=/api/1/1/8/3/3/0/833050d88f3aa1aedf4d32bfa154a846.mp3*~data=user_id=0,application_id=42~hmac=5f907637076a5263149866dfa62755ac8c4ef2e777bae7afff938aff6a0cc080",
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music114/v4/8c/0f/81/8c0f81f2-9f10-5e3d-b9de-5961a73e8e52/195081078724.jpg/600x600bb.jpg",
+      "itunesTrackId": "1500776331",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/dd/45/0c/dd450c77-20ac-97a8-4b6f-189de32647b5/mzaf_3088503985720431976.plus.aac.p.m4a",
       "aliases": [
             "yo perreo sola"
       ]
     }),
     song({
-      "id": "bad-bunny-un-ratito",
-      "title": "Un Ratito",
+      "id": "bad-bunny-un-x100to",
+      "title": "un x100to",
+      "artistId": "bad-bunny",
+      "albumId": "un-x100to-single",
+      "year": 2023,
+      "genreIds": [
+            "reggaeton",
+            "urbano",
+            "trap"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music116/v4/b6/74/4d/b6744dbd-77ed-413a-3777-5ac6a2e780eb/197188732554.jpg/600x600bb.jpg",
+      "itunesTrackId": "1682500319",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/af/44/ac/af44ac2f-9dbe-a956-f529-8311b618074e/mzaf_892284930014907127.plus.aac.p.m4a",
+      "aliases": [
+            "un x100to"
+      ]
+    }),
+    song({
+      "id": "bad-bunny-dura-remix",
+      "title": "Dura (feat. Natti Natasha, Becky G. & Bad Bunny) [Remix]",
+      "artistId": "bad-bunny",
+      "albumId": "dura-remix-feat-natti-natasha-becky-g-bad-bunny-single",
+      "year": 2018,
+      "genreIds": [
+            "reggaeton",
+            "urbano",
+            "trap"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music124/v4/98/83/65/988365e4-2539-d741-5744-bc8329cee86e/00602567683636.rgb.jpg/600x600bb.jpg",
+      "itunesTrackId": "1376379642",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/b0/b4/9a/b0b49adb-f044-7b4f-00fd-4aa2aff52e79/mzaf_7536881629110733610.plus.aac.p.m4a",
+      "aliases": [
+            "dura (feat. natti natasha, becky g. & bad bunny) [remix]",
+            "dura [remix]",
+            "dura feat natti natasha becky g bad bunny remix",
+            "dura remix"
+      ]
+    }),
+    song({
+      "id": "bad-bunny-yonaguni",
+      "title": "Yonaguni",
+      "artistId": "bad-bunny",
+      "albumId": "yonaguni-single",
+      "year": 2021,
+      "genreIds": [
+            "reggaeton",
+            "urbano",
+            "trap"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/b6/12/da/b612daba-6c68-c2ab-7492-fb2e079074d5/196006829308.jpg/600x600bb.jpg",
+      "itunesTrackId": "1570323056",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/49/b9/6b/49b96b1c-aeee-7e22-ce0a-be17bab4a864/mzaf_5470366028981689473.plus.aac.p.m4a",
+      "aliases": [
+            "yonaguni"
+      ]
+    }),
+    song({
+      "id": "bad-bunny-la-romana",
+      "title": "La Romana (feat. El Alfa)",
+      "artistId": "bad-bunny",
+      "albumId": "x-100pre",
+      "year": 2018,
+      "genreIds": [
+            "reggaeton",
+            "urbano",
+            "trap"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music126/v4/cf/3a/db/cf3adbe6-8ea1-f60f-60fd-713eefda3962/193483317984.jpg/600x600bb.jpg",
+      "itunesTrackId": "1447554992",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/67/68/da/6768da23-2a87-1a61-3e0c-6343bbf7def2/mzaf_12566167496288218150.plus.aac.p.m4a",
+      "aliases": [
+            "la romana (feat. el alfa)",
+            "la romana",
+            "la romana feat el alfa"
+      ]
+    }),
+    song({
+      "id": "bad-bunny-ojitos-lindos",
+      "title": "Ojitos Lindos",
       "artistId": "bad-bunny",
       "albumId": "un-verano-sin-ti",
       "year": 2022,
@@ -2009,66 +1869,34 @@ export const seedCatalog = {
             "urbano",
             "trap"
       ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/b29d1070377b784384c2456093f96a66/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/5/f/7/0/5f7ba84f559707a314f264e72565676a.mp3?hdnea=exp=1790665567~acl=/api/1/1/5/f/7/0/5f7ba84f559707a314f264e72565676a.mp3*~data=user_id=0,application_id=42~hmac=bb41f81404dfa28dc0aeed0744a6b687badb532d2244e21abb13cb0eea5f5170",
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music112/v4/3e/04/eb/3e04ebf6-370f-f59d-ec84-2c2643db92f1/196626945068.jpg/600x600bb.jpg",
+      "itunesTrackId": "1622045962",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/72/ae/81/72ae81c2-4ef3-b998-40b6-563c0609509f/mzaf_12868850384306577273.plus.aac.p.m4a",
       "aliases": [
-            "un ratito"
+            "ojitos lindos"
       ]
     }),
     song({
-      "id": "bad-bunny-mayores",
-      "title": "Mayores",
+      "id": "bad-bunny-krippy-kush",
+      "title": "Krippy Kush",
       "artistId": "bad-bunny",
-      "albumId": "mala-santa",
-      "year": 2019,
-      "genreIds": [
-            "reggaeton",
-            "urbano",
-            "trap"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/39fe1c12b2803537b35eec48c9bf5d4e/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/7/4/c/0/74c486c688883a179a5718b89b0fe4ce.mp3?hdnea=exp=1790665567~acl=/api/1/1/7/4/c/0/74c486c688883a179a5718b89b0fe4ce.mp3*~data=user_id=0,application_id=42~hmac=04aad5496af6a2f67e10def66c740b3c534fec2cae6b1a06285d93c0383c99af",
-      "aliases": [
-            "mayores"
-      ]
-    }),
-    song({
-      "id": "bad-bunny-where-she-goes",
-      "title": "WHERE SHE GOES",
-      "artistId": "bad-bunny",
-      "albumId": "where-she-goes",
-      "year": 2023,
-      "genreIds": [
-            "reggaeton",
-            "urbano",
-            "trap"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/70b2fbb08f3b42fcbcd53039b7415d00/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/c/c/c/0/cccf5d8a0eb14710f36b1ef07f01e8b8.mp3?hdnea=exp=1790665567~acl=/api/1/1/c/c/c/0/cccf5d8a0eb14710f36b1ef07f01e8b8.mp3*~data=user_id=0,application_id=42~hmac=e9a52ac7287961dc60f9701e756477ab658c41ac8d25da1e3462811afeaee612",
-      "aliases": [
-            "where she goes"
-      ]
-    }),
-    song({
-      "id": "bad-bunny-sensualidad",
-      "title": "Sensualidad",
-      "artistId": "bad-bunny",
-      "albumId": "sensualidad",
+      "albumId": "trapxficante",
       "year": 2017,
       "genreIds": [
             "reggaeton",
             "urbano",
             "trap"
       ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/51da6004b3e2d63652afba61877da386/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/b/c/7/0/bc74b3015f12a3155ce31476706fb7ba.mp3?hdnea=exp=1790665567~acl=/api/1/1/b/c/7/0/bc74b3015f12a3155ce31476706fb7ba.mp3*~data=user_id=0,application_id=42~hmac=3745f223bfb4106a8df6a233b52f92fb7c01c90df0d18ce71b4b6a118755a9d5",
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/93/33/50/933350d5-0336-8c7e-7291-c329c1facb9e/886446349701.jpg/600x600bb.jpg",
+      "itunesTrackId": "1271533108",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/63/34/b8/6334b860-1e8c-1d1b-dea9-5b5b061c3282/mzaf_15452857219474660627.plus.aac.p.m4a",
       "aliases": [
-            "sensualidad"
+            "krippy kush"
       ]
     }),
     song({
-      "id": "bad-bunny-ketu-tecre",
-      "title": "KETU TeCRÉ",
+      "id": "bad-bunny-nuevayol",
+      "title": "NUEVAYoL",
       "artistId": "bad-bunny",
       "albumId": "debi-tirar-mas-fotos",
       "year": 2025,
@@ -2077,10 +1905,779 @@ export const seedCatalog = {
             "urbano",
             "trap"
       ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/d98eaccfbb945bdf68241d6de7fe6a49/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/e/0/4/0/e043c4461fa9d97144176863e12a5399.mp3?hdnea=exp=1790665567~acl=/api/1/1/e/0/4/0/e043c4461fa9d97144176863e12a5399.mp3*~data=user_id=0,application_id=42~hmac=547ba4c5cf24d4da1246a0fb0fb1dc2a5bc977010a65499a2ded63310a80d75d",
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/90/5e/7e/905e7ed5-a8fa-a8f3-cd06-0028fdf3afaa/199066342442.jpg/600x600bb.jpg",
+      "itunesTrackId": "1787022572",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/2e/97/55/2e97555a-1ed3-9e07-de57-07e1213186c9/mzaf_7594924455925081680.plus.aac.p.m4a",
       "aliases": [
-            "ketu tecré"
+            "nuevayol"
+      ]
+    }),
+    song({
+      "id": "bad-bunny-safaera",
+      "title": "Safaera",
+      "artistId": "bad-bunny",
+      "albumId": "yhlqmdlg",
+      "year": 2020,
+      "genreIds": [
+            "reggaeton",
+            "urbano",
+            "trap"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music114/v4/8c/0f/81/8c0f81f2-9f10-5e3d-b9de-5961a73e8e52/195081078724.jpg/600x600bb.jpg",
+      "itunesTrackId": "1500776935",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/dd/ba/e3/ddbae3c9-29ea-d596-96ba-dd322272c5f6/mzaf_14005940560076990317.plus.aac.p.m4a",
+      "aliases": [
+            "safaera"
+      ]
+    }),
+    song({
+      "id": "bad-bunny-sensualidad",
+      "title": "Sensualidad (feat. Mambo Kingz & DJ Luian)",
+      "artistId": "bad-bunny",
+      "albumId": "sensualidad-feat-mambo-kingz-dj-luian-single",
+      "year": 2017,
+      "genreIds": [
+            "reggaeton",
+            "urbano",
+            "trap"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music125/v4/a3/1a/e9/a31ae99b-9378-d004-a613-e8f7397f7a88/191773843489.jpg/600x600bb.jpg",
+      "itunesTrackId": "1299972308",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/b6/c4/e5/b6c4e5f9-b6db-331a-725c-2cfb6d88f60f/mzaf_5234489305622674042.plus.aac.p.m4a",
+      "aliases": [
+            "sensualidad (feat. mambo kingz & dj luian)",
+            "sensualidad",
+            "sensualidad feat mambo kingz dj luian"
+      ]
+    }),
+    song({
+      "id": "bad-bunny-party",
+      "title": "Party",
+      "artistId": "bad-bunny",
+      "albumId": "un-verano-sin-ti",
+      "year": 2022,
+      "genreIds": [
+            "reggaeton",
+            "urbano",
+            "trap"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music112/v4/3e/04/eb/3e04ebf6-370f-f59d-ec84-2c2643db92f1/196626945068.jpg/600x600bb.jpg",
+      "itunesTrackId": "1622045955",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/ea/e9/37/eae937e1-34a1-b47d-8f99-e725e30a51db/mzaf_12388599992272735639.plus.aac.p.m4a",
+      "aliases": [
+            "party"
+      ]
+    }),
+    song({
+      "id": "bad-bunny-volvi",
+      "title": "Volví",
+      "artistId": "bad-bunny",
+      "albumId": "volvi-single",
+      "year": 2021,
+      "genreIds": [
+            "reggaeton",
+            "urbano",
+            "trap"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music125/v4/26/f0/00/26f000c0-7e2d-9473-c92e-829727e1470c/196292218404.jpg/600x600bb.jpg",
+      "itunesTrackId": "1579190424",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/c4/95/7e/c4957ef2-87dd-89f6-f71a-b0a0117b4472/mzaf_7089843981118099963.plus.aac.p.m4a",
+      "aliases": [
+            "volví"
+      ]
+    }),
+    song({
+      "id": "bad-bunny-despues-de-la-playa",
+      "title": "Después de la Playa",
+      "artistId": "bad-bunny",
+      "albumId": "un-verano-sin-ti",
+      "year": 2022,
+      "genreIds": [
+            "reggaeton",
+            "urbano",
+            "trap"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music112/v4/3e/04/eb/3e04ebf6-370f-f59d-ec84-2c2643db92f1/196626945068.jpg/600x600bb.jpg",
+      "itunesTrackId": "1622045626",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/f6/c6/a0/f6c6a092-1690-3328-907d-280a8ba6adac/mzaf_4195200870757777362.plus.aac.p.m4a",
+      "aliases": [
+            "después de la playa"
+      ]
+    }),
+    song({
+      "id": "bad-bunny-un-dia-one-day",
+      "title": "UN DIA (ONE DAY)",
+      "artistId": "bad-bunny",
+      "albumId": "un-dia-one-day-single",
+      "year": 2020,
+      "genreIds": [
+            "reggaeton",
+            "urbano",
+            "trap"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music124/v4/c7/93/50/c793507d-c4df-4c05-80bb-3a02d9f95113/20UMGIM38540.rgb.jpg/600x600bb.jpg",
+      "itunesTrackId": "1523100120",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/40/d5/2b/40d52beb-0340-3cdd-87e2-381dc7d395ce/mzaf_15479019833935841785.plus.aac.p.m4a",
+      "aliases": [
+            "un dia (one day)",
+            "un dia one day"
+      ]
+    }),
+    song({
+      "id": "bad-bunny-la-noche-de-anoche",
+      "title": "LA NOCHE DE ANOCHE",
+      "artistId": "bad-bunny",
+      "albumId": "el-ultimo-tour-del-mundo",
+      "year": 2020,
+      "genreIds": [
+            "reggaeton",
+            "urbano",
+            "trap"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/64/70/1c/64701cff-71ed-912f-ce62-71d409f5e6ad/195497640560.jpg/600x600bb.jpg",
+      "itunesTrackId": "1542103215",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/e1/68/7d/e1687dbd-9fa8-6330-f8bc-9f2d539ab039/mzaf_6426845985048084789.plus.aac.p.m4a",
+      "aliases": [
+            "la noche de anoche"
+      ]
+    }),
+    song({
+      "id": "bad-bunny-solita",
+      "title": "Solita (feat. Bad Bunny, Wisin & Almighty)",
+      "artistId": "bad-bunny",
+      "albumId": "solita-feat-bad-bunny-wisin-almighty-single",
+      "year": 2016,
+      "genreIds": [
+            "reggaeton",
+            "urbano",
+            "trap"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/8e/2e/fa/8e2efa19-b0c2-fe40-6a4e-563505f4d652/192562129890.jpg/600x600bb.jpg",
+      "itunesTrackId": "1336752455",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/3b/6e/27/3b6e276c-b7bf-5a9d-5f2b-4338395627ce/mzaf_5338456261565874881.plus.aac.p.m4a",
+      "aliases": [
+            "solita (feat. bad bunny, wisin & almighty)",
+            "solita",
+            "solita feat bad bunny wisin almighty"
+      ]
+    }),
+    song({
+      "id": "bad-bunny-soltera-remix",
+      "title": "Soltera (Remix)",
+      "artistId": "bad-bunny",
+      "albumId": "soltera-remix-single",
+      "year": 2019,
+      "genreIds": [
+            "reggaeton",
+            "urbano",
+            "trap"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/88/a7/91/88a79117-a14c-7674-f4c9-34e23d8eafdd/192641311772_Cover.jpg/600x600bb.jpg",
+      "itunesTrackId": "1462982163",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/71/7b/d3/717bd38b-bf04-488d-de11-ce2cd390bbb2/mzaf_6652708260714977201.plus.aac.p.m4a",
+      "aliases": [
+            "soltera (remix)",
+            "soltera remix"
+      ]
+    }),
+    song({
+      "id": "bad-bunny-el-bano",
+      "title": "EL BAÑO (feat. Bad Bunny)",
+      "artistId": "bad-bunny",
+      "albumId": "el-bano-feat-bad-bunny-single",
+      "year": 2018,
+      "genreIds": [
+            "reggaeton",
+            "urbano",
+            "trap"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music125/v4/d8/58/41/d8584106-801b-3dd1-a396-c35888619191/886446929262.jpg/600x600bb.jpg",
+      "itunesTrackId": "1332868074",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/3d/f7/73/3df773d5-cd40-5953-8662-5d5e7d1c518e/mzaf_3076556046558396142.plus.aac.p.m4a",
+      "aliases": [
+            "el baño (feat. bad bunny)",
+            "el baño",
+            "el baño feat bad bunny"
+      ]
+    }),
+    song({
+      "id": "bad-bunny-mayores",
+      "title": "Mayores",
+      "artistId": "bad-bunny",
+      "albumId": "mala-santa",
+      "year": 2017,
+      "genreIds": [
+            "reggaeton",
+            "urbano",
+            "trap"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music125/v4/2b/65/69/2b6569c2-e825-cce3-f94a-c2cbe6e68c1f/886448075417.jpg/600x600bb.jpg",
+      "itunesTrackId": "1483618937",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/96/b0/96/96b096ae-a3c4-0331-30d9-8b176d632b67/mzaf_15072306116525560431.plus.aac.p.m4a",
+      "aliases": [
+            "mayores"
+      ]
+    }),
+    song({
+      "id": "bad-bunny-esta-rico",
+      "title": "Está Rico",
+      "artistId": "bad-bunny",
+      "albumId": "esta-rico-single",
+      "year": 2018,
+      "genreIds": [
+            "reggaeton",
+            "urbano",
+            "trap"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/b1/e2/3f/b1e23f6e-29ba-c816-cd4a-2f995c19a25d/886447345481.jpg/600x600bb.jpg",
+      "itunesTrackId": "1437321000",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/23/da/7b/23da7b05-6980-a9e4-9e7c-e5b3c9b91708/mzaf_7444114228010934273.plus.aac.p.m4a",
+      "aliases": [
+            "está rico"
+      ]
+    }),
+    song({
+      "id": "bad-bunny-si-veo-a-tu-mama",
+      "title": "Si Veo a Tu Mamá",
+      "artistId": "bad-bunny",
+      "albumId": "yhlqmdlg",
+      "year": 2020,
+      "genreIds": [
+            "reggaeton",
+            "urbano",
+            "trap"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music114/v4/8c/0f/81/8c0f81f2-9f10-5e3d-b9de-5961a73e8e52/195081078724.jpg/600x600bb.jpg",
+      "itunesTrackId": "1500776323",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/b3/cd/a2/b3cda27f-382a-ed21-b6b9-2d6d1d4c5bbe/mzaf_15368178672903748165.plus.aac.p.m4a",
+      "aliases": [
+            "si veo a tu mamá"
+      ]
+    }),
+    song({
+      "id": "bad-bunny-moscow-mule",
+      "title": "Moscow Mule",
+      "artistId": "bad-bunny",
+      "albumId": "un-verano-sin-ti",
+      "year": 2022,
+      "genreIds": [
+            "reggaeton",
+            "urbano",
+            "trap"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music112/v4/3e/04/eb/3e04ebf6-370f-f59d-ec84-2c2643db92f1/196626945068.jpg/600x600bb.jpg",
+      "itunesTrackId": "1622045625",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/9b/3a/85/9b3a85d7-3544-0a83-76cf-18dd022e143b/mzaf_2334221945359492587.plus.aac.p.m4a",
+      "aliases": [
+            "moscow mule"
+      ]
+    }),
+    song({
+      "id": "bad-bunny-baile-inolvidable",
+      "title": "BAILE INoLVIDABLE",
+      "artistId": "bad-bunny",
+      "albumId": "debi-tirar-mas-fotos",
+      "year": 2025,
+      "genreIds": [
+            "reggaeton",
+            "urbano",
+            "trap"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/90/5e/7e/905e7ed5-a8fa-a8f3-cd06-0028fdf3afaa/199066342442.jpg/600x600bb.jpg",
+      "itunesTrackId": "1787022842",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/3a/ea/38/3aea38e3-106b-db96-7beb-5d2bc02bdf70/mzaf_17568275540135957611.plus.aac.p.m4a",
+      "aliases": [
+            "baile inolvidable"
+      ]
+    }),
+    song({
+      "id": "bad-bunny-krippy-kush-remix-feat-21-savage-rvssian",
+      "title": "Krippy Kush (Remix) [feat. 21 Savage & Rvssian]",
+      "artistId": "bad-bunny",
+      "albumId": "krippy-kush-remix-feat-21-savage-rvssian-single",
+      "year": 2017,
+      "genreIds": [
+            "reggaeton",
+            "urbano",
+            "trap"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music118/v4/99/2b/9d/992b9d6b-aa73-ac67-438c-990a3ca932e2/886446848471.jpg/600x600bb.jpg",
+      "itunesTrackId": "1313403609",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/2b/46/6d/2b466da2-487b-b42f-b318-e0d149cffc25/mzaf_11961723781377844244.plus.aac.p.m4a",
+      "aliases": [
+            "krippy kush (remix) [feat. 21 savage & rvssian]",
+            "krippy kush remix feat 21 savage rvssian"
+      ]
+    }),
+    song({
+      "id": "bad-bunny-tu-no-vive-asi",
+      "title": "Tú No Vive Así (feat. Mambo Kingz & DJ Luian)",
+      "artistId": "bad-bunny",
+      "albumId": "tu-no-vive-asi-feat-mambo-kingz-dj-luian-single",
+      "year": 2016,
+      "genreIds": [
+            "reggaeton",
+            "urbano",
+            "trap"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music125/v4/8b/19/44/8b194436-ac9c-6864-d076-8fe75593340f/859718413691_cover.jpg/600x600bb.jpg",
+      "itunesTrackId": "1160905971",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/3b/52/51/3b52512e-4017-3c2a-1c92-1e5d77748425/mzaf_18130993587164176053.plus.aac.p.m4a",
+      "aliases": [
+            "tú no vive así (feat. mambo kingz & dj luian)",
+            "tú no vive así",
+            "tú no vive así feat mambo kingz dj luian"
+      ]
+    }),
+    song({
+      "id": "bad-bunny-que-pretendes",
+      "title": "QUÉ PRETENDES",
+      "artistId": "bad-bunny",
+      "albumId": "oasis",
+      "year": 2019,
+      "genreIds": [
+            "reggaeton",
+            "urbano",
+            "trap"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/77/32/74/7732746d-25e5-baae-b921-bad4a07d87b1/19UMGIM55524.rgb.jpg/600x600bb.jpg",
+      "itunesTrackId": "1470146805",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/9a/27/25/9a2725fe-b8a3-1e27-f0e5-1372969d4677/mzaf_3228593275219281054.plus.aac.p.m4a",
+      "aliases": [
+            "qué pretendes"
+      ]
+    }),
+    song({
+      "id": "bad-bunny-ni-bien-ni-mal",
+      "title": "NI BIEN NI MAL",
+      "artistId": "bad-bunny",
+      "albumId": "x-100pre",
+      "year": 2018,
+      "genreIds": [
+            "reggaeton",
+            "urbano",
+            "trap"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music126/v4/cf/3a/db/cf3adbe6-8ea1-f60f-60fd-713eefda3962/193483317984.jpg/600x600bb.jpg",
+      "itunesTrackId": "1447554607",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/97/a7/dc/97a7dc0b-3412-8bf9-6d3d-affa5cce0ac6/mzaf_14104158146329838429.plus.aac.p.m4a",
+      "aliases": [
+            "ni bien ni mal"
+      ]
+    }),
+    song({
+      "id": "bad-bunny-where-she-goes",
+      "title": "WHERE SHE GOES",
+      "artistId": "bad-bunny",
+      "albumId": "where-she-goes-single",
+      "year": 2023,
+      "genreIds": [
+            "reggaeton",
+            "urbano",
+            "trap"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music116/v4/ad/b7/0e/adb70ef8-c456-3b31-136c-450d196d7cda/197188909819.jpg/600x600bb.jpg",
+      "itunesTrackId": "1687809996",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/1b/a9/b7/1ba9b780-3e00-aa39-398f-90ac5553ee57/mzaf_5865009104556120014.plus.aac.p.m4a",
+      "aliases": [
+            "where she goes"
+      ]
+    }),
+    song({
+      "id": "bad-bunny-efecto",
+      "title": "Efecto",
+      "artistId": "bad-bunny",
+      "albumId": "un-verano-sin-ti",
+      "year": 2022,
+      "genreIds": [
+            "reggaeton",
+            "urbano",
+            "trap"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music112/v4/3e/04/eb/3e04ebf6-370f-f59d-ec84-2c2643db92f1/196626945068.jpg/600x600bb.jpg",
+      "itunesTrackId": "1622045954",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/4e/ec/7b/4eec7bd9-982c-bb39-4acb-77d724502e8a/mzaf_9582878707075648609.plus.aac.p.m4a",
+      "aliases": [
+            "efecto"
+      ]
+    }),
+    song({
+      "id": "bad-bunny-eoo",
+      "title": "EoO",
+      "artistId": "bad-bunny",
+      "albumId": "debi-tirar-mas-fotos",
+      "year": 2025,
+      "genreIds": [
+            "reggaeton",
+            "urbano",
+            "trap"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/90/5e/7e/905e7ed5-a8fa-a8f3-cd06-0028fdf3afaa/199066342442.jpg/600x600bb.jpg",
+      "itunesTrackId": "1787023929",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/bb/b7/ad/bbb7adc0-e19a-de2c-f5fa-7aa7597c018f/mzaf_3830528517982749933.plus.aac.p.m4a",
+      "aliases": [
+            "eoo"
+      ]
+    }),
+    song({
+      "id": "bad-bunny-vete",
+      "title": "Vete",
+      "artistId": "bad-bunny",
+      "albumId": "vete-single",
+      "year": 2019,
+      "genreIds": [
+            "reggaeton",
+            "urbano",
+            "trap"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/bf/a5/21/bfa521a9-f74e-cd26-c03d-235516ade520/194491632793.jpg/600x600bb.jpg",
+      "itunesTrackId": "1488271434",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/4a/cf/eb/4acfebbd-7c29-384c-1cc4-45ce6a65804b/mzaf_10661750974589814882.plus.aac.p.m4a",
+      "aliases": [
+            "vete"
+      ]
+    }),
+    song({
+      "id": "bad-bunny-no-te-hagas",
+      "title": "No Te Hagas",
+      "artistId": "bad-bunny",
+      "albumId": "no-te-hagas-single",
+      "year": 2017,
+      "genreIds": [
+            "reggaeton",
+            "urbano",
+            "trap"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music114/v4/20/c4/88/20c488b6-819a-31ba-a87c-00af3a4e9328/050742332501_art.jpg/600x600bb.jpg",
+      "itunesTrackId": "1214658772",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/25/27/a5/2527a5ad-09aa-3a84-093b-8536f7bbe989/mzaf_2762431368977945726.plus.aac.p.m4a",
+      "aliases": [
+            "no te hagas"
+      ]
+    }),
+    song({
+      "id": "bad-bunny-lo-siento-bb",
+      "title": "Lo Siento BB:/",
+      "artistId": "bad-bunny",
+      "albumId": "lo-siento-bb-single",
+      "year": 2021,
+      "genreIds": [
+            "reggaeton",
+            "urbano",
+            "trap"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/5d/6a/00/5d6a0054-5145-6011-c638-3e2666d0e8dd/192641833472_Cover.jpg/600x600bb.jpg",
+      "itunesTrackId": "1586673104",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/8b/d8/6f/8bd86fba-a872-6f5b-0580-6ab8a2fcdab3/mzaf_17568360462674085748.plus.aac.p.m4a",
+      "aliases": [
+            "lo siento bb:/",
+            "lo siento bb"
+      ]
+    }),
+    song({
+      "id": "bad-bunny-el-amante",
+      "title": "El Amante (feat. Ozuna & Bad Bunny)",
+      "artistId": "bad-bunny",
+      "albumId": "el-amante-remix-feat-ozuna-bad-bunny-single",
+      "year": 2017,
+      "genreIds": [
+            "reggaeton",
+            "urbano",
+            "trap"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music117/v4/2e/bd/86/2ebd86fd-0283-a7b8-3ee5-5fc67574ed8d/886446605975.jpg/600x600bb.jpg",
+      "itunesTrackId": "1252802713",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/fd/af/e3/fdafe3bc-fff6-8a06-f80e-2cecff9808ca/mzaf_16714348965282558934.plus.aac.p.m4a",
+      "aliases": [
+            "el amante (feat. ozuna & bad bunny)",
+            "el amante",
+            "el amante feat ozuna bad bunny"
+      ]
+    }),
+    song({
+      "id": "bad-bunny-am-remix",
+      "title": "AM Remix",
+      "artistId": "bad-bunny",
+      "albumId": "am-remix-single",
+      "year": 2021,
+      "genreIds": [
+            "reggaeton",
+            "urbano",
+            "trap"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music125/v4/7c/34/9e/7c349e67-f967-951d-52c4-54e003f50d40/196292004861.jpg/600x600bb.jpg",
+      "itunesTrackId": "1573431833",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/67/a3/dc/67a3dc05-f80b-23c7-1edb-1dd1482ff6c5/mzaf_12389068966029931161.plus.aac.p.m4a",
+      "aliases": [
+            "am remix"
+      ]
+    }),
+    song({
+      "id": "bad-bunny-caro",
+      "title": "Caro",
+      "artistId": "bad-bunny",
+      "albumId": "x-100pre",
+      "year": 2018,
+      "genreIds": [
+            "reggaeton",
+            "urbano",
+            "trap"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music126/v4/cf/3a/db/cf3adbe6-8ea1-f60f-60fd-713eefda3962/193483317984.jpg/600x600bb.jpg",
+      "itunesTrackId": "1447554906",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/48/f3/f9/48f3f913-8611-5dae-b9f7-b7e99e9618d0/mzaf_9554157280783761668.plus.aac.p.m4a",
+      "aliases": [
+            "caro"
+      ]
+    }),
+    song({
+      "id": "bad-bunny-i-like-it-dillon-francis-remix",
+      "title": "I Like It (Dillon Francis Remix)",
+      "artistId": "bad-bunny",
+      "albumId": "i-like-it-dillon-francis-remix-single",
+      "year": 2018,
+      "genreIds": [
+            "reggaeton",
+            "urbano",
+            "trap"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music124/v4/00/e9/82/00e982d3-cb07-cba0-4a03-7fbe973354ca/075679868282.jpg/600x600bb.jpg",
+      "itunesTrackId": "1401003756",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/96/88/7c/96887cc1-a88b-a230-874c-20d6d4060cb8/mzaf_17832614870404199675.plus.aac.p.m4a",
+      "aliases": [
+            "i like it (dillon francis remix)",
+            "i like it dillon francis remix"
+      ]
+    }),
+    song({
+      "id": "bad-bunny-mia",
+      "title": "MÍA (feat. Drake)",
+      "artistId": "bad-bunny",
+      "albumId": "x-100pre",
+      "year": 2018,
+      "genreIds": [
+            "reggaeton",
+            "urbano",
+            "trap"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music126/v4/cf/3a/db/cf3adbe6-8ea1-f60f-60fd-713eefda3962/193483317984.jpg/600x600bb.jpg",
+      "itunesTrackId": "1447555315",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/72/ad/b6/72adb69d-18a8-a7cd-4534-bba34deb9486/mzaf_14761776520883767907.plus.aac.p.m4a",
+      "aliases": [
+            "mía (feat. drake)",
+            "mía",
+            "mía feat drake"
+      ]
+    }),
+    song({
+      "id": "bad-bunny-la-santa",
+      "title": "La Santa",
+      "artistId": "bad-bunny",
+      "albumId": "yhlqmdlg",
+      "year": 2020,
+      "genreIds": [
+            "reggaeton",
+            "urbano",
+            "trap"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music114/v4/8c/0f/81/8c0f81f2-9f10-5e3d-b9de-5961a73e8e52/195081078724.jpg/600x600bb.jpg",
+      "itunesTrackId": "1500776330",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/ad/6e/c5/ad6ec577-7790-bba5-12cb-5f78c87e07f9/mzaf_4789972617466519274.plus.aac.p.m4a",
+      "aliases": [
+            "la santa"
+      ]
+    }),
+    song({
+      "id": "bad-bunny-me-mata",
+      "title": "Me Mata (feat. Arcángel, Almighty, Bryant Myers, Noriel, Baby Rasta & Brytiago)",
+      "artistId": "bad-bunny",
+      "albumId": "me-mata-feat-arcangel-almighty-bryant-myers-noriel-baby-rasta-brytiago-single",
+      "year": 2017,
+      "genreIds": [
+            "reggaeton",
+            "urbano",
+            "trap"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music122/v4/29/79/f3/2979f357-93aa-c4c3-d874-80491c008a53/191773039967.jpg/600x600bb.jpg",
+      "itunesTrackId": "1225663087",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/7e/bd/38/7ebd3840-4f0d-da56-4394-5c83d4a16276/mzaf_17708278963732766639.plus.aac.p.m4a",
+      "aliases": [
+            "me mata (feat. arcángel, almighty, bryant myers, noriel, baby rasta & brytiago)",
+            "me mata",
+            "me mata feat arcángel almighty bryant myers noriel baby rasta brytiago"
+      ]
+    }),
+    song({
+      "id": "bad-bunny-me-acostumbre",
+      "title": "Me Acostumbré (feat. Bad Bunny)",
+      "artistId": "bad-bunny",
+      "albumId": "me-acostumbre-feat-bad-bunny-single",
+      "year": 2017,
+      "genreIds": [
+            "reggaeton",
+            "urbano",
+            "trap"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music124/v4/c4/ec/f2/c4ecf24e-2b24-b71f-a885-a6293f830434/654827031824_cover.jpg/600x600bb.jpg",
+      "itunesTrackId": "1224814422",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/20/30/77/203077cb-1cd2-924e-8644-399beda6b9b3/mzaf_5429702908957759278.plus.aac.p.m4a",
+      "aliases": [
+            "me acostumbré (feat. bad bunny)",
+            "me acostumbré",
+            "me acostumbré feat bad bunny"
+      ]
+    }),
+    song({
+      "id": "bad-bunny-explicale",
+      "title": "Explícale (feat. Bad Bunny)",
+      "artistId": "bad-bunny",
+      "albumId": "update",
+      "year": 2017,
+      "genreIds": [
+            "reggaeton",
+            "urbano",
+            "trap"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/75/11/88/7511883c-9c74-fafd-6484-4460af87d285/886446656601.jpg/600x600bb.jpg",
+      "itunesTrackId": "1269665793",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/37/f1/66/37f16695-d89d-e615-4d2c-562f4e0fc1d4/mzaf_3864961887202914413.plus.aac.p.m4a",
+      "aliases": [
+            "explícale (feat. bad bunny)",
+            "explícale",
+            "explícale feat bad bunny"
+      ]
+    }),
+    song({
+      "id": "bad-bunny-k-pop",
+      "title": "K-POP",
+      "artistId": "bad-bunny",
+      "albumId": "k-pop-single",
+      "year": 2023,
+      "genreIds": [
+            "reggaeton",
+            "urbano",
+            "trap"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music126/v4/1b/6e/23/1b6e23a2-5c18-2379-70df-52abb55db146/196871325424.jpg/600x600bb.jpg",
+      "itunesTrackId": "1698529515",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/ec/57/eb/ec57eb90-b249-5187-c17d-34c3416645c4/mzaf_1863007014340801244.plus.aac.p.m4a",
+      "aliases": [
+            "k-pop",
+            "kpop"
+      ]
+    }),
+    song({
+      "id": "bad-bunny-te-guste",
+      "title": "Te Gusté",
+      "artistId": "bad-bunny",
+      "albumId": "te-guste-single",
+      "year": 2018,
+      "genreIds": [
+            "reggaeton",
+            "urbano",
+            "trap"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music118/v4/49/d5/59/49d559f7-536e-48fd-a624-69143b578657/193483172255.jpg/600x600bb.jpg",
+      "itunesTrackId": "1441612579",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/37/6b/e6/376be623-225b-edc2-516b-502a19d67788/mzaf_13186545258555110303.plus.aac.p.m4a",
+      "aliases": [
+            "te gusté"
+      ]
+    }),
+    song({
+      "id": "bad-bunny-te-bote",
+      "title": "Te Boté (feat. Nicky Jam, Ozuna & Bad Bunny)",
+      "artistId": "bad-bunny",
+      "albumId": "te-bote-feat-bad-bunny-nicky-jam-ozuna-single",
+      "year": 2018,
+      "genreIds": [
+            "reggaeton",
+            "urbano",
+            "trap"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/e4/64/ac/e464ac2f-28a9-6a6b-6e29-23f7cc6b8f67/192562723944.jpg/600x600bb.jpg",
+      "itunesTrackId": "1404179411",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/47/6d/00/476d00b0-97e7-83ee-f759-19a9d5232610/mzaf_15498518957842431555.plus.aac.p.m4a",
+      "aliases": [
+            "te boté (feat. nicky jam, ozuna & bad bunny)",
+            "te boté",
+            "te boté feat nicky jam ozuna bad bunny"
+      ]
+    }),
+    song({
+      "id": "bad-bunny-diles",
+      "title": "Diles (feat. Arcángel, Ñengo Flow, DJ Luian & Mambo Kingz)",
+      "artistId": "bad-bunny",
+      "albumId": "diles-feat-arcangel-nengo-flow-dj-luian-mambo-kingz-single",
+      "year": 2016,
+      "genreIds": [
+            "reggaeton",
+            "urbano",
+            "trap"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music125/v4/e3/6b/0b/e36b0bd8-3a60-8466-b034-4ac6652f4110/191079034949.jpg/600x600bb.jpg",
+      "itunesTrackId": "1470490146",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/07/80/55/078055ad-67ee-61fe-4351-4191c0ebb5b6/mzaf_9464144795972529657.plus.aac.p.m4a",
+      "aliases": [
+            "diles (feat. arcángel, ñengo flow, dj luian & mambo kingz)",
+            "diles",
+            "diles feat arcángel ñengo flow dj luian mambo kingz"
+      ]
+    }),
+    song({
+      "id": "bad-bunny-la-dificil",
+      "title": "La Difícil",
+      "artistId": "bad-bunny",
+      "albumId": "yhlqmdlg",
+      "year": 2020,
+      "genreIds": [
+            "reggaeton",
+            "urbano",
+            "trap"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music114/v4/8c/0f/81/8c0f81f2-9f10-5e3d-b9de-5961a73e8e52/195081078724.jpg/600x600bb.jpg",
+      "itunesTrackId": "1500776327",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/3d/bb/07/3dbb070e-7def-6973-fb9d-a2ba6e23ade2/mzaf_10872476211479128210.plus.aac.p.m4a",
+      "aliases": [
+            "la difícil"
+      ]
+    }),
+    song({
+      "id": "bad-bunny-si-tu-lo-dejas",
+      "title": "Si Tú Lo Dejas (feat. Bad Bunny, Farruko, Nicky Jam & King Kosa)",
+      "artistId": "bad-bunny",
+      "albumId": "si-tu-lo-dejas-feat-bad-bunny-farruko-nicky-jam-king-kosa-single",
+      "year": 2017,
+      "genreIds": [
+            "reggaeton",
+            "urbano",
+            "trap"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/e9/ef/21/e9ef2169-c9c2-9e02-1557-9fdc57bb370d/191773573706.jpg/600x600bb.jpg",
+      "itunesTrackId": "1266094432",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/58/bd/82/58bd8216-f22a-6355-c5a7-072c08c63ea4/mzaf_2512516184578697110.plus.aac.p.m4a",
+      "aliases": [
+            "si tú lo dejas (feat. bad bunny, farruko, nicky jam & king kosa)",
+            "si tú lo dejas",
+            "si tú lo dejas feat bad bunny farruko nicky jam king kosa"
+      ]
+    }),
+    song({
+      "id": "bad-bunny-solo-de-mi",
+      "title": "Solo de Mí",
+      "artistId": "bad-bunny",
+      "albumId": "x-100pre",
+      "year": 2018,
+      "genreIds": [
+            "reggaeton",
+            "urbano",
+            "trap"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music126/v4/cf/3a/db/cf3adbe6-8ea1-f60f-60fd-713eefda3962/193483317984.jpg/600x600bb.jpg",
+      "itunesTrackId": "1447554983",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/cb/79/62/cb7962e3-98a0-ca91-ffc7-3c374a331351/mzaf_18194306686486355534.plus.aac.p.m4a",
+      "aliases": [
+            "solo de mí"
       ]
     }),
     song({
@@ -2094,10 +2691,548 @@ export const seedCatalog = {
             "urbano",
             "trap"
       ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/72213221ed4529431857d42f6be61d56/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/d/2/6/0/d26374fbbb888a1bfa3baa2b0eb086ef.mp3?hdnea=exp=1790665567~acl=/api/1/1/d/2/6/0/d26374fbbb888a1bfa3baa2b0eb086ef.mp3*~data=user_id=0,application_id=42~hmac=58331eaecbfa060a646643ffc631f8c6f61d9c534658e8276252cc5d9a198b47",
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music126/v4/cf/3a/db/cf3adbe6-8ea1-f60f-60fd-713eefda3962/193483317984.jpg/600x600bb.jpg",
+      "itunesTrackId": "1447554981",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/79/54/b9/7954b9c3-9015-47b4-4921-edf5b5da9871/mzaf_1677484927020451272.plus.aac.p.m4a",
       "aliases": [
             "si estuviésemos juntos"
+      ]
+    }),
+    song({
+      "id": "bad-bunny-200-mph",
+      "title": "200 MPH (feat. Diplo)",
+      "artistId": "bad-bunny",
+      "albumId": "x-100pre",
+      "year": 2018,
+      "genreIds": [
+            "reggaeton",
+            "urbano",
+            "trap"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music126/v4/cf/3a/db/cf3adbe6-8ea1-f60f-60fd-713eefda3962/193483317984.jpg/600x600bb.jpg",
+      "itunesTrackId": "1447554817",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/04/74/84/047484db-cf02-e855-3f74-22cce928eeee/mzaf_4875017951959287951.plus.aac.p.m4a",
+      "aliases": [
+            "200 mph (feat. diplo)",
+            "200 mph",
+            "200 mph feat diplo"
+      ]
+    }),
+    song({
+      "id": "bad-bunny-otra-noche-en-miami",
+      "title": "Otra Noche en Miami",
+      "artistId": "bad-bunny",
+      "albumId": "x-100pre",
+      "year": 2018,
+      "genreIds": [
+            "reggaeton",
+            "urbano",
+            "trap"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music126/v4/cf/3a/db/cf3adbe6-8ea1-f60f-60fd-713eefda3962/193483317984.jpg/600x600bb.jpg",
+      "itunesTrackId": "1447554973",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/a9/bb/1a/a9bb1a7e-9b23-8d9f-9f9e-226b1df72f2a/mzaf_12214025847237217238.plus.aac.p.m4a",
+      "aliases": [
+            "otra noche en miami"
+      ]
+    }),
+    song({
+      "id": "bad-bunny-chambea",
+      "title": "Chambea",
+      "artistId": "bad-bunny",
+      "albumId": "chambea-single",
+      "year": 2017,
+      "genreIds": [
+            "reggaeton",
+            "urbano",
+            "trap"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music124/v4/c4/9e/70/c49e703f-74e4-6aa0-2134-80d38bcd0348/191079942855.jpg/600x600bb.jpg",
+      "itunesTrackId": "1470498412",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/fa/f1/f8/faf1f890-8c1d-a87b-9e3f-3f7a45235fbd/mzaf_11199641229246548629.plus.aac.p.m4a",
+      "aliases": [
+            "chambea"
+      ]
+    }),
+    song({
+      "id": "bad-bunny-neverita",
+      "title": "Neverita",
+      "artistId": "bad-bunny",
+      "albumId": "un-verano-sin-ti",
+      "year": 2022,
+      "genreIds": [
+            "reggaeton",
+            "urbano",
+            "trap"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music112/v4/3e/04/eb/3e04ebf6-370f-f59d-ec84-2c2643db92f1/196626945068.jpg/600x600bb.jpg",
+      "itunesTrackId": "1622045948",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/23/26/dd/2326dd0b-f117-306c-8454-be8934ffb402/mzaf_18297346266039659444.plus.aac.p.m4a",
+      "aliases": [
+            "neverita"
+      ]
+    }),
+    song({
+      "id": "bad-bunny-me-fui-de-vacaciones",
+      "title": "Me Fui de Vacaciones",
+      "artistId": "bad-bunny",
+      "albumId": "un-verano-sin-ti",
+      "year": 2022,
+      "genreIds": [
+            "reggaeton",
+            "urbano",
+            "trap"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music112/v4/3e/04/eb/3e04ebf6-370f-f59d-ec84-2c2643db92f1/196626945068.jpg/600x600bb.jpg",
+      "itunesTrackId": "1622046237",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/a9/1a/db/a91adb07-ba1b-4560-b1f1-961fec8654dc/mzaf_8216769890898312299.plus.aac.p.m4a",
+      "aliases": [
+            "me fui de vacaciones"
+      ]
+    }),
+    song({
+      "id": "bad-bunny-vete-1500776923",
+      "title": "Vete",
+      "artistId": "bad-bunny",
+      "albumId": "yhlqmdlg",
+      "year": 2019,
+      "genreIds": [
+            "reggaeton",
+            "urbano",
+            "trap"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music114/v4/8c/0f/81/8c0f81f2-9f10-5e3d-b9de-5961a73e8e52/195081078724.jpg/600x600bb.jpg",
+      "itunesTrackId": "1500776923",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/9e/ed/26/9eed26a0-2242-8bb7-6232-03248ff65f38/mzaf_11531603017291507693.plus.aac.p.m4a",
+      "aliases": [
+            "vete"
+      ]
+    }),
+    song({
+      "id": "bad-bunny-estamos-bien",
+      "title": "Estamos Bien",
+      "artistId": "bad-bunny",
+      "albumId": "x-100pre",
+      "year": 2018,
+      "genreIds": [
+            "reggaeton",
+            "urbano",
+            "trap"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music126/v4/cf/3a/db/cf3adbe6-8ea1-f60f-60fd-713eefda3962/193483317984.jpg/600x600bb.jpg",
+      "itunesTrackId": "1447555306",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/fc/2b/1f/fc2b1f38-b2af-4ba6-e144-26e8442f8586/mzaf_16057425778477285662.plus.aac.p.m4a",
+      "aliases": [
+            "estamos bien"
+      ]
+    }),
+    song({
+      "id": "bad-bunny-perro-negro",
+      "title": "PERRO NEGRO",
+      "artistId": "bad-bunny",
+      "albumId": "nadie-sabe-lo-que-va-a-pasar-manana",
+      "year": 2023,
+      "genreIds": [
+            "reggaeton",
+            "urbano",
+            "trap"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/00/e0/31/00e0311e-9dab-fd0c-fc37-ee3d36aafbf3/197190137897.jpg/600x600bb.jpg",
+      "itunesTrackId": "1710983279",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/7d/66/2f/7d662f25-7023-0301-f9dc-0e8ce7155a56/mzaf_11838409189562420602.plus.aac.p.m4a",
+      "aliases": [
+            "perro negro"
+      ]
+    }),
+    song({
+      "id": "bad-bunny-el-apagon",
+      "title": "El Apagón",
+      "artistId": "bad-bunny",
+      "albumId": "un-verano-sin-ti",
+      "year": 2022,
+      "genreIds": [
+            "reggaeton",
+            "urbano",
+            "trap"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music112/v4/3e/04/eb/3e04ebf6-370f-f59d-ec84-2c2643db92f1/196626945068.jpg/600x600bb.jpg",
+      "itunesTrackId": "1622046221",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/88/1a/d2/881ad258-4d49-a5d0-3b35-1b318d527197/mzaf_3975222456564799946.plus.aac.p.m4a",
+      "aliases": [
+            "el apagón"
+      ]
+    }),
+    song({
+      "id": "bad-bunny-soy-peor",
+      "title": "Soy Peor",
+      "artistId": "bad-bunny",
+      "albumId": "soy-peor-single",
+      "year": 2016,
+      "genreIds": [
+            "reggaeton",
+            "urbano",
+            "trap"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music124/v4/1e/dc/8a/1edc8a20-f6e5-4de9-238e-94f09ea6159e/191079205288.jpg/600x600bb.jpg",
+      "itunesTrackId": "1470492107",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/c2/d4/0d/c2d40d34-e407-ed99-eb58-0e2b4ecd799a/mzaf_7715703807770741123.plus.aac.p.m4a",
+      "aliases": [
+            "soy peor"
+      ]
+    }),
+    song({
+      "id": "bad-bunny-cafe-con-ron",
+      "title": "CAFé CON RON",
+      "artistId": "bad-bunny",
+      "albumId": "debi-tirar-mas-fotos",
+      "year": 2025,
+      "genreIds": [
+            "reggaeton",
+            "urbano",
+            "trap"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/90/5e/7e/905e7ed5-a8fa-a8f3-cd06-0028fdf3afaa/199066342442.jpg/600x600bb.jpg",
+      "itunesTrackId": "1787023682",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/57/38/8f/57388fad-59e3-e11f-4147-500341594b86/mzaf_6984117293309341445.plus.aac.p.m4a",
+      "aliases": [
+            "café con ron"
+      ]
+    }),
+    song({
+      "id": "bad-bunny-callaita-1622046245",
+      "title": "Callaita",
+      "artistId": "bad-bunny",
+      "albumId": "un-verano-sin-ti",
+      "year": 2019,
+      "genreIds": [
+            "reggaeton",
+            "urbano",
+            "trap"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music112/v4/3e/04/eb/3e04ebf6-370f-f59d-ec84-2c2643db92f1/196626945068.jpg/600x600bb.jpg",
+      "itunesTrackId": "1622046245",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/a4/02/45/a40245c1-ab0e-273b-3ea8-d9fd621fed4c/mzaf_4314948787458058017.plus.aac.p.m4a",
+      "aliases": [
+            "callaita"
+      ]
+    }),
+    song({
+      "id": "bad-bunny-la-cartera",
+      "title": "La Cartera",
+      "artistId": "bad-bunny",
+      "albumId": "gangalee",
+      "year": 2019,
+      "genreIds": [
+            "reggaeton",
+            "urbano",
+            "trap"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music125/v4/c7/72/d1/c772d175-a331-e0bd-8cf4-62b7cea7e6c3/886447686447.jpg/600x600bb.jpg",
+      "itunesTrackId": "1460403329",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/a8/9f/a6/a89fa616-fbfe-944b-6763-dec32561bb80/mzaf_7763749035595826784.plus.aac.p.m4a",
+      "aliases": [
+            "la cartera"
+      ]
+    }),
+    song({
+      "id": "bad-bunny-booker-t",
+      "title": "BOOKER T",
+      "artistId": "bad-bunny",
+      "albumId": "el-ultimo-tour-del-mundo",
+      "year": 2020,
+      "genreIds": [
+            "reggaeton",
+            "urbano",
+            "trap"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/64/70/1c/64701cff-71ed-912f-ce62-71d409f5e6ad/195497640560.jpg/600x600bb.jpg",
+      "itunesTrackId": "1542103608",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/21/2b/8e/212b8eaf-b99c-e0e7-42e8-27f7fd701514/mzaf_4772784024094951049.plus.aac.p.m4a",
+      "aliases": [
+            "booker t"
+      ]
+    }),
+    song({
+      "id": "bad-bunny-un-polvo",
+      "title": "Un Polvo (feat. Bad Bunny, Arcángel, Ñengo Flow & De La Ghetto)",
+      "artistId": "bad-bunny",
+      "albumId": "un-polvo-feat-bad-bunny-arcangel-nengo-flow-de-la-ghetto-single",
+      "year": 2016,
+      "genreIds": [
+            "reggaeton",
+            "urbano",
+            "trap"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music124/v4/5c/05/86/5c0586fe-1e29-f0cc-6683-6ce88cd91d86/886446225555.jpg/600x600bb.jpg",
+      "itunesTrackId": "1177180462",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/c5/56/96/c55696fb-8856-007e-6e4c-0703ac731e17/mzaf_6885199037506286557.plus.aac.p.m4a",
+      "aliases": [
+            "un polvo (feat. bad bunny, arcángel, ñengo flow & de la ghetto)",
+            "un polvo",
+            "un polvo feat bad bunny arcángel ñengo flow de la ghetto"
+      ]
+    }),
+    song({
+      "id": "bad-bunny-tarot",
+      "title": "Tarot",
+      "artistId": "bad-bunny",
+      "albumId": "un-verano-sin-ti",
+      "year": 2022,
+      "genreIds": [
+            "reggaeton",
+            "urbano",
+            "trap"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music112/v4/3e/04/eb/3e04ebf6-370f-f59d-ec84-2c2643db92f1/196626945068.jpg/600x600bb.jpg",
+      "itunesTrackId": "1622045643",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/93/23/dd/9323ddbb-4a2c-249b-9e39-88703c567f41/mzaf_12486720115800977792.plus.aac.p.m4a",
+      "aliases": [
+            "tarot"
+      ]
+    }),
+    song({
+      "id": "bad-bunny-otro-atardecer",
+      "title": "Otro Atardecer",
+      "artistId": "bad-bunny",
+      "albumId": "un-verano-sin-ti",
+      "year": 2022,
+      "genreIds": [
+            "reggaeton",
+            "urbano",
+            "trap"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music112/v4/3e/04/eb/3e04ebf6-370f-f59d-ec84-2c2643db92f1/196626945068.jpg/600x600bb.jpg",
+      "itunesTrackId": "1622046222",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/3e/5f/85/3e5f858c-d5e2-76d2-f093-6e3e738b15af/mzaf_11064066927076408850.plus.aac.p.m4a",
+      "aliases": [
+            "otro atardecer"
+      ]
+    }),
+    song({
+      "id": "bad-bunny-solo-de-mi-1446812205",
+      "title": "Solo de Mí",
+      "artistId": "bad-bunny",
+      "albumId": "solo-de-mi-single",
+      "year": 2018,
+      "genreIds": [
+            "reggaeton",
+            "urbano",
+            "trap"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/f0/9e/37/f09e375d-756c-b66f-cabe-2d8d8ce3d860/193483294216.jpg/600x600bb.jpg",
+      "itunesTrackId": "1446812205",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/51/79/4a/51794a9d-bd1e-dc59-0ab3-a0dffb2f978b/mzaf_10277405399232489143.plus.aac.p.m4a",
+      "aliases": [
+            "solo de mí"
+      ]
+    }),
+    song({
+      "id": "bad-bunny-ignorantes",
+      "title": "Ignorantes",
+      "artistId": "bad-bunny",
+      "albumId": "yhlqmdlg",
+      "year": 2020,
+      "genreIds": [
+            "reggaeton",
+            "urbano",
+            "trap"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music114/v4/8c/0f/81/8c0f81f2-9f10-5e3d-b9de-5961a73e8e52/195081078724.jpg/600x600bb.jpg",
+      "itunesTrackId": "1500776927",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/e5/cd/6f/e5cd6f7a-846c-791b-6ecc-519f85fa94da/mzaf_1308995959799076230.plus.aac.p.m4a",
+      "aliases": [
+            "ignorantes"
+      ]
+    }),
+    song({
+      "id": "bad-bunny-47-remix",
+      "title": "47 (Remix)",
+      "artistId": "bad-bunny",
+      "albumId": "47-remix-single",
+      "year": 2017,
+      "genreIds": [
+            "reggaeton",
+            "urbano",
+            "trap"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/57/47/ef/5747effe-2fc9-363f-45d6-9e72f9c1bb4c/47_Remix.jpg/600x600bb.jpg",
+      "itunesTrackId": "1220604829",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/97/c6/5e/97c65ead-8c13-3ac6-54a7-0524577064e6/mzaf_11801338601629233690.plus.aac.p.m4a",
+      "aliases": [
+            "47 (remix)",
+            "47 remix"
+      ]
+    }),
+    song({
+      "id": "bad-bunny-escapate-conmigo-remix",
+      "title": "Escápate Conmigo (feat. Ozuna, Bad Bunny, De La Ghetto, Arcángel, Noriel & Almighty) [Remix]",
+      "artistId": "bad-bunny",
+      "albumId": "victory",
+      "year": 2017,
+      "genreIds": [
+            "reggaeton",
+            "urbano",
+            "trap"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music114/v4/5a/12/af/5a12af89-f328-1a03-cc81-effff45acb6f/886444951227.jpg/600x600bb.jpg",
+      "itunesTrackId": "1308517161",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/8d/e8/91/8de89137-fc2e-0566-06a9-377bf4a021cc/mzaf_8248532317977986885.plus.aac.p.m4a",
+      "aliases": [
+            "escápate conmigo (feat. ozuna, bad bunny, de la ghetto, arcángel, noriel & almighty) [remix]",
+            "escápate conmigo [remix]",
+            "escápate conmigo feat ozuna bad bunny de la ghetto arcángel noriel almighty remix",
+            "escápate conmigo remix"
+      ]
+    }),
+    song({
+      "id": "bad-bunny-gently",
+      "title": "Gently (feat. Bad Bunny)",
+      "artistId": "bad-bunny",
+      "albumId": "for-all-the-dogs",
+      "year": 2023,
+      "genreIds": [
+            "reggaeton",
+            "urbano",
+            "trap"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music116/v4/21/50/ee/2150ee84-62c3-4190-7dfa-da30abd98ac8/23UM1IM09862.rgb.jpg/600x600bb.jpg",
+      "itunesTrackId": "1710685894",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/fc/a8/e7/fca8e7b0-ca0c-4342-52f3-e8ccbeab1d51/mzaf_15682620857374826402.plus.aac.p.m4a",
+      "aliases": [
+            "gently (feat. bad bunny)",
+            "gently",
+            "gently feat bad bunny"
+      ]
+    }),
+    song({
+      "id": "bad-bunny-como-un-bebe",
+      "title": "COMO UN BEBÉ (feat. Mr Eazi)",
+      "artistId": "bad-bunny",
+      "albumId": "oasis",
+      "year": 2019,
+      "genreIds": [
+            "reggaeton",
+            "urbano",
+            "trap"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/77/32/74/7732746d-25e5-baae-b921-bad4a07d87b1/19UMGIM55524.rgb.jpg/600x600bb.jpg",
+      "itunesTrackId": "1470147066",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/e5/fc/89/e5fc8933-b447-874f-8ce2-1f2c857d385e/mzaf_12194544074690898868.plus.aac.p.m4a",
+      "aliases": [
+            "como un bebé (feat. mr eazi)",
+            "como un bebé",
+            "como un bebé feat mr eazi"
+      ]
+    }),
+    song({
+      "id": "bad-bunny-gato-de-noche",
+      "title": "Gato de Noche",
+      "artistId": "bad-bunny",
+      "albumId": "gato-de-noche-single",
+      "year": 2022,
+      "genreIds": [
+            "reggaeton",
+            "urbano",
+            "trap"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music122/v4/db/25/4f/db254ff8-ef57-7847-76ad-e437dac0fa32/197187723072.jpg/600x600bb.jpg",
+      "itunesTrackId": "1660630469",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/d2/8e/ea/d28eeacf-4544-df14-ffd1-7b6370cfbd36/mzaf_9368738627881395304.plus.aac.p.m4a",
+      "aliases": [
+            "gato de noche"
+      ]
+    }),
+    song({
+      "id": "bad-bunny-yo-le-llego",
+      "title": "YO LE LLEGO",
+      "artistId": "bad-bunny",
+      "albumId": "oasis",
+      "year": 2019,
+      "genreIds": [
+            "reggaeton",
+            "urbano",
+            "trap"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/77/32/74/7732746d-25e5-baae-b921-bad4a07d87b1/19UMGIM55524.rgb.jpg/600x600bb.jpg",
+      "itunesTrackId": "1470146793",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/f6/93/d1/f693d199-a0c6-aea4-9a0c-3ac17d0a6bbd/mzaf_18170810707829095530.plus.aac.p.m4a",
+      "aliases": [
+            "yo le llego"
+      ]
+    }),
+    song({
+      "id": "bad-bunny-como-se-siente-remix",
+      "title": "CÓMO SE SIENTE (Remix)",
+      "artistId": "bad-bunny",
+      "albumId": "las-que-no-iban-a-salir",
+      "year": 2020,
+      "genreIds": [
+            "reggaeton",
+            "urbano",
+            "trap"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/9f/05/24/9f052490-6a7c-cea1-df51-b732a5ff7779/195081580067.jpg/600x600bb.jpg",
+      "itunesTrackId": "1512629482",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/93/21/fd/9321fd2b-0431-29b8-a146-09c0610a1366/mzaf_18281736586911550217.plus.aac.p.m4a",
+      "aliases": [
+            "cómo se siente (remix)",
+            "cómo se siente remix"
+      ]
+    }),
+    song({
+      "id": "bad-bunny-la-jumpa",
+      "title": "La Jumpa",
+      "artistId": "bad-bunny",
+      "albumId": "sr-santos",
+      "year": 2022,
+      "genreIds": [
+            "reggaeton",
+            "urbano",
+            "trap"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music122/v4/c2/48/5a/c2485a96-58d4-5874-c9d6-cf479c06020b/197187400171.jpg/600x600bb.jpg",
+      "itunesTrackId": "1655984214",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/10/8e/83/108e83be-957c-ad97-8cbb-41b9848c8141/mzaf_15075849277666857449.plus.aac.p.m4a",
+      "aliases": [
+            "la jumpa"
+      ]
+    }),
+    song({
+      "id": "bad-bunny-mia-1662168786",
+      "title": "MIA (feat. Drake)",
+      "artistId": "bad-bunny",
+      "albumId": "mia-feat-drake-single",
+      "year": 2018,
+      "genreIds": [
+            "reggaeton",
+            "urbano",
+            "trap"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music123/v4/09/aa/f8/09aaf8da-8eaf-bf60-0c23-48a88d546cbd/26991.jpg/600x600bb.jpg",
+      "itunesTrackId": "1662168786",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/e7/b6/05/e7b605d3-e1a7-9d3b-b226-1acea91f0899/mzaf_12789921691491209751.plus.aac.p.m4a",
+      "aliases": [
+            "mia (feat. drake)",
+            "mia",
+            "mia feat drake"
+      ]
+    }),
+    song({
+      "id": "bad-bunny-bichiyal",
+      "title": "Bichiyal",
+      "artistId": "bad-bunny",
+      "albumId": "yhlqmdlg",
+      "year": 2020,
+      "genreIds": [
+            "reggaeton",
+            "urbano",
+            "trap"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music114/v4/8c/0f/81/8c0f81f2-9f10-5e3d-b9de-5961a73e8e52/195081078724.jpg/600x600bb.jpg",
+      "itunesTrackId": "1500776332",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/71/f0/fa/71f0faaa-bd26-006b-6060-6f6700bbe0fe/mzaf_1676135694668797571.plus.aac.p.m4a",
+      "aliases": [
+            "bichiyal"
       ]
     }),
     song({
@@ -2111,67 +3246,109 @@ export const seedCatalog = {
             "urbano",
             "trap"
       ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/b29d1070377b784384c2456093f96a66/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/8/3/4/0/834cbc66b820bc8ee6a4f13fc363cdd5.mp3?hdnea=exp=1790665567~acl=/api/1/1/8/3/4/0/834cbc66b820bc8ee6a4f13fc363cdd5.mp3*~data=user_id=0,application_id=42~hmac=c66a6e3a5308621163a56acd83217502d8d37555a604f5967b42df337bd53a71",
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music112/v4/3e/04/eb/3e04ebf6-370f-f59d-ec84-2c2643db92f1/196626945068.jpg/600x600bb.jpg",
+      "itunesTrackId": "1622045951",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/4a/0c/b8/4a0cb8ab-b0e3-baff-14d2-2b7490168e16/mzaf_6396147887223988741.plus.aac.p.m4a",
       "aliases": [
             "la corriente"
       ]
     }),
     song({
-      "id": "mora-tuyo",
-      "title": "Tuyo",
-      "artistId": "mora",
-      "albumId": "primer-dia-de-clases",
+      "id": "bad-bunny-coco-chanel",
+      "title": "Coco Chanel",
+      "artistId": "bad-bunny",
+      "albumId": "3men2-kbrn",
+      "year": 2023,
+      "genreIds": [
+            "reggaeton",
+            "urbano",
+            "trap"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music116/v4/2d/59/b6/2d59b6d2-bd1a-474c-1ee6-09099dce30d6/197188331313.jpg/600x600bb.jpg",
+      "itunesTrackId": "1676736128",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/95/3b/2b/953b2b65-6703-1ebf-9fef-1d3f9938cd5e/mzaf_7738204541830188875.plus.aac.p.m4a",
+      "aliases": [
+            "coco chanel"
+      ]
+    }),
+    song({
+      "id": "bad-bunny-amorfoda",
+      "title": "Amorfoda",
+      "artistId": "bad-bunny",
+      "albumId": "amorfoda-single",
+      "year": 2018,
+      "genreIds": [
+            "reggaeton",
+            "urbano",
+            "trap"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music124/v4/c2/90/c1/c290c133-ebcf-b08a-c398-c323abb25944/843357117287.jpg/600x600bb.jpg",
+      "itunesTrackId": "1470490722",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/b3/68/bb/b368bb0f-5f10-f0e8-74b4-58e0a95d77fb/mzaf_14541338477590224542.plus.aac.p.m4a",
+      "aliases": [
+            "amorfoda"
+      ]
+    }),
+    song({
+      "id": "bad-bunny-bailame-remix",
+      "title": "Báilame (Remix)",
+      "artistId": "bad-bunny",
+      "albumId": "bailame-remix-single",
+      "year": 2017,
+      "genreIds": [
+            "reggaeton",
+            "urbano",
+            "trap"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/cd/84/98/cd84989f-a5ea-fe39-b67a-dab4d1c7081c/00602557926132.rgb.jpg/600x600bb.jpg",
+      "itunesTrackId": "1444846093",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/86/4b/f6/864bf6f0-f8e9-ba76-023c-5f757f85514a/mzaf_218803261048521556.plus.aac.p.m4a",
+      "aliases": [
+            "báilame (remix)",
+            "báilame remix"
+      ]
+    }),
+    song({
+      "id": "bad-bunny-yo-perreo-sola-remix",
+      "title": "Yo Perreo Sola (Remix)",
+      "artistId": "bad-bunny",
+      "albumId": "yo-perreo-sola-remix-single",
+      "year": 2020,
+      "genreIds": [
+            "reggaeton",
+            "urbano",
+            "trap"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music125/v4/03/23/1d/03231d9c-9416-98a5-06fb-438fd25ae0d0/195497457656.jpg/600x600bb.jpg",
+      "itunesTrackId": "1535856957",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/a1/d0/cc/a1d0cc05-ee8a-6919-afff-020c2d8fdd44/mzaf_3337148318148396257.plus.aac.p.m4a",
+      "aliases": [
+            "yo perreo sola (remix)",
+            "yo perreo sola remix"
+      ]
+    }),
+    song({
+      "id": "bad-bunny-de-museo",
+      "title": "De Museo",
+      "artistId": "bad-bunny",
+      "albumId": "de-museo-single",
       "year": 2021,
       "genreIds": [
             "reggaeton",
             "urbano",
             "trap"
       ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/aeb6974f7292b35f4617720d530a3351/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/d/f/9/0/df993335678048f6d980ec7821bc9181.mp3?hdnea=exp=1790665572~acl=/api/1/1/d/f/9/0/df993335678048f6d980ec7821bc9181.mp3*~data=user_id=0,application_id=42~hmac=e789db58a231550f785569b82c9c0eb75d41ab2cf646d7e7443d46d9996b532a",
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music125/v4/9e/f2/88/9ef288ab-9ab5-630f-255f-26d609cd91f8/196292052268.jpg/600x600bb.jpg",
+      "itunesTrackId": "1575007990",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/55/6b/92/556b926f-8bd8-6241-cdcb-accbce30aeaa/mzaf_18243313514278216128.plus.aac.p.m4a",
       "aliases": [
-            "tuyo"
+            "de museo"
       ]
     }),
     song({
-      "id": "mora-la-inocente",
-      "title": "LA INOCENTE",
-      "artistId": "mora",
-      "albumId": "microdosis",
-      "year": 2022,
-      "genreIds": [
-            "reggaeton",
-            "urbano",
-            "trap"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/0385ddab0f03acd721ba2620d122d80a/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/a/8/5/0/a8505bb9ee1a5db91c1ef2ebf204a375.mp3?hdnea=exp=1790665572~acl=/api/1/1/a/8/5/0/a8505bb9ee1a5db91c1ef2ebf204a375.mp3*~data=user_id=0,application_id=42~hmac=b69f635d2456dd7613447764d449eeed44e49f6d1b8847dec3ba2eb7c3dbbb45",
-      "aliases": [
-            "la inocente"
-      ]
-    }),
-    song({
-      "id": "mora-512",
-      "title": "512",
-      "artistId": "mora",
-      "albumId": "primer-dia-de-clases",
-      "year": 2021,
-      "genreIds": [
-            "reggaeton",
-            "urbano",
-            "trap"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/aeb6974f7292b35f4617720d530a3351/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/9/1/7/0/9170f47ea7a7fb05daab813f04a7540f.mp3?hdnea=exp=1790665572~acl=/api/1/1/9/1/7/0/9170f47ea7a7fb05daab813f04a7540f.mp3*~data=user_id=0,application_id=42~hmac=9d63f4e8f3721fdb9988154e1f21bf839fc8e150dc124d3e1397a62f68b4657e",
-      "aliases": [
-            "512"
-      ]
-    }),
-    song({
-      "id": "mora-una-vez",
-      "title": "Una Vez",
-      "artistId": "mora",
+      "id": "bad-bunny-esta-cn-ser-yo",
+      "title": "Está C****n Ser Yo",
+      "artistId": "bad-bunny",
       "albumId": "yhlqmdlg",
       "year": 2020,
       "genreIds": [
@@ -2179,147 +3356,88 @@ export const seedCatalog = {
             "urbano",
             "trap"
       ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/0a6f32569d4785c5ef82f581086f4302/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/0/7/a/0/07a54b3eae5fc71a935a760769a10f15.mp3?hdnea=exp=1790665572~acl=/api/1/1/0/7/a/0/07a54b3eae5fc71a935a760769a10f15.mp3*~data=user_id=0,application_id=42~hmac=6cb1dccdd3774cf0b94530a842dbd68a06681abf36094001c1d80366fd195ebe",
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music114/v4/8c/0f/81/8c0f81f2-9f10-5e3d-b9de-5961a73e8e52/195081078724.jpg/600x600bb.jpg",
+      "itunesTrackId": "1500776941",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/6d/b9/fb/6db9fb6a-e82d-88f9-e6fe-528228bfb696/mzaf_3381254398597382905.plus.aac.p.m4a",
       "aliases": [
-            "una vez"
+            "está c****n ser yo",
+            "está cn ser yo"
       ]
     }),
     song({
-      "id": "mora-memorias",
-      "title": "MEMORIAS",
-      "artistId": "mora",
-      "albumId": "microdosis",
+      "id": "bad-bunny-mala-y-peligrosa",
+      "title": "Mala y Peligrosa (feat. Bad Bunny)",
+      "artistId": "bad-bunny",
+      "albumId": "mala-y-peligrosa-single-feat-bad-bunny-single",
+      "year": 2017,
+      "genreIds": [
+            "reggaeton",
+            "urbano",
+            "trap"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music124/v4/55/ee/ff/55eeff3e-61cf-54ec-17db-bf4a5f796908/886446693491.jpg/600x600bb.jpg",
+      "itunesTrackId": "1302460735",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/67/c7/82/67c7827f-c391-cc5d-3174-faf5a6c96536/mzaf_5342015230454657170.plus.aac.p.m4a",
+      "aliases": [
+            "mala y peligrosa (feat. bad bunny)",
+            "mala y peligrosa",
+            "mala y peligrosa feat bad bunny"
+      ]
+    }),
+    song({
+      "id": "bad-bunny-x-ultima-vez",
+      "title": "X ÚLTIMA VEZ",
+      "artistId": "bad-bunny",
+      "albumId": "legendaddy",
       "year": 2022,
       "genreIds": [
             "reggaeton",
             "urbano",
             "trap"
       ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/0385ddab0f03acd721ba2620d122d80a/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/8/8/c/0/88cfe706395f670e177e168a05d8ffbf.mp3?hdnea=exp=1790665572~acl=/api/1/1/8/8/c/0/88cfe706395f670e177e168a05d8ffbf.mp3*~data=user_id=0,application_id=42~hmac=05d1be902470b7d4099f1ab5d7d7bc4234b7ce622577a124dfa219b433e8c63b",
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music116/v4/9d/60/16/9d6016fd-63f5-eeff-34ff-9804e92f715e/22UMGIM30752.rgb.jpg/600x600bb.jpg",
+      "itunesTrackId": "1614983838",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/12/0b/52/120b524a-0a27-3d01-7844-d67588cda156/mzaf_17781129293714346888.plus.aac.p.m4a",
       "aliases": [
-            "memorias"
+            "x última vez"
       ]
     }),
     song({
-      "id": "mora-hibiki",
-      "title": "HIBIKI",
-      "artistId": "mora",
-      "albumId": "nadie-sabe-lo-que-va-a-pasar-manana",
-      "year": 2023,
+      "id": "bad-bunny-dime",
+      "title": "Dime (feat. Arcángel & De La Ghetto)",
+      "artistId": "bad-bunny",
+      "albumId": "dime-feat-arcangel-de-la-ghetto-single",
+      "year": 2018,
       "genreIds": [
             "reggaeton",
             "urbano",
             "trap"
       ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/f840891b70f6e240b8ecaec49346bd6a/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/e/e/4/0/ee4b6b1702f38b7457c66394edd475be.mp3?hdnea=exp=1790665572~acl=/api/1/1/e/e/4/0/ee4b6b1702f38b7457c66394edd475be.mp3*~data=user_id=0,application_id=42~hmac=251b6678f560d5fbc566f4f88acef5e03fcf218bb6007efff3cf86188946dba2",
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music124/v4/f5/f2/9f/f5f29f9b-6430-13a8-203f-201936213200/00192650100299.rgb.jpg/600x600bb.jpg",
+      "itunesTrackId": "1359938239",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/e9/e1/c4/e9e1c4b4-392d-7324-bb72-a9934c9f79cc/mzaf_15606140662024213461.plus.aac.p.m4a",
       "aliases": [
-            "hibiki"
+            "dime (feat. arcángel & de la ghetto)",
+            "dime",
+            "dime feat arcángel de la ghetto"
       ]
     }),
     song({
-      "id": "mora-aurora",
-      "title": "AURORA",
-      "artistId": "mora",
-      "albumId": "lo-mismo-de-siempre",
-      "year": 2025,
+      "id": "bad-bunny-hasta-que-dios-diga",
+      "title": "Hasta Que Dios Diga",
+      "artistId": "bad-bunny",
+      "albumId": "emmanuel",
+      "year": 2020,
       "genreIds": [
             "reggaeton",
             "urbano",
             "trap"
       ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/44e85c6297e4b37127a97779714db5df/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/d/8/b/0/d8b787dc90a38105475e0ad185f8bb77.mp3?hdnea=exp=1790665572~acl=/api/1/1/d/8/b/0/d8b787dc90a38105475e0ad185f8bb77.mp3*~data=user_id=0,application_id=42~hmac=17bb4f7435f6ce11b6440b314c689d8549d1c3a7bac0adf389282f08c1811fa8",
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music113/v4/bb/88/5e/bb885ec5-2fac-b5ad-132d-1c411376de96/195081694092.jpg/600x600bb.jpg",
+      "itunesTrackId": "1515824225",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview113/v4/bf/e7/96/bfe796f8-d3e1-5bbb-ae7a-3d26c79d2477/mzaf_15789708585300321603.plus.aac.p.m4a",
       "aliases": [
-            "aurora"
-      ]
-    }),
-    song({
-      "id": "mora-detras-de-tu-alma",
-      "title": "DETRÁS DE TU ALMA",
-      "artistId": "mora",
-      "albumId": "lo-mismo-de-siempre",
-      "year": 2025,
-      "genreIds": [
-            "reggaeton",
-            "urbano",
-            "trap"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/44e85c6297e4b37127a97779714db5df/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/e/5/2/0/e52f278c4888ccdf8d66d5635d11720a.mp3?hdnea=exp=1790665572~acl=/api/1/1/e/5/2/0/e52f278c4888ccdf8d66d5635d11720a.mp3*~data=user_id=0,application_id=42~hmac=08191b99fe4b2aee35adf5dc069fa33113c259d1ef8170e034007c8dbe8e278a",
-      "aliases": [
-            "detrás de tu alma",
-            "detras de tu alma"
-      ]
-    }),
-    song({
-      "id": "mora-droga",
-      "title": "DROGA",
-      "artistId": "mora",
-      "albumId": "lo-mismo-de-siempre",
-      "year": 2025,
-      "genreIds": [
-            "reggaeton",
-            "urbano",
-            "trap"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/44e85c6297e4b37127a97779714db5df/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/f/0/8/0/f08c352430dc3ae0022462a159f3a442.mp3?hdnea=exp=1790665572~acl=/api/1/1/f/0/8/0/f08c352430dc3ae0022462a159f3a442.mp3*~data=user_id=0,application_id=42~hmac=f7f95fdbed6073a7d66c93c43b277666cc3bac65e2af39d5a4d1e03cdc36d6b8",
-      "aliases": [
-            "droga"
-      ]
-    }),
-    song({
-      "id": "mora-escalofrios",
-      "title": "ESCALOFRÍOS",
-      "artistId": "mora",
-      "albumId": "microdosis",
-      "year": 2022,
-      "genreIds": [
-            "reggaeton",
-            "urbano",
-            "trap"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/0385ddab0f03acd721ba2620d122d80a/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/0/4/c/0/04c569eda227dcb874a5eb9cc5344bf9.mp3?hdnea=exp=1790665572~acl=/api/1/1/0/4/c/0/04c569eda227dcb874a5eb9cc5344bf9.mp3*~data=user_id=0,application_id=42~hmac=eb3b177aaaa04edaa93df342832ab0c26f2137f9bc1c71057f7df6e3f7bc731f",
-      "aliases": [
-            "escalofríos"
-      ]
-    }),
-    song({
-      "id": "mora-reina",
-      "title": "REINA",
-      "artistId": "mora",
-      "albumId": "estrella",
-      "year": 2023,
-      "genreIds": [
-            "reggaeton",
-            "urbano",
-            "trap"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/e68252ef53f5b405606ac9029c650120/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/8/4/c/0/84c8fc7a0d2769b42ddad51d574932c7.mp3?hdnea=exp=1790665572~acl=/api/1/1/8/4/c/0/84c8fc7a0d2769b42ddad51d574932c7.mp3*~data=user_id=0,application_id=42~hmac=7963cc08e2f6a82de94c84c44f08e9112ec07fecc15999030aad769073c53f23",
-      "aliases": [
-            "reina"
-      ]
-    }),
-    song({
-      "id": "mora-ay-bendito",
-      "title": "Ay Bendito",
-      "artistId": "mora",
-      "albumId": "hermoso",
-      "year": 2026,
-      "genreIds": [
-            "reggaeton",
-            "urbano",
-            "trap"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/5c3c52f4b410b1dbf7e009cb7efe2b7d/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/c/5/a/0/c5ab3cbd6f622b375fac12088d157950.mp3?hdnea=exp=1790665572~acl=/api/1/1/c/5/a/0/c5ab3cbd6f622b375fac12088d157950.mp3*~data=user_id=0,application_id=42~hmac=bbae3d05bc2426d34fe092c2ee75a9db8f2081d5e40889b3718b8a551a1a015c",
-      "aliases": [
-            "ay bendito"
+            "hasta que dios diga"
       ]
     }),
     song({
@@ -2333,84 +3451,17 @@ export const seedCatalog = {
             "urbano",
             "trap"
       ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/e68252ef53f5b405606ac9029c650120/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/6/8/e/0/68e55b3d3f96f7742cfa46917c4c4f97.mp3?hdnea=exp=1790665572~acl=/api/1/1/6/8/e/0/68e55b3d3f96f7742cfa46917c4c4f97.mp3*~data=user_id=0,application_id=42~hmac=70f965d2add22a81b96bf7db063c14065180dac128e04ea245fb2911b9e07b5f",
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/ff/e3/6d/ffe36d58-d153-826d-4f7f-7ba38e81c75a/197189639050.jpg/600x600bb.jpg",
+      "itunesTrackId": "1704060593",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/2e/f7/83/2ef783e6-12ee-31e7-d837-552083a6ed10/mzaf_13901399736219003720.plus.aac.p.m4a",
       "aliases": [
             "donde se aprende a querer?",
             "donde se aprende a querer"
       ]
     }),
     song({
-      "id": "mora-desaparecer",
-      "title": "Desaparecer",
-      "artistId": "mora",
-      "albumId": "primer-dia-de-clases",
-      "year": 2021,
-      "genreIds": [
-            "reggaeton",
-            "urbano",
-            "trap"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/aeb6974f7292b35f4617720d530a3351/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/6/6/7/0/667293f972a1c1dd2c15407efd37ec11.mp3?hdnea=exp=1790665572~acl=/api/1/1/6/6/7/0/667293f972a1c1dd2c15407efd37ec11.mp3*~data=user_id=0,application_id=42~hmac=868f4fec4208cb682825369b79ba208b4ebce43841025ed8c4dde31d7a4bd75e",
-      "aliases": [
-            "desaparecer"
-      ]
-    }),
-    song({
-      "id": "mora-rapido",
-      "title": "RÁPIDO",
-      "artistId": "mora",
-      "albumId": "rapido",
-      "year": 2023,
-      "genreIds": [
-            "reggaeton",
-            "urbano",
-            "trap"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/d1ee49b1bbe5a91158b7e50a8e9e1c25/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/d/4/1/0/d41923fab91803729e63fb26038088a0.mp3?hdnea=exp=1790665572~acl=/api/1/1/d/4/1/0/d41923fab91803729e63fb26038088a0.mp3*~data=user_id=0,application_id=42~hmac=347b6930fe46951a09cce2599f82bf10e1d6c1076b835b339457b74b2f986988",
-      "aliases": [
-            "rápido"
-      ]
-    }),
-    song({
-      "id": "mora-1204",
-      "title": "1204",
-      "artistId": "mora",
-      "albumId": "fx-de-la-rose",
-      "year": 2025,
-      "genreIds": [
-            "reggaeton",
-            "urbano",
-            "trap"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/f795e41a1c8d14e6b0cbf6a2bf1adf98/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/3/6/d/0/36d4e7684dba23736014ada0ea2d7369.mp3?hdnea=exp=1790665572~acl=/api/1/1/3/6/d/0/36d4e7684dba23736014ada0ea2d7369.mp3*~data=user_id=0,application_id=42~hmac=8071eca8c3220d6a603243ae8a65bb11c96eeab80b9da1a13132950c7e4a59e3",
-      "aliases": [
-            "1204"
-      ]
-    }),
-    song({
-      "id": "mora-mil-vidas",
-      "title": "MIL VIDAS",
-      "artistId": "mora",
-      "albumId": "lo-mismo-de-siempre",
-      "year": 2025,
-      "genreIds": [
-            "reggaeton",
-            "urbano",
-            "trap"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/44e85c6297e4b37127a97779714db5df/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/a/5/6/0/a5686985b1baac9086d6e9d9350afbd7.mp3?hdnea=exp=1790665572~acl=/api/1/1/a/5/6/0/a5686985b1baac9086d6e9d9350afbd7.mp3*~data=user_id=0,application_id=42~hmac=be7959aa57075c9ecb5e14d28ef9193b1c0f2b71e166969df6d475f3de5a6270",
-      "aliases": [
-            "mil vidas"
-      ]
-    }),
-    song({
-      "id": "mora-tus-lagrimas",
-      "title": "TUS LÁGRIMAS",
+      "id": "mora-memorias",
+      "title": "MEMORIAS",
       "artistId": "mora",
       "albumId": "microdosis",
       "year": 2022,
@@ -2419,113 +3470,29 @@ export const seedCatalog = {
             "urbano",
             "trap"
       ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/0385ddab0f03acd721ba2620d122d80a/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/c/2/9/0/c29ed5c4cb8a997e3e0b979c93e07343.mp3?hdnea=exp=1790665572~acl=/api/1/1/c/2/9/0/c29ed5c4cb8a997e3e0b979c93e07343.mp3*~data=user_id=0,application_id=42~hmac=78b7eea9a75f0612e097cd78de3eae950bae5e4fac28231d6a7ff1196b0baede",
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/5b/4f/71/5b4f715a-5323-cc45-382a-7d0b4b69f418/196626706898.jpg/600x600bb.jpg",
+      "itunesTrackId": "1617074066",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/aa/a7/ec/aaa7ec7c-ef26-ff55-e3f0-41e95c8c419e/mzaf_7845428154904821468.plus.aac.p.m4a",
       "aliases": [
-            "tus lágrimas"
+            "memorias"
       ]
     }),
     song({
-      "id": "mora-modelito",
-      "title": "MODELITO",
+      "id": "mora-escalofrios",
+      "title": "ESCALOFRÍOS",
       "artistId": "mora",
-      "albumId": "paraiso",
+      "albumId": "microdosis",
       "year": 2022,
       "genreIds": [
             "reggaeton",
             "urbano",
             "trap"
       ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/1bf2a443d594d066367f30f35c273049/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/3/a/0/0/3a0d98c4d281e5bea6f5ce744d7a67df.mp3?hdnea=exp=1790665572~acl=/api/1/1/3/a/0/0/3a0d98c4d281e5bea6f5ce744d7a67df.mp3*~data=user_id=0,application_id=42~hmac=f9bd5eb0557e674259e87233d2c057ae14be3708c0dd750e2c52cbbcf984d00f",
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/5b/4f/71/5b4f715a-5323-cc45-382a-7d0b4b69f418/196626706898.jpg/600x600bb.jpg",
+      "itunesTrackId": "1617074364",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/58/0a/9b/580a9b5d-510c-5ad4-8000-9fc62af0f4f3/mzaf_5160120078046007974.plus.aac.p.m4a",
       "aliases": [
-            "modelito"
-      ]
-    }),
-    song({
-      "id": "mora-mas-que-algo",
-      "title": "MÁS QUE ALGO",
-      "artistId": "mora",
-      "albumId": "lo-mismo-de-siempre",
-      "year": 2025,
-      "genreIds": [
-            "reggaeton",
-            "urbano",
-            "trap"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/44e85c6297e4b37127a97779714db5df/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/4/0/5/0/4054bee26824db9bbf56d2333fb9f262.mp3?hdnea=exp=1790665572~acl=/api/1/1/4/0/5/0/4054bee26824db9bbf56d2333fb9f262.mp3*~data=user_id=0,application_id=42~hmac=15ece1945738c142d063deed8b7e7dfe59cfe2c685b36e1c47c68553c2d0a751",
-      "aliases": [
-            "más que algo"
-      ]
-    }),
-    song({
-      "id": "mora-pensabas",
-      "title": "Pensabas",
-      "artistId": "mora",
-      "albumId": "pensabas",
-      "year": 2017,
-      "genreIds": [
-            "reggaeton",
-            "urbano",
-            "trap"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/8dab7d0f45bfbb11f2ad2ab86ef42453/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/2/9/8/0/298c332a22b93bcfc8fc38a1a331a4de.mp3?hdnea=exp=1790665572~acl=/api/1/1/2/9/8/0/298c332a22b93bcfc8fc38a1a331a4de.mp3*~data=user_id=0,application_id=42~hmac=38f0b2713f7010f4f6c00796872900b8fcf3b81cfba345901bc74590776b04f7",
-      "aliases": [
-            "pensabas"
-      ]
-    }),
-    song({
-      "id": "mora-cabernet",
-      "title": "Cabernet",
-      "artistId": "mora",
-      "albumId": "cabernet",
-      "year": 2026,
-      "genreIds": [
-            "reggaeton",
-            "urbano",
-            "trap"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/449e7f5cf962d5ae2458494b52fbc996/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/1/9/e/0/19e6f17bfae37c05a60187042531cc9b.mp3?hdnea=exp=1790665572~acl=/api/1/1/1/9/e/0/19e6f17bfae37c05a60187042531cc9b.mp3*~data=user_id=0,application_id=42~hmac=8cd36f26b7a734402654c70194d3e2aceca8fa9ee2d726d686f5b3a0b8480457",
-      "aliases": [
-            "cabernet"
-      ]
-    }),
-    song({
-      "id": "mora-ayer-y-hoy",
-      "title": "AYER Y HOY",
-      "artistId": "mora",
-      "albumId": "estrella",
-      "year": 2023,
-      "genreIds": [
-            "reggaeton",
-            "urbano",
-            "trap"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/e68252ef53f5b405606ac9029c650120/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/e/f/4/0/ef4b7e276b91fe32ffa33184747e88e1.mp3?hdnea=exp=1790665572~acl=/api/1/1/e/f/4/0/ef4b7e276b91fe32ffa33184747e88e1.mp3*~data=user_id=0,application_id=42~hmac=d317dfeb61597489a5090a2093a4e9f20170c2db895adff0ceabd7fa2a889495",
-      "aliases": [
-            "ayer y hoy"
-      ]
-    }),
-    song({
-      "id": "mora-algo-asi-remix",
-      "title": "algo así (remix)",
-      "artistId": "mora",
-      "albumId": "algo-asi-remix",
-      "year": 2022,
-      "genreIds": [
-            "reggaeton",
-            "urbano",
-            "trap"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/5a5e4bdf2d4183e8b98e3478c6f44715/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/3/3/3/0/333a66f758bf2d3337a78668ddb37dd4.mp3?hdnea=exp=1790665572~acl=/api/1/1/3/3/3/0/333a66f758bf2d3337a78668ddb37dd4.mp3*~data=user_id=0,application_id=42~hmac=48aa5674d2afdef395df968e728f14417d4c3585259fa10d1293629a4ea3bac2",
-      "aliases": [
-            "algo así (remix)",
-            "algo así remix"
+            "escalofríos"
       ]
     }),
     song({
@@ -2539,83 +3506,16 @@ export const seedCatalog = {
             "urbano",
             "trap"
       ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/e68252ef53f5b405606ac9029c650120/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/8/3/0/0/830e42f807f45b8690b251ca53f519c0.mp3?hdnea=exp=1790665572~acl=/api/1/1/8/3/0/0/830e42f807f45b8690b251ca53f519c0.mp3*~data=user_id=0,application_id=42~hmac=cded772176477ff7b9d540f3effbe480bf09ac840242e4db8bb9d9771377e17e",
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/ff/e3/6d/ffe36d58-d153-826d-4f7f-7ba38e81c75a/197189639050.jpg/600x600bb.jpg",
+      "itunesTrackId": "1704060589",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/ab/cd/fc/abcdfc00-196f-1563-aacf-55fa6250bb34/mzaf_946837812915397019.plus.aac.p.m4a",
       "aliases": [
             "pasajero"
       ]
     }),
     song({
-      "id": "mora-pecado",
-      "title": "PECADO",
-      "artistId": "mora",
-      "albumId": "microdosis",
-      "year": 2022,
-      "genreIds": [
-            "reggaeton",
-            "urbano",
-            "trap"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/0385ddab0f03acd721ba2620d122d80a/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/c/d/7/0/cd707d42d57544d2af4a40c5765dc4c4.mp3?hdnea=exp=1790665572~acl=/api/1/1/c/d/7/0/cd707d42d57544d2af4a40c5765dc4c4.mp3*~data=user_id=0,application_id=42~hmac=de652e2bbaab33b2c85b80c18eeed613d6e2aefe8d605c742abefb25962ea7cf",
-      "aliases": [
-            "pecado"
-      ]
-    }),
-    song({
-      "id": "mora-volando",
-      "title": "Volando",
-      "artistId": "mora",
-      "albumId": "primer-dia-de-clases",
-      "year": 2021,
-      "genreIds": [
-            "reggaeton",
-            "urbano",
-            "trap"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/aeb6974f7292b35f4617720d530a3351/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/5/c/e/0/5ce8d909511b688f43632594a60f5c00.mp3?hdnea=exp=1790665572~acl=/api/1/1/5/c/e/0/5ce8d909511b688f43632594a60f5c00.mp3*~data=user_id=0,application_id=42~hmac=683e715f774a2a667ed2b408855a691faf47475688426b222ca358413d069356",
-      "aliases": [
-            "volando"
-      ]
-    }),
-    song({
-      "id": "mora-tema-de-jory",
-      "title": "TEMA DE JORY",
-      "artistId": "mora",
-      "albumId": "lo-mismo-de-siempre",
-      "year": 2025,
-      "genreIds": [
-            "reggaeton",
-            "urbano",
-            "trap"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/44e85c6297e4b37127a97779714db5df/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/e/1/7/0/e1745f7a2e42382aeffe15ac7ecbdf10.mp3?hdnea=exp=1790665572~acl=/api/1/1/e/1/7/0/e1745f7a2e42382aeffe15ac7ecbdf10.mp3*~data=user_id=0,application_id=42~hmac=c21ed71db232cab7b646847155f58132d76a0b2aa8e899ec0878f731ceefeb95",
-      "aliases": [
-            "tema de jory"
-      ]
-    }),
-    song({
-      "id": "mora-te-conoci-perriando",
-      "title": "Te Conoci Perriando",
-      "artistId": "mora",
-      "albumId": "primer-dia-de-clases",
-      "year": 2021,
-      "genreIds": [
-            "reggaeton",
-            "urbano",
-            "trap"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/aeb6974f7292b35f4617720d530a3351/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/0/f/5/0/0f5e9f89d4c15b841355bb10586028bf.mp3?hdnea=exp=1790665572~acl=/api/1/1/0/f/5/0/0f5e9f89d4c15b841355bb10586028bf.mp3*~data=user_id=0,application_id=42~hmac=d28e4d09711dee5d11824b8a8b7d33d40bac5fc7e22acee74482057b5c4a9c91",
-      "aliases": [
-            "te conoci perriando"
-      ]
-    }),
-    song({
-      "id": "mora-un-deseo",
-      "title": "UN DESEO",
+      "id": "mora-media-luna",
+      "title": "MEDIA LUNA",
       "artistId": "mora",
       "albumId": "estrella",
       "year": 2023,
@@ -2624,180 +3524,11 @@ export const seedCatalog = {
             "urbano",
             "trap"
       ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/e68252ef53f5b405606ac9029c650120/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/8/a/4/0/8a47918fd7f436ce70162173925f9d0d.mp3?hdnea=exp=1790665572~acl=/api/1/1/8/a/4/0/8a47918fd7f436ce70162173925f9d0d.mp3*~data=user_id=0,application_id=42~hmac=df03b67582b31415eec0e5765f41f734399523b888d6543b5b7bb21929bb6d5d",
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/ff/e3/6d/ffe36d58-d153-826d-4f7f-7ba38e81c75a/197189639050.jpg/600x600bb.jpg",
+      "itunesTrackId": "1704060586",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/69/41/d2/6941d217-e429-76a4-cbdf-0022bdc75cea/mzaf_17098232230843226571.plus.aac.p.m4a",
       "aliases": [
-            "un deseo"
-      ]
-    }),
-    song({
-      "id": "mora-que-habilidad",
-      "title": "QUE HABILIDAD",
-      "artistId": "mora",
-      "albumId": "paraiso",
-      "year": 2022,
-      "genreIds": [
-            "reggaeton",
-            "urbano",
-            "trap"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/1bf2a443d594d066367f30f35c273049/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/1/1/8/0/118813aa33ae2d80372d992b927e2895.mp3?hdnea=exp=1790665572~acl=/api/1/1/1/1/8/0/118813aa33ae2d80372d992b927e2895.mp3*~data=user_id=0,application_id=42~hmac=c1fe71216ccebdd19781bd23fe41a3b2a2f1c5d2b2380fe073976e591b8e0012",
-      "aliases": [
-            "que habilidad"
-      ]
-    }),
-    song({
-      "id": "mora-apa",
-      "title": "APA",
-      "artistId": "mora",
-      "albumId": "paraiso",
-      "year": 2022,
-      "genreIds": [
-            "reggaeton",
-            "urbano",
-            "trap"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/1bf2a443d594d066367f30f35c273049/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/5/8/5/0/58590e4938bbff356f6dcab37e2a5a57.mp3?hdnea=exp=1790665572~acl=/api/1/1/5/8/5/0/58590e4938bbff356f6dcab37e2a5a57.mp3*~data=user_id=0,application_id=42~hmac=f06220474e4fbccf54417cd6a2869a363c35fe5fe5458af75d3799eb65eb4879",
-      "aliases": [
-            "apa"
-      ]
-    }),
-    song({
-      "id": "mora-ansiedades",
-      "title": "Ansiedades",
-      "artistId": "mora",
-      "albumId": "metro-boomin-presents-spider-man-across-the-spider-verse-soundtrack-from-and-inspired-by-the-motion-picture-deluxe-edition",
-      "year": 2023,
-      "genreIds": [
-            "reggaeton",
-            "urbano",
-            "trap"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/909acf24c4e836b2483bee0e8cb939d2/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/a/6/c/0/a6c50eb56a0283d5cf5cc1202365295c.mp3?hdnea=exp=1790665572~acl=/api/1/1/a/6/c/0/a6c50eb56a0283d5cf5cc1202365295c.mp3*~data=user_id=0,application_id=42~hmac=c29aea23bca15f8e6738430f22b7a9a977d42f82b4cc72317da144d512c5fa7f",
-      "aliases": [
-            "ansiedades"
-      ]
-    }),
-    song({
-      "id": "mora-serotonina",
-      "title": "Serotonina",
-      "artistId": "mora",
-      "albumId": "serotonina",
-      "year": 2022,
-      "genreIds": [
-            "reggaeton",
-            "urbano",
-            "trap"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/dd82baaf36ec98d5107fe5416bd0a746/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/8/0/b/0/80b3db3d14df32ff3715fea6e29616f0.mp3?hdnea=exp=1790665572~acl=/api/1/1/8/0/b/0/80b3db3d14df32ff3715fea6e29616f0.mp3*~data=user_id=0,application_id=42~hmac=aad6f2fb7937a4d37b6a83062690efb0d0ceed128bf42655349d7c0505f0dc41",
-      "aliases": [
-            "serotonina"
-      ]
-    }),
-    song({
-      "id": "mora-laguna",
-      "title": "LAGUNA",
-      "artistId": "mora",
-      "albumId": "estrella",
-      "year": 2023,
-      "genreIds": [
-            "reggaeton",
-            "urbano",
-            "trap"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/e68252ef53f5b405606ac9029c650120/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/a/a/c/0/aaceac5e3713cd527d9647b95d891f53.mp3?hdnea=exp=1790665572~acl=/api/1/1/a/a/c/0/aaceac5e3713cd527d9647b95d891f53.mp3*~data=user_id=0,application_id=42~hmac=c43c6e201525c2c072fa361a06dc1bdd857bcf9f26f5c4533d2f6ef5df36bf1d",
-      "aliases": [
-            "laguna"
-      ]
-    }),
-    song({
-      "id": "mora-2010",
-      "title": "2010",
-      "artistId": "mora",
-      "albumId": "microdosis",
-      "year": 2022,
-      "genreIds": [
-            "reggaeton",
-            "urbano",
-            "trap"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/0385ddab0f03acd721ba2620d122d80a/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/4/b/1/0/4b1c5a9ef6c6db949889bab9c2ad0d7d.mp3?hdnea=exp=1790665572~acl=/api/1/1/4/b/1/0/4b1c5a9ef6c6db949889bab9c2ad0d7d.mp3*~data=user_id=0,application_id=42~hmac=3aadaeeb8a0de80b9e28120ac87a2d16afa8f85d8f4357265224b9c460f2c362",
-      "aliases": [
-            "2010"
-      ]
-    }),
-    song({
-      "id": "mora-ia",
-      "title": "IA",
-      "artistId": "mora",
-      "albumId": "ia",
-      "year": 2024,
-      "genreIds": [
-            "reggaeton",
-            "urbano",
-            "trap"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/c2f947072d09666dea3c6eae9951583b/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/d/b/5/0/db5f05bf310e2a700d7f0fbb27aebd1d.mp3?hdnea=exp=1790665572~acl=/api/1/1/d/b/5/0/db5f05bf310e2a700d7f0fbb27aebd1d.mp3*~data=user_id=0,application_id=42~hmac=13368efc7a24afabfedd5ca3f9007952c1730ef036b9bfab4438cfe5531d22de",
-      "aliases": [
-            "ia"
-      ]
-    }),
-    song({
-      "id": "mora-impredecible",
-      "title": "Impredecible",
-      "artistId": "mora",
-      "albumId": "corsa",
-      "year": 2026,
-      "genreIds": [
-            "reggaeton",
-            "urbano",
-            "trap"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/4be457656a57ebd54c087db80d544fcb/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/5/e/2/0/5e22a970e15a303b890761b3fea3b20d.mp3?hdnea=exp=1790665572~acl=/api/1/1/5/e/2/0/5e22a970e15a303b890761b3fea3b20d.mp3*~data=user_id=0,application_id=42~hmac=e9d5be31fd28641d44c0f7ca28b43433c04becd13542e1666d51b131ea56c9ea",
-      "aliases": [
-            "impredecible"
-      ]
-    }),
-    song({
-      "id": "mora-de-paquete",
-      "title": "DE PAQUETE",
-      "artistId": "mora",
-      "albumId": "lo-mismo-de-siempre",
-      "year": 2025,
-      "genreIds": [
-            "reggaeton",
-            "urbano",
-            "trap"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/44e85c6297e4b37127a97779714db5df/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/5/2/4/0/524051362a44f96905873a118d097c99.mp3?hdnea=exp=1790665572~acl=/api/1/1/5/2/4/0/524051362a44f96905873a118d097c99.mp3*~data=user_id=0,application_id=42~hmac=487c2fd3d985d77d7fe0a03273344bbc0d6a023b14c2e88916ada0c1bc7fe3f9",
-      "aliases": [
-            "de paquete"
-      ]
-    }),
-    song({
-      "id": "mora-diamonds",
-      "title": "DIAMONDS",
-      "artistId": "mora",
-      "albumId": "estrella",
-      "year": 2023,
-      "genreIds": [
-            "reggaeton",
-            "urbano",
-            "trap"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/e68252ef53f5b405606ac9029c650120/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/0/1/8/0/0182ffaa48afc74da75e3a66c3abe1e9.mp3?hdnea=exp=1790665572~acl=/api/1/1/0/1/8/0/0182ffaa48afc74da75e3a66c3abe1e9.mp3*~data=user_id=0,application_id=42~hmac=82cde174982b970ac0aa2467b8d0bb9d29dc41565b8a6dc88f8a1ff45c0ca02c",
-      "aliases": [
-            "diamonds"
+            "media luna"
       ]
     }),
     song({
@@ -2811,97 +3542,192 @@ export const seedCatalog = {
             "urbano",
             "trap"
       ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/1bf2a443d594d066367f30f35c273049/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/a/5/e/0/a5ee8ae663d1f9e400f97c1fd5713cbe.mp3?hdnea=exp=1790665572~acl=/api/1/1/a/5/e/0/a5ee8ae663d1f9e400f97c1fd5713cbe.mp3*~data=user_id=0,application_id=42~hmac=eaa8919025e9b0f4f3b54f4d804a54dc12cc99713e52a03a395d43913b43ab91",
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/9b/6d/51/9b6d518e-68bf-c7c5-3a54-cb3c094eeff9/197187249541.jpg/600x600bb.jpg",
+      "itunesTrackId": "1651264685",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/68/3e/93/683e9377-3960-e881-0b0c-050a5becffd5/mzaf_16176450857206068799.plus.aac.p.m4a",
       "aliases": [
             "domingo de bote"
       ]
     }),
     song({
-      "id": "mora-7-lagrimas-remix",
-      "title": "7 Lágrimas (Remix)",
+      "id": "mora-mil-vidas",
+      "title": "MIL VIDAS",
       "artistId": "mora",
-      "albumId": "7-lagrimas-remix",
+      "albumId": "lo-mismo-de-siempre",
+      "year": 2025,
+      "genreIds": [
+            "reggaeton",
+            "urbano",
+            "trap"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/01/a1/3f/01a13ff7-c95c-9cb6-2776-695f8ed829d3/199350474521.jpg/600x600bb.jpg",
+      "itunesTrackId": "1811397163",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/d4/b7/a6/d4b7a64c-a5e3-dad4-9f88-be4342595865/mzaf_7756205501019100443.plus.aac.p.m4a",
+      "aliases": [
+            "mil vidas"
+      ]
+    }),
+    song({
+      "id": "mora-playa-privada",
+      "title": "PLAYA PRIVADA",
+      "artistId": "mora",
+      "albumId": "microdosis",
       "year": 2022,
       "genreIds": [
             "reggaeton",
             "urbano",
             "trap"
       ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/e59b0158ab655fbe475418506bc125aa/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/8/c/9/0/8c95aa2ae37dd12eea1df0b443175ca6.mp3?hdnea=exp=1790665572~acl=/api/1/1/8/c/9/0/8c95aa2ae37dd12eea1df0b443175ca6.mp3*~data=user_id=0,application_id=42~hmac=77d2c2154ca709e2a19366424da95a683021a3fd14b20cb9cc8dfc0bfa88a7a0",
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/5b/4f/71/5b4f715a-5323-cc45-382a-7d0b4b69f418/196626706898.jpg/600x600bb.jpg",
+      "itunesTrackId": "1617074888",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/75/36/da/7536da26-92c0-9a50-71f6-2f8972d4d13c/mzaf_4810961665621457870.plus.aac.p.m4a",
       "aliases": [
-            "7 lágrimas (remix)",
-            "7 lágrimas",
-            "7 lágrimas remix"
+            "playa privada"
       ]
     }),
     song({
-      "id": "mora-la-carita",
-      "title": "La Carita",
+      "id": "mora-badtrip",
+      "title": "badtrip :(",
       "artistId": "mora",
-      "albumId": "primer-dia-de-clases",
-      "year": 2021,
+      "albumId": "microdosis",
+      "year": 2022,
       "genreIds": [
             "reggaeton",
             "urbano",
             "trap"
       ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/aeb6974f7292b35f4617720d530a3351/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/8/7/8/0/878eb818934d0012e82be8a799975ad7.mp3?hdnea=exp=1790665572~acl=/api/1/1/8/7/8/0/878eb818934d0012e82be8a799975ad7.mp3*~data=user_id=0,application_id=42~hmac=9788769938f2bf9a92e7f503afa2e93bb2bfeccdc58222765d6428cbd976a1d5",
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/5b/4f/71/5b4f715a-5323-cc45-382a-7d0b4b69f418/196626706898.jpg/600x600bb.jpg",
+      "itunesTrackId": "1617073898",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/65/1e/cf/651ecf2b-fdec-7556-416a-096cb1f50f27/mzaf_4845566952747589466.plus.aac.p.m4a",
       "aliases": [
-            "la carita"
+            "badtrip :(",
+            "badtrip"
       ]
     }),
     song({
-      "id": "mora-primer-dia-de-clases",
-      "title": "Primer Dia de Clases",
+      "id": "mora-apa",
+      "title": "APA",
       "artistId": "mora",
-      "albumId": "primer-dia-de-clases",
-      "year": 2021,
+      "albumId": "paraiso",
+      "year": 2022,
       "genreIds": [
             "reggaeton",
             "urbano",
             "trap"
       ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/aeb6974f7292b35f4617720d530a3351/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/6/a/0/0/6a0eac8a89754b56fefecd5c0efa1147.mp3?hdnea=exp=1790665572~acl=/api/1/1/6/a/0/0/6a0eac8a89754b56fefecd5c0efa1147.mp3*~data=user_id=0,application_id=42~hmac=c1aa36af1eccd48288a344014fe5eff667fa1794b6e05fe10878542f21456158",
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/9b/6d/51/9b6d518e-68bf-c7c5-3a54-cb3c094eeff9/197187249541.jpg/600x600bb.jpg",
+      "itunesTrackId": "1651264846",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/bd/f0/b1/bdf0b18f-1c99-4c29-30fd-f809d1dd8249/mzaf_11542284838953502118.plus.aac.p.m4a",
       "aliases": [
-            "primer dia de clases"
+            "apa"
       ]
     }),
     song({
-      "id": "mora-los-peores-del-mundo",
-      "title": "LOS PEORES DEL MUNDO",
+      "id": "mora-pecado",
+      "title": "PECADO",
       "artistId": "mora",
-      "albumId": "apocalipto",
-      "year": 2026,
+      "albumId": "microdosis",
+      "year": 2022,
       "genreIds": [
             "reggaeton",
             "urbano",
             "trap"
       ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/45ef2fc3fd81d83c1f52b64c5b441422/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/c/0/7/0/c07657019dad48e584ba6436b9d7f98f.mp3?hdnea=exp=1790665572~acl=/api/1/1/c/0/7/0/c07657019dad48e584ba6436b9d7f98f.mp3*~data=user_id=0,application_id=42~hmac=0e0d9f845a21ca0504e3b05d0f194b04055f0e45e52a6c99a1346d079d2c6817",
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/5b/4f/71/5b4f715a-5323-cc45-382a-7d0b4b69f418/196626706898.jpg/600x600bb.jpg",
+      "itunesTrackId": "1617074355",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/0f/51/ab/0f51abf6-bd91-af2b-e7e1-799a3f6d54d1/mzaf_15482097358638419341.plus.aac.p.m4a",
       "aliases": [
-            "los peores del mundo"
+            "pecado"
       ]
     }),
     song({
-      "id": "mora-a-mi-nombre",
-      "title": "A MI NOMBRE",
+      "id": "mora-ojos-colorau",
+      "title": "OJOS COLORAU",
       "artistId": "mora",
-      "albumId": "sayonara",
-      "year": 2024,
+      "albumId": "microdosis",
+      "year": 2022,
       "genreIds": [
             "reggaeton",
             "urbano",
             "trap"
       ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/c3bd92e88e7cbf443e5ee99f365ba042/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/9/6/9/0/969b05cb453d1ffeb089091cd2c694de.mp3?hdnea=exp=1790665572~acl=/api/1/1/9/6/9/0/969b05cb453d1ffeb089091cd2c694de.mp3*~data=user_id=0,application_id=42~hmac=8ec255febf5818e9428d36bd76dc93bc36392c5692eae7951a9f0a67676a7665",
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/5b/4f/71/5b4f715a-5323-cc45-382a-7d0b4b69f418/196626706898.jpg/600x600bb.jpg",
+      "itunesTrackId": "1617075260",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/d2/27/4d/d2274da4-a500-fa73-9690-53dd7b06a5ec/mzaf_18265917791897288549.plus.aac.p.m4a",
       "aliases": [
-            "a mi nombre"
+            "ojos colorau"
+      ]
+    }),
+    song({
+      "id": "mora-tu-amigo",
+      "title": "TU AMIGO",
+      "artistId": "mora",
+      "albumId": "microdosis",
+      "year": 2022,
+      "genreIds": [
+            "reggaeton",
+            "urbano",
+            "trap"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/5b/4f/71/5b4f715a-5323-cc45-382a-7d0b4b69f418/196626706898.jpg/600x600bb.jpg",
+      "itunesTrackId": "1617075247",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/cb/65/c3/cb65c38f-b805-15b4-bd79-aa34cb3d7450/mzaf_6126384750631793786.plus.aac.p.m4a",
+      "aliases": [
+            "tu amigo"
+      ]
+    }),
+    song({
+      "id": "mora-oro-rosado",
+      "title": "ORO ROSADO",
+      "artistId": "mora",
+      "albumId": "microdosis",
+      "year": 2022,
+      "genreIds": [
+            "reggaeton",
+            "urbano",
+            "trap"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/5b/4f/71/5b4f715a-5323-cc45-382a-7d0b4b69f418/196626706898.jpg/600x600bb.jpg",
+      "itunesTrackId": "1617075250",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/70/85/3a/70853a1a-5c4d-9fec-0671-d1b41f119e3d/mzaf_11027711883634100626.plus.aac.p.m4a",
+      "aliases": [
+            "oro rosado"
+      ]
+    }),
+    song({
+      "id": "mora-cositas",
+      "title": "COSITAS",
+      "artistId": "mora",
+      "albumId": "paraiso",
+      "year": 2022,
+      "genreIds": [
+            "reggaeton",
+            "urbano",
+            "trap"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/9b/6d/51/9b6d518e-68bf-c7c5-3a54-cb3c094eeff9/197187249541.jpg/600x600bb.jpg",
+      "itunesTrackId": "1651264952",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/f8/2a/93/f82a930d-ead5-5b62-7b5c-4f9c2dbf96e0/mzaf_3943839474247894580.plus.aac.p.m4a",
+      "aliases": [
+            "cositas"
+      ]
+    }),
+    song({
+      "id": "mora-lejos-de-ti",
+      "title": "LEJOS DE TI",
+      "artistId": "mora",
+      "albumId": "microdosis",
+      "year": 2022,
+      "genreIds": [
+            "reggaeton",
+            "urbano",
+            "trap"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/5b/4f/71/5b4f715a-5323-cc45-382a-7d0b4b69f418/196626706898.jpg/600x600bb.jpg",
+      "itunesTrackId": "1617074910",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/98/d4/f3/98d4f30d-6ae8-a557-86b6-da1135e76efb/mzaf_603059598773368476.plus.aac.p.m4a",
+      "aliases": [
+            "lejos de ti"
       ]
     }),
     song({
@@ -2915,66 +3741,340 @@ export const seedCatalog = {
             "urbano",
             "trap"
       ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/1bf2a443d594d066367f30f35c273049/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/f/d/7/0/fd79e21dacda05e155a0a9e10b145242.mp3?hdnea=exp=1790665572~acl=/api/1/1/f/d/7/0/fd79e21dacda05e155a0a9e10b145242.mp3*~data=user_id=0,application_id=42~hmac=5adea66e653a1c05e88929483a7796fef8d17b204d2e3e85e8433e099625b853",
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/9b/6d/51/9b6d518e-68bf-c7c5-3a54-cb3c094eeff9/197187249541.jpg/600x600bb.jpg",
+      "itunesTrackId": "1651265098",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/a6/7c/b6/a67cb6c0-6a4a-31fd-c58e-bfbe1f9650f1/mzaf_5421437115876916682.plus.aac.p.m4a",
       "aliases": [
             "en la orilla"
       ]
     }),
     song({
-      "id": "mora-lacone",
-      "title": "LACONE",
+      "id": "mora-casualidad",
+      "title": "CASUALIDAD",
       "artistId": "mora",
-      "albumId": "lacone",
+      "albumId": "paraiso",
       "year": 2022,
       "genreIds": [
             "reggaeton",
             "urbano",
             "trap"
       ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/169e7514efeba45cc593ccbceb91b14e/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/2/3/1/0/231118b43f5f54f695cc29c0f0ea7fc6.mp3?hdnea=exp=1790665572~acl=/api/1/1/2/3/1/0/231118b43f5f54f695cc29c0f0ea7fc6.mp3*~data=user_id=0,application_id=42~hmac=b51734f00752f97f1c79a1b48f63c14ae73b2bfadd6dda0d24acaaeebe7a0fe0",
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/9b/6d/51/9b6d518e-68bf-c7c5-3a54-cb3c094eeff9/197187249541.jpg/600x600bb.jpg",
+      "itunesTrackId": "1651265365",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/17/e8/5d/17e85d40-edbe-d54f-c86b-13ccb57ce8f2/mzaf_1514988839879198173.plus.aac.p.m4a",
       "aliases": [
-            "lacone"
+            "casualidad"
       ]
     }),
     song({
-      "id": "mora-cuando-sera",
-      "title": "Cuando Sera",
+      "id": "mora-airbnb",
+      "title": "AIRBNB",
       "artistId": "mora",
-      "albumId": "primer-dia-de-clases",
-      "year": 2021,
+      "albumId": "paraiso",
+      "year": 2022,
       "genreIds": [
             "reggaeton",
             "urbano",
             "trap"
       ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/aeb6974f7292b35f4617720d530a3351/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/b/4/e/0/b4e9a2189d0205974f57aadd3800d0fe.mp3?hdnea=exp=1790665572~acl=/api/1/1/b/4/e/0/b4e9a2189d0205974f57aadd3800d0fe.mp3*~data=user_id=0,application_id=42~hmac=61cfd4246971080be9e90edfad27884a5c8bd41f1bfa5ad71895d093896c5a82",
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/9b/6d/51/9b6d518e-68bf-c7c5-3a54-cb3c094eeff9/197187249541.jpg/600x600bb.jpg",
+      "itunesTrackId": "1651265369",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/56/87/88/568788d9-163f-7f75-4219-76fbcc8de689/mzaf_7050499939653063932.plus.aac.p.m4a",
       "aliases": [
-            "cuando sera"
+            "airbnb"
       ]
     }),
     song({
-      "id": "mora-textos-frios",
-      "title": "Textos Fríos",
+      "id": "mora-tu-sabes-donde-vivo",
+      "title": "TÚ SABES DONDE VIVO",
       "artistId": "mora",
-      "albumId": "musica-buena-para-dias-malos",
-      "year": 2024,
+      "albumId": "paraiso",
+      "year": 2022,
       "genreIds": [
             "reggaeton",
             "urbano",
             "trap"
       ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/2f3593fb3036904074068e225a1fcb62/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/2/b/f/0/2bfb7e9e9c888ddfdb1badab6d3cb71f.mp3?hdnea=exp=1790665572~acl=/api/1/1/2/b/f/0/2bfb7e9e9c888ddfdb1badab6d3cb71f.mp3*~data=user_id=0,application_id=42~hmac=04c8f9dd63bd6fc885e48422ed20cfde9b22734fe017b5ead0c61471c6ecb762",
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/9b/6d/51/9b6d518e-68bf-c7c5-3a54-cb3c094eeff9/197187249541.jpg/600x600bb.jpg",
+      "itunesTrackId": "1651265578",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/0f/4a/01/0f4a01b7-699f-8409-ae08-348dc6ee41a8/mzaf_5499652829538244665.plus.aac.p.m4a",
       "aliases": [
-            "textos fríos"
+            "tú sabes donde vivo"
       ]
     }),
     song({
-      "id": "rauw-alejandro-que-pasaria",
-      "title": "Qué Pasaría...",
+      "id": "mora-eivissa",
+      "title": "EIVISSA",
+      "artistId": "mora",
+      "albumId": "paraiso",
+      "year": 2022,
+      "genreIds": [
+            "reggaeton",
+            "urbano",
+            "trap"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/9b/6d/51/9b6d518e-68bf-c7c5-3a54-cb3c094eeff9/197187249541.jpg/600x600bb.jpg",
+      "itunesTrackId": "1651265722",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/69/49/42/69494217-e364-929d-a0d7-09d6e2910e06/mzaf_8151817634588162267.plus.aac.p.m4a",
+      "aliases": [
+            "eivissa"
+      ]
+    }),
+    song({
+      "id": "mora-ansiedades",
+      "title": "Ansiedades",
+      "artistId": "mora",
+      "albumId": "metro-boomin-presents-spider-man-across-the-spider-verse-soundtrack-from-and-inspired-by-the-motion-picture-deluxe-edition",
+      "year": 2023,
+      "genreIds": [
+            "reggaeton",
+            "urbano",
+            "trap"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music116/v4/43/3b/ed/433bedaf-fcb0-9c11-cb11-b24d90df7e21/23UMGIM64367.rgb.jpg/600x600bb.jpg",
+      "itunesTrackId": "1691212056",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/63/ca/49/63ca49dc-ee5d-e21b-2060-ce206030b15c/mzaf_15868602792766205870.plus.aac.p.m4a",
+      "aliases": [
+            "ansiedades"
+      ]
+    }),
+    song({
+      "id": "mora-bienvenido-al-paraiso",
+      "title": "BIENVENIDO AL PARAÍSO",
+      "artistId": "mora",
+      "albumId": "paraiso",
+      "year": 2022,
+      "genreIds": [
+            "reggaeton",
+            "urbano",
+            "trap"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/9b/6d/51/9b6d518e-68bf-c7c5-3a54-cb3c094eeff9/197187249541.jpg/600x600bb.jpg",
+      "itunesTrackId": "1651264487",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/79/fe/0f/79fe0f39-c990-ecf1-b5c2-f307ecfe840e/mzaf_6284656213438898567.plus.aac.p.m4a",
+      "aliases": [
+            "bienvenido al paraíso"
+      ]
+    }),
+    song({
+      "id": "mora-hasta-cuando",
+      "title": "Hasta Cuándo",
+      "artistId": "mora",
+      "albumId": "hasta-cuando-single",
+      "year": 2018,
+      "genreIds": [
+            "reggaeton",
+            "urbano",
+            "trap"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music123/v4/54/7d/81/547d81fc-221d-8b80-b214-6d79463ef2fb/843357150925.jpg/600x600bb.jpg",
+      "itunesTrackId": "1470492249",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/ef/08/7c/ef087caf-a643-314d-6ce1-fe12b5c77669/mzaf_15852745472365278881.plus.aac.p.m4a",
+      "aliases": [
+            "hasta cuándo"
+      ]
+    }),
+    song({
+      "id": "mora-reir-o-llorar",
+      "title": "Reír o Llorar",
+      "artistId": "mora",
+      "albumId": "reir-o-llorar-single",
+      "year": 2018,
+      "genreIds": [
+            "reggaeton",
+            "urbano",
+            "trap"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music113/v4/70/53/59/70535927-c127-bc8b-eabc-84dde3bc2f61/193436043670.jpg/600x600bb.jpg",
+      "itunesTrackId": "1470500437",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview115/v4/53/cb/db/53cbdb60-e5db-e0be-f6d7-74052a40d8d9/mzaf_5219747161571323878.plus.aac.p.m4a",
+      "aliases": [
+            "reír o llorar"
+      ]
+    }),
+    song({
+      "id": "mora-miradas",
+      "title": "Miradas",
+      "artistId": "mora",
+      "albumId": "miradas-single",
+      "year": 2019,
+      "genreIds": [
+            "reggaeton",
+            "urbano",
+            "trap"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music123/v4/48/7c/b3/487cb34e-8d59-10fd-f823-736d2afdc797/194491207762.jpg/600x600bb.jpg",
+      "itunesTrackId": "1476920523",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/2a/88/0d/2a880df1-ff02-9bfd-6dc9-d0fed1939ec7/mzaf_18379877829183867815.plus.aac.p.m4a",
+      "aliases": [
+            "miradas"
+      ]
+    }),
+    song({
+      "id": "mora-me-niego",
+      "title": "Me Niego",
+      "artistId": "mora",
+      "albumId": "me-niego-single",
+      "year": 2018,
+      "genreIds": [
+            "reggaeton",
+            "urbano",
+            "trap"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music123/v4/d8/4f/8a/d84f8ac1-351c-1f7d-2652-a41f9c18188b/193436054287.jpg/600x600bb.jpg",
+      "itunesTrackId": "1469941042",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview125/v4/7b/2d/61/7b2d6121-d6ad-629a-9ce9-aa6f1334715c/mzaf_14693244395439173415.plus.aac.p.m4a",
+      "aliases": [
+            "me niego"
+      ]
+    }),
+    song({
+      "id": "mora-caliente",
+      "title": "Caliente",
+      "artistId": "mora",
+      "albumId": "caliente-single",
+      "year": 2020,
+      "genreIds": [
+            "reggaeton",
+            "urbano",
+            "trap"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music113/v4/45/1e/30/451e307b-906c-db7f-9bd1-a52c9289f0e5/194491874933.jpg/600x600bb.jpg",
+      "itunesTrackId": "1495603679",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview115/v4/45/33/35/45333548-f686-ff9b-dbc2-0b931f6b5af8/mzaf_155991811783107221.plus.aac.p.m4a",
+      "aliases": [
+            "caliente"
+      ]
+    }),
+    song({
+      "id": "mora-el-recuerdo",
+      "title": "El Recuerdo",
+      "artistId": "mora",
+      "albumId": "el-recuerdo-single",
+      "year": 2019,
+      "genreIds": [
+            "reggaeton",
+            "urbano",
+            "trap"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music123/v4/70/1b/eb/701beb18-c6ca-1d8c-b879-fa2ec050eb60/193872276229.jpg/600x600bb.jpg",
+      "itunesTrackId": "1470496498",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview125/v4/8c/07/b8/8c07b8f6-f7d2-4752-0ba5-5b299ed6755c/mzaf_17902418283420735207.plus.aac.p.m4a",
+      "aliases": [
+            "el recuerdo"
+      ]
+    }),
+    song({
+      "id": "mora-dandole",
+      "title": "Dandole",
+      "artistId": "mora",
+      "albumId": "dandole-single",
+      "year": 2019,
+      "genreIds": [
+            "reggaeton",
+            "urbano",
+            "trap"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/3e/ee/52/3eee52a4-6d11-c5ae-f92f-4c797d7d50ec/194491358822.jpg/600x600bb.jpg",
+      "itunesTrackId": "1480638651",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview125/v4/f4/d3/d4/f4d3d46e-1107-3bbd-d23c-cdd53b2ef319/mzaf_3037097511824461090.plus.aac.p.m4a",
+      "aliases": [
+            "dandole"
+      ]
+    }),
+    song({
+      "id": "mora-te-miento",
+      "title": "Te Miento",
+      "artistId": "mora",
+      "albumId": "te-miento-single",
+      "year": 2018,
+      "genreIds": [
+            "reggaeton",
+            "urbano",
+            "trap"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music113/v4/ad/1f/9f/ad1f9f7f-7436-bf52-1010-b9ff20f55e4b/843357168791.jpg/600x600bb.jpg",
+      "itunesTrackId": "1470580192",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview125/v4/9c/dc/80/9cdc8062-610d-e996-13e8-f2e1f24467f0/mzaf_14803633296846213902.plus.aac.p.m4a",
+      "aliases": [
+            "te miento"
+      ]
+    }),
+    song({
+      "id": "mora-no-te-creo",
+      "title": "No Te Creo",
+      "artistId": "mora",
+      "albumId": "no-te-creo-single",
+      "year": 2019,
+      "genreIds": [
+            "reggaeton",
+            "urbano",
+            "trap"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music123/v4/5c/69/1a/5c691a21-38c7-a4f6-a61f-c7a822e11c27/194491525989.jpg/600x600bb.jpg",
+      "itunesTrackId": "1484595327",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview115/v4/21/68/43/2168439e-a362-1058-607e-2c9478a4d58f/mzaf_8488445191952137983.plus.aac.p.m4a",
+      "aliases": [
+            "no te creo"
+      ]
+    }),
+    song({
+      "id": "mora-dame-una-senal",
+      "title": "Dame una Señal",
+      "artistId": "mora",
+      "albumId": "dame-una-senal-single",
+      "year": 2018,
+      "genreIds": [
+            "reggaeton",
+            "urbano",
+            "trap"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music123/v4/68/2c/51/682c5194-9361-8a6d-b8d8-68a4689efdaa/843357137131.jpg/600x600bb.jpg",
+      "itunesTrackId": "1470499228",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview115/v4/df/fd/c8/dffdc846-35f9-7813-769c-ac0cc63577d3/mzaf_7221509411139688339.plus.aac.p.m4a",
+      "aliases": [
+            "dame una señal"
+      ]
+    }),
+    song({
+      "id": "mora-se-escapo",
+      "title": "Se Escapo",
+      "artistId": "mora",
+      "albumId": "se-escapo-single",
+      "year": 2019,
+      "genreIds": [
+            "reggaeton",
+            "urbano",
+            "trap"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music123/v4/67/26/38/672638c8-8b02-623d-23f3-0d9fc62de545/193483940410.jpg/600x600bb.jpg",
+      "itunesTrackId": "1466988731",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview125/v4/a9/13/d8/a913d8b1-230e-256d-026c-6edf1afe2911/mzaf_657304186750791938.plus.aac.p.m4a",
+      "aliases": [
+            "se escapo"
+      ]
+    }),
+    song({
+      "id": "mora-la-culpa",
+      "title": "La Culpa",
+      "artistId": "mora",
+      "albumId": "la-culpa-single",
+      "year": 2019,
+      "genreIds": [
+            "reggaeton",
+            "urbano",
+            "trap"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music113/v4/e2/a3/90/e2a390f0-d4d3-7291-21ff-b784b44f2590/193483894164.jpg/600x600bb.jpg",
+      "itunesTrackId": "1465785617",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview125/v4/66/00/93/6600937e-42f5-6331-fe38-a30cd5b05a49/mzaf_7263530488413854766.plus.aac.p.m4a",
+      "aliases": [
+            "la culpa"
+      ]
+    }),
+    song({
+      "id": "rauw-alejandro-khe",
+      "title": "Khé?",
       "artistId": "rauw-alejandro",
       "albumId": "cosa-nuestra",
       "year": 2024,
@@ -2983,338 +4083,67 @@ export const seedCatalog = {
             "urbano",
             "pop-latino"
       ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/73ee2e7a43dbeaa119a62d9a15d28670/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/2/4/c/0/24c890f65300d2e8fb506275555feb1c.mp3?hdnea=exp=1790665577~acl=/api/1/1/2/4/c/0/24c890f65300d2e8fb506275555feb1c.mp3*~data=user_id=0,application_id=42~hmac=02a07ed792ae2c601a7f250b70ed197c2f2ff3f97cd7fc67edacd35b2d6bfcad",
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/ab/e8/09/abe8092d-ef44-61b9-6b50-ab7efb78ca51/196872401516.jpg/600x600bb.jpg",
+      "itunesTrackId": "1775463293",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/06/03/6e/06036e06-d980-1c42-1618-5f725a92876f/mzaf_9794012487077515499.plus.aac.p.m4a",
       "aliases": [
-            "qué pasaría...",
-            "qué pasaría"
+            "khé?",
+            "khé"
       ]
     }),
     song({
-      "id": "rauw-alejandro-tiroteo-remix",
-      "title": "Tiroteo (Remix)",
+      "id": "rauw-alejandro-que-somos",
+      "title": "¿Qué Somos?",
       "artistId": "rauw-alejandro",
-      "albumId": "tiroteo-remix",
-      "year": 2021,
+      "albumId": "que-somos-single",
+      "year": 2018,
       "genreIds": [
             "reggaeton",
             "urbano",
             "pop-latino"
       ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/e9d1d2b1ceafe3d812b971d31282a6a1/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/7/2/6/0/726b36f0e77a2b07ca81872ad02ee667.mp3?hdnea=exp=1790665577~acl=/api/1/1/7/2/6/0/726b36f0e77a2b07ca81872ad02ee667.mp3*~data=user_id=0,application_id=42~hmac=5ad761f6d020d29817d9bdf3e5ea8e10c99ef5e7759b3f55f00e39888a05cd7c",
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music114/v4/3d/5e/99/3d5e9985-a522-5ef5-27f8-b9f0cca8d7b7/193483182193.jpg/600x600bb.jpg",
+      "itunesTrackId": "1441832524",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/a9/9c/93/a99c9346-3a6d-b770-cbb3-f14ce3621668/mzaf_8941245828095105796.plus.aac.p.m4a",
       "aliases": [
-            "tiroteo (remix)",
-            "tiroteo",
-            "tiroteo remix"
-      ]
-    }),
-    song({
-      "id": "rauw-alejandro-todo-de-ti",
-      "title": "Todo De Ti",
-      "artistId": "rauw-alejandro",
-      "albumId": "todo-de-ti",
-      "year": 2025,
-      "genreIds": [
-            "reggaeton",
-            "urbano",
-            "pop-latino"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/7167a61f54a62c453f4d99ee59c151a4/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/3/b/a/0/3ba5a4ddf058e58c87bb193fe73761a5.mp3?hdnea=exp=1790665577~acl=/api/1/1/3/b/a/0/3ba5a4ddf058e58c87bb193fe73761a5.mp3*~data=user_id=0,application_id=42~hmac=ca89c3bd1a1c5fa4891e6bd946a1bb3ae8ed3b8d32574915245a2676321dbbfc",
-      "aliases": [
-            "todo de ti"
-      ]
-    }),
-    song({
-      "id": "rauw-alejandro-party",
-      "title": "Party",
-      "artistId": "rauw-alejandro",
-      "albumId": "un-verano-sin-ti",
-      "year": 2022,
-      "genreIds": [
-            "reggaeton",
-            "urbano",
-            "pop-latino"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/b29d1070377b784384c2456093f96a66/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/d/2/6/0/d269c532ca354df7f96701370fbd0c90.mp3?hdnea=exp=1790665577~acl=/api/1/1/d/2/6/0/d269c532ca354df7f96701370fbd0c90.mp3*~data=user_id=0,application_id=42~hmac=6b5059c788f2740a037bb6f29eef051c1eaf6e3aae15c156e3b47f86e62ae0a1",
-      "aliases": [
-            "party"
-      ]
-    }),
-    song({
-      "id": "rauw-alejandro-el-efecto",
-      "title": "El Efecto",
-      "artistId": "rauw-alejandro",
-      "albumId": "el-efecto",
-      "year": 2019,
-      "genreIds": [
-            "reggaeton",
-            "urbano",
-            "pop-latino"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/f22008ee7be5b98f5d20de528e297f57/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/e/c/c/0/ecc3f09ce336ff1dffc65f6fe653290d.mp3?hdnea=exp=1790665577~acl=/api/1/1/e/c/c/0/ecc3f09ce336ff1dffc65f6fe653290d.mp3*~data=user_id=0,application_id=42~hmac=78c39b1fa79909cde4db4ab04414c243ff25811a0a8ebfca6bfbdd79fc9d4cb3",
-      "aliases": [
-            "el efecto"
-      ]
-    }),
-    song({
-      "id": "rauw-alejandro-desesperados",
-      "title": "Desesperados",
-      "artistId": "rauw-alejandro",
-      "albumId": "desesperados",
-      "year": 2021,
-      "genreIds": [
-            "reggaeton",
-            "urbano",
-            "pop-latino"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/a37d5de6838312531d93af97e3e31463/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/2/3/1/0/231a8b566e2d510ba8b516c2ef966dfc.mp3?hdnea=exp=1790665577~acl=/api/1/1/2/3/1/0/231a8b566e2d510ba8b516c2ef966dfc.mp3*~data=user_id=0,application_id=42~hmac=617e5cc2a29fa0888e74811fe0a347e29357ab5a591b72e76f42808fb4a9464b",
-      "aliases": [
-            "desesperados"
-      ]
-    }),
-    song({
-      "id": "rauw-alejandro-te-felicito",
-      "title": "Te Felicito",
-      "artistId": "rauw-alejandro",
-      "albumId": "te-felicito",
-      "year": 2022,
-      "genreIds": [
-            "reggaeton",
-            "urbano",
-            "pop-latino"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/28f42c9a3641c18d5cbdd4c5561ecc2a/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/2/2/b/0/22b8a5609f8440da2e26ad3c3a8f4ab0.mp3?hdnea=exp=1790665577~acl=/api/1/1/2/2/b/0/22b8a5609f8440da2e26ad3c3a8f4ab0.mp3*~data=user_id=0,application_id=42~hmac=7692d3c0a219837e32bc4a055c070218fc6678fa06459d3e1349c283f16aac61",
-      "aliases": [
-            "te felicito"
+            "¿qué somos?",
+            "qué somos"
       ]
     }),
     song({
       "id": "rauw-alejandro-carita-linda",
       "title": "Carita Linda",
       "artistId": "rauw-alejandro",
-      "albumId": "carita-linda",
+      "albumId": "cosa-nuestra-capitulo-0",
       "year": 2025,
       "genreIds": [
             "reggaeton",
             "urbano",
             "pop-latino"
       ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/aa082cbd3024b62f7fc7027c80ff4a16/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/5/d/1/0/5d101c085279731929c911d49e40c442.mp3?hdnea=exp=1790665577~acl=/api/1/1/5/d/1/0/5d101c085279731929c911d49e40c442.mp3*~data=user_id=0,application_id=42~hmac=3dd41b3b54e20c9ef32709b110645c39e463573c6c65cd4a1897c316d865ecd9",
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/1c/2b/5f/1c2b5fdf-9a6a-9e07-bea3-ff92f7da2796/196873615424.jpg/600x600bb.jpg",
+      "itunesTrackId": "1839980818",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/4b/90/f4/4b90f492-cc73-1556-3d2d-0cc421057b84/mzaf_17454960609528429361.plus.aac.p.m4a",
       "aliases": [
             "carita linda"
       ]
     }),
     song({
-      "id": "rauw-alejandro-aquel-nap-zzzz",
-      "title": "Aquel Nap ZzZz",
+      "id": "rauw-alejandro-lejos-del-cielo",
+      "title": "LEJOS DEL CIELO",
       "artistId": "rauw-alejandro",
-      "albumId": "vice-versa",
-      "year": 2021,
-      "genreIds": [
-            "reggaeton",
-            "urbano",
-            "pop-latino"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/a37d5de6838312531d93af97e3e31463/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/9/d/7/0/9d742fa22980cc7058088e1cc7e21f20.mp3?hdnea=exp=1790665577~acl=/api/1/1/9/d/7/0/9d742fa22980cc7058088e1cc7e21f20.mp3*~data=user_id=0,application_id=42~hmac=b681706f4edfe1f62aa5e832850d695f7e5b3093c5f59d66746cb0e5163bd8c0",
-      "aliases": [
-            "aquel nap zzzz"
-      ]
-    }),
-    song({
-      "id": "rauw-alejandro-macacoa-2000-from-gtavi-the-album",
-      "title": "Macacoa 2000 (from GTAVI: The Album)",
-      "artistId": "rauw-alejandro",
-      "albumId": "macacoa-2000-from-gtavi-the-album",
-      "year": 2026,
-      "genreIds": [
-            "reggaeton",
-            "urbano",
-            "pop-latino"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/dc492b8d028525c713a52713b9bb005d/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/3/f/9/0/3f948eae7be67b5d34fb2be0c24f524e.mp3?hdnea=exp=1790665577~acl=/api/1/1/3/f/9/0/3f948eae7be67b5d34fb2be0c24f524e.mp3*~data=user_id=0,application_id=42~hmac=1ec7afc6c72afef854b66b79325ca614cb722d9055445195619d022b4756846b",
-      "aliases": [
-            "macacoa 2000 (from gtavi: the album)",
-            "macacoa 2000 from gtavi the album"
-      ]
-    }),
-    song({
-      "id": "rauw-alejandro-desenfocao",
-      "title": "Desenfocao'",
-      "artistId": "rauw-alejandro",
-      "albumId": "vice-versa",
-      "year": 2021,
-      "genreIds": [
-            "reggaeton",
-            "urbano",
-            "pop-latino"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/a37d5de6838312531d93af97e3e31463/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/a/d/5/0/ad5e4d2ac728a880a76d1143cd010e52.mp3?hdnea=exp=1790665577~acl=/api/1/1/a/d/5/0/ad5e4d2ac728a880a76d1143cd010e52.mp3*~data=user_id=0,application_id=42~hmac=f9c28986a383b8719bca905c3239808444caed4af28878ae2020ee9df8ae4d04",
-      "aliases": [
-            "desenfocao'",
-            "desenfocao"
-      ]
-    }),
-    song({
-      "id": "rauw-alejandro-lokera",
-      "title": "LOKERA",
-      "artistId": "rauw-alejandro",
-      "albumId": "lokera",
+      "albumId": "saturno",
       "year": 2022,
       "genreIds": [
             "reggaeton",
             "urbano",
             "pop-latino"
       ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/2d50aff19d283eb7b4ddcda9df86edbe/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/e/e/b/0/eeb85c8641688eb8b4cea37769e47b0c.mp3?hdnea=exp=1790665577~acl=/api/1/1/e/e/b/0/eeb85c8641688eb8b4cea37769e47b0c.mp3*~data=user_id=0,application_id=42~hmac=be88a2b4239bbceb257295c42c39e8efd704873e6bf4d10a20f6cfef459365a2",
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music123/v4/99/0f/ef/990fefcb-db12-0cf0-90f9-44115c095c73/196589764720.jpg/600x600bb.jpg",
+      "itunesTrackId": "1665293786",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/a6/d6/87/a6d687f1-1759-3489-b5c2-a1a4f3c43b58/mzaf_5681629621223807008.plus.aac.p.m4a",
       "aliases": [
-            "lokera"
-      ]
-    }),
-    song({
-      "id": "rauw-alejandro-la-nota",
-      "title": "La Nota",
-      "artistId": "rauw-alejandro",
-      "albumId": "la-nota",
-      "year": 2020,
-      "genreIds": [
-            "reggaeton",
-            "urbano",
-            "pop-latino"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/a871bc44a406ccead04f94d925ffd959/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/d/6/4/0/d64a892113e154cd1067c0cf5c73922e.mp3?hdnea=exp=1790665577~acl=/api/1/1/d/6/4/0/d64a892113e154cd1067c0cf5c73922e.mp3*~data=user_id=0,application_id=42~hmac=86347502e0d8f6f1b7eb94476a3bdd8dfe1b4d1a9e166bb6f189a9ec5984a2d1",
-      "aliases": [
-            "la nota"
-      ]
-    }),
-    song({
-      "id": "rauw-alejandro-nada",
-      "title": "Nada",
-      "artistId": "rauw-alejandro",
-      "albumId": "error-93",
-      "year": 2019,
-      "genreIds": [
-            "reggaeton",
-            "urbano",
-            "pop-latino"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/b64008a045f96fc3e206aa87ebd730fe/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/a/7/d/0/a7de1be9488780562d89976835b9ab52.mp3?hdnea=exp=1790665577~acl=/api/1/1/a/7/d/0/a7de1be9488780562d89976835b9ab52.mp3*~data=user_id=0,application_id=42~hmac=bdb174312dcb738e6f8a97e95e8e020fa4b33f723d2e1a5db1805e3a3f6d729a",
-      "aliases": [
-            "nada"
-      ]
-    }),
-    song({
-      "id": "rauw-alejandro-tu-con-el",
-      "title": "Tú Con Él",
-      "artistId": "rauw-alejandro",
-      "albumId": "cosa-nuestra",
-      "year": 2024,
-      "genreIds": [
-            "reggaeton",
-            "urbano",
-            "pop-latino"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/73ee2e7a43dbeaa119a62d9a15d28670/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/0/3/6/0/0366061694782a2b15e56ffbb33ca74b.mp3?hdnea=exp=1790665577~acl=/api/1/1/0/3/6/0/0366061694782a2b15e56ffbb33ca74b.mp3*~data=user_id=0,application_id=42~hmac=87c32dba97da6ad55019d721631d356574deed986f8b33cb39289ed190fcb40a",
-      "aliases": [
-            "tú con él"
-      ]
-    }),
-    song({
-      "id": "rauw-alejandro-diluvio",
-      "title": "DILUVIO",
-      "artistId": "rauw-alejandro",
-      "albumId": "playa-saturno",
-      "year": 2023,
-      "genreIds": [
-            "reggaeton",
-            "urbano",
-            "pop-latino"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/00e071a1d8e65037e37e38c3ff673ef0/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/b/7/0/0/b7020330acee6a5f628fbf5650ba9009.mp3?hdnea=exp=1790665577~acl=/api/1/1/b/7/0/0/b7020330acee6a5f628fbf5650ba9009.mp3*~data=user_id=0,application_id=42~hmac=3ad19bde182111e7fbde2880f27cf56f7dc1a9feab6dc5461815ae959882f68e",
-      "aliases": [
-            "diluvio"
-      ]
-    }),
-    song({
-      "id": "rauw-alejandro-santa",
-      "title": "Santa",
-      "artistId": "rauw-alejandro",
-      "albumId": "santa",
-      "year": 2024,
-      "genreIds": [
-            "reggaeton",
-            "urbano",
-            "pop-latino"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/965eeb50245f3178580ac5bda885e56b/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/8/e/b/0/8ebcb44f7900b1a20dc8e31d2507fba2.mp3?hdnea=exp=1790665577~acl=/api/1/1/8/e/b/0/8ebcb44f7900b1a20dc8e31d2507fba2.mp3*~data=user_id=0,application_id=42~hmac=90ddbe4316f0fdac6c689c1e56ab68240638da68bd781dcf75030abc4dd83c01",
-      "aliases": [
-            "santa"
-      ]
-    }),
-    song({
-      "id": "rauw-alejandro-dejame-entrar",
-      "title": "Déjame Entrar",
-      "artistId": "rauw-alejandro",
-      "albumId": "dejame-entrar",
-      "year": 2025,
-      "genreIds": [
-            "reggaeton",
-            "urbano",
-            "pop-latino"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/2b65baa6a0f570cde85bbfe85b883e3e/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/0/f/c/0/0fc5cee849325202edf7cdf98466c0bd.mp3?hdnea=exp=1790665577~acl=/api/1/1/0/f/c/0/0fc5cee849325202edf7cdf98466c0bd.mp3*~data=user_id=0,application_id=42~hmac=dd39088fc718c57d1d636aa121e476e1a7cb58d7daacdc3d951a7234417b47c6",
-      "aliases": [
-            "déjame entrar"
-      ]
-    }),
-    song({
-      "id": "rauw-alejandro-algo-magico",
-      "title": "Algo Mágico",
-      "artistId": "rauw-alejandro",
-      "albumId": "algo-magico",
-      "year": 2020,
-      "genreIds": [
-            "reggaeton",
-            "urbano",
-            "pop-latino"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/67a980d6f0e68da999109114e0514231/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/9/2/4/0/924aaa22fdea3f16f0ed0fa7b3341982.mp3?hdnea=exp=1790665577~acl=/api/1/1/9/2/4/0/924aaa22fdea3f16f0ed0fa7b3341982.mp3*~data=user_id=0,application_id=42~hmac=d123abb2fac71f581c798e0bfda6ad56d217cfeb21743fb5a401a852e6ed0806",
-      "aliases": [
-            "algo mágico"
-      ]
-    }),
-    song({
-      "id": "rauw-alejandro-reloj",
-      "title": "Reloj",
-      "artistId": "rauw-alejandro",
-      "albumId": "reloj",
-      "year": 2020,
-      "genreIds": [
-            "reggaeton",
-            "urbano",
-            "pop-latino"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/d582ea50b2178d0c0599ee93628f6e99/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/5/c/8/0/5c8e6ec365d1041f87eb291c0d91b26f.mp3?hdnea=exp=1790665577~acl=/api/1/1/5/c/8/0/5c8e6ec365d1041f87eb291c0d91b26f.mp3*~data=user_id=0,application_id=42~hmac=3ba25227dbb0cf74d06e0bf08073f3ff4f0b477c363b78b783d5fb4a52d94e26",
-      "aliases": [
-            "reloj"
+            "lejos del cielo"
       ]
     }),
     song({
@@ -3328,50 +4157,16 @@ export const seedCatalog = {
             "urbano",
             "pop-latino"
       ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/73ee2e7a43dbeaa119a62d9a15d28670/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/5/f/c/0/5fc69b2820a240f4e40c12bd9697459c.mp3?hdnea=exp=1790665577~acl=/api/1/1/5/f/c/0/5fc69b2820a240f4e40c12bd9697459c.mp3*~data=user_id=0,application_id=42~hmac=7ff8df19452c2e903d255786869c889371d2b24855986901204031dbb7ffddae",
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/ab/e8/09/abe8092d-ef44-61b9-6b50-ab7efb78ca51/196872401516.jpg/600x600bb.jpg",
+      "itunesTrackId": "1775463295",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/35/27/5c/35275c5e-ed6c-f40d-79d6-4e0be0e4833b/mzaf_4468510896180892129.plus.aac.p.m4a",
       "aliases": [
             "se fue"
       ]
     }),
     song({
-      "id": "rauw-alejandro-tattoo-remix-with-camilo",
-      "title": "Tattoo Remix with Camilo",
-      "artistId": "rauw-alejandro",
-      "albumId": "tattoo-remix-with-camilo",
-      "year": 2020,
-      "genreIds": [
-            "reggaeton",
-            "urbano",
-            "pop-latino"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/57e994f9cf091d162589d31e98e3efa2/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/1/e/9/0/1e9c9ad7d4cee8031cb457b128c66e26.mp3?hdnea=exp=1790665577~acl=/api/1/1/1/e/9/0/1e9c9ad7d4cee8031cb457b128c66e26.mp3*~data=user_id=0,application_id=42~hmac=abbe616c6b0bd14bd240ae367d841e034c29ef1cfa94f841f169efaa78b8bbe5",
-      "aliases": [
-            "tattoo remix with camilo",
-            "tattoo"
-      ]
-    }),
-    song({
-      "id": "rauw-alejandro-fantasias",
-      "title": "Fantasias",
-      "artistId": "rauw-alejandro",
-      "albumId": "fantasias",
-      "year": 2019,
-      "genreIds": [
-            "reggaeton",
-            "urbano",
-            "pop-latino"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/735a266ec0b5083aaccbf1ae0d3fe45a/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/9/e/c/0/9ec61cf2c3e7333d285066c2ddeb123d.mp3?hdnea=exp=1790665577~acl=/api/1/1/9/e/c/0/9ec61cf2c3e7333d285066c2ddeb123d.mp3*~data=user_id=0,application_id=42~hmac=7fdc46f1fd66d7746b0e9b28e9c93c2acf07197565757e8dd4eb4ca60c780417",
-      "aliases": [
-            "fantasias"
-      ]
-    }),
-    song({
-      "id": "rauw-alejandro-212-am",
-      "title": "2:12 AM",
+      "id": "rauw-alejandro-tu-con-el",
+      "title": "Tú Con Él",
       "artistId": "rauw-alejandro",
       "albumId": "cosa-nuestra",
       "year": 2024,
@@ -3380,16 +4175,165 @@ export const seedCatalog = {
             "urbano",
             "pop-latino"
       ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/73ee2e7a43dbeaa119a62d9a15d28670/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/d/9/0/0/d9045e5b04af47694befbbf45791cb83.mp3?hdnea=exp=1790665577~acl=/api/1/1/d/9/0/0/d9045e5b04af47694befbbf45791cb83.mp3*~data=user_id=0,application_id=42~hmac=debcbfd5a024c4cf6daa133cb98f3d5424c80ced7f1bf9c83375e5beb90d2f5e",
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/ab/e8/09/abe8092d-ef44-61b9-6b50-ab7efb78ca51/196872401516.jpg/600x600bb.jpg",
+      "itunesTrackId": "1775462856",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/ab/8a/a5/ab8aa549-a0ee-9083-6953-093a56cc573c/mzaf_10969913427257276545.plus.aac.p.m4a",
       "aliases": [
-            "2:12 am",
-            "212 am"
+            "tú con él"
       ]
     }),
     song({
-      "id": "rauw-alejandro-dile-a-el",
-      "title": "Dile a El",
+      "id": "rauw-alejandro-hayami-hana",
+      "title": "Hayami Hana",
+      "artistId": "rauw-alejandro",
+      "albumId": "hayami-hana-single",
+      "year": 2023,
+      "genreIds": [
+            "reggaeton",
+            "urbano",
+            "pop-latino"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music126/v4/cf/53/2d/cf532d06-3a16-73f3-793a-52e191317625/196871372343.jpg/600x600bb.jpg",
+      "itunesTrackId": "1702234154",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/ac/7a/b8/ac7ab8fb-20a5-0407-9bbe-8911e2b2389e/mzaf_17380562941014216950.plus.aac.p.m4a",
+      "aliases": [
+            "hayami hana"
+      ]
+    }),
+    song({
+      "id": "rauw-alejandro-desenfocao",
+      "title": "Desenfocao'",
+      "artistId": "rauw-alejandro",
+      "albumId": "vice-versa",
+      "year": 2021,
+      "genreIds": [
+            "reggaeton",
+            "urbano",
+            "pop-latino"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music126/v4/58/13/c3/5813c326-a7fa-f792-77e1-8310d9c80742/886449738724.jpg/600x600bb.jpg",
+      "itunesTrackId": "1596868402",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/12/92/43/1292436d-e28c-f3ba-51eb-91ca2b4ea578/mzaf_15223671047978269981.plus.aac.p.m4a",
+      "aliases": [
+            "desenfocao'",
+            "desenfocao"
+      ]
+    }),
+    song({
+      "id": "rauw-alejandro-el-efecto",
+      "title": "El Efecto",
+      "artistId": "rauw-alejandro",
+      "albumId": "el-efecto-single",
+      "year": 2019,
+      "genreIds": [
+            "reggaeton",
+            "urbano",
+            "pop-latino"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music114/v4/8f/b4/86/8fb48663-c2bb-aa02-b69b-406f880d69c1/193483566238.jpg/600x600bb.jpg",
+      "itunesTrackId": "1455400735",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/94/aa/24/94aa2410-ef26-1ca6-654a-eca00dba54ad/mzaf_4129769492258788908.plus.aac.p.m4a",
+      "aliases": [
+            "el efecto"
+      ]
+    }),
+    song({
+      "id": "rauw-alejandro-fantasias-remix",
+      "title": "Fantasías (feat. Farruko & Lunay) [Remix]",
+      "artistId": "rauw-alejandro",
+      "albumId": "fantasias-remix-feat-farruko-lunay-single",
+      "year": 2020,
+      "genreIds": [
+            "reggaeton",
+            "urbano",
+            "pop-latino"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music125/v4/6e/a1/0c/6ea10ce7-6497-0cb2-f3df-bf23250e01af/195081093802.jpg/600x600bb.jpg",
+      "itunesTrackId": "1501250888",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/8a/e0/e3/8ae0e35d-8748-10bf-ad7a-f025dba8eb78/mzaf_12064390926748538957.plus.aac.p.m4a",
+      "aliases": [
+            "fantasías (feat. farruko & lunay) [remix]",
+            "fantasías [remix]",
+            "fantasías feat farruko lunay remix",
+            "fantasías remix"
+      ]
+    }),
+    song({
+      "id": "rauw-alejandro-fantasias",
+      "title": "Fantasías",
+      "artistId": "rauw-alejandro",
+      "albumId": "fantasias-single",
+      "year": 2019,
+      "genreIds": [
+            "reggaeton",
+            "urbano",
+            "pop-latino"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music124/v4/c4/a0/65/c4a0650a-87b0-3514-4e0c-e32e5afbb3a6/194491183394.jpg/600x600bb.jpg",
+      "itunesTrackId": "1476338343",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/08/11/af/0811af85-461e-f4ec-a14e-15f062704a12/mzaf_750685182702086202.plus.aac.p.m4a",
+      "aliases": [
+            "fantasías"
+      ]
+    }),
+    song({
+      "id": "rauw-alejandro-tattoo-remix-with-camilo",
+      "title": "Tattoo (Remix with Camilo)",
+      "artistId": "rauw-alejandro",
+      "albumId": "tattoo-remix-with-camilo-single",
+      "year": 2020,
+      "genreIds": [
+            "reggaeton",
+            "urbano",
+            "pop-latino"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music123/v4/38/16/47/38164723-5bde-a8a2-5b01-8786571db86b/886448596455.jpg/600x600bb.jpg",
+      "itunesTrackId": "1520712876",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/35/39/d9/3539d9bb-a9eb-492b-71c3-e2a9ee4ad4bb/mzaf_11870500896650250561.plus.aac.p.m4a",
+      "aliases": [
+            "tattoo (remix with camilo)",
+            "tattoo remix with camilo"
+      ]
+    }),
+    song({
+      "id": "rauw-alejandro-carita-linda-1805936403",
+      "title": "Carita Linda",
+      "artistId": "rauw-alejandro",
+      "albumId": "carita-linda-single",
+      "year": 2025,
+      "genreIds": [
+            "reggaeton",
+            "urbano",
+            "pop-latino"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/57/66/bd/5766bdb1-b341-210f-0fd5-8278cdc1d0b9/196872986761.jpg/600x600bb.jpg",
+      "itunesTrackId": "1805936403",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/e1/bb/96/e1bb9652-e885-7755-4522-6fc6a590bfae/mzaf_17275304242619133749.plus.aac.p.m4a",
+      "aliases": [
+            "carita linda"
+      ]
+    }),
+    song({
+      "id": "rauw-alejandro-pasaporte",
+      "title": "Pasaporte",
+      "artistId": "rauw-alejandro",
+      "albumId": "cosa-nuestra",
+      "year": 2024,
+      "genreIds": [
+            "reggaeton",
+            "urbano",
+            "pop-latino"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/ab/e8/09/abe8092d-ef44-61b9-6b50-ab7efb78ca51/196872401516.jpg/600x600bb.jpg",
+      "itunesTrackId": "1775463297",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/78/62/cd/7862cd57-dcae-e4c7-0d6f-fef2e2a9d5b1/mzaf_8272479219925900783.plus.aac.p.m4a",
+      "aliases": [
+            "pasaporte"
+      ]
+    }),
+    song({
+      "id": "rauw-alejandro-enchule",
+      "title": "Enchule",
       "artistId": "rauw-alejandro",
       "albumId": "afrodisiaco",
       "year": 2020,
@@ -3398,198 +4342,63 @@ export const seedCatalog = {
             "urbano",
             "pop-latino"
       ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/981c0de369542a25a43da5631cf6c722/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/7/e/8/0/7e828ef6657b0b3527ea9a1923b73435.mp3?hdnea=exp=1790665577~acl=/api/1/1/7/e/8/0/7e828ef6657b0b3527ea9a1923b73435.mp3*~data=user_id=0,application_id=42~hmac=cc47e4dcffba87fe5a688b4ed8a793423b9794ad7d8506620030fc0093a66eb6",
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music125/v4/35/85/36/3585365d-4678-0648-1bfd-76ea49ba8c9c/886448841388.jpg/600x600bb.jpg",
+      "itunesTrackId": "1536862161",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/30/fb/bc/30fbbc71-fe05-d457-a7fd-1e0b3acdc6cb/mzaf_18436365791031452156.plus.aac.p.m4a",
       "aliases": [
-            "dile a el"
+            "enchule"
       ]
     }),
     song({
-      "id": "rauw-alejandro-committed",
-      "title": "Committed",
+      "id": "rauw-alejandro-al-mismo-tiempo",
+      "title": "Al Mismo Tiempo",
       "artistId": "rauw-alejandro",
-      "albumId": "cosa-nuestra",
-      "year": 2024,
-      "genreIds": [
-            "reggaeton",
-            "urbano",
-            "pop-latino"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/73ee2e7a43dbeaa119a62d9a15d28670/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/2/5/2/0/2528ecd13255b264890874e6f0eaa0b1.mp3?hdnea=exp=1790665577~acl=/api/1/1/2/5/2/0/2528ecd13255b264890874e6f0eaa0b1.mp3*~data=user_id=0,application_id=42~hmac=b43b78aa48e433eac88e0017523a9f9f4ee991b7be7e0befcab2b981c9605cf0",
-      "aliases": [
-            "committed"
-      ]
-    }),
-    song({
-      "id": "rauw-alejandro-problemon",
-      "title": "Problemón",
-      "artistId": "rauw-alejandro",
-      "albumId": "problemon",
-      "year": 2021,
-      "genreIds": [
-            "reggaeton",
-            "urbano",
-            "pop-latino"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/9dc8207002a14d97d36212c674205ec0/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/2/b/e/0/2bef37922832b0eea11cf09e4957d7f7.mp3?hdnea=exp=1790665577~acl=/api/1/1/2/b/e/0/2bef37922832b0eea11cf09e4957d7f7.mp3*~data=user_id=0,application_id=42~hmac=d2c288a040761da60dadf707f4114678d44938606f87c5eaa1b28d88af5ba1cb",
-      "aliases": [
-            "problemón"
-      ]
-    }),
-    song({
-      "id": "rauw-alejandro-beso",
-      "title": "BESO",
-      "artistId": "rauw-alejandro",
-      "albumId": "rr",
-      "year": 2023,
-      "genreIds": [
-            "reggaeton",
-            "urbano",
-            "pop-latino"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/47be3894ae3c7fb4d5e86167eed8cbcd/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/f/8/1/0/f8165cd88232a535630abb7309caa73c.mp3?hdnea=exp=1790665577~acl=/api/1/1/f/8/1/0/f8165cd88232a535630abb7309caa73c.mp3*~data=user_id=0,application_id=42~hmac=be714ef79309f4c15730287b5db8a79399d502d2f5a9c4a05af9ac2b460685b0",
-      "aliases": [
-            "beso"
-      ]
-    }),
-    song({
-      "id": "rauw-alejandro-mirame-remix",
-      "title": "Mírame (Remix)",
-      "artistId": "rauw-alejandro",
-      "albumId": "mirame",
+      "albumId": "trap-cake-vol-1",
       "year": 2019,
       "genreIds": [
             "reggaeton",
             "urbano",
             "pop-latino"
       ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/69d93180195a12aad802cbdb59bb3d50/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/1/1/7/0/117383e083823a92a165d1386d9946de.mp3?hdnea=exp=1790665577~acl=/api/1/1/1/1/7/0/117383e083823a92a165d1386d9946de.mp3*~data=user_id=0,application_id=42~hmac=a904039a7ef328440b2d6251f9bb899aad8ab4e7f590060a091e2f17438b8d00",
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music124/v4/ff/d2/3d/ffd23dae-61d5-ad74-de3a-20ad47058a04/193483867779.jpg/600x600bb.jpg",
+      "itunesTrackId": "1465146476",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/f0/c0/11/f0c01105-f4c6-8a7a-eca9-7662ba6281ca/mzaf_9521632477296627695.plus.aac.p.m4a",
       "aliases": [
-            "mírame (remix)",
-            "mírame",
-            "mírame remix"
+            "al mismo tiempo"
       ]
     }),
     song({
-      "id": "rauw-alejandro-pongo",
-      "title": "PONGO",
+      "id": "rauw-alejandro-algo-magico",
+      "title": "Algo Mágico",
       "artistId": "rauw-alejandro",
-      "albumId": "pongo",
-      "year": 2026,
-      "genreIds": [
-            "reggaeton",
-            "urbano",
-            "pop-latino"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/a3c375742fde996cc7328543e51b42f4/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/c/c/6/0/cc6676666011bb35ca8b599914e6164f.mp3?hdnea=exp=1790665577~acl=/api/1/1/c/c/6/0/cc6676666011bb35ca8b599914e6164f.mp3*~data=user_id=0,application_id=42~hmac=0038590e2721250c3d7c6d2e97d7eceb7ff75906274e3568a56c57ab1f299d89",
-      "aliases": [
-            "pongo"
-      ]
-    }),
-    song({
-      "id": "rauw-alejandro-baby-hello",
-      "title": "BABY HELLO",
-      "artistId": "rauw-alejandro",
-      "albumId": "baby-hello",
-      "year": 2023,
-      "genreIds": [
-            "reggaeton",
-            "urbano",
-            "pop-latino"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/cde16d42c97d7a2ef939683776abf5f3/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/b/b/1/0/bb1d3d9b48b02f83850da6a3221deb12.mp3?hdnea=exp=1790665577~acl=/api/1/1/b/b/1/0/bb1d3d9b48b02f83850da6a3221deb12.mp3*~data=user_id=0,application_id=42~hmac=b0269ff83aca73b412cf24c580501a1a7e0e1c9946fd663767a9c2790ddddd19",
-      "aliases": [
-            "baby hello"
-      ]
-    }),
-    song({
-      "id": "rauw-alejandro-la-old-skul",
-      "title": "La Old Skul",
-      "artistId": "rauw-alejandro",
-      "albumId": "vice-versa",
-      "year": 2021,
-      "genreIds": [
-            "reggaeton",
-            "urbano",
-            "pop-latino"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/a37d5de6838312531d93af97e3e31463/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/2/4/3/0/24355951e9e4affca9d8b5ba77b3dce3.mp3?hdnea=exp=1790665577~acl=/api/1/1/2/4/3/0/24355951e9e4affca9d8b5ba77b3dce3.mp3*~data=user_id=0,application_id=42~hmac=58379978cf993ad9f76dd9e3825f8ac27723830de3eccd0b2ed7bdad18454a36",
-      "aliases": [
-            "la old skul"
-      ]
-    }),
-    song({
-      "id": "rauw-alejandro-cosa-guapa",
-      "title": "Cosa Guapa",
-      "artistId": "rauw-alejandro",
-      "albumId": "vice-versa",
-      "year": 2021,
-      "genreIds": [
-            "reggaeton",
-            "urbano",
-            "pop-latino"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/a37d5de6838312531d93af97e3e31463/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/2/1/0/0/210c9fae6ae4c44580ca7f25fae5a217.mp3?hdnea=exp=1790665577~acl=/api/1/1/2/1/0/0/210c9fae6ae4c44580ca7f25fae5a217.mp3*~data=user_id=0,application_id=42~hmac=8a157d307eff511014b79f7bb88a9c69fe35ae51ad48d99d48b177eab9fba2bd",
-      "aliases": [
-            "cosa guapa"
-      ]
-    }),
-    song({
-      "id": "rauw-alejandro-s-e-x-p-l-a-y-l-i-s-t-1",
-      "title": "S E X P L A Y L I S T 1",
-      "artistId": "rauw-alejandro",
-      "albumId": "primera-musa",
-      "year": 2024,
-      "genreIds": [
-            "reggaeton",
-            "urbano",
-            "pop-latino"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/5a276a9d492329afc2d1270105cc379c/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/1/3/d/0/13d4235189aa98f897bf785dec56d189.mp3?hdnea=exp=1790665577~acl=/api/1/1/1/3/d/0/13d4235189aa98f897bf785dec56d189.mp3*~data=user_id=0,application_id=42~hmac=345facb50e1319735ee6fac385b1aca733c45715cc0d30f0ba81fdb19fc100f3",
-      "aliases": [
-            "s e x p l a y l i s t 1"
-      ]
-    }),
-    song({
-      "id": "rauw-alejandro-sci-fi",
-      "title": "Sci-Fi",
-      "artistId": "rauw-alejandro",
-      "albumId": "sci-fi",
-      "year": 2022,
-      "genreIds": [
-            "reggaeton",
-            "urbano",
-            "pop-latino"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/4aa9456a6466925d64451488c994ecb2/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/5/1/9/0/519b850df78b26f504140493e8ef1b40.mp3?hdnea=exp=1790665577~acl=/api/1/1/5/1/9/0/519b850df78b26f504140493e8ef1b40.mp3*~data=user_id=0,application_id=42~hmac=a77873d301f699753c121bd6ca5fcd8716af697cb53fd28397b9ebc35bc57e15",
-      "aliases": [
-            "sci-fi",
-            "scifi"
-      ]
-    }),
-    song({
-      "id": "rauw-alejandro-elegi",
-      "title": "Elegí (feat. Dímelo Flow)",
-      "artistId": "rauw-alejandro",
-      "albumId": "elegi-feat-dimelo-flow",
+      "albumId": "algo-magico-single",
       "year": 2020,
       "genreIds": [
             "reggaeton",
             "urbano",
             "pop-latino"
       ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/26110c54b3f3d89ab94215969102da53/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/c/6/4/0/c6484936efbb3f0dac0d83ea338ef6f5.mp3?hdnea=exp=1790665577~acl=/api/1/1/c/6/4/0/c6484936efbb3f0dac0d83ea338ef6f5.mp3*~data=user_id=0,application_id=42~hmac=33199271cf352da18ec742839f9758e254bf05ff51cda96349f17c96fff45381",
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/12/96/69/1296696b-fbe0-6779-1e45-151b58953df1/886448579120.jpg/600x600bb.jpg",
+      "itunesTrackId": "1519843922",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/a8/e3/4f/a8e34fef-6276-7107-c760-89ccc7aabc9c/mzaf_17436159163931531715.plus.aac.p.m4a",
+      "aliases": [
+            "algo mágico"
+      ]
+    }),
+    song({
+      "id": "rauw-alejandro-elegi",
+      "title": "Elegí (feat. Dímelo Flow)",
+      "artistId": "rauw-alejandro",
+      "albumId": "elegi-feat-dimelo-flow-single",
+      "year": 2020,
+      "genreIds": [
+            "reggaeton",
+            "urbano",
+            "pop-latino"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music114/v4/1d/f2/61/1df261a7-2086-8945-07b0-e943323d8c53/886448376453.jpg/600x600bb.jpg",
+      "itunesTrackId": "1504274066",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/d6/21/2e/d6212ee2-f040-ec71-897a-7dfe7d22a64b/mzaf_8954353887300885683.plus.aac.p.m4a",
       "aliases": [
             "elegí (feat. dímelo flow)",
             "elegí",
@@ -3597,61 +4406,80 @@ export const seedCatalog = {
       ]
     }),
     song({
-      "id": "rauw-alejandro-el-efecto-remix",
-      "title": "El Efecto (Remix)",
+      "id": "rauw-alejandro-algo-magico-1536862273",
+      "title": "Algo Mágico",
       "artistId": "rauw-alejandro",
-      "albumId": "el-efecto-remix",
-      "year": 2019,
-      "genreIds": [
-            "reggaeton",
-            "urbano",
-            "pop-latino"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/b633661ef86386798a95c1eb55aa416c/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/6/7/8/0/678c4fe1d13bed9a1813dfe47bfa1364.mp3?hdnea=exp=1790665577~acl=/api/1/1/6/7/8/0/678c4fe1d13bed9a1813dfe47bfa1364.mp3*~data=user_id=0,application_id=42~hmac=f4b75f982b83d01afc998f396e79cf417d96ee08795856845134e70b47fa95c4",
-      "aliases": [
-            "el efecto (remix)",
-            "el efecto",
-            "el efecto remix"
-      ]
-    }),
-    song({
-      "id": "rauw-alejandro-nostalgico",
-      "title": "Nostálgico",
-      "artistId": "rauw-alejandro",
-      "albumId": "nostalgico",
-      "year": 2021,
-      "genreIds": [
-            "reggaeton",
-            "urbano",
-            "pop-latino"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/5b5b786af475dd47e745e91680a7f411/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/3/4/2/0/342bfe011c21a3161eaf231872427521.mp3?hdnea=exp=1790665577~acl=/api/1/1/3/4/2/0/342bfe011c21a3161eaf231872427521.mp3*~data=user_id=0,application_id=42~hmac=db4017788d5c0759dbdfc77b273b0667921afc455482b81a0e2500b30fb74ad3",
-      "aliases": [
-            "nostálgico"
-      ]
-    }),
-    song({
-      "id": "rauw-alejandro-tattoo",
-      "title": "Tattoo",
-      "artistId": "rauw-alejandro",
-      "albumId": "tattoo",
+      "albumId": "afrodisiaco",
       "year": 2020,
       "genreIds": [
             "reggaeton",
             "urbano",
             "pop-latino"
       ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/7a3ff432b3b5aaf92a2a35edc5da71ac/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/3/b/6/0/3b6105089c017e2a8aa460bf2b680008.mp3?hdnea=exp=1790665577~acl=/api/1/1/3/b/6/0/3b6105089c017e2a8aa460bf2b680008.mp3*~data=user_id=0,application_id=42~hmac=1026ff9515407ca91fc1414cd3b5065624424be601b662cae6d422c3287efe34",
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music125/v4/35/85/36/3585365d-4678-0648-1bfd-76ea49ba8c9c/886448841388.jpg/600x600bb.jpg",
+      "itunesTrackId": "1536862273",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/8a/ff/39/8aff395f-4d37-6c6f-1620-3dde35d74472/mzaf_14508187973915633613.plus.aac.p.m4a",
+      "aliases": [
+            "algo mágico"
+      ]
+    }),
+    song({
+      "id": "rauw-alejandro-nubes",
+      "title": "Nubes",
+      "artistId": "rauw-alejandro",
+      "albumId": "vice-versa",
+      "year": 2021,
+      "genreIds": [
+            "reggaeton",
+            "urbano",
+            "pop-latino"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music126/v4/58/13/c3/5813c326-a7fa-f792-77e1-8310d9c80742/886449738724.jpg/600x600bb.jpg",
+      "itunesTrackId": "1596868390",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/d3/28/2c/d3282c1f-268f-c753-d288-5d643c87691b/mzaf_9081986131645779312.plus.aac.p.m4a",
+      "aliases": [
+            "nubes"
+      ]
+    }),
+    song({
+      "id": "rauw-alejandro-tattoo",
+      "title": "Tattoo",
+      "artistId": "rauw-alejandro",
+      "albumId": "tattoo-single",
+      "year": 2020,
+      "genreIds": [
+            "reggaeton",
+            "urbano",
+            "pop-latino"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music125/v4/29/86/a6/2986a6fc-ff17-4384-85ad-10fcd0d8c81e/194491896423.jpg/600x600bb.jpg",
+      "itunesTrackId": "1496282613",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/4a/f4/7b/4af47b3e-fcd4-6f5d-49d8-f0176051c87a/mzaf_6478340869683988548.plus.aac.p.m4a",
       "aliases": [
             "tattoo"
       ]
     }),
     song({
-      "id": "rauw-alejandro-curame",
-      "title": "Cúrame",
+      "id": "rauw-alejandro-no-me-sorprende",
+      "title": "NO ME SORPRENDE",
+      "artistId": "rauw-alejandro",
+      "albumId": "playa-saturno",
+      "year": 2023,
+      "genreIds": [
+            "reggaeton",
+            "urbano",
+            "pop-latino"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music126/v4/d2/1a/63/d21a6376-80b9-ce89-e4f3-af3f0b70acf9/196871287098.jpg/600x600bb.jpg",
+      "itunesTrackId": "1695651426",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/19/ba/7c/19ba7c94-a73b-a8f8-628b-301876ce0842/mzaf_2319625488275551640.plus.aac.p.m4a",
+      "aliases": [
+            "no me sorprende"
+      ]
+    }),
+    song({
+      "id": "rauw-alejandro-cuando-fue",
+      "title": "¿Cuándo Fue?",
       "artistId": "rauw-alejandro",
       "albumId": "vice-versa",
       "year": 2021,
@@ -3660,32 +4488,17 @@ export const seedCatalog = {
             "urbano",
             "pop-latino"
       ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/a37d5de6838312531d93af97e3e31463/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/e/f/f/0/eff62d7a7519ae7c76ee5abfa395da42.mp3?hdnea=exp=1790665577~acl=/api/1/1/e/f/f/0/eff62d7a7519ae7c76ee5abfa395da42.mp3*~data=user_id=0,application_id=42~hmac=f629f933781c030e27bcd189a2f1e2b2c0294f5c6d0a0c83b2b6028919eca648",
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music126/v4/58/13/c3/5813c326-a7fa-f792-77e1-8310d9c80742/886449738724.jpg/600x600bb.jpg",
+      "itunesTrackId": "1596868406",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/30/db/94/30db942e-30d5-569b-91ae-e75cdbd16a79/mzaf_6918036862829436534.plus.aac.p.m4a",
       "aliases": [
-            "cúrame"
+            "¿cuándo fue?",
+            "cuándo fue"
       ]
     }),
     song({
-      "id": "rauw-alejandro-sexo-virtual",
-      "title": "Sexo Virtual",
-      "artistId": "rauw-alejandro",
-      "albumId": "vice-versa",
-      "year": 2021,
-      "genreIds": [
-            "reggaeton",
-            "urbano",
-            "pop-latino"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/a37d5de6838312531d93af97e3e31463/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/6/4/2/0/6421bc56075fe2b8c4e6c9cf2876bd3c.mp3?hdnea=exp=1790665577~acl=/api/1/1/6/4/2/0/6421bc56075fe2b8c4e6c9cf2876bd3c.mp3*~data=user_id=0,application_id=42~hmac=87c5ab355bc948ee986c2c200ecce8469fa0cd6270f854fc714ed6b9d4069ed9",
-      "aliases": [
-            "sexo virtual"
-      ]
-    }),
-    song({
-      "id": "rauw-alejandro-espresso-martini",
-      "title": "Espresso Martini",
+      "id": "rauw-alejandro-touching-the-sky",
+      "title": "Touching The Sky",
       "artistId": "rauw-alejandro",
       "albumId": "cosa-nuestra",
       "year": 2024,
@@ -3694,66 +4507,125 @@ export const seedCatalog = {
             "urbano",
             "pop-latino"
       ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/73ee2e7a43dbeaa119a62d9a15d28670/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/d/a/2/0/da24aba0df2eb9d289932b144cc9fbfb.mp3?hdnea=exp=1790665577~acl=/api/1/1/d/a/2/0/da24aba0df2eb9d289932b144cc9fbfb.mp3*~data=user_id=0,application_id=42~hmac=e1455823ad22db5dc467b2d3555366981ab0de725502c0a698fd34a44132a5c1",
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/ab/e8/09/abe8092d-ef44-61b9-6b50-ab7efb78ca51/196872401516.jpg/600x600bb.jpg",
+      "itunesTrackId": "1775463302",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/21/19/e6/2119e611-4db8-2062-1971-84daaae497ab/mzaf_10279849090489651246.plus.aac.p.m4a",
       "aliases": [
-            "espresso martini"
+            "touching the sky"
       ]
     }),
     song({
-      "id": "rauw-alejandro-amar-de-nuevo",
-      "title": "Amar De Nuevo",
+      "id": "rauw-alejandro-detective",
+      "title": "Detective",
       "artistId": "rauw-alejandro",
-      "albumId": "cosa-nuestra",
-      "year": 2024,
+      "albumId": "detective-single",
+      "year": 2019,
       "genreIds": [
             "reggaeton",
             "urbano",
             "pop-latino"
       ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/73ee2e7a43dbeaa119a62d9a15d28670/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/f/9/0/0/f9013ee17760d685c09076e4b63a19c4.mp3?hdnea=exp=1790665577~acl=/api/1/1/f/9/0/0/f9013ee17760d685c09076e4b63a19c4.mp3*~data=user_id=0,application_id=42~hmac=62cda42a217989991f4a5305f112e959cb0d341882b8d31df38cf8666f7c57b3",
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music124/v4/29/bc/47/29bc47d2-0d7e-aa63-25f5-290866c76cbb/194491005801.jpg/600x600bb.jpg",
+      "itunesTrackId": "1470681563",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/d9/b8/8e/d9b88ea5-fd08-7ee6-2f3d-af54f8ffe2eb/mzaf_8653173389247485189.plus.aac.p.m4a",
       "aliases": [
-            "amar de nuevo"
+            "detective"
       ]
     }),
     song({
-      "id": "rauw-alejandro-la-freak",
-      "title": "LA FREAK",
+      "id": "rauw-alejandro-que-le-de",
+      "title": "Que Le Dé",
       "artistId": "rauw-alejandro",
-      "albumId": "codigos-de-muneka",
+      "albumId": "que-le-de-single",
+      "year": 2019,
+      "genreIds": [
+            "reggaeton",
+            "urbano",
+            "pop-latino"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music114/v4/a1/a4/fc/a1a4fc45-8fb8-1be8-c20c-f3fd57d2b279/193483246932.jpg/600x600bb.jpg",
+      "itunesTrackId": "1446646481",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/73/4c/0f/734c0fd4-6936-9bbf-aaa8-0f2c897483e1/mzaf_8083167158773077544.plus.aac.p.m4a",
+      "aliases": [
+            "que le dé"
+      ]
+    }),
+    song({
+      "id": "rauw-alejandro-una-noche",
+      "title": "Una Noche",
+      "artistId": "rauw-alejandro",
+      "albumId": "una-noche-single",
+      "year": 2019,
+      "genreIds": [
+            "reggaeton",
+            "urbano",
+            "pop-latino"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music124/v4/fb/45/35/fb45350c-d7c5-6144-17ff-a0d635e479e6/194491422653.jpg/600x600bb.jpg",
+      "itunesTrackId": "1483871962",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/37/10/b3/3710b382-6507-0405-9a02-5404e54a9da8/mzaf_9032008264454365712.plus.aac.p.m4a",
+      "aliases": [
+            "una noche"
+      ]
+    }),
+    song({
+      "id": "rauw-alejandro-guabansexxx",
+      "title": "GuabanSexxx",
+      "artistId": "rauw-alejandro",
+      "albumId": "cosa-nuestra-capitulo-0",
       "year": 2025,
       "genreIds": [
             "reggaeton",
             "urbano",
             "pop-latino"
       ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/1958a931af8c47ade28fbc98b12a52e4/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/9/6/f/0/96f090958a77bed45747ed1e9c4e5ff4.mp3?hdnea=exp=1790665577~acl=/api/1/1/9/6/f/0/96f090958a77bed45747ed1e9c4e5ff4.mp3*~data=user_id=0,application_id=42~hmac=c03d829f9141c6f08dfcef43eeb79840a00134a9d1f8ee1831ba79a14b660559",
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/1c/2b/5f/1c2b5fdf-9a6a-9e07-bea3-ff92f7da2796/196873615424.jpg/600x600bb.jpg",
+      "itunesTrackId": "1839980821",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/b7/cc/61/b7cc6125-aefb-5536-7ccf-2f495f118c8b/mzaf_3803201100463300260.plus.aac.p.m4a",
       "aliases": [
-            "la freak"
+            "guabansexxx"
       ]
     }),
     song({
-      "id": "rauw-alejandro-punto-40",
-      "title": "PUNTO 40",
+      "id": "rauw-alejandro-tattoo-remix-with-camilo-1536862279",
+      "title": "Tattoo (Remix with Camilo)",
       "artistId": "rauw-alejandro",
-      "albumId": "punto-40",
+      "albumId": "afrodisiaco",
+      "year": 2020,
+      "genreIds": [
+            "reggaeton",
+            "urbano",
+            "pop-latino"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music125/v4/35/85/36/3585365d-4678-0648-1bfd-76ea49ba8c9c/886448841388.jpg/600x600bb.jpg",
+      "itunesTrackId": "1536862279",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/22/d4/58/22d458ed-5e19-0f79-5acf-f67a5e8aceed/mzaf_5172685673902883.plus.aac.p.m4a",
+      "aliases": [
+            "tattoo (remix with camilo)",
+            "tattoo remix with camilo"
+      ]
+    }),
+    song({
+      "id": "rauw-alejandro-verde-menta",
+      "title": "VERDE MENTA",
+      "artistId": "rauw-alejandro",
+      "albumId": "saturno",
       "year": 2022,
       "genreIds": [
             "reggaeton",
             "urbano",
             "pop-latino"
       ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/fed547fa4455f1e9c711cb3d9185b0a1/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/6/0/2/0/60254feea499619e761e42441c03f867.mp3?hdnea=exp=1790665577~acl=/api/1/1/6/0/2/0/60254feea499619e761e42441c03f867.mp3*~data=user_id=0,application_id=42~hmac=d5fd2552b94e02492d102ac4a457d1c912d10c5d42881b350483a51390ce7e21",
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music123/v4/99/0f/ef/990fefcb-db12-0cf0-90f9-44115c095c73/196589764720.jpg/600x600bb.jpg",
+      "itunesTrackId": "1665295351",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/73/e1/6d/73e16d19-3fce-8085-7ed9-2e7c97ed1ca8/mzaf_3801098750883343974.plus.aac.p.m4a",
       "aliases": [
-            "punto 40"
+            "verde menta"
       ]
     }),
     song({
-      "id": "rauw-alejandro-museo",
-      "title": "MUSEO",
+      "id": "rauw-alejandro-caprichoso",
+      "title": "CAPRICHOSO",
       "artistId": "rauw-alejandro",
       "albumId": "trap-cake-vol-2",
       "year": 2022,
@@ -3762,115 +4634,358 @@ export const seedCatalog = {
             "urbano",
             "pop-latino"
       ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/80f8f11592054ecf47318fbbff035498/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/6/6/c/0/66c55626a9f68505a4fec2c27db6784c.mp3?hdnea=exp=1790665577~acl=/api/1/1/6/6/c/0/66c55626a9f68505a4fec2c27db6784c.mp3*~data=user_id=0,application_id=42~hmac=bd0c6e65e5ef7bd619e6e215a0d2c2cb27c67978d451ccf207aae45ea4635882",
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music116/v4/a8/9b/bb/a89bbb29-dd7c-79bb-da24-b3b1d40ec27c/886449955039.jpg/600x600bb.jpg",
+      "itunesTrackId": "1611595025",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/e1/b3/2e/e1b32eb4-2afc-630d-efcb-b7f891244f0e/mzaf_15647891885902717085.plus.aac.p.m4a",
       "aliases": [
-            "museo"
+            "caprichoso"
       ]
     }),
     song({
-      "id": "rauw-alejandro-cosa-nuestra",
-      "title": "Cosa Nuestra",
+      "id": "rauw-alejandro-touching-the-sky-1746608655",
+      "title": "Touching The Sky",
       "artistId": "rauw-alejandro",
-      "albumId": "cosa-nuestra",
+      "albumId": "touching-the-sky-single",
       "year": 2024,
       "genreIds": [
             "reggaeton",
             "urbano",
             "pop-latino"
       ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/73ee2e7a43dbeaa119a62d9a15d28670/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/b/d/e/0/bde74f3ea4bc4d6b3261c13573b6094c.mp3?hdnea=exp=1790665577~acl=/api/1/1/b/d/e/0/bde74f3ea4bc4d6b3261c13573b6094c.mp3*~data=user_id=0,application_id=42~hmac=154ddfedbe544ab0e61b1e2b945ef9fa3db28e6caf10e909ac52c6c8c3bbe263",
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/81/f5/7d/81f57db7-9574-a914-d6b7-7061ceba2682/196872086287.jpg/600x600bb.jpg",
+      "itunesTrackId": "1746608655",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/f3/43/8e/f3438e8a-7536-346a-617f-a0896409950b/mzaf_3719167212664862852.plus.aac.p.m4a",
       "aliases": [
-            "cosa nuestra"
+            "touching the sky"
       ]
     }),
     song({
-      "id": "rauw-alejandro-aquel-diciembre",
-      "title": "Aquel diciembre",
+      "id": "rauw-alejandro-enchule-1532083937",
+      "title": "Enchule",
       "artistId": "rauw-alejandro",
-      "albumId": "do-not-disturb-late-checkout",
-      "year": 2026,
-      "genreIds": [
-            "reggaeton",
-            "urbano",
-            "pop-latino"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/fd1dd93b24597cfb6729e613b040e43e/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/2/b/c/0/2bc58ecc7e5f353838b78e780a4ac0cc.mp3?hdnea=exp=1790665577~acl=/api/1/1/2/b/c/0/2bc58ecc7e5f353838b78e780a4ac0cc.mp3*~data=user_id=0,application_id=42~hmac=1c0742089a8cb72e1a10fc77b57b3f579213c55454d5d38d49d9b58cfe22d2fb",
-      "aliases": [
-            "aquel diciembre"
-      ]
-    }),
-    song({
-      "id": "rauw-alejandro-pensandote",
-      "title": "Pensándote",
-      "artistId": "rauw-alejandro",
-      "albumId": "afrodisiaco",
+      "albumId": "enchule-single",
       "year": 2020,
       "genreIds": [
             "reggaeton",
             "urbano",
             "pop-latino"
       ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/981c0de369542a25a43da5631cf6c722/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/a/0/1/0/a0119f743570331e1e41204493a79641.mp3?hdnea=exp=1790665577~acl=/api/1/1/a/0/1/0/a0119f743570331e1e41204493a79641.mp3*~data=user_id=0,application_id=42~hmac=2a24b4921c12e91b3e69f4b2cafeb665fa3c11c6a3b573264a9b01e68da874df",
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music114/v4/7f/e8/48/7fe8482c-a5f7-630b-7abd-37be61127e8b/886448723660.jpg/600x600bb.jpg",
+      "itunesTrackId": "1532083937",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/e4/13/cb/e413cbbf-475c-0a5c-1ead-2627feabd497/mzaf_17616886726912707537.plus.aac.p.m4a",
       "aliases": [
-            "pensándote"
+            "enchule"
       ]
     }),
     song({
-      "id": "rauw-alejandro-rosita",
-      "title": "ROSITA",
+      "id": "rauw-alejandro-tti",
+      "title": "T.T.I.",
       "artistId": "rauw-alejandro",
-      "albumId": "rosita",
+      "albumId": "tti-single",
+      "year": 2018,
+      "genreIds": [
+            "reggaeton",
+            "urbano",
+            "pop-latino"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music124/v4/5c/2b/b0/5c2bb060-3f39-2de6-ee4c-93e6d3659581/192562997802.jpg/600x600bb.jpg",
+      "itunesTrackId": "1437388254",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/d6/8d/10/d68d10d1-788c-7221-cf74-b320c3936699/mzaf_3054951130286228527.plus.aac.p.m4a",
+      "aliases": [
+            "t.t.i.",
+            "tti"
+      ]
+    }),
+    song({
+      "id": "rauw-alejandro-wuepa",
+      "title": "WUEPA",
+      "artistId": "rauw-alejandro",
+      "albumId": "trap-cake-vol-2",
+      "year": 2022,
+      "genreIds": [
+            "reggaeton",
+            "urbano",
+            "pop-latino"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music116/v4/a8/9b/bb/a89bbb29-dd7c-79bb-da24-b3b1d40ec27c/886449955039.jpg/600x600bb.jpg",
+      "itunesTrackId": "1611595271",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/0a/80/86/0a808606-c5e7-d745-3555-71492680f8be/mzaf_16483891831707292057.plus.aac.p.m4a",
+      "aliases": [
+            "wuepa"
+      ]
+    }),
+    song({
+      "id": "rauw-alejandro-besito-en-la-frente",
+      "title": "Besito en la Frente",
+      "artistId": "rauw-alejandro",
+      "albumId": "cosa-nuestra-capitulo-0",
+      "year": 2025,
+      "genreIds": [
+            "reggaeton",
+            "urbano",
+            "pop-latino"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/1c/2b/5f/1c2b5fdf-9a6a-9e07-bea3-ff92f7da2796/196873615424.jpg/600x600bb.jpg",
+      "itunesTrackId": "1839980830",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/9b/8f/0c/9b8f0c29-d79d-3693-7dbe-4329ca5923ed/mzaf_10623406604094081391.plus.aac.p.m4a",
+      "aliases": [
+            "besito en la frente"
+      ]
+    }),
+    song({
+      "id": "rauw-alejandro-red-velvet",
+      "title": "RED VELVET",
+      "artistId": "rauw-alejandro",
+      "albumId": "trap-cake-vol-2",
+      "year": 2022,
+      "genreIds": [
+            "reggaeton",
+            "urbano",
+            "pop-latino"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music116/v4/a8/9b/bb/a89bbb29-dd7c-79bb-da24-b3b1d40ec27c/886449955039.jpg/600x600bb.jpg",
+      "itunesTrackId": "1611595236",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/98/93/a9/9893a96c-b2ca-0730-dc93-9095a02ccc74/mzaf_11553662362156170042.plus.aac.p.m4a",
+      "aliases": [
+            "red velvet"
+      ]
+    }),
+    song({
+      "id": "rauw-alejandro-gtr",
+      "title": "GTR",
+      "artistId": "rauw-alejandro",
+      "albumId": "trap-cake-vol-2",
+      "year": 2022,
+      "genreIds": [
+            "reggaeton",
+            "urbano",
+            "pop-latino"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music116/v4/a8/9b/bb/a89bbb29-dd7c-79bb-da24-b3b1d40ec27c/886449955039.jpg/600x600bb.jpg",
+      "itunesTrackId": "1611595277",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/cd/d0/98/cdd098f6-2af6-61b9-572e-1d6b2bdb7c59/mzaf_5521871894046449723.plus.aac.p.m4a",
+      "aliases": [
+            "gtr"
+      ]
+    }),
+    song({
+      "id": "rauw-alejandro-saturno",
+      "title": "SATURNO",
+      "artistId": "rauw-alejandro",
+      "albumId": "saturno",
+      "year": 2022,
+      "genreIds": [
+            "reggaeton",
+            "urbano",
+            "pop-latino"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music123/v4/99/0f/ef/990fefcb-db12-0cf0-90f9-44115c095c73/196589764720.jpg/600x600bb.jpg",
+      "itunesTrackId": "1665293382",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/97/1d/e3/971de379-7541-3110-e701-32e17d6b5660/mzaf_10809066254844724316.plus.aac.p.m4a",
+      "aliases": [
+            "saturno"
+      ]
+    }),
+    song({
+      "id": "rauw-alejandro-mirando-al-cielo",
+      "title": "Mirando Al Cielo",
+      "artistId": "rauw-alejandro",
+      "albumId": "cosa-nuestra-capitulo-0",
+      "year": 2025,
+      "genreIds": [
+            "reggaeton",
+            "urbano",
+            "pop-latino"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/1c/2b/5f/1c2b5fdf-9a6a-9e07-bea3-ff92f7da2796/196873615424.jpg/600x600bb.jpg",
+      "itunesTrackId": "1839980837",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/8c/57/9f/8c579f66-31b5-e32e-d485-046babfb7cbf/mzaf_414854945330706481.plus.aac.p.m4a",
+      "aliases": [
+            "mirando al cielo"
+      ]
+    }),
+    song({
+      "id": "rauw-alejandro-hackiao",
+      "title": "HACKIAO",
+      "artistId": "rauw-alejandro",
+      "albumId": "trap-cake-vol-2",
+      "year": 2022,
+      "genreIds": [
+            "reggaeton",
+            "urbano",
+            "pop-latino"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music116/v4/a8/9b/bb/a89bbb29-dd7c-79bb-da24-b3b1d40ec27c/886449955039.jpg/600x600bb.jpg",
+      "itunesTrackId": "1611595288",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/30/45/a4/3045a4d2-771f-11c2-89f1-f6ad47d21f2d/mzaf_17841645180612938688.plus.aac.p.m4a",
+      "aliases": [
+            "hackiao"
+      ]
+    }),
+    song({
+      "id": "rauw-alejandro-guabansexxx-1837526056",
+      "title": "GuabanSexxx",
+      "artistId": "rauw-alejandro",
+      "albumId": "guabansexxx-single",
+      "year": 2025,
+      "genreIds": [
+            "reggaeton",
+            "urbano",
+            "pop-latino"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/03/bc/a5/03bca54f-f865-f364-417a-3f11eb6da920/196873561103.jpg/600x600bb.jpg",
+      "itunesTrackId": "1837526056",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/dc/f6/57/dcf657d6-dbc0-95ae-fcbd-8a9c6043ad19/mzaf_13543097147513818804.plus.aac.p.m4a",
+      "aliases": [
+            "guabansexxx"
+      ]
+    }),
+    song({
+      "id": "rauw-alejandro-caprichoso-1608598061",
+      "title": "CAPRICHOSO",
+      "artistId": "rauw-alejandro",
+      "albumId": "caprichoso-single",
+      "year": 2022,
+      "genreIds": [
+            "reggaeton",
+            "urbano",
+            "pop-latino"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music116/v4/52/65/a3/5265a352-16ce-deb2-63f9-bd959b8cc3d4/886449896097.jpg/600x600bb.jpg",
+      "itunesTrackId": "1608598061",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/18/ae/3d/18ae3d74-f116-fbfa-e769-f7a26cb115f5/mzaf_843811920658554551.plus.aac.p.m4a",
+      "aliases": [
+            "caprichoso"
+      ]
+    }),
+    song({
+      "id": "rauw-alejandro-pasaporte-1770193623",
+      "title": "Pasaporte",
+      "artistId": "rauw-alejandro",
+      "albumId": "pasaporte-single",
+      "year": 2024,
+      "genreIds": [
+            "reggaeton",
+            "urbano",
+            "pop-latino"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/16/7d/f9/167df9e0-d1b2-63a1-1e87-7e96fbdaf00f/196872460919.jpg/600x600bb.jpg",
+      "itunesTrackId": "1770193623",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/4c/9a/f7/4c9af762-cb45-91d1-bf36-786c33da10b6/mzaf_2654292853317558867.plus.aac.p.m4a",
+      "aliases": [
+            "pasaporte"
+      ]
+    }),
+    song({
+      "id": "rauw-alejandro-mis-dias-sin-ti",
+      "title": "Mis Días Sin Ti",
+      "artistId": "rauw-alejandro",
+      "albumId": "mis-dias-sin-ti-single",
+      "year": 2019,
+      "genreIds": [
+            "reggaeton",
+            "urbano",
+            "pop-latino"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music123/v4/ea/32/86/ea328664-8387-ae21-35f3-85e9d5745035/194491757748.jpg/600x600bb.jpg",
+      "itunesTrackId": "1491853196",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview115/v4/e3/cd/61/e3cd617c-d1f2-77ef-4ab0-3c2cda06f502/mzaf_3718764274456704841.plus.aac.p.m4a",
+      "aliases": [
+            "mis días sin ti"
+      ]
+    }),
+    song({
+      "id": "rauw-alejandro-deca-a-las-vegas-interlude",
+      "title": "DECA' A LAS VEGAS (INTERLUDE)",
+      "artistId": "rauw-alejandro",
+      "albumId": "saturno",
+      "year": 2022,
+      "genreIds": [
+            "reggaeton",
+            "urbano",
+            "pop-latino"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music123/v4/99/0f/ef/990fefcb-db12-0cf0-90f9-44115c095c73/196589764720.jpg/600x600bb.jpg",
+      "itunesTrackId": "1665294720",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/e1/9a/3a/e19a3a1b-8c6a-e9eb-375f-0c9ee0e9138a/mzaf_4886840828072368705.plus.aac.p.m4a",
+      "aliases": [
+            "deca' a las vegas (interlude)",
+            "deca a las vegas interlude"
+      ]
+    }),
+    song({
+      "id": "rauw-alejandro-dando-vueltas",
+      "title": "Dando Vueltas",
+      "artistId": "rauw-alejandro",
+      "albumId": "dando-vueltas-single",
       "year": 2026,
       "genreIds": [
             "reggaeton",
             "urbano",
             "pop-latino"
       ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/41e37ff5386c9b52b246f5a4134ac215/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/1/1/d/0/11d05d0b0f904cb4312866f91f0bb3a3.mp3?hdnea=exp=1790665577~acl=/api/1/1/1/1/d/0/11d05d0b0f904cb4312866f91f0bb3a3.mp3*~data=user_id=0,application_id=42~hmac=fe8bedc80bfd8cc03ee6e99dc7926321f93528a995fab584d4c769e56dd8310c",
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/92/2b/10/922b10c4-80df-d849-f76e-22b5c8bc2f9b/196874252383.jpg/600x600bb.jpg",
+      "itunesTrackId": "1893775786",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/8e/dc/34/8edc3499-7ea8-feed-83e6-da5a3ec984cd/mzaf_12094517903049712581.plus.aac.p.m4a",
       "aliases": [
-            "rosita"
+            "dando vueltas"
       ]
     }),
     song({
-      "id": "travis-scott-fen",
-      "title": "FE!N (feat. Playboi Carti)",
-      "artistId": "travis-scott",
-      "albumId": "utopia",
-      "year": 2023,
+      "id": "rauw-alejandro-fantasias-unplugged",
+      "title": "Fantasías (Unplugged)",
+      "artistId": "rauw-alejandro",
+      "albumId": "fantasias-unplugged-single",
+      "year": 2019,
       "genreIds": [
-            "hip-hop",
-            "rap",
-            "trap"
+            "reggaeton",
+            "urbano",
+            "pop-latino"
       ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/6d7164fecb39ddee0cb15952e750d907/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/4/7/c/0/47c5acbdd0e0b218700ae15e0a5f34a0.mp3?hdnea=exp=1790665585~acl=/api/1/1/4/7/c/0/47c5acbdd0e0b218700ae15e0a5f34a0.mp3*~data=user_id=0,application_id=42~hmac=af30345151526f5722f66824a51c73de1bd5c074551729f340038342ff01d34b",
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music123/v4/11/06/4a/11064a1f-a0a5-15ad-e23f-2a3304784f1a/194491559601.jpg/600x600bb.jpg",
+      "itunesTrackId": "1485497026",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/92/e3/36/92e336b0-f403-57f9-e6f9-9eb96b2aed51/mzaf_14882963611930371927.plus.aac.p.m4a",
       "aliases": [
-            "fe!n (feat. playboi carti)",
-            "fe!n",
-            "fen feat playboi carti",
-            "fen"
+            "fantasías (unplugged)",
+            "fantasías unplugged"
       ]
     }),
     song({
-      "id": "travis-scott-sicko-mode",
-      "title": "SICKO MODE",
-      "artistId": "travis-scott",
-      "albumId": "astroworld",
-      "year": 2018,
+      "id": "rauw-alejandro-que-le-de-remix-feat-myke-towers-justin-quiles",
+      "title": "Que Le Dé (Remix) [feat. Myke Towers & Justin Quiles]",
+      "artistId": "rauw-alejandro",
+      "albumId": "que-le-de-remix-feat-myke-towers-justin-quiles-single",
+      "year": 2019,
       "genreIds": [
-            "hip-hop",
-            "rap",
-            "trap"
+            "reggaeton",
+            "urbano",
+            "pop-latino"
       ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/0b08015216f975dc7fb5be3d5dcc4d88/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/b/9/7/0/b97402f4426864d46acd235a7146895c.mp3?hdnea=exp=1790665585~acl=/api/1/1/b/9/7/0/b97402f4426864d46acd235a7146895c.mp3*~data=user_id=0,application_id=42~hmac=2475f539b10fc333f4bc77ab72653402943e02efe9c8c6cbca190e52a5ad20f3",
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music123/v4/a8/f0/10/a8f01063-c0cb-2e06-038b-75ee146fbbfc/194491497385.jpg/600x600bb.jpg",
+      "itunesTrackId": "1484431682",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview125/v4/1a/9e/ef/1a9eef94-45d4-439e-4a32-c107d7e2066e/mzaf_5592561677330400974.plus.aac.p.m4a",
       "aliases": [
-            "sicko mode"
+            "que le dé (remix) [feat. myke towers & justin quiles]",
+            "que le dé remix feat myke towers justin quiles"
+      ]
+    }),
+    song({
+      "id": "rauw-alejandro-rauleeto-skit",
+      "title": "RAULEETO (Skit)",
+      "artistId": "rauw-alejandro",
+      "albumId": "saturno",
+      "year": 2022,
+      "genreIds": [
+            "reggaeton",
+            "urbano",
+            "pop-latino"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music123/v4/99/0f/ef/990fefcb-db12-0cf0-90f9-44115c095c73/196589764720.jpg/600x600bb.jpg",
+      "itunesTrackId": "1665295797",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/9b/a2/65/9ba265b0-6284-c5c9-d01f-8080aa08278c/mzaf_1239955487110166689.plus.aac.p.m4a",
+      "aliases": [
+            "rauleeto (skit)",
+            "rauleeto skit"
       ]
     }),
     song({
@@ -3884,63 +4999,336 @@ export const seedCatalog = {
             "rap",
             "trap"
       ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/a2f66f08468fb9897019e82ffb7a5fcb/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/e/e/1/0/ee1f78cff459de066182995b5fde2fbb.mp3?hdnea=exp=1790665585~acl=/api/1/1/e/e/1/0/ee1f78cff459de066182995b5fde2fbb.mp3*~data=user_id=0,application_id=42~hmac=bf1de3a619fc795fe9a533467f51a79fa816f62de0c5b2b553670bf9ca12d8bb",
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music125/v4/50/f7/a3/50f7a39d-3bd5-28e9-0264-532f08b5b810/886446074726.jpg/600x600bb.jpg",
+      "itunesTrackId": "1150135924",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/ad/02/74/ad02745f-7fbe-7e2c-ac32-632dc4dedac3/mzaf_15768763593759835970.plus.aac.p.m4a",
       "aliases": [
             "goosebumps"
       ]
     }),
     song({
-      "id": "travis-scott-highest-in-the-room",
-      "title": "HIGHEST IN THE ROOM",
+      "id": "travis-scott-sicko-mode",
+      "title": "SICKO MODE",
       "artistId": "travis-scott",
-      "albumId": "highest-in-the-room",
+      "albumId": "astroworld",
+      "year": 2018,
+      "genreIds": [
+            "hip-hop",
+            "rap",
+            "trap"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music125/v4/30/66/90/306690d4-2a29-402e-e406-6b319ce7731a/886447227169.jpg/600x600bb.jpg",
+      "itunesTrackId": "1421242781",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/d6/2f/01/d62f0112-0864-40e3-473d-0918d82dde3f/mzaf_9628524103484106734.plus.aac.p.m4a",
+      "aliases": [
+            "sicko mode"
+      ]
+    }),
+    song({
+      "id": "travis-scott-take-what-you-want",
+      "title": "Take What You Want (feat. Ozzy Osbourne & Travis Scott)",
+      "artistId": "travis-scott",
+      "albumId": "hollywoods-bleeding",
       "year": 2019,
       "genreIds": [
             "hip-hop",
             "rap",
             "trap"
       ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/5fa05e7d74819963577a92a8c6ad4979/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/2/7/1/0/2719bbd3dad355b7c5e7f32be24a5cfe.mp3?hdnea=exp=1790665585~acl=/api/1/1/2/7/1/0/2719bbd3dad355b7c5e7f32be24a5cfe.mp3*~data=user_id=0,application_id=42~hmac=b6ae785622cd316c746528b0dc2d058a9062f6e2ab72bd0163733c231542eff8",
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/7b/1b/1b/7b1b1b0b-7ce2-b223-f9e0-8e36abe51877/19UMGIM78325.rgb.jpg/600x600bb.jpg",
+      "itunesTrackId": "1477880568",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/f0/bc/f4/f0bcf490-3c10-a4a7-f47d-77ff43cb5f7f/mzaf_593599495913580444.plus.aac.p.m4a",
+      "aliases": [
+            "take what you want (feat. ozzy osbourne & travis scott)",
+            "take what you want",
+            "take what you want feat ozzy osbourne travis scott"
+      ]
+    }),
+    song({
+      "id": "travis-scott-pick-up-the-phone",
+      "title": "pick up the phone (feat. Quavo)",
+      "artistId": "travis-scott",
+      "albumId": "birds-in-the-trap-sing-mcknight",
+      "year": 2016,
+      "genreIds": [
+            "hip-hop",
+            "rap",
+            "trap"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music125/v4/50/f7/a3/50f7a39d-3bd5-28e9-0264-532f08b5b810/886446074726.jpg/600x600bb.jpg",
+      "itunesTrackId": "1150135947",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/08/e5/8a/08e58afe-4d1b-b7bf-94e8-3c3b3d0c65db/mzaf_7099223190326373282.plus.aac.p.m4a",
+      "aliases": [
+            "pick up the phone (feat. quavo)",
+            "pick up the phone",
+            "pick up the phone feat quavo"
+      ]
+    }),
+    song({
+      "id": "travis-scott-love-galore",
+      "title": "Love Galore (feat. Travis Scott)",
+      "artistId": "travis-scott",
+      "albumId": "ctrl",
+      "year": 2017,
+      "genreIds": [
+            "hip-hop",
+            "rap",
+            "trap"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/20/28/8f/20288f6f-fbf2-fb0f-6732-e7d334e1ff50/886446548432.jpg/600x600bb.jpg",
+      "itunesTrackId": "1239976603",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/94/32/90/9432904b-e73b-7766-951f-cbc1e5811f6e/mzaf_4546725919246364301.plus.aac.p.m4a",
+      "aliases": [
+            "love galore (feat. travis scott)",
+            "love galore",
+            "love galore feat travis scott"
+      ]
+    }),
+    song({
+      "id": "travis-scott-sky-walker",
+      "title": "Sky Walker (feat. Travis Scott)",
+      "artistId": "travis-scott",
+      "albumId": "sky-walker-feat-travis-scott-single",
+      "year": 2017,
+      "genreIds": [
+            "hip-hop",
+            "rap",
+            "trap"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music124/v4/ae/4a/6e/ae4a6e8b-d8df-7f06-db7b-3e923ba51756/886446674513.jpg/600x600bb.jpg",
+      "itunesTrackId": "1273787066",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/09/e8/75/09e875f4-4c30-6597-5e9d-2c6b1e1de898/mzaf_12626105694506883117.plus.aac.p.m4a",
+      "aliases": [
+            "sky walker (feat. travis scott)",
+            "sky walker",
+            "sky walker feat travis scott"
+      ]
+    }),
+    song({
+      "id": "travis-scott-bake-sale",
+      "title": "Bake Sale (feat. Travis Scott)",
+      "artistId": "travis-scott",
+      "albumId": "khalifa",
+      "year": 2016,
+      "genreIds": [
+            "hip-hop",
+            "rap",
+            "trap"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music69/v4/06/fd/ea/06fdea4a-558f-73b1-abc5-8eef0822368d/075679913487.jpg/600x600bb.jpg",
+      "itunesTrackId": "1077051661",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/ec/88/03/ec8803e2-d3c0-fdaa-d3a6-67ac04395763/mzaf_7278932956738511146.plus.aac.p.m4a",
+      "aliases": [
+            "bake sale (feat. travis scott)",
+            "bake sale",
+            "bake sale feat travis scott"
+      ]
+    }),
+    song({
+      "id": "travis-scott-sicko-mode-1421658123",
+      "title": "SICKO MODE",
+      "artistId": "travis-scott",
+      "albumId": "astroworld",
+      "year": 2018,
+      "genreIds": [
+            "hip-hop",
+            "rap",
+            "trap"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music125/v4/e7/49/8f/e7498f65-df8f-bead-d6e3-2a8d4d642a79/886447235317.jpg/600x600bb.jpg",
+      "itunesTrackId": "1421658123",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/d3/91/a1/d391a141-256f-726f-9da1-8aa4e42b3236/mzaf_17761183103753218003.plus.aac.p.m4a",
+      "aliases": [
+            "sicko mode"
+      ]
+    }),
+    song({
+      "id": "travis-scott-beibs-in-the-trap",
+      "title": "beibs in the trap",
+      "artistId": "travis-scott",
+      "albumId": "birds-in-the-trap-sing-mcknight",
+      "year": 2016,
+      "genreIds": [
+            "hip-hop",
+            "rap",
+            "trap"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music125/v4/50/f7/a3/50f7a39d-3bd5-28e9-0264-532f08b5b810/886446074726.jpg/600x600bb.jpg",
+      "itunesTrackId": "1150135848",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/5e/4e/21/5e4e2113-2d5e-fbfd-7336-ffb3e365e7bc/mzaf_17790642788226729893.plus.aac.p.m4a",
+      "aliases": [
+            "beibs in the trap"
+      ]
+    }),
+    song({
+      "id": "travis-scott-go-off",
+      "title": "Go Off",
+      "artistId": "travis-scott",
+      "albumId": "the-fate-of-the-furious-the-album",
+      "year": 2017,
+      "genreIds": [
+            "hip-hop",
+            "rap",
+            "trap"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music125/v4/ba/77/22/ba772286-cdd8-8925-aa93-784db1836d7b/075679900111.jpg/600x600bb.jpg",
+      "itunesTrackId": "1210538350",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/64/e6/fb/64e6fb31-4966-ba1a-e3ce-078993694ad1/mzaf_14189329048971622062.plus.aac.p.m4a",
+      "aliases": [
+            "go off"
+      ]
+    }),
+    song({
+      "id": "travis-scott-highest-in-the-room",
+      "title": "HIGHEST IN THE ROOM",
+      "artistId": "travis-scott",
+      "albumId": "highest-in-the-room-single",
+      "year": 2019,
+      "genreIds": [
+            "hip-hop",
+            "rap",
+            "trap"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music114/v4/30/5f/c4/305fc4b4-155d-8e67-7c7a-8eb35032fbcb/886448042792.jpg/600x600bb.jpg",
+      "itunesTrackId": "1481874619",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/b8/d7/81/b8d78130-ab22-c295-d3a4-d020826e611c/mzaf_1312813084904992049.plus.aac.p.m4a",
       "aliases": [
             "highest in the room"
       ]
     }),
     song({
-      "id": "travis-scott-rhyno-from-gtavi-the-album",
-      "title": "RHYNO (from GTAVI: The Album)",
+      "id": "travis-scott-sky-walker-1305444999",
+      "title": "Sky Walker (feat. Travis Scott)",
       "artistId": "travis-scott",
-      "albumId": "rhyno-from-gtavi-the-album",
-      "year": 2026,
+      "albumId": "war-leisure",
+      "year": 2017,
       "genreIds": [
             "hip-hop",
             "rap",
             "trap"
       ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/dc492b8d028525c713a52713b9bb005d/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/f/d/b/0/fdb56e2387b99accd3c917bc8ba0d78b.mp3?hdnea=exp=1790665585~acl=/api/1/1/f/d/b/0/fdb56e2387b99accd3c917bc8ba0d78b.mp3*~data=user_id=0,application_id=42~hmac=43d7f30416032d18c977b447ad3227766eeb92345a1f21de563d503dd0477868",
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/36/b1/91/36b191ad-319e-729e-653a-6590248059e8/886446846248.jpg/600x600bb.jpg",
+      "itunesTrackId": "1305444999",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/54/bb/b6/54bbb6e3-c3b8-adb3-c59a-cf4d8ae4fdde/mzaf_112909437272658871.plus.aac.p.m4a",
       "aliases": [
-            "rhyno (from gtavi: the album)",
-            "rhyno from gtavi the album"
+            "sky walker (feat. travis scott)",
+            "sky walker",
+            "sky walker feat travis scott"
       ]
     }),
     song({
-      "id": "travis-scott-k-pop",
-      "title": "K-POP",
+      "id": "travis-scott-upper-echelon",
+      "title": "Upper Echelon (feat. T.I. & 2 Chainz)",
       "artistId": "travis-scott",
-      "albumId": "k-pop",
-      "year": 2023,
+      "albumId": "upper-echelon-feat-ti-2-chainz-single",
+      "year": 2013,
       "genreIds": [
             "hip-hop",
             "rap",
             "trap"
       ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/49dd2965ab5ecaeb65061bc21d17075b/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/1/5/9/0/159ada2aee5762e1a5483b6917d6bd0f.mp3?hdnea=exp=1790665585~acl=/api/1/1/1/5/9/0/159ada2aee5762e1a5483b6917d6bd0f.mp3*~data=user_id=0,application_id=42~hmac=ce0b75f204de0e2096ad78c6cd4d4f09465d2d400a81443b1b2e90f4f8090a80",
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music124/v4/7d/9f/8b/7d9f8b28-7a2b-f48b-cab3-b43b8edc7a81/886443943636.jpg/600x600bb.jpg",
+      "itunesTrackId": "639014933",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/43/5d/42/435d42d5-edac-16e1-8f6f-20df7a60f1a2/mzaf_1322128770020909009.plus.aac.p.m4a",
       "aliases": [
-            "k-pop",
-            "kpop"
+            "upper echelon (feat. t.i. & 2 chainz)",
+            "upper echelon",
+            "upper echelon feat ti 2 chainz"
+      ]
+    }),
+    song({
+      "id": "travis-scott-zeze",
+      "title": "ZEZE (feat. Travis Scott & Offset)",
+      "artistId": "travis-scott",
+      "albumId": "dying-to-live",
+      "year": 2018,
+      "genreIds": [
+            "hip-hop",
+            "rap",
+            "trap"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music124/v4/f0/3a/ec/f03aec4c-03b2-bdb3-0893-00bd754747ae/075679857286.jpg/600x600bb.jpg",
+      "itunesTrackId": "1446040612",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/63/d8/9b/63d89b9e-ffe9-b7fe-5636-ddb84c3f34ea/mzaf_4843682374852365843.plus.aac.p.m4a",
+      "aliases": [
+            "zeze (feat. travis scott & offset)",
+            "zeze",
+            "zeze feat travis scott offset"
+      ]
+    }),
+    song({
+      "id": "travis-scott-goosebumps-1151481750",
+      "title": "goosebumps",
+      "artistId": "travis-scott",
+      "albumId": "birds-in-the-trap-sing-mcknight",
+      "year": 2016,
+      "genreIds": [
+            "hip-hop",
+            "rap",
+            "trap"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music114/v4/b8/e5/27/b8e527c8-aaf4-c7b7-5562-c479458ed7d9/886446092645.jpg/600x600bb.jpg",
+      "itunesTrackId": "1151481750",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/f0/60/39/f060399b-690f-2e55-7013-5530cd616d95/mzaf_6001308391779304655.plus.aac.p.m4a",
+      "aliases": [
+            "goosebumps"
+      ]
+    }),
+    song({
+      "id": "travis-scott-ghostface-killers",
+      "title": "Ghostface Killers (feat. Travis Scott)",
+      "artistId": "travis-scott",
+      "albumId": "without-warning",
+      "year": 2017,
+      "genreIds": [
+            "hip-hop",
+            "rap",
+            "trap"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/24/25/f6/2425f66c-acda-ef4f-5682-ad543e088507/886446838526.jpg/600x600bb.jpg",
+      "itunesTrackId": "1303426037",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/71/39/37/7139376c-2900-948a-1137-bfa05f850553/mzaf_5657186480440234411.plus.aac.p.m4a",
+      "aliases": [
+            "ghostface killers (feat. travis scott)",
+            "ghostface killers",
+            "ghostface killers feat travis scott"
+      ]
+    }),
+    song({
+      "id": "travis-scott-goosebumps-remix",
+      "title": "Goosebumps (Remix)",
+      "artistId": "travis-scott",
+      "albumId": "goosebumps-remix-single",
+      "year": 2021,
+      "genreIds": [
+            "hip-hop",
+            "rap",
+            "trap"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music114/v4/c2/db/f4/c2dbf458-593f-f672-2629-4559de329be9/886449020270.jpg/600x600bb.jpg",
+      "itunesTrackId": "1549042958",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/6f/e9/3b/6fe93b1f-612c-da89-0b34-1c91aa3f9c66/mzaf_2320455866501814661.plus.aac.p.m4a",
+      "aliases": [
+            "goosebumps (remix)",
+            "goosebumps remix"
+      ]
+    }),
+    song({
+      "id": "travis-scott-through-the-late-night",
+      "title": "through the late night",
+      "artistId": "travis-scott",
+      "albumId": "birds-in-the-trap-sing-mcknight",
+      "year": 2016,
+      "genreIds": [
+            "hip-hop",
+            "rap",
+            "trap"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music125/v4/50/f7/a3/50f7a39d-3bd5-28e9-0264-532f08b5b810/886446074726.jpg/600x600bb.jpg",
+      "itunesTrackId": "1150135832",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/26/92/72/2692729f-2da7-d1ca-e27f-cc044ac88768/mzaf_1193406110649512241.plus.aac.p.m4a",
+      "aliases": [
+            "through the late night"
       ]
     }),
     song({
@@ -3948,109 +5336,22 @@ export const seedCatalog = {
       "title": "BUTTERFLY EFFECT",
       "artistId": "travis-scott",
       "albumId": "astroworld",
-      "year": 2018,
+      "year": 2017,
       "genreIds": [
             "hip-hop",
             "rap",
             "trap"
       ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/0b08015216f975dc7fb5be3d5dcc4d88/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/f/6/8/0/f68ff5d4a51c1376a352c9a7c45c7327.mp3?hdnea=exp=1790665585~acl=/api/1/1/f/6/8/0/f68ff5d4a51c1376a352c9a7c45c7327.mp3*~data=user_id=0,application_id=42~hmac=0a1487d1c4a152b4108c96ff9fb4387e305fbf4693d0a954bac5dea1e1c33cee",
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music125/v4/30/66/90/306690d4-2a29-402e-e406-6b319ce7731a/886447227169.jpg/600x600bb.jpg",
+      "itunesTrackId": "1421243623",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/46/c7/32/46c7320a-5a79-5edd-a447-4be6246dfa76/mzaf_15930848296096645653.plus.aac.p.m4a",
       "aliases": [
             "butterfly effect"
       ]
     }),
     song({
-      "id": "travis-scott-trance",
-      "title": "Trance",
-      "artistId": "travis-scott",
-      "albumId": "heroes-villains",
-      "year": 2022,
-      "genreIds": [
-            "hip-hop",
-            "rap",
-            "trap"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/862ab860ff69c30deeb5979db6e46b62/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/5/b/1/0/5b18f175688832a0c334eb1093b7c41c.mp3?hdnea=exp=1790665585~acl=/api/1/1/5/b/1/0/5b18f175688832a0c334eb1093b7c41c.mp3*~data=user_id=0,application_id=42~hmac=4c406bf05119f474c37aff5242fb1be6df74567fba04247dd80ee79ec0b33f48",
-      "aliases": [
-            "trance"
-      ]
-    }),
-    song({
-      "id": "travis-scott-my-eyes",
-      "title": "MY EYES",
-      "artistId": "travis-scott",
-      "albumId": "utopia",
-      "year": 2023,
-      "genreIds": [
-            "hip-hop",
-            "rap",
-            "trap"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/6d7164fecb39ddee0cb15952e750d907/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/b/d/e/0/bde786926179901de4abb6cceb2f6176.mp3?hdnea=exp=1790665585~acl=/api/1/1/b/d/e/0/bde786926179901de4abb6cceb2f6176.mp3*~data=user_id=0,application_id=42~hmac=ee2508753926e6ca344a4b5213a341c02f13c9829634b7d2e5d64d7c701f3fcc",
-      "aliases": [
-            "my eyes"
-      ]
-    }),
-    song({
-      "id": "travis-scott-i-know",
-      "title": "I KNOW ?",
-      "artistId": "travis-scott",
-      "albumId": "utopia",
-      "year": 2023,
-      "genreIds": [
-            "hip-hop",
-            "rap",
-            "trap"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/6d7164fecb39ddee0cb15952e750d907/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/8/2/8/0/8285d8922596a959e9d7af17a3773157.mp3?hdnea=exp=1790665585~acl=/api/1/1/8/2/8/0/8285d8922596a959e9d7af17a3773157.mp3*~data=user_id=0,application_id=42~hmac=e7ff8588b8ac6203a058772c50267965dd55b7119311580486b56b1a65f7e3b0",
-      "aliases": [
-            "i know ?",
-            "i know"
-      ]
-    }),
-    song({
-      "id": "travis-scott-reflections-laughing",
-      "title": "Reflections Laughing",
-      "artistId": "travis-scott",
-      "albumId": "hurry-up-tomorrow",
-      "year": 2025,
-      "genreIds": [
-            "hip-hop",
-            "rap",
-            "trap"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/e4b16c1afe136140bba34368357e8f05/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/2/8/f/0/28f4349950d6e3c8116436b9c6e5884e.mp3?hdnea=exp=1790665585~acl=/api/1/1/2/8/f/0/28f4349950d6e3c8116436b9c6e5884e.mp3*~data=user_id=0,application_id=42~hmac=b5f3c63e4e380d15f637666deebb8507d2ce03f272e2e20644da371cc8d13ba4",
-      "aliases": [
-            "reflections laughing"
-      ]
-    }),
-    song({
-      "id": "travis-scott-90210",
-      "title": "90210 (feat. Kacy Hill)",
-      "artistId": "travis-scott",
-      "albumId": "rodeo",
-      "year": 2015,
-      "genreIds": [
-            "hip-hop",
-            "rap",
-            "trap"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/c6fe182fb0f3485428906c7b21873046/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/2/d/f/0/2dfa8879a28a07882735f27cf8305913.mp3?hdnea=exp=1790665585~acl=/api/1/1/2/d/f/0/2dfa8879a28a07882735f27cf8305913.mp3*~data=user_id=0,application_id=42~hmac=ad47dbdb7037cea148d5c13a80b7f4eb2fd06acf03a9a39d4e0afdfebb526f27",
-      "aliases": [
-            "90210 (feat. kacy hill)",
-            "90210",
-            "90210 feat kacy hill"
-      ]
-    }),
-    song({
-      "id": "travis-scott-astrothunder",
-      "title": "ASTROTHUNDER",
+      "id": "travis-scott-stargazing",
+      "title": "STARGAZING",
       "artistId": "travis-scott",
       "albumId": "astroworld",
       "year": 2018,
@@ -4059,85 +5360,86 @@ export const seedCatalog = {
             "rap",
             "trap"
       ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/0b08015216f975dc7fb5be3d5dcc4d88/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/7/4/6/0/746a808541be868dc65fd4d6c7f8dd0a.mp3?hdnea=exp=1790665585~acl=/api/1/1/7/4/6/0/746a808541be868dc65fd4d6c7f8dd0a.mp3*~data=user_id=0,application_id=42~hmac=8bb995e9c6fc803540984063d6db8b90d9dcff62c17ebc430f1a7e9bc29cd23f",
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music125/v4/30/66/90/306690d4-2a29-402e-e406-6b319ce7731a/886447227169.jpg/600x600bb.jpg",
+      "itunesTrackId": "1421242380",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/80/a3/6f/80a36f60-f026-2954-4620-725816528f39/mzaf_14366219948706406616.plus.aac.p.m4a",
       "aliases": [
-            "astrothunder"
+            "stargazing"
       ]
     }),
     song({
-      "id": "travis-scott-know-no-better",
-      "title": "Know No Better",
+      "id": "travis-scott-mamacita",
+      "title": "Mamacita (feat. Rich Homie Quan & Young Thug)",
       "artistId": "travis-scott",
-      "albumId": "know-no-better",
-      "year": 2017,
+      "albumId": "mamacita-feat-rich-homie-quan-young-thug-single",
+      "year": 2014,
       "genreIds": [
             "hip-hop",
             "rap",
             "trap"
       ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/7cfbdd4afc111238434ab41c05db48c7/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/d/7/0/0/d700f1e17f0ca3be05d52803a86bc3ca.mp3?hdnea=exp=1790665585~acl=/api/1/1/d/7/0/0/d700f1e17f0ca3be05d52803a86bc3ca.mp3*~data=user_id=0,application_id=42~hmac=468b83eb223a1a04e4e8448f0db601cf490a5395c6a337683d5c9a850f0ce5bd",
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music114/v4/c4/60/e7/c460e7dd-5613-9433-fc17-fe5c443451a0/886444946445.jpg/600x600bb.jpg",
+      "itunesTrackId": "940867798",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/2e/ba/ca/2ebacafb-2d1f-af64-9202-578fd26a6fe7/mzaf_8243344681939169235.plus.aac.p.m4a",
       "aliases": [
-            "know no better"
+            "mamacita (feat. rich homie quan & young thug)",
+            "mamacita",
+            "mamacita feat rich homie quan young thug"
       ]
     }),
     song({
-      "id": "travis-scott-what-to-do",
-      "title": "WHAT TO DO? (feat. Don Toliver)",
+      "id": "travis-scott-wonderful",
+      "title": "wonderful",
       "artistId": "travis-scott",
-      "albumId": "jackboys",
-      "year": 2019,
+      "albumId": "birds-in-the-trap-sing-mcknight",
+      "year": 2016,
       "genreIds": [
             "hip-hop",
             "rap",
             "trap"
       ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/d1ed81aebe34697130d8caf2459e0d72/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/7/9/4/0/794e383bfe02724e6fbae9b0454fe837.mp3?hdnea=exp=1790665585~acl=/api/1/1/7/9/4/0/794e383bfe02724e6fbae9b0454fe837.mp3*~data=user_id=0,application_id=42~hmac=58c1d4a58ec23a10b6ede6c092e78c89f1cbee408323d9ab4151c0640ad93aae",
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music125/v4/50/f7/a3/50f7a39d-3bd5-28e9-0264-532f08b5b810/886446074726.jpg/600x600bb.jpg",
+      "itunesTrackId": "1150135962",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/95/e3/06/95e30637-7a79-d9d6-13b5-024da275edda/mzaf_18395981835716359336.plus.aac.p.m4a",
       "aliases": [
-            "what to do? (feat. don toliver)",
-            "what to do?",
-            "what to do feat don toliver",
-            "what to do"
+            "wonderful"
       ]
     }),
     song({
-      "id": "travis-scott-father",
-      "title": "FATHER (feat. Travis Scott)",
+      "id": "travis-scott-the-scotts",
+      "title": "THE SCOTTS",
       "artistId": "travis-scott",
-      "albumId": "bully",
-      "year": 2026,
+      "albumId": "the-scotts-single",
+      "year": 2020,
       "genreIds": [
             "hip-hop",
             "rap",
             "trap"
       ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/e6c8292811aac14c1c4d25d768b863ee/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/0/0/9/0/00923ce99fdd214462f91a1d174dd1b5.mp3?hdnea=exp=1790665585~acl=/api/1/1/0/0/9/0/00923ce99fdd214462f91a1d174dd1b5.mp3*~data=user_id=0,application_id=42~hmac=9645092622e59c73fc381e7b29fe9cec48fc129307d4a448558df472cf07fa8f",
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/e0/a9/f6/e0a9f68b-c5fe-faa4-6ad2-0c12e22bc66c/886448429944.jpg/600x600bb.jpg",
+      "itunesTrackId": "1509730429",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/8d/a7/df/8da7dfae-a303-0053-2164-d90c5f189f78/mzaf_14003723044532999630.plus.aac.p.m4a",
       "aliases": [
-            "father (feat. travis scott)",
-            "father",
-            "father feat travis scott"
+            "the scotts"
       ]
     }),
     song({
-      "id": "travis-scott-out-west",
-      "title": "OUT WEST (feat. Young Thug)",
+      "id": "travis-scott-a-team",
+      "title": "A-Team",
       "artistId": "travis-scott",
-      "albumId": "jackboys",
-      "year": 2019,
+      "albumId": "a-team-single",
+      "year": 2015,
       "genreIds": [
             "hip-hop",
             "rap",
             "trap"
       ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/d1ed81aebe34697130d8caf2459e0d72/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/b/6/b/0/b6b6faad9c2bb8bdb96be083b2fbb34d.mp3?hdnea=exp=1790665585~acl=/api/1/1/b/6/b/0/b6b6faad9c2bb8bdb96be083b2fbb34d.mp3*~data=user_id=0,application_id=42~hmac=ffddb4b80d9ab1d8889f1cc5310d2b0502a6d8741ec3117006eed740c08e133e",
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music125/v4/c9/56/15/c956151b-076b-59c3-8cfc-026e216ca1b9/886445740608.jpg/600x600bb.jpg",
+      "itunesTrackId": "1082009352",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/18/61/25/186125fa-f490-2076-023f-d6f29a7989ea/mzaf_5572820753077424851.plus.aac.p.m4a",
       "aliases": [
-            "out west (feat. young thug)",
-            "out west",
-            "out west feat young thug"
+            "a-team",
+            "ateam"
       ]
     }),
     song({
@@ -4151,68 +5453,36 @@ export const seedCatalog = {
             "rap",
             "trap"
       ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/0b08015216f975dc7fb5be3d5dcc4d88/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/a/4/7/0/a4763c687c57d63e6ba3809a02ef6c9e.mp3?hdnea=exp=1790665585~acl=/api/1/1/a/4/7/0/a4763c687c57d63e6ba3809a02ef6c9e.mp3*~data=user_id=0,application_id=42~hmac=273aec07e6ec175f303d33cba9b359954dfaa897a3aed3325f926fddb82535b4",
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music125/v4/30/66/90/306690d4-2a29-402e-e406-6b319ce7731a/886447227169.jpg/600x600bb.jpg",
+      "itunesTrackId": "1421243212",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/9c/01/e4/9c01e4d1-08eb-2988-717b-89216a6491f9/mzaf_1401007185924005358.plus.aac.p.m4a",
       "aliases": [
             "yosemite"
       ]
     }),
     song({
-      "id": "travis-scott-the-scotts",
-      "title": "THE SCOTTS",
+      "id": "travis-scott-fair-trade",
+      "title": "Fair Trade (feat. Travis Scott)",
       "artistId": "travis-scott",
-      "albumId": "the-scotts",
-      "year": 2020,
+      "albumId": "certified-lover-boy",
+      "year": 2021,
       "genreIds": [
             "hip-hop",
             "rap",
             "trap"
       ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/c960f0b900832a1c8ece116ccc789a27/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/d/c/9/0/dc9f6c09236f26a58610e0479e6602c1.mp3?hdnea=exp=1790665585~acl=/api/1/1/d/c/9/0/dc9f6c09236f26a58610e0479e6602c1.mp3*~data=user_id=0,application_id=42~hmac=716fdc322b1433efa37e0eb662ffb7fe04cf9376a2e44da168d76c8d3284b0ca",
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/11/36/38/1136384a-eebc-697a-c005-d890e41c0854/21UM1IM07518.rgb.jpg/600x600bb.jpg",
+      "itunesTrackId": "1584281493",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/b7/73/99/b773993b-6558-845c-d07d-ca512d9ba2b9/mzaf_1260365158707282945.plus.aac.p.m4a",
       "aliases": [
-            "the scotts"
+            "fair trade (feat. travis scott)",
+            "fair trade",
+            "fair trade feat travis scott"
       ]
     }),
     song({
-      "id": "travis-scott-skeletons",
-      "title": "SKELETONS",
-      "artistId": "travis-scott",
-      "albumId": "astroworld",
-      "year": 2018,
-      "genreIds": [
-            "hip-hop",
-            "rap",
-            "trap"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/0b08015216f975dc7fb5be3d5dcc4d88/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/4/5/8/0/458ead6cc75d4fdf60a450cd2a7a6024.mp3?hdnea=exp=1790665585~acl=/api/1/1/4/5/8/0/458ead6cc75d4fdf60a450cd2a7a6024.mp3*~data=user_id=0,application_id=42~hmac=d4518fc028a3011cd684a901956744b38b644a61a5374bd1a6a6180567481d15",
-      "aliases": [
-            "skeletons"
-      ]
-    }),
-    song({
-      "id": "travis-scott-nightcrawler",
-      "title": "Nightcrawler (feat. Swae Lee & Chief Keef)",
-      "artistId": "travis-scott",
-      "albumId": "rodeo",
-      "year": 2015,
-      "genreIds": [
-            "hip-hop",
-            "rap",
-            "trap"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/c6fe182fb0f3485428906c7b21873046/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/6/4/6/0/646928cd4ff982643ae7343e36aa7788.mp3?hdnea=exp=1790665585~acl=/api/1/1/6/4/6/0/646928cd4ff982643ae7343e36aa7788.mp3*~data=user_id=0,application_id=42~hmac=f3bbef19de455c33e52479875b768ebc327e6576524436f154bdfc4b05f2a986",
-      "aliases": [
-            "nightcrawler (feat. swae lee & chief keef)",
-            "nightcrawler",
-            "nightcrawler feat swae lee chief keef"
-      ]
-    }),
-    song({
-      "id": "travis-scott-telekinesis",
-      "title": "TELEKINESIS (feat. SZA & Future)",
+      "id": "travis-scott-fen",
+      "title": "FE!N (feat. Playboi Carti)",
       "artistId": "travis-scott",
       "albumId": "utopia",
       "year": 2023,
@@ -4221,228 +5491,14 @@ export const seedCatalog = {
             "rap",
             "trap"
       ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/6d7164fecb39ddee0cb15952e750d907/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/5/f/9/0/5f964cf835087b1ecde591cd10fb6507.mp3?hdnea=exp=1790665585~acl=/api/1/1/5/f/9/0/5f964cf835087b1ecde591cd10fb6507.mp3*~data=user_id=0,application_id=42~hmac=8d81b7ed6e712f22ae492f8a0c4ac3b8ce3ee267c68dd21da7c7eb764548080f",
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music126/v4/09/7d/b0/097db06f-8403-3cf7-7510-139e570ca66b/196871341882.jpg/600x600bb.jpg",
+      "itunesTrackId": "1699712651",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/3b/a8/09/3ba809b6-0e6b-7913-4eab-4183c9ee3495/mzaf_4419831661503814046.plus.aac.p.m4a",
       "aliases": [
-            "telekinesis (feat. sza & future)",
-            "telekinesis",
-            "telekinesis feat sza future"
-      ]
-    }),
-    song({
-      "id": "travis-scott-til-further-notice",
-      "title": "TIL FURTHER NOTICE (feat. James Blake & 21 Savage)",
-      "artistId": "travis-scott",
-      "albumId": "utopia",
-      "year": 2023,
-      "genreIds": [
-            "hip-hop",
-            "rap",
-            "trap"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/6d7164fecb39ddee0cb15952e750d907/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/6/0/3/0/60372c75c29778272e5d150c8b737a93.mp3?hdnea=exp=1790665585~acl=/api/1/1/6/0/3/0/60372c75c29778272e5d150c8b737a93.mp3*~data=user_id=0,application_id=42~hmac=639ca43d610e75b78b91544f7de0b2658745e90715542a43b99e036303ca6ab4",
-      "aliases": [
-            "til further notice (feat. james blake & 21 savage)",
-            "til further notice",
-            "til further notice feat james blake 21 savage"
-      ]
-    }),
-    song({
-      "id": "travis-scott-kick-out",
-      "title": "KICK OUT",
-      "artistId": "travis-scott",
-      "albumId": "jackboys-2",
-      "year": 2025,
-      "genreIds": [
-            "hip-hop",
-            "rap",
-            "trap"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/2a622e01fb9b1c4717c63ae3caca9826/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/f/c/3/0/fc3a9cdaca69930413dfeec2a0511578.mp3?hdnea=exp=1790665585~acl=/api/1/1/f/c/3/0/fc3a9cdaca69930413dfeec2a0511578.mp3*~data=user_id=0,application_id=42~hmac=56d7110932773080cb36db8eaf515785eae784f0679f961e0b1cb06b54fc3172",
-      "aliases": [
-            "kick out"
-      ]
-    }),
-    song({
-      "id": "travis-scott-drugs-you-should-try-it",
-      "title": "Drugs You Should Try It",
-      "artistId": "travis-scott",
-      "albumId": "days-before-rodeo",
-      "year": 2024,
-      "genreIds": [
-            "hip-hop",
-            "rap",
-            "trap"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/b8be81921aa5990f1cd3b7499d4d6501/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/f/f/d/0/ffde1c559b719adcda540652b9db9093.mp3?hdnea=exp=1790665585~acl=/api/1/1/f/f/d/0/ffde1c559b719adcda540652b9db9093.mp3*~data=user_id=0,application_id=42~hmac=980dc63bd1ba3fbc915448e4a227c30068f5a9994e312ae604e3384e2d44589d",
-      "aliases": [
-            "drugs you should try it"
-      ]
-    }),
-    song({
-      "id": "travis-scott-champain-vacay",
-      "title": "CHAMPAIN & VACAY",
-      "artistId": "travis-scott",
-      "albumId": "jackboys-2",
-      "year": 2025,
-      "genreIds": [
-            "hip-hop",
-            "rap",
-            "trap"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/2a622e01fb9b1c4717c63ae3caca9826/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/6/1/f/0/61fb1ea6510153a07e6d0c76a8e8e8e5.mp3?hdnea=exp=1790665585~acl=/api/1/1/6/1/f/0/61fb1ea6510153a07e6d0c76a8e8e8e5.mp3*~data=user_id=0,application_id=42~hmac=530dd14515fe6010fb546fd84de5c104daab384e4361fb8d97969aebc58a4a58",
-      "aliases": [
-            "champain & vacay",
-            "champain vacay"
-      ]
-    }),
-    song({
-      "id": "travis-scott-4x4",
-      "title": "4X4",
-      "artistId": "travis-scott",
-      "albumId": "4x4",
-      "year": 2025,
-      "genreIds": [
-            "hip-hop",
-            "rap",
-            "trap"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/0f37592365f63e65cd7fa4d3c7f10c7c/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/4/6/3/0/463294c5a3d0de1e146641762754534c.mp3?hdnea=exp=1790665585~acl=/api/1/1/4/6/3/0/463294c5a3d0de1e146641762754534c.mp3*~data=user_id=0,application_id=42~hmac=fefd70a35fcb82a0afa5706f42450c7d206bb0d568bc1846b7e5db2dc5e5d148",
-      "aliases": [
-            "4x4"
-      ]
-    }),
-    song({
-      "id": "travis-scott-parking-lot",
-      "title": "Parking Lot",
-      "artistId": "travis-scott",
-      "albumId": "parking-lot",
-      "year": 2024,
-      "genreIds": [
-            "hip-hop",
-            "rap",
-            "trap"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/31a3c258adbd198877adfc28c7a4aee6/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/7/d/6/0/7d640fc4af822846e26a3e4c159006eb.mp3?hdnea=exp=1790665585~acl=/api/1/1/7/d/6/0/7d640fc4af822846e26a3e4c159006eb.mp3*~data=user_id=0,application_id=42~hmac=9547669f7cb17bcf8d981e2e79d8bbce659e576602fbcf76a838991c038ee078",
-      "aliases": [
-            "parking lot"
-      ]
-    }),
-    song({
-      "id": "travis-scott-tkn",
-      "title": "TKN",
-      "artistId": "travis-scott",
-      "albumId": "tkn",
-      "year": 2020,
-      "genreIds": [
-            "hip-hop",
-            "rap",
-            "trap"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/1f5bb099f460c29fa4c3991431116e17/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/b/a/7/0/ba7afa4cf3908e4d84f71c61125879fc.mp3?hdnea=exp=1790665585~acl=/api/1/1/b/a/7/0/ba7afa4cf3908e4d84f71c61125879fc.mp3*~data=user_id=0,application_id=42~hmac=45d5417c59091b6f4428745040641fe417d79f13787b4c71bffede9a597bd65a",
-      "aliases": [
-            "tkn"
-      ]
-    }),
-    song({
-      "id": "travis-scott-5-tint",
-      "title": "5% TINT",
-      "artistId": "travis-scott",
-      "albumId": "astroworld",
-      "year": 2018,
-      "genreIds": [
-            "hip-hop",
-            "rap",
-            "trap"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/0b08015216f975dc7fb5be3d5dcc4d88/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/5/f/b/0/5fb959a56d6982f611ac6d880595fd87.mp3?hdnea=exp=1790665585~acl=/api/1/1/5/f/b/0/5fb959a56d6982f611ac6d880595fd87.mp3*~data=user_id=0,application_id=42~hmac=62fab318f2fd97638250733686a5820a969e1fd7207734206f626ecc87c74a7c",
-      "aliases": [
-            "5% tint",
-            "5 tint"
-      ]
-    }),
-    song({
-      "id": "travis-scott-when-im-home",
-      "title": "When I’m Home",
-      "artistId": "travis-scott",
-      "albumId": "the-odyssey-original-motion-picture-soundtrack",
-      "year": 2026,
-      "genreIds": [
-            "hip-hop",
-            "rap",
-            "trap"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/dd000448a0e2f7f44c0e3150fcc42da9/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/c/4/a/0/c4a207e1ac003c89c910b5239ebb1a84.mp3?hdnea=exp=1790665585~acl=/api/1/1/c/4/a/0/c4a207e1ac003c89c910b5239ebb1a84.mp3*~data=user_id=0,application_id=42~hmac=48cd7db4304a277ed8b3af3402431bb471bf7a3b91160a3f4ab1e74d9a168ff5",
-      "aliases": [
-            "when i’m home",
-            "when im home"
-      ]
-    }),
-    song({
-      "id": "travis-scott-meltdown",
-      "title": "MELTDOWN (feat. Drake)",
-      "artistId": "travis-scott",
-      "albumId": "utopia",
-      "year": 2023,
-      "genreIds": [
-            "hip-hop",
-            "rap",
-            "trap"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/6d7164fecb39ddee0cb15952e750d907/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/2/f/d/0/2fd32f2fe468eb671e631c957c7eb44e.mp3?hdnea=exp=1790665585~acl=/api/1/1/2/f/d/0/2fd32f2fe468eb671e631c957c7eb44e.mp3*~data=user_id=0,application_id=42~hmac=6018fe983c150b6d136fb0799e221fc4e0ac27c0ba698427f28f5f7aa2b3af14",
-      "aliases": [
-            "meltdown (feat. drake)",
-            "meltdown",
-            "meltdown feat drake"
-      ]
-    }),
-    song({
-      "id": "travis-scott-topia-twins",
-      "title": "TOPIA TWINS (feat. Rob49 & 21 Savage)",
-      "artistId": "travis-scott",
-      "albumId": "utopia",
-      "year": 2023,
-      "genreIds": [
-            "hip-hop",
-            "rap",
-            "trap"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/6d7164fecb39ddee0cb15952e750d907/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/6/a/b/0/6ab3bc286c857066b8f3e449cdb92f51.mp3?hdnea=exp=1790665585~acl=/api/1/1/6/a/b/0/6ab3bc286c857066b8f3e449cdb92f51.mp3*~data=user_id=0,application_id=42~hmac=a76cb077a4f8154350a3dec26fdd7e5290ff148dc4ad59dc0b4665f2cc3df7f8",
-      "aliases": [
-            "topia twins (feat. rob49 & 21 savage)",
-            "topia twins",
-            "topia twins feat rob49 21 savage"
-      ]
-    }),
-    song({
-      "id": "travis-scott-maria-im-drunk",
-      "title": "Maria I'm Drunk (feat. Justin Bieber & Young Thug)",
-      "artistId": "travis-scott",
-      "albumId": "rodeo",
-      "year": 2015,
-      "genreIds": [
-            "hip-hop",
-            "rap",
-            "trap"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/c6fe182fb0f3485428906c7b21873046/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/6/a/7/0/6a7517b029ef44af9cca9b8ff20ce4d5.mp3?hdnea=exp=1790665585~acl=/api/1/1/6/a/7/0/6a7517b029ef44af9cca9b8ff20ce4d5.mp3*~data=user_id=0,application_id=42~hmac=1f5ef0e8338969d9a043897d180a8ddabb25f388e5421eaad4deb10e8045dd7b",
-      "aliases": [
-            "maria i'm drunk (feat. justin bieber & young thug)",
-            "maria i'm drunk",
-            "maria im drunk feat justin bieber young thug",
-            "maria im drunk"
+            "fe!n (feat. playboi carti)",
+            "fe!n",
+            "fen feat playboi carti",
+            "fen"
       ]
     }),
     song({
@@ -4456,63 +5512,90 @@ export const seedCatalog = {
             "rap",
             "trap"
       ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/1d809f545fb9ecea849cf45fc8bcc681/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/e/9/4/0/e94fefca3fb327a5610e9378da03b6b4.mp3?hdnea=exp=1790665585~acl=/api/1/1/e/9/4/0/e94fefca3fb327a5610e9378da03b6b4.mp3*~data=user_id=0,application_id=42~hmac=cf8876bae78c47e2de5355cf2fa926207ce14d178a41f86b234c8004136438e1",
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music123/v4/ba/e2/2a/bae22a5e-c878-da64-0ecc-4a3584a1a139/190295411411.jpg/600x600bb.jpg",
+      "itunesTrackId": "1464549858",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/98/13/39/98133957-193e-730c-e66f-8c63d5c7d94f/mzaf_5099798108341416366.plus.aac.p.m4a",
       "aliases": [
             "antisocial"
       ]
     }),
     song({
-      "id": "travis-scott-dumbo",
-      "title": "DUMBO",
+      "id": "travis-scott-wake-up",
+      "title": "WAKE UP",
       "artistId": "travis-scott",
-      "albumId": "jackboys-2",
-      "year": 2025,
+      "albumId": "astroworld",
+      "year": 2018,
       "genreIds": [
             "hip-hop",
             "rap",
             "trap"
       ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/2a622e01fb9b1c4717c63ae3caca9826/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/2/1/3/0/213598bb030d5c24a27a177aa5aca964.mp3?hdnea=exp=1790665585~acl=/api/1/1/2/1/3/0/213598bb030d5c24a27a177aa5aca964.mp3*~data=user_id=0,application_id=42~hmac=3226d51ef64a09035755c2851f25a4f4b490576fccfe433acc4b60f665482506",
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music125/v4/30/66/90/306690d4-2a29-402e-e406-6b319ce7731a/886447227169.jpg/600x600bb.jpg",
+      "itunesTrackId": "1421243049",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/6d/11/68/6d1168f2-6f3a-8bb0-5b62-2eed24610231/mzaf_13463306424050220955.plus.aac.p.m4a",
       "aliases": [
-            "dumbo"
+            "wake up"
       ]
     }),
     song({
-      "id": "travis-scott-pick-up-the-phone",
-      "title": "pick up the phone (feat. Quavo)",
+      "id": "travis-scott-out-west",
+      "title": "OUT WEST (feat. Young Thug)",
       "artistId": "travis-scott",
-      "albumId": "pick-up-the-phone-feat-quavo",
-      "year": 2016,
+      "albumId": "jackboys",
+      "year": 2019,
       "genreIds": [
             "hip-hop",
             "rap",
             "trap"
       ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/bdc55cf166f1be51964f8c0cf58643ac/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/1/4/9/0/14924dcfe511d190d808f6abe52a2bc1.mp3?hdnea=exp=1790665585~acl=/api/1/1/1/4/9/0/14924dcfe511d190d808f6abe52a2bc1.mp3*~data=user_id=0,application_id=42~hmac=dd0b7ec9f55a2c49c5cd02e7d0881a3a80d8426be61761db1e5978f4b705d266",
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music125/v4/d8/59/d5/d859d57b-d3a3-04bf-5011-f4e30a8e84a5/886448209393.jpg/600x600bb.jpg",
+      "itunesTrackId": "1492786009",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/43/88/ce/4388ce81-2af0-646c-8569-c4cd3f1d862a/mzaf_1352863570425118426.plus.aac.p.m4a",
       "aliases": [
-            "pick up the phone (feat. quavo)",
-            "pick up the phone",
-            "pick up the phone feat quavo"
+            "out west (feat. young thug)",
+            "out west",
+            "out west feat young thug"
       ]
     }),
     song({
-      "id": "travis-scott-thank-god",
-      "title": "THANK GOD",
+      "id": "travis-scott-dont-play",
+      "title": "Don't Play (feat. The 1975 & Big Sean)",
       "artistId": "travis-scott",
-      "albumId": "utopia",
-      "year": 2023,
+      "albumId": "dont-play-feat-the-1975-big-sean-single",
+      "year": 2014,
       "genreIds": [
             "hip-hop",
             "rap",
             "trap"
       ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/6d7164fecb39ddee0cb15952e750d907/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/1/9/7/0/19770718ae7c9b49c9d70b0e372d05c0.mp3?hdnea=exp=1790665585~acl=/api/1/1/1/9/7/0/19770718ae7c9b49c9d70b0e372d05c0.mp3*~data=user_id=0,application_id=42~hmac=09ef365732cf838ef88ad7f42327a85a0aea1959668d08f61ef4b807cbf69549",
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music124/v4/e1/7c/72/e17c7229-e541-beff-854f-2db021565820/886444742108.jpg/600x600bb.jpg",
+      "itunesTrackId": "898064669",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/0b/d6/16/0bd61609-e8b7-29ff-8874-0fbb5345d4e9/mzaf_14574109152047431603.plus.aac.p.m4a",
       "aliases": [
-            "thank god"
+            "don't play (feat. the 1975 & big sean)",
+            "don't play",
+            "dont play feat the 1975 big sean",
+            "dont play"
+      ]
+    }),
+    song({
+      "id": "travis-scott-watch",
+      "title": "Watch (feat. Lil Uzi Vert & Kanye West)",
+      "artistId": "travis-scott",
+      "albumId": "watch-feat-lil-uzi-vert-kanye-west-single",
+      "year": 2018,
+      "genreIds": [
+            "hip-hop",
+            "rap",
+            "trap"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music124/v4/9e/7b/56/9e7b560d-59ce-dda7-5b8a-99130d4816a6/886447093788.jpg/600x600bb.jpg",
+      "itunesTrackId": "1378632301",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/1c/ee/63/1cee6363-b53c-430a-cc64-7766aa0c4649/mzaf_9140914459217327185.plus.aac.p.m4a",
+      "aliases": [
+            "watch (feat. lil uzi vert & kanye west)",
+            "watch",
+            "watch feat lil uzi vert kanye west"
       ]
     }),
     song({
@@ -4526,138 +5609,93 @@ export const seedCatalog = {
             "rap",
             "trap"
       ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/c6fe182fb0f3485428906c7b21873046/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/a/4/e/0/a4ef2ec4cb30d7696e214322fe413e39.mp3?hdnea=exp=1790665585~acl=/api/1/1/a/4/e/0/a4ef2ec4cb30d7696e214322fe413e39.mp3*~data=user_id=0,application_id=42~hmac=d23b7239e1a8c31fbb690240051f53d4a8abad27be67ba18649ae8d6c47c3635",
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/71/87/78/7187786f-70af-fd36-fc7f-a4ba61b65d98/886445454987.jpg/600x600bb.jpg",
+      "itunesTrackId": "1456177234",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/80/3f/1a/803f1a88-71ad-f263-03e1-0fe3a6b90438/mzaf_14430645632362065684.plus.aac.p.m4a",
       "aliases": [
             "antidote"
       ]
     }),
     song({
-      "id": "travis-scott-stop-trying-to-be-god",
-      "title": "STOP TRYING TO BE GOD",
+      "id": "travis-scott-sicko-mode-skrillex-remix",
+      "title": "SICKO MODE (Skrillex Remix)",
       "artistId": "travis-scott",
-      "albumId": "astroworld",
+      "albumId": "sicko-mode-skrillex-remix-single",
       "year": 2018,
       "genreIds": [
             "hip-hop",
             "rap",
             "trap"
       ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/0b08015216f975dc7fb5be3d5dcc4d88/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/5/6/6/0/5666732b308de0d6d054083c35e4fb68.mp3?hdnea=exp=1790665585~acl=/api/1/1/5/6/6/0/5666732b308de0d6d054083c35e4fb68.mp3*~data=user_id=0,application_id=42~hmac=c0d60021371c3fcad9fc207c14a6f639f23d5595d05be3df476757649735b166",
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music124/v4/54/49/06/54490655-32ac-c6bf-ce71-22b26b0ca02c/886447435809.jpg/600x600bb.jpg",
+      "itunesTrackId": "1444811013",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/c2/52/6b/c2526bca-8f8b-e100-c96a-2314f13f86ba/mzaf_12134984595119974195.plus.aac.p.m4a",
       "aliases": [
-            "stop trying to be god"
+            "sicko mode (skrillex remix)",
+            "sicko mode skrillex remix"
       ]
     }),
     song({
-      "id": "travis-scott-down-in-atlanta",
-      "title": "Down In Atlanta",
+      "id": "travis-scott-love-galore-1239977713",
+      "title": "Love Galore (feat. Travis Scott)",
       "artistId": "travis-scott",
-      "albumId": "down-in-atlanta",
-      "year": 2022,
+      "albumId": "ctrl",
+      "year": 2017,
       "genreIds": [
             "hip-hop",
             "rap",
             "trap"
       ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/e7701e80a53d80b6d0f577b7dc2d0b91/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/4/b/8/0/4b8026a4f905fb98f86d0a9173afde8f.mp3?hdnea=exp=1790665585~acl=/api/1/1/4/b/8/0/4b8026a4f905fb98f86d0a9173afde8f.mp3*~data=user_id=0,application_id=42~hmac=ec8850bd00401ff78bfa9debb0c558ddd6d25ceaffcd46776a8cdc6e7abd2638",
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music124/v4/a2/bc/ad/a2bcad46-b389-4be1-8bac-5a0959b0b8e4/886446548449.jpg/600x600bb.jpg",
+      "itunesTrackId": "1239977713",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/80/93/0e/80930e81-73a0-f495-5ce7-46013e73ab6b/mzaf_10823851631334035424.plus.aac.p.m4a",
       "aliases": [
-            "down in atlanta"
+            "love galore (feat. travis scott)",
+            "love galore",
+            "love galore feat travis scott"
       ]
     }),
     song({
-      "id": "travis-scott-raindrops-insane",
-      "title": "Raindrops (Insane)",
+      "id": "travis-scott-power-is-power",
+      "title": "Power is Power",
       "artistId": "travis-scott",
-      "albumId": "heroes-villains",
-      "year": 2022,
+      "albumId": "for-the-throne-music-inspired-by-the-hbo-series-game-of-thrones",
+      "year": 2019,
       "genreIds": [
             "hip-hop",
             "rap",
             "trap"
       ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/862ab860ff69c30deeb5979db6e46b62/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/a/f/4/0/af488531f1dee655b3b658be43e1b81c.mp3?hdnea=exp=1790665585~acl=/api/1/1/a/f/4/0/af488531f1dee655b3b658be43e1b81c.mp3*~data=user_id=0,application_id=42~hmac=acce10398dbeef8376f8973f4d8582093dddb4a935017e8a1f210789a52b8f63",
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music114/v4/c2/28/5c/c2285ce6-2a18-bd39-6649-00255013b33a/886447653814.jpg/600x600bb.jpg",
+      "itunesTrackId": "1458925223",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/59/bc/e6/59bce6c8-fdcd-6d5a-d9d9-2228dd4f3581/mzaf_16850998571656134206.plus.aac.p.m4a",
       "aliases": [
-            "raindrops (insane)",
-            "raindrops insane"
+            "power is power"
       ]
     }),
     song({
-      "id": "travis-scott-escape-plan",
-      "title": "ESCAPE PLAN",
+      "id": "travis-scott-sky-walker-1305422743",
+      "title": "Sky Walker (feat. Travis Scott)",
       "artistId": "travis-scott",
-      "albumId": "escape-plan-mafia",
-      "year": 2021,
+      "albumId": "war-leisure",
+      "year": 2017,
       "genreIds": [
             "hip-hop",
             "rap",
             "trap"
       ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/ef2a1dd715dc245a38210ff8c427897d/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/1/8/7/0/187250d7c67b26a5578d999144f22be2.mp3?hdnea=exp=1790665585~acl=/api/1/1/1/8/7/0/187250d7c67b26a5578d999144f22be2.mp3*~data=user_id=0,application_id=42~hmac=5ab877d94c5fe37446632ead1df7ee6e5bb3f9de7b6288e8f8e0d41e6795edb3",
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music128/v4/26/56/cd/2656cd50-73a3-998f-2204-9342b805f517/886446846255.jpg/600x600bb.jpg",
+      "itunesTrackId": "1305422743",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/5f/8b/81/5f8b811d-f557-083c-6473-f2eb852f7f3c/mzaf_12176439196876779053.plus.aac.p.m4a",
       "aliases": [
-            "escape plan"
+            "sky walker (feat. travis scott)",
+            "sky walker",
+            "sky walker feat travis scott"
       ]
     }),
     song({
-      "id": "travis-scott-rip-screw",
-      "title": "R.I.P. SCREW",
-      "artistId": "travis-scott",
-      "albumId": "astroworld",
-      "year": 2018,
-      "genreIds": [
-            "hip-hop",
-            "rap",
-            "trap"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/0b08015216f975dc7fb5be3d5dcc4d88/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/2/2/4/0/22457ad7648079a95b2207d8e799b3de.mp3?hdnea=exp=1790665585~acl=/api/1/1/2/2/4/0/22457ad7648079a95b2207d8e799b3de.mp3*~data=user_id=0,application_id=42~hmac=fea6b8f48b7ea181486d7e35c14aa0e0b5d152c6392c40e703fd18a768355c03",
-      "aliases": [
-            "r.i.p. screw",
-            "rip screw"
-      ]
-    }),
-    song({
-      "id": "travis-scott-3500",
-      "title": "3500 (feat. Future & 2 Chainz)",
-      "artistId": "travis-scott",
-      "albumId": "rodeo",
-      "year": 2015,
-      "genreIds": [
-            "hip-hop",
-            "rap",
-            "trap"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/c6fe182fb0f3485428906c7b21873046/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/0/c/3/0/0c322705bcd5359ad923f0c635b0793b.mp3?hdnea=exp=1790665585~acl=/api/1/1/0/c/3/0/0c322705bcd5359ad923f0c635b0793b.mp3*~data=user_id=0,application_id=42~hmac=b41eb8c5bde1a712389d97ce6546dd4d8d519624bb2c0b07a87babf4acb37cd1",
-      "aliases": [
-            "3500 (feat. future & 2 chainz)",
-            "3500",
-            "3500 feat future 2 chainz"
-      ]
-    }),
-    song({
-      "id": "travis-scott-mafia",
-      "title": "MAFIA",
-      "artistId": "travis-scott",
-      "albumId": "escape-plan-mafia",
-      "year": 2021,
-      "genreIds": [
-            "hip-hop",
-            "rap",
-            "trap"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/ef2a1dd715dc245a38210ff8c427897d/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/c/8/b/0/c8bf5afeb4138006c3b1aef08160d0f7.mp3?hdnea=exp=1790665585~acl=/api/1/1/c/8/b/0/c8bf5afeb4138006c3b1aef08160d0f7.mp3*~data=user_id=0,application_id=42~hmac=31c48718375ab07cb4c100da09fd5d41685f5db7bb9b6dd461933f7e0a67ad40",
-      "aliases": [
-            "mafia"
-      ]
-    }),
-    song({
-      "id": "travis-scott-circus-maximus",
-      "title": "CIRCUS MAXIMUS (feat. The Weeknd & Swae Lee)",
+      "id": "travis-scott-meltdown",
+      "title": "MELTDOWN (feat. Drake)",
       "artistId": "travis-scott",
       "albumId": "utopia",
       "year": 2023,
@@ -4666,12 +5704,150 @@ export const seedCatalog = {
             "rap",
             "trap"
       ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/6d7164fecb39ddee0cb15952e750d907/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/0/1/1/0/01123a25dcba9399ca178b29347272d7.mp3?hdnea=exp=1790665585~acl=/api/1/1/0/1/1/0/01123a25dcba9399ca178b29347272d7.mp3*~data=user_id=0,application_id=42~hmac=1179c2d47103afa0157a6f66435a6322fe52faf99a174df1d916403f3960c4e1",
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music126/v4/09/7d/b0/097db06f-8403-3cf7-7510-139e570ca66b/196871341882.jpg/600x600bb.jpg",
+      "itunesTrackId": "1699712649",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/40/71/e4/4071e419-dd6b-d201-b423-6fe1b7524bc7/mzaf_8905420541275094034.plus.aac.p.m4a",
       "aliases": [
-            "circus maximus (feat. the weeknd & swae lee)",
-            "circus maximus",
-            "circus maximus feat the weeknd swae lee"
+            "meltdown (feat. drake)",
+            "meltdown",
+            "meltdown feat drake"
+      ]
+    }),
+    song({
+      "id": "travis-scott-deserve",
+      "title": "Deserve (feat. Travis Scott)",
+      "artistId": "travis-scott",
+      "albumId": "deserve-feat-travis-scott-single",
+      "year": 2017,
+      "genreIds": [
+            "hip-hop",
+            "rap",
+            "trap"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/55/27/61/55276186-6965-409b-3eae-294372239ebc/888915461884_cover.jpg/600x600bb.jpg",
+      "itunesTrackId": "1291589117",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview125/v4/f6/22/b4/f622b482-7c04-5114-d42e-454d2f542c27/mzaf_12338200878031857798.plus.aac.p.m4a",
+      "aliases": [
+            "deserve (feat. travis scott)",
+            "deserve",
+            "deserve feat travis scott"
+      ]
+    }),
+    song({
+      "id": "travis-scott-franchise",
+      "title": "FRANCHISE (feat. Young Thug & M.I.A.)",
+      "artistId": "travis-scott",
+      "albumId": "franchise-feat-young-thug-mia-single",
+      "year": 2020,
+      "genreIds": [
+            "hip-hop",
+            "rap",
+            "trap"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music124/v4/2c/4b/29/2c4b29b8-9b6b-e5d6-0905-e05a2b9feaed/886448660323.jpg/600x600bb.jpg",
+      "itunesTrackId": "1532784716",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/7a/4b/10/7a4b1005-07c3-7c81-605c-f4d80be48e83/mzaf_15365764488566782805.plus.aac.p.m4a",
+      "aliases": [
+            "franchise (feat. young thug & m.i.a.)",
+            "franchise",
+            "franchise feat young thug mia"
+      ]
+    }),
+    song({
+      "id": "travis-scott-pick-up-the-phone-1151481753",
+      "title": "pick up the phone",
+      "artistId": "travis-scott",
+      "albumId": "birds-in-the-trap-sing-mcknight",
+      "year": 2016,
+      "genreIds": [
+            "hip-hop",
+            "rap",
+            "trap"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music114/v4/b8/e5/27/b8e527c8-aaf4-c7b7-5562-c479458ed7d9/886446092645.jpg/600x600bb.jpg",
+      "itunesTrackId": "1151481753",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/57/82/9e/57829eeb-602b-6572-0212-04f96694b706/mzaf_838415077415712784.plus.aac.p.m4a",
+      "aliases": [
+            "pick up the phone"
+      ]
+    }),
+    song({
+      "id": "travis-scott-let-it-fly",
+      "title": "Let It Fly (feat. Travis Scott)",
+      "artistId": "travis-scott",
+      "albumId": "tha-carter-v",
+      "year": 2018,
+      "genreIds": [
+            "hip-hop",
+            "rap",
+            "trap"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/21/69/f7/2169f7b5-ae60-4bb8-2329-49c8f1f5f24b/18UMGIM63096.rgb.jpg/600x600bb.jpg",
+      "itunesTrackId": "1437592172",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/fc/5f/db/fc5fdbed-d94a-86dd-b5e8-f1af24f4b197/mzaf_777187321572974888.plus.aac.p.m4a",
+      "aliases": [
+            "let it fly (feat. travis scott)",
+            "let it fly",
+            "let it fly feat travis scott"
+      ]
+    }),
+    song({
+      "id": "travis-scott-dont-quit",
+      "title": "Don't Quit (feat. Travis Scott & Jeremih)",
+      "artistId": "travis-scott",
+      "albumId": "grateful",
+      "year": 2017,
+      "genreIds": [
+            "hip-hop",
+            "rap",
+            "trap"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/03/5d/32/035d32e9-6fdb-8f08-daf0-c2f208128d06/886446550695.jpg/600x600bb.jpg",
+      "itunesTrackId": "1244230133",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/4e/2c/a8/4e2ca806-43b2-f1f4-26ec-80d89e5f5637/mzaf_9098433143212689113.plus.aac.p.m4a",
+      "aliases": [
+            "don't quit (feat. travis scott & jeremih)",
+            "don't quit",
+            "dont quit feat travis scott jeremih",
+            "dont quit"
+      ]
+    }),
+    song({
+      "id": "travis-scott-coordinate",
+      "title": "coordinate",
+      "artistId": "travis-scott",
+      "albumId": "birds-in-the-trap-sing-mcknight",
+      "year": 2016,
+      "genreIds": [
+            "hip-hop",
+            "rap",
+            "trap"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music125/v4/50/f7/a3/50f7a39d-3bd5-28e9-0264-532f08b5b810/886446074726.jpg/600x600bb.jpg",
+      "itunesTrackId": "1150135829",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/1c/4d/d3/1c4dd389-e9cb-cda2-ff7e-698a8c1762de/mzaf_4710239810830966011.plus.aac.p.m4a",
+      "aliases": [
+            "coordinate"
+      ]
+    }),
+    song({
+      "id": "travis-scott-the-london",
+      "title": "The London (feat. J. Cole & Travis Scott)",
+      "artistId": "travis-scott",
+      "albumId": "so-much-fun",
+      "year": 2019,
+      "genreIds": [
+            "hip-hop",
+            "rap",
+            "trap"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/1f/f3/57/1ff35761-4124-912a-baef-02b236c977df/075679838612.jpg/600x600bb.jpg",
+      "itunesTrackId": "1476637109",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/14/b0/bf/14b0bf82-d689-bb02-31f1-707202339a97/mzaf_7285445040374277865.plus.aac.p.m4a",
+      "aliases": [
+            "the london (feat. j. cole & travis scott)",
+            "the london",
+            "the london feat j cole travis scott"
       ]
     }),
     song({
@@ -4685,290 +5861,229 @@ export const seedCatalog = {
             "rap",
             "trap"
       ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/0b08015216f975dc7fb5be3d5dcc4d88/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/2/4/c/0/24cb61b1af1a8991f7856c90db1ccee8.mp3?hdnea=exp=1790665585~acl=/api/1/1/2/4/c/0/24cb61b1af1a8991f7856c90db1ccee8.mp3*~data=user_id=0,application_id=42~hmac=35e5d8133e0740d246c571005217e49ea11769103b4c970e24c0b59f17c332c9",
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music125/v4/30/66/90/306690d4-2a29-402e-e406-6b319ce7731a/886447227169.jpg/600x600bb.jpg",
+      "itunesTrackId": "1421243220",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/00/f9/1b/00f91b85-136d-8edb-f933-4f9c59b85ef3/mzaf_12222878040756828717.plus.aac.p.m4a",
       "aliases": [
             "can't say",
             "cant say"
       ]
     }),
     song({
-      "id": "travis-scott-niagara-falls-foot-or-2",
-      "title": "Niagara Falls (Foot or 2)",
+      "id": "travis-scott-last-time",
+      "title": "Last Time (feat. Travis Scott)",
       "artistId": "travis-scott",
-      "albumId": "heroes-villains",
-      "year": 2022,
+      "albumId": "the-return-of-east-atlanta-santa",
+      "year": 2016,
       "genreIds": [
             "hip-hop",
             "rap",
             "trap"
       ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/862ab860ff69c30deeb5979db6e46b62/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/1/8/f/0/18fa0fe1871a5316407f867fb506d240.mp3?hdnea=exp=1790665585~acl=/api/1/1/1/8/f/0/18fa0fe1871a5316407f867fb506d240.mp3*~data=user_id=0,application_id=42~hmac=398bdc8c9639e2acb997733aab964b2ef273b09dbf2a493631d66d7d72f2d829",
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music124/v4/12/ae/93/12ae936e-c34f-a03a-0167-ad179482103e/075679903068.jpg/600x600bb.jpg",
+      "itunesTrackId": "1186969047",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/05/5e/76/055e7637-1115-2781-4be9-16c18bdc1a9b/mzaf_2621194066944535063.plus.aac.p.m4a",
       "aliases": [
-            "niagara falls (foot or 2)",
-            "niagara falls foot or 2"
+            "last time (feat. travis scott)",
+            "last time",
+            "last time feat travis scott"
       ]
     }),
     song({
-      "id": "travis-scott-dubai-shit",
-      "title": "Dubai Shit",
+      "id": "travis-scott-goosebumps-remix-1550044643",
+      "title": "Goosebumps (Remix)",
       "artistId": "travis-scott",
-      "albumId": "huncho-jack-jack-huncho",
-      "year": 2017,
+      "albumId": "goosebumps-remix-single",
+      "year": 2021,
       "genreIds": [
             "hip-hop",
             "rap",
             "trap"
       ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/6f18c8d5bdd7b675856c86163bed7f10/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/4/8/1/0/4817a2bc22b7f8956970447db0e7cc8b.mp3?hdnea=exp=1790665585~acl=/api/1/1/4/8/1/0/4817a2bc22b7f8956970447db0e7cc8b.mp3*~data=user_id=0,application_id=42~hmac=3dd0ccf0eb8cd0411f246b48e429253fe435f2c0341ce45e6eff1c82bc04403c",
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music125/v4/58/4d/f8/584df880-b51d-e404-351d-2707de11360e/886449020263.jpg/600x600bb.jpg",
+      "itunesTrackId": "1550044643",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/69/d4/18/69d418ca-8790-5c6d-6481-9bb3e4ac53dd/mzaf_6238661952056577429.plus.aac.p.m4a",
       "aliases": [
-            "dubai shit"
+            "goosebumps (remix)",
+            "goosebumps remix"
       ]
     }),
     song({
-      "id": "drake-ahi",
-      "title": "Ahí",
-      "artistId": "drake",
-      "albumId": "no-me-arrepiento-de-sentir-tanto",
-      "year": 2026,
-      "genreIds": [
-            "hip-hop",
-            "rap",
-            "r-and-b"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/f794dd1931dac42fc13f938850b686c6/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/5/7/d/0/57d6af5c1f6d70380fbbfb733e5d02c8.mp3?hdnea=exp=1790665591~acl=/api/1/1/5/7/d/0/57d6af5c1f6d70380fbbfb733e5d02c8.mp3*~data=user_id=0,application_id=42~hmac=36c140b45023a3b07e74d8db7d60fc48d898ae77ded837b9ef328a5791640640",
-      "aliases": [
-            "ahí"
-      ]
-    }),
-    song({
-      "id": "drake-passionfruit",
-      "title": "Passionfruit",
-      "artistId": "drake",
-      "albumId": "more-life",
-      "year": 2017,
-      "genreIds": [
-            "hip-hop",
-            "rap",
-            "r-and-b"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/8f0187ad83cdd1f47f1c55420f9df227/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/e/b/d/0/ebd770a4b7ecbfbc98bc19a96e39f048.mp3?hdnea=exp=1790665591~acl=/api/1/1/e/b/d/0/ebd770a4b7ecbfbc98bc19a96e39f048.mp3*~data=user_id=0,application_id=42~hmac=0609539c18c4bdadbaf8d20ed528fb5a30fa24ef3567a4a2394aba48113f5bf0",
-      "aliases": [
-            "passionfruit"
-      ]
-    }),
-    song({
-      "id": "drake-one-dance",
-      "title": "One Dance",
-      "artistId": "drake",
-      "albumId": "views",
-      "year": 2016,
-      "genreIds": [
-            "hip-hop",
-            "rap",
-            "r-and-b"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/56bdb7a86a27fadb96332c0c8f1b8e81/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/7/a/b/0/7ab0602a95834e7862f7ef2ee5389d88.mp3?hdnea=exp=1790665591~acl=/api/1/1/7/a/b/0/7ab0602a95834e7862f7ef2ee5389d88.mp3*~data=user_id=0,application_id=42~hmac=7a79050a7eb760093c3e716e17d4f96a1c062f371f5226af94f4d8f99d812b73",
-      "aliases": [
-            "one dance"
-      ]
-    }),
-    song({
-      "id": "drake-hotline-bling",
-      "title": "Hotline Bling",
-      "artistId": "drake",
-      "albumId": "views",
-      "year": 2016,
-      "genreIds": [
-            "hip-hop",
-            "rap",
-            "r-and-b"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/56bdb7a86a27fadb96332c0c8f1b8e81/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/a/c/1/0/ac1d5a7a9a829c0332a6de32a0f8a90b.mp3?hdnea=exp=1790665591~acl=/api/1/1/a/c/1/0/ac1d5a7a9a829c0332a6de32a0f8a90b.mp3*~data=user_id=0,application_id=42~hmac=cdefacb698a3462295a3927ebfd31fbec843b9f3e33b1adfb1488839687581d8",
-      "aliases": [
-            "hotline bling"
-      ]
-    }),
-    song({
-      "id": "drake-gods-plan",
-      "title": "God's Plan",
-      "artistId": "drake",
-      "albumId": "scorpion",
+      "id": "travis-scott-no-bystanders",
+      "title": "NO BYSTANDERS",
+      "artistId": "travis-scott",
+      "albumId": "astroworld",
       "year": 2018,
       "genreIds": [
             "hip-hop",
             "rap",
-            "r-and-b"
+            "trap"
       ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/b69d3bcbd130ad4cc9259de543889e30/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/9/5/c/0/95c243df757f8ccd17b6692e1051e2e9.mp3?hdnea=exp=1790665591~acl=/api/1/1/9/5/c/0/95c243df757f8ccd17b6692e1051e2e9.mp3*~data=user_id=0,application_id=42~hmac=6794745f9385edd4a1176c1ee089d82a558f42752ec5cdf98d570c57f6b4489e",
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music125/v4/30/66/90/306690d4-2a29-402e-e406-6b319ce7731a/886447227169.jpg/600x600bb.jpg",
+      "itunesTrackId": "1421242807",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/0b/80/c2/0b80c283-f4ca-8c48-5233-c9c21f38b418/mzaf_2882719911110924207.plus.aac.p.m4a",
       "aliases": [
-            "god's plan",
-            "gods plan"
+            "no bystanders"
       ]
     }),
     song({
-      "id": "drake-hold-on-were-going-home-album-version",
-      "title": "Hold On, We're Going Home (Album Version)",
+      "id": "travis-scott-i-know",
+      "title": "I KNOW ?",
+      "artistId": "travis-scott",
+      "albumId": "utopia",
+      "year": 2023,
+      "genreIds": [
+            "hip-hop",
+            "rap",
+            "trap"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music126/v4/09/7d/b0/097db06f-8403-3cf7-7510-139e570ca66b/196871341882.jpg/600x600bb.jpg",
+      "itunesTrackId": "1699712653",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/9d/48/6a/9d486a08-b88c-7c9d-a0e3-c0e837969b41/mzaf_16726206942857415848.plus.aac.p.m4a",
+      "aliases": [
+            "i know ?",
+            "i know"
+      ]
+    }),
+    song({
+      "id": "drake-where-ya-at",
+      "title": "Where Ya At (feat. Drake)",
       "artistId": "drake",
-      "albumId": "nothing-was-the-same-deluxe",
+      "albumId": "ds2-deluxe",
+      "year": 2015,
+      "genreIds": [
+            "hip-hop",
+            "rap",
+            "r-and-b"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/0a/46/ab/0a46ab3a-2415-0659-2cc2-f3f173144bd5/886445328530.jpg/600x600bb.jpg",
+      "itunesTrackId": "1017055088",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/54/cc/1c/54cc1c31-b739-8ac6-b86f-5300ed782b3b/mzaf_7093323233087860336.plus.aac.p.m4a",
+      "aliases": [
+            "where ya at (feat. drake)",
+            "where ya at",
+            "where ya at feat drake"
+      ]
+    }),
+    song({
+      "id": "drake-for-free",
+      "title": "For Free (feat. Drake)",
+      "artistId": "drake",
+      "albumId": "major-key",
+      "year": 2016,
+      "genreIds": [
+            "hip-hop",
+            "rap",
+            "r-and-b"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music124/v4/02/f6/9e/02f69e64-9f7b-8c15-c0a4-4dec2860fb44/886445975833.jpg/600x600bb.jpg",
+      "itunesTrackId": "1127989697",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/51/78/5b/51785bea-918e-d0ce-ab07-17941950af05/mzaf_6533258021824305971.plus.aac.p.m4a",
+      "aliases": [
+            "for free (feat. drake)",
+            "for free",
+            "for free feat drake"
+      ]
+    }),
+    song({
+      "id": "drake-mine",
+      "title": "Mine (feat. Drake)",
+      "artistId": "drake",
+      "albumId": "beyonce",
       "year": 2013,
       "genreIds": [
             "hip-hop",
             "rap",
             "r-and-b"
       ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/64ec37a4cf512c7810c40ba0d318ff1e/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/5/a/6/0/5a668eb11bba76dbada03606b7b3de91.mp3?hdnea=exp=1790665591~acl=/api/1/1/5/a/6/0/5a668eb11bba76dbada03606b7b3de91.mp3*~data=user_id=0,application_id=42~hmac=9722bf2ae4f3a6d35f3fcc77a2e7a3bba8f7f6f828aad1d4ecae5b86ab11ee41",
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Features4/v4/dc/ca/29/dcca295f-851e-5faf-a3b4-030965fa80f2/dj.jyrlgxlq.jpg/600x600bb.jpg",
+      "itunesTrackId": "780330398",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview125/v4/fd/b8/a2/fdb8a2de-cd26-142f-e787-9424338a39b0/mzaf_12770306890315070234.plus.aac.p.m4a",
       "aliases": [
-            "hold on, we're going home (album version)",
-            "hold on, we're going home",
-            "hold on were going home album version"
+            "mine (feat. drake)",
+            "mine",
+            "mine feat drake"
       ]
     }),
     song({
-      "id": "drake-yebbas-heartbreak",
-      "title": "Yebba’s Heartbreak",
+      "id": "drake-round-of-applause",
+      "title": "Round of Applause (feat. Drake)",
       "artistId": "drake",
-      "albumId": "certified-lover-boy",
-      "year": 2021,
+      "albumId": "round-of-applause-feat-drake-single",
+      "year": 2011,
       "genreIds": [
             "hip-hop",
             "rap",
             "r-and-b"
       ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/ea8f80f2edb20885ac8aed8751716794/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/f/a/4/0/fa495d0e81bf7500a7260e1503a9a58e.mp3?hdnea=exp=1790665591~acl=/api/1/1/f/a/4/0/fa495d0e81bf7500a7260e1503a9a58e.mp3*~data=user_id=0,application_id=42~hmac=f08594e70df1735078cf5cdec627c605d82ba68f308d1a0cc5e3572da6a4e5e0",
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music/fc/6c/d0/mzi.wnmxvqxa.jpg/600x600bb.jpg",
+      "itunesTrackId": "472627210",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/aa/1e/93/aa1e9367-6bbc-a468-0442-40aac5f03e84/mzaf_8746266193712847439.plus.aac.p.m4a",
       "aliases": [
-            "yebba’s heartbreak",
-            "yebbas heartbreak"
+            "round of applause (feat. drake)",
+            "round of applause",
+            "round of applause feat drake"
       ]
     }),
     song({
-      "id": "drake-janice-stfu",
-      "title": "Janice STFU",
+      "id": "drake-rico",
+      "title": "R.I.C.O. (feat. Drake)",
       "artistId": "drake",
-      "albumId": "iceman",
-      "year": 2026,
+      "albumId": "dreams-worth-more-than-money",
+      "year": 2015,
       "genreIds": [
             "hip-hop",
             "rap",
             "r-and-b"
       ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/cccf5e9af10b6aae96f5cdd5a27c2aff/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/7/3/2/0/7324c7d1edf2e198c43ec4f5c80670fc.mp3?hdnea=exp=1790665591~acl=/api/1/1/7/3/2/0/7324c7d1edf2e198c43ec4f5c80670fc.mp3*~data=user_id=0,application_id=42~hmac=dbf0adf01afeaadbb4680fd7ca458d71d73a8bf5f38c12b966a390f173637340",
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/a6/16/25/a6162590-4434-40bf-6390-6e3df46c7bbe/075679923578.jpg/600x600bb.jpg",
+      "itunesTrackId": "1011549379",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/5b/ba/df/5bbadf22-a1f5-c126-a878-fd26ec834775/mzaf_15026470508059842556.plus.aac.p.m4a",
       "aliases": [
-            "janice stfu"
+            "r.i.c.o. (feat. drake)",
+            "r.i.c.o.",
+            "rico feat drake",
+            "rico"
       ]
     }),
     song({
-      "id": "drake-national-treasures",
-      "title": "National Treasures",
+      "id": "drake-both",
+      "title": "Both (feat. Drake)",
       "artistId": "drake",
-      "albumId": "iceman",
-      "year": 2026,
+      "albumId": "the-return-of-east-atlanta-santa",
+      "year": 2016,
       "genreIds": [
             "hip-hop",
             "rap",
             "r-and-b"
       ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/cccf5e9af10b6aae96f5cdd5a27c2aff/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/9/7/d/0/97d16a361784464e6e647b6afe1f61ec.mp3?hdnea=exp=1790665591~acl=/api/1/1/9/7/d/0/97d16a361784464e6e647b6afe1f61ec.mp3*~data=user_id=0,application_id=42~hmac=75bf2462f7541dd24cc19fdbfd1a823041407ca938ceea1de93275f727933f5d",
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music124/v4/12/ae/93/12ae936e-c34f-a03a-0167-ad179482103e/075679903068.jpg/600x600bb.jpg",
+      "itunesTrackId": "1186969034",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/af/c2/79/afc27965-bf22-d035-8a15-e036396fee09/mzaf_15341059502812916372.plus.aac.p.m4a",
       "aliases": [
-            "national treasures"
+            "both (feat. drake)",
+            "both",
+            "both feat drake"
       ]
     }),
     song({
-      "id": "drake-bs-on-the-table",
-      "title": "B’s On The Table",
+      "id": "drake-odio",
+      "title": "Odio (feat. Drake)",
       "artistId": "drake",
-      "albumId": "iceman",
-      "year": 2026,
+      "albumId": "formula-vol-2-deluxe-edition",
+      "year": 2014,
       "genreIds": [
             "hip-hop",
             "rap",
             "r-and-b"
       ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/cccf5e9af10b6aae96f5cdd5a27c2aff/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/d/6/5/0/d65bfaf21dd61c331e964a90982d51e6.mp3?hdnea=exp=1790665591~acl=/api/1/1/d/6/5/0/d65bfaf21dd61c331e964a90982d51e6.mp3*~data=user_id=0,application_id=42~hmac=b78040f7e2334b2ee6dd7551258cef2a80cb324118129191d44a22c80ed039d9",
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/8f/fc/6e/8ffc6efb-353f-46ac-eeb6-8247c01cfc87/886444383691.jpg/600x600bb.jpg",
+      "itunesTrackId": "804145420",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/0a/4d/8f/0a4d8f1c-6ad5-7d67-6937-8a248633ea86/mzaf_13659809313593484046.plus.aac.p.m4a",
       "aliases": [
-            "b’s on the table",
-            "bs on the table"
-      ]
-    }),
-    song({
-      "id": "drake-toosie-slide",
-      "title": "Toosie Slide",
-      "artistId": "drake",
-      "albumId": "toosie-slide",
-      "year": 2020,
-      "genreIds": [
-            "hip-hop",
-            "rap",
-            "r-and-b"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/d2216c368d2223ebf839fa09cd90c150/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/0/c/2/0/0c2b974e0db59b2aec53f76806cdb486.mp3?hdnea=exp=1790665591~acl=/api/1/1/0/c/2/0/0c2b974e0db59b2aec53f76806cdb486.mp3*~data=user_id=0,application_id=42~hmac=4309406bb54689a78b57cc19e9c7268544dc45d80b8f7e685c910ee9b7fc1ef2",
-      "aliases": [
-            "toosie slide"
-      ]
-    }),
-    song({
-      "id": "drake-get-it-together",
-      "title": "Get It Together",
-      "artistId": "drake",
-      "albumId": "more-life",
-      "year": 2017,
-      "genreIds": [
-            "hip-hop",
-            "rap",
-            "r-and-b"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/8f0187ad83cdd1f47f1c55420f9df227/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/2/c/7/0/2c74cee872b2076a7e5b30503ce29c7f.mp3?hdnea=exp=1790665591~acl=/api/1/1/2/c/7/0/2c74cee872b2076a7e5b30503ce29c7f.mp3*~data=user_id=0,application_id=42~hmac=03fb8a26a9da9d6eb4d42f56a96e100fa8f1633c496de665ca01c0754032b21a",
-      "aliases": [
-            "get it together"
-      ]
-    }),
-    song({
-      "id": "drake-teenage-fever",
-      "title": "Teenage Fever",
-      "artistId": "drake",
-      "albumId": "more-life",
-      "year": 2017,
-      "genreIds": [
-            "hip-hop",
-            "rap",
-            "r-and-b"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/8f0187ad83cdd1f47f1c55420f9df227/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/2/f/e/0/2fe80eb47049c28c0a612bd7bf1059f1.mp3?hdnea=exp=1790665591~acl=/api/1/1/2/f/e/0/2fe80eb47049c28c0a612bd7bf1059f1.mp3*~data=user_id=0,application_id=42~hmac=77ca12b1d6a46f8a6744b0fd0d33b863155bf14082904d4ff502e024eed4581e",
-      "aliases": [
-            "teenage fever"
-      ]
-    }),
-    song({
-      "id": "drake-dont-matter-to-me",
-      "title": "Don’t Matter To Me",
-      "artistId": "drake",
-      "albumId": "scorpion",
-      "year": 2018,
-      "genreIds": [
-            "hip-hop",
-            "rap",
-            "r-and-b"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/b69d3bcbd130ad4cc9259de543889e30/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/7/7/f/0/77f1289a7afded248f1b1deafbd97e80.mp3?hdnea=exp=1790665591~acl=/api/1/1/7/7/f/0/77f1289a7afded248f1b1deafbd97e80.mp3*~data=user_id=0,application_id=42~hmac=bda7b2cb0fe8d792a7c7c8db1177068d2908faea40163cc29bb35d431d8f3fcf",
-      "aliases": [
-            "don’t matter to me",
-            "dont matter to me"
+            "odio (feat. drake)",
+            "odio",
+            "odio feat drake"
       ]
     }),
     song({
@@ -4982,216 +6097,88 @@ export const seedCatalog = {
             "rap",
             "r-and-b"
       ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/b69d3bcbd130ad4cc9259de543889e30/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/8/e/9/0/8e98d4391469188d709eb95264246113.mp3?hdnea=exp=1790665591~acl=/api/1/1/8/e/9/0/8e98d4391469188d709eb95264246113.mp3*~data=user_id=0,application_id=42~hmac=54460771e4de3bf5e727c29ec3ec3503e94a25c40f3804f6d8c95bde1e1e1043",
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/1f/37/43/1f374304-2e04-2be3-53ea-41dd6f0b6fb8/00602567892410.rgb.jpg/600x600bb.jpg",
+      "itunesTrackId": "1418213402",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/6c/59/2f/6c592f9b-99af-485a-461f-f379a98fd110/mzaf_4057620018861205477.plus.aac.p.m4a",
       "aliases": [
             "in my feelings"
       ]
     }),
     song({
-      "id": "drake-jimmy-cooks",
-      "title": "Jimmy Cooks",
+      "id": "drake-in-my-feelings-1406109901",
+      "title": "In My Feelings",
       "artistId": "drake",
-      "albumId": "honestly-nevermind",
-      "year": 2022,
+      "albumId": "scorpion",
+      "year": 2018,
       "genreIds": [
             "hip-hop",
             "rap",
             "r-and-b"
       ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/0b26e40653e97c640740ece8e32fc2af/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/9/c/7/0/9c775b3ddb238859dc8dafe1f64f423d.mp3?hdnea=exp=1790665591~acl=/api/1/1/9/c/7/0/9c775b3ddb238859dc8dafe1f64f423d.mp3*~data=user_id=0,application_id=42~hmac=2d35a6af928f8a40e7fbe3eb8c59a65f50ac5b81b93fbfbf9d3f94ff0ebaa280",
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/bb/6d/8f/bb6d8f67-6d04-10b5-dd62-eb5809ac54fc/00602567879152.rgb.jpg/600x600bb.jpg",
+      "itunesTrackId": "1406109901",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/df/e8/e2/dfe8e281-f90d-a00e-141e-aab9f5b0b0b1/mzaf_8379698669799841165.plus.aac.p.m4a",
       "aliases": [
-            "jimmy cooks"
+            "in my feelings"
       ]
     }),
     song({
-      "id": "drake-money-in-the-grave",
-      "title": "Money In The Grave",
+      "id": "drake-fall-for-your-type",
+      "title": "Fall for Your Type (feat. Drake)",
       "artistId": "drake",
-      "albumId": "the-best-in-the-world-pack",
-      "year": 2019,
+      "albumId": "fall-for-your-type-feat-drake-single",
+      "year": 2010,
       "genreIds": [
             "hip-hop",
             "rap",
             "r-and-b"
       ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/4291e5f9bfe723d120fe22fdd74d0e64/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/b/a/7/0/ba7358aa3d74b60dc6bcf26211f7f9e5.mp3?hdnea=exp=1790665591~acl=/api/1/1/b/a/7/0/ba7358aa3d74b60dc6bcf26211f7f9e5.mp3*~data=user_id=0,application_id=42~hmac=ceaf3387753aecfaf4cbf61152649ee7e33459b4259ecd7f311e9073720ab735",
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Features114/v4/6c/a3/18/6ca318d6-ce97-4ee7-a16e-2b4e4909db06/dj.tbiwjigr.jpg/600x600bb.jpg",
+      "itunesTrackId": "403387930",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/d3/fc/f5/d3fcf589-5daf-7294-5bd1-b298df0ef2dc/mzaf_17172224736939769987.plus.aac.p.m4a",
       "aliases": [
-            "money in the grave"
+            "fall for your type (feat. drake)",
+            "fall for your type",
+            "fall for your type feat drake"
       ]
     }),
     song({
-      "id": "drake-not-you-too",
-      "title": "Not You Too",
+      "id": "drake-going-bad",
+      "title": "Going Bad (feat. Drake)",
       "artistId": "drake",
-      "albumId": "dark-lane-demo-tapes",
-      "year": 2020,
+      "albumId": "championships",
+      "year": 2018,
       "genreIds": [
             "hip-hop",
             "rap",
             "r-and-b"
       ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/d46b7a8aa40ef7f09d71a03c2ce8edcd/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/d/5/1/0/d51008801a76749ce151a78a1c6595af.mp3?hdnea=exp=1790665591~acl=/api/1/1/d/5/1/0/d51008801a76749ce151a78a1c6595af.mp3*~data=user_id=0,application_id=42~hmac=5d7430b6bc55f513730624d8d93ae13e7a00db34bafc2bec7899f27e0e76d77e",
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/ee/39/ad/ee39ad12-b314-f0c8-a285-a49340427e68/075679862440.jpg/600x600bb.jpg",
+      "itunesTrackId": "1445099332",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/cc/fe/0c/ccfe0cb8-5189-faec-21f5-b15cbf3ebd9e/mzaf_12859251399127168454.plus.aac.p.m4a",
       "aliases": [
-            "not you too"
+            "going bad (feat. drake)",
+            "going bad",
+            "going bad feat drake"
       ]
     }),
     song({
-      "id": "drake-massive",
-      "title": "Massive",
+      "id": "drake-deuces-remix-feat-drake-ti-kanye-west-fabolous-rick-ross-andre-3000",
+      "title": "Deuces (Remix) [feat. Drake, T.I., Kanye West, Fabolous, Rick Ross & André 3000]",
       "artistId": "drake",
-      "albumId": "honestly-nevermind",
-      "year": 2022,
+      "albumId": "deuces-remix-ep",
+      "year": 2010,
       "genreIds": [
             "hip-hop",
             "rap",
             "r-and-b"
       ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/0b26e40653e97c640740ece8e32fc2af/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/f/e/1/0/fe1bbe6f41896fd2ae874d5625a31233.mp3?hdnea=exp=1790665591~acl=/api/1/1/f/e/1/0/fe1bbe6f41896fd2ae874d5625a31233.mp3*~data=user_id=0,application_id=42~hmac=d7f6f2332b89eb08ff4f781c3b598ca9b9a3cccbb568fff3c7201a2f50fbea50",
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music/1f/88/df/mzi.udvjskao.jpg/600x600bb.jpg",
+      "itunesTrackId": "399912130",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/e6/9d/03/e69d03ce-a771-ebfe-ba2b-d134e33905d1/mzaf_7642906119423728753.plus.aac.p.m4a",
       "aliases": [
-            "massive"
-      ]
-    }),
-    song({
-      "id": "drake-plot-twist",
-      "title": "Plot Twist",
-      "artistId": "drake",
-      "albumId": "iceman",
-      "year": 2026,
-      "genreIds": [
-            "hip-hop",
-            "rap",
-            "r-and-b"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/cccf5e9af10b6aae96f5cdd5a27c2aff/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/4/e/d/0/4ed082085b9d2a7efd4f13f42009f400.mp3?hdnea=exp=1790665591~acl=/api/1/1/4/e/d/0/4ed082085b9d2a7efd4f13f42009f400.mp3*~data=user_id=0,application_id=42~hmac=09a3757c83f3b3ca88246a3580c07da61de20e13271b36dffb05f1f646ce61b2",
-      "aliases": [
-            "plot twist"
-      ]
-    }),
-    song({
-      "id": "drake-die-trying",
-      "title": "DIE TRYING",
-      "artistId": "drake",
-      "albumId": "ome-exy-ongs-4-u",
-      "year": 2025,
-      "genreIds": [
-            "hip-hop",
-            "rap",
-            "r-and-b"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/478562cdbafe4faa1515bd457042cc4a/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/5/e/0/0/5e03672a36e02e2c1d3d6725e8c8bca3.mp3?hdnea=exp=1790665591~acl=/api/1/1/5/e/0/0/5e03672a36e02e2c1d3d6725e8c8bca3.mp3*~data=user_id=0,application_id=42~hmac=68700de1b665703a3846dc6f9790c50f244740f6007f824cadf2e0a00b4d237c",
-      "aliases": [
-            "die trying"
-      ]
-    }),
-    song({
-      "id": "drake-laugh-now-cry-later",
-      "title": "Laugh Now Cry Later",
-      "artistId": "drake",
-      "albumId": "laugh-now-cry-later",
-      "year": 2020,
-      "genreIds": [
-            "hip-hop",
-            "rap",
-            "r-and-b"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/9797dfc8af8f1c08653f348b27202d93/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/f/4/e/0/f4e7e0195c2d4aaf11c03718539ec9dd.mp3?hdnea=exp=1790665591~acl=/api/1/1/f/4/e/0/f4e7e0195c2d4aaf11c03718539ec9dd.mp3*~data=user_id=0,application_id=42~hmac=ecdc951a7eef61b4f803fb6ba29dd3682138c8a79333eefce7814ff8b3d3d969",
-      "aliases": [
-            "laugh now cry later"
-      ]
-    }),
-    song({
-      "id": "drake-slap-the-city",
-      "title": "Slap The City",
-      "artistId": "drake",
-      "albumId": "habibti",
-      "year": 2026,
-      "genreIds": [
-            "hip-hop",
-            "rap",
-            "r-and-b"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/a3c0b45062f3987b928b13cd6122f443/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/4/d/3/0/4d362fa7e0b4cb6cce953c7a1ef414cd.mp3?hdnea=exp=1790665591~acl=/api/1/1/4/d/3/0/4d362fa7e0b4cb6cce953c7a1ef414cd.mp3*~data=user_id=0,application_id=42~hmac=7b0fab811c703f127abed6a33e967b548e857c4e1933d6f83dae02652cf1332c",
-      "aliases": [
-            "slap the city"
-      ]
-    }),
-    song({
-      "id": "drake-shabang",
-      "title": "Shabang",
-      "artistId": "drake",
-      "albumId": "iceman",
-      "year": 2026,
-      "genreIds": [
-            "hip-hop",
-            "rap",
-            "r-and-b"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/cccf5e9af10b6aae96f5cdd5a27c2aff/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/f/e/4/0/fe4ce0c7912e3a02f26be7ac4aab4f3d.mp3?hdnea=exp=1790665591~acl=/api/1/1/f/e/4/0/fe4ce0c7912e3a02f26be7ac4aab4f3d.mp3*~data=user_id=0,application_id=42~hmac=3deb5e5b5a374e027439e35a32e9a16ee9cb39482b3332f2726f0a622ab8e6cd",
-      "aliases": [
-            "shabang"
-      ]
-    }),
-    song({
-      "id": "drake-fair-trade",
-      "title": "Fair Trade",
-      "artistId": "drake",
-      "albumId": "certified-lover-boy",
-      "year": 2021,
-      "genreIds": [
-            "hip-hop",
-            "rap",
-            "r-and-b"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/ea8f80f2edb20885ac8aed8751716794/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/b/0/9/0/b09bb40ef4ffa400f43478fbd15717a2.mp3?hdnea=exp=1790665591~acl=/api/1/1/b/0/9/0/b09bb40ef4ffa400f43478fbd15717a2.mp3*~data=user_id=0,application_id=42~hmac=c1c3a8f085ed5e356cc0d57157d9c8792c351f3e6bd996bbda5077b5c135bd50",
-      "aliases": [
-            "fair trade"
-      ]
-    }),
-    song({
-      "id": "drake-popstar",
-      "title": "POPSTAR (feat. Drake)",
-      "artistId": "drake",
-      "albumId": "popstar-feat-drake",
-      "year": 2020,
-      "genreIds": [
-            "hip-hop",
-            "rap",
-            "r-and-b"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/5ef6f56d0f42ad0a38d016bbf3933d6b/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/1/6/7/0/1677b9051005bbd27f96de6271192268.mp3?hdnea=exp=1790665591~acl=/api/1/1/1/6/7/0/1677b9051005bbd27f96de6271192268.mp3*~data=user_id=0,application_id=42~hmac=c9dd18d41b60fb7036cf00d0733827c7d7bacfb310867dd8f68ba77272105595",
-      "aliases": [
-            "popstar (feat. drake)",
-            "popstar",
-            "popstar feat drake"
-      ]
-    }),
-    song({
-      "id": "drake-rich-flex",
-      "title": "Rich Flex",
-      "artistId": "drake",
-      "albumId": "her-loss",
-      "year": 2022,
-      "genreIds": [
-            "hip-hop",
-            "rap",
-            "r-and-b"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/4599d79a2bea5890737328996e2e7077/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/6/4/1/0/641cd153f0df260d829f65b75b2666ad.mp3?hdnea=exp=1790665591~acl=/api/1/1/6/4/1/0/641cd153f0df260d829f65b75b2666ad.mp3*~data=user_id=0,application_id=42~hmac=7bada1deb8aa61dcd687071bd5edaeac31e6620ff2181f11c01f28f92b80959f",
-      "aliases": [
-            "rich flex"
+            "deuces (remix) [feat. drake, t.i., kanye west, fabolous, rick ross & andré 3000]",
+            "deuces remix feat drake ti kanye west fabolous rick ross andré 3000"
       ]
     }),
     song({
@@ -5205,44 +6192,225 @@ export const seedCatalog = {
             "rap",
             "r-and-b"
       ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/b69d3bcbd130ad4cc9259de543889e30/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/e/0/c/0/e0c1c5e0db941f3393239a64e8991376.mp3?hdnea=exp=1790665591~acl=/api/1/1/e/0/c/0/e0c1c5e0db941f3393239a64e8991376.mp3*~data=user_id=0,application_id=42~hmac=25a8a7f9fd1266b9722d31bf0b2f48f1353653702e2c9ed2981d26972fbaa116",
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/1f/37/43/1f374304-2e04-2be3-53ea-41dd6f0b6fb8/00602567892410.rgb.jpg/600x600bb.jpg",
+      "itunesTrackId": "1418213266",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/28/1f/18/281f18cc-5c03-3e7e-4454-cd89783d4164/mzaf_17499593388749003553.plus.aac.p.m4a",
       "aliases": [
             "nonstop"
       ]
     }),
     song({
-      "id": "drake-9",
-      "title": "9",
+      "id": "drake-dnf",
+      "title": "DnF (feat. Drake & Future)",
       "artistId": "drake",
-      "albumId": "views",
+      "albumId": "dear-america-ep",
+      "year": 2014,
+      "genreIds": [
+            "hip-hop",
+            "rap",
+            "r-and-b"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music114/v4/64/c1/36/64c13642-c730-06b9-56b3-4868acdfde6f/886444799867.jpg/600x600bb.jpg",
+      "itunesTrackId": "910325770",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/dc/79/72/dc79721c-fcd2-19a4-6e6f-cde5ab92b7f8/mzaf_7547724257890147935.plus.aac.p.m4a",
+      "aliases": [
+            "dnf (feat. drake & future)",
+            "dnf",
+            "dnf feat drake future"
+      ]
+    }),
+    song({
+      "id": "drake-yes-indeed",
+      "title": "Yes Indeed",
+      "artistId": "drake",
+      "albumId": "harder-than-ever",
+      "year": 2018,
+      "genreIds": [
+            "hip-hop",
+            "rap",
+            "r-and-b"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music122/v4/b2/21/04/b22104c5-b230-4e99-2b98-e99c664b88c7/18UMGIM28345.rgb.jpg/600x600bb.jpg",
+      "itunesTrackId": "1384782182",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/4e/08/6e/4e086e0b-18cd-baee-6985-1a229aeb0f9d/mzaf_3710743165742865399.plus.aac.p.m4a",
+      "aliases": [
+            "yes indeed"
+      ]
+    }),
+    song({
+      "id": "drake-un-thinkable-im-ready-remix-feat-drake",
+      "title": "Un-thinkable (I'm Ready) [Remix] {feat. Drake}",
+      "artistId": "drake",
+      "albumId": "un-thinkable-im-ready-remix-feat-drake-single",
+      "year": 2010,
+      "genreIds": [
+            "hip-hop",
+            "rap",
+            "r-and-b"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music124/v4/4d/5d/5d/4d5d5db9-94c5-8d29-22ab-23ab947e18ff/884977645149.jpg/600x600bb.jpg",
+      "itunesTrackId": "374980726",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/fc/ba/71/fcba7100-ebd1-4b35-4553-b1caaaf8ffc0/mzaf_12229862900273920336.plus.aac.p.m4a",
+      "aliases": [
+            "un-thinkable (i'm ready) [remix] {feat. drake}",
+            "unthinkable im ready remix feat drake"
+      ]
+    }),
+    song({
+      "id": "drake-money-in-the-grave",
+      "title": "Money In The Grave (feat. Rick Ross)",
+      "artistId": "drake",
+      "albumId": "the-best-in-the-world-pack-single",
+      "year": 2019,
+      "genreIds": [
+            "hip-hop",
+            "rap",
+            "r-and-b"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music125/v4/5b/31/bf/5b31bf6d-0a7f-ad73-426f-72948846bef2/19UMGIM54644.rgb.jpg/600x600bb.jpg",
+      "itunesTrackId": "1468618077",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/f4/6f/14/f46f1484-d4fc-fd11-5de6-50c6cbe8f1d1/mzaf_6036980944069893228.plus.aac.p.m4a",
+      "aliases": [
+            "money in the grave (feat. rick ross)",
+            "money in the grave",
+            "money in the grave feat rick ross"
+      ]
+    }),
+    song({
+      "id": "drake-gods-plan",
+      "title": "God's Plan",
+      "artistId": "drake",
+      "albumId": "scorpion",
+      "year": 2018,
+      "genreIds": [
+            "hip-hop",
+            "rap",
+            "r-and-b"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/1f/37/43/1f374304-2e04-2be3-53ea-41dd6f0b6fb8/00602567892410.rgb.jpg/600x600bb.jpg",
+      "itunesTrackId": "1418213269",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/ec/de/77/ecde7774-eb39-2e47-06e4-dbd911be7b75/mzaf_5914483064715703001.plus.aac.p.m4a",
+      "aliases": [
+            "god's plan",
+            "gods plan"
+      ]
+    }),
+    song({
+      "id": "drake-life-is-good",
+      "title": "Life Is Good (feat. Drake)",
+      "artistId": "drake",
+      "albumId": "life-is-good-feat-drake-single",
+      "year": 2020,
+      "genreIds": [
+            "hip-hop",
+            "rap",
+            "r-and-b"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music125/v4/56/17/2c/56172c37-dc56-6651-1e70-59dc6d2e6e3f/886448218845.jpg/600x600bb.jpg",
+      "itunesTrackId": "1493865024",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/50/98/3b/50983b15-6c28-9eec-eb69-7379a7ff0911/mzaf_11618289533403196157.plus.aac.p.m4a",
+      "aliases": [
+            "life is good (feat. drake)",
+            "life is good",
+            "life is good feat drake"
+      ]
+    }),
+    song({
+      "id": "drake-used-to-this",
+      "title": "Used to This (feat. Drake)",
+      "artistId": "drake",
+      "albumId": "used-to-this-feat-drake-single",
       "year": 2016,
       "genreIds": [
             "hip-hop",
             "rap",
             "r-and-b"
       ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/56bdb7a86a27fadb96332c0c8f1b8e81/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/c/e/a/0/ceac2b0f817e0be28654b1cd6c6f6115.mp3?hdnea=exp=1790665591~acl=/api/1/1/c/e/a/0/ceac2b0f817e0be28654b1cd6c6f6115.mp3*~data=user_id=0,application_id=42~hmac=8b4541d72563800238e7872ad343e3b30065a1046a97bfb187d9a8fafe83e638",
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/72/30/b3/7230b3e9-349d-f3c8-76d9-838e0d3a8842/886446180748.jpg/600x600bb.jpg",
+      "itunesTrackId": "1172512610",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/19/3b/cd/193bcd00-859c-f148-3435-d848cf1045d0/mzaf_7782670181739675179.plus.aac.p.m4a",
       "aliases": [
-            "9"
+            "used to this (feat. drake)",
+            "used to this",
+            "used to this feat drake"
       ]
     }),
     song({
-      "id": "drake-she-will",
-      "title": "She Will",
+      "id": "drake-100",
+      "title": "100 (feat. Drake)",
       "artistId": "drake",
-      "albumId": "tha-carter-iv-complete-edition",
+      "albumId": "100-feat-drake-single",
+      "year": 2015,
+      "genreIds": [
+            "hip-hop",
+            "rap",
+            "r-and-b"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/eb/bd/5a/ebbd5ace-1da9-19b4-f3fb-c4ba89a161fc/099923098720.jpg/600x600bb.jpg",
+      "itunesTrackId": "1012444165",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/75/4f/96/754f9626-5815-6920-90e8-2c9656d8a3aa/mzaf_9643968210218350681.plus.aac.p.m4a",
+      "aliases": [
+            "100 (feat. drake)",
+            "100",
+            "100 feat drake"
+      ]
+    }),
+    song({
+      "id": "drake-way-2-sexy",
+      "title": "Way 2 Sexy (feat. Future & Young Thug)",
+      "artistId": "drake",
+      "albumId": "certified-lover-boy",
       "year": 2021,
       "genreIds": [
             "hip-hop",
             "rap",
             "r-and-b"
       ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/9cd3050aedcb4324e6ffc4477929f2db/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/d/3/c/0/d3c6744a1e95d8f7ef6ccf40eddf695a.mp3?hdnea=exp=1790665591~acl=/api/1/1/d/3/c/0/d3c6744a1e95d8f7ef6ccf40eddf695a.mp3*~data=user_id=0,application_id=42~hmac=633973084b0cf95cd4c52fe1197dedfe1f5fe9b0dc65fef96ed5e1c80bb2d8ee",
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/11/36/38/1136384a-eebc-697a-c005-d890e41c0854/21UM1IM07518.rgb.jpg/600x600bb.jpg",
+      "itunesTrackId": "1584281770",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/33/39/81/33398169-2945-2f05-16f3-0938f9567bc3/mzaf_16119717744792362196.plus.aac.p.m4a",
       "aliases": [
-            "she will"
+            "way 2 sexy (feat. future & young thug)",
+            "way 2 sexy",
+            "way 2 sexy feat future young thug"
+      ]
+    }),
+    song({
+      "id": "drake-wait-for-u",
+      "title": "WAIT FOR U (feat. Drake & Tems)",
+      "artistId": "drake",
+      "albumId": "i-never-liked-you",
+      "year": 2022,
+      "genreIds": [
+            "hip-hop",
+            "rap",
+            "r-and-b"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music122/v4/65/f2/06/65f2067b-a8ea-239c-c219-8e0f0282dcea/196589073693.jpg/600x600bb.jpg",
+      "itunesTrackId": "1621119447",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/77/67/90/77679025-8a80-42a2-bbcd-335dd083295b/mzaf_11646896799515737302.plus.aac.p.m4a",
+      "aliases": [
+            "wait for u (feat. drake & tems)",
+            "wait for u",
+            "wait for u feat drake tems"
+      ]
+    }),
+    song({
+      "id": "drake-nice-for-what",
+      "title": "Nice For What",
+      "artistId": "drake",
+      "albumId": "scorpion",
+      "year": 2018,
+      "genreIds": [
+            "hip-hop",
+            "rap",
+            "r-and-b"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/1f/37/43/1f374304-2e04-2be3-53ea-41dd6f0b6fb8/00602567892410.rgb.jpg/600x600bb.jpg",
+      "itunesTrackId": "1418213383",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/bb/76/b3/bb76b3f3-13ef-8591-6093-6a420cd6905e/mzaf_7765125451109658407.plus.aac.p.m4a",
+      "aliases": [
+            "nice for what"
       ]
     }),
     song({
@@ -5256,327 +6424,55 @@ export const seedCatalog = {
             "rap",
             "r-and-b"
       ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/478562cdbafe4faa1515bd457042cc4a/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/7/2/4/0/7247d308a563fc4b59d9d35b4387e098.mp3?hdnea=exp=1790665591~acl=/api/1/1/7/2/4/0/7247d308a563fc4b59d9d35b4387e098.mp3*~data=user_id=0,application_id=42~hmac=a04cad82c33f7493a4cb57db5dfd1e946137ef546993f9c74a60d4311ea95214",
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/34/10/1e/34101e1f-f4b9-907a-ce47-3fba5b3ee5e8/50222.jpg/600x600bb.jpg",
+      "itunesTrackId": "1796127375",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/3d/9b/5c/3d9b5ca8-00ca-3279-ecd7-0c63bb5b088b/mzaf_1981580556231779964.plus.aac.p.m4a",
       "aliases": [
             "nokia"
       ]
     }),
     song({
-      "id": "drake-started-from-the-bottom",
-      "title": "Started From the Bottom",
+      "id": "drake-laugh-now-cry-later",
+      "title": "Laugh Now Cry Later (feat. Lil Durk)",
       "artistId": "drake",
-      "albumId": "nothing-was-the-same-deluxe",
-      "year": 2013,
-      "genreIds": [
-            "hip-hop",
-            "rap",
-            "r-and-b"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/64ec37a4cf512c7810c40ba0d318ff1e/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/8/1/b/0/81b203a1069f4da780cf24c1670f86d5.mp3?hdnea=exp=1790665591~acl=/api/1/1/8/1/b/0/81b203a1069f4da780cf24c1670f86d5.mp3*~data=user_id=0,application_id=42~hmac=fcd4a8fc8ee4309da5398fd222fd22f152ec2d81f4f44cdcad087f1f64663d45",
-      "aliases": [
-            "started from the bottom"
-      ]
-    }),
-    song({
-      "id": "drake-pain-1993",
-      "title": "Pain 1993",
-      "artistId": "drake",
-      "albumId": "dark-lane-demo-tapes",
+      "albumId": "laugh-now-cry-later-feat-lil-durk-single",
       "year": 2020,
       "genreIds": [
             "hip-hop",
             "rap",
             "r-and-b"
       ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/d46b7a8aa40ef7f09d71a03c2ce8edcd/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/7/3/0/0/730669819c21726da23af2dcae8bab71.mp3?hdnea=exp=1790665591~acl=/api/1/1/7/3/0/0/730669819c21726da23af2dcae8bab71.mp3*~data=user_id=0,application_id=42~hmac=8c2de080714870f50f6b37334bfd1a90aeb9536b250971a335f249b010875fbe",
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/ba/bd/b2/babdb2e9-1fe4-ecaf-034a-d24870fa1811/20UMGIM71041.rgb.jpg/600x600bb.jpg",
+      "itunesTrackId": "1527584879",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/4a/63/9f/4a639fe8-aa67-0fce-0abe-5435a535fce2/mzaf_3540916071811527416.plus.aac.p.m4a",
       "aliases": [
-            "pain 1993"
+            "laugh now cry later (feat. lil durk)",
+            "laugh now cry later",
+            "laugh now cry later feat lil durk"
       ]
     }),
     song({
-      "id": "drake-never-recover",
-      "title": "Never Recover",
+      "id": "drake-gods-plan-1406109863",
+      "title": "God's Plan",
       "artistId": "drake",
-      "albumId": "drip-harder",
+      "albumId": "scorpion",
       "year": 2018,
       "genreIds": [
             "hip-hop",
             "rap",
             "r-and-b"
       ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/3d845a35fd7849630324107baf07657b/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/2/b/2/0/2b21ba81c60038356b577d54c422a403.mp3?hdnea=exp=1790665591~acl=/api/1/1/2/b/2/0/2b21ba81c60038356b577d54c422a403.mp3*~data=user_id=0,application_id=42~hmac=447634245e276e34bd4cd399f19b7bf5e0892c5c02fb3a710bd7705aa39ee1ae",
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/bb/6d/8f/bb6d8f67-6d04-10b5-dd62-eb5809ac54fc/00602567879152.rgb.jpg/600x600bb.jpg",
+      "itunesTrackId": "1406109863",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/c6/4a/be/c64abe74-adb4-cff5-005d-0fab3d72a806/mzaf_10276154697254415719.plus.aac.p.m4a",
       "aliases": [
-            "never recover"
+            "god's plan",
+            "gods plan"
       ]
     }),
     song({
-      "id": "drake-take-care",
-      "title": "Take Care",
-      "artistId": "drake",
-      "albumId": "take-care-deluxe",
-      "year": 2012,
-      "genreIds": [
-            "hip-hop",
-            "rap",
-            "r-and-b"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/6e7a6c8f36669dcd11abe7e7c3222e91/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/2/c/8/0/2c8e63eefa13bd0e30a0ee3edf194425.mp3?hdnea=exp=1790665591~acl=/api/1/1/2/c/8/0/2c8e63eefa13bd0e30a0ee3edf194425.mp3*~data=user_id=0,application_id=42~hmac=a9582a48e6a19308827fe5f1bf8db0fbd05813898d82ae239f44d59b068682ba",
-      "aliases": [
-            "take care"
-      ]
-    }),
-    song({
-      "id": "drake-know-yourself",
-      "title": "Know Yourself",
-      "artistId": "drake",
-      "albumId": "if-youre-reading-this-its-too-late",
-      "year": 2015,
-      "genreIds": [
-            "hip-hop",
-            "rap",
-            "r-and-b"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/1c1ca5ffababd01e1e7cc090cf296304/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/8/b/f/0/8bf1b563f042415201609310e09446d5.mp3?hdnea=exp=1790665591~acl=/api/1/1/8/b/f/0/8bf1b563f042415201609310e09446d5.mp3*~data=user_id=0,application_id=42~hmac=95d6e981a0b5e20ee46cdc3937e35a6871076d56e4601a9e1d488b0ff761203d",
-      "aliases": [
-            "know yourself"
-      ]
-    }),
-    song({
-      "id": "drake-forever-explicit-version",
-      "title": "Forever (Explicit Version)",
-      "artistId": "drake",
-      "albumId": "forever",
-      "year": 2009,
-      "genreIds": [
-            "hip-hop",
-            "rap",
-            "r-and-b"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/e1e3e58f8f395010769d435ae3f14bb4/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/2/e/2/0/2e2f35e5cdee732dba2ba0e912c04ab3.mp3?hdnea=exp=1790665591~acl=/api/1/1/2/e/2/0/2e2f35e5cdee732dba2ba0e912c04ab3.mp3*~data=user_id=0,application_id=42~hmac=9b418d77afde6890d0b0efc01883bdc657b0d82f6975b5eecabf9c8c3fa11b0a",
-      "aliases": [
-            "forever (explicit version)",
-            "forever",
-            "forever explicit version"
-      ]
-    }),
-    song({
-      "id": "drake-whisper-my-name",
-      "title": "Whisper My Name",
-      "artistId": "drake",
-      "albumId": "iceman",
-      "year": 2026,
-      "genreIds": [
-            "hip-hop",
-            "rap",
-            "r-and-b"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/cccf5e9af10b6aae96f5cdd5a27c2aff/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/f/c/9/0/fc902a2c4d3add205c45309109fcf943.mp3?hdnea=exp=1790665591~acl=/api/1/1/f/c/9/0/fc902a2c4d3add205c45309109fcf943.mp3*~data=user_id=0,application_id=42~hmac=64086d372588fe13dbbdd562236f55eabd40b41bf320ef375b2163f1f7b40e0d",
-      "aliases": [
-            "whisper my name"
-      ]
-    }),
-    song({
-      "id": "drake-meltdown",
-      "title": "MELTDOWN (feat. Drake)",
-      "artistId": "drake",
-      "albumId": "utopia",
-      "year": 2023,
-      "genreIds": [
-            "hip-hop",
-            "rap",
-            "r-and-b"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/6d7164fecb39ddee0cb15952e750d907/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/2/f/d/0/2fd32f2fe468eb671e631c957c7eb44e.mp3?hdnea=exp=1790665591~acl=/api/1/1/2/f/d/0/2fd32f2fe468eb671e631c957c7eb44e.mp3*~data=user_id=0,application_id=42~hmac=50d3521e75303f86c9eb7ee20601b575331c4b4bd77be932f1c2ee3e1db7e9fd",
-      "aliases": [
-            "meltdown (feat. drake)",
-            "meltdown",
-            "meltdown feat drake"
-      ]
-    }),
-    song({
-      "id": "drake-chicago-freestyle",
-      "title": "Chicago Freestyle",
-      "artistId": "drake",
-      "albumId": "dark-lane-demo-tapes",
-      "year": 2020,
-      "genreIds": [
-            "hip-hop",
-            "rap",
-            "r-and-b"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/d46b7a8aa40ef7f09d71a03c2ce8edcd/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/3/1/4/0/31495c0f2753bd7787373f5beaaa8d1e.mp3?hdnea=exp=1790665591~acl=/api/1/1/3/1/4/0/31495c0f2753bd7787373f5beaaa8d1e.mp3*~data=user_id=0,application_id=42~hmac=a9568cfe811d490daab086307178bb981d97a1200feaf86de04564cd4443cfe1",
-      "aliases": [
-            "chicago freestyle"
-      ]
-    }),
-    song({
-      "id": "drake-controlla",
-      "title": "Controlla",
-      "artistId": "drake",
-      "albumId": "views",
-      "year": 2016,
-      "genreIds": [
-            "hip-hop",
-            "rap",
-            "r-and-b"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/56bdb7a86a27fadb96332c0c8f1b8e81/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/9/4/a/0/94a94baa6b342700c5d7a18b978bc351.mp3?hdnea=exp=1790665591~acl=/api/1/1/9/4/a/0/94a94baa6b342700c5d7a18b978bc351.mp3*~data=user_id=0,application_id=42~hmac=f9aacc9e8fd6262156efd24da9a767b85d8911e9d5610d59e9d89bbc7d7f88f2",
-      "aliases": [
-            "controlla"
-      ]
-    }),
-    song({
-      "id": "drake-make-them-cry",
-      "title": "Make Them Cry",
-      "artistId": "drake",
-      "albumId": "iceman",
-      "year": 2026,
-      "genreIds": [
-            "hip-hop",
-            "rap",
-            "r-and-b"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/cccf5e9af10b6aae96f5cdd5a27c2aff/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/f/3/c/0/f3c19a0cbb03874d243b136a9eb6d5b5.mp3?hdnea=exp=1790665591~acl=/api/1/1/f/3/c/0/f3c19a0cbb03874d243b136a9eb6d5b5.mp3*~data=user_id=0,application_id=42~hmac=436138cc1c0df6f85528997485d557c45138429b812c8b662db0ddb4975a4a2e",
-      "aliases": [
-            "make them cry"
-      ]
-    }),
-    song({
-      "id": "drake-rich-baby-daddy",
-      "title": "Rich Baby Daddy",
-      "artistId": "drake",
-      "albumId": "for-all-the-dogs",
-      "year": 2023,
-      "genreIds": [
-            "hip-hop",
-            "rap",
-            "r-and-b"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/868162e87da67d647789ed7b6456840c/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/c/7/f/0/c7f452be42181a050a57540cfd317f5e.mp3?hdnea=exp=1790665591~acl=/api/1/1/c/7/f/0/c7f452be42181a050a57540cfd317f5e.mp3*~data=user_id=0,application_id=42~hmac=ef1de5d136ac57d2388eb655e4224ca18d85a66b17732e35da419b6f2ca832bc",
-      "aliases": [
-            "rich baby daddy"
-      ]
-    }),
-    song({
-      "id": "drake-flights-booked",
-      "title": "Flight's Booked",
-      "artistId": "drake",
-      "albumId": "honestly-nevermind",
-      "year": 2022,
-      "genreIds": [
-            "hip-hop",
-            "rap",
-            "r-and-b"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/0b26e40653e97c640740ece8e32fc2af/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/a/4/3/0/a4382de61133c0598b22ee19164171c2.mp3?hdnea=exp=1790665591~acl=/api/1/1/a/4/3/0/a4382de61133c0598b22ee19164171c2.mp3*~data=user_id=0,application_id=42~hmac=6a56dd5777334aa4d7ec667b4e53a4a2af8a3e6a4ddd7db356fd8d4fb33706ae",
-      "aliases": [
-            "flight's booked",
-            "flights booked"
-      ]
-    }),
-    song({
-      "id": "drake-too-good",
-      "title": "Too Good",
-      "artistId": "drake",
-      "albumId": "views",
-      "year": 2016,
-      "genreIds": [
-            "hip-hop",
-            "rap",
-            "r-and-b"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/56bdb7a86a27fadb96332c0c8f1b8e81/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/f/1/5/0/f152d4afb75fae93e1f8702f2e6be4b3.mp3?hdnea=exp=1790665591~acl=/api/1/1/f/1/5/0/f152d4afb75fae93e1f8702f2e6be4b3.mp3*~data=user_id=0,application_id=42~hmac=2a05924d64aa7b743647c62810c7b464cc40ab801131869e3fbc5ba109ef5e77",
-      "aliases": [
-            "too good"
-      ]
-    }),
-    song({
-      "id": "drake-what-did-i-miss",
-      "title": "What Did I Miss?",
-      "artistId": "drake",
-      "albumId": "iceman",
-      "year": 2026,
-      "genreIds": [
-            "hip-hop",
-            "rap",
-            "r-and-b"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/cccf5e9af10b6aae96f5cdd5a27c2aff/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/f/6/0/0/f60f4d4aa19d279c0a6a2d76d5a11261.mp3?hdnea=exp=1790665591~acl=/api/1/1/f/6/0/0/f60f4d4aa19d279c0a6a2d76d5a11261.mp3*~data=user_id=0,application_id=42~hmac=e627697a0f02ebabadbb3f3f7055f636c6a02c11567762d5864ea486b72069a0",
-      "aliases": [
-            "what did i miss?",
-            "what did i miss"
-      ]
-    }),
-    song({
-      "id": "drake-little-bit",
-      "title": "Little Bit",
-      "artistId": "drake",
-      "albumId": "so-far-gone",
-      "year": 2019,
-      "genreIds": [
-            "hip-hop",
-            "rap",
-            "r-and-b"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/55fb57cfe1b96220bc9688a1ede36bd4/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/3/d/e/0/3de4829d974b779ff335024125d83e01.mp3?hdnea=exp=1790665591~acl=/api/1/1/3/d/e/0/3de4829d974b779ff335024125d83e01.mp3*~data=user_id=0,application_id=42~hmac=689ca0d6890f2ccafdc74838c39567079a3bb95bb99234fcab5124867e363edf",
-      "aliases": [
-            "little bit"
-      ]
-    }),
-    song({
-      "id": "drake-first-person-shooter",
-      "title": "First Person Shooter",
-      "artistId": "drake",
-      "albumId": "for-all-the-dogs",
-      "year": 2023,
-      "genreIds": [
-            "hip-hop",
-            "rap",
-            "r-and-b"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/868162e87da67d647789ed7b6456840c/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/9/a/6/0/9a63d7a39b3dc0aa243acf3a6a928eb8.mp3?hdnea=exp=1790665591~acl=/api/1/1/9/a/6/0/9a63d7a39b3dc0aa243acf3a6a928eb8.mp3*~data=user_id=0,application_id=42~hmac=37cb67052223a59b1ea66dc9df5c6fc3e249bba43958e9d0479918e63233db05",
-      "aliases": [
-            "first person shooter"
-      ]
-    }),
-    song({
-      "id": "drake-ran-to-atlanta",
-      "title": "Ran To Atlanta",
-      "artistId": "drake",
-      "albumId": "iceman",
-      "year": 2026,
-      "genreIds": [
-            "hip-hop",
-            "rap",
-            "r-and-b"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/cccf5e9af10b6aae96f5cdd5a27c2aff/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/5/6/5/0/565ad8cd5f9fa975beac7bc92f4e50a2.mp3?hdnea=exp=1790665591~acl=/api/1/1/5/6/5/0/565ad8cd5f9fa975beac7bc92f4e50a2.mp3*~data=user_id=0,application_id=42~hmac=4ceef59723075f65ce5fbe77e74e5fa7b12ae912ee232ab2b8d5352fc43a9faa",
-      "aliases": [
-            "ran to atlanta"
-      ]
-    }),
-    song({
-      "id": "drake-way-2-sexy",
-      "title": "Way 2 Sexy",
+      "id": "drake-knife-talk",
+      "title": "Knife Talk (feat. 21 Savage & Project Pat)",
       "artistId": "drake",
       "albumId": "certified-lover-boy",
       "year": 2021,
@@ -5585,164 +6481,735 @@ export const seedCatalog = {
             "rap",
             "r-and-b"
       ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/ea8f80f2edb20885ac8aed8751716794/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/5/c/2/0/5c2748681a7c88bca3172d2ae2741892.mp3?hdnea=exp=1790665591~acl=/api/1/1/5/c/2/0/5c2748681a7c88bca3172d2ae2741892.mp3*~data=user_id=0,application_id=42~hmac=9824b0fb3dc7777de52d389ef3bedb47b09c039cfec29e17308a3f679bf1ac8a",
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/11/36/38/1136384a-eebc-697a-c005-d890e41c0854/21UM1IM07518.rgb.jpg/600x600bb.jpg",
+      "itunesTrackId": "1584281787",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/42/ce/b6/42ceb62a-3be2-c339-3cfd-776e69dcc65e/mzaf_6648789242742053507.plus.aac.p.m4a",
       "aliases": [
-            "way 2 sexy"
+            "knife talk (feat. 21 savage & project pat)",
+            "knife talk",
+            "knife talk feat 21 savage project pat"
       ]
     }),
     song({
-      "id": "jvke-this-is-what-falling-in-love-feels-like",
-      "title": "this is what falling in love feels like",
+      "id": "drake-for-free-1127957581",
+      "title": "For Free (feat. Drake)",
+      "artistId": "drake",
+      "albumId": "major-key",
+      "year": 2016,
+      "genreIds": [
+            "hip-hop",
+            "rap",
+            "r-and-b"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music124/v4/8a/a0/e9/8aa0e9e6-e0c8-2943-6dab-0dc78d2cc280/886445975840.jpg/600x600bb.jpg",
+      "itunesTrackId": "1127957581",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/9b/4d/85/9b4d8542-3e4f-1591-f9af-e3dbf6243e7d/mzaf_9635743591112292188.plus.aac.p.m4a",
+      "aliases": [
+            "for free (feat. drake)",
+            "for free",
+            "for free feat drake"
+      ]
+    }),
+    song({
+      "id": "drake-digital-girl-remix-feat-drake-kanye-west-the-dream",
+      "title": "Digital Girl (Remix) [feat. Drake, Kanye West & The-Dream]",
+      "artistId": "drake",
+      "albumId": "digital-girl-remix-feat-drake-kanye-west-the-dream-single",
+      "year": 2009,
+      "genreIds": [
+            "hip-hop",
+            "rap",
+            "r-and-b"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music/ee/29/f8/mzi.uzeksaky.jpg/600x600bb.jpg",
+      "itunesTrackId": "324916238",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/b6/1b/9a/b61b9a5a-d69d-ffb6-2b69-e10b22da33e1/mzaf_14664811215030323080.plus.aac.p.m4a",
+      "aliases": [
+            "digital girl (remix) [feat. drake, kanye west & the-dream]",
+            "digital girl remix feat drake kanye west thedream"
+      ]
+    }),
+    song({
+      "id": "drake-popstar",
+      "title": "POPSTAR (feat. Drake)",
+      "artistId": "drake",
+      "albumId": "popstar-feat-drake-single",
+      "year": 2020,
+      "genreIds": [
+            "hip-hop",
+            "rap",
+            "r-and-b"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/73/8c/64/738c6422-f3e6-c0ab-e073-87ca7c1d49f3/886448646310.jpg/600x600bb.jpg",
+      "itunesTrackId": "1523923824",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/2f/2d/cd/2f2dcda9-2349-c308-a8c7-0b9ca624fd30/mzaf_17915181718013333247.plus.aac.p.m4a",
+      "aliases": [
+            "popstar (feat. drake)",
+            "popstar",
+            "popstar feat drake"
+      ]
+    }),
+    song({
+      "id": "drake-tony-montana",
+      "title": "Tony Montana (feat. Drake)",
+      "artistId": "drake",
+      "albumId": "pluto-3d",
+      "year": 2011,
+      "genreIds": [
+            "hip-hop",
+            "rap",
+            "r-and-b"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music114/v4/75/82/5d/75825d28-9f34-bcbc-9fdf-86ec7931d9fe/886443728318.jpg/600x600bb.jpg",
+      "itunesTrackId": "573715609",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/71/fd/b6/71fdb6ee-f0c4-ffe0-9bf1-43b0d34dd44b/mzaf_9862839830031543442.plus.aac.p.m4a",
+      "aliases": [
+            "tony montana (feat. drake)",
+            "tony montana",
+            "tony montana feat drake"
+      ]
+    }),
+    song({
+      "id": "drake-rich-flex",
+      "title": "Rich Flex",
+      "artistId": "drake",
+      "albumId": "her-loss",
+      "year": 2022,
+      "genreIds": [
+            "hip-hop",
+            "rap",
+            "r-and-b"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music112/v4/c7/00/3f/c7003f83-3a43-1201-4aec-41be71ba64c5/22UM1IM29131.rgb.jpg/600x600bb.jpg",
+      "itunesTrackId": "1652999417",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/66/9c/53/669c53a6-14e2-6ffa-4c6a-410e8a8ecec9/mzaf_13540301130010907146.plus.aac.p.m4a",
+      "aliases": [
+            "rich flex"
+      ]
+    }),
+    song({
+      "id": "drake-jimmy-cooks",
+      "title": "Jimmy Cooks (feat. 21 Savage)",
+      "artistId": "drake",
+      "albumId": "honestly-nevermind",
+      "year": 2022,
+      "genreIds": [
+            "hip-hop",
+            "rap",
+            "r-and-b"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music122/v4/84/2c/b4/842cb419-243c-b3f4-4da9-b6b980996062/22UMGIM67371.rgb.jpg/600x600bb.jpg",
+      "itunesTrackId": "1630231297",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/5f/a8/51/5fa851df-ed7d-30f5-3914-3ad816e4fe39/mzaf_17292481549578259763.plus.aac.p.m4a",
+      "aliases": [
+            "jimmy cooks (feat. 21 savage)",
+            "jimmy cooks",
+            "jimmy cooks feat 21 savage"
+      ]
+    }),
+    song({
+      "id": "drake-celebration",
+      "title": "Celebration (feat. Drake)",
+      "artistId": "drake",
+      "albumId": "now-or-never-deluxe-version",
+      "year": 2010,
+      "genreIds": [
+            "hip-hop",
+            "rap",
+            "r-and-b"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music/09/3e/c3/mzi.vuqaqfxh.jpg/600x600bb.jpg",
+      "itunesTrackId": "407880061",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/ba/88/b4/ba88b40b-a88b-ed7e-48d5-106371243c1c/mzaf_17710886417998018705.plus.aac.p.m4a",
+      "aliases": [
+            "celebration (feat. drake)",
+            "celebration",
+            "celebration feat drake"
+      ]
+    }),
+    song({
+      "id": "drake-no-guidance",
+      "title": "No Guidance (feat. Drake)",
+      "artistId": "drake",
+      "albumId": "indigo",
+      "year": 2019,
+      "genreIds": [
+            "hip-hop",
+            "rap",
+            "r-and-b"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/6d/73/b7/6d73b73e-dc59-cb79-8322-39842a57aa93/886447789421.jpg/600x600bb.jpg",
+      "itunesTrackId": "1466877495",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/c9/23/7f/c9237f24-7cfd-c458-94b6-97535484cf6e/mzaf_17400412453410090843.plus.aac.p.m4a",
+      "aliases": [
+            "no guidance (feat. drake)",
+            "no guidance",
+            "no guidance feat drake"
+      ]
+    }),
+    song({
+      "id": "drake-we-in-this-15",
+      "title": "We in This 1.5 (feat. Drake & Future)",
+      "artistId": "drake",
+      "albumId": "we-in-this-15-feat-drake-future-single",
+      "year": 2012,
+      "genreIds": [
+            "hip-hop",
+            "rap",
+            "r-and-b"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music/v4/5f/0f/15/5f0f1589-dd0a-1c00-b6b0-8ea53b7f708d/DRAMA_WEINTHIS_DIRTY.jpg/600x600bb.jpg",
+      "itunesTrackId": "558977088",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview125/v4/0f/90/31/0f90319d-91c6-f19e-7698-809dad33392f/mzaf_3091812209421520030.plus.aac.p.m4a",
+      "aliases": [
+            "we in this 1.5 (feat. drake & future)",
+            "we in this 1.5",
+            "we in this 15 feat drake future",
+            "we in this 15"
+      ]
+    }),
+    song({
+      "id": "drake-back-on-road",
+      "title": "Back On Road",
+      "artistId": "drake",
+      "albumId": "everybody-looking-deluxe",
+      "year": 2016,
+      "genreIds": [
+            "hip-hop",
+            "rap",
+            "r-and-b"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music60/v4/b8/52/e8/b852e8bb-937c-81ce-ae70-4f6a8215fa11/075679906618.jpg/600x600bb.jpg",
+      "itunesTrackId": "1135576239",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/4b/ad/de/4badded5-860d-449a-d078-c783b321b09e/mzaf_9151105678072936280.plus.aac.p.m4a",
+      "aliases": [
+            "back on road"
+      ]
+    }),
+    song({
+      "id": "drake-no-stylist",
+      "title": "No Stylist (feat. Drake)",
+      "artistId": "drake",
+      "albumId": "no-stylist-feat-drake-single",
+      "year": 2018,
+      "genreIds": [
+            "hip-hop",
+            "rap",
+            "r-and-b"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music118/v4/d4/03/ea/d403eac9-c6e5-7ae4-f51a-e50290ea90e3/886447310977.jpg/600x600bb.jpg",
+      "itunesTrackId": "1436807984",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview128/v4/20/2f/89/202f89a3-359a-cfd1-52b8-af4ff5ea90a4/mzaf_6272467499565951851.plus.aac.p.m4a",
+      "aliases": [
+            "no stylist (feat. drake)",
+            "no stylist",
+            "no stylist feat drake"
+      ]
+    }),
+    song({
+      "id": "drake-no-guns-allowed",
+      "title": "No Guns Allowed (feat. Cori B & Drake)",
+      "artistId": "drake",
+      "albumId": "reincarnated-deluxe-version",
+      "year": 2013,
+      "genreIds": [
+            "hip-hop",
+            "rap",
+            "r-and-b"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music124/v4/75/a3/5f/75a35fb4-b435-18c7-f311-65722b468841/886443932104.jpg/600x600bb.jpg",
+      "itunesTrackId": "624887971",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/6e/81/17/6e8117d8-8788-a0de-a2ee-bf22059741ab/mzaf_5794105006775880937.plus.aac.p.m4a",
+      "aliases": [
+            "no guns allowed (feat. cori b & drake)",
+            "no guns allowed",
+            "no guns allowed feat cori b drake"
+      ]
+    }),
+    song({
+      "id": "drake-to-the-max",
+      "title": "To the Max (feat. Drake)",
+      "artistId": "drake",
+      "albumId": "grateful",
+      "year": 2017,
+      "genreIds": [
+            "hip-hop",
+            "rap",
+            "r-and-b"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/03/5d/32/035d32e9-6fdb-8f08-daf0-c2f208128d06/886446550695.jpg/600x600bb.jpg",
+      "itunesTrackId": "1244230125",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/47/1c/fe/471cfe72-1537-92ac-5a01-f3e1c9073381/mzaf_2247453585595223338.plus.aac.p.m4a",
+      "aliases": [
+            "to the max (feat. drake)",
+            "to the max",
+            "to the max feat drake"
+      ]
+    }),
+    song({
+      "id": "drake-toosie-slide",
+      "title": "Toosie Slide",
+      "artistId": "drake",
+      "albumId": "toosie-slide-single",
+      "year": 2020,
+      "genreIds": [
+            "hip-hop",
+            "rap",
+            "r-and-b"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music125/v4/77/12/f8/7712f8c6-4fb9-e8ef-fd3c-f46877bfbfa4/20UMGIM25453.rgb.jpg/600x600bb.jpg",
+      "itunesTrackId": "1505943432",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/12/38/26/123826ad-b6d8-b9d2-effd-78af1f5b5c9b/mzaf_2519002002001797457.plus.aac.p.m4a",
+      "aliases": [
+            "toosie slide"
+      ]
+    }),
+    song({
+      "id": "drake-toosie-slide-1511037391",
+      "title": "Toosie Slide",
+      "artistId": "drake",
+      "albumId": "dark-lane-demo-tapes",
+      "year": 2020,
+      "genreIds": [
+            "hip-hop",
+            "rap",
+            "r-and-b"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/a7/36/f6/a736f61f-1a51-e955-78b2-9585bd5849cb/20UMGIM34466.rgb.jpg/600x600bb.jpg",
+      "itunesTrackId": "1511037391",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/53/48/58/534858e6-2c63-375d-00a1-56d57006a7ca/mzaf_16955135253057020920.plus.aac.p.m4a",
+      "aliases": [
+            "toosie slide"
+      ]
+    }),
+    song({
+      "id": "drake-seeing-green",
+      "title": "Seeing Green",
+      "artistId": "drake",
+      "albumId": "beam-me-up-scotty-remastered",
+      "year": 2021,
+      "genreIds": [
+            "hip-hop",
+            "rap",
+            "r-and-b"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music125/v4/c0/e4/b6/c0e4b6ff-a92c-4886-5135-56d013a4bc3a/21UMGIM42530.rgb.jpg/600x600bb.jpg",
+      "itunesTrackId": "1567455269",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/73/5d/10/735d10e7-7588-7822-0420-c747b7d88f70/mzaf_2572993301604474488.plus.aac.p.m4a",
+      "aliases": [
+            "seeing green"
+      ]
+    }),
+    song({
+      "id": "drake-lemon-drake-remix",
+      "title": "Lemon (feat. Drake) [Drake Remix]",
+      "artistId": "drake",
+      "albumId": "lemon-feat-drake-drake-remix-single",
+      "year": 2018,
+      "genreIds": [
+            "hip-hop",
+            "rap",
+            "r-and-b"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music124/v4/d7/8b/07/d78b07f7-6b95-8dcc-2486-fe38102c01d4/886447023662.jpg/600x600bb.jpg",
+      "itunesTrackId": "1358772954",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/dc/b7/eb/dcb7ebb1-cd2b-70bf-9d3a-dee488e39e9c/mzaf_11206100562832624833.plus.aac.p.m4a",
+      "aliases": [
+            "lemon (feat. drake) [drake remix]",
+            "lemon [drake remix]",
+            "lemon feat drake drake remix",
+            "lemon drake remix"
+      ]
+    }),
+    song({
+      "id": "drake-wants-and-needs",
+      "title": "Wants and Needs (feat. Lil Baby)",
+      "artistId": "drake",
+      "albumId": "scary-hours-2",
+      "year": 2021,
+      "genreIds": [
+            "hip-hop",
+            "rap",
+            "r-and-b"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music125/v4/63/2a/34/632a3488-d104-3ff1-dc02-4ed86f58ed05/21UMGIM18577.rgb.jpg/600x600bb.jpg",
+      "itunesTrackId": "1556670532",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/8f/f5/f3/8ff5f38f-5803-212f-2edf-29865316646b/mzaf_9094270342036499562.plus.aac.p.m4a",
+      "aliases": [
+            "wants and needs (feat. lil baby)",
+            "wants and needs",
+            "wants and needs feat lil baby"
+      ]
+    }),
+    song({
+      "id": "drake-fkin-problems",
+      "title": "F**kin' Problems (feat. Drake, 2 Chainz & Kendrick Lamar)",
+      "artistId": "drake",
+      "albumId": "longliveaap",
+      "year": 2012,
+      "genreIds": [
+            "hip-hop",
+            "rap",
+            "r-and-b"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music/v4/50/b3/9d/50b39db3-0922-2863-37aa-37b9a47f7ad7/886443325524.jpg/600x600bb.jpg",
+      "itunesTrackId": "581997286",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview125/v4/a4/f3/ae/a4f3ae59-7a9a-2dc4-663b-a5218f169c59/mzaf_7727692306135666936.plus.aac.p.m4a",
+      "aliases": [
+            "f**kin' problems (feat. drake, 2 chainz & kendrick lamar)",
+            "f**kin' problems",
+            "fkin problems feat drake 2 chainz kendrick lamar",
+            "fkin problems"
+      ]
+    }),
+    song({
+      "id": "drake-hold-on-were-going-home",
+      "title": "Hold On, We're Going Home (feat. Majid Jordan)",
+      "artistId": "drake",
+      "albumId": "nothing-was-the-same-deluxe",
+      "year": 2013,
+      "genreIds": [
+            "hip-hop",
+            "rap",
+            "r-and-b"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/51/61/f3/5161f3c4-2292-f035-eb68-6f95bbc9edd6/00602537542338.rgb.jpg/600x600bb.jpg",
+      "itunesTrackId": "1440829630",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/6a/29/77/6a29774b-1cde-2a24-c9a7-7b69c5dff602/mzaf_13454693018547391187.plus.aac.p.m4a",
+      "aliases": [
+            "hold on, we're going home (feat. majid jordan)",
+            "hold on, we're going home",
+            "hold on were going home feat majid jordan",
+            "hold on were going home"
+      ]
+    }),
+    song({
+      "id": "drake-one-dance",
+      "title": "One Dance (feat. Wizkid & Kyla)",
+      "artistId": "drake",
+      "albumId": "views",
+      "year": 2016,
+      "genreIds": [
+            "hip-hop",
+            "rap",
+            "r-and-b"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/f2/0d/8b/f20d8bff-a927-ae98-6784-20a1f51cb23e/16UMGIM27642.rgb.jpg/600x600bb.jpg",
+      "itunesTrackId": "1440841384",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/cb/ee/e3/cbeee354-21e5-2c44-daeb-bcd95e26fe6a/mzaf_5204581280747289469.plus.aac.p.m4a",
+      "aliases": [
+            "one dance (feat. wizkid & kyla)",
+            "one dance",
+            "one dance feat wizkid kyla"
+      ]
+    }),
+    song({
+      "id": "drake-where-ya-at-1017070161",
+      "title": "Where Ya At (feat. Drake)",
+      "artistId": "drake",
+      "albumId": "ds2",
+      "year": 2015,
+      "genreIds": [
+            "hip-hop",
+            "rap",
+            "r-and-b"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/00/89/5e/00895ec1-5731-56ff-b869-7b5aea7a5a06/886445325768.jpg/600x600bb.jpg",
+      "itunesTrackId": "1017070161",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/ed/94/d5/ed94d5e1-2a12-02c3-895c-855a532955d7/mzaf_2186655925278920572.plus.aac.p.m4a",
+      "aliases": [
+            "where ya at (feat. drake)",
+            "where ya at",
+            "where ya at feat drake"
+      ]
+    }),
+    song({
+      "id": "jvke-this-is-what-heartbreak-feels-like",
+      "title": "this is what heartbreak feels like",
       "artistId": "jvke",
-      "albumId": "this-is-what-falling-in-love-feels-like-554hz",
+      "albumId": "this-is-what-heartbreak-feels-like-single",
       "year": 2022,
       "genreIds": [
             "pop"
       ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/845eff477946539849c7291510d61daf/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/f/0/7/0/f07bf5cec4253a10c3918f48123a8bbe.mp3?hdnea=exp=1790665597~acl=/api/1/1/f/0/7/0/f07bf5cec4253a10c3918f48123a8bbe.mp3*~data=user_id=0,application_id=42~hmac=0a8205afff904a753807aa97b446e3508cb6db6ab2f77131d09cb403f39727fe",
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music116/v4/0a/02/7f/0a027f39-2abe-432a-e5d6-bfe6635ba254/5056167171577_1.jpg/600x600bb.jpg",
+      "itunesTrackId": "1613552734",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/04/f7/34/04f73400-6ffb-de14-bd05-59044df265c2/mzaf_12365859698983843194.plus.aac.p.m4a",
       "aliases": [
-            "this is what falling in love feels like"
+            "this is what heartbreak feels like"
+      ]
+    }),
+    song({
+      "id": "jvke-golden-hour",
+      "title": "golden hour",
+      "artistId": "jvke",
+      "albumId": "this-is-what-falling-in-love-feels-like-554hz-single",
+      "year": 2022,
+      "genreIds": [
+            "pop"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music122/v4/33/9d/f2/339df25b-1f4c-2715-bc07-eb9c144c96ba/5056167176534_1.jpg/600x600bb.jpg",
+      "itunesTrackId": "1645425554",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/0c/37/d2/0c37d254-ee5b-9dfc-806d-e1a233830e61/mzaf_794829248015398789.plus.aac.p.m4a",
+      "aliases": [
+            "golden hour"
       ]
     }),
     song({
       "id": "jvke-her",
       "title": "her",
       "artistId": "jvke",
-      "albumId": "her",
+      "albumId": "her-single",
       "year": 2024,
       "genreIds": [
             "pop"
       ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/66b9e13e53ca95c833c4fad5029bf434/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/a/8/1/0/a81f854e9421507f7738f72e3f59c57d.mp3?hdnea=exp=1790665597~acl=/api/1/1/a/8/1/0/a81f854e9421507f7738f72e3f59c57d.mp3*~data=user_id=0,application_id=42~hmac=8c06589538f7fb25abed9515eecf2d9d4be03d53f20d5c75ef310067a52685d8",
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/9c/0c/88/9c0c883c-0901-60a1-8f4b-6a96c36be366/198846140360.jpg/600x600bb.jpg",
+      "itunesTrackId": "1764940884",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/e3/20/68/e3206897-c043-0e44-0909-cf6bd75c17df/mzaf_9868200905441748258.plus.aac.p.m4a",
       "aliases": [
             "her"
       ]
     }),
     song({
-      "id": "jvke-this-is-what-falling-in-love-feels-like-leon-leiden-remix",
-      "title": "this is what falling in love feels like (Leon Leiden Remix)",
+      "id": "jvke-this-is-what-falling-in-love-feels-like",
+      "title": "this is what falling in love feels like",
       "artistId": "jvke",
-      "albumId": "this-is-what-falling-in-love-feels-like-leon-leiden-remix",
-      "year": 2022,
+      "albumId": "this-is-what-falling-in-love-feels-like-single",
+      "year": 2021,
       "genreIds": [
             "pop"
       ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/b69c55d0c4b786a8efb97daa0aa5ae6c/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/d/1/3/0/d13b09b75cd0a6e98eb1eeefaecaf8b5.mp3?hdnea=exp=1790665597~acl=/api/1/1/d/1/3/0/d13b09b75cd0a6e98eb1eeefaecaf8b5.mp3*~data=user_id=0,application_id=42~hmac=46cb233665ce345c1d4e0a66ce67124a5a10b60025ff39046570ceb8386df53c",
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/0f/6b/0d/0f6b0d9e-686c-9cca-ae0b-442f649224ac/5056167166535_1.jpg/600x600bb.jpg",
+      "itunesTrackId": "1582691808",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/23/28/c7/2328c7a9-24fe-7bab-8024-c8c67828164b/mzaf_7087381778902583194.plus.aac.p.m4a",
       "aliases": [
-            "this is what falling in love feels like (leon leiden remix)",
-            "this is what falling in love feels like",
-            "this is what falling in love feels like leon leiden remix"
-      ]
-    }),
-    song({
-      "id": "jvke-a-thousand-years",
-      "title": "A Thousand Years",
-      "artistId": "jvke",
-      "albumId": "a-thousand-years",
-      "year": 2026,
-      "genreIds": [
-            "pop"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/f1b759c0179e74fcc8f87070458c7827/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/9/1/c/0/91c610a84eeb165d77368ec15b43fc44.mp3?hdnea=exp=1790665597~acl=/api/1/1/9/1/c/0/91c610a84eeb165d77368ec15b43fc44.mp3*~data=user_id=0,application_id=42~hmac=73460d363be58fe05f69e751f307bf5c772a14d92def91c6393753f223202d6c",
-      "aliases": [
-            "a thousand years"
-      ]
-    }),
-    song({
-      "id": "jvke-golden-hour-leon-leiden-remix",
-      "title": "golden hour (Leon Leiden Remix)",
-      "artistId": "jvke",
-      "albumId": "golden-hour-leon-leiden-remix",
-      "year": 2023,
-      "genreIds": [
-            "pop"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/5c01dcb78005bee09bd0177d20c10efe/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/e/9/2/0/e926b6e1e4fe3cfb5e27aed858a40758.mp3?hdnea=exp=1790665597~acl=/api/1/1/e/9/2/0/e926b6e1e4fe3cfb5e27aed858a40758.mp3*~data=user_id=0,application_id=42~hmac=a674ca424dbb56541c9018773fa10c20ea02bb84ea72278375ba9f9b46e25895",
-      "aliases": [
-            "golden hour (leon leiden remix)",
-            "golden hour",
-            "golden hour leon leiden remix"
-      ]
-    }),
-    song({
-      "id": "jvke-her-4015232221",
-      "title": "her (feat. Leon Leiden & Macario Martínez)",
-      "artistId": "jvke",
-      "albumId": "her-feat-leon-leiden-macario-martinez",
-      "year": 2026,
-      "genreIds": [
-            "pop"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/eda7f7f8af9d23968515387835812edf/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/5/9/4/0/5941a180e2db3969fce42d7b414f433e.mp3?hdnea=exp=1790665597~acl=/api/1/1/5/9/4/0/5941a180e2db3969fce42d7b414f433e.mp3*~data=user_id=0,application_id=42~hmac=d52d0ffc6aac0445febb59eb64842872298dd16ec44f287e49ce32e56770cb1c",
-      "aliases": [
-            "her (feat. leon leiden & macario martínez)",
-            "her",
-            "her feat leon leiden macario martínez"
+            "this is what falling in love feels like"
       ]
     }),
     song({
       "id": "jvke-this-is-what-autumn-feels-like",
       "title": "this is what autumn feels like",
       "artistId": "jvke",
-      "albumId": "this-is-what-autumn-feels-like",
+      "albumId": "this-is-what-autumn-feels-like-single",
       "year": 2023,
       "genreIds": [
             "pop"
       ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/68ea4f015ec09acb45930000906ae240/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/0/3/3/0/033644616f4d40741b6b7becca7c1c83.mp3?hdnea=exp=1790665597~acl=/api/1/1/0/3/3/0/033644616f4d40741b6b7becca7c1c83.mp3*~data=user_id=0,application_id=42~hmac=2236baba9e66a25f6caed719543d6cefdc2302180f15899272a9ac6b67ce6826",
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music116/v4/24/ec/59/24ec5968-5ed9-23a6-85d5-c892c7250a8a/197189899157.jpg/600x600bb.jpg",
+      "itunesTrackId": "1706572064",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/99/91/84/99918437-5e2e-c94e-d3e4-559d13df9fe7/mzaf_11041178831094481022.plus.aac.p.m4a",
       "aliases": [
             "this is what autumn feels like"
       ]
     }),
     song({
-      "id": "jvke-juliet",
-      "title": "juliet",
+      "id": "jvke-this-is-what-winter-feels-like",
+      "title": "this is what winter feels like",
       "artistId": "jvke",
-      "albumId": "juliet",
-      "year": 2026,
+      "albumId": "this-is-what-winter-feels-like-single",
+      "year": 2024,
       "genreIds": [
             "pop"
       ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/1ca0283b6db61faeaab2bdc9fc636097/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/c/8/7/0/c87f0de3deffe182132099bf1553ed35.mp3?hdnea=exp=1790665597~acl=/api/1/1/c/8/7/0/c87f0de3deffe182132099bf1553ed35.mp3*~data=user_id=0,application_id=42~hmac=34438b0828cc5d7fd2aea3b0dc34c36ff06d052dafb765b9a7b8d36fbb26ca8a",
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music126/v4/4d/eb/ea/4debeafa-bf39-6673-29b5-23145c024de8/197190797046.jpg/600x600bb.jpg",
+      "itunesTrackId": "1724478152",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/51/86/38/51863885-ab0a-aea5-f6e9-120d17f1be46/mzaf_2228469718239519600.plus.aac.p.m4a",
       "aliases": [
-            "juliet"
+            "this is what winter feels like"
       ]
     }),
     song({
       "id": "jvke-this-is-what-space-feels-like",
       "title": "this is what space feels like",
       "artistId": "jvke",
-      "albumId": "this-is-what-space-feels-like",
+      "albumId": "this-is-what-space-feels-like-single",
       "year": 2023,
       "genreIds": [
             "pop"
       ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/0350d6572df5c56a98fb434649652caf/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/1/5/3/0/1531fd06e70e060b589961dcb5ccd3a5.mp3?hdnea=exp=1790665597~acl=/api/1/1/1/5/3/0/1531fd06e70e060b589961dcb5ccd3a5.mp3*~data=user_id=0,application_id=42~hmac=eeca2ba8dfb90891bdfcbf8c7be7bfb2af7ecd422573e35d0aa7176ba900b452",
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music116/v4/f7/c3/e7/f7c3e778-f4ae-f42f-a875-9762e084165f/197189968631.jpg/600x600bb.jpg",
+      "itunesTrackId": "1707404623",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/60/3e/6c/603e6c20-1cd2-1f37-9237-90b1121f78b5/mzaf_13853842830833549447.plus.aac.p.m4a",
       "aliases": [
             "this is what space feels like"
       ]
     }),
     song({
-      "id": "jvke-her-3648021022",
-      "title": "her (feat. Annika Wells)",
+      "id": "jvke-next-to-you",
+      "title": "next to you",
       "artistId": "jvke",
-      "albumId": "her-feat-annika-wells",
+      "albumId": "next-to-you-single",
+      "year": 2024,
+      "genreIds": [
+            "pop"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/46/6f/42/466f4205-6844-4e00-dd97-3d8733998f7f/198846714318.jpg/600x600bb.jpg",
+      "itunesTrackId": "1774862205",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/7f/41/84/7f418458-ab0e-0fe1-3218-5e741c579955/mzaf_357205006288921390.plus.aac.p.m4a",
+      "aliases": [
+            "next to you"
+      ]
+    }),
+    song({
+      "id": "jvke-pretty",
+      "title": "pretty",
+      "artistId": "jvke",
+      "albumId": "pretty-single",
       "year": 2025,
       "genreIds": [
             "pop"
       ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/ac7846047e4502363f2bc4a878aa8705/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/4/2/7/0/4272a26feda9ad61c697bc94ed623478.mp3?hdnea=exp=1790665597~acl=/api/1/1/4/2/7/0/4272a26feda9ad61c697bc94ed623478.mp3*~data=user_id=0,application_id=42~hmac=d72b738c6ea7d478c46ac85b37b5f40f4b56df140b05bad58d08775a3ee2bee7",
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/d6/f5/97/d6f59722-3bd9-aaf8-1ac6-ffd6709d049d/199066778128.jpg/600x600bb.jpg",
+      "itunesTrackId": "1796262634",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/82/2f/71/822f7108-b867-9ac7-ed6c-b376f692a3e8/mzaf_5371073073296748110.plus.aac.p.m4a",
+      "aliases": [
+            "pretty"
+      ]
+    }),
+    song({
+      "id": "jvke-this-is-what-forever-feels-like",
+      "title": "this is what forever feels like",
+      "artistId": "jvke",
+      "albumId": "this-is-what-forever-feels-like-single",
+      "year": 2024,
+      "genreIds": [
+            "pop"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/70/00/8f/70008f27-39e2-bed5-75bd-03ba7a3ef339/24UMGIM96359.rgb.jpg/600x600bb.jpg",
+      "itunesTrackId": "1767033098",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/26/0d/e3/260de30b-f159-ef0c-8eb4-8875d595c45c/mzaf_12655986924825883030.plus.aac.p.m4a",
+      "aliases": [
+            "this is what forever feels like"
+      ]
+    }),
+    song({
+      "id": "jvke-this-is-what-losing-someone-feels-like",
+      "title": "this is what losing someone feels like",
+      "artistId": "jvke",
+      "albumId": "this-is-what-losing-someone-feels-like-single",
+      "year": 2023,
+      "genreIds": [
+            "pop"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music116/v4/fa/f1/cd/faf1cd7c-9e3d-ddf4-8e26-e279fecae59a/197188326906.jpg/600x600bb.jpg",
+      "itunesTrackId": "1676164761",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/3e/af/dd/3eafdd6f-557d-0a4b-fa5d-fa137b82be64/mzaf_4449160098405444934.plus.aac.p.m4a",
+      "aliases": [
+            "this is what losing someone feels like"
+      ]
+    }),
+    song({
+      "id": "jvke-upside-down",
+      "title": "Upside Down",
+      "artistId": "jvke",
+      "albumId": "upside-down-single",
+      "year": 2020,
+      "genreIds": [
+            "pop"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/8e/c2/f0/8ec2f0cf-ea75-cd59-a14c-259632c0c31e/193436230483_01_img001.jpg/600x600bb.jpg",
+      "itunesTrackId": "1528042362",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/9b/99/5b/9b995b98-8761-31e4-7489-985d6f2fbe85/mzaf_5714591490065863628.plus.aac.p.m4a",
+      "aliases": [
+            "upside down"
+      ]
+    }),
+    song({
+      "id": "jvke-moon-and-back",
+      "title": "moon and back",
+      "artistId": "jvke",
+      "albumId": "this-is-what-____-feels-like-vol-1-4",
+      "year": 2022,
+      "genreIds": [
+            "pop"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/8d/1a/7b/8d1a7b44-316f-7c7f-4380-935673fb697a/5056167175650.jpg/600x600bb.jpg",
+      "itunesTrackId": "1640157153",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/b8/15/48/b8154880-ae33-85d4-9d15-f9da1488c425/mzaf_3381325006672748284.plus.aac.p.m4a",
+      "aliases": [
+            "moon and back"
+      ]
+    }),
+    song({
+      "id": "jvke-im-not-okay",
+      "title": "i'm not okay",
+      "artistId": "jvke",
+      "albumId": "this-is-what-____-feels-like-vol-1-4",
+      "year": 2022,
+      "genreIds": [
+            "pop"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/8d/1a/7b/8d1a7b44-316f-7c7f-4380-935673fb697a/5056167175650.jpg/600x600bb.jpg",
+      "itunesTrackId": "1640157415",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/4c/2a/90/4c2a90c3-11dc-64b0-c76e-9b562fe11313/mzaf_13525756762039636490.plus.aac.p.m4a",
+      "aliases": [
+            "i'm not okay",
+            "im not okay"
+      ]
+    }),
+    song({
+      "id": "jvke-butterflies",
+      "title": "butterflies (feat. TAEHYUN & KIM CHAEWON)",
+      "artistId": "jvke",
+      "albumId": "butterflies-feat-taehyun-kim-chaewon-single",
+      "year": 2025,
+      "genreIds": [
+            "pop"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/92/43/14/924314e9-d8ab-5d1e-e973-7e8759423761/5034644795249.jpg/600x600bb.jpg",
+      "itunesTrackId": "1822894499",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/11/7d/b5/117db50d-0374-b038-7604-625813f29e21/mzaf_8842658850481002732.plus.aac.p.m4a",
+      "aliases": [
+            "butterflies (feat. taehyun & kim chaewon)",
+            "butterflies",
+            "butterflies feat taehyun kim chaewon"
+      ]
+    }),
+    song({
+      "id": "jvke-this-is-what-sadness-feels-like",
+      "title": "this is what sadness feels like",
+      "artistId": "jvke",
+      "albumId": "this-is-what-____-feels-like-vol-1-4",
+      "year": 2022,
+      "genreIds": [
+            "pop"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/8d/1a/7b/8d1a7b44-316f-7c7f-4380-935673fb697a/5056167175650.jpg/600x600bb.jpg",
+      "itunesTrackId": "1640157426",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/6a/22/29/6a222916-0210-2788-b659-28cafd7c99b8/mzaf_15480075933777068506.plus.aac.p.m4a",
+      "aliases": [
+            "this is what sadness feels like"
+      ]
+    }),
+    song({
+      "id": "jvke-wonder-if-she-loves-me",
+      "title": "wonder if she loves me",
+      "artistId": "jvke",
+      "albumId": "this-is-what-____-feels-like-vol-1-4",
+      "year": 2022,
+      "genreIds": [
+            "pop"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/8d/1a/7b/8d1a7b44-316f-7c7f-4380-935673fb697a/5056167175650.jpg/600x600bb.jpg",
+      "itunesTrackId": "1640157430",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/3f/57/d0/3f57d0d6-4249-c5bc-d8b7-eb1eff918074/mzaf_17510943636064751832.plus.aac.p.m4a",
+      "aliases": [
+            "wonder if she loves me"
+      ]
+    }),
+    song({
+      "id": "jvke-her-1852033947",
+      "title": "her (feat. Annika Wells)",
+      "artistId": "jvke",
+      "albumId": "her-feat-annika-wells-single",
+      "year": 2025,
+      "genreIds": [
+            "pop"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/0e/ef/b3/0eefb350-1a8e-10de-0fbc-c39774aabda0/199806412749.jpg/600x600bb.jpg",
+      "itunesTrackId": "1852033947",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/72/d5/bc/72d5bc82-86be-d6aa-1117-defe6b7f6fd8/mzaf_15956218593939766908.plus.aac.p.m4a",
       "aliases": [
             "her (feat. annika wells)",
             "her",
@@ -5750,392 +7217,118 @@ export const seedCatalog = {
       ]
     }),
     song({
-      "id": "jvke-made-for-me",
-      "title": "made for me",
+      "id": "jvke-upside-down-1537392037",
+      "title": "Upside Down (feat. Charlie Puth)",
       "artistId": "jvke",
-      "albumId": "made-for-me",
-      "year": 2026,
-      "genreIds": [
-            "pop"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/a9b7a4e2b1bd8c0457c402be41d6e211/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/9/1/3/0/91305571fe9f704d359980316a7b1e70.mp3?hdnea=exp=1790665597~acl=/api/1/1/9/1/3/0/91305571fe9f704d359980316a7b1e70.mp3*~data=user_id=0,application_id=42~hmac=bbf60ec50fc5083a0909a26fa6be78d50a3361c8e53fc18a3e827dec664aa506",
-      "aliases": [
-            "made for me"
-      ]
-    }),
-    song({
-      "id": "jvke-hero",
-      "title": "Hero",
-      "artistId": "jvke",
-      "albumId": "hero",
-      "year": 2022,
-      "genreIds": [
-            "pop"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/7e35e29d49f6013b0f30ea3366cb2c6f/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/3/0/0/0/300184cb534b5113d35dec8621c25b3f.mp3?hdnea=exp=1790665597~acl=/api/1/1/3/0/0/0/300184cb534b5113d35dec8621c25b3f.mp3*~data=user_id=0,application_id=42~hmac=48f7002048c75cf40f67050dbca0076ff8ac1944aa6d26174b2cfea9fcd97632",
-      "aliases": [
-            "hero"
-      ]
-    }),
-    song({
-      "id": "jvke-this-is-what-winter-feels-like",
-      "title": "this is what winter feels like",
-      "artistId": "jvke",
-      "albumId": "this-is-what-winter-feels-like",
-      "year": 2024,
-      "genreIds": [
-            "pop"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/5afc34bba9c511e0179d65c609879211/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/9/7/a/0/97a7d61871b60b3f67b11b372e55abcc.mp3?hdnea=exp=1790665597~acl=/api/1/1/9/7/a/0/97a7d61871b60b3f67b11b372e55abcc.mp3*~data=user_id=0,application_id=42~hmac=51aa811e1cce7f23e4daccd10beafe957b6cd37aa2a762f43b5b538db3811b2e",
-      "aliases": [
-            "this is what winter feels like"
-      ]
-    }),
-    song({
-      "id": "jvke-butterflies",
-      "title": "butterflies (feat. TAEHYUN of TOMORROW X TOGETHER & Kim Chaewon of LE SSERAFIM)",
-      "artistId": "jvke",
-      "albumId": "butterflies-feat-taehyun-of-tomorrow-x-together-kim-chaewon-of-le-sserafim",
-      "year": 2025,
-      "genreIds": [
-            "pop"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/f3629674b8a53c5c27fa6c06291bd725/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/0/c/b/0/0cb5ef13ce838fac609ec577ce9bdd04.mp3?hdnea=exp=1790665597~acl=/api/1/1/0/c/b/0/0cb5ef13ce838fac609ec577ce9bdd04.mp3*~data=user_id=0,application_id=42~hmac=34f2f1fc47edc2b4210868c71f1fe6cb8bfbf38e159b449587ae24389a41b1c1",
-      "aliases": [
-            "butterflies (feat. taehyun of tomorrow x together & kim chaewon of le sserafim)",
-            "butterflies",
-            "butterflies feat taehyun of tomorrow x together kim chaewon of le sserafim"
-      ]
-    }),
-    song({
-      "id": "jvke-upside-down",
-      "title": "Upside Down",
-      "artistId": "jvke",
-      "albumId": "upside-down",
+      "albumId": "upside-down-feat-charlie-puth-single",
       "year": 2020,
       "genreIds": [
             "pop"
       ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/880433d7a3959661c4d3604390463855/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/6/0/2/0/60231f086f10ca2ad03133b631451feb.mp3?hdnea=exp=1790665597~acl=/api/1/1/6/0/2/0/60231f086f10ca2ad03133b631451feb.mp3*~data=user_id=0,application_id=42~hmac=bff9f6d8a8efc9e1c08e6a5c1ae9265f23c68b56473a6921af52f8b0b2f8cffa",
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music114/v4/72/ca/d7/72cad76c-5499-7098-0e53-5931cd3b6ee9/075679797384.jpg/600x600bb.jpg",
+      "itunesTrackId": "1537392037",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview112/v4/8e/48/11/8e481100-cbdb-7364-43bf-6652aa84e7fe/mzaf_12384018199898078083.plus.aac.p.m4a",
       "aliases": [
-            "upside down"
+            "upside down (feat. charlie puth)",
+            "upside down",
+            "upside down feat charlie puth"
       ]
     }),
     song({
-      "id": "jvke-this-is-what-heartbreak-feels-like",
-      "title": "this is what heartbreak feels like",
+      "id": "jvke-golden-hour-1640157165",
+      "title": "golden hour",
       "artistId": "jvke",
-      "albumId": "this-is-what-heartbreak-feels-like-432hz",
+      "albumId": "this-is-what-____-feels-like-vol-1-4",
       "year": 2022,
       "genreIds": [
             "pop"
       ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/55f417a91ab97af23e8d63d500151f18/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/6/3/9/0/639b85470193fdebdcc5bdaf022ad0fa.mp3?hdnea=exp=1790665597~acl=/api/1/1/6/3/9/0/639b85470193fdebdcc5bdaf022ad0fa.mp3*~data=user_id=0,application_id=42~hmac=88bd88abe4cd48883c7de5e7853b0c379d36902ef9814e8d48fddd0eb758bad5",
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/8d/1a/7b/8d1a7b44-316f-7c7f-4380-935673fb697a/5056167175650.jpg/600x600bb.jpg",
+      "itunesTrackId": "1640157165",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/30/02/8c/30028c8a-a125-5466-bcc6-27a83b1c0135/mzaf_16911571635366913039.plus.aac.p.m4a",
       "aliases": [
-            "this is what heartbreak feels like"
-      ]
-    }),
-    song({
-      "id": "jvke-this-is-what-forever-feels-like",
-      "title": "this is what forever feels like",
-      "artistId": "jvke",
-      "albumId": "this-is-what-forever-feels-like",
-      "year": 2024,
-      "genreIds": [
-            "pop"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/cfccefa2e0eb0c4f6628da3c7493fa82/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/0/3/3/0/033a83f2d5ea8643193e3c1f1ac2fc45.mp3?hdnea=exp=1790665597~acl=/api/1/1/0/3/3/0/033a83f2d5ea8643193e3c1f1ac2fc45.mp3*~data=user_id=0,application_id=42~hmac=71bbabe42f94346a1da20fb6e3fc11811611f855cc2e919c2a10c07b2018d20c",
-      "aliases": [
-            "this is what forever feels like"
-      ]
-    }),
-    song({
-      "id": "jvke-her-3665772472",
-      "title": "her (feat. ZVC)",
-      "artistId": "jvke",
-      "albumId": "her-feat-zvc",
-      "year": 2025,
-      "genreIds": [
-            "pop"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/cc1352d4f8ec67864613cacea8fbb75f/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/6/6/b/0/66b203b9d3a5d03f8e3d7f7057bac9be.mp3?hdnea=exp=1790665597~acl=/api/1/1/6/6/b/0/66b203b9d3a5d03f8e3d7f7057bac9be.mp3*~data=user_id=0,application_id=42~hmac=21e59547614b5b173a5a8401cf643b2714e220697aa3dc76b9b286bdbfe64fec",
-      "aliases": [
-            "her (feat. zvc)",
-            "her",
-            "her feat zvc"
-      ]
-    }),
-    song({
-      "id": "jvke-her-3692164902",
-      "title": "her (feat. John Michael Howell)",
-      "artistId": "jvke",
-      "albumId": "her-feat-john-michael-howell",
-      "year": 2025,
-      "genreIds": [
-            "pop"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/79a02adcfc86d562169abf94ac0a1c38/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/a/d/a/0/ada225806645bfb49a63f28c7a6754a0.mp3?hdnea=exp=1790665597~acl=/api/1/1/a/d/a/0/ada225806645bfb49a63f28c7a6754a0.mp3*~data=user_id=0,application_id=42~hmac=7f03dc0f703592f383b5979bbf3f46e901ab6f895e2d7a8fe7d29e779d748595",
-      "aliases": [
-            "her (feat. john michael howell)",
-            "her",
-            "her feat john michael howell"
-      ]
-    }),
-    song({
-      "id": "jvke-next-to-you",
-      "title": "next to you",
-      "artistId": "jvke",
-      "albumId": "next-to-you",
-      "year": 2024,
-      "genreIds": [
-            "pop"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/7978e13721f60f0438f60091eef89eca/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/b/3/1/0/b3120cf42004e83961d753cd18bbecda.mp3?hdnea=exp=1790665597~acl=/api/1/1/b/3/1/0/b3120cf42004e83961d753cd18bbecda.mp3*~data=user_id=0,application_id=42~hmac=a15121c87f8061b57e81b9205c0f905f879f8563ff6d4b20124742a10ea6c9db",
-      "aliases": [
-            "next to you"
-      ]
-    }),
-    song({
-      "id": "jvke-im-not-okay",
-      "title": "i'm not okay",
-      "artistId": "jvke",
-      "albumId": "this-is-what-heartbreak-feels-like-432hz",
-      "year": 2022,
-      "genreIds": [
-            "pop"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/55f417a91ab97af23e8d63d500151f18/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/0/2/3/0/023d0937cc1fbbd163195c3eeb43592b.mp3?hdnea=exp=1790665597~acl=/api/1/1/0/2/3/0/023d0937cc1fbbd163195c3eeb43592b.mp3*~data=user_id=0,application_id=42~hmac=e8f632fa07509fb540f1eb0a806adc784a2587a3211825bb36eff22de40d68f7",
-      "aliases": [
-            "i'm not okay",
-            "im not okay"
-      ]
-    }),
-    song({
-      "id": "jvke-moon-and-back",
-      "title": "moon and back",
-      "artistId": "jvke",
-      "albumId": "this-is-what-falling-in-love-feels-like-554hz",
-      "year": 2022,
-      "genreIds": [
-            "pop"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/845eff477946539849c7291510d61daf/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/f/6/f/0/f6f611f9c8a5c487def30555e8431572.mp3?hdnea=exp=1790665597~acl=/api/1/1/f/6/f/0/f6f611f9c8a5c487def30555e8431572.mp3*~data=user_id=0,application_id=42~hmac=8c30a18fae996ca2255a794bfd41a1fd8a8abf8414550a369c3fb91dbaea7c96",
-      "aliases": [
-            "moon and back"
-      ]
-    }),
-    song({
-      "id": "jvke-pretty",
-      "title": "pretty",
-      "artistId": "jvke",
-      "albumId": "pretty",
-      "year": 2025,
-      "genreIds": [
-            "pop"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/4f509b07c62f64c2901cbb15da9caca7/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/d/c/9/0/dc9e8de27973a04e0d6b8da2d576a0e7.mp3?hdnea=exp=1790665597~acl=/api/1/1/d/c/9/0/dc9e8de27973a04e0d6b8da2d576a0e7.mp3*~data=user_id=0,application_id=42~hmac=0135bc706f6d054b3281048e110c49d7d86463de49d376e3fd8769caf6f579f9",
-      "aliases": [
-            "pretty"
-      ]
-    }),
-    song({
-      "id": "jvke-clouds",
-      "title": "clouds",
-      "artistId": "jvke",
-      "albumId": "clouds",
-      "year": 2024,
-      "genreIds": [
-            "pop"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/4c6387f381566b1c3a9e95fd77368a93/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/c/3/1/0/c31a73281d120dd4102b2f3e70d657ca.mp3?hdnea=exp=1790665597~acl=/api/1/1/c/3/1/0/c31a73281d120dd4102b2f3e70d657ca.mp3*~data=user_id=0,application_id=42~hmac=1618543212f4153e593623d1ef5d8db4c738529a5ad7298e43a2c8c2dc3c0f69",
-      "aliases": [
-            "clouds"
-      ]
-    }),
-    song({
-      "id": "jvke-this-is-what-falling-out-of-love-feels-like",
-      "title": "this is what falling out of love feels like",
-      "artistId": "jvke",
-      "albumId": "this-is-what-falling-out-of-love-feels-like-392hz",
-      "year": 2022,
-      "genreIds": [
-            "pop"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/04e9623d3234681a2abd04670aa6f7a7/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/c/0/9/0/c0993085f07b4f3486fdbde6fd0cf434.mp3?hdnea=exp=1790665597~acl=/api/1/1/c/0/9/0/c0993085f07b4f3486fdbde6fd0cf434.mp3*~data=user_id=0,application_id=42~hmac=2dcdd25590baba695cbd2905df942358833306fe81cb07cc865218c90adcaabe",
-      "aliases": [
-            "this is what falling out of love feels like"
-      ]
-    }),
-    song({
-      "id": "jvke-this-is-what-sadness-feels-like",
-      "title": "this is what sadness feels like",
-      "artistId": "jvke",
-      "albumId": "this-is-what-sadness-feels-like-214hz",
-      "year": 2022,
-      "genreIds": [
-            "pop"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/d2dbdd6d401de1ed3e7a91408511fce2/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/6/d/1/0/6d113a12ca5342e6e7c4d996b766a81c.mp3?hdnea=exp=1790665597~acl=/api/1/1/6/d/1/0/6d113a12ca5342e6e7c4d996b766a81c.mp3*~data=user_id=0,application_id=42~hmac=96825573ba2b4d61f092be3772edc4933301e358cff541ac087665668169d73b",
-      "aliases": [
-            "this is what sadness feels like"
-      ]
-    }),
-    song({
-      "id": "jvke-infinity-beyond",
-      "title": "infinity beyond",
-      "artistId": "jvke",
-      "albumId": "infinity-beyond",
-      "year": 2026,
-      "genreIds": [
-            "pop"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/eab66f5e23947a84ef8ca25cb940fd90/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/e/b/0/0/eb0e108dd03c346915573659769ae0d5.mp3?hdnea=exp=1790665597~acl=/api/1/1/e/b/0/0/eb0e108dd03c346915573659769ae0d5.mp3*~data=user_id=0,application_id=42~hmac=64612cc8a59776379385ee3e8d125d48190e1e954725678f770cff82f914ef16",
-      "aliases": [
-            "infinity beyond"
-      ]
-    }),
-    song({
-      "id": "jvke-this-is-what-heartbreak-feels-like-cg5-remix",
-      "title": "this is what heartbreak feels like (CG5 Remix)",
-      "artistId": "jvke",
-      "albumId": "this-is-what-heartbreak-feels-like-cg5-remix",
-      "year": 2022,
-      "genreIds": [
-            "pop"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/95c1a2fc8c5ef0cbc21b3e34d789a7c9/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/f/7/9/0/f79f9ad37ebf053cfb21aba742c4368c.mp3?hdnea=exp=1790665597~acl=/api/1/1/f/7/9/0/f79f9ad37ebf053cfb21aba742c4368c.mp3*~data=user_id=0,application_id=42~hmac=6b7d93d0e7f1a464ddd9cde985795bbc2cfe50b2d267d6cc3b51e13706cb6059",
-      "aliases": [
-            "this is what heartbreak feels like (cg5 remix)",
-            "this is what heartbreak feels like cg5 remix"
-      ]
-    }),
-    song({
-      "id": "jvke-her-3675143792",
-      "title": "her (feat. Annika Wells & Kaden Hawke)",
-      "artistId": "jvke",
-      "albumId": "her-feat-annika-wells-kaden-hawke",
-      "year": 2025,
-      "genreIds": [
-            "pop"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/21c3c5b44bf8e2afd1b31c5495e03fba/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/5/c/7/0/5c77b051d42c2deba8643bf30f02a323.mp3?hdnea=exp=1790665597~acl=/api/1/1/5/c/7/0/5c77b051d42c2deba8643bf30f02a323.mp3*~data=user_id=0,application_id=42~hmac=4f5a16cbeabf64f6f0ef1a93ad5e7ce3c2ff973d29901bf27e976dd9cd47bb5f",
-      "aliases": [
-            "her (feat. annika wells & kaden hawke)",
-            "her",
-            "her feat annika wells kaden hawke"
-      ]
-    }),
-    song({
-      "id": "jvke-fire",
-      "title": "Fire!",
-      "artistId": "jvke",
-      "albumId": "fire-feat-yuqi-gi-dle-jvke",
-      "year": 2023,
-      "genreIds": [
-            "pop"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/e651043be2dd2835b960fc090d07b897/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/a/c/c/0/acc71bac5962d3f0e785dd8dfa8203f2.mp3?hdnea=exp=1790665597~acl=/api/1/1/a/c/c/0/acc71bac5962d3f0e785dd8dfa8203f2.mp3*~data=user_id=0,application_id=42~hmac=dbee82cec933f0569df6ba0af1b8d574d87595d793625ae1617f518a88243dd1",
-      "aliases": [
-            "fire!",
-            "fire"
+            "golden hour"
       ]
     }),
     song({
       "id": "jvke-oh-to-be-loved",
       "title": "oh to be loved",
       "artistId": "jvke",
-      "albumId": "oh-to-be-loved",
+      "albumId": "oh-to-be-loved-single",
       "year": 2025,
       "genreIds": [
             "pop"
       ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/ccfe1b7b7409336d659fc9399f44c186/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/1/d/d/0/1ddb7281bc1468ab565a377dbdd41b94.mp3?hdnea=exp=1790665597~acl=/api/1/1/1/d/d/0/1ddb7281bc1468ab565a377dbdd41b94.mp3*~data=user_id=0,application_id=42~hmac=1986970696cfe2da5c4de5201e4e0cda6c8fe985da809c43e5852d53f9fb969c",
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/94/b3/53/94b353bb-92f9-5247-2a92-45fe7a9af1d5/199538532470.jpg/600x600bb.jpg",
+      "itunesTrackId": "1832550895",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/c9/df/8f/c9df8fe9-bd80-3084-e710-3650f32d230f/mzaf_11719694478854458388.plus.aac.p.m4a",
       "aliases": [
             "oh to be loved"
       ]
     }),
     song({
-      "id": "jvke-wonder-if-she-loves-me",
-      "title": "wonder if she loves me",
+      "id": "jvke-clouds",
+      "title": "clouds",
       "artistId": "jvke",
-      "albumId": "this-is-what-sadness-feels-like-214hz",
-      "year": 2022,
+      "albumId": "clouds-single",
+      "year": 2024,
       "genreIds": [
             "pop"
       ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/d2dbdd6d401de1ed3e7a91408511fce2/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/8/0/9/0/8092d98d4adf55d2e8ca94eeb0a1aae0.mp3?hdnea=exp=1790665597~acl=/api/1/1/8/0/9/0/8092d98d4adf55d2e8ca94eeb0a1aae0.mp3*~data=user_id=0,application_id=42~hmac=dc73fdbf43cc57e7540a7751808623e60bcea0d02d6feaa31e11c26f970633f2",
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music112/v4/e0/88/9c/e0889cad-608c-d7d2-bcfe-ef27e206f66c/198391334375.jpg/600x600bb.jpg",
+      "itunesTrackId": "1732687497",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/78/b1/20/78b12069-fedb-24a5-6fd0-5f470ae28722/mzaf_16875813703655919309.plus.aac.p.m4a",
       "aliases": [
-            "wonder if she loves me"
+            "clouds"
       ]
     }),
     song({
-      "id": "jvke-golden-hour-minlee-remix",
-      "title": "golden hour (minlee remix)",
+      "id": "jvke-golden-hour-1631223935",
+      "title": "golden hour",
       "artistId": "jvke",
-      "albumId": "golden-hour-minlee-remix",
+      "albumId": "golden-hour-single",
       "year": 2022,
       "genreIds": [
             "pop"
       ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/d6c6f8b427162751f4b7a71c73b48023/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/f/2/d/0/f2d5af29e8e4d2508851dddbf6aa3ecf.mp3?hdnea=exp=1790665597~acl=/api/1/1/f/2/d/0/f2d5af29e8e4d2508851dddbf6aa3ecf.mp3*~data=user_id=0,application_id=42~hmac=66fc03ff06db4ea94f06f318fe772577cc9fea6f5c0bffe7619eff1deead495c",
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music113/v4/0c/35/28/0c352801-dc06-3076-cf73-c4ff0fbaf686/5056167174196.jpg/600x600bb.jpg",
+      "itunesTrackId": "1631223935",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/28/f3/d8/28f3d803-255f-434e-cc6b-b393575cb3f2/mzaf_10013788889842484282.plus.aac.p.m4a",
       "aliases": [
-            "golden hour (minlee remix)",
-            "golden hour",
-            "golden hour minlee remix"
+            "golden hour"
       ]
     }),
     song({
       "id": "jvke-i-cant-help-it",
       "title": "i can't help it",
       "artistId": "jvke",
-      "albumId": "i-cant-help-it",
+      "albumId": "this-is-what-____-feels-like-vol-1-4",
       "year": 2022,
       "genreIds": [
             "pop"
       ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/04e9623d3234681a2abd04670aa6f7a7/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/5/e/0/0/5e0ff6bf75c1fbe54e569359f7deba42.mp3?hdnea=exp=1790665597~acl=/api/1/1/5/e/0/0/5e0ff6bf75c1fbe54e569359f7deba42.mp3*~data=user_id=0,application_id=42~hmac=ce485740780cb7930a818144d4384d5af3b3bb5b00fd7bda9c791d25df97eb1c",
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/8d/1a/7b/8d1a7b44-316f-7c7f-4380-935673fb697a/5056167175650.jpg/600x600bb.jpg",
+      "itunesTrackId": "1640157861",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/3f/32/7b/3f327bb9-4bd2-a890-48af-bb7f2e196586/mzaf_9530330024954907950.plus.aac.p.m4a",
       "aliases": [
             "i can't help it",
             "i cant help it"
       ]
     }),
     song({
-      "id": "jvke-defenseless",
-      "title": "DEFENSELESS",
+      "id": "jvke-catch-me",
+      "title": "catch me",
       "artistId": "jvke",
-      "albumId": "defenseless",
-      "year": 2025,
+      "albumId": "this-is-what-____-feels-like-vol-1-4",
+      "year": 2022,
       "genreIds": [
             "pop"
       ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/650bb613d6a020b3afc8e20dbd86469c/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/0/c/f/0/0cf551dd2fbbc41f84c78047bff65c6d.mp3?hdnea=exp=1790665597~acl=/api/1/1/0/c/f/0/0cf551dd2fbbc41f84c78047bff65c6d.mp3*~data=user_id=0,application_id=42~hmac=1fa05533934996b7a874f00994f025e5dd5894d833c2b56749640e84395d5b28",
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/8d/1a/7b/8d1a7b44-316f-7c7f-4380-935673fb697a/5056167175650.jpg/600x600bb.jpg",
+      "itunesTrackId": "1640157856",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/03/52/81/03528138-3315-05b9-ad8a-367c0b63c3e4/mzaf_8700207094390661799.plus.aac.p.m4a",
       "aliases": [
-            "defenseless"
+            "catch me"
       ]
     }),
     song({
@@ -6147,195 +7340,276 @@ export const seedCatalog = {
       "genreIds": [
             "pop"
       ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/ff66669185174ac6f6b7a6342c93fca5/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/0/b/9/0/0b935d6f49a8774cc1a7a712a5ad7d97.mp3?hdnea=exp=1790665597~acl=/api/1/1/0/b/9/0/0b935d6f49a8774cc1a7a712a5ad7d97.mp3*~data=user_id=0,application_id=42~hmac=414f64413bd24e327566aab41f36fda965377fe8deca39d491ca5a7d30252c2c",
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/8d/1a/7b/8d1a7b44-316f-7c7f-4380-935673fb697a/5056167175650.jpg/600x600bb.jpg",
+      "itunesTrackId": "1640157422",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/f5/fd/5c/f5fd5cc8-6d25-5a93-1440-127ef934288c/mzaf_10226518011322885143.plus.aac.p.m4a",
       "aliases": [
             "ghost town"
       ]
     }),
     song({
-      "id": "jvke-this-is-what-a-new-year-feels-like",
-      "title": "this is what a new year feels like",
+      "id": "jvke-this-is-what-falling-in-love-feels-like-1640157147",
+      "title": "this is what falling in love feels like",
       "artistId": "jvke",
-      "albumId": "this-is-what-a-new-year-feels-like",
-      "year": 2025,
-      "genreIds": [
-            "pop"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/bb2bb1cd80f7fb56bddab4d0963eb2ea/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/b/5/1/0/b511786902a5b820e8cfafdbc28e4053.mp3?hdnea=exp=1790665597~acl=/api/1/1/b/5/1/0/b511786902a5b820e8cfafdbc28e4053.mp3*~data=user_id=0,application_id=42~hmac=5c4115fda32087ec7182add69d40e20ad8d16d92feaeffe3eccf446474c65462",
-      "aliases": [
-            "this is what a new year feels like"
-      ]
-    }),
-    song({
-      "id": "jvke-save-your-breath",
-      "title": "save your breath",
-      "artistId": "jvke",
-      "albumId": "this-is-what-sadness-feels-like-214hz",
-      "year": 2022,
-      "genreIds": [
-            "pop"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/d2dbdd6d401de1ed3e7a91408511fce2/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/3/6/2/0/3621b20a536fa3aaa98be9e1f139f83c.mp3?hdnea=exp=1790665597~acl=/api/1/1/3/6/2/0/3621b20a536fa3aaa98be9e1f139f83c.mp3*~data=user_id=0,application_id=42~hmac=3f850ff0cfba28693154a5d021e7f5cac58be31610e220e322fd6338f63d7d86",
-      "aliases": [
-            "save your breath"
-      ]
-    }),
-    song({
-      "id": "jvke-lavender",
-      "title": "lavender",
-      "artistId": "jvke",
-      "albumId": "lavender",
-      "year": 2024,
-      "genreIds": [
-            "pop"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/83a9b2fe3731f048205e7594b38adb1e/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/6/4/c/0/64c04079e1e4e0be21294e6d2b83b6eb.mp3?hdnea=exp=1790665597~acl=/api/1/1/6/4/c/0/64c04079e1e4e0be21294e6d2b83b6eb.mp3*~data=user_id=0,application_id=42~hmac=aa1013c281b76df83a9ab1c7e2ab07de95ed0f60fb5138917707728bfc6f1047",
-      "aliases": [
-            "lavender"
-      ]
-    }),
-    song({
-      "id": "jvke-colors",
-      "title": "colors",
-      "artistId": "jvke",
-      "albumId": "the-asia-tour-blooming-season-ep",
-      "year": 2025,
-      "genreIds": [
-            "pop"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/81df491bbbda3fc6ac085da9a7c0111c/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/e/2/2/0/e2284403de4dc5111f920aee943a46af.mp3?hdnea=exp=1790665597~acl=/api/1/1/e/2/2/0/e2284403de4dc5111f920aee943a46af.mp3*~data=user_id=0,application_id=42~hmac=464c8964aeec4ada52c2528b1a10eeaf78e2f3cd428653197f2db773918cc70d",
-      "aliases": [
-            "colors"
-      ]
-    }),
-    song({
-      "id": "jvke-this-is-what-losing-someone-feels-like",
-      "title": "this is what losing someone feels like",
-      "artistId": "jvke",
-      "albumId": "this-is-what-losing-someone-feels-like",
-      "year": 2023,
-      "genreIds": [
-            "pop"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/7ade7fd473734bd4a58043d1816e8a9d/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/0/c/d/0/0cd5daac817b039e09c0d61a37a1ca7d.mp3?hdnea=exp=1790665597~acl=/api/1/1/0/c/d/0/0cd5daac817b039e09c0d61a37a1ca7d.mp3*~data=user_id=0,application_id=42~hmac=ea7256de76c732cee1af039375c30cde7e65eb985dac26736f5f2251e0f75b1e",
-      "aliases": [
-            "this is what losing someone feels like"
-      ]
-    }),
-    song({
-      "id": "jvke-this-is-what-floating-feels-like",
-      "title": "this is what floating feels like",
-      "artistId": "jvke",
-      "albumId": "this-is-what-floating-feels-like",
-      "year": 2025,
-      "genreIds": [
-            "pop"
-      ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/9f5231806b00b59ab921b19b72430e3b/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/c/d/f/0/cdf0c542f5ec357fd0471a64c8166bc3.mp3?hdnea=exp=1790665597~acl=/api/1/1/c/d/f/0/cdf0c542f5ec357fd0471a64c8166bc3.mp3*~data=user_id=0,application_id=42~hmac=6f926723ef14be4c2bda053a1cd0fb1b7b14704f7ce68ec569e389b6ed491865",
-      "aliases": [
-            "this is what floating feels like"
-      ]
-    }),
-    song({
-      "id": "jvke-anxiety",
-      "title": "anxiety.",
-      "artistId": "jvke",
-      "albumId": "anxiety",
+      "albumId": "this-is-what-____-feels-like-vol-1-4",
       "year": 2021,
       "genreIds": [
             "pop"
       ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/74ed191d4ca358573d51e08e9fe3688a/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/b/d/3/0/bd3a580d6f3c8f4b9034b63e0cfc0095.mp3?hdnea=exp=1790665597~acl=/api/1/1/b/d/3/0/bd3a580d6f3c8f4b9034b63e0cfc0095.mp3*~data=user_id=0,application_id=42~hmac=02e7e79f7662c073f23b71baab28893173a092f3a2719be392a35d21a2cc7a13",
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/8d/1a/7b/8d1a7b44-316f-7c7f-4380-935673fb697a/5056167175650.jpg/600x600bb.jpg",
+      "itunesTrackId": "1640157147",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/09/19/91/09199139-833b-d098-7844-05799a692207/mzaf_16055862609759917806.plus.aac.p.m4a",
       "aliases": [
-            "anxiety.",
-            "anxiety"
+            "this is what falling in love feels like"
+      ]
+    }),
+    song({
+      "id": "jvke-this-is-what-falling-out-of-love-feels-like",
+      "title": "this is what falling out of love feels like",
+      "artistId": "jvke",
+      "albumId": "this-is-what-____-feels-like-vol-1-4",
+      "year": 2022,
+      "genreIds": [
+            "pop"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/8d/1a/7b/8d1a7b44-316f-7c7f-4380-935673fb697a/5056167175650.jpg/600x600bb.jpg",
+      "itunesTrackId": "1640157695",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/bb/87/49/bb8749f9-f7a6-4662-b5d0-59b359ee4a7a/mzaf_10403432417158829953.plus.aac.p.m4a",
+      "aliases": [
+            "this is what falling out of love feels like"
+      ]
+    }),
+    song({
+      "id": "jvke-this-is-what-heartbreak-feels-like-1640157411",
+      "title": "this is what heartbreak feels like",
+      "artistId": "jvke",
+      "albumId": "this-is-what-____-feels-like-vol-1-4",
+      "year": 2022,
+      "genreIds": [
+            "pop"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/8d/1a/7b/8d1a7b44-316f-7c7f-4380-935673fb697a/5056167175650.jpg/600x600bb.jpg",
+      "itunesTrackId": "1640157411",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/93/fc/db/93fcdb57-05f5-ca6c-1115-5770815f0feb/mzaf_3220956921180273603.plus.aac.p.m4a",
+      "aliases": [
+            "this is what heartbreak feels like"
       ]
     }),
     song({
       "id": "jvke-this-is-what-slow-dancing-feels-like",
       "title": "this is what slow dancing feels like",
       "artistId": "jvke",
-      "albumId": "this-is-what-slow-dancing-feels-like",
+      "albumId": "this-is-what-slow-dancing-feels-like-single",
       "year": 2024,
       "genreIds": [
             "pop"
       ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/249b90387b123b25f7c74dc1c0f1d7bf/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/5/f/b/0/5fbd4fdd6b4ff10c4975927ac86d9815.mp3?hdnea=exp=1790665597~acl=/api/1/1/5/f/b/0/5fbd4fdd6b4ff10c4975927ac86d9815.mp3*~data=user_id=0,application_id=42~hmac=7f5c83522581eadacf2ab853d2e8704213521974a116671b98daa446116d4de7",
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/db/26/61/db2661d8-8df7-0cb1-a1cd-2662455d4c8d/198391807879.jpg/600x600bb.jpg",
+      "itunesTrackId": "1893796001",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/81/78/9a/81789ac1-dbea-6fb8-be0c-71ac4a7a4542/mzaf_2648985130467643188.plus.aac.p.m4a",
       "aliases": [
             "this is what slow dancing feels like"
       ]
     }),
     song({
-      "id": "jvke-moonboy",
-      "title": "moonboy",
+      "id": "jvke-save-your-breath",
+      "title": "save your breath",
       "artistId": "jvke",
-      "albumId": "moonboy",
-      "year": 2026,
+      "albumId": "this-is-what-____-feels-like-vol-1-4",
+      "year": 2022,
       "genreIds": [
             "pop"
       ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/b5239c06daf5ceb9a79ec3cf396a9763/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/e/9/2/0/e92bda546f2799feaa4ecc4251f9b2ac.mp3?hdnea=exp=1790665597~acl=/api/1/1/e/9/2/0/e92bda546f2799feaa4ecc4251f9b2ac.mp3*~data=user_id=0,application_id=42~hmac=3918400e76328363f97f702afb6c5b2df04556d5ea651ddec2b2463e8429a78c",
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/8d/1a/7b/8d1a7b44-316f-7c7f-4380-935673fb697a/5056167175650.jpg/600x600bb.jpg",
+      "itunesTrackId": "1640157689",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/52/88/c4/5288c41f-9fce-03b1-80f2-91eeb2786259/mzaf_3868588033246011130.plus.aac.p.m4a",
       "aliases": [
-            "moonboy"
+            "save your breath"
       ]
     }),
     song({
-      "id": "jvke-seasons",
-      "title": "seasons",
+      "id": "jvke-anxiety",
+      "title": "anxiety.",
       "artistId": "jvke",
-      "albumId": "the-asia-tour-blooming-season-ep",
+      "albumId": "anxiety-single",
+      "year": 2021,
+      "genreIds": [
+            "pop"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music116/v4/02/45/31/0245311e-a817-8c9c-1e62-9f387885397e/5056167168607_1.jpg/600x600bb.jpg",
+      "itunesTrackId": "1593766137",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/7f/7e/cc/7f7ecce2-fd7d-477e-c1c0-14b8b6b746d9/mzaf_7587292784634028703.plus.aac.p.m4a",
+      "aliases": [
+            "anxiety.",
+            "anxiety"
+      ]
+    }),
+    song({
+      "id": "jvke-secrets",
+      "title": "Secrets",
+      "artistId": "jvke",
+      "albumId": "secrets-single",
+      "year": 2021,
+      "genreIds": [
+            "pop"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music125/v4/26/9a/27/269a2702-c4b0-35e7-7ee7-866e7ada44bc/5056167163428_1.jpg/600x600bb.jpg",
+      "itunesTrackId": "1564721104",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview125/v4/b8/0d/52/b80d52c1-38f9-ba69-1784-639c70f029cd/mzaf_13712712690791061131.plus.aac.p.m4a",
+      "aliases": [
+            "secrets"
+      ]
+    }),
+    song({
+      "id": "jvke-her-1854172835",
+      "title": "her (feat. ZVC)",
+      "artistId": "jvke",
+      "albumId": "her-feat-zvc-single",
       "year": 2025,
       "genreIds": [
             "pop"
       ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/81df491bbbda3fc6ac085da9a7c0111c/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/8/a/6/0/8a622ea3ed82253916e9c79c562cbe63.mp3?hdnea=exp=1790665597~acl=/api/1/1/8/a/6/0/8a622ea3ed82253916e9c79c562cbe63.mp3*~data=user_id=0,application_id=42~hmac=b1131f6310e98e187772d069e29266f841bc8417e37fd92a7f7ded85c4829bcf",
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/db/cb/29/dbcb2966-b66c-1ca8-50ee-226b430c58f3/199806499955.jpg/600x600bb.jpg",
+      "itunesTrackId": "1854172835",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/f2/06/97/f2069755-0f3f-22d0-8022-0faebb108755/mzaf_10936688572321603249.plus.aac.p.m4a",
       "aliases": [
-            "seasons"
+            "her (feat. zvc)",
+            "her",
+            "her feat zvc"
       ]
     }),
     song({
-      "id": "jvke-never-get-used-to-this",
-      "title": "NEVER GET USED TO THIS (feat. JVKE)",
+      "id": "jvke-her-1855570657",
+      "title": "her (feat. Annika Wells & Kaden Hawke)",
       "artistId": "jvke",
-      "albumId": "never-get-used-to-this",
+      "albumId": "her-feat-annika-wells-kaden-hawke-single",
+      "year": 2025,
+      "genreIds": [
+            "pop"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/e2/51/f4/e251f49e-ad52-9fc4-a7ab-c2479f4cf7b7/199806533055.jpg/600x600bb.jpg",
+      "itunesTrackId": "1855570657",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/93/9e/71/939e716a-8153-facc-c83f-daca09867b3c/mzaf_16363548792934233456.plus.aac.p.m4a",
+      "aliases": [
+            "her (feat. annika wells & kaden hawke)",
+            "her",
+            "her feat annika wells kaden hawke"
+      ]
+    }),
+    song({
+      "id": "jvke-golden-hour-ruel-remix",
+      "title": "golden hour (Ruel Remix)",
+      "artistId": "jvke",
+      "albumId": "golden-hour-ruel-remix-single",
+      "year": 2022,
+      "genreIds": [
+            "pop"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music126/v4/12/fe/12/12fe1268-8f52-ec1c-906a-2162dab9d8f9/197187332304.jpg/600x600bb.jpg",
+      "itunesTrackId": "1653659067",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview112/v4/4e/99/88/4e99882b-5399-6676-d90c-41b6c1cc130d/mzaf_7564503610947609893.plus.aac.p.m4a",
+      "aliases": [
+            "golden hour (ruel remix)",
+            "golden hour ruel remix"
+      ]
+    }),
+    song({
+      "id": "jvke-shine-your-light",
+      "title": "SHINE YOUR LIGHT",
+      "artistId": "jvke",
+      "albumId": "this-is-what-christmas-feels-like",
+      "year": 2025,
+      "genreIds": [
+            "pop"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/22/b2/6e/22b26e20-4ba2-270f-2b80-24ef507b8d5a/199806664629.jpg/600x600bb.jpg",
+      "itunesTrackId": "1858333406",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/25/a4/5d/25a45da0-e667-e290-9d28-6d1858aecf19/mzaf_6450581710528305621.plus.aac.p.m4a",
+      "aliases": [
+            "shine your light"
+      ]
+    }),
+    song({
+      "id": "jvke-home",
+      "title": "Home",
+      "artistId": "jvke",
+      "albumId": "home-single",
+      "year": 2021,
+      "genreIds": [
+            "pop"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music124/v4/ad/41/ba/ad41ba21-1fc3-4c0d-97dc-8b7ad499d5ec/5056167162056_1.jpg/600x600bb.jpg",
+      "itunesTrackId": "1557248180",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview124/v4/7e/c5/08/7ec50897-be42-501a-e715-53436d4484ae/mzaf_18144335950611840402.plus.aac.p.m4a",
+      "aliases": [
+            "home"
+      ]
+    }),
+    song({
+      "id": "jvke-lavender",
+      "title": "lavender (feat. Pink Sweat$)",
+      "artistId": "jvke",
+      "albumId": "lavender-feat-pink-sweat-single",
       "year": 2024,
       "genreIds": [
             "pop"
       ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/19c357011a30cd8155ac2b4a1b836051/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/a/2/f/0/a2f1f064d818d52e875bf2f18ec15b51.mp3?hdnea=exp=1790665597~acl=/api/1/1/a/2/f/0/a2f1f064d818d52e875bf2f18ec15b51.mp3*~data=user_id=0,application_id=42~hmac=a1c24979b299f990421043bc3e47331e78c2c2af86ad8b2ff8f46d66ceced651",
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music116/v4/9c/2e/2f/9c2e2fa3-4bc3-90fd-22e0-cd56bdd4a661/198391110238.jpg/600x600bb.jpg",
+      "itunesTrackId": "1729283841",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/f2/51/21/f2512145-23a0-bf48-dd20-d23fcde43da9/mzaf_13693856940833076376.plus.aac.p.m4a",
       "aliases": [
-            "never get used to this (feat. jvke)",
-            "never get used to this",
-            "never get used to this feat jvke"
+            "lavender (feat. pink sweat$)",
+            "lavender",
+            "lavender feat pink sweat"
       ]
     }),
     song({
-      "id": "jvke-mi-amor",
-      "title": "Mi Amor (with JVKE & Anitta)",
+      "id": "jvke-this-is-what-floating-feels-like",
+      "title": "this is what floating feels like",
       "artistId": "jvke",
-      "albumId": "mi-amor-with-jvke-anitta",
-      "year": 2024,
+      "albumId": "this-is-what-floating-feels-like-single",
+      "year": 2025,
       "genreIds": [
             "pop"
       ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/66268aaa55d7ca577d38d9f82c48dd8a/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/d/8/7/0/d8736ccaa889fba7d5e0d319caf5a7c6.mp3?hdnea=exp=1790665597~acl=/api/1/1/d/8/7/0/d8736ccaa889fba7d5e0d319caf5a7c6.mp3*~data=user_id=0,application_id=42~hmac=204f671185e6fb5a61774c11a1ec337e7b5fe2904143b8b94d10ae9232e36c05",
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/97/26/2b/97262bf6-f46f-68dd-ccad-8b46df52f880/199350316654.jpg/600x600bb.jpg",
+      "itunesTrackId": "1807413775",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/79/70/a0/7970a0fe-a7a7-fbb1-e3c4-81940a40480c/mzaf_11792056338486459979.plus.aac.p.m4a",
       "aliases": [
-            "mi amor (with jvke & anitta)",
-            "mi amor",
-            "mi amor with jvke anitta"
+            "this is what floating feels like"
+      ]
+    }),
+    song({
+      "id": "jvke-christmas",
+      "title": "CHRISTmas",
+      "artistId": "jvke",
+      "albumId": "this-is-what-christmas-feels-like",
+      "year": 2025,
+      "genreIds": [
+            "pop"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/22/b2/6e/22b26e20-4ba2-270f-2b80-24ef507b8d5a/199806664629.jpg/600x600bb.jpg",
+      "itunesTrackId": "1858333412",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/0c/e2/6d/0ce26d81-c242-c2d2-7984-8610b4fbcb28/mzaf_3488982971615543883.plus.aac.p.m4a",
+      "aliases": [
+            "christmas"
+      ]
+    }),
+    song({
+      "id": "jvke-golden-hour-cello-version",
+      "title": "golden hour (Cello Version)",
+      "artistId": "jvke",
+      "albumId": "golden-hour-cello-version-single",
+      "year": 2022,
+      "genreIds": [
+            "pop"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music116/v4/d8/6a/74/d86a74b4-7a13-8887-9de2-ebc5a4171533/197188589837.jpg/600x600bb.jpg",
+      "itunesTrackId": "1680872835",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/fb/0a/65/fb0a65e4-2811-580d-edd1-edb1d92f8751/mzaf_6249976231160652604.plus.aac.p.m4a",
+      "aliases": [
+            "golden hour (cello version)",
+            "golden hour cello version"
       ]
     }),
     song({
@@ -6347,26 +7621,129 @@ export const seedCatalog = {
       "genreIds": [
             "pop"
       ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/b0f148e1d6128c0bb22876f13557e62d/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/c/0/a/0/c0a677f7cee74453042b5eded3e67f66.mp3?hdnea=exp=1790665597~acl=/api/1/1/c/0/a/0/c0a677f7cee74453042b5eded3e67f66.mp3*~data=user_id=0,application_id=42~hmac=0c17cca4a1027fc7008d17c38cdbf128f658b02881c77119d14f8411c5363244",
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/22/b2/6e/22b26e20-4ba2-270f-2b80-24ef507b8d5a/199806664629.jpg/600x600bb.jpg",
+      "itunesTrackId": "1858332953",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/06/60/bd/0660bd59-3189-325c-7156-ff2f343fbdd0/mzaf_10917208714079784565.plus.aac.p.m4a",
       "aliases": [
             "this is what christmas feels like"
       ]
     }),
     song({
-      "id": "jvke-dont-let-me-down",
-      "title": "Don't Let Me Down",
+      "id": "jvke-golden-hour-r3hab-remix",
+      "title": "golden hour (R3HAB Remix)",
       "artistId": "jvke",
-      "albumId": "dont-let-me-down",
+      "albumId": "golden-hour-r3hab-remix-single",
+      "year": 2023,
+      "genreIds": [
+            "pop"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music116/v4/76/49/d9/7649d92e-311c-e25c-5e14-af5a63a2c4d8/197188720230.jpg/600x600bb.jpg",
+      "itunesTrackId": "1684640597",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/54/6d/fe/546dfee1-6bdc-241d-717b-9bfa4bb7c4c7/mzaf_11760928983298122388.plus.aac.p.m4a",
+      "aliases": [
+            "golden hour (r3hab remix)",
+            "golden hour r3hab remix"
+      ]
+    }),
+    song({
+      "id": "jvke-christmas-through-your-eyes",
+      "title": "Christmas Through Your Eyes",
+      "artistId": "jvke",
+      "albumId": "this-is-what-christmas-feels-like",
+      "year": 2025,
+      "genreIds": [
+            "pop"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/22/b2/6e/22b26e20-4ba2-270f-2b80-24ef507b8d5a/199806664629.jpg/600x600bb.jpg",
+      "itunesTrackId": "1858332955",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/ef/0b/f9/ef0bf950-bd04-e017-1dd2-27bed4fdd3d9/mzaf_2656726136642295905.plus.aac.p.m4a",
+      "aliases": [
+            "christmas through your eyes"
+      ]
+    }),
+    song({
+      "id": "jvke-golden-hour-fujii-kaze-remix",
+      "title": "golden hour (Fujii Kaze Remix)",
+      "artistId": "jvke",
+      "albumId": "golden-hour-fujii-kaze-remix-single",
+      "year": 2023,
+      "genreIds": [
+            "pop"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music116/v4/e9/19/1a/e9191aa1-bd40-8f63-fc06-367f02fc2d0c/197188552725.jpg/600x600bb.jpg",
+      "itunesTrackId": "1680177846",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/09/04/7b/09047bec-ff28-7ec9-b258-32f89fac43c8/mzaf_6620254559481912003.plus.aac.p.m4a",
+      "aliases": [
+            "golden hour (fujii kaze remix)",
+            "golden hour fujii kaze remix"
+      ]
+    }),
+    song({
+      "id": "jvke-christmas-morning",
+      "title": "CHRISTMAS MORNING",
+      "artistId": "jvke",
+      "albumId": "this-is-what-christmas-feels-like",
+      "year": 2025,
+      "genreIds": [
+            "pop"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/22/b2/6e/22b26e20-4ba2-270f-2b80-24ef507b8d5a/199806664629.jpg/600x600bb.jpg",
+      "itunesTrackId": "1858332958",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/a3/3e/b5/a33eb5a8-e230-7b63-d803-289bd342d28f/mzaf_15273661500639829713.plus.aac.p.m4a",
+      "aliases": [
+            "christmas morning"
+      ]
+    }),
+    song({
+      "id": "jvke-juliet",
+      "title": "juliet",
+      "artistId": "jvke",
+      "albumId": "juliet-single",
+      "year": 2026,
+      "genreIds": [
+            "pop"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/9b/7b/59/9b7b59ae-b3dd-441d-765f-8f370d615c4b/820233513579.jpg/600x600bb.jpg",
+      "itunesTrackId": "6776292802",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/6e/11/a4/6e11a4d8-24e9-a1b6-1b64-9ef0f25ca3a7/mzaf_16087034118680215516.plus.aac.p.m4a",
+      "aliases": [
+            "juliet"
+      ]
+    }),
+    song({
+      "id": "jvke-her-christmas-version",
+      "title": "her (feat. Forrest Frank) [Christmas Version]",
+      "artistId": "jvke",
+      "albumId": "this-is-what-christmas-feels-like",
+      "year": 2025,
+      "genreIds": [
+            "pop"
+      ],
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/22/b2/6e/22b26e20-4ba2-270f-2b80-24ef507b8d5a/199806664629.jpg/600x600bb.jpg",
+      "itunesTrackId": "1858333413",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/a4/ce/13/a4ce13c0-605b-9250-96e7-c4190f92db1e/mzaf_12465043090497545413.plus.aac.p.m4a",
+      "aliases": [
+            "her (feat. forrest frank) [christmas version]",
+            "her [christmas version]",
+            "her feat forrest frank christmas version",
+            "her christmas version"
+      ]
+    }),
+    song({
+      "id": "jvke-shine-golden-hour-sample-feat-lil-man-j-arden-jones-micah-palace",
+      "title": "SHINE (golden hour sample) [feat. Lil Man J, Arden Jones & Micah Palace]",
+      "artistId": "jvke",
+      "albumId": "shine-golden-hour-sample-feat-lil-man-j-arden-jones-micah-palace-single",
       "year": 2024,
       "genreIds": [
             "pop"
       ],
-      "image": "https://cdn-images.dzcdn.net/images/cover/46543edace8ea35d64d60e6a968ff674/1000x1000-000000-80-0-0.jpg",
-      "previewUrl": "https://cdnt-preview.dzcdn.net/api/1/1/2/5/a/0/25aa0ee3a94222d5e435b3ea6c48cb75.mp3?hdnea=exp=1790665597~acl=/api/1/1/2/5/a/0/25aa0ee3a94222d5e435b3ea6c48cb75.mp3*~data=user_id=0,application_id=42~hmac=2bfd06d3e9fc3c7194f4996802ebf0149101efbc84bf3ee049d2c1ff0234b0e1",
+      "image": "https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/9a/5a/cc/9a5acc62-71af-0f5e-05d7-84ed4a27c0fa/198846140513.jpg/600x600bb.jpg",
+      "itunesTrackId": "1765565666",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/18/98/c9/1898c9c6-5d1f-a3f3-f8d5-f9568ef0cd06/mzaf_3060365073902484894.plus.aac.p.m4a",
       "aliases": [
-            "don't let me down",
-            "dont let me down"
+            "shine (golden hour sample) [feat. lil man j, arden jones & micah palace]",
+            "shine golden hour sample feat lil man j arden jones micah palace"
       ]
     }),
   ],

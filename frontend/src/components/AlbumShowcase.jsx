@@ -132,7 +132,7 @@ export default function AlbumShowcase({ style = {} }) {
       }}
       aria-label="Catálogo de Álbumes en Movimiento"
     >
-      {/* Top Header of the Showcase Card */}
+      {/* Top Header */}
       <div className="row" style={{ justifyContent: "space-between", alignItems: "center" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <YoavllySymbol size={22} />
@@ -159,13 +159,17 @@ export default function AlbumShowcase({ style = {} }) {
         </span>
       </div>
 
-      {/* Centered marquee rows taking balanced vertical space */}
+      {/* Marquee rows */}
       <div style={{ display: "flex", flexDirection: "column", gap: 16, flex: 1, justifyContent: "center", margin: "16px 0" }}>
-        {/* Row 1: Moving smoothly Left */}
+        {/* Row 1: Left */}
         <div className="album-marquee-viewport">
           <div className="album-marquee-track track-left">
             {ROW_1_LOOP.map((album, index) => (
-              <div key={`r1-${album.id}-${index}`} className="album-cover-card" title={`${album.name} - ${album.artist} (${album.year})`}>
+              <div
+                key={`r1-${album.id}-${index}`}
+                className="album-cover-card"
+                title={`${album.name} - ${album.artist} (${album.year})`}
+              >
                 <img
                   src={album.image}
                   alt={album.name}
@@ -181,11 +185,15 @@ export default function AlbumShowcase({ style = {} }) {
           </div>
         </div>
 
-        {/* Row 2: Moving smoothly Right */}
+        {/* Row 2: Right */}
         <div className="album-marquee-viewport">
           <div className="album-marquee-track track-right">
             {ROW_2_LOOP.map((album, index) => (
-              <div key={`r2-${album.id}-${index}`} className="album-cover-card" title={`${album.name} - ${album.artist} (${album.year})`}>
+              <div
+                key={`r2-${album.id}-${index}`}
+                className="album-cover-card"
+                title={`${album.name} - ${album.artist} (${album.year})`}
+              >
                 <img
                   src={album.image}
                   alt={album.name}
@@ -202,7 +210,7 @@ export default function AlbumShowcase({ style = {} }) {
         </div>
       </div>
 
-      {/* Bottom Live Footer */}
+      {/* Bottom Footer */}
       <div
         style={{
           display: "flex",

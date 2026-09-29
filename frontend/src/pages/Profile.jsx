@@ -12,6 +12,8 @@ export default function Profile() {
     loginAccount,
     updateUsername,
     loginWithGoogle,
+    linkGoogle,
+    linkingStatus,
     logout,
   } = useApp();
   const { userId } = useParams();
@@ -70,7 +72,7 @@ export default function Profile() {
           setStats(d.user?.stats || null);
           if (d.user) setProfileData(d.user);
         })
-        .catch(() => {});
+        .catch(() => { });
     }
   }, [userId, currentUser?.id, isOtherUser]);
 
@@ -159,6 +161,12 @@ export default function Profile() {
 
   const activeUser = isOtherUser ? profileData : currentUser;
   const isGuest = Boolean(activeUser?.isGuest);
+  const hasGoogle = Boolean(activeUser?.googleId || linkingStatus?.googleLinked);
+  const canLinkGoogle = !isOtherUser && !isGuest && !hasGoogle;
+  const isOwner = Boolean(
+    activeUser?.email?.trim().toLowerCase() === "pablo.ecpx@gmail.com" &&
+    (activeUser?.googleId || linkingStatus?.googleLinked)
+  );
 
   return (
     <div className="grid page-container" style={{ gap: 28 }}>
@@ -174,7 +182,7 @@ export default function Profile() {
           <p className="muted" style={{ margin: 0 }}>
             {isOtherUser
               ? "Estadísticas de rendimiento, precisión y artistas destacados en YOAVLLY."
-              : "Gestiona tu identidad, vincula tu cuenta permanente y revisa tu récord musical."}
+              : "Gestiona tu identidad, vincula tu cuenta permanente y revisa tu récord musical"}
           </p>
         </div>
 
@@ -201,9 +209,19 @@ export default function Profile() {
         </div>
       )}
 
-      {searchParams.get("google") === "success" && (
+      {(searchParams.get("google") === "success" || searchParams.get("google") === "link_success") && (
         <div className="card" style={{ padding: 14, borderColor: "var(--ok)", background: "var(--ok-subtle)" }}>
-          <p className="ok" style={{ margin: 0, fontWeight: 700 }}>Conexión con Google completada exitosamente.</p>
+          <p className="ok" style={{ margin: 0, fontWeight: 700 }}>
+            ✓ Conexión con Google completada exitosamente. Tu foto de perfil se ha sincronizado con Google.
+          </p>
+        </div>
+      )}
+
+      {searchParams.get("google") === "link_error" && (
+        <div className="card" style={{ padding: 14, borderColor: "var(--bad)", background: "var(--bad-subtle)" }}>
+          <p className="error" style={{ margin: 0, fontWeight: 700 }}>
+            {searchParams.get("msg") || "Error al conectar con Google. Por favor, intenta de nuevo."}
+          </p>
         </div>
       )}
 
@@ -281,32 +299,122 @@ export default function Profile() {
                     {activeUser?.name || "Jugador"}
                   </h2>
                 </div>
-                <div className="row" style={{ gap: 6, flexWrap: "wrap" }}>
-                  {isGuest ? (
-                    <span className="chip" style={{ fontSize: 11, background: "var(--brand-subtle)", color: "var(--brand)" }}>
-                      Modo Invitado
-                    </span>
-                  ) : (
-                    <span className="chip ok" style={{ fontSize: 11 }}>
-                      Cuenta Registrada
+                <div className="row" style={{ gap: 6, flexWrap: "wrap", alignItems: "center" }}>
+                  {isOwner && (
+                    <span
+                      className="chip"
+                      style={{
+                        fontSize: 11,
+                        fontWeight: 800,
+                        background: "linear-gradient(135deg, rgba(234, 179, 8, 0.2), rgba(245, 158, 11, 0.3))",
+                        color: "#FACC15",
+                        border: "1px solid rgba(250, 204, 21, 0.5)",
+                        boxShadow: "0 0 10px rgba(234, 179, 8, 0.35)",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 6,
+                        textShadow: "0 0 8px rgba(250, 204, 21, 0.4)",
+                      }}
+                    >
+                      <span
+                        style={{
+                          position: "relative",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          width: 14,
+                          height: 14,
+                          flexShrink: 0,
+                        }}
+                      >
+                        {/* Main Sparkle */}
+                        <svg
+                          width="11"
+                          height="11"
+                          viewBox="0 0 24 24"
+                          fill="currentColor"
+                          style={{
+                            animation: "ownerSparkleMain 2.2s ease-in-out infinite",
+                            transformOrigin: "center",
+                          }}
+                        >
+                          <path d="M12 0L14.59 8.41L23 11L14.59 13.59L12 22L9.41 13.59L1 11L9.41 8.41L12 0Z" />
+                        </svg>
+                        {/* Mini Sparkle Top-Right */}
+                        <svg
+                          width="5.5"
+                          height="5.5"
+                          viewBox="0 0 24 24"
+                          fill="currentColor"
+                          style={{
+                            position: "absolute",
+                            top: -1,
+                            right: -3,
+                            animation: "ownerSparkleMini1 1.5s ease-in-out infinite",
+                            transformOrigin: "center",
+                          }}
+                        >
+                          <path d="M12 0L14.59 8.41L23 11L14.59 13.59L12 22L9.41 13.59L1 11L9.41 8.41L12 0Z" />
+                        </svg>
+                        {/* Mini Sparkle Bottom-Left */}
+                        <svg
+                          width="4.5"
+                          height="4.5"
+                          viewBox="0 0 24 24"
+                          fill="currentColor"
+                          style={{
+                            position: "absolute",
+                            bottom: -1,
+                            left: -2.5,
+                            animation: "ownerSparkleMini2 1.9s ease-in-out infinite 0.25s",
+                            transformOrigin: "center",
+                          }}
+                        >
+                          <path d="M12 0L14.59 8.41L23 11L14.59 13.59L12 22L9.41 13.59L1 11L9.41 8.41L12 0Z" />
+                        </svg>
+                      </span>
+                      Owner
                     </span>
                   )}
-                  {activeUser?.googleId && (
-                    <span className="chip" style={{ fontSize: 11, background: "#FFFFFF", border: "1px solid var(--border)", display: "flex", alignItems: "center", gap: 4 }}>
-                      <svg width="12" height="12" viewBox="0 0 24 24">
-                        <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.17z"/>
-                        <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.33 24 12 24z"/>
-                        <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 9.99 0 12s.45 3.82 1.25 5.42l4.03-3.15z"/>
-                        <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/>
-                      </svg>
-                      Google
-                    </span>
-                  )}
-                  {activeUser?.email && (
-                    <span className="muted" style={{ fontSize: 12 }}>
-                      {activeUser.email}
-                    </span>
-                  )}
+                  <span
+                    className="chip ok"
+                    style={{
+                      fontSize: 11,
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 6,
+                      background: "rgba(34, 197, 94, 0.12)",
+                      border: "1px solid rgba(34, 197, 94, 0.35)",
+                      color: "#4ADE80",
+                      fontWeight: 700,
+                      boxShadow: "0 0 10px rgba(34, 197, 94, 0.25)",
+                    }}
+                  >
+                    <svg
+                      width="15"
+                      height="15"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      style={{
+                        animation: "verifiedBadgePulse 2.4s ease-in-out infinite",
+                        transformOrigin: "center",
+                        flexShrink: 0,
+                      }}
+                    >
+                      <path
+                        d="M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z"
+                        fill="#22C55E"
+                      />
+                      <path
+                        d="m9 12 2 2 4-4"
+                        stroke="#FFFFFF"
+                        strokeWidth="2.4"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                    Registrado
+                  </span>
                 </div>
               </div>
             </div>
@@ -333,15 +441,160 @@ export default function Profile() {
               </div>
             )}
 
-            {!isOtherUser && (
-              <div className="row" style={{ justifyContent: "space-between", borderTop: "1px solid var(--border)", paddingTop: 16, marginTop: "auto" }}>
-                <button
-                  type="button"
-                  className="btn ghost sm"
-                  onClick={() => setIsEditing(!isEditing)}
+            {/* Si ya tienes cuenta con correo: opción en lugar de color de avatar para agregar a google */}
+            {canLinkGoogle && (
+              <div style={{ borderTop: "1px solid var(--border)", paddingTop: 16 }}>
+                <label style={{ fontSize: 11, fontWeight: 800, display: "block", marginBottom: 8, textTransform: "uppercase", color: "var(--text-muted)", letterSpacing: "0.05em" }}>
+                  Foto de perfil y Google
+                </label>
+                <div
+                  style={{
+                    background: "var(--bg-subtle)",
+                    border: "1px solid var(--border)",
+                    borderRadius: 14,
+                    padding: "16px",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 12,
+                  }}
                 >
-                  {isEditing ? "Cancelar" : "🎨 Cambiar avatar"}
-                </button>
+                  <div>
+                    <div style={{ fontSize: 14, fontWeight: 700, color: "var(--text)", marginBottom: 4 }}>
+                      Agregar cuenta de Google
+                    </div>
+                    <p className="muted" style={{ margin: 0, fontSize: 12, lineHeight: 1.5 }}>
+                      Vincula tu cuenta de Google para obtener tu foto de perfil oficial automáticamente y acceder con 1 clic.
+                    </p>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => linkGoogle("/profile")}
+                    className="btn"
+                    style={{
+                      background: "#FFFFFF",
+                      color: "#1F2937",
+                      border: "1.5px solid #E5E7EB",
+                      boxShadow: "0 2px 6px rgba(0, 0, 0, 0.06)",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: 10,
+                      fontWeight: 700,
+                      fontSize: 13,
+                      padding: "10px 16px",
+                      cursor: "pointer",
+                      width: "100%",
+                      borderRadius: 10,
+                    }}
+                  >
+                    <svg width="18" height="18" viewBox="0 0 24 24">
+                      <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.17z" />
+                      <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.33 24 12 24z" />
+                      <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 9.99 0 12s.45 3.82 1.25 5.42l4.03-3.15z" />
+                      <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z" />
+                    </svg>
+                    Agregar a Google
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Si ya tiene Google vinculado: estado de vinculación */}
+            {!isOtherUser && !isGuest && hasGoogle && (
+              <div style={{ borderTop: "1px solid var(--border)", paddingTop: 16 }}>
+                <div
+                  style={{
+                    background: "var(--bg-subtle)",
+                    border: "1px solid var(--border)",
+                    borderRadius: 14,
+                    padding: "12px 16px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                  }}
+                >
+                  <div className="row" style={{ alignItems: "center", gap: 10 }}>
+                    <svg width="20" height="20" viewBox="0 0 24 24">
+                      <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.17z" />
+                      <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.33 24 12 24z" />
+                      <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 9.99 0 12s.45 3.82 1.25 5.42l4.03-3.15z" />
+                      <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z" />
+                    </svg>
+                    <div>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: "var(--text)" }}>
+                        Vinculado con Google
+                      </div>
+                      <div style={{ fontSize: 11, color: "var(--text-muted)" }}>
+                        Foto de perfil sincronizada
+                      </div>
+                    </div>
+                  </div>
+                  <span className="chip ok" style={{ fontSize: 11 }}>
+                    Activo
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {!isOtherUser && (
+              <div
+                className="row"
+                style={{
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  borderTop: "1px solid var(--border)",
+                  paddingTop: 16,
+                  marginTop: "auto",
+                  gap: 12,
+                }}
+              >
+                {activeUser?.email ? (
+                  <div
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 8,
+                      background: "rgba(255, 255, 255, 0.04)",
+                      border: "1px solid var(--border)",
+                      padding: "6px 12px",
+                      borderRadius: 9999,
+                      maxWidth: "65%",
+                    }}
+                    title={activeUser.email}
+                  >
+                    <svg
+                      width="13"
+                      height="13"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="var(--text-muted)"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      style={{ flexShrink: 0, opacity: 0.8 }}
+                    >
+                      <rect width="20" height="16" x="2" y="4" rx="2" />
+                      <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+                    </svg>
+                    <span
+                      style={{
+                        fontSize: 12,
+                        fontWeight: 600,
+                        color: "var(--text-muted)",
+                        letterSpacing: "0.01em",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      {activeUser.email}
+                    </span>
+                  </div>
+                ) : (
+                  <div />
+                )}
+
                 <button
                   type="button"
                   className="btn ghost sm"
@@ -354,39 +607,6 @@ export default function Profile() {
                   Cerrar sesión
                 </button>
               </div>
-            )}
-
-            {/* Editing Avatar Form */}
-            {isEditing && !isOtherUser && (
-              <form onSubmit={onSaveProfile} className="grid" style={{ gap: 14, borderTop: "1px solid var(--border)", paddingTop: 14 }}>
-                <div>
-                  <label style={{ fontSize: 12, fontWeight: 700, display: "block", marginBottom: 6 }}>
-                    Color de avatar
-                  </label>
-                  <div className="row" style={{ gap: 8 }}>
-                    {AVATAR_COLORS.map((c) => (
-                      <button
-                        key={c}
-                        type="button"
-                        onClick={() => setEditAvatar(c)}
-                        style={{
-                          width: 28,
-                          height: 28,
-                          borderRadius: "50%",
-                          background: c,
-                          border: editAvatar === c ? "3px solid #FFFFFF" : "1px solid var(--border)",
-                          boxShadow: editAvatar === c ? "0 0 0 2px var(--brand)" : "none",
-                          cursor: "pointer",
-                        }}
-                      />
-                    ))}
-                  </div>
-                </div>
-
-                <button className="btn primary sm" type="submit">
-                  Guardar Avatar
-                </button>
-              </form>
             )}
           </div>
 
@@ -426,10 +646,10 @@ export default function Profile() {
                 }}
               >
                 <svg width="18" height="18" viewBox="0 0 24 24">
-                  <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.17z"/>
-                  <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.33 24 12 24z"/>
-                  <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 9.99 0 12s.45 3.82 1.25 5.42l4.03-3.15z"/>
-                  <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/>
+                  <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.17z" />
+                  <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.33 24 12 24z" />
+                  <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 9.99 0 12s.45 3.82 1.25 5.42l4.03-3.15z" />
+                  <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z" />
                 </svg>
                 Vincular con Google
               </button>
@@ -586,7 +806,7 @@ export default function Profile() {
               {/* Header */}
               <div className="row" style={{ justifyContent: "space-between", alignItems: "center" }}>
                 <h3 style={{ margin: 0, fontSize: 22, color: "var(--text)" }}>
-                  Rendimiento y Puntos
+                  Estadísticas YOAVLLY
                 </h3>
                 <span
                   className="chip"
@@ -612,7 +832,7 @@ export default function Profile() {
                   alignContent: "center",
                 }}
               >
-                <Stat label="PUNTUACIÓN TOTAL" value={stats?.totalScore || 0} isBrand />
+                <Stat label="PUNTUACIÓN TOTAL" value={stats?.totalScore || 0} />
                 <Stat label="MEJOR PARTIDA" value={stats?.bestScore || 0} />
                 <Stat label="VICTORIAS" value={stats?.wins || 0} />
                 <Stat label="PARTIDAS JUGADAS" value={stats?.gamesPlayed || 0} />

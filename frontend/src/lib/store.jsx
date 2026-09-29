@@ -63,16 +63,38 @@ export function AppProvider({ children }) {
     const params = new URLSearchParams(window.location.search);
     const googleStatus = params.get("google");
     const userIdParam = params.get("userId");
+    const userDataParam = params.get("userData");
 
-    if (googleStatus === "success" && userIdParam) {
-      api(`/api/users/${userIdParam}`)
-        .then((res) => {
-          if (res.user) {
-            persistUser(res.user);
-            setUser(res.user);
-          }
-        })
-        .catch(() => {});
+    if (googleStatus === "success") {
+      let loadedUser = null;
+      if (userDataParam) {
+        try {
+          loadedUser = JSON.parse(decodeURIComponent(userDataParam));
+        } catch {}
+      }
+
+      if (loadedUser) {
+        persistUser(loadedUser);
+        setUser(loadedUser);
+        api("/api/session", { method: "POST", body: loadedUser }).catch(() => {});
+      } else if (userIdParam) {
+        api(`/api/users/${userIdParam}`)
+          .then((res) => {
+            if (res.user) {
+              persistUser(res.user);
+              setUser(res.user);
+            }
+          })
+          .catch(() => {});
+      }
+
+      try {
+        const url = new URL(window.location.href);
+        url.searchParams.delete("google");
+        url.searchParams.delete("userId");
+        url.searchParams.delete("userData");
+        window.history.replaceState({}, document.title, url.pathname + (url.search ? url.search : ""));
+      } catch {}
     }
 
     api("/api/me")
@@ -164,8 +186,9 @@ export function AppProvider({ children }) {
       },
 
       async loginWithGoogle(returnTo = "/play") {
+        const origin = window.location.origin;
         try {
-          const { url } = await api(`/api/google/login?returnTo=${encodeURIComponent(returnTo)}&purpose=login`);
+          const { url } = await api(`/api/google/login?returnTo=${encodeURIComponent(returnTo)}&purpose=login&origin=${encodeURIComponent(origin)}`);
           if (url) {
             window.location.href = url;
             return;
@@ -173,12 +196,13 @@ export function AppProvider({ children }) {
         } catch (e) {
           console.warn("API google login failed, falling back to direct auth redirect", e);
         }
-        window.location.href = `${BACKEND_URL}/auth/google?returnTo=${encodeURIComponent(returnTo)}&purpose=login`;
+        window.location.href = `${BACKEND_URL}/auth/google?returnTo=${encodeURIComponent(returnTo)}&purpose=login&origin=${encodeURIComponent(origin)}`;
       },
 
       async linkGoogle(returnTo = "/profile") {
+        const origin = window.location.origin;
         try {
-          const { url } = await api(`/api/google/login?returnTo=${encodeURIComponent(returnTo)}&purpose=link`);
+          const { url } = await api(`/api/google/login?returnTo=${encodeURIComponent(returnTo)}&purpose=link&origin=${encodeURIComponent(origin)}`);
           if (url) {
             window.location.href = url;
             return;
@@ -186,7 +210,7 @@ export function AppProvider({ children }) {
         } catch (e) {
           console.warn("API google link failed, falling back to direct auth redirect", e);
         }
-        window.location.href = `${BACKEND_URL}/auth/google?returnTo=${encodeURIComponent(returnTo)}&purpose=link`;
+        window.location.href = `${BACKEND_URL}/auth/google?returnTo=${encodeURIComponent(returnTo)}&purpose=link&origin=${encodeURIComponent(origin)}`;
       },
 
       async unlinkGoogle() {
@@ -219,6 +243,7 @@ export function AppProvider({ children }) {
       },
 
       async createRoom(mode, config, explicitUser) {
+        setRoom(null);
         let u = explicitUser || user || loadSavedUser();
         if (!u) {
           const autoName = `Jugador${Math.floor(100 + Math.random() * 900)}`;
@@ -231,6 +256,7 @@ export function AppProvider({ children }) {
       },
 
       async joinRoom(code, explicitUser) {
+        setRoom(null);
         let u = explicitUser || user || loadSavedUser();
         if (!u) {
           const autoName = `Jugador${Math.floor(100 + Math.random() * 900)}`;
@@ -266,7 +292,10 @@ export function AppProvider({ children }) {
         if (res.state) setRoom(res.state);
       },
 
-      leaveRoom() { emitAck("room:leave"); setRoom(null); },
+      leaveRoom() {
+        setRoom(null);
+        emitAck("room:leave").catch(() => {});
+      },
 
       async logout() {
         try { await api("/api/auth/logout", { method: "POST" }); } catch {}
