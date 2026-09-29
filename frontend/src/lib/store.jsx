@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { api } from "./api.js";
 import { emitAck, getSocket } from "./socket.js";
 import { BACKEND_URL } from "./config.js";
@@ -14,6 +14,9 @@ export const AVATAR_COLORS = [
   "#EC4899", // Rose
   "#06B6D4", // Cyan
 ];
+
+// Per-tab, so a reload puts you back in the same room.
+const ROOM_KEY = "trivially_room";
 
 function loadSavedUser() {
   try {
@@ -40,12 +43,51 @@ function persistUser(user) {
   }
 }
 
+function loadSavedRoomCode() {
+  try {
+    return sessionStorage.getItem(ROOM_KEY);
+  } catch {
+    return null;
+  }
+}
+
+function saveRoomCode(code) {
+  try {
+    if (code) sessionStorage.setItem(ROOM_KEY, code);
+    else sessionStorage.removeItem(ROOM_KEY);
+  } catch {}
+}
+
 export function AppProvider({ children }) {
   const [user, setUser] = useState(loadSavedUser);
   const [catalog, setCatalog] = useState(null);
   const [room, setRoom] = useState(null);
   const [linkingStatus, setLinkingStatus] = useState(null);
   const [error, setError] = useState("");
+
+  // Actions read these refs instead of closing over state, so e.g. saveGuest() followed by joinRoom() sees the new user.
+  const userRef = useRef(user);
+  userRef.current = user;
+  const roomCodeRef = useRef(loadSavedRoomCode());
+
+  function applyUser(next) {
+    userRef.current = next;
+    persistUser(next);
+    setUser(next);
+  }
+
+  function enterRoom(state) {
+    roomCodeRef.current = state.code;
+    saveRoomCode(state.code);
+    setRoom(state);
+    return state;
+  }
+
+  function clearRoom() {
+    roomCodeRef.current = null;
+    saveRoomCode(null);
+    setRoom(null);
+  }
 
   useEffect(() => {
     api("/api/catalog").then(setCatalog).catch(() => {});
@@ -57,10 +99,7 @@ export function AppProvider({ children }) {
     if (googleStatus === "success" && userIdParam) {
       api(`/api/users/${userIdParam}`)
         .then((res) => {
-          if (res.user) {
-            persistUser(res.user);
-            setUser(res.user);
-          }
+          if (res.user) applyUser(res.user);
         })
         .catch(() => {});
     }
@@ -68,19 +107,34 @@ export function AppProvider({ children }) {
     api("/api/me")
       .then((d) => {
         setLinkingStatus(d.linkingStatus || null);
-        if (d.user) {
-          persistUser(d.user);
-          setUser(d.user);
-        }
+        if (d.user) applyUser(d.user);
       })
       .catch(() => {});
   }, []);
 
   useEffect(() => {
     const s = getSocket();
-    const onState = (state) => setRoom(state);
+    const onState = (state) => {
+      // A broadcast for a room we already left can still be in flight.
+      if (state?.code === roomCodeRef.current) setRoom(state);
+    };
+    // Re-enter our room after a reload or a dropped connection; the server holds the seat for a few seconds.
+    const rejoin = async () => {
+      const code = roomCodeRef.current;
+      const current = userRef.current;
+      if (!code || !current?.name) return;
+      const res = await emitAck("room:join", { user: current, code });
+      if (roomCodeRef.current !== code) return;
+      if (res.ok) setRoom(res.state);
+      else clearRoom();
+    };
     s.on("room:state", onState);
-    return () => s.off("room:state", onState);
+    s.on("connect", rejoin);
+    if (s.connected) rejoin();
+    return () => {
+      s.off("room:state", onState);
+      s.off("connect", rejoin);
+    };
   }, []);
 
   const actions = useMemo(
@@ -95,8 +149,7 @@ export function AppProvider({ children }) {
         localStorage.setItem("yoavlly_guest_id", guestId);
         localStorage.setItem("yoavlly_guest_name", cleanName);
         const guestObj = { id: guestId, name: cleanName, avatar: avatar || AVATAR_COLORS[0], isGuest: true };
-        persistUser(guestObj);
-        setUser(guestObj);
+        applyUser(guestObj);
         try {
           await api("/api/session", { method: "POST", body: guestObj });
         } catch {}
@@ -104,47 +157,40 @@ export function AppProvider({ children }) {
       },
 
       async saveProfile(name, avatar) {
-        const current = user || { id: `usr_${Math.random().toString(36).slice(2, 10)}`, avatar: AVATAR_COLORS[0] };
+        const current = userRef.current || { id: `usr_${Math.random().toString(36).slice(2, 10)}`, avatar: AVATAR_COLORS[0] };
         const next = { ...current, name: (name || current.name || "").trim(), avatar: avatar || current.avatar || AVATAR_COLORS[0], isGuest: false };
-        persistUser(next);
-        setUser(next);
+        applyUser(next);
         await api("/api/session", { method: "POST", body: next });
         return next;
       },
 
       async updateUsername(newName) {
-        if (!user) throw new Error("No autenticado");
+        const current = userRef.current;
+        if (!current) throw new Error("No autenticado");
         const clean = (newName || "").trim();
         if (!clean) throw new Error("Por favor introduce un nombre de usuario");
-        const res = await api(`/api/users/${user.id}/name`, { method: "PATCH", body: { name: clean } });
-        if (res.user) {
-          persistUser(res.user);
-          setUser(res.user);
-        }
+        const res = await api(`/api/users/${current.id}/name`, { method: "PATCH", body: { name: clean } });
+        if (res.user) applyUser(res.user);
         return res.user;
       },
 
       async registerAccount({ name, email, password }) {
-        const guestId = user?.isGuest ? user.id : localStorage.getItem("yoavlly_guest_id");
+        const current = userRef.current;
+        const guestId = current?.isGuest ? current.id : localStorage.getItem("yoavlly_guest_id");
         const nextId = `usr_${Math.random().toString(36).slice(2, 10)}`;
         const res = await api("/api/auth/register", {
           method: "POST",
-          body: { id: nextId, name, email, password, guestId, avatar: user?.avatar || AVATAR_COLORS[0] },
+          body: { id: nextId, name, email, password, guestId, avatar: current?.avatar || AVATAR_COLORS[0] },
         });
-        if (res.user) {
-          persistUser(res.user);
-          setUser(res.user);
-        }
+        if (res.user) applyUser(res.user);
         return res.user;
       },
 
       async loginAccount(identifier, password) {
-        const guestId = user?.isGuest ? user.id : localStorage.getItem("yoavlly_guest_id");
+        const current = userRef.current;
+        const guestId = current?.isGuest ? current.id : localStorage.getItem("yoavlly_guest_id");
         const res = await api("/api/auth/login", { method: "POST", body: { identifier, password, guestId } });
-        if (res.user) {
-          persistUser(res.user);
-          setUser(res.user);
-        }
+        if (res.user) applyUser(res.user);
         return res.user;
       },
 
@@ -177,8 +223,7 @@ export function AppProvider({ children }) {
       async unlinkGoogle() {
         const res = await api("/api/auth/unlink-google", { method: "POST" });
         if (res.user) {
-          persistUser(res.user);
-          setUser(res.user);
+          applyUser(res.user);
           setLinkingStatus((prev) => ({ ...prev, googleLinked: false }));
         }
         return res.user;
@@ -186,37 +231,44 @@ export function AppProvider({ children }) {
 
       async deleteAccount(confirmName) {
         await api("/api/auth/delete-account", { method: "DELETE", body: { confirmName } });
-        persistUser(null);
+        applyUser(null);
         localStorage.removeItem("yoavlly_guest_name");
         localStorage.removeItem("yoavlly_guest_id");
-        setUser(null);
         setLinkingStatus(null);
       },
 
       async updatePlayer(data) {
-        if (!user) return;
-        const next = { ...user, ...data };
-        persistUser(next);
-        setUser(next);
+        const current = userRef.current;
+        if (!current) return;
+        const next = { ...current, ...data };
+        applyUser(next);
         const res = await emitAck("player:update", data);
         if (res?.state) setRoom(res.state);
         return next;
       },
 
-      async createRoom(mode, config) {
-        if (!user) throw new Error("Debes identificarte antes de crear una sala");
-        const res = await emitAck("room:create", { user, mode, config });
+      // `game` is where the room starts: null for the Home screen, or a game id such as "musica".
+      async createRoom(mode, config, game = "musica") {
+        const current = userRef.current;
+        if (!current?.name) throw new Error("Debes identificarte antes de crear una sala");
+        const res = await emitAck("room:create", { user: current, mode, config, game });
         if (!res.ok) throw new Error(res.error);
-        setRoom(res.state);
-        return res.state;
+        return enterRoom(res.state);
       },
 
       async joinRoom(code) {
-        if (!user) throw new Error("Debes identificarte antes de unirte");
-        const res = await emitAck("room:join", { user, code: code.toUpperCase() });
+        const current = userRef.current;
+        if (!current?.name) throw new Error("Debes identificarte antes de unirte");
+        const res = await emitAck("room:join", { user: current, code: code.toUpperCase() });
         if (!res.ok) throw new Error(res.error);
-        setRoom(res.state);
-        return res.state;
+        return enterRoom(res.state);
+      },
+
+      // Host only: moves every player in the room into `game` (null = back to the Home screen).
+      async setGame(game) {
+        const res = await emitAck("room:setGame", game ?? null);
+        if (!res.ok) throw new Error(res.error);
+        if (res.state) setRoom(res.state);
       },
 
       async updateConfig(config) {
@@ -243,18 +295,17 @@ export function AppProvider({ children }) {
         if (res.state) setRoom(res.state);
       },
 
-      leaveRoom() { emitAck("room:leave"); setRoom(null); },
+      leaveRoom() { emitAck("room:leave"); clearRoom(); },
 
       async logout() {
         try { await api("/api/auth/logout", { method: "POST" }); } catch {}
-        persistUser(null);
+        applyUser(null);
         localStorage.removeItem("yoavlly_guest_name");
         localStorage.removeItem("yoavlly_guest_id");
-        setUser(null);
         setLinkingStatus(null);
       },
     }),
-    [user]
+    []
   );
 
   // spotify prop provided as safe inert object for any backward compat

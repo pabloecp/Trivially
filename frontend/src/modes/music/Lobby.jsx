@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import PlayerCard from "../components/PlayerCard.jsx";
-import RoomConfigModal from "../components/RoomConfigModal.jsx";
-import { useApp } from "../lib/store.jsx";
-import { YoavllySymbol } from "../components/YoavllySymbol.jsx";
+import PlayerCard from "../../components/PlayerCard.jsx";
+import RoomConfigModal from "../../components/RoomConfigModal.jsx";
+import { useApp } from "../../lib/store.jsx";
+import { YoavllySymbol } from "../../components/YoavllySymbol.jsx";
 
 export default function Lobby() {
   const { code } = useParams();
@@ -16,6 +16,7 @@ export default function Lobby() {
     setReady,
     startGame,
     leaveRoom,
+    setGame,
     updateConfig,
     toggleConfigPermission,
   } = useApp();
@@ -28,19 +29,12 @@ export default function Lobby() {
   const [showConfigModal, setShowConfigModal] = useState(false);
   const [permissionMsg, setPermissionMsg] = useState("");
 
-  // Join room if not joined yet
+  // Join room if not joined yet. Moving to the game screen is handled by RoomNavigator (App.jsx).
   useEffect(() => {
     if (user?.name && (!room || room.code !== code)) {
-      joinRoom(code).catch(() => nav("/play"));
+      joinRoom(code).catch(() => nav("/"));
     }
   }, [code, user?.name]);
-
-  // Navigate to game when game starts
-  useEffect(() => {
-    if (room && room.phase !== "lobby" && room.phase !== "finished") {
-      nav(`/game/${room.code}`);
-    }
-  }, [room?.phase]);
 
   // If user does not have a saved name yet, show prompt
   if (!user?.name) {
@@ -116,7 +110,7 @@ export default function Lobby() {
     .join(", ");
 
   async function copyLink() {
-    const link = `${window.location.origin}/lobby/${room.code}`;
+    const link = `${window.location.origin}/sala/${room.code}`;
     try {
       await navigator.clipboard.writeText(link);
       setCopied(true);
@@ -131,6 +125,15 @@ export default function Lobby() {
     setStartErr("");
     try {
       await startGame();
+    } catch (e) {
+      setStartErr(e.message);
+    }
+  }
+
+  async function onBackToHub() {
+    setStartErr("");
+    try {
+      await setGame(null);
     } catch (e) {
       setStartErr(e.message);
     }
@@ -325,6 +328,14 @@ export default function Lobby() {
                   ? "Comenzar Ronda Solo →"
                   : `Comenzar Partida (${connectedPlayers.length} jugadores) →`}
               </button>
+              <button
+                className="btn secondary"
+                onClick={onBackToHub}
+                type="button"
+                title="Lleva a todos los jugadores a la página principal para elegir otro juego"
+              >
+                🏠 Volver todos a la sala principal
+              </button>
             </div>
           ) : (
             <div className="grid" style={{ gap: 10 }}>
@@ -346,7 +357,7 @@ export default function Lobby() {
               className="btn ghost sm"
               onClick={() => {
                 leaveRoom();
-                nav("/play");
+                nav("/");
               }}
               type="button"
             >

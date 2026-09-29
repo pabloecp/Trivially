@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { useApp } from "../lib/store.jsx";
-import { YoavllySymbol } from "../components/YoavllySymbol.jsx";
+import { useApp } from "../../lib/store.jsx";
+import { YoavllySymbol } from "../../components/YoavllySymbol.jsx";
 
 export default function Join() {
   const [code, setCode] = useState("");

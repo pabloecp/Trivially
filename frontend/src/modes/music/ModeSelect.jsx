@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useApp } from "../lib/store.jsx";
-import { AuthPromptModal } from "../components/AuthPromptModal.jsx";
-import AlbumShowcase from "../components/AlbumShowcase.jsx";
+import { useApp } from "../../lib/store.jsx";
+import { AuthPromptModal } from "../../components/AuthPromptModal.jsx";
+import AlbumShowcase from "../../components/AlbumShowcase.jsx";
 
 export default function ModeSelect() {
   const { user, createRoom, joinRoom } = useApp();
@@ -14,8 +14,9 @@ export default function ModeSelect() {
   const [pendingAction, setPendingAction] = useState(null); // "create" | "join"
   const nav = useNavigate();
 
-  async function handleCreateRoom() {
-    if (!user?.name) {
+  // `hasName` is passed right after the name modal, before `user` in this render catches up.
+  async function handleCreateRoom(hasName = Boolean(user?.name)) {
+    if (!hasName) {
       setPendingAction("create");
       setAuthModalOpen(true);
       return;
@@ -136,7 +137,7 @@ export default function ModeSelect() {
             <button
               type="button"
               className="btn primary lg"
-              onClick={handleCreateRoom}
+              onClick={() => handleCreateRoom()}
               disabled={creating}
               style={{
                 width: "100%",
@@ -206,7 +207,7 @@ export default function ModeSelect() {
         onSuccess={() => {
           setAuthModalOpen(false);
           if (pendingAction === "create") {
-            handleCreateRoom();
+            handleCreateRoom(true);
           } else if (pendingAction === "join" && code.trim()) {
             nav(`/lobby/${code.trim().toUpperCase()}`);
           }

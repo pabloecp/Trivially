@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { api } from "../lib/api.js";
-import { useApp } from "../lib/store.jsx";
-import { YoavllySymbol } from "../components/YoavllySymbol.jsx";
-import { AuthPromptModal } from "../components/AuthPromptModal.jsx";
+import { api } from "../../lib/api.js";
+import { useApp } from "../../lib/store.jsx";
+import { YoavllySymbol } from "../../components/YoavllySymbol.jsx";
+import { AuthPromptModal } from "../../components/AuthPromptModal.jsx";
 
 const ROUND_OPTIONS = [5, 10, 15, 20, 25];
 

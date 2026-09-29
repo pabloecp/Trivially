@@ -5,6 +5,15 @@ import { isCorrectAnswer, normalizeAnswer } from "./answers.js";
 import { COUNTDOWN_MS, REVEAL_MS, ROUND_MS, scoreAnswer } from "./scoring.js";
 
 const CODE_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+// Games the host can move a room into (ids match frontend/src/modes/index.js). `null` is the Home screen.
+export const GAME_IDS = ["musica"];
+// How long a dropped player keeps their seat (and host role) so a reload or network blip doesn't kick them.
+const RECONNECT_GRACE_MS = 20000;
+
+export function assertGame(game) {
+  if (game === null || GAME_IDS.includes(game)) return game;
+  throw new Error("Ese juego no está disponible");
+}
 
 export function createRoomCode(existing) {
   let code = "";
@@ -54,9 +63,10 @@ function publicPlayer(player, phase, room) {
 }
 
 export class RoomManager {
-  constructor({ catalog, store }) {
+  constructor({ catalog, store, reconnectGraceMs = RECONNECT_GRACE_MS }) {
     this.catalog = catalog;
     this.store = store;
+    this.reconnectGraceMs = reconnectGraceMs;
     this.rooms = new Map();
     this.socketToRoom = new Map();
   }
@@ -65,11 +75,12 @@ export class RoomManager {
     return this.rooms.get(code.toUpperCase());
   }
 
-  create({ host, mode, config }) {
+  create({ host, mode, config, game = null }) {
     const code = createRoomCode(this.rooms);
     const room = {
       code,
       mode: mode || "multi",
+      game: assertGame(game),
       hostId: host.id,
       coHosts: [],
       createdAt: Date.now(),
@@ -103,40 +114,75 @@ export class RoomManager {
       lastAnswer: null,
       lastPoints: 0,
     };
+    // Rejoining from a new socket (reload, second tab): the old socket no longer speaks for this player.
+    if (existing?.socketId && existing.socketId !== user.socketId) {
+      this.socketToRoom.delete(existing.socketId);
+    }
+    clearTimeout(player.dropTimer);
+    player.dropTimer = null;
     player.name = user.name;
     player.avatar = user.avatar;
     player.connected = true;
     player.socketId = user.socketId;
-    player.status = room.phase === "lobby" ? (isHost ? "conectado" : "conectado") : "jugando";
-    if (room.phase === "lobby") player.status = "conectado";
+    player.status = room.phase === "lobby" ? "conectado" : "jugando";
     room.players.set(user.id, player);
     this.socketToRoom.set(user.socketId, { code: room.code, userId: user.id });
     return player;
   }
 
+  // Explicit "leave room".
   leave(socketId) {
     const ref = this.socketToRoom.get(socketId);
     if (!ref) return null;
     const room = this.get(ref.code);
     this.socketToRoom.delete(socketId);
     if (!room) return null;
+    return this.removePlayer(room, ref.userId);
+  }
+
+  // Lost connection: keep the seat for a grace period in case the player comes back.
+  disconnect(socketId) {
+    const ref = this.socketToRoom.get(socketId);
+    if (!ref) return null;
+    this.socketToRoom.delete(socketId);
+    const room = this.get(ref.code);
+    if (!room) return null;
     const player = room.players.get(ref.userId);
+    if (!player) return { room };
+    player.connected = false;
+    player.socketId = null;
+    player.status = "desconectado";
+    clearTimeout(player.dropTimer);
+    player.dropTimer = setTimeout(() => {
+      player.dropTimer = null;
+      if (player.connected || this.rooms.get(room.code) !== room) return;
+      const result = this.removePlayer(room, player.id);
+      if (result.room) this.onPhaseChange?.(result.room);
+    }, this.reconnectGraceMs);
+    player.dropTimer.unref?.();
+    return { room };
+  }
+
+  removePlayer(room, userId) {
+    const player = room.players.get(userId);
     if (!player) return { room, left: true };
+    clearTimeout(player.dropTimer);
+    player.dropTimer = null;
     if (room.phase === "lobby") {
-      room.players.delete(ref.userId);
+      room.players.delete(userId);
       if (Array.isArray(room.coHosts)) {
-        room.coHosts = room.coHosts.filter((id) => id !== ref.userId);
-      }
-      if (room.hostId === ref.userId) this.transferHost(room);
-      if (!room.players.size) {
-        this.destroy(room);
-        return { room: null, left: true };
+        room.coHosts = room.coHosts.filter((id) => id !== userId);
       }
     } else {
+      // Mid-match the player stays on the scoreboard as disconnected.
       player.connected = false;
       player.status = "desconectado";
       player.socketId = null;
-      if (room.hostId === ref.userId) this.transferHost(room);
+    }
+    if (room.hostId === userId) this.transferHost(room);
+    if (![...room.players.values()].some((p) => p.connected)) {
+      this.destroy(room);
+      return { room: null, left: true };
     }
     return { room, left: true };
   }
@@ -151,6 +197,10 @@ export class RoomManager {
 
   destroy(room) {
     if (room.timer) clearTimeout(room.timer);
+    room.players.forEach((p) => {
+      clearTimeout(p.dropTimer);
+      if (p.socketId) this.socketToRoom.delete(p.socketId);
+    });
     this.rooms.delete(room.code);
   }
 
@@ -211,6 +261,7 @@ export class RoomManager {
 
   start(room, userId) {
     if (room.hostId !== userId) throw new Error("Solo el Host puede iniciar");
+    if (room.game !== "musica") throw new Error("Elige un juego antes de empezar");
     if (room.phase !== "lobby") throw new Error("La partida ya comenzó");
     const connected = [...room.players.values()].filter((p) => p.connected);
     if (connected.length < 1) {
@@ -345,7 +396,20 @@ export class RoomManager {
 
   restart(room, userId) {
     if (room.hostId !== userId) throw new Error("Solo el Host puede reiniciar la sala");
+    this.resetMatch(room);
+  }
+
+  // Moves the whole room into another game (or back to the Home screen with `null`), abandoning any match in progress.
+  setGame(room, userId, game) {
+    if (room.hostId !== userId) throw new Error("Solo el Host puede cambiar de juego");
+    const next = assertGame(game ?? null);
+    this.resetMatch(room);
+    room.game = next;
+  }
+
+  resetMatch(room) {
     if (room.timer) clearTimeout(room.timer);
+    room.timer = null;
     room.phase = "lobby";
     room.phaseStartedAt = Date.now();
     room.phaseEndsAt = null;
@@ -354,7 +418,13 @@ export class RoomManager {
     room.currentTrackId = null;
     room.answers = {};
     room.statsApplied = false;
-    room.players.forEach((p) => {
+    for (const [id, p] of room.players) {
+      // Players who left mid-match (and aren't reconnecting) have no seat in a fresh lobby.
+      if (!p.connected && !p.dropTimer) {
+        room.players.delete(id);
+        room.coHosts = (room.coHosts || []).filter((c) => c !== id);
+        continue;
+      }
       p.score = 0;
       p.correct = 0;
       p.streak = 0;
@@ -362,8 +432,8 @@ export class RoomManager {
       p.answerTimes = [];
       p.lastAnswer = null;
       p.lastPoints = 0;
-      p.status = "conectado";
-    });
+      p.status = p.connected ? "conectado" : "desconectado";
+    }
   }
 
 
@@ -429,6 +499,7 @@ export class RoomManager {
       code: room.code,
       name: room.config.name || "Partida YOAVLLY",
       mode: room.mode,
+      game: room.game,
       hostId: room.hostId,
       hostName: host?.name || "Host",
       phase: room.phase,

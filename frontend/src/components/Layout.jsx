@@ -1,22 +1,11 @@
-import { useEffect, useState } from "react";
 import { Link, NavLink } from "react-router-dom";
 import { useApp } from "../lib/store.jsx";
+import { useTheme } from "../lib/theme.js";
 import { YoavllyLogo } from "./YoavllySymbol.jsx";
 
 export default function Layout({ children }) {
   const { user, error } = useApp();
-  const [theme, setTheme] = useState(() => {
-    return localStorage.getItem("yoavlly_theme") || localStorage.getItem("bysong_theme") || "dark";
-  });
-
-  useEffect(() => {
-    document.documentElement.setAttribute("data-theme", theme);
-    localStorage.setItem("yoavlly_theme", theme);
-  }, [theme]);
-
-  function toggleTheme() {
-    setTheme((prev) => (prev === "dark" ? "light" : "dark"));
-  }
+  const { theme, toggleTheme } = useTheme();
 
   return (
     <div className="shell">

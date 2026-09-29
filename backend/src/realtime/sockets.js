@@ -13,10 +13,13 @@ export function attachSockets(io, rooms) {
     socket.on("room:create", (payload, ack) => {
       try {
         const user = bindUser(socket, payload?.user);
+        leaveCurrentRoom(io, rooms, socket);
         const room = rooms.create({
           host: user,
           mode: payload.mode || "multi",
           config: payload.config || {},
+          // Older clients don't send `game` and expect to land in the song lobby.
+          game: payload.game === undefined ? "musica" : payload.game,
         });
         socket.join(room.code);
         ack?.({ ok: true, state: rooms.publicState(room, user.id) });
@@ -31,6 +34,7 @@ export function attachSockets(io, rooms) {
         const user = bindUser(socket, payload?.user);
         const room = rooms.get(payload.code || "");
         if (!room) throw new Error("Sala no encontrada");
+        leaveCurrentRoom(io, rooms, socket, room.code);
         rooms.addPlayer(room, user);
         socket.join(room.code);
         ack?.({ ok: true, state: rooms.publicState(room, user.id) });
@@ -41,9 +45,19 @@ export function attachSockets(io, rooms) {
     });
 
     socket.on("room:leave", (ack) => {
-      const result = rooms.leave(socket.id);
-      if (result?.room) io.to(result.room.code).emit("room:state", rooms.publicState(result.room));
+      leaveCurrentRoom(io, rooms, socket);
       ack?.({ ok: true });
+    });
+
+    socket.on("room:setGame", (game, ack) => {
+      try {
+        const { room, userId } = requireRoom(rooms, socket);
+        rooms.setGame(room, userId, game);
+        ack?.({ ok: true, state: rooms.publicState(room, userId) });
+        io.to(room.code).emit("room:state", rooms.publicState(room));
+      } catch (err) {
+        ack?.({ ok: false, error: err.message });
+      }
     });
 
     socket.on("room:config", (config, ack) => {
@@ -137,10 +151,19 @@ export function attachSockets(io, rooms) {
     });
 
     socket.on("disconnect", () => {
-      const result = rooms.leave(socket.id);
+      const result = rooms.disconnect(socket.id);
       if (result?.room) io.to(result.room.code).emit("room:state", rooms.publicState(result.room));
     });
   });
+}
+
+// Takes the socket out of the room it's in (unless it's `keepCode`), so it stops getting that room's updates.
+function leaveCurrentRoom(io, rooms, socket, keepCode) {
+  const ref = rooms.socketToRoom.get(socket.id);
+  if (!ref || ref.code === keepCode) return;
+  socket.leave(ref.code);
+  const result = rooms.leave(socket.id);
+  if (result?.room) io.to(result.room.code).emit("room:state", rooms.publicState(result.room));
 }
 
 function bindUser(socket, user) {
@@ -162,9 +185,10 @@ function watchRoom(io, rooms, room) {
   if (room.watching) return;
   room.watching = true;
   const tick = () => {
-    if (!rooms.rooms.has(room.code)) return;
+    if (rooms.rooms.get(room.code) !== room) return;
     io.to(room.code).emit("room:state", rooms.publicState(room));
-    if (room.phase !== "finished") {
+    // Stop once the match is over or the host sent everyone back to a lobby.
+    if (["countdown", "playing", "reveal"].includes(room.phase)) {
       const wait = Math.max(250, (room.phaseEndsAt || Date.now()) - Date.now() + 30);
       setTimeout(tick, Math.min(wait, 1000));
     } else {

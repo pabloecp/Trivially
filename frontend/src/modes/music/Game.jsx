@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import MiniBoard from "../components/MiniBoard.jsx";
-import { YoavllySymbol } from "../components/YoavllySymbol.jsx";
-import { remainingMs, useApp } from "../lib/store.jsx";
+import MiniBoard from "../../components/MiniBoard.jsx";
+import { YoavllySymbol } from "../../components/YoavllySymbol.jsx";
+import { remainingMs, useApp } from "../../lib/store.jsx";
 
 function normalize(str = "") {
   return str
@@ -14,7 +14,7 @@ function normalize(str = "") {
 
 export default function Game() {
   const { code } = useParams();
-  const { user, room, joinRoom, answer, restartGame, leaveRoom } = useApp();
+  const { user, room, joinRoom, answer, restartGame, leaveRoom, setGame } = useApp();
   const nav = useNavigate();
 
   const audioRef = useRef(null);
@@ -29,13 +29,21 @@ export default function Game() {
   const [query, setQuery] = useState("");
   const [activeIndex, setActiveIndex] = useState(0);
   const [submittedSong, setSubmittedSong] = useState(null);
+  // Host's "back to the main room" mid-match needs a second tap, since it ends the match for everyone.
+  const [confirmHub, setConfirmHub] = useState(false);
 
-  // Join room if disconnected or reloaded
+  // Join room if disconnected or reloaded. Going back to the lobby is handled by RoomNavigator (App.jsx).
   useEffect(() => {
     if (!room || room.code !== code) {
-      joinRoom(code).catch(() => nav("/play"));
+      joinRoom(code).catch(() => nav("/"));
     }
   }, [code]);
+
+  useEffect(() => {
+    if (!confirmHub) return;
+    const t = setTimeout(() => setConfirmHub(false), 3000);
+    return () => clearTimeout(t);
+  }, [confirmHub]);
 
   // Synchronized timer ticker
   useEffect(() => {
@@ -90,13 +98,6 @@ export default function Game() {
       }, 100);
     }
   }, [room?.phase, room?.currentRound]);
-
-  // If room resets back to lobby
-  useEffect(() => {
-    if (room?.phase === "lobby") {
-      nav(`/lobby/${room.code}`);
-    }
-  }, [room?.phase, room?.code]);
 
   const playerObj = room?.players?.find((p) => p.id === user?.id);
   const me = playerObj
@@ -195,6 +196,15 @@ export default function Game() {
     if (audioRef.current) {
       audioRef.current.play().then(() => setAudioBlocked(false)).catch(() => {});
     }
+  }
+
+  function backToHub({ confirm = false } = {}) {
+    if (confirm && !confirmHub) {
+      setConfirmHub(true);
+      return;
+    }
+    setConfirmHub(false);
+    setGame(null).catch((e) => setErr(e.message || "No se pudo volver a la sala"));
   }
 
   if (!room) {
@@ -360,18 +370,23 @@ export default function Game() {
         {/* Action Controls */}
         <div className="row" style={{ justifyContent: "center", gap: 12, flexWrap: "wrap" }}>
           {isHost ? (
-            <button className="btn primary lg" onClick={restartGame}>
-              🔄 Jugar de Nuevo
-            </button>
+            <>
+              <button className="btn primary lg" onClick={restartGame}>
+                🔄 Jugar de Nuevo
+              </button>
+              <button className="btn secondary lg" onClick={() => backToHub()}>
+                🏠 Elegir otro juego
+              </button>
+            </>
           ) : (
-            <span className="muted">Esperando a que el host reinicie la partida...</span>
+            <span className="muted">Esperando a que el host decida qué jugar...</span>
           )}
 
           <button
             className="btn ghost lg"
             onClick={() => {
               leaveRoom();
-              nav("/play");
+              nav("/");
             }}
           >
             Salir al Menú
@@ -406,6 +421,16 @@ export default function Game() {
             {audioBlocked && (
               <button className="btn secondary sm" onClick={unblockAudio}>
                 🔊 Activar Audio
+              </button>
+            )}
+
+            {isHost && (
+              <button
+                className="btn ghost sm"
+                onClick={() => backToHub({ confirm: true })}
+                title="Termina la partida y lleva a todos a la página principal"
+              >
+                {confirmHub ? "¿Seguro? Toca otra vez" : "🏠 Sala principal"}
               </button>
             )}
 
