@@ -31,8 +31,10 @@ const app = express();
 app.set("trust proxy", 1);
 
 const clientOrigin = (process.env.CLIENT_ORIGIN || "https://triviallyonline.vercel.app").replace(/\/$/, "");
-const isProduction = process.env.NODE_ENV === "production";
-const isCrossSite = isProduction && clientOrigin.startsWith("https://");
+// Cross-site cookies only when serving HTTPS clients (production).
+// On localhost, always use lax/insecure so dev works without HTTPS.
+const isLocalhost = clientOrigin.includes("localhost") || clientOrigin.includes("127.0.0.1");
+const isCrossSite = !isLocalhost && clientOrigin.startsWith("https://");
 
 app.use(
   cors({

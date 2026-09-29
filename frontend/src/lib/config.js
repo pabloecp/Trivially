@@ -3,6 +3,8 @@
 const envApiUrl = import.meta.env.VITE_API_URL;
 const isDev = import.meta.env.DEV;
 
+// In production on Vercel, use "" so requests go through Vercel rewrites (same-origin → cookies work).
+// Only use the direct Railway URL if explicitly set via VITE_API_URL.
 export const BACKEND_URL = (
-  isDev ? "" : (envApiUrl || "https://trivially-production.up.railway.app")
+  isDev ? "" : (envApiUrl || "")
 ).replace(/\/$/, "");

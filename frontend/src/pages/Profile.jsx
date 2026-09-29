@@ -286,7 +286,7 @@ export default function Profile() {
                     width: 72,
                     height: 72,
                     fontSize: 30,
-                    boxShadow: "0 6px 16px rgba(123, 115, 246, 0.25)",
+                    boxShadow: "0 6px 16px rgba(29, 185, 84, 0.3)",
                   }}
                 >
                   {(activeUser?.name || "U").slice(0, 1).toUpperCase()}

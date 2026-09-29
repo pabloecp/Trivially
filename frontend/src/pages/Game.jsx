@@ -4,6 +4,7 @@ import MiniBoard from "../components/MiniBoard.jsx";
 import UserAvatar from "../components/UserAvatar.jsx";
 import { YoavllySymbol } from "../components/YoavllySymbol.jsx";
 import { remainingMs, useApp } from "../lib/store.jsx";
+import { BACKEND_URL } from "../lib/config.js";
 
 function normalize(str = "") {
   return str
@@ -50,7 +51,7 @@ export default function Game() {
   function proxyUrl(url) {
     if (!url) return url;
     if (url.startsWith("https://audio-ssl.itunes.apple.com/")) {
-      return `/api/audio/proxy?url=${encodeURIComponent(url)}`;
+      return `${BACKEND_URL}/api/audio/proxy?url=${encodeURIComponent(url)}`;
     }
     return url;
   }
@@ -482,7 +483,7 @@ export default function Game() {
             <div style={{ textAlign: "center" }}>
               <h2 style={{ fontSize: 24, margin: "0 0 6px" }}>¿Qué canción estás escuchando?</h2>
               <p className="muted" style={{ margin: 0, fontSize: 14 }}>
-                Escribe el nombre. Aparecerán sugerencias al instante; pulsa <strong>Enter</strong> o haz clic para seleccionarla.
+                Escribe el nombre y selecciona una sugerencia al instante
               </p>
             </div>
 

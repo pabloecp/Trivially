@@ -114,7 +114,7 @@ export function registerWithPassword(store, { name, email, password, avatar, gue
     id: userId,
     name: cleanName,
     email: cleanEmail,
-    avatar: avatar || "#7B73F6",
+    avatar: avatar || "#1DB954",
     isGuest: false,
     passwordHash: hash,
     passwordSalt: salt,
@@ -182,7 +182,7 @@ export function upsertGoogleUser(store, { id, email, name, avatar, googleId }, g
     id: userId,
     name: name || "Jugador Google",
     email: cleanEmail,
-    avatar: avatar || "#7B73F6",
+    avatar: avatar || "#1DB954",
     isGuest: false,
     googleId,
   });

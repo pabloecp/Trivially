@@ -6,9 +6,9 @@ import { BACKEND_URL } from "./config.js";
 const AppContext = createContext(null);
 
 export const AVATAR_COLORS = [
-  "#7B73F6", // YOAVLLY Violet
-  "#37352F", // Charcoal
+  "#1DB954", // Spotify Green
   "#10B981", // Emerald
+  "#37352F", // Charcoal
   "#F59E0B", // Amber
   "#6366F1", // Indigo
   "#EC4899", // Rose
@@ -65,6 +65,8 @@ export function AppProvider({ children }) {
     const userIdParam = params.get("userId");
     const userDataParam = params.get("userData");
 
+    let googleJustLoaded = false;
+
     if (googleStatus === "success") {
       let loadedUser = null;
       if (userDataParam) {
@@ -74,10 +76,12 @@ export function AppProvider({ children }) {
       }
 
       if (loadedUser) {
+        googleJustLoaded = true;
         persistUser(loadedUser);
         setUser(loadedUser);
         api("/api/session", { method: "POST", body: loadedUser }).catch(() => {});
       } else if (userIdParam) {
+        googleJustLoaded = true;
         api(`/api/users/${userIdParam}`)
           .then((res) => {
             if (res.user) {
@@ -97,15 +101,19 @@ export function AppProvider({ children }) {
       } catch {}
     }
 
-    api("/api/me")
-      .then((d) => {
-        setLinkingStatus(d.linkingStatus || null);
-        if (d.user) {
-          persistUser(d.user);
-          setUser(d.user);
-        }
-      })
-      .catch(() => {});
+    // Only fetch /api/me if we didn't just load from Google params
+    // to avoid overwriting the freshly-loaded Google user with null
+    if (!googleJustLoaded) {
+      api("/api/me")
+        .then((d) => {
+          setLinkingStatus(d.linkingStatus || null);
+          if (d.user) {
+            persistUser(d.user);
+            setUser(d.user);
+          }
+        })
+        .catch(() => {});
+    }
   }, []);
 
   useEffect(() => {
