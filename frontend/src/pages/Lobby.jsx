@@ -105,7 +105,7 @@ export default function Lobby() {
   const canEditConfig = isHost || Boolean(me?.canEditConfig) || Boolean(room.coHosts?.includes(user?.id));
   const isReady = me?.status === "listo";
   const connectedPlayers = room.players.filter((p) => p.connected);
-  const canStart = room.mode === "solo" ? connectedPlayers.length >= 1 : connectedPlayers.length >= 2;
+  const canStart = connectedPlayers.length >= 1;
 
   // Selected genres & artists labels
   const selectedGenreNames = (room.config?.genreIds || [])
@@ -257,21 +257,55 @@ export default function Lobby() {
             )}
           </div>
 
-          <div style={{ fontSize: 14, lineHeight: 1.8, color: "var(--text)" }}>
-            <div><strong>Rondas:</strong> {room.config?.rounds || 5} rondas</div>
-            {selectedGenreNames && <div><strong>Géneros:</strong> {selectedGenreNames}</div>}
-            {selectedArtistNames && <div><strong>Artistas:</strong> {selectedArtistNames}</div>}
-            <div><strong>Tiempo por ronda:</strong> 15 segundos</div>
-            <div><strong>Anfitrión:</strong> {room.hostName || "Host"}</div>
-            {room.coHosts?.length > 0 && (
-              <div style={{ color: "var(--ok)", fontWeight: 600 }}>
-                <strong>Con privilegios de ajustes:</strong>{" "}
-                {room.coHosts
-                  .map((cid) => room.players.find((p) => p.id === cid)?.name || cid)
-                  .join(", ")}
-              </div>
-            )}
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+              gap: 12,
+              background: "var(--bg-elevated)",
+              padding: 16,
+              borderRadius: 14,
+              border: "1px solid var(--border)",
+            }}
+          >
+            <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+              <span className="muted" style={{ fontSize: 11, textTransform: "uppercase", fontWeight: 700, letterSpacing: "0.05em" }}>Rondas</span>
+              <span style={{ fontSize: 14, fontWeight: 700, color: "var(--text)" }}>🎯 {room.config?.rounds || 5} rondas</span>
+            </div>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+              <span className="muted" style={{ fontSize: 11, textTransform: "uppercase", fontWeight: 700, letterSpacing: "0.05em" }}>Tiempo por ronda</span>
+              <span style={{ fontSize: 14, fontWeight: 700, color: "var(--text)" }}>⏱️ 15 segundos</span>
+            </div>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+              <span className="muted" style={{ fontSize: 11, textTransform: "uppercase", fontWeight: 700, letterSpacing: "0.05em" }}>Artistas</span>
+              <span style={{ fontSize: 14, fontWeight: 700, color: "var(--text)" }}>
+                🎤 {(room.config?.artistIds || []).length >= (catalog?.artists?.length || 3) ? "Todos los artistas" : selectedArtistNames || "Todos"}
+              </span>
+            </div>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+              <span className="muted" style={{ fontSize: 11, textTransform: "uppercase", fontWeight: 700, letterSpacing: "0.05em" }}>Géneros</span>
+              <span style={{ fontSize: 14, fontWeight: 700, color: "var(--text)" }}>
+                🎵 {(room.config?.genreIds || []).length >= (catalog?.genres?.length || 5) ? "Todos los géneros" : selectedGenreNames || "Todos"}
+              </span>
+            </div>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+              <span className="muted" style={{ fontSize: 11, textTransform: "uppercase", fontWeight: 700, letterSpacing: "0.05em" }}>Anfitrión</span>
+              <span style={{ fontSize: 14, fontWeight: 700, color: "var(--brand)" }}>👑 {room.hostName || "Host"}</span>
+            </div>
           </div>
+
+          {room.coHosts?.length > 0 && (
+            <div style={{ fontSize: 13, color: "var(--ok)", fontWeight: 600 }}>
+              ✓ Con privilegios de ajustes:{" "}
+              {room.coHosts
+                .map((cid) => room.players.find((p) => p.id === cid)?.name || cid)
+                .join(", ")}
+            </div>
+          )}
 
           {startErr && (
             <div className="card" style={{ padding: 12, borderColor: "var(--bad)", background: "var(--bad-subtle)" }}>
@@ -287,13 +321,10 @@ export default function Lobby() {
                 disabled={!canStart}
                 type="button"
               >
-                {!canStart
-                  ? "Esperando a otro jugador para iniciar..."
+                {connectedPlayers.length === 1
+                  ? "Comenzar Ronda Solo →"
                   : `Comenzar Partida (${connectedPlayers.length} jugadores) →`}
               </button>
-              <p className="muted" style={{ margin: 0, fontSize: 12, textAlign: "center" }}>
-                Como Host, tú decides cuándo iniciar la partida para todos los jugadores.
-              </p>
             </div>
           ) : (
             <div className="grid" style={{ gap: 10 }}>

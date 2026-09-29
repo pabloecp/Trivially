@@ -23,11 +23,11 @@ function defaultConfig() {
     roundMs: ROUND_MS,
     enabledCategories: ["artist", "genre"],
     artistIds: ["bad-bunny", "mora", "rauw-alejandro"],
-    genreIds: ["reggaeton"],
+    genreIds: ["reggaeton", "urbano", "trap", "pop-latino", "pop"],
     albumIds: [],
     playlistIds: [],
-    yearFrom: 2020,
-    yearTo: 2026,
+    yearFrom: null,
+    yearTo: null,
   };
 }
 
@@ -213,8 +213,8 @@ export class RoomManager {
     if (room.hostId !== userId) throw new Error("Solo el Host puede iniciar");
     if (room.phase !== "lobby") throw new Error("La partida ya comenzó");
     const connected = [...room.players.values()].filter((p) => p.connected);
-    if (room.mode === "multi" && connected.length < 2) {
-      throw new Error("Se necesitan al menos 2 jugadores");
+    if (connected.length < 1) {
+      throw new Error("Se necesita al menos 1 jugador");
     }
     let tracks = [];
     if (room.config?.customTracks && room.config.customTracks.length > 0) {

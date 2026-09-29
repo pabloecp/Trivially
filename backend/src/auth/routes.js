@@ -188,7 +188,7 @@ export function createApiRouter({ catalog, store }) {
       const h = hydrateSong(catalog, s);
       return { id: h.id, title: h.title, artistName: h.artistName, albumName: h.albumName, year: h.year, image: h.image, previewUrl: h.previewUrl };
     });
-    res.json({ count: songs.length, songs });
+    res.json({ count: songs.length, matchingCount: songs.length, songs });
   });
 
   // --- Leaderboard ---
