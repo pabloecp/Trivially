@@ -69,7 +69,7 @@ Plataforma interactiva de trivia musical en tiempo real con buscador predictivo 
    # Google OAuth (Opcional)
    GOOGLE_CLIENT_ID=tu_google_client_id
    GOOGLE_CLIENT_SECRET=tu_google_client_secret
-   GOOGLE_REDIRECT_URI=https://trivially-production.up.railway.app/auth/google/callback
+   GOOGLE_REDIRECT_URI=https://triviallyonline.vercel.app/auth/google/callback
    ```
 
    **Configuración para Frontend (`frontend/.env`):**

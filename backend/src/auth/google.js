@@ -25,7 +25,7 @@ export function createGoogleAuthUrl(returnTo = "/play", purpose = "login") {
   }
 
   const redirectUri =
-    process.env.GOOGLE_REDIRECT_URI || "https://trivially-production.up.railway.app/auth/google/callback";
+    process.env.GOOGLE_REDIRECT_URI || "https://triviallyonline.vercel.app/auth/google/callback";
 
   console.log(`[Google OAuth] redirect_uri utilizado: ${redirectUri}`);
 
@@ -46,7 +46,7 @@ export async function exchangeGoogleCode(code, state) {
   pendingGoogleStates.delete(state);
 
   const redirectUri =
-    process.env.GOOGLE_REDIRECT_URI || "https://trivially-production.up.railway.app/auth/google/callback";
+    process.env.GOOGLE_REDIRECT_URI || "https://triviallyonline.vercel.app/auth/google/callback";
 
   console.log(`[Google OAuth] Intercambiando token con redirect_uri: ${redirectUri}`);
 
