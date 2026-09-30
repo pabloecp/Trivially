@@ -167,9 +167,9 @@ function ProfileScreen() {
                 {roleTag.label}
                 {activeUser.role === "owner" && (
                   <>
-                    <Icon name="sparkle" size={13} filled strokeWidth={0} className="tv-tag-glint tv-tag-glint--1" />
-                    <Icon name="sparkle" size={10} filled strokeWidth={0} className="tv-tag-glint tv-tag-glint--2" />
-                    <Icon name="sparkle" size={9} filled strokeWidth={0} className="tv-tag-glint tv-tag-glint--3" />
+                    <Icon name="sparkle" size={9} filled strokeWidth={0} className="tv-tag-glint tv-tag-glint--1" />
+                    <Icon name="sparkle" size={6} filled strokeWidth={0} className="tv-tag-glint tv-tag-glint--2" />
+                    <Icon name="sparkle" size={7} filled strokeWidth={0} className="tv-tag-glint tv-tag-glint--3" />
                   </>
                 )}
               </span>

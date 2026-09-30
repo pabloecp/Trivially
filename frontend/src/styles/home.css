@@ -1187,17 +1187,17 @@ body:has(.tv-app) {
 .tv-tag--admin { background: #f050ae; color: #fff; }
 .tv-tag--moderator { background: #33a8c7; color: #fff; }
 .tv-tag-sparkle { animation: ownerSparkleMain 2.2s ease-in-out infinite; }
-/* Owner: little sparkles twinkling around the tag. */
-.tv-tag--owner { position: relative; overflow: visible; }
+/* Owner: little sparkles twinkling inside the tag (clipped to it, never spilling out). */
+.tv-tag--owner { position: relative; overflow: hidden; padding-right: 18px; }
 .tv-tag-glint {
   position: absolute;
-  color: var(--tv-violet);
+  color: #fff;
   pointer-events: none;
-  filter: drop-shadow(0 0 3px rgba(255, 255, 255, 0.6));
+  filter: drop-shadow(0 0 1px rgba(0, 0, 0, 0.35));
 }
-.tv-tag-glint--1 { top: -9px; right: -7px; animation: ownerSparkleMini1 1.8s ease-in-out infinite; }
-.tv-tag-glint--2 { bottom: -7px; left: -6px; animation: ownerSparkleMini2 2.4s ease-in-out infinite; }
-.tv-tag-glint--3 { top: -8px; left: 30%; animation: ownerSparkleMini1 2.1s ease-in-out 0.6s infinite; }
+.tv-tag-glint--1 { top: 3px; right: 4px; animation: ownerSparkleMini1 1.8s ease-in-out infinite; }
+.tv-tag-glint--2 { bottom: 3px; right: 10px; animation: ownerSparkleMini2 2.4s ease-in-out infinite; }
+.tv-tag-glint--3 { bottom: 2px; left: 4px; animation: ownerSparkleMini1 2.1s ease-in-out 0.6s infinite; }
 /* Registrado: Instagram-style verified badge that pulses like the owner star. */
 .tv-tag-verified { animation: verifiedBadgePulse 2.2s ease-in-out infinite; }
 .tv-tag--points { background: var(--brand); color: var(--on-brand); font-size: 16px; padding: 7px 14px; }
