@@ -116,6 +116,17 @@ export function createApiRouter({ catalog, store }) {
     }
   });
 
+  // Second half of the Google login (see handleGoogleCallback): trades the one-time ticket for a session.
+  router.post("/auth/google/finish", authRateLimit, (req, res) => {
+    const userId = consumeTicket(req.body?.ticket, "login");
+    const user = userId ? store.users[userId] : null;
+    if (!user) return res.status(400).json({ error: "El inicio de sesión con Google expiró. Inténtalo otra vez." });
+    const previous = req.session?.userId;
+    if (previous && previous !== user.id) claimGuestStats(store, user.id, previous);
+    req.session.userId = user.id;
+    res.json({ ok: true, user: sanitizeUser(user) });
+  });
+
   router.post("/auth/logout", (req, res) => {
     req.session = null;
     res.json({ ok: true });
@@ -334,9 +345,11 @@ export async function handleGoogleCallback(req, res, store) {
       const guestId = req.session?.userId || null;
       const user = upsertGoogleUser(store, profile, guestId);
       req.session.userId = user.id;
-      // Finish on the site's own domain so the session cookie is first-party there (phones block the other one).
+      // The site finishes the login itself with POST /api/auth/google/finish, so the session cookie is set by a
+      // plain same-site request on its own domain (phones drop cookies set on the other domain or mid-redirect).
       const ticket = createTicket(user.id, "login");
-      res.redirect(`${origin}/auth/google/finish?ticket=${encodeURIComponent(ticket)}&returnTo=${encodeURIComponent(returnTo)}`);
+      const sep = returnTo.includes("?") ? "&" : "?";
+      res.redirect(`${origin}${returnTo}${sep}google=ticket&ticket=${encodeURIComponent(ticket)}`);
     }
   } catch (err) {
     console.error("Google callback error:", err);

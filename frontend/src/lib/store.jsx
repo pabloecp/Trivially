@@ -111,7 +111,8 @@ export function AppProvider({ children }) {
     setSocketTokenProvider(async () => {
       let res = await api("/api/socket-token").catch(() => null);
       const current = userRef.current;
-      if (current?.isGuest && current.name && res?.userId !== current.id) {
+      // Only start a guest session when the server has none; never replace one (e.g. a Google login in progress).
+      if (current?.isGuest && current.name && res && !res.userId) {
         const s = await api("/api/session", { method: "POST", body: current }).catch(() => null);
         if (s?.user && s.user.id !== current.id) adoptUser({ ...current, id: s.user.id });
         res = await api("/api/socket-token").catch(() => null);
@@ -132,25 +133,29 @@ export function AppProvider({ children }) {
 
     let googleJustLoaded = false;
 
-    if (googleStatus === "success") {
-      // The Google callback already opened the session on the server; ask it who we are instead of trusting
-      // the user data in the URL. If the session cookie didn't stick (blocked cookies), say so.
+    if (googleStatus === "ticket" || googleStatus === "success") {
+      // Back from Google: trade the one-time ticket for our session (a normal request, so the cookie sticks
+      // on every browser), then ask the server who we are.
       googleJustLoaded = true;
-      api("/api/me")
+      const ticket = params.get("ticket");
+      (ticket ? api("/api/auth/google/finish", { method: "POST", body: { ticket } }) : Promise.resolve())
+        .then(() => api("/api/me"))
         .then((d) => {
           setLinkingStatus(d.linkingStatus || null);
-          if (d.user) {
+          if (d.user && !d.user.isGuest) {
             applyUser(d.user);
+            localStorage.removeItem("yoavlly_guest_id");
             reconnectSocket();
           } else {
-            googleFailed("tu navegador bloqueó la sesión. Permite cookies para este sitio e inténtalo otra vez.");
+            googleFailed("tu navegador no guardó la sesión. Permite cookies para este sitio e inténtalo otra vez.");
           }
         })
-        .catch(() => googleFailed("no hubo respuesta del servidor. Inténtalo otra vez."));
+        .catch((e) => googleFailed(e.message || "no hubo respuesta del servidor. Inténtalo otra vez."));
 
       try {
         const url = new URL(window.location.href);
         url.searchParams.delete("google");
+        url.searchParams.delete("ticket");
         url.searchParams.delete("userId");
         url.searchParams.delete("userData");
         window.history.replaceState({}, document.title, url.pathname + (url.search ? url.search : ""));
