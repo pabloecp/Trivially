@@ -8,7 +8,7 @@ import AppIcon from "../components/home/AppIcon.jsx";
 import PartyPanel from "../components/home/PartyPanel.jsx";
 import PlaySheet from "../components/home/PlaySheet.jsx";
 import Wordmark from "../components/home/Wordmark.jsx";
-import { DailyQuestion, HowToPlay, SampleQuestion } from "../components/home/HomeExtras.jsx";
+import { DailyFact, DailyQuestion, HowToPlay, ModeCarousel, SampleQuestion } from "../components/home/HomeExtras.jsx";
 import "../styles/home.css";
 
 function ModeTile({ mode, index, showGo, onPick }) {
@@ -131,13 +131,16 @@ export default function Home() {
             <PartyPanel room={room} onToast={showToast} />
           </div>
         ) : (
-          // Temporary: the three side-panel ideas stacked, to compare them. Keep the one we like.
+          // Temporary: the side-panel ideas stacked, to compare them. Keep the one we like.
           [
+            { label: "Opción 0 · Solo el logo", Side: null },
             { label: "Opción 1 · Pregunta de muestra", Side: SampleQuestion },
             { label: "Opción 2 · Pregunta del día", Side: DailyQuestion },
             { label: "Opción 3 · Cómo se juega", Side: HowToPlay },
+            { label: "Opción 4 · Dato curioso del día", Side: DailyFact },
+            { label: "Opción 5 · Carrusel de categorías", Side: ModeCarousel },
           ].map(({ label, Side }, i) => (
-            <div key={label} className="tv-stage tv-stage--split">
+            <div key={label} className={`tv-stage${Side ? " tv-stage--split" : " tv-stage--solo"}`}>
               <p className="tv-stage-label">{label}</p>
               <section className="tv-hero">
                 <AppIcon />
@@ -156,7 +159,7 @@ export default function Home() {
                   Jugar
                 </button>
               </section>
-              <Side />
+              {Side && <Side />}
             </div>
           ))
         )}

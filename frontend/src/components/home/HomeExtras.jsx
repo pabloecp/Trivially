@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { GAME_MODES } from "../../modes/index.js";
 import Icon from "./Icon.jsx";
 
@@ -60,32 +60,20 @@ function Options({ item, picked, reveal, onPick }) {
   );
 }
 
-// Option 1: a sample question from a different category every few seconds; you can also answer it.
+// Option 1: sample questions from every category. No timer: it waits for your answer, then you move on.
 export function SampleQuestion() {
   const [index, setIndex] = useState(0);
-  const [reveal, setReveal] = useState(false);
   const [picked, setPicked] = useState(null);
-  const timer = useRef(0);
-
-  useEffect(() => {
-    clearTimeout(timer.current);
-    timer.current = setTimeout(
-      () => {
-        if (!reveal) setReveal(true);
-        else {
-          setReveal(false);
-          setPicked(null);
-          setIndex((n) => (n + 1) % SAMPLES.length);
-        }
-      },
-      reveal ? (picked === null ? 1800 : 2600) : 4200
-    );
-    return () => clearTimeout(timer.current);
-  }, [index, reveal, picked]);
 
   const item = SAMPLES[index];
   const mode = modeOf(item.mode);
-  const result = picked === null ? null : picked === item.answer;
+  const reveal = picked !== null;
+  const right = picked === item.answer;
+
+  function next() {
+    setPicked(null);
+    setIndex((n) => (n + 1) % SAMPLES.length);
+  }
 
   return (
     <section className={`tv-card tv-qcard tv-c-${mode.color}`} aria-label="Pregunta de muestra">
@@ -99,19 +87,19 @@ export function SampleQuestion() {
       </div>
       <div key={index} className="tv-qbody">
         <h2 className="tv-qtitle">{item.q}</h2>
-        <Options
-          item={item}
-          picked={picked}
-          reveal={reveal}
-          onPick={(i) => {
-            setPicked(i);
-            setReveal(true);
-          }}
-        />
+        <Options item={item} picked={picked} reveal={reveal} onPick={setPicked} />
       </div>
-      <p className="tv-hint tv-qfoot" aria-live="polite">
-        {result === true ? "¡Correcto! Imagina esto contra tus amigos." : result === false ? "¡Casi! En una partida de verdad tendrías revancha." : "Toca una respuesta para probar."}
-      </p>
+      <div className="tv-qfoot-row" aria-live="polite">
+        <p className="tv-hint">
+          {!reveal ? "Toca una respuesta para probar." : right ? "¡Correcto! Imagina esto contra tus amigos." : "¡Casi! En una partida de verdad tendrías revancha."}
+        </p>
+        {reveal && (
+          <button type="button" className="tv-btn tv-btn--sm tv-c-neutral" onClick={next}>
+            Siguiente
+            <Icon name="chevron" size={16} strokeWidth={3} />
+          </button>
+        )}
+      </div>
     </section>
   );
 }
@@ -206,6 +194,123 @@ export function HowToPlay() {
           </li>
         ))}
       </ol>
+    </section>
+  );
+}
+
+const FACTS = [
+  { mode: "mundo", text: "Canadá tiene más lagos que todos los demás países del mundo juntos." },
+  { mode: "cultura", text: "Un día en Venus dura más que un año en Venus: tarda más en girar sobre sí mismo que en dar la vuelta al Sol." },
+  { mode: "musica", text: "«Despacito» fue el primer video de YouTube en superar los 5.000 millones de reproducciones." },
+  { mode: "cine", text: "El rugido del dinosaurio T. rex de «Jurassic Park» mezcla sonidos de un elefante bebé, un tigre y un cocodrilo." },
+  { mode: "cultura", text: "Los pulpos tienen tres corazones y su sangre es de color azul." },
+  { mode: "mundo", text: "Rusia abarca 11 husos horarios: cuando en un extremo es de noche, en el otro ya es de día." },
+  { mode: "musica", text: "Freddie Mercury tenía cuatro dientes de más, y decía que le daban más espacio en la boca para su voz." },
+  { mode: "cine", text: "«Toy Story» (1995) fue la primera película hecha por completo con animación por computadora." },
+];
+
+// Option 4: a fun fact each day from a different category; you can peek at more.
+export function DailyFact() {
+  const dayNumber = Math.floor(Date.now() / 86400000);
+  const [offset, setOffset] = useState(0);
+  const item = FACTS[(dayNumber + offset) % FACTS.length];
+  const mode = modeOf(item.mode);
+
+  return (
+    <section className={`tv-card tv-qcard tv-c-${mode.color}`} aria-label="Dato curioso del día">
+      <div className="tv-qcard-head">
+        <span className="tv-daily-kicker">
+          <Icon name="bulb" size={16} strokeWidth={2.6} />
+          {offset === 0 ? "Dato curioso del día" : "Otro dato curioso"}
+        </span>
+        <CategoryChip mode={mode} />
+      </div>
+      <div key={offset} className="tv-qbody">
+        <p className="tv-fact">{item.text}</p>
+      </div>
+      <div className="tv-qfoot-row">
+        <p className="tv-hint">¿Lo sabías? Hay más como este en las partidas.</p>
+        <button type="button" className="tv-btn tv-btn--sm tv-c-neutral" onClick={() => setOffset((n) => n + 1)}>
+          Otro dato
+          <Icon name="chevron" size={16} strokeWidth={3} />
+        </button>
+      </div>
+    </section>
+  );
+}
+
+const MODE_BLURBS = {
+  musica: "Escucha 30 segundos y adivina la canción antes que nadie.",
+  cultura: "Historia, ciencia, arte y todo lo demás en preguntas rápidas.",
+  cine: "Películas, series, actores y frases que todo el mundo conoce.",
+  mundo: "Capitales, banderas, mapas y maravillas de todo el planeta.",
+};
+const CAROUSEL_MS = 3800;
+
+// Option 5: a big card per game mode that slides by on its own; the dots and arrows move it by hand.
+export function ModeCarousel() {
+  const [index, setIndex] = useState(0);
+  const [paused, setPaused] = useState(false);
+  const mode = GAME_MODES[index];
+
+  useEffect(() => {
+    if (paused) return;
+    const t = setTimeout(() => setIndex((n) => (n + 1) % GAME_MODES.length), CAROUSEL_MS);
+    return () => clearTimeout(t);
+  }, [index, paused]);
+
+  function go(step) {
+    setIndex((n) => (n + step + GAME_MODES.length) % GAME_MODES.length);
+  }
+
+  return (
+    <section
+      className="tv-carousel"
+      aria-roledescription="carrusel"
+      aria-label="Categorías de Trivially"
+      onMouseEnter={() => setPaused(true)}
+      onMouseLeave={() => setPaused(false)}
+      onFocus={() => setPaused(true)}
+      onBlur={() => setPaused(false)}
+    >
+      <div key={mode.id} className={`tv-slide tv-c-${mode.color}`} aria-live="polite">
+        <Icon name={mode.icon} size={220} strokeWidth={1.4} className="tv-slide-watermark" />
+        <span className="tv-badge tv-slide-badge">
+          <Icon name={mode.icon} size={30} />
+        </span>
+        <span className="tv-slide-status">
+          {mode.available ? (
+            "Disponible"
+          ) : (
+            <>
+              <Icon name="lock" size={12} strokeWidth={3} />
+              Pronto
+            </>
+          )}
+        </span>
+        <h2 className="tv-slide-name">{mode.name}</h2>
+        <p className="tv-slide-text">{MODE_BLURBS[mode.id]}</p>
+      </div>
+      <div className="tv-carousel-nav">
+        <button type="button" className="tv-icon-btn tv-icon-btn--sm" onClick={() => go(-1)} aria-label="Categoría anterior">
+          <Icon name="back" size={18} strokeWidth={2.8} />
+        </button>
+        <div className="tv-qdots">
+          {GAME_MODES.map((m, i) => (
+            <button
+              key={m.id}
+              type="button"
+              className={`tv-carousel-dot${i === index ? " is-on" : ""}`}
+              onClick={() => setIndex(i)}
+              aria-label={m.name}
+              aria-current={i === index ? "true" : undefined}
+            />
+          ))}
+        </div>
+        <button type="button" className="tv-icon-btn tv-icon-btn--sm" onClick={() => go(1)} aria-label="Siguiente categoría">
+          <Icon name="chevron" size={18} strokeWidth={2.8} />
+        </button>
+      </div>
     </section>
   );
 }
