@@ -149,7 +149,7 @@ export default function MusicHome() {
           </div>
           <h3>Multiplayer en tiempo real</h3>
           <p className="muted" style={{ margin: 0, fontSize: 14 }}>
-            Salas privadas con código XO (ej. XO4K9M). Reloj centralizado y sincronización exacta de audio entre todos los jugadores.
+            Salas privadas con código XO (ej. XOYOAV). Reloj centralizado y sincronización exacta de audio entre todos los jugadores.
           </p>
         </div>
 

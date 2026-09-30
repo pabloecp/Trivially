@@ -82,7 +82,7 @@ export default function Home() {
     playRef.current?.focus({ preventScroll: true });
   }, [inviteCode, nav]);
 
-  // Invite links (/sala/XO4K9M) join straight away, asking for a name first if we don't have one.
+  // Invite links (/sala/XOYOAV) join straight away, asking for a name first if we don't have one.
   useEffect(() => {
     if (!inviteCode || room?.code === inviteCode || sheetOpen) return;
     if (!user?.name) {

@@ -8,7 +8,7 @@ import Game from "./modes/music/Game.jsx";
 import { useApp } from "./lib/store.jsx";
 import { roomPath } from "./modes/index.js";
 
-// Screens tied to one room, e.g. /lobby/XO4K9M.
+// Screens tied to one room, e.g. /lobby/XOYOAV.
 const ROOM_SCREEN = /^\/(?:lobby|game|sala)\/([^/]+)/;
 
 function Guard({ children }) {
