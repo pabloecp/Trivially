@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 const THEME_KEY = "trivially_theme";
 
 function loadTheme() {
-  return localStorage.getItem(THEME_KEY) || "light";
+  return localStorage.getItem(THEME_KEY) || "dark";
 }
 
 // Shared by the new Home and the legacy Layout so the choice survives navigation between them.
