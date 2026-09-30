@@ -128,8 +128,10 @@ body:has(.tv-app) {
 }
 
 /* ---------- Background ---------- */
+/* Scrolls with the page instead of being fixed: iOS Safari paints its status and toolbar areas with the colour
+   of fixed elements at the screen edges, and a fixed transparent layer left them as solid black bars. */
 .tv-backdrop {
-  position: fixed;
+  position: absolute;
   inset: 0;
   z-index: -1;
   overflow: hidden;
