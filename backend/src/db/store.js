@@ -3,6 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { createClient } from "@supabase/supabase-js";
+import { assertCanSetRole, effectiveRole } from "../auth/roles.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DATA_DIR = path.join(__dirname, "../../data");
@@ -18,7 +19,7 @@ function emptyStore() {
 export function sanitizeUser(user) {
   if (!user) return null;
   const { passwordHash, passwordSalt, ...safe } = user;
-  return safe;
+  return { ...safe, role: effectiveRole(user) };
 }
 
 /** Public profile — only safe fields for other users to see */
@@ -31,6 +32,7 @@ export function sanitizeUserPublic(user) {
     isGuest: Boolean(user.isGuest),
     stats: user.stats || {},
     googleLinked: Boolean(user.googleId),
+    role: effectiveRole(user),
   };
 }
 
@@ -199,6 +201,7 @@ export function upsertUser(store, user) {
     avatar: user.avatar,
     isGuest: Boolean(user.isGuest),
     email: user.email || null,
+    role: "user",
     stats: {
       totalScore: 0,
       bestScore: 0,
@@ -275,6 +278,8 @@ export function loginWithPassword(store, { identifier, password, guestId }) {
     if (!valid) throw new Error("Contraseña incorrecta");
   } else if (user.googleId) {
     throw new Error("Esta cuenta fue creada con Google. Por favor usa 'Continuar con Google'.");
+  } else {
+    throw new Error("Esta cuenta no tiene contraseña. Crea una cuenta nueva o entra con Google.");
   }
 
   if (guestId && guestId !== user.id) {
@@ -384,7 +389,8 @@ export function claimGuestStats(store, targetUserId, guestId) {
   if (!targetUserId || !guestId || targetUserId === guestId) return null;
   const guest = store.users[guestId];
   const user = store.users[targetUserId];
-  if (!guest || !user) return null;
+  // Only real guest records can be merged (and deleted); never another registered account.
+  if (!guest || !user || !guest.isGuest || user.isGuest) return null;
 
   user.stats.totalScore += guest.stats.totalScore || 0;
   user.stats.bestScore = Math.max(user.stats.bestScore || 0, guest.stats.bestScore || 0);
@@ -432,6 +438,36 @@ export function applyMatchStats(store, players) {
     }
   });
   saveStore(store);
+}
+
+/** Changes a user's role. `actorId` must outrank both the target's current role and the new one. */
+export function setUserRole(store, actorId, targetId, role) {
+  const actor = store.users[actorId];
+  const target = store.users[targetId];
+  if (!target) throw new Error("Usuario no encontrado");
+  assertCanSetRole(actor, target, role);
+  target.role = role;
+  saveStore(store);
+  return sanitizeUser(target);
+}
+
+/** Registered users for the admin panel, most active first. */
+export function listUsers(store, { search = "", role = "" } = {}) {
+  const q = search.trim().toLowerCase();
+  return Object.values(store.users)
+    .filter((u) => !u.isGuest)
+    .map((u) => ({
+      id: u.id,
+      name: u.name,
+      email: u.email || null,
+      avatar: u.avatar,
+      role: effectiveRole(u),
+      googleLinked: Boolean(u.googleId),
+      gamesPlayed: u.stats?.gamesPlayed || 0,
+    }))
+    .filter((u) => !role || u.role === role)
+    .filter((u) => !q || u.name?.toLowerCase().includes(q) || u.email?.toLowerCase().includes(q))
+    .sort((a, b) => b.gamesPlayed - a.gamesPlayed || (a.name || "").localeCompare(b.name || ""));
 }
 
 export function leaderboard(store, sort = "totalScore") {

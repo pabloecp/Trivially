@@ -17,6 +17,13 @@ const STATS = [
   { key: "bestStreak", label: "Mejor racha", color: "purple" },
 ];
 
+// Badge shown on the profile for staff roles (plain users get none).
+const ROLE_TAGS = {
+  owner: { label: "Owner", icon: "star" },
+  admin: { label: "Admin", icon: "crown" },
+  moderator: { label: "Moderador", icon: "check" },
+};
+
 function Notice({ tone, icon, children }) {
   return (
     <p className={`tv-notice tv-notice--${tone}`} role={tone === "bad" ? "alert" : "status"}>
@@ -112,10 +119,7 @@ function ProfileScreen() {
   const isGuest = Boolean(activeUser?.isGuest);
   const hasGoogle = Boolean(activeUser?.googleId || activeUser?.googleLinked || (!isOtherUser && linkingStatus?.googleLinked));
   const canLinkGoogle = !isOtherUser && !isGuest && !hasGoogle;
-  const isOwner = Boolean(
-    activeUser?.email?.trim().toLowerCase() === "pablo.ecpx@gmail.com" &&
-    (activeUser?.googleId || linkingStatus?.googleLinked)
-  );
+  const roleTag = ROLE_TAGS[activeUser?.role];
   const googleNotice = searchParams.get("google");
 
   return (
@@ -142,10 +146,10 @@ function ProfileScreen() {
           <p className="tv-party-kicker">{isOtherUser ? "Perfil de jugador" : "Tu perfil"}</p>
           <h1 className="tv-page-title">{activeUser?.name || "Jugador"}</h1>
           <div className="tv-tags">
-            {isOwner && (
-              <span className="tv-tag tv-tag--owner">
-                <Icon name="star" size={13} filled className="tv-tag-sparkle" />
-                Owner
+            {roleTag && (
+              <span className={`tv-tag tv-tag--${activeUser.role}`}>
+                <Icon name={roleTag.icon} size={13} filled className={activeUser.role === "owner" ? "tv-tag-sparkle" : ""} />
+                {roleTag.label}
               </span>
             )}
             {isGuest ? (

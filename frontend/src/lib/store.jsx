@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { api } from "./api.js";
-import { emitAck, getSocket } from "./socket.js";
+import { emitAck, getSocket, reconnectSocket, setSocketTokenProvider } from "./socket.js";
 import { BACKEND_URL } from "./config.js";
 
 const AppContext = createContext(null);
@@ -100,6 +100,26 @@ export function AppProvider({ children }) {
     }
   }, []);
 
+  // A guest's id can be swapped by the server (see /api/session); keep localStorage in step.
+  function adoptUser(next) {
+    if (next?.isGuest) localStorage.setItem("yoavlly_guest_id", next.id);
+    applyUser(next);
+  }
+
+  // Makes sure the server session is ours, then returns the signed token the socket connects with.
+  useEffect(() => {
+    setSocketTokenProvider(async () => {
+      let res = await api("/api/socket-token").catch(() => null);
+      const current = userRef.current;
+      if (current?.isGuest && current.name && res?.userId !== current.id) {
+        const s = await api("/api/session", { method: "POST", body: current }).catch(() => null);
+        if (s?.user && s.user.id !== current.id) adoptUser({ ...current, id: s.user.id });
+        res = await api("/api/socket-token").catch(() => null);
+      }
+      return res?.token || null;
+    });
+  }, []);
+
   useEffect(() => {
     refreshCatalog();
 
@@ -121,7 +141,9 @@ export function AppProvider({ children }) {
       if (loadedUser) {
         googleJustLoaded = true;
         applyUser(loadedUser);
-        api("/api/session", { method: "POST", body: loadedUser }).catch(() => {});
+        api("/api/session", { method: "POST", body: loadedUser })
+          .catch(() => {})
+          .finally(reconnectSocket);
       } else if (userIdParam) {
         googleJustLoaded = true;
         api(`/api/users/${userIdParam}`)
@@ -147,6 +169,8 @@ export function AppProvider({ children }) {
         .then((d) => {
           setLinkingStatus(d.linkingStatus || null);
           if (d.user) applyUser(d.user);
+          // The server session expired: a saved registered account can't be used anymore without signing in.
+          else if (userRef.current && !userRef.current.isGuest) applyUser(null);
         })
         .catch(() => {});
     }
@@ -190,18 +214,16 @@ export function AppProvider({ children }) {
         localStorage.setItem("yoavlly_guest_name", cleanName);
         const guestObj = { id: guestId, name: cleanName, avatar: avatar || AVATAR_COLORS[0], isGuest: true };
         applyUser(guestObj);
+        let saved = guestObj;
         try {
-          await api("/api/session", { method: "POST", body: guestObj });
+          const res = await api("/api/session", { method: "POST", body: guestObj });
+          if (res.user && res.user.id !== guestId) {
+            saved = { ...guestObj, id: res.user.id };
+            adoptUser(saved);
+          }
         } catch {}
-        return guestObj;
-      },
-
-      async saveProfile(name, avatar) {
-        const current = userRef.current || { id: `usr_${Math.random().toString(36).slice(2, 10)}`, avatar: AVATAR_COLORS[0] };
-        const next = { ...current, name: (name || current.name || "").trim(), avatar: avatar || current.avatar || AVATAR_COLORS[0], isGuest: false };
-        applyUser(next);
-        await api("/api/session", { method: "POST", body: next });
-        return next;
+        reconnectSocket();
+        return saved;
       },
 
       async updateUsername(newName) {
@@ -229,6 +251,7 @@ export function AppProvider({ children }) {
           localStorage.setItem("yoavlly_guest_name", res.user.name);
           localStorage.removeItem("yoavlly_guest_id");
           applyUser(res.user);
+          reconnectSocket();
         }
         return res.user;
       },
@@ -241,6 +264,7 @@ export function AppProvider({ children }) {
           localStorage.setItem("yoavlly_guest_name", res.user.name);
           localStorage.removeItem("yoavlly_guest_id");
           applyUser(res.user);
+          reconnectSocket();
         }
         return res.user;
       },
@@ -288,6 +312,7 @@ export function AppProvider({ children }) {
         localStorage.removeItem("yoavlly_guest_name");
         localStorage.removeItem("yoavlly_guest_id");
         setLinkingStatus(null);
+        reconnectSocket();
       },
 
       async updatePlayer(data) {
@@ -360,6 +385,7 @@ export function AppProvider({ children }) {
         localStorage.removeItem("yoavlly_guest_name");
         localStorage.removeItem("yoavlly_guest_id");
         setLinkingStatus(null);
+        reconnectSocket();
       },
     }),
     []

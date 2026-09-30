@@ -17,3 +17,9 @@ create index if not exists users_email_idx on public.users (lower(email));
 -- El backend usa la service_role key (se salta RLS). Con RLS activado y sin políticas,
 -- nadie puede leer/escribir la tabla desde el navegador con la anon key.
 alter table public.users enable row level security;
+
+-- Roles (user, moderator, admin, owner). El rol se guarda dentro de `data`; esta columna
+-- solo lo muestra en el Table Editor y permite filtrar. Es de solo lectura (generada).
+alter table public.users
+  add column if not exists role text generated always as (coalesce(data->>'role', 'user')) stored;
+create index if not exists users_role_idx on public.users (role);

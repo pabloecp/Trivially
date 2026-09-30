@@ -2,6 +2,12 @@ import { io } from "socket.io-client";
 import { BACKEND_URL } from "./config.js";
 
 let socket;
+// Supplies the signed token that tells the server who we are (set by AppProvider in store.jsx).
+let tokenProvider = async () => null;
+
+export function setSocketTokenProvider(fn) {
+  tokenProvider = fn;
+}
 
 export function getSocket() {
   if (!socket) {
@@ -12,9 +18,22 @@ export function getSocket() {
     socket = io(socketUrl, {
       transports: ["websocket", "polling"],
       withCredentials: true,
+      // Called on every (re)connect, so the token always matches the current account.
+      auth: (cb) => {
+        tokenProvider()
+          .then((token) => cb({ token }))
+          .catch(() => cb({ token: null }));
+      },
     });
   }
   return socket;
+}
+
+/** Reconnects so the server picks up a new identity (after signing in/out or becoming a guest). */
+export function reconnectSocket() {
+  if (!socket) return;
+  socket.disconnect();
+  socket.connect();
 }
 
 export function emitAck(event, ...args) {

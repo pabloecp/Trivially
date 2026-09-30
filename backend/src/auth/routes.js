@@ -6,10 +6,12 @@ import {
   deleteUser,
   leaderboard,
   linkGoogle,
+  listUsers,
   loginWithPassword,
   registerWithPassword,
   sanitizeUser,
   sanitizeUserPublic,
+  setUserRole,
   unlinkGoogle,
   updateUserName,
   upsertGoogleUser,
@@ -17,14 +19,46 @@ import {
 } from "../db/store.js";
 import { createGoogleAuthUrl, exchangeGoogleCode, googleConfigured } from "./google.js";
 import { authRateLimit } from "./rateLimit.js";
+import { hasRole, ROLES } from "./roles.js";
+import { createSocketToken } from "./socketToken.js";
+import crypto from "node:crypto";
+
+/** Express middleware: only lets through signed-in users with at least `minRole`. */
+export function requireRole(store, minRole) {
+  return (req, res, next) => {
+    const user = req.session?.userId ? store.users[req.session.userId] : null;
+    if (!user || user.isGuest) return res.status(401).json({ error: "Inicia sesión para continuar" });
+    if (!hasRole(user, minRole)) return res.status(403).json({ error: "No tienes permiso para hacer esto" });
+    req.user = user;
+    next();
+  };
+}
 
 export function createApiRouter({ catalog, store }) {
   const router = Router();
 
+  // Starts (or refreshes) the session of a guest, or of a registered user who is already signed in.
+  // A registered account can only be entered through /auth/login, /auth/register or Google, so nobody can
+  // take over someone else's account (or role) just by sending its id here.
   router.post("/session", (req, res) => {
-    const { id, name, avatar, isGuest } = req.body || {};
+    const { id, name, avatar } = req.body || {};
     if (!id || !name) return res.status(400).json({ error: "Nombre requerido" });
-    const user = upsertUser(store, { id, name, avatar, isGuest });
+
+    const existing = store.users[id];
+    if (existing && !existing.isGuest) {
+      if (req.session?.userId !== id) {
+        return res.status(401).json({ error: "Tu sesión expiró. Vuelve a iniciar sesión." });
+      }
+      const user = upsertUser(store, { id, name, avatar });
+      return res.json({ user: sanitizeUser(user), google: { configured: googleConfigured() } });
+    }
+
+    if (!String(id).startsWith("gst_")) return res.status(400).json({ error: "Identificador de invitado no válido" });
+    // Guest ids are visible to everyone in a room, so an id that already belongs to another browser's session
+    // gets a fresh one instead of being handed over. The client adopts whatever id comes back.
+    const taken = existing && req.session?.userId !== id;
+    const guestId = taken ? `gst_${crypto.randomBytes(5).toString("hex")}` : id;
+    const user = upsertUser(store, { id: guestId, name, avatar, isGuest: true });
     req.session.userId = user.id;
     res.json({
       user: sanitizeUser(user),
@@ -32,21 +66,21 @@ export function createApiRouter({ catalog, store }) {
     });
   });
 
+  // Token the browser passes to Socket.IO so the realtime server knows which account it is (see socketToken.js).
+  router.get("/socket-token", (req, res) => {
+    const userId = req.session?.userId;
+    if (!userId || !store.users[userId]) return res.json({ token: null, userId: null });
+    res.json({ token: createSocketToken(userId), userId });
+  });
+
   router.post("/auth/register", authRateLimit, (req, res) => {
     try {
-      const { id, name, email, password, guestId, avatar } = req.body || {};
+      const { name, email, password, guestId, avatar } = req.body || {};
       if (!name || !name.trim()) return res.status(400).json({ error: "Nombre requerido" });
       if (!email || !email.trim()) return res.status(400).json({ error: "Correo electrónico requerido" });
 
-      let safeUser;
-      if (password) {
-        safeUser = registerWithPassword(store, { name, email, password, avatar, guestId });
-      } else {
-        const userId = id || `usr_${Date.now()}`;
-        const user = upsertUser(store, { id: userId, name: name.trim(), email: email.trim(), avatar, isGuest: false });
-        if (guestId) claimGuestStats(store, user.id, guestId);
-        safeUser = sanitizeUser(store.users[user.id]);
-      }
+      if (!password) return res.status(400).json({ error: "Contraseña requerida" });
+      const safeUser = registerWithPassword(store, { name, email, password, avatar, guestId });
 
       req.session.userId = safeUser.id;
       res.json({ ok: true, user: safeUser });
@@ -61,22 +95,8 @@ export function createApiRouter({ catalog, store }) {
       const loginId = (identifier || email || "").trim();
       if (!loginId) return res.status(400).json({ error: "Introduce tu correo o nombre" });
 
-      let safeUser;
-      if (password) {
-        safeUser = loginWithPassword(store, { identifier: loginId, password, guestId });
-      } else {
-        const clean = loginId.toLowerCase();
-        const existing = Object.values(store.users).find(
-          (u) => (u.email && u.email.toLowerCase() === clean) || (u.name && u.name.toLowerCase() === clean && !u.isGuest)
-        );
-        if (!existing) {
-          return res.status(404).json({ error: "No se encontró una cuenta con ese correo o nombre. ¿Deseas crear una?" });
-        }
-        if (guestId && guestId !== existing.id) {
-          claimGuestStats(store, existing.id, guestId);
-        }
-        safeUser = sanitizeUser(existing);
-      }
+      if (!password) return res.status(400).json({ error: "Introduce tu contraseña" });
+      const safeUser = loginWithPassword(store, { identifier: loginId, password, guestId });
 
       req.session.userId = safeUser.id;
       res.json({ ok: true, user: safeUser });
@@ -160,6 +180,27 @@ export function createApiRouter({ catalog, store }) {
       const { name } = req.body || {};
       const updated = updateUserName(store, req.params.id, name);
       res.json({ ok: true, user: updated });
+    } catch (err) {
+      res.status(400).json({ error: err.message });
+    }
+  });
+
+  // --- Roles / admin ---
+
+  router.get("/admin/roles", requireRole(store, "moderator"), (req, res) => {
+    res.json({ roles: ROLES });
+  });
+
+  router.get("/admin/users", requireRole(store, "moderator"), (req, res) => {
+    const users = listUsers(store, { search: String(req.query.search || ""), role: String(req.query.role || "") });
+    res.json({ users });
+  });
+
+  router.patch("/admin/users/:id/role", requireRole(store, "admin"), (req, res) => {
+    try {
+      const user = setUserRole(store, req.user.id, req.params.id, req.body?.role);
+      console.log(`[Roles] ${req.user.name} (${req.user.id}) cambió el rol de ${user.name} (${user.id}) a ${user.role}`);
+      res.json({ ok: true, user: { id: user.id, name: user.name, role: user.role } });
     } catch (err) {
       res.status(400).json({ error: err.message });
     }

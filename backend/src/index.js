@@ -60,6 +60,7 @@ app.use(
     name: "yoavlly",
     secret: process.env.SESSION_SECRET || "yoavlly-dev-secret",
     httpOnly: true,
+    maxAge: 30 * 24 * 60 * 60 * 1000, // stay signed in for 30 days
     sameSite: isCrossSite ? "none" : "lax",
     secure: isCrossSite,
   })

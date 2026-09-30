@@ -1182,6 +1182,8 @@ body:has(.tv-app) {
 .tv-tag--ok { background: rgba(34, 197, 94, 0.15); color: #16a34a; }
 [data-theme="dark"] .tv-tag--ok { color: #4ade80; }
 .tv-tag--owner { background: var(--tv-violet); color: #0a0a0a; }
+.tv-tag--admin { background: #f050ae; color: #fff; }
+.tv-tag--moderator { background: #33a8c7; color: #fff; }
 .tv-tag-sparkle { animation: ownerSparkleMain 2.2s ease-in-out infinite; }
 .tv-tag--points { background: var(--brand); color: var(--on-brand); font-size: 16px; padding: 7px 14px; }
 .tv-tag--streak { background: #ffab00; color: #0a0a0a; font-size: 16px; padding: 7px 14px; }

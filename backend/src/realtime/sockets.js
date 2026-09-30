@@ -1,4 +1,12 @@
+import { verifySocketToken } from "../auth/socketToken.js";
+
 export function attachSockets(io, rooms) {
+  // Who this connection is comes only from the signed token, never from ids the client puts in payloads.
+  io.use((socket, next) => {
+    socket.data.userId = verifySocketToken(socket.handshake.auth?.token);
+    next();
+  });
+
   rooms.onPhaseChange = (room) => {
     if (room && room.code) {
       io.to(room.code).emit("room:state", rooms.publicState(room));
@@ -7,12 +15,14 @@ export function attachSockets(io, rooms) {
 
   io.on("connection", (socket) => {
     socket.on("identify", (profile) => {
-      socket.data.profile = profile;
+      try {
+        bindUser(socket, profile, rooms);
+      } catch {}
     });
 
     socket.on("room:create", (payload, ack) => {
       try {
-        const user = bindUser(socket, payload?.user);
+        const user = bindUser(socket, payload?.user, rooms);
         leaveCurrentRoom(io, rooms, socket);
         const room = rooms.create({
           host: user,
@@ -31,7 +41,7 @@ export function attachSockets(io, rooms) {
 
     socket.on("room:join", (payload, ack) => {
       try {
-        const user = bindUser(socket, payload?.user);
+        const user = bindUser(socket, payload?.user, rooms);
         const room = rooms.get(payload.code || "");
         if (!room) throw new Error("Sala no encontrada");
         leaveCurrentRoom(io, rooms, socket, room.code);
@@ -166,9 +176,21 @@ function leaveCurrentRoom(io, rooms, socket, keepCode) {
   if (result?.room) io.to(result.room.code).emit("room:state", rooms.publicState(result.room));
 }
 
-function bindUser(socket, user) {
-  const profile = user || socket.data.profile;
-  if (!profile?.id || !profile?.name) throw new Error("Identifícate primero");
+// The player for this socket: the id comes from the verified token; name/avatar from the saved account when
+// there is one (so nobody can show up under another player's name), otherwise from what the client sent.
+function bindUser(socket, user, rooms) {
+  const id = socket.data.userId;
+  if (!id) throw new Error("Tu sesión no es válida. Recarga la página.");
+  const saved = rooms.store?.users?.[id];
+  const name = saved?.name || user?.name || socket.data.profile?.name;
+  if (!name) throw new Error("Identifícate primero");
+  const profile = {
+    ...(user || {}),
+    id,
+    name,
+    avatar: saved?.avatar || user?.avatar,
+    isGuest: saved ? Boolean(saved.isGuest) : true,
+  };
   socket.data.profile = profile;
   return { ...profile, socketId: socket.id };
 }
