@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import PlayerCard from "../../components/PlayerCard.jsx";
 import RoomConfigModal from "../../components/RoomConfigModal.jsx";
+import TvShell from "../../components/home/TvShell.jsx";
+import Avatar from "../../components/home/Avatar.jsx";
+import Icon from "../../components/home/Icon.jsx";
 import { useApp } from "../../lib/store.jsx";
-import { YoavllySymbol } from "../../components/YoavllySymbol.jsx";
 import { api } from "../../lib/api.js";
 
 const ARTIST_NAME_MAP = {
@@ -15,6 +16,14 @@ const ARTIST_NAME_MAP = {
   "jvke": "JVKE",
 };
 
+function playerTag(player, { isMe, isHost }) {
+  if (!player.connected) return "Reconectando…";
+  if (isHost && isMe) return "Anfitrión · tú";
+  if (isHost) return "Anfitrión";
+  if (isMe) return "Tú";
+  return "En la sala";
+}
+
 export default function Lobby() {
   const { code } = useParams();
   const {
@@ -24,7 +33,6 @@ export default function Lobby() {
     refreshCatalog,
     joinRoom,
     saveGuest,
-    setReady,
     startGame,
     leaveRoom,
     setGame,
@@ -40,28 +48,9 @@ export default function Lobby() {
   const [showConfigModal, setShowConfigModal] = useState(false);
   const [permissionMsg, setPermissionMsg] = useState("");
 
-  const [songCount, setSongCount] = useState(() => {
-    const artistCount = room?.config?.artistIds?.length ?? 6;
-    return artistCount * 50;
-  });
-
   useEffect(() => {
     refreshCatalog?.();
   }, [refreshCatalog]);
-
-  useEffect(() => {
-    if (!room?.config) return;
-    api("/api/catalog/preview", { method: "POST", body: room.config })
-      .then((data) => {
-        if (data?.matchingCount || data?.count) {
-          setSongCount(data.matchingCount || data.count);
-        }
-      })
-      .catch(() => {
-        const artistCount = room?.config?.artistIds?.length ?? 6;
-        setSongCount(artistCount * 50);
-      });
-  }, [room?.config]);
 
   // Join room if not joined yet. Moving to the game screen is handled by RoomNavigator (App.jsx).
   useEffect(() => {
@@ -84,54 +73,46 @@ export default function Lobby() {
     }
 
     return (
-      <div className="grid page-compact" style={{ margin: "40px auto" }}>
-        <div className="card grid" style={{ padding: 36, textAlign: "center", gap: 20 }}>
-          <div style={{ display: "flex", justifyContent: "center" }}>
-            <YoavllySymbol size={48} />
-          </div>
-
-          <div>
-            <h2 style={{ fontSize: 24, margin: "0 0 8px" }}>¿Cómo quieres aparecer en la partida?</h2>
-            <p className="muted" style={{ margin: 0, fontSize: 14 }}>
-              Introduce tu Nombre para unirte a la sala {code}. Lo recordaremos para futuras partidas.
-            </p>
-          </div>
-
-          <form onSubmit={onEnterGuest} className="grid" style={{ gap: 14 }}>
-            <input
-              className="field"
-              value={guestName}
-              onChange={(e) => setGuestName(e.target.value)}
-              placeholder="Pablo"
-              maxLength={20}
-              autoFocus
-              style={{ textAlign: "center", fontSize: 18, fontWeight: 700 }}
-              required
-            />
-
-            {guestErr && <p className="error" style={{ margin: 0 }}>{guestErr}</p>}
-
-            <button className="btn primary lg" type="submit" disabled={!guestName.trim()}>
-              Entrar a la Sala
-            </button>
-          </form>
-        </div>
-      </div>
+      <TvShell mode="musica">
+        <form className="tv-card tv-lobby-guest" onSubmit={onEnterGuest}>
+          <h1 className="tv-lobby-title">¿Cómo quieres aparecer?</h1>
+          <p className="tv-lobby-sub">
+            Escribe tu nombre para unirte a la sala <strong>{code}</strong>. Lo recordaremos para futuras partidas.
+          </p>
+          <input
+            className="tv-field"
+            value={guestName}
+            onChange={(e) => setGuestName(e.target.value)}
+            placeholder="Tu nombre"
+            maxLength={20}
+            autoFocus
+            required
+          />
+          {guestErr && <p className="tv-lobby-error">{guestErr}</p>}
+          <button className="tv-btn tv-btn--block tv-c-green" type="submit" disabled={!guestName.trim()}>
+            Entrar a la sala
+          </button>
+        </form>
+      </TvShell>
     );
   }
 
   if (!room) {
     return (
-      <div className="card" style={{ maxWidth: 460, margin: "60px auto", textAlign: "center" }}>
-        <p className="muted">Conectando a la sala {code}...</p>
-      </div>
+      <TvShell mode="musica">
+        <div className="tv-card tv-lobby-guest">
+          <p className="tv-party-status">
+            <span className="tv-pulse" aria-hidden="true" />
+            Conectando a la sala {code}…
+          </p>
+        </div>
+      </TvShell>
     );
   }
 
   const me = room.players.find((p) => p.id === user?.id);
   const isHost = room.hostId === user?.id;
   const canEditConfig = isHost || Boolean(me?.canEditConfig) || Boolean(room.coHosts?.includes(user?.id));
-  const isReady = me?.status === "listo";
   const connectedPlayers = room.players.filter((p) => p.connected);
   const canStart = connectedPlayers.length >= 1;
 
@@ -148,12 +129,11 @@ export default function Lobby() {
     const link = `${window.location.origin}/sala/${room.code}`;
     try {
       await navigator.clipboard.writeText(link);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2500);
     } catch {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2500);
+      // Clipboard can be blocked; the code is on screen anyway.
     }
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2500);
   }
 
   async function onStartGame() {
@@ -186,223 +166,152 @@ export default function Lobby() {
       );
       setTimeout(() => setPermissionMsg(""), 3500);
     } catch (err) {
-      alert(err.message || "Error al modificar privilegios");
+      setPermissionMsg(err.message || "Error al modificar privilegios");
+      setTimeout(() => setPermissionMsg(""), 3500);
     }
   }
 
   return (
-    <div className="grid page-medium" style={{ gap: 24 }}>
-      {/* Toast Notification for Permission Changes */}
-      {permissionMsg && (
-        <div
-          className="card"
-          style={{
-            padding: "10px 16px",
-            background: "rgba(16, 185, 129, 0.12)",
-            borderColor: "rgba(16, 185, 129, 0.3)",
-            color: "#059669",
-            fontWeight: 700,
-            fontSize: 14,
-            display: "flex",
-            alignItems: "center",
-            gap: 8,
-          }}
-        >
-          <span>✓</span>
-          <span>{permissionMsg}</span>
-        </div>
-      )}
-
-      {/* Lobby Header with Room Code */}
-      <div className="card" style={{ padding: 28, borderColor: "var(--brand)" }}>
-        <div className="row" style={{ justifyContent: "space-between", alignItems: "center" }}>
+    <TvShell mode="musica">
+      <div className="tv-lobby">
+        <section className="tv-card tv-lobby-head">
           <div>
-            <div className="kicker">
-              <YoavllySymbol size={14} /> Sala Multijugador en Vivo
+            <p className="tv-party-kicker">Adivina la canción · Sala de espera</p>
+            <p className="tv-party-code">{room.code}</p>
+          </div>
+          <button type="button" className="tv-btn tv-c-violet" onClick={copyLink}>
+            <Icon name={copied ? "check" : "link"} size={20} strokeWidth={2.8} />
+            {copied ? "¡Copiado!" : "Invitar"}
+          </button>
+        </section>
+
+        <div className="tv-lobby-grid">
+          <section className="tv-card" aria-label="Jugadores en la sala">
+            <div className="tv-card-head">
+              <h2 className="tv-card-title">Jugadores</h2>
+              <span className="tv-count">{connectedPlayers.length}</span>
             </div>
-            <h1 style={{ margin: "4px 0 0", fontSize: 32 }}>Lobby de Espera</h1>
-          </div>
 
-          {/* Room Code Badge */}
-          <div style={{ textAlign: "right" }}>
-            <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", color: "var(--text-muted)", letterSpacing: "0.05em" }}>
-              Código de Sala
-            </div>
-            <div
-              style={{
-                fontSize: 36,
-                fontWeight: 900,
-                fontFamily: "'Outfit', monospace",
-                color: "var(--brand)",
-                letterSpacing: "0.15em",
-                margin: "2px 0 6px",
-              }}
-            >
-              {room.code}
-            </div>
-            <button className="btn secondary sm" onClick={copyLink} type="button">
-              {copied ? "¡Enlace copiado!" : "Copiar enlace de invitación"}
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Players List and Controls */}
-      <div className="grid grid-2" style={{ gap: 24, alignItems: "start" }}>
-        {/* Connected Players */}
-        <div className="card" style={{ padding: 24 }}>
-          <div className="row" style={{ justifyContent: "space-between", marginBottom: 16 }}>
-            <h3 style={{ margin: 0 }}>Jugadores en la Sala</h3>
-            <span className="chip" style={{ fontSize: 12 }}>
-              {connectedPlayers.length} {connectedPlayers.length === 1 ? "jugador" : "jugadores"}
-            </span>
-          </div>
-
-          {isHost && connectedPlayers.length > 1 && (
-            <p className="muted" style={{ margin: "0 0 12px", fontSize: 12 }}>
-              💡 Como Host, puedes darle privilegios a cualquier jugador para que modifique los ajustes de la partida.
-            </p>
-          )}
-
-          <div className="grid" style={{ gap: 10 }}>
-            {room.players.map((p) => (
-              <PlayerCard
-                key={p.id}
-                player={p}
-                hostId={room.hostId}
-                isMe={p.id === user?.id}
-                isCurrentUserHost={isHost}
-                isLobby={room.phase === "lobby"}
-                onTogglePermission={handleTogglePermission}
-              />
-            ))}
-          </div>
-        </div>
-
-        {/* Room Config & Actions */}
-        <div className="card grid" style={{ padding: 24, gap: 18 }}>
-          <div className="row" style={{ justifyContent: "space-between", alignItems: "center" }}>
-            <h3 style={{ margin: 0 }}>Resumen de la Partida</h3>
-            {canEditConfig && (
-              <button
-                type="button"
-                className="btn secondary sm"
-                onClick={() => setShowConfigModal(true)}
-                style={{ fontSize: 12, padding: "5px 12px", fontWeight: 700 }}
-              >
-                ⚙️ Modificar Ajustes
-              </button>
+            {isHost && connectedPlayers.length > 1 && (
+              <p className="tv-hint">Como anfitrión puedes dar permisos para que otros cambien los ajustes.</p>
             )}
-          </div>
 
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
-              gap: 12,
-              background: "var(--bg-elevated)",
-              padding: 16,
-              borderRadius: 14,
-              border: "1px solid var(--border)",
-            }}
-          >
-            <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
-              <span className="muted" style={{ fontSize: 11, textTransform: "uppercase", fontWeight: 700, letterSpacing: "0.05em" }}>Rondas</span>
-              <span style={{ fontSize: 14, fontWeight: 700, color: "var(--text)" }}>🎯 {room.config?.rounds || 5} rondas</span>
+            <ul className="tv-lobby-players">
+              {room.players.map((p, i) => {
+                const isMe = p.id === user?.id;
+                const isHostPlayer = p.id === room.hostId;
+                return (
+                  <li
+                    key={p.id}
+                    className={`tv-player tv-player--row${isMe ? " is-me" : ""}${p.connected ? "" : " is-away"}`}
+                    style={{ "--i": i }}
+                  >
+                    <span className="tv-player-avatar">
+                      <Avatar name={p.name} avatar={p.avatar} />
+                      {isHostPlayer && <Icon name="crown" size={18} strokeWidth={2} filled className="tv-player-crown" />}
+                    </span>
+                    <span className="tv-player-text">
+                      <span className="tv-player-name">{p.name}</span>
+                      <span className="tv-player-tag">
+                        {playerTag(p, { isMe, isHost: isHostPlayer })}
+                        {!isHostPlayer && p.canEditConfig && " · ajustes"}
+                      </span>
+                    </span>
+                    {isHost && !isHostPlayer && (
+                      <button
+                        type="button"
+                        className={`tv-mini-btn${p.canEditConfig ? " is-on" : ""}`}
+                        onClick={() => handleTogglePermission(p.id)}
+                        title={p.canEditConfig ? "Quitar permisos para modificar ajustes" : "Dar permisos para modificar los ajustes"}
+                      >
+                        {p.canEditConfig ? "Quitar permisos" : "Dar permisos"}
+                      </button>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          </section>
+
+          <section className="tv-card" aria-label="Resumen de la partida">
+            <div className="tv-card-head">
+              <h2 className="tv-card-title">La partida</h2>
+              {canEditConfig && (
+                <button type="button" className="tv-btn tv-btn--sm tv-c-neutral" onClick={() => setShowConfigModal(true)}>
+                  <Icon name="star" size={16} />
+                  Ajustes
+                </button>
+              )}
             </div>
 
-            <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
-              <span className="muted" style={{ fontSize: 11, textTransform: "uppercase", fontWeight: 700, letterSpacing: "0.05em" }}>Tiempo por ronda</span>
-              <span style={{ fontSize: 14, fontWeight: 700, color: "var(--text)" }}>
-                ⏱️ {Math.round((room.config?.roundMs || 15000) / 1000)} segundos
-              </span>
+            <div className="tv-stats">
+              <div className="tv-stat">
+                <span className="tv-stat-label">Rondas</span>
+                <span className="tv-stat-value">{room.config?.rounds || 5}</span>
+              </div>
+              <div className="tv-stat">
+                <span className="tv-stat-label">Tiempo por ronda</span>
+                <span className="tv-stat-value">{Math.round((room.config?.roundMs || 15000) / 1000)} s</span>
+              </div>
+              <div className="tv-stat tv-stat--wide">
+                <span className="tv-stat-label">Artistas</span>
+                <span className="tv-stat-value tv-stat-value--sm">
+                  {isAllArtists ? "Todos los artistas" : selectedArtistNames || "Ninguno"}
+                </span>
+              </div>
+              <div className="tv-stat tv-stat--wide">
+                <span className="tv-stat-label">Anfitrión</span>
+                <span className="tv-stat-value tv-stat-value--sm">{room.hostName || "Host"}</span>
+              </div>
             </div>
 
-            <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
-              <span className="muted" style={{ fontSize: 11, textTransform: "uppercase", fontWeight: 700, letterSpacing: "0.05em" }}>Artistas</span>
-              <span style={{ fontSize: 14, fontWeight: 700, color: "var(--text)" }}>
-                🎤 {isAllArtists ? "Todos los artistas" : selectedArtistNames || "Ninguno"}
-              </span>
-            </div>
+            {startErr && <p className="tv-lobby-error">{startErr}</p>}
 
-            <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
-              <span className="muted" style={{ fontSize: 11, textTransform: "uppercase", fontWeight: 700, letterSpacing: "0.05em" }}>Anfitrión</span>
-              <span style={{ fontSize: 14, fontWeight: 700, color: "var(--brand)" }}>👑 {room.hostName || "Host"}</span>
-            </div>
-          </div>
-
-          {room.coHosts?.length > 0 && (
-            <div style={{ fontSize: 13, color: "var(--ok)", fontWeight: 600 }}>
-              ✓ Con privilegios de ajustes:{" "}
-              {room.coHosts
-                .map((cid) => room.players.find((p) => p.id === cid)?.name || cid)
-                .join(", ")}
-            </div>
-          )}
-
-          {startErr && (
-            <div className="card" style={{ padding: 12, borderColor: "var(--bad)", background: "var(--bad-subtle)" }}>
-              <p className="error" style={{ margin: 0, fontSize: 13 }}>{startErr}</p>
-            </div>
-          )}
-
-          {isHost ? (
-            <div className="grid" style={{ gap: 10 }}>
-              <button
-                className="btn primary lg"
-                onClick={onStartGame}
-                disabled={!canStart}
-                type="button"
-              >
-                Comenzar Partida
-              </button>
-              <button
-                className="btn secondary"
-                onClick={onBackToHub}
-                type="button"
-                title="Lleva a todos los jugadores a la página principal para elegir otro juego"
-              >
-                🏠 Volver todos a la sala principal
-              </button>
-            </div>
-          ) : (
-            <div
-              className="card"
-              style={{
-                padding: "20px 24px",
-                textAlign: "center",
-                background: "var(--bg-elevated)",
-                border: "1px solid var(--border)",
-                borderRadius: 16,
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                gap: 8,
-              }}
-            >
-              <span style={{ fontSize: 24 }}>⏳</span>
-              <strong style={{ fontSize: 16, color: "var(--text)" }}>
-                Esperando al host...
-              </strong>
-              <p className="muted" style={{ margin: 0, fontSize: 13 }}>
-                La partida comenzará automáticamente cuando el anfitrión pulse comenzar.
+            {isHost ? (
+              <div className="tv-lobby-actions">
+                <button className="tv-btn tv-btn--block tv-c-green" onClick={onStartGame} disabled={!canStart} type="button">
+                  <Icon name="play" size={20} filled strokeWidth={1.5} />
+                  Comenzar partida
+                </button>
+                <button
+                  className="tv-btn tv-c-neutral"
+                  onClick={onBackToHub}
+                  type="button"
+                  title="Lleva a todos los jugadores al inicio para elegir otro juego"
+                >
+                  <Icon name="home" size={18} />
+                  Volver todos al inicio
+                </button>
+              </div>
+            ) : (
+              <p className="tv-party-status">
+                <span className="tv-pulse" aria-hidden="true" />
+                Esperando a que {room.hostName || "el anfitrión"} comience la partida…
               </p>
-            </div>
-          )}
+            )}
 
-          <div style={{ borderTop: "1px solid var(--border)", paddingTop: 14, textAlign: "center" }}>
             <button
-              className="btn ghost sm"
+              type="button"
+              className="tv-link-btn tv-party-leave"
               onClick={() => {
                 leaveRoom();
                 nav("/");
               }}
-              type="button"
             >
+              <Icon name="logout" size={18} />
               Salir de la sala
             </button>
-          </div>
+          </section>
         </div>
+      </div>
+
+      <div className="tv-toast-region" role="status" aria-live="polite">
+        {permissionMsg && (
+          <div key={permissionMsg} className="tv-toast">
+            <Icon name="check" size={16} strokeWidth={2.8} />
+            {permissionMsg}
+          </div>
+        )}
       </div>
 
       {/* Settings Modal for Host and Users with Edit Config Privileges */}
@@ -413,6 +322,6 @@ export default function Lobby() {
         catalog={catalog}
         onSave={updateConfig}
       />
-    </div>
+    </TvShell>
   );
 }

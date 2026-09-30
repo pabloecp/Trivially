@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { useApp } from "../lib/store.jsx";
 import { YoavllySymbol } from "./YoavllySymbol.jsx";
 
-export function AuthPromptModal({ isOpen, onClose, returnTo = "/play", title = "Inicia Sesión para Jugar" }) {
+export function AuthPromptModal({ isOpen, onClose, returnTo = "/", title = "Inicia Sesión para Jugar" }) {
   const { loginWithGoogle } = useApp();
 
   if (!isOpen) return null;

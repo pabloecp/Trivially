@@ -1,13 +1,8 @@
 import { useEffect, useRef } from "react";
-import { Navigate, Outlet, Route, Routes, useLocation, useNavigate } from "react-router-dom";
-import Layout from "./components/Layout.jsx";
+import { Navigate, Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import Home from "./pages/Home.jsx";
 import Login from "./pages/Login.jsx";
 import Profile from "./pages/Profile.jsx";
-import MusicHome from "./modes/music/MusicHome.jsx";
-import ModeSelect from "./modes/music/ModeSelect.jsx";
-import Join from "./modes/music/Join.jsx";
-import Setup from "./modes/music/Setup.jsx";
 import Lobby from "./modes/music/Lobby.jsx";
 import Game from "./modes/music/Game.jsx";
 import { useApp } from "./lib/store.jsx";
@@ -20,15 +15,6 @@ function Guard({ children }) {
   const { user } = useApp();
   if (!user) return <Navigate to="/login" replace />;
   return children;
-}
-
-// Pages that still use the original navbar layout.
-function LegacyShell() {
-  return (
-    <Layout>
-      <Outlet />
-    </Layout>
-  );
 }
 
 // Keeps every player on the screen of the game their room is in, which is how the host moves the whole party.
@@ -65,21 +51,16 @@ export default function App() {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/sala/:code" element={<Home />} />
-        <Route element={<LegacyShell />}>
-          <Route path="/login" element={<Login />} />
-          {/* The leaderboard is hidden for now; its page is still in pages/LeaderboardPage.jsx. */}
-          <Route path="/leaderboard" element={<Navigate to="/" replace />} />
-          <Route path="/profile" element={<Profile />} />
-          <Route path="/profile/:userId" element={<Profile />} />
-
-          {/* Modo "Adivina la canción" (the original interface) */}
-          <Route path="/musica" element={<MusicHome />} />
-          <Route path="/play" element={<ModeSelect />} />
-          <Route path="/play/join" element={<Join />} />
-          <Route path="/play/setup" element={<Setup />} />
-          <Route path="/lobby/:code" element={<Lobby />} />
-          <Route path="/game/:code" element={<Game />} />
-        </Route>
+        <Route path="/lobby/:code" element={<Lobby />} />
+        <Route path="/game/:code" element={<Game />} />
+        <Route path="/profile" element={<Profile />} />
+        <Route path="/profile/:userId" element={<Profile />} />
+        {/* The old /play screens are gone: everything starts from Home. */}
+        <Route path="/play/*" element={<Navigate to="/" replace />} />
+        <Route path="/musica" element={<Navigate to="/" replace />} />
+        <Route path="/login" element={<Login />} />
+        {/* The leaderboard is hidden for now; its page is still in pages/LeaderboardPage.jsx. */}
+        <Route path="/leaderboard" element={<Navigate to="/" replace />} />
       </Routes>
     </>
   );

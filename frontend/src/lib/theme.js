@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 
-const THEME_KEY = "yoavlly_theme";
+const THEME_KEY = "trivially_theme";
 
 function loadTheme() {
-  return localStorage.getItem(THEME_KEY) || localStorage.getItem("bysong_theme") || "dark";
+  return localStorage.getItem(THEME_KEY) || "light";
 }
 
 // Shared by the new Home and the legacy Layout so the choice survives navigation between them.

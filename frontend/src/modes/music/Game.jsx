@@ -1,8 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import MiniBoard from "../../components/MiniBoard.jsx";
-import UserAvatar from "../../components/UserAvatar.jsx";
-import { YoavllySymbol } from "../../components/YoavllySymbol.jsx";
+import TvShell from "../../components/home/TvShell.jsx";
+import Avatar from "../../components/home/Avatar.jsx";
+import Confetti from "../../components/home/Confetti.jsx";
+import CountUp from "../../components/home/CountUp.jsx";
+import Icon from "../../components/home/Icon.jsx";
 import { remainingMs, useApp } from "../../lib/store.jsx";
 import { BACKEND_URL } from "../../lib/config.js";
 
@@ -14,7 +17,7 @@ function normalize(str = "") {
     .trim();
 }
 
-export default function Game() {
+function GameScreen() {
   const { code } = useParams();
   const { user, room, joinRoom, answer, restartGame, leaveRoom, setGame } = useApp();
   const nav = useNavigate();
@@ -251,168 +254,105 @@ export default function Game() {
 
   if (!room) {
     return (
-      <div className="card" style={{ maxWidth: 460, margin: "60px auto", textAlign: "center" }}>
-        <p className="muted">Sincronizando con el servidor...</p>
+      <div className="tv-card tv-lobby-guest">
+        <p className="tv-party-status">
+          <span className="tv-pulse" aria-hidden="true" />
+          Conectando a la partida…
+        </p>
       </div>
     );
   }
 
   // ==========================================
-  // PHASE: FINISHED (Podio y Resultados Finales)
+  // PHASE: FINISHED (podio y resultados)
   // ==========================================
   if (room.phase === "finished" && room.results) {
     const top = room.results;
     const winner = top[0];
-    const second = top[1];
-    const third = top[2];
+    const podium = [top[1], top[0], top[2]]; // 2nd, 1st, 3rd
 
     return (
-      <div className="grid page-medium" style={{ gap: 28 }}>
-        <div style={{ textAlign: "center" }}>
-          <div className="kicker">
-            <YoavllySymbol size={16} /> ¡Partida Finalizada!
-          </div>
-          <h1>
-            {top.length > 1 ? `¡Ganó ${winner?.name}!` : "¡Fin de la Partida!"}
+      <div className="tv-page tv-results">
+        <Confetti />
+        <header className="tv-results-head">
+          <p className="tv-party-kicker">Partida terminada</p>
+          <h1 className="tv-page-title tv-results-title">
+            {top.length > 1 ? `¡Ganó ${winner?.name}!` : "¡Fin de la partida!"}
           </h1>
-          <p className="lead" style={{ margin: "0 auto" }}>
-            Revisa el podio de honor, las mejores rachas y las estadísticas completas.
-          </p>
+        </header>
+
+        <div className="tv-podium" role="list" aria-label="Podio">
+          {podium.map((p, i) => {
+            const place = i === 1 ? 1 : i === 0 ? 2 : 3;
+            if (!p) return <div key={place} className="tv-podium-spot is-empty" aria-hidden="true" />;
+            return (
+              <div key={p.id} role="listitem" className={`tv-podium-spot is-${place}`}>
+                <span className="tv-podium-avatar">
+                  {place === 1 && <Icon name="crown" size={30} filled strokeWidth={1.6} className="tv-podium-crown" />}
+                  <Avatar name={p.name} avatar={p.avatar} className={place === 1 ? "tv-avatar--lg" : ""} />
+                </span>
+                <strong className="tv-podium-name">{p.name}</strong>
+                <span className="tv-podium-score">
+                  <CountUp value={p.score} /> pts
+                </span>
+                <div className="tv-podium-block">
+                  <span className="tv-podium-place">{place}</span>
+                </div>
+              </div>
+            );
+          })}
         </div>
 
-        {/* Podium */}
-        <div className="podium">
-          {/* Second Place */}
-          {second ? (
-            <div className="podium-place second">
-              <div style={{ fontSize: 28, marginBottom: 8 }}>🥈</div>
-              <div style={{ marginBottom: 10, display: "flex", justifyContent: "center" }}>
-                <UserAvatar
-                  avatar={second.avatar}
-                  name={second.name}
-                  size={52}
-                />
-              </div>
-              <strong style={{ fontSize: 16, display: "block" }}>{second.name}</strong>
-              <div style={{ color: "var(--brand)", fontWeight: 900, fontSize: 22, margin: "4px 0" }}>
-                {second.score} pts
-              </div>
-              <div className="muted" style={{ fontSize: 12 }}>
-                {second.correct} aciertos · racha {second.bestStreak}
-              </div>
-            </div>
-          ) : <div style={{ flex: 1 }} />}
+        <section className="tv-card" aria-labelledby="tv-breakdown">
+          <h2 id="tv-breakdown" className="tv-card-title">Resultados</h2>
+          <ol className="tv-rank-list">
+            {top.map((p, i) => (
+              <li key={p.id} className={`tv-rank-row${p.id === user?.id ? " is-me" : ""}`} style={{ "--i": i }}>
+                <span className="tv-rank-pos">{p.position}</span>
+                <Avatar name={p.name} avatar={p.avatar} />
+                <span className="tv-rank-name">
+                  {p.name}
+                  <span className="tv-rank-meta">
+                    {p.correct} aciertos · racha {p.bestStreak}
+                    {p.avgMs ? ` · ${(p.avgMs / 1000).toFixed(1)} s` : ""}
+                  </span>
+                </span>
+                <span className="tv-rank-score">{p.score}</span>
+              </li>
+            ))}
+          </ol>
+        </section>
 
-          {/* First Place */}
-          {winner && (
-            <div className="podium-place first">
-              <div style={{ fontSize: 36, marginBottom: 4, lineHeight: 1 }}>👑</div>
-              <div style={{ marginBottom: 10, display: "flex", justifyContent: "center" }}>
-                <UserAvatar
-                  avatar={winner.avatar}
-                  name={winner.name}
-                  size={68}
-                  style={{ boxShadow: "0 8px 24px var(--brand-subtle)" }}
-                />
-              </div>
-              <div className="chip active" style={{ fontSize: 11, marginBottom: 8, padding: "4px 12px" }}>
-                1º LUGAR
-              </div>
-              <strong style={{ fontSize: 20, display: "block" }}>{winner.name}</strong>
-              <div style={{ color: "var(--brand)", fontWeight: 900, fontSize: 30, margin: "6px 0" }}>
-                {winner.score} pts
-              </div>
-              <div className="muted" style={{ fontSize: 13 }}>
-                {winner.correct} aciertos · racha {winner.bestStreak}
-              </div>
-            </div>
-          )}
+        {err && <p className="tv-lobby-error" role="alert">{err}</p>}
 
-          {/* Third Place */}
-          {third ? (
-            <div className="podium-place third">
-              <div style={{ fontSize: 28, marginBottom: 8 }}>🥉</div>
-              <div style={{ marginBottom: 10, display: "flex", justifyContent: "center" }}>
-                <UserAvatar
-                  avatar={third.avatar}
-                  name={third.name}
-                  size={48}
-                />
-              </div>
-              <strong style={{ fontSize: 15, display: "block" }}>{third.name}</strong>
-              <div style={{ color: "var(--brand)", fontWeight: 900, fontSize: 20, margin: "4px 0" }}>
-                {third.score} pts
-              </div>
-              <div className="muted" style={{ fontSize: 12 }}>
-                {third.correct} aciertos · racha {third.bestStreak}
-              </div>
-            </div>
-          ) : <div style={{ flex: 1 }} />}
-        </div>
-
-        {/* Detailed Stats Table */}
-        <div className="card" style={{ padding: 24 }}>
-          <h3 style={{ margin: "0 0 16px" }}>Desglose de la partida</h3>
-          <div className="table-wrap">
-            <table className="table">
-              <thead>
-                <tr>
-                  <th>Pos</th>
-                  <th>Jugador</th>
-                  <th>Puntos</th>
-                  <th>Aciertos</th>
-                  <th>Mejor Racha</th>
-                  <th>Tiempo Promedio</th>
-                </tr>
-              </thead>
-              <tbody>
-                {top.map((p) => (
-                  <tr key={p.id}>
-                    <td><strong>#{p.position}</strong></td>
-                    <td>
-                      <div className="row" style={{ gap: 8 }}>
-                        <UserAvatar
-                          avatar={p.avatar}
-                          name={p.name}
-                          size={26}
-                        />
-                        <span>{p.name}</span>
-                      </div>
-                    </td>
-                    <td><strong>{p.score}</strong></td>
-                    <td>{p.correct}</td>
-                    <td>🔥 {p.bestStreak}</td>
-                    <td>{p.avgMs ? `${(p.avgMs / 1000).toFixed(1)}s` : "-"}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        {/* Action Controls */}
-        <div className="row" style={{ justifyContent: "center", gap: 12, flexWrap: "wrap" }}>
+        <div className="tv-results-actions">
           {isHost ? (
             <>
-              <button className="btn primary lg" onClick={restartGame}>
-                Jugar de Nuevo
+              <button className="tv-btn tv-btn--block tv-c-green" onClick={restartGame} type="button">
+                <Icon name="play" size={20} filled strokeWidth={1.5} />
+                Volver al lobby
               </button>
-              <button className="btn secondary lg" onClick={() => backToHub()}>
+              <button className="tv-btn tv-c-neutral" onClick={() => backToHub()} type="button">
+                <Icon name="home" size={18} />
                 Elegir otro juego
               </button>
             </>
           ) : (
-            <span className="muted">Esperando a que el host decida qué jugar...</span>
+            <p className="tv-party-status">
+              <span className="tv-pulse" aria-hidden="true" />
+              Esperando a que el anfitrión decida qué jugar…
+            </p>
           )}
-
           <button
-            className="btn ghost lg"
+            type="button"
+            className="tv-link-btn"
             onClick={() => {
               leaveRoom();
               nav("/");
             }}
           >
-            Salir al Menú
+            <Icon name="logout" size={18} />
+            Salir de la sala
           </button>
         </div>
       </div>
@@ -420,129 +360,105 @@ export default function Game() {
   }
 
   // ==========================================
-  // ACTIVE GAME SHELL: COUNTDOWN, PLAYING, REVEAL
+  // ACTIVE GAME: COUNTDOWN, PLAYING, REVEAL
   // ==========================================
+  const seconds = Math.max(0, Math.ceil(left / 1000));
+  const urgent = room.phase === "playing" && left <= 4000;
+
   return (
-    <div className="game-layout">
-      {/* Hidden audio element for preview stream */}
+    <div className="tv-game">
       <audio ref={audioRef} preload="auto" playsInline />
 
-      {/* Main Game Screen */}
-      <div className="game-main">
-        {/* Top Info Bar */}
-        <div className="game-topbar">
-          <div>
-            <div className="kicker" style={{ fontSize: 11, marginBottom: 2 }}>
-              Sala {room.code} · Modo {room.mode === "solo" ? "Práctica" : "Multijugador"}
-            </div>
-            <h2 style={{ margin: 0, fontSize: 20 }}>
-              Ronda {room.currentRound + 1} de {room.totalRounds}
-            </h2>
+      <div className="tv-game-main">
+        <section className="tv-card tv-game-top">
+          <div className="tv-game-round">
+            <p className="tv-party-kicker">
+              Sala {room.code} · {room.mode === "solo" ? "Práctica" : "Multijugador"}
+            </p>
+            <h1 className="tv-card-title">
+              Ronda {room.currentRound + 1} <span className="tv-muted">de {room.totalRounds}</span>
+            </h1>
           </div>
 
-          <div className="row" style={{ gap: 12, alignItems: "center" }}>
-            <button
-              type="button"
-              className="btn ghost sm"
-              style={{ fontSize: 12, padding: "5px 12px", color: "var(--text-muted)" }}
-              onClick={() => {
-                if (window.confirm("¿Seguro que deseas salir de la partida?")) {
-                  leaveRoom();
-                  nav("/play");
-                }
-              }}
-              title="Salir de la partida actual"
-            >
-              ✕ Salir
-            </button>
+          <div className={`tv-clock${urgent ? " is-urgent" : ""}`} role="timer" aria-label={`${seconds} segundos`}>
+            <svg viewBox="0 0 44 44" aria-hidden="true">
+              <circle className="tv-clock-track" cx="22" cy="22" r="19" />
+              <circle className="tv-clock-fill" cx="22" cy="22" r="19" style={{ strokeDashoffset: 119.4 * (1 - pct / 100) }} />
+            </svg>
+            <span key={seconds} className="tv-clock-num">{seconds}</span>
+          </div>
 
+          <div className="tv-game-tools">
             {isHost && (
               <button
-                className="btn ghost sm"
+                type="button"
+                className={`tv-mini-btn${confirmHub ? " is-on" : ""}`}
                 onClick={() => backToHub({ confirm: true })}
-                title="Termina la partida y lleva a todos a la página principal"
+                title="Termina la partida y lleva a todos al inicio"
               >
-                {confirmHub ? "¿Seguro? Toca otra vez" : "🏠 Sala principal"}
+                {confirmHub ? "¿Seguro? Toca otra vez" : "Terminar"}
               </button>
             )}
-
-            <div
-              style={{
-                fontFamily: "'Outfit', monospace",
-                fontWeight: 900,
-                fontSize: 22,
-                color: left <= 4000 && room.phase === "playing" ? "var(--bad)" : "var(--brand)",
+            <button
+              type="button"
+              className="tv-icon-btn tv-icon-btn--sm"
+              aria-label="Salir de la partida"
+              onClick={() => {
+                if (window.confirm("¿Seguro que quieres salir de la partida?")) {
+                  leaveRoom();
+                  nav("/");
+                }
               }}
             >
-              ⏱️ {Math.max(0, Math.ceil(left / 1000))}s
-            </div>
+              <Icon name="logout" size={18} />
+            </button>
           </div>
-        </div>
 
-        {/* Dynamic Timer Bar */}
-        <div className="timer-bar-wrap">
-          <div
-            className={`timer-bar-fill ${left <= 4000 && room.phase === "playing" ? "urgent" : ""}`}
-            style={{ width: `${pct}%` }}
-          />
-        </div>
+          <div className="tv-timer" aria-hidden="true">
+            <span className={`tv-timer-fill${urgent ? " is-urgent" : ""}`} style={{ width: `${pct}%` }} />
+          </div>
+        </section>
 
-        {/* 1. COUNTDOWN PHASE */}
         {room.phase === "countdown" && (
-          <div className="countdown-box">
-            <div className="kicker" style={{ fontSize: 13 }}>
-              <YoavllySymbol size={16} /> Prepárate para escuchar
-            </div>
-            <div className="countdown-number">
-              {Math.max(1, Math.ceil(left / 1000))}
-            </div>
-            <p className="muted" style={{ margin: 0, fontSize: 15 }}>
-              Escucha atentamente. Escribe el título de la canción tan pronto como la reconozcas.
-            </p>
-          </div>
+          <section className="tv-card tv-countdown">
+            <p className="tv-party-kicker">Prepárate para escuchar</p>
+            <span key={Math.max(1, seconds)} className="tv-countdown-num">{Math.max(1, seconds)}</span>
+            <p className="tv-hint">Escribe el título en cuanto reconozcas la canción.</p>
+          </section>
         )}
 
-        {/* 2. PLAYING PHASE (TYPING & AUTOCOMPLETE SLIDE BAR) */}
         {room.phase === "playing" && (
-          <div className="grid" style={{ gap: 20 }}>
-            <div style={{ textAlign: "center" }}>
-              <h2 style={{ fontSize: 24, margin: "0 0 6px" }}>¿Qué canción estás escuchando?</h2>
-              <p className="muted" style={{ margin: 0, fontSize: 14 }}>
-                Escribe el nombre y selecciona una sugerencia al instante
-              </p>
+          <section className="tv-card tv-play-card">
+            <div className="tv-eq" aria-hidden="true">
+              {Array.from({ length: 7 }, (_, i) => (
+                <span key={i} style={{ "--i": i }} />
+              ))}
             </div>
+            <h2 className="tv-play-q">¿Qué canción está sonando?</h2>
 
-            {/* Sonic Pulse Equalizer Wave */}
-            <div className="sound-pulse">
-              <span className="sound-wave-bar" />
-              <span className="sound-wave-bar" />
-              <span className="sound-wave-bar" />
-              <span className="sound-wave-bar" />
-              <span className="sound-wave-bar" />
-              <span className="sound-wave-bar" />
-            </div>
-
-            {/* Guess Typing Interface */}
             {!locked ? (
-              <div className="yoavlly-search-container">
-                <div className="yoavlly-input-wrapper">
-                  <span className="yoavlly-input-icon">🎵</span>
+              <div className="tv-search">
+                <div className="tv-search-box">
+                  <Icon name="music" size={22} className="tv-search-icon" />
                   <input
                     ref={inputRef}
                     type="text"
-                    className="yoavlly-search-input"
-                    placeholder="Escribe la canción (Ej. Andrea)"
+                    className="tv-search-input"
+                    placeholder="Escribe el título…"
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
                     onKeyDown={handleKeyDown}
                     autoComplete="off"
                     autoFocus
                     spellCheck="false"
+                    aria-label="Título de la canción"
+                    aria-autocomplete="list"
+                    aria-controls="tv-suggest"
                   />
                   {query.trim().length > 0 && (
                     <button
                       type="button"
-                      className="yoavlly-search-submit-btn"
+                      className="tv-btn tv-btn--sm tv-c-green"
                       onClick={() => {
                         if (suggestions.length > 0 && suggestions[activeIndex]) {
                           handleSubmitSong(suggestions[activeIndex]);
@@ -550,191 +466,115 @@ export default function Game() {
                           handleSubmitSong(query.trim());
                         }
                       }}
-                      title="Enviar respuesta (Enter)"
                     >
-                      Enviar ↵
+                      Enviar
                     </button>
                   )}
                 </div>
 
-                {/* Animated Dropdown / Slide Bar with matching songs */}
                 {query.trim().length > 0 && (
-                  <div className="yoavlly-suggestions-slidebar">
-                    <div className="yoavlly-suggestions-header">
-                      <span>Sugerencias ({suggestions.length})</span>
-                      <span className="yoavlly-keyboard-hint">Usa ↑ ↓ y Enter para elegir</span>
-                    </div>
-
+                  <div className="tv-suggest" id="tv-suggest">
                     {suggestions.length > 0 ? (
-                      <div className="yoavlly-suggestions-list" ref={suggestionsListRef}>
-                        {suggestions.map((song, index) => {
-                          const isSelected = index === activeIndex;
-                          return (
-                            <div
-                              key={song.id}
-                              className={`yoavlly-suggestion-item ${isSelected ? "active" : ""}`}
+                      <ul className="tv-suggest-list" ref={suggestionsListRef} role="listbox">
+                        {suggestions.map((song, index) => (
+                          <li key={song.id} role="option" aria-selected={index === activeIndex} style={{ "--i": index }}>
+                            <button
+                              type="button"
+                              className={`tv-suggest-item${index === activeIndex ? " is-active" : ""}`}
                               onClick={() => handleSubmitSong(song)}
                               onMouseEnter={() => setActiveIndex(index)}
                             >
-                              <div className="yoavlly-suggestion-icon">🎶</div>
-                              <div className="yoavlly-suggestion-info">
-                                <span className="yoavlly-suggestion-title">{song.title}</span>
-                                <span className="yoavlly-suggestion-artist">{song.artistName}</span>
-                              </div>
-                              {isSelected && (
-                                <span className="yoavlly-select-badge">Enter ↵</span>
-                              )}
-                            </div>
-                          );
-                        })}
-                      </div>
+                              <span className="tv-suggest-title">{song.title}</span>
+                              <span className="tv-suggest-artist">{song.artistName}</span>
+                              {index === activeIndex && <kbd className="tv-kbd">Enter</kbd>}
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
                     ) : (
-                      <div className="yoavlly-no-suggestions">
-                        <span>No encontramos una sugerencia exacta, pero puedes presionar <strong>Enter</strong> para enviar "<strong>{query}</strong>".</span>
-                      </div>
+                      <p className="tv-hint tv-suggest-empty">
+                        Sin sugerencias. Pulsa <kbd className="tv-kbd">Enter</kbd> para enviar “{query}”.
+                      </p>
                     )}
+                    <p className="tv-suggest-help">Usa ↑ ↓ y Enter para elegir</p>
                   </div>
                 )}
               </div>
             ) : (
-              /* Locked Answer Display */
-              <div className="yoavlly-locked-container">
-                <div className="yoavlly-locked-card">
-                  <div className="yoavlly-locked-badge">✓ Respuesta Registrada</div>
-                  <h3 className="yoavlly-locked-title">
-                    {submittedSong || me?.lastAnswer?.text || "Canción enviada"}
-                  </h3>
-                  <p className="muted" style={{ margin: "8px 0 0", fontSize: 13 }}>
-                    Esperando a que termine el tiempo o a que los demás jugadores respondan...
-                  </p>
-                </div>
+              <div className="tv-locked">
+                <span className="tv-locked-check">
+                  <Icon name="check" size={28} strokeWidth={3.2} />
+                </span>
+                <p className="tv-party-kicker">Respuesta enviada</p>
+                <p className="tv-locked-title">{submittedSong || me?.lastAnswer?.text || "Canción enviada"}</p>
+                <p className="tv-hint">Esperando al resto de jugadores…</p>
               </div>
             )}
 
-            {err && <p className="error" style={{ textAlign: "center", margin: 0 }}>{err}</p>}
-          </div>
+            {err && <p className="tv-lobby-error" role="alert">{err}</p>}
+          </section>
         )}
 
-        {/* 3. REVEAL PHASE (RESULTADO DE LA RONDA) */}
-        {room.phase === "reveal" && room.reveal && (
-          <div className="grid" style={{ gap: 20 }}>
-            {/* Feedback Banner */}
-            {(() => {
-              const isCorrect = Boolean(me?.lastAnswer?.correct);
-              const didAnswer = Boolean(me?.lastAnswer?.text || submittedSong);
-
-              return (
-                <div
-                  className={`card ${isCorrect ? "anim-win-banner" : didAnswer ? "anim-lose-banner" : ""}`}
-                  style={{
-                    position: "relative",
-                    overflow: "hidden",
-                    padding: "24px 28px",
-                    textAlign: "center",
-                    background: isCorrect
-                      ? "var(--ok-subtle)"
-                      : didAnswer
-                      ? "var(--bad-subtle)"
-                      : "var(--amber-subtle)",
-                    borderColor: isCorrect
-                      ? "var(--ok-border)"
-                      : didAnswer
-                      ? "var(--bad-border)"
-                      : "var(--border)",
-                  }}
-                >
-                  <div style={{ fontSize: 38, marginBottom: 8 }}>
-                    {isCorrect ? "🎉" : didAnswer ? "❌" : "⌛"}
-                  </div>
-
-                  <h2 style={{ margin: "0 0 6px", fontSize: 24 }}>
-                    {isCorrect
-                      ? "¡Correcto! Excelente oído"
-                      : didAnswer
-                      ? "Respuesta Incorrecta"
-                      : "¡Se agotó el tiempo!"}
-                  </h2>
-
-                  <div className="row" style={{ justifyContent: "center", gap: 12, margin: "8px 0" }}>
-                    {isCorrect && (
-                      <span className="chip ok" style={{ fontSize: 14, fontWeight: 800 }}>
-                        +{me?.lastPoints || 0} pts
-                      </span>
-                    )}
-
-                    {me?.streak > 1 && (
-                      <span className="chip streak" style={{ fontSize: 14 }}>
-                        🔥 Racha de {me.streak}
-                      </span>
-                    )}
-                  </div>
-
-                  {didAnswer && !isCorrect && me?.lastAnswer?.text && (
-                    <p className="muted" style={{ margin: "4px 0 0", fontSize: 13 }}>
-                      Escribiste: <em>"{me.lastAnswer.text}"</em>
-                    </p>
-                  )}
+        {room.phase === "reveal" && room.reveal && (() => {
+          const isCorrect = Boolean(me?.lastAnswer?.correct);
+          const didAnswer = Boolean(me?.lastAnswer?.text || submittedSong);
+          const tone = isCorrect ? "ok" : didAnswer ? "bad" : "timeout";
+          return (
+            <>
+              <section className={`tv-card tv-result tv-result--${tone}`} role="status">
+                {isCorrect && <Confetti pieces={18} />}
+                <span className="tv-result-icon">
+                  <Icon name={isCorrect ? "check" : didAnswer ? "lock" : "hash"} size={30} strokeWidth={3} />
+                </span>
+                <h2 className="tv-result-title">
+                  {isCorrect ? "¡Correcto!" : didAnswer ? "Incorrecto" : "¡Se acabó el tiempo!"}
+                </h2>
+                <div className="tv-tags tv-tags--center">
+                  {isCorrect && <span className="tv-tag tv-tag--points">+{me?.lastPoints || 0} pts</span>}
+                  {me?.streak > 1 && <span className="tv-tag tv-tag--streak">Racha de {me.streak}</span>}
                 </div>
-              );
-            })()}
+                {didAnswer && !isCorrect && me?.lastAnswer?.text && (
+                  <p className="tv-hint">Escribiste “{me.lastAnswer.text}”</p>
+                )}
+              </section>
 
-            {/* Reveal Song Card */}
-            <div
-              className="card"
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 20,
-                padding: 20,
-                background: "var(--bg-surface)",
-              }}
-            >
-              <img
-                src={room.reveal.image || "/artists/bad-bunny.jpg"}
-                alt={room.reveal.title}
-                style={{
-                  width: 90,
-                  height: 90,
-                  borderRadius: 12,
-                  objectFit: "cover",
-                  boxShadow: "var(--shadow-md)",
-                  flexShrink: 0,
-                }}
-              />
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div className="kicker" style={{ fontSize: 11, marginBottom: 4 }}>
-                  Era la canción:
+              <section className="tv-card tv-song">
+                <img
+                  className="tv-song-cover"
+                  src={room.reveal.image || "/artists/bad-bunny.jpg"}
+                  alt={`Portada de ${room.reveal.title}`}
+                />
+                <div className="tv-song-text">
+                  <p className="tv-party-kicker">Era la canción</p>
+                  <h3 className="tv-song-title">{room.reveal.title}</h3>
+                  <p className="tv-song-meta">
+                    {room.reveal.artistName}
+                    {room.reveal.albumName ? ` · ${room.reveal.albumName}` : ""}
+                    {room.reveal.year ? ` (${room.reveal.year})` : ""}
+                  </p>
                 </div>
-                <h3 style={{ margin: "0 0 4px", fontSize: 22, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                  {room.reveal.title}
-                </h3>
-                <p className="muted" style={{ margin: 0, fontSize: 15 }}>
-                  {room.reveal.artistName}
-                  {room.reveal.albumName ? ` · ${room.reveal.albumName}` : ""}
-                  {room.reveal.year ? ` (${room.reveal.year})` : ""}
-                </p>
-              </div>
-            </div>
+              </section>
 
-            <div style={{ textAlign: "center" }}>
-              <p className="muted" style={{ fontSize: 13, margin: 0 }}>
-                {room.currentRound + 1 >= room.totalRounds
-                  ? "Cargando resultados finales..."
-                  : "Siguiente canción en breve..."}
+              <p className="tv-party-status tv-next">
+                <span className="tv-pulse" aria-hidden="true" />
+                {room.currentRound + 1 >= room.totalRounds ? "Calculando resultados…" : "Siguiente canción en breve…"}
               </p>
-            </div>
-          </div>
-        )}
+            </>
+          );
+        })()}
       </div>
 
-      {/* Realtime Players Sidebar */}
-      <aside className="game-sidebar">
-        <MiniBoard
-          players={room.players || []}
-          currentUserId={user?.id}
-          phase={room.phase}
-        />
+      <aside className="tv-game-side">
+        <MiniBoard players={room.players || []} currentUserId={user?.id} />
       </aside>
     </div>
+  );
+}
+
+export default function Game() {
+  return (
+    <TvShell mode="musica">
+      <GameScreen />
+    </TvShell>
   );
 }

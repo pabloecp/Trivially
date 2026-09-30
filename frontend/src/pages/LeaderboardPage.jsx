@@ -55,7 +55,7 @@ export default function LeaderboardPage() {
             Los mejores jugadores clasificados por rendimiento, velocidad y rachas de reconocimiento.
           </p>
         </div>
-        <Link to="/play" className="btn primary sm">
+        <Link to="/" className="btn primary sm">
           + Jugar Ahora
         </Link>
       </div>

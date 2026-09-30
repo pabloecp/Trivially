@@ -216,7 +216,7 @@ export function createApiRouter({ catalog, store }) {
 
   router.get("/google/login", (req, res) => {
     try {
-      const returnTo = req.query.returnTo || "/play";
+      const returnTo = req.query.returnTo || "/";
       const purpose = req.query.purpose || "login";
       const origin = req.query.origin || "";
       res.json({ url: createGoogleAuthUrl(returnTo, purpose, origin) });
@@ -236,7 +236,7 @@ export function handleGoogleRedirect(req, res) {
   const originParam = req.query.origin || req.headers.referer || "";
   const clientOrigin = originParam ? new URL(originParam, defaultOrigin).origin : defaultOrigin;
   try {
-    const returnTo = req.query.returnTo || "/play";
+    const returnTo = req.query.returnTo || "/";
     const purpose = req.query.purpose || "login";
     const url = createGoogleAuthUrl(returnTo, purpose, clientOrigin);
     res.redirect(url);
@@ -251,7 +251,7 @@ export async function handleGoogleCallback(req, res, store) {
   const defaultOrigin = host.includes("127.0.0.1") || host.includes("localhost")
     ? (host.includes("127.0.0.1") ? "http://127.0.0.1:5173" : "http://localhost:5173")
     : "https://triviallyonline.vercel.app";
-  let returnTo = "/play";
+  let returnTo = "/";
   let origin = defaultOrigin;
   try {
     const { code, state } = req.query;

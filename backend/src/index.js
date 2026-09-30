@@ -7,7 +7,7 @@ import express from "express";
 import cookieSession from "cookie-session";
 import { Server } from "socket.io";
 import { loadCatalog } from "./catalog/catalogProvider.js";
-import { loadStore } from "./db/store.js";
+import { flushStore, initStore } from "./db/store.js";
 import { RoomManager } from "./game/roomManager.js";
 import {
   createApiRouter,
@@ -24,7 +24,7 @@ dotenv.config({ path: path.resolve(__dirname, "../../.env") });
 const PORT = Number(process.env.PORT || 8080);
 
 const catalog = await loadCatalog();
-const store = loadStore();
+const store = await initStore();
 const rooms = new RoomManager({ catalog, store });
 
 const app = express();
@@ -110,6 +110,13 @@ const io = new Server(server, {
   },
 });
 attachSockets(io, rooms);
+
+// Make sure the last stats reach the database when the host stops the server (Railway sends SIGTERM on deploy).
+for (const signal of ["SIGTERM", "SIGINT"]) {
+  process.on(signal, () => {
+    flushStore().finally(() => process.exit(0));
+  });
+}
 
 server.listen(PORT, () => {
   console.log(`YOAVLLY API en http://localhost:${PORT}`);

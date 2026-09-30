@@ -10,7 +10,7 @@ export function googleConfigured() {
   return Boolean(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET);
 }
 
-export function createGoogleAuthUrl(returnTo = "/play", purpose = "login", clientOrigin = "") {
+export function createGoogleAuthUrl(returnTo = "/", purpose = "login", clientOrigin = "") {
   if (!googleConfigured()) {
     throw new Error("Google OAuth no está configurado (GOOGLE_CLIENT_ID o GOOGLE_CLIENT_SECRET ausente)");
   }
@@ -123,7 +123,7 @@ export async function exchangeGoogleCode(code, state) {
       name: profile.name || profile.given_name || "Usuario de Google",
       avatar: profile.picture,
     },
-    returnTo: stateData?.returnTo || "/play",
+    returnTo: stateData?.returnTo || "/",
     purpose: stateData?.purpose || "login",
     origin: stateData?.origin || "",
   };

@@ -1,95 +1,50 @@
-import UserAvatar from "./UserAvatar.jsx";
+import Avatar from "./home/Avatar.jsx";
+import Icon from "./home/Icon.jsx";
 
+// Live scoreboard shown next to the game. The score re-mounts on change so it pops.
 export default function MiniBoard({ players, currentUserId }) {
   const ranked = [...(players || [])].sort((a, b) => b.score - a.score);
 
-  const getPosBadge = (index) => {
-    if (index === 0) return "🥇";
-    if (index === 1) return "🥈";
-    if (index === 2) return "🥉";
-    return `#${index + 1}`;
-  };
-
   return (
-    <div className="card" style={{ padding: 20 }}>
-      <div className="row" style={{ justifyContent: "space-between", marginBottom: 14 }}>
-        <h3 style={{ margin: 0, fontSize: 16 }}>Marcador en vivo</h3>
-        <span className="chip" style={{ fontSize: 11, padding: "2px 8px" }}>
-          {players.length} {players.length === 1 ? "jugador" : "jugadores"}
-        </span>
+    <section className="tv-card tv-board" aria-labelledby="tv-board-title">
+      <div className="tv-card-head">
+        <h2 id="tv-board-title" className="tv-card-title">Marcador</h2>
+        <span className="tv-count">{ranked.length}</span>
       </div>
 
-      <div className="grid" style={{ gap: 8 }}>
+      <ol className="tv-board-list">
         {ranked.map((p, i) => {
           const isMe = p.id === currentUserId;
           return (
-            <div
+            <li
               key={p.id}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 10,
-                padding: "8px 12px",
-                borderRadius: "var(--radius-md)",
-                background: isMe ? "var(--brand-subtle)" : "var(--bg-subtle)",
-                border: isMe ? "1px solid var(--brand)" : "1px solid var(--border-subtle)",
-              }}
+              className={`tv-board-row${isMe ? " is-me" : ""}${i < 3 ? ` is-top is-top-${i + 1}` : ""}`}
+              style={{ "--i": i }}
             >
-              <span
-                style={{
-                  width: 22,
-                  fontSize: i < 3 ? 15 : 12,
-                  fontWeight: 800,
-                  color: "var(--text-muted)",
-                  textAlign: "center",
-                  flexShrink: 0,
-                }}
-              >
-                {getPosBadge(i)}
+              <span className="tv-board-pos">{i + 1}</span>
+              <Avatar name={p.name} avatar={p.avatar} />
+              <span className="tv-board-name">
+                <span className="tv-board-line">
+                  {p.name}
+                  {isMe && <span className="tv-muted"> · tú</span>}
+                </span>
+                {p.streak > 1 && <span className="tv-board-streak">Racha {p.streak}</span>}
               </span>
-
-              <UserAvatar
-                avatar={p.avatar}
-                name={p.name}
-                size={30}
-              />
-
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div
-                  style={{
-                    fontWeight: isMe ? 800 : 600,
-                    fontSize: 13,
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                    whiteSpace: "nowrap",
-                    color: "var(--text)",
-                  }}
-                >
-                  {p.name} {isMe && "(Tú)"}
-                </div>
-                {p.streak > 1 && (
-                  <div style={{ fontSize: 11, fontWeight: 700, color: "#EA580C" }}>
-                    🔥 {p.streak} STREAK
-                  </div>
+              <span className="tv-board-right">
+                <span key={p.score} className="tv-board-score">{p.score}</span>
+                {p.answered ? (
+                  <span className="tv-board-state is-done">
+                    <Icon name="check" size={12} strokeWidth={3.2} />
+                    Listo
+                  </span>
+                ) : (
+                  <span className="tv-board-state">Pensando…</span>
                 )}
-              </div>
-
-              <div style={{ textAlign: "right", flexShrink: 0 }}>
-                <div style={{ fontWeight: 800, fontSize: 15, fontFamily: "'Outfit', sans-serif", color: "var(--brand)" }}>
-                  {p.score}
-                </div>
-                <div style={{ fontSize: 10 }}>
-                  {p.answered ? (
-                    <span className="ok" style={{ fontWeight: 700 }}>Listo</span>
-                  ) : (
-                    <span style={{ color: "var(--text-muted)" }}>⏱️ ...</span>
-                  )}
-                </div>
-              </div>
-            </div>
+              </span>
+            </li>
           );
         })}
-      </div>
-    </div>
+      </ol>
+    </section>
   );
 }
