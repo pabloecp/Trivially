@@ -106,9 +106,18 @@ export function AppProvider({ children }) {
     applyUser(next);
   }
 
+  // Resolves once a Google login coming back in the URL has been finished, so the socket (and its guest
+  // fallback) never runs in the middle of it.
+  const googleDone = useRef(null);
+  if (!googleDone.current) {
+    let resolve;
+    googleDone.current = { promise: new Promise((r) => (resolve = r)), resolve };
+  }
+
   // Makes sure the server session is ours, then returns the signed token the socket connects with.
   useEffect(() => {
     setSocketTokenProvider(async () => {
+      await googleDone.current.promise;
       let res = await api("/api/socket-token").catch(() => null);
       const current = userRef.current;
       // Only start a guest session when the server has none; never replace one (e.g. a Google login in progress).
@@ -150,7 +159,8 @@ export function AppProvider({ children }) {
             googleFailed("tu navegador no guardó la sesión. Permite cookies para este sitio e inténtalo otra vez.");
           }
         })
-        .catch((e) => googleFailed(e.message || "no hubo respuesta del servidor. Inténtalo otra vez."));
+        .catch((e) => googleFailed(e.message || "no hubo respuesta del servidor. Inténtalo otra vez."))
+        .finally(() => googleDone.current.resolve());
 
       try {
         const url = new URL(window.location.href);
@@ -161,6 +171,8 @@ export function AppProvider({ children }) {
         window.history.replaceState({}, document.title, url.pathname + (url.search ? url.search : ""));
       } catch {}
     }
+
+    if (!googleJustLoaded) googleDone.current.resolve();
 
     // Only fetch /api/me if we didn't just load from Google params
     // to avoid overwriting the freshly-loaded Google user with null

@@ -65,6 +65,11 @@ export function createApiRouter({ catalog, store }) {
     }
 
     if (!String(id).startsWith("gst_")) return res.status(400).json({ error: "Identificador de invitado no válido" });
+    // Never downgrade a signed-in account to a guest (e.g. a stale guest saved in the browser racing a login).
+    const current = req.session?.userId ? store.users[req.session.userId] : null;
+    if (current && !current.isGuest) {
+      return res.json({ user: sanitizeUser(current), google: { configured: googleConfigured() } });
+    }
     // Guest ids are visible to everyone in a room, so an id that already belongs to another browser's session
     // gets a fresh one instead of being handed over. The client adopts whatever id comes back.
     const taken = existing && req.session?.userId !== id;
