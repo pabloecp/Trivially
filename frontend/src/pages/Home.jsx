@@ -139,7 +139,8 @@ export default function Home() {
             { label: "Opción 3 · Cómo se juega", Side: HowToPlay },
             { label: "Opción 4 · Dato curioso del día", Side: DailyFact },
             { label: "Opción 5 · Carrusel de categorías", Side: ModeCarousel },
-          ].map(({ label, Side }, i) => (
+            { label: "Opción 6 · Logo, pregunta del día y dato curioso", Side: null, Below: [DailyQuestion, DailyFact] },
+          ].map(({ label, Side, Below = [] }, i) => (
             <div key={label} className={`tv-stage${Side ? " tv-stage--split" : " tv-stage--solo"}`}>
               <p className="tv-stage-label">{label}</p>
               <section className="tv-hero">
@@ -160,6 +161,9 @@ export default function Home() {
                 </button>
               </section>
               {Side && <Side />}
+              {Below.map((Card, j) => (
+                <Card key={j} />
+              ))}
             </div>
           ))
         )}
