@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project
 
-Trivially is a real-time music trivia game ("Adivina la canción"): players hear a 30s audio preview and type the song title, solo or in multiplayer rooms with `XO····` codes. All UI copy and server error messages are in Spanish — keep new strings in Spanish. The project was previously called YOAVLLY / BySong; those names still appear in package names, the session cookie, and `localStorage` keys (`yoavlly-user`, `yoavlly_guest_id`, `yoavlly_theme`, with `bysong*` fallbacks). Don't rename those keys without a migration or existing users lose their saved identity.
+Trivially is a real-time music trivia game ("Adivina la canción"): players hear a 30s audio preview and type the song title, solo or in multiplayer rooms with `XO····` codes. All UI copy and server error messages are in Spanish — keep new strings in Spanish. The project was previously called YOAVLLY; that name still appears in package names, the session cookie, and `localStorage` keys (`yoavlly-user`, `yoavlly_guest_id`, `yoavlly_theme`). Don't rename those keys without a migration or existing users lose their saved identity.
 
 ## Commands
 

@@ -1,10 +1,13 @@
 import assert from "node:assert/strict";
 import {
+  deleteGuest,
   deleteUser,
   linkGoogle,
   registerWithPassword,
   sanitizeUserPublic,
   unlinkGoogle,
+  updateUserAvatar,
+  upsertGoogleUser,
   upsertUser,
 } from "./store.js";
 
@@ -47,5 +50,24 @@ assert.throws(() => {
 
 deleteUser(testStore, user1.id, "User 2Chars");
 assert.equal(testStore.users[user1.id], undefined);
+
+// Test 6: Guests are removed on sign-out; registered accounts never are
+upsertUser(testStore, { id: "gst_test01", name: "Invitado", isGuest: true });
+assert.equal(deleteGuest(testStore, "gst_test01"), true);
+assert.equal(testStore.users.gst_test01, undefined);
+const user2 = registerWithPassword(testStore, { name: "Registrado", email: "r@yoavlly.test", password: "ab" });
+assert.equal(deleteGuest(testStore, user2.id), false);
+assert.ok(testStore.users[user2.id]);
+
+// Test 7: Avatar is a color or the Google photo; picking a color keeps the photo for later
+assert.throws(() => updateUserAvatar(testStore, user2.id, "google"), /Google/);
+assert.throws(() => updateUserAvatar(testStore, user2.id, "https://evil.test/x.png"), /no válido/);
+assert.equal(updateUserAvatar(testStore, user2.id, "#33A8C7").avatar, "#33A8C7");
+const gUser = upsertGoogleUser(testStore, { name: "G", email: "g@yoavlly.test", avatar: "https://photo.test/g.jpg", googleId: "g_1" });
+assert.equal(gUser.avatar, "https://photo.test/g.jpg");
+updateUserAvatar(testStore, gUser.id, "#F050AE");
+upsertGoogleUser(testStore, { email: "g@yoavlly.test", avatar: "https://photo.test/g2.jpg", googleId: "g_1" });
+assert.equal(testStore.users[gUser.id].avatar, "#F050AE");
+assert.equal(updateUserAvatar(testStore, gUser.id, "google").avatar, "https://photo.test/g2.jpg");
 
 console.log("All store tests passed!");

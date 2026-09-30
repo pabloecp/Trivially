@@ -252,7 +252,10 @@ body:has(.tv-app) {
   .tv-stage.has-room .tv-party { justify-self: stretch; max-width: none; }
 }
 .tv-play-icon { background: var(--tv-violet); color: #0a0a0a; }
-.tv-topbar-end { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.tv-topbar-end { display: flex; align-items: center; justify-content: flex-end; gap: 10px; min-width: 0; }
+/* Inicio never shrinks; a long player name gets cut with "…" instead. */
+.tv-chip--home { flex-shrink: 0; }
+.tv-topbar-end .tv-chip { max-width: min(62vw, 100%); }
 .tv-main--page { align-items: stretch; padding-top: 20px; }
 
 /* ---------- Split: room on one side, rotating albums on the other ---------- */
@@ -821,6 +824,16 @@ body:has(.tv-app) {
   outline: 3px solid var(--tv-text);
   outline-offset: 3px;
 }
+.tv-swatch--photo {
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  padding: 0;
+  background: var(--tv-neutral);
+  color: var(--tv-neutral-on);
+}
+.tv-swatch--photo img { width: 100%; height: 100%; object-fit: cover; }
+.tv-swatch--photo.is-locked { opacity: 0.6; }
 
 .tv-btn {
   display: inline-flex;
@@ -1027,7 +1040,57 @@ body:has(.tv-app) {
 .tv-lobby-head { grid-template-columns: 1fr auto; align-items: center; }
 .tv-lobby-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; align-items: start; }
 @media (min-width: 860px) { .tv-lobby-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
-.tv-lobby-grid .tv-card:nth-child(2) { animation-delay: 0.08s; }
+.tv-lobby-grid > .tv-card { animation-delay: 0.08s; }
+.tv-lobby-col { display: grid; gap: 20px; min-width: 0; }
+.tv-lobby-col > .tv-card:nth-child(2) { animation-delay: 0.16s; }
+
+/* ---------- Waiting-room mini game ---------- */
+.tv-notes { gap: 14px; }
+.tv-notes-score {
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: var(--tv-option-bg);
+  font-weight: 800;
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+  color: var(--tv-text-2);
+}
+.tv-notes-arena {
+  position: relative;
+  height: 210px;
+  border-radius: 22px;
+  background: var(--tv-option-bg);
+  box-shadow: inset 0 3px 0 var(--tv-option-edge);
+  overflow: hidden;
+  touch-action: manipulation;
+}
+.tv-notes-intro {
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 12px;
+  height: 100%;
+  padding: 16px;
+  text-align: center;
+}
+.tv-notes-text { margin: 0; font-weight: 800; color: var(--tv-text-2); }
+.tv-notes-note {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  margin: -26px 0 0 -26px;
+  border: 0;
+  border-radius: 18px;
+  background: linear-gradient(155deg, var(--c1), var(--c2));
+  box-shadow: 0 4px 0 var(--edge);
+  color: var(--on);
+  cursor: pointer;
+  animation: tvPop 0.35s var(--tv-spring) backwards;
+}
+.tv-notes-note:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--edge); }
+@media (prefers-reduced-motion: reduce) { .tv-notes-note { animation: none; } }
 .tv-card-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .tv-card-title { margin: 0; font-family: var(--tv-display); font-weight: 600; font-size: 22px; letter-spacing: 0; color: var(--tv-text); }
 .tv-count {
@@ -1480,6 +1543,20 @@ body:has(.tv-app) {
 .tv-suggest-artist { grid-column: 1; font-weight: 700; font-size: 13px; color: var(--tv-text-3); }
 .tv-suggest-item .tv-kbd { grid-column: 2; grid-row: 1 / span 2; }
 .tv-suggest-empty { padding: 8px 10px; }
+.tv-suggest-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+  padding: 8px 14px 2px;
+  border-top: 2px solid rgba(127, 127, 127, 0.18);
+  font-weight: 800;
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--tv-text-3);
+}
+.tv-suggest-list li.tv-suggest-group:first-child { margin-top: 0; border-top: 0; }
 .tv-suggest-help { margin: 0; padding: 0 10px 4px; font-weight: 700; font-size: 12px; color: var(--tv-text-3); }
 /* Touch screens have no arrow keys or Enter hint to show. */
 @media (hover: none) {

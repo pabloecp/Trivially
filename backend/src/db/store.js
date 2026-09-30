@@ -10,6 +10,8 @@ const DATA_DIR = path.join(__dirname, "../../data");
 const STORE_PATH = path.join(DATA_DIR, "store.json");
 
 const MAX_NAME_LENGTH = 24;
+export const DEFAULT_AVATAR = "#F050AE";
+const HEX_COLOR = /^#[0-9a-f]{6}$/i;
 
 function emptyStore() {
   return { users: {} };
@@ -253,7 +255,7 @@ export function registerWithPassword(store, { name, email, password, avatar, gue
     id: userId,
     name: cleanName,
     email: cleanEmail,
-    avatar: avatar || "#1DB954",
+    avatar: avatar || DEFAULT_AVATAR,
     isGuest: false,
     passwordHash: hash,
     passwordSalt: salt,
@@ -306,8 +308,14 @@ export function upsertGoogleUser(store, { id, email, name, avatar, googleId }, g
   );
 
   if (existing) {
+    // The Google photo becomes the avatar the first time; after that it only refreshes it if the player is
+    // still using the photo (a color they picked is kept).
+    const usingPhoto = !existing.googleId || !HEX_COLOR.test(existing.avatar || "");
     existing.googleId = googleId;
-    if (avatar) existing.avatar = avatar;
+    if (avatar) {
+      existing.googlePhoto = avatar;
+      if (usingPhoto) existing.avatar = avatar;
+    }
     if (!existing.name) existing.name = name;
     existing.isGuest = false;
     store.users[existing.id] = existing;
@@ -323,10 +331,11 @@ export function upsertGoogleUser(store, { id, email, name, avatar, googleId }, g
     id: userId,
     name: name || "Jugador Google",
     email: cleanEmail,
-    avatar: avatar || "#1DB954",
+    avatar: avatar || DEFAULT_AVATAR,
     isGuest: false,
     googleId,
   });
+  if (avatar) store.users[newUser.id].googlePhoto = avatar;
 
   if (guestId) {
     claimGuestStats(store, newUser.id, guestId);
@@ -348,7 +357,10 @@ export function linkGoogle(store, userId, { googleId, email, avatar }) {
 
   user.googleId = googleId;
   if (email && !user.email) user.email = email.trim().toLowerCase();
-  if (avatar) user.avatar = avatar;
+  if (avatar) {
+    user.avatar = avatar;
+    user.googlePhoto = avatar;
+  }
   store.users[userId] = user;
   saveStore(store);
   return sanitizeUser(user);
@@ -366,6 +378,8 @@ export function unlinkGoogle(store, userId) {
   }
 
   delete user.googleId;
+  delete user.googlePhoto;
+  if (!HEX_COLOR.test(user.avatar || "")) user.avatar = DEFAULT_AVATAR;
   store.users[userId] = user;
   saveStore(store);
   return sanitizeUser(user);
@@ -382,6 +396,32 @@ export function deleteUser(store, userId, confirmName) {
   delete store.users[userId];
   saveStore(store);
   return true;
+}
+
+/** Removes a guest record (no-op for registered accounts). Guests are only kept while they are signed in. */
+export function deleteGuest(store, userId) {
+  const user = store.users[userId];
+  if (!user?.isGuest) return false;
+  delete store.users[userId];
+  saveStore(store);
+  return true;
+}
+
+/** Sets the avatar to a color ("#rrggbb") or, with "google", to the player's Google photo. */
+export function updateUserAvatar(store, userId, choice) {
+  const user = store.users[userId];
+  if (!user) throw new Error("Usuario no encontrado");
+  if (choice === "google") {
+    const photo = user.googlePhoto || (user.googleId && !HEX_COLOR.test(user.avatar || "") ? user.avatar : null);
+    if (!photo) throw new Error("Inicia sesión con Google para usar tu foto de perfil");
+    user.avatar = photo;
+  } else if (HEX_COLOR.test(choice || "")) {
+    user.avatar = choice;
+  } else {
+    throw new Error("Color no válido");
+  }
+  saveStore(store);
+  return sanitizeUser(user);
 }
 
 export function updateUserName(store, userId, newName) {

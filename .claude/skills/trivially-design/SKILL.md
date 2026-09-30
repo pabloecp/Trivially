@@ -10,7 +10,7 @@ Estilo: entre app y web. Tarjetas y botones redondeados y "gordos" (sombra sóli
 ## Paleta
 
 - **Sitio**: rosa `#F050AE` (hover `#F46CBD`, activo `#D93C99`) + amarillo `#FDF148` como segundo color (chips, pestaña/enlace activo, botones secundarios, un punto del logo).
-- **Neutros**: modo claro blanco (`#FFFFFF`, superficies `#F5F5F5`, texto `#0A0A0A`); modo oscuro negro (`#0A0A0A`, superficies `#161616`/`#232323`, texto blanco). Claro es el tema por defecto (`trivially_theme`).
+- **Neutros**: modo claro blanco (`#FFFFFF`, superficies `#F5F5F5`, texto `#0A0A0A`); modo oscuro negro (`#0A0A0A`, superficies `#161616`/`#232323`, texto blanco). Oscuro es el tema por defecto (`trivially_theme`).
 - **Color por modo de juego** (cada modo cambia el color principal del sitio):
   - Adivina la canción → lima `#A0E426`
   - Cultura general → naranja `#FFAB00`

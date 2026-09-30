@@ -3,6 +3,7 @@ import { hydrateSong } from "../catalog/catalogProvider.js";
 import { selectSongs } from "../catalog/songSelector.js";
 import {
   claimGuestStats,
+  deleteGuest,
   deleteUser,
   leaderboard,
   linkGoogle,
@@ -13,6 +14,7 @@ import {
   sanitizeUserPublic,
   setUserRole,
   unlinkGoogle,
+  updateUserAvatar,
   updateUserName,
   upsertGoogleUser,
   upsertUser,
@@ -134,6 +136,8 @@ export function createApiRouter({ catalog, store }) {
   });
 
   router.post("/auth/logout", (req, res) => {
+    // A guest who signs out is gone for good: nothing about them stays in the store.
+    if (req.session?.userId) deleteGuest(store, req.session.userId);
     req.session = null;
     res.json({ ok: true });
   });
@@ -209,6 +213,18 @@ export function createApiRouter({ catalog, store }) {
       const { name } = req.body || {};
       const updated = updateUserName(store, req.params.id, name);
       res.json({ ok: true, user: updated });
+    } catch (err) {
+      res.status(400).json({ error: err.message });
+    }
+  });
+
+  router.patch("/users/:id/avatar", (req, res) => {
+    try {
+      if (req.session?.userId !== req.params.id) {
+        return res.status(403).json({ error: "No tienes permiso para modificar este usuario" });
+      }
+      const user = updateUserAvatar(store, req.params.id, req.body?.avatar);
+      res.json({ ok: true, user });
     } catch (err) {
       res.status(400).json({ error: err.message });
     }

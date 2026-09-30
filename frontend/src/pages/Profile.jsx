@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, Navigate, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { api } from "../lib/api.js";
-import { useApp } from "../lib/store.jsx";
+import { AVATAR_COLORS, useApp } from "../lib/store.jsx";
 import TvShell from "../components/home/TvShell.jsx";
 import Avatar from "../components/home/Avatar.jsx";
 import CountUp from "../components/home/CountUp.jsx";
@@ -34,7 +34,7 @@ function Notice({ tone, icon, children }) {
 }
 
 function ProfileScreen() {
-  const { user: currentUser, updateUsername, linkGoogle, linkingStatus, logout } = useApp();
+  const { user: currentUser, updateUsername, updateAvatar, linkGoogle, linkingStatus, logout } = useApp();
   const { userId } = useParams();
   const [searchParams] = useSearchParams();
   const nav = useNavigate();
@@ -48,6 +48,7 @@ function ProfileScreen() {
 
   const [newUserName, setNewUserName] = useState("");
   const [savingName, setSavingName] = useState(false);
+  const [savingColor, setSavingColor] = useState(false);
 
   const [msg, setMsg] = useState("");
   const [err, setErr] = useState("");
@@ -102,6 +103,29 @@ function ProfileScreen() {
     }
   }
 
+  async function onPickColor(color) {
+    if (savingColor || color === currentUser?.avatar) return;
+    if (color === "google" && !googlePhoto) {
+      setMsg("");
+      setErr(
+        isGuest
+          ? "Para poner tu foto tienes que iniciar sesión con Google."
+          : "Para poner tu foto tienes que vincular tu cuenta de Google."
+      );
+      return;
+    }
+    setSavingColor(true);
+    setErr("");
+    try {
+      await updateAvatar(color);
+      setMsg("Color actualizado.");
+    } catch (e) {
+      setErr(e.message);
+    } finally {
+      setSavingColor(false);
+    }
+  }
+
   if (loadingUser) {
     return (
       <div className="tv-card tv-lobby-guest">
@@ -113,7 +137,7 @@ function ProfileScreen() {
     );
   }
 
-  if (!isOtherUser && (!currentUser || currentUser.isGuest)) {
+  if (!isOtherUser && !currentUser) {
     return <Navigate to="/login?returnTo=/profile" replace />;
   }
 
@@ -133,6 +157,9 @@ function ProfileScreen() {
   const activeUser = isOtherUser ? profileData : currentUser;
   const isGuest = Boolean(activeUser?.isGuest);
   const hasGoogle = Boolean(activeUser?.googleId || activeUser?.googleLinked || (!isOtherUser && linkingStatus?.googleLinked));
+  // Older Google accounts have no googlePhoto yet; their photo is still the avatar itself.
+  const googlePhoto =
+    activeUser?.googlePhoto || (hasGoogle && activeUser?.avatar?.startsWith("http") ? activeUser.avatar : null);
   const canLinkGoogle = !isOtherUser && !isGuest && !hasGoogle;
   const roleTag = ROLE_TAGS[activeUser?.role];
   const googleNotice = searchParams.get("google");
@@ -233,6 +260,57 @@ function ProfileScreen() {
               </label>
             </form>
 
+            <div className="tv-form-row">
+              <span className="tv-label">Color de tu avatar</span>
+              <div className="tv-swatches" role="group" aria-label="Color de tu avatar">
+                {AVATAR_COLORS.map((c, i) => (
+                  <button
+                    key={c}
+                    type="button"
+                    className="tv-swatch"
+                    style={{ background: c }}
+                    aria-pressed={activeUser?.avatar === c}
+                    aria-label={`Color ${i + 1}`}
+                    disabled={savingColor}
+                    onClick={() => onPickColor(c)}
+                  />
+                ))}
+                <button
+                  type="button"
+                  className={`tv-swatch tv-swatch--photo${googlePhoto ? "" : " is-locked"}`}
+                  aria-pressed={Boolean(googlePhoto) && activeUser?.avatar === googlePhoto}
+                  aria-label={googlePhoto ? "Usar tu foto de Google" : "Foto de perfil (requiere Google)"}
+                  title={googlePhoto ? "Usar tu foto de Google" : "Inicia sesión con Google para usar tu foto"}
+                  disabled={savingColor}
+                  onClick={() => onPickColor("google")}
+                >
+                  {googlePhoto ? (
+                    <img src={googlePhoto} alt="" referrerPolicy="no-referrer" />
+                  ) : (
+                    <Icon name="user" size={18} strokeWidth={2.4} />
+                  )}
+                </button>
+              </div>
+              {!googlePhoto && (
+                <span className="tv-hint">
+                  {isGuest ? "Inicia sesión con Google" : "Vincula Google"} para poner tu foto de perfil.
+                </span>
+              )}
+            </div>
+
+            {isGuest && (
+              <div className="tv-row-card">
+                <Icon name="user" size={26} />
+                <div className="tv-row-card-text">
+                  <strong>Estás como invitado</strong>
+                  <span>Crea una cuenta para guardar tus puntos.</span>
+                </div>
+                <Link to="/login?returnTo=/profile" className="tv-btn tv-btn--sm tv-c-pink">
+                  Crear cuenta
+                </Link>
+              </div>
+            )}
+
             {canLinkGoogle && (
               <div className="tv-row-card">
                 <GoogleIcon size={26} />
@@ -265,7 +343,7 @@ function ProfileScreen() {
                 className="tv-link-btn tv-link-btn--danger"
                 onClick={() => {
                   logout();
-                  nav("/login");
+                  nav(isGuest ? "/" : "/login");
                 }}
               >
                 <Icon name="logout" size={18} />

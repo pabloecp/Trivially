@@ -1,10 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { useApp } from "../lib/store.jsx";
-import { useTheme } from "../lib/theme.js";
 import { GAME_MODES, roomPath } from "../modes/index.js";
 import Icon from "../components/home/Icon.jsx";
-import ProfileChip from "../components/home/ProfileChip.jsx";
+import TvTopbar from "../components/home/TvTopbar.jsx";
 import AppIcon from "../components/home/AppIcon.jsx";
 import PartyPanel from "../components/home/PartyPanel.jsx";
 import PlaySheet from "../components/home/PlaySheet.jsx";
@@ -52,7 +51,6 @@ export default function Home() {
   const { code: inviteParam } = useParams();
   const inviteCode = inviteParam?.toUpperCase();
   const nav = useNavigate();
-  const { theme, toggleTheme } = useTheme();
   const [sheetOpen, setSheetOpen] = useState(false);
   const [sheetMode, setSheetMode] = useState(null);
   const [sheetJoinCode, setSheetJoinCode] = useState(null);
@@ -99,8 +97,6 @@ export default function Home() {
     if (!mode.available) {
       shake(tile);
       showToast(`${mode.name} llega muy pronto`);
-    } else if (!room) {
-      openSheet(mode);
     } else if (room.game === mode.id) {
       nav(roomPath(room));
     } else if (!isHost) {
@@ -122,17 +118,7 @@ export default function Home() {
         <span className="tv-blob tv-blob--3" />
       </div>
 
-      <header className="tv-topbar">
-        <ProfileChip user={user} />
-        <button
-          type="button"
-          className="tv-icon-btn"
-          onClick={toggleTheme}
-          aria-label={theme === "dark" ? "Cambiar a modo claro" : "Cambiar a modo oscuro"}
-        >
-          <Icon name={theme === "dark" ? "sun" : "moon"} size={22} />
-        </button>
-      </header>
+      <TvTopbar />
 
       <main className="tv-main">
         <div className={`tv-stage${room ? " has-room" : ""}`}>
@@ -159,22 +145,25 @@ export default function Home() {
           {room && <PartyPanel room={room} onToast={showToast} />}
         </div>
 
-        <section className="tv-modes" aria-labelledby="tv-modes-title">
-          <h2 id="tv-modes-title" className="tv-section-title">
-            {choosing ? (isHost ? "Elige el juego" : "Juegos") : "Modos de juego"}
-          </h2>
-          <div className="tv-mode-grid">
-            {GAME_MODES.map((mode, i) => (
-              <ModeTile
-                key={mode.id}
-                mode={mode}
-                index={i}
-                showGo={!room || isHost || room.game === mode.id}
-                onPick={pickMode}
-              />
-            ))}
-          </div>
-        </section>
+        {/* The games only show up once you're in a room; Jugar is the way in. */}
+        {room && (
+          <section className="tv-modes" aria-labelledby="tv-modes-title">
+            <h2 id="tv-modes-title" className="tv-section-title">
+              {choosing ? (isHost ? "Elige el juego" : "Juegos") : "Modos de juego"}
+            </h2>
+            <div className="tv-mode-grid">
+              {GAME_MODES.map((mode, i) => (
+                <ModeTile
+                  key={mode.id}
+                  mode={mode}
+                  index={i}
+                  showGo={isHost || room.game === mode.id}
+                  onPick={pickMode}
+                />
+              ))}
+            </div>
+          </section>
+        )}
       </main>
 
       <PlaySheet mode={sheetMode} joinCode={sheetJoinCode} open={sheetOpen} onClose={closeSheet} />

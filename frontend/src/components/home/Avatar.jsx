@@ -5,7 +5,7 @@ export default function Avatar({ name, avatar, className = "" }) {
     return <img className={cls} src={avatar} alt="" referrerPolicy="no-referrer" />;
   }
   return (
-    <span className={cls} style={{ background: avatar || "#7B73F6" }}>
+    <span className={cls} style={{ background: avatar || "#F050AE" }}>
       {(name || "U").slice(0, 1).toUpperCase()}
     </span>
   );

@@ -5,13 +5,13 @@ import { BACKEND_URL } from "./config.js";
 
 const AppContext = createContext(null);
 
+// The first one is the default. The profile adds an eighth option: the Google photo.
 export const AVATAR_COLORS = [
+  "#F050AE", // Deep Pink
   "#33A8C7", // Turquoise Surf
-  "#52E3E1", // Neon Ice
   "#A0E426", // Slime Lime
   "#FFAB00", // Orange
   "#F77976", // Grapefruit Pink
-  "#F050AE", // Deep Pink
   "#D883FF", // Mauve Magic
   "#9336FD", // Purple
 ];
@@ -21,11 +21,11 @@ const ROOM_KEY = "trivially_room";
 
 function loadSavedUser() {
   try {
-    const raw = localStorage.getItem("yoavlly-user") || localStorage.getItem("bysong-user");
+    const raw = localStorage.getItem("yoavlly-user");
     if (raw) return JSON.parse(raw);
 
-    const guestName = localStorage.getItem("yoavlly_guest_name") || localStorage.getItem("bysong_guest_name");
-    const guestId = localStorage.getItem("yoavlly_guest_id") || localStorage.getItem("bysong_guest_id") || `gst_${Math.random().toString(36).slice(2, 10)}`;
+    const guestName = localStorage.getItem("yoavlly_guest_name");
+    const guestId = localStorage.getItem("yoavlly_guest_id") || `gst_${Math.random().toString(36).slice(2, 10)}`;
     if (guestName) {
       return { id: guestId, name: guestName, isGuest: true, avatar: AVATAR_COLORS[0] };
     }
@@ -40,7 +40,6 @@ function persistUser(user) {
     localStorage.setItem("yoavlly-user", JSON.stringify(user));
   } else {
     localStorage.removeItem("yoavlly-user");
-    localStorage.removeItem("bysong-user");
   }
 }
 
@@ -88,6 +87,18 @@ export function AppProvider({ children }) {
     roomCodeRef.current = null;
     saveRoomCode(null);
     setRoom(null);
+  }
+
+  // Signing out (or deleting the account/guest) also leaves the room, so nobody stays seated as a ghost.
+  function forgetUser() {
+    if (roomCodeRef.current) emitAck("room:leave").catch(() => {});
+    clearRoom();
+    setAuthToken(null);
+    applyUser(null);
+    localStorage.removeItem("yoavlly_guest_name");
+    localStorage.removeItem("yoavlly_guest_id");
+    setLinkingStatus(null);
+    reconnectSocket();
   }
 
   const refreshCatalog = useCallback(async () => {
@@ -218,7 +229,7 @@ export function AppProvider({ children }) {
       async saveGuest(name, avatar) {
         const cleanName = (name || "").trim();
         if (!cleanName) throw new Error("Por favor introduce un nombre");
-        let guestId = localStorage.getItem("yoavlly_guest_id") || localStorage.getItem("bysong_guest_id");
+        let guestId = localStorage.getItem("yoavlly_guest_id");
         if (!guestId) {
           guestId = `gst_${Math.random().toString(36).slice(2, 10)}`;
         }
@@ -320,12 +331,21 @@ export function AppProvider({ children }) {
 
       async deleteAccount(confirmName) {
         await api("/api/auth/delete-account", { method: "DELETE", body: { confirmName } });
-        setAuthToken(null);
-        applyUser(null);
-        localStorage.removeItem("yoavlly_guest_name");
-        localStorage.removeItem("yoavlly_guest_id");
-        setLinkingStatus(null);
-        reconnectSocket();
+        forgetUser();
+      },
+
+      // `choice` is a color from AVATAR_COLORS or "google" for the Google photo. Saved on the server
+      // (guests and accounts alike) and in the current room.
+      async updateAvatar(choice) {
+        const current = userRef.current;
+        if (!current) throw new Error("No autenticado");
+        const res = await api(`/api/users/${current.id}/avatar`, { method: "PATCH", body: { avatar: choice } });
+        const avatar = res.user?.avatar || choice;
+        applyUser({ ...current, ...(res.user || {}), avatar });
+        if (roomCodeRef.current) {
+          const ack = await emitAck("player:update", { avatar });
+          if (ack?.state) setRoom(ack.state);
+        }
       },
 
       async updatePlayer(data) {
@@ -394,12 +414,7 @@ export function AppProvider({ children }) {
 
       async logout() {
         try { await api("/api/auth/logout", { method: "POST" }); } catch {}
-        setAuthToken(null);
-        applyUser(null);
-        localStorage.removeItem("yoavlly_guest_name");
-        localStorage.removeItem("yoavlly_guest_id");
-        setLinkingStatus(null);
-        reconnectSocket();
+        forgetUser();
       },
     }),
     []

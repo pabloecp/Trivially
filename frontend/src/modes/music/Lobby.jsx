@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import RoomConfigModal from "../../components/RoomConfigModal.jsx";
 import TvShell from "../../components/home/TvShell.jsx";
+import NoteCatcher from "../../components/home/NoteCatcher.jsx";
 import Avatar from "../../components/home/Avatar.jsx";
 import Icon from "../../components/home/Icon.jsx";
 import PlayerName from "../../components/home/PlayerName.jsx";
@@ -187,52 +188,56 @@ export default function Lobby() {
         </section>
 
         <div className="tv-lobby-grid">
-          <section className="tv-card" aria-label="Jugadores en la sala">
-            <div className="tv-card-head">
-              <h2 className="tv-card-title">Jugadores</h2>
-              <span className="tv-count">{connectedPlayers.length}</span>
-            </div>
+          <div className="tv-lobby-col">
+            <section className="tv-card" aria-label="Jugadores en la sala">
+              <div className="tv-card-head">
+                <h2 className="tv-card-title">Jugadores</h2>
+                <span className="tv-count">{connectedPlayers.length}</span>
+              </div>
 
-            {isHost && connectedPlayers.length > 1 && (
-              <p className="tv-hint">Como anfitrión puedes dar permisos para que otros cambien los ajustes.</p>
-            )}
+              {isHost && connectedPlayers.length > 1 && (
+                <p className="tv-hint">Como anfitrión puedes dar permisos para que otros cambien los ajustes.</p>
+              )}
 
-            <ul className="tv-lobby-players">
-              {room.players.map((p, i) => {
-                const isMe = p.id === user?.id;
-                const isHostPlayer = p.id === room.hostId;
-                return (
-                  <li
-                    key={p.id}
-                    className={`tv-player tv-player--row${isMe ? " is-me" : ""}${p.connected ? "" : " is-away"}`}
-                    style={{ "--i": i }}
-                  >
-                    <span className="tv-player-avatar">
-                      <Avatar name={p.name} avatar={p.avatar} />
-                      {isHostPlayer && <Icon name="crown" size={18} strokeWidth={2} filled className="tv-player-crown" />}
-                    </span>
-                    <span className="tv-player-text">
-                      <PlayerName player={p} className="tv-player-name" />
-                      <span className="tv-player-tag">
-                        {playerTag(p, { isMe, isHost: isHostPlayer })}
-                        {!isHostPlayer && p.canEditConfig && " · ajustes"}
+              <ul className="tv-lobby-players">
+                {room.players.map((p, i) => {
+                  const isMe = p.id === user?.id;
+                  const isHostPlayer = p.id === room.hostId;
+                  return (
+                    <li
+                      key={p.id}
+                      className={`tv-player tv-player--row${isMe ? " is-me" : ""}${p.connected ? "" : " is-away"}`}
+                      style={{ "--i": i }}
+                    >
+                      <span className="tv-player-avatar">
+                        <Avatar name={p.name} avatar={p.avatar} />
+                        {isHostPlayer && <Icon name="crown" size={18} strokeWidth={2} filled className="tv-player-crown" />}
                       </span>
-                    </span>
-                    {isHost && !isHostPlayer && (
-                      <button
-                        type="button"
-                        className={`tv-mini-btn${p.canEditConfig ? " is-on" : ""}`}
-                        onClick={() => handleTogglePermission(p.id)}
-                        title={p.canEditConfig ? "Quitar permisos para modificar ajustes" : "Dar permisos para modificar los ajustes"}
-                      >
-                        {p.canEditConfig ? "Quitar permisos" : "Dar permisos"}
-                      </button>
-                    )}
-                  </li>
-                );
-              })}
-            </ul>
-          </section>
+                      <span className="tv-player-text">
+                        <PlayerName player={p} className="tv-player-name" />
+                        <span className="tv-player-tag">
+                          {playerTag(p, { isMe, isHost: isHostPlayer })}
+                          {!isHostPlayer && p.canEditConfig && " · ajustes"}
+                        </span>
+                      </span>
+                      {isHost && !isHostPlayer && (
+                        <button
+                          type="button"
+                          className={`tv-mini-btn${p.canEditConfig ? " is-on" : ""}`}
+                          onClick={() => handleTogglePermission(p.id)}
+                          title={p.canEditConfig ? "Quitar permisos para modificar ajustes" : "Dar permisos para modificar los ajustes"}
+                        >
+                          {p.canEditConfig ? "Quitar permisos" : "Dar permisos"}
+                        </button>
+                      )}
+                    </li>
+                  );
+                })}
+              </ul>
+            </section>
+
+            <NoteCatcher />
+          </div>
 
           <section className="tv-card" aria-label="Resumen de la partida">
             <div className="tv-card-head">

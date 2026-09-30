@@ -1,5 +1,5 @@
 /**
- * Adaptador Spotify Web API para BySong.
+ * Adaptador Spotify Web API para Trivially.
  * Todas las llamadas se realizan exclusivamente desde el backend con el token del usuario.
  */
 

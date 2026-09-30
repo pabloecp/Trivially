@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import MiniBoard from "../../components/MiniBoard.jsx";
 import TvShell from "../../components/home/TvShell.jsx";
@@ -170,30 +170,56 @@ function GameScreen() {
       ? Math.max(0, Math.min(100, (left / 3000) * 100))
       : 100;
 
-  // Filter autocomplete suggestions based on user search query
-  const suggestions = useMemo(() => {
+  // Autocomplete: songs whose title matches go first; below them, each artist whose name matches with their songs.
+  const suggestionGroups = useMemo(() => {
     const q = normalize(query);
-    if (!q || !room?.searchCatalog || locked) return [];
+    if (!q || !room?.searchCatalog || locked) return { byTitle: [], byArtist: [] };
 
-    const list = room.searchCatalog;
-    const matches = [];
+    const titleMatches = [];
+    const artists = new Map();
 
-    for (const song of list) {
+    for (const song of room.searchCatalog) {
       const normTitle = normalize(song.title);
       const normArtist = normalize(song.artistName);
 
       if (normTitle.startsWith(q)) {
-        matches.push({ song, score: 100 - (normTitle.length - q.length) });
+        titleMatches.push({ song, score: 100 - (normTitle.length - q.length) });
       } else if (normTitle.includes(q)) {
-        matches.push({ song, score: 60 - normTitle.indexOf(q) });
-      } else if (normArtist.startsWith(q) || normArtist.includes(q)) {
-        matches.push({ song, score: 30 });
+        titleMatches.push({ song, score: 60 - normTitle.indexOf(q) });
+      }
+
+      if (normArtist.includes(q)) {
+        if (!artists.has(song.artistName)) {
+          artists.set(song.artistName, { name: song.artistName, starts: normArtist.startsWith(q), songs: [] });
+        }
+        artists.get(song.artistName).songs.push(song);
       }
     }
 
-    matches.sort((a, b) => b.score - a.score);
-    return matches.slice(0, 8).map((m) => m.song);
+    titleMatches.sort((a, b) => b.score - a.score);
+    const byTitle = titleMatches.slice(0, 8).map((m) => m.song);
+    const shown = new Set(byTitle.map((s) => s.id));
+
+    const byArtist = [...artists.values()]
+      .sort((a, b) => b.starts - a.starts || a.name.localeCompare(b.name))
+      .map((a) => ({
+        name: a.name,
+        songs: a.songs
+          .filter((s) => !shown.has(s.id))
+          .sort((x, y) => x.title.localeCompare(y.title))
+          .slice(0, 5),
+      }))
+      .filter((a) => a.songs.length > 0)
+      .slice(0, 4);
+
+    return { byTitle, byArtist };
   }, [query, room?.searchCatalog, locked]);
+
+  // Flat list in display order, for the arrow keys and Enter.
+  const suggestions = useMemo(
+    () => [...suggestionGroups.byTitle, ...suggestionGroups.byArtist.flatMap((a) => a.songs)],
+    [suggestionGroups]
+  );
 
   // Keep active index within bounds
   useEffect(() => {
@@ -203,10 +229,8 @@ function GameScreen() {
   // Ensure active suggestion is visible when using arrow keys
   useEffect(() => {
     if (suggestionsListRef.current && suggestions.length > 0) {
-      const items = suggestionsListRef.current.children;
-      if (items[activeIndex]) {
-        items[activeIndex].scrollIntoView({ block: "nearest", behavior: "smooth" });
-      }
+      const item = suggestionsListRef.current.querySelector(`[data-index="${activeIndex}"]`);
+      item?.scrollIntoView({ block: "nearest", behavior: "smooth" });
     }
   }, [activeIndex]);
 
@@ -487,20 +511,33 @@ function GameScreen() {
                   <div className="tv-suggest" id="tv-suggest">
                     {suggestions.length > 0 ? (
                       <ul className="tv-suggest-list" ref={suggestionsListRef} role="listbox">
-                        {suggestions.map((song, index) => (
-                          <li key={song.id} role="option" aria-selected={index === activeIndex} style={{ "--i": index }}>
-                            <button
-                              type="button"
-                              className={`tv-suggest-item${index === activeIndex ? " is-active" : ""}`}
-                              onClick={() => handleSubmitSong(song)}
-                              onMouseEnter={() => setActiveIndex(index)}
-                            >
-                              <span className="tv-suggest-title">{song.title}</span>
-                              <span className="tv-suggest-artist">{song.artistName}</span>
-                              {index === activeIndex && <kbd className="tv-kbd">Enter</kbd>}
-                            </button>
-                          </li>
-                        ))}
+                        {suggestions.map((song, index) => {
+                          const firstOfArtist =
+                            index >= suggestionGroups.byTitle.length &&
+                            suggestionGroups.byArtist.find((a) => a.songs[0] === song);
+                          return (
+                            <Fragment key={song.id}>
+                              {firstOfArtist && (
+                                <li role="presentation" className="tv-suggest-group" style={{ "--i": index }}>
+                                  <Icon name="user" size={14} strokeWidth={2.6} />
+                                  {firstOfArtist.name}
+                                </li>
+                              )}
+                              <li role="option" aria-selected={index === activeIndex} data-index={index} style={{ "--i": index }}>
+                                <button
+                                  type="button"
+                                  className={`tv-suggest-item${index === activeIndex ? " is-active" : ""}`}
+                                  onClick={() => handleSubmitSong(song)}
+                                  onMouseEnter={() => setActiveIndex(index)}
+                                >
+                                  <span className="tv-suggest-title">{song.title}</span>
+                                  <span className="tv-suggest-artist">{song.artistName}</span>
+                                  {index === activeIndex && <kbd className="tv-kbd">Enter</kbd>}
+                                </button>
+                              </li>
+                            </Fragment>
+                          );
+                        })}
                       </ul>
                     ) : (
                       <p className="tv-hint tv-suggest-empty">
