@@ -1342,6 +1342,18 @@ body:has(.tv-app) {
 .tv-row-card-text { display: grid; flex: 1; min-width: 0; }
 .tv-row-card-text strong { font-weight: 800; font-size: 15px; }
 .tv-row-card-text span { font-weight: 700; font-size: 13px; color: var(--tv-text-3); }
+.tv-profile-id { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.tv-profile-id code {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding: 4px 10px;
+  border-radius: 10px;
+  background: var(--tv-option-bg);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--tv-text-3);
+}
 .tv-account-foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
 .tv-email { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 700; font-size: 14px; color: var(--tv-text-3); }
 
@@ -1573,6 +1585,8 @@ body:has(.tv-app) {
 .tv-podium-avatar .tv-avatar:not(.tv-avatar--lg) { width: 48px; height: 48px; font-size: 22px; }
 .tv-podium-avatar { position: relative; animation: tvPop 0.6s var(--tv-spring) backwards; }
 .tv-podium-crown { position: absolute; top: -26px; left: 50%; translate: -50% 0; color: #ffab00; stroke: #cc8800; animation: tvBob 2.4s ease-in-out infinite; }
+.tv-player-link { color: inherit; text-decoration: none; border-radius: 6px; transition: color 0.15s ease; }
+.tv-player-link:hover { color: var(--brand); text-decoration: underline; text-underline-offset: 3px; }
 .tv-podium-name { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 800; font-size: 15px; }
 .tv-podium-score { font-family: var(--tv-display); font-weight: 700; font-size: 18px; color: var(--brand); }
 .tv-podium-block {

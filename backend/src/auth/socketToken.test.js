@@ -15,3 +15,13 @@ assert.equal(verifySocketToken("nope"), null);
 assert.equal(verifySocketToken(undefined), null);
 
 console.log("socketToken.test ok");
+
+// Login/link tickets: right kind only, single use, expire.
+import { consumeTicket, createTicket } from "./socketToken.js";
+const ticket = createTicket("usr_2", "login");
+assert.equal(consumeTicket(ticket, "link"), null, "a login ticket is not a link ticket");
+assert.equal(consumeTicket(ticket, "login"), "usr_2");
+assert.equal(consumeTicket(ticket, "login"), null, "tickets work once");
+assert.equal(consumeTicket(createTicket("usr_2", "login", 1000, Date.now() - 5000), "login"), null, "expired");
+assert.equal(consumeTicket(createSocketToken("usr_2"), "login"), null, "socket tokens can't log in");
+console.log("tickets ok");

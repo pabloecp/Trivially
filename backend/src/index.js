@@ -12,6 +12,7 @@ import { RoomManager } from "./game/roomManager.js";
 import {
   createApiRouter,
   handleGoogleCallback,
+  handleGoogleFinish,
   handleGoogleRedirect,
 } from "./auth/routes.js";
 import { attachSockets } from "./realtime/sockets.js";
@@ -35,6 +36,16 @@ const clientOrigin = (process.env.CLIENT_ORIGIN || "https://triviallyonline.verc
 // On localhost, always use lax/insecure so dev works without HTTPS.
 const isLocalhost = clientOrigin.includes("localhost") || clientOrigin.includes("127.0.0.1");
 const isCrossSite = !isLocalhost && clientOrigin.startsWith("https://");
+
+// Google must send users back through the site's own domain (Vercel rewrites /auth to this server). If the
+// callback lands on the Railway domain instead, the session cookie belongs to that domain and phones block it.
+if (!isLocalhost && process.env.GOOGLE_REDIRECT_URI) {
+  try {
+    if (new URL(process.env.GOOGLE_REDIRECT_URI).host !== new URL(clientOrigin).host) {
+      console.warn(`[Google OAuth] GOOGLE_REDIRECT_URI debería ser ${clientOrigin}/auth/google/callback`);
+    }
+  } catch {}
+}
 
 app.use(
   cors({
@@ -91,6 +102,7 @@ app.get("/api/audio/proxy", async (req, res) => {
 app.use("/api", createApiRouter({ catalog, store }));
 app.get("/auth/google", handleGoogleRedirect);
 app.get("/auth/google/callback", (req, res) => handleGoogleCallback(req, res, store));
+app.get("/auth/google/finish", handleGoogleFinish);
 
 const frontendDist = path.join(__dirname, "../../frontend/dist");
 app.use(express.static(frontendDist));

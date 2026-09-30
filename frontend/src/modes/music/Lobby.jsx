@@ -4,6 +4,7 @@ import RoomConfigModal from "../../components/RoomConfigModal.jsx";
 import TvShell from "../../components/home/TvShell.jsx";
 import Avatar from "../../components/home/Avatar.jsx";
 import Icon from "../../components/home/Icon.jsx";
+import PlayerName from "../../components/home/PlayerName.jsx";
 import { useApp } from "../../lib/store.jsx";
 import { api } from "../../lib/api.js";
 
@@ -211,7 +212,7 @@ export default function Lobby() {
                       {isHostPlayer && <Icon name="crown" size={18} strokeWidth={2} filled className="tv-player-crown" />}
                     </span>
                     <span className="tv-player-text">
-                      <span className="tv-player-name">{p.name}</span>
+                      <PlayerName player={p} className="tv-player-name" />
                       <span className="tv-player-tag">
                         {playerTag(p, { isMe, isHost: isHostPlayer })}
                         {!isHostPlayer && p.canEditConfig && " · ajustes"}

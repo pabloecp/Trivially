@@ -1,5 +1,6 @@
 import Avatar from "./home/Avatar.jsx";
 import Icon from "./home/Icon.jsx";
+import PlayerName from "./home/PlayerName.jsx";
 
 // Live scoreboard shown next to the game. The score re-mounts on change so it pops.
 export default function MiniBoard({ players, currentUserId }) {
@@ -25,7 +26,7 @@ export default function MiniBoard({ players, currentUserId }) {
               <Avatar name={p.name} avatar={p.avatar} />
               <span className="tv-board-name">
                 <span className="tv-board-line">
-                  {p.name}
+                  <PlayerName player={p} />
                   {isMe && <span className="tv-muted"> · tú</span>}
                 </span>
                 {p.streak > 1 && <span className="tv-board-streak">Racha {p.streak}</span>}

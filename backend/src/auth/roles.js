@@ -2,7 +2,7 @@
 //   user       normal player (default)
 //   moderator  can see the user list
 //   admin      can also promote/demote users and moderators
-//   owner      can also promote/demote admins. Never assigned through the API: it comes from OWNER_EMAILS.
+//   owner      can also promote/demote admins. Never assigned through the API: it comes from OWNER_IDS.
 export const ROLES = ["user", "moderator", "admin", "owner"];
 
 export function roleLevel(role) {
@@ -19,19 +19,19 @@ export function hasRole(user, minRole) {
   return roleLevel(effectiveRole(user)) >= roleLevel(minRole);
 }
 
-/** Emails listed in OWNER_EMAILS (comma separated) get the owner role automatically. */
-export function ownerEmails() {
-  return (process.env.OWNER_EMAILS || "")
+/** User ids listed in OWNER_IDS (comma separated) get the owner role. Ids never change, unlike names or emails. */
+export function ownerIds() {
+  return (process.env.OWNER_IDS || "")
     .split(",")
-    .map((e) => e.trim().toLowerCase())
+    .map((id) => id.trim())
     .filter(Boolean);
 }
 
-/** The role a stored user actually has: OWNER_EMAILS wins, then the saved role, then "user". */
+/** The role a stored user actually has: OWNER_IDS wins, then the saved role, then "user". */
 export function effectiveRole(user) {
   if (!user || user.isGuest) return "user";
-  if (user.email && ownerEmails().includes(user.email.trim().toLowerCase())) return "owner";
-  if (user.role === "owner") return "admin"; // an owner removed from OWNER_EMAILS keeps admin rights only
+  if (ownerIds().includes(user.id)) return "owner";
+  if (user.role === "owner") return "admin"; // an owner removed from OWNER_IDS keeps admin rights only
   return isValidRole(user.role) ? user.role : "user";
 }
 

@@ -6,6 +6,7 @@ import Avatar from "../../components/home/Avatar.jsx";
 import Confetti from "../../components/home/Confetti.jsx";
 import CountUp from "../../components/home/CountUp.jsx";
 import Icon from "../../components/home/Icon.jsx";
+import PlayerName from "../../components/home/PlayerName.jsx";
 import { remainingMs, useApp } from "../../lib/store.jsx";
 import { BACKEND_URL } from "../../lib/config.js";
 
@@ -291,7 +292,7 @@ function GameScreen() {
                   {place === 1 && <Icon name="crown" size={30} filled strokeWidth={1.6} className="tv-podium-crown" />}
                   <Avatar name={p.name} avatar={p.avatar} className={place === 1 ? "tv-avatar--lg" : ""} />
                 </span>
-                <strong className="tv-podium-name">{p.name}</strong>
+                <PlayerName player={p} className="tv-podium-name" />
                 <span className="tv-podium-score">
                   <CountUp value={p.score} /> pts
                 </span>
@@ -311,7 +312,7 @@ function GameScreen() {
                 <span className="tv-rank-pos">{p.position}</span>
                 <Avatar name={p.name} avatar={p.avatar} />
                 <span className="tv-rank-name">
-                  {p.name}
+                  <PlayerName player={p} />
                   <span className="tv-rank-meta">
                     {p.correct} aciertos · racha {p.bestStreak}
                     {p.avgMs ? ` · ${(p.avgMs / 1000).toFixed(1)} s` : ""}

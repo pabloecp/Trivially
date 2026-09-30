@@ -10,7 +10,7 @@ export function googleConfigured() {
   return Boolean(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET);
 }
 
-export function createGoogleAuthUrl(returnTo = "/", purpose = "login", clientOrigin = "") {
+export function createGoogleAuthUrl(returnTo = "/", purpose = "login", clientOrigin = "", linkTicket = null) {
   if (!googleConfigured()) {
     throw new Error("Google OAuth no está configurado (GOOGLE_CLIENT_ID o GOOGLE_CLIENT_SECRET ausente)");
   }
@@ -20,6 +20,7 @@ export function createGoogleAuthUrl(returnTo = "/", purpose = "login", clientOri
     returnTo,
     purpose,
     origin: clientOrigin || "",
+    link: linkTicket,
     at: Date.now(),
   };
   const state = Buffer.from(JSON.stringify(statePayload)).toString("base64url");
@@ -126,5 +127,6 @@ export async function exchangeGoogleCode(code, state) {
     returnTo: stateData?.returnTo || "/",
     purpose: stateData?.purpose || "login",
     origin: stateData?.origin || "",
+    linkTicket: stateData?.link || null,
   };
 }

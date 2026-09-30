@@ -20,7 +20,7 @@ import {
 import { createGoogleAuthUrl, exchangeGoogleCode, googleConfigured } from "./google.js";
 import { authRateLimit } from "./rateLimit.js";
 import { hasRole, ROLES } from "./roles.js";
-import { createSocketToken } from "./socketToken.js";
+import { consumeTicket, createSocketToken, createTicket } from "./socketToken.js";
 import crypto from "node:crypto";
 
 /** Express middleware: only lets through signed-in users with at least `minRole`. */
@@ -32,6 +32,17 @@ export function requireRole(store, minRole) {
     req.user = user;
     next();
   };
+}
+
+// Linking Google needs to know who is signed in, but the callback may land on another domain without our
+// session cookie; so the signed-in user's id travels inside the OAuth state as a signed ticket.
+function linkTicketFor(req, purpose) {
+  return purpose === "link" && req.session?.userId ? createTicket(req.session.userId, "link", 10 * 60 * 1000) : null;
+}
+
+/** Only same-site paths like "/profile", never "//evil.com" or full URLs. */
+function safePath(path) {
+  return typeof path === "string" && path.startsWith("/") && !path.startsWith("//") && !path.includes("\\") ? path : "/";
 }
 
 export function createApiRouter({ catalog, store }) {
@@ -260,7 +271,7 @@ export function createApiRouter({ catalog, store }) {
       const returnTo = req.query.returnTo || "/";
       const purpose = req.query.purpose || "login";
       const origin = req.query.origin || "";
-      res.json({ url: createGoogleAuthUrl(returnTo, purpose, origin) });
+      res.json({ url: createGoogleAuthUrl(returnTo, purpose, origin, linkTicketFor(req, purpose)) });
     } catch (err) {
       res.status(400).json({ error: err.message });
     }
@@ -279,7 +290,7 @@ export function handleGoogleRedirect(req, res) {
   try {
     const returnTo = req.query.returnTo || "/";
     const purpose = req.query.purpose || "login";
-    const url = createGoogleAuthUrl(returnTo, purpose, clientOrigin);
+    const url = createGoogleAuthUrl(returnTo, purpose, clientOrigin, linkTicketFor(req, purpose));
     res.redirect(url);
   } catch (err) {
     console.error("Google redirect error:", err);
@@ -297,8 +308,8 @@ export async function handleGoogleCallback(req, res, store) {
   try {
     const { code, state } = req.query;
     if (!code) throw new Error("Código de autenticación ausente");
-    const { profile, returnTo: stateReturnTo, purpose, origin: originFromState } = await exchangeGoogleCode(code, state);
-    if (stateReturnTo) returnTo = stateReturnTo;
+    const { profile, returnTo: stateReturnTo, purpose, origin: originFromState, linkTicket } = await exchangeGoogleCode(code, state);
+    if (stateReturnTo) returnTo = safePath(stateReturnTo);
     if (originFromState) {
       origin = originFromState.replace(/\/$/, "");
     } else {
@@ -307,7 +318,7 @@ export async function handleGoogleCallback(req, res, store) {
 
     if (purpose === "link") {
       // Linking Google to existing account
-      const userId = req.session?.userId;
+      const userId = req.session?.userId || consumeTicket(linkTicket, "link");
       if (!userId) {
         res.redirect(`${origin}${returnTo}?google=link_error&msg=${encodeURIComponent("No autenticado")}`);
         return;
@@ -323,11 +334,24 @@ export async function handleGoogleCallback(req, res, store) {
       const guestId = req.session?.userId || null;
       const user = upsertGoogleUser(store, profile, guestId);
       req.session.userId = user.id;
-      const userParam = encodeURIComponent(JSON.stringify(user));
-      res.redirect(`${origin}${returnTo}?google=success&userId=${encodeURIComponent(user.id)}&userData=${userParam}`);
+      // Finish on the site's own domain so the session cookie is first-party there (phones block the other one).
+      const ticket = createTicket(user.id, "login");
+      res.redirect(`${origin}/auth/google/finish?ticket=${encodeURIComponent(ticket)}&returnTo=${encodeURIComponent(returnTo)}`);
     }
   } catch (err) {
     console.error("Google callback error:", err);
     res.redirect(`${origin}/login?google=error&msg=${encodeURIComponent(err.message)}`);
   }
+}
+
+// Second half of the Google login: runs on the site's own domain (Vercel rewrites /auth here) and opens the session.
+export function handleGoogleFinish(req, res) {
+  const returnTo = safePath(req.query.returnTo);
+  const userId = consumeTicket(req.query.ticket, "login");
+  if (!userId) {
+    res.redirect(`/login?google=error&msg=${encodeURIComponent("El enlace de inicio de sesión expiró. Inténtalo otra vez.")}`);
+    return;
+  }
+  req.session.userId = userId;
+  res.redirect(`${returnTo}${returnTo.includes("?") ? "&" : "?"}google=success`);
 }

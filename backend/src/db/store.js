@@ -187,6 +187,15 @@ export function saveStore(store) {
   fs.writeFileSync(STORE_PATH, JSON.stringify(store, null, 2));
 }
 
+/** A fresh account id that no other user has. Ids are permanent: profiles, roles and stats hang off them. */
+export function newUserId(store) {
+  let id;
+  do {
+    id = `usr_${Date.now()}_${crypto.randomBytes(6).toString("hex")}`;
+  } while (store.users[id]);
+  return id;
+}
+
 function validateName(name) {
   const clean = (name || "").trim();
   if (!clean) throw new Error("El nombre no puede estar vacío");
@@ -239,7 +248,7 @@ export function registerWithPassword(store, { name, email, password, avatar, gue
   }
 
   const { salt, hash } = hashPassword(password);
-  const userId = `usr_${Date.now()}_${crypto.randomBytes(4).toString("hex")}`;
+  const userId = newUserId(store);
   const user = upsertUser(store, {
     id: userId,
     name: cleanName,
@@ -309,7 +318,7 @@ export function upsertGoogleUser(store, { id, email, name, avatar, googleId }, g
     return sanitizeUser(store.users[existing.id]);
   }
 
-  const userId = id || `usr_g_${Date.now()}`;
+  const userId = id && !store.users[id] ? id : newUserId(store);
   const newUser = upsertUser(store, {
     id: userId,
     name: name || "Jugador Google",

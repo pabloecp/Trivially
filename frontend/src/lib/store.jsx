@@ -120,38 +120,33 @@ export function AppProvider({ children }) {
     });
   }, []);
 
+  function googleFailed(msg) {
+    window.location.replace(`/login?google=error&msg=${encodeURIComponent(msg)}`);
+  }
+
   useEffect(() => {
     refreshCatalog();
 
     const params = new URLSearchParams(window.location.search);
     const googleStatus = params.get("google");
-    const userIdParam = params.get("userId");
-    const userDataParam = params.get("userData");
 
     let googleJustLoaded = false;
 
     if (googleStatus === "success") {
-      let loadedUser = null;
-      if (userDataParam) {
-        try {
-          loadedUser = JSON.parse(decodeURIComponent(userDataParam));
-        } catch {}
-      }
-
-      if (loadedUser) {
-        googleJustLoaded = true;
-        applyUser(loadedUser);
-        api("/api/session", { method: "POST", body: loadedUser })
-          .catch(() => {})
-          .finally(reconnectSocket);
-      } else if (userIdParam) {
-        googleJustLoaded = true;
-        api(`/api/users/${userIdParam}`)
-          .then((res) => {
-            if (res.user) applyUser(res.user);
-          })
-          .catch(() => {});
-      }
+      // The Google callback already opened the session on the server; ask it who we are instead of trusting
+      // the user data in the URL. If the session cookie didn't stick (blocked cookies), say so.
+      googleJustLoaded = true;
+      api("/api/me")
+        .then((d) => {
+          setLinkingStatus(d.linkingStatus || null);
+          if (d.user) {
+            applyUser(d.user);
+            reconnectSocket();
+          } else {
+            googleFailed("tu navegador bloqueó la sesión. Permite cookies para este sitio e inténtalo otra vez.");
+          }
+        })
+        .catch(() => googleFailed("no hubo respuesta del servidor. Inténtalo otra vez."));
 
       try {
         const url = new URL(window.location.href);

@@ -19,6 +19,37 @@ export function createSocketToken(userId, now = Date.now()) {
   return `${payload}.${sign(payload)}`;
 }
 
+// Short-lived, single-use tickets that carry a user id across the Google round trip, from whichever domain the
+// callback landed on to the site's own domain (see /auth/google/finish), or into a "link Google" flow.
+const usedTickets = new Map(); // nonce -> expiry
+
+export function createTicket(userId, kind, ttlMs = 2 * 60 * 1000, now = Date.now()) {
+  const payload = Buffer.from(
+    JSON.stringify({ uid: userId, kind, exp: now + ttlMs, n: crypto.randomBytes(9).toString("base64url") })
+  ).toString("base64url");
+  return `${payload}.${sign(payload)}`;
+}
+
+/** Returns the user id of a valid ticket of this kind and burns it, otherwise null. */
+export function consumeTicket(ticket, kind, now = Date.now()) {
+  if (typeof ticket !== "string") return null;
+  const [payload, sig] = ticket.split(".");
+  if (!payload || !sig) return null;
+  const expected = sign(payload);
+  if (sig.length !== expected.length || !crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(expected))) return null;
+  let data;
+  try {
+    data = JSON.parse(Buffer.from(payload, "base64url").toString("utf8"));
+  } catch {
+    return null;
+  }
+  if (data.kind !== kind || !data.uid || typeof data.exp !== "number" || data.exp < now) return null;
+  for (const [n, exp] of usedTickets) if (exp < now) usedTickets.delete(n);
+  if (usedTickets.has(data.n)) return null;
+  usedTickets.set(data.n, data.exp);
+  return data.uid;
+}
+
 /** Returns the user id inside a valid, unexpired token, otherwise null. */
 export function verifySocketToken(token, now = Date.now()) {
   if (typeof token !== "string") return null;

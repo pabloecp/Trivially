@@ -4,6 +4,7 @@ import { useApp } from "../../lib/store.jsx";
 import { findMode, roomPath } from "../../modes/index.js";
 import Avatar from "./Avatar.jsx";
 import Icon from "./Icon.jsx";
+import PlayerName from "./PlayerName.jsx";
 
 function playerTag(player, { isMe, isHost }) {
   if (!player.connected) return "Reconectando…";
@@ -70,7 +71,7 @@ export default function PartyPanel({ room, onToast }) {
                 {isHostPlayer && <Icon name="crown" size={18} strokeWidth={2} filled className="tv-player-crown" />}
               </span>
               <span className="tv-player-text">
-                <span className="tv-player-name">{p.name}</span>
+                <PlayerName player={p} className="tv-player-name" />
                 <span className="tv-player-tag">{playerTag(p, { isMe, isHost: isHostPlayer })}</span>
               </span>
             </li>

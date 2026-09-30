@@ -2,7 +2,6 @@ import assert from "node:assert/strict";
 import { effectiveRole, hasRole } from "./roles.js";
 import { claimGuestStats, listUsers, registerWithPassword, sanitizeUser, setUserRole } from "../db/store.js";
 
-process.env.OWNER_EMAILS = "boss@trivially.test";
 const store = { users: {} };
 
 const owner = registerWithPassword(store, { name: "Boss", email: "boss@trivially.test", password: "pw" });
@@ -10,11 +9,19 @@ const admin = registerWithPassword(store, { name: "Admin", email: "admin@trivial
 const alice = registerWithPassword(store, { name: "Alice", email: "alice@trivially.test", password: "pw" });
 const bob = registerWithPassword(store, { name: "Bob", email: "bob@trivially.test", password: "pw" });
 
-// New accounts are plain users; OWNER_EMAILS makes the owner.
+// New accounts are plain users; OWNER_IDS makes the owner (by id, not by name or email).
+assert.equal(owner.role, "user");
+process.env.OWNER_IDS = `usr_unrelated, ${owner.id}`;
+assert.equal(sanitizeUser(store.users[owner.id]).role, "owner");
 assert.equal(alice.role, "user");
-assert.equal(owner.role, "owner");
+assert.equal(effectiveRole({ id: "usr_x", email: "boss@trivially.test" }), "user", "email alone is not enough");
+
+// Every account gets its own id.
+const ids = Object.keys(store.users);
+assert.equal(new Set(ids).size, ids.length);
+assert.ok(ids.every((id) => /^usr_\d+_[0-9a-f]+$/.test(id)));
 assert.equal(effectiveRole({ isGuest: true, role: "admin" }), "user", "guests never have a role");
-assert.equal(effectiveRole({ email: "x@y.z", role: "owner" }), "admin", "owner only comes from OWNER_EMAILS");
+assert.equal(effectiveRole({ email: "x@y.z", role: "owner" }), "admin", "owner only comes from OWNER_IDS");
 
 // Plain users can't change roles.
 assert.throws(() => setUserRole(store, alice.id, bob.id, "moderator"), /permiso/);
