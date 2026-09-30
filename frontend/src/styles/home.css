@@ -88,9 +88,12 @@
 .tv-c-mint { --c1: var(--tv-mint); --c2: var(--tv-mint-2); --edge: var(--tv-mint-edge); --on: #0a0a0a; }
 .tv-c-neutral { --c1: var(--tv-neutral); --c2: var(--tv-neutral-2); --edge: var(--tv-neutral-edge); --on: var(--tv-neutral-on); }
 
-/* Overscroll area around the app */
+/* Overscroll area around the app. No rubber-band bounce either: on phones it pulled the page away from the edges
+   and showed this flat colour past the end of the background. */
+html:has(.tv-app),
 body:has(.tv-app) {
   background: var(--tv-bg);
+  overscroll-behavior-y: none;
 }
 
 .tv-app {
