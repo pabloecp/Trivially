@@ -8,7 +8,7 @@ import AppIcon from "../components/home/AppIcon.jsx";
 import PartyPanel from "../components/home/PartyPanel.jsx";
 import PlaySheet from "../components/home/PlaySheet.jsx";
 import Wordmark from "../components/home/Wordmark.jsx";
-import { DailyFact, DailyQuestion, HowToPlay, ModeCarousel, SampleQuestion } from "../components/home/HomeExtras.jsx";
+import HowToPlay from "../components/home/HowToPlay.jsx";
 import "../styles/home.css";
 
 function ModeTile({ mode, index, showGo, selected, onPick }) {
@@ -141,41 +141,20 @@ export default function Home() {
             <PartyPanel room={room} onToast={showToast} />
           </div>
         ) : (
-          // Temporary: the side-panel ideas stacked, to compare them. Keep the one we like.
-          [
-            { label: "Opción 0 · Solo el logo", Side: null },
-            { label: "Opción 1 · Pregunta de muestra", Side: SampleQuestion },
-            { label: "Opción 2 · Pregunta del día", Side: DailyQuestion },
-            { label: "Opción 3 · Cómo se juega", Side: HowToPlay },
-            { label: "Opción 4 · Dato curioso del día", Side: DailyFact },
-            { label: "Opción 5 · Carrusel de categorías", Side: ModeCarousel },
-            { label: "Opción 6 · Logo y cómo se juega", Side: null, Below: [HowToPlay] },
-          ].map(({ label, Side, Below = [] }, i) => (
-            <div key={label} className={`tv-stage${Side ? " tv-stage--split" : " tv-stage--solo"}`}>
-              <p className="tv-stage-label">{label}</p>
-              <section className="tv-hero">
-                <AppIcon />
-                <Wordmark />
-                <p className="tv-tagline">Trivia rápida para jugar solo o con amigos.</p>
-                <button
-                  ref={i === 0 ? playRef : undefined}
-                  type="button"
-                  className="tv-play"
-                  aria-haspopup="dialog"
-                  onClick={() => openSheet()}
-                >
-                  <span className="tv-play-icon">
-                    <Icon name="play" size={20} filled strokeWidth={1.5} />
-                  </span>
-                  Jugar
-                </button>
-              </section>
-              {Side && <Side />}
-              {Below.map((Card, j) => (
-                <Card key={j} />
-              ))}
-            </div>
-          ))
+          <div className="tv-stage">
+            <section className="tv-hero">
+              <AppIcon />
+              <Wordmark />
+              <p className="tv-tagline">Trivia rápida para jugar solo o con amigos.</p>
+              <button ref={playRef} type="button" className="tv-play" aria-haspopup="dialog" onClick={() => openSheet()}>
+                <span className="tv-play-icon">
+                  <Icon name="play" size={20} filled strokeWidth={1.5} />
+                </span>
+                Jugar
+              </button>
+            </section>
+            <HowToPlay />
+          </div>
         )}
 
         {room && ModeLobby && (
