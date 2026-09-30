@@ -183,12 +183,6 @@ function ProfileScreen() {
             )}
           </div>
         </div>
-        {!isOtherUser && (
-          <Link to="/" className="tv-btn tv-c-pink tv-profile-play">
-            <Icon name="play" size={16} filled strokeWidth={1.5} />
-            Jugar
-          </Link>
-        )}
       </section>
 
       <div className={`tv-profile-grid${isOtherUser ? " is-single" : ""}`}>

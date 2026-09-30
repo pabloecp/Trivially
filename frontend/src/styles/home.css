@@ -231,7 +231,8 @@ body:has(.tv-app) {
   align-items: center;
   max-width: 1120px;
   margin: 0 auto;
-  padding: 4px 16px calc(40px + env(safe-area-inset-bottom));
+  /* Room above the logo: it bobs up 10px and would otherwise touch the top bar. */
+  padding: 24px 16px calc(40px + env(safe-area-inset-bottom));
 }
 
 /* ---------- Home stage: logo (and the room beside it), modes below ---------- */
@@ -640,15 +641,6 @@ body:has(.tv-app) {
   transition: transform 0.3s var(--tv-spring);
 }
 .tv-sheet-pos.is-dragging { transition: none; }
-/* The root follows the visible area (see PlaySheet), so with the keyboard up the sheet may have to scroll. */
-.tv-sheet-root.has-keyboard .tv-sheet-pos {
-  max-height: 100%;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-}
-.tv-sheet-root.has-keyboard .tv-sheet { padding-bottom: 14px; }
-.tv-sheet-root.has-keyboard .tv-sheet-handle { margin-bottom: 10px; }
-.tv-sheet-root.has-keyboard .tv-sheet-head { padding-bottom: 12px; }
 .tv-sheet {
   padding: 6px 16px calc(22px + env(safe-area-inset-bottom));
   border-radius: 32px 32px 0 0;
@@ -1188,8 +1180,7 @@ body:has(.tv-app) {
   font-size: 13px;
   animation: tvPop 0.5s var(--tv-spring) 0.2s backwards;
 }
-.tv-tag--ok { background: rgba(34, 197, 94, 0.15); color: #16a34a; }
-[data-theme="dark"] .tv-tag--ok { color: #4ade80; }
+.tv-tag--ok { background: #22c55e; color: #0a0a0a; }
 .tv-tag--owner { background: var(--tv-violet); color: #0a0a0a; }
 .tv-tag--admin { background: #f050ae; color: #fff; }
 .tv-tag--moderator { background: #33a8c7; color: #fff; }
@@ -1308,11 +1299,6 @@ body:has(.tv-app) {
 .tv-avatar--lg { width: 64px; height: 64px; font-size: 28px; }
 .tv-profile-who { display: grid; gap: 6px; min-width: 0; }
 .tv-profile-who .tv-page-title { overflow-wrap: anywhere; }
-.tv-profile-play { grid-column: 1 / -1; justify-self: start; position: relative; z-index: 1; }
-@media (min-width: 640px) {
-  .tv-profile-hero { grid-template-columns: auto minmax(0, 1fr) auto; }
-  .tv-profile-play { grid-column: auto; }
-}
 .tv-profile-grid { display: grid; gap: 20px; align-items: start; }
 @media (min-width: 900px) { .tv-profile-grid:not(.is-single) { grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); } }
 .tv-profile-grid > .tv-card:nth-child(2) { animation-delay: 0.1s; }
@@ -1416,7 +1402,8 @@ body:has(.tv-app) {
   animation: tvCount 0.9s var(--tv-spring);
 }
 
-.tv-play-card { justify-items: center; text-align: center; padding: 28px 20px; }
+/* One column that never grows past the card: long song titles in the suggestions pushed it off screen on phones. */
+.tv-play-card { grid-template-columns: minmax(0, 1fr); justify-items: center; text-align: center; padding: 28px 20px; }
 .tv-play-q { margin: 0; font-family: var(--tv-display); font-weight: 600; font-size: clamp(22px, 5vw, 28px); letter-spacing: 0; color: var(--tv-text); }
 .tv-eq { display: flex; align-items: flex-end; gap: 6px; height: 54px; }
 .tv-eq span {
@@ -1430,7 +1417,7 @@ body:has(.tv-app) {
 }
 .tv-eq span:nth-child(even) { animation-duration: 0.7s; }
 
-.tv-search { display: grid; gap: 10px; width: 100%; max-width: 560px; text-align: left; }
+.tv-search { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; width: 100%; max-width: 560px; text-align: left; }
 .tv-search-box {
   display: flex;
   align-items: center;
@@ -1460,6 +1447,7 @@ body:has(.tv-app) {
 .tv-app .tv-search-box:focus-within :focus-visible { outline: none; }
 .tv-suggest {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 6px;
   padding: 8px;
   border-radius: 22px;
@@ -1467,7 +1455,7 @@ body:has(.tv-app) {
   box-shadow: 0 6px 0 var(--tv-edge), 0 20px 40px -16px rgba(0, 0, 0, 0.5);
   animation: tvDropIn 0.3s var(--tv-spring);
 }
-.tv-suggest-list { display: grid; gap: 4px; max-height: 300px; overflow-y: auto; margin: 0; padding: 0; list-style: none; }
+.tv-suggest-list { display: grid; grid-template-columns: minmax(0, 1fr); gap: 4px; max-height: 300px; overflow-y: auto; margin: 0; padding: 0; list-style: none; }
 .tv-suggest-list li { animation: tvSlideIn 0.3s var(--tv-spring) backwards; animation-delay: calc(var(--i) * 30ms); }
 .tv-suggest-item {
   display: grid;
@@ -1489,6 +1477,17 @@ body:has(.tv-app) {
 .tv-suggest-item .tv-kbd { grid-column: 2; grid-row: 1 / span 2; }
 .tv-suggest-empty { padding: 8px 10px; }
 .tv-suggest-help { margin: 0; padding: 0 10px 4px; font-weight: 700; font-size: 12px; color: var(--tv-text-3); }
+/* Touch screens have no arrow keys or Enter hint to show. */
+@media (hover: none) {
+  .tv-suggest-help,
+  .tv-suggest-item .tv-kbd { display: none; }
+  .tv-suggest-item.is-active { transform: none; }
+}
+@media (max-width: 640px) {
+  .tv-play-card { padding: 22px 14px; }
+  .tv-search-box { height: 56px; padding-left: 14px; }
+  .tv-suggest-list { max-height: 240px; }
+}
 
 .tv-locked { display: grid; justify-items: center; gap: 6px; }
 .tv-locked-check {
@@ -1515,6 +1514,7 @@ body:has(.tv-app) {
   color: #fff;
   animation: tvPop 0.6s var(--tv-spring);
 }
+.tv-result-cheer { margin: 0; font-family: var(--tv-display); font-weight: 600; font-size: 19px; color: var(--tv-text-2); }
 .tv-result-title { margin: 0; font-family: var(--tv-display); font-weight: 700; font-size: clamp(28px, 6vw, 36px); letter-spacing: 0; color: var(--tv-text); }
 .tv-result--ok { box-shadow: 0 6px 0 var(--tv-edge), inset 0 0 0 3px #22c55e; }
 .tv-result--ok .tv-result-icon { background: #22c55e; box-shadow: 0 5px 0 #15803d; }
@@ -1700,7 +1700,6 @@ body:has(.tv-app) {
 }
 
 @media (min-width: 900px) {
-  .tv-main { padding-top: 12px; }
   .tv-mode-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 18px; }
   .tv-mode { min-height: 168px; padding: 16px; }
   .tv-mode-name { font-size: 22px; }

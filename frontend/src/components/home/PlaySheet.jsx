@@ -17,7 +17,6 @@ const TITLES = {
 // it asks for a name and then joins that room.
 export default function PlaySheet({ mode, joinCode, open, onClose }) {
   const { user, saveGuest, createRoom, joinRoom } = useApp();
-  const rootRef = useRef(null);
   const sheetRef = useRef(null);
   const dragStart = useRef(null);
   const [mounted, setMounted] = useState(open);
@@ -49,30 +48,6 @@ export default function PlaySheet({ mode, joinCode, open, onClose }) {
       preventScroll: true,
     });
   }, [open, mounted, step]);
-
-  // Phones draw the keyboard over the page without shrinking it, so a sheet pinned to the bottom ends up behind
-  // the keyboard. Pin it to the visible area instead (the visual viewport), so the field you type in stays in view.
-  useEffect(() => {
-    if (!open || !mounted) return;
-    const vv = window.visualViewport;
-    const root = rootRef.current;
-    if (!vv || !root) return;
-    function fit() {
-      root.style.top = `${vv.offsetTop}px`;
-      root.style.height = `${vv.height}px`;
-      root.style.bottom = "auto";
-      root.classList.toggle("has-keyboard", window.innerHeight - vv.height > 120);
-    }
-    fit();
-    vv.addEventListener("resize", fit);
-    vv.addEventListener("scroll", fit);
-    return () => {
-      vv.removeEventListener("resize", fit);
-      vv.removeEventListener("scroll", fit);
-      root.style.top = root.style.height = root.style.bottom = "";
-      root.classList.remove("has-keyboard");
-    };
-  }, [open, mounted]);
 
   useEffect(() => {
     if (!open || !mounted) return;
@@ -183,7 +158,7 @@ export default function PlaySheet({ mode, joinCode, open, onClose }) {
   const dragging = dragStart.current !== null;
 
   return (
-    <div ref={rootRef} className={`tv-sheet-root ${open ? "is-open" : "is-closing"}`}>
+    <div className={`tv-sheet-root ${open ? "is-open" : "is-closing"}`}>
       <div className="tv-sheet-backdrop" onClick={onClose} />
       <div
         className={`tv-sheet-pos${dragging ? " is-dragging" : ""}`}

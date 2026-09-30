@@ -18,6 +18,15 @@ function normalize(str = "") {
     .trim();
 }
 
+// Shown under the result when the round didn't go your way; one per round, never the same twice in a row.
+const CHEERS = [
+  "¡Estuviste cerca!",
+  "¡La próxima es tuya!",
+  "¡Casi la tienes!",
+  "¡No te rindas, tú puedes!",
+  "¡Sigue así, vas mejorando!",
+];
+
 function GameScreen() {
   const { code } = useParams();
   const { user, room, joinRoom, answer, restartGame, leaveRoom, setGame } = useApp();
@@ -26,6 +35,7 @@ function GameScreen() {
   const audioRef = useRef(null);
   const inputRef = useRef(null);
   const suggestionsListRef = useRef(null);
+  const cheerOffset = useRef(Math.floor(Math.random() * CHEERS.length));
 
   const [left, setLeft] = useState(0);
   const [err, setErr] = useState("");
@@ -530,6 +540,9 @@ function GameScreen() {
                 <h2 className="tv-result-title">
                   {isCorrect ? "¡Correcto!" : didAnswer ? "Incorrecto" : "¡Se acabó el tiempo!"}
                 </h2>
+                {!isCorrect && (
+                  <p className="tv-result-cheer">{CHEERS[(room.currentRound + cheerOffset.current) % CHEERS.length]}</p>
+                )}
                 <div className="tv-tags tv-tags--center">
                   {isCorrect && <span className="tv-tag tv-tag--points">+{me?.lastPoints || 0} pts</span>}
                   {me?.streak > 1 && <span className="tv-tag tv-tag--streak">Racha de {me.streak}</span>}
