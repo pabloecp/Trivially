@@ -1,14 +1,14 @@
 import { useEffect, useState } from "react";
 
-const THEME_KEY = "yoavlly_theme";
+const THEME_KEY = "trivially_theme";
 
-// The light theme is still fully styled, but the app is dark-only for now. Set this to true to bring back the
-// theme switch (and the saved preference) everywhere.
-export const LIGHT_THEME_ENABLED = false;
+// Light by default with a theme switch and a saved preference, as on main. Set this to false to lock the app to
+// the dark theme and hide the switch.
+export const LIGHT_THEME_ENABLED = true;
 
 function loadTheme() {
   if (!LIGHT_THEME_ENABLED) return "dark";
-  return localStorage.getItem(THEME_KEY) || localStorage.getItem("bysong_theme") || "dark";
+  return localStorage.getItem(THEME_KEY) || "light";
 }
 
 // Shared by the new Home and the legacy Layout so the choice survives navigation between them.

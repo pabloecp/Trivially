@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { api } from "../lib/api.js";
+import Icon from "./home/Icon.jsx";
 
 const ROUND_OPTIONS = [5, 10, 15, 20, 25];
 const TIME_OPTIONS = [15, 20, 25, 30];
@@ -132,180 +133,99 @@ export default function RoomConfigModal({ isOpen, onClose, currentConfig, catalo
     : (preview?.matchingCount ?? preview?.count ?? (selectedArtists.length * 50));
   const isAllArtists = selectedArtists.length === allArtistIds.length;
 
+  // Close with Escape while open.
+  useEffect(() => {
+    if (!isOpen) return;
+    const onKey = (e) => e.key === "Escape" && onClose();
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
-  return (
-    <div
-      style={{
-        position: "fixed",
-        inset: 0,
-        backgroundColor: "rgba(0, 0, 0, 0.7)",
-        backdropFilter: "blur(6px)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        zIndex: 9999,
-        padding: 16,
-      }}
-      onClick={onClose}
-    >
-      <div
-        className="card"
-        style={{
-          width: "100%",
-          maxWidth: 580,
-          maxHeight: "90vh",
-          overflowY: "auto",
-          padding: 24,
-          background: "var(--bg-surface)",
-          border: "1px solid var(--border)",
-          boxShadow: "var(--shadow-lg)",
-          borderRadius: 20,
-          display: "flex",
-          flexDirection: "column",
-          gap: 20,
-        }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Top Header */}
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
-          <div>
-            <h2 style={{ fontSize: 20, margin: 0, color: "var(--text)" }}>Ajustes de la Partida</h2>
-            <p className="muted" style={{ margin: "2px 0 0", fontSize: 13 }}>
-              Modifica las opciones de las rondas para toda la sala
-            </p>
-          </div>
+  const notEnough = availableCount < rounds;
 
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <button
-              type="button"
-              className="btn primary sm"
-              onClick={handleSave}
-              disabled={saving || availableCount < rounds}
-              style={{ fontWeight: 700 }}
-            >
-              {saving ? "Guardando..." : "Guardar Ajustes"}
-            </button>
-            <button
-              type="button"
-              className="btn ghost sm"
-              onClick={onClose}
-              style={{ fontSize: 18, width: 34, height: 34, padding: 0 }}
-              aria-label="Cerrar"
-            >
-              ✕
-            </button>
+  return (
+    <div className="tv-modal-root">
+      <div className="tv-modal-backdrop" onClick={onClose} />
+      <form
+        className="tv-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="tv-config-title"
+        onSubmit={handleSave}
+      >
+        <div className="tv-card-head">
+          <div>
+            <h2 id="tv-config-title" className="tv-card-title">Ajustes de la partida</h2>
+            <p className="tv-hint">Se aplican a toda la sala.</p>
           </div>
+          <button type="button" className="tv-icon-btn tv-icon-btn--sm" onClick={onClose} aria-label="Cerrar ajustes">
+            <Icon name="close" size={20} strokeWidth={2.8} />
+          </button>
         </div>
 
-        {err && (
-          <div className="card" style={{ padding: 12, borderColor: "var(--bad)", background: "var(--bad-subtle)" }}>
-            <p className="error" style={{ margin: 0, fontSize: 13 }}>{err}</p>
+        <fieldset className="tv-fieldset">
+          <legend className="tv-label">
+            Artistas · <span className="tv-accent">{availableCount} canciones</span>
+          </legend>
+          <div className="tv-picks">
+            {artistsList.map((a, i) => {
+              const active = selectedArtists.includes(a.id);
+              return (
+                <button
+                  key={a.id}
+                  type="button"
+                  className="tv-pick tv-pick--artist"
+                  aria-pressed={active}
+                  onClick={() => toggleArtist(a.id)}
+                  style={{ "--i": i }}
+                >
+                  {a.image && <img src={a.image} alt="" loading="lazy" />}
+                  {a.name}
+                </button>
+              );
+            })}
           </div>
-        )}
+          <div className="tv-picks-tools">
+            <button type="button" className="tv-link-btn" onClick={selectAllArtists} disabled={isAllArtists}>Todos</button>
+            <button type="button" className="tv-link-btn" onClick={deselectAllArtists} disabled={selectedArtists.length === 0}>Ninguno</button>
+          </div>
+        </fieldset>
 
-        {availableCount < rounds && (
-          <p className="error" style={{ margin: 0, fontSize: 13 }}>
-            Se necesitan al menos {rounds} canciones en el catálogo. Selecciona más artistas.
+        <fieldset className="tv-fieldset">
+          <legend className="tv-label">Rondas</legend>
+          <div className="tv-picks">
+            {ROUND_OPTIONS.map((n) => (
+              <button key={n} type="button" className="tv-pick" aria-pressed={rounds === n} onClick={() => setRounds(n)}>
+                {n}
+              </button>
+            ))}
+          </div>
+        </fieldset>
+
+        <fieldset className="tv-fieldset">
+          <legend className="tv-label">Segundos por ronda</legend>
+          <div className="tv-picks">
+            {TIME_OPTIONS.map((sec) => (
+              <button key={sec} type="button" className="tv-pick" aria-pressed={roundSeconds === sec} onClick={() => setRoundSeconds(sec)}>
+                {sec} s
+              </button>
+            ))}
+          </div>
+        </fieldset>
+
+        {notEnough && (
+          <p className="tv-lobby-error" role="alert">
+            Se necesitan al menos {rounds} canciones. Elige más artistas o menos rondas.
           </p>
         )}
+        {err && <p className="tv-lobby-error" role="alert">{err}</p>}
 
-        <form onSubmit={handleSave} className="grid" style={{ gap: 20 }}>
-          {/* =========================================
-              AJUSTES PRINCIPALES
-             ========================================= */}
-
-          {/* 1. Artistas */}
-          <div>
-            <label style={{ fontSize: 14, fontWeight: 700, display: "block", marginBottom: 8, color: "var(--text)" }}>
-              Artistas: <span style={{ color: "var(--brand)" }}>{availableCount} canciones</span>
-            </label>
-
-            <div className="row" style={{ gap: 8, flexWrap: "wrap" }}>
-              {artistsList.map((a) => {
-                  const active = selectedArtists.includes(a.id);
-                  return (
-                    <button
-                      key={a.id}
-                      type="button"
-                      className={`chip interactive ${active ? "active" : ""}`}
-                      onClick={() => toggleArtist(a.id)}
-                      style={{
-                        fontSize: 13,
-                        padding: "6px 14px",
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: 8,
-                        borderRadius: 9999,
-                      }}
-                    >
-                      {a.image && (
-                        <img
-                          src={a.image}
-                          alt={a.name}
-                          style={{
-                            width: 22,
-                            height: 22,
-                            borderRadius: "50%",
-                            objectFit: "cover",
-                          }}
-                        />
-                      )}
-                      <span>{a.name}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-          {/* 2. Rounds (5, 10, 15, 20, 25) */}
-          <div>
-            <label style={{ fontSize: 14, fontWeight: 700, display: "block", marginBottom: 8, color: "var(--text)" }}>
-              Número de Rondas: <span style={{ color: "var(--brand)" }}>{rounds}</span>
-            </label>
-            <div className="row" style={{ gap: 8, flexWrap: "wrap" }}>
-              {ROUND_OPTIONS.map((n) => (
-                <button
-                  key={n}
-                  type="button"
-                  onClick={() => setRounds(n)}
-                  className={`chip interactive ${rounds === n ? "active" : ""}`}
-                  style={{
-                    padding: "8px 16px",
-                    fontWeight: rounds === n ? 800 : 600,
-                  }}
-                >
-                  {n} rondas
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* 3. Tiempo por Ronda */}
-          <div>
-            <label style={{ fontSize: 13, fontWeight: 700, display: "block", marginBottom: 8, color: "var(--text)" }}>
-              Tiempo por Ronda: <span style={{ color: "var(--brand)" }}>{roundSeconds} segundos</span>
-            </label>
-            <div className="row" style={{ gap: 8, flexWrap: "wrap" }}>
-              {TIME_OPTIONS.map((sec) => (
-                <button
-                  key={sec}
-                  type="button"
-                  className={`chip interactive ${roundSeconds === sec ? "active" : ""}`}
-                  onClick={() => setRoundSeconds(sec)}
-                  style={{
-                    fontSize: 13,
-                    padding: "8px 14px",
-                    fontWeight: roundSeconds === sec ? 800 : 600,
-                  }}
-                >
-                  {sec} segundos
-                </button>
-              ))}
-            </div>
-          </div>
-        </form>
-      </div>
+        <button type="submit" className="tv-btn tv-btn--block tv-c-green" disabled={saving || notEnough}>
+          {saving ? "Guardando…" : "Guardar ajustes"}
+        </button>
+      </form>
     </div>
   );
 }

@@ -152,7 +152,7 @@ export default function AlbumShowcase({ style = {} }) {
             fontWeight: 700,
             background: "var(--brand-subtle)",
             color: "var(--brand)",
-            border: "1px solid rgba(29, 185, 84, 0.25)",
+            border: "1px solid rgba(var(--brand-rgb), 0.25)",
           }}
         >
           En Vivo

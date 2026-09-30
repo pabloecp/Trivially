@@ -4,14 +4,14 @@ export const GAME_MODES = [
   {
     id: "musica",
     name: "Adivina la canción",
-    color: "pink",
+    color: "green",
     icon: "music",
     available: true,
     path: (room) => (room.phase === "lobby" ? `/lobby/${room.code}` : `/game/${room.code}`),
   },
-  { id: "cultura", name: "Cultura general", color: "violet", icon: "bulb", available: false },
-  { id: "cine", name: "Cine y series", color: "blue", icon: "film", available: false },
-  { id: "mundo", name: "Geografía", color: "mint", icon: "globe", available: false },
+  { id: "cultura", name: "Cultura general", color: "amber", icon: "bulb", available: false },
+  { id: "cine", name: "Cine y series", color: "purple", icon: "film", available: false },
+  { id: "mundo", name: "Geografía", color: "sky", icon: "globe", available: false },
 ];
 
 export function findMode(id) {

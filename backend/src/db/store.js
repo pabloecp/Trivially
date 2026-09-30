@@ -2,6 +2,7 @@ import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { createClient } from "@supabase/supabase-js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DATA_DIR = path.join(__dirname, "../../data");
@@ -44,16 +45,142 @@ export function verifyPassword(password, salt, hash) {
   return crypto.timingSafeEqual(Buffer.from(computed, "hex"), Buffer.from(hash, "hex"));
 }
 
-export function loadStore() {
+// ---------------------------------------------------------------------------
+// Persistence. The store is an in-memory object (`{ users }`) that every function below mutates and then
+// passes to saveStore(). With SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY set, saveStore() also writes the
+// changed users to the Supabase `users` table (see backend/supabase/schema.sql). Without them it keeps
+// using data/store.json, so local development works with no setup.
+// ---------------------------------------------------------------------------
+let supabase = null;
+const synced = new Map(); // user id -> JSON last written to Supabase
+let flushTimer = null;
+let flushing = Promise.resolve();
+let pendingStore = null;
+
+export function supabaseEnabled() {
+  return Boolean(process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY);
+}
+
+function getSupabase() {
+  if (!supabase) {
+    supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY, {
+      auth: { persistSession: false, autoRefreshToken: false },
+    });
+  }
+  return supabase;
+}
+
+function toRow(user) {
+  return {
+    id: user.id,
+    email: user.email || null,
+    google_id: user.googleId || null,
+    name: user.name || null,
+    avatar: user.avatar || null,
+    is_guest: false,
+    stats: user.stats || {},
+    data: user,
+    updated_at: new Date().toISOString(),
+  };
+}
+
+function readLocalStore() {
   try {
-    const raw = fs.readFileSync(STORE_PATH, "utf8");
-    return JSON.parse(raw);
+    return JSON.parse(fs.readFileSync(STORE_PATH, "utf8"));
   } catch {
     return emptyStore();
   }
 }
 
+/** Sync loader (local JSON only). Prefer initStore(), which also reads from Supabase. */
+export function loadStore() {
+  return readLocalStore();
+}
+
+/** Loads the store at startup: from Supabase when configured, otherwise from data/store.json. */
+export async function initStore() {
+  if (!supabaseEnabled()) return readLocalStore();
+
+  const db = getSupabase();
+  const store = emptyStore();
+  const pageSize = 1000;
+  for (let from = 0; ; from += pageSize) {
+    const { data, error } = await db.from("users").select("id, data").range(from, from + pageSize - 1);
+    if (error) throw new Error(`Supabase: no se pudieron cargar los usuarios (${error.message})`);
+    for (const row of data) {
+      store.users[row.id] = row.data;
+      synced.set(row.id, JSON.stringify(row.data));
+    }
+    if (data.length < pageSize) break;
+  }
+
+  // First run against an empty database: bring over the accounts from the old local file.
+  if (Object.keys(store.users).length === 0) {
+    const local = readLocalStore();
+    const accounts = Object.values(local.users || {}).filter((u) => !u.isGuest);
+    if (accounts.length) {
+      for (const u of accounts) store.users[u.id] = u;
+      await flushToSupabase(store);
+      console.log(`[Supabase] ${accounts.length} usuarios migrados desde data/store.json`);
+    }
+  }
+  console.log(`[Supabase] ${Object.keys(store.users).length} usuarios cargados`);
+  return store;
+}
+
+async function flushToSupabase(store) {
+  const db = getSupabase();
+  const upserts = [];
+  const seen = new Set();
+  for (const user of Object.values(store.users)) {
+    if (user.isGuest) continue; // guests live only in memory
+    seen.add(user.id);
+    const json = JSON.stringify(user);
+    if (synced.get(user.id) !== json) upserts.push({ row: toRow(user), json });
+  }
+  const removed = [...synced.keys()].filter((id) => !seen.has(id));
+
+  if (upserts.length) {
+    const { error } = await db.from("users").upsert(upserts.map((u) => u.row), { onConflict: "id" });
+    if (error) throw error;
+    for (const u of upserts) synced.set(u.row.id, u.json);
+  }
+  if (removed.length) {
+    const { error } = await db.from("users").delete().in("id", removed);
+    if (error) throw error;
+    for (const id of removed) synced.delete(id);
+  }
+}
+
+function scheduleFlush(store) {
+  pendingStore = store;
+  if (flushTimer) return;
+  flushTimer = setTimeout(() => {
+    flushTimer = null;
+    flushing = flushing
+      .then(() => flushToSupabase(pendingStore))
+      .catch((err) => console.error("[Supabase] No se pudo guardar:", err.message));
+  }, 200);
+}
+
+/** Writes any pending changes now (call before the process exits). */
+export async function flushStore() {
+  if (!supabaseEnabled() || !pendingStore) return;
+  if (flushTimer) {
+    clearTimeout(flushTimer);
+    flushTimer = null;
+  }
+  flushing = flushing
+    .then(() => flushToSupabase(pendingStore))
+    .catch((err) => console.error("[Supabase] No se pudo guardar:", err.message));
+  await flushing;
+}
+
 export function saveStore(store) {
+  if (supabaseEnabled()) {
+    scheduleFlush(store);
+    return;
+  }
   fs.mkdirSync(DATA_DIR, { recursive: true });
   fs.writeFileSync(STORE_PATH, JSON.stringify(store, null, 2));
 }

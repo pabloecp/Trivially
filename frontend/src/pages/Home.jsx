@@ -4,32 +4,12 @@ import { useApp } from "../lib/store.jsx";
 import { useTheme } from "../lib/theme.js";
 import { GAME_MODES, roomPath } from "../modes/index.js";
 import Icon from "../components/home/Icon.jsx";
-import Avatar from "../components/home/Avatar.jsx";
+import ProfileChip from "../components/home/ProfileChip.jsx";
 import AppIcon from "../components/home/AppIcon.jsx";
 import PartyPanel from "../components/home/PartyPanel.jsx";
 import PlaySheet from "../components/home/PlaySheet.jsx";
 import Wordmark from "../components/home/Wordmark.jsx";
 import "../styles/home.css";
-
-function ProfileChip({ user }) {
-  if (!user) {
-    return (
-      <Link to="/login" className="tv-chip">
-        <span className="tv-avatar tv-avatar--empty">
-          <Icon name="user" size={18} />
-        </span>
-        <span className="tv-chip-name">Entrar</span>
-      </Link>
-    );
-  }
-
-  return (
-    <Link to="/profile" className="tv-chip" aria-label={`Tu perfil: ${user.name}`}>
-      <Avatar name={user.name} avatar={user.avatar} />
-      <span className="tv-chip-name">{user.name}</span>
-    </Link>
-  );
-}
 
 function ModeTile({ mode, index, showGo, onPick }) {
   return (
@@ -154,28 +134,29 @@ export default function Home() {
       </header>
 
       <main className="tv-main">
-        <section className={`tv-hero${room ? " is-compact" : ""}`}>
-          <AppIcon />
-          <Wordmark />
-          {!room && <p className="tv-tagline">Trivia rápida para jugar solo o con amigos.</p>}
-        </section>
+        <div className={`tv-stage${room ? " has-room" : ""}`}>
+          <section className="tv-hero">
+            <AppIcon />
+            <Wordmark />
+            {!room && <p className="tv-tagline">Trivia rápida para jugar solo o con amigos.</p>}
+            {!room && (
+              <button
+                ref={playRef}
+                type="button"
+                className="tv-play"
+                aria-haspopup="dialog"
+                onClick={() => openSheet()}
+              >
+                <span className="tv-play-icon">
+                  <Icon name="play" size={20} filled strokeWidth={1.5} />
+                </span>
+                Jugar
+              </button>
+            )}
+          </section>
 
-        {room ? (
-          <PartyPanel room={room} onToast={showToast} />
-        ) : (
-          <button
-            ref={playRef}
-            type="button"
-            className="tv-play"
-            aria-haspopup="dialog"
-            onClick={() => openSheet()}
-          >
-            <span className="tv-play-icon">
-              <Icon name="play" size={20} filled strokeWidth={1.5} />
-            </span>
-            Jugar
-          </button>
-        )}
+          {room && <PartyPanel room={room} onToast={showToast} />}
+        </div>
 
         {room && (
           <section className="tv-modes" aria-labelledby="tv-modes-title">

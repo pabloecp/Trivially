@@ -8,6 +8,7 @@
     "test": "node src/game/answers.test.js && node src/catalog/songSelector.test.js && node src/game/scoring.test.js && node src/game/options.test.js && node src/db/store.test.js && node src/game/roomPermissions.test.js && node src/game/roomLifecycle.test.js"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.117.2",
     "bysong": "file:..",
     "cookie-session": "^2.1.0",
     "cors": "^2.8.5",

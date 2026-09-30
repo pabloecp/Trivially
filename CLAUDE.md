@@ -87,3 +87,4 @@ Timers on the client use `remainingMs(room)`, which corrects for clock skew with
   - The frontend is on Vercel. `frontend/vercel.json` rewrites `/api` and `/auth` to the Railway backend and sends everything else to the SPA. Socket.IO connects directly to `BACKEND_URL`.
   - The backend is on Railway, port 8080. It also serves `frontend/dist` as a static SPA fallback when that folder exists.
 - The backend loads `.env` from `backend/` and from the repo root. Variables: `PORT`, `CLIENT_ORIGIN`, `SESSION_SECRET`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REDIRECT_URI`.
+

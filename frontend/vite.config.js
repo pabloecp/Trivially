@@ -8,15 +8,7 @@ export default defineConfig({
     port: 5173,
     proxy: {
       "/api": "http://127.0.0.1:8080",
-      "/auth": {
-        target: "http://127.0.0.1:8080",
-        changeOrigin: true,
-        bypass: (req) => {
-          if (req.url && req.url.startsWith("/auth")) {
-            return false;
-          }
-        },
-      },
+      "/auth": { target: "http://127.0.0.1:8080", changeOrigin: true },
       "/socket.io": {
         target: "http://127.0.0.1:8080",
         ws: true,

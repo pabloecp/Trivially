@@ -6,13 +6,14 @@ import { BACKEND_URL } from "./config.js";
 const AppContext = createContext(null);
 
 export const AVATAR_COLORS = [
-  "#1DB954", // Spotify Green
-  "#10B981", // Emerald
-  "#37352F", // Charcoal
-  "#F59E0B", // Amber
-  "#6366F1", // Indigo
-  "#EC4899", // Rose
-  "#06B6D4", // Cyan
+  "#33A8C7", // Turquoise Surf
+  "#52E3E1", // Neon Ice
+  "#A0E426", // Slime Lime
+  "#FFAB00", // Orange
+  "#F77976", // Grapefruit Pink
+  "#F050AE", // Deep Pink
+  "#D883FF", // Mauve Magic
+  "#9336FD", // Purple
 ];
 
 // Per-tab, so a reload puts you back in the same room.
@@ -244,7 +245,7 @@ export function AppProvider({ children }) {
         return res.user;
       },
 
-      async loginWithGoogle(returnTo = "/play") {
+      async loginWithGoogle(returnTo = "/") {
         const origin = window.location.origin;
         try {
           const { url } = await api(`/api/google/login?returnTo=${encodeURIComponent(returnTo)}&purpose=login&origin=${encodeURIComponent(origin)}`);
