@@ -165,13 +165,6 @@ function ProfileScreen() {
               <span className={`tv-tag tv-tag--${activeUser.role}`}>
                 <Icon name={roleTag.icon} size={13} filled className={activeUser.role === "owner" ? "tv-tag-sparkle" : ""} />
                 {roleTag.label}
-                {activeUser.role === "owner" && (
-                  <>
-                    <Icon name="sparkle" size={9} filled strokeWidth={0} className="tv-tag-glint tv-tag-glint--1" />
-                    <Icon name="sparkle" size={6} filled strokeWidth={0} className="tv-tag-glint tv-tag-glint--2" />
-                    <Icon name="sparkle" size={7} filled strokeWidth={0} className="tv-tag-glint tv-tag-glint--3" />
-                  </>
-                )}
               </span>
             )}
             {isGuest ? (
