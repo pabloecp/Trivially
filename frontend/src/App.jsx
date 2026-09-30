@@ -1,15 +1,20 @@
 import { useEffect, useRef } from "react";
-import { Navigate, Route, Routes, useLocation, useNavigate } from "react-router-dom";
+import { Navigate, Route, Routes, useLocation, useNavigate, useParams } from "react-router-dom";
 import Home from "./pages/Home.jsx";
 import Login from "./pages/Login.jsx";
 import Profile from "./pages/Profile.jsx";
-import Lobby from "./modes/music/Lobby.jsx";
 import Game from "./modes/music/Game.jsx";
 import { useApp } from "./lib/store.jsx";
 import { roomPath } from "./modes/index.js";
 
-// Screens tied to one room, e.g. /lobby/XOYOAV.
+// Screens tied to one room, e.g. /game/XOYOAV.
 const ROOM_SCREEN = /^\/(?:lobby|game|sala)\/([^/]+)/;
+
+// Old /lobby/CODE links: the waiting room now lives on the room screen, which /sala/CODE opens and joins.
+function LobbyRedirect() {
+  const { code } = useParams();
+  return <Navigate to={`/sala/${code}`} replace />;
+}
 
 function Guard({ children }) {
   const { user } = useApp();
@@ -37,7 +42,7 @@ function RoomNavigator() {
       if (screenCode === room.code) nav(target, { replace: true });
       return;
     }
-    // Anywhere else (Home, profile...) follow the room only when it moves into a game.
+    // Anywhere else (Home, profile...) follow the room only when a match starts.
     if (moved && target !== "/") nav(target);
   }, [target, pathname]);
 
@@ -51,7 +56,7 @@ export default function App() {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/sala/:code" element={<Home />} />
-        <Route path="/lobby/:code" element={<Lobby />} />
+        <Route path="/lobby/:code" element={<LobbyRedirect />} />
         <Route path="/game/:code" element={<Game />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/profile/:userId" element={<Profile />} />

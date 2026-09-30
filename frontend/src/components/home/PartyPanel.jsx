@@ -1,7 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { useApp } from "../../lib/store.jsx";
-import { findMode, roomPath } from "../../modes/index.js";
 import Avatar from "./Avatar.jsx";
 import Icon from "./Icon.jsx";
 import PlayerName from "./PlayerName.jsx";
@@ -14,17 +12,15 @@ function playerTag(player, { isMe, isHost }) {
   return "En la sala";
 }
 
-// The room card on Home: invite code, who's in, and which game the room is in.
+// The room card on Home: invite code and who's in.
 export default function PartyPanel({ room, onToast }) {
-  const { user, setGame, leaveRoom } = useApp();
-  const nav = useNavigate();
+  const { user, leaveRoom } = useApp();
   const [copied, setCopied] = useState(false);
   const copiedTimer = useRef(0);
 
   useEffect(() => () => clearTimeout(copiedTimer.current), []);
 
   const isHost = room.hostId === user?.id;
-  const activeMode = findMode(room.game);
   const alone = room.players.length === 1;
 
   async function copyInvite() {
@@ -37,10 +33,6 @@ export default function PartyPanel({ room, onToast }) {
     } catch {
       onToast(`Comparte este enlace: ${url}`, "link");
     }
-  }
-
-  function bringEveryoneHome() {
-    setGame(null).catch((err) => onToast(err.message));
   }
 
   return (
@@ -72,41 +64,23 @@ export default function PartyPanel({ room, onToast }) {
               </span>
               <span className="tv-player-text">
                 <PlayerName player={p} className="tv-player-name" />
-                <span className="tv-player-tag">{playerTag(p, { isMe, isHost: isHostPlayer })}</span>
+                <span className="tv-player-tag">
+                  {playerTag(p, { isMe, isHost: isHostPlayer })}
+                  {!isHostPlayer && p.canEditConfig && " · ajustes"}
+                </span>
               </span>
             </li>
           );
         })}
       </ul>
 
-      {activeMode ? (
-        <div className="tv-party-active">
-          <span className={`tv-badge tv-c-${activeMode.color}`}>
-            <Icon name={activeMode.icon} size={24} />
-          </span>
-          <p className="tv-party-active-text">
-            La sala está en <strong>{activeMode.name}</strong>
-          </p>
-          <div className="tv-party-actions">
-            <button type="button" className="tv-btn tv-c-yellow" onClick={() => nav(roomPath(room))}>
-              <Icon name="play" size={16} filled strokeWidth={1.5} />
-              Ir al juego
-            </button>
-            {isHost && (
-              <button type="button" className="tv-btn tv-c-neutral" onClick={bringEveryoneHome}>
-                <Icon name="home" size={18} />
-                Traer a todos aquí
-              </button>
-            )}
-          </div>
-        </div>
-      ) : (
+      {!room.game && (
         <p className="tv-party-status">
           <span className="tv-pulse" aria-hidden="true" />
           {isHost
             ? alone
               ? "Invita a tus amigos o elige un juego para jugar solo."
-              : "Elige un juego y todos entrarán contigo."
+              : "Elige un juego y todos lo verán al instante."
             : `Esperando a que ${room.hostName} elija el juego…`}
         </p>
       )}

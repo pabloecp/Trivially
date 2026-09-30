@@ -71,11 +71,11 @@ Timers on the client use `remainingMs(room)`, which corrects for clock skew with
 ### Frontend structure (mid-redesign)
 
 - `/` (`pages/Home.jsx`) uses the new casual-game design. Its styles are in `styles/home.css`, where every class is namespaced `tv-` and uses `--tv-*` tokens.
-- Home is the multiplayer hub. The Jugar sheet (`components/home/PlaySheet.jsx`) creates or joins a room, asking for a guest name first when there isn't one. `components/home/PartyPanel.jsx` shows the code, the players and the invite link `/sala/:code`, which also renders Home and auto-joins. While `room.game` is `null`, the host taps a mode tile to move everyone into it.
+- Home is the multiplayer hub. The Jugar sheet (`components/home/PlaySheet.jsx`) creates or joins a room, asking for a guest name first when there isn't one. `components/home/PartyPanel.jsx` shows the code, the players and the invite link `/sala/:code`, which also renders Home and auto-joins. The room screen (Home with a room) never changes page while the room waits: the host taps a mode tile and every player's screen swaps in that mode's `Lobby` panel (settings, start button) with an animation. Only starting a match moves players to the game screen.
 - The mode tiles come from the registry in `src/modes/index.js` (`GAME_MODES`). To add a mode:
-  - add an entry there with `available: true` and a `path(room)` for its screens
+  - add an entry there with `available: true`, a `Lobby` panel component and a `path(room)` for its in-match screens
   - add the id to `GAME_IDS` in `roomManager.js`
-- `RoomNavigator` in `App.jsx` does all room-driven navigation. It sends each client to `roomPath(room)` and swaps out stale `/lobby`, `/game` or `/sala` screens of the player's own room. It pulls players off other pages (profile, leaderboard) only when the room moves into a game. Game pages should not navigate on phase changes themselves.
+- `RoomNavigator` in `App.jsx` does all room-driven navigation. It sends each client to `roomPath(room)` (`/` while the room is in `lobby`, the mode's `path` during a match) and swaps out stale `/game` or `/sala` screens of the player's own room. It pulls players off other pages (profile, leaderboard) only when a match starts. Old `/lobby/:code` links redirect to `/sala/:code`. Game pages should not navigate on phase changes themselves.
 - All other routes, including the music mode's pages in `src/modes/music/` (Setup → Lobby → Game), render inside `LegacyShell` in `App.jsx`. That shell adds the old navbar `Layout` and uses the older design tokens in `styles/global.css`.
 - `lib/theme.js` `useTheme()` sets `data-theme` on `<html>`. Both stylesheets define `[data-theme="light"]` overrides.
 
