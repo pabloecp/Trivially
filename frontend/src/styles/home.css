@@ -640,6 +640,15 @@ body:has(.tv-app) {
   transition: transform 0.3s var(--tv-spring);
 }
 .tv-sheet-pos.is-dragging { transition: none; }
+/* The root follows the visible area (see PlaySheet), so with the keyboard up the sheet may have to scroll. */
+.tv-sheet-root.has-keyboard .tv-sheet-pos {
+  max-height: 100%;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.tv-sheet-root.has-keyboard .tv-sheet { padding-bottom: 14px; }
+.tv-sheet-root.has-keyboard .tv-sheet-handle { margin-bottom: 10px; }
+.tv-sheet-root.has-keyboard .tv-sheet-head { padding-bottom: 12px; }
 .tv-sheet {
   padding: 6px 16px calc(22px + env(safe-area-inset-bottom));
   border-radius: 32px 32px 0 0;
@@ -1342,18 +1351,6 @@ body:has(.tv-app) {
 .tv-row-card-text { display: grid; flex: 1; min-width: 0; }
 .tv-row-card-text strong { font-weight: 800; font-size: 15px; }
 .tv-row-card-text span { font-weight: 700; font-size: 13px; color: var(--tv-text-3); }
-.tv-profile-id { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-.tv-profile-id code {
-  max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  padding: 4px 10px;
-  border-radius: 10px;
-  background: var(--tv-option-bg);
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--tv-text-3);
-}
 .tv-account-foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
 .tv-email { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 700; font-size: 14px; color: var(--tv-text-3); }
 

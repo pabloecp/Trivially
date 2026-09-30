@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
-import { api } from "./api.js";
+import { api, setAuthToken } from "./api.js";
 import { emitAck, getSocket, reconnectSocket, setSocketTokenProvider } from "./socket.js";
 import { BACKEND_URL } from "./config.js";
 
@@ -320,6 +320,7 @@ export function AppProvider({ children }) {
 
       async deleteAccount(confirmName) {
         await api("/api/auth/delete-account", { method: "DELETE", body: { confirmName } });
+        setAuthToken(null);
         applyUser(null);
         localStorage.removeItem("yoavlly_guest_name");
         localStorage.removeItem("yoavlly_guest_id");
@@ -393,6 +394,7 @@ export function AppProvider({ children }) {
 
       async logout() {
         try { await api("/api/auth/logout", { method: "POST" }); } catch {}
+        setAuthToken(null);
         applyUser(null);
         localStorage.removeItem("yoavlly_guest_name");
         localStorage.removeItem("yoavlly_guest_id");

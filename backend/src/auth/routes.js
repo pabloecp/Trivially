@@ -20,7 +20,7 @@ import {
 import { createGoogleAuthUrl, exchangeGoogleCode, googleConfigured } from "./google.js";
 import { authRateLimit } from "./rateLimit.js";
 import { hasRole, ROLES } from "./roles.js";
-import { consumeTicket, createSocketToken, createTicket } from "./socketToken.js";
+import { consumeTicket, createAuthToken, createSocketToken, createTicket } from "./socketToken.js";
 import crypto from "node:crypto";
 
 /** Express middleware: only lets through signed-in users with at least `minRole`. */
@@ -61,14 +61,14 @@ export function createApiRouter({ catalog, store }) {
         return res.status(401).json({ error: "Tu sesión expiró. Vuelve a iniciar sesión." });
       }
       const user = upsertUser(store, { id, name, avatar });
-      return res.json({ user: sanitizeUser(user), google: { configured: googleConfigured() } });
+      return res.json({ user: sanitizeUser(user), authToken: createAuthToken(user.id), google: { configured: googleConfigured() } });
     }
 
     if (!String(id).startsWith("gst_")) return res.status(400).json({ error: "Identificador de invitado no válido" });
     // Never downgrade a signed-in account to a guest (e.g. a stale guest saved in the browser racing a login).
     const current = req.session?.userId ? store.users[req.session.userId] : null;
     if (current && !current.isGuest) {
-      return res.json({ user: sanitizeUser(current), google: { configured: googleConfigured() } });
+      return res.json({ user: sanitizeUser(current), authToken: createAuthToken(current.id), google: { configured: googleConfigured() } });
     }
     // Guest ids are visible to everyone in a room, so an id that already belongs to another browser's session
     // gets a fresh one instead of being handed over. The client adopts whatever id comes back.
@@ -78,6 +78,7 @@ export function createApiRouter({ catalog, store }) {
     req.session.userId = user.id;
     res.json({
       user: sanitizeUser(user),
+      authToken: createAuthToken(user.id),
       google: { configured: googleConfigured() },
     });
   });
@@ -99,7 +100,7 @@ export function createApiRouter({ catalog, store }) {
       const safeUser = registerWithPassword(store, { name, email, password, avatar, guestId });
 
       req.session.userId = safeUser.id;
-      res.json({ ok: true, user: safeUser });
+      res.json({ ok: true, user: safeUser, authToken: createAuthToken(safeUser.id) });
     } catch (err) {
       res.status(400).json({ error: err.message });
     }
@@ -115,7 +116,7 @@ export function createApiRouter({ catalog, store }) {
       const safeUser = loginWithPassword(store, { identifier: loginId, password, guestId });
 
       req.session.userId = safeUser.id;
-      res.json({ ok: true, user: safeUser });
+      res.json({ ok: true, user: safeUser, authToken: createAuthToken(safeUser.id) });
     } catch (err) {
       res.status(400).json({ error: err.message });
     }
@@ -129,7 +130,7 @@ export function createApiRouter({ catalog, store }) {
     const previous = req.session?.userId;
     if (previous && previous !== user.id) claimGuestStats(store, user.id, previous);
     req.session.userId = user.id;
-    res.json({ ok: true, user: sanitizeUser(user) });
+    res.json({ ok: true, user: sanitizeUser(user), authToken: createAuthToken(user.id) });
   });
 
   router.post("/auth/logout", (req, res) => {
@@ -192,6 +193,7 @@ export function createApiRouter({ catalog, store }) {
 
     res.json({
       user,
+      authToken: rawUser ? createAuthToken(rawUser.id) : null,
       linkingStatus,
       google: { configured: googleConfigured() },
     });

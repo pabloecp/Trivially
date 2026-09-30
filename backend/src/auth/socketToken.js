@@ -50,18 +50,39 @@ export function consumeTicket(ticket, kind, now = Date.now()) {
   return data.uid;
 }
 
-/** Returns the user id inside a valid, unexpired token, otherwise null. */
-export function verifySocketToken(token, now = Date.now()) {
+/** Returns the payload of a correctly signed, unexpired token, otherwise null. */
+function readToken(token, now) {
   if (typeof token !== "string") return null;
   const [payload, sig] = token.split(".");
   if (!payload || !sig) return null;
   const expected = sign(payload);
   if (sig.length !== expected.length || !crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(expected))) return null;
   try {
-    const { uid, exp } = JSON.parse(Buffer.from(payload, "base64url").toString("utf8"));
-    if (!uid || typeof exp !== "number" || exp < now) return null;
-    return uid;
+    const data = JSON.parse(Buffer.from(payload, "base64url").toString("utf8"));
+    if (!data.uid || typeof data.exp !== "number" || data.exp < now) return null;
+    return data;
   } catch {
     return null;
   }
+}
+
+/** Returns the user id inside a valid, unexpired token, otherwise null. */
+export function verifySocketToken(token, now = Date.now()) {
+  return readToken(token, now)?.uid || null;
+}
+
+// Some phone browsers (Safari with tracking protection, in-app browsers) don't keep our session cookie, so every
+// login also hands the browser this long-lived token. The site sends it back as `Authorization: Bearer …` and the
+// server treats it like the cookie (see index.js).
+const AUTH_TTL_MS = 30 * 24 * 60 * 60 * 1000;
+
+export function createAuthToken(userId, now = Date.now()) {
+  const payload = Buffer.from(JSON.stringify({ uid: userId, kind: "auth", exp: now + AUTH_TTL_MS })).toString("base64url");
+  return `${payload}.${sign(payload)}`;
+}
+
+/** Returns the user id of a valid session token (never a socket token or a ticket), otherwise null. */
+export function verifyAuthToken(token, now = Date.now()) {
+  const data = readToken(token, now);
+  return data?.kind === "auth" ? data.uid : null;
 }

@@ -7,7 +7,6 @@ import Avatar from "../components/home/Avatar.jsx";
 import CountUp from "../components/home/CountUp.jsx";
 import GoogleIcon from "../components/home/GoogleIcon.jsx";
 import Icon from "../components/home/Icon.jsx";
-import { profilePath } from "../components/home/PlayerName.jsx";
 
 const STATS = [
   { key: "totalScore", label: "Puntuación total", color: "pink" },
@@ -53,7 +52,6 @@ function ProfileScreen() {
   const [msg, setMsg] = useState("");
   const [err, setErr] = useState("");
   const [notFound, setNotFound] = useState(false);
-  const [copied, setCopied] = useState(false);
 
   // Load user data
   useEffect(() => {
@@ -119,33 +117,17 @@ function ProfileScreen() {
     return <Navigate to="/login?returnTo=/profile" replace />;
   }
 
-  // Your own profile always lives at /profile/<your id>, so the address can be shared as is.
-  if (!userId) {
-    return <Navigate to={profilePath(currentUser.id)} replace />;
-  }
-
   if (isOtherUser && notFound) {
     return (
       <div className="tv-card tv-lobby-guest">
         <h1 className="tv-lobby-title">Perfil no encontrado</h1>
-        <p className="tv-lobby-sub">No existe ningún jugador con el id <strong>{userId}</strong>.</p>
+        <p className="tv-lobby-sub">Este jugador no existe o borró su cuenta.</p>
         <Link to="/" className="tv-btn tv-btn--block tv-c-pink">
           <Icon name="home" size={18} />
           Volver al inicio
         </Link>
       </div>
     );
-  }
-
-  async function copyProfileLink() {
-    const url = `${window.location.origin}${profilePath(activeUser.id)}`;
-    try {
-      await navigator.clipboard.writeText(url);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch {
-      setMsg(`Enlace de tu perfil: ${url}`);
-    }
   }
 
   const activeUser = isOtherUser ? profileData : currentUser;
@@ -199,12 +181,6 @@ function ProfileScreen() {
                 Google
               </span>
             )}
-          </div>
-          <div className="tv-profile-id">
-            <code title="Id del jugador">{activeUser?.id}</code>
-            <button type="button" className="tv-mini-btn" onClick={copyProfileLink}>
-              {copied ? "¡Copiado!" : "Copiar enlace"}
-            </button>
           </div>
         </div>
         {!isOtherUser && (

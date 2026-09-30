@@ -15,6 +15,7 @@ import {
   handleGoogleFinish,
   handleGoogleRedirect,
 } from "./auth/routes.js";
+import { verifyAuthToken } from "./auth/socketToken.js";
 import { attachSockets } from "./realtime/sockets.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -76,6 +77,15 @@ app.use(
     secure: isCrossSite,
   })
 );
+
+// Fallback for browsers that drop the session cookie (mostly phones): the site also sends the token it got at
+// login, and a valid one decides who the request belongs to.
+app.use((req, _res, next) => {
+  const match = /^Bearer (.+)$/.exec(req.headers.authorization || "");
+  const userId = match ? verifyAuthToken(match[1]) : null;
+  if (userId && store.users[userId] && req.session.userId !== userId) req.session.userId = userId;
+  next();
+});
 
 app.get("/health", (_req, res) => res.json({ ok: true, name: "YOAVLLY" }));
 

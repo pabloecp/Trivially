@@ -25,3 +25,11 @@ assert.equal(consumeTicket(ticket, "login"), null, "tickets work once");
 assert.equal(consumeTicket(createTicket("usr_2", "login", 1000, Date.now() - 5000), "login"), null, "expired");
 assert.equal(consumeTicket(createSocketToken("usr_2"), "login"), null, "socket tokens can't log in");
 console.log("tickets ok");
+
+// Session tokens (the cookie fallback): only their own kind counts, and they expire after 30 days.
+import { createAuthToken, verifyAuthToken } from "./socketToken.js";
+assert.equal(verifyAuthToken(createAuthToken("usr_3")), "usr_3");
+assert.equal(verifyAuthToken(createSocketToken("usr_3")), null, "a socket token is not a session");
+assert.equal(verifyAuthToken(createTicket("usr_3", "login")), null, "a ticket is not a session");
+assert.equal(verifyAuthToken(createAuthToken("usr_3", Date.now() - 31 * 24 * 60 * 60 * 1000)), null, "expired");
+console.log("auth tokens ok");
