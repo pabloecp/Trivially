@@ -88,12 +88,9 @@
 .tv-c-mint { --c1: var(--tv-mint); --c2: var(--tv-mint-2); --edge: var(--tv-mint-edge); --on: #0a0a0a; }
 .tv-c-neutral { --c1: var(--tv-neutral); --c2: var(--tv-neutral-2); --edge: var(--tv-neutral-edge); --on: var(--tv-neutral-on); }
 
-/* Overscroll area around the app. No rubber-band bounce either: on phones it pulled the page away from the edges
-   and showed this flat colour past the end of the background. */
-html:has(.tv-app),
+/* Overscroll area around the app */
 body:has(.tv-app) {
   background: var(--tv-bg);
-  overscroll-behavior-y: none;
 }
 
 .tv-app {
@@ -1190,6 +1187,19 @@ body:has(.tv-app) {
 .tv-tag--admin { background: #f050ae; color: #fff; }
 .tv-tag--moderator { background: #33a8c7; color: #fff; }
 .tv-tag-sparkle { animation: ownerSparkleMain 2.2s ease-in-out infinite; }
+/* Owner: little sparkles twinkling around the tag. */
+.tv-tag--owner { position: relative; overflow: visible; }
+.tv-tag-glint {
+  position: absolute;
+  color: var(--tv-violet);
+  pointer-events: none;
+  filter: drop-shadow(0 0 3px rgba(255, 255, 255, 0.6));
+}
+.tv-tag-glint--1 { top: -9px; right: -7px; animation: ownerSparkleMini1 1.8s ease-in-out infinite; }
+.tv-tag-glint--2 { bottom: -7px; left: -6px; animation: ownerSparkleMini2 2.4s ease-in-out infinite; }
+.tv-tag-glint--3 { top: -8px; left: 30%; animation: ownerSparkleMini1 2.1s ease-in-out 0.6s infinite; }
+/* Registrado: Instagram-style verified badge that pulses like the owner star. */
+.tv-tag-verified { animation: verifiedBadgePulse 2.2s ease-in-out infinite; }
 .tv-tag--points { background: var(--brand); color: var(--on-brand); font-size: 16px; padding: 7px 14px; }
 .tv-tag--streak { background: #ffab00; color: #0a0a0a; font-size: 16px; padding: 7px 14px; }
 .tv-live { display: inline-flex; align-items: center; gap: 8px; font-weight: 800; font-size: 13px; color: var(--tv-text-3); }
