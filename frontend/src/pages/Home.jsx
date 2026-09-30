@@ -139,7 +139,7 @@ export default function Home() {
             { label: "Opción 3 · Cómo se juega", Side: HowToPlay },
             { label: "Opción 4 · Dato curioso del día", Side: DailyFact },
             { label: "Opción 5 · Carrusel de categorías", Side: ModeCarousel },
-            { label: "Opción 6 · Logo, pregunta del día y dato curioso", Side: null, Below: [DailyQuestion, DailyFact] },
+            { label: "Opción 6 · Logo y cómo se juega", Side: null, Below: [HowToPlay] },
           ].map(({ label, Side, Below = [] }, i) => (
             <div key={label} className={`tv-stage${Side ? " tv-stage--split" : " tv-stage--solo"}`}>
               <p className="tv-stage-label">{label}</p>

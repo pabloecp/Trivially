@@ -515,20 +515,7 @@ body:has(.tv-app) {
   font-weight: 700;
   font-size: 12px;
 }
-.tv-step-code {
-  flex-shrink: 0;
-  padding: 6px 10px;
-  border-radius: 10px;
-  background: var(--tv-yellow);
-  box-shadow: 0 3px 0 var(--tv-yellow-edge);
-  color: #0a0a0a;
-  font-family: var(--tv-display);
-  font-weight: 700;
-  font-size: 14px;
-  letter-spacing: 0.12em;
-}
 @media (max-width: 420px) {
-  .tv-step-code { display: none; }
   .tv-qopts { grid-template-columns: minmax(0, 1fr); }
 }
 .tv-play-icon { background: var(--tv-violet); color: #0a0a0a; }
