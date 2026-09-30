@@ -178,8 +178,20 @@ export default function Home() {
           ))
         )}
 
+        {room && ModeLobby && (
+          <section key={roomMode.id} className="tv-room-game" aria-label={roomMode.name}>
+            <h2 className="tv-section-title tv-room-game-title">
+              <span className={`tv-badge tv-c-${roomMode.color}`}>
+                <Icon name={roomMode.icon} size={20} />
+              </span>
+              {roomMode.name}
+            </h2>
+            <ModeLobby room={room} onToast={showToast} />
+          </section>
+        )}
+
         {/* The games only show up once you're in a room; Jugar is the way in. The room screen stays put: picking a
-            game swaps the panel below it, for every player at once. */}
+            game swaps the panel above, for every player at once. */}
         {room && (
           <section className="tv-modes" aria-labelledby="tv-modes-title">
             <h2 id="tv-modes-title" className="tv-section-title">
@@ -197,18 +209,6 @@ export default function Home() {
                 />
               ))}
             </div>
-          </section>
-        )}
-
-        {room && ModeLobby && (
-          <section key={roomMode.id} className="tv-room-game" aria-label={roomMode.name}>
-            <h2 className="tv-section-title tv-room-game-title">
-              <span className={`tv-badge tv-c-${roomMode.color}`}>
-                <Icon name={roomMode.icon} size={20} />
-              </span>
-              {roomMode.name}
-            </h2>
-            <ModeLobby room={room} onToast={showToast} />
           </section>
         )}
       </main>
