@@ -1,7 +1,7 @@
 import Icon from "./Icon.jsx";
 
 const STEPS = [
-  { icon: "users", color: "pink", title: "Elige un modo", text: "Música, cultura general, cine, geografía… lo que más te guste." },
+  { icon: "users", color: "pink", title: "Elige un modo", text: "Música, cultura general, cine o lo que más te guste." },
   { icon: "hash", color: "violet", title: "Crea una sala", text: "Comparte el código con tus amigos o juega solo." },
   { icon: "bolt", color: "sky", title: "Responde antes que nadie", text: "Cuanto más rápido aciertes, más puntos sumas." },
 ];
