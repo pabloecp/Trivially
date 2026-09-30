@@ -72,9 +72,8 @@ export default function Home() {
   const { code: inviteParam } = useParams();
   const inviteCode = inviteParam?.toUpperCase();
   const nav = useNavigate();
-  const { theme, toggleTheme } = useTheme();
+  const { theme, toggleTheme, canToggle } = useTheme();
   const [sheetOpen, setSheetOpen] = useState(false);
-  const [sheetMode, setSheetMode] = useState(null);
   const [sheetJoinCode, setSheetJoinCode] = useState(null);
   const [toast, setToast] = useState(null);
   const playRef = useRef(null);
@@ -90,8 +89,7 @@ export default function Home() {
     toastTimer.current = setTimeout(() => setToast(null), 2600);
   }, []);
 
-  function openSheet(mode = null, joinCode = null) {
-    setSheetMode(mode);
+  function openSheet(joinCode = null) {
     setSheetJoinCode(joinCode);
     setSheetOpen(true);
   }
@@ -106,7 +104,7 @@ export default function Home() {
   useEffect(() => {
     if (!inviteCode || room?.code === inviteCode || sheetOpen) return;
     if (!user?.name) {
-      openSheet(null, inviteCode);
+      openSheet(inviteCode);
       return;
     }
     joinRoom(inviteCode).catch((err) => {
@@ -115,12 +113,11 @@ export default function Home() {
     });
   }, [inviteCode, user?.name]);
 
+  // Only reachable from the mode grid, which is shown once we're in a room.
   function pickMode(mode, tile) {
     if (!mode.available) {
       shake(tile);
       showToast(`${mode.name} llega muy pronto`);
-    } else if (!room) {
-      openSheet(mode);
     } else if (room.game === mode.id) {
       nav(roomPath(room));
     } else if (!isHost) {
@@ -144,14 +141,16 @@ export default function Home() {
 
       <header className="tv-topbar">
         <ProfileChip user={user} />
-        <button
-          type="button"
-          className="tv-icon-btn"
-          onClick={toggleTheme}
-          aria-label={theme === "dark" ? "Cambiar a modo claro" : "Cambiar a modo oscuro"}
-        >
-          <Icon name={theme === "dark" ? "sun" : "moon"} size={22} />
-        </button>
+        {canToggle && (
+          <button
+            type="button"
+            className="tv-icon-btn"
+            onClick={toggleTheme}
+            aria-label={theme === "dark" ? "Cambiar a modo claro" : "Cambiar a modo oscuro"}
+          >
+            <Icon name={theme === "dark" ? "sun" : "moon"} size={22} />
+          </button>
+        )}
       </header>
 
       <main className="tv-main">
@@ -178,25 +177,27 @@ export default function Home() {
           </button>
         )}
 
-        <section className="tv-modes" aria-labelledby="tv-modes-title">
-          <h2 id="tv-modes-title" className="tv-section-title">
-            {choosing ? (isHost ? "Elige el juego" : "Juegos") : "Modos de juego"}
-          </h2>
-          <div className="tv-mode-grid">
-            {GAME_MODES.map((mode, i) => (
-              <ModeTile
-                key={mode.id}
-                mode={mode}
-                index={i}
-                showGo={!room || isHost || room.game === mode.id}
-                onPick={pickMode}
-              />
-            ))}
-          </div>
-        </section>
+        {room && (
+          <section className="tv-modes" aria-labelledby="tv-modes-title">
+            <h2 id="tv-modes-title" className="tv-section-title">
+              {choosing ? (isHost ? "Elige el juego" : "Juegos") : "Modos de juego"}
+            </h2>
+            <div className="tv-mode-grid">
+              {GAME_MODES.map((mode, i) => (
+                <ModeTile
+                  key={mode.id}
+                  mode={mode}
+                  index={i}
+                  showGo={isHost || room.game === mode.id}
+                  onPick={pickMode}
+                />
+              ))}
+            </div>
+          </section>
+        )}
       </main>
 
-      <PlaySheet mode={sheetMode} joinCode={sheetJoinCode} open={sheetOpen} onClose={closeSheet} />
+      <PlaySheet joinCode={sheetJoinCode} open={sheetOpen} onClose={closeSheet} />
 
       <div className="tv-toast-region" role="status" aria-live="polite">
         {toast && (

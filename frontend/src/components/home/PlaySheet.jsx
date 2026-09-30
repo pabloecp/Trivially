@@ -12,10 +12,9 @@ const TITLES = {
   name: "¿Cómo te llamas?",
 };
 
-// Bottom sheet to create or join a room. With `mode`, a new room goes straight into that game; without it the
-// room starts on Home so the host can pick. With `joinCode` (an invite link opened by someone with no name yet)
-// it asks for a name and then joins that room.
-export default function PlaySheet({ mode, joinCode, open, onClose }) {
+// Bottom sheet to create or join a room. A new room starts on Home so the host can pick the game. With
+// `joinCode` (an invite link opened by someone with no name yet) it asks for a name and then joins that room.
+export default function PlaySheet({ joinCode, open, onClose }) {
   const { user, saveGuest, createRoom, joinRoom } = useApp();
   const sheetRef = useRef(null);
   const dragStart = useRef(null);
@@ -120,7 +119,7 @@ export default function PlaySheet({ mode, joinCode, open, onClose }) {
     setBusy(true);
     setError("");
     try {
-      if (action.type === "create") await createRoom("multi", {}, mode?.id ?? null);
+      if (action.type === "create") await createRoom("multi", {}, null);
       else await joinRoom(action.code);
       onClose(); // the room navigator takes the player wherever the room is
     } catch (err) {
@@ -181,11 +180,11 @@ export default function PlaySheet({ mode, joinCode, open, onClose }) {
           >
             <span className="tv-sheet-handle" />
             <div className="tv-sheet-head">
-              <span className={`tv-badge tv-c-${mode?.color || "yellow"}`}>
-                <Icon name={mode?.icon || "users"} size={26} />
+              <span className="tv-badge tv-c-yellow">
+                <Icon name="users" size={26} />
               </span>
               <div>
-                <p className="tv-sheet-kicker">{mode?.name || "Multijugador"}</p>
+                <p className="tv-sheet-kicker">Multijugador</p>
                 <h2 id="tv-sheet-title" className="tv-sheet-title">{TITLES[step]}</h2>
               </div>
             </div>
@@ -206,7 +205,7 @@ export default function PlaySheet({ mode, joinCode, open, onClose }) {
                   </span>
                   <span className="tv-option-text">
                     <strong>{busy ? "Creando sala…" : "Crear sala"}</strong>
-                    <span>{mode ? "Juega solo o invita a tus amigos" : "Invita a tus amigos y elijan juego"}</span>
+                    <span>Invita a tus amigos y elijan juego</span>
                   </span>
                   <Icon name="chevron" size={22} className="tv-option-chevron" />
                 </button>

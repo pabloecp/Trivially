@@ -6,7 +6,7 @@ import UserAvatar from "./UserAvatar.jsx";
 
 export default function Layout({ children }) {
   const { user, error } = useApp();
-  const { theme, toggleTheme } = useTheme();
+  const { theme, toggleTheme, canToggle } = useTheme();
 
   return (
     <div className="shell">
@@ -19,15 +19,17 @@ export default function Layout({ children }) {
           <div className="nav-links">
             <NavLink to="/">Jugar</NavLink>
 
-            {/* Theme Toggle Button */}
-            <button
-              type="button"
-              className="theme-toggle-btn"
-              onClick={toggleTheme}
-              title={theme === "dark" ? "Cambiar a modo claro" : "Cambiar a modo oscuro"}
-            >
-              {theme === "dark" ? "🌙" : "☀️"}
-            </button>
+            {/* Theme Toggle Button (hidden while the app is dark-only) */}
+            {canToggle && (
+              <button
+                type="button"
+                className="theme-toggle-btn"
+                onClick={toggleTheme}
+                title={theme === "dark" ? "Cambiar a modo claro" : "Cambiar a modo oscuro"}
+              >
+                {theme === "dark" ? "🌙" : "☀️"}
+              </button>
+            )}
 
             {user && !user.isGuest ? (
               <NavLink to="/profile" className="user-nav-chip">
