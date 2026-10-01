@@ -1724,7 +1724,20 @@ body:has(.tv-app) {
   box-shadow: 0 6px 0 var(--tv-edge), 0 20px 40px -16px rgba(0, 0, 0, 0.5);
   animation: tvDropIn 0.3s var(--tv-spring);
 }
-.tv-suggest-list { display: grid; grid-template-columns: minmax(0, 1fr); gap: 4px; max-height: 300px; overflow-y: auto; margin: 0; padding: 0; list-style: none; }
+/* Scrolls without showing bars (they looked out of place on the dark card); the wheel, touch and arrow keys still work. */
+.tv-suggest-list {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 4px;
+  max-height: 300px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  scrollbar-width: none;
+}
+.tv-suggest-list::-webkit-scrollbar { display: none; }
 .tv-suggest-list li { animation: tvSlideIn 0.3s var(--tv-spring) backwards; animation-delay: calc(var(--i) * 30ms); }
 .tv-suggest-item {
   display: grid;
