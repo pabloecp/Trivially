@@ -22,9 +22,9 @@ export function findMode(id) {
   return GAME_MODES.find((m) => m.id === id) || null;
 }
 
-// The screen a room's players belong on: the room screen on Home while nobody is playing (whatever game is
-// picked), otherwise that game's own screens.
+// The screen a room's players belong on: the room screen (/sala/CODE, Home with the room) while nobody is playing,
+// whatever game is picked, otherwise that game's own screens.
 export function roomPath(room) {
   const mode = findMode(room.game);
-  return room.phase !== "lobby" && mode?.path ? mode.path(room) : "/";
+  return room.phase !== "lobby" && mode?.path ? mode.path(room) : `/sala/${room.code}`;
 }

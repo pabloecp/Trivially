@@ -42,6 +42,66 @@ function ModeTile({ mode, index, showGo, selected, onPick }) {
   );
 }
 
+// The host's "Cambiar juego": every game in a little menu, to switch right from the game's header.
+function ModeMenu({ current, onPick }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+
+  useEffect(() => {
+    if (!open) return undefined;
+    const away = (e) => !ref.current?.contains(e.target) && setOpen(false);
+    const esc = (e) => e.key === "Escape" && setOpen(false);
+    document.addEventListener("pointerdown", away);
+    document.addEventListener("keydown", esc);
+    return () => {
+      document.removeEventListener("pointerdown", away);
+      document.removeEventListener("keydown", esc);
+    };
+  }, [open]);
+
+  return (
+    <div ref={ref} className="tv-mode-menu-wrap">
+      <button type="button" className="tv-switch-btn" aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen((v) => !v)}>
+        Cambiar juego
+        <Icon name="chevron" size={14} strokeWidth={3} className="tv-switch-icon" />
+      </button>
+      {open && (
+        <div className="tv-mode-menu" role="menu">
+          {GAME_MODES.map((mode) => (
+            <button
+              key={mode.id}
+              type="button"
+              role="menuitemradio"
+              aria-checked={mode.id === current}
+              className="tv-mode-menu-item"
+              disabled={!mode.available}
+              onClick={() => {
+                setOpen(false);
+                onPick(mode);
+              }}
+            >
+              <span className={`tv-badge tv-c-${mode.color}`}>
+                <Icon name={mode.icon} size={16} />
+              </span>
+              <span className="tv-mode-menu-name">{mode.name}</span>
+              {mode.id === current ? (
+                <Icon name="check" size={16} strokeWidth={3} className="tv-mode-menu-check" />
+              ) : (
+                !mode.available && (
+                  <span className="tv-mode-menu-soon">
+                    <Icon name="lock" size={11} strokeWidth={3} />
+                    Pronto
+                  </span>
+                )
+              )}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function shake(tile) {
   tile.classList.remove("is-shaking");
   void tile.getBoundingClientRect(); // restart the shake animation
@@ -168,14 +228,10 @@ export default function Home() {
                 {roomMode.name}
               </h2>
               {isHost && (
-                <button
-                  type="button"
-                  className="tv-switch-btn"
-                  onClick={() => modesRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })}
-                >
-                  Cambiar juego
-                  <Icon name="chevron" size={14} strokeWidth={3} className="tv-switch-icon" />
-                </button>
+                <ModeMenu
+                  current={room.game}
+                  onPick={(mode) => mode.id !== room.game && setGame(mode.id).catch((err) => showToast(err.message))}
+                />
               )}
             </div>
             <ModeLobby room={room} onToast={showToast} />
@@ -184,7 +240,8 @@ export default function Home() {
 
         {/* The games only show up once you're in a room; Jugar is the way in. The room screen stays put: picking a
             game swaps the panel above, for every player at once. */}
-        {room && (
+        {/* Once a game is picked, the host switches it from the menu in its header instead. */}
+        {choosing && (
           <section ref={modesRef} className="tv-modes" aria-labelledby="tv-modes-title">
             <h2 id="tv-modes-title" className="tv-section-title">
               {choosing ? (isHost ? "Elige el juego" : "Juegos") : isHost ? "Cambiar de juego" : "Juego"}

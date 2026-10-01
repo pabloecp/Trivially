@@ -58,7 +58,6 @@ function configKey(config) {
   return JSON.stringify([config?.playlistIds || [], config?.rounds, config?.roundMs]);
 }
 
-// The match settings, right on the room screen. Every tap is saved straight away for the whole room; the local
 // Album covers of the chosen playlists sliding by in two rows, so you can see what kind of songs are coming.
 // Each row is drawn twice in a row and slides half its width, which loops without a jump.
 function CoverStrip({ covers }) {
@@ -80,8 +79,8 @@ function CoverStrip({ covers }) {
   );
 }
 
-// copy only keeps the tap visible until the server's new state arrives. `children` go at the bottom of the card
-// (the host's "who may change the settings" chips).
+// The match settings, right on the room screen. Every tap is saved straight away for the whole room; the local
+// copy only keeps the tap visible until the server's new state arrives. `children` go at the bottom of the card.
 // With `readOnly` (players without permission to change them) everything shows but nothing can be tapped.
 export default function MusicSettings({ room, catalog, updateConfig, onToast, children, readOnly = false }) {
   const { user, listSpotifyPlaylists, addSpotifyPlaylist, connectSpotify } = useApp();

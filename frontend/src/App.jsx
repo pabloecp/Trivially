@@ -42,8 +42,10 @@ function RoomNavigator() {
       if (screenCode === room.code) nav(target, { replace: true });
       return;
     }
-    // Anywhere else (Home, profile...) follow the room only when a match starts.
-    if (moved && target !== "/") nav(target);
+    // On Home the address becomes the room's own (/sala/CODE) as soon as you create or join one. Other pages
+    // (profile...) are only left when a match starts.
+    if (pathname === "/") nav(target, { replace: true });
+    else if (moved && !target.startsWith("/sala/")) nav(target);
   }, [target, pathname]);
 
   return null;

@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useApp } from "../../lib/store.jsx";
 import Avatar from "./Avatar.jsx";
 import Icon from "./Icon.jsx";
-import PlayerName from "./PlayerName.jsx";
+import { profilePath } from "./PlayerName.jsx";
 
 function playerTag(player, { isMe, isHost }) {
   if (!player.connected) return "Reconectando…";
@@ -12,13 +13,70 @@ function playerTag(player, { isMe, isHost }) {
   return "En la sala";
 }
 
+// What tapping a player offers: their profile (registered players), and for the host, letting them change the
+// match settings or not.
+function PlayerMenu({ player, isMe, canManage, onClose, onToast }) {
+  const { toggleConfigPermission } = useApp();
+  const ref = useRef(null);
+
+  useEffect(() => {
+    const away = (e) => {
+      if (!ref.current?.parentElement?.contains(e.target)) onClose();
+    };
+    const esc = (e) => e.key === "Escape" && onClose();
+    document.addEventListener("pointerdown", away);
+    document.addEventListener("keydown", esc);
+    return () => {
+      document.removeEventListener("pointerdown", away);
+      document.removeEventListener("keydown", esc);
+    };
+  }, [onClose]);
+
+  async function togglePermission() {
+    onClose();
+    try {
+      const res = await toggleConfigPermission(player.id);
+      onToast?.(res?.granted ? `${player.name} ya puede cambiar los ajustes` : `${player.name} ya no puede cambiar los ajustes`, "check");
+    } catch (err) {
+      onToast?.(err.message || "No se pudieron cambiar los permisos");
+    }
+  }
+
+  return (
+    <div ref={ref} className="tv-player-menu" role="menu">
+      {player.isGuest ? (
+        <p className="tv-player-menu-note">{isMe ? "Juegas como invitado" : "Juega como invitado"}: sin perfil</p>
+      ) : (
+        // A new tab, so nobody loses their seat in the room.
+        <a role="menuitem" className="tv-player-menu-item" href={profilePath(player.id)} target="_blank" rel="noopener" onClick={onClose}>
+          <Icon name="user" size={16} strokeWidth={2.6} />
+          {isMe ? "Ver mi perfil" : "Ver perfil"}
+        </a>
+      )}
+      {canManage && (
+        <button type="button" role="menuitem" className="tv-player-menu-item" onClick={togglePermission}>
+          <Icon name={player.canEditConfig ? "lock" : "check"} size={16} strokeWidth={2.8} />
+          {player.canEditConfig ? "Quitar permiso de ajustes" : "Dar permiso de ajustes"}
+        </button>
+      )}
+    </div>
+  );
+}
+
 // The room card on Home: invite code and who's in.
 export default function PartyPanel({ room, onToast }) {
   const { user, leaveRoom } = useApp();
+  const nav = useNavigate();
   const [copied, setCopied] = useState(false);
+  const [menuFor, setMenuFor] = useState(null);
   const copiedTimer = useRef(0);
 
   useEffect(() => () => clearTimeout(copiedTimer.current), []);
+
+  function leave() {
+    leaveRoom();
+    nav("/");
+  }
 
   const isHost = room.hostId === user?.id;
   const alone = room.players.length === 1;
@@ -55,20 +113,37 @@ export default function PartyPanel({ room, onToast }) {
           return (
             <li
               key={p.id}
-              className={`tv-player${isMe ? " is-me" : ""}${p.connected ? "" : " is-away"}`}
+              className={`tv-player${isMe ? " is-me" : ""}${p.connected ? "" : " is-away"}${menuFor === p.id ? " is-open" : ""}`}
               style={{ "--i": i }}
             >
-              <span className="tv-player-avatar">
-                <Avatar name={p.name} avatar={p.avatar} />
-                {isHostPlayer && <Icon name="crown" size={18} strokeWidth={2} filled className="tv-player-crown" />}
-              </span>
-              <span className="tv-player-text">
-                <PlayerName player={p} className="tv-player-name" />
-                <span className="tv-player-tag">
-                  {playerTag(p, { isMe, isHost: isHostPlayer })}
-                  {!isHostPlayer && p.canEditConfig && " · ajustes"}
+              <button
+                type="button"
+                className="tv-player-btn"
+                aria-haspopup="menu"
+                aria-expanded={menuFor === p.id}
+                onClick={() => setMenuFor((cur) => (cur === p.id ? null : p.id))}
+              >
+                <span className="tv-player-avatar">
+                  <Avatar name={p.name} avatar={p.avatar} />
+                  {isHostPlayer && <Icon name="crown" size={18} strokeWidth={2} filled className="tv-player-crown" />}
                 </span>
-              </span>
+                <span className="tv-player-text">
+                  <span className="tv-player-name">{p.name}</span>
+                  <span className="tv-player-tag">
+                    {playerTag(p, { isMe, isHost: isHostPlayer })}
+                    {!isHostPlayer && p.canEditConfig && " · ajustes"}
+                  </span>
+                </span>
+              </button>
+              {menuFor === p.id && (
+                <PlayerMenu
+                  player={p}
+                  isMe={isMe}
+                  canManage={isHost && !isMe}
+                  onClose={() => setMenuFor(null)}
+                  onToast={onToast}
+                />
+              )}
             </li>
           );
         })}
@@ -85,8 +160,8 @@ export default function PartyPanel({ room, onToast }) {
         </p>
       )}
 
-      <button type="button" className="tv-link-btn tv-party-leave" onClick={leaveRoom}>
-        <Icon name="logout" size={18} />
+      <button type="button" className="tv-leave-btn" onClick={leave}>
+        <Icon name="logout" size={16} strokeWidth={2.6} />
         Salir de la sala
       </button>
     </section>

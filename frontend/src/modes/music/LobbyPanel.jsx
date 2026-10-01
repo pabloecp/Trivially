@@ -9,7 +9,7 @@ import { useApp } from "../../lib/store.jsx";
 // the match settings (playlists, rounds, time) for whoever may change them, and the start button.
 // Everyone sees the match settings; players without permission see them locked.
 export default function LobbyPanel({ room, onToast }) {
-  const { user, catalog, refreshCatalog, startGame, updateConfig, toggleConfigPermission } = useApp();
+  const { user, catalog, refreshCatalog, startGame, updateConfig } = useApp();
   const [startErr, setStartErr] = useState("");
 
   useEffect(() => {
@@ -25,7 +25,6 @@ export default function LobbyPanel({ room, onToast }) {
   const roundsSet = room.config?.rounds || 10;
   const enoughSongs = songsReady == null || songsReady >= roundsSet;
   const canStart = connected.length > 0 && enoughSongs;
-  const others = room.players.filter((p) => p.id !== room.hostId);
 
   const playlists = catalog?.playlists || [];
   const chosenIds = room.config?.playlistIds || [];
@@ -49,16 +48,6 @@ export default function LobbyPanel({ room, onToast }) {
   // Each round: 3 s countdown + the guessing time + 7 s showing the answer.
   const minutes = Math.max(1, Math.round((rounds * (3 + seconds + 7)) / 60));
 
-  // The host decides who else may change the settings.
-  async function togglePermission(player) {
-    try {
-      const res = await toggleConfigPermission(player.id);
-      onToast?.(res?.granted ? `${player.name} ya puede cambiar los ajustes` : `${player.name} ya no puede cambiar los ajustes`, "check");
-    } catch (err) {
-      onToast?.(err.message || "No se pudieron cambiar los permisos");
-    }
-  }
-
   async function onStartGame() {
     setStartErr("");
     try {
@@ -70,27 +59,7 @@ export default function LobbyPanel({ room, onToast }) {
 
   return (
     <div className="tv-lobby-grid has-settings">
-      <MusicSettings room={room} catalog={catalog} updateConfig={updateConfig} onToast={onToast} readOnly={!canEditConfig}>
-        {isHost && others.length > 0 && (
-          <div className="tv-perm">
-            <p className="tv-stat-label">Pueden cambiar los ajustes</p>
-            <div className="tv-perm-list">
-              {others.map((p) => (
-                <button
-                  key={p.id}
-                  type="button"
-                  className={`tv-perm-chip${p.canEditConfig ? " is-on" : ""}`}
-                  aria-pressed={Boolean(p.canEditConfig)}
-                  onClick={() => togglePermission(p)}
-                >
-                  <Icon name={p.canEditConfig ? "check" : "lock"} size={14} strokeWidth={3} />
-                  {p.name}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-      </MusicSettings>
+      <MusicSettings room={room} catalog={catalog} updateConfig={updateConfig} onToast={onToast} readOnly={!canEditConfig} />
 
       <section className="tv-card tv-match" aria-label="Resumen de la partida">
         <h2 className="tv-card-title">Resumen de la partida</h2>

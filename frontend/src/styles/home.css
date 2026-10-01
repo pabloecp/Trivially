@@ -2139,3 +2139,124 @@ fieldset.tv-steppers { margin: 0; padding: 0; border: 0; min-width: 0; }
 .tv-settings fieldset:disabled .tv-stepper-btn { opacity: 0.35; }
 .tv-settings fieldset:disabled .tv-pick[aria-pressed="false"] { opacity: 0.55; }
 .tv-settings fieldset:disabled .tv-pick[aria-pressed="true"] { opacity: 1; }
+
+/* ---------- Room card: players you can tap, leave button ---------- */
+/* Inicio while in a room: the first tap turns it into the "leave?" question. */
+.tv-app .tv-chip--home.is-confirm { background: var(--tv-danger-bg); color: var(--tv-danger); }
+.tv-chip--home.is-confirm .tv-avatar { background: var(--tv-danger); color: #fff; }
+
+/* A player is a button: the whole chip lights up on hover, and tapping it opens their menu. */
+.tv-player { position: relative; padding: 0; transition: opacity 0.3s ease, box-shadow 0.15s ease; }
+.tv-player:hover,
+.tv-player.is-open { box-shadow: 0 3px 0 var(--tv-option-edge), inset 0 0 0 2px var(--tv-yellow); }
+.tv-player-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-width: 0;
+  padding: 8px 12px 8px 8px;
+  border: 0;
+  border-radius: 20px;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.tv-player-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  z-index: 20;
+  display: grid;
+  gap: 2px;
+  min-width: 220px;
+  padding: 6px;
+  border-radius: 16px;
+  background: var(--tv-surface);
+  box-shadow: 0 0 0 1px var(--tv-edge), 0 18px 36px -12px rgba(0, 0, 0, 0.6);
+  animation: tvDropIn 0.2s var(--tv-spring);
+}
+.tv-player-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 0;
+  border-radius: 11px;
+  background: none;
+  color: var(--tv-text);
+  font: inherit;
+  font-weight: 800;
+  font-size: 14px;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+.tv-player-menu-item:hover,
+.tv-player-menu-item:focus-visible { background: var(--tv-option-bg); }
+.tv-player-menu-note { margin: 0; padding: 10px 12px; font-weight: 700; font-size: 13px; color: var(--tv-text-3); }
+
+/* Leaving the room: small and red, so it reads as "get out". */
+.tv-leave-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-self: center;
+  gap: 6px;
+  margin-bottom: 6px;
+  padding: 7px 14px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--tv-danger-bg);
+  color: var(--tv-danger);
+  font: inherit;
+  font-weight: 800;
+  font-size: 13px;
+  cursor: pointer;
+  transition: transform 0.18s var(--tv-spring), background 0.2s ease;
+}
+.tv-leave-btn:hover { transform: translateY(-2px); background: rgba(241, 94, 108, 0.26); }
+.tv-leave-btn:active { transform: translateY(1px); }
+
+/* The host's "Cambiar juego" menu in the game's header. */
+.tv-mode-menu-wrap { position: relative; }
+.tv-switch-icon { transition: rotate 0.2s ease; }
+.tv-switch-btn[aria-expanded="true"] .tv-switch-icon { rotate: 180deg; }
+.tv-mode-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 20;
+  display: grid;
+  gap: 2px;
+  min-width: 270px;
+  padding: 6px;
+  border-radius: 16px;
+  background: var(--tv-surface);
+  box-shadow: 0 0 0 1px var(--tv-edge), 0 18px 36px -12px rgba(0, 0, 0, 0.6);
+  animation: tvDropIn 0.2s var(--tv-spring);
+}
+.tv-mode-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 12px;
+  background: none;
+  color: var(--tv-text);
+  font: inherit;
+  font-weight: 800;
+  font-size: 14px;
+  text-align: left;
+  cursor: pointer;
+}
+.tv-mode-menu-item .tv-badge { width: 30px; height: 30px; border-radius: 10px; }
+.tv-mode-menu-item:hover:not(:disabled),
+.tv-mode-menu-item[aria-checked="true"] { background: var(--tv-option-bg); }
+.tv-mode-menu-item:disabled { cursor: default; color: var(--tv-text-3); }
+.tv-mode-menu-item:disabled .tv-badge { opacity: 0.5; }
+.tv-mode-menu-name { flex: 1; white-space: nowrap; }
+.tv-mode-menu-check { color: var(--brand); }
+.tv-mode-menu-soon { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; color: var(--tv-text-3); }
