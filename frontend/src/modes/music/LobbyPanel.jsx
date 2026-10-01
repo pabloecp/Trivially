@@ -48,8 +48,6 @@ export default function LobbyPanel({ room, onToast }) {
 
   return (
     <div className="tv-lobby-grid has-settings">
-      <MusicSettings room={room} catalog={catalog} updateConfig={updateConfig} onToast={onToast} readOnly={!canEditConfig} />
-
       <section className="tv-card tv-match" aria-label="Resumen de la partida">
         <h2 className="tv-card-title">Resumen de la partida</h2>
 
@@ -123,6 +121,8 @@ export default function LobbyPanel({ room, onToast }) {
           </p>
         )}
       </section>
+
+      <MusicSettings room={room} catalog={catalog} updateConfig={updateConfig} onToast={onToast} readOnly={!canEditConfig} />
 
     </div>
   );
