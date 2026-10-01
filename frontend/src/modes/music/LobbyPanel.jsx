@@ -24,7 +24,7 @@ export default function LobbyPanel({ room, onToast }) {
   const playlists = catalog?.playlists || [];
   const chosen = playlists.filter((p) => room.config?.playlistIds?.includes(p.id));
   const playlistNames = (chosen.length ? chosen : playlists.filter((p) => p.isDefault)).map((p) => p.name.split(" · ").pop()).join(", ");
-  const rounds = room.config?.rounds || 5;
+  const rounds = room.config?.rounds || 10;
   const seconds = Math.round((room.config?.roundMs || 15000) / 1000);
   // Each round: 3 s countdown + the guessing time + 7 s showing the answer.
   const minutes = Math.max(1, Math.round((rounds * (3 + seconds + 7)) / 60));

@@ -1,8 +1,46 @@
 import { useEffect, useState } from "react";
 import Icon from "../../components/home/Icon.jsx";
 
-const ROUND_OPTIONS = [5, 10, 15, 20, 25];
-const TIME_OPTIONS = [15, 20, 25, 30];
+// Both steppers move in steps of 5. The server keeps the same limits (roomManager.updateConfig).
+const ROUNDS = { min: 5, max: 25, step: 5 };
+const SECONDS = { min: 10, max: 30, step: 5 };
+
+function Stepper({ label, value, unit, limits, onChange }) {
+  const { min, max, step } = limits;
+  return (
+    <div className="tv-stepper" role="group" aria-label={label}>
+      <span className="tv-label">{label}</span>
+      <div className="tv-stepper-row">
+        <button
+          type="button"
+          className="tv-stepper-btn"
+          onClick={() => onChange(Math.max(min, value - step))}
+          disabled={value <= min}
+          aria-label={`Menos ${label.toLowerCase()}`}
+        >
+          <Icon name="chevron" size={22} strokeWidth={3} className="tv-stepper-down" />
+        </button>
+        <span key={value} className="tv-stepper-value" aria-live="polite">
+          {value}
+          {unit && <small>{unit}</small>}
+        </span>
+        <button
+          type="button"
+          className="tv-stepper-btn"
+          onClick={() => onChange(Math.min(max, value + step))}
+          disabled={value >= max}
+          aria-label={`Más ${label.toLowerCase()}`}
+        >
+          <Icon name="chevron" size={22} strokeWidth={3} className="tv-stepper-up" />
+        </button>
+      </div>
+      <span className="tv-stepper-range">
+        de {min} a {max}
+        {unit ? ` ${unit}` : ""}
+      </span>
+    </div>
+  );
+}
 
 function configKey(config) {
   return JSON.stringify([config?.playlistIds || [], config?.rounds, config?.roundMs]);
@@ -23,7 +61,7 @@ export default function MusicSettings({ room, catalog, updateConfig, onToast, ch
 
   const known = (draft?.playlistIds || []).filter((id) => playlists.some((p) => p.id === id));
   const selected = known.length ? known : defaultIds;
-  const rounds = draft?.rounds || 5;
+  const rounds = draft?.rounds || 10;
   const seconds = Math.round((draft?.roundMs || 15000) / 1000);
   const songCount = playlists.filter((p) => selected.includes(p.id)).reduce((n, p) => n + p.trackCount, 0);
 
@@ -85,27 +123,10 @@ export default function MusicSettings({ room, catalog, updateConfig, onToast, ch
         )}
       </fieldset>
 
-      <fieldset className="tv-fieldset">
-        <legend className="tv-label">Rondas</legend>
-        <div className="tv-picks">
-          {ROUND_OPTIONS.map((n) => (
-            <button key={n} type="button" className="tv-pick" aria-pressed={rounds === n} onClick={() => save({ rounds: n })}>
-              {n}
-            </button>
-          ))}
-        </div>
-      </fieldset>
-
-      <fieldset className="tv-fieldset">
-        <legend className="tv-label">Segundos por ronda</legend>
-        <div className="tv-picks">
-          {TIME_OPTIONS.map((sec) => (
-            <button key={sec} type="button" className="tv-pick" aria-pressed={seconds === sec} onClick={() => save({ roundMs: sec * 1000 })}>
-              {sec} s
-            </button>
-          ))}
-        </div>
-      </fieldset>
+      <div className="tv-steppers">
+        <Stepper label="Rondas" value={rounds} limits={ROUNDS} onChange={(n) => save({ rounds: n })} />
+        <Stepper label="Segundos por ronda" value={seconds} unit="s" limits={SECONDS} onChange={(n) => save({ roundMs: n * 1000 })} />
+      </div>
 
       {children}
     </section>

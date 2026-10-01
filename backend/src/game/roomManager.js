@@ -30,7 +30,7 @@ export function createRoomCode(existing) {
 function defaultConfig(catalog) {
   const playlist = catalog?.playlists?.find((p) => p.isDefault) || catalog?.playlists?.[0];
   return {
-    rounds: 5,
+    rounds: 10,
     roundMs: ROUND_MS,
     playlistIds: playlist ? [playlist.id] : [],
   };
@@ -241,6 +241,9 @@ export class RoomManager {
     }
     if (room.phase !== "lobby") throw new Error("La partida ya comenzó");
     const next = { ...room.config, ...config };
+    // Same limits as the settings on screen: 5–25 rounds, 10–30 seconds to guess.
+    if (config?.rounds != null) next.rounds = Math.min(25, Math.max(5, Math.round(Number(config.rounds)) || 10));
+    if (config?.roundMs != null) next.roundMs = Math.min(30000, Math.max(10000, Math.round(Number(config.roundMs)) || ROUND_MS));
     if (config?.playlistIds) {
       const known = new Set(this.catalog.playlists.map((p) => p.id));
       next.playlistIds = config.playlistIds.filter((id) => known.has(id));
@@ -277,7 +280,7 @@ export class RoomManager {
     if (room.config?.customTracks && room.config.customTracks.length > 0) {
       const pool = room.config.customTracks;
       const shuffled = [...pool].sort(() => Math.random() - 0.5);
-      const rounds = Math.min(room.config.rounds || 5, shuffled.length);
+      const rounds = Math.min(room.config.rounds || 10, shuffled.length);
       for (let i = 0; i < rounds; i += 1) {
         tracks.push(shuffled[i % shuffled.length]);
       }
