@@ -137,32 +137,45 @@ export default function RoomConfigModal({ isOpen, onClose, currentConfig, catalo
           <legend className="tv-label">
             Playlists · <span className="tv-accent">{availableCount} canciones</span>
           </legend>
-          <div className="tv-playlists">
+          <div className="tv-picks">
             {playlists.map((p, i) => {
               const active = selectedPlaylists.includes(p.id);
+              // "Most Streamed Songs on Spotify · Español" shows as "Español" on its chip; the full name is the tooltip.
+              const label = p.name.split(" · ").pop();
               return (
                 <button
                   key={p.id}
                   type="button"
-                  className="tv-playlist"
+                  className="tv-pick tv-pick--playlist"
                   aria-pressed={active}
+                  aria-label={`${p.name}, ${p.trackCount} canciones`}
+                  title={p.name}
                   onClick={() => togglePlaylist(p.id)}
                   style={{ "--i": i }}
                 >
-                  <span className="tv-playlist-icon">
-                    <Icon name={active ? "check" : "music"} size={20} strokeWidth={active ? 3 : 2.4} />
+                  <span className="tv-pick-art">
+                    <Icon name={p.id === "top-global" ? "globe" : "music"} size={18} strokeWidth={2.4} />
                   </span>
-                  <span className="tv-playlist-text">
-                    <strong>{p.name}</strong>
-                    <span>
-                      {p.trackCount} canciones{p.isDefault ? " · por defecto" : ""}
-                    </span>
-                  </span>
+                  {label}
+                  <span className="tv-pick-count">{p.trackCount}</span>
                 </button>
               );
             })}
           </div>
-          <p className="tv-hint">Puedes elegir varias; las canciones se mezclan.</p>
+          <div className="tv-picks-tools">
+            <button type="button" className="tv-link-btn" onClick={() => setSelectedPlaylists(playlists.map((p) => p.id))} disabled={selectedPlaylists.length === playlists.length}>
+              Todas
+            </button>
+            <button type="button" className="tv-link-btn" onClick={() => setSelectedPlaylists(defaultPlaylistIds)} disabled={selectedPlaylists.length === 1 && selectedPlaylists[0] === defaultPlaylistIds[0]}>
+              Por defecto
+            </button>
+          </div>
+          <p key={`${selectedPlaylists.length}-${availableCount}`} className="tv-playlist-total" aria-live="polite">
+            <Icon name="music" size={16} strokeWidth={2.6} />
+            {selectedPlaylists.length === 1 ? "1 playlist" : `${selectedPlaylists.length} playlists`} ·{" "}
+            <strong>{preview ? `${availableCount} canciones` : "contando…"}</strong>
+          </p>
+          <p className="tv-hint">Elige todas las que quieras; sus canciones se mezclan en la partida.</p>
         </fieldset>
 
         <fieldset className="tv-fieldset">

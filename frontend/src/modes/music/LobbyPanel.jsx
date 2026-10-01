@@ -23,7 +23,7 @@ export default function LobbyPanel({ room, onToast }) {
 
   const playlists = catalog?.playlists || [];
   const chosen = playlists.filter((p) => room.config?.playlistIds?.includes(p.id));
-  const playlistNames = (chosen.length ? chosen : playlists.filter((p) => p.isDefault)).map((p) => p.name).join(" · ");
+  const playlistNames = (chosen.length ? chosen : playlists.filter((p) => p.isDefault)).map((p) => p.name.split(" · ").pop()).join(", ");
 
   // The host decides who else may change the settings.
   async function togglePermission(player) {
