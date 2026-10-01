@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import MusicSettings from "./MusicSettings.jsx";
 import Avatar from "../../components/home/Avatar.jsx";
 import Icon from "../../components/home/Icon.jsx";
+import SpotifyIcon from "../../components/home/SpotifyIcon.jsx";
 import { useApp } from "../../lib/store.jsx";
 
 // The music mode's waiting room, shown inside the room screen on Home once the host picks this game:
@@ -22,8 +23,17 @@ export default function LobbyPanel({ room, onToast }) {
   const others = room.players.filter((p) => p.id !== room.hostId);
 
   const playlists = catalog?.playlists || [];
-  const chosen = playlists.filter((p) => room.config?.playlistIds?.includes(p.id));
-  const playlistNames = (chosen.length ? chosen : playlists.filter((p) => p.isDefault)).map((p) => p.name.split(" · ").pop()).join(", ");
+  const chosenIds = room.config?.playlistIds || [];
+  const chosen = playlists.filter((p) => chosenIds.includes(p.id));
+  const custom = (room.customPlaylists || []).filter((p) => chosenIds.includes(p.id));
+  const playlistNames = [
+    ...(chosen.length || custom.length ? chosen : playlists.filter((p) => p.isDefault)).map((p) => p.name.split(" · ").pop()),
+    ...custom.map((p) => p.name),
+  ].join(", ");
+  // Spotify songs still being looked up: the match can start already, the rest join as they are found.
+  const loading = custom.filter((p) => p.loading);
+  const loadingReady = loading.reduce((n, p) => n + p.ready, 0);
+  const loadingTotal = loading.reduce((n, p) => n + p.total, 0);
   const rounds = room.config?.rounds || 10;
   const seconds = Math.round((room.config?.roundMs || 15000) / 1000);
   // Each round: 3 s countdown + the guessing time + 7 s showing the answer.
@@ -106,6 +116,15 @@ export default function LobbyPanel({ room, onToast }) {
             {connected.length === 1 ? "1 jugador en la sala" : `${connected.length} jugadores en la sala`}
           </div>
         </div>
+
+        {loading.length > 0 && (
+          <p className="tv-playlist-total tv-spotify-loading" aria-live="polite">
+            <SpotifyIcon size={18} />
+            <span>
+              Cargando canciones de Spotify: <strong>{loadingReady} de {loadingTotal}</strong> listas.{loadingReady > 0 || chosen.length ? " Ya puedes empezar." : ""}
+            </span>
+          </p>
+        )}
 
         {startErr && <p className="tv-lobby-error">{startErr}</p>}
 

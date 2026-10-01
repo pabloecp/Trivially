@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import Icon from "../../components/home/Icon.jsx";
+import SpotifyIcon from "../../components/home/SpotifyIcon.jsx";
 import { api } from "../../lib/api.js";
+import { useApp } from "../../lib/store.jsx";
 
 // Both steppers move in steps of 5. The server keeps the same limits (roomManager.updateConfig).
 const ROUNDS = { min: 5, max: 25, step: 5 };
@@ -43,6 +45,15 @@ function Stepper({ label, value, unit, limits, onChange }) {
   );
 }
 
+// A Spotify playlist's cover, or the Spotify logo when it has none.
+function PlaylistArt({ image }) {
+  return (
+    <span className={`tv-pick-art${image ? "" : " tv-pick-art--spotify"}`}>
+      {image ? <img src={image} alt="" loading="lazy" /> : <SpotifyIcon size={22} color="#000" waves="#1DB954" />}
+    </span>
+  );
+}
+
 function configKey(config) {
   return JSON.stringify([config?.playlistIds || [], config?.rounds, config?.roundMs]);
 }
@@ -70,7 +81,14 @@ function CoverStrip({ covers }) {
 // copy only keeps the tap visible until the server's new state arrives. `children` go at the bottom of the card
 // (the host's "who may change the settings" chips).
 export default function MusicSettings({ room, catalog, updateConfig, onToast, children }) {
+  const { user, listSpotifyPlaylists, addSpotifyPlaylist } = useApp();
   const playlists = catalog?.playlists || [];
+  // Spotify playlists the host already added to the room (everyone who edits the settings sees these).
+  const custom = room.customPlaylists || [];
+  // Only an owner who hosts the room, with Spotify connected, gets the "+" with their playlists.
+  const canSpotify = room.hostId === user?.id && user?.role === "owner" && Boolean(user?.spotify);
+  const [spotifyLists, setSpotifyLists] = useState(null);
+  const [spotifyBusy, setSpotifyBusy] = useState("");
   const defaultIds = playlists.filter((p) => p.isDefault).map((p) => p.id);
   const [draft, setDraft] = useState(room.config);
 
@@ -79,8 +97,9 @@ export default function MusicSettings({ room, catalog, updateConfig, onToast, ch
     setDraft(room.config);
   }, [configKey(room.config)]);
 
-  const known = (draft?.playlistIds || []).filter((id) => playlists.some((p) => p.id === id));
+  const known = (draft?.playlistIds || []).filter((id) => playlists.some((p) => p.id === id) || custom.some((p) => p.id === id));
   const selected = known.length ? known : defaultIds;
+  const hasCustom = selected.some((id) => id.startsWith("sp:"));
   const rounds = draft?.rounds || 10;
   const seconds = Math.round((draft?.roundMs || 15000) / 1000);
   const songCount = playlists.filter((p) => selected.includes(p.id)).reduce((n, p) => n + p.trackCount, 0);
@@ -129,6 +148,28 @@ export default function MusicSettings({ room, catalog, updateConfig, onToast, ch
     };
   }, [coversKey]);
 
+  async function showSpotifyPlaylists() {
+    setSpotifyBusy("list");
+    try {
+      setSpotifyLists(await listSpotifyPlaylists());
+    } catch (err) {
+      onToast?.(err.message || "No se pudieron leer tus playlists de Spotify");
+    } finally {
+      setSpotifyBusy("");
+    }
+  }
+
+  async function addSpotify(id) {
+    setSpotifyBusy(id);
+    try {
+      await addSpotifyPlaylist(id);
+    } catch (err) {
+      onToast?.(err.message || "No se pudo añadir la playlist");
+    } finally {
+      setSpotifyBusy("");
+    }
+  }
+
   async function save(change) {
     const next = { ...draft, ...change };
     setDraft(next);
@@ -175,8 +216,54 @@ export default function MusicSettings({ room, catalog, updateConfig, onToast, ch
               </button>
             );
           })}
+          {custom.map((p) => (
+            <button
+              key={p.id}
+              type="button"
+              className="tv-pick tv-pick--playlist tv-pick--custom"
+              aria-pressed={selected.includes(p.id)}
+              title={`${p.name} · ${p.ready} de ${p.total} canciones listas`}
+              onClick={() => togglePlaylist(p.id)}
+            >
+              <PlaylistArt image={p.image} />
+              <span className="tv-pick-name">{p.name}</span>
+              {p.loading && <small className="tv-pick-progress">{p.ready}/{p.total}</small>}
+            </button>
+          ))}
+          {canSpotify &&
+            (spotifyLists || [])
+              .filter((p) => !custom.some((c) => c.id === `sp:${p.id}`))
+              .map((p) => (
+                <button
+                  key={p.id}
+                  type="button"
+                  className="tv-pick tv-pick--playlist tv-pick--custom"
+                  aria-pressed={false}
+                  title={`${p.name} · ${p.total} canciones`}
+                  disabled={Boolean(spotifyBusy)}
+                  onClick={() => addSpotify(p.id)}
+                >
+                  <PlaylistArt image={p.image} />
+                  <span className="tv-pick-name">{spotifyBusy === p.id ? "Añadiendo…" : p.name}</span>
+                </button>
+              ))}
+          {canSpotify && !spotifyLists && (
+            <button
+              type="button"
+              className="tv-pick tv-pick--add"
+              onClick={showSpotifyPlaylists}
+              disabled={spotifyBusy === "list"}
+              aria-label="Añadir tus playlists de Spotify"
+              title="Tus playlists de Spotify"
+            >
+              {spotifyBusy === "list" ? <SpotifyIcon size={20} /> : <Icon name="plus" size={20} strokeWidth={3} />}
+            </button>
+          )}
         </div>
-        {playlists.length > 0 && songCount < rounds && (
+        {canSpotify && spotifyLists?.length === 0 && (
+          <p className="tv-playlist-total">No encontramos playlists en tu Spotify.</p>
+        )}
+        {!hasCustom && playlists.length > 0 && songCount < rounds && (
           <p className="tv-playlist-total is-short" role="alert">
             <Icon name="lock" size={16} strokeWidth={2.6} />
             <span>

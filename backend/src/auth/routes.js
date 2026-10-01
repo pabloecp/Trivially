@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { hydrateSong } from "../catalog/catalogProvider.js";
 import { selectSongs } from "../catalog/songSelector.js";
+import { listSpotifyPlaylists } from "../catalog/spotifyLibrary.js";
 import {
   claimGuestStats,
   deleteGuest,
@@ -171,6 +172,16 @@ export function createApiRouter({ catalog, store }) {
   router.get("/spotify/login", requireRole(store, "owner"), (req, res) => {
     try {
       res.json({ url: spotifyAuthUrl(createTicket(req.user.id, "spotify", 10 * 60 * 1000)) });
+    } catch (err) {
+      res.status(400).json({ error: err.message });
+    }
+  });
+
+  // The owner's playlists, for the "+" in the match settings.
+  router.get("/spotify/playlists", requireRole(store, "owner"), async (req, res) => {
+    try {
+      if (!req.user.spotify) return res.status(400).json({ error: "Conecta tu Spotify en tu perfil primero" });
+      res.json({ playlists: await listSpotifyPlaylists(store, req.user.id) });
     } catch (err) {
       res.status(400).json({ error: err.message });
     }

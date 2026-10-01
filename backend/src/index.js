@@ -7,6 +7,7 @@ import express from "express";
 import cookieSession from "cookie-session";
 import { Server } from "socket.io";
 import { loadCatalog } from "./catalog/catalogProvider.js";
+import { TrackResolver } from "./catalog/trackResolver.js";
 import { flushStore, initStore } from "./db/store.js";
 import { RoomManager } from "./game/roomManager.js";
 import {
@@ -29,7 +30,7 @@ const PORT = Number(process.env.PORT || 8080);
 
 const catalog = await loadCatalog();
 const store = await initStore();
-const rooms = new RoomManager({ catalog, store });
+const rooms = new RoomManager({ catalog, store, resolver: new TrackResolver({ catalog }) });
 
 const app = express();
 app.set("trust proxy", 1);

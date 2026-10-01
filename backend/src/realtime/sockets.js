@@ -1,5 +1,6 @@
 import { verifySocketToken } from "../auth/socketToken.js";
 import { prefetchMedia } from "../audio/mediaCache.js";
+import { readSpotifyPlaylist } from "../catalog/spotifyLibrary.js";
 
 export function attachSockets(io, rooms) {
   // Who this connection is comes only from the signed token, never from ids the client puts in payloads.
@@ -7,6 +8,9 @@ export function attachSockets(io, rooms) {
     socket.data.userId = verifySocketToken(socket.handshake.auth?.token);
     next();
   });
+
+  // Rounds are chosen a little ahead during the match; their audio and covers start downloading right then.
+  rooms.onNewTracks = (tracks) => prefetchMedia(tracks);
 
   rooms.onPhaseChange = (room) => {
     if (room && room.code) {
@@ -75,6 +79,21 @@ export function attachSockets(io, rooms) {
       try {
         const { room, userId } = requireRoom(rooms, socket);
         rooms.updateConfig(room, userId, config);
+        ack?.({ ok: true, state: rooms.publicState(room, userId) });
+        io.to(room.code).emit("room:state", rooms.publicState(room));
+      } catch (err) {
+        ack?.({ ok: false, error: err.message });
+      }
+    });
+
+    // An owner host adds one of their Spotify playlists; its songs load in the background.
+    socket.on("room:spotifyPlaylist", async (playlistId, ack) => {
+      try {
+        const { room, userId } = requireRoom(rooms, socket);
+        rooms.assertSpotifyHost(room, userId);
+        const playlist = await readSpotifyPlaylist(rooms.store, userId, String(playlistId || ""));
+        if (!playlist.tracks.length) throw new Error("Esa playlist no tiene canciones que se puedan usar");
+        rooms.addSpotifyPlaylist(room, userId, playlist);
         ack?.({ ok: true, state: rooms.publicState(room, userId) });
         io.to(room.code).emit("room:state", rooms.publicState(room));
       } catch (err) {

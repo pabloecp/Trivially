@@ -1,0 +1,239 @@
+// Turns Spotify songs (title, artists, length) into playable songs: the 30 s preview and cover come from iTunes,
+// like the rest of the catalog. Each song is looked up once: results (found or not) are kept in memory and in the
+// Supabase table `spotify_songs` (see backend/supabase/schema.sql), so the next room that picks a playlist with that
+// song gets it at once. iTunes allows ~20 searches a minute, so the searches wait in a single queue.
+import { getSupabase, supabaseEnabled } from "../db/store.js";
+import { levenshtein, normalizeAnswer } from "../game/answers.js";
+
+const SEARCH_GAP_MS = 3100; // ~19 searches a minute
+const RATE_LIMIT_WAIT_MS = 60_000;
+const RETRY_NOT_FOUND_MS = 30 * 24 * 60 * 60 * 1000; // a song not found is searched again after a month
+const TABLE = "spotify_songs";
+
+/** "Song - Remastered 2011" or "Song (feat. X)" → "Song". The title players see and must guess. */
+export function cleanTitle(title = "") {
+  return title
+    .replace(/\s+-\s+.*$/, "")
+    .replace(/\s*[([](feat\.?|ft\.?|with|con)\s[^)\]]*[)\]]/gi, "")
+    .trim() || title.trim();
+}
+
+function titleScore(a, b) {
+  const x = normalizeAnswer(cleanTitle(a));
+  const y = normalizeAnswer(cleanTitle(b));
+  if (!x || !y) return 0;
+  if (x === y) return 1;
+  if ((x.includes(y) || y.includes(x)) && Math.min(x.length, y.length) >= 4) return 0.85;
+  return 1 - levenshtein(x, y) / Math.max(x.length, y.length);
+}
+
+function artistMatches(artists, name) {
+  const n = normalizeAnswer(name);
+  return artists.some((a) => {
+    const x = normalizeAnswer(a);
+    return x && (n.includes(x) || x.includes(n));
+  });
+}
+
+const UNWANTED = /karaoke|instrumental|tribute|made famous|originally performed|in the style of|8 ?bit|lullaby/i;
+
+/** How well an iTunes result fits a Spotify song, or 0 when it isn't the same song. */
+export function scoreCandidate(track, result) {
+  if (!result?.previewUrl || !result.trackName) return 0;
+  const title = titleScore(track.title, result.trackName);
+  if (title < 0.8) return 0;
+  const artist = artistMatches(track.artists, result.artistName || "") ? 1 : 0;
+  const diff = track.durationMs && result.trackTimeMillis ? Math.abs(track.durationMs - result.trackTimeMillis) : null;
+  const duration = diff == null ? 0 : diff <= 3000 ? 1 : diff <= 8000 ? 0.5 : 0;
+  if (!artist && duration < 1) return 0;
+  const unwanted = UNWANTED.test(`${result.trackName} ${result.artistName} ${result.collectionName}`) && !UNWANTED.test(track.title);
+  return title * 2 + artist + duration - (unwanted ? 2 : 0);
+}
+
+function songFromItunes(track, result) {
+  return {
+    id: `sp-${track.spotifyId}`,
+    spotifyId: track.spotifyId,
+    itunesId: result.trackId || null,
+    title: cleanTitle(track.title),
+    artistName: track.artists.join(" & ") || result.artistName,
+    albumName: track.albumName || result.collectionName || "",
+    year: track.year || Number(String(result.releaseDate || "").slice(0, 4)) || null,
+    image: (result.artworkUrl100 || "").replace(/\/\d+x\d+bb\./, "/600x600bb.") || null,
+    previewUrl: result.previewUrl,
+  };
+}
+
+function songFromRow(row) {
+  if (!row.found) return null;
+  return {
+    id: `sp-${row.spotify_id}`,
+    spotifyId: row.spotify_id,
+    itunesId: row.itunes_id,
+    title: row.title,
+    artistName: row.artist_name,
+    albumName: row.album_name || "",
+    year: row.year,
+    image: row.image,
+    previewUrl: row.preview_url,
+  };
+}
+
+const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+
+export class TrackResolver {
+  constructor({ catalog, fetchImpl = (...a) => fetch(...a), searchGapMs = SEARCH_GAP_MS, useDb = supabaseEnabled() }) {
+    this.fetch = fetchImpl;
+    this.searchGapMs = searchGapMs;
+    this.useDb = useDb;
+    this.known = new Map(); // spotifyId -> song | null (not on iTunes)
+    this.queue = [];
+    this.running = false;
+    this.lastSearchAt = 0;
+    // Songs already in the catalog are used as they are, by title + artist.
+    this.catalogIndex = new Map();
+    for (const s of catalog?.songs || []) {
+      const key = normalizeAnswer(cleanTitle(s.title));
+      if (!this.catalogIndex.has(key)) this.catalogIndex.set(key, []);
+      this.catalogIndex.get(key).push(s);
+    }
+  }
+
+  fromCatalog(track) {
+    const list = this.catalogIndex.get(normalizeAnswer(cleanTitle(track.title))) || [];
+    return list.find((s) => artistMatches(track.artists, s.artistName || "")) || null;
+  }
+
+  /**
+   * Finds every song of a playlist. `onResult(spotifyId, song | null)` is called once per song as soon as it is
+   * known (catalog and saved ones right away, the rest as iTunes answers). `isCancelled()` stops pending searches.
+   */
+  async resolve(tracks, { onResult, isCancelled = () => false }) {
+    const missing = [];
+    for (const t of tracks) {
+      if (this.known.has(t.spotifyId)) onResult(t.spotifyId, this.known.get(t.spotifyId));
+      else {
+        const hit = this.fromCatalog(t);
+        if (hit) {
+          this.known.set(t.spotifyId, hit);
+          onResult(t.spotifyId, hit);
+        } else missing.push(t);
+      }
+    }
+    const saved = await this.loadSaved(missing.map((t) => t.spotifyId));
+    for (const t of missing) {
+      if (saved.has(t.spotifyId)) {
+        this.known.set(t.spotifyId, saved.get(t.spotifyId));
+        onResult(t.spotifyId, saved.get(t.spotifyId));
+      } else {
+        this.queue.push({ track: t, onResult, isCancelled });
+      }
+    }
+    this.run();
+  }
+
+  async loadSaved(ids) {
+    const out = new Map();
+    if (!this.useDb || !ids.length) return out;
+    try {
+      const db = getSupabase();
+      for (let i = 0; i < ids.length; i += 200) {
+        const { data, error } = await db.from(TABLE).select("*").in("spotify_id", ids.slice(i, i + 200));
+        if (error) throw error;
+        for (const row of data) {
+          if (!row.found && Date.now() - new Date(row.updated_at).getTime() > RETRY_NOT_FOUND_MS) continue;
+          out.set(row.spotify_id, songFromRow(row));
+        }
+      }
+    } catch (err) {
+      console.warn(`[Spotify] No se pudieron leer las canciones guardadas (${err.message})`);
+    }
+    return out;
+  }
+
+  async save(track, song) {
+    if (!this.useDb) return;
+    const row = {
+      spotify_id: track.spotifyId,
+      found: Boolean(song),
+      title: song?.title || cleanTitle(track.title),
+      artist_name: song?.artistName || track.artists.join(" & "),
+      album_name: song?.albumName || track.albumName || null,
+      year: song?.year || track.year || null,
+      image: song?.image || null,
+      preview_url: song?.previewUrl || null,
+      itunes_id: song?.itunesId || null,
+      catalog_song_id: song && !song.id.startsWith("sp-") ? song.id : null,
+      updated_at: new Date().toISOString(),
+    };
+    const { error } = await getSupabase().from(TABLE).upsert(row, { onConflict: "spotify_id" });
+    if (error) console.warn(`[Spotify] No se pudo guardar ${track.spotifyId} (${error.message})`);
+  }
+
+  async run() {
+    if (this.running) return;
+    this.running = true;
+    try {
+      while (this.queue.length) {
+        const job = this.queue.shift();
+        if (job.isCancelled()) continue;
+        const id = job.track.spotifyId;
+        if (this.known.has(id)) {
+          job.onResult(id, this.known.get(id));
+          continue;
+        }
+        let song = null;
+        try {
+          song = await this.search(job.track);
+        } catch (err) {
+          // Couldn't ask iTunes (not a "not found"): tell the room, but don't remember it.
+          console.warn(`[Spotify] Búsqueda fallida para "${job.track.title}" (${err.message})`);
+          job.onResult(id, null);
+          continue;
+        }
+        this.known.set(id, song);
+        job.onResult(id, song);
+        this.save(job.track, song).catch(() => {});
+      }
+    } finally {
+      this.running = false;
+    }
+  }
+
+  async itunes(term) {
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      const gap = this.lastSearchAt + this.searchGapMs - Date.now();
+      if (gap > 0) await wait(gap);
+      this.lastSearchAt = Date.now();
+      const url = `https://itunes.apple.com/search?${new URLSearchParams({ term, media: "music", entity: "song", limit: "15", country: "US" })}`;
+      const res = await this.fetch(url);
+      if (res.status === 403 || res.status === 429) {
+        await wait(RATE_LIMIT_WAIT_MS);
+        continue;
+      }
+      if (!res.ok) throw new Error(`iTunes ${res.status}`);
+      return (await res.json()).results || [];
+    }
+    throw new Error("iTunes sigue limitando las búsquedas");
+  }
+
+  /** "title artist" first; if nothing fits, the title alone. */
+  async search(track) {
+    const title = cleanTitle(track.title);
+    for (const term of [`${title} ${track.artists[0] || ""}`.trim(), title]) {
+      const results = await this.itunes(term);
+      let best = null;
+      let bestScore = 0;
+      for (const r of results) {
+        const score = scoreCandidate(track, r);
+        if (score > bestScore) {
+          best = r;
+          bestScore = score;
+        }
+      }
+      if (best) return songFromItunes(track, best);
+      if (!track.artists[0]) break;
+    }
+    return null;
+  }
+}

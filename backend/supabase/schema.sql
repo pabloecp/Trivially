@@ -63,3 +63,22 @@ create index if not exists playlist_songs_playlist_idx on public.playlist_songs 
 alter table public.songs enable row level security;
 alter table public.playlists enable row level security;
 alter table public.playlist_songs enable row level security;
+
+-- ---------------------------------------------------------------------------
+-- Canciones de Spotify ya buscadas en iTunes (playlists personalizadas de los owners). Se rellena sola: cada canción
+-- se busca una vez y aquí queda su fragmento y portada, o found = false si iTunes no la tiene.
+-- ---------------------------------------------------------------------------
+create table if not exists public.spotify_songs (
+  spotify_id       text primary key,
+  found            boolean not null default false,
+  title            text   not null,                     -- título limpio (sin "- Remastered", "(feat. …)")
+  artist_name      text   not null,
+  album_name       text,
+  year             int,
+  image            text,                                -- portada (iTunes)
+  preview_url      text,                                -- fragmento de 30 s (iTunes)
+  itunes_id        bigint,
+  catalog_song_id  text,                                -- si ya estaba en el catálogo (songs.id)
+  updated_at       timestamptz not null default now()
+);
+alter table public.spotify_songs enable row level security;

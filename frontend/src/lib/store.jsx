@@ -404,6 +404,18 @@ export function AppProvider({ children }) {
         if (res.state) setRoom(res.state);
       },
 
+      // Owners: their Spotify playlists, to add one to the room (the server reads it and loads its songs).
+      async listSpotifyPlaylists() {
+        const res = await api("/api/spotify/playlists");
+        return res.playlists || [];
+      },
+
+      async addSpotifyPlaylist(playlistId) {
+        const res = await emitAck("room:spotifyPlaylist", playlistId);
+        if (!res.ok) throw new Error(res.error);
+        if (res.state) setRoom(res.state);
+      },
+
       async toggleConfigPermission(targetUserId) {
         const res = await emitAck("room:toggleConfigPermission", targetUserId);
         if (!res.ok) throw new Error(res.error);

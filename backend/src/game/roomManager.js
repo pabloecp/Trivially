@@ -1,5 +1,7 @@
-import { pickRoundTracks } from "../catalog/songSelector.js";
+import { selectSongs } from "../catalog/songSelector.js";
+import { hasRole } from "../auth/roles.js";
 import { hydrateSong } from "../catalog/catalogProvider.js";
+import { cleanTitle } from "../catalog/trackResolver.js";
 import { applyMatchStats } from "../db/store.js";
 import { isCorrectAnswer, normalizeAnswer } from "./answers.js";
 import { COUNTDOWN_MS, REVEAL_MS, ROUND_MS, scoreAnswer } from "./scoring.js";
@@ -7,6 +9,10 @@ import { COUNTDOWN_MS, REVEAL_MS, ROUND_MS, scoreAnswer } from "./scoring.js";
 const CODE_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 // Games the host can move a room into (ids match frontend/src/modes/index.js). `null` is the Home screen.
 export const GAME_IDS = ["musica"];
+// Custom playlists from an owner's Spotify go in config.playlistIds with this prefix ("sp:<spotify playlist id>").
+export const SPOTIFY_PREFIX = "sp:";
+// Rounds are chosen this many rounds ahead, so their audio and cover are downloaded before they start.
+const LOOKAHEAD = 2;
 // How long a dropped player keeps their seat (and host role) so a reload or network blip doesn't kick them.
 const RECONNECT_GRACE_MS = 20000;
 
@@ -60,8 +66,9 @@ function publicPlayer(player, phase, room) {
 }
 
 export class RoomManager {
-  constructor({ catalog, store, reconnectGraceMs = RECONNECT_GRACE_MS }) {
+  constructor({ catalog, store, resolver = null, reconnectGraceMs = RECONNECT_GRACE_MS }) {
     this.catalog = catalog;
+    this.resolver = resolver;
     this.store = store;
     this.reconnectGraceMs = reconnectGraceMs;
     this.rooms = new Map();
@@ -86,9 +93,12 @@ export class RoomManager {
       phaseEndsAt: null,
       currentRound: 0,
       tracks: [],
+      totalRounds: 0,
       currentTrackId: null,
       answers: {},
       timer: null,
+      // "sp:<id>" -> a Spotify playlist the host added: its songs and which ones are already playable.
+      customPlaylists: {},
       config: { ...defaultConfig(this.catalog), ...config },
       players: new Map(),
     };
@@ -197,6 +207,7 @@ export class RoomManager {
 
   destroy(room) {
     if (room.timer) clearTimeout(room.timer);
+    clearTimeout(room.progressTimer);
     room.players.forEach((p) => {
       clearTimeout(p.dropTimer);
       if (p.socketId) this.socketToRoom.delete(p.socketId);
@@ -245,11 +256,104 @@ export class RoomManager {
     if (config?.rounds != null) next.rounds = Math.min(25, Math.max(5, Math.round(Number(config.rounds)) || 10));
     if (config?.roundMs != null) next.roundMs = Math.min(30000, Math.max(10000, Math.round(Number(config.roundMs)) || ROUND_MS));
     if (config?.playlistIds) {
-      const known = new Set(this.catalog.playlists.map((p) => p.id));
-      next.playlistIds = config.playlistIds.filter((id) => known.has(id));
+      // Spotify playlists can only be added by the host (addSpotifyPlaylist); here they can only stay or go.
+      const known = new Set([...this.catalog.playlists.map((p) => p.id), ...Object.keys(room.customPlaylists || {})]);
+      next.playlistIds = [...new Set(config.playlistIds)].filter((id) => known.has(id));
       if (!next.playlistIds.length) throw new Error("Elige al menos una playlist");
     }
     room.config = next;
+    for (const entry of Object.values(room.customPlaylists || {})) entry.active = room.config.playlistIds.includes(entry.id);
+  }
+
+  /** Only an owner who is the room's host and has Spotify connected can add their playlists. */
+  assertSpotifyHost(room, userId) {
+    if (room.hostId !== userId) throw new Error("Solo el host puede añadir playlists de Spotify");
+    const user = this.store?.users?.[userId];
+    if (!user || !hasRole(user, "owner")) throw new Error("Las playlists de Spotify son solo para owners");
+    if (!user.spotify) throw new Error("Conecta tu Spotify en tu perfil primero");
+    if (room.phase !== "lobby") throw new Error("La partida ya comenzó");
+  }
+
+  /**
+   * Adds (and selects) one of the host's Spotify playlists, read by catalog/spotifyLibrary.js. Its songs are looked
+   * up on iTunes in the background; the match can start as soon as any song of the selection is playable.
+   */
+  addSpotifyPlaylist(room, userId, playlist) {
+    this.assertSpotifyHost(room, userId);
+    const id = `${SPOTIFY_PREFIX}${playlist.id}`;
+    let entry = room.customPlaylists[id];
+    if (!entry) {
+      entry = { id, name: playlist.name, image: playlist.image, tracks: playlist.tracks, songs: new Map(), done: new Set(), active: true };
+      room.customPlaylists[id] = entry;
+    }
+    entry.active = true;
+    if (!room.config.playlistIds.includes(id)) room.config = { ...room.config, playlistIds: [...room.config.playlistIds, id] };
+    const pending = entry.tracks.filter((t) => !entry.done.has(t.spotifyId));
+    if (pending.length && this.resolver) {
+      this.resolver
+        .resolve(pending, {
+          onResult: (spotifyId, song) => {
+            entry.done.add(spotifyId);
+            if (song) entry.songs.set(spotifyId, song);
+            this.progressChanged(room);
+          },
+          isCancelled: () => !entry.active || this.rooms.get(room.code) !== room,
+        })
+        .catch((err) => console.warn(`[Spotify] ${err.message}`));
+    }
+    return entry;
+  }
+
+  // Loading progress reaches the players at most every 1.5 s.
+  progressChanged(room) {
+    if (room.progressTimer) return;
+    room.progressTimer = setTimeout(() => {
+      room.progressTimer = null;
+      if (this.rooms.get(room.code) === room) this.onPhaseChange?.(room);
+    }, 1500);
+    room.progressTimer.unref?.();
+  }
+
+  /** Every song the match can draw from right now: the chosen catalog playlists plus the playable Spotify songs. */
+  songPool(room) {
+    const ids = room.config.playlistIds || [];
+    const custom = ids.map((id) => room.customPlaylists?.[id]).filter(Boolean);
+    const catalogIds = ids.filter((id) => !id.startsWith(SPOTIFY_PREFIX));
+    // With only Spotify playlists chosen, the default playlist isn't mixed in.
+    const pool = catalogIds.length || !custom.length ? selectSongs(this.catalog, { playlistIds: catalogIds }) : [];
+    const seen = new Set(pool.map((s) => s.id));
+    for (const entry of custom) {
+      for (const song of entry.songs.values()) {
+        if (!seen.has(song.id)) {
+          seen.add(song.id);
+          pool.push(song);
+        }
+      }
+    }
+    return pool;
+  }
+
+  // Chooses the songs of the coming rounds that haven't been chosen yet; songs already played are avoided while
+  // there are others. Spotify songs found meanwhile join the draw.
+  pickAhead(room) {
+    if (room.config?.customTracks?.length) return [];
+    const until = Math.min(room.totalRounds, room.currentRound + 1 + LOOKAHEAD);
+    const added = [];
+    while (room.tracks.length < until) {
+      const pool = this.songPool(room);
+      if (!pool.length) break;
+      const used = new Set(room.tracks.map((t) => t.id));
+      const fresh = pool.filter((s) => !used.has(s.id));
+      // A later round waits for new songs (Spotify ones may still arrive); only the round about to start repeats one.
+      if (!fresh.length && room.tracks.length > room.currentRound) break;
+      const from = fresh.length ? fresh : pool.filter((s) => s.id !== room.tracks[room.tracks.length - 1]?.id);
+      const list = from.length ? from : pool;
+      const track = list[Math.floor(Math.random() * list.length)];
+      room.tracks.push(track);
+      added.push(track);
+    }
+    if (added.length) this.onNewTracks?.(added);
+    return added;
   }
 
   updatePlayer(room, userId, { name, avatar }) {
@@ -276,20 +380,22 @@ export class RoomManager {
     if (connected.length < 1) {
       throw new Error("Se necesita al menos 1 jugador");
     }
-    let tracks = [];
-    if (room.config?.customTracks && room.config.customTracks.length > 0) {
-      const pool = room.config.customTracks;
-      const shuffled = [...pool].sort(() => Math.random() - 0.5);
-      const rounds = Math.min(room.config.rounds || 10, shuffled.length);
-      for (let i = 0; i < rounds; i += 1) {
-        tracks.push(shuffled[i % shuffled.length]);
-      }
-    } else {
-      tracks = pickRoundTracks(this.catalog, room.config, room.config.rounds);
-    }
-    if (!tracks.length) throw new Error("Ninguna canción cumple esos filtros");
-    room.tracks = tracks;
     room.currentRound = 0;
+    if (room.config?.customTracks && room.config.customTracks.length > 0) {
+      const shuffled = [...room.config.customTracks].sort(() => Math.random() - 0.5);
+      room.tracks = shuffled.slice(0, Math.min(room.config.rounds || 10, shuffled.length));
+      room.totalRounds = room.tracks.length;
+    } else {
+      room.tracks = [];
+      room.totalRounds = room.config.rounds || 10;
+      if (!this.songPool(room).length) {
+        const loading = (room.config.playlistIds || []).some((id) => {
+          const entry = room.customPlaylists?.[id];
+          return entry && entry.done.size < entry.tracks.length;
+        });
+        throw new Error(loading ? "Tus canciones de Spotify se están cargando, espera unos segundos" : "Ninguna canción cumple esos filtros");
+      }
+    }
     connected.forEach((p) => {
       p.score = 0;
       p.correct = 0;
@@ -333,6 +439,19 @@ export class RoomManager {
       });
     }
 
+    // Every song of the chosen Spotify playlists, found on iTunes yet or not.
+    for (const id of room?.config?.playlistIds || []) {
+      const entry = room.customPlaylists?.[id];
+      if (!entry) continue;
+      for (const t of entry.tracks) {
+        const song = entry.songs.get(t.spotifyId);
+        const id = song?.id || `sp-${t.spotifyId}`;
+        if (seen.has(id)) continue;
+        seen.add(id);
+        allSongs.push({ id, title: song?.title || cleanTitle(t.title), artistName: song?.artistName || t.artists.join(" & ") || "Artista" });
+      }
+    }
+
     // Also add room tracks (in case they came from Spotify playlists)
     for (const s of (room?.tracks || [])) {
       if (seen.has(s.id)) continue;
@@ -348,6 +467,7 @@ export class RoomManager {
   }
 
   beginCountdown(room) {
+    this.pickAhead(room);
     const track = room.tracks[room.currentRound];
     room.currentTrackId = track.id;
     room.answers = {};
@@ -379,7 +499,7 @@ export class RoomManager {
   }
 
   advance(room) {
-    if (room.currentRound + 1 >= room.tracks.length) {
+    if (room.currentRound + 1 >= (room.totalRounds || room.tracks.length)) {
       this.finish(room);
       return;
     }
@@ -423,6 +543,7 @@ export class RoomManager {
     room.phaseEndsAt = null;
     room.currentRound = 0;
     room.tracks = [];
+    room.totalRounds = 0;
     room.currentTrackId = null;
     room.answers = {};
     room.statsApplied = false;
@@ -546,7 +667,16 @@ export class RoomManager {
       phaseEndsAt: room.phaseEndsAt,
       serverNow: Date.now(),
       currentRound: room.currentRound,
-      totalRounds: room.tracks.length || room.config.rounds,
+      totalRounds: room.totalRounds || room.tracks.length || room.config.rounds,
+      // Spotify playlists the host added, with how many of their songs are ready to play.
+      customPlaylists: Object.values(room.customPlaylists || {}).map((e) => ({
+        id: e.id,
+        name: e.name,
+        image: e.image,
+        total: e.tracks.length,
+        ready: e.songs.size,
+        loading: e.active && e.done.size < e.tracks.length,
+      })),
       config: room.config,
       coHosts: [...(room.coHosts || [])],
       players: [...room.players.values()].map((p) => publicPlayer(p, room.phase, room)),
