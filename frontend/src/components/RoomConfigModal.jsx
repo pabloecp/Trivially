@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { api } from "../lib/api.js";
 import Icon from "./home/Icon.jsx";
 
@@ -38,35 +38,32 @@ export default function RoomConfigModal({ isOpen, onClose, currentConfig, catalo
   });
 
   const [selectedPlaylists, setSelectedPlaylists] = useState(() => currentConfig?.playlistIds || []);
+  // The selection is filled in once per opening (the room's playlists, or the default one), never again while the
+  // player is tapping, so an empty selection stays empty.
+  const filled = useRef(false);
 
   useEffect(() => {
-    if (isOpen) {
-      setSelectedPlaylists(currentConfig?.playlistIds?.length ? currentConfig.playlistIds : defaultPlaylistIds);
-      if (currentConfig?.rounds) {
-        setRounds(currentConfig.rounds);
-      }
-      if (currentConfig?.roundMs) {
-        setRoundSeconds(Math.round(currentConfig.roundMs / 1000));
-      }
+    if (!isOpen) {
+      filled.current = false;
+      return;
     }
+    if (currentConfig?.rounds) setRounds(currentConfig.rounds);
+    if (currentConfig?.roundMs) setRoundSeconds(Math.round(currentConfig.roundMs / 1000));
   }, [isOpen]);
 
-  // Until the catalog arrives there is nothing selected; fall back to the default playlist then.
   useEffect(() => {
-    if (isOpen && !selectedPlaylists.length && defaultPlaylistIds.length) setSelectedPlaylists(defaultPlaylistIds);
-  }, [isOpen, defaultPlaylistIds]);
+    if (!isOpen || filled.current || !playlists.length) return;
+    filled.current = true;
+    const known = currentConfig?.playlistIds?.filter((id) => playlists.some((p) => p.id === id)) || [];
+    setSelectedPlaylists(known.length ? known : defaultPlaylistIds);
+  }, [isOpen, playlists, defaultPlaylistIds]);
 
   const [preview, setPreview] = useState(null);
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState("");
 
-  // At least one playlist stays selected.
   function togglePlaylist(id) {
-    if (selectedPlaylists.includes(id)) {
-      if (selectedPlaylists.length > 1) setSelectedPlaylists(selectedPlaylists.filter((x) => x !== id));
-    } else {
-      setSelectedPlaylists([...selectedPlaylists, id]);
-    }
+    setSelectedPlaylists((cur) => (cur.includes(id) ? cur.filter((x) => x !== id) : [...cur, id]));
   }
 
   const candidateConfig = useMemo(() => {
@@ -77,13 +74,16 @@ export default function RoomConfigModal({ isOpen, onClose, currentConfig, catalo
     };
   }, [rounds, roundSeconds, selectedPlaylists]);
 
-  // Live query preview count
+  // How many different songs the chosen playlists add up to (they overlap, so the server counts them). Only the
+  // answer to the latest selection is kept.
+  const previewReq = useRef(0);
   useEffect(() => {
-    if (!isOpen) return;
-    api("/api/catalog/preview", { method: "POST", body: candidateConfig })
-      .then((data) => setPreview(data))
+    if (!isOpen || !selectedPlaylists.length) return;
+    const req = ++previewReq.current;
+    api("/api/catalog/preview", { method: "POST", body: { playlistIds: selectedPlaylists } })
+      .then((data) => req === previewReq.current && setPreview(data))
       .catch(() => {});
-  }, [candidateConfig, isOpen]);
+  }, [selectedPlaylists, isOpen]);
 
   async function handleSave(e) {
     if (e) e.preventDefault();
@@ -99,7 +99,7 @@ export default function RoomConfigModal({ isOpen, onClose, currentConfig, catalo
     }
   }
 
-  const availableCount = preview?.count ?? 0;
+  const availableCount = selectedPlaylists.length ? preview?.count ?? 0 : 0;
 
   // Close with Escape while open.
   useEffect(() => {
@@ -111,7 +111,8 @@ export default function RoomConfigModal({ isOpen, onClose, currentConfig, catalo
 
   if (!isOpen) return null;
 
-  const notEnough = Boolean(preview) && availableCount < rounds;
+  const counting = selectedPlaylists.length > 0 && !preview;
+  const notEnough = !counting && availableCount < rounds;
 
   return (
     <div className="tv-modal-root">
@@ -135,7 +136,7 @@ export default function RoomConfigModal({ isOpen, onClose, currentConfig, catalo
 
         <fieldset className="tv-fieldset">
           <legend className="tv-label">
-            Playlists · <span className="tv-accent">{availableCount} canciones</span>
+            Playlists
           </legend>
           <div className="tv-picks">
             {playlists.map((p, i) => {
@@ -154,7 +155,7 @@ export default function RoomConfigModal({ isOpen, onClose, currentConfig, catalo
                   style={{ "--i": i }}
                 >
                   <span className="tv-pick-art">
-                    <Icon name={p.id === "top-global" ? "globe" : "music"} size={18} strokeWidth={2.4} />
+                    <Icon name="music" size={18} strokeWidth={2.4} />
                   </span>
                   {label}
                   <span className="tv-pick-count">{p.trackCount}</span>
@@ -162,20 +163,20 @@ export default function RoomConfigModal({ isOpen, onClose, currentConfig, catalo
               );
             })}
           </div>
-          <div className="tv-picks-tools">
-            <button type="button" className="tv-link-btn" onClick={() => setSelectedPlaylists(playlists.map((p) => p.id))} disabled={selectedPlaylists.length === playlists.length}>
-              Todas
-            </button>
-            <button type="button" className="tv-link-btn" onClick={() => setSelectedPlaylists(defaultPlaylistIds)} disabled={selectedPlaylists.length === 1 && selectedPlaylists[0] === defaultPlaylistIds[0]}>
-              Por defecto
-            </button>
-          </div>
-          <p key={`${selectedPlaylists.length}-${availableCount}`} className="tv-playlist-total" aria-live="polite">
-            <Icon name="music" size={16} strokeWidth={2.6} />
-            {selectedPlaylists.length === 1 ? "1 playlist" : `${selectedPlaylists.length} playlists`} ·{" "}
-            <strong>{preview ? `${availableCount} canciones` : "contando…"}</strong>
+          <p className={`tv-playlist-total${notEnough ? " is-short" : ""}`} aria-live="polite">
+            <Icon name={notEnough ? "lock" : "music"} size={16} strokeWidth={2.6} />
+            {notEnough ? (
+              <span>
+                Necesitas al menos <strong>{rounds} canciones</strong>
+                {selectedPlaylists.length ? ` (tienes ${availableCount})` : ""}
+              </span>
+            ) : (
+              <span>
+                {selectedPlaylists.length === 1 ? "1 playlist" : `${selectedPlaylists.length} playlists`} ·{" "}
+                <strong>{counting ? "contando…" : `${availableCount} canciones`}</strong>
+              </span>
+            )}
           </p>
-          <p className="tv-hint">Elige todas las que quieras; sus canciones se mezclan en la partida.</p>
         </fieldset>
 
         <fieldset className="tv-fieldset">
@@ -200,14 +201,9 @@ export default function RoomConfigModal({ isOpen, onClose, currentConfig, catalo
           </div>
         </fieldset>
 
-        {notEnough && (
-          <p className="tv-lobby-error" role="alert">
-            Se necesitan al menos {rounds} canciones. Elige más playlists o menos rondas.
-          </p>
-        )}
         {err && <p className="tv-lobby-error" role="alert">{err}</p>}
 
-        <button type="submit" className="tv-btn tv-btn--block tv-c-green" disabled={saving || notEnough}>
+        <button type="submit" className="tv-btn tv-btn--block tv-c-green" disabled={saving || notEnough || counting}>
           {saving ? "Guardando…" : "Guardar ajustes"}
         </button>
       </form>

@@ -1441,6 +1441,7 @@ body:has(.tv-app) {
   display: flex;
   align-items: center;
   gap: 8px;
+  min-height: 58px; /* room for two lines, so the warning never changes the modal height */
   margin: 0;
   padding: 10px 14px;
   border-radius: 14px;
@@ -1448,9 +1449,18 @@ body:has(.tv-app) {
   color: var(--tv-text-2);
   font-weight: 800;
   font-size: 14px;
-  animation: tvPick 0.35s var(--tv-spring);
+  line-height: 1.3;
 }
-.tv-playlist-total svg { color: var(--brand); }
+.tv-playlist-total svg { flex-shrink: 0; }
+.tv-playlist-total.is-short { background: var(--tv-danger-bg); color: var(--tv-danger); }
+.tv-playlist-total.is-short svg,
+.tv-playlist-total.is-short strong { color: var(--tv-danger); }
+/* Tapping a playlist only changes its colour: no bounce, so nothing around it jumps. */
+.tv-pick--playlist,
+.tv-pick--playlist:hover,
+.tv-pick--playlist:active { transform: none; }
+.tv-pick--playlist[aria-pressed="true"] { animation: none; }
+.tv-playlist-total:not(.is-short) svg { color: var(--brand); }
 .tv-playlist-total strong { color: var(--tv-text); }
 
 /* ---------- Login ---------- */
