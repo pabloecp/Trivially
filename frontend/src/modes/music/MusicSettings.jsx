@@ -107,7 +107,6 @@ export default function MusicSettings({ room, catalog, updateConfig, onToast, ch
   const selected = known.length ? known : defaultIds;
   const hasCustom = selected.some((id) => id.startsWith("sp:"));
   const chosenCustom = custom.filter((p) => selected.includes(p.id));
-  const customLoading = chosenCustom.some((p) => p.loading);
   const rounds = draft?.rounds || 10;
   const seconds = Math.round((draft?.roundMs || 15000) / 1000);
   const songCount = playlists.filter((p) => selected.includes(p.id)).reduce((n, p) => n + p.trackCount, 0);
@@ -160,12 +159,12 @@ export default function MusicSettings({ room, catalog, updateConfig, onToast, ch
     };
   }, [coversKey]);
 
-  // While Spotify songs are still loading, the strip waits for at least 5 covers; then it starts with those and
-  // more join as they are found.
+  // The strip waits for at least 5 different covers (a Spotify playlist still loading may have fewer); until
+  // then the loading bar shows. Once it starts, more covers join as songs are found.
   // Only covers of the current selection: after a change the loading bar shows until the new ones are in, so the
   // strip never shows songs that aren't in the chosen playlists.
   const stripFits = ready.selection === selectionKey;
-  const showStrip = stripFits && (ready.list.length >= 5 || (ready.list.length > 0 && !customLoading));
+  const showStrip = stripFits && ready.list.length >= 5;
 
   async function onPlus() {
     if (!spotifyLinked) {
@@ -266,11 +265,14 @@ export default function MusicSettings({ room, catalog, updateConfig, onToast, ch
               type="button"
               className="tv-pick tv-pick--playlist tv-pick--custom"
               aria-pressed={true}
-              title={p.name}
+              title={`${p.name} · ${p.ready} de ${p.total} canciones listas`}
               onClick={() => togglePlaylist(p.id)}
             >
               <PlaylistArt image={p.image} />
               <span className="tv-pick-name">{p.name}</span>
+              <small className="tv-pick-progress">
+                {p.ready}/{p.total}
+              </small>
             </button>
           ))}
           {isOwnerHost &&
@@ -339,7 +341,7 @@ export default function MusicSettings({ room, catalog, updateConfig, onToast, ch
       {showStrip ? (
         <CoverStrip key={ready.selection} covers={ready.list} />
       ) : (
-        (covers.length > 0 || customLoading) && <div className="tv-covers tv-covers--loading" aria-hidden="true" />
+        (covers.length > 0 || chosenCustom.length > 0) && <div className="tv-covers tv-covers--loading" aria-hidden="true" />
       )}
 
       <div className="tv-steppers">

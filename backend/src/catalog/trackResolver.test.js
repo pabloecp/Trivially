@@ -40,4 +40,26 @@ assert.equal(searches, 1);
 await resolver.resolve([track], { onResult: () => {} });
 assert.equal(searches, 1, "no second search for the same song");
 
+// A song only on another country's store: the first pass misses it, the deeper second pass finds it.
+const onlyMx = async (url) => ({
+  ok: true,
+  status: 200,
+  json: async () => ({ results: new URL(url).searchParams.get("country") === "MX" ? [{ ...right, trackName: "Hoy" }] : [] }),
+});
+const deepResolver = new TrackResolver({ catalog: { songs: [] }, fetchImpl: onlyMx, searchGapMs: 0, useDb: false });
+const hoy = { ...track, spotifyId: "hoy", title: "Hoy" };
+const got = [];
+const settle = async () => {
+  while (deepResolver.running || deepResolver.queue.length) await new Promise((r) => setTimeout(r, 5));
+};
+await deepResolver.resolve([hoy], { onResult: (id, song) => got.push(song) });
+await settle();
+assert.equal(got[0], null, "first pass: not found");
+await deepResolver.resolve([hoy], { deep: true, onResult: (id, song) => got.push(song) });
+await settle();
+assert.equal(got[1]?.title, "Hoy", "second pass: found on the MX store");
+// …and from then on it is known.
+await deepResolver.resolve([hoy], { onResult: (id, song) => got.push(song) });
+assert.equal(got[2]?.title, "Hoy");
+
 console.log("trackResolver.test ok");

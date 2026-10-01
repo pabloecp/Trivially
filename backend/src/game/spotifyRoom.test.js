@@ -73,6 +73,15 @@ mgr.advance(room);
 assert.equal(room.phase, "finished");
 for (const r of [room, other]) mgr.destroy(r);
 
+// When every song was searched once, the ones not found (t1) get a second, deeper search.
+const deepCall = waiting.find((w) => w.job.deep);
+assert.ok(deepCall, "second pass started");
+assert.deepEqual(deepCall.tracks.map((t) => t.spotifyId), ["t1"]);
+assert.equal(mgr.publicState(room).customPlaylists[0].loading, true, "still loading during the second pass");
+deepCall.job.onResult("t1", song(1));
+assert.equal(mgr.publicState(room).customPlaylists[0].ready, 6);
+assert.equal(mgr.publicState(room).customPlaylists[0].loading, false);
+
 // Only selected playlists load: unselecting one drops its pending searches, selecting it again resumes them.
 waiting.length = 0;
 const lobby = mgr.create({ host: { id: "owner", name: "Owner", socketId: "s5" }, game: "musica" });

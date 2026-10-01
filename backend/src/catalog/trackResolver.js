@@ -94,6 +94,7 @@ export class TrackResolver {
     this.searchGapMs = searchGapMs;
     this.useDb = useDb;
     this.known = new Map(); // spotifyId -> song | null (not on iTunes)
+    this.deepMissed = new Set(); // not found even by the second, deeper pass (until the server restarts)
     this.queue = [];
     this.running = false;
     this.lastSearchAt = 0;
@@ -115,7 +116,18 @@ export class TrackResolver {
    * Finds every song of a playlist. `onResult(spotifyId, song | null)` is called once per song as soon as it is
    * known (catalog and saved ones right away, the rest as iTunes answers). `isCancelled()` stops pending searches.
    */
-  async resolve(tracks, { onResult, isCancelled = () => false }) {
+  async resolve(tracks, { onResult, isCancelled = () => false, deep = false }) {
+    // Second pass for songs the first one didn't find: other searches and stores (see search). Songs found in the
+    // meantime are answered at once; songs the deep pass already missed aren't searched again.
+    if (deep) {
+      for (const t of tracks) {
+        const song = this.known.get(t.spotifyId);
+        if (song || this.deepMissed.has(t.spotifyId)) onResult(t.spotifyId, song || null);
+        else this.queue.push({ track: t, onResult, isCancelled, deep: true });
+      }
+      this.run();
+      return;
+    }
     const missing = [];
     for (const t of tracks) {
       if (this.known.has(t.spotifyId)) onResult(t.spotifyId, this.known.get(t.spotifyId));
@@ -187,16 +199,21 @@ export class TrackResolver {
         const job = this.queue.shift();
         if (job.isCancelled()) continue;
         const id = job.track.spotifyId;
-        if (this.known.has(id)) {
+        if (this.known.get(id) || (this.known.has(id) && !job.deep)) {
           job.onResult(id, this.known.get(id));
           continue;
         }
         let song = null;
         try {
-          song = await this.search(job.track);
+          song = await this.search(job.track, { deep: job.deep });
         } catch (err) {
           // Couldn't ask iTunes (not a "not found"): tell the room, but don't remember it.
           console.warn(`[Spotify] Búsqueda fallida para "${job.track.title}" (${err.message})`);
+          job.onResult(id, null);
+          continue;
+        }
+        if (job.deep && !song) {
+          this.deepMissed.add(id);
           job.onResult(id, null);
           continue;
         }
@@ -230,12 +247,25 @@ export class TrackResolver {
    * "title + first artist", then "title + second artist", then the first artist's songs (the search sometimes
    * misses a song the artist list has). Every result still has to pass scoreCandidate.
    */
-  async search(track) {
+  async search(track, { deep = false } = {}) {
     const title = cleanTitle(track.title);
     const [first, second] = track.artists;
-    const searches = [[`${title} ${first || ""}`.trim()]];
-    if (second) searches.push([`${title} ${second}`]);
-    if (first) searches.push([first, { attribute: "artistTerm", limit: "200" }]);
+    const searches = [];
+    if (!deep) {
+      searches.push([`${title} ${first || ""}`.trim()]);
+      if (second) searches.push([`${title} ${second}`]);
+      if (first) searches.push([first, { attribute: "artistTerm", limit: "200" }]);
+    } else {
+      // The deeper pass: the title without anything in brackets, other countries' stores (some Latin releases are
+      // only there), the title alone with more results, the second artist's songs and the album. The result still
+      // has to be the same title, artist and length (scoreCandidate).
+      const plain = title.replace(/\(.*?\)|\[.*?\]/g, "").replace(/\s+/g, " ").trim() || title;
+      searches.push([`${first || ""} ${plain}`.trim(), { country: "MX" }]);
+      searches.push([`${plain} ${first || ""}`.trim(), { country: "ES" }]);
+      searches.push([plain, { limit: "50" }]);
+      if (second) searches.push([second, { attribute: "artistTerm", limit: "200" }]);
+      if (first && track.albumName) searches.push([`${first} ${cleanTitle(track.albumName)}`, { limit: "50" }]);
+    }
     for (const [term, extra] of searches) {
       const results = await this.itunes(term, extra);
       let best = null;

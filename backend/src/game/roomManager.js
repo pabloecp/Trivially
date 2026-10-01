@@ -302,20 +302,34 @@ export class RoomManager {
    * Each call starts a new run, so a playlist never has its searches queued twice.
    */
   loadPlaylist(room, entry) {
-    const pending = entry.tracks.filter((t) => !entry.done.has(t.spotifyId));
-    if (!pending.length || !this.resolver) return;
+    if (!this.resolver) return;
+    entry.retried ||= new Set();
+    // First every song once; when that is done, a second deeper search for the ones not found.
+    let pending = entry.tracks.filter((t) => !entry.done.has(t.spotifyId));
+    const deep = !pending.length;
+    if (deep) pending = this.missingSongs(entry);
+    if (!pending.length) return;
     const run = (entry.run || 0) + 1;
     entry.run = run;
     this.resolver
       .resolve(pending, {
+        deep,
         onResult: (spotifyId, song) => {
           entry.done.add(spotifyId);
+          if (deep) entry.retried.add(spotifyId);
           if (song) entry.songs.set(spotifyId, song);
           this.progressChanged(room);
+          // The first pass just finished: start the second one.
+          if (!deep && entry.run === run && entry.done.size === entry.tracks.length) this.loadPlaylist(room, entry);
         },
         isCancelled: () => !entry.active || entry.run !== run || this.rooms.get(room.code) !== room,
       })
       .catch((err) => console.warn(`[Spotify] ${err.message}`));
+  }
+
+  /** Songs of the playlist searched once without luck and not yet searched again. */
+  missingSongs(entry) {
+    return entry.tracks.filter((t) => entry.done.has(t.spotifyId) && !entry.songs.has(t.spotifyId) && !entry.retried?.has(t.spotifyId));
   }
 
   // Loading progress reaches the players at most every 1.5 s.
@@ -694,7 +708,7 @@ export class RoomManager {
         image: e.image,
         total: e.tracks.length,
         ready: e.songs.size,
-        loading: e.active && e.done.size < e.tracks.length,
+        loading: e.active && (e.done.size < e.tracks.length || this.missingSongs(e).length > 0),
         // Small covers of the songs found so far, for the strip under the playlists.
         covers: [...e.songs.values()]
           .map((song) => song.image?.replace(/\/\d+x\d+bb\./, "/160x160bb."))
