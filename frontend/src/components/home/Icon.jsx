@@ -66,6 +66,7 @@ const PATHS = {
   ),
   moon: <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" />,
   chevron: <path d="m9 18 6-6-6-6" />,
+  swap: <path d="M17 3l4 4-4 4M21 7H8M7 21l-4-4 4-4M3 17h13" />,
   back: (
     <>
       <path d="m12 19-7-7 7-7" />

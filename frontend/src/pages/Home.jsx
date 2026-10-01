@@ -62,8 +62,9 @@ function ModeMenu({ current, onPick }) {
   return (
     <div ref={ref} className="tv-mode-menu-wrap">
       <button type="button" className="tv-switch-btn" aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen((v) => !v)}>
+        <Icon name="swap" size={18} strokeWidth={2.6} />
         Cambiar juego
-        <Icon name="chevron" size={14} strokeWidth={3} className="tv-switch-icon" />
+        <Icon name="chevron" size={16} strokeWidth={3} className="tv-switch-icon" />
       </button>
       {open && (
         <div className="tv-mode-menu" role="menu">

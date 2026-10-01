@@ -711,27 +711,29 @@ body:has(.tv-app) {
 .tv-room-game-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
 .tv-room-game-head .tv-section-title { margin: 0; }
 .tv-room-game-title { display: flex; align-items: center; gap: 12px; min-width: 0; }
-/* Small "change game" link next to the game's name: jumps down to the game tiles. */
+/* Chunky brand-coloured "change game" button next to the game's name. */
 .tv-switch-btn {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: 8px;
   flex-shrink: 0;
-  padding: 6px 10px 6px 12px;
+  height: 46px;
+  padding: 0 16px 0 14px;
   border: 0;
-  border-radius: 999px;
-  background: var(--tv-option-bg);
-  box-shadow: 0 2px 0 var(--tv-option-edge);
-  color: var(--tv-text-2);
+  border-radius: 16px;
+  background: var(--brand);
+  box-shadow: 0 4px 0 rgba(var(--brand-rgb), 0.45), 0 10px 22px -8px rgba(var(--brand-rgb), 0.6);
+  color: var(--on-brand);
   font: inherit;
-  font-weight: 800;
-  font-size: 13px;
+  font-family: "Fredoka", "Outfit", sans-serif;
+  font-weight: 700;
+  font-size: 16px;
   cursor: pointer;
-  transition: transform 0.18s var(--tv-spring), color 0.2s ease;
+  transition: transform 0.18s var(--tv-spring), filter 0.2s ease;
 }
-.tv-switch-btn:hover { color: var(--tv-text); transform: translateY(-1px); }
-.tv-switch-btn:active { transform: translateY(2px); box-shadow: none; }
-.tv-switch-icon { transform: rotate(90deg); }
+.tv-switch-btn:hover { transform: translateY(-2px); filter: brightness(1.08); }
+.tv-switch-btn:active { transform: translateY(4px); box-shadow: none; }
+.tv-switch-btn:focus-visible { outline: 3px solid var(--tv-focus); outline-offset: 3px; }
 .tv-room-game-title .tv-badge { width: 38px; height: 38px; border-radius: 13px; }
 @keyframes tvModePick {
   0% { transform: scale(1); }
@@ -2221,8 +2223,8 @@ fieldset.tv-steppers { margin: 0; padding: 0; border: 0; min-width: 0; }
 
 /* The host's "Cambiar juego" menu in the game's header. */
 .tv-mode-menu-wrap { position: relative; }
-.tv-switch-icon { transition: rotate 0.2s ease; }
-.tv-switch-btn[aria-expanded="true"] .tv-switch-icon { rotate: 180deg; }
+.tv-switch-icon { rotate: 90deg; transition: rotate 0.2s ease; }
+.tv-switch-btn[aria-expanded="true"] .tv-switch-icon { rotate: 270deg; }
 .tv-mode-menu {
   position: absolute;
   top: calc(100% + 8px);
