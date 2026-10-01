@@ -416,12 +416,20 @@ export class RoomManager {
     } else {
       room.tracks = [];
       room.totalRounds = room.config.rounds || 10;
-      if (!this.songPool(room).length) {
-        const loading = (room.config.playlistIds || []).some((id) => {
-          const entry = room.customPlaylists?.[id];
-          return entry && entry.done.size < entry.tracks.length;
-        });
+      const available = this.songPool(room).length;
+      const loading = (room.config.playlistIds || []).some((id) => {
+        const entry = room.customPlaylists?.[id];
+        return entry && entry.done.size < entry.tracks.length;
+      });
+      if (!available) {
         throw new Error(loading ? "Tus canciones de Spotify se están cargando, espera unos segundos" : "Ninguna canción cumple esos filtros");
+      }
+      // Every round gets a different song: with fewer songs than rounds the same ones would keep coming back.
+      if (available < room.totalRounds) {
+        throw new Error(
+          `Solo hay ${available} ${available === 1 ? "canción lista" : "canciones listas"} para ${room.totalRounds} rondas. ` +
+            (loading ? "Espera a que carguen más o baja las rondas." : "Baja las rondas o elige más playlists.")
+        );
       }
     }
     connected.forEach((p) => {
@@ -701,6 +709,10 @@ export class RoomManager {
       serverNow: Date.now(),
       currentRound: room.currentRound,
       totalRounds: room.totalRounds || room.tracks.length || room.config.rounds,
+      // In the lobby: how many different songs the chosen playlists have ready (a match needs one per round), and
+      // whether iTunes is making the Spotify songs wait.
+      songsReady: room.phase === "lobby" ? this.songPool(room).length : undefined,
+      itunesSlow: Boolean(this.resolver?.slow),
       // Spotify playlists the host added, with how many of their songs are ready to play.
       customPlaylists: Object.values(room.customPlaylists || {}).map((e) => ({
         id: e.id,

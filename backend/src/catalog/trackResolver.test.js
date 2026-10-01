@@ -68,7 +68,50 @@ const none = async () => (firstPassSearches += 1, { ok: true, status: 200, json:
 const quick = new TrackResolver({ catalog: { songs: [] }, fetchImpl: none, searchGapMs: 0, useDb: false });
 await quick.resolve([{ ...track, spotifyId: "zz" }], { onResult: () => {} });
 while (quick.running || quick.queue.length) await new Promise((r) => setTimeout(r, 5));
-assert.equal(firstPassSearches, 1);
+assert.ok(firstPassSearches <= 2, "first pass: the title search and at most the artist lookup");
+
+// Songs that share an album are found through it: the artist and the album are looked up once for all of them.
+const calls = [];
+const albumFetch = async (url) => {
+  const u = new URL(url);
+  const p = Object.fromEntries(u.searchParams);
+  calls.push(u.pathname + " " + (p.entity || ""));
+  let results = [];
+  if (u.pathname === "/search" && p.entity === "musicArtist") results = [{ artistId: 7, artistName: "Bad Bunny" }];
+  if (u.pathname === "/lookup" && p.entity === "album") results = [{ wrapperType: "collection", collectionId: 70, collectionName: "Un Verano Sin Ti" }];
+  if (u.pathname === "/lookup" && p.entity === "song") {
+    results = [
+      { wrapperType: "collection", collectionId: 70 },
+      { ...right, wrapperType: "track", trackNumber: 1, trackName: "Moscow Mule", trackTimeMillis: 245000 },
+      { ...right, wrapperType: "track", trackNumber: 16, trackName: "Ojitos Lindos", trackTimeMillis: 258300 },
+    ];
+  }
+  return { ok: true, status: 200, json: async () => ({ results }) };
+};
+const albums = new TrackResolver({ catalog: { songs: [] }, fetchImpl: albumFetch, searchGapMs: 0, useDb: false });
+const fromAlbum = new Map();
+const album = { albumId: "uvst", albumName: "Un Verano Sin Ti", albumType: "album", albumArtist: "Bad Bunny" };
+await albums.resolve(
+  [
+    { ...track, ...album, spotifyId: "mm", title: "Moscow Mule", artists: ["Bad Bunny"], durationMs: 245500, trackNumber: 1 },
+    { ...track, ...album, spotifyId: "ol", trackNumber: 16 },
+  ],
+  { onResult: (id, song) => fromAlbum.set(id, song) }
+);
+while (albums.running || albums.queue.length) await new Promise((r) => setTimeout(r, 5));
+assert.equal(fromAlbum.get("mm")?.title, "Moscow Mule");
+assert.equal(fromAlbum.get("ol")?.title, "Ojitos Lindos");
+assert.deepEqual(calls, ["/search musicArtist", "/lookup album", "/lookup song"], "one lookup each, shared by both songs");
+
+// The playlist chosen last is searched first.
+const order = [];
+const lifo = new TrackResolver({ catalog: { songs: [] }, fetchImpl: none, searchGapMs: 0, useDb: false });
+lifo.running = true; // hold the queue while both playlists are added
+await lifo.resolve([{ ...track, spotifyId: "old1" }, { ...track, spotifyId: "old2" }], { onResult: (id) => order.push(id) });
+await lifo.resolve([{ ...track, spotifyId: "new1" }], { onResult: (id) => order.push(id) });
+lifo.running = false;
+await lifo.run();
+assert.deepEqual(order, ["new1", "old1", "old2"]);
 
 // A failure with one song never stops the queue for the rest.
 const sturdy = new TrackResolver({ catalog: { songs: [] }, fetchImpl, searchGapMs: 0, useDb: false });

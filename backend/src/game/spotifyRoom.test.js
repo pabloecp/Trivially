@@ -52,16 +52,19 @@ mgr.updateConfig(room, "owner", { playlistIds: ["sp:abc"] });
 // Nothing playable yet: the match can't start.
 assert.throws(() => mgr.start(room, "owner"), /se están cargando/);
 
-// Two songs found: the match starts with what there is and takes the rest as they arrive.
+// Two songs found: not enough for 5 rounds (the same songs would keep coming back), so it can't start yet.
 const { job } = waiting[0];
 job.onResult("t0", song(0));
 job.onResult("t1", null);
 job.onResult("t2", song(2));
+assert.equal(mgr.publicState(room).songsReady, 2);
+assert.throws(() => mgr.start(room, "owner"), /Solo hay 2 canciones listas para 5 rondas/);
+
+// With one song per round it starts; rounds are picked a few at a time.
+for (let i = 3; i < 6; i += 1) job.onResult(`t${i}`, song(i));
 mgr.start(room, "owner");
 assert.equal(mgr.publicState(room).totalRounds, 5);
-assert.ok(room.tracks.every((t) => ["sp-t0", "sp-t2"].includes(t.id)));
 assert.ok(room.tracks.length <= 3, "rounds are picked a few at a time");
-for (let i = 3; i < 6; i += 1) job.onResult(`t${i}`, song(i));
 const ids = new Set();
 for (let r = 0; r < 5; r += 1) {
   ids.add(room.tracks[room.currentRound].id);

@@ -101,7 +101,12 @@ export async function readSpotifyPlaylist(store, userId, playlistId) {
           spotifyId: t.id,
           title: t.name,
           artists: (t.artists || []).map((a) => a.name).filter(Boolean),
+          albumId: t.album?.id || null,
           albumName: t.album?.name || "",
+          albumType: t.album?.album_type || "",
+          albumArtist: t.album?.artists?.[0]?.name || "",
+          trackNumber: t.track_number || null,
+          discNumber: t.disc_number || 1,
           year: Number(String(t.album?.release_date || "").slice(0, 4)) || null,
           durationMs: t.duration_ms || 0,
         });

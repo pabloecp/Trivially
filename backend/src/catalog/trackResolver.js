@@ -92,6 +92,16 @@ function songFromRow(row) {
 
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
+/** "Un Verano Sin Ti (Deluxe Edition) - Single" → "un verano sin ti": album names compared without the extras. */
+function albumKey(name = "") {
+  return normalizeAnswer(cleanTitle(name).replace(/\s*[([](deluxe|expanded|remaster|edition|bonus)[^)\]]*[)\]]/gi, ""));
+}
+
+/** Gives up waiting after `ms` (e.g. a database that doesn't answer), so loading never stalls on it. */
+function withTimeout(promise, ms, label) {
+  return Promise.race([promise, new Promise((_, reject) => setTimeout(() => reject(new Error(`${label}: sin respuesta`)), ms))]);
+}
+
 export class TrackResolver {
   constructor({ catalog, fetchImpl = (...a) => fetch(...a), searchGapMs = SEARCH_GAP_MS, useDb = supabaseEnabled() }) {
     this.fetch = fetchImpl;
@@ -100,7 +110,14 @@ export class TrackResolver {
     this.known = new Map(); // spotifyId -> song | null (not on iTunes)
     this.deepMissed = new Set(); // not found even by the second, deeper pass (until the server restarts)
     this.queue = [];
+    this.batches = 0; // each resolve() call is a batch; the newest one goes first (see takeNext)
+    this.seq = 0;
     this.running = false;
+    this.lastBlockedAt = 0;
+    // iTunes lookups shared by every song of the same artist or album (promises, so parallel askers share one request).
+    this.artistIds = new Map();
+    this.artistAlbumLists = new Map();
+    this.albumTrackLists = new Map();
     this.lastSearchAt = 0;
     this.gap = searchGapMs; // grows while iTunes blocks us (403/429) and shrinks back as searches go through
     this.stats = { searches: 0, blocked: 0, found: 0, failed: 0 };
@@ -123,13 +140,19 @@ export class TrackResolver {
    * known (catalog and saved ones right away, the rest as iTunes answers). `isCancelled()` stops pending searches.
    */
   async resolve(tracks, { onResult, isCancelled = () => false, deep = false }) {
+    const batch = ++this.batches;
+    const enqueue = (track, isDeep) => this.queue.push({ track, onResult, isCancelled, deep: isDeep, batch, seq: ++this.seq });
+    // Songs that share an album with others in the playlist are found through that album: one lookup serves them all.
+    const perAlbum = new Map();
+    for (const t of tracks) if (t.albumId) perAlbum.set(t.albumId, (perAlbum.get(t.albumId) || 0) + 1);
+    for (const t of tracks) t.albumShared = perAlbum.get(t.albumId) >= 2 && t.albumType !== "single";
     // Second pass for songs the first one didn't find: other searches and stores (see search). Songs found in the
     // meantime are answered at once; songs the deep pass already missed aren't searched again.
     if (deep) {
       for (const t of tracks) {
         const song = this.known.get(t.spotifyId);
         if (song || this.deepMissed.has(t.spotifyId)) onResult(t.spotifyId, song || null);
-        else this.queue.push({ track: t, onResult, isCancelled, deep: true });
+        else enqueue(t, true);
       }
       this.run();
       return;
@@ -145,7 +168,10 @@ export class TrackResolver {
         } else missing.push(t);
       }
     }
-    const saved = await this.loadSaved(missing.map((t) => t.spotifyId));
+    const saved = await withTimeout(this.loadSaved(missing.map((t) => t.spotifyId)), 10_000, "Supabase").catch((err) => {
+      console.warn(`[Spotify] No se pudieron leer las canciones guardadas (${err.message})`);
+      return new Map();
+    });
     const toSearch = missing.filter((t) => !saved.has(t.spotifyId)).length;
     console.log(
       `[Spotify] ${tracks.length} canciones: ${tracks.length - missing.length} ya conocidas, ` +
@@ -156,7 +182,7 @@ export class TrackResolver {
         this.known.set(t.spotifyId, saved.get(t.spotifyId));
         onResult(t.spotifyId, saved.get(t.spotifyId));
       } else {
-        this.queue.push({ track: t, onResult, isCancelled });
+        enqueue(t, false);
       }
     }
     this.run();
@@ -208,7 +234,7 @@ export class TrackResolver {
     this.running = true;
     try {
       while (this.queue.length) {
-        const job = this.queue.shift();
+        const job = this.takeNext();
         try {
           await this.runJob(job);
         } catch (err) {
@@ -219,6 +245,26 @@ export class TrackResolver {
     } finally {
       this.running = false;
     }
+  }
+
+  /**
+   * The next song to search: first-pass searches before second-pass ones, and the most recently chosen playlist
+   * first, so a playlist the host just picked gets playable right away instead of waiting behind older ones.
+   * Within a playlist, songs go in order.
+   */
+  takeNext() {
+    let best = 0;
+    for (let i = 1; i < this.queue.length; i += 1) {
+      const a = this.queue[i];
+      const b = this.queue[best];
+      if (a.deep !== b.deep ? !a.deep : a.batch !== b.batch ? a.batch > b.batch : a.seq < b.seq) best = i;
+    }
+    return this.queue.splice(best, 1)[0];
+  }
+
+  /** True while iTunes is making us wait (it blocked a search in the last 2 minutes). */
+  get slow() {
+    return Date.now() - this.lastBlockedAt < 120_000;
   }
 
   async runJob(job) {
@@ -250,18 +296,27 @@ export class TrackResolver {
     this.save(job.track, song).catch(() => {});
   }
 
-  async itunes(term, extra = {}) {
+  itunes(term, extra = {}) {
+    return this.request("search", { term, media: "music", entity: "song", limit: "15", country: "US", ...extra });
+  }
+
+  lookup(params) {
+    return this.request("lookup", { country: "US", ...params });
+  }
+
+  async request(kind, params) {
     for (let attempt = 0; attempt < 3; attempt += 1) {
       const gap = this.lastSearchAt + this.gap - Date.now();
       if (gap > 0) await wait(gap);
       this.lastSearchAt = Date.now();
-      const url = `https://itunes.apple.com/search?${new URLSearchParams({ term, media: "music", entity: "song", limit: "15", country: "US", ...extra })}`;
+      const url = `https://itunes.apple.com/${kind}?${new URLSearchParams(params)}`;
       const res = await this.fetch(url, { signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS) });
       this.stats.searches += 1;
       if (this.stats.searches % 25 === 0) this.logStats();
       if (res.status === 403 || res.status === 429) {
         // Blocked: wait, and go slower from now on so it doesn't keep happening.
         this.stats.blocked += 1;
+        this.lastBlockedAt = Date.now();
         this.gap = Math.min(MAX_GAP_MS, this.gap * 2);
         console.warn(`[Spotify] iTunes bloqueó la búsqueda (${res.status}); espero y sigo cada ${Math.round(this.gap / 1000)} s`);
         await wait(RATE_LIMIT_WAIT_MS);
@@ -287,13 +342,92 @@ export class TrackResolver {
    * "title + first artist", then "title + second artist", then the first artist's songs (the search sometimes
    * misses a song the artist list has). Every result still has to pass scoreCandidate.
    */
+  /** The iTunes id of an artist, by name (cached). */
+  artistId(name) {
+    const key = normalizeAnswer(name);
+    if (!this.artistIds.has(key)) {
+      this.artistIds.set(
+        key,
+        this.itunes(name, { entity: "musicArtist", limit: "5" }).then((list) => {
+          const exact = list.find((a) => normalizeAnswer(a.artistName || "") === key);
+          return (exact || list.find((a) => artistMatches([name], a.artistName || "")))?.artistId || null;
+        })
+      );
+      this.artistIds.get(key).catch(() => this.artistIds.delete(key));
+    }
+    return this.artistIds.get(key);
+  }
+
+  /** Every album of an artist (cached). */
+  artistAlbums(id) {
+    if (!this.artistAlbumLists.has(id)) {
+      this.artistAlbumLists.set(
+        id,
+        this.lookup({ id, entity: "album", limit: "200" }).then((list) => list.filter((r) => r.wrapperType === "collection"))
+      );
+      this.artistAlbumLists.get(id).catch(() => this.artistAlbumLists.delete(id));
+    }
+    return this.artistAlbumLists.get(id);
+  }
+
+  /** Every song of an album (cached). */
+  albumTracks(collectionId) {
+    if (!this.albumTrackLists.has(collectionId)) {
+      this.albumTrackLists.set(
+        collectionId,
+        this.lookup({ id: collectionId, entity: "song" }).then((list) => list.filter((r) => r.wrapperType === "track"))
+      );
+      this.albumTrackLists.get(collectionId).catch(() => this.albumTrackLists.delete(collectionId));
+    }
+    return this.albumTrackLists.get(collectionId);
+  }
+
+  /**
+   * The exact recording through its album: the artist's album list on iTunes, the album with the same name, and in
+   * it the song with the same track number (or title) and length. Songs of the same artist or album reuse the
+   * lookups, so a playlist with many songs from one album costs a couple of requests in total.
+   */
+  async viaAlbum(track) {
+    const artist = track.albumArtist || track.artists[0];
+    const want = albumKey(track.albumName);
+    if (!artist || !want) return null;
+    const id = await this.artistId(artist);
+    if (!id) return null;
+    const albums = (await this.artistAlbums(id)).filter((a) => {
+      const key = albumKey(a.collectionName);
+      return key === want || ((key.includes(want) || want.includes(key)) && Math.min(key.length, want.length) >= 4);
+    });
+    for (const album of albums.slice(0, 2)) {
+      let best = null;
+      let bestScore = 0;
+      for (const r of await this.albumTracks(album.collectionId)) {
+        let score = scoreCandidate(track, r);
+        if (!score) continue;
+        if (track.trackNumber && r.trackNumber === track.trackNumber && (r.discNumber || 1) === (track.discNumber || 1)) score += 1;
+        if (score > bestScore) {
+          best = r;
+          bestScore = score;
+        }
+      }
+      if (best) return best;
+    }
+    return null;
+  }
+
   async search(track, { deep = false } = {}) {
     const title = cleanTitle(track.title);
     const [first, second] = track.artists;
     const searches = [];
     if (!deep) {
-      // First pass: one search per song, so the whole playlist gets a first look quickly. Most songs are found here.
-      searches.push([`${title} ${first || ""}`.trim()]);
+      // First pass: a song that shares its album with others in the playlist goes through the album (shared
+      // lookups); any other song gets one search by title and artist first. Each falls back to the other way.
+      const bySearch = async () => this.bestOf(track, await this.itunes(`${title} ${first || ""}`.trim()));
+      const steps = track.albumShared ? [() => this.viaAlbum(track), bySearch] : [bySearch, () => this.viaAlbum(track)];
+      for (const step of steps) {
+        const hit = await step();
+        if (hit) return songFromItunes(track, hit);
+      }
+      return null;
     } else {
       // The deeper pass: the title with the second artist, the first artist's songs, the title without anything in
       // brackets on other countries' stores (some Latin releases are only there), the title alone with more
@@ -309,18 +443,23 @@ export class TrackResolver {
       if (first && track.albumName) searches.push([`${first} ${cleanTitle(track.albumName)}`, { limit: "50" }]);
     }
     for (const [term, extra] of searches) {
-      const results = await this.itunes(term, extra);
-      let best = null;
-      let bestScore = 0;
-      for (const r of results) {
-        const score = scoreCandidate(track, r);
-        if (score > bestScore) {
-          best = r;
-          bestScore = score;
-        }
-      }
+      const best = this.bestOf(track, await this.itunes(term, extra));
       if (best) return songFromItunes(track, best);
     }
     return null;
+  }
+
+  /** The iTunes result that fits the Spotify song best, or null when none is the same song. */
+  bestOf(track, results) {
+    let best = null;
+    let bestScore = 0;
+    for (const r of results) {
+      const score = scoreCandidate(track, r);
+      if (score > bestScore) {
+        best = r;
+        bestScore = score;
+      }
+    }
+    return best;
   }
 }

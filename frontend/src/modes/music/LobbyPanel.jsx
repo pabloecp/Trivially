@@ -19,7 +19,11 @@ export default function LobbyPanel({ room, onToast }) {
   const isHost = room.hostId === user?.id;
   const canEditConfig = isHost || Boolean(me?.canEditConfig) || Boolean(room.coHosts?.includes(user?.id));
   const connected = room.players.filter((p) => p.connected);
-  const canStart = connected.length > 0;
+  // A match needs a different song for every round (the server checks it too; older servers don't send songsReady).
+  const songsReady = room.songsReady;
+  const roundsSet = room.config?.rounds || 10;
+  const enoughSongs = songsReady == null || songsReady >= roundsSet;
+  const canStart = connected.length > 0 && enoughSongs;
   const others = room.players.filter((p) => p.id !== room.hostId);
 
   const playlists = catalog?.playlists || [];
@@ -134,7 +138,18 @@ export default function LobbyPanel({ room, onToast }) {
                   Cargando canciones de Spotify: <strong>{loadingReady} listas</strong>, {loadingChecked} de {loadingTotal}{" "}
                   revisadas.
                 </>
-              )}{loadingReady > 0 || chosen.length ? " Ya puedes empezar." : ""}
+              )}
+              {room.itunesSlow && " iTunes nos está haciendo esperar, sigue buscando."}
+            </span>
+          </p>
+        )}
+
+        {!enoughSongs && (
+          <p className="tv-playlist-total is-short" role="status">
+            <Icon name="lock" size={16} strokeWidth={2.6} />
+            <span>
+              Hay <strong>{songsReady} {songsReady === 1 ? "canción lista" : "canciones listas"}</strong> para {roundsSet} rondas.{" "}
+              {loading.length > 0 ? "Espera a que carguen más o baja las rondas." : "Baja las rondas o elige más playlists."}
             </span>
           </p>
         )}
