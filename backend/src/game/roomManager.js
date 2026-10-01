@@ -408,16 +408,21 @@ export class RoomManager {
   }
 
   /**
-   * Build the full searchable song list for the current round.
-   * This is sent to clients for autocomplete. It includes all catalog songs
-   * plus custom tracks if available.
+   * The autocomplete list sent to players during a round: only the songs of the playlists being played (the chosen
+   * catalog playlists and every song of the chosen Spotify ones), plus custom tracks if available.
    */
   buildSearchCatalog(room) {
     const allSongs = [];
     const seen = new Set();
 
-    // Add all catalog songs
-    for (const s of this.catalog.songs) {
+    // Only the songs of the chosen playlists (the same catalog part as songPool); the whole catalog without a room.
+    const ids = room?.config?.playlistIds || [];
+    const catalogIds = ids.filter((id) => !id.startsWith(SPOTIFY_PREFIX));
+    const hasSpotify = ids.some((id) => room?.customPlaylists?.[id]);
+    let catalogSongs = this.catalog.songs;
+    if (room?.config?.customTracks?.length) catalogSongs = [];
+    else if (room) catalogSongs = catalogIds.length || !hasSpotify ? selectSongs(this.catalog, { playlistIds: catalogIds }) : [];
+    for (const s of catalogSongs) {
       if (seen.has(s.id)) continue;
       seen.add(s.id);
       allSongs.push({

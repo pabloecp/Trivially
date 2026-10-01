@@ -40,6 +40,15 @@ assert.equal(mgr.publicState(room).customPlaylists[0].loading, true);
 // The whole playlist is in the autocomplete even before it is found on iTunes.
 assert.equal(mgr.buildSearchCatalog(room).filter((s) => s.id.startsWith("sp-")).length, 6);
 
+// With only the Spotify playlist chosen, the autocomplete has only its songs; adding Inglés adds that playlist's songs.
+assert.equal(mgr.buildSearchCatalog(room).length, 6);
+mgr.updateConfig(room, "owner", { playlistIds: ["sp:abc", "top-en"] });
+const english = mgr.catalog.playlists.find((p) => p.id === "top-en").trackIds;
+const search = mgr.buildSearchCatalog(room);
+assert.equal(search.length, 6 + english.length);
+assert.ok(search.every((s) => s.id.startsWith("sp-") || english.includes(s.id)), "no songs from playlists not chosen");
+mgr.updateConfig(room, "owner", { playlistIds: ["sp:abc"] });
+
 // Nothing playable yet: the match can't start.
 assert.throws(() => mgr.start(room, "owner"), /se están cargando/);
 
