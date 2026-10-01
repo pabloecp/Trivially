@@ -1,5 +1,5 @@
 import { pickRoundTracks } from "../catalog/songSelector.js";
-import { hydrateSong, findArtist } from "../catalog/catalogProvider.js";
+import { hydrateSong } from "../catalog/catalogProvider.js";
 import { applyMatchStats } from "../db/store.js";
 import { isCorrectAnswer, normalizeAnswer } from "./answers.js";
 import { COUNTDOWN_MS, REVEAL_MS, ROUND_MS, scoreAnswer } from "./scoring.js";
@@ -26,17 +26,13 @@ export function createRoomCode(existing) {
   return code;
 }
 
-function defaultConfig() {
+// A new room plays the catalog's default playlist.
+function defaultConfig(catalog) {
+  const playlist = catalog?.playlists?.find((p) => p.isDefault) || catalog?.playlists?.[0];
   return {
     rounds: 5,
     roundMs: ROUND_MS,
-    enabledCategories: ["artist"],
-    artistIds: ["bad-bunny", "mora", "rauw-alejandro", "travis-scott", "drake", "jvke"],
-    genreIds: [],
-    albumIds: [],
-    playlistIds: [],
-    yearFrom: null,
-    yearTo: null,
+    playlistIds: playlist ? [playlist.id] : [],
   };
 }
 
@@ -93,7 +89,7 @@ export class RoomManager {
       currentTrackId: null,
       answers: {},
       timer: null,
-      config: { ...defaultConfig(), ...config },
+      config: { ...defaultConfig(this.catalog), ...config },
       players: new Map(),
     };
     this.rooms.set(code, room);
@@ -244,7 +240,13 @@ export class RoomManager {
       throw new Error("No tienes permisos para configurar la partida");
     }
     if (room.phase !== "lobby") throw new Error("La partida ya comenzó");
-    room.config = { ...room.config, ...config };
+    const next = { ...room.config, ...config };
+    if (config?.playlistIds) {
+      const known = new Set(this.catalog.playlists.map((p) => p.id));
+      next.playlistIds = config.playlistIds.filter((id) => known.has(id));
+      if (!next.playlistIds.length) throw new Error("Elige al menos una playlist");
+    }
+    room.config = next;
   }
 
   updatePlayer(room, userId, { name, avatar }) {
@@ -309,11 +311,10 @@ export class RoomManager {
     for (const s of this.catalog.songs) {
       if (seen.has(s.id)) continue;
       seen.add(s.id);
-      const artist = findArtist(this.catalog, s.artistId);
       allSongs.push({
         id: s.id,
         title: s.title,
-        artistName: s.artistName || artist?.name || "Artista",
+        artistName: s.artistName || "Artista",
       });
     }
 
@@ -336,7 +337,7 @@ export class RoomManager {
       allSongs.push({
         id: s.id,
         title: s.title,
-        artistName: s.artistName || findArtist(this.catalog, s.artistId)?.name || "Artista",
+        artistName: s.artistName || "Artista",
       });
     }
 

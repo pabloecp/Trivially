@@ -55,7 +55,7 @@ Timers on the client use `remainingMs(room)`, which corrects for clock skew with
 
 ### Catalog
 
-`catalog/catalogProvider.js` `loadCatalog()` returns the static `seedCatalog.js`, which holds artists, albums, genres, playlists, and songs with iTunes `previewUrl`s. `spotifyCatalog.js` exists but is not wired in. Round selection lives in `catalog/songSelector.js`: `config.enabledCategories` decides which id filters (`artistIds`, `genreIds`, `albumIds`, `playlistIds`, `yearFrom`/`yearTo`) apply. If `room.config.customTracks` is set, the catalog is bypassed entirely.
+The catalog is a set of playlists of songs with iTunes `previewUrl`s. `catalog/catalogProvider.js` `loadCatalog()` reads it at boot from the Supabase tables `songs`, `playlists` and `playlist_songs` (see `backend/supabase/schema.sql`), and falls back to `catalog/catalog.json` when Supabase isn't configured or has no playlists. `npm run catalog:upload --prefix backend` copies `catalog.json` to Supabase, deleting songs and playlists the file no longer has. There are three playlists of 100 songs taken from kworb.net's all-time Spotify ranking: Spanish (`top-es`, the default for new rooms), English (`top-en`) and Global (`top-global`). Round selection lives in `catalog/songSelector.js`: a match draws from the union of `config.playlistIds`, or from the default playlist when none of those ids exists. If `room.config.customTracks` is set, the catalog is bypassed entirely. `spotifyCatalog.js` exists but is not wired in.
 
 ### Persistence and auth
 

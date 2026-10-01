@@ -592,7 +592,7 @@ function GameScreen() {
               <section className="tv-card tv-song">
                 <img
                   className="tv-song-cover"
-                  src={room.reveal.image || "/artists/bad-bunny.jpg"}
+                  src={room.reveal.image || "/logo.svg"}
                   alt={`Portada de ${room.reveal.title}`}
                 />
                 <div className="tv-song-text">

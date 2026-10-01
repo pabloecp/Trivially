@@ -1,8 +1,8 @@
 import assert from "node:assert/strict";
-import { getSeedCatalog } from "../catalog/seedCatalog.js";
+import { readLocalCatalog } from "../catalog/catalogProvider.js";
 import { RoomManager } from "./roomManager.js";
 
-const catalog = getSeedCatalog();
+const catalog = readLocalCatalog();
 const manager = new RoomManager({ catalog, store: { users: {} } });
 
 // Build search catalog for autocomplete

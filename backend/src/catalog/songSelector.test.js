@@ -1,31 +1,27 @@
 import assert from "node:assert/strict";
-import { getSeedCatalog } from "../catalog/seedCatalog.js";
-import { selectSongs } from "./songSelector.js";
+import { readLocalCatalog } from "./catalogProvider.js";
+import { pickRoundTracks, selectSongs } from "./songSelector.js";
 
-const catalog = getSeedCatalog();
+const catalog = readLocalCatalog();
+const [first, second] = catalog.playlists;
 
-const mora = selectSongs(catalog, {
-  enabledCategories: ["artist"],
-  artistIds: ["mora"],
-});
-assert.ok(mora.length && mora.every((s) => s.artistId === "mora"));
+// One playlist: exactly its songs.
+const one = selectSongs(catalog, { playlistIds: [first.id] });
+assert.equal(one.length, new Set(first.trackIds).size);
+assert.ok(one.every((s) => first.trackIds.includes(s.id)));
 
-const combo = selectSongs(catalog, {
-  enabledCategories: ["genre", "artist", "year"],
-  genreIds: ["reggaeton"],
-  artistIds: ["bad-bunny"],
-  yearFrom: 2020,
-  yearTo: 2026,
-});
-assert.ok(combo.length > 0 && combo.every((s) => s.artistId === "bad-bunny" && s.year >= 2020 && s.year <= 2026));
+// Several playlists: their union, each song once.
+const both = selectSongs(catalog, { playlistIds: [first.id, second.id] });
+assert.equal(both.length, new Set([...first.trackIds, ...second.trackIds]).size);
 
-const firstAlbum = catalog.albums[0];
-if (firstAlbum) {
-  const albumSongs = selectSongs(catalog, {
-    enabledCategories: ["album"],
-    albumIds: [firstAlbum.id],
-  });
-  assert.ok(albumSongs.every((s) => s.albumId === firstAlbum.id));
-}
+// No valid playlist: the default one.
+const fallback = selectSongs(catalog, { playlistIds: ["no-existe"] });
+const def = catalog.playlists.find((p) => p.isDefault);
+assert.equal(fallback.length, new Set(def.trackIds).size);
+
+// Every song can be played and every playlist has 100 of them.
+assert.ok(catalog.songs.every((s) => s.id && s.title && s.artistName && s.previewUrl));
+assert.ok(catalog.playlists.every((p) => p.trackIds.length === 100));
+assert.equal(pickRoundTracks(catalog, { playlistIds: [first.id] }, 5).length, 5);
 
 console.log("songSelector.test ok");

@@ -4,17 +4,8 @@ import NoteCatcher from "../../components/home/NoteCatcher.jsx";
 import Icon from "../../components/home/Icon.jsx";
 import { useApp } from "../../lib/store.jsx";
 
-const ARTIST_NAME_MAP = {
-  "bad-bunny": "Bad Bunny",
-  "mora": "Mora",
-  "rauw-alejandro": "Rauw Alejandro",
-  "travis-scott": "Travis Scott",
-  "drake": "Drake",
-  "jvke": "JVKE",
-};
-
 // The music mode's waiting room, shown inside the room screen on Home once the host picks this game:
-// the match settings, the start button and a little game to pass the time.
+// the match settings (playlists, rounds, time), the start button and a little game to pass the time.
 export default function LobbyPanel({ room, onToast }) {
   const { user, catalog, refreshCatalog, startGame, updateConfig, toggleConfigPermission } = useApp();
   const [startErr, setStartErr] = useState("");
@@ -30,12 +21,9 @@ export default function LobbyPanel({ room, onToast }) {
   const canStart = room.players.some((p) => p.connected);
   const others = room.players.filter((p) => p.id !== room.hostId);
 
-  const totalArtistCount = Math.max(catalog?.artists?.length || 0, Object.keys(ARTIST_NAME_MAP).length);
-  const selectedArtistIds = room.config?.artistIds || [];
-  const isAllArtists = selectedArtistIds.length >= totalArtistCount;
-  const selectedArtistNames = selectedArtistIds
-    .map((aid) => catalog?.artists?.find((a) => a.id === aid)?.name || ARTIST_NAME_MAP[aid] || aid)
-    .join(", ");
+  const playlists = catalog?.playlists || [];
+  const chosen = playlists.filter((p) => room.config?.playlistIds?.includes(p.id));
+  const playlistNames = (chosen.length ? chosen : playlists.filter((p) => p.isDefault)).map((p) => p.name).join(" · ");
 
   // The host decides who else may change the settings.
   async function togglePermission(player) {
@@ -79,10 +67,8 @@ export default function LobbyPanel({ room, onToast }) {
             <span className="tv-stat-value">{Math.round((room.config?.roundMs || 15000) / 1000)} s</span>
           </div>
           <div className="tv-stat tv-stat--wide">
-            <span className="tv-stat-label">Artistas</span>
-            <span className="tv-stat-value tv-stat-value--sm">
-              {isAllArtists ? "Todos los artistas" : selectedArtistNames || "Ninguno"}
-            </span>
+            <span className="tv-stat-label">{chosen.length > 1 ? "Playlists" : "Playlist"}</span>
+            <span className="tv-stat-value tv-stat-value--sm">{playlistNames || "Cargando…"}</span>
           </div>
         </div>
 

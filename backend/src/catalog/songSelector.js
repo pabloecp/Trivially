@@ -1,53 +1,11 @@
-export function selectSongs(catalog, filters = {}) {
-  const {
-    enabledCategories = [],
-    artistIds = [],
-    genreIds = [],
-    albumIds = [],
-    playlistIds = [],
-    yearFrom,
-    yearTo,
-  } = filters;
-
-  const active = new Set(enabledCategories);
-  let songs = [...catalog.songs];
-
-  const useArtists = active.has("artist") || active.has("artistSongs");
-  const useGenres = active.has("genre");
-  const useAlbums = active.has("album");
-  const useYear = active.has("year") && (yearFrom || yearTo);
-  const usePlaylists = active.has("playlist");
-
-  if (useGenres) {
-    songs = songs.filter((s) => s.genreIds?.some((g) => genreIds.includes(g)));
-  }
-
-  if (useArtists) {
-    songs = songs.filter(
-      (s) => artistIds.includes(s.artistId) || s.featuredArtistIds?.some((id) => artistIds.includes(id))
-    );
-  }
-
-  if (useAlbums) {
-    songs = songs.filter((s) => albumIds.includes(s.albumId));
-  }
-
-  if (useYear) {
-    const from = Number(yearFrom || 1900);
-    const to = Number(yearTo || 2100);
-    songs = songs.filter((s) => s.year >= from && s.year <= to);
-  }
-
-  if (usePlaylists) {
-    const allowed = new Set(
-      catalog.playlists
-        .filter((p) => playlistIds.includes(p.id))
-        .flatMap((p) => p.trackIds)
-    );
-    songs = songs.filter((s) => allowed.has(s.id));
-  }
-
-  return songs;
+// Songs a match can draw from: every song in the chosen playlists, or in the default playlist when none of the
+// chosen ids exists (e.g. an old room config).
+export function selectSongs(catalog, { playlistIds = [] } = {}) {
+  const chosen = catalog.playlists.filter((p) => playlistIds.includes(p.id));
+  const lists = chosen.length ? chosen : catalog.playlists.filter((p) => p.isDefault);
+  if (!lists.length) return [...catalog.songs];
+  const ids = new Set(lists.flatMap((p) => p.trackIds));
+  return catalog.songs.filter((s) => ids.has(s.id));
 }
 
 export function pickRoundTracks(catalog, filters, rounds) {

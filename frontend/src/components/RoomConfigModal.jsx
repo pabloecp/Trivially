@@ -5,15 +5,6 @@ import Icon from "./home/Icon.jsx";
 const ROUND_OPTIONS = [5, 10, 15, 20, 25];
 const TIME_OPTIONS = [15, 20, 25, 30];
 
-const DEFAULT_CATALOG_ARTISTS = [
-  { id: "bad-bunny", name: "Bad Bunny", image: "/artists/bad-bunny.jpg" },
-  { id: "mora", name: "Mora", image: "/artists/mora.jpg" },
-  { id: "rauw-alejandro", name: "Rauw Alejandro", image: "/artists/rauw-alejandro.jpg" },
-  { id: "travis-scott", name: "Travis Scott", image: "/artists/travis-scott.jpg" },
-  { id: "drake", name: "Drake", image: "/artists/drake.jpg" },
-  { id: "jvke", name: "JVKE", image: "/artists/jvke.jpg" },
-];
-
 export default function RoomConfigModal({ isOpen, onClose, currentConfig, catalog, onSave }) {
   const [activeCatalog, setActiveCatalog] = useState(catalog);
 
@@ -24,21 +15,16 @@ export default function RoomConfigModal({ isOpen, onClose, currentConfig, catalo
   useEffect(() => {
     if (isOpen) {
       api("/api/catalog").then((data) => {
-        if (data?.artists) setActiveCatalog(data);
+        if (data?.playlists) setActiveCatalog(data);
       }).catch(() => {});
     }
   }, [isOpen]);
 
-  const artistsList = useMemo(() => {
-    const list = activeCatalog?.artists || catalog?.artists || [];
-    const map = new Map(DEFAULT_CATALOG_ARTISTS.map((a) => [a.id, a]));
-    for (const a of list) {
-      map.set(a.id, { ...map.get(a.id), ...a });
-    }
-    return Array.from(map.values());
-  }, [activeCatalog, catalog]);
-
-  const allArtistIds = useMemo(() => artistsList.map((a) => a.id), [artistsList]);
+  const playlists = activeCatalog?.playlists || [];
+  const defaultPlaylistIds = useMemo(() => {
+    const def = playlists.find((p) => p.isDefault) || playlists[0];
+    return def ? [def.id] : [];
+  }, [playlists]);
 
   const [rounds, setRounds] = useState(() => {
     const r = currentConfig?.rounds || 5;
@@ -51,18 +37,11 @@ export default function RoomConfigModal({ isOpen, onClose, currentConfig, catalo
     return TIME_OPTIONS.includes(s) ? s : 15;
   });
 
-  const [selectedArtists, setSelectedArtists] = useState(() => {
-    if (currentConfig?.artistIds && currentConfig.artistIds.length > 0) {
-      return currentConfig.artistIds;
-    }
-    return ["bad-bunny", "mora", "rauw-alejandro", "travis-scott", "drake", "jvke"];
-  });
+  const [selectedPlaylists, setSelectedPlaylists] = useState(() => currentConfig?.playlistIds || []);
 
   useEffect(() => {
     if (isOpen) {
-      if (currentConfig?.artistIds && currentConfig.artistIds.length > 0) {
-        setSelectedArtists(currentConfig.artistIds);
-      }
+      setSelectedPlaylists(currentConfig?.playlistIds?.length ? currentConfig.playlistIds : defaultPlaylistIds);
       if (currentConfig?.rounds) {
         setRounds(currentConfig.rounds);
       }
@@ -72,39 +51,31 @@ export default function RoomConfigModal({ isOpen, onClose, currentConfig, catalo
     }
   }, [isOpen]);
 
+  // Until the catalog arrives there is nothing selected; fall back to the default playlist then.
+  useEffect(() => {
+    if (isOpen && !selectedPlaylists.length && defaultPlaylistIds.length) setSelectedPlaylists(defaultPlaylistIds);
+  }, [isOpen, defaultPlaylistIds]);
+
   const [preview, setPreview] = useState(null);
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState("");
 
-  function toggleArtist(id) {
-    if (selectedArtists.includes(id)) {
-      setSelectedArtists(selectedArtists.filter((x) => x !== id));
+  // At least one playlist stays selected.
+  function togglePlaylist(id) {
+    if (selectedPlaylists.includes(id)) {
+      if (selectedPlaylists.length > 1) setSelectedPlaylists(selectedPlaylists.filter((x) => x !== id));
     } else {
-      setSelectedArtists([...selectedArtists, id]);
+      setSelectedPlaylists([...selectedPlaylists, id]);
     }
-  }
-
-  function selectAllArtists() {
-    setSelectedArtists([...allArtistIds]);
-  }
-
-  function deselectAllArtists() {
-    setSelectedArtists([]);
   }
 
   const candidateConfig = useMemo(() => {
     return {
       rounds: Number(rounds),
       roundMs: Number(roundSeconds) * 1000,
-      enabledCategories: ["artist"],
-      artistIds: selectedArtists,
-      genreIds: [],
-      albumIds: [],
-      playlistIds: [],
-      yearFrom: null,
-      yearTo: null,
+      playlistIds: selectedPlaylists,
     };
-  }, [rounds, roundSeconds, selectedArtists]);
+  }, [rounds, roundSeconds, selectedPlaylists]);
 
   // Live query preview count
   useEffect(() => {
@@ -128,10 +99,7 @@ export default function RoomConfigModal({ isOpen, onClose, currentConfig, catalo
     }
   }
 
-  const availableCount = selectedArtists.length === 0
-    ? 0
-    : (preview?.matchingCount ?? preview?.count ?? (selectedArtists.length * 50));
-  const isAllArtists = selectedArtists.length === allArtistIds.length;
+  const availableCount = preview?.count ?? 0;
 
   // Close with Escape while open.
   useEffect(() => {
@@ -143,7 +111,7 @@ export default function RoomConfigModal({ isOpen, onClose, currentConfig, catalo
 
   if (!isOpen) return null;
 
-  const notEnough = availableCount < rounds;
+  const notEnough = Boolean(preview) && availableCount < rounds;
 
   return (
     <div className="tv-modal-root">
@@ -167,30 +135,34 @@ export default function RoomConfigModal({ isOpen, onClose, currentConfig, catalo
 
         <fieldset className="tv-fieldset">
           <legend className="tv-label">
-            Artistas · <span className="tv-accent">{availableCount} canciones</span>
+            Playlists · <span className="tv-accent">{availableCount} canciones</span>
           </legend>
-          <div className="tv-picks">
-            {artistsList.map((a, i) => {
-              const active = selectedArtists.includes(a.id);
+          <div className="tv-playlists">
+            {playlists.map((p, i) => {
+              const active = selectedPlaylists.includes(p.id);
               return (
                 <button
-                  key={a.id}
+                  key={p.id}
                   type="button"
-                  className="tv-pick tv-pick--artist"
+                  className="tv-playlist"
                   aria-pressed={active}
-                  onClick={() => toggleArtist(a.id)}
+                  onClick={() => togglePlaylist(p.id)}
                   style={{ "--i": i }}
                 >
-                  {a.image && <img src={a.image} alt="" loading="lazy" />}
-                  {a.name}
+                  <span className="tv-playlist-icon">
+                    <Icon name={active ? "check" : "music"} size={20} strokeWidth={active ? 3 : 2.4} />
+                  </span>
+                  <span className="tv-playlist-text">
+                    <strong>{p.name}</strong>
+                    <span>
+                      {p.trackCount} canciones{p.isDefault ? " · por defecto" : ""}
+                    </span>
+                  </span>
                 </button>
               );
             })}
           </div>
-          <div className="tv-picks-tools">
-            <button type="button" className="tv-link-btn" onClick={selectAllArtists} disabled={isAllArtists}>Todos</button>
-            <button type="button" className="tv-link-btn" onClick={deselectAllArtists} disabled={selectedArtists.length === 0}>Ninguno</button>
-          </div>
+          <p className="tv-hint">Puedes elegir varias; las canciones se mezclan.</p>
         </fieldset>
 
         <fieldset className="tv-fieldset">
@@ -217,7 +189,7 @@ export default function RoomConfigModal({ isOpen, onClose, currentConfig, catalo
 
         {notEnough && (
           <p className="tv-lobby-error" role="alert">
-            Se necesitan al menos {rounds} canciones. Elige más artistas o menos rondas.
+            Se necesitan al menos {rounds} canciones. Elige más playlists o menos rondas.
           </p>
         )}
         {err && <p className="tv-lobby-error" role="alert">{err}</p>}

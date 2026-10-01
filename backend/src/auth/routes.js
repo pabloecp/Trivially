@@ -255,15 +255,11 @@ export function createApiRouter({ catalog, store }) {
 
   router.get("/catalog", (req, res) => {
     res.json({
-      source: catalog.songs[0]?.source || "seed",
-      artists: catalog.artists,
-      genres: catalog.genres,
-      albums: catalog.albums,
       playlists: catalog.playlists.map((p) => ({
         id: p.id,
         name: p.name,
         description: p.description,
-        image: p.image,
+        isDefault: Boolean(p.isDefault),
         trackCount: p.trackIds.length,
       })),
     });

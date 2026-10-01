@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "node --watch src/index.js",
     "start": "node src/index.js",
+    "catalog:upload": "node scripts/uploadCatalog.js",
     "test": "node src/game/answers.test.js && node src/catalog/songSelector.test.js && node src/game/scoring.test.js && node src/game/options.test.js && node src/db/store.test.js && node src/game/roomPermissions.test.js && node src/game/roomLifecycle.test.js && node src/auth/roles.test.js && node src/auth/socketToken.test.js"
   },
   "dependencies": {

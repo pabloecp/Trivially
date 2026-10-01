@@ -23,3 +23,43 @@ alter table public.users enable row level security;
 alter table public.users
   add column if not exists role text generated always as (coalesce(data->>'role', 'user')) stored;
 create index if not exists users_role_idx on public.users (role);
+
+-- ---------------------------------------------------------------------------
+-- Catálogo de canciones: playlists y sus canciones. Se rellena con `npm run catalog:upload --prefix backend`
+-- (copia backend/src/catalog/catalog.json). El backend lo lee al arrancar.
+-- ---------------------------------------------------------------------------
+create table if not exists public.songs (
+  id           text primary key,
+  title        text   not null,
+  artist_name  text   not null,
+  album_name   text,
+  year         int,
+  image        text,
+  preview_url  text   not null,                       -- fragmento de 30 s (iTunes)
+  genre        text,
+  language     text,                                   -- es, en u otro
+  itunes_id    bigint,
+  streams      bigint,                                 -- reproducciones en Spotify al crear la lista
+  updated_at   timestamptz not null default now()
+);
+
+create table if not exists public.playlists (
+  id           text primary key,
+  name         text   not null,
+  description  text,
+  position     int    not null default 0,              -- orden en los ajustes
+  is_default   boolean not null default false,         -- la que usa una sala nueva
+  updated_at   timestamptz not null default now()
+);
+
+create table if not exists public.playlist_songs (
+  playlist_id  text not null references public.playlists (id) on delete cascade,
+  song_id      text not null references public.songs (id) on delete cascade,
+  position     int  not null,                          -- puesto en el ranking (1 = la más escuchada)
+  primary key (playlist_id, song_id)
+);
+create index if not exists playlist_songs_playlist_idx on public.playlist_songs (playlist_id, position);
+
+alter table public.songs enable row level security;
+alter table public.playlists enable row level security;
+alter table public.playlist_songs enable row level security;
