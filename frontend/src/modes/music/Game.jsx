@@ -29,7 +29,7 @@ const CHEERS = [
 
 function GameScreen() {
   const { code } = useParams();
-  const { user, room, joinRoom, answer, restartGame, leaveRoom, setGame } = useApp();
+  const { user, room, joinRoom, answer, skipSong, restartGame, leaveRoom, setGame } = useApp();
   const nav = useNavigate();
 
   const audioRef = useRef(null);
@@ -44,8 +44,12 @@ function GameScreen() {
   const [query, setQuery] = useState("");
   const [activeIndex, setActiveIndex] = useState(0);
   const [submittedSong, setSubmittedSong] = useState(null);
+  // Round in which this player tapped "Saltar" (shown right away, before the server confirms).
+  const [skippedRound, setSkippedRound] = useState(null);
   // Host's "back to the main room" mid-match needs a second tap, since it ends the match for everyone.
   const [confirmHub, setConfirmHub] = useState(false);
+  // Skip works like "Terminar": the first tap warns that the round gives no points, the second one skips.
+  const [confirmSkip, setConfirmSkip] = useState(false);
   // The "Era la canción" card appears once its cover has loaded (or after 1.5 s, so a slow image never holds it).
   const revealTitle = room?.phase === "reveal" ? room?.reveal?.title : null;
   const [coverReadyFor, setCoverReadyFor] = useState(null);
@@ -67,6 +71,16 @@ function GameScreen() {
     const t = setTimeout(() => setConfirmHub(false), 3000);
     return () => clearTimeout(t);
   }, [confirmHub]);
+
+  useEffect(() => {
+    if (!confirmSkip) return;
+    const t = setTimeout(() => setConfirmSkip(false), 3000);
+    return () => clearTimeout(t);
+  }, [confirmSkip]);
+
+  useEffect(() => {
+    setConfirmSkip(false);
+  }, [room?.currentRound]);
 
   // Synchronized timer ticker
   useEffect(() => {
@@ -163,6 +177,7 @@ function GameScreen() {
       setQuery("");
       setActiveIndex(0);
       setSubmittedSong(null);
+      setSkippedRound(null);
       setErr("");
       // Auto-focus input when playing starts
       setTimeout(() => {
@@ -179,7 +194,22 @@ function GameScreen() {
     : room?.me;
 
   const isHost = room?.hostId === user?.id;
-  const locked = Boolean(me?.answered) || Boolean(submittedSong) || room?.phase !== "playing";
+  const skipped = skippedRound === room?.currentRound || Boolean(me?.lastAnswer?.skipped);
+  const locked = Boolean(me?.answered) || Boolean(submittedSong) || skipped || room?.phase !== "playing";
+
+  function handleSkip() {
+    if (locked) return;
+    if (!confirmSkip) {
+      setConfirmSkip(true);
+      return;
+    }
+    setConfirmSkip(false);
+    setSkippedRound(room.currentRound);
+    skipSong().catch((e) => {
+      setSkippedRound(null);
+      setErr(e.message || "No se pudo saltar la canción");
+    });
+  }
   const totalMs = room?.config?.roundMs || 15000;
   const pct =
     room?.phase === "playing"
@@ -452,19 +482,6 @@ function GameScreen() {
                 {confirmHub ? "¿Seguro? Toca otra vez" : "Terminar"}
               </button>
             )}
-            <button
-              type="button"
-              className="tv-icon-btn tv-icon-btn--sm"
-              aria-label="Salir de la partida"
-              onClick={() => {
-                if (window.confirm("¿Seguro que quieres salir de la partida?")) {
-                  leaveRoom();
-                  nav("/");
-                }
-              }}
-            >
-              <Icon name="logout" size={18} />
-            </button>
           </div>
 
           <div className="tv-timer" aria-hidden="true">
@@ -525,6 +542,18 @@ function GameScreen() {
                   )}
                 </div>
 
+                {!query.trim() && (
+                  <button
+                    type="button"
+                    className={`tv-skip-btn${confirmSkip ? " is-on" : ""}`}
+                    onClick={handleSkip}
+                    aria-live="polite"
+                  >
+                    <Icon name={confirmSkip ? "lock" : "close"} size={16} strokeWidth={3} />
+                    {confirmSkip ? "No te dará puntos. Toca otra vez" : "Saltar"}
+                  </button>
+                )}
+
                 {query.trim().length > 0 && (
                   <div className="tv-suggest" id="tv-suggest">
                     {suggestions.length > 0 ? (
@@ -567,12 +596,14 @@ function GameScreen() {
                 )}
               </div>
             ) : (
-              <div className="tv-locked">
+              <div className={`tv-locked${skipped ? " is-skipped" : ""}`}>
                 <span className="tv-locked-check">
-                  <Icon name="check" size={28} strokeWidth={3.2} />
+                  <Icon name={skipped ? "close" : "check"} size={28} strokeWidth={3.2} />
                 </span>
-                <p className="tv-party-kicker">Respuesta enviada</p>
-                <p className="tv-locked-title">{submittedSong || me?.lastAnswer?.text || "Canción enviada"}</p>
+                <p className="tv-party-kicker">{skipped ? "Sin respuesta" : "Respuesta enviada"}</p>
+                <p className="tv-locked-title">
+                  {skipped ? "Te la saltaste" : submittedSong || me?.lastAnswer?.text || "Canción enviada"}
+                </p>
                 <p className="tv-hint">Esperando al resto de jugadores…</p>
               </div>
             )}
@@ -583,17 +614,17 @@ function GameScreen() {
 
         {room.phase === "reveal" && room.reveal && (() => {
           const isCorrect = Boolean(me?.lastAnswer?.correct);
-          const didAnswer = Boolean(me?.lastAnswer?.text || submittedSong);
+          const didAnswer = !skipped && Boolean(me?.lastAnswer?.text || submittedSong);
           const tone = isCorrect ? "ok" : didAnswer ? "bad" : "timeout";
           return (
             <>
               <section className={`tv-card tv-result tv-result--${tone}`} role="status">
                 {isCorrect && <Confetti pieces={18} />}
                 <span className="tv-result-icon">
-                  <Icon name={isCorrect ? "check" : didAnswer ? "lock" : "hash"} size={30} strokeWidth={3} />
+                  <Icon name={isCorrect ? "check" : didAnswer ? "lock" : skipped ? "close" : "hash"} size={30} strokeWidth={3} />
                 </span>
                 <h2 className="tv-result-title">
-                  {isCorrect ? "¡Correcto!" : didAnswer ? "Incorrecto" : "¡Se acabó el tiempo!"}
+                  {isCorrect ? "¡Correcto!" : didAnswer ? "Incorrecto" : skipped ? "No te la sabías" : "¡Se acabó el tiempo!"}
                 </h2>
                 {!isCorrect && (
                   <p className="tv-result-cheer">{CHEERS[(room.currentRound + cheerOffset.current) % CHEERS.length]}</p>

@@ -152,6 +152,17 @@ export function attachSockets(io, rooms) {
     });
 
 
+    socket.on("game:skip", (ack) => {
+      try {
+        const { room, userId } = requireRoom(rooms, socket);
+        rooms.skip(room, userId);
+        ack?.({ ok: true, state: rooms.publicState(room, userId) });
+        io.to(room.code).emit("room:state", rooms.publicState(room));
+      } catch (err) {
+        ack?.({ ok: false, error: err.message });
+      }
+    });
+
     socket.on("game:answer", (text, ack) => {
       try {
         const { room, userId } = requireRoom(rooms, socket);

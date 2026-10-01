@@ -491,6 +491,23 @@ export class RoomManager {
       const artistKey = track.artistId || (track.artistName ? track.artistName.toLowerCase().replace(/\s+/g, "-") : "varios");
       player.artistHits[artistKey] = (player.artistHits[artistKey] || 0) + 1;
     }
+    this.answered(room, player);
+  }
+
+  /** "Saltar": the player gives up on this round. No points, and the streak starts over. */
+  skip(room, userId) {
+    const player = room.players.get(userId);
+    if (!player) throw new Error("Jugador no encontrado");
+    if (player.lastAnswer) return player.lastAnswer;
+    if (room.phase !== "playing") throw new Error("No se aceptan respuestas ahora");
+    player.lastAnswer = { text: "", correct: false, skipped: true, at: Date.now() };
+    player.lastPoints = 0;
+    player.streak = 0;
+    this.answered(room, player);
+  }
+
+  // Once every connected player has answered (or skipped), the song is revealed without waiting for the clock.
+  answered(room, player) {
     player.status = "respondió";
     this.onPhaseChange?.(room);
     const active = [...room.players.values()].filter((p) => p.connected);

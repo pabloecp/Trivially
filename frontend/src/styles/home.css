@@ -1770,6 +1770,28 @@ body:has(.tv-app) {
 }
 
 .tv-locked { display: grid; justify-items: center; gap: 6px; }
+.tv-locked.is-skipped .tv-locked-check { background: var(--tv-neutral); box-shadow: 0 5px 0 var(--tv-neutral-edge); color: var(--tv-text-2); }
+/* "Saltar": a quiet way out, under the answer box. */
+.tv-skip-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-self: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--tv-option-bg);
+  box-shadow: 0 3px 0 var(--tv-option-edge);
+  color: var(--tv-text-2);
+  font: inherit;
+  font-weight: 800;
+  font-size: 14px;
+  cursor: pointer;
+  transition: transform 0.18s var(--tv-spring), color 0.2s ease;
+}
+.tv-skip-btn:hover { color: var(--tv-text); transform: translateY(-2px); }
+.tv-skip-btn:active { transform: translateY(3px); box-shadow: none; }
+.tv-skip-btn.is-on, .tv-skip-btn.is-on:hover { background: var(--tv-danger-bg); color: var(--tv-danger); }
 .tv-locked-check {
   display: grid;
   place-items: center;

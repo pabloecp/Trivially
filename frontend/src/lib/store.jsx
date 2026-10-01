@@ -407,6 +407,13 @@ export function AppProvider({ children }) {
         if (res.state) setRoom(res.state);
       },
 
+      // "Saltar": give up on the current round.
+      async skipSong() {
+        const res = await emitAck("game:skip");
+        if (!res.ok) throw new Error(res.error);
+        if (res.state) setRoom(res.state);
+      },
+
       leaveRoom() {
         emitAck("room:leave").catch(() => {});
         clearRoom();
