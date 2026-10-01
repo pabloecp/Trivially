@@ -1,7 +1,7 @@
 /* Trivially Home — casual game look. Everything here is namespaced with `tv-`. */
 
 :root {
-  --tv-bg: #0a0a0a;
+  --tv-bg: #121212;
   --tv-bg-2: #3a1030;
   --tv-surface: #161616;
   --tv-edge: #000000;
@@ -50,7 +50,7 @@
 }
 
 [data-theme="light"] {
-  --tv-bg: #ffffff;
+  --tv-bg: #f2f2f4;
   --tv-bg-2: #ffe3f3;
   --tv-surface: #ffffff;
   --tv-edge: #e4e4e4;
@@ -99,7 +99,8 @@ body:has(.tv-app) {
   min-height: 100vh;
   min-height: 100dvh;
   overflow-x: hidden;
-  background: radial-gradient(120% 60% at 50% 0%, var(--tv-bg-2), var(--tv-bg) 70%);
+  /* Solid backgrounds: calm in the menus, the mode's vivid colour once a game is picked (see the end of the file). */
+  background: var(--tv-bg);
   color: var(--tv-text);
   font-family: "Nunito", "Plus Jakarta Sans", system-ui, sans-serif;
   -webkit-tap-highlight-color: transparent;
@@ -2281,15 +2282,27 @@ fieldset.tv-steppers { margin: 0; padding: 0; border: 0; min-width: 0; }
 .tv-mode-menu-check { color: var(--brand); }
 .tv-mode-menu-soon { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; color: var(--tv-text-3); }
 
-/* ---------- Room in a game: the whole background takes the mode's colour (data-mode on <html>) ---------- */
-:root[data-mode] .tv-app {
-  background: radial-gradient(120% 60% at 50% 0%, rgba(var(--brand-rgb), 0.28), var(--tv-bg) 75%);
-  transition: background 0.5s ease;
+/* ---------- Backgrounds: one solid colour ---------- */
+/* No blobs, gradient or dots: the menus sit on a calm solid background (--tv-bg). */
+.tv-backdrop { display: none; }
+
+/* A picked game (data-mode on <html>: its room and its match screens) paints the whole background with the mode's
+   vivid colour, the same in light and dark. Cards keep their own surface on top, so they read like tiles on a board;
+   what sits right on the colour (the game's title and badge) turns dark so it doesn't melt into it. */
+:root[data-mode] { --tv-mode-bg: var(--brand); --tv-on-mode: var(--on-brand, #0a0a0a); }
+:root[data-mode="musica"] { --tv-mode-bg: #a0e426; --tv-on-mode: #0a0a0a; }
+:root[data-mode] .tv-app,
+:root[data-mode] body:has(.tv-app) {
+  background: var(--tv-mode-bg);
+  transition: background 0.4s ease;
 }
-:root[data-mode] .tv-blob--1,
-:root[data-mode] .tv-blob--2 { background: var(--brand); }
-:root[data-mode] .tv-blob--3 { background: var(--brand-active, var(--brand)); }
-:root[data-mode] .tv-blob { --tv-blob-opacity: 0.4; }
+:root[data-mode] .tv-room-game-title { color: var(--tv-on-mode); }
+:root[data-mode] .tv-room-game-title .tv-badge {
+  --c1: #0a0a0a;
+  --c2: #0a0a0a;
+  --edge: rgba(0, 0, 0, 0.35);
+  color: var(--tv-mode-bg);
+}
 
 /* Mobile: the game button is as wide as the room-code card above it, and its menu too. */
 @media (max-width: 720px) {
