@@ -73,4 +73,22 @@ mgr.advance(room);
 assert.equal(room.phase, "finished");
 for (const r of [room, other]) mgr.destroy(r);
 
+// Only selected playlists load: unselecting one drops its pending searches, selecting it again resumes them.
+waiting.length = 0;
+const lobby = mgr.create({ host: { id: "owner", name: "Owner", socketId: "s5" }, game: "musica" });
+const one = { ...playlist, id: "one" };
+const two = { ...playlist, id: "two", tracks: playlist.tracks.map((t) => ({ ...t, spotifyId: `two-${t.spotifyId}` })) };
+mgr.addSpotifyPlaylist(lobby, "owner", one);
+mgr.addSpotifyPlaylist(lobby, "owner", two);
+assert.equal(waiting.length, 2);
+mgr.updateConfig(lobby, "owner", { playlistIds: ["sp:two"] });
+assert.equal(waiting[0].job.isCancelled(), true, "playlist 1 stops loading");
+assert.equal(waiting[1].job.isCancelled(), false, "playlist 2 keeps loading");
+waiting[0].job.onResult("t0", song(0));
+mgr.updateConfig(lobby, "owner", { playlistIds: ["sp:two", "sp:one"] });
+assert.equal(waiting.length, 3, "playlist 1 starts loading again");
+assert.equal(waiting[2].tracks.length, 5, "only the songs it didn't have yet");
+assert.equal(waiting[2].job.isCancelled(), false);
+mgr.destroy(lobby);
+
 console.log("spotifyRoom.test ok");

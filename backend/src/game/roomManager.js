@@ -262,7 +262,11 @@ export class RoomManager {
       if (!next.playlistIds.length) throw new Error("Elige al menos una playlist");
     }
     room.config = next;
-    for (const entry of Object.values(room.customPlaylists || {})) entry.active = room.config.playlistIds.includes(entry.id);
+    for (const entry of Object.values(room.customPlaylists || {})) {
+      const wasActive = entry.active;
+      entry.active = room.config.playlistIds.includes(entry.id);
+      if (entry.active && !wasActive) this.loadPlaylist(room, entry);
+    }
   }
 
   /** Only an owner who is the room's host and has Spotify connected can add their playlists. */
@@ -288,20 +292,30 @@ export class RoomManager {
     }
     entry.active = true;
     if (!room.config.playlistIds.includes(id)) room.config = { ...room.config, playlistIds: [...room.config.playlistIds, id] };
-    const pending = entry.tracks.filter((t) => !entry.done.has(t.spotifyId));
-    if (pending.length && this.resolver) {
-      this.resolver
-        .resolve(pending, {
-          onResult: (spotifyId, song) => {
-            entry.done.add(spotifyId);
-            if (song) entry.songs.set(spotifyId, song);
-            this.progressChanged(room);
-          },
-          isCancelled: () => !entry.active || this.rooms.get(room.code) !== room,
-        })
-        .catch((err) => console.warn(`[Spotify] ${err.message}`));
-    }
+    this.loadPlaylist(room, entry);
     return entry;
+  }
+
+  /**
+   * Looks up the songs of a selected Spotify playlist that aren't known yet. Only selected playlists load: when one
+   * is unselected its waiting searches are dropped (isCancelled), and selecting it again picks up where it stopped.
+   * Each call starts a new run, so a playlist never has its searches queued twice.
+   */
+  loadPlaylist(room, entry) {
+    const pending = entry.tracks.filter((t) => !entry.done.has(t.spotifyId));
+    if (!pending.length || !this.resolver) return;
+    const run = (entry.run || 0) + 1;
+    entry.run = run;
+    this.resolver
+      .resolve(pending, {
+        onResult: (spotifyId, song) => {
+          entry.done.add(spotifyId);
+          if (song) entry.songs.set(spotifyId, song);
+          this.progressChanged(room);
+        },
+        isCancelled: () => !entry.active || entry.run !== run || this.rooms.get(room.code) !== room,
+      })
+      .catch((err) => console.warn(`[Spotify] ${err.message}`));
   }
 
   // Loading progress reaches the players at most every 1.5 s.

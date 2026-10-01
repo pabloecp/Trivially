@@ -18,6 +18,38 @@ function normalize(str = "") {
     .trim();
 }
 
+// "Sebastián Yatra & Myke Towers" → ["Sebastián Yatra", "Myke Towers"]: each artist of a song can be searched.
+function splitArtists(name = "") {
+  return name
+    .split(/\s*(?:,|&|\s+feat\.?\s+|\s+ft\.?\s+|\s+x\s+|\s+y\s+|\s+with\s+)\s*/i)
+    .map((a) => a.trim())
+    .filter(Boolean);
+}
+
+function editDistance(a, b) {
+  let prev = Array.from({ length: b.length + 1 }, (_, j) => j);
+  for (let i = 1; i <= a.length; i += 1) {
+    const cur = [i];
+    for (let j = 1; j <= b.length; j += 1) {
+      cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+    }
+    prev = cur;
+  }
+  return prev[b.length];
+}
+
+// How an artist's name matches what was typed: 3 starts with it, 2 contains it, 1 close with a typo
+// ("mike towers" for "Myke Towers"), 0 not at all.
+function artistMatch(normArtist, q) {
+  if (normArtist.startsWith(q)) return 3;
+  if (normArtist.includes(q)) return 2;
+  if (q.length >= 4) {
+    const allowed = q.length >= 8 ? 2 : 1;
+    if (editDistance(q, normArtist.slice(0, q.length)) <= allowed || editDistance(q, normArtist) <= allowed) return 1;
+  }
+  return 0;
+}
+
 // Shown under the result when the round didn't go your way; one per round, never the same twice in a row.
 const CHEERS = [
   "¡Estuviste cerca!",
@@ -236,12 +268,18 @@ function GameScreen() {
         titleMatches.push({ song, score: 60 - normTitle.indexOf(q) });
       }
 
-      if (normArtist.includes(q)) {
-        if (!artists.has(song.artistName)) {
-          artists.set(song.artistName, { name: song.artistName, starts: normArtist.startsWith(q), songs: [] });
-        }
-        artists.get(song.artistName).songs.push(song);
-      }
+      // Every artist of the song counts, also the second one ("Myke Towers" finds "Pareja Del Año"), but under
+      // that artist the songs where they come first go on top and the ones where they are a guest at the bottom.
+      splitArtists(song.artistName).forEach((artist, position) => {
+        const match = artistMatch(normalize(artist), q);
+        if (!match) return;
+        const key = normalize(artist);
+        if (!artists.has(key)) artists.set(key, { name: artist, match, main: false, songs: [] });
+        const group = artists.get(key);
+        group.match = Math.max(group.match, match);
+        group.main = group.main || position === 0;
+        group.songs.push({ song, position });
+      });
     }
 
     titleMatches.sort((a, b) => b.score - a.score);
@@ -249,12 +287,15 @@ function GameScreen() {
     const shown = new Set(byTitle.map((s) => s.id));
 
     const byArtist = [...artists.values()]
-      .sort((a, b) => b.starts - a.starts || a.name.localeCompare(b.name))
+      .sort((a, b) => b.match - a.match || b.main - a.main || a.name.localeCompare(b.name))
       .map((a) => ({
         name: a.name,
         songs: a.songs
-          .filter((s) => !shown.has(s.id))
-          .sort((x, y) => x.title.localeCompare(y.title))
+          .filter(({ song }) => !shown.has(song.id))
+          .sort((x, y) => (x.position > 0) - (y.position > 0) || x.song.title.localeCompare(y.song.title))
+          .map(({ song }) => song)
+          // A song shows once: in its best group (groups are already sorted best first).
+          .filter((song) => !shown.has(song.id) && shown.add(song.id))
           .slice(0, 5),
       }))
       .filter((a) => a.songs.length > 0)
