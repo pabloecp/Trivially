@@ -4,6 +4,7 @@ import { useApp } from "../lib/store.jsx";
 import { GAME_MODES, findMode } from "../modes/index.js";
 import Icon from "../components/home/Icon.jsx";
 import TvTopbar from "../components/home/TvTopbar.jsx";
+import HowToPlay from "../components/home/HowToPlay.jsx";
 import AppIcon from "../components/home/AppIcon.jsx";
 import PartyPanel from "../components/home/PartyPanel.jsx";
 import PlaySheet from "../components/home/PlaySheet.jsx";
@@ -224,6 +225,7 @@ export default function Home() {
                 Jugar
               </button>
             </section>
+            <HowToPlay />
           </div>
         )}
 

@@ -248,6 +248,9 @@ body:has(.tv-app) {
 }
 /* Home without a room: logo and Jugar centred in the space under the top bar. */
 .tv-stage.is-home { min-height: calc(100svh - 190px); align-content: center; }
+/* "Cómo se juega" is desktop only; on mobile the logo gets the whole screen. */
+@media (min-width: 721px) { .tv-stage.is-home { min-height: 0; align-content: normal; } }
+@media (max-width: 720px) { .tv-howto { display: none; } }
 .tv-stage .tv-party { margin-top: 0; max-width: 560px; }
 @media (min-width: 900px) {
   .tv-stage.has-room { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 48px; }
