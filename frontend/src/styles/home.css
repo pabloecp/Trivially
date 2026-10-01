@@ -1627,7 +1627,7 @@ body:has(.tv-app) {
 .tv-game-tools { grid-area: tools; display: flex; justify-content: flex-end; align-items: center; gap: 8px; }
 .tv-timer { grid-area: bar; }
 @media (min-width: 640px) {
-  .tv-game-top { grid-template-columns: minmax(0, 1fr) auto auto; grid-template-areas: "round clock tools" "bar bar bar"; }
+  .tv-game-top { grid-template-columns: minmax(0, 1fr) auto auto; grid-template-areas: "round tools clock" "bar bar bar"; }
 }
 .tv-timer {
   height: 14px;

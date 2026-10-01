@@ -32,4 +32,12 @@ mgr.skip(room, "host-1");
 assert.equal(room.phase, "reveal");
 clearTimeout(room.timer);
 
+// Playing alone, skipping reveals the song straight away instead of waiting for other players.
+const solo = mgr.create({ host: { id: "solo-1", name: "Solo", socketId: "s3" }, mode: "multi", game: "musica" });
+mgr.start(solo, "solo-1");
+mgr.beginPlaying(solo);
+mgr.skip(solo, "solo-1");
+assert.equal(solo.phase, "reveal");
+clearTimeout(solo.timer);
+
 console.log("skip.test ok");
