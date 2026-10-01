@@ -1399,7 +1399,6 @@ body:has(.tv-app) {
   animation: tvMarquee calc(var(--n) * 2.4s) linear infinite;
 }
 .tv-covers-row.is-reverse .tv-covers-track { animation-direction: reverse; }
-.tv-covers:hover .tv-covers-track { animation-play-state: paused; }
 .tv-covers img {
   width: 64px;
   height: 64px;

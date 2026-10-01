@@ -36,6 +36,7 @@ async function get(store, userId, pathOrUrl) {
   const token = await accessToken(store, userId);
   const res = await fetch(pathOrUrl.startsWith("http") ? pathOrUrl : `${API}${pathOrUrl}`, {
     headers: { Authorization: `Bearer ${token}` },
+    signal: AbortSignal.timeout(15_000),
   });
   if (!res.ok) {
     const err = new Error(res.status === 403 || res.status === 404 ? "Spotify no deja leer esa playlist" : "Spotify no respondió. Inténtalo otra vez.");

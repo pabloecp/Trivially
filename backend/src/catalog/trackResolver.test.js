@@ -62,4 +62,20 @@ assert.equal(got[1]?.title, "Hoy", "second pass: found on the MX store");
 await deepResolver.resolve([hoy], { onResult: (id, song) => got.push(song) });
 assert.equal(got[2]?.title, "Hoy");
 
+// The first pass does a single search per song; the others wait for the second pass.
+let firstPassSearches = 0;
+const none = async () => (firstPassSearches += 1, { ok: true, status: 200, json: async () => ({ results: [] }) });
+const quick = new TrackResolver({ catalog: { songs: [] }, fetchImpl: none, searchGapMs: 0, useDb: false });
+await quick.resolve([{ ...track, spotifyId: "zz" }], { onResult: () => {} });
+while (quick.running || quick.queue.length) await new Promise((r) => setTimeout(r, 5));
+assert.equal(firstPassSearches, 1);
+
+// A failure with one song never stops the queue for the rest.
+const sturdy = new TrackResolver({ catalog: { songs: [] }, fetchImpl, searchGapMs: 0, useDb: false });
+const after = [];
+await sturdy.resolve([{ ...track, spotifyId: "boom" }], { onResult: () => { throw new Error("falla"); } });
+await sturdy.resolve([{ ...track, spotifyId: "next" }], { onResult: (id, song) => after.push(song) });
+while (sturdy.running || sturdy.queue.length) await new Promise((r) => setTimeout(r, 5));
+assert.equal(after[0]?.title, "Ojitos Lindos");
+
 console.log("trackResolver.test ok");

@@ -708,6 +708,9 @@ export class RoomManager {
         image: e.image,
         total: e.tracks.length,
         ready: e.songs.size,
+        // Songs looked at once, and the not-found ones waiting for the second, deeper search.
+        checked: e.done.size,
+        retrying: e.active ? this.missingSongs(e).length : 0,
         loading: e.active && (e.done.size < e.tracks.length || this.missingSongs(e).length > 0),
         // Small covers of the songs found so far, for the strip under the playlists.
         covers: [...e.songs.values()]

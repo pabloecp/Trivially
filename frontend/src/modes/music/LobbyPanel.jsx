@@ -34,6 +34,9 @@ export default function LobbyPanel({ room, onToast }) {
   const loading = custom.filter((p) => p.loading);
   const loadingReady = loading.reduce((n, p) => n + p.ready, 0);
   const loadingTotal = loading.reduce((n, p) => n + p.total, 0);
+  const loadingChecked = loading.reduce((n, p) => n + (p.checked ?? p.total), 0);
+  // Every song was looked at once: what's left is the second search for the ones not found.
+  const retrying = loadingChecked >= loadingTotal ? loading.reduce((n, p) => n + (p.retrying || 0), 0) : 0;
   const rounds = room.config?.rounds || 10;
   const seconds = Math.round((room.config?.roundMs || 15000) / 1000);
   // Each round: 3 s countdown + the guessing time + 7 s showing the answer.
@@ -121,7 +124,17 @@ export default function LobbyPanel({ room, onToast }) {
           <p className="tv-playlist-total tv-spotify-loading" aria-live="polite">
             <SpotifyIcon size={18} />
             <span>
-              Cargando canciones de Spotify: <strong>{loadingReady} de {loadingTotal}</strong> listas.{loadingReady > 0 || chosen.length ? " Ya puedes empezar." : ""}
+              {retrying > 0 ? (
+                <>
+                  <strong>{loadingReady} de {loadingTotal}</strong> listas. Buscando otra vez {retrying}{" "}
+                  {retrying === 1 ? "canción que no se encontró" : "canciones que no se encontraron"}.
+                </>
+              ) : (
+                <>
+                  Cargando canciones de Spotify: <strong>{loadingReady} listas</strong>, {loadingChecked} de {loadingTotal}{" "}
+                  revisadas.
+                </>
+              )}{loadingReady > 0 || chosen.length ? " Ya puedes empezar." : ""}
             </span>
           </p>
         )}
