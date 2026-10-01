@@ -1162,7 +1162,7 @@ body:has(.tv-app) {
 .tv-lobby-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; align-items: start; }
 .tv-lobby-grid > .tv-card { animation-delay: 0.08s; }
 @media (min-width: 860px) {
-  .tv-lobby-grid.has-settings { grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); align-items: stretch; }
+  .tv-lobby-grid.has-settings { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: stretch; }
 }
 /* "La partida": a little preview of the match, with the start button at the bottom. */
 .tv-match { display: flex; flex-direction: column; gap: 16px; }
