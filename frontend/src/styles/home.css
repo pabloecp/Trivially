@@ -1441,7 +1441,6 @@ body:has(.tv-app) {
   display: flex;
   align-items: center;
   gap: 8px;
-  min-height: 58px; /* room for two lines, so the warning never changes the modal height */
   margin: 0;
   padding: 10px 14px;
   border-radius: 14px;
@@ -1460,8 +1459,6 @@ body:has(.tv-app) {
 .tv-pick--playlist:hover,
 .tv-pick--playlist:active { transform: none; }
 .tv-pick--playlist[aria-pressed="true"] { animation: none; }
-.tv-playlist-total:not(.is-short) svg { color: var(--brand); }
-.tv-playlist-total strong { color: var(--tv-text); }
 
 /* ---------- Login ---------- */
 .tv-auth { display: grid; gap: 18px; width: 100%; max-width: 460px; margin: 0 auto; }

@@ -163,20 +163,15 @@ export default function RoomConfigModal({ isOpen, onClose, currentConfig, catalo
               );
             })}
           </div>
-          <p className={`tv-playlist-total${notEnough ? " is-short" : ""}`} aria-live="polite">
-            <Icon name={notEnough ? "lock" : "music"} size={16} strokeWidth={2.6} />
-            {notEnough ? (
+          {notEnough && (
+            <p className="tv-playlist-total is-short" role="alert">
+              <Icon name="lock" size={16} strokeWidth={2.6} />
               <span>
                 Necesitas al menos <strong>{rounds} canciones</strong>
                 {selectedPlaylists.length ? ` (tienes ${availableCount})` : ""}
               </span>
-            ) : (
-              <span>
-                {selectedPlaylists.length === 1 ? "1 playlist" : `${selectedPlaylists.length} playlists`} ·{" "}
-                <strong>{counting ? "contando…" : `${availableCount} canciones`}</strong>
-              </span>
-            )}
-          </p>
+            </p>
+          )}
         </fieldset>
 
         <fieldset className="tv-fieldset">
