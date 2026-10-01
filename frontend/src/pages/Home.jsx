@@ -8,7 +8,6 @@ import AppIcon from "../components/home/AppIcon.jsx";
 import PartyPanel from "../components/home/PartyPanel.jsx";
 import PlaySheet from "../components/home/PlaySheet.jsx";
 import Wordmark from "../components/home/Wordmark.jsx";
-import HowToPlay from "../components/home/HowToPlay.jsx";
 import "../styles/home.css";
 
 function ModeTile({ mode, index, showGo, selected, onPick }) {
@@ -213,7 +212,7 @@ export default function Home() {
             <PartyPanel room={room} onToast={showToast} />
           </div>
         ) : (
-          <div className="tv-stage">
+          <div className="tv-stage is-home">
             <section className="tv-hero">
               <AppIcon />
               <Wordmark />
@@ -225,7 +224,6 @@ export default function Home() {
                 Jugar
               </button>
             </section>
-            <HowToPlay />
           </div>
         )}
 

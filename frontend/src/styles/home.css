@@ -246,6 +246,8 @@ body:has(.tv-app) {
   justify-items: center;
   align-items: center;
 }
+/* Home without a room: logo and Jugar centred in the space under the top bar. */
+.tv-stage.is-home { min-height: calc(100svh - 190px); align-content: center; }
 .tv-stage .tv-party { margin-top: 0; max-width: 560px; }
 @media (min-width: 900px) {
   .tv-stage.has-room { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 48px; }
