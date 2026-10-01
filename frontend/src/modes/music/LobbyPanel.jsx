@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import MusicSettings from "./MusicSettings.jsx";
 import Avatar from "../../components/home/Avatar.jsx";
 import Icon from "../../components/home/Icon.jsx";
@@ -6,11 +6,10 @@ import SpotifyIcon from "../../components/home/SpotifyIcon.jsx";
 import { useApp } from "../../lib/store.jsx";
 
 // The music mode's waiting room, shown inside the room screen on Home once the host picks this game:
-// the match settings (playlists, rounds, time) for whoever may change them, and the start button.
+// the match settings (playlists, rounds, time) for whoever may change them. The start button lives in PartyPanel.
 // Everyone sees the match settings; players without permission see them locked.
 export default function LobbyPanel({ room, onToast }) {
-  const { user, catalog, refreshCatalog, startGame, updateConfig } = useApp();
-  const [startErr, setStartErr] = useState("");
+  const { user, catalog, refreshCatalog, updateConfig } = useApp();
 
   useEffect(() => {
     refreshCatalog?.();
@@ -24,7 +23,6 @@ export default function LobbyPanel({ room, onToast }) {
   const songsReady = room.songsReady;
   const roundsSet = room.config?.rounds || 10;
   const enoughSongs = songsReady == null || songsReady >= roundsSet;
-  const canStart = connected.length > 0 && enoughSongs;
 
   const playlists = catalog?.playlists || [];
   const chosenIds = room.config?.playlistIds || [];
@@ -47,15 +45,6 @@ export default function LobbyPanel({ room, onToast }) {
   const seconds = Math.round((room.config?.roundMs || 15000) / 1000);
   // Each round: 3 s countdown + the guessing time + 7 s showing the answer.
   const minutes = Math.max(1, Math.round((rounds * (3 + seconds + 7)) / 60));
-
-  async function onStartGame() {
-    setStartErr("");
-    try {
-      await startGame();
-    } catch (e) {
-      setStartErr(e.message);
-    }
-  }
 
   return (
     <div className="tv-lobby-grid has-settings">
@@ -131,20 +120,6 @@ export default function LobbyPanel({ room, onToast }) {
               Hay <strong>{songsReady} {songsReady === 1 ? "canción lista" : "canciones listas"}</strong> para {roundsSet} rondas.{" "}
               {loading.length > 0 ? "Espera a que carguen más o baja las rondas." : "Baja las rondas o elige más playlists."}
             </span>
-          </p>
-        )}
-
-        {startErr && <p className="tv-lobby-error">{startErr}</p>}
-
-        {isHost ? (
-          <button className="tv-btn tv-btn--block tv-c-green" onClick={onStartGame} disabled={!canStart} type="button">
-            <Icon name="play" size={20} filled strokeWidth={1.5} />
-            Comenzar partida
-          </button>
-        ) : (
-          <p className="tv-party-status">
-            <span className="tv-pulse" aria-hidden="true" />
-            Esperando a que {room.hostName || "el anfitrión"} comience la partida…
           </p>
         )}
       </section>

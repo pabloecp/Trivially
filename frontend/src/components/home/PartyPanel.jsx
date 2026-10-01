@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useApp } from "../../lib/store.jsx";
+import { findMode } from "../../modes/index.js";
 import Avatar from "./Avatar.jsx";
 import Icon from "./Icon.jsx";
 import { profilePath } from "./PlayerName.jsx";
@@ -80,6 +81,7 @@ export default function PartyPanel({ room, onToast }) {
 
   const isHost = room.hostId === user?.id;
   const alone = room.players.length === 1;
+  const StartButton = findMode(room.game)?.Start;
 
   async function copyInvite() {
     const url = `${window.location.origin}/sala/${room.code}`;
@@ -148,6 +150,8 @@ export default function PartyPanel({ room, onToast }) {
           );
         })}
       </ul>
+
+      {StartButton && <StartButton room={room} onToast={onToast} />}
 
       {!room.game && (
         <p className="tv-party-status">
