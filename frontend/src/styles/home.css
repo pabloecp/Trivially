@@ -1378,8 +1378,35 @@ body:has(.tv-app) {
 
 /* Room settings (music mode) */
 .tv-settings { gap: 20px; }
-/* Next to the match summary the two cards share a height; spread the settings instead of leaving a gap. */
-@media (min-width: 860px) { .tv-lobby-grid.has-settings .tv-settings { align-content: space-between; } }
+/* Covers of the chosen playlists sliding by (MusicSettings CoverStrip). */
+.tv-covers {
+  display: grid;
+  gap: 8px;
+  padding: 4px 0;
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent);
+  animation: tvFade 0.5s ease-out;
+}
+.tv-covers-track {
+  display: flex;
+  gap: 8px;
+  width: max-content;
+  padding-right: 8px; /* same as the gap, so half the track is exactly one copy of the row */
+  animation: tvMarquee calc(var(--n) * 2.4s) linear infinite;
+}
+.tv-covers-row.is-reverse .tv-covers-track { animation-direction: reverse; }
+.tv-covers:hover .tv-covers-track { animation-play-state: paused; }
+.tv-covers img {
+  width: 64px;
+  height: 64px;
+  flex-shrink: 0;
+  border-radius: 14px;
+  object-fit: cover;
+  background: var(--tv-option-bg);
+  box-shadow: 0 3px 0 var(--tv-option-edge);
+}
+@keyframes tvMarquee { to { transform: translateX(-50%); } }
 .tv-steppers { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
 .tv-stepper {
   display: grid;
@@ -1466,12 +1493,6 @@ body:has(.tv-app) {
   border-radius: 10px;
   background: linear-gradient(155deg, var(--tv-pink), var(--tv-pink-2));
   color: #fff;
-}
-.tv-pick-count {
-  padding: 2px 8px;
-  border-radius: 999px;
-  background: rgba(0, 0, 0, 0.18);
-  font-size: 12px;
 }
 .tv-picks-tools { display: flex; gap: 4px; }
 .tv-playlist-total {

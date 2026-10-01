@@ -254,6 +254,7 @@ export function createApiRouter({ catalog, store }) {
   // --- Catalog ---
 
   router.get("/catalog", (req, res) => {
+    const images = new Map(catalog.songs.map((s) => [s.id, s.image]));
     res.json({
       playlists: catalog.playlists.map((p) => ({
         id: p.id,
@@ -261,6 +262,11 @@ export function createApiRouter({ catalog, store }) {
         description: p.description,
         isDefault: Boolean(p.isDefault),
         trackCount: p.trackIds.length,
+        // Small album covers for the strip in the room settings (iTunes serves any size from the same path).
+        covers: p.trackIds
+          .map((id) => images.get(id))
+          .filter(Boolean)
+          .map((url) => url.replace(/\/\d+x\d+bb\./, "/160x160bb.")),
       })),
     });
   });

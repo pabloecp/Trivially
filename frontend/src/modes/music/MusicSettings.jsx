@@ -47,6 +47,25 @@ function configKey(config) {
 }
 
 // The match settings, right on the room screen. Every tap is saved straight away for the whole room; the local
+// Album covers of the chosen playlists sliding by in two rows, so you can see what kind of songs are coming.
+// Each row is drawn twice in a row and slides half its width, which loops without a jump.
+function CoverStrip({ covers }) {
+  const rows = [covers.filter((_, i) => i % 2 === 0), covers.filter((_, i) => i % 2 === 1)];
+  return (
+    <div className="tv-covers" aria-hidden="true">
+      {rows.map((row, r) => (
+        <div key={r} className={`tv-covers-row${r ? " is-reverse" : ""}`}>
+          <div className="tv-covers-track" style={{ "--n": row.length }}>
+            {[...row, ...row].map((src, i) => (
+              <img key={i} src={src} alt="" loading="lazy" />
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 // copy only keeps the tap visible until the server's new state arrives. `children` go at the bottom of the card
 // (the host's "who may change the settings" chips).
 export default function MusicSettings({ room, catalog, updateConfig, onToast, children }) {
@@ -64,6 +83,12 @@ export default function MusicSettings({ room, catalog, updateConfig, onToast, ch
   const rounds = draft?.rounds || 10;
   const seconds = Math.round((draft?.roundMs || 15000) / 1000);
   const songCount = playlists.filter((p) => selected.includes(p.id)).reduce((n, p) => n + p.trackCount, 0);
+  // Covers of the chosen playlists, taking turns between them so a mix shows both, without repeats.
+  const lists = playlists.filter((p) => selected.includes(p.id)).map((p) => p.covers || []);
+  const covers = [];
+  for (let i = 0; covers.length < 40 && lists.some((l) => i < l.length); i += 1) {
+    for (const l of lists) if (l[i] && !covers.includes(l[i]) && covers.length < 40) covers.push(l[i]);
+  }
 
   async function save(change) {
     const next = { ...draft, ...change };
@@ -87,7 +112,7 @@ export default function MusicSettings({ room, catalog, updateConfig, onToast, ch
 
   return (
     <section className="tv-card tv-settings" aria-labelledby="tv-settings-title">
-      <h2 id="tv-settings-title" className="tv-card-title">Ajustes</h2>
+      <h2 id="tv-settings-title" className="tv-card-title">Ajustes de la partida</h2>
 
       <fieldset className="tv-fieldset">
         <legend className="tv-label">Playlists</legend>
@@ -108,7 +133,6 @@ export default function MusicSettings({ room, catalog, updateConfig, onToast, ch
                   <Icon name="music" size={18} strokeWidth={2.4} />
                 </span>
                 {label}
-                <span className="tv-pick-count">{p.trackCount}</span>
               </button>
             );
           })}
@@ -122,6 +146,8 @@ export default function MusicSettings({ room, catalog, updateConfig, onToast, ch
           </p>
         )}
       </fieldset>
+
+      {covers.length > 0 && <CoverStrip key={selected.join(",")} covers={covers} />}
 
       <div className="tv-steppers">
         <Stepper label="Rondas" value={rounds} limits={ROUNDS} onChange={(n) => save({ rounds: n })} />
