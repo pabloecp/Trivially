@@ -7,6 +7,7 @@ import {
   deleteUser,
   leaderboard,
   linkGoogle,
+  linkSpotify,
   listUsers,
   loginWithPassword,
   registerWithPassword,
@@ -20,6 +21,7 @@ import {
   upsertUser,
 } from "../db/store.js";
 import { createGoogleAuthUrl, exchangeGoogleCode, googleConfigured } from "./google.js";
+import { exchangeSpotifyCode, spotifyAuthUrl, spotifyConfigured } from "./spotify.js";
 import { authRateLimit } from "./rateLimit.js";
 import { hasRole, ROLES } from "./roles.js";
 import { consumeTicket, createAuthToken, createSocketToken, createTicket } from "./socketToken.js";
@@ -164,6 +166,22 @@ export function createApiRouter({ catalog, store }) {
     }
   });
 
+  // --- Spotify (owners only for now) ---
+
+  router.get("/spotify/login", requireRole(store, "owner"), (req, res) => {
+    try {
+      res.json({ url: spotifyAuthUrl(createTicket(req.user.id, "spotify", 10 * 60 * 1000)) });
+    } catch (err) {
+      res.status(400).json({ error: err.message });
+    }
+  });
+
+  router.post("/auth/unlink-spotify", (req, res) => {
+    const userId = req.session?.userId;
+    if (!userId || !store.users[userId]) return res.status(401).json({ error: "No autenticado" });
+    res.json({ ok: true, user: unlinkSpotify(store, userId) });
+  });
+
   // --- Delete Account ---
 
   router.delete("/auth/delete-account", (req, res) => {
@@ -192,6 +210,7 @@ export function createApiRouter({ catalog, store }) {
       linkingStatus = {
         hasPassword: Boolean(rawUser.passwordHash && rawUser.passwordSalt),
         googleLinked: Boolean(rawUser.googleId),
+        spotifyLinked: Boolean(rawUser.spotify),
       };
     }
 
@@ -200,6 +219,7 @@ export function createApiRouter({ catalog, store }) {
       authToken: rawUser ? createAuthToken(rawUser.id) : null,
       linkingStatus,
       google: { configured: googleConfigured() },
+      spotify: { configured: spotifyConfigured() },
     });
   });
 
@@ -392,4 +412,27 @@ export function handleGoogleFinish(req, res) {
   }
   req.session.userId = userId;
   res.redirect(`${returnTo}${returnTo.includes("?") ? "&" : "?"}google=success`);
+}
+
+// Spotify sends the owner back here after they approve the link. `state` is the ticket made in /api/spotify/login,
+// so this works even when the browser didn't keep the session cookie.
+export async function handleSpotifyCallback(req, res, store) {
+  const host = req.headers.host || "";
+  const site = host.includes("localhost") || host.includes("127.0.0.1")
+    ? "http://localhost:5173"
+    : (process.env.CLIENT_ORIGIN || "https://triviallyonline.vercel.app").replace(/\/$/, "");
+  const back = (status, msg) => res.redirect(`${site}/profile?spotify=${status}${msg ? `&msg=${encodeURIComponent(msg)}` : ""}`);
+  try {
+    if (req.query.error) return back("error", "Cancelaste la conexión con Spotify");
+    const userId = consumeTicket(req.query.state, "spotify");
+    const user = userId ? store.users[userId] : null;
+    if (!user) return back("error", "El enlace expiró. Inténtalo otra vez.");
+    if (!hasRole(user, "owner")) return back("error", "Solo los owners pueden conectar Spotify por ahora");
+    if (!req.query.code) return back("error", "Spotify no devolvió el código de acceso");
+    linkSpotify(store, user.id, await exchangeSpotifyCode(req.query.code));
+    back("linked");
+  } catch (err) {
+    console.error("Spotify callback error:", err);
+    back("error", err.message);
+  }
 }

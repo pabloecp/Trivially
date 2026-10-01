@@ -6,6 +6,7 @@ import TvShell from "../components/home/TvShell.jsx";
 import Avatar from "../components/home/Avatar.jsx";
 import CountUp from "../components/home/CountUp.jsx";
 import GoogleIcon from "../components/home/GoogleIcon.jsx";
+import SpotifyIcon from "../components/home/SpotifyIcon.jsx";
 import Icon from "../components/home/Icon.jsx";
 
 const STATS = [
@@ -34,7 +35,9 @@ function Notice({ tone, icon, children }) {
 }
 
 function ProfileScreen() {
-  const { user: currentUser, updateUsername, updateAvatar, linkGoogle, linkingStatus, logout } = useApp();
+  const { user: currentUser, updateUsername, updateAvatar, linkGoogle, connectSpotify, unlinkSpotify, linkingStatus, logout } =
+    useApp();
+  const [spotifyBusy, setSpotifyBusy] = useState(false);
   const { userId } = useParams();
   const [searchParams] = useSearchParams();
   const nav = useNavigate();
@@ -163,6 +166,35 @@ function ProfileScreen() {
   const canLinkGoogle = !isOtherUser && !isGuest && !hasGoogle;
   const roleTag = ROLE_TAGS[activeUser?.role];
   const googleNotice = searchParams.get("google");
+  const hasSpotify = Boolean(activeUser?.spotify || activeUser?.spotifyLinked);
+  // Only owners (the ones with the tag) see the Spotify button for now.
+  const canSpotify = !isOtherUser && activeUser?.role === "owner";
+  const spotifyNotice = searchParams.get("spotify");
+
+  async function onConnectSpotify() {
+    setErr("");
+    setSpotifyBusy(true);
+    try {
+      await connectSpotify();
+    } catch (e) {
+      setErr(e.message || "No se pudo conectar con Spotify");
+      setSpotifyBusy(false);
+    }
+  }
+
+  async function onUnlinkSpotify() {
+    setErr("");
+    setMsg("");
+    setSpotifyBusy(true);
+    try {
+      await unlinkSpotify();
+      setMsg("Spotify desconectado.");
+    } catch (e) {
+      setErr(e.message || "No se pudo desconectar Spotify");
+    } finally {
+      setSpotifyBusy(false);
+    }
+  }
 
   return (
     <div className="tv-page">
@@ -175,6 +207,12 @@ function ProfileScreen() {
       {googleNotice === "link_error" && (
         <Notice tone="bad" icon="lock">
           {searchParams.get("msg") || "No se pudo conectar con Google. Intenta de nuevo."}
+        </Notice>
+      )}
+      {spotifyNotice === "linked" && hasSpotify && <Notice tone="ok" icon="check">Spotify conectado a tu perfil.</Notice>}
+      {spotifyNotice === "error" && (
+        <Notice tone="bad" icon="lock">
+          {searchParams.get("msg") || "No se pudo conectar con Spotify. Intenta de nuevo."}
         </Notice>
       )}
       {msg && <Notice tone="ok" icon="check">{msg}</Notice>}
@@ -206,6 +244,12 @@ function ProfileScreen() {
               <span className="tv-tag">
                 <GoogleIcon size={13} />
                 Google
+              </span>
+            )}
+            {hasSpotify && (
+              <span className="tv-tag tv-tag--spotify">
+                <SpotifyIcon size={13} color="#000" waves="#1DB954" />
+                Spotify
               </span>
             )}
           </div>
@@ -331,6 +375,28 @@ function ProfileScreen() {
                   <span>Foto de perfil sincronizada</span>
                 </div>
                 <span className="tv-tag tv-tag--ok">Activo</span>
+              </div>
+            )}
+            {canSpotify && (
+              <div className="tv-row-card">
+                <SpotifyIcon size={26} />
+                <div className="tv-row-card-text">
+                  <strong>{hasSpotify ? "Spotify conectado" : "Conecta Spotify"}</strong>
+                  <span>
+                    {hasSpotify
+                      ? activeUser.spotify?.displayName || "Tu cuenta de Spotify"
+                      : "Vincula tu cuenta de Spotify a tu perfil."}
+                  </span>
+                </div>
+                {hasSpotify ? (
+                  <button type="button" className="tv-link-btn tv-link-btn--danger" onClick={onUnlinkSpotify} disabled={spotifyBusy}>
+                    Desconectar
+                  </button>
+                ) : (
+                  <button type="button" className="tv-btn tv-btn--sm tv-btn--spotify" onClick={onConnectSpotify} disabled={spotifyBusy}>
+                    {spotifyBusy ? "Abriendo…" : "Conectar"}
+                  </button>
+                )}
               </div>
             )}
 

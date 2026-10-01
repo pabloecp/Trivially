@@ -67,6 +67,8 @@ The catalog is a set of playlists of songs with iTunes `previewUrl`s. `catalog/c
 - On register, login, or Google sign-in, `claimGuestStats` merges the guest's stats into the account and deletes the guest.
 - `cookie-session` stores only `userId`. It is set to `SameSite=None; Secure` when `CLIENT_ORIGIN` is https or in production.
 - Use `sanitizeUser` for the account owner and `sanitizeUserPublic` for everyone else.
+- Owners can link a Spotify account (`auth/spotify.js`, `/api/spotify/login` → `/auth/spotify/callback`). The tokens stay in `user.spotify` on the server; `sanitizeUser` only exposes the id and display name, and `sanitizeUserPublic` only `spotifyLinked`.
+- `supabaseEnabled()` is always false inside `*.test.js` scripts, so tests never write to the real Supabase `users` table even when its variables are set.
 
 ### Frontend structure (mid-redesign)
 
@@ -86,5 +88,5 @@ The catalog is a set of playlists of songs with iTunes `previewUrl`s. `catalog/c
 - **Production:**
   - The frontend is on Vercel. `frontend/vercel.json` rewrites `/api` and `/auth` to the Railway backend and sends everything else to the SPA. Socket.IO connects directly to `BACKEND_URL`.
   - The backend is on Railway, port 8080. It also serves `frontend/dist` as a static SPA fallback when that folder exists.
-- The backend loads `.env` from `backend/` and from the repo root. Variables: `PORT`, `CLIENT_ORIGIN`, `SESSION_SECRET`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REDIRECT_URI`.
+- The backend loads `.env` from `backend/` and from the repo root. Variables: `PORT`, `CLIENT_ORIGIN`, `SESSION_SECRET`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REDIRECT_URI`, `SPOTIFY_CLIENT_ID`, `SPOTIFY_CLIENT_SECRET`, `SPOTIFY_REDIRECT_URI` (optional, defaults to `<CLIENT_ORIGIN>/auth/spotify/callback`).
 

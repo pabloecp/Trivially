@@ -329,6 +329,21 @@ export function AppProvider({ children }) {
         return res.user;
       },
 
+      // Owners only: sends the browser to Spotify, which comes back to /profile?spotify=linked (or =error).
+      async connectSpotify() {
+        const { url } = await api("/api/spotify/login");
+        if (url) window.location.href = url;
+      },
+
+      async unlinkSpotify() {
+        const res = await api("/api/auth/unlink-spotify", { method: "POST" });
+        if (res.user) {
+          applyUser(res.user);
+          setLinkingStatus((prev) => ({ ...prev, spotifyLinked: false }));
+        }
+        return res.user;
+      },
+
       async deleteAccount(confirmName) {
         await api("/api/auth/delete-account", { method: "DELETE", body: { confirmName } });
         forgetUser();

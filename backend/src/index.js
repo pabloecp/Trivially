@@ -14,6 +14,7 @@ import {
   handleGoogleCallback,
   handleGoogleFinish,
   handleGoogleRedirect,
+  handleSpotifyCallback,
 } from "./auth/routes.js";
 import { verifyAuthToken } from "./auth/socketToken.js";
 import { attachSockets } from "./realtime/sockets.js";
@@ -128,6 +129,7 @@ app.use("/api", createApiRouter({ catalog, store }));
 app.get("/auth/google", handleGoogleRedirect);
 app.get("/auth/google/callback", (req, res) => handleGoogleCallback(req, res, store));
 app.get("/auth/google/finish", handleGoogleFinish);
+app.get("/auth/spotify/callback", (req, res) => handleSpotifyCallback(req, res, store));
 
 const frontendDist = path.join(__dirname, "../../frontend/dist");
 app.use(express.static(frontendDist));

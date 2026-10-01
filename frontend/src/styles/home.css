@@ -1335,6 +1335,8 @@ body:has(.tv-app) {
 /* Buttons */
 .tv-btn--google { --c1: #ffffff; --c2: #f3f3f3; --edge: #d4d4d4; --on: #1f1f1f; }
 .tv-app .tv-btn--google { color: #1f1f1f; }
+.tv-btn--spotify { --c1: #1ed760; --c2: #1db954; --edge: #148a3d; --on: #000; }
+.tv-app .tv-btn--spotify { color: #000; }
 .tv-icon-btn--sm { width: 40px; height: 40px; border-radius: 13px; }
 .tv-app .tv-link-btn--danger { color: var(--tv-danger); }
 .tv-app .tv-link-btn--danger:hover { color: var(--tv-danger); background: var(--tv-danger-bg); }
@@ -1358,6 +1360,7 @@ body:has(.tv-app) {
 .tv-tag--owner { background: var(--tv-violet); color: #0a0a0a; }
 .tv-tag--admin { background: #f050ae; color: #fff; }
 .tv-tag--moderator { background: #33a8c7; color: #fff; }
+.tv-tag--spotify { background: #1db954; color: #000; }
 .tv-tag-sparkle { animation: ownerSparkleMain 2.2s ease-in-out infinite; }
 /* Registrado: Instagram-style verified badge that pulses like the owner star. */
 .tv-tag-verified { animation: verifiedBadgePulse 2.2s ease-in-out infinite; }

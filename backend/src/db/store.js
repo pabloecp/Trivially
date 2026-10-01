@@ -17,11 +17,16 @@ function emptyStore() {
   return { users: {} };
 }
 
+// The Spotify link keeps its tokens on the server; clients only ever see who the account is.
+function publicSpotify(spotify) {
+  return spotify ? { id: spotify.id, displayName: spotify.displayName, url: spotify.url, connectedAt: spotify.connectedAt } : null;
+}
+
 /** Remove password fields — for the owner or internal use */
 export function sanitizeUser(user) {
   if (!user) return null;
-  const { passwordHash, passwordSalt, ...safe } = user;
-  return { ...safe, role: effectiveRole(user) };
+  const { passwordHash, passwordSalt, spotify, ...safe } = user;
+  return { ...safe, spotify: publicSpotify(spotify), role: effectiveRole(user) };
 }
 
 /** Public profile — only safe fields for other users to see */
@@ -34,6 +39,7 @@ export function sanitizeUserPublic(user) {
     isGuest: Boolean(user.isGuest),
     stats: user.stats || {},
     googleLinked: Boolean(user.googleId),
+    spotifyLinked: Boolean(user.spotify),
     role: effectiveRole(user),
   };
 }
@@ -61,8 +67,11 @@ let flushTimer = null;
 let flushing = Promise.resolve();
 let pendingStore = null;
 
+// Test scripts (*.test.js) never touch Supabase, even when its variables are set: they only use fake users.
+const RUNNING_TEST = /\.test\.js$/.test(process.argv[1] || "");
+
 export function supabaseEnabled() {
-  return Boolean(process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY);
+  return !RUNNING_TEST && Boolean(process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY);
 }
 
 export function getSupabase() {
@@ -362,6 +371,25 @@ export function linkGoogle(store, userId, { googleId, email, avatar }) {
     user.googlePhoto = avatar;
   }
   store.users[userId] = user;
+  saveStore(store);
+  return sanitizeUser(user);
+}
+
+/** Saves a Spotify link (profile + tokens) on the account. One Spotify account per Trivially account. */
+export function linkSpotify(store, userId, spotify) {
+  const user = store.users[userId];
+  if (!user || user.isGuest) throw new Error("Usuario no encontrado");
+  const conflict = Object.values(store.users).find((u) => u.spotify?.id === spotify.id && u.id !== userId);
+  if (conflict) throw new Error("Esta cuenta de Spotify ya está conectada a otro usuario");
+  user.spotify = spotify;
+  saveStore(store);
+  return sanitizeUser(user);
+}
+
+export function unlinkSpotify(store, userId) {
+  const user = store.users[userId];
+  if (!user) throw new Error("Usuario no encontrado");
+  delete user.spotify;
   saveStore(store);
   return sanitizeUser(user);
 }
