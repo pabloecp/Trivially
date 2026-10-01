@@ -16,7 +16,7 @@ const DEEP_MISSED_ID = 0;
 // Saved results from before the matching rules got stricter (any artist was enough) are searched again.
 const RULES_SINCE = Date.parse("2026-10-01T06:00:00Z");
 // "Not found" results saved before the album route existed are searched again (they only had the name search).
-const NOT_FOUND_RULES_SINCE = Date.parse("2026-10-01T09:00:00Z");
+const NOT_FOUND_RULES_SINCE = Date.parse("2026-10-01T10:00:00Z"); // album and every-artist routes
 // Spotify and iTunes lengths of the same recording differ by a second or two at most.
 const MAX_LENGTH_DIFF_MS = 6000;
 
@@ -28,7 +28,14 @@ export function cleanTitle(title = "") {
     .trim() || title.trim();
 }
 
+const plainLower = (v) => cleanTitle(v).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+
 function titleScore(a, b) {
+  // iTunes censors some titles ("F**K THAT"): each * stands for any one letter of the Spotify title.
+  if (b.includes("*")) {
+    const pattern = plainLower(b).replace(/[.+?^${}()|[\]\\]/g, "\\$&").replace(/\*/g, ".");
+    if (new RegExp(`^${pattern}$`).test(plainLower(a))) return 1;
+  }
   const x = normalizeAnswer(cleanTitle(a));
   const y = normalizeAnswer(cleanTitle(b));
   if (!x || !y) return 0;
@@ -373,6 +380,19 @@ export class TrackResolver {
     return this.artistAlbumLists.get(id);
   }
 
+  /** An artist's songs on iTunes, the most popular 200 (cached). */
+  artistSongs(id) {
+    const key = `songs:${id}`;
+    if (!this.artistAlbumLists.has(key)) {
+      this.artistAlbumLists.set(
+        key,
+        this.lookup({ id, entity: "song", limit: "200" }).then((list) => list.filter((r) => r.wrapperType === "track"))
+      );
+      this.artistAlbumLists.get(key).catch(() => this.artistAlbumLists.delete(key));
+    }
+    return this.artistAlbumLists.get(key);
+  }
+
   /** Every song of an album (cached). */
   albumTracks(collectionId) {
     if (!this.albumTrackLists.has(collectionId)) {
@@ -386,33 +406,30 @@ export class TrackResolver {
   }
 
   /**
-   * The exact recording through its album: the artist's album list on iTunes, the album with the same name, and in
-   * it the song with the same track number (or title) and length. Songs of the same artist or album reuse the
-   * lookups, so a playlist with many songs from one album costs a couple of requests in total.
+   * The exact recording through its artists. For the album's artist and then each artist of the song (up to 3, a
+   * collaboration is often listed under the guest: "Romeo y Julieta" is under Quevedo): the album with the same
+   * name and in it the same track number, else the artist's 200 most popular songs ("VINO TINTO" is a single on
+   * Spotify but part of ÉXODO on iTunes). Every lookup is cached, so songs sharing artists or albums reuse them.
+   * The result still has to be the same title, artist and length (scoreCandidate).
    */
-  async viaAlbum(track) {
-    const artist = track.albumArtist || track.artists[0];
+  async viaArtists(track) {
     const want = albumKey(track.albumName);
-    if (!artist || !want) return null;
-    const id = await this.artistId(artist);
-    if (!id) return null;
-    const albums = (await this.artistAlbums(id)).filter((a) => {
-      const key = albumKey(a.collectionName);
-      return key === want || ((key.includes(want) || want.includes(key)) && Math.min(key.length, want.length) >= 4);
-    });
-    for (const album of albums.slice(0, 2)) {
-      let best = null;
-      let bestScore = 0;
-      for (const r of await this.albumTracks(album.collectionId)) {
-        let score = scoreCandidate(track, r);
-        if (!score) continue;
-        if (track.trackNumber && r.trackNumber === track.trackNumber && (r.discNumber || 1) === (track.discNumber || 1)) score += 1;
-        if (score > bestScore) {
-          best = r;
-          bestScore = score;
+    const names = [...new Set([track.albumArtist, ...track.artists].filter(Boolean))].slice(0, 3);
+    for (const name of names) {
+      const id = await this.artistId(name);
+      if (!id) continue;
+      if (want) {
+        const albums = (await this.artistAlbums(id)).filter((a) => {
+          const key = albumKey(a.collectionName);
+          return key === want || ((key.includes(want) || want.includes(key)) && Math.min(key.length, want.length) >= 4);
+        });
+        for (const album of albums.slice(0, 2)) {
+          const hit = this.bestOf(track, await this.albumTracks(album.collectionId));
+          if (hit) return hit;
         }
       }
-      if (best) return best;
+      const hit = this.bestOf(track, await this.artistSongs(id));
+      if (hit) return hit;
     }
     return null;
   }
@@ -425,7 +442,7 @@ export class TrackResolver {
       // First pass: a song that shares its album with others in the playlist goes through the album (shared
       // lookups); any other song gets one search by title and artist first. Each falls back to the other way.
       const bySearch = async () => this.bestOf(track, await this.itunes(`${title} ${first || ""}`.trim()));
-      const steps = track.albumShared ? [() => this.viaAlbum(track), bySearch] : [bySearch, () => this.viaAlbum(track)];
+      const steps = track.albumShared ? [() => this.viaArtists(track), bySearch] : [bySearch, () => this.viaArtists(track)];
       for (const step of steps) {
         const hit = await step();
         if (hit) return songFromItunes(track, hit);
@@ -457,7 +474,10 @@ export class TrackResolver {
     let best = null;
     let bestScore = 0;
     for (const r of results) {
-      const score = scoreCandidate(track, r);
+      let score = scoreCandidate(track, r);
+      if (!score) continue;
+      // Same position in the same album: the very same release.
+      if (track.trackNumber && r.trackNumber === track.trackNumber && (r.discNumber || 1) === (track.discNumber || 1)) score += 0.5;
       if (score > bestScore) {
         best = r;
         bestScore = score;

@@ -17,6 +17,9 @@ assert.equal(scoreCandidate(nubes, { ...right, trackName: "Nubes", artistName: "
 assert.equal(scoreCandidate(track, { ...right, trackTimeMillis: 240000 }), 0);
 // Instrumental versions are never used.
 assert.equal(scoreCandidate(track, { ...right, trackName: "Ojitos Lindos (Instrumental)" }), 0);
+// iTunes censors some titles: "F**K THAT" is "FUCK THAT".
+assert.ok(scoreCandidate({ ...track, title: "FUCK THAT", artists: ["Nicki Nicole"] }, { ...right, trackName: "F**K THAT", artistName: "Nicki Nicole" }) > 0);
+assert.equal(scoreCandidate({ ...track, title: "LUCK THAT", artists: ["Nicki Nicole"] }, { ...right, trackName: "F**K THAT", artistName: "Nicki Nicole" }), 0);
 // Small differences in the title still match.
 assert.ok(scoreCandidate({ ...track, title: "Lo Siento BB:/" }, { ...right, trackName: "Lo Siento BB" }) > 0);
 
@@ -68,7 +71,8 @@ const none = async () => (firstPassSearches += 1, { ok: true, status: 200, json:
 const quick = new TrackResolver({ catalog: { songs: [] }, fetchImpl: none, searchGapMs: 0, useDb: false });
 await quick.resolve([{ ...track, spotifyId: "zz" }], { onResult: () => {} });
 while (quick.running || quick.queue.length) await new Promise((r) => setTimeout(r, 5));
-assert.ok(firstPassSearches <= 2, "first pass: the title search and at most the artist lookup");
+// The title search plus looking up each of its two artists (none exists in this fake iTunes).
+assert.ok(firstPassSearches <= 3, "first pass: the title search and at most one lookup per artist");
 
 // Songs that share an album are found through it: the artist and the album are looked up once for all of them.
 const calls = [];
