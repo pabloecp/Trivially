@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import Icon from "../../components/home/Icon.jsx";
+import { api } from "../../lib/api.js";
 
 // Both steppers move in steps of 5. The server keeps the same limits (roomManager.updateConfig).
 const ROUNDS = { min: 5, max: 25, step: 5 };
@@ -83,8 +84,22 @@ export default function MusicSettings({ room, catalog, updateConfig, onToast, ch
   const rounds = draft?.rounds || 10;
   const seconds = Math.round((draft?.roundMs || 15000) / 1000);
   const songCount = playlists.filter((p) => selected.includes(p.id)).reduce((n, p) => n + p.trackCount, 0);
+  // A server without `covers` in /api/catalog (older deploys) still lists each playlist's songs, images included.
+  const [fetched, setFetched] = useState({});
+  const missing = playlists.filter((p) => selected.includes(p.id) && !p.covers && !fetched[p.id]).map((p) => p.id);
+  useEffect(() => {
+    for (const id of missing) {
+      api("/api/catalog/preview", { method: "POST", body: { playlistIds: [id] } })
+        .then((data) => {
+          const urls = (data.songs || []).map((s) => s.image?.replace(/\/\d+x\d+bb\./, "/160x160bb.")).filter(Boolean);
+          setFetched((cur) => ({ ...cur, [id]: urls }));
+        })
+        .catch(() => {});
+    }
+  }, [missing.join(",")]);
+
   // Covers of the chosen playlists, taking turns between them so a mix shows both, without repeats.
-  const lists = playlists.filter((p) => selected.includes(p.id)).map((p) => p.covers || []);
+  const lists = playlists.filter((p) => selected.includes(p.id)).map((p) => p.covers || fetched[p.id] || []);
   const covers = [];
   for (let i = 0; covers.length < 40 && lists.some((l) => i < l.length); i += 1) {
     for (const l of lists) if (l[i] && !covers.includes(l[i]) && covers.length < 40) covers.push(l[i]);
