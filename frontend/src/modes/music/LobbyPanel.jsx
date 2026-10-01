@@ -36,6 +36,8 @@ export default function LobbyPanel({ room, onToast }) {
   ].join(", ");
   // Spotify songs still being looked up: the match can start already, the rest join as they are found.
   const loading = custom.filter((p) => p.loading);
+  // Finished, but some songs aren't on iTunes (they can't come up in the match).
+  const incomplete = custom.filter((p) => !p.loading && p.ready < p.total);
   const loadingReady = loading.reduce((n, p) => n + p.ready, 0);
   const loadingTotal = loading.reduce((n, p) => n + p.total, 0);
   const loadingChecked = loading.reduce((n, p) => n + (p.checked ?? p.total), 0);
@@ -143,6 +145,16 @@ export default function LobbyPanel({ room, onToast }) {
             </span>
           </p>
         )}
+
+        {incomplete.map((p) => (
+          <p key={p.id} className="tv-playlist-total" role="status">
+            <SpotifyIcon size={18} />
+            <span>
+              {p.total - p.ready} de {p.total} canciones de <strong>{p.name}</strong> no están en iTunes, así que no
+              pueden salir en la partida.
+            </span>
+          </p>
+        ))}
 
         {!enoughSongs && (
           <p className="tv-playlist-total is-short" role="status">

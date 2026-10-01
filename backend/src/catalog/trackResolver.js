@@ -15,6 +15,8 @@ const TABLE = "spotify_songs";
 const DEEP_MISSED_ID = 0;
 // Saved results from before the matching rules got stricter (any artist was enough) are searched again.
 const RULES_SINCE = Date.parse("2026-10-01T06:00:00Z");
+// "Not found" results saved before the album route existed are searched again (they only had the name search).
+const NOT_FOUND_RULES_SINCE = Date.parse("2026-10-01T09:00:00Z");
 // Spotify and iTunes lengths of the same recording differ by a second or two at most.
 const MAX_LENGTH_DIFF_MS = 6000;
 
@@ -199,6 +201,7 @@ export class TrackResolver {
         for (const row of data) {
           const savedAt = new Date(row.updated_at).getTime();
           if (savedAt < RULES_SINCE) continue;
+          if (!row.found && savedAt < NOT_FOUND_RULES_SINCE) continue;
           if (!row.found && Date.now() - savedAt > RETRY_NOT_FOUND_MS) continue;
           if (!row.found && Number(row.itunes_id) === DEEP_MISSED_ID) this.deepMissed.add(row.spotify_id);
           out.set(row.spotify_id, songFromRow(row));
