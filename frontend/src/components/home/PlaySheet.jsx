@@ -25,6 +25,7 @@ export default function PlaySheet({ mode, joinCode, open, onClose }) {
   const [pending, setPending] = useState(null); // action to run once we have a name
   const [code, setCode] = useState("");
   const [name, setName] = useState("");
+  const rootRef = useRef(null);
   const [color, setColor] = useState(AVATAR_COLORS[0]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -40,6 +41,25 @@ export default function PlaySheet({ mode, joinCode, open, onClose }) {
       setStep(joinCode ? "name" : "menu");
     }
   }, [open]);
+
+  // On phones the keyboard doesn't resize the page: it covers the bottom of it, and that's where this sheet sits.
+  // Keep the sheet inside the part of the screen the keyboard leaves visible.
+  useEffect(() => {
+    const vv = window.visualViewport;
+    const root = rootRef.current;
+    if (!open || !mounted || !vv || !root) return undefined;
+    function fit() {
+      root.style.setProperty("--tv-vv-h", `${vv.height}px`);
+      root.style.setProperty("--tv-vv-top", `${vv.offsetTop}px`);
+    }
+    fit();
+    vv.addEventListener("resize", fit);
+    vv.addEventListener("scroll", fit);
+    return () => {
+      vv.removeEventListener("resize", fit);
+      vv.removeEventListener("scroll", fit);
+    };
+  }, [open, mounted]);
 
   useEffect(() => {
     if (!open || !mounted) return;
@@ -158,7 +178,7 @@ export default function PlaySheet({ mode, joinCode, open, onClose }) {
   const dragging = dragStart.current !== null;
 
   return (
-    <div className={`tv-sheet-root ${open ? "is-open" : "is-closing"}`}>
+    <div ref={rootRef} className={`tv-sheet-root ${open ? "is-open" : "is-closing"}`}>
       <div className="tv-sheet-backdrop" onClick={onClose} />
       <div
         className={`tv-sheet-pos${dragging ? " is-dragging" : ""}`}
