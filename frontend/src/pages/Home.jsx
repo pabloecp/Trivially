@@ -228,6 +228,7 @@ export default function Home() {
                 </span>
                 {roomMode.name}
               </h2>
+              {roomMode.tagline && <p className="tv-room-game-tagline">{roomMode.tagline}</p>}
               {isHost && (
                 <ModeMenu
                   current={room.game}

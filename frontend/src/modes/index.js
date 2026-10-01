@@ -9,13 +9,14 @@ export const GAME_MODES = [
     name: "Adivina la canción",
     color: "green",
     icon: "music",
+    tagline: "Escucha 30 segundos y escribe el título de la canción.",
     available: true,
     Lobby: MusicLobbyPanel,
     path: (room) => `/game/${room.code}`,
   },
-  { id: "cultura", name: "Cultura general", color: "amber", icon: "bulb", available: false },
-  { id: "cine", name: "Cine y series", color: "purple", icon: "film", available: false },
-  { id: "mundo", name: "Geografía", color: "sky", icon: "globe", available: false },
+  { id: "cultura", name: "Cultura general", color: "amber", icon: "bulb", tagline: "Preguntas de todo un poco.", available: false },
+  { id: "cine", name: "Cine y series", color: "purple", icon: "film", tagline: "Adivina la película o serie.", available: false },
+  { id: "mundo", name: "Geografía", color: "sky", icon: "globe", tagline: "Banderas, capitales y mucho más.", available: false },
 ];
 
 export function findMode(id) {
