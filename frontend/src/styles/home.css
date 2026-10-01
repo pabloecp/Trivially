@@ -711,8 +711,10 @@ body:has(.tv-app) {
 .tv-room-game-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
 .tv-room-game-head .tv-section-title { margin: 0; }
 /* Mode description fills the gap between the title and the "Cambiar juego" button (desktop only). */
-.tv-room-game-tagline { flex: 1; min-width: 0; margin: 0; color: var(--tv-text-2); font-weight: 700; font-size: 15px; }
+.tv-room-game-tagline { flex: 0 1 auto; min-width: 0; margin: 0; color: var(--tv-text-2); font-weight: 700; font-size: 15px; }
 @media (max-width: 720px) { .tv-room-game-tagline { display: none; } }
+/* Desktop: game name, description and button sit together at the right, flush with the room-code card's edge. */
+@media (min-width: 721px) { .tv-room-game-head { justify-content: flex-end; gap: 18px; } }
 .tv-room-game-title { display: flex; align-items: center; gap: 12px; min-width: 0; }
 /* Chunky brand-coloured "change game" button next to the game's name. */
 .tv-switch-btn {
