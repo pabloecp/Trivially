@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import MusicSettings from "./MusicSettings.jsx";
+import Avatar from "../../components/home/Avatar.jsx";
 import Icon from "../../components/home/Icon.jsx";
 import { useApp } from "../../lib/store.jsx";
 
@@ -16,12 +17,17 @@ export default function LobbyPanel({ room, onToast }) {
   const me = room.players.find((p) => p.id === user?.id);
   const isHost = room.hostId === user?.id;
   const canEditConfig = isHost || Boolean(me?.canEditConfig) || Boolean(room.coHosts?.includes(user?.id));
-  const canStart = room.players.some((p) => p.connected);
+  const connected = room.players.filter((p) => p.connected);
+  const canStart = connected.length > 0;
   const others = room.players.filter((p) => p.id !== room.hostId);
 
   const playlists = catalog?.playlists || [];
   const chosen = playlists.filter((p) => room.config?.playlistIds?.includes(p.id));
   const playlistNames = (chosen.length ? chosen : playlists.filter((p) => p.isDefault)).map((p) => p.name.split(" · ").pop()).join(", ");
+  const rounds = room.config?.rounds || 5;
+  const seconds = Math.round((room.config?.roundMs || 15000) / 1000);
+  // Each round: 3 s countdown + the guessing time + 7 s showing the answer.
+  const minutes = Math.max(1, Math.round((rounds * (3 + seconds + 7)) / 60));
 
   // The host decides who else may change the settings.
   async function togglePermission(player) {
@@ -46,25 +52,38 @@ export default function LobbyPanel({ room, onToast }) {
     <div className={`tv-lobby-grid${canEditConfig ? " has-settings" : ""}`}>
       {canEditConfig && <MusicSettings room={room} catalog={catalog} updateConfig={updateConfig} onToast={onToast} />}
 
-      <section className="tv-card" aria-label="Resumen de la partida">
+      <section className="tv-card tv-match" aria-label="Resumen de la partida">
         <h2 className="tv-card-title">La partida</h2>
 
-        {!canEditConfig && (
-          <div className="tv-stats">
-            <div className="tv-stat">
-              <span className="tv-stat-label">Rondas</span>
-              <span className="tv-stat-value">{room.config?.rounds || 5}</span>
-            </div>
-            <div className="tv-stat">
-              <span className="tv-stat-label">Tiempo por ronda</span>
-              <span className="tv-stat-value">{Math.round((room.config?.roundMs || 15000) / 1000)} s</span>
-            </div>
-            <div className="tv-stat tv-stat--wide">
-              <span className="tv-stat-label">{chosen.length > 1 ? "Playlists" : "Playlist"}</span>
-              <span className="tv-stat-value tv-stat-value--sm">{playlistNames || "Cargando…"}</span>
-            </div>
+        <div className="tv-match-preview">
+          <div className="tv-eq tv-eq--sm" aria-hidden="true">
+            {Array.from({ length: 7 }, (_, i) => (
+              <span key={i} style={{ "--i": i }} />
+            ))}
           </div>
-        )}
+          <p className="tv-match-title">
+            <strong>{rounds}</strong> canciones por adivinar
+          </p>
+          <div className="tv-match-chips">
+            <span className="tv-match-chip">
+              <Icon name="bolt" size={14} strokeWidth={2.6} />
+              {seconds} s cada una
+            </span>
+            <span className="tv-match-chip">
+              <Icon name="music" size={14} strokeWidth={2.6} />
+              {playlistNames || "Cargando…"}
+            </span>
+            <span className="tv-match-chip">≈ {minutes} min</span>
+          </div>
+          <div className="tv-match-players">
+            <span className="tv-avatar-stack" aria-hidden="true">
+              {connected.slice(0, 5).map((p) => (
+                <Avatar key={p.id} name={p.name} avatar={p.avatar} />
+              ))}
+            </span>
+            {connected.length === 1 ? "1 jugador en la sala" : `${connected.length} jugadores en la sala`}
+          </div>
+        </div>
 
         {isHost && others.length > 0 && (
           <div className="tv-perm">
