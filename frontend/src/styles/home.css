@@ -755,7 +755,11 @@ body:has(.tv-app) {
 /* ---------- Play sheet ---------- */
 .tv-sheet-root {
   position: fixed;
-  inset: 0;
+  /* Follows the visible viewport (JS sets these) so the on-screen keyboard doesn't cover the sheet. */
+  top: var(--tv-vv-top, 0px);
+  left: 0;
+  right: 0;
+  height: var(--tv-vv-h, 100%);
   z-index: 40;
   display: flex;
   align-items: flex-end;
@@ -772,12 +776,18 @@ body:has(.tv-app) {
 }
 .tv-sheet-pos {
   position: relative;
+  display: flex;
+  flex-direction: column;
+  max-height: 100%;
   width: 100%;
   max-width: 520px;
   transition: transform 0.3s var(--tv-spring);
 }
 .tv-sheet-pos.is-dragging { transition: none; }
 .tv-sheet {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
   padding: 6px 16px calc(22px + env(safe-area-inset-bottom));
   border-radius: 32px 32px 0 0;
   background: var(--tv-sheet-bg);
