@@ -9,6 +9,10 @@ const SEARCH_GAP_MS = 3100; // ~19 searches a minute
 const RATE_LIMIT_WAIT_MS = 60_000;
 const RETRY_NOT_FOUND_MS = 30 * 24 * 60 * 60 * 1000; // a song not found is searched again after a month
 const TABLE = "spotify_songs";
+// Saved results from before the matching rules got stricter (any artist was enough) are searched again.
+const RULES_SINCE = Date.parse("2026-10-01T06:00:00Z");
+// Spotify and iTunes lengths of the same recording differ by a second or two at most.
+const MAX_LENGTH_DIFF_MS = 6000;
 
 /** "Song - Remastered 2011" or "Song (feat. X)" → "Song". The title players see and must guess. */
 export function cleanTitle(title = "") {
@@ -37,17 +41,20 @@ function artistMatches(artists, name) {
 
 const UNWANTED = /karaoke|instrumental|tribute|made famous|originally performed|in the style of|8 ?bit|lullaby/i;
 
-/** How well an iTunes result fits a Spotify song, or 0 when it isn't the same song. */
+/**
+ * How well an iTunes result fits a Spotify song, or 0 when it isn't the same song. All three must agree: the title,
+ * one of the artists, and the length (when both sides give it). A song with the same name by someone else, or a
+ * karaoke/instrumental version, is never used: better to leave the song out than to play the wrong one.
+ */
 export function scoreCandidate(track, result) {
   if (!result?.previewUrl || !result.trackName) return 0;
   const title = titleScore(track.title, result.trackName);
   if (title < 0.8) return 0;
-  const artist = artistMatches(track.artists, result.artistName || "") ? 1 : 0;
+  if (!artistMatches(track.artists, result.artistName || "")) return 0;
+  if (UNWANTED.test(`${result.trackName} ${result.artistName} ${result.collectionName}`) && !UNWANTED.test(track.title)) return 0;
   const diff = track.durationMs && result.trackTimeMillis ? Math.abs(track.durationMs - result.trackTimeMillis) : null;
-  const duration = diff == null ? 0 : diff <= 3000 ? 1 : diff <= 8000 ? 0.5 : 0;
-  if (!artist && duration < 1) return 0;
-  const unwanted = UNWANTED.test(`${result.trackName} ${result.artistName} ${result.collectionName}`) && !UNWANTED.test(track.title);
-  return title * 2 + artist + duration - (unwanted ? 2 : 0);
+  if (diff != null && diff > MAX_LENGTH_DIFF_MS) return 0;
+  return title * 2 + (diff == null ? 0 : 1 - diff / MAX_LENGTH_DIFF_MS);
 }
 
 function songFromItunes(track, result) {
@@ -141,7 +148,9 @@ export class TrackResolver {
         const { data, error } = await db.from(TABLE).select("*").in("spotify_id", ids.slice(i, i + 200));
         if (error) throw error;
         for (const row of data) {
-          if (!row.found && Date.now() - new Date(row.updated_at).getTime() > RETRY_NOT_FOUND_MS) continue;
+          const savedAt = new Date(row.updated_at).getTime();
+          if (savedAt < RULES_SINCE) continue;
+          if (!row.found && Date.now() - savedAt > RETRY_NOT_FOUND_MS) continue;
           out.set(row.spotify_id, songFromRow(row));
         }
       }
@@ -200,12 +209,12 @@ export class TrackResolver {
     }
   }
 
-  async itunes(term) {
+  async itunes(term, extra = {}) {
     for (let attempt = 0; attempt < 3; attempt += 1) {
       const gap = this.lastSearchAt + this.searchGapMs - Date.now();
       if (gap > 0) await wait(gap);
       this.lastSearchAt = Date.now();
-      const url = `https://itunes.apple.com/search?${new URLSearchParams({ term, media: "music", entity: "song", limit: "15", country: "US" })}`;
+      const url = `https://itunes.apple.com/search?${new URLSearchParams({ term, media: "music", entity: "song", limit: "15", country: "US", ...extra })}`;
       const res = await this.fetch(url);
       if (res.status === 403 || res.status === 429) {
         await wait(RATE_LIMIT_WAIT_MS);
@@ -217,11 +226,18 @@ export class TrackResolver {
     throw new Error("iTunes sigue limitando las búsquedas");
   }
 
-  /** "title artist" first; if nothing fits, the title alone. */
+  /**
+   * "title + first artist", then "title + second artist", then the first artist's songs (the search sometimes
+   * misses a song the artist list has). Every result still has to pass scoreCandidate.
+   */
   async search(track) {
     const title = cleanTitle(track.title);
-    for (const term of [`${title} ${track.artists[0] || ""}`.trim(), title]) {
-      const results = await this.itunes(term);
+    const [first, second] = track.artists;
+    const searches = [[`${title} ${first || ""}`.trim()]];
+    if (second) searches.push([`${title} ${second}`]);
+    if (first) searches.push([first, { attribute: "artistTerm", limit: "200" }]);
+    for (const [term, extra] of searches) {
+      const results = await this.itunes(term, extra);
       let best = null;
       let bestScore = 0;
       for (const r of results) {
@@ -232,7 +248,6 @@ export class TrackResolver {
         }
       }
       if (best) return songFromItunes(track, best);
-      if (!track.artists[0]) break;
     }
     return null;
   }

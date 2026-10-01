@@ -9,8 +9,14 @@ const track = { spotifyId: "sp1", title: "Ojitos Lindos", artists: ["Bad Bunny",
 const right = { trackId: 1, trackName: "Ojitos Lindos", artistName: "Bad Bunny & Bomba Estéreo", previewUrl: "https://audio-ssl.itunes.apple.com/a.m4a", trackTimeMillis: 258300, artworkUrl100: "https://is1-ssl.mzstatic.com/x/100x100bb.jpg" };
 // Same title, other artist and other length: a different song.
 assert.equal(scoreCandidate(track, { ...right, artistName: "Otro", trackTimeMillis: 190000 }), 0);
-// Karaoke versions lose to the real one.
-assert.ok(scoreCandidate(track, right) > scoreCandidate(track, { ...right, artistName: "Karaoke Bad Bunny" }));
+assert.ok(scoreCandidate(track, right) > 0);
+// Same title and same length but another artist: not the song (De La Rose's "NUBES" is not Rauw Alejandro's).
+const nubes = { spotifyId: "n", title: "NUBES", artists: ["De La Rose", "Omar Courtz"], durationMs: 180000 };
+assert.equal(scoreCandidate(nubes, { ...right, trackName: "Nubes", artistName: "Rauw Alejandro", trackTimeMillis: 179000 }), 0);
+// Same title and artist but a clearly different length (another version): not the song either.
+assert.equal(scoreCandidate(track, { ...right, trackTimeMillis: 240000 }), 0);
+// Instrumental versions are never used.
+assert.equal(scoreCandidate(track, { ...right, trackName: "Ojitos Lindos (Instrumental)" }), 0);
 // Small differences in the title still match.
 assert.ok(scoreCandidate({ ...track, title: "Lo Siento BB:/" }, { ...right, trackName: "Lo Siento BB" }) > 0);
 

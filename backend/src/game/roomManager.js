@@ -676,6 +676,11 @@ export class RoomManager {
         total: e.tracks.length,
         ready: e.songs.size,
         loading: e.active && e.done.size < e.tracks.length,
+        // Small covers of the songs found so far, for the strip under the playlists.
+        covers: [...e.songs.values()]
+          .map((song) => song.image?.replace(/\/\d+x\d+bb\./, "/160x160bb."))
+          .filter(Boolean)
+          .slice(0, 40),
       })),
       config: room.config,
       coHosts: [...(room.coHosts || [])],

@@ -1534,10 +1534,21 @@ body:has(.tv-app) {
 .tv-pick-art--spotify { background: #000; }
 .tv-pick--custom { max-width: 100%; }
 .tv-pick-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 180px; }
-.tv-pick-progress { font-size: 12px; font-weight: 800; opacity: 0.7; font-variant-numeric: tabular-nums; }
+.tv-spotify-ask {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 16px;
+  background: rgba(29, 185, 84, 0.12);
+  font-weight: 800;
+  font-size: 14px;
+  animation: tvDropIn 0.3s var(--tv-spring);
+}
+.tv-spotify-ask span { flex: 1; }
 .tv-pick:disabled { cursor: default; opacity: 0.7; }
-.tv-pick--add { width: 44px; padding: 0; justify-content: center; border: 2px dashed var(--tv-edge); background: transparent; box-shadow: none; }
-.tv-pick--add:hover { border-color: #1db954; color: #1db954; }
+.tv-pick--add { width: 44px; padding: 0; justify-content: center; }
+.tv-app .tv-pick--add:hover { color: #1db954; }
 
 /* ---------- Login ---------- */
 .tv-auth { display: grid; gap: 18px; width: 100%; max-width: 460px; margin: 0 auto; }

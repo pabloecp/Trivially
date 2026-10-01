@@ -62,7 +62,9 @@ function configKey(config) {
 // Album covers of the chosen playlists sliding by in two rows, so you can see what kind of songs are coming.
 // Each row is drawn twice in a row and slides half its width, which loops without a jump.
 function CoverStrip({ covers }) {
-  const rows = [covers.filter((_, i) => i % 2 === 0), covers.filter((_, i) => i % 2 === 1)];
+  // With few covers (a Spotify playlist still loading) each row repeats them so it still fills the card.
+  const fill = (row) => (row.length ? Array.from({ length: Math.max(1, Math.ceil(10 / row.length)) }, () => row).flat() : row);
+  const rows = covers.length < 4 ? [fill(covers), fill(covers)] : [fill(covers.filter((_, i) => i % 2 === 0)), fill(covers.filter((_, i) => i % 2 === 1))];
   return (
     <div className="tv-covers" aria-hidden="true">
       {rows.map((row, r) => (
@@ -81,12 +83,16 @@ function CoverStrip({ covers }) {
 // copy only keeps the tap visible until the server's new state arrives. `children` go at the bottom of the card
 // (the host's "who may change the settings" chips).
 export default function MusicSettings({ room, catalog, updateConfig, onToast, children }) {
-  const { user, listSpotifyPlaylists, addSpotifyPlaylist } = useApp();
+  const { user, listSpotifyPlaylists, addSpotifyPlaylist, connectSpotify } = useApp();
   const playlists = catalog?.playlists || [];
-  // Spotify playlists the host already added to the room (everyone who edits the settings sees these).
+  // Spotify playlists the host already added to the room.
   const custom = room.customPlaylists || [];
-  // Only an owner who hosts the room, with Spotify connected, gets the "+" with their playlists.
-  const canSpotify = room.hostId === user?.id && user?.role === "owner" && Boolean(user?.spotify);
+  // Only an owner who hosts the room gets the "+". Without Spotify connected it asks to connect it; with it, it
+  // opens their playlists. Closed, only the chosen ones show.
+  const isOwnerHost = room.hostId === user?.id && user?.role === "owner";
+  const spotifyLinked = Boolean(user?.spotify);
+  const [spotifyOpen, setSpotifyOpen] = useState(false);
+  const [askLink, setAskLink] = useState(false);
   const [spotifyLists, setSpotifyLists] = useState(null);
   const [spotifyBusy, setSpotifyBusy] = useState("");
   const defaultIds = playlists.filter((p) => p.isDefault).map((p) => p.id);
@@ -100,6 +106,8 @@ export default function MusicSettings({ room, catalog, updateConfig, onToast, ch
   const known = (draft?.playlistIds || []).filter((id) => playlists.some((p) => p.id === id) || custom.some((p) => p.id === id));
   const selected = known.length ? known : defaultIds;
   const hasCustom = selected.some((id) => id.startsWith("sp:"));
+  const chosenCustom = custom.filter((p) => selected.includes(p.id));
+  const customLoading = chosenCustom.some((p) => p.loading);
   const rounds = draft?.rounds || 10;
   const seconds = Math.round((draft?.roundMs || 15000) / 1000);
   const songCount = playlists.filter((p) => selected.includes(p.id)).reduce((n, p) => n + p.trackCount, 0);
@@ -118,7 +126,10 @@ export default function MusicSettings({ room, catalog, updateConfig, onToast, ch
   }, [missing.join(",")]);
 
   // Covers of the chosen playlists, taking turns between them so a mix shows both, without repeats.
-  const lists = playlists.filter((p) => selected.includes(p.id)).map((p) => p.covers || fetched[p.id] || []);
+  const lists = [
+    ...playlists.filter((p) => selected.includes(p.id)).map((p) => p.covers || fetched[p.id] || []),
+    ...chosenCustom.map((p) => p.covers || []),
+  ];
   const covers = [];
   for (let i = 0; covers.length < 40 && lists.some((l) => i < l.length); i += 1) {
     for (const l of lists) if (l[i] && !covers.includes(l[i]) && covers.length < 40) covers.push(l[i]);
@@ -128,7 +139,8 @@ export default function MusicSettings({ room, catalog, updateConfig, onToast, ch
   // slides. Until the first batch is ready a placeholder of the same size holds the space; after that the old
   // covers stay until the new playlist's ones are in.
   const coversKey = covers.join("|");
-  const [ready, setReady] = useState({ key: "", list: [] });
+  const selectionKey = selected.join(",");
+  const [ready, setReady] = useState({ key: "", selection: "", list: [] });
   useEffect(() => {
     if (!covers.length) return;
     let cancelled = false;
@@ -141,12 +153,39 @@ export default function MusicSettings({ room, catalog, updateConfig, onToast, ch
         img.src = src;
       });
     Promise.all(covers.map(loadOne)).then((list) => {
-      if (!cancelled) setReady({ key: coversKey, list: list.filter(Boolean) });
+      if (!cancelled) setReady({ key: coversKey, selection: selectionKey, list: list.filter(Boolean) });
     });
     return () => {
       cancelled = true;
     };
   }, [coversKey]);
+
+  // While Spotify songs are still loading, the strip waits for at least 5 covers; then it starts with those and
+  // more join as they are found.
+  const showStrip = ready.list.length >= 5 || (ready.list.length > 0 && !customLoading);
+
+  async function onPlus() {
+    if (!spotifyLinked) {
+      setAskLink((v) => !v);
+      return;
+    }
+    if (spotifyOpen) {
+      setSpotifyOpen(false);
+      return;
+    }
+    setSpotifyOpen(true);
+    if (!spotifyLists) await showSpotifyPlaylists();
+  }
+
+  async function onConnectSpotify() {
+    setSpotifyBusy("connect");
+    try {
+      await connectSpotify();
+    } catch (err) {
+      onToast?.(err.message || "No se pudo conectar con Spotify");
+      setSpotifyBusy("");
+    }
+  }
 
   async function showSpotifyPlaylists() {
     setSpotifyBusy("list");
@@ -160,6 +199,8 @@ export default function MusicSettings({ room, catalog, updateConfig, onToast, ch
   }
 
   async function addSpotify(id) {
+    // Added before and then unselected: it only needs selecting again.
+    if (custom.some((c) => c.id === `sp:${id}`)) return togglePlaylist(`sp:${id}`);
     setSpotifyBusy(id);
     try {
       await addSpotifyPlaylist(id);
@@ -216,23 +257,23 @@ export default function MusicSettings({ room, catalog, updateConfig, onToast, ch
               </button>
             );
           })}
-          {custom.map((p) => (
+          {chosenCustom.map((p) => (
             <button
               key={p.id}
               type="button"
               className="tv-pick tv-pick--playlist tv-pick--custom"
-              aria-pressed={selected.includes(p.id)}
-              title={`${p.name} · ${p.ready} de ${p.total} canciones listas`}
+              aria-pressed={true}
+              title={p.name}
               onClick={() => togglePlaylist(p.id)}
             >
               <PlaylistArt image={p.image} />
               <span className="tv-pick-name">{p.name}</span>
-              {p.loading && <small className="tv-pick-progress">{p.ready}/{p.total}</small>}
             </button>
           ))}
-          {canSpotify &&
+          {isOwnerHost &&
+            spotifyOpen &&
             (spotifyLists || [])
-              .filter((p) => !custom.some((c) => c.id === `sp:${p.id}`))
+              .filter((p) => !selected.includes(`sp:${p.id}`))
               .map((p) => (
                 <button
                   key={p.id}
@@ -247,20 +288,39 @@ export default function MusicSettings({ room, catalog, updateConfig, onToast, ch
                   <span className="tv-pick-name">{spotifyBusy === p.id ? "Añadiendo…" : p.name}</span>
                 </button>
               ))}
-          {canSpotify && !spotifyLists && (
+          {isOwnerHost && (
             <button
               type="button"
               className="tv-pick tv-pick--add"
-              onClick={showSpotifyPlaylists}
+              onClick={onPlus}
               disabled={spotifyBusy === "list"}
-              aria-label="Añadir tus playlists de Spotify"
+              aria-expanded={spotifyLinked ? spotifyOpen : askLink}
+              aria-label={spotifyOpen ? "Ocultar tus playlists de Spotify" : "Añadir tus playlists de Spotify"}
               title="Tus playlists de Spotify"
             >
-              {spotifyBusy === "list" ? <SpotifyIcon size={20} /> : <Icon name="plus" size={20} strokeWidth={3} />}
+              {spotifyBusy === "list" ? (
+                <SpotifyIcon size={20} />
+              ) : (
+                <Icon name={spotifyOpen ? "close" : "plus"} size={20} strokeWidth={3} />
+              )}
             </button>
           )}
         </div>
-        {canSpotify && spotifyLists?.length === 0 && (
+        {isOwnerHost && askLink && !spotifyLinked && (
+          <div className="tv-spotify-ask">
+            <SpotifyIcon size={26} />
+            <span>Conecta tu Spotify para jugar con tus playlists.</span>
+            <button
+              type="button"
+              className="tv-btn tv-btn--sm tv-btn--spotify"
+              onClick={onConnectSpotify}
+              disabled={spotifyBusy === "connect"}
+            >
+              {spotifyBusy === "connect" ? "Abriendo…" : "Conectar"}
+            </button>
+          </div>
+        )}
+        {isOwnerHost && spotifyOpen && spotifyLists?.length === 0 && (
           <p className="tv-playlist-total">No encontramos playlists en tu Spotify.</p>
         )}
         {!hasCustom && playlists.length > 0 && songCount < rounds && (
@@ -273,10 +333,10 @@ export default function MusicSettings({ room, catalog, updateConfig, onToast, ch
         )}
       </fieldset>
 
-      {ready.list.length > 0 ? (
-        <CoverStrip key={ready.key} covers={ready.list} />
+      {showStrip ? (
+        <CoverStrip key={ready.selection} covers={ready.list} />
       ) : (
-        covers.length > 0 && <div className="tv-covers tv-covers--loading" aria-hidden="true" />
+        (covers.length > 0 || customLoading) && <div className="tv-covers tv-covers--loading" aria-hidden="true" />
       )}
 
       <div className="tv-steppers">

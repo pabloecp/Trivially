@@ -16,6 +16,7 @@ import {
   sanitizeUserPublic,
   setUserRole,
   unlinkGoogle,
+  unlinkSpotify,
   updateUserAvatar,
   updateUserName,
   upsertGoogleUser,
@@ -188,9 +189,13 @@ export function createApiRouter({ catalog, store }) {
   });
 
   router.post("/auth/unlink-spotify", (req, res) => {
-    const userId = req.session?.userId;
-    if (!userId || !store.users[userId]) return res.status(401).json({ error: "No autenticado" });
-    res.json({ ok: true, user: unlinkSpotify(store, userId) });
+    try {
+      const userId = req.session?.userId;
+      if (!userId || !store.users[userId]) return res.status(401).json({ error: "No autenticado" });
+      res.json({ ok: true, user: unlinkSpotify(store, userId) });
+    } catch (err) {
+      res.status(400).json({ error: err.message });
+    }
   });
 
   // --- Delete Account ---
