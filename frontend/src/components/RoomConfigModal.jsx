@@ -62,8 +62,12 @@ export default function RoomConfigModal({ isOpen, onClose, currentConfig, catalo
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState("");
 
+  // One playlist always stays selected: tapping the last one does nothing.
   function togglePlaylist(id) {
-    setSelectedPlaylists((cur) => (cur.includes(id) ? cur.filter((x) => x !== id) : [...cur, id]));
+    setSelectedPlaylists((cur) => {
+      if (!cur.includes(id)) return [...cur, id];
+      return cur.length > 1 ? cur.filter((x) => x !== id) : cur;
+    });
   }
 
   const candidateConfig = useMemo(() => {
@@ -168,7 +172,7 @@ export default function RoomConfigModal({ isOpen, onClose, currentConfig, catalo
               <Icon name="lock" size={16} strokeWidth={2.6} />
               <span>
                 Necesitas al menos <strong>{rounds} canciones</strong>
-                {selectedPlaylists.length ? ` (tienes ${availableCount})` : ""}
+                {` (tienes ${availableCount})`}
               </span>
             </p>
           )}
