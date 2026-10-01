@@ -710,34 +710,32 @@ body:has(.tv-app) {
 .tv-perm-chip.is-on { background: #22c55e; box-shadow: 0 3px 0 #15803d; color: #0a0a0a; }
 .tv-room-game-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
 .tv-room-game-head .tv-section-title { margin: 0; }
-/* Mode description fills the gap between the title and the "Cambiar juego" button (desktop only). */
-.tv-room-game-tagline { flex: 0 1 auto; min-width: 0; margin: 0; color: var(--tv-text-2); font-weight: 700; font-size: 15px; }
-@media (max-width: 720px) { .tv-room-game-tagline { display: none; } }
-/* Desktop: game name, description and button sit together at the right, flush with the room-code card's edge. */
+/* Desktop: the game button sits at the right, flush with the room-code card's edge. */
 @media (min-width: 721px) { .tv-room-game-head { justify-content: flex-end; gap: 18px; } }
 .tv-room-game-title { display: flex; align-items: center; gap: 12px; min-width: 0; }
-/* Chunky brand-coloured "change game" button next to the game's name. */
+/* The host's game button: dark tile with the mode's coloured badge; while pressed the colours swap (mode colour
+   fills the tile, the badge goes dark). Opens the game menu. */
 .tv-switch-btn {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 12px;
   flex-shrink: 0;
-  height: 46px;
-  padding: 0 16px 0 14px;
+  padding: 8px 16px 8px 8px;
   border: 0;
-  border-radius: 16px;
-  background: var(--brand);
-  box-shadow: 0 4px 0 rgba(var(--brand-rgb), 0.45), 0 10px 22px -8px rgba(var(--brand-rgb), 0.6);
-  color: var(--on-brand);
-  font: inherit;
-  font-family: "Fredoka", "Outfit", sans-serif;
-  font-weight: 700;
-  font-size: 16px;
+  border-radius: 20px;
+  background: var(--tv-surface);
+  box-shadow: 0 5px 0 var(--tv-edge);
+  color: var(--tv-text);
+  font-family: var(--tv-display);
+  font-weight: 600;
+  font-size: 20px;
   cursor: pointer;
-  transition: transform 0.18s var(--tv-spring), filter 0.2s ease;
+  transition: transform 0.18s var(--tv-spring), background 0.15s ease, color 0.15s ease, box-shadow 0.18s ease;
 }
-.tv-switch-btn:hover { transform: translateY(-2px); filter: brightness(1.08); }
-.tv-switch-btn:active { transform: translateY(4px); box-shadow: none; }
+.tv-switch-btn .tv-badge { width: 38px; height: 38px; border-radius: 13px; transition: background 0.15s ease, color 0.15s ease; }
+.tv-switch-btn:hover { transform: translateY(-2px); box-shadow: 0 7px 0 var(--tv-edge); }
+.tv-switch-btn:active { transform: translateY(4px); box-shadow: 0 1px 0 var(--tv-edge); background: linear-gradient(155deg, var(--c1), var(--c2)); color: var(--on); }
+.tv-switch-btn:active .tv-badge { background: var(--tv-surface); color: var(--c2); box-shadow: none; }
 .tv-switch-btn:focus-visible { outline: 3px solid var(--tv-focus); outline-offset: 3px; }
 .tv-room-game-title .tv-badge { width: 38px; height: 38px; border-radius: 13px; }
 @keyframes tvModePick {

@@ -44,6 +44,7 @@ function ModeTile({ mode, index, showGo, selected, onPick }) {
 
 // The host's "Cambiar juego": every game in a little menu, to switch right from the game's header.
 function ModeMenu({ current, onPick }) {
+  const currentMode = findMode(current);
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
 
@@ -61,9 +62,18 @@ function ModeMenu({ current, onPick }) {
 
   return (
     <div ref={ref} className="tv-mode-menu-wrap">
-      <button type="button" className="tv-switch-btn" aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen((v) => !v)}>
-        <Icon name="swap" size={18} strokeWidth={2.6} />
-        Cambiar juego
+      <button
+        type="button"
+        className={`tv-switch-btn tv-c-${currentMode.color}`}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        aria-label={`Juego actual: ${currentMode.name}. Cambiar juego`}
+        onClick={() => setOpen((v) => !v)}
+      >
+        <span className={`tv-badge tv-c-${currentMode.color}`}>
+          <Icon name={currentMode.icon} size={20} />
+        </span>
+        <span className="tv-switch-name">{currentMode.name}</span>
         <Icon name="chevron" size={16} strokeWidth={3} className="tv-switch-icon" />
       </button>
       {open && (
@@ -222,18 +232,18 @@ export default function Home() {
         {room && ModeLobby && (
           <section key={roomMode.id} className="tv-room-game" aria-label={roomMode.name}>
             <div className="tv-room-game-head">
-              <h2 className="tv-section-title tv-room-game-title">
-                <span className={`tv-badge tv-c-${roomMode.color}`}>
-                  <Icon name={roomMode.icon} size={20} />
-                </span>
-                {roomMode.name}
-              </h2>
-              {roomMode.tagline && <p className="tv-room-game-tagline">{roomMode.tagline}</p>}
-              {isHost && (
+              {isHost ? (
                 <ModeMenu
                   current={room.game}
                   onPick={(mode) => mode.id !== room.game && setGame(mode.id).catch((err) => showToast(err.message))}
                 />
+              ) : (
+                <h2 className="tv-section-title tv-room-game-title">
+                  <span className={`tv-badge tv-c-${roomMode.color}`}>
+                    <Icon name={roomMode.icon} size={20} />
+                  </span>
+                  {roomMode.name}
+                </h2>
               )}
             </div>
             <ModeLobby room={room} onToast={showToast} />
