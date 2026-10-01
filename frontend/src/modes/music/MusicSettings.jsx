@@ -9,8 +9,9 @@ function configKey(config) {
 }
 
 // The match settings, right on the room screen. Every tap is saved straight away for the whole room; the local
-// copy only keeps the tap visible until the server's new state arrives.
-export default function MusicSettings({ room, catalog, updateConfig, onToast }) {
+// copy only keeps the tap visible until the server's new state arrives. `children` go at the bottom of the card
+// (the host's "who may change the settings" chips).
+export default function MusicSettings({ room, catalog, updateConfig, onToast, children }) {
   const playlists = catalog?.playlists || [];
   const defaultIds = playlists.filter((p) => p.isDefault).map((p) => p.id);
   const [draft, setDraft] = useState(room.config);
@@ -105,6 +106,8 @@ export default function MusicSettings({ room, catalog, updateConfig, onToast }) 
           ))}
         </div>
       </fieldset>
+
+      {children}
     </section>
   );
 }

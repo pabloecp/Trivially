@@ -50,10 +50,32 @@ export default function LobbyPanel({ room, onToast }) {
 
   return (
     <div className={`tv-lobby-grid${canEditConfig ? " has-settings" : ""}`}>
-      {canEditConfig && <MusicSettings room={room} catalog={catalog} updateConfig={updateConfig} onToast={onToast} />}
+      {canEditConfig && (
+        <MusicSettings room={room} catalog={catalog} updateConfig={updateConfig} onToast={onToast}>
+          {isHost && others.length > 0 && (
+            <div className="tv-perm">
+              <p className="tv-stat-label">Pueden cambiar los ajustes</p>
+              <div className="tv-perm-list">
+                {others.map((p) => (
+                  <button
+                    key={p.id}
+                    type="button"
+                    className={`tv-perm-chip${p.canEditConfig ? " is-on" : ""}`}
+                    aria-pressed={Boolean(p.canEditConfig)}
+                    onClick={() => togglePermission(p)}
+                  >
+                    <Icon name={p.canEditConfig ? "check" : "lock"} size={14} strokeWidth={3} />
+                    {p.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+        </MusicSettings>
+      )}
 
       <section className="tv-card tv-match" aria-label="Resumen de la partida">
-        <h2 className="tv-card-title">La partida</h2>
+        <h2 className="tv-card-title">Resumen de la partida</h2>
 
         <div className="tv-match-preview">
           <div className="tv-eq tv-eq--sm" aria-hidden="true">
@@ -62,7 +84,7 @@ export default function LobbyPanel({ room, onToast }) {
             ))}
           </div>
           <p className="tv-match-title">
-            <strong>{rounds}</strong> canciones por adivinar
+            <strong>{rounds}</strong> rondas
           </p>
           <div className="tv-match-chips">
             <span className="tv-match-chip">
@@ -84,26 +106,6 @@ export default function LobbyPanel({ room, onToast }) {
             {connected.length === 1 ? "1 jugador en la sala" : `${connected.length} jugadores en la sala`}
           </div>
         </div>
-
-        {isHost && others.length > 0 && (
-          <div className="tv-perm">
-            <p className="tv-stat-label">Pueden cambiar los ajustes</p>
-            <div className="tv-perm-list">
-              {others.map((p) => (
-                <button
-                  key={p.id}
-                  type="button"
-                  className={`tv-perm-chip${p.canEditConfig ? " is-on" : ""}`}
-                  aria-pressed={Boolean(p.canEditConfig)}
-                  onClick={() => togglePermission(p)}
-                >
-                  <Icon name={p.canEditConfig ? "check" : "lock"} size={14} strokeWidth={3} />
-                  {p.name}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
 
         {startErr && <p className="tv-lobby-error">{startErr}</p>}
 

@@ -1168,8 +1168,10 @@ body:has(.tv-app) {
 .tv-match { display: flex; flex-direction: column; gap: 16px; }
 .tv-match > :last-child { margin-top: auto; }
 .tv-match-preview {
+  flex: 1;
   display: grid;
   justify-items: center;
+  align-content: center;
   gap: 12px;
   padding: 20px 14px;
   border-radius: 22px;
@@ -1376,6 +1378,9 @@ body:has(.tv-app) {
 
 /* Room settings (music mode) */
 .tv-settings { gap: 20px; }
+/* Next to the match summary the two cards share a height; spread the settings instead of leaving a gap. */
+@media (min-width: 860px) { .tv-lobby-grid.has-settings .tv-settings { align-content: space-between; } }
+.tv-settings .tv-perm { padding-top: 16px; border-top: 2px dashed var(--tv-edge); }
 .tv-picks { display: flex; flex-wrap: wrap; gap: 8px; }
 .tv-pick {
   display: inline-flex;
