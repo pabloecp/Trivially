@@ -46,6 +46,14 @@ function GameScreen() {
   const [submittedSong, setSubmittedSong] = useState(null);
   // Host's "back to the main room" mid-match needs a second tap, since it ends the match for everyone.
   const [confirmHub, setConfirmHub] = useState(false);
+  // The "Era la canción" card appears once its cover has loaded (or after 1.5 s, so a slow image never holds it).
+  const revealTitle = room?.phase === "reveal" ? room?.reveal?.title : null;
+  const [coverReadyFor, setCoverReadyFor] = useState(null);
+  useEffect(() => {
+    if (!revealTitle) return;
+    const t = setTimeout(() => setCoverReadyFor(revealTitle), 1500);
+    return () => clearTimeout(t);
+  }, [revealTitle]);
 
   // Join room if disconnected or reloaded. Going back to the lobby is handled by RoomNavigator (App.jsx).
   useEffect(() => {
@@ -74,6 +82,16 @@ function GameScreen() {
     if (!url) return url;
     if (url.startsWith("https://audio-ssl.itunes.apple.com/")) {
       return `${BACKEND_URL}/api/audio/proxy?url=${encodeURIComponent(url)}`;
+    }
+    return url;
+  }
+
+  // Covers come through the backend too: it downloads each round's cover when the match starts, so at the reveal
+  // it is served from memory. Same size as revealCoverUrl in backend/src/audio/mediaCache.js.
+  function coverUrl(url) {
+    if (!url) return "/logo.svg";
+    if (/^https:\/\/is\d+-ssl\.mzstatic\.com\//.test(url)) {
+      return `${BACKEND_URL}/api/image/proxy?url=${encodeURIComponent(url.replace(/\/\d+x\d+bb\./, "/300x300bb."))}`;
     }
     return url;
   }
@@ -589,11 +607,20 @@ function GameScreen() {
                 )}
               </section>
 
-              <section className="tv-card tv-song">
+              <section className={`tv-card tv-song${coverReadyFor === room.reveal.title ? "" : " is-waiting"}`}>
+                {/* Flips in once the image has loaded, never half-drawn. */}
                 <img
+                  key={room.reveal.title}
                   className="tv-song-cover"
-                  src={room.reveal.image || "/logo.svg"}
+                  src={coverUrl(room.reveal.image)}
                   alt={`Portada de ${room.reveal.title}`}
+                  onLoad={(e) => {
+                    e.currentTarget.classList.add("is-loaded");
+                    setCoverReadyFor(room.reveal.title);
+                  }}
+                  onError={(e) => {
+                    e.currentTarget.src = "/logo.svg";
+                  }}
                 />
                 <div className="tv-song-text">
                   <p className="tv-party-kicker">Era la canción</p>

@@ -58,7 +58,7 @@ function CoverStrip({ covers }) {
         <div key={r} className={`tv-covers-row${r ? " is-reverse" : ""}`}>
           <div className="tv-covers-track" style={{ "--n": row.length }}>
             {[...row, ...row].map((src, i) => (
-              <img key={i} src={src} alt="" loading="lazy" />
+              <img key={i} src={src} alt="" />
             ))}
           </div>
         </div>
@@ -104,6 +104,30 @@ export default function MusicSettings({ room, catalog, updateConfig, onToast, ch
   for (let i = 0; covers.length < 40 && lists.some((l) => i < l.length); i += 1) {
     for (const l of lists) if (l[i] && !covers.includes(l[i]) && covers.length < 40) covers.push(l[i]);
   }
+
+  // The strip only shows covers that have finished downloading, so none of them pops in half-loaded while it
+  // slides. Until the first batch is ready a placeholder of the same size holds the space; after that the old
+  // covers stay until the new playlist's ones are in.
+  const coversKey = covers.join("|");
+  const [ready, setReady] = useState({ key: "", list: [] });
+  useEffect(() => {
+    if (!covers.length) return;
+    let cancelled = false;
+    const loadOne = (src) =>
+      new Promise((resolve) => {
+        const img = new Image();
+        const timer = setTimeout(() => resolve(null), 6000);
+        img.onload = () => (clearTimeout(timer), resolve(src));
+        img.onerror = () => (clearTimeout(timer), resolve(null));
+        img.src = src;
+      });
+    Promise.all(covers.map(loadOne)).then((list) => {
+      if (!cancelled) setReady({ key: coversKey, list: list.filter(Boolean) });
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [coversKey]);
 
   async function save(change) {
     const next = { ...draft, ...change };
@@ -162,7 +186,11 @@ export default function MusicSettings({ room, catalog, updateConfig, onToast, ch
         )}
       </fieldset>
 
-      {covers.length > 0 && <CoverStrip key={selected.join(",")} covers={covers} />}
+      {ready.list.length > 0 ? (
+        <CoverStrip key={ready.key} covers={ready.list} />
+      ) : (
+        covers.length > 0 && <div className="tv-covers tv-covers--loading" aria-hidden="true" />
+      )}
 
       <div className="tv-steppers">
         <Stepper label="Rondas" value={rounds} limits={ROUNDS} onChange={(n) => save({ rounds: n })} />

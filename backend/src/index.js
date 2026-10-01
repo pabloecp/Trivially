@@ -17,6 +17,7 @@ import {
 } from "./auth/routes.js";
 import { verifyAuthToken } from "./auth/socketToken.js";
 import { attachSockets } from "./realtime/sockets.js";
+import { getMedia, isCoverUrl, isPreviewUrl } from "./audio/mediaCache.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 dotenv.config();
@@ -90,20 +91,34 @@ app.use((req, _res, next) => {
 app.get("/health", (_req, res) => res.json({ ok: true, name: "YOAVLLY" }));
 
 // Audio proxy: re-serves iTunes preview URLs with audio/mp4 MIME type
-// Needed because iTunes returns audio/x-m4p which browsers don't play natively
+// Needed because iTunes returns audio/x-m4p which browsers don't play natively. Served from mediaCache, which a
+// match fills ahead of time.
 app.get("/api/audio/proxy", async (req, res) => {
   const url = req.query.url;
-  if (!url || !url.startsWith("https://audio-ssl.itunes.apple.com/")) {
+  if (!isPreviewUrl(url)) {
     return res.status(400).json({ error: "Invalid URL" });
   }
   try {
-    const upstream = await fetch(url);
-    if (!upstream.ok) return res.status(502).json({ error: "Upstream error" });
+    const audio = await getMedia(url);
     res.setHeader("Content-Type", "audio/mp4");
     res.setHeader("Cache-Control", "public, max-age=86400");
     res.setHeader("Access-Control-Allow-Origin", "*");
-    const buf = await upstream.arrayBuffer();
-    res.send(Buffer.from(buf));
+    res.send(audio);
+  } catch (e) {
+    res.status(502).json({ error: e.message });
+  }
+});
+
+// Album covers for the reveal screen, from the same cache, so the cover is ready the moment a round is revealed.
+app.get("/api/image/proxy", async (req, res) => {
+  const url = req.query.url;
+  if (!isCoverUrl(url)) return res.status(400).json({ error: "Invalid URL" });
+  try {
+    const image = await getMedia(url);
+    res.setHeader("Content-Type", "image/jpeg");
+    res.setHeader("Cache-Control", "public, max-age=86400");
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    res.send(image);
   } catch (e) {
     res.status(502).json({ error: e.message });
   }

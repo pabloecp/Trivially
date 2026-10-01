@@ -1407,6 +1407,14 @@ body:has(.tv-app) {
   box-shadow: 0 3px 0 var(--tv-option-edge);
 }
 @keyframes tvMarquee { to { transform: translateX(-50%); } }
+/* Same height as two rows of covers, shown while they download. */
+.tv-covers--loading {
+  height: 144px;
+  border-radius: 16px;
+  background: linear-gradient(100deg, var(--tv-option-bg) 30%, var(--tv-surface) 50%, var(--tv-option-bg) 70%) 0 0 / 300% 100%;
+  animation: tvShimmer 1.2s ease-in-out infinite;
+}
+@keyframes tvShimmer { from { background-position: 100% 0; } to { background-position: 0 0; } }
 .tv-steppers { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
 .tv-stepper {
   display: grid;
@@ -1801,8 +1809,11 @@ body:has(.tv-app) {
   border-radius: 20px;
   object-fit: cover;
   box-shadow: 0 5px 0 var(--tv-edge);
-  animation: tvFlipIn 0.7s var(--tv-spring) 0.2s backwards;
+  opacity: 0;
 }
+.tv-song-cover.is-loaded { opacity: 1; animation: tvFlipIn 0.7s var(--tv-spring) backwards; }
+/* The song card stays hidden until its cover is ready, then everything shows at once. */
+.tv-song.is-waiting { visibility: hidden; }
 .tv-song-text { min-width: 0; display: grid; gap: 2px; }
 .tv-song-title { margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: var(--tv-display); font-weight: 700; font-size: 24px; letter-spacing: 0; color: var(--tv-text); }
 .tv-song-meta { margin: 0; font-weight: 700; color: var(--tv-text-2); }
