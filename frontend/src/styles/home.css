@@ -1,7 +1,7 @@
 /* Trivially Home — casual game look. Everything here is namespaced with `tv-`. */
 
 :root {
-  --tv-bg: #121212;
+  --tv-bg: #2a2a31;
   --tv-bg-2: #3a1030;
   --tv-surface: #161616;
   --tv-edge: #000000;
@@ -77,7 +77,7 @@
   --tv-neutral-on: #f050ae;
 }
 
-.tv-c-green { --c1: #b6ee55; --c2: #a0e426; --edge: #7fb800; --on: #0a0a0a; }
+.tv-c-green { --c1: #1ed760; --c2: #1db954; --edge: #148a3d; --on: #0a0a0a; }
 .tv-c-amber { --c1: #ffc247; --c2: #ffab00; --edge: #cc8800; --on: #0a0a0a; }
 .tv-c-purple { --c1: #b06bff; --c2: #9336fd; --edge: #6f1fd1; --on: #fff; }
 .tv-c-sky { --c1: #52c4e0; --c2: #33a8c7; --edge: #22809a; --on: #0a0a0a; }
@@ -2290,7 +2290,7 @@ fieldset.tv-steppers { margin: 0; padding: 0; border: 0; min-width: 0; }
    vivid colour, the same in light and dark. Cards keep their own surface on top, so they read like tiles on a board;
    what sits right on the colour (the game's title and badge) turns dark so it doesn't melt into it. */
 :root[data-mode] { --tv-mode-bg: var(--brand); --tv-on-mode: var(--on-brand, #0a0a0a); }
-:root[data-mode="musica"] { --tv-mode-bg: #a0e426; --tv-on-mode: #0a0a0a; }
+:root[data-mode="musica"] { --tv-mode-bg: #1db954; --tv-on-mode: #0a0a0a; }
 :root[data-mode] .tv-app,
 :root[data-mode] body:has(.tv-app) {
   background: var(--tv-mode-bg);

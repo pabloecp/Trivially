@@ -12,13 +12,13 @@ Estilo: entre app y web. Tarjetas y botones redondeados y "gordos" (sombra sóli
 - **Sitio**: rosa `#F050AE` (hover `#F46CBD`, activo `#D93C99`) + amarillo `#FDF148` como segundo color (chips, pestaña/enlace activo, botones secundarios, un punto del logo).
 - **Neutros**: modo claro blanco (`#FFFFFF`, superficies `#F5F5F5`, texto `#0A0A0A`); modo oscuro negro (`#0A0A0A`, superficies `#161616`/`#232323`, texto blanco). Oscuro es el tema por defecto (`trivially_theme`).
 - **Color por modo de juego** (cada modo cambia el color principal del sitio):
-  - Adivina la canción → lima `#A0E426`
+  - Adivina la canción → verde Spotify `#1DB954` (con el modo elegido, todo el fondo es de este color)
   - Cultura general → naranja `#FFAB00`
   - Cine y series → morado `#9336FD`
   - Geografía → turquesa `#33A8C7`
   - Extras de la paleta: Neon Ice `#52E3E1`, Grapefruit `#F77976`, Mauve `#D883FF` (avatares, fondos).
 - Aciertos en verde y errores en rojo son semánticos: no los cambies por colores de marca.
-- Texto sobre lima/naranja/turquesa/amarillo va oscuro (`#0A0A0A`); sobre rosa/morado va blanco.
+- Texto sobre verde/naranja/turquesa/amarillo va oscuro (`#0A0A0A`); sobre rosa/morado va blanco.
 
 ## Cómo se aplica
 

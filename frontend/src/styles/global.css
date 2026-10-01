@@ -1736,19 +1736,19 @@ h1, h2, h3, h4 { font-family: "Outfit", "Plus Jakarta Sans", sans-serif; font-we
 [data-theme="light"] .nav-links a:hover { background: var(--bg-subtle); color: var(--text); }
 .tab-btn.active { background: var(--accent); color: var(--accent-ink); }
 
-/* ---- Game-mode colors: each mode swaps the brand color. Music = lime. ---- */
+/* ---- Game-mode colors: each mode swaps the brand color. Music = Spotify green. ---- */
 :root[data-mode="musica"] {
-  --brand: #A0E426;
-  --brand-rgb: 160, 228, 38;
-  --brand-hover: #B6EE55;
-  --brand-active: #86C112;
-  --border-focus: #A0E426;
+  --brand: #1DB954;
+  --brand-rgb: 29, 185, 84;
+  --brand-hover: #1ED760;
+  --brand-active: #179443;
+  --border-focus: #1DB954;
   --on-brand: #0A0A0A;
 }
 :root[data-mode="musica"][data-theme="light"] {
-  --brand: #8CC81A;
-  --brand-hover: #7AB010;
-  --brand-active: #659A08;
-  --border-focus: #8CC81A;
+  --brand: #1DB954;
+  --brand-hover: #1AA34A;
+  --brand-active: #168D40;
+  --border-focus: #1DB954;
   --on-brand: #0A0A0A;
 }
