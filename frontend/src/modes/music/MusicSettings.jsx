@@ -136,8 +136,8 @@ export default function MusicSettings({ room, catalog, updateConfig, onToast, ch
   }
 
   // The strip only shows covers that have finished downloading, so none of them pops in half-loaded while it
-  // slides. Until the first batch is ready a placeholder of the same size holds the space; after that the old
-  // covers stay until the new playlist's ones are in.
+  // slides. Until they are ready a placeholder of the same size holds the space; while a Spotify playlist loads,
+  // the strip keeps its covers and the new ones join once downloaded.
   const coversKey = covers.join("|");
   const selectionKey = selected.join(",");
   const [ready, setReady] = useState({ key: "", selection: "", list: [] });
@@ -162,7 +162,10 @@ export default function MusicSettings({ room, catalog, updateConfig, onToast, ch
 
   // While Spotify songs are still loading, the strip waits for at least 5 covers; then it starts with those and
   // more join as they are found.
-  const showStrip = ready.list.length >= 5 || (ready.list.length > 0 && !customLoading);
+  // Only covers of the current selection: after a change the loading bar shows until the new ones are in, so the
+  // strip never shows songs that aren't in the chosen playlists.
+  const stripFits = ready.selection === selectionKey;
+  const showStrip = stripFits && (ready.list.length >= 5 || (ready.list.length > 0 && !customLoading));
 
   async function onPlus() {
     if (!spotifyLinked) {
