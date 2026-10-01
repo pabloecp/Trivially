@@ -82,14 +82,16 @@ function CoverStrip({ covers }) {
 
 // copy only keeps the tap visible until the server's new state arrives. `children` go at the bottom of the card
 // (the host's "who may change the settings" chips).
-export default function MusicSettings({ room, catalog, updateConfig, onToast, children }) {
+// With `readOnly` (players without permission, option 3 for now) everything shows but nothing can be tapped.
+export default function MusicSettings({ room, catalog, updateConfig, onToast, children, readOnly = false }) {
   const { user, listSpotifyPlaylists, addSpotifyPlaylist, connectSpotify } = useApp();
   const playlists = catalog?.playlists || [];
-  // Spotify playlists the host already added to the room.
+  // Spotify playlists already added to the room.
   const custom = room.customPlaylists || [];
-  // Only an owner who hosts the room gets the "+". Without Spotify connected it asks to connect it; with it, it
-  // opens their playlists. Closed, only the chosen ones show.
-  const isOwnerHost = room.hostId === user?.id && user?.role === "owner";
+  // This panel only shows to whoever may change the settings (the host or a player with permission); among them,
+  // owners get the "+". Without Spotify connected it asks to connect it; with it, it opens their playlists.
+  // Closed, only the chosen ones show.
+  const isOwnerEditor = !readOnly && user?.role === "owner";
   const spotifyLinked = Boolean(user?.spotify);
   const [spotifyOpen, setSpotifyOpen] = useState(false);
   const [askLink, setAskLink] = useState(false);
@@ -214,6 +216,7 @@ export default function MusicSettings({ room, catalog, updateConfig, onToast, ch
   }
 
   async function save(change) {
+    if (readOnly) return;
     const next = { ...draft, ...change };
     setDraft(next);
     try {
@@ -236,8 +239,14 @@ export default function MusicSettings({ room, catalog, updateConfig, onToast, ch
   return (
     <section className="tv-card tv-settings" aria-labelledby="tv-settings-title">
       <h2 id="tv-settings-title" className="tv-card-title">Ajustes de la partida</h2>
+      {readOnly && (
+        <p className="tv-readonly-note">
+          <Icon name="lock" size={15} strokeWidth={2.6} />
+          Solo {room.hostName || "el host"} puede cambiar los ajustes
+        </p>
+      )}
 
-      <fieldset className="tv-fieldset">
+      <fieldset className="tv-fieldset" disabled={readOnly}>
         <legend className="tv-label">Playlists</legend>
         <div className="tv-picks">
           {playlists.map((p) => {
@@ -275,7 +284,7 @@ export default function MusicSettings({ room, catalog, updateConfig, onToast, ch
               </small>
             </button>
           ))}
-          {isOwnerHost &&
+          {isOwnerEditor &&
             spotifyOpen &&
             (spotifyLists || [])
               .filter((p) => !selected.includes(`sp:${p.id}`))
@@ -293,7 +302,7 @@ export default function MusicSettings({ room, catalog, updateConfig, onToast, ch
                   <span className="tv-pick-name">{spotifyBusy === p.id ? "Añadiendo…" : p.name}</span>
                 </button>
               ))}
-          {isOwnerHost && (
+          {isOwnerEditor && (
             <button
               type="button"
               className="tv-pick tv-pick--add"
@@ -311,7 +320,7 @@ export default function MusicSettings({ room, catalog, updateConfig, onToast, ch
             </button>
           )}
         </div>
-        {isOwnerHost && askLink && !spotifyLinked && (
+        {isOwnerEditor && askLink && !spotifyLinked && (
           <div className="tv-spotify-ask">
             <SpotifyIcon size={26} />
             <span>Conecta tu Spotify para jugar con tus playlists.</span>
@@ -325,7 +334,7 @@ export default function MusicSettings({ room, catalog, updateConfig, onToast, ch
             </button>
           </div>
         )}
-        {isOwnerHost && spotifyOpen && spotifyLists?.length === 0 && (
+        {isOwnerEditor && spotifyOpen && spotifyLists?.length === 0 && (
           <p className="tv-playlist-total">No encontramos playlists en tu Spotify.</p>
         )}
         {!hasCustom && playlists.length > 0 && songCount < rounds && (
@@ -344,10 +353,10 @@ export default function MusicSettings({ room, catalog, updateConfig, onToast, ch
         (covers.length > 0 || chosenCustom.length > 0) && <div className="tv-covers tv-covers--loading" aria-hidden="true" />
       )}
 
-      <div className="tv-steppers">
+      <fieldset className="tv-steppers" disabled={readOnly}>
         <Stepper label="Rondas" value={rounds} limits={ROUNDS} onChange={(n) => save({ rounds: n })} />
         <Stepper label="Segundos por ronda" value={seconds} unit="s" limits={SECONDS} onChange={(n) => save({ roundMs: n * 1000 })} />
-      </div>
+      </fieldset>
 
       {children}
     </section>

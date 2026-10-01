@@ -86,16 +86,27 @@ export function attachSockets(io, rooms) {
       }
     });
 
-    // An owner host adds one of their Spotify playlists; its songs load in the background.
+    // An owner who may change the settings adds one of their Spotify playlists; its songs load in the background.
     socket.on("room:spotifyPlaylist", async (playlistId, ack) => {
       try {
         const { room, userId } = requireRoom(rooms, socket);
-        rooms.assertSpotifyHost(room, userId);
+        rooms.assertSpotifyEditor(room, userId);
         const playlist = await readSpotifyPlaylist(rooms.store, userId, String(playlistId || ""));
         if (!playlist.tracks.length) throw new Error("Esa playlist no tiene canciones que se puedan usar");
         rooms.addSpotifyPlaylist(room, userId, playlist);
         ack?.({ ok: true, state: rooms.publicState(room, userId) });
         io.to(room.code).emit("room:state", rooms.publicState(room));
+      } catch (err) {
+        ack?.({ ok: false, error: err.message });
+      }
+    });
+
+    // Quick phrases and emojis in the lobby: a one-off event for the room, not part of the room state.
+    socket.on("room:react", (text, ack) => {
+      try {
+        const { room, userId } = requireRoom(rooms, socket);
+        io.to(room.code).emit("room:reaction", rooms.react(room, userId, String(text || "")));
+        ack?.({ ok: true });
       } catch (err) {
         ack?.({ ok: false, error: err.message });
       }

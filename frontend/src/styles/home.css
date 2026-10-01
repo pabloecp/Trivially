@@ -2118,3 +2118,165 @@ body:has(.tv-app) {
     transition-duration: 0.001ms !important;
   }
 }
+
+/* ---------- Waiting room extras ---------- */
+/* Temporary labels over the stacked options on Home. */
+.tv-option { display: grid; gap: 10px; }
+.tv-option + .tv-option { margin-top: 28px; }
+.tv-option-label {
+  justify-self: start;
+  margin: 0;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: var(--tv-surface);
+  box-shadow: 0 3px 0 var(--tv-edge);
+  font-weight: 800;
+  font-size: 14px;
+  color: var(--tv-text-2);
+}
+.tv-lobby-grid > .tv-extras { grid-column: 1 / -1; display: grid; gap: 14px; }
+.tv-extras-inline { display: grid; gap: 12px; }
+
+/* Settings shown to players who can't change them. */
+fieldset.tv-steppers { margin: 0; padding: 0; border: 0; min-width: 0; }
+.tv-readonly-note {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  justify-self: start;
+  margin: -6px 0 0;
+  padding: 5px 12px;
+  border-radius: 999px;
+  background: var(--tv-option-bg);
+  font-weight: 800;
+  font-size: 13px;
+  color: var(--tv-text-3);
+}
+.tv-settings fieldset:disabled .tv-pick,
+.tv-settings fieldset:disabled .tv-stepper-btn { cursor: default; }
+.tv-settings fieldset:disabled .tv-stepper-btn { opacity: 0.35; }
+.tv-settings fieldset:disabled .tv-pick[aria-pressed="false"] { opacity: 0.55; }
+.tv-settings fieldset:disabled .tv-pick[aria-pressed="true"] { opacity: 1; }
+
+/* "¿Sabías que?" */
+.tv-fact {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 18px;
+  background: var(--tv-option-bg);
+  box-shadow: 0 3px 0 var(--tv-option-edge);
+  text-align: left;
+}
+.tv-fact-icon {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  background: var(--tv-yellow);
+  color: #0a0a0a;
+}
+.tv-fact-body { display: grid; gap: 2px; flex: 1; min-width: 0; }
+.tv-fact-label { font-weight: 800; font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--tv-text-3); }
+.tv-fact-text { font-weight: 700; font-size: 15px; line-height: 1.35; animation: tvFactIn 0.45s var(--tv-spring); }
+@keyframes tvFactIn { from { opacity: 0; transform: translateY(6px); } }
+.tv-fact-next {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  border: 0;
+  border-radius: 11px;
+  background: var(--tv-surface);
+  color: var(--tv-text-2);
+  cursor: pointer;
+}
+.tv-fact-next:hover { color: var(--tv-text); }
+
+/* Quick phrases and emojis */
+.tv-quick { display: grid; gap: 10px; }
+.tv-quick-emojis { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
+.tv-quick-emoji {
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: 14px;
+  background: var(--tv-option-bg);
+  box-shadow: 0 3px 0 var(--tv-option-edge);
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+  transition: transform 0.18s var(--tv-spring);
+}
+.tv-quick-emoji:hover { transform: translateY(-3px) scale(1.08); }
+.tv-quick-emoji:active { transform: translateY(2px); box-shadow: none; }
+.tv-quick-phrases { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
+.tv-quick-phrase {
+  padding: 8px 12px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--tv-option-bg);
+  box-shadow: 0 3px 0 var(--tv-option-edge);
+  font: inherit;
+  font-weight: 800;
+  font-size: 13px;
+  color: var(--tv-text-2);
+  cursor: pointer;
+  transition: transform 0.18s var(--tv-spring), color 0.2s ease;
+}
+.tv-quick-phrase:hover { color: var(--tv-text); transform: translateY(-2px); }
+.tv-quick-emoji:disabled,
+.tv-quick-phrase:disabled { opacity: 0.5; cursor: default; transform: none; }
+
+/* What a player sent, over their avatar in the room card. */
+.tv-bubble {
+  position: absolute;
+  bottom: calc(100% + 10px);
+  left: 50%;
+  z-index: 3;
+  padding: 6px 11px;
+  border-radius: 14px;
+  background: #fff;
+  color: #0a0a0a;
+  font-weight: 800;
+  font-size: 13px;
+  white-space: nowrap;
+  box-shadow: 0 6px 18px -6px rgba(0, 0, 0, 0.5);
+  transform: translateX(-20%);
+  animation: tvBubble 3.6s var(--tv-spring) forwards;
+  pointer-events: none;
+}
+.tv-bubble::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 20%;
+  border: 7px solid transparent;
+  border-top-color: #fff;
+}
+@keyframes tvBubble {
+  0% { opacity: 0; scale: 0.6; }
+  10% { opacity: 1; scale: 1; }
+  85% { opacity: 1; }
+  100% { opacity: 0; }
+}
+.tv-float-emoji {
+  position: absolute;
+  bottom: 40%;
+  left: 85%;
+  z-index: 3;
+  font-size: 28px;
+  translate: -50% 0;
+  animation: tvFloatEmoji 2.4s ease-out forwards;
+  pointer-events: none;
+}
+@keyframes tvFloatEmoji {
+  0% { opacity: 0; transform: translateY(0) scale(0.5); }
+  15% { opacity: 1; transform: translateY(-10px) scale(1.2); }
+  100% { opacity: 0; transform: translateY(-90px) scale(1); }
+}
+.tv-party-players { overflow: visible; }

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useApp } from "../../lib/store.jsx";
 import Avatar from "./Avatar.jsx";
+import { ReactionBubble } from "./RoomExtras.jsx";
 import Icon from "./Icon.jsx";
 import PlayerName from "./PlayerName.jsx";
 
@@ -61,6 +62,7 @@ export default function PartyPanel({ room, onToast }) {
               <span className="tv-player-avatar">
                 <Avatar name={p.name} avatar={p.avatar} />
                 {isHostPlayer && <Icon name="crown" size={18} strokeWidth={2} filled className="tv-player-crown" />}
+                <ReactionBubble playerId={p.id} />
               </span>
               <span className="tv-player-text">
                 <PlayerName player={p} className="tv-player-name" />

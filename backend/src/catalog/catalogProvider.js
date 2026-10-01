@@ -23,6 +23,8 @@ function songFromRow(row) {
     previewUrl: row.preview_url,
     genre: row.genre,
     language: row.language,
+    itunesId: row.itunes_id,
+    streams: row.streams,
   };
 }
 
