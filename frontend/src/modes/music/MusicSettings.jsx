@@ -82,7 +82,7 @@ function CoverStrip({ covers }) {
 
 // copy only keeps the tap visible until the server's new state arrives. `children` go at the bottom of the card
 // (the host's "who may change the settings" chips).
-// With `readOnly` (players without permission, option 3 for now) everything shows but nothing can be tapped.
+// With `readOnly` (players without permission to change them) everything shows but nothing can be tapped.
 export default function MusicSettings({ room, catalog, updateConfig, onToast, children, readOnly = false }) {
   const { user, listSpotifyPlaylists, addSpotifyPlaylist, connectSpotify } = useApp();
   const playlists = catalog?.playlists || [];

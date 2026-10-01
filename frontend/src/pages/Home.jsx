@@ -178,21 +178,7 @@ export default function Home() {
                 </button>
               )}
             </div>
-            {/* Temporary: the waiting-room options stacked, to compare them. Keep the one we like. */}
-            {(roomMode.id === "musica"
-              ? [
-                  [0, "Opción 0 · Como está"],
-                  [1, "Opción 1 · ¿Sabías que? y mensajes en el resumen"],
-                  [2, "Opción 2 · Lo mismo, abajo en su tarjeta"],
-                  [3, "Opción 3 · Ver los ajustes sin poder cambiarlos"],
-                ]
-              : [[0, null]]
-            ).map(([variant, label]) => (
-              <div key={variant} className="tv-option">
-                {label && <p className="tv-option-label">{label}</p>}
-                <ModeLobby room={room} onToast={showToast} variant={variant} />
-              </div>
-            ))}
+            <ModeLobby room={room} onToast={showToast} />
           </section>
         )}
 

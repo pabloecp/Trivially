@@ -101,17 +101,6 @@ export function attachSockets(io, rooms) {
       }
     });
 
-    // Quick phrases and emojis in the lobby: a one-off event for the room, not part of the room state.
-    socket.on("room:react", (text, ack) => {
-      try {
-        const { room, userId } = requireRoom(rooms, socket);
-        io.to(room.code).emit("room:reaction", rooms.react(room, userId, String(text || "")));
-        ack?.({ ok: true });
-      } catch (err) {
-        ack?.({ ok: false, error: err.message });
-      }
-    });
-
     socket.on("room:toggleConfigPermission", (targetUserId, ack) => {
       try {
         const { room, userId } = requireRoom(rooms, socket);

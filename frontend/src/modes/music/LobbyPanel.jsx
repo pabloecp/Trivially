@@ -3,14 +3,12 @@ import MusicSettings from "./MusicSettings.jsx";
 import Avatar from "../../components/home/Avatar.jsx";
 import Icon from "../../components/home/Icon.jsx";
 import SpotifyIcon from "../../components/home/SpotifyIcon.jsx";
-import { FunFacts, QuickReactions } from "../../components/home/RoomExtras.jsx";
 import { useApp } from "../../lib/store.jsx";
 
 // The music mode's waiting room, shown inside the room screen on Home once the host picks this game:
 // the match settings (playlists, rounds, time) for whoever may change them, and the start button.
-// `variant` (temporary, to compare on Home): 0 as it was; 1 "¿Sabías que?" and quick messages inside the summary;
-// 2 the same in their own card below; 3 players who can't change the settings still see them, locked.
-export default function LobbyPanel({ room, onToast, variant = 0 }) {
+// Everyone sees the match settings; players without permission see them locked.
+export default function LobbyPanel({ room, onToast }) {
   const { user, catalog, refreshCatalog, startGame, updateConfig, toggleConfigPermission } = useApp();
   const [startErr, setStartErr] = useState("");
 
@@ -71,30 +69,28 @@ export default function LobbyPanel({ room, onToast, variant = 0 }) {
   }
 
   return (
-    <div className={`tv-lobby-grid${canEditConfig || variant === 3 ? " has-settings" : ""}`}>
-      {(canEditConfig || variant === 3) && (
-        <MusicSettings room={room} catalog={catalog} updateConfig={updateConfig} onToast={onToast} readOnly={!canEditConfig}>
-          {isHost && others.length > 0 && (
-            <div className="tv-perm">
-              <p className="tv-stat-label">Pueden cambiar los ajustes</p>
-              <div className="tv-perm-list">
-                {others.map((p) => (
-                  <button
-                    key={p.id}
-                    type="button"
-                    className={`tv-perm-chip${p.canEditConfig ? " is-on" : ""}`}
-                    aria-pressed={Boolean(p.canEditConfig)}
-                    onClick={() => togglePermission(p)}
-                  >
-                    <Icon name={p.canEditConfig ? "check" : "lock"} size={14} strokeWidth={3} />
-                    {p.name}
-                  </button>
-                ))}
-              </div>
+    <div className="tv-lobby-grid has-settings">
+      <MusicSettings room={room} catalog={catalog} updateConfig={updateConfig} onToast={onToast} readOnly={!canEditConfig}>
+        {isHost && others.length > 0 && (
+          <div className="tv-perm">
+            <p className="tv-stat-label">Pueden cambiar los ajustes</p>
+            <div className="tv-perm-list">
+              {others.map((p) => (
+                <button
+                  key={p.id}
+                  type="button"
+                  className={`tv-perm-chip${p.canEditConfig ? " is-on" : ""}`}
+                  aria-pressed={Boolean(p.canEditConfig)}
+                  onClick={() => togglePermission(p)}
+                >
+                  <Icon name={p.canEditConfig ? "check" : "lock"} size={14} strokeWidth={3} />
+                  {p.name}
+                </button>
+              ))}
             </div>
-          )}
-        </MusicSettings>
-      )}
+          </div>
+        )}
+      </MusicSettings>
 
       <section className="tv-card tv-match" aria-label="Resumen de la partida">
         <h2 className="tv-card-title">Resumen de la partida</h2>
@@ -128,13 +124,6 @@ export default function LobbyPanel({ room, onToast, variant = 0 }) {
             {connected.length === 1 ? "1 jugador en la sala" : `${connected.length} jugadores en la sala`}
           </div>
         </div>
-
-        {variant === 1 && (
-          <div className="tv-extras-inline">
-            <FunFacts facts={room.facts} />
-            <QuickReactions onToast={onToast} />
-          </div>
-        )}
 
         {loading.length > 0 && (
           <p className="tv-playlist-total tv-spotify-loading" aria-live="polite">
@@ -191,13 +180,6 @@ export default function LobbyPanel({ room, onToast, variant = 0 }) {
         )}
       </section>
 
-      {variant === 2 && (
-        <section className="tv-card tv-extras" aria-label="Mientras esperan">
-          <h2 className="tv-card-title">Mientras esperan</h2>
-          <FunFacts facts={room.facts} />
-          <QuickReactions onToast={onToast} />
-        </section>
-      )}
     </div>
   );
 }

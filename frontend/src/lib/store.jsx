@@ -63,8 +63,6 @@ export function AppProvider({ children }) {
   const [catalog, setCatalog] = useState(null);
   const [room, setRoom] = useState(null);
   const [linkingStatus, setLinkingStatus] = useState(null);
-  // Quick phrases and emojis sent in the room, kept for a few seconds so they show over each avatar.
-  const [reactions, setReactions] = useState([]);
   const [error, setError] = useState("");
 
   // Actions read these refs instead of closing over state, so e.g. saveGuest() followed by joinRoom() sees the new user.
@@ -217,18 +215,11 @@ export function AppProvider({ children }) {
       if (res.ok) setRoom(res.state);
       else clearRoom();
     };
-    const onReaction = (r) => {
-      const item = { ...r, key: `${r.playerId}-${r.at}` };
-      setReactions((cur) => [...cur.filter((x) => Date.now() - x.at < 4000), item]);
-      setTimeout(() => setReactions((cur) => cur.filter((x) => x.key !== item.key)), 3600);
-    };
     s.on("room:state", onState);
-    s.on("room:reaction", onReaction);
     s.on("connect", rejoin);
     if (s.connected) rejoin();
     return () => {
       s.off("room:state", onState);
-      s.off("room:reaction", onReaction);
       s.off("connect", rejoin);
     };
   }, []);
@@ -425,12 +416,6 @@ export function AppProvider({ children }) {
         if (res.state) setRoom(res.state);
       },
 
-      // A quick phrase or emoji for the room (only the fixed ones in RoomExtras.jsx).
-      async react(text) {
-        const res = await emitAck("room:react", text);
-        if (!res.ok) throw new Error(res.error);
-      },
-
       async toggleConfigPermission(targetUserId) {
         const res = await emitAck("room:toggleConfigPermission", targetUserId);
         if (!res.ok) throw new Error(res.error);
@@ -473,7 +458,7 @@ export function AppProvider({ children }) {
   const spotify = useMemo(() => ({ configured: false, connected: false }), []);
 
   return (
-    <AppContext.Provider value={{ user, catalog, refreshCatalog, room, setRoom, spotify, linkingStatus, reactions, error, setError, ...actions }}>
+    <AppContext.Provider value={{ user, catalog, refreshCatalog, room, setRoom, spotify, linkingStatus, error, setError, ...actions }}>
       {children}
     </AppContext.Provider>
   );

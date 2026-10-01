@@ -11,66 +11,6 @@ const CODE_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 export const GAME_IDS = ["musica"];
 // Custom playlists from an owner's Spotify go in config.playlistIds with this prefix ("sp:<spotify playlist id>").
 export const SPOTIFY_PREFIX = "sp:";
-// Quick messages players can send in the lobby: only these, so there is nothing to moderate. Keep in step with
-// frontend/src/components/home/RoomExtras.jsx.
-export const QUICK_PHRASES = ["¡Ya empieza!", "¡Voy a ganar!", "Pon la de español", "Pon la de inglés", "¡Más rondas!", "¡Estoy listo!", "Dame un minuto", "¡Vamos!"];
-export const QUICK_EMOJIS = ["🔥", "😂", "🎶", "😱", "👀", "💃", "👏", "😎"];
-const REACTION_GAP_MS = 1200;
-
-const fmtStreams = (n) =>
-  n >= 1e9 ? `${(n / 1e9).toFixed(1).replace(".", ",").replace(",0", "")} mil millones` : `${Math.round(n / 1e6)} millones`;
-const primaryArtist = (name = "") => name.split(/\s*(?:,|&|\s+feat\.?\s+|\s+x\s+)\s*/i)[0].trim();
-
-/**
- * "¿Sabías que?" lines about the songs a match can draw from, made only from our own data (Spotify streams from the
- * catalog, years, artists, albums), so they are always true.
- */
-export function songFacts(pool) {
-  const facts = [];
-  const songs = pool.filter((s) => s.title && s.artistName);
-  if (songs.length < 3) return facts;
-  const q = (s) => `«${s.title}» de ${s.artistName}`;
-
-  const streamed = songs.filter((s) => s.streams > 0).sort((a, b) => b.streams - a.streams);
-  if (streamed[0]) facts.push(`${q(streamed[0])} es la más escuchada de estas playlists: ${fmtStreams(streamed[0].streams)} de reproducciones en Spotify.`);
-  if (streamed.length >= 3) facts.push(`En el podio también están ${q(streamed[1])} y ${q(streamed[2])}.`);
-
-  const byArtist = new Map();
-  for (const s of songs) {
-    const a = primaryArtist(s.artistName);
-    byArtist.set(a, (byArtist.get(a) || 0) + 1);
-  }
-  const [topArtist, topCount] = [...byArtist].sort((a, b) => b[1] - a[1])[0];
-  if (topCount >= 2) facts.push(`${topArtist} es quien más canciones tiene aquí: ${topCount}.`);
-  facts.push(`En juego hay ${songs.length} canciones de ${byArtist.size} artistas distintos.`);
-
-  const dated = songs.filter((s) => s.year > 1900).sort((a, b) => a.year - b.year);
-  if (dated.length >= 2 && dated[0].year !== dated[dated.length - 1].year) {
-    facts.push(`La más antigua es ${q(dated[0])}, de ${dated[0].year}.`);
-    facts.push(`La más nueva es ${q(dated[dated.length - 1])}, de ${dated[dated.length - 1].year}.`);
-    const decades = new Map();
-    for (const s of dated) decades.set(Math.floor(s.year / 10) * 10, (decades.get(Math.floor(s.year / 10) * 10) || 0) + 1);
-    const [decade, count] = [...decades].sort((a, b) => b[1] - a[1])[0];
-    facts.push(`El ${Math.round((count / dated.length) * 100)} % de las canciones son de la década de ${decade}.`);
-  }
-
-  const collabs = songs.filter((s) => /,|&|feat\.?|\sx\s/i.test(s.artistName)).length;
-  if (collabs >= 3) facts.push(`${collabs} canciones son colaboraciones entre varios artistas.`);
-
-  // A few songs in the spotlight, different each time the playlists change.
-  const spotlight = [...songs].filter((s) => s.year).sort(() => Math.random() - 0.5).slice(0, 4);
-  for (const s of spotlight) {
-    // "China (feat. J Balvin & Ozuna)" or "El Comienzo (Apple Music Edition)": shown without the brackets.
-    const album = (s.albumName || "").replace(/\s*-\s*(Single|EP)$/i, "").replace(/\s*[([][^)\]]*[)\]]/g, "").trim();
-    facts.push(
-      !album || album.toLowerCase() === s.title.replace(/\s*[([][^)\]]*[)\]]/g, "").trim().toLowerCase()
-        ? `${q(s)} salió como sencillo en ${s.year}.`
-        : `${q(s)} salió en ${s.year}, en el álbum «${album}».`
-    );
-  }
-  return facts;
-}
-
 // Rounds are chosen this many rounds ahead, so their audio and cover are downloaded before they start.
 const LOOKAHEAD = 2;
 // How long a dropped player keeps their seat (and host role) so a reload or network blip doesn't kick them.
@@ -447,26 +387,6 @@ export class RoomManager {
     return added;
   }
 
-  /** The lobby's "¿Sabías que?" lines, rebuilt only when the chosen playlists or their playable songs change. */
-  lobbyFacts(room) {
-    const pool = this.songPool(room);
-    const key = `${(room.config.playlistIds || []).join(",")}|${pool.length}`;
-    if (room.factsCache?.key !== key) room.factsCache = { key, facts: songFacts(pool) };
-    return room.factsCache.facts;
-  }
-
-  /** A quick phrase or emoji from a player, shown over their avatar for everyone. Only the fixed ones are allowed. */
-  react(room, userId, text) {
-    const player = room.players.get(userId);
-    if (!player) throw new Error("Jugador no encontrado");
-    const kind = QUICK_EMOJIS.includes(text) ? "emoji" : QUICK_PHRASES.includes(text) ? "phrase" : null;
-    if (!kind) throw new Error("Ese mensaje no está disponible");
-    const now = Date.now();
-    if (now - (player.lastReactionAt || 0) < REACTION_GAP_MS) throw new Error("Espera un momento");
-    player.lastReactionAt = now;
-    return { playerId: userId, text, kind, at: now };
-  }
-
   updatePlayer(room, userId, { name, avatar }) {
     const player = room.players.get(userId);
     if (!player) throw new Error("Jugador no encontrado");
@@ -795,7 +715,6 @@ export class RoomManager {
       // In the lobby: how many different songs the chosen playlists have ready (a match needs one per round), and
       // whether iTunes is making the Spotify songs wait.
       songsReady: room.phase === "lobby" ? this.songPool(room).length : undefined,
-      facts: room.phase === "lobby" && room.game === "musica" ? this.lobbyFacts(room) : undefined,
       itunesSlow: Boolean(this.resolver?.slow),
       // Spotify playlists the host added, with how many of their songs are ready to play.
       customPlaylists: Object.values(room.customPlaylists || {}).map((e) => ({
