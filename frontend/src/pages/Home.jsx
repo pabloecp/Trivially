@@ -58,6 +58,7 @@ export default function Home() {
   const [sheetJoinCode, setSheetJoinCode] = useState(null);
   const [toast, setToast] = useState(null);
   const playRef = useRef(null);
+  const modesRef = useRef(null);
   const toastTimer = useRef(0);
 
   const isHost = Boolean(room) && room.hostId === user?.id;
@@ -159,12 +160,24 @@ export default function Home() {
 
         {room && ModeLobby && (
           <section key={roomMode.id} className="tv-room-game" aria-label={roomMode.name}>
-            <h2 className="tv-section-title tv-room-game-title">
-              <span className={`tv-badge tv-c-${roomMode.color}`}>
-                <Icon name={roomMode.icon} size={20} />
-              </span>
-              {roomMode.name}
-            </h2>
+            <div className="tv-room-game-head">
+              <h2 className="tv-section-title tv-room-game-title">
+                <span className={`tv-badge tv-c-${roomMode.color}`}>
+                  <Icon name={roomMode.icon} size={20} />
+                </span>
+                {roomMode.name}
+              </h2>
+              {isHost && (
+                <button
+                  type="button"
+                  className="tv-switch-btn"
+                  onClick={() => modesRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })}
+                >
+                  Cambiar juego
+                  <Icon name="chevron" size={14} strokeWidth={3} className="tv-switch-icon" />
+                </button>
+              )}
+            </div>
             <ModeLobby room={room} onToast={showToast} />
           </section>
         )}
@@ -172,7 +185,7 @@ export default function Home() {
         {/* The games only show up once you're in a room; Jugar is the way in. The room screen stays put: picking a
             game swaps the panel above, for every player at once. */}
         {room && (
-          <section className="tv-modes" aria-labelledby="tv-modes-title">
+          <section ref={modesRef} className="tv-modes" aria-labelledby="tv-modes-title">
             <h2 id="tv-modes-title" className="tv-section-title">
               {choosing ? (isHost ? "Elige el juego" : "Juegos") : isHost ? "Cambiar de juego" : "Juego"}
             </h2>

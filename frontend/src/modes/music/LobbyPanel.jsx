@@ -1,15 +1,13 @@
 import { useEffect, useState } from "react";
-import RoomConfigModal from "../../components/RoomConfigModal.jsx";
-import NoteCatcher from "../../components/home/NoteCatcher.jsx";
+import MusicSettings from "./MusicSettings.jsx";
 import Icon from "../../components/home/Icon.jsx";
 import { useApp } from "../../lib/store.jsx";
 
 // The music mode's waiting room, shown inside the room screen on Home once the host picks this game:
-// the match settings (playlists, rounds, time), the start button and a little game to pass the time.
+// the match settings (playlists, rounds, time) for whoever may change them, and the start button.
 export default function LobbyPanel({ room, onToast }) {
   const { user, catalog, refreshCatalog, startGame, updateConfig, toggleConfigPermission } = useApp();
   const [startErr, setStartErr] = useState("");
-  const [showConfigModal, setShowConfigModal] = useState(false);
 
   useEffect(() => {
     refreshCatalog?.();
@@ -45,32 +43,28 @@ export default function LobbyPanel({ room, onToast }) {
   }
 
   return (
-    <div className="tv-lobby-grid">
-      <section className="tv-card" aria-label="Resumen de la partida">
-        <div className="tv-card-head">
-          <h2 className="tv-card-title">La partida</h2>
-          {canEditConfig && (
-            <button type="button" className="tv-btn tv-btn--sm tv-c-neutral" onClick={() => setShowConfigModal(true)}>
-              <Icon name="star" size={16} />
-              Ajustes
-            </button>
-          )}
-        </div>
+    <div className={`tv-lobby-grid${canEditConfig ? " has-settings" : ""}`}>
+      {canEditConfig && <MusicSettings room={room} catalog={catalog} updateConfig={updateConfig} onToast={onToast} />}
 
-        <div className="tv-stats">
-          <div className="tv-stat">
-            <span className="tv-stat-label">Rondas</span>
-            <span className="tv-stat-value">{room.config?.rounds || 5}</span>
+      <section className="tv-card" aria-label="Resumen de la partida">
+        <h2 className="tv-card-title">La partida</h2>
+
+        {!canEditConfig && (
+          <div className="tv-stats">
+            <div className="tv-stat">
+              <span className="tv-stat-label">Rondas</span>
+              <span className="tv-stat-value">{room.config?.rounds || 5}</span>
+            </div>
+            <div className="tv-stat">
+              <span className="tv-stat-label">Tiempo por ronda</span>
+              <span className="tv-stat-value">{Math.round((room.config?.roundMs || 15000) / 1000)} s</span>
+            </div>
+            <div className="tv-stat tv-stat--wide">
+              <span className="tv-stat-label">{chosen.length > 1 ? "Playlists" : "Playlist"}</span>
+              <span className="tv-stat-value tv-stat-value--sm">{playlistNames || "Cargando…"}</span>
+            </div>
           </div>
-          <div className="tv-stat">
-            <span className="tv-stat-label">Tiempo por ronda</span>
-            <span className="tv-stat-value">{Math.round((room.config?.roundMs || 15000) / 1000)} s</span>
-          </div>
-          <div className="tv-stat tv-stat--wide">
-            <span className="tv-stat-label">{chosen.length > 1 ? "Playlists" : "Playlist"}</span>
-            <span className="tv-stat-value tv-stat-value--sm">{playlistNames || "Cargando…"}</span>
-          </div>
-        </div>
+        )}
 
         {isHost && others.length > 0 && (
           <div className="tv-perm">
@@ -107,15 +101,6 @@ export default function LobbyPanel({ room, onToast }) {
         )}
       </section>
 
-      <NoteCatcher />
-
-      <RoomConfigModal
-        isOpen={showConfigModal}
-        onClose={() => setShowConfigModal(false)}
-        currentConfig={room.config}
-        catalog={catalog}
-        onSave={updateConfig}
-      />
     </div>
   );
 }
