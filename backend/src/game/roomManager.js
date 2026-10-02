@@ -641,7 +641,7 @@ export class RoomManager {
       streak: player.streak,
     });
     player.lastAnswer = {
-      text: correct ? track.title : String(answerText),
+      text: this.answerLabel(room, track, answerText, correct),
       correct,
       at: Date.now(),
     };
@@ -657,6 +657,16 @@ export class RoomManager {
       player.artistHits[artistKey] = (player.artistHits[artistKey] || 0) + 1;
     }
     this.answered(room, player);
+  }
+
+  /** What the player answered, as people read it: "As It Was - Harry Styles" for a picked suggestion (whose raw
+   *  value is a song id such as "harry-styles-as-it-was") or for the right song; the typed text otherwise. */
+  answerLabel(room, track, answerText, correct) {
+    const label = (song) => (song.artistName ? `${song.title} - ${song.artistName}` : song.title);
+    if (correct) return label(track);
+    const raw = String(answerText);
+    const picked = this.buildSearchCatalog(room).find((s) => s.id === raw);
+    return picked ? label(picked) : raw;
   }
 
   /** "Saltar": the player gives up on this round. No points, and the streak starts over. */

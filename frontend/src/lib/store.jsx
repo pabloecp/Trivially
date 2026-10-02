@@ -7,13 +7,11 @@ const AppContext = createContext(null);
 
 // The first one is the default. The profile adds an eighth option: the Google photo.
 export const AVATAR_COLORS = [
-  "#F050AE", // Deep Pink
-  "#33A8C7", // Turquoise Surf
-  "#A0E426", // Slime Lime
-  "#FFAB00", // Orange
-  "#F77976", // Grapefruit Pink
-  "#D883FF", // Mauve Magic
-  "#9336FD", // Purple
+  "#6366F1", // Índigo
+  "#3B82F6", // Azul
+  "#8B5CF6", // Violeta
+  "#2563EB", // Azul rey
+  "#A855F7", // Morado
 ];
 
 // Per-tab, so a reload puts you back in the same room.

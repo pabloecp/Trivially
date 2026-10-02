@@ -1,0 +1,177 @@
+/* Generated: the three colour options of the theme button (lib/palettes.js lists them).
+   Only blue, blue-violet (indigo) and purple, on black and grey boxes with white letters. Option 1 is the
+   base; 2 and 3 change the shades and how the colours are filled. --tv-grad-top / --tv-grad-bottom are the
+   page's top-to-bottom gradient. Only colour variables live here: nothing in this file animates. */
+
+/* Opción 1: Negro total (flat) */
+:root:root {
+  --tv-bg: #050505;
+  --tv-surface: #111111;
+  --tv-sheet-bg: #111111;
+  --tv-edge: #000000;
+  --tv-option-bg: #0a0a0a;
+  --tv-option-edge: #141414;
+  --tv-text: #ffffff;
+  --tv-text-2: #cbcbcb;
+  --tv-text-3: #949494;
+  --tv-logo-shadow: #030303;
+  --tv-neutral: #272727;
+  --tv-neutral-2: #272727;
+  --tv-neutral-edge: #191919;
+  --tv-neutral-on: #ffffff;
+  --tv-toast-bg: #ffffff;
+  --tv-toast-fg: #050505;
+  --tv-scrim: rgba(0, 0, 0, 0.66);
+  --tv-dots: rgba(255, 255, 255, 0.05);
+  --p-ink: #050505;
+  --tv-grad-top: 79, 70, 229;
+  --tv-grad-bottom: 168, 85, 247;
+  --p-site-1: #4f46e5; --p-site-2: #4f46e5; --p-site-edge: #242067;
+  --p-site-rgb: 79, 70, 229; --p-site-text: #4f46e5; --p-on-site: #ffffff;
+  --p-accent-1: #a855f7; --p-accent-2: #a855f7; --p-accent-edge: #4c266f;
+  --p-accent-rgb: 168, 85, 247; --p-accent-text: #a855f7; --p-on-accent: #ffffff;
+  --p-music-1: #2563eb; --p-music-2: #2563eb; --p-music-edge: #112d6a;
+  --p-music-rgb: 37, 99, 235; --p-music-text: #2563eb; --p-on-music: #ffffff;
+  --p-culture-1: #8b5cf6; --p-culture-2: #8b5cf6; --p-culture-edge: #3f296f;
+  --p-culture-rgb: 139, 92, 246; --p-culture-text: #8b5cf6; --p-on-culture: #ffffff;
+  --p-cinema-1: #6d28d9; --p-cinema-2: #6d28d9; --p-cinema-edge: #311262;
+  --p-cinema-rgb: 109, 40, 217; --p-cinema-text: #7c3edd; --p-on-cinema: #ffffff;
+  --p-world-1: #3b82f6; --p-world-2: #3b82f6; --p-world-edge: #1b3a6f;
+  --p-world-rgb: 59, 130, 246; --p-world-text: #3b82f6; --p-on-world: #ffffff;
+  --p-extra-1: #4338ca; --p-extra-2: #4338ca; --p-extra-edge: #1e195b;
+  --p-extra-rgb: 67, 56, 202; --p-extra-text: #5f56d2; --p-on-extra: #ffffff;
+  --tv-glow: rgba(79, 70, 229, 0.45);
+}
+
+/* Opción 2: Azul (flat) */
+:root:root[data-palette="2"] {
+  --tv-bg: #0d0e12;
+  --tv-surface: #17191f;
+  --tv-sheet-bg: #17191f;
+  --tv-edge: #08090c;
+  --tv-option-bg: #111318;
+  --tv-option-edge: #2a2d36;
+  --tv-text: #ffffff;
+  --tv-text-2: #ccccce;
+  --tv-text-3: #97989a;
+  --tv-logo-shadow: #08080b;
+  --tv-neutral: #2a2d36;
+  --tv-neutral-2: #2a2d36;
+  --tv-neutral-edge: #1b1d23;
+  --tv-neutral-on: #ffffff;
+  --tv-toast-bg: #ffffff;
+  --tv-toast-fg: #0d0e12;
+  --tv-scrim: rgba(0, 0, 0, 0.66);
+  --tv-dots: rgba(255, 255, 255, 0.05);
+  --p-ink: #0d0e12;
+  --tv-grad-top: 59, 130, 246;
+  --tv-grad-bottom: 139, 92, 246;
+  --p-site-1: #3b82f6; --p-site-2: #3b82f6; --p-site-edge: #295bac;
+  --p-site-rgb: 59, 130, 246; --p-site-text: #3b82f6; --p-on-site: #ffffff;
+  --p-accent-1: #60a5fa; --p-accent-2: #60a5fa; --p-accent-edge: #4374af;
+  --p-accent-rgb: 96, 165, 250; --p-accent-text: #60a5fa; --p-on-accent: #0d0e12;
+  --p-music-1: #2563eb; --p-music-2: #2563eb; --p-music-edge: #1a45a4;
+  --p-music-rgb: 37, 99, 235; --p-music-text: #2563eb; --p-on-music: #ffffff;
+  --p-culture-1: #6366f1; --p-culture-2: #6366f1; --p-culture-edge: #4547a9;
+  --p-culture-rgb: 99, 102, 241; --p-culture-text: #6366f1; --p-on-culture: #ffffff;
+  --p-cinema-1: #8b5cf6; --p-cinema-2: #8b5cf6; --p-cinema-edge: #6140ac;
+  --p-cinema-rgb: 139, 92, 246; --p-cinema-text: #8b5cf6; --p-on-cinema: #ffffff;
+  --p-world-1: #2f6bff; --p-world-2: #2f6bff; --p-world-edge: #214bb2;
+  --p-world-rgb: 47, 107, 255; --p-world-text: #2f6bff; --p-on-world: #ffffff;
+  --p-extra-1: #4f46e5; --p-extra-2: #4f46e5; --p-extra-edge: #3731a0;
+  --p-extra-rgb: 79, 70, 229; --p-extra-text: #584fe6; --p-on-extra: #ffffff;
+  --tv-glow: rgba(59, 130, 246, 0.45);
+}
+
+/* Opción 3: Ultravioleta (gradient) */
+:root:root[data-palette="3"] {
+  --tv-bg: #0e0c13;
+  --tv-surface: #18151f;
+  --tv-sheet-bg: #18151f;
+  --tv-edge: #09080c;
+  --tv-option-bg: #120f18;
+  --tv-option-edge: #2c2737;
+  --tv-text: #ffffff;
+  --tv-text-2: #ccccce;
+  --tv-text-3: #97969a;
+  --tv-logo-shadow: #08070b;
+  --tv-neutral: #2c2737;
+  --tv-neutral-2: #2c2737;
+  --tv-neutral-edge: #1d1924;
+  --tv-neutral-on: #ffffff;
+  --tv-toast-bg: #ffffff;
+  --tv-toast-fg: #0e0c13;
+  --tv-scrim: rgba(0, 0, 0, 0.66);
+  --tv-dots: rgba(255, 255, 255, 0.05);
+  --p-ink: #0e0c13;
+  --tv-grad-top: 99, 102, 241;
+  --tv-grad-bottom: 109, 40, 217;
+  --p-site-1: #8d57e1; --p-site-2: #6d28d9; --p-site-edge: #4c1c98;
+  --p-site-rgb: 109, 40, 217; --p-site-text: #7c3edd; --p-on-site: #ffffff;
+  --p-accent-1: #9da5fa; --p-accent-2: #818cf8; --p-accent-edge: #5a62ae;
+  --p-accent-rgb: 129, 140, 248; --p-accent-text: #818cf8; --p-on-accent: #0e0c13;
+  --p-music-1: #9965f1; --p-music-2: #7c3aed; --p-music-edge: #5729a6;
+  --p-music-rgb: 124, 58, 237; --p-music-text: #7c3aed; --p-on-music: #ffffff;
+  --p-culture-1: #8588f4; --p-culture-2: #6366f1; --p-culture-edge: #4547a9;
+  --p-culture-rgb: 99, 102, 241; --p-culture-text: #6366f1; --p-on-culture: #ffffff;
+  --p-cinema-1: #bb7af9; --p-cinema-2: #a855f7; --p-cinema-edge: #763cad;
+  --p-cinema-rgb: 168, 85, 247; --p-cinema-text: #a855f7; --p-on-cinema: #ffffff;
+  --p-world-1: #766feb; --p-world-2: #4f46e5; --p-world-edge: #3731a0;
+  --p-world-rgb: 79, 70, 229; --p-world-text: #584fe6; --p-on-world: #ffffff;
+  --p-extra-1: #a580f8; --p-extra-2: #8b5cf6; --p-extra-edge: #6140ac;
+  --p-extra-rgb: 139, 92, 246; --p-extra-text: #8b5cf6; --p-on-extra: #ffffff;
+  --tv-glow: rgba(109, 40, 217, 0.45);
+}
+
+/* The brand tokens used across the app follow the slots of whichever option is on. Doubled :root so these win
+   over the defaults in global.css and home.css. */
+:root:root {
+  --brand: var(--p-site-2);
+  --brand-rgb: var(--p-site-rgb);
+  --brand-text: var(--p-site-text);
+  --on-brand: var(--p-on-site);
+  --brand-hover: var(--p-site-1);
+  --brand-active: var(--p-site-edge);
+  --border-focus: var(--p-site-2);
+  --accent: var(--p-accent-2);
+  --accent-hover: var(--p-accent-1);
+  --accent-ink: var(--p-on-accent);
+  --tv-focus: var(--p-site-text);
+  --bg: var(--tv-bg);
+  --bg-surface: var(--tv-surface);
+  --bg-surface-hover: var(--tv-option-bg);
+  --bg-subtle: var(--tv-option-bg);
+  --text: var(--tv-text);
+  --text-secondary: var(--tv-text-2);
+  --text-muted: var(--tv-text-3);
+  --border: var(--tv-option-edge);
+  --border-subtle: var(--tv-option-edge);
+  --border-hover: var(--tv-text-3);
+  /* Right is green and wrong / delete is red in every option (see --p-ok / --p-bad in home.css). */
+  --ok: var(--p-ok-text); --ok-subtle: rgba(var(--p-ok-rgb), 0.15); --ok-border: rgba(var(--p-ok-rgb), 0.35);
+  --bad: var(--p-bad-text); --bad-subtle: rgba(var(--p-bad-rgb), 0.15); --bad-border: rgba(var(--p-bad-rgb), 0.35);
+  --amber: var(--p-accent-text); --amber-subtle: rgba(var(--p-accent-rgb), 0.15);
+  --tv-danger: var(--p-bad-text);
+  --tv-danger-bg: rgba(var(--p-bad-rgb), 0.16);
+}
+
+:root:root[data-mode="musica"] {
+  --brand: var(--p-music-2); --brand-rgb: var(--p-music-rgb); --brand-text: var(--p-music-text);
+  --on-brand: var(--p-on-music); --brand-hover: var(--p-music-1); --brand-active: var(--p-music-edge);
+  --border-focus: var(--p-music-2); --tv-mode-bg: var(--p-music-2); --tv-on-mode: var(--p-on-music);
+}
+:root:root[data-mode="cultura"] {
+  --brand: var(--p-culture-2); --brand-rgb: var(--p-culture-rgb); --brand-text: var(--p-culture-text);
+  --on-brand: var(--p-on-culture); --brand-hover: var(--p-culture-1); --brand-active: var(--p-culture-edge);
+  --border-focus: var(--p-culture-2); --tv-mode-bg: var(--p-culture-2); --tv-on-mode: var(--p-on-culture);
+}
+:root:root[data-mode="cine"] {
+  --brand: var(--p-cinema-2); --brand-rgb: var(--p-cinema-rgb); --brand-text: var(--p-cinema-text);
+  --on-brand: var(--p-on-cinema); --brand-hover: var(--p-cinema-1); --brand-active: var(--p-cinema-edge);
+  --border-focus: var(--p-cinema-2); --tv-mode-bg: var(--p-cinema-2); --tv-on-mode: var(--p-on-cinema);
+}
+:root:root[data-mode="mundo"] {
+  --brand: var(--p-world-2); --brand-rgb: var(--p-world-rgb); --brand-text: var(--p-world-text);
+  --on-brand: var(--p-on-world); --brand-hover: var(--p-world-1); --brand-active: var(--p-world-edge);
+  --border-focus: var(--p-world-2); --tv-mode-bg: var(--p-world-2); --tv-on-mode: var(--p-on-world);
+}

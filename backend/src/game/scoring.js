@@ -1,6 +1,6 @@
 export const ROUND_MS = 15000;
 export const COUNTDOWN_MS = 3000;
-export const REVEAL_MS = 7000;
+export const REVEAL_MS = 3000; // the answer stays on screen 3 s, then the next round counts down 3 s
 
 export function scoreAnswer({ correct, remainingMs, durationMs, streak }) {
   if (!correct) return { points: 0, streak: 0, speedBonus: 0, streakBonus: 0 };

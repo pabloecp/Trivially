@@ -2,8 +2,22 @@ import Avatar from "./home/Avatar.jsx";
 import Icon from "./home/Icon.jsx";
 import PlayerName from "./home/PlayerName.jsx";
 
+function BoardAnswer({ answer }) {
+  if (!answer || answer.skipped || !answer.text) {
+    return <span className="tv-board-answer">{answer?.skipped ? "Saltó la canción" : "Sin respuesta"}</span>;
+  }
+  return (
+    <span className={`tv-board-answer ${answer.correct ? "is-right" : "is-wrong"}`} title={answer.text}>
+      <Icon name={answer.correct ? "check" : "close"} size={12} strokeWidth={3.2} />
+      <span className="tv-board-answer-text">{answer.text}</span>
+    </span>
+  );
+}
+
 // Live scoreboard shown next to the game. The score re-mounts on change so it pops.
-export default function MiniBoard({ players, currentUserId }) {
+export default function MiniBoard({ players, currentUserId, phase }) {
+  // The server sends everyone's answer only once the round is over (reveal / finished).
+  const showAnswers = phase === "reveal" || phase === "finished";
   const ranked = [...(players || [])].sort((a, b) => b.score - a.score);
 
   return (
@@ -29,11 +43,15 @@ export default function MiniBoard({ players, currentUserId }) {
                   <PlayerName player={p} />
                   {isMe && <span className="tv-muted"> · tú</span>}
                 </span>
-                {p.streak > 1 && <span className="tv-board-streak">Racha {p.streak}</span>}
+                {showAnswers ? (
+                  <BoardAnswer answer={p.lastAnswer} />
+                ) : (
+                  p.streak > 1 && <span className="tv-board-streak">Racha {p.streak}</span>
+                )}
               </span>
               <span className="tv-board-right">
                 <span key={p.score} className="tv-board-score">{p.score}</span>
-                {p.answered ? (
+                {showAnswers ? null : p.answered ? (
                   <span className="tv-board-state is-done">
                     <Icon name="check" size={12} strokeWidth={3.2} />
                     Listo

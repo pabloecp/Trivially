@@ -9,16 +9,17 @@ Estilo: entre app y web. Tarjetas y botones redondeados y "gordos" (sombra sóli
 
 ## Paleta
 
-- **Sitio**: rosa `#F050AE` (hover `#F46CBD`, activo `#D93C99`) + amarillo `#FDF148` como segundo color (chips, pestaña/enlace activo, botones secundarios, un punto del logo).
-- **Neutros**: modo claro blanco (`#FFFFFF`, superficies `#F5F5F5`, texto `#0A0A0A`); modo oscuro negro (`#0A0A0A`, superficies `#161616`/`#232323`, texto blanco). Oscuro es el tema por defecto (`trivially_theme`).
-- **Color por modo de juego** (cada modo cambia el color principal del sitio):
-  - Adivina la canción → lima `#A0E426`
-  - Cultura general → naranja `#FFAB00`
-  - Cine y series → morado `#9336FD`
-  - Geografía → turquesa `#33A8C7`
-  - Extras de la paleta: Neon Ice `#52E3E1`, Grapefruit `#F77976`, Mauve `#D883FF` (avatares, fondos).
-- Aciertos en verde y errores en rojo son semánticos: no los cambies por colores de marca.
-- Texto sobre lima/naranja/turquesa/amarillo va oscuro (`#0A0A0A`); sobre rosa/morado va blanco.
+Cinco colores planos, sin degradados raros. Definidos como `--p-*` al inicio de `frontend/src/styles/home.css` (cada uno con tono claro `-1`, principal `-2` y borde `-edge` para la sombra gruesa):
+
+- **Violeta** `#6A40E6` (en oscuro `#A58BFF`): el color del sitio (botones principales, enlaces, pestañas).
+- **Sol (amarillo)** `#FFC52E`: segundo color (chips, botón Invitar, avisos, foco).
+- **Verde** `#1DB954`: modo Adivina la canción (y aciertos).
+- **Celeste** `#2EA8FF`: modo Geografía.
+- **Coral** `#FF6A55`: modo Cine y series.
+- Cultura general usa el amarillo. Texto sobre amarillo, verde, celeste y coral va oscuro (`#1D1A33`); sobre violeta va blanco.
+- **Neutros**: oscuro = índigo (`#231F3D`, superficies `#2E2A50`/`#3A3562`, texto blanco); claro = crema (`#FFF4E3`, superficies blancas, texto `#1D1A33`). Oscuro es el tema por defecto (`trivially_theme`).
+- Errores en rojo y aciertos en verde son semánticos: no los cambies por colores de marca.
+- Movimiento de color: cinco globos de colores flotan detrás de todo (`.tv-blob--1..5`) y el logo cambia de color sin parar (matiz del icono con `--logo-h`, letras con `tvLetterColors`). Con un modo elegido, el fondo se pinta del color del modo y los globos se ven suaves encima.
 
 ## Cómo se aplica
 

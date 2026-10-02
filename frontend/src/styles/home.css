@@ -1,47 +1,56 @@
 /* Trivially Home — casual game look. Everything here is namespaced with `tv-`. */
 
+/* ---------- Palette: the colours are slots, and each of the ten options (see lib/palettes.js) fills them ----------
+   site = the site's own colour, accent = its second colour, music / culture / cinema / world = the colour of each
+   game mode, extra = the odd one out (moderator tag, "blue" tiles). The slot colours of all ten options, Duolingo's
+   (options 1 and 2) included, are in styles/palettes.css; this file only has the greys.
+   Per slot: --x-1 / --x-2 are the fill (the same for a flat colour, two shades for a gradient) and --x-edge is the
+   solid shadow under a tile. */
 :root {
-  --tv-bg: #0a0a0a;
-  --tv-bg-2: #3a1030;
-  --tv-surface: #161616;
-  --tv-edge: #000000;
+  /* Meaning, not decoration: these two stay the same in every colour option. */
+  --p-ok: #22c55e;  --p-ok-edge: #15803d;  --p-ok-rgb: 34, 197, 94;   --p-ok-text: #4ade80;
+  --p-bad: #ef4444; --p-bad-edge: #b91c1c; --p-bad-rgb: 239, 68, 68;  --p-bad-text: #ff7070;
+  --p-ink: #0a0a0f; /* the page's black, used as the letter on light colours */
+  --p-eel: #4b4b4b;
+  --p-wolf: #777777;
+  --p-hare: #afafaf;
+  --p-swan: #e5e5e5;
+  --p-polar: #f7f7f7;
+}
+
+/* Older class names kept so the markup doesn't change: "yellow" and "pink" are the site colour, "violet" is the
+   second colour (accent), "mint" is the music colour, "blue" is the extra one. */
+:root {
+  --tv-yellow: var(--p-site-1);    --tv-yellow-2: var(--p-site-2);   --tv-yellow-edge: var(--p-site-edge);
+  --tv-pink: var(--p-site-1);      --tv-pink-2: var(--p-site-2);     --tv-pink-edge: var(--p-site-edge);
+  --tv-violet: var(--p-accent-1);  --tv-violet-2: var(--p-accent-2); --tv-violet-edge: var(--p-accent-edge);
+  --tv-mint: var(--p-music-1);     --tv-mint-2: var(--p-music-2);    --tv-mint-edge: var(--p-music-edge);
+  --tv-blue: var(--p-extra-1);     --tv-blue-2: var(--p-extra-2);    --tv-blue-edge: var(--p-extra-edge);
+
+  /* Night mode (the default): Duolingo's dark surfaces. */
+  --tv-bg: #0a0a0f;
+  --tv-surface: #16161f;
+  --tv-edge: #2a2a36;
   --tv-text: #ffffff;
-  --tv-text-2: rgba(255,255,255,0.76);
-  --tv-text-3: rgba(255,255,255,0.5);
+  --tv-text-2: var(--p-swan);
+  --tv-text-3: var(--p-hare);
   --tv-ink: #ffffff;
   --tv-logo-shadow: #000000;
-  --tv-dots: rgba(255, 255, 255, 0.06);
-  --tv-blob-opacity: 0.35;
-  --tv-scrim: rgba(0,0,0,0.66);
-  --tv-sheet-bg: #161616;
-  --tv-option-bg: #232323;
-  --tv-option-edge: #000000;
+  --tv-dots: rgba(255, 255, 255, 0.05);
+  --tv-blob-opacity: 0.3;
+  --tv-scrim: rgba(0, 0, 0, 0.72);
+  --tv-sheet-bg: #16161f;
+  --tv-option-bg: #0f0f16;
+  --tv-option-edge: #2a2a36;
   --tv-handle: rgba(255, 255, 255, 0.22);
   --tv-toast-bg: #ffffff;
-  --tv-toast-fg: #0a0a0a;
-  --tv-focus: #f88ad0;
-  --tv-danger: #ff9aa5;
-  --tv-danger-bg: rgba(241, 94, 108, 0.16);
-  --tv-glow: rgba(240, 80, 174, 0.5);
-
-  /* Electric-blue family */
-  --tv-yellow: #f46cbd;
-  --tv-yellow-2: #f050ae;
-  --tv-yellow-edge: #c93a90;
-  --tv-pink: #f46cbd;
-  --tv-pink-2: #f050ae;
-  --tv-pink-edge: #a02c78;
-  --tv-violet: #fdf148;
-  --tv-violet-2: #f2dc1e;
-  --tv-violet-edge: #bfae00;
-  --tv-blue: #52e3e1;
-  --tv-blue-2: #33a8c7;
-  --tv-blue-edge: #22809a;
-  --tv-mint: #fdf148;
-  --tv-mint-2: #f2dc1e;
-  --tv-mint-edge: #bfae00;
-  --tv-neutral: #2a2a2a;
-  --tv-neutral-2: #232323;
+  --tv-toast-fg: #0a0a0f;
+  --tv-focus: var(--p-site-2);
+  --tv-danger: var(--p-cinema-2);
+  --tv-danger-bg: rgba(168, 85, 247, 0.16);
+  --tv-glow: rgba(99, 102, 241, 0.4);
+  --tv-neutral: #2a2a36;
+  --tv-neutral-2: #2a2a36;
   --tv-neutral-edge: #000000;
   --tv-neutral-on: #ffffff;
 
@@ -51,47 +60,42 @@
 
 [data-theme="light"] {
   --tv-bg: #ffffff;
-  --tv-bg-2: #ffe3f3;
   --tv-surface: #ffffff;
-  --tv-edge: #e4e4e4;
-  --tv-text: #0a0a0a;
-  --tv-text-2: rgba(10, 10, 10, 0.7);
-  --tv-text-3: rgba(10, 10, 10, 0.45);
-  --tv-logo-shadow: #ffc9e6;
-  --tv-dots: rgba(10, 10, 10, 0.07);
-  --tv-blob-opacity: 0.28;
-  --tv-scrim: rgba(10, 10, 10, 0.4);
+  --tv-edge: var(--p-swan);
+  --tv-text: var(--p-eel);
+  --tv-text-2: var(--p-eel);
+  --tv-text-3: var(--p-wolf);
+  --tv-logo-shadow: var(--p-swan);
+  --tv-dots: rgba(75, 75, 75, 0.06);
+  --tv-blob-opacity: 0.22;
+  --tv-scrim: rgba(75, 75, 75, 0.4);
   --tv-sheet-bg: #ffffff;
-  --tv-option-bg: #f5f5f5;
-  --tv-option-edge: #e4e4e4;
-  --tv-handle: rgba(10, 10, 10, 0.16);
-  --tv-toast-bg: #0a0a0a;
+  --tv-option-bg: var(--p-polar);
+  --tv-option-edge: var(--p-swan);
+  --tv-handle: rgba(75, 75, 75, 0.16);
+  --tv-toast-bg: #0a0a0f;
   --tv-toast-fg: #ffffff;
-  --tv-focus: #f050ae;
-  --tv-danger: #c62828;
-  --tv-danger-bg: rgba(239, 68, 68, 0.1);
-  --tv-glow: rgba(240, 80, 174, 0.4);
-  --tv-neutral: #f0f0f0;
-  --tv-neutral-2: #e4e4e4;
-  --tv-neutral-edge: #c8c8c8;
-  --tv-neutral-on: #f050ae;
+  --tv-focus: var(--p-extra-2);
+  --tv-danger: var(--p-cinema-edge);
+  --tv-danger-bg: rgba(168, 85, 247, 0.12);
+  --tv-glow: rgba(99, 102, 241, 0.35);
+  --tv-neutral: var(--p-swan);
+  --tv-neutral-2: var(--p-swan);
+  --tv-neutral-edge: var(--p-hare);
+  --tv-neutral-on: var(--p-eel);
 }
 
-.tv-c-green { --c1: #b6ee55; --c2: #a0e426; --edge: #7fb800; --on: #0a0a0a; }
-.tv-c-amber { --c1: #ffc247; --c2: #ffab00; --edge: #cc8800; --on: #0a0a0a; }
-.tv-c-purple { --c1: #b06bff; --c2: #9336fd; --edge: #6f1fd1; --on: #fff; }
-.tv-c-sky { --c1: #52c4e0; --c2: #33a8c7; --edge: #22809a; --on: #0a0a0a; }
-.tv-c-yellow { --c1: var(--tv-yellow); --c2: var(--tv-yellow-2); --edge: var(--tv-yellow-edge); --on: #fff; }
-.tv-c-pink { --c1: var(--tv-pink); --c2: var(--tv-pink-2); --edge: var(--tv-pink-edge); --on: #fff; }
-.tv-c-violet { --c1: var(--tv-violet); --c2: var(--tv-violet-2); --edge: var(--tv-violet-edge); --on: #0a0a0a; }
-.tv-c-blue { --c1: var(--tv-blue); --c2: var(--tv-blue-2); --edge: var(--tv-blue-edge); --on: #fff; }
-.tv-c-mint { --c1: var(--tv-mint); --c2: var(--tv-mint-2); --edge: var(--tv-mint-edge); --on: #0a0a0a; }
+/* One class per slot, plus the older names. --on is the letter on top of the colour (palettes.css picks it by contrast). */
+.tv-c-music, .tv-c-feather, .tv-c-green, .tv-c-mint { --c1: var(--p-music-1); --c2: var(--p-music-2); --edge: var(--p-music-edge); --on: var(--p-on-music, var(--p-ink)); }
+.tv-c-site, .tv-c-macaw, .tv-c-yellow, .tv-c-pink { --c1: var(--p-site-1); --c2: var(--p-site-2); --edge: var(--p-site-edge); --on: var(--p-on-site, var(--p-ink)); }
+.tv-c-extra, .tv-c-humpback, .tv-c-blue { --c1: var(--p-extra-1); --c2: var(--p-extra-2); --edge: var(--p-extra-edge); --on: var(--p-on-extra, #fff); }
+.tv-c-cinema, .tv-c-cardinal, .tv-c-coral { --c1: var(--p-cinema-1); --c2: var(--p-cinema-2); --edge: var(--p-cinema-edge); --on: var(--p-on-cinema, var(--p-ink)); }
+.tv-c-culture, .tv-c-fox, .tv-c-amber { --c1: var(--p-culture-1); --c2: var(--p-culture-2); --edge: var(--p-culture-edge); --on: var(--p-on-culture, var(--p-ink)); }
+.tv-c-accent, .tv-c-bee, .tv-c-violet { --c1: var(--p-accent-1); --c2: var(--p-accent-2); --edge: var(--p-accent-edge); --on: var(--p-on-accent, var(--p-ink)); }
+.tv-c-world, .tv-c-beetle, .tv-c-sky, .tv-c-purple { --c1: var(--p-world-1); --c2: var(--p-world-2); --edge: var(--p-world-edge); --on: var(--p-on-world, var(--p-ink)); }
 .tv-c-neutral { --c1: var(--tv-neutral); --c2: var(--tv-neutral-2); --edge: var(--tv-neutral-edge); --on: var(--tv-neutral-on); }
 
 /* Overscroll area around the app */
-body:has(.tv-app) {
-  background: var(--tv-bg);
-}
 
 .tv-app {
   position: relative;
@@ -99,7 +103,7 @@ body:has(.tv-app) {
   min-height: 100vh;
   min-height: 100dvh;
   overflow-x: hidden;
-  background: radial-gradient(120% 60% at 50% 0%, var(--tv-bg-2), var(--tv-bg) 70%);
+  /* Black fading into the main colour; see "The page" near the end of the file. */
   color: var(--tv-text);
   font-family: "Nunito", "Plus Jakarta Sans", system-ui, sans-serif;
   -webkit-tap-highlight-color: transparent;
@@ -154,10 +158,13 @@ body:has(.tv-app) {
   filter: blur(80px);
   opacity: var(--tv-blob-opacity);
   animation: tvDrift 24s ease-in-out infinite alternate;
+  will-change: transform;
 }
-.tv-blob--1 { background: var(--tv-pink); top: -24vmax; left: -18vmax; }
-.tv-blob--2 { background: var(--tv-blue); top: 8vmax; right: -26vmax; animation-duration: 28s; animation-delay: -8s; }
-.tv-blob--3 { background: var(--tv-yellow); bottom: -32vmax; left: 6vmax; opacity: calc(var(--tv-blob-opacity) * 0.6); animation-duration: 32s; animation-delay: -14s; }
+.tv-blob--1 { background: var(--p-site-2); top: -26vmax; left: -20vmax; }
+.tv-blob--2 { background: var(--p-world-2); top: 6vmax; right: -28vmax; animation-duration: 28s; animation-delay: -8s; }
+.tv-blob--3 { background: var(--p-cinema-2); bottom: -34vmax; left: 4vmax; animation-duration: 32s; animation-delay: -14s; }
+.tv-blob--4 { background: var(--p-accent-2); top: 38vmax; right: -14vmax; width: 34vmax; height: 34vmax; animation-duration: 26s; animation-delay: -4s; }
+.tv-blob--5 { background: var(--p-music-2); top: 46vmax; left: -22vmax; width: 36vmax; height: 36vmax; animation-duration: 30s; animation-delay: -18s; }
 
 /* ---------- Top bar ---------- */
 .tv-topbar {
@@ -252,9 +259,11 @@ body:has(.tv-app) {
 @media (min-width: 721px) { .tv-stage.is-home { min-height: 0; align-content: normal; } }
 @media (max-width: 720px) { .tv-howto { display: none; } }
 .tv-stage .tv-party { margin-top: 0; max-width: 560px; }
+/* In a room the code card is as wide as the game bar and settings under it, at every screen size. */
+.tv-stage.has-room .tv-party { justify-self: stretch; max-width: none; }
 @media (min-width: 900px) {
-  .tv-stage.has-room { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 48px; }
-  .tv-stage.has-room .tv-party { justify-self: stretch; max-width: none; }
+  /* Same 20px gap as the two boxes under it, so the room card lines up with the game bar and the right box. */
+  .tv-stage.has-room { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; }
 }
 
 /* ---------- Home: how to play, under the logo ---------- */
@@ -295,7 +304,7 @@ body:has(.tv-app) {
   font-weight: 700;
   font-size: 12px;
 }
-.tv-play-icon { background: var(--tv-violet); color: #0a0a0a; }
+.tv-play-icon { background: var(--p-on-site); color: var(--p-site-2); }
 .tv-topbar-end { display: flex; align-items: center; justify-content: flex-end; gap: 10px; min-width: 0; }
 /* Inicio never shrinks; a long player name gets cut with "…" instead. */
 .tv-chip--home { flex-shrink: 0; }
@@ -345,6 +354,8 @@ body:has(.tv-app) {
   height: 148px;
   animation: tvPop 0.7s var(--tv-spring) 0.05s backwards;
 }
+/* The app icon. Each colour option (palettes.css) can reshape it: --logo-radius, --logo-bg, --logo-ring,
+   --logo-shadow, --logo-mark and the --logo-star-* variables. The defaults are the main look. */
 .tv-appicon-tile {
   position: relative;
   overflow: clip;
@@ -352,10 +363,11 @@ body:has(.tv-app) {
   place-items: center;
   width: 132px;
   height: 132px;
-  border-radius: 38px;
-  background: linear-gradient(155deg, var(--tv-yellow), var(--tv-yellow-2));
-  box-shadow: 0 8px 0 var(--tv-yellow-edge), 0 24px 40px -12px var(--tv-glow);
-  color: #fff;
+  border-radius: var(--logo-radius, 38px);
+  background: var(--logo-bg, linear-gradient(155deg, var(--tv-yellow), var(--tv-yellow-2)));
+  border: var(--logo-ring, 0);
+  box-shadow: var(--logo-shadow, 0 8px 0 var(--tv-yellow-edge), 0 24px 40px -12px var(--tv-glow));
+  color: var(--logo-mark, #fff);
   animation: tvBob 3.6s ease-in-out infinite;
 }
 .tv-appicon-shine {
@@ -365,7 +377,7 @@ body:has(.tv-app) {
   width: 110px;
   height: 70px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, var(--logo-shine, 0.25));
   transform: rotate(-24deg);
 }
 .tv-appicon-mark {
@@ -373,7 +385,7 @@ body:has(.tv-app) {
   font-weight: 700;
   font-size: 96px;
   line-height: 1;
-  text-shadow: 0 5px 0 var(--tv-pink-edge);
+  text-shadow: var(--logo-mark-shadow, 0 5px 0 rgba(0, 0, 0, 0.18));
   transform: translateY(2px);
 }
 .tv-appicon-star {
@@ -384,10 +396,11 @@ body:has(.tv-app) {
   place-items: center;
   width: 34px;
   height: 34px;
-  border-radius: 12px;
-  background: var(--tv-yellow);
-  box-shadow: 0 3px 0 var(--tv-yellow-edge);
-  color: var(--tv-ink);
+  border-radius: var(--logo-star-radius, 12px);
+  background: var(--logo-star-bg, var(--p-accent-2));
+  box-shadow: var(--logo-star-shadow, 0 3px 0 var(--p-accent-edge));
+  color: var(--logo-star-fg, var(--p-ink));
+  display: var(--logo-star-display, grid);
   rotate: 12deg;
 }
 .tv-appicon-shadow {
@@ -397,11 +410,11 @@ body:has(.tv-app) {
   width: 84px;
   height: 12px;
   border-radius: 50%;
-  background: rgba(8, 4, 30, 0.35);
+  background: rgba(0, 0, 0, 0.35);
   filter: blur(5px);
   animation: tvShadow 3.6s ease-in-out infinite;
 }
-[data-theme="light"] .tv-appicon-shadow { background: rgba(120, 60, 40, 0.22); }
+[data-theme="light"] .tv-appicon-shadow { background: rgba(75, 75, 75, 0.2); }
 
 .tv-wordmark {
   display: flex;
@@ -468,7 +481,7 @@ body:has(.tv-app) {
   font-weight: 700;
   font-size: 30px;
   letter-spacing: 0.01em;
-  color: var(--tv-ink);
+  color: var(--p-on-site);
   cursor: pointer;
   transition: transform 0.14s ease, box-shadow 0.14s ease;
   animation: tvRise 0.6s var(--tv-spring) 0.6s backwards;
@@ -500,7 +513,7 @@ body:has(.tv-app) {
   height: 44px;
   padding-left: 3px;
   border-radius: 50%;
-  background: var(--tv-ink);
+  background: var(--p-on-site);
   color: var(--tv-yellow);
   transition: transform 0.3s var(--tv-spring);
 }
@@ -712,7 +725,7 @@ body:has(.tv-app) {
   transition: transform 0.18s var(--tv-spring), background 0.2s ease;
 }
 .tv-perm-chip:active { transform: translateY(2px); }
-.tv-perm-chip.is-on { background: #22c55e; box-shadow: 0 3px 0 #15803d; color: #0a0a0a; }
+.tv-perm-chip.is-on { background: var(--p-ok); box-shadow: 0 3px 0 var(--p-ok-edge); color: var(--p-ink); }
 .tv-room-game-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
 .tv-room-game-head .tv-section-title { margin: 0; }
 /* Desktop: the game button sits at the right, flush with the room-code card's edge. */
@@ -1040,7 +1053,7 @@ body:has(.tv-app) {
   width: 100%;
   max-width: 560px;
   margin-top: 22px;
-  padding: 18px 18px 10px;
+  padding: 18px;
   border-radius: 30px;
   background: var(--tv-surface);
   box-shadow: 0 6px 0 var(--tv-edge), 0 24px 40px -24px rgba(0, 0, 0, 0.5);
@@ -1181,7 +1194,7 @@ body:has(.tv-app) {
 .tv-lobby-head { grid-template-columns: 1fr auto; align-items: center; }
 .tv-lobby-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; align-items: start; }
 .tv-lobby-grid > .tv-card { animation-delay: 0.08s; }
-@media (min-width: 860px) {
+@media (min-width: 900px) {
   .tv-lobby-grid.has-settings { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: stretch; }
 }
 /* "La partida": a little preview of the match, with the start button at the bottom. */
@@ -1201,7 +1214,7 @@ body:has(.tv-app) {
 .tv-eq--sm { gap: 5px; height: 38px; }
 .tv-eq--sm span { width: 8px; }
 .tv-match-title { margin: 0; font-family: var(--tv-display); font-weight: 600; font-size: 20px; color: var(--tv-text); }
-.tv-match-title strong { color: var(--brand); font-size: 26px; }
+.tv-match-title strong { color: var(--brand-text); font-size: 26px; }
 .tv-match-chips { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; }
 .tv-match-chip {
   display: inline-flex;
@@ -1214,7 +1227,7 @@ body:has(.tv-app) {
   font-size: 13px;
   color: var(--tv-text-2);
 }
-.tv-match-chip svg { color: var(--brand); }
+.tv-match-chip svg { color: var(--brand-text); }
 .tv-match-players { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 14px; color: var(--tv-text-3); }
 .tv-avatar-stack { display: flex; }
 .tv-avatar-stack .tv-avatar { width: 30px; height: 30px; font-size: 14px; box-shadow: 0 0 0 3px var(--tv-option-bg); }
@@ -1224,7 +1237,7 @@ body:has(.tv-app) {
 .tv-card-title { margin: 0; font-family: var(--tv-display); font-weight: 600; font-size: 22px; letter-spacing: 0; color: var(--tv-text); }
 .tv-count {
   display: grid; place-items: center; min-width: 32px; height: 32px; padding: 0 10px;
-  border-radius: 999px; background: var(--tv-violet); color: #0a0a0a; font-weight: 800; font-size: 15px;
+  border-radius: 999px; background: var(--tv-violet); color: var(--p-ink); font-weight: 800; font-size: 15px;
 }
 .tv-hint { margin: 0; font-size: 14px; font-weight: 700; color: var(--tv-text-3); }
 .tv-lobby-players { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
@@ -1267,7 +1280,7 @@ body:has(.tv-app) {
 }
 .tv-page-sub { margin: 0; max-width: 34ch; font-weight: 700; font-size: 16px; line-height: 1.45; color: var(--tv-text-2); text-wrap: balance; }
 .tv-muted { color: var(--tv-text-3); }
-.tv-accent { color: var(--brand); }
+.tv-accent { color: var(--brand-text); }
 
 .tv-notice {
   display: flex;
@@ -1281,10 +1294,10 @@ body:has(.tv-app) {
   animation: tvNotice 0.5s var(--tv-spring) backwards;
 }
 .tv-notice svg { flex-shrink: 0; }
-.tv-notice--ok { background: rgba(34, 197, 94, 0.14); color: #16a34a; }
+.tv-notice--ok { background: rgba(var(--p-ok-rgb), 0.14); color: var(--p-ok-text); }
 .tv-notice--bad { background: var(--tv-danger-bg); color: var(--tv-danger); }
-.tv-notice--brand { background: rgba(var(--brand-rgb), 0.14); color: var(--brand); }
-[data-theme="dark"] .tv-notice--ok { color: #4ade80; }
+.tv-notice--brand { background: rgba(var(--brand-rgb), 0.14); color: var(--brand-text); }
+
 
 /* Forms */
 .tv-form { display: grid; gap: 14px; animation: tvRise 0.4s var(--tv-spring) backwards; }
@@ -1353,8 +1366,8 @@ body:has(.tv-app) {
 .tv-app .tv-seg-btn[aria-selected="true"] { color: var(--tv-text); }
 
 /* Buttons */
-.tv-btn--google { --c1: #ffffff; --c2: #f3f3f3; --edge: #d4d4d4; --on: #1f1f1f; }
-.tv-app .tv-btn--google { color: #1f1f1f; }
+.tv-btn--google { --c1: #ffffff; --c2: #ffffff; --edge: #b4b4b4; --on: #111111; }
+.tv-app .tv-btn--google { color: #111111; }
 .tv-btn--spotify { --c1: #1ed760; --c2: #1db954; --edge: #148a3d; --on: #000; }
 .tv-app .tv-btn--spotify { color: #000; }
 .tv-icon-btn--sm { width: 40px; height: 40px; border-radius: 13px; }
@@ -1376,16 +1389,16 @@ body:has(.tv-app) {
   font-size: 13px;
   animation: tvPop 0.5s var(--tv-spring) 0.2s backwards;
 }
-.tv-tag--ok { background: #22c55e; color: #0a0a0a; }
-.tv-tag--owner { background: var(--tv-violet); color: #0a0a0a; }
-.tv-tag--admin { background: #f050ae; color: #fff; }
-.tv-tag--moderator { background: #33a8c7; color: #fff; }
+.tv-tag--ok { background: var(--p-ok); color: var(--p-ink); }
+.tv-tag--owner { background: var(--tv-violet); color: var(--p-ink); }
+.tv-tag--admin { background: var(--p-site-2); color: var(--p-ink); }
+.tv-tag--moderator { background: var(--p-extra-2); color: #fff; }
 .tv-tag--spotify { background: #1db954; color: #000; }
 .tv-tag-sparkle { animation: ownerSparkleMain 2.2s ease-in-out infinite; }
 /* Registrado: Instagram-style verified badge that pulses like the owner star. */
 .tv-tag-verified { animation: verifiedBadgePulse 2.2s ease-in-out infinite; }
 .tv-tag--points { background: var(--brand); color: var(--on-brand); font-size: 16px; padding: 7px 14px; }
-.tv-tag--streak { background: #ffab00; color: #0a0a0a; font-size: 16px; padding: 7px 14px; }
+.tv-tag--streak { background: var(--p-culture-2); color: var(--p-ink); font-size: 16px; padding: 7px 14px; }
 .tv-live { display: inline-flex; align-items: center; gap: 8px; font-weight: 800; font-size: 13px; color: var(--tv-text-3); }
 .tv-kbd {
   display: inline-block;
@@ -1522,7 +1535,7 @@ body:has(.tv-app) {
   height: 32px;
   border-radius: 10px;
   background: linear-gradient(155deg, var(--tv-pink), var(--tv-pink-2));
-  color: #fff;
+  color: var(--p-ink);
 }
 .tv-picks-tools { display: flex; gap: 4px; }
 .tv-playlist-total {
@@ -1559,7 +1572,7 @@ body:has(.tv-app) {
   gap: 10px;
   padding: 10px 12px;
   border-radius: 16px;
-  background: rgba(29, 185, 84, 0.12);
+  background: rgba(var(--brand-rgb), 0.12);
   font-weight: 800;
   font-size: 14px;
   animation: tvDropIn 0.3s var(--tv-spring);
@@ -1567,7 +1580,7 @@ body:has(.tv-app) {
 .tv-spotify-ask span { flex: 1; }
 .tv-pick:disabled { cursor: default; opacity: 0.7; }
 .tv-pick--add { width: 44px; padding: 0; justify-content: center; }
-.tv-app .tv-pick--add:hover { color: #1db954; }
+.tv-app .tv-pick--add:hover { color: var(--brand-text); }
 
 /* ---------- Login ---------- */
 .tv-auth { display: grid; gap: 18px; width: 100%; max-width: 460px; margin: 0 auto; }
@@ -1683,7 +1696,7 @@ body:has(.tv-app) {
   background: linear-gradient(90deg, var(--brand-hover), var(--brand));
   transition: width 0.15s linear, background 0.3s ease;
 }
-.tv-timer-fill.is-urgent { background: linear-gradient(90deg, #ff8f8f, #ef4444); }
+.tv-timer-fill.is-urgent { background: var(--p-bad); }
 
 .tv-clock { position: relative; display: grid; place-items: center; width: 64px; height: 64px; }
 .tv-clock svg { position: absolute; inset: 0; transform: rotate(-90deg); }
@@ -1697,8 +1710,8 @@ body:has(.tv-app) {
   font-variant-numeric: tabular-nums;
   animation: tvTick 0.4s var(--tv-spring);
 }
-.tv-clock.is-urgent .tv-clock-fill { stroke: #ef4444; }
-.tv-clock.is-urgent .tv-clock-num { color: #ef4444; animation: tvTickUrgent 0.45s ease; }
+.tv-clock.is-urgent .tv-clock-fill { stroke: var(--p-bad); }
+.tv-clock.is-urgent .tv-clock-num { color: var(--tv-danger); animation: tvTickUrgent 0.45s ease; }
 
 .tv-countdown { justify-items: center; text-align: center; padding: 40px 20px; }
 .tv-countdown-num {
@@ -1706,7 +1719,7 @@ body:has(.tv-app) {
   font-weight: 700;
   font-size: clamp(96px, 22vw, 150px);
   line-height: 1;
-  color: var(--brand);
+  color: var(--brand-text);
   text-shadow: 0 8px 0 var(--tv-edge);
   animation: tvCount 0.9s var(--tv-spring);
 }
@@ -1739,7 +1752,7 @@ body:has(.tv-app) {
   transition: box-shadow 0.2s ease;
 }
 .tv-search-box:focus-within { box-shadow: inset 0 3px 0 var(--tv-option-edge), 0 0 0 3px var(--brand); }
-.tv-search-icon { flex-shrink: 0; color: var(--brand); }
+.tv-search-icon { flex-shrink: 0; color: var(--brand-text); }
 .tv-search-input {
   flex: 1;
   min-width: 0;
@@ -1869,16 +1882,16 @@ body:has(.tv-app) {
   width: 68px;
   height: 68px;
   border-radius: 24px;
-  color: #fff;
+  color: var(--p-ink);
   animation: tvPop 0.6s var(--tv-spring);
 }
 .tv-result-cheer { margin: 0; font-family: var(--tv-display); font-weight: 600; font-size: 19px; color: var(--tv-text-2); }
 .tv-result-title { margin: 0; font-family: var(--tv-display); font-weight: 700; font-size: clamp(28px, 6vw, 36px); letter-spacing: 0; color: var(--tv-text); }
-.tv-result--ok { box-shadow: 0 6px 0 var(--tv-edge), inset 0 0 0 3px #22c55e; }
-.tv-result--ok .tv-result-icon { background: #22c55e; box-shadow: 0 5px 0 #15803d; }
-.tv-result--bad { box-shadow: 0 6px 0 var(--tv-edge), inset 0 0 0 3px #ef4444; animation: tvRise 0.4s var(--tv-spring) backwards, tvShake 0.5s ease 0.35s; }
-.tv-result--bad .tv-result-icon { background: #ef4444; box-shadow: 0 5px 0 #b91c1c; }
-.tv-result--timeout .tv-result-icon { background: #ffab00; box-shadow: 0 5px 0 #cc8800; color: #0a0a0a; }
+.tv-result--ok { box-shadow: 0 6px 0 var(--tv-edge), inset 0 0 0 3px var(--p-ok); }
+.tv-result--ok .tv-result-icon { background: var(--p-ok); box-shadow: 0 5px 0 var(--p-ok-edge); }
+.tv-result--bad { box-shadow: 0 6px 0 var(--tv-edge), inset 0 0 0 3px var(--p-bad); animation: tvRise 0.4s var(--tv-spring) backwards, tvShake 0.5s ease 0.35s; }
+.tv-result--bad .tv-result-icon { background: var(--p-bad); box-shadow: 0 5px 0 var(--p-bad-edge); color: #fff; }
+.tv-result--timeout .tv-result-icon { background: var(--p-accent-2); box-shadow: 0 5px 0 var(--p-accent-edge); color: var(--p-ink); }
 
 .tv-song { grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 16px; animation-delay: 0.15s; }
 .tv-song-cover {
@@ -1915,12 +1928,13 @@ body:has(.tv-app) {
 }
 .tv-board-row.is-me { box-shadow: 0 3px 0 var(--tv-option-edge), inset 0 0 0 2px var(--brand); }
 .tv-board-pos { font-family: var(--tv-display); font-weight: 700; font-size: 18px; text-align: center; color: var(--tv-text-3); }
-.tv-board-row.is-top-1 .tv-board-pos { color: #ffab00; }
-.tv-board-row.is-top-2 .tv-board-pos { color: #9ca3af; }
-.tv-board-row.is-top-3 .tv-board-pos { color: #c2703d; }
+.tv-board-row.is-top-1 .tv-board-pos { color: var(--p-accent-edge); }
+.tv-board-row.is-top-2 .tv-board-pos { color: var(--p-hare); }
+.tv-board-row.is-top-3 .tv-board-pos { color: var(--p-culture-edge); }
 .tv-board-name { display: grid; min-width: 0; font-weight: 800; font-size: 15px; }
 .tv-board-line { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.tv-board-streak { font-weight: 800; font-size: 12px; color: #ffab00; }
+.tv-board-streak { font-weight: 800; font-size: 12px; color: var(--p-cinema-2); }
+[data-theme="light"] .tv-board-streak { color: var(--p-cinema-edge); }
 .tv-board-right { display: grid; justify-items: end; }
 .tv-board-score {
   font-family: var(--tv-display);
@@ -1931,8 +1945,8 @@ body:has(.tv-app) {
   animation: tvScore 0.6s var(--tv-spring);
 }
 .tv-board-state { display: inline-flex; align-items: center; gap: 3px; font-weight: 800; font-size: 11px; color: var(--tv-text-3); }
-.tv-board-state.is-done { color: #16a34a; animation: tvPop 0.4s var(--tv-spring); }
-[data-theme="dark"] .tv-board-state.is-done { color: #4ade80; }
+.tv-board-state.is-done { color: var(--p-ok-text); animation: tvPop 0.4s var(--tv-spring); }
+
 
 /* Results */
 .tv-results { position: relative; max-width: 760px; }
@@ -1940,13 +1954,15 @@ body:has(.tv-app) {
 .tv-results-title { animation: tvPop 0.7s var(--tv-spring) 0.1s backwards; }
 .tv-podium { margin-top: 30px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: end; gap: 10px; }
 .tv-podium-spot { display: grid; justify-items: center; gap: 6px; min-width: 0; text-align: center; }
+/* A ring keeps a green avatar visible on the music mode's green background. */
+.tv-podium-avatar .tv-avatar { box-shadow: 0 0 0 4px var(--tv-surface), 0 6px 0 4px var(--tv-edge); }
 .tv-podium-avatar .tv-avatar:not(.tv-avatar--lg) { width: 48px; height: 48px; font-size: 22px; }
 .tv-podium-avatar { position: relative; animation: tvPop 0.6s var(--tv-spring) backwards; }
-.tv-podium-crown { position: absolute; top: -26px; left: 50%; translate: -50% 0; color: #ffab00; stroke: #cc8800; animation: tvBob 2.4s ease-in-out infinite; }
+.tv-podium-crown { position: absolute; top: -26px; left: 50%; translate: -50% 0; color: var(--p-accent-2); stroke: var(--p-accent-edge); animation: tvBob 2.4s ease-in-out infinite; }
 .tv-player-link { color: inherit; text-decoration: none; border-radius: 6px; transition: color 0.15s ease; }
-.tv-player-link:hover { color: var(--brand); text-decoration: underline; text-underline-offset: 3px; }
+.tv-player-link:hover { color: var(--brand-text); text-decoration: underline; text-underline-offset: 3px; }
 .tv-podium-name { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 800; font-size: 15px; }
-.tv-podium-score { font-family: var(--tv-display); font-weight: 700; font-size: 18px; color: var(--brand); }
+.tv-podium-score { font-family: var(--tv-display); font-weight: 700; font-size: 18px; color: var(--brand-text); }
 .tv-podium-block {
   display: grid;
   place-items: start center;
@@ -1959,9 +1975,9 @@ body:has(.tv-app) {
   animation: tvGrow 0.8s var(--tv-spring) backwards;
 }
 .tv-podium-place { font-family: var(--tv-display); font-weight: 700; font-size: 34px; color: rgba(0, 0, 0, 0.55); }
-.tv-podium-spot.is-1 { --c1: #ffd24d; --c2: #ffab00; --edge: #cc8800; }
-.tv-podium-spot.is-2 { --c1: #e5e7eb; --c2: #b8bec8; --edge: #8b929d; }
-.tv-podium-spot.is-3 { --c1: #f2b27c; --c2: #d98a4e; --edge: #a8612d; }
+.tv-podium-spot.is-1 { --c1: var(--p-accent-1); --c2: var(--p-accent-2); --edge: var(--p-accent-edge); }
+.tv-podium-spot.is-2 { --c1: var(--p-swan); --c2: var(--p-swan); --edge: var(--p-hare); }
+.tv-podium-spot.is-3 { --c1: var(--p-culture-1); --c2: var(--p-culture-2); --edge: var(--p-culture-edge); }
 .tv-podium-spot.is-1 .tv-podium-block { height: 130px; animation-delay: 0.45s; }
 .tv-podium-spot.is-2 .tv-podium-block { height: 96px; animation-delay: 0.3s; }
 .tv-podium-spot.is-3 .tv-podium-block { height: 72px; animation-delay: 0.15s; }
@@ -2014,7 +2030,7 @@ body:has(.tv-app) {
 @keyframes tvDropIn { from { opacity: 0; transform: translateY(-8px) scale(0.98); } }
 @keyframes tvSlideIn { from { opacity: 0; transform: translateX(-14px); } }
 @keyframes tvFlipIn { from { opacity: 0; transform: perspective(400px) rotateY(80deg) scale(0.8); } }
-@keyframes tvScore { 0% { transform: scale(1.6); color: var(--brand); } }
+@keyframes tvScore { 0% { transform: scale(1.6); color: var(--brand-text); } }
 @keyframes tvGrow { from { transform: scaleY(0); } }
 @keyframes tvConfetti {
   0% { opacity: 1; transform: translate3d(0, 0, 0) rotate(0); }
@@ -2120,8 +2136,8 @@ body:has(.tv-app) {
 @keyframes tvSheetOut { to { transform: translateY(110%); } }
 @keyframes tvToast { from { opacity: 0; transform: translateY(20px) scale(0.9); } }
 @keyframes tvPulse {
-  0% { box-shadow: 0 0 0 0 rgba(56, 227, 176, 0.6); }
-  100% { box-shadow: 0 0 0 10px rgba(56, 227, 176, 0); }
+  0% { box-shadow: 0 0 0 0 rgba(var(--brand-rgb), 0.6); }
+  100% { box-shadow: 0 0 0 10px rgba(var(--brand-rgb), 0); }
 }
 @keyframes tvDrift {
   from { transform: translate(0, 0) scale(1); }
@@ -2163,7 +2179,8 @@ fieldset.tv-steppers { margin: 0; padding: 0; border: 0; min-width: 0; }
 /* ---------- Room card: players you can tap, leave button ---------- */
 /* Inicio while in a room: the first tap turns it into the "leave?" question. */
 .tv-app .tv-chip--home.is-confirm { background: var(--tv-danger-bg); color: var(--tv-danger); }
-.tv-chip--home.is-confirm .tv-avatar { background: var(--tv-danger); color: #fff; }
+.tv-chip--home.is-confirm .tv-avatar { background: var(--tv-danger); color: var(--p-ink); }
+[data-theme="light"] .tv-chip--home.is-confirm .tv-avatar { color: #fff; }
 
 /* A player is a button: the whole chip lights up on hover, and tapping it opens their menu. */
 .tv-player { position: relative; padding: 0; transition: opacity 0.3s ease, box-shadow 0.15s ease; }
@@ -2236,13 +2253,31 @@ fieldset.tv-steppers { margin: 0; padding: 0; border: 0; min-width: 0; }
   cursor: pointer;
   transition: transform 0.18s var(--tv-spring), background 0.2s ease;
 }
-.tv-leave-btn:hover { transform: translateY(-2px); background: rgba(241, 94, 108, 0.26); }
+.tv-leave-btn--icon {
+  flex-shrink: 0;
+  justify-self: auto;
+  width: 46px;
+  height: 46px;
+  margin: 0;
+  padding: 0;
+  justify-content: center;
+  border-radius: 16px;
+}
+.tv-party-codebox { flex: 1; min-width: 0; }
+.tv-theme-btn { width: auto; gap: 6px; padding: 0 14px; font-weight: 800; font-size: 14px; white-space: nowrap; display: inline-flex; align-items: center; }
+.tv-chip--back { margin-right: auto; flex-shrink: 0; }
+.tv-chip--back .tv-avatar { background: var(--brand); color: var(--on-brand); }
+@media (max-width: 520px) {
+  .tv-theme-btn span { display: none; }
+  .tv-theme-btn { width: 46px; padding: 0; justify-content: center; }
+  .tv-chip--back .tv-chip-name { display: none; }
+  .tv-chip--back { padding-right: 5px; }
+}
+.tv-leave-btn:hover { transform: translateY(-2px); background: rgba(var(--p-bad-rgb), 0.26); }
 .tv-leave-btn:active { transform: translateY(1px); }
 
 /* The host's "Cambiar juego" menu in the game's header. */
 .tv-mode-menu-wrap { position: relative; }
-.tv-switch-icon { rotate: 90deg; transition: rotate 0.2s ease; }
-.tv-switch-btn[aria-expanded="true"] .tv-switch-icon { rotate: 270deg; }
 .tv-mode-menu {
   position: absolute;
   top: calc(100% + 8px);
@@ -2278,18 +2313,27 @@ fieldset.tv-steppers { margin: 0; padding: 0; border: 0; min-width: 0; }
 .tv-mode-menu-item:disabled { cursor: default; color: var(--tv-text-3); }
 .tv-mode-menu-item:disabled .tv-badge { opacity: 0.5; }
 .tv-mode-menu-name { flex: 1; white-space: nowrap; }
-.tv-mode-menu-check { color: var(--brand); }
+.tv-mode-menu-check { color: var(--brand-text); }
 .tv-mode-menu-soon { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; color: var(--tv-text-3); }
 
-/* ---------- Room in a game: the whole background takes the mode's colour (data-mode on <html>) ---------- */
-:root[data-mode] .tv-app {
-  background: radial-gradient(120% 60% at 50% 0%, rgba(var(--brand-rgb), 0.28), var(--tv-bg) 75%);
-  transition: background 0.5s ease;
+/* ---------- Backgrounds: a calm base with slow, colourful blobs ---------- */
+/* The blobs are the page's motion: five palette colours drifting behind everything. */
+
+/* The page: one straight linear gradient, the option's blue/purple at the top going straight into the black/grey
+   of the page (--tv-grad-top / --tv-grad-bottom from palettes.css). Inside a game mode the top takes that mode's
+   colour instead, still the same gradient, never a solid fill. */
+.tv-app,
+body:has(.tv-app) {
+  background: linear-gradient(180deg,
+    rgba(var(--tv-grad-top-mode, var(--tv-grad-top)), 0.5) 0%,
+    rgba(var(--tv-grad-bottom), 0.28) 40%,
+    var(--tv-bg) 85%);
+  background-color: var(--tv-bg);
+  background-attachment: fixed;
 }
-:root[data-mode] .tv-blob--1,
-:root[data-mode] .tv-blob--2 { background: var(--brand); }
-:root[data-mode] .tv-blob--3 { background: var(--brand-active, var(--brand)); }
-:root[data-mode] .tv-blob { --tv-blob-opacity: 0.4; }
+/* No floating colour blobs on top: the gradient is the whole background. */
+.tv-backdrop .tv-blob { display: none; }
+:root[data-mode] { --tv-grad-top-mode: var(--brand-rgb); }
 
 /* Mobile: the game button is as wide as the room-code card above it, and its menu too. */
 @media (max-width: 720px) {
@@ -2298,3 +2342,78 @@ fieldset.tv-steppers { margin: 0; padding: 0; border: 0; min-width: 0; }
   .tv-room-game-head .tv-switch-name { flex: 1; text-align: left; }
   .tv-room-game-head .tv-mode-menu { left: 0; right: 0; min-width: 0; }
 }
+
+/* ---------- Room: the game bar spans the whole width, so the two boxes under it line up with it ---------- */
+.tv-room-game-head { display: block; margin-bottom: 20px; }
+.tv-room-game-head .tv-mode-menu-wrap { width: 100%; }
+.tv-room-game-head .tv-switch-btn {
+  display: flex;
+  width: 100%;
+  margin: 0;
+  padding: 10px;
+  gap: 14px;
+  text-align: left;
+  font-size: 22px;
+}
+/* Wide screens: the bar sits over the right-hand box only (same width as that column of .tv-lobby-grid). */
+@media (min-width: 900px) {
+  .tv-room-game-head { width: calc(50% - 10px); margin-left: auto; }
+}
+/* "Modo de juego" in small letters over the game's name. */
+.tv-switch-text { display: flex; flex-direction: column; flex: 1; min-width: 0; line-height: 1.15; }
+.tv-switch-label {
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--tv-text-3);
+}
+.tv-switch-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* The game's icon, in the game's colour. */
+.tv-switch-badge {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 46px;
+  height: 46px;
+  border-radius: 15px;
+  background: var(--brand);
+  color: var(--on-brand);
+}
+/* Host only: the "change game" mark at the right end, a button-looking square with two arrows. */
+.tv-switch-icon {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 46px;
+  height: 46px;
+  border-radius: 15px;
+  background: var(--tv-option-bg);
+  box-shadow: inset 0 0 0 2px var(--tv-option-edge);
+  color: var(--tv-text);
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.tv-switch-btn:hover .tv-switch-icon,
+.tv-switch-btn[aria-expanded="true"] .tv-switch-icon { background: var(--brand); color: var(--on-brand); box-shadow: none; }
+.tv-switch-btn:active { background: var(--tv-surface); color: var(--tv-text); }
+/* Players who aren't the host see the same bar, but it's only a title. */
+h2.tv-room-game-title.tv-switch-btn { cursor: default; font-family: var(--tv-display); font-weight: 600; letter-spacing: 0; }
+h2.tv-room-game-title.tv-switch-btn:hover { transform: none; box-shadow: 0 5px 0 var(--tv-edge); }
+.tv-room-game-head .tv-mode-menu { left: 0; right: 0; min-width: 0; }
+
+/* ---------- Scoreboard: each player's answer once the round is over ---------- */
+.tv-board-answer {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  font-weight: 800;
+  font-size: 12px;
+  color: var(--tv-text-3);
+}
+.tv-board-answer svg { flex-shrink: 0; }
+.tv-board-answer { align-items: flex-start; }
+.tv-board-answer svg { margin-top: 2px; }
+.tv-board-answer-text { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; white-space: normal; line-height: 1.3; }
+.tv-board-answer.is-right { color: var(--p-ok-text); }
+.tv-board-answer.is-wrong { color: var(--p-bad-text); }

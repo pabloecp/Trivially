@@ -3,6 +3,7 @@ import MusicSettings from "./MusicSettings.jsx";
 import Avatar from "../../components/home/Avatar.jsx";
 import Icon from "../../components/home/Icon.jsx";
 import SpotifyIcon from "../../components/home/SpotifyIcon.jsx";
+import { playlistLabel } from "./playlistLabel.js";
 import { useApp } from "../../lib/store.jsx";
 
 // The music mode's waiting room, shown inside the room screen on Home once the host picks this game:
@@ -29,7 +30,7 @@ export default function LobbyPanel({ room, onToast }) {
   const chosen = playlists.filter((p) => chosenIds.includes(p.id));
   const custom = (room.customPlaylists || []).filter((p) => chosenIds.includes(p.id));
   const playlistNames = [
-    ...(chosen.length || custom.length ? chosen : playlists.filter((p) => p.isDefault)).map((p) => p.name.split(" · ").pop()),
+    ...(chosen.length || custom.length ? chosen : playlists.filter((p) => p.isDefault)).map(playlistLabel),
     ...custom.map((p) => p.name),
   ].join(", ");
   // Spotify songs still being looked up: the match can start already, the rest join as they are found.
@@ -43,8 +44,8 @@ export default function LobbyPanel({ room, onToast }) {
   const retrying = loadingChecked >= loadingTotal ? loading.reduce((n, p) => n + (p.retrying || 0), 0) : 0;
   const rounds = room.config?.rounds || 10;
   const seconds = Math.round((room.config?.roundMs || 15000) / 1000);
-  // Each round: 3 s countdown + the guessing time + 7 s showing the answer.
-  const minutes = Math.max(1, Math.round((rounds * (3 + seconds + 7)) / 60));
+  // Each round: 3 s countdown + the guessing time + 3 s showing the answer.
+  const minutes = Math.max(1, Math.round((rounds * (3 + seconds + 3)) / 60));
 
   return (
     <div className="tv-lobby-grid has-settings">
