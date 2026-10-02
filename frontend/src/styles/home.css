@@ -2273,6 +2273,15 @@ fieldset.tv-steppers { margin: 0; padding: 0; border: 0; min-width: 0; }
   border-radius: 16px;
 }
 .tv-party-codebox { flex: 1; min-width: 0; }
+.tv-party > * { min-width: 0; }
+.tv-invite-btn { flex-shrink: 0; }
+/* Phones: the code, leave and invite buttons must fit one row inside the card. */
+@media (max-width: 520px) {
+  .tv-party-head { gap: 10px; }
+  .tv-party-head .tv-party-code { font-size: clamp(22px, 7.4vw, 30px); letter-spacing: 0.06em; }
+  .tv-invite-btn { width: 46px; padding: 0; justify-content: center; }
+  .tv-invite-label { display: none; }
+}
 .tv-theme-btn { width: auto; gap: 6px; padding: 0 14px; font-weight: 800; font-size: 14px; white-space: nowrap; display: inline-flex; align-items: center; }
 .tv-chip--back { margin-right: auto; flex-shrink: 0; }
 .tv-chip--back .tv-avatar { background: var(--brand); color: var(--on-brand); }
