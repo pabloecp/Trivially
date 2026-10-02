@@ -105,9 +105,9 @@ export default function PartyPanel({ room, onToast }) {
           <p className="tv-party-kicker">Código de sala</p>
           <p className="tv-party-code">{room.code}</p>
         </div>
-        <button type="button" className="tv-btn tv-c-violet" onClick={copyInvite}>
+        <button type="button" className="tv-btn tv-c-violet tv-invite-btn" onClick={copyInvite} aria-label="Invitar con enlace">
           <Icon name={copied ? "check" : "link"} size={20} strokeWidth={2.8} />
-          {copied ? "¡Copiado!" : "Invitar"}
+          <span className="tv-invite-label">{copied ? "¡Copiado!" : "Invitar"}</span>
         </button>
       </div>
 
