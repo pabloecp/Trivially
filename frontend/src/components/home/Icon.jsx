@@ -66,6 +66,7 @@ const PATHS = {
   ),
   moon: <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" />,
   chevron: <path d="m9 18 6-6-6-6" />,
+  swap: <path d="M17 3l4 4-4 4M21 7H8M7 21l-4-4 4-4M3 17h13" />,
   back: (
     <>
       <path d="m12 19-7-7 7-7" />
@@ -74,6 +75,7 @@ const PATHS = {
   ),
   check: <path d="M20 6 9 17l-5-5" />,
   close: <path d="M18 6 6 18M6 6l12 12" />,
+  plus: <path d="M12 5v14M5 12h14" />,
   link: (
     <>
       <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
@@ -99,7 +101,19 @@ const PATHS = {
       <path d="M21 12H9" />
     </>
   ),
+  bolt: <path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z" />,
   star: <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />,
+  // Scalloped badge with a check cut out, like Instagram's verified mark. The badge takes the text colour.
+  verified: (
+    <>
+      <path
+        fill="currentColor"
+        stroke="none"
+        d="M12 3.4Q16.5 1.2 18.1 5.9 22.8 7.5 20.6 12 22.8 16.5 18.1 18.1 16.5 22.8 12 20.6 7.5 22.8 5.9 18.1 1.2 16.5 3.4 12 1.2 7.5 5.9 5.9 7.5 1.2 12 3.4Z"
+      />
+      <path d="m8.3 12.2 2.6 2.6 4.9-5.2" stroke="#fff" fill="none" />
+    </>
+  ),
 };
 
 export default function Icon({ name, size = 24, strokeWidth = 2.4, filled = false, className }) {

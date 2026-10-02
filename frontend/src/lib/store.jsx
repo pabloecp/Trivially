@@ -1,17 +1,17 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
-import { api } from "./api.js";
-import { emitAck, getSocket } from "./socket.js";
+import { api, setAuthToken } from "./api.js";
+import { emitAck, getSocket, reconnectSocket, setSocketTokenProvider } from "./socket.js";
 import { BACKEND_URL } from "./config.js";
 
 const AppContext = createContext(null);
 
+// The first one is the default. The profile adds an eighth option: the Google photo.
 export const AVATAR_COLORS = [
+  "#F050AE", // Deep Pink
   "#33A8C7", // Turquoise Surf
-  "#52E3E1", // Neon Ice
   "#A0E426", // Slime Lime
   "#FFAB00", // Orange
   "#F77976", // Grapefruit Pink
-  "#F050AE", // Deep Pink
   "#D883FF", // Mauve Magic
   "#9336FD", // Purple
 ];
@@ -21,11 +21,11 @@ const ROOM_KEY = "trivially_room";
 
 function loadSavedUser() {
   try {
-    const raw = localStorage.getItem("yoavlly-user") || localStorage.getItem("bysong-user");
+    const raw = localStorage.getItem("yoavlly-user");
     if (raw) return JSON.parse(raw);
 
-    const guestName = localStorage.getItem("yoavlly_guest_name") || localStorage.getItem("bysong_guest_name");
-    const guestId = localStorage.getItem("yoavlly_guest_id") || localStorage.getItem("bysong_guest_id") || `gst_${Math.random().toString(36).slice(2, 10)}`;
+    const guestName = localStorage.getItem("yoavlly_guest_name");
+    const guestId = localStorage.getItem("yoavlly_guest_id") || `gst_${Math.random().toString(36).slice(2, 10)}`;
     if (guestName) {
       return { id: guestId, name: guestName, isGuest: true, avatar: AVATAR_COLORS[0] };
     }
@@ -40,7 +40,6 @@ function persistUser(user) {
     localStorage.setItem("yoavlly-user", JSON.stringify(user));
   } else {
     localStorage.removeItem("yoavlly-user");
-    localStorage.removeItem("bysong-user");
   }
 }
 
@@ -90,6 +89,18 @@ export function AppProvider({ children }) {
     setRoom(null);
   }
 
+  // Signing out (or deleting the account/guest) also leaves the room, so nobody stays seated as a ghost.
+  function forgetUser() {
+    if (roomCodeRef.current) emitAck("room:leave").catch(() => {});
+    clearRoom();
+    setAuthToken(null);
+    applyUser(null);
+    localStorage.removeItem("yoavlly_guest_name");
+    localStorage.removeItem("yoavlly_guest_id");
+    setLinkingStatus(null);
+    reconnectSocket();
+  }
+
   const refreshCatalog = useCallback(async () => {
     try {
       const data = await api("/api/catalog");
@@ -100,45 +111,79 @@ export function AppProvider({ children }) {
     }
   }, []);
 
+  // A guest's id can be swapped by the server (see /api/session); keep localStorage in step.
+  function adoptUser(next) {
+    if (next?.isGuest) localStorage.setItem("yoavlly_guest_id", next.id);
+    applyUser(next);
+  }
+
+  // Resolves once a Google login coming back in the URL has been finished, so the socket (and its guest
+  // fallback) never runs in the middle of it.
+  const googleDone = useRef(null);
+  if (!googleDone.current) {
+    let resolve;
+    googleDone.current = { promise: new Promise((r) => (resolve = r)), resolve };
+  }
+
+  // Makes sure the server session is ours, then returns the signed token the socket connects with.
+  useEffect(() => {
+    setSocketTokenProvider(async () => {
+      await googleDone.current.promise;
+      let res = await api("/api/socket-token").catch(() => null);
+      const current = userRef.current;
+      // Only start a guest session when the server has none; never replace one (e.g. a Google login in progress).
+      if (current?.isGuest && current.name && res && !res.userId) {
+        const s = await api("/api/session", { method: "POST", body: current }).catch(() => null);
+        if (s?.user && s.user.id !== current.id) adoptUser({ ...current, id: s.user.id });
+        res = await api("/api/socket-token").catch(() => null);
+      }
+      return res?.token || null;
+    });
+  }, []);
+
+  function googleFailed(msg) {
+    window.location.replace(`/login?google=error&msg=${encodeURIComponent(msg)}`);
+  }
+
   useEffect(() => {
     refreshCatalog();
 
     const params = new URLSearchParams(window.location.search);
     const googleStatus = params.get("google");
-    const userIdParam = params.get("userId");
-    const userDataParam = params.get("userData");
 
     let googleJustLoaded = false;
 
-    if (googleStatus === "success") {
-      let loadedUser = null;
-      if (userDataParam) {
-        try {
-          loadedUser = JSON.parse(decodeURIComponent(userDataParam));
-        } catch {}
-      }
-
-      if (loadedUser) {
-        googleJustLoaded = true;
-        applyUser(loadedUser);
-        api("/api/session", { method: "POST", body: loadedUser }).catch(() => {});
-      } else if (userIdParam) {
-        googleJustLoaded = true;
-        api(`/api/users/${userIdParam}`)
-          .then((res) => {
-            if (res.user) applyUser(res.user);
-          })
-          .catch(() => {});
-      }
+    if (googleStatus === "ticket" || googleStatus === "success") {
+      // Back from Google: trade the one-time ticket for our session (a normal request, so the cookie sticks
+      // on every browser), then ask the server who we are.
+      googleJustLoaded = true;
+      const ticket = params.get("ticket");
+      (ticket ? api("/api/auth/google/finish", { method: "POST", body: { ticket } }) : Promise.resolve())
+        .then(() => api("/api/me"))
+        .then((d) => {
+          setLinkingStatus(d.linkingStatus || null);
+          if (d.user && !d.user.isGuest) {
+            applyUser(d.user);
+            localStorage.removeItem("yoavlly_guest_id");
+            reconnectSocket();
+          } else {
+            googleFailed("tu navegador no guardó la sesión. Permite cookies para este sitio e inténtalo otra vez.");
+          }
+        })
+        .catch((e) => googleFailed(e.message || "no hubo respuesta del servidor. Inténtalo otra vez."))
+        .finally(() => googleDone.current.resolve());
 
       try {
         const url = new URL(window.location.href);
         url.searchParams.delete("google");
+        url.searchParams.delete("ticket");
         url.searchParams.delete("userId");
         url.searchParams.delete("userData");
         window.history.replaceState({}, document.title, url.pathname + (url.search ? url.search : ""));
       } catch {}
     }
+
+    if (!googleJustLoaded) googleDone.current.resolve();
 
     // Only fetch /api/me if we didn't just load from Google params
     // to avoid overwriting the freshly-loaded Google user with null
@@ -147,6 +192,8 @@ export function AppProvider({ children }) {
         .then((d) => {
           setLinkingStatus(d.linkingStatus || null);
           if (d.user) applyUser(d.user);
+          // The server session expired: a saved registered account can't be used anymore without signing in.
+          else if (userRef.current && !userRef.current.isGuest) applyUser(null);
         })
         .catch(() => {});
     }
@@ -182,7 +229,7 @@ export function AppProvider({ children }) {
       async saveGuest(name, avatar) {
         const cleanName = (name || "").trim();
         if (!cleanName) throw new Error("Por favor introduce un nombre");
-        let guestId = localStorage.getItem("yoavlly_guest_id") || localStorage.getItem("bysong_guest_id");
+        let guestId = localStorage.getItem("yoavlly_guest_id");
         if (!guestId) {
           guestId = `gst_${Math.random().toString(36).slice(2, 10)}`;
         }
@@ -190,18 +237,16 @@ export function AppProvider({ children }) {
         localStorage.setItem("yoavlly_guest_name", cleanName);
         const guestObj = { id: guestId, name: cleanName, avatar: avatar || AVATAR_COLORS[0], isGuest: true };
         applyUser(guestObj);
+        let saved = guestObj;
         try {
-          await api("/api/session", { method: "POST", body: guestObj });
+          const res = await api("/api/session", { method: "POST", body: guestObj });
+          if (res.user && res.user.id !== guestId) {
+            saved = { ...guestObj, id: res.user.id };
+            adoptUser(saved);
+          }
         } catch {}
-        return guestObj;
-      },
-
-      async saveProfile(name, avatar) {
-        const current = userRef.current || { id: `usr_${Math.random().toString(36).slice(2, 10)}`, avatar: AVATAR_COLORS[0] };
-        const next = { ...current, name: (name || current.name || "").trim(), avatar: avatar || current.avatar || AVATAR_COLORS[0], isGuest: false };
-        applyUser(next);
-        await api("/api/session", { method: "POST", body: next });
-        return next;
+        reconnectSocket();
+        return saved;
       },
 
       async updateUsername(newName) {
@@ -229,6 +274,7 @@ export function AppProvider({ children }) {
           localStorage.setItem("yoavlly_guest_name", res.user.name);
           localStorage.removeItem("yoavlly_guest_id");
           applyUser(res.user);
+          reconnectSocket();
         }
         return res.user;
       },
@@ -241,6 +287,7 @@ export function AppProvider({ children }) {
           localStorage.setItem("yoavlly_guest_name", res.user.name);
           localStorage.removeItem("yoavlly_guest_id");
           applyUser(res.user);
+          reconnectSocket();
         }
         return res.user;
       },
@@ -282,12 +329,38 @@ export function AppProvider({ children }) {
         return res.user;
       },
 
+      // Owners only: sends the browser to Spotify, which comes back to /profile?spotify=linked (or =error).
+      async connectSpotify() {
+        const { url } = await api("/api/spotify/login");
+        if (url) window.location.href = url;
+      },
+
+      async unlinkSpotify() {
+        const res = await api("/api/auth/unlink-spotify", { method: "POST" });
+        if (res.user) {
+          applyUser(res.user);
+          setLinkingStatus((prev) => ({ ...prev, spotifyLinked: false }));
+        }
+        return res.user;
+      },
+
       async deleteAccount(confirmName) {
         await api("/api/auth/delete-account", { method: "DELETE", body: { confirmName } });
-        applyUser(null);
-        localStorage.removeItem("yoavlly_guest_name");
-        localStorage.removeItem("yoavlly_guest_id");
-        setLinkingStatus(null);
+        forgetUser();
+      },
+
+      // `choice` is a color from AVATAR_COLORS or "google" for the Google photo. Saved on the server
+      // (guests and accounts alike) and in the current room.
+      async updateAvatar(choice) {
+        const current = userRef.current;
+        if (!current) throw new Error("No autenticado");
+        const res = await api(`/api/users/${current.id}/avatar`, { method: "PATCH", body: { avatar: choice } });
+        const avatar = res.user?.avatar || choice;
+        applyUser({ ...current, ...(res.user || {}), avatar });
+        if (roomCodeRef.current) {
+          const ack = await emitAck("player:update", { avatar });
+          if (ack?.state) setRoom(ack.state);
+        }
       },
 
       async updatePlayer(data) {
@@ -331,6 +404,18 @@ export function AppProvider({ children }) {
         if (res.state) setRoom(res.state);
       },
 
+      // Owners: their Spotify playlists, to add one to the room (the server reads it and loads its songs).
+      async listSpotifyPlaylists() {
+        const res = await api("/api/spotify/playlists");
+        return res.playlists || [];
+      },
+
+      async addSpotifyPlaylist(playlistId) {
+        const res = await emitAck("room:spotifyPlaylist", playlistId);
+        if (!res.ok) throw new Error(res.error);
+        if (res.state) setRoom(res.state);
+      },
+
       async toggleConfigPermission(targetUserId) {
         const res = await emitAck("room:toggleConfigPermission", targetUserId);
         if (!res.ok) throw new Error(res.error);
@@ -349,6 +434,13 @@ export function AppProvider({ children }) {
         if (res.state) setRoom(res.state);
       },
 
+      // "Saltar": give up on the current round.
+      async skipSong() {
+        const res = await emitAck("game:skip");
+        if (!res.ok) throw new Error(res.error);
+        if (res.state) setRoom(res.state);
+      },
+
       leaveRoom() {
         emitAck("room:leave").catch(() => {});
         clearRoom();
@@ -356,10 +448,7 @@ export function AppProvider({ children }) {
 
       async logout() {
         try { await api("/api/auth/logout", { method: "POST" }); } catch {}
-        applyUser(null);
-        localStorage.removeItem("yoavlly_guest_name");
-        localStorage.removeItem("yoavlly_guest_id");
-        setLinkingStatus(null);
+        forgetUser();
       },
     }),
     []

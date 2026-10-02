@@ -1,55 +1,112 @@
 import { Router } from "express";
 import { hydrateSong } from "../catalog/catalogProvider.js";
 import { selectSongs } from "../catalog/songSelector.js";
+import { listSpotifyPlaylists } from "../catalog/spotifyLibrary.js";
 import {
   claimGuestStats,
+  deleteGuest,
   deleteUser,
   leaderboard,
   linkGoogle,
+  linkSpotify,
+  listUsers,
   loginWithPassword,
   registerWithPassword,
   sanitizeUser,
   sanitizeUserPublic,
+  setUserRole,
   unlinkGoogle,
+  unlinkSpotify,
+  updateUserAvatar,
   updateUserName,
   upsertGoogleUser,
   upsertUser,
 } from "../db/store.js";
 import { createGoogleAuthUrl, exchangeGoogleCode, googleConfigured } from "./google.js";
+import { exchangeSpotifyCode, spotifyAuthUrl, spotifyConfigured } from "./spotify.js";
 import { authRateLimit } from "./rateLimit.js";
+import { hasRole, ROLES } from "./roles.js";
+import { consumeTicket, createAuthToken, createSocketToken, createTicket } from "./socketToken.js";
+import crypto from "node:crypto";
+
+/** Express middleware: only lets through signed-in users with at least `minRole`. */
+export function requireRole(store, minRole) {
+  return (req, res, next) => {
+    const user = req.session?.userId ? store.users[req.session.userId] : null;
+    if (!user || user.isGuest) return res.status(401).json({ error: "Inicia sesión para continuar" });
+    if (!hasRole(user, minRole)) return res.status(403).json({ error: "No tienes permiso para hacer esto" });
+    req.user = user;
+    next();
+  };
+}
+
+// Linking Google needs to know who is signed in, but the callback may land on another domain without our
+// session cookie; so the signed-in user's id travels inside the OAuth state as a signed ticket.
+function linkTicketFor(req, purpose) {
+  return purpose === "link" && req.session?.userId ? createTicket(req.session.userId, "link", 10 * 60 * 1000) : null;
+}
+
+/** Only same-site paths like "/profile", never "//evil.com" or full URLs. */
+function safePath(path) {
+  return typeof path === "string" && path.startsWith("/") && !path.startsWith("//") && !path.includes("\\") ? path : "/";
+}
 
 export function createApiRouter({ catalog, store }) {
   const router = Router();
 
+  // Starts (or refreshes) the session of a guest, or of a registered user who is already signed in.
+  // A registered account can only be entered through /auth/login, /auth/register or Google, so nobody can
+  // take over someone else's account (or role) just by sending its id here.
   router.post("/session", (req, res) => {
-    const { id, name, avatar, isGuest } = req.body || {};
+    const { id, name, avatar } = req.body || {};
     if (!id || !name) return res.status(400).json({ error: "Nombre requerido" });
-    const user = upsertUser(store, { id, name, avatar, isGuest });
+
+    const existing = store.users[id];
+    if (existing && !existing.isGuest) {
+      if (req.session?.userId !== id) {
+        return res.status(401).json({ error: "Tu sesión expiró. Vuelve a iniciar sesión." });
+      }
+      const user = upsertUser(store, { id, name, avatar });
+      return res.json({ user: sanitizeUser(user), authToken: createAuthToken(user.id), google: { configured: googleConfigured() } });
+    }
+
+    if (!String(id).startsWith("gst_")) return res.status(400).json({ error: "Identificador de invitado no válido" });
+    // Never downgrade a signed-in account to a guest (e.g. a stale guest saved in the browser racing a login).
+    const current = req.session?.userId ? store.users[req.session.userId] : null;
+    if (current && !current.isGuest) {
+      return res.json({ user: sanitizeUser(current), authToken: createAuthToken(current.id), google: { configured: googleConfigured() } });
+    }
+    // Guest ids are visible to everyone in a room, so an id that already belongs to another browser's session
+    // gets a fresh one instead of being handed over. The client adopts whatever id comes back.
+    const taken = existing && req.session?.userId !== id;
+    const guestId = taken ? `gst_${crypto.randomBytes(5).toString("hex")}` : id;
+    const user = upsertUser(store, { id: guestId, name, avatar, isGuest: true });
     req.session.userId = user.id;
     res.json({
       user: sanitizeUser(user),
+      authToken: createAuthToken(user.id),
       google: { configured: googleConfigured() },
     });
   });
 
+  // Token the browser passes to Socket.IO so the realtime server knows which account it is (see socketToken.js).
+  router.get("/socket-token", (req, res) => {
+    const userId = req.session?.userId;
+    if (!userId || !store.users[userId]) return res.json({ token: null, userId: null });
+    res.json({ token: createSocketToken(userId), userId });
+  });
+
   router.post("/auth/register", authRateLimit, (req, res) => {
     try {
-      const { id, name, email, password, guestId, avatar } = req.body || {};
+      const { name, email, password, guestId, avatar } = req.body || {};
       if (!name || !name.trim()) return res.status(400).json({ error: "Nombre requerido" });
       if (!email || !email.trim()) return res.status(400).json({ error: "Correo electrónico requerido" });
 
-      let safeUser;
-      if (password) {
-        safeUser = registerWithPassword(store, { name, email, password, avatar, guestId });
-      } else {
-        const userId = id || `usr_${Date.now()}`;
-        const user = upsertUser(store, { id: userId, name: name.trim(), email: email.trim(), avatar, isGuest: false });
-        if (guestId) claimGuestStats(store, user.id, guestId);
-        safeUser = sanitizeUser(store.users[user.id]);
-      }
+      if (!password) return res.status(400).json({ error: "Contraseña requerida" });
+      const safeUser = registerWithPassword(store, { name, email, password, avatar, guestId });
 
       req.session.userId = safeUser.id;
-      res.json({ ok: true, user: safeUser });
+      res.json({ ok: true, user: safeUser, authToken: createAuthToken(safeUser.id) });
     } catch (err) {
       res.status(400).json({ error: err.message });
     }
@@ -61,31 +118,30 @@ export function createApiRouter({ catalog, store }) {
       const loginId = (identifier || email || "").trim();
       if (!loginId) return res.status(400).json({ error: "Introduce tu correo o nombre" });
 
-      let safeUser;
-      if (password) {
-        safeUser = loginWithPassword(store, { identifier: loginId, password, guestId });
-      } else {
-        const clean = loginId.toLowerCase();
-        const existing = Object.values(store.users).find(
-          (u) => (u.email && u.email.toLowerCase() === clean) || (u.name && u.name.toLowerCase() === clean && !u.isGuest)
-        );
-        if (!existing) {
-          return res.status(404).json({ error: "No se encontró una cuenta con ese correo o nombre. ¿Deseas crear una?" });
-        }
-        if (guestId && guestId !== existing.id) {
-          claimGuestStats(store, existing.id, guestId);
-        }
-        safeUser = sanitizeUser(existing);
-      }
+      if (!password) return res.status(400).json({ error: "Introduce tu contraseña" });
+      const safeUser = loginWithPassword(store, { identifier: loginId, password, guestId });
 
       req.session.userId = safeUser.id;
-      res.json({ ok: true, user: safeUser });
+      res.json({ ok: true, user: safeUser, authToken: createAuthToken(safeUser.id) });
     } catch (err) {
       res.status(400).json({ error: err.message });
     }
   });
 
+  // Second half of the Google login (see handleGoogleCallback): trades the one-time ticket for a session.
+  router.post("/auth/google/finish", authRateLimit, (req, res) => {
+    const userId = consumeTicket(req.body?.ticket, "login");
+    const user = userId ? store.users[userId] : null;
+    if (!user) return res.status(400).json({ error: "El inicio de sesión con Google expiró. Inténtalo otra vez." });
+    const previous = req.session?.userId;
+    if (previous && previous !== user.id) claimGuestStats(store, user.id, previous);
+    req.session.userId = user.id;
+    res.json({ ok: true, user: sanitizeUser(user), authToken: createAuthToken(user.id) });
+  });
+
   router.post("/auth/logout", (req, res) => {
+    // A guest who signs out is gone for good: nothing about them stays in the store.
+    if (req.session?.userId) deleteGuest(store, req.session.userId);
     req.session = null;
     res.json({ ok: true });
   });
@@ -107,6 +163,36 @@ export function createApiRouter({ catalog, store }) {
       if (!userId) return res.status(401).json({ error: "No autenticado" });
       const user = unlinkGoogle(store, userId);
       res.json({ ok: true, user });
+    } catch (err) {
+      res.status(400).json({ error: err.message });
+    }
+  });
+
+  // --- Spotify (owners only for now) ---
+
+  router.get("/spotify/login", requireRole(store, "owner"), (req, res) => {
+    try {
+      res.json({ url: spotifyAuthUrl(createTicket(req.user.id, "spotify", 10 * 60 * 1000)) });
+    } catch (err) {
+      res.status(400).json({ error: err.message });
+    }
+  });
+
+  // The owner's playlists, for the "+" in the match settings.
+  router.get("/spotify/playlists", requireRole(store, "owner"), async (req, res) => {
+    try {
+      if (!req.user.spotify) return res.status(400).json({ error: "Conecta tu Spotify en tu perfil primero" });
+      res.json({ playlists: await listSpotifyPlaylists(store, req.user.id) });
+    } catch (err) {
+      res.status(400).json({ error: err.message });
+    }
+  });
+
+  router.post("/auth/unlink-spotify", (req, res) => {
+    try {
+      const userId = req.session?.userId;
+      if (!userId || !store.users[userId]) return res.status(401).json({ error: "No autenticado" });
+      res.json({ ok: true, user: unlinkSpotify(store, userId) });
     } catch (err) {
       res.status(400).json({ error: err.message });
     }
@@ -140,13 +226,16 @@ export function createApiRouter({ catalog, store }) {
       linkingStatus = {
         hasPassword: Boolean(rawUser.passwordHash && rawUser.passwordSalt),
         googleLinked: Boolean(rawUser.googleId),
+        spotifyLinked: Boolean(rawUser.spotify),
       };
     }
 
     res.json({
       user,
+      authToken: rawUser ? createAuthToken(rawUser.id) : null,
       linkingStatus,
       google: { configured: googleConfigured() },
+      spotify: { configured: spotifyConfigured() },
     });
   });
 
@@ -165,20 +254,55 @@ export function createApiRouter({ catalog, store }) {
     }
   });
 
+  router.patch("/users/:id/avatar", (req, res) => {
+    try {
+      if (req.session?.userId !== req.params.id) {
+        return res.status(403).json({ error: "No tienes permiso para modificar este usuario" });
+      }
+      const user = updateUserAvatar(store, req.params.id, req.body?.avatar);
+      res.json({ ok: true, user });
+    } catch (err) {
+      res.status(400).json({ error: err.message });
+    }
+  });
+
+  // --- Roles / admin ---
+
+  router.get("/admin/roles", requireRole(store, "moderator"), (req, res) => {
+    res.json({ roles: ROLES });
+  });
+
+  router.get("/admin/users", requireRole(store, "moderator"), (req, res) => {
+    const users = listUsers(store, { search: String(req.query.search || ""), role: String(req.query.role || "") });
+    res.json({ users });
+  });
+
+  router.patch("/admin/users/:id/role", requireRole(store, "admin"), (req, res) => {
+    try {
+      const user = setUserRole(store, req.user.id, req.params.id, req.body?.role);
+      console.log(`[Roles] ${req.user.name} (${req.user.id}) cambió el rol de ${user.name} (${user.id}) a ${user.role}`);
+      res.json({ ok: true, user: { id: user.id, name: user.name, role: user.role } });
+    } catch (err) {
+      res.status(400).json({ error: err.message });
+    }
+  });
+
   // --- Catalog ---
 
   router.get("/catalog", (req, res) => {
+    const images = new Map(catalog.songs.map((s) => [s.id, s.image]));
     res.json({
-      source: catalog.songs[0]?.source || "seed",
-      artists: catalog.artists,
-      genres: catalog.genres,
-      albums: catalog.albums,
       playlists: catalog.playlists.map((p) => ({
         id: p.id,
         name: p.name,
         description: p.description,
-        image: p.image,
+        isDefault: Boolean(p.isDefault),
         trackCount: p.trackIds.length,
+        // Small album covers for the strip in the room settings (iTunes serves any size from the same path).
+        covers: p.trackIds
+          .map((id) => images.get(id))
+          .filter(Boolean)
+          .map((url) => url.replace(/\/\d+x\d+bb\./, "/160x160bb.")),
       })),
     });
   });
@@ -219,7 +343,7 @@ export function createApiRouter({ catalog, store }) {
       const returnTo = req.query.returnTo || "/";
       const purpose = req.query.purpose || "login";
       const origin = req.query.origin || "";
-      res.json({ url: createGoogleAuthUrl(returnTo, purpose, origin) });
+      res.json({ url: createGoogleAuthUrl(returnTo, purpose, origin, linkTicketFor(req, purpose)) });
     } catch (err) {
       res.status(400).json({ error: err.message });
     }
@@ -238,7 +362,7 @@ export function handleGoogleRedirect(req, res) {
   try {
     const returnTo = req.query.returnTo || "/";
     const purpose = req.query.purpose || "login";
-    const url = createGoogleAuthUrl(returnTo, purpose, clientOrigin);
+    const url = createGoogleAuthUrl(returnTo, purpose, clientOrigin, linkTicketFor(req, purpose));
     res.redirect(url);
   } catch (err) {
     console.error("Google redirect error:", err);
@@ -256,8 +380,8 @@ export async function handleGoogleCallback(req, res, store) {
   try {
     const { code, state } = req.query;
     if (!code) throw new Error("Código de autenticación ausente");
-    const { profile, returnTo: stateReturnTo, purpose, origin: originFromState } = await exchangeGoogleCode(code, state);
-    if (stateReturnTo) returnTo = stateReturnTo;
+    const { profile, returnTo: stateReturnTo, purpose, origin: originFromState, linkTicket } = await exchangeGoogleCode(code, state);
+    if (stateReturnTo) returnTo = safePath(stateReturnTo);
     if (originFromState) {
       origin = originFromState.replace(/\/$/, "");
     } else {
@@ -266,7 +390,7 @@ export async function handleGoogleCallback(req, res, store) {
 
     if (purpose === "link") {
       // Linking Google to existing account
-      const userId = req.session?.userId;
+      const userId = req.session?.userId || consumeTicket(linkTicket, "link");
       if (!userId) {
         res.redirect(`${origin}${returnTo}?google=link_error&msg=${encodeURIComponent("No autenticado")}`);
         return;
@@ -282,11 +406,49 @@ export async function handleGoogleCallback(req, res, store) {
       const guestId = req.session?.userId || null;
       const user = upsertGoogleUser(store, profile, guestId);
       req.session.userId = user.id;
-      const userParam = encodeURIComponent(JSON.stringify(user));
-      res.redirect(`${origin}${returnTo}?google=success&userId=${encodeURIComponent(user.id)}&userData=${userParam}`);
+      // The site finishes the login itself with POST /api/auth/google/finish, so the session cookie is set by a
+      // plain same-site request on its own domain (phones drop cookies set on the other domain or mid-redirect).
+      const ticket = createTicket(user.id, "login");
+      const sep = returnTo.includes("?") ? "&" : "?";
+      res.redirect(`${origin}${returnTo}${sep}google=ticket&ticket=${encodeURIComponent(ticket)}`);
     }
   } catch (err) {
     console.error("Google callback error:", err);
     res.redirect(`${origin}/login?google=error&msg=${encodeURIComponent(err.message)}`);
+  }
+}
+
+// Second half of the Google login: runs on the site's own domain (Vercel rewrites /auth here) and opens the session.
+export function handleGoogleFinish(req, res) {
+  const returnTo = safePath(req.query.returnTo);
+  const userId = consumeTicket(req.query.ticket, "login");
+  if (!userId) {
+    res.redirect(`/login?google=error&msg=${encodeURIComponent("El enlace de inicio de sesión expiró. Inténtalo otra vez.")}`);
+    return;
+  }
+  req.session.userId = userId;
+  res.redirect(`${returnTo}${returnTo.includes("?") ? "&" : "?"}google=success`);
+}
+
+// Spotify sends the owner back here after they approve the link. `state` is the ticket made in /api/spotify/login,
+// so this works even when the browser didn't keep the session cookie.
+export async function handleSpotifyCallback(req, res, store) {
+  const host = req.headers.host || "";
+  const site = host.includes("localhost") || host.includes("127.0.0.1")
+    ? "http://localhost:5173"
+    : (process.env.CLIENT_ORIGIN || "https://triviallyonline.vercel.app").replace(/\/$/, "");
+  const back = (status, msg) => res.redirect(`${site}/profile?spotify=${status}${msg ? `&msg=${encodeURIComponent(msg)}` : ""}`);
+  try {
+    if (req.query.error) return back("error", "Cancelaste la conexión con Spotify");
+    const userId = consumeTicket(req.query.state, "spotify");
+    const user = userId ? store.users[userId] : null;
+    if (!user) return back("error", "El enlace expiró. Inténtalo otra vez.");
+    if (!hasRole(user, "owner")) return back("error", "Solo los owners pueden conectar Spotify por ahora");
+    if (!req.query.code) return back("error", "Spotify no devolvió el código de acceso");
+    linkSpotify(store, user.id, await exchangeSpotifyCode(req.query.code));
+    back("linked");
+  } catch (err) {
+    console.error("Spotify callback error:", err);
+    back("error", err.message);
   }
 }

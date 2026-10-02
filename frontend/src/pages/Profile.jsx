@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
 import { Link, Navigate, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { api } from "../lib/api.js";
-import { useApp } from "../lib/store.jsx";
+import { AVATAR_COLORS, useApp } from "../lib/store.jsx";
 import TvShell from "../components/home/TvShell.jsx";
 import Avatar from "../components/home/Avatar.jsx";
 import CountUp from "../components/home/CountUp.jsx";
 import GoogleIcon from "../components/home/GoogleIcon.jsx";
+import SpotifyIcon from "../components/home/SpotifyIcon.jsx";
 import Icon from "../components/home/Icon.jsx";
 
 const STATS = [
@@ -17,6 +18,13 @@ const STATS = [
   { key: "bestStreak", label: "Mejor racha", color: "purple" },
 ];
 
+// Badge shown on the profile for staff roles (plain users get none).
+const ROLE_TAGS = {
+  owner: { label: "Owner", icon: "star" },
+  admin: { label: "Admin", icon: "crown" },
+  moderator: { label: "Moderador", icon: "check" },
+};
+
 function Notice({ tone, icon, children }) {
   return (
     <p className={`tv-notice tv-notice--${tone}`} role={tone === "bad" ? "alert" : "status"}>
@@ -27,7 +35,9 @@ function Notice({ tone, icon, children }) {
 }
 
 function ProfileScreen() {
-  const { user: currentUser, updateUsername, linkGoogle, linkingStatus, logout } = useApp();
+  const { user: currentUser, updateUsername, updateAvatar, linkGoogle, connectSpotify, unlinkSpotify, linkingStatus, logout } =
+    useApp();
+  const [spotifyBusy, setSpotifyBusy] = useState(false);
   const { userId } = useParams();
   const [searchParams] = useSearchParams();
   const nav = useNavigate();
@@ -41,22 +51,25 @@ function ProfileScreen() {
 
   const [newUserName, setNewUserName] = useState("");
   const [savingName, setSavingName] = useState(false);
+  const [savingColor, setSavingColor] = useState(false);
 
   const [msg, setMsg] = useState("");
   const [err, setErr] = useState("");
+  const [notFound, setNotFound] = useState(false);
 
   // Load user data
   useEffect(() => {
     if (isOtherUser) {
       setLoadingUser(true);
-      api(`/api/users/${userId}`)
+      setNotFound(false);
+      api(`/api/users/${encodeURIComponent(userId)}`)
         .then((d) => {
           setProfileData(d.user);
           setStats(d.user?.stats || null);
           setLoadingUser(false);
         })
         .catch(() => {
-          setErr("No se pudo cargar el perfil de este jugador.");
+          setNotFound(true);
           setLoadingUser(false);
         });
     } else if (currentUser?.id) {
@@ -93,6 +106,29 @@ function ProfileScreen() {
     }
   }
 
+  async function onPickColor(color) {
+    if (savingColor || color === currentUser?.avatar) return;
+    if (color === "google" && !googlePhoto) {
+      setMsg("");
+      setErr(
+        isGuest
+          ? "Para poner tu foto tienes que iniciar sesión con Google."
+          : "Para poner tu foto tienes que vincular tu cuenta de Google."
+      );
+      return;
+    }
+    setSavingColor(true);
+    setErr("");
+    try {
+      await updateAvatar(color);
+      setMsg("Color actualizado.");
+    } catch (e) {
+      setErr(e.message);
+    } finally {
+      setSavingColor(false);
+    }
+  }
+
   if (loadingUser) {
     return (
       <div className="tv-card tv-lobby-guest">
@@ -104,19 +140,61 @@ function ProfileScreen() {
     );
   }
 
-  if (!isOtherUser && (!currentUser || currentUser.isGuest)) {
+  if (!isOtherUser && !currentUser) {
     return <Navigate to="/login?returnTo=/profile" replace />;
+  }
+
+  if (isOtherUser && notFound) {
+    return (
+      <div className="tv-card tv-lobby-guest">
+        <h1 className="tv-lobby-title">Perfil no encontrado</h1>
+        <p className="tv-lobby-sub">Este jugador no existe o borró su cuenta.</p>
+        <Link to="/" className="tv-btn tv-btn--block tv-c-pink">
+          <Icon name="home" size={18} />
+          Volver al inicio
+        </Link>
+      </div>
+    );
   }
 
   const activeUser = isOtherUser ? profileData : currentUser;
   const isGuest = Boolean(activeUser?.isGuest);
   const hasGoogle = Boolean(activeUser?.googleId || activeUser?.googleLinked || (!isOtherUser && linkingStatus?.googleLinked));
+  // Older Google accounts have no googlePhoto yet; their photo is still the avatar itself.
+  const googlePhoto =
+    activeUser?.googlePhoto || (hasGoogle && activeUser?.avatar?.startsWith("http") ? activeUser.avatar : null);
   const canLinkGoogle = !isOtherUser && !isGuest && !hasGoogle;
-  const isOwner = Boolean(
-    activeUser?.email?.trim().toLowerCase() === "pablo.ecpx@gmail.com" &&
-    (activeUser?.googleId || linkingStatus?.googleLinked)
-  );
+  const roleTag = ROLE_TAGS[activeUser?.role];
   const googleNotice = searchParams.get("google");
+  const hasSpotify = Boolean(activeUser?.spotify || activeUser?.spotifyLinked);
+  // Only owners (the ones with the tag) see the Spotify button for now.
+  const canSpotify = !isOtherUser && activeUser?.role === "owner";
+  const spotifyNotice = searchParams.get("spotify");
+
+  async function onConnectSpotify() {
+    setErr("");
+    setSpotifyBusy(true);
+    try {
+      await connectSpotify();
+    } catch (e) {
+      setErr(e.message || "No se pudo conectar con Spotify");
+      setSpotifyBusy(false);
+    }
+  }
+
+  async function onUnlinkSpotify() {
+    setErr("");
+    setMsg("");
+    setSpotifyBusy(true);
+    try {
+      await unlinkSpotify();
+      setMsg("Spotify desconectado.");
+    } catch (e) {
+      setErr(e.message || "No se pudo desconectar Spotify");
+    } finally {
+      setSpotifyBusy(false);
+    }
+  }
 
   return (
     <div className="tv-page">
@@ -131,6 +209,12 @@ function ProfileScreen() {
           {searchParams.get("msg") || "No se pudo conectar con Google. Intenta de nuevo."}
         </Notice>
       )}
+      {spotifyNotice === "linked" && hasSpotify && <Notice tone="ok" icon="check">Spotify conectado a tu perfil.</Notice>}
+      {spotifyNotice === "error" && (
+        <Notice tone="bad" icon="lock">
+          {searchParams.get("msg") || "No se pudo conectar con Spotify. Intenta de nuevo."}
+        </Notice>
+      )}
       {msg && <Notice tone="ok" icon="check">{msg}</Notice>}
       {err && <Notice tone="bad" icon="lock">{err}</Notice>}
 
@@ -142,17 +226,17 @@ function ProfileScreen() {
           <p className="tv-party-kicker">{isOtherUser ? "Perfil de jugador" : "Tu perfil"}</p>
           <h1 className="tv-page-title">{activeUser?.name || "Jugador"}</h1>
           <div className="tv-tags">
-            {isOwner && (
-              <span className="tv-tag tv-tag--owner">
-                <Icon name="star" size={13} filled className="tv-tag-sparkle" />
-                Owner
+            {roleTag && (
+              <span className={`tv-tag tv-tag--${activeUser.role}`}>
+                <Icon name={roleTag.icon} size={13} filled className={activeUser.role === "owner" ? "tv-tag-sparkle" : ""} />
+                {roleTag.label}
               </span>
             )}
             {isGuest ? (
               <span className="tv-tag">Invitado</span>
             ) : (
               <span className="tv-tag tv-tag--ok">
-                <Icon name="check" size={13} strokeWidth={3} />
+                <Icon name="verified" size={15} strokeWidth={2.4} className="tv-tag-verified" />
                 Registrado
               </span>
             )}
@@ -162,14 +246,14 @@ function ProfileScreen() {
                 Google
               </span>
             )}
+            {hasSpotify && (
+              <span className="tv-tag tv-tag--spotify">
+                <SpotifyIcon size={13} color="#000" waves="#1DB954" />
+                Spotify
+              </span>
+            )}
           </div>
         </div>
-        {!isOtherUser && (
-          <Link to="/" className="tv-btn tv-c-pink tv-profile-play">
-            <Icon name="play" size={16} filled strokeWidth={1.5} />
-            Jugar
-          </Link>
-        )}
       </section>
 
       <div className={`tv-profile-grid${isOtherUser ? " is-single" : ""}`}>
@@ -220,6 +304,57 @@ function ProfileScreen() {
               </label>
             </form>
 
+            <div className="tv-form-row">
+              <span className="tv-label">Color de tu avatar</span>
+              <div className="tv-swatches" role="group" aria-label="Color de tu avatar">
+                {AVATAR_COLORS.map((c, i) => (
+                  <button
+                    key={c}
+                    type="button"
+                    className="tv-swatch"
+                    style={{ background: c }}
+                    aria-pressed={activeUser?.avatar === c}
+                    aria-label={`Color ${i + 1}`}
+                    disabled={savingColor}
+                    onClick={() => onPickColor(c)}
+                  />
+                ))}
+                <button
+                  type="button"
+                  className={`tv-swatch tv-swatch--photo${googlePhoto ? "" : " is-locked"}`}
+                  aria-pressed={Boolean(googlePhoto) && activeUser?.avatar === googlePhoto}
+                  aria-label={googlePhoto ? "Usar tu foto de Google" : "Foto de perfil (requiere Google)"}
+                  title={googlePhoto ? "Usar tu foto de Google" : "Inicia sesión con Google para usar tu foto"}
+                  disabled={savingColor}
+                  onClick={() => onPickColor("google")}
+                >
+                  {googlePhoto ? (
+                    <img src={googlePhoto} alt="" referrerPolicy="no-referrer" />
+                  ) : (
+                    <Icon name="user" size={18} strokeWidth={2.4} />
+                  )}
+                </button>
+              </div>
+              {!googlePhoto && (
+                <span className="tv-hint">
+                  {isGuest ? "Inicia sesión con Google" : "Vincula Google"} para poner tu foto de perfil.
+                </span>
+              )}
+            </div>
+
+            {isGuest && (
+              <div className="tv-row-card">
+                <Icon name="user" size={26} />
+                <div className="tv-row-card-text">
+                  <strong>Estás como invitado</strong>
+                  <span>Crea una cuenta para guardar tus puntos.</span>
+                </div>
+                <Link to="/login?returnTo=/profile" className="tv-btn tv-btn--sm tv-c-pink">
+                  Crear cuenta
+                </Link>
+              </div>
+            )}
+
             {canLinkGoogle && (
               <div className="tv-row-card">
                 <GoogleIcon size={26} />
@@ -242,6 +377,28 @@ function ProfileScreen() {
                 <span className="tv-tag tv-tag--ok">Activo</span>
               </div>
             )}
+            {canSpotify && (
+              <div className="tv-row-card">
+                <SpotifyIcon size={26} />
+                <div className="tv-row-card-text">
+                  <strong>{hasSpotify ? "Spotify conectado" : "Conecta Spotify"}</strong>
+                  <span>
+                    {hasSpotify
+                      ? activeUser.spotify?.displayName || "Tu cuenta de Spotify"
+                      : "Vincula tu cuenta de Spotify a tu perfil."}
+                  </span>
+                </div>
+                {hasSpotify ? (
+                  <button type="button" className="tv-link-btn tv-link-btn--danger" onClick={onUnlinkSpotify} disabled={spotifyBusy}>
+                    Desconectar
+                  </button>
+                ) : (
+                  <button type="button" className="tv-btn tv-btn--sm tv-btn--spotify" onClick={onConnectSpotify} disabled={spotifyBusy}>
+                    {spotifyBusy ? "Abriendo…" : "Conectar"}
+                  </button>
+                )}
+              </div>
+            )}
 
             <div className="tv-account-foot">
               {activeUser?.email && (
@@ -252,7 +409,7 @@ function ProfileScreen() {
                 className="tv-link-btn tv-link-btn--danger"
                 onClick={() => {
                   logout();
-                  nav("/login");
+                  nav(isGuest ? "/" : "/login");
                 }}
               >
                 <Icon name="logout" size={18} />

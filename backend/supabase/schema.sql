@@ -17,3 +17,68 @@ create index if not exists users_email_idx on public.users (lower(email));
 -- El backend usa la service_role key (se salta RLS). Con RLS activado y sin políticas,
 -- nadie puede leer/escribir la tabla desde el navegador con la anon key.
 alter table public.users enable row level security;
+
+-- Roles (user, moderator, admin, owner). El rol se guarda dentro de `data`; esta columna
+-- solo lo muestra en el Table Editor y permite filtrar. Es de solo lectura (generada).
+alter table public.users
+  add column if not exists role text generated always as (coalesce(data->>'role', 'user')) stored;
+create index if not exists users_role_idx on public.users (role);
+
+-- ---------------------------------------------------------------------------
+-- Catálogo de canciones: playlists y sus canciones. Se rellena con `npm run catalog:upload --prefix backend`
+-- (copia backend/src/catalog/catalog.json). El backend lo lee al arrancar.
+-- ---------------------------------------------------------------------------
+create table if not exists public.songs (
+  id           text primary key,
+  title        text   not null,
+  artist_name  text   not null,
+  album_name   text,
+  year         int,
+  image        text,
+  preview_url  text   not null,                       -- fragmento de 30 s (iTunes)
+  genre        text,
+  language     text,                                   -- es, en u otro
+  itunes_id    bigint,
+  streams      bigint,                                 -- reproducciones en Spotify al crear la lista
+  updated_at   timestamptz not null default now()
+);
+
+create table if not exists public.playlists (
+  id           text primary key,
+  name         text   not null,
+  description  text,
+  position     int    not null default 0,              -- orden en los ajustes
+  is_default   boolean not null default false,         -- la que usa una sala nueva
+  updated_at   timestamptz not null default now()
+);
+
+create table if not exists public.playlist_songs (
+  playlist_id  text not null references public.playlists (id) on delete cascade,
+  song_id      text not null references public.songs (id) on delete cascade,
+  position     int  not null,                          -- puesto en el ranking (1 = la más escuchada)
+  primary key (playlist_id, song_id)
+);
+create index if not exists playlist_songs_playlist_idx on public.playlist_songs (playlist_id, position);
+
+alter table public.songs enable row level security;
+alter table public.playlists enable row level security;
+alter table public.playlist_songs enable row level security;
+
+-- ---------------------------------------------------------------------------
+-- Canciones de Spotify ya buscadas en iTunes (playlists personalizadas de los owners). Se rellena sola: cada canción
+-- se busca una vez y aquí queda su fragmento y portada, o found = false si iTunes no la tiene.
+-- ---------------------------------------------------------------------------
+create table if not exists public.spotify_songs (
+  spotify_id       text primary key,
+  found            boolean not null default false,
+  title            text   not null,                     -- título limpio (sin "- Remastered", "(feat. …)")
+  artist_name      text   not null,
+  album_name       text,
+  year             int,
+  image            text,                                -- portada (iTunes)
+  preview_url      text,                                -- fragmento de 30 s (iTunes)
+  itunes_id        bigint,
+  catalog_song_id  text,                                -- si ya estaba en el catálogo (songs.id)
+  updated_at       timestamptz not null default now()
+);
+alter table public.spotify_songs enable row level security;

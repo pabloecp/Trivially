@@ -36,6 +36,14 @@ assert.equal(mgr.canEditConfig(room, "player-2"), true);
 mgr.updateConfig(room, "player-2", { rounds: 7 });
 assert.equal(room.config.rounds, 7);
 
+// Rounds stay within 5–25 and the time to guess within 10–30 s.
+mgr.updateConfig(room, "host-1", { rounds: 99, roundMs: 2000 });
+assert.equal(room.config.rounds, 25);
+assert.equal(room.config.roundMs, 10000);
+mgr.updateConfig(room, "host-1", { rounds: 1, roundMs: 60000 });
+assert.equal(room.config.rounds, 5);
+assert.equal(room.config.roundMs, 30000);
+
 // State reflects permissions
 const stateP2 = mgr.publicState(room, "player-2");
 assert.equal(stateP2.me.canEditConfig, true);

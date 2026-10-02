@@ -7,6 +7,9 @@ import GoogleIcon from "../components/home/GoogleIcon.jsx";
 import Icon from "../components/home/Icon.jsx";
 import Segmented from "../components/home/Segmented.jsx";
 
+// In-app browsers (Instagram, WhatsApp, Facebook, TikTok...) are blocked by Google for sign-in.
+const IN_APP_BROWSER = typeof navigator !== "undefined" && /Instagram|FBAN|FBAV|FB_IAB|WhatsApp|Line\/|TikTok|musical_ly|Snapchat|; wv\)/i.test(navigator.userAgent);
+
 const MODES = [
   { value: "register", label: "Crear cuenta" },
   { value: "login", label: "Iniciar sesión" },
@@ -91,6 +94,13 @@ function LoginScreen() {
         <p className="tv-notice tv-notice--ok" role="status">
           <Icon name="check" size={18} strokeWidth={2.8} />
           Sesión con Google iniciada
+        </p>
+      )}
+
+      {IN_APP_BROWSER && (
+        <p className="tv-notice tv-notice--brand" role="status">
+          <Icon name="link" size={18} strokeWidth={2.6} />
+          Google no permite iniciar sesión desde este navegador. Abre la página en Safari o Chrome (menú ⋯ → Abrir en el navegador).
         </p>
       )}
 

@@ -1,4 +1,17 @@
+import { verifySocketToken } from "../auth/socketToken.js";
+import { prefetchMedia } from "../audio/mediaCache.js";
+import { readSpotifyPlaylist } from "../catalog/spotifyLibrary.js";
+
 export function attachSockets(io, rooms) {
+  // Who this connection is comes only from the signed token, never from ids the client puts in payloads.
+  io.use((socket, next) => {
+    socket.data.userId = verifySocketToken(socket.handshake.auth?.token);
+    next();
+  });
+
+  // Rounds are chosen a little ahead during the match; their audio and covers start downloading right then.
+  rooms.onNewTracks = (tracks) => prefetchMedia(tracks);
+
   rooms.onPhaseChange = (room) => {
     if (room && room.code) {
       io.to(room.code).emit("room:state", rooms.publicState(room));
@@ -7,12 +20,14 @@ export function attachSockets(io, rooms) {
 
   io.on("connection", (socket) => {
     socket.on("identify", (profile) => {
-      socket.data.profile = profile;
+      try {
+        bindUser(socket, profile, rooms);
+      } catch {}
     });
 
     socket.on("room:create", (payload, ack) => {
       try {
-        const user = bindUser(socket, payload?.user);
+        const user = bindUser(socket, payload?.user, rooms);
         leaveCurrentRoom(io, rooms, socket);
         const room = rooms.create({
           host: user,
@@ -31,7 +46,7 @@ export function attachSockets(io, rooms) {
 
     socket.on("room:join", (payload, ack) => {
       try {
-        const user = bindUser(socket, payload?.user);
+        const user = bindUser(socket, payload?.user, rooms);
         const room = rooms.get(payload.code || "");
         if (!room) throw new Error("Sala no encontrada");
         leaveCurrentRoom(io, rooms, socket, room.code);
@@ -71,6 +86,21 @@ export function attachSockets(io, rooms) {
       }
     });
 
+    // An owner who may change the settings adds one of their Spotify playlists; its songs load in the background.
+    socket.on("room:spotifyPlaylist", async (playlistId, ack) => {
+      try {
+        const { room, userId } = requireRoom(rooms, socket);
+        rooms.assertSpotifyEditor(room, userId);
+        const playlist = await readSpotifyPlaylist(rooms.store, userId, String(playlistId || ""));
+        if (!playlist.tracks.length) throw new Error("Esa playlist no tiene canciones que se puedan usar");
+        rooms.addSpotifyPlaylist(room, userId, playlist);
+        ack?.({ ok: true, state: rooms.publicState(room, userId) });
+        io.to(room.code).emit("room:state", rooms.publicState(room));
+      } catch (err) {
+        ack?.({ ok: false, error: err.message });
+      }
+    });
+
     socket.on("room:toggleConfigPermission", (targetUserId, ack) => {
       try {
         const { room, userId } = requireRoom(rooms, socket);
@@ -97,6 +127,8 @@ export function attachSockets(io, rooms) {
       try {
         const { room, userId } = requireRoom(rooms, socket);
         rooms.start(room, userId);
+        // Download every round's preview and cover now, so nothing waits for iTunes once the match runs.
+        prefetchMedia(room.tracks);
         watchRoom(io, rooms, room);
         ack?.({ ok: true });
         io.to(room.code).emit("room:state", rooms.publicState(room));
@@ -139,6 +171,17 @@ export function attachSockets(io, rooms) {
     });
 
 
+    socket.on("game:skip", (ack) => {
+      try {
+        const { room, userId } = requireRoom(rooms, socket);
+        rooms.skip(room, userId);
+        ack?.({ ok: true, state: rooms.publicState(room, userId) });
+        io.to(room.code).emit("room:state", rooms.publicState(room));
+      } catch (err) {
+        ack?.({ ok: false, error: err.message });
+      }
+    });
+
     socket.on("game:answer", (text, ack) => {
       try {
         const { room, userId } = requireRoom(rooms, socket);
@@ -166,9 +209,21 @@ function leaveCurrentRoom(io, rooms, socket, keepCode) {
   if (result?.room) io.to(result.room.code).emit("room:state", rooms.publicState(result.room));
 }
 
-function bindUser(socket, user) {
-  const profile = user || socket.data.profile;
-  if (!profile?.id || !profile?.name) throw new Error("Identifícate primero");
+// The player for this socket: the id comes from the verified token; name/avatar from the saved account when
+// there is one (so nobody can show up under another player's name), otherwise from what the client sent.
+function bindUser(socket, user, rooms) {
+  const id = socket.data.userId;
+  if (!id) throw new Error("Tu sesión no es válida. Recarga la página.");
+  const saved = rooms.store?.users?.[id];
+  const name = saved?.name || user?.name || socket.data.profile?.name;
+  if (!name) throw new Error("Identifícate primero");
+  const profile = {
+    ...(user || {}),
+    id,
+    name,
+    avatar: saved?.avatar || user?.avatar,
+    isGuest: saved ? Boolean(saved.isGuest) : true,
+  };
   socket.data.profile = profile;
   return { ...profile, socketId: socket.id };
 }

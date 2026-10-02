@@ -1,5 +1,9 @@
-// Game modes shown on the Home screen. To add a new mode, add an entry here with `available: true`
-// and a `path` for its screens, and add its id to GAME_IDS in backend/src/game/roomManager.js.
+import MusicLobbyPanel from "./music/LobbyPanel.jsx";
+import MusicStartButton from "./music/StartButton.jsx";
+
+// Game modes shown on the Home screen. To add a new mode, add an entry here with `available: true`, a `Lobby`
+// panel (shown on the room screen while the room waits in that mode) and a `path` for its in-match screens,
+// and add its id to GAME_IDS in backend/src/game/roomManager.js.
 export const GAME_MODES = [
   {
     id: "musica",
@@ -7,7 +11,9 @@ export const GAME_MODES = [
     color: "green",
     icon: "music",
     available: true,
-    path: (room) => (room.phase === "lobby" ? `/lobby/${room.code}` : `/game/${room.code}`),
+    Lobby: MusicLobbyPanel,
+    Start: MusicStartButton,
+    path: (room) => `/game/${room.code}`,
   },
   { id: "cultura", name: "Cultura general", color: "amber", icon: "bulb", available: false },
   { id: "cine", name: "Cine y series", color: "purple", icon: "film", available: false },
@@ -18,8 +24,9 @@ export function findMode(id) {
   return GAME_MODES.find((m) => m.id === id) || null;
 }
 
-// The screen a room's players belong on: Home while the party picks a game, otherwise that game's own screens.
+// The screen a room's players belong on: the room screen (/sala/CODE, Home with the room) while nobody is playing,
+// whatever game is picked, otherwise that game's own screens.
 export function roomPath(room) {
   const mode = findMode(room.game);
-  return mode?.path ? mode.path(room) : "/";
+  return room.phase !== "lobby" && mode?.path ? mode.path(room) : `/sala/${room.code}`;
 }

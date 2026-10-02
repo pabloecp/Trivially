@@ -3,22 +3,30 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { createClient } from "@supabase/supabase-js";
+import { assertCanSetRole, effectiveRole } from "../auth/roles.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DATA_DIR = path.join(__dirname, "../../data");
 const STORE_PATH = path.join(DATA_DIR, "store.json");
 
 const MAX_NAME_LENGTH = 24;
+export const DEFAULT_AVATAR = "#F050AE";
+const HEX_COLOR = /^#[0-9a-f]{6}$/i;
 
 function emptyStore() {
   return { users: {} };
 }
 
+// The Spotify link keeps its tokens on the server; clients only ever see who the account is.
+function publicSpotify(spotify) {
+  return spotify ? { id: spotify.id, displayName: spotify.displayName, url: spotify.url, connectedAt: spotify.connectedAt } : null;
+}
+
 /** Remove password fields — for the owner or internal use */
 export function sanitizeUser(user) {
   if (!user) return null;
-  const { passwordHash, passwordSalt, ...safe } = user;
-  return safe;
+  const { passwordHash, passwordSalt, spotify, ...safe } = user;
+  return { ...safe, spotify: publicSpotify(spotify), role: effectiveRole(user) };
 }
 
 /** Public profile — only safe fields for other users to see */
@@ -31,6 +39,8 @@ export function sanitizeUserPublic(user) {
     isGuest: Boolean(user.isGuest),
     stats: user.stats || {},
     googleLinked: Boolean(user.googleId),
+    spotifyLinked: Boolean(user.spotify),
+    role: effectiveRole(user),
   };
 }
 
@@ -57,11 +67,14 @@ let flushTimer = null;
 let flushing = Promise.resolve();
 let pendingStore = null;
 
+// Test scripts (*.test.js) never touch Supabase, even when its variables are set: they only use fake users.
+const RUNNING_TEST = /\.test\.js$/.test(process.argv[1] || "");
+
 export function supabaseEnabled() {
-  return Boolean(process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY);
+  return !RUNNING_TEST && Boolean(process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY);
 }
 
-function getSupabase() {
+export function getSupabase() {
   if (!supabase) {
     supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY, {
       auth: { persistSession: false, autoRefreshToken: false },
@@ -185,6 +198,15 @@ export function saveStore(store) {
   fs.writeFileSync(STORE_PATH, JSON.stringify(store, null, 2));
 }
 
+/** A fresh account id that no other user has. Ids are permanent: profiles, roles and stats hang off them. */
+export function newUserId(store) {
+  let id;
+  do {
+    id = `usr_${Date.now()}_${crypto.randomBytes(6).toString("hex")}`;
+  } while (store.users[id]);
+  return id;
+}
+
 function validateName(name) {
   const clean = (name || "").trim();
   if (!clean) throw new Error("El nombre no puede estar vacío");
@@ -199,6 +221,7 @@ export function upsertUser(store, user) {
     avatar: user.avatar,
     isGuest: Boolean(user.isGuest),
     email: user.email || null,
+    role: "user",
     stats: {
       totalScore: 0,
       bestScore: 0,
@@ -236,12 +259,12 @@ export function registerWithPassword(store, { name, email, password, avatar, gue
   }
 
   const { salt, hash } = hashPassword(password);
-  const userId = `usr_${Date.now()}_${crypto.randomBytes(4).toString("hex")}`;
+  const userId = newUserId(store);
   const user = upsertUser(store, {
     id: userId,
     name: cleanName,
     email: cleanEmail,
-    avatar: avatar || "#1DB954",
+    avatar: avatar || DEFAULT_AVATAR,
     isGuest: false,
     passwordHash: hash,
     passwordSalt: salt,
@@ -275,6 +298,8 @@ export function loginWithPassword(store, { identifier, password, guestId }) {
     if (!valid) throw new Error("Contraseña incorrecta");
   } else if (user.googleId) {
     throw new Error("Esta cuenta fue creada con Google. Por favor usa 'Continuar con Google'.");
+  } else {
+    throw new Error("Esta cuenta no tiene contraseña. Crea una cuenta nueva o entra con Google.");
   }
 
   if (guestId && guestId !== user.id) {
@@ -292,8 +317,14 @@ export function upsertGoogleUser(store, { id, email, name, avatar, googleId }, g
   );
 
   if (existing) {
+    // The Google photo becomes the avatar the first time; after that it only refreshes it if the player is
+    // still using the photo (a color they picked is kept).
+    const usingPhoto = !existing.googleId || !HEX_COLOR.test(existing.avatar || "");
     existing.googleId = googleId;
-    if (avatar) existing.avatar = avatar;
+    if (avatar) {
+      existing.googlePhoto = avatar;
+      if (usingPhoto) existing.avatar = avatar;
+    }
     if (!existing.name) existing.name = name;
     existing.isGuest = false;
     store.users[existing.id] = existing;
@@ -304,15 +335,16 @@ export function upsertGoogleUser(store, { id, email, name, avatar, googleId }, g
     return sanitizeUser(store.users[existing.id]);
   }
 
-  const userId = id || `usr_g_${Date.now()}`;
+  const userId = id && !store.users[id] ? id : newUserId(store);
   const newUser = upsertUser(store, {
     id: userId,
     name: name || "Jugador Google",
     email: cleanEmail,
-    avatar: avatar || "#1DB954",
+    avatar: avatar || DEFAULT_AVATAR,
     isGuest: false,
     googleId,
   });
+  if (avatar) store.users[newUser.id].googlePhoto = avatar;
 
   if (guestId) {
     claimGuestStats(store, newUser.id, guestId);
@@ -334,8 +366,30 @@ export function linkGoogle(store, userId, { googleId, email, avatar }) {
 
   user.googleId = googleId;
   if (email && !user.email) user.email = email.trim().toLowerCase();
-  if (avatar) user.avatar = avatar;
+  if (avatar) {
+    user.avatar = avatar;
+    user.googlePhoto = avatar;
+  }
   store.users[userId] = user;
+  saveStore(store);
+  return sanitizeUser(user);
+}
+
+/** Saves a Spotify link (profile + tokens) on the account. One Spotify account per Trivially account. */
+export function linkSpotify(store, userId, spotify) {
+  const user = store.users[userId];
+  if (!user || user.isGuest) throw new Error("Usuario no encontrado");
+  const conflict = Object.values(store.users).find((u) => u.spotify?.id === spotify.id && u.id !== userId);
+  if (conflict) throw new Error("Esta cuenta de Spotify ya está conectada a otro usuario");
+  user.spotify = spotify;
+  saveStore(store);
+  return sanitizeUser(user);
+}
+
+export function unlinkSpotify(store, userId) {
+  const user = store.users[userId];
+  if (!user) throw new Error("Usuario no encontrado");
+  delete user.spotify;
   saveStore(store);
   return sanitizeUser(user);
 }
@@ -352,6 +406,8 @@ export function unlinkGoogle(store, userId) {
   }
 
   delete user.googleId;
+  delete user.googlePhoto;
+  if (!HEX_COLOR.test(user.avatar || "")) user.avatar = DEFAULT_AVATAR;
   store.users[userId] = user;
   saveStore(store);
   return sanitizeUser(user);
@@ -370,6 +426,32 @@ export function deleteUser(store, userId, confirmName) {
   return true;
 }
 
+/** Removes a guest record (no-op for registered accounts). Guests are only kept while they are signed in. */
+export function deleteGuest(store, userId) {
+  const user = store.users[userId];
+  if (!user?.isGuest) return false;
+  delete store.users[userId];
+  saveStore(store);
+  return true;
+}
+
+/** Sets the avatar to a color ("#rrggbb") or, with "google", to the player's Google photo. */
+export function updateUserAvatar(store, userId, choice) {
+  const user = store.users[userId];
+  if (!user) throw new Error("Usuario no encontrado");
+  if (choice === "google") {
+    const photo = user.googlePhoto || (user.googleId && !HEX_COLOR.test(user.avatar || "") ? user.avatar : null);
+    if (!photo) throw new Error("Inicia sesión con Google para usar tu foto de perfil");
+    user.avatar = photo;
+  } else if (HEX_COLOR.test(choice || "")) {
+    user.avatar = choice;
+  } else {
+    throw new Error("Color no válido");
+  }
+  saveStore(store);
+  return sanitizeUser(user);
+}
+
 export function updateUserName(store, userId, newName) {
   const user = store.users[userId];
   if (!user) throw new Error("Usuario no encontrado");
@@ -384,7 +466,8 @@ export function claimGuestStats(store, targetUserId, guestId) {
   if (!targetUserId || !guestId || targetUserId === guestId) return null;
   const guest = store.users[guestId];
   const user = store.users[targetUserId];
-  if (!guest || !user) return null;
+  // Only real guest records can be merged (and deleted); never another registered account.
+  if (!guest || !user || !guest.isGuest || user.isGuest) return null;
 
   user.stats.totalScore += guest.stats.totalScore || 0;
   user.stats.bestScore = Math.max(user.stats.bestScore || 0, guest.stats.bestScore || 0);
@@ -432,6 +515,36 @@ export function applyMatchStats(store, players) {
     }
   });
   saveStore(store);
+}
+
+/** Changes a user's role. `actorId` must outrank both the target's current role and the new one. */
+export function setUserRole(store, actorId, targetId, role) {
+  const actor = store.users[actorId];
+  const target = store.users[targetId];
+  if (!target) throw new Error("Usuario no encontrado");
+  assertCanSetRole(actor, target, role);
+  target.role = role;
+  saveStore(store);
+  return sanitizeUser(target);
+}
+
+/** Registered users for the admin panel, most active first. */
+export function listUsers(store, { search = "", role = "" } = {}) {
+  const q = search.trim().toLowerCase();
+  return Object.values(store.users)
+    .filter((u) => !u.isGuest)
+    .map((u) => ({
+      id: u.id,
+      name: u.name,
+      email: u.email || null,
+      avatar: u.avatar,
+      role: effectiveRole(u),
+      googleLinked: Boolean(u.googleId),
+      gamesPlayed: u.stats?.gamesPlayed || 0,
+    }))
+    .filter((u) => !role || u.role === role)
+    .filter((u) => !q || u.name?.toLowerCase().includes(q) || u.email?.toLowerCase().includes(q))
+    .sort((a, b) => b.gamesPlayed - a.gamesPlayed || (a.name || "").localeCompare(b.name || ""));
 }
 
 export function leaderboard(store, sort = "totalScore") {

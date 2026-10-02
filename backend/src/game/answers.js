@@ -15,7 +15,7 @@ function cleanDigitsOnly(value = "") {
   return value.replace(/\D/g, "");
 }
 
-function levenshtein(a, b) {
+export function levenshtein(a, b) {
   if (a === b) return 0;
   const m = a.length;
   const n = b.length;

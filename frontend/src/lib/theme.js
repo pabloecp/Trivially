@@ -7,8 +7,7 @@ const THEME_KEY = "trivially_theme";
 export const LIGHT_THEME_ENABLED = true;
 
 function loadTheme() {
-  if (!LIGHT_THEME_ENABLED) return "dark";
-  return localStorage.getItem(THEME_KEY) || "light";
+  return localStorage.getItem(THEME_KEY) || "dark";
 }
 
 // Shared by the new Home and the legacy Layout so the choice survives navigation between them.

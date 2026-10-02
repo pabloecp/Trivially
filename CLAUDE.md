@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project
 
-Trivially is a real-time music trivia game ("Adivina la canción"): players hear a 30s audio preview and type the song title, solo or in multiplayer rooms with `XO····` codes. All UI copy and server error messages are in Spanish — keep new strings in Spanish. The project was previously called YOAVLLY / BySong; those names still appear in package names, the session cookie, and `localStorage` keys (`yoavlly-user`, `yoavlly_guest_id`, `yoavlly_theme`, with `bysong*` fallbacks). Don't rename those keys without a migration or existing users lose their saved identity.
+Trivially is a real-time music trivia game ("Adivina la canción"): players hear a 30s audio preview and type the song title, solo or in multiplayer rooms with `XO····` codes. All UI copy and server error messages are in Spanish — keep new strings in Spanish. The project was previously called YOAVLLY; that name still appears in the session cookie and `localStorage` keys (`yoavlly-user`, `yoavlly_guest_id`, `yoavlly_theme`). Don't rename those keys without a migration or existing users lose their saved identity.
 
 ## Commands
 
@@ -55,7 +55,9 @@ Timers on the client use `remainingMs(room)`, which corrects for clock skew with
 
 ### Catalog
 
-`catalog/catalogProvider.js` `loadCatalog()` returns the static `seedCatalog.js`, which holds artists, albums, genres, playlists, and songs with iTunes `previewUrl`s. `spotifyCatalog.js` exists but is not wired in. Round selection lives in `catalog/songSelector.js`: `config.enabledCategories` decides which id filters (`artistIds`, `genreIds`, `albumIds`, `playlistIds`, `yearFrom`/`yearTo`) apply. If `room.config.customTracks` is set, the catalog is bypassed entirely.
+The catalog is a set of playlists of songs with iTunes `previewUrl`s. `catalog/catalogProvider.js` `loadCatalog()` reads it at boot from the Supabase tables `songs`, `playlists` and `playlist_songs` (see `backend/supabase/schema.sql`), and falls back to `catalog/catalog.json` when Supabase isn't configured or has no playlists. `npm run catalog:upload --prefix backend` copies `catalog.json` to Supabase, deleting songs and playlists the file no longer has. There are two playlists of 100 songs taken from kworb.net's all-time Spotify ranking: Spanish (`top-es`, the default for new rooms) and English (`top-en`). Round selection lives in `catalog/songSelector.js`: a match draws from the union of `config.playlistIds`, or from the default playlist when none of those ids exists. If `room.config.customTracks` is set, the catalog is bypassed entirely. `spotifyCatalog.js` exists but is not wired in.
+
+Owners who host a room can add their own Spotify playlists (the "+" chip in `MusicSettings.jsx`, socket `room:spotifyPlaylist`). They go in `config.playlistIds` as `sp:<spotify id>` and live in `room.customPlaylists`. `catalog/spotifyLibrary.js` reads the songs from Spotify, and `catalog/trackResolver.js` finds each one's preview and cover on iTunes through a single rate-limited queue (~19 requests a minute): one search by title and artist, or through each of the song's artists (up to 3): the album with the same name, else the artist's 200 most popular songs (artist, album and song-list lookups are cached, so songs sharing them cost nothing extra). Titles iTunes censors ("F**K") still match. The most recently chosen playlist is searched first, and a second, deeper pass for the songs not found only runs when no first-pass work is waiting. A match can't start with fewer playable songs than rounds. Results, found or not, are cached in memory and in the Supabase table `spotify_songs`. Rounds are picked a couple at a time (`pickAhead`), so a match can start while the playlist is still loading and songs found later join the draw.
 
 ### Persistence and auth
 
@@ -67,15 +69,17 @@ Timers on the client use `remainingMs(room)`, which corrects for clock skew with
 - On register, login, or Google sign-in, `claimGuestStats` merges the guest's stats into the account and deletes the guest.
 - `cookie-session` stores only `userId`. It is set to `SameSite=None; Secure` when `CLIENT_ORIGIN` is https or in production.
 - Use `sanitizeUser` for the account owner and `sanitizeUserPublic` for everyone else.
+- Owners can link a Spotify account (`auth/spotify.js`, `/api/spotify/login` → `/auth/spotify/callback`). The tokens stay in `user.spotify` on the server; `sanitizeUser` only exposes the id and display name, and `sanitizeUserPublic` only `spotifyLinked`.
+- `supabaseEnabled()` is always false inside `*.test.js` scripts, so tests never write to the real Supabase `users` table even when its variables are set.
 
 ### Frontend structure (mid-redesign)
 
 - `/` (`pages/Home.jsx`) uses the new casual-game design. Its styles are in `styles/home.css`, where every class is namespaced `tv-` and uses `--tv-*` tokens.
-- Home is the multiplayer hub. The Jugar sheet (`components/home/PlaySheet.jsx`) creates or joins a room, asking for a guest name first when there isn't one. `components/home/PartyPanel.jsx` shows the code, the players and the invite link `/sala/:code`, which also renders Home and auto-joins. While `room.game` is `null`, the host taps a mode tile to move everyone into it.
+- Home is the multiplayer hub. The Jugar sheet (`components/home/PlaySheet.jsx`) creates or joins a room, asking for a guest name first when there isn't one. `components/home/PartyPanel.jsx` shows the code, the players (tapping one opens their profile and, for the host, the settings permission) and the invite link `/sala/:code`, which also renders Home and auto-joins. A room's own address is `/sala/:code`: creating or joining one moves Home there, and leaving (the red button, or Inicio tapped twice) goes back to `/`. The room screen (Home with a room) never changes page while the room waits: the host taps a mode tile and every player's screen swaps in that mode's `Lobby` panel (settings, start button) with an animation. Only starting a match moves players to the game screen.
 - The mode tiles come from the registry in `src/modes/index.js` (`GAME_MODES`). To add a mode:
-  - add an entry there with `available: true` and a `path(room)` for its screens
+  - add an entry there with `available: true`, a `Lobby` panel component and a `path(room)` for its in-match screens
   - add the id to `GAME_IDS` in `roomManager.js`
-- `RoomNavigator` in `App.jsx` does all room-driven navigation. It sends each client to `roomPath(room)` and swaps out stale `/lobby`, `/game` or `/sala` screens of the player's own room. It pulls players off other pages (profile, leaderboard) only when the room moves into a game. Game pages should not navigate on phase changes themselves.
+- `RoomNavigator` in `App.jsx` does all room-driven navigation. It sends each client to `roomPath(room)` (`/sala/:code` while the room is in `lobby`, the mode's `path` during a match) and swaps out stale `/game` or `/sala` screens of the player's own room. It pulls players off other pages (profile, leaderboard) only when a match starts. Old `/lobby/:code` links redirect to `/sala/:code`. Game pages should not navigate on phase changes themselves.
 - All other routes, including the music mode's pages in `src/modes/music/` (Setup → Lobby → Game), render inside `LegacyShell` in `App.jsx`. That shell adds the old navbar `Layout` and uses the older design tokens in `styles/global.css`.
 - `lib/theme.js` `useTheme()` sets `data-theme` on `<html>`. Both stylesheets define `[data-theme="light"]` overrides.
 
@@ -86,5 +90,5 @@ Timers on the client use `remainingMs(room)`, which corrects for clock skew with
 - **Production:**
   - The frontend is on Vercel. `frontend/vercel.json` rewrites `/api` and `/auth` to the Railway backend and sends everything else to the SPA. Socket.IO connects directly to `BACKEND_URL`.
   - The backend is on Railway, port 8080. It also serves `frontend/dist` as a static SPA fallback when that folder exists.
-- The backend loads `.env` from `backend/` and from the repo root. Variables: `PORT`, `CLIENT_ORIGIN`, `SESSION_SECRET`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REDIRECT_URI`.
+- The backend loads `.env` from `backend/` and from the repo root. Variables: `PORT`, `CLIENT_ORIGIN`, `SESSION_SECRET`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REDIRECT_URI`, `SPOTIFY_CLIENT_ID`, `SPOTIFY_CLIENT_SECRET`, `SPOTIFY_REDIRECT_URI` (optional, defaults to `<CLIENT_ORIGIN>/auth/spotify/callback`).
 
