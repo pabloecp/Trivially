@@ -2178,9 +2178,15 @@ fieldset.tv-steppers { margin: 0; padding: 0; border: 0; min-width: 0; }
 
 /* ---------- Room card: players you can tap, leave button ---------- */
 /* Inicio while in a room: the first tap turns it into the "leave?" question. */
-.tv-app .tv-chip--home.is-confirm { background: var(--tv-danger-bg); color: var(--tv-danger); }
-.tv-chip--home.is-confirm .tv-avatar { background: var(--tv-danger); color: var(--p-ink); }
-[data-theme="light"] .tv-chip--home.is-confirm .tv-avatar { color: #fff; }
+/* "¿Salir de la sala?": the same soft red as the "¿Seguro? Toca otra vez" button, all of it (fill, icon, letters). */
+.tv-app .tv-chip--home.is-confirm {
+  background: var(--tv-danger-bg);
+  box-shadow: 0 3px 0 rgba(var(--p-bad-rgb), 0.28);
+  color: var(--tv-danger);
+}
+.tv-app .tv-chip--home.is-confirm:hover { box-shadow: 0 5px 0 rgba(var(--p-bad-rgb), 0.28); }
+.tv-app .tv-chip--home.is-confirm:active { box-shadow: 0 0 0 rgba(var(--p-bad-rgb), 0.28); }
+.tv-chip--home.is-confirm .tv-avatar { background: rgba(var(--p-bad-rgb), 0.22); color: var(--tv-danger); }
 
 /* A player is a button: the whole chip lights up on hover, and tapping it opens their menu. */
 .tv-player { position: relative; padding: 0; transition: opacity 0.3s ease, box-shadow 0.15s ease; }
