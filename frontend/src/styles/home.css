@@ -1,23 +1,21 @@
 /* Trivially Home — casual game look. Everything here is namespaced with `tv-`. */
 
 :root {
-  /* Neutrals from an OKLCH scale tinted with the brand's pink (hue of #F050AE, very low chroma), so greys and the
-     pink belong together. Every text colour passes WCAG AA on bg, surface and option-bg. */
-  --tv-bg: #120c0f;
-  --tv-bg-2: #3f142d;
-  --tv-surface: #1e171a;
-  --tv-edge: #070405;
+  --tv-bg: #0a0a0a;
+  --tv-bg-2: #3a1030;
+  --tv-surface: #161616;
+  --tv-edge: #000000;
   --tv-text: #ffffff;
-  --tv-text-2: #d6ced2;
-  --tv-text-3: #9e9599;
+  --tv-text-2: rgba(255,255,255,0.76);
+  --tv-text-3: rgba(255,255,255,0.5);
   --tv-ink: #ffffff;
   --tv-logo-shadow: #000000;
-  --tv-dots: rgba(255, 255, 255, 0.05);
-  --tv-blob-opacity: 0.22;
-  --tv-scrim: rgba(7, 4, 5, 0.7);
-  --tv-sheet-bg: #1e171a;
-  --tv-option-bg: #2b2427;
-  --tv-option-edge: #070405;
+  --tv-dots: rgba(255, 255, 255, 0.06);
+  --tv-blob-opacity: 0.35;
+  --tv-scrim: rgba(0,0,0,0.66);
+  --tv-sheet-bg: #161616;
+  --tv-option-bg: #232323;
+  --tv-option-edge: #000000;
   --tv-handle: rgba(255, 255, 255, 0.22);
   --tv-toast-bg: #ffffff;
   --tv-toast-fg: #0a0a0a;
@@ -42,9 +40,9 @@
   --tv-mint: #fdf148;
   --tv-mint-2: #f2dc1e;
   --tv-mint-edge: #bfae00;
-  --tv-neutral: #2b2427;
-  --tv-neutral-2: #241d20;
-  --tv-neutral-edge: #070405;
+  --tv-neutral: #2a2a2a;
+  --tv-neutral-2: #232323;
+  --tv-neutral-edge: #000000;
   --tv-neutral-on: #ffffff;
 
   --tv-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
@@ -52,20 +50,20 @@
 }
 
 [data-theme="light"] {
-  --tv-bg: #f7f2f4;
-  --tv-bg-2: #fedeec;
+  --tv-bg: #ffffff;
+  --tv-bg-2: #ffe3f3;
   --tv-surface: #ffffff;
-  --tv-edge: #dad2d5;
-  --tv-text: #151012;
-  --tv-text-2: #524a4e;
-  --tv-text-3: #71696d;
+  --tv-edge: #e4e4e4;
+  --tv-text: #0a0a0a;
+  --tv-text-2: rgba(10, 10, 10, 0.7);
+  --tv-text-3: rgba(10, 10, 10, 0.45);
   --tv-logo-shadow: #ffc9e6;
-  --tv-dots: rgba(21, 16, 18, 0.06);
-  --tv-blob-opacity: 0.2;
+  --tv-dots: rgba(10, 10, 10, 0.07);
+  --tv-blob-opacity: 0.28;
   --tv-scrim: rgba(10, 10, 10, 0.4);
   --tv-sheet-bg: #ffffff;
-  --tv-option-bg: #f3eef1;
-  --tv-option-edge: #dad2d5;
+  --tv-option-bg: #f5f5f5;
+  --tv-option-edge: #e4e4e4;
   --tv-handle: rgba(10, 10, 10, 0.16);
   --tv-toast-bg: #0a0a0a;
   --tv-toast-fg: #ffffff;
@@ -73,13 +71,13 @@
   --tv-danger: #c62828;
   --tv-danger-bg: rgba(239, 68, 68, 0.1);
   --tv-glow: rgba(240, 80, 174, 0.4);
-  --tv-neutral: #f3eef1;
-  --tv-neutral-2: #ebe4e7;
-  --tv-neutral-edge: #dad2d5;
+  --tv-neutral: #f0f0f0;
+  --tv-neutral-2: #e4e4e4;
+  --tv-neutral-edge: #c8c8c8;
   --tv-neutral-on: #f050ae;
 }
 
-.tv-c-green { --c1: #1ed760; --c2: #1db954; --edge: #148a3d; --on: #0a0a0a; }
+.tv-c-green { --c1: #b6ee55; --c2: #a0e426; --edge: #7fb800; --on: #0a0a0a; }
 .tv-c-amber { --c1: #ffc247; --c2: #ffab00; --edge: #cc8800; --on: #0a0a0a; }
 .tv-c-purple { --c1: #b06bff; --c2: #9336fd; --edge: #6f1fd1; --on: #fff; }
 .tv-c-sky { --c1: #52c4e0; --c2: #33a8c7; --edge: #22809a; --on: #0a0a0a; }
@@ -2284,16 +2282,14 @@ fieldset.tv-steppers { margin: 0; padding: 0; border: 0; min-width: 0; }
 .tv-mode-menu-soon { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; color: var(--tv-text-3); }
 
 /* ---------- Room in a game: the whole background takes the mode's colour (data-mode on <html>) ---------- */
-/* Picking a game should be felt: the base itself shifts towards the mode's colour, with a stronger glow on top. */
 :root[data-mode] .tv-app {
-  --tv-mode-base: color-mix(in oklab, var(--tv-bg) 88%, var(--brand));
-  background: radial-gradient(120% 65% at 50% 0%, rgba(var(--brand-rgb), 0.3), var(--tv-mode-base) 78%);
+  background: radial-gradient(120% 60% at 50% 0%, rgba(var(--brand-rgb), 0.28), var(--tv-bg) 75%);
   transition: background 0.5s ease;
 }
 :root[data-mode] .tv-blob--1,
 :root[data-mode] .tv-blob--2 { background: var(--brand); }
 :root[data-mode] .tv-blob--3 { background: var(--brand-active, var(--brand)); }
-:root[data-mode] .tv-blob { --tv-blob-opacity: 0.3; }
+:root[data-mode] .tv-blob { --tv-blob-opacity: 0.4; }
 
 /* Mobile: the game button is as wide as the room-code card above it, and its menu too. */
 @media (max-width: 720px) {
