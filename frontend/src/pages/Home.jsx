@@ -70,11 +70,16 @@ function ModeMenu({ current, onPick }) {
         aria-label={`Juego actual: ${currentMode.name}. Cambiar juego`}
         onClick={() => setOpen((v) => !v)}
       >
-        <span className={`tv-badge tv-c-${currentMode.color}`}>
+        <span className="tv-switch-badge">
           <Icon name={currentMode.icon} size={20} />
         </span>
-        <span className="tv-switch-name">{currentMode.name}</span>
-        <Icon name="chevron" size={16} strokeWidth={3} className="tv-switch-icon" />
+        <span className="tv-switch-text">
+          <span className="tv-switch-label">Modo de juego</span>
+          <span className="tv-switch-name">{currentMode.name}</span>
+        </span>
+        <span className="tv-switch-icon" aria-hidden="true">
+          <Icon name="swap" size={18} strokeWidth={2.6} />
+        </span>
       </button>
       {open && (
         <div className="tv-mode-menu" role="menu">
@@ -199,6 +204,8 @@ export default function Home() {
         <span className="tv-blob tv-blob--1" />
         <span className="tv-blob tv-blob--2" />
         <span className="tv-blob tv-blob--3" />
+        <span className="tv-blob tv-blob--4" />
+        <span className="tv-blob tv-blob--5" />
       </div>
 
       <TvTopbar />
@@ -238,11 +245,14 @@ export default function Home() {
                   onPick={(mode) => mode.id !== room.game && setGame(mode.id).catch((err) => showToast(err.message))}
                 />
               ) : (
-                <h2 className="tv-section-title tv-room-game-title">
-                  <span className={`tv-badge tv-c-${roomMode.color}`}>
+                <h2 className="tv-switch-btn tv-room-game-title">
+                  <span className="tv-switch-badge">
                     <Icon name={roomMode.icon} size={20} />
                   </span>
-                  {roomMode.name}
+                  <span className="tv-switch-text">
+                    <span className="tv-switch-label">Modo de juego</span>
+                    <span className="tv-switch-name">{roomMode.name}</span>
+                  </span>
                 </h2>
               )}
             </div>

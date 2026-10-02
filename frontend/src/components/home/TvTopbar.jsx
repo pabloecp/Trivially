@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { roomPath } from "../../modes/index.js";
 import { useTheme } from "../../lib/theme.js";
 import { useApp } from "../../lib/store.jsx";
 import Icon from "./Icon.jsx";
@@ -8,8 +9,13 @@ import ProfileChip from "./ProfileChip.jsx";
 // Same top bar on every screen: Inicio on the left, profile and theme toggle on the right.
 export default function TvTopbar() {
   const { user, room, leaveRoom } = useApp();
-  const { theme, toggleTheme } = useTheme();
+  const { palette, toggleTheme } = useTheme();
   const nav = useNavigate();
+  const { pathname } = useLocation();
+  // Away from your room (profile, another page): a shortcut back to it, or to the match if one is running.
+  const roomTarget = room ? roomPath(room) : null;
+  const showBack = Boolean(roomTarget) && pathname !== roomTarget;
+  const inMatch = Boolean(room) && room.phase !== "lobby";
   // Inside a room, Inicio means leaving it: the first tap asks, the second one leaves.
   const [confirmLeave, setConfirmLeave] = useState(false);
 
@@ -48,15 +54,25 @@ export default function TvTopbar() {
         </span>
         <span className="tv-chip-name">{confirmLeave ? "¿Salir de la sala?" : "Inicio"}</span>
       </Link>
+      {showBack && !confirmLeave && (
+        <Link to={roomTarget} className="tv-chip tv-chip--back" aria-label={inMatch ? "Volver a la partida" : "Volver a la sala"}>
+          <span className="tv-avatar tv-avatar--empty">
+            <Icon name={inMatch ? "play" : "users"} size={18} filled={inMatch} />
+          </span>
+          <span className="tv-chip-name">{inMatch ? "Volver a la partida" : "Volver a la sala"}</span>
+        </Link>
+      )}
       <div className="tv-topbar-end">
         <ProfileChip user={user} />
         <button
           type="button"
-          className="tv-icon-btn"
+          className="tv-icon-btn tv-theme-btn"
           onClick={toggleTheme}
-          aria-label={theme === "dark" ? "Cambiar a modo claro" : "Cambiar a modo oscuro"}
+          aria-label={`Colores: opción ${palette.id} de 3 (${palette.name}). Toca para la siguiente.`}
+          title={palette.name}
         >
-          <Icon name={theme === "dark" ? "sun" : "moon"} size={22} />
+          <Icon name={palette.theme === "dark" ? "moon" : "sun"} size={18} />
+          <span>Opción {palette.id}</span>
         </button>
       </div>
     </header>

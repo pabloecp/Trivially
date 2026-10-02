@@ -715,7 +715,7 @@ function GameScreen() {
       </div>
 
       <aside className="tv-game-side">
-        <MiniBoard players={room.players || []} currentUserId={user?.id} />
+        <MiniBoard players={room.players || []} currentUserId={user?.id} phase={room.phase} />
       </aside>
     </div>
   );

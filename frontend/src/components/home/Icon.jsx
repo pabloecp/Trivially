@@ -75,6 +75,14 @@ const PATHS = {
   ),
   check: <path d="M20 6 9 17l-5-5" />,
   close: <path d="M18 6 6 18M6 6l12 12" />,
+  swap: (
+    <>
+      <path d="m16 3 4 4-4 4" />
+      <path d="M20 7H4" />
+      <path d="m8 21-4-4 4-4" />
+      <path d="M4 17h16" />
+    </>
+  ),
   plus: <path d="M12 5v14M5 12h14" />,
   link: (
     <>

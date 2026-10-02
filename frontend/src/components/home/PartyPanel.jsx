@@ -98,7 +98,10 @@ export default function PartyPanel({ room, onToast }) {
   return (
     <section className="tv-party" aria-label="Tu sala">
       <div className="tv-party-head">
-        <div>
+        <button type="button" className="tv-leave-btn tv-leave-btn--icon" onClick={leave} aria-label="Salir de la sala" title="Salir de la sala">
+          <Icon name="logout" size={18} strokeWidth={2.6} />
+        </button>
+        <div className="tv-party-codebox">
           <p className="tv-party-kicker">Código de sala</p>
           <p className="tv-party-code">{room.code}</p>
         </div>
@@ -164,10 +167,6 @@ export default function PartyPanel({ room, onToast }) {
         </p>
       )}
 
-      <button type="button" className="tv-leave-btn" onClick={leave}>
-        <Icon name="logout" size={16} strokeWidth={2.6} />
-        Salir de la sala
-      </button>
     </section>
   );
 }

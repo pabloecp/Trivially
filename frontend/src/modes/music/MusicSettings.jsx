@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import Icon from "../../components/home/Icon.jsx";
 import SpotifyIcon from "../../components/home/SpotifyIcon.jsx";
+import { playlistLabel } from "./playlistLabel.js";
 import { api } from "../../lib/api.js";
 import { useApp } from "../../lib/store.jsx";
 
@@ -249,8 +250,8 @@ export default function MusicSettings({ room, catalog, updateConfig, onToast, ch
         <legend className="tv-label">Playlists</legend>
         <div className="tv-picks">
           {playlists.map((p) => {
-            // "Most Streamed Songs on Spotify · Español" shows as "Español"; the full name is the tooltip.
-            const label = p.name.split(" · ").pop();
+            // "Most Streamed Songs on Spotify · Español" shows as "Top 100 Español"; the full name is the tooltip.
+            const label = playlistLabel(p);
             return (
               <button
                 key={p.id}
