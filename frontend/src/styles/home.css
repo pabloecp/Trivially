@@ -2178,9 +2178,18 @@ fieldset.tv-steppers { margin: 0; padding: 0; border: 0; min-width: 0; }
 
 /* ---------- Room card: players you can tap, leave button ---------- */
 /* Inicio while in a room: the first tap turns it into the "leave?" question. */
-.tv-app .tv-chip--home.is-confirm { background: var(--tv-danger-bg); color: var(--tv-danger); }
-.tv-chip--home.is-confirm .tv-avatar { background: var(--tv-danger); color: var(--p-ink); }
-[data-theme="light"] .tv-chip--home.is-confirm .tv-avatar { color: #fff; }
+/* "¿Salir de la sala?": the same soft red as the "¿Seguro? Toca otra vez" button, all of it (fill, icon, letters). */
+.tv-app .tv-chip--home.is-confirm {
+  /* Solid: the soft red already blended into the box colour, so nothing shows through from the page behind. */
+  --confirm-bg: color-mix(in srgb, var(--p-bad) 16%, var(--tv-surface));
+  --confirm-edge: color-mix(in srgb, var(--p-bad) 28%, var(--tv-edge));
+  background: var(--confirm-bg);
+  box-shadow: 0 3px 0 var(--confirm-edge);
+  color: var(--tv-danger);
+}
+.tv-app .tv-chip--home.is-confirm:hover { box-shadow: 0 5px 0 var(--confirm-edge); }
+.tv-app .tv-chip--home.is-confirm:active { box-shadow: 0 0 0 var(--confirm-edge); }
+.tv-chip--home.is-confirm .tv-avatar { background: color-mix(in srgb, var(--p-bad) 24%, var(--tv-surface)); color: var(--tv-danger); }
 
 /* A player is a button: the whole chip lights up on hover, and tapping it opens their menu. */
 .tv-player { position: relative; padding: 0; transition: opacity 0.3s ease, box-shadow 0.15s ease; }
@@ -2264,6 +2273,15 @@ fieldset.tv-steppers { margin: 0; padding: 0; border: 0; min-width: 0; }
   border-radius: 16px;
 }
 .tv-party-codebox { flex: 1; min-width: 0; }
+.tv-party > * { min-width: 0; }
+.tv-invite-btn { flex-shrink: 0; }
+/* Phones: the code, leave and invite buttons must fit one row inside the card. */
+@media (max-width: 520px) {
+  .tv-party-head { gap: 10px; }
+  .tv-party-head .tv-party-code { font-size: clamp(22px, 7.4vw, 30px); letter-spacing: 0.06em; }
+  .tv-invite-btn { width: 46px; padding: 0; justify-content: center; }
+  .tv-invite-label { display: none; }
+}
 .tv-theme-btn { width: auto; gap: 6px; padding: 0 14px; font-weight: 800; font-size: 14px; white-space: nowrap; display: inline-flex; align-items: center; }
 .tv-chip--back { margin-right: auto; flex-shrink: 0; }
 .tv-chip--back .tv-avatar { background: var(--brand); color: var(--on-brand); }
