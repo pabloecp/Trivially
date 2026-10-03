@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useApp } from "../../lib/store.jsx";
 import { findMode } from "../../modes/index.js";
 import Avatar from "./Avatar.jsx";
@@ -48,11 +48,11 @@ function PlayerMenu({ player, isMe, canManage, onClose, onToast }) {
       {player.isGuest ? (
         <p className="tv-player-menu-note">{isMe ? "Juegas como invitado" : "Juega como invitado"}: sin perfil</p>
       ) : (
-        // A new tab, so nobody loses their seat in the room.
-        <a role="menuitem" className="tv-player-menu-item" href={profilePath(player.id)} target="_blank" rel="noopener" onClick={onClose}>
+        // Same tab: the socket stays connected, so the seat is kept, and the profile has a way back to the room.
+        <Link role="menuitem" className="tv-player-menu-item" to={profilePath(player.id)} onClick={onClose}>
           <Icon name="user" size={16} strokeWidth={2.6} />
           {isMe ? "Ver mi perfil" : "Ver perfil"}
-        </a>
+        </Link>
       )}
       {canManage && (
         <button type="button" role="menuitem" className="tv-player-menu-item" onClick={togglePermission}>

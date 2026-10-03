@@ -1269,6 +1269,7 @@
 
 /* ---------- Shared page pieces (login, profile, game) ---------- */
 .tv-page { display: grid; gap: 20px; width: 100%; max-width: 1000px; margin: 0 auto; }
+.tv-profile-back { justify-self: start; }
 .tv-page-title {
   margin: 0;
   font-family: var(--tv-display);
