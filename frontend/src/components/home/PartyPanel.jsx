@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useApp } from "../../lib/store.jsx";
 import { findMode } from "../../modes/index.js";
 import Avatar from "./Avatar.jsx";
@@ -17,7 +17,7 @@ function playerTag(player, { isMe, isHost }) {
 // What tapping a player offers: their profile (registered players), and for the host, letting them change the
 // match settings or not.
 function PlayerMenu({ player, isMe, canManage, onClose, onToast }) {
-  const { toggleConfigPermission } = useApp();
+  const { toggleConfigPermission, kickPlayer } = useApp();
   const ref = useRef(null);
 
   useEffect(() => {
@@ -43,21 +43,37 @@ function PlayerMenu({ player, isMe, canManage, onClose, onToast }) {
     }
   }
 
+  async function kick() {
+    onClose();
+    try {
+      await kickPlayer(player.id);
+      onToast?.(`Sacaste a ${player.name} de la sala`, "check");
+    } catch (err) {
+      onToast?.(err.message || "No se pudo sacar al jugador");
+    }
+  }
+
   return (
     <div ref={ref} className="tv-player-menu" role="menu">
       {player.isGuest ? (
         <p className="tv-player-menu-note">{isMe ? "Juegas como invitado" : "Juega como invitado"}: sin perfil</p>
       ) : (
-        // A new tab, so nobody loses their seat in the room.
-        <a role="menuitem" className="tv-player-menu-item" href={profilePath(player.id)} target="_blank" rel="noopener" onClick={onClose}>
+        // Same tab: the socket stays connected, so the seat is kept, and the profile has a way back to the room.
+        <Link role="menuitem" className="tv-player-menu-item" to={profilePath(player.id)} onClick={onClose}>
           <Icon name="user" size={16} strokeWidth={2.6} />
           {isMe ? "Ver mi perfil" : "Ver perfil"}
-        </a>
+        </Link>
       )}
       {canManage && (
         <button type="button" role="menuitem" className="tv-player-menu-item" onClick={togglePermission}>
           <Icon name={player.canEditConfig ? "lock" : "check"} size={16} strokeWidth={2.8} />
           {player.canEditConfig ? "Quitar permiso de ajustes" : "Dar permiso de ajustes"}
+        </button>
+      )}
+      {canManage && (
+        <button type="button" role="menuitem" className="tv-player-menu-item tv-player-menu-item--danger" onClick={kick}>
+          <Icon name="logout" size={16} strokeWidth={2.6} />
+          Sacar de la sala
         </button>
       )}
     </div>

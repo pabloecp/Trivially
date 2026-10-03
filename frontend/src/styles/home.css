@@ -1106,7 +1106,8 @@
   transition: opacity 0.3s ease;
 }
 .tv-player.is-me { box-shadow: 0 3px 0 var(--tv-option-edge), inset 0 0 0 2px var(--tv-yellow); }
-.tv-player.is-away { opacity: 0.5; }
+/* Only the player row fades while they reconnect, not the menu opened from it. */
+.tv-player.is-away .tv-player-btn { opacity: 0.5; }
 .tv-player-avatar {
   position: relative;
   flex-shrink: 0;
@@ -1269,6 +1270,7 @@
 
 /* ---------- Shared page pieces (login, profile, game) ---------- */
 .tv-page { display: grid; gap: 20px; width: 100%; max-width: 1000px; margin: 0 auto; }
+.tv-profile-back { justify-self: start; }
 .tv-page-title {
   margin: 0;
   font-family: var(--tv-display);
@@ -2242,6 +2244,7 @@ fieldset.tv-steppers { margin: 0; padding: 0; border: 0; min-width: 0; }
 }
 .tv-player-menu-item:hover,
 .tv-player-menu-item:focus-visible { background: var(--tv-option-bg); }
+.tv-player-menu-item--danger { color: var(--tv-danger); }
 .tv-player-menu-note { margin: 0; padding: 10px 12px; font-weight: 700; font-size: 13px; color: var(--tv-text-3); }
 
 /* Leaving the room: small and red, so it reads as "get out". */

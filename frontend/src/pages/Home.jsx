@@ -125,7 +125,7 @@ function shake(tile) {
 }
 
 export default function Home() {
-  const { user, room, joinRoom, setGame } = useApp();
+  const { user, room, joinRoom, setGame, kickedNotice, setKickedNotice } = useApp();
   const { code: inviteParam } = useParams();
   const inviteCode = inviteParam?.toUpperCase();
   const nav = useNavigate();
@@ -146,6 +146,12 @@ export default function Home() {
     clearTimeout(toastTimer.current);
     toastTimer.current = setTimeout(() => setToast(null), 2600);
   }, []);
+
+  useEffect(() => {
+    if (!kickedNotice) return;
+    showToast(kickedNotice, "logout");
+    setKickedNotice("");
+  }, [kickedNotice]);
 
   function openSheet(mode = null, joinCode = null) {
     setSheetMode(mode);
