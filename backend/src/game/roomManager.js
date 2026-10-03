@@ -108,6 +108,7 @@ export class RoomManager {
   }
 
   addPlayer(room, user, isHost = false) {
+    if (room.kicked?.has(user.id)) throw new Error("El anfitrión te sacó de esta sala");
     const existing = room.players.get(user.id);
     const isGuest = Boolean(user.isGuest ?? (user.id?.startsWith("gst_") || !user.email));
     const player = existing || {
@@ -244,6 +245,22 @@ export class RoomManager {
       granted = true;
     }
     return { granted, coHosts: [...room.coHosts] };
+  }
+
+  // The host removes a player for good: their seat goes (even mid-match) and they can't join this room again.
+  kick(room, hostUserId, targetUserId) {
+    if (!room) throw new Error("Sala no encontrada");
+    if (room.hostId !== hostUserId) throw new Error("Solo el anfitrión puede sacar jugadores");
+    if (hostUserId === targetUserId) throw new Error("No puedes sacarte a ti mismo");
+    const player = room.players.get(targetUserId);
+    if (!player) throw new Error("El jugador no está en la sala");
+    clearTimeout(player.dropTimer);
+    if (player.socketId) this.socketToRoom.delete(player.socketId);
+    room.players.delete(targetUserId);
+    room.coHosts = (room.coHosts || []).filter((id) => id !== targetUserId);
+    room.kicked ||= new Set();
+    room.kicked.add(targetUserId);
+    return { socketId: player.socketId, name: player.name };
   }
 
   updateConfig(room, userId, config) {

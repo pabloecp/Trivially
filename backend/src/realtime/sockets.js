@@ -112,6 +112,22 @@ export function attachSockets(io, rooms) {
       }
     });
 
+    socket.on("room:kick", (targetUserId, ack) => {
+      try {
+        const { room, userId } = requireRoom(rooms, socket);
+        const { socketId } = rooms.kick(room, userId, targetUserId);
+        const target = socketId && io.sockets.sockets.get(socketId);
+        if (target) {
+          target.leave(room.code);
+          target.emit("room:kicked", { code: room.code });
+        }
+        ack?.({ ok: true, state: rooms.publicState(room, userId) });
+        io.to(room.code).emit("room:state", rooms.publicState(room));
+      } catch (err) {
+        ack?.({ ok: false, error: err.message });
+      }
+    });
+
     socket.on("room:ready", (ready, ack) => {
       try {
         const { room, userId } = requireRoom(rooms, socket);
