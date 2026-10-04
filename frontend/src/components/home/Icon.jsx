@@ -103,6 +103,15 @@ const PATHS = {
   ),
   bolt: <path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z" />,
   star: <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />,
+  // Four answer tiles: the "Opción múltiple" mode.
+  grid: (
+    <>
+      <rect x="3" y="3" width="7.5" height="7.5" rx="2.2" />
+      <rect x="13.5" y="3" width="7.5" height="7.5" rx="2.2" />
+      <rect x="3" y="13.5" width="7.5" height="7.5" rx="2.2" />
+      <rect x="13.5" y="13.5" width="7.5" height="7.5" rx="2.2" />
+    </>
+  ),
   // Scalloped badge with a check cut out, like Instagram's verified mark. The badge takes the text colour.
   verified: (
     <>

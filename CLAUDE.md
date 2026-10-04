@@ -18,7 +18,7 @@ node backend/src/game/answers.test.js   # run one test file
 npm run build --prefix frontend         # production build to frontend/dist
 ```
 
-`.claude/launch.json` defines `trivially-dev` (root `npm run dev`, port 5173) for the preview tools.
+`.claude/launch.json` defines `trivially-dev` (root `npm run dev`, port 5173) for the preview tools. The preview tools pass `PORT=5173` to the whole command, which makes the API collide with Vite, so start `trivially-api` (port 8080) and `trivially-web` (port 5173) separately instead.
 
 Tests are standalone scripts using `node:assert/strict`. There is no test runner: each file runs top to bottom and prints `"<name> ok"`. A new test file must be appended to the `&&` chain in `backend/package.json` `scripts.test` or it won't run.
 
@@ -29,12 +29,20 @@ Tests are standalone scripts using `node:assert/strict`. There is no test runner
 ### Server-authoritative game loop (backend)
 
 - `backend/src/game/roomManager.js` holds all game state in memory. Rooms live in a `Map` keyed by code, plus a `socketToRoom` map from socket id to `{code, userId}`. Nothing about rooms is persisted, so a server restart drops every room.
-- A room is a party that outlives any one game. `room.game` is `null` while everyone is on the Home screen, or a game id from `GAME_IDS` (currently only `"musica"`). Only the host can change it, with `setGame()` (socket `room:setGame`), which also abandons any match in progress via `resetMatch()`. `room:create` without a `game` field defaults to `"musica"` for older clients.
+- A room is a party that outlives any one game. `room.game` is `null` while everyone is on the Home screen, or a game id from `GAME_IDS` (`"musica"` and `"opciones"`). Only the host can change it, with `setGame()` (socket `room:setGame`), which also abandons any match in progress via `resetMatch()`. `room:create` without a `game` field defaults to `"musica"` for older clients.
 - Leaving and dropping out are different. `leave()` (explicit `room:leave`) removes the player right away. `disconnect()` marks them `connected: false` and keeps their seat and host role for `RECONNECT_GRACE_MS` (20s) so a reload doesn't kick them out. `addPlayer()` with the same user id reclaims the seat. When the last connected player goes, the room is destroyed.
 - Phases: `lobby → countdown (3s) → playing (config.roundMs, 15s by default) → reveal (7s) →` the next round's countdown, until `finished`. `setPhase()` owns the single `room.timer`, and every transition calls `rooms.onPhaseChange`. `sockets.js` wires that hook to broadcast `room:state`, and `watchRoom()` also re-broadcasts about once a second while a match runs.
 - `publicState(room, forUserId)` is the **only** serializer sent to clients, and it is where secrets are withheld. Other players' answers and the current track's metadata are hidden until `reveal`. Only `audio.previewUrl` is exposed during countdown and playing. `searchCatalog` (the autocomplete list) is included only during `playing`. The per-user `me` block is included only when `forUserId` is passed, which happens in ack responses, not broadcasts. Any new room or player field must be added here deliberately.
 - `game:answer` accepts either the exact track id (the player picked an autocomplete suggestion) or free text, which is matched with `isCorrectAnswer` in `game/answers.js`. That function normalizes accents and strips parentheticals, then applies Levenshtein and substring tolerance. Scoring is in `game/scoring.js`: 800 base, up to 500 speed bonus, and a streak bonus capped at 400.
 - When a match finishes, `applyMatchStats` writes cumulative per-user stats to the store (see Persistence below).
+- **Opción múltiple** (`"opciones"`, `QUIZ_GAME`) reuses the same loop. Its settings live in `config.quiz` (`rounds` 5–20, `roundMs` 5–30 s, `difficulty` `facil|media|dificil|mixta`), and `game/quiz.js` has the limits and `pickQuestions`, which draws the match's questions into `room.tracks` (in place of songs) and shuffles each one's options. `game:answer` takes the option index: `submitQuizAnswer` only records it, and only during `playing` (no grace period, since the reveal shows the right option). `gradeQuiz()` scores every answer at once when the reveal starts, so no ack, score or streak tells anyone whether an answer was right before then. `publicQuestion()` never sends the question id, withholds the options until `playing`, and withholds the right one and the per-option `picks` until `reveal`. The reveal lasts `QUIZ_REVEAL_MS` (5s). The frontend lives in `src/modes/quiz/` (route `/quiz/:code`) with styles in `styles/quiz.css`.
+
+### Question bank
+
+- **The real questions must never be committed: the GitHub repo is public.** They live in the Supabase table `questions` and in the git-ignored file `backend/private/questions.json`.
+- `questions/questionBank.js` `loadQuestions()` runs at boot and passes the bank to `RoomManager`. It reads the Supabase table (active rows), else the private file, else the obviously fake placeholders in `questions/sampleQuestions.js`. The table has RLS on and no policies, so only the backend's service-role key can read it. Never add a public read policy or an API route that lists questions.
+- Row shape (`questions/questionSchema.js`, `backend/supabase/schema.sql`): `id, type, mode, category, difficulty, language, prompt, data, active, created_at`. Only `type = multiple_choice` is played so far, with `data = { options: [4 texts], correct: index }`; `open`, `true_false` and `audio` are reserved. `mode` is the game id (`opciones`) or null for any. Categories are the ids in `QUESTION_CATEGORIES` (`ciencia`, `historia`, `literatura`, `musica`, `arte`, `deportes`, `peliculas_series`, `videojuegos`, `geografia`, `cultura`); players see the display names.
+- `npm run questions:upload --prefix backend` validates the private file (nothing is uploaded if any row is wrong) and upserts it by id. Rows without an id get a uuid written back into the file. `-- --check` only validates and prints counts per category and difficulty; `-- --prune` also deletes database rows that aren't in the file.
 
 ### Socket protocol
 

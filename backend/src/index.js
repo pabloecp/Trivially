@@ -10,6 +10,7 @@ import { loadCatalog } from "./catalog/catalogProvider.js";
 import { TrackResolver } from "./catalog/trackResolver.js";
 import { flushStore, initStore } from "./db/store.js";
 import { RoomManager } from "./game/roomManager.js";
+import { loadQuestions } from "./questions/questionBank.js";
 import {
   createApiRouter,
   handleGoogleCallback,
@@ -30,7 +31,8 @@ const PORT = Number(process.env.PORT || 8080);
 
 const catalog = await loadCatalog();
 const store = await initStore();
-const rooms = new RoomManager({ catalog, store, resolver: new TrackResolver({ catalog }) });
+const questions = await loadQuestions();
+const rooms = new RoomManager({ catalog, store, questions, resolver: new TrackResolver({ catalog }) });
 
 const app = express();
 app.set("trust proxy", 1);

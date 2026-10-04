@@ -16,6 +16,7 @@ Estilo: entre app y web. Tarjetas y botones redondeados y "gordos" (sombra sóli
   - Cultura general → naranja `#FFAB00`
   - Cine y series → morado `#9336FD`
   - Geografía → turquesa `#33A8C7`
+  - Opción múltiple → azul cielo `#5B8CFF` con acento mantequilla `#FFD66B` (tokens `--tv-qm`/`--tv-ql`/`--tv-qd`/`--tv-qa` en `styles/quiz.css`; dificultad = profundidad del azul, Mixta en mantequilla). Sus respuestas A–D tienen otra paleta fija de tonos joya: frambuesa `#F2456B`, turquesa `#14B8A6`, oro `#FFB52E`, índigo `#5B5FEF` (`--tv-q1`…`--tv-q4`, `.tv-opt-0`…`.tv-opt-3`). Sin degradados entre colores distintos
   - Extras de la paleta: Neon Ice `#52E3E1`, Grapefruit `#F77976`, Mauve `#D883FF` (avatares, fondos).
 - Aciertos en verde y errores en rojo son semánticos: no los cambies por colores de marca.
 - Texto sobre lima/naranja/turquesa/amarillo va oscuro (`#0A0A0A`); sobre rosa/morado va blanco.

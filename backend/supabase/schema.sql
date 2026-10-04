@@ -82,3 +82,27 @@ create table if not exists public.spotify_songs (
   updated_at       timestamptz not null default now()
 );
 alter table public.spotify_songs enable row level security;
+
+-- ---------------------------------------------------------------------------
+-- Preguntas de los modos de trivia. Se rellena con `npm run questions:upload --prefix backend`, que copia
+-- backend/private/questions.json (fuera del repo, que es público). Solo el backend las lee: con RLS activado y sin
+-- políticas, nadie puede leerlas desde el navegador con la anon key. Nunca añadas una política de lectura pública.
+--   type        multiple_choice | open | true_false | audio (de momento solo se juega multiple_choice)
+--   mode        modo de juego que la usa ('opciones'); null = cualquiera
+--   category    ciencia, historia, literatura, musica, arte, deportes, peliculas_series, videojuegos, geografia, cultura
+--   data        según el tipo; multiple_choice: { "options": ["…", "…", "…", "…"], "correct": 2 }
+-- ---------------------------------------------------------------------------
+create table if not exists public.questions (
+  id          uuid primary key default gen_random_uuid(),
+  type        text not null check (type in ('multiple_choice', 'open', 'true_false', 'audio')),
+  mode        text,
+  category    text not null,
+  difficulty  text not null check (difficulty in ('facil', 'media', 'dificil')),
+  language    text not null default 'es',
+  prompt      text not null,
+  data        jsonb not null,
+  active      boolean not null default true,
+  created_at  timestamptz not null default now()
+);
+create index if not exists questions_pick_idx on public.questions (type, mode, difficulty) where active;
+alter table public.questions enable row level security;

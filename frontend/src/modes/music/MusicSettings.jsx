@@ -1,49 +1,13 @@
 import { useEffect, useState } from "react";
 import Icon from "../../components/home/Icon.jsx";
 import SpotifyIcon from "../../components/home/SpotifyIcon.jsx";
+import Stepper from "../../components/home/Stepper.jsx";
 import { api } from "../../lib/api.js";
 import { useApp } from "../../lib/store.jsx";
 
 // Both steppers move in steps of 5. The server keeps the same limits (roomManager.updateConfig).
 const ROUNDS = { min: 5, max: 25, step: 5 };
 const SECONDS = { min: 10, max: 30, step: 5 };
-
-function Stepper({ label, value, unit, limits, onChange }) {
-  const { min, max, step } = limits;
-  return (
-    <div className="tv-stepper" role="group" aria-label={label}>
-      <span className="tv-label">{label}</span>
-      <div className="tv-stepper-row">
-        <button
-          type="button"
-          className="tv-stepper-btn"
-          onClick={() => onChange(Math.max(min, value - step))}
-          disabled={value <= min}
-          aria-label={`Menos ${label.toLowerCase()}`}
-        >
-          <Icon name="chevron" size={22} strokeWidth={3} className="tv-stepper-down" />
-        </button>
-        <span key={value} className="tv-stepper-value" aria-live="polite">
-          {value}
-          {unit && <small>{unit}</small>}
-        </span>
-        <button
-          type="button"
-          className="tv-stepper-btn"
-          onClick={() => onChange(Math.min(max, value + step))}
-          disabled={value >= max}
-          aria-label={`Más ${label.toLowerCase()}`}
-        >
-          <Icon name="chevron" size={22} strokeWidth={3} className="tv-stepper-up" />
-        </button>
-      </div>
-      <span className="tv-stepper-range">
-        de {min} a {max}
-        {unit ? ` ${unit}` : ""}
-      </span>
-    </div>
-  );
-}
 
 // A Spotify playlist's cover, or the Spotify logo when it has none.
 function PlaylistArt({ image }) {

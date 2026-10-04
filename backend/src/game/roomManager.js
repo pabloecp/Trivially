@@ -4,11 +4,14 @@ import { hydrateSong } from "../catalog/catalogProvider.js";
 import { cleanTitle } from "../catalog/trackResolver.js";
 import { applyMatchStats } from "../db/store.js";
 import { isCorrectAnswer, normalizeAnswer } from "./answers.js";
+import { countQuestions, defaultQuizConfig, mergeQuizConfig, pickQuestions, QUIZ_REVEAL_MS } from "./quiz.js";
 import { COUNTDOWN_MS, REVEAL_MS, ROUND_MS, scoreAnswer } from "./scoring.js";
 
 const CODE_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 // Games the host can move a room into (ids match frontend/src/modes/index.js). `null` is the Home screen.
-export const GAME_IDS = ["musica"];
+export const GAME_IDS = ["musica", "opciones"];
+// "Opción múltiple": its settings live in config.quiz and its questions take the place of songs in room.tracks.
+export const QUIZ_GAME = "opciones";
 // Custom playlists from an owner's Spotify go in config.playlistIds with this prefix ("sp:<spotify playlist id>").
 export const SPOTIFY_PREFIX = "sp:";
 // Rounds are chosen this many rounds ahead, so their audio and cover are downloaded before they start.
@@ -39,6 +42,7 @@ function defaultConfig(catalog) {
     rounds: 10,
     roundMs: ROUND_MS,
     playlistIds: playlist ? [playlist.id] : [],
+    quiz: defaultQuizConfig(),
   };
 }
 
@@ -66,8 +70,10 @@ function publicPlayer(player, phase, room) {
 }
 
 export class RoomManager {
-  constructor({ catalog, store, resolver = null, reconnectGraceMs = RECONNECT_GRACE_MS }) {
+  constructor({ catalog, store, questions = [], resolver = null, reconnectGraceMs = RECONNECT_GRACE_MS }) {
     this.catalog = catalog;
+    // The trivia question bank (backend/src/questions/questionBank.js loadQuestions).
+    this.questions = questions;
     this.resolver = resolver;
     this.store = store;
     this.reconnectGraceMs = reconnectGraceMs;
@@ -252,6 +258,7 @@ export class RoomManager {
     }
     if (room.phase !== "lobby") throw new Error("La partida ya comenzó");
     const next = { ...room.config, ...config };
+    if (config?.quiz) next.quiz = mergeQuizConfig(room.config.quiz, config.quiz);
     // Same limits as the settings on screen: 5–25 rounds, 10–30 seconds to guess.
     if (config?.rounds != null) next.rounds = Math.min(25, Math.max(5, Math.round(Number(config.rounds)) || 10));
     if (config?.roundMs != null) next.roundMs = Math.min(30000, Math.max(10000, Math.round(Number(config.roundMs)) || ROUND_MS));
@@ -367,7 +374,7 @@ export class RoomManager {
   // Chooses the songs of the coming rounds that haven't been chosen yet; songs already played are avoided while
   // there are others. Spotify songs found meanwhile join the draw.
   pickAhead(room) {
-    if (room.config?.customTracks?.length) return [];
+    if (room.game === QUIZ_GAME || room.config?.customTracks?.length) return [];
     const until = Math.min(room.totalRounds, room.currentRound + 1 + LOOKAHEAD);
     const added = [];
     while (room.tracks.length < until) {
@@ -405,14 +412,22 @@ export class RoomManager {
 
   start(room, userId) {
     if (room.hostId !== userId) throw new Error("Solo el Host puede iniciar");
-    if (room.game !== "musica") throw new Error("Elige un juego antes de empezar");
+    if (!GAME_IDS.includes(room.game)) throw new Error("Elige un juego antes de empezar");
     if (room.phase !== "lobby") throw new Error("La partida ya comenzó");
     const connected = [...room.players.values()].filter((p) => p.connected);
     if (connected.length < 1) {
       throw new Error("Se necesita al menos 1 jugador");
     }
     room.currentRound = 0;
-    if (room.config?.customTracks && room.config.customTracks.length > 0) {
+    if (room.game === QUIZ_GAME) {
+      const quiz = mergeQuizConfig(room.config.quiz);
+      const available = countQuestions(this.questions, quiz.difficulty);
+      if (available < quiz.rounds) {
+        throw new Error(`Solo hay ${available} preguntas de esa dificultad. Baja el número de preguntas.`);
+      }
+      room.tracks = pickQuestions(this.questions, quiz.rounds, quiz.difficulty);
+      room.totalRounds = room.tracks.length;
+    } else if (room.config?.customTracks && room.config.customTracks.length > 0) {
       const shuffled = [...room.config.customTracks].sort(() => Math.random() - 0.5);
       room.tracks = shuffled.slice(0, Math.min(room.config.rounds || 10, shuffled.length));
       room.totalRounds = room.tracks.length;
@@ -523,14 +538,21 @@ export class RoomManager {
     this.setPhase(room, "countdown", COUNTDOWN_MS, () => this.beginPlaying(room));
   }
 
+  /** How long players have to answer each round in the room's game. */
+  roundMs(room) {
+    if (room.game === QUIZ_GAME) return mergeQuizConfig(room.config.quiz).roundMs;
+    return room.config.roundMs || ROUND_MS;
+  }
+
   beginPlaying(room) {
-    this.setPhase(room, "playing", room.config.roundMs || ROUND_MS, () => this.beginReveal(room));
+    this.setPhase(room, "playing", this.roundMs(room), () => this.beginReveal(room));
   }
 
   beginReveal(room) {
     const track = room.tracks[room.currentRound];
     const now = Date.now();
-    const duration = room.config.roundMs || ROUND_MS;
+    const duration = this.roundMs(room);
+    if (room.game === QUIZ_GAME && track) this.gradeQuiz(room, track);
     room.players.forEach((player) => {
       if (!player.lastAnswer) {
         player.streak = 0;
@@ -538,7 +560,7 @@ export class RoomManager {
         player.lastAnswer = { text: "", correct: false, at: now };
       }
     });
-    this.setPhase(room, "reveal", REVEAL_MS, () => this.advance(room));
+    this.setPhase(room, "reveal", room.game === QUIZ_GAME ? QUIZ_REVEAL_MS : REVEAL_MS, () => this.advance(room));
     return { track, duration };
   }
 
@@ -618,6 +640,7 @@ export class RoomManager {
     if (player.lastAnswer) {
       return player.lastAnswer;
     }
+    if (room.game === QUIZ_GAME) return this.submitQuizAnswer(room, player, answerText);
 
     // Grace period for network latency if reveal just started
     const isPlaying = room.phase === "playing";
@@ -637,7 +660,7 @@ export class RoomManager {
     const scored = scoreAnswer({
       correct,
       remainingMs,
-      durationMs: room.config.roundMs || ROUND_MS,
+      durationMs: this.roundMs(room),
       streak: player.streak,
     });
     player.lastAnswer = {
@@ -651,12 +674,48 @@ export class RoomManager {
     player.score += scored.points;
     if (correct) {
       player.correct += 1;
-      player.answerTimes.push((room.config.roundMs || ROUND_MS) - remainingMs);
+      player.answerTimes.push(this.roundMs(room) - remainingMs);
       if (!player.artistHits) player.artistHits = {};
       const artistKey = track.artistId || (track.artistName ? track.artistName.toLowerCase().replace(/\s+/g, "-") : "varios");
       player.artistHits[artistKey] = (player.artistHits[artistKey] || 0) + 1;
     }
     this.answered(room, player);
+  }
+
+  /**
+   * Opción múltiple: the player's choice (an option index) is only recorded here. It is graded at the reveal
+   * (gradeQuiz), so until then nothing that reaches any client (the answer ack, scores, streaks) says whether it was
+   * right. Answers are only taken while the question is open: during the reveal the right option is on screen.
+   */
+  submitQuizAnswer(room, player, value) {
+    if (room.phase !== "playing") throw new Error("No se aceptan respuestas ahora");
+    const question = room.tracks[room.currentRound];
+    if (!question) throw new Error("No hay pregunta activa");
+    const choice = Number(value);
+    if (!Number.isInteger(choice) || choice < 0 || choice >= question.options.length) throw new Error("Elige una de las opciones");
+    player.lastAnswer = { text: question.options[choice], choice, at: Date.now() };
+    player.answerRemainingMs = Math.max(0, (room.phaseEndsAt || Date.now()) - Date.now());
+    this.answered(room, player);
+  }
+
+  /** Opción múltiple, when the round ends: scores every answer to the question (same scoring as the songs). */
+  gradeQuiz(room, question) {
+    const durationMs = this.roundMs(room);
+    for (const player of room.players.values()) {
+      const answer = player.lastAnswer;
+      if (!answer || answer.skipped || !Number.isInteger(answer.choice)) continue;
+      const correct = answer.choice === question.answer;
+      const scored = scoreAnswer({ correct, remainingMs: player.answerRemainingMs || 0, durationMs, streak: player.streak });
+      answer.correct = correct;
+      player.lastPoints = scored.points;
+      player.streak = scored.streak;
+      player.bestStreak = Math.max(player.bestStreak, player.streak);
+      player.score += scored.points;
+      if (correct) {
+        player.correct += 1;
+        player.answerTimes.push(durationMs - (player.answerRemainingMs || 0));
+      }
+    }
   }
 
   /** "Saltar": the player gives up on this round. No points, and the streak starts over. */
@@ -714,7 +773,10 @@ export class RoomManager {
       totalRounds: room.totalRounds || room.tracks.length || room.config.rounds,
       // In the lobby: how many different songs the chosen playlists have ready (a match needs one per round), and
       // whether iTunes is making the Spotify songs wait.
-      songsReady: room.phase === "lobby" ? this.songPool(room).length : undefined,
+      songsReady: room.phase === "lobby" && room.game !== QUIZ_GAME ? this.songPool(room).length : undefined,
+      // Opción múltiple, in the lobby: how many different questions the chosen difficulty has (one per round).
+      questionsReady:
+        room.phase === "lobby" && room.game === QUIZ_GAME ? countQuestions(this.questions, mergeQuizConfig(room.config.quiz).difficulty) : undefined,
       itunesSlow: Boolean(this.resolver?.slow),
       // Spotify playlists the host added, with how many of their songs are ready to play.
       customPlaylists: Object.values(room.customPlaylists || {}).map((e) => ({
@@ -738,20 +800,23 @@ export class RoomManager {
       players: [...room.players.values()].map((p) => publicPlayer(p, room.phase, room)),
       audio: null,
       reveal: null,
+      question: null,
       results: null,
     };
 
-    if (track && (room.phase === "countdown" || room.phase === "playing")) {
+    if (room.game === QUIZ_GAME) {
+      if (track) payload.question = this.publicQuestion(room, track);
+    } else if (track && (room.phase === "countdown" || room.phase === "playing")) {
       payload.audio = {
         previewUrl: track.previewUrl,
         round: room.currentRound + 1,
       };
     }
     // Send full search catalog for autocomplete during playing phase
-    if (room.phase === "playing") {
+    if (room.phase === "playing" && room.game !== QUIZ_GAME) {
       payload.searchCatalog = this.buildSearchCatalog(room);
     }
-    if (track && showTrack) {
+    if (track && showTrack && room.game !== QUIZ_GAME) {
       payload.reveal = hydrateSong(this.catalog, track);
     }
     if (room.phase === "finished") {
@@ -783,5 +848,30 @@ export class RoomManager {
         : null;
     }
     return payload;
+  }
+
+  /**
+   * The current question of Opción múltiple. The options only show once the round is playing; which one is right,
+   * and how many players picked each, only from the reveal on.
+   */
+  publicQuestion(room, question) {
+    const showOptions = ["playing", "reveal", "finished"].includes(room.phase);
+    const showAnswer = room.phase === "reveal" || room.phase === "finished";
+    const picks = question.options.map(() => 0);
+    if (showAnswer) {
+      for (const p of room.players.values()) {
+        if (Number.isInteger(p.lastAnswer?.choice)) picks[p.lastAnswer.choice] += 1;
+      }
+    }
+    // No question id: with it a player could recognise a question they have seen before (or look it up).
+    return {
+      round: room.currentRound + 1,
+      text: question.text,
+      category: question.category,
+      difficulty: question.difficulty,
+      options: showOptions ? question.options : null,
+      answer: showAnswer ? question.answer : null,
+      picks: showAnswer ? picks : null,
+    };
   }
 }

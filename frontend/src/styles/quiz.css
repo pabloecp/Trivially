@@ -1,0 +1,345 @@
+/* "Opción múltiple". Loaded after home.css (the quiz modules import both), and builds on its tv- classes.
+   Two palettes, never blended into each other:
+   - the answers (A-D) keep four jewel tones, the same every question: --tv-q1 ... --tv-q4;
+   - the rest of the mode (room screen, settings, buttons, timer) is sky blue with a butter accent: --tv-qm-*
+     (main), --tv-ql-* (light), --tv-qd-* (deep) and --tv-qa-* (accent). Difficulty reads as depth of blue.
+   To try other colours, change only these tokens and the matching --brand values below. */
+
+:root {
+  /* Answers: raspberry, teal, gold, indigo. */
+  --tv-q1-1: #ff6f8e;
+  --tv-q1: #f2456b;
+  --tv-q1-edge: #b82347;
+  --tv-q1-on: #0a0a0a;
+  --tv-q2-1: #3fd3c3;
+  --tv-q2: #14b8a6;
+  --tv-q2-edge: #0e8276;
+  --tv-q2-on: #0a0a0a;
+  --tv-q3-1: #ffcb5c;
+  --tv-q3: #ffb52e;
+  --tv-q3-edge: #c98a00;
+  --tv-q3-on: #0a0a0a;
+  --tv-q4-1: #7c80ff;
+  --tv-q4: #5b5fef;
+  --tv-q4-edge: #3b3fc4;
+  --tv-q4-on: #ffffff;
+
+  /* Interface: sky blue, its light and deep shades, and butter. */
+  --tv-qm-1: #82a8ff;
+  --tv-qm: #5b8cff;
+  --tv-qm-edge: #3a62d6;
+  --tv-qm-on: #0a0a0a;
+  --tv-qm-rgb: 91, 140, 255;
+  --tv-ql-1: #cbdaff;
+  --tv-ql: #a9c2ff;
+  --tv-ql-edge: #7393e6;
+  --tv-ql-on: #0a0a0a;
+  --tv-qd-1: #4f70f0;
+  --tv-qd: #3553d6;
+  --tv-qd-edge: #22389e;
+  --tv-qd-on: #ffffff;
+  --tv-qa-1: #ffe7a3;
+  --tv-qa: #ffd66b;
+  --tv-qa-edge: #cfa53a;
+  --tv-qa-on: #0a0a0a;
+  --tv-qa-rgb: 255, 214, 107;
+}
+
+/* ---------- Colours ---------- */
+/* The four answers. */
+.tv-opt-0 { --c1: var(--tv-q1-1); --c2: var(--tv-q1); --edge: var(--tv-q1-edge); --on: var(--tv-q1-on); }
+.tv-opt-1 { --c1: var(--tv-q2-1); --c2: var(--tv-q2); --edge: var(--tv-q2-edge); --on: var(--tv-q2-on); }
+.tv-opt-2 { --c1: var(--tv-q3-1); --c2: var(--tv-q3); --edge: var(--tv-q3-edge); --on: var(--tv-q3-on); }
+.tv-opt-3 { --c1: var(--tv-q4-1); --c2: var(--tv-q4); --edge: var(--tv-q4-edge); --on: var(--tv-q4-on); }
+/* The interface: the mode's tile, start button and badges, and one colour per difficulty. */
+.tv-c-quiz { --c1: var(--tv-qm-1); --c2: var(--tv-qm); --edge: var(--tv-qm-edge); --on: var(--tv-qm-on); }
+.tv-c-quiz-light { --c1: var(--tv-ql-1); --c2: var(--tv-ql); --edge: var(--tv-ql-edge); --on: var(--tv-ql-on); }
+.tv-c-quiz-deep { --c1: var(--tv-qd-1); --c2: var(--tv-qd); --edge: var(--tv-qd-edge); --on: var(--tv-qd-on); }
+.tv-c-quiz-accent { --c1: var(--tv-qa-1); --c2: var(--tv-qa); --edge: var(--tv-qa-edge); --on: var(--tv-qa-on); }
+
+/* ---------- Room in this game ---------- */
+/* The site's main colour becomes the sky blue (counters, timer, clock, chips...). */
+:root[data-mode="opciones"] {
+  --brand: #5b8cff;
+  --brand-rgb: 91, 140, 255;
+  --brand-hover: #82a8ff;
+  --brand-active: #3a62d6;
+  --border-focus: #5b8cff;
+  --on-brand: #0a0a0a;
+}
+:root[data-mode="opciones"][data-theme="light"] {
+  --brand: #3a6bef;
+  --brand-rgb: 58, 107, 239;
+  --brand-hover: #2f5cd8;
+  --brand-active: #22389e;
+  --border-focus: #3a6bef;
+  --on-brand: #ffffff;
+}
+/* Blue glow at the top like every mode, with a soft touch of butter at the bottom. */
+:root[data-mode="opciones"] .tv-app.tv-app {
+  background:
+    radial-gradient(120% 60% at 50% 0%, rgba(var(--tv-qm-rgb), 0.28), transparent 70%),
+    radial-gradient(50% 35% at 0% 100%, rgba(var(--tv-qa-rgb), 0.08), transparent 70%),
+    var(--tv-bg);
+}
+:root[data-mode="opciones"] .tv-app .tv-blob--1 { background: var(--tv-qm); }
+:root[data-mode="opciones"] .tv-app .tv-blob--2 { background: var(--tv-ql); }
+:root[data-mode="opciones"] .tv-app .tv-blob--3 { background: var(--tv-qa); }
+
+/* ---------- Settings ---------- */
+.tv-diffs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.tv-diff {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  min-height: 60px;
+  padding: 8px 12px 8px 8px;
+  border: 0;
+  border-radius: 18px;
+  background: var(--tv-option-bg);
+  box-shadow: 0 4px 0 var(--tv-option-edge);
+  text-align: left;
+  cursor: pointer;
+  transition: transform 0.2s var(--tv-spring), box-shadow 0.2s ease;
+}
+.tv-app .tv-diff { color: var(--tv-text); }
+.tv-diff:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 6px 0 var(--tv-option-edge); }
+.tv-diff:active:not(:disabled) { transform: translateY(4px); box-shadow: 0 0 0 var(--tv-option-edge); }
+.tv-diff:disabled { cursor: default; }
+.tv-diff-icon {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  background: linear-gradient(155deg, var(--c1), var(--c2));
+  box-shadow: 0 3px 0 var(--edge);
+  color: var(--on);
+}
+.tv-diff-stars { display: flex; gap: 1px; }
+.tv-diff-text { display: grid; min-width: 0; }
+.tv-diff-text strong { font-family: var(--tv-display); font-weight: 600; font-size: 17px; line-height: 1.15; }
+.tv-diff-text small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 700; font-size: 12px; color: var(--tv-text-3); }
+.tv-diff[aria-pressed="true"] {
+  background: linear-gradient(155deg, var(--c1), var(--c2));
+  box-shadow: 0 4px 0 var(--edge);
+  animation: tvPick 0.35s var(--tv-spring);
+}
+.tv-app .tv-diff[aria-pressed="true"] { color: var(--on); }
+.tv-diff[aria-pressed="true"] small { color: inherit; opacity: 0.7; }
+.tv-diff[aria-pressed="true"] .tv-diff-icon { background: #fff; box-shadow: none; color: var(--edge); }
+.tv-diff[aria-pressed="true"]:hover:not(:disabled) { box-shadow: 0 6px 0 var(--edge); }
+
+/* A difficulty as a small filled chip (summary and question). */
+.tv-app .tv-diff-chip { background: var(--c2); color: var(--on); }
+
+/* ---------- Summary ---------- */
+.tv-quiz-preview {
+  background:
+    radial-gradient(120% 90% at 50% 0%, rgba(var(--tv-qm-rgb), 0.18), transparent 70%),
+    var(--tv-option-bg);
+}
+.tv-quiz-tiles { display: grid; grid-template-columns: repeat(2, 30px); gap: 6px; }
+.tv-quiz-tile {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  background: linear-gradient(155deg, var(--c1), var(--c2));
+  box-shadow: 0 3px 0 var(--edge);
+  color: var(--on);
+  font-family: var(--tv-display);
+  font-weight: 700;
+  font-size: 14px;
+  animation: tvQuizHop 2.4s var(--tv-spring) infinite;
+  animation-delay: calc(var(--i) * 0.3s);
+}
+@keyframes tvQuizHop {
+  0%, 60%, 100% { transform: none; }
+  20% { transform: translateY(-6px) rotate(-6deg); }
+  35% { transform: translateY(1px); }
+}
+
+/* ---------- Game ---------- */
+.tv-quiz-q {
+  position: relative;
+  overflow: hidden;
+  overflow: clip;
+  justify-items: center;
+  gap: 14px;
+  padding: 26px 20px;
+  text-align: center;
+}
+.tv-quiz-q-meta { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; }
+.tv-quiz-q-meta .tv-match-chip:not(.tv-diff-chip) { background: var(--tv-option-bg); }
+.tv-quiz-q-text {
+  margin: 0;
+  max-width: 30ch;
+  font-family: var(--tv-display);
+  font-weight: 600;
+  font-size: clamp(22px, 4.6vw, 32px);
+  line-height: 1.2;
+  letter-spacing: 0;
+  color: var(--tv-text);
+  text-wrap: balance;
+  animation: tvRise 0.45s var(--tv-spring) 0.05s backwards;
+}
+.tv-quiz-count {
+  font-family: var(--tv-display);
+  font-weight: 700;
+  font-size: 64px;
+  line-height: 1;
+  color: var(--brand);
+  text-shadow: 0 5px 0 var(--tv-edge);
+  animation: tvCount 0.9s var(--tv-spring);
+}
+
+.tv-quiz-verdict {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: 18px;
+  background: var(--tv-option-bg);
+  animation: tvPop 0.5s var(--tv-spring);
+}
+.tv-quiz-verdict-icon {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 13px;
+  color: #fff;
+}
+.tv-quiz-verdict-title { font-family: var(--tv-display); font-weight: 700; font-size: 22px; color: var(--tv-text); }
+.tv-quiz-verdict--ok { box-shadow: inset 0 0 0 3px #22c55e; }
+.tv-quiz-verdict--ok .tv-quiz-verdict-icon { background: #22c55e; box-shadow: 0 3px 0 #15803d; }
+.tv-quiz-verdict--bad { box-shadow: inset 0 0 0 3px #ef4444; animation: tvPop 0.5s var(--tv-spring), tvShake 0.5s ease 0.3s; }
+.tv-quiz-verdict--bad .tv-quiz-verdict-icon { background: #ef4444; box-shadow: 0 3px 0 #b91c1c; }
+.tv-quiz-verdict--timeout .tv-quiz-verdict-icon { background: #ffab00; box-shadow: 0 3px 0 #cc8800; color: #0a0a0a; }
+
+/* The four answers: one column on phones, a 2 × 2 board from 560px. */
+.tv-quiz-options { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
+@media (min-width: 560px) { .tv-quiz-options { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; } }
+.tv-quiz-opt {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  min-height: 72px;
+  padding: 12px 16px 12px 12px;
+  border: 0;
+  border-radius: 22px;
+  background: linear-gradient(155deg, var(--c1), var(--c2));
+  box-shadow: 0 6px 0 var(--edge);
+  text-align: left;
+  cursor: pointer;
+  transition: transform 0.2s var(--tv-spring), box-shadow 0.2s ease, opacity 0.3s ease, filter 0.3s ease;
+  animation: tvRise 0.45s var(--tv-spring) backwards;
+  animation-delay: calc(var(--i, 0) * 60ms);
+}
+.tv-app .tv-quiz-opt { color: var(--on); }
+.tv-quiz-opt:hover:not(:disabled) { transform: translateY(-3px); box-shadow: 0 9px 0 var(--edge); }
+.tv-quiz-opt:active:not(:disabled) { transform: translateY(6px); box-shadow: 0 0 0 var(--edge); }
+.tv-quiz-opt:disabled { cursor: default; }
+.tv-quiz-opt-letter {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.9);
+  color: var(--edge);
+  font-family: var(--tv-display);
+  font-weight: 700;
+  font-size: 22px;
+}
+.tv-quiz-opt-text {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-family: var(--tv-display);
+  font-weight: 600;
+  font-size: 19px;
+  line-height: 1.2;
+}
+.tv-quiz-opt-mark {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #fff;
+  animation: tvPop 0.5s var(--tv-spring);
+}
+.tv-quiz-opt.is-right .tv-quiz-opt-mark { color: #16a34a; }
+.tv-quiz-opt.is-wrong .tv-quiz-opt-mark { color: #dc2626; }
+.tv-quiz-opt-picks {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  padding: 4px 9px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.14);
+  font-weight: 800;
+  font-size: 13px;
+}
+
+/* Before the options appear: coloured slots that breathe. */
+.tv-quiz-opt.is-waiting { cursor: default; opacity: 0.45; animation: tvQuizWait 1.2s ease-in-out infinite alternate; }
+.tv-quiz-opt.is-waiting .tv-quiz-opt-letter { background: rgba(255, 255, 255, 0.55); }
+@keyframes tvQuizWait { to { opacity: 0.7; } }
+
+/* Answer sent: the chosen one stands out, the rest step back. */
+.tv-quiz-opt.is-picked {
+  transform: translateY(2px) scale(1.02);
+  box-shadow: 0 4px 0 var(--edge), 0 0 0 4px var(--tv-surface), 0 0 0 7px var(--c2);
+  animation: tvPick 0.35s var(--tv-spring);
+}
+.tv-quiz-opt.is-out { opacity: 0.35; filter: saturate(0.4); transform: scale(0.98); }
+/* Reveal: the right one glows, a wrong pick gets a red ring, the others fade out. */
+.tv-quiz-opt.is-right {
+  box-shadow: 0 6px 0 var(--edge), 0 0 0 4px var(--tv-surface), 0 0 0 7px #22c55e;
+  animation: tvQuizRight 0.6s var(--tv-spring);
+}
+.tv-quiz-opt.is-wrong {
+  opacity: 0.7;
+  box-shadow: 0 6px 0 var(--edge), 0 0 0 4px var(--tv-surface), 0 0 0 7px #ef4444;
+}
+@keyframes tvQuizRight {
+  40% { transform: scale(1.05) rotate(-1deg); }
+}
+
+.tv-quiz-keys { color: var(--tv-text-3); }
+@media (hover: none) {
+  .tv-quiz-keys { display: none; }
+}
+@media (max-width: 640px) {
+  .tv-quiz-q { padding: 22px 16px; }
+  .tv-quiz-opt { min-height: 64px; border-radius: 20px; }
+  .tv-quiz-opt-letter { width: 40px; height: 40px; font-size: 20px; }
+  .tv-quiz-opt-text { font-size: 17px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tv-quiz-tile,
+  .tv-quiz-opt,
+  .tv-quiz-opt.is-waiting,
+  .tv-quiz-opt.is-picked,
+  .tv-quiz-opt.is-right,
+  .tv-quiz-count,
+  .tv-quiz-q-text,
+  .tv-quiz-verdict,
+  .tv-diff[aria-pressed="true"] { animation: none; }
+  .tv-quiz-opt.is-picked,
+  .tv-quiz-opt.is-out { transform: none; }
+}

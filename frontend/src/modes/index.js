@@ -1,5 +1,7 @@
 import MusicLobbyPanel from "./music/LobbyPanel.jsx";
 import MusicStartButton from "./music/StartButton.jsx";
+import QuizLobbyPanel from "./quiz/LobbyPanel.jsx";
+import QuizStartButton from "./quiz/StartButton.jsx";
 
 // Game modes shown on the Home screen. To add a new mode, add an entry here with `available: true`, a `Lobby`
 // panel (shown on the room screen while the room waits in that mode) and a `path` for its in-match screens,
@@ -14,6 +16,17 @@ export const GAME_MODES = [
     Lobby: MusicLobbyPanel,
     Start: MusicStartButton,
     path: (room) => `/game/${room.code}`,
+  },
+  {
+    id: "opciones",
+    name: "Opción múltiple",
+    // Sky blue (styles/quiz.css); its answers have their own four colours.
+    color: "quiz",
+    icon: "grid",
+    available: true,
+    Lobby: QuizLobbyPanel,
+    Start: QuizStartButton,
+    path: (room) => `/quiz/${room.code}`,
   },
   { id: "cultura", name: "Cultura general", color: "amber", icon: "bulb", available: false },
   { id: "cine", name: "Cine y series", color: "purple", icon: "film", available: false },
