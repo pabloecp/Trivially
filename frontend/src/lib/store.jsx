@@ -7,13 +7,11 @@ const AppContext = createContext(null);
 
 // The first one is the default. The profile adds an eighth option: the Google photo.
 export const AVATAR_COLORS = [
-  "#F050AE", // Deep Pink
-  "#33A8C7", // Turquoise Surf
-  "#A0E426", // Slime Lime
-  "#FFAB00", // Orange
-  "#F77976", // Grapefruit Pink
-  "#D883FF", // Mauve Magic
-  "#9336FD", // Purple
+  "#6366F1", // Índigo
+  "#3B82F6", // Azul
+  "#8B5CF6", // Violeta
+  "#2563EB", // Azul rey
+  "#A855F7", // Morado
 ];
 
 // Per-tab, so a reload puts you back in the same room.
@@ -64,6 +62,8 @@ export function AppProvider({ children }) {
   const [room, setRoom] = useState(null);
   const [linkingStatus, setLinkingStatus] = useState(null);
   const [error, setError] = useState("");
+  // Set when the host takes us out of the room; Home shows it once and clears it.
+  const [kickedNotice, setKickedNotice] = useState("");
 
   // Actions read these refs instead of closing over state, so e.g. saveGuest() followed by joinRoom() sees the new user.
   const userRef = useRef(user);
@@ -215,11 +215,18 @@ export function AppProvider({ children }) {
       if (res.ok) setRoom(res.state);
       else clearRoom();
     };
+    const onKicked = ({ code } = {}) => {
+      if (code !== roomCodeRef.current) return;
+      clearRoom();
+      setKickedNotice("El anfitrión te sacó de la sala");
+    };
     s.on("room:state", onState);
+    s.on("room:kicked", onKicked);
     s.on("connect", rejoin);
     if (s.connected) rejoin();
     return () => {
       s.off("room:state", onState);
+      s.off("room:kicked", onKicked);
       s.off("connect", rejoin);
     };
   }, []);
@@ -423,6 +430,12 @@ export function AppProvider({ children }) {
         return res;
       },
 
+      async kickPlayer(targetUserId) {
+        const res = await emitAck("room:kick", targetUserId);
+        if (!res.ok) throw new Error(res.error);
+        if (res.state) setRoom(res.state);
+      },
+
       async setReady(ready) { await emitAck("room:ready", ready); },
       async startGame() { const res = await emitAck("room:start"); if (!res.ok) throw new Error(res.error); },
       async restartGame() { const res = await emitAck("room:restart"); if (!res.ok) throw new Error(res.error); },
@@ -458,7 +471,7 @@ export function AppProvider({ children }) {
   const spotify = useMemo(() => ({ configured: false, connected: false }), []);
 
   return (
-    <AppContext.Provider value={{ user, catalog, refreshCatalog, room, setRoom, spotify, linkingStatus, error, setError, ...actions }}>
+    <AppContext.Provider value={{ user, catalog, refreshCatalog, room, setRoom, kickedNotice, setKickedNotice, spotify, linkingStatus, error, setError, ...actions }}>
       {children}
     </AppContext.Provider>
   );

@@ -2,44 +2,46 @@
 @import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Outfit:wght@500;600;700;800;900&display=swap");
 
 :root {
-  /* Spotify Theme — Dark Mode First (Default) */
-  --brand: #F050AE;
-  --brand-rgb: 240, 80, 174;
+  /* Night mode (default). Duolingo's colours: the site is macaw blue, with bee yellow as its second colour;
+     each game mode swaps the blue for its own (see data-mode below). */
+  --brand: #6366F1;
+  --brand-rgb: 99, 102, 241;
+  --brand-text: #818CF8; /* the brand colour as text: a darker shade on light backgrounds */
   --on-brand: #FFFFFF;
-  --brand-hover: #F46CBD;
-  --brand-active: #D93C99;
+  --brand-hover: #6366F1;
+  --brand-active: #4338CA;
   --brand-subtle: rgba(var(--brand-rgb), 0.15);
   --brand-subtle-hover: rgba(var(--brand-rgb), 0.24);
   --brand-tint: rgba(var(--brand-rgb), 0.08);
 
-  /* Backgrounds & Surfaces (Spotify Iconic Dark) */
-  --bg: #0A0A0A;
-  --bg-surface: #161616;
-  --bg-surface-hover: #232323;
-  --bg-subtle: #1D1D1D;
-  --nav-bg: rgba(22, 22, 22, 0.85);
+  /* Backgrounds & Surfaces (Duolingo night mode) */
+  --bg: #0A0A0F;
+  --bg-surface: #16161F;
+  --bg-surface-hover: #2A2A36;
+  --bg-subtle: #0A0A0F;
+  --nav-bg: rgba(22, 22, 31, 0.92);
 
   /* Typography Colors */
   --text: #FFFFFF;
-  --text-secondary: #B8B8B8;
-  --text-muted: #7A7A7A;
-  --text-inverse: #0A0A0A;
+  --text-secondary: #E5E5E5;
+  --text-muted: #AFAFAF;
+  --text-inverse: #0A0A0F;
 
   /* Borders */
-  --border: #2A2A2A;
-  --border-subtle: #1D1D1D;
-  --border-focus: #F050AE;
-  --border-hover: #444444;
+  --border: #2A2A36;
+  --border-subtle: #2A2A36;
+  --border-focus: #6366F1;
+  --border-hover: #777777;
 
-  /* Feedback Colors */
-  --ok: #22C55E;
-  --ok-subtle: rgba(34, 197, 94, 0.15);
-  --ok-border: rgba(34, 197, 94, 0.35);
-  --bad: #F15E6C;
-  --bad-subtle: rgba(241, 94, 108, 0.15);
-  --bad-border: rgba(241, 94, 108, 0.35);
-  --amber: #F59E0B;
-  --amber-subtle: rgba(245, 158, 11, 0.15);
+  /* Feedback Colors: feather = right, cardinal = wrong, fox = warning */
+  --ok: #3B82F6;
+  --ok-subtle: rgba(59, 130, 246, 0.15);
+  --ok-border: rgba(59, 130, 246, 0.35);
+  --bad: #A855F7;
+  --bad-subtle: rgba(168, 85, 247, 0.15);
+  --bad-border: rgba(168, 85, 247, 0.35);
+  --amber: #818CF8;
+  --amber-subtle: rgba(129, 140, 248, 0.15);
 
   /* Shadows */
   --shadow-sm: 0 2px 6px rgba(0, 0, 0, 0.35);
@@ -56,39 +58,42 @@
   --ease: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* Light Theme (Día) */
+/* Light Theme (Día): white, Duolingo's greys */
 [data-theme="light"] {
-  --brand: #F050AE;
-  --brand-hover: #D93C99;
-  --brand-active: #B82E7D;
+  --brand: #6366F1;
+  --brand-rgb: 99, 102, 241;
+  --brand-text: #4F46E5; /* humpback: the readable blue on white */
+  --on-brand: #FFFFFF;
+  --brand-hover: #6366F1;
+  --brand-active: #4338CA;
   --brand-subtle: rgba(var(--brand-rgb), 0.12);
   --brand-subtle-hover: rgba(var(--brand-rgb), 0.2);
   --brand-tint: rgba(var(--brand-rgb), 0.08);
 
   --bg: #FFFFFF;
   --bg-surface: #FFFFFF;
-  --bg-surface-hover: #F5F5F5;
-  --bg-subtle: #EFEFEF;
-  --nav-bg: rgba(255, 255, 255, 0.85);
+  --bg-surface-hover: #F7F7F7;
+  --bg-subtle: #F7F7F7;
+  --nav-bg: rgba(255, 255, 255, 0.92);
 
-  --text: #0A0A0A;
-  --text-secondary: #555555;
-  --text-muted: #8A8A8A;
+  --text: #4B4B4B;
+  --text-secondary: #4B4B4B;
+  --text-muted: #777777;
   --text-inverse: #FFFFFF;
 
-  --border: #E4E4E4;
-  --border-subtle: #EEEEEE;
-  --border-focus: #F050AE;
-  --border-hover: #C8C8C8;
+  --border: #E5E5E5;
+  --border-subtle: #E5E5E5;
+  --border-focus: #6366F1;
+  --border-hover: #AFAFAF;
 
-  --ok: #10B981;
-  --ok-subtle: #ECFDF5;
-  --ok-border: #A7F3D0;
-  --bad: #EF4444;
-  --bad-subtle: #FEF2F2;
-  --bad-border: #FECACA;
-  --amber: #F59E0B;
-  --amber-subtle: #FFFBEB;
+  --ok: #2563EB;
+  --ok-subtle: rgba(59, 130, 246, 0.14);
+  --ok-border: rgba(59, 130, 246, 0.4);
+  --bad: #7C3AED;
+  --bad-subtle: rgba(168, 85, 247, 0.12);
+  --bad-border: rgba(168, 85, 247, 0.35);
+  --amber: #4F46E5;
+  --amber-subtle: rgba(129, 140, 248, 0.14);
 
   --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06);
   --shadow-md: 0 10px 25px -4px rgba(var(--brand-rgb), 0.09), 0 2px 8px rgba(0, 0, 0, 0.04);
@@ -107,9 +112,7 @@ body {
   margin: 0;
   color: var(--text);
   background-color: var(--bg);
-  background-image: 
-    radial-gradient(1200px 600px at 50% -10%, rgba(var(--brand-rgb), 0.12), transparent 70%),
-    radial-gradient(900px 500px at 90% 90%, rgba(var(--brand-rgb), 0.06), transparent 60%);
+  background-image: none;
   background-attachment: fixed;
   font-family: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   font-size: 15px;
@@ -117,12 +120,6 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   transition: background-color 0.3s ease, color 0.3s ease;
-}
-
-[data-theme="light"] body {
-  background-image: 
-    radial-gradient(1200px 600px at 50% -10%, rgba(var(--brand-rgb), 0.08), transparent 70%),
-    radial-gradient(800px 400px at 90% 90%, rgba(var(--brand-rgb), 0.04), transparent 60%);
 }
 
 h1, h2, h3, h4 {
@@ -490,10 +487,10 @@ button, input, select {
 }
 
 .chip.streak {
-  background: rgba(249, 115, 22, 0.15);
-  color: #FB923C;
-  border: 1px solid rgba(249, 115, 22, 0.35);
-  box-shadow: 0 2px 10px rgba(249, 115, 22, 0.2);
+  background: rgba(var(--brand-rgb), 0.15);
+  color: var(--brand-text);
+  border: 1px solid rgba(var(--brand-rgb), 0.35);
+  box-shadow: 0 2px 10px rgba(var(--brand-rgb), 0.2);
   animation: streakPulse 1.8s infinite ease-in-out;
 }
 @keyframes streakPulse {
@@ -1011,12 +1008,12 @@ button, input, select {
 
 @keyframes defeatGlow {
   0% {
-    box-shadow: 0 0 15px rgba(241, 94, 108, 0.2);
-    border-color: rgba(241, 94, 108, 0.4);
+    box-shadow: 0 0 15px rgba(var(--brand-rgb), 0.2);
+    border-color: rgba(var(--brand-rgb), 0.4);
   }
   100% {
-    box-shadow: 0 0 35px rgba(241, 94, 108, 0.5);
-    border-color: rgba(241, 94, 108, 0.8);
+    box-shadow: 0 0 35px rgba(var(--brand-rgb), 0.5);
+    border-color: rgba(var(--brand-rgb), 0.8);
   }
 }
 
@@ -1622,11 +1619,11 @@ button, input, select {
 @keyframes verifiedBadgePulse {
   0%, 100% {
     transform: scale(1) rotate(0deg);
-    filter: drop-shadow(0 0 2px rgba(34, 197, 94, 0.4));
+    filter: drop-shadow(0 0 2px rgba(var(--brand-rgb), 0.4));
   }
   50% {
     transform: scale(1.18) rotate(5deg);
-    filter: drop-shadow(0 0 6px rgba(34, 197, 94, 0.8));
+    filter: drop-shadow(0 0 6px rgba(var(--brand-rgb), 0.8));
   }
 }
 
@@ -1634,23 +1631,21 @@ button, input, select {
 
 
 /* =====================================================================
-   Trivially look — electric blue on white. Between an app and a website:
+   Trivially look — Duolingo's flat colours on night blue-grey (or white). Between an app and a website:
    a sticky bar and roomy pages like a site, soft rounded controls and
    springy motion like an app. Shared by Home, profiles, rooms and games.
    ===================================================================== */
 :root {
   --spring: cubic-bezier(0.34, 1.56, 0.64, 1);
-  --accent: #FDF148;
-  --accent-hover: #FFF67A;
-  --accent-ink: #0A0A0A;
+  --accent: #A855F7;
+  --accent-hover: #A855F7;
+  --accent-ink: #FFFFFF;
   --glow: rgba(var(--brand-rgb), 0.35);
 }
 
 body {
   font-family: "Plus Jakarta Sans", system-ui, sans-serif;
-  background-image:
-    radial-gradient(900px 480px at 85% -8%, rgba(var(--brand-rgb), 0.16), transparent 70%),
-    radial-gradient(700px 420px at 0% 100%, rgba(var(--brand-rgb), 0.08), transparent 65%);
+  background-image: none;
 }
 h1, h2, h3, h4 { font-family: "Outfit", "Plus Jakarta Sans", sans-serif; font-weight: 700; letter-spacing: -0.02em; }
 
@@ -1726,29 +1721,14 @@ h1, h2, h3, h4 { font-family: "Outfit", "Plus Jakarta Sans", sans-serif; font-we
 }
 
 /* Second color: yellow. Palette = electric blue + yellow + black + white. */
-.btn.secondary { background: var(--accent); color: var(--accent-ink); box-shadow: 0 8px 20px -10px rgba(253, 241, 72, 0.7); }
+.btn.secondary { background: var(--accent); color: var(--accent-ink); box-shadow: 0 8px 20px -10px rgba(var(--p-accent-rgb), 0.7); }
 .btn.secondary:hover:not(:disabled) { background: var(--accent-hover); color: var(--accent-ink); transform: translateY(-2px); }
 .chip { background: var(--accent); color: var(--accent-ink); }
 .chip.interactive:hover { background: var(--accent-hover); color: var(--accent-ink); }
-.kicker { color: var(--brand); }
+.kicker { color: var(--brand-text); }
 .nav-links a.active { background: var(--accent); color: var(--accent-ink); }
 .nav-links a:hover { background: var(--bg-subtle); color: var(--text); }
 [data-theme="light"] .nav-links a:hover { background: var(--bg-subtle); color: var(--text); }
 .tab-btn.active { background: var(--accent); color: var(--accent-ink); }
 
-/* ---- Game-mode colors: each mode swaps the brand color. Music = lime. ---- */
-:root[data-mode="musica"] {
-  --brand: #A0E426;
-  --brand-rgb: 160, 228, 38;
-  --brand-hover: #B6EE55;
-  --brand-active: #86C112;
-  --border-focus: #A0E426;
-  --on-brand: #0A0A0A;
-}
-:root[data-mode="musica"][data-theme="light"] {
-  --brand: #8CC81A;
-  --brand-hover: #7AB010;
-  --brand-active: #659A08;
-  --border-focus: #8CC81A;
-  --on-brand: #0A0A0A;
-}
+/* Game-mode colours: each mode swaps the brand colour for its own slot (see palettes.css). */

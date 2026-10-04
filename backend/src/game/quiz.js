@@ -55,7 +55,7 @@ function shuffle(list) {
  * `count` different questions of that difficulty, as the rounds of a match: each with its options in a new random
  * order and `answer` pointing at the right one. These objects stay on the server (see RoomManager.publicQuestion).
  */
-export function pickQuestions(bank, count, difficulty) {
+export function pickQuizQuestions(bank, count, difficulty) {
   return shuffle(questionsFor(bank, difficulty))
     .slice(0, count)
     .map((q) => {

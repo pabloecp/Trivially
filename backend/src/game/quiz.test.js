@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readLocalCatalog } from "../catalog/catalogProvider.js";
 import { questionErrors } from "../questions/questionSchema.js";
 import { sampleQuestions } from "../questions/sampleQuestions.js";
-import { countQuestions, mergeQuizConfig, pickQuestions } from "./quiz.js";
+import { countQuestions, mergeQuizConfig, pickQuizQuestions } from "./quiz.js";
 import { RoomManager } from "./roomManager.js";
 
 const bank = sampleQuestions();
@@ -22,7 +22,7 @@ assert.match(questionErrors({ ...good, data: { options: ["a", "b", "c", "d"], co
 assert.equal(countQuestions([{ ...good, type: "true_false" }, { ...good, mode: "otro" }, { ...good, mode: null }], "mixta"), 1);
 
 // Shuffled options keep pointing at the right answer, the category shows by name, and a match never repeats.
-const picked = pickQuestions(bank, 10, "media");
+const picked = pickQuizQuestions(bank, 10, "media");
 assert.equal(new Set(picked.map((q) => q.id)).size, 10);
 for (const q of picked) {
   const original = bank.find((o) => o.id === q.id);

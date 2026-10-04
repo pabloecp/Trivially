@@ -25,9 +25,14 @@ function Guard({ children }) {
 
 // Keeps every player on the screen of the game their room is in, which is how the host moves the whole party.
 function RoomNavigator() {
-  const { room } = useApp();
+  const { room, kickedNotice } = useApp();
   const nav = useNavigate();
   const { pathname } = useLocation();
+
+  // Taken out of the room by the host: leave its screens (Home shows why).
+  useEffect(() => {
+    if (kickedNotice && !room) nav("/", { replace: true });
+  }, [kickedNotice]);
   const target = room ? roomPath(room) : null;
   const lastTarget = useRef(null);
 

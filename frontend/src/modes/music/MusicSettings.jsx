@@ -2,12 +2,13 @@ import { useEffect, useState } from "react";
 import Icon from "../../components/home/Icon.jsx";
 import SpotifyIcon from "../../components/home/SpotifyIcon.jsx";
 import Stepper from "../../components/home/Stepper.jsx";
+import { playlistLabel } from "./playlistLabel.js";
 import { api } from "../../lib/api.js";
 import { useApp } from "../../lib/store.jsx";
 
 // Both steppers move in steps of 5. The server keeps the same limits (roomManager.updateConfig).
-const ROUNDS = { min: 5, max: 25, step: 5 };
-const SECONDS = { min: 10, max: 30, step: 5 };
+export const ROUNDS = { min: 5, max: 25, step: 5 };
+export const SECONDS = { min: 10, max: 30, step: 5 };
 
 // A Spotify playlist's cover, or the Spotify logo when it has none.
 function PlaylistArt({ image }) {
@@ -213,8 +214,8 @@ export default function MusicSettings({ room, catalog, updateConfig, onToast, ch
         <legend className="tv-label">Playlists</legend>
         <div className="tv-picks">
           {playlists.map((p) => {
-            // "Most Streamed Songs on Spotify · Español" shows as "Español"; the full name is the tooltip.
-            const label = p.name.split(" · ").pop();
+            // "Most Streamed Songs on Spotify · Español" shows as "Top 100 Español"; the full name is the tooltip.
+            const label = playlistLabel(p);
             return (
               <button
                 key={p.id}

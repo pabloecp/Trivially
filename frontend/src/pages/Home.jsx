@@ -70,11 +70,16 @@ function ModeMenu({ current, onPick }) {
         aria-label={`Juego actual: ${currentMode.name}. Cambiar juego`}
         onClick={() => setOpen((v) => !v)}
       >
-        <span className={`tv-badge tv-c-${currentMode.color}`}>
+        <span className="tv-switch-badge">
           <Icon name={currentMode.icon} size={20} />
         </span>
-        <span className="tv-switch-name">{currentMode.name}</span>
-        <Icon name="chevron" size={16} strokeWidth={3} className="tv-switch-icon" />
+        <span className="tv-switch-text">
+          <span className="tv-switch-label">Modo de juego</span>
+          <span className="tv-switch-name">{currentMode.name}</span>
+        </span>
+        <span className="tv-switch-icon" aria-hidden="true">
+          <Icon name="swap" size={18} strokeWidth={2.6} />
+        </span>
       </button>
       {open && (
         <div className="tv-mode-menu" role="menu">
@@ -120,11 +125,12 @@ function shake(tile) {
 }
 
 export default function Home() {
-  const { user, room, joinRoom, setGame } = useApp();
+  const { user, room, joinRoom, setGame, kickedNotice, setKickedNotice } = useApp();
   const { code: inviteParam } = useParams();
   const inviteCode = inviteParam?.toUpperCase();
   const nav = useNavigate();
   const [sheetOpen, setSheetOpen] = useState(false);
+  const [sheetMode, setSheetMode] = useState(null);
   const [sheetJoinCode, setSheetJoinCode] = useState(null);
   const [toast, setToast] = useState(null);
   const playRef = useRef(null);
@@ -141,7 +147,14 @@ export default function Home() {
     toastTimer.current = setTimeout(() => setToast(null), 2600);
   }, []);
 
-  function openSheet(joinCode = null) {
+  useEffect(() => {
+    if (!kickedNotice) return;
+    showToast(kickedNotice, "logout");
+    setKickedNotice("");
+  }, [kickedNotice]);
+
+  function openSheet(mode = null, joinCode = null) {
+    setSheetMode(mode);
     setSheetJoinCode(joinCode);
     setSheetOpen(true);
   }
@@ -156,7 +169,7 @@ export default function Home() {
   useEffect(() => {
     if (!inviteCode || room?.code === inviteCode || sheetOpen) return;
     if (!user?.name) {
-      openSheet(inviteCode);
+      openSheet(null, inviteCode);
       return;
     }
     joinRoom(inviteCode).catch((err) => {
@@ -165,7 +178,6 @@ export default function Home() {
     });
   }, [inviteCode, user?.name]);
 
-  // Only reachable from the mode grid, which is shown once we're in a room.
   function pickMode(mode, tile) {
     if (!mode.available) {
       shake(tile);
@@ -198,6 +210,8 @@ export default function Home() {
         <span className="tv-blob tv-blob--1" />
         <span className="tv-blob tv-blob--2" />
         <span className="tv-blob tv-blob--3" />
+        <span className="tv-blob tv-blob--4" />
+        <span className="tv-blob tv-blob--5" />
       </div>
 
       <TvTopbar />
@@ -237,11 +251,14 @@ export default function Home() {
                   onPick={(mode) => mode.id !== room.game && setGame(mode.id).catch((err) => showToast(err.message))}
                 />
               ) : (
-                <h2 className="tv-section-title tv-room-game-title">
-                  <span className={`tv-badge tv-c-${roomMode.color}`}>
+                <h2 className="tv-switch-btn tv-room-game-title">
+                  <span className="tv-switch-badge">
                     <Icon name={roomMode.icon} size={20} />
                   </span>
-                  {roomMode.name}
+                  <span className="tv-switch-text">
+                    <span className="tv-switch-label">Modo de juego</span>
+                    <span className="tv-switch-name">{roomMode.name}</span>
+                  </span>
                 </h2>
               )}
             </div>
@@ -273,7 +290,7 @@ export default function Home() {
         )}
       </main>
 
-      <PlaySheet joinCode={sheetJoinCode} open={sheetOpen} onClose={closeSheet} />
+      <PlaySheet mode={sheetMode} joinCode={sheetJoinCode} open={sheetOpen} onClose={closeSheet} />
 
       <div className="tv-toast-region" role="status" aria-live="polite">
         {toast && (

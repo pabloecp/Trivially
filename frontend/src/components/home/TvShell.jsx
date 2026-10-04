@@ -17,6 +17,8 @@ export default function TvShell({ mode, children }) {
         <span className="tv-blob tv-blob--1" />
         <span className="tv-blob tv-blob--2" />
         <span className="tv-blob tv-blob--3" />
+        <span className="tv-blob tv-blob--4" />
+        <span className="tv-blob tv-blob--5" />
       </div>
 
       <TvTopbar />

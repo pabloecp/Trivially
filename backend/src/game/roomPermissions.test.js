@@ -60,4 +60,16 @@ assert.throws(() => {
   mgr.updateConfig(room, "player-2", { rounds: 3 });
 }, /No tienes permisos/);
 
+// Kicking: only the host, never themselves; the player loses their seat, permission and can't come back.
+mgr.toggleConfigPermission(room, "host-1", "player-3");
+assert.throws(() => mgr.kick(room, "player-2", "player-3"), /Solo el anfitrión/);
+assert.throws(() => mgr.kick(room, "host-1", "host-1"), /a ti mismo/);
+const kicked = mgr.kick(room, "host-1", "player-3");
+assert.equal(kicked.socketId, "sock-3");
+assert.equal(room.players.has("player-3"), false);
+assert.equal(room.coHosts.includes("player-3"), false);
+assert.equal(mgr.socketToRoom.has("sock-3"), false);
+assert.throws(() => mgr.addPlayer(room, { ...player3, socketId: "sock-3b" }), /te sacó/);
+assert.throws(() => mgr.kick(room, "host-1", "player-3"), /no está en la sala/);
+
 console.log("roomPermissions.test ok");
