@@ -36,6 +36,10 @@ Tests are standalone scripts using `node:assert/strict`. There is no test runner
 - `game:answer` accepts either the exact track id (the player picked an autocomplete suggestion) or free text, which is matched with `isCorrectAnswer` in `game/answers.js`. That function normalizes accents and strips parentheticals, then applies Levenshtein and substring tolerance. Scoring is in `game/scoring.js`: 800 base, up to 500 speed bonus, and a streak bonus capped at 400.
 - When a match finishes, `applyMatchStats` writes cumulative per-user stats to the store (see Persistence below).
 
+### Question games (Geografía, id `mundo`)
+
+`isQuestionGame(room.game)` (`catalog/questionBank.js`) switches `roomManager` from songs to open-answer questions. `start()` draws `config.rounds` questions from `catalog/questions/geografia.json` into `room.tracks`, so phases, timers, scoring, skip and results are shared with the music mode. `submitAnswer` checks the text with `isCorrectOpenAnswer` (`game/openAnswers.js`: accents, articles, word order and small typos tolerated, `aliases`, `reject`, exact numbers, `answerType: "name"` for surnames). `publicState` sends only `question.prompt` while playing; `answer` goes out in `reveal` after the round. The match screen is the shared `modes/music/Game.jsx` (it branches on the game for the prompt, the free input and the answer card); the lobby is `modes/mundo/LobbyPanel.jsx`. Stats still count toward the same totals as music. To add another question game: a JSON bank, an entry in `FILES` of `questionBank.js`, and its id in `GAME_IDS` and `GAME_MODES`.
+
 ### Socket protocol
 
 Every client→server event in `backend/src/realtime/sockets.js` follows the same pattern:

@@ -226,6 +226,8 @@ function GameScreen() {
     : room?.me;
 
   const isHost = room?.hostId === user?.id;
+  // Question games (Geografía): a written prompt and a free answer instead of a song and its autocomplete.
+  const quiz = Boolean(room?.question) || Boolean(room?.game && room.game !== "musica");
   const skipped = skippedRound === room?.currentRound || Boolean(me?.lastAnswer?.skipped);
   const locked = Boolean(me?.answered) || Boolean(submittedSong) || skipped || room?.phase !== "playing";
 
@@ -239,7 +241,7 @@ function GameScreen() {
     setSkippedRound(room.currentRound);
     skipSong().catch((e) => {
       setSkippedRound(null);
-      setErr(e.message || "No se pudo saltar la canción");
+      setErr(e.message || (quiz ? "No se pudo saltar la pregunta" : "No se pudo saltar la canción"));
     });
   }
   const totalMs = room?.config?.roundMs || 15000;
@@ -532,37 +534,43 @@ function GameScreen() {
 
         {room.phase === "countdown" && (
           <section className="tv-card tv-countdown">
-            <p className="tv-party-kicker">Prepárate para escuchar</p>
+            <p className="tv-party-kicker">{quiz ? "Prepárate para leer" : "Prepárate para escuchar"}</p>
             <span key={Math.max(1, seconds)} className="tv-countdown-num">{Math.max(1, seconds)}</span>
-            <p className="tv-hint">Escribe el título en cuanto reconozcas la canción.</p>
+            <p className="tv-hint">{quiz ? "Escribe la respuesta en cuanto la sepas." : "Escribe el título en cuanto reconozcas la canción."}</p>
           </section>
         )}
 
         {room.phase === "playing" && (
           <section className="tv-card tv-play-card">
-            <div className="tv-eq" aria-hidden="true">
-              {Array.from({ length: 7 }, (_, i) => (
-                <span key={i} style={{ "--i": i }} />
-              ))}
-            </div>
-            <h2 className="tv-play-q">¿Qué canción está sonando?</h2>
+            {quiz ? (
+              <span className="tv-badge tv-c-world" aria-hidden="true">
+                <Icon name="globe" size={28} />
+              </span>
+            ) : (
+              <div className="tv-eq" aria-hidden="true">
+                {Array.from({ length: 7 }, (_, i) => (
+                  <span key={i} style={{ "--i": i }} />
+                ))}
+              </div>
+            )}
+            <h2 className="tv-play-q">{quiz ? room.question?.prompt : "¿Qué canción está sonando?"}</h2>
 
             {!locked ? (
               <div className="tv-search">
                 <div className="tv-search-box">
-                  <Icon name="music" size={22} className="tv-search-icon" />
+                  <Icon name={quiz ? "globe" : "music"} size={22} className="tv-search-icon" />
                   <input
                     ref={inputRef}
                     type="text"
                     className="tv-search-input"
-                    placeholder="Escribe el título…"
+                    placeholder={quiz ? "Escribe tu respuesta…" : "Escribe el título…"}
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
                     onKeyDown={handleKeyDown}
                     autoComplete="off"
                     autoFocus
                     spellCheck="false"
-                    aria-label="Título de la canción"
+                    aria-label={quiz ? "Tu respuesta" : "Título de la canción"}
                     aria-autocomplete="list"
                     aria-controls="tv-suggest"
                   />
@@ -595,7 +603,7 @@ function GameScreen() {
                   </button>
                 )}
 
-                {query.trim().length > 0 && (
+                {!quiz && query.trim().length > 0 && (
                   <div className="tv-suggest" id="tv-suggest">
                     {suggestions.length > 0 ? (
                       <ul className="tv-suggest-list" ref={suggestionsListRef} role="listbox">
@@ -643,7 +651,7 @@ function GameScreen() {
                 </span>
                 <p className="tv-party-kicker">{skipped ? "Sin respuesta" : "Respuesta enviada"}</p>
                 <p className="tv-locked-title">
-                  {skipped ? "Te la saltaste" : submittedSong || me?.lastAnswer?.text || "Canción enviada"}
+                  {skipped ? "Te la saltaste" : submittedSong || me?.lastAnswer?.text || (quiz ? "Respuesta enviada" : "Canción enviada")}
                 </p>
                 <p className="tv-hint">Esperando al resto de jugadores…</p>
               </div>
@@ -679,6 +687,18 @@ function GameScreen() {
                 )}
               </section>
 
+              {quiz ? (
+                <section className="tv-card tv-song">
+                  <span className="tv-badge tv-c-world" aria-hidden="true">
+                    <Icon name="globe" size={28} />
+                  </span>
+                  <div className="tv-song-text">
+                    <p className="tv-party-kicker">La respuesta era</p>
+                    <h3 className="tv-song-title">{room.reveal.answer}</h3>
+                    <p className="tv-song-meta">{room.reveal.prompt}</p>
+                  </div>
+                </section>
+              ) : (
               <section className={`tv-card tv-song${coverReadyFor === room.reveal.title ? "" : " is-waiting"}`}>
                 {/* Flips in once the image has loaded, never half-drawn. */}
                 <img
@@ -704,10 +724,11 @@ function GameScreen() {
                   </p>
                 </div>
               </section>
+              )}
 
               <p className="tv-party-status tv-next">
                 <span className="tv-pulse" aria-hidden="true" />
-                {room.currentRound + 1 >= room.totalRounds ? "Calculando resultados…" : "Siguiente canción en breve…"}
+                {room.currentRound + 1 >= room.totalRounds ? "Calculando resultados…" : quiz ? "Siguiente pregunta en breve…" : "Siguiente canción en breve…"}
               </p>
             </>
           );
@@ -722,8 +743,9 @@ function GameScreen() {
 }
 
 export default function Game() {
+  const { room } = useApp();
   return (
-    <TvShell mode="musica">
+    <TvShell mode={room?.game || "musica"}>
       <GameScreen />
     </TvShell>
   );

@@ -1,5 +1,6 @@
 import MusicLobbyPanel from "./music/LobbyPanel.jsx";
 import MusicStartButton from "./music/StartButton.jsx";
+import GeoLobbyPanel from "./mundo/LobbyPanel.jsx";
 
 // Game modes shown on the Home screen. To add a new mode, add an entry here with `available: true`, a `Lobby`
 // panel (shown on the room screen while the room waits in that mode) and a `path` for its in-match screens,
@@ -17,7 +18,17 @@ export const GAME_MODES = [
   },
   { id: "cultura", name: "Cultura general", color: "culture", icon: "bulb", available: false },
   { id: "cine", name: "Cine y series", color: "cinema", icon: "film", available: false },
-  { id: "mundo", name: "Geografía", color: "world", icon: "globe", available: false },
+  {
+    id: "mundo",
+    name: "Geografía",
+    color: "world",
+    icon: "globe",
+    available: true,
+    Lobby: GeoLobbyPanel,
+    // The start button is shared with the music mode: it only checks the questions ready against the rounds.
+    Start: MusicStartButton,
+    path: (room) => `/game/${room.code}`,
+  },
 ];
 
 export function findMode(id) {
