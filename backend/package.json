@@ -6,7 +6,7 @@
     "dev": "node --watch src/index.js",
     "start": "node src/index.js",
     "catalog:upload": "node scripts/uploadCatalog.js",
-    "test": "node src/game/answers.test.js && node src/catalog/songSelector.test.js && node src/game/scoring.test.js && node src/game/options.test.js && node src/db/store.test.js && node src/game/roomPermissions.test.js && node src/game/roomLifecycle.test.js && node src/auth/roles.test.js && node src/auth/socketToken.test.js && node src/audio/mediaCache.test.js && node src/game/skip.test.js && node src/auth/spotify.test.js && node src/catalog/trackResolver.test.js && node src/game/spotifyRoom.test.js"
+    "test": "node src/game/answers.test.js && node src/game/openAnswers.test.js && node src/catalog/questions/questions.test.js && node src/catalog/songSelector.test.js && node src/game/scoring.test.js && node src/game/options.test.js && node src/db/store.test.js && node src/game/roomPermissions.test.js && node src/game/roomLifecycle.test.js && node src/auth/roles.test.js && node src/auth/socketToken.test.js && node src/audio/mediaCache.test.js && node src/game/skip.test.js && node src/auth/spotify.test.js && node src/catalog/trackResolver.test.js && node src/game/spotifyRoom.test.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.117.2",
