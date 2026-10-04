@@ -18,6 +18,8 @@ export default function MatchResults({ room, color = "green" }) {
   const top = room.results;
   const winner = top[0];
   const podium = [top[1], top[0], top[2]]; // 2nd, 1st, 3rd
+  // Geografía settles a tie for first place with tiebreak rounds; if none of them had a winner, the tie stands.
+  const tied = Boolean(room.tiebreak) && !winner?.tiebreakWinner && top.length > 1 && top[1].score === winner.score;
 
   return (
     <div className="tv-page tv-results">
@@ -25,8 +27,9 @@ export default function MatchResults({ room, color = "green" }) {
       <header className="tv-results-head">
         <p className="tv-party-kicker">Partida terminada</p>
         <h1 className="tv-page-title tv-results-title">
-          {top.length > 1 ? `¡Ganó ${winner?.name}!` : "¡Fin de la partida!"}
+          {tied ? "¡Empate!" : top.length > 1 ? `¡Ganó ${winner?.name}!` : "¡Fin de la partida!"}
         </h1>
+        {winner?.tiebreakWinner && <p className="tv-hint">Ganó en el desempate</p>}
       </header>
 
       <div className="tv-podium" role="list" aria-label="Podio">
@@ -63,6 +66,7 @@ export default function MatchResults({ room, color = "green" }) {
                 <span className="tv-rank-meta">
                   {p.correct} aciertos · racha {p.bestStreak}
                   {p.avgMs ? ` · ${(p.avgMs / 1000).toFixed(1)} s` : ""}
+                  {p.tiebreakWinner ? " · ganó el desempate" : ""}
                 </span>
               </span>
               <span className="tv-rank-score">{p.score}</span>

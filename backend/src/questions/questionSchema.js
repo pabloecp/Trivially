@@ -1,14 +1,18 @@
 // What a question of the trivia modes looks like (the `questions` table in backend/supabase/schema.sql):
 //   id, type, mode, category, difficulty, language, prompt, data, active, created_at
-// `data` depends on the type. Only multiple_choice is played so far:
-//   multiple_choice  { "options": ["…", "…", "…", "…"], "correct": 2 }
-//   open             { "answers": ["Madrid"], "aliases": ["madrid españa"], "match": "fuzzy" }
+// `data` depends on the type:
+//   multiple_choice  { "options": ["…", "…", "…", "…"], "correct": 2 }                       (Opción múltiple)
+//   open             { "answer": "Madrid", "aliases": ["…"], "reject": ["…"], "flag": "es" }  (Geografía; checked by
+//                    game/openAnswers.js, `flag` only on flag questions)
+//   location         { "name": "Francia", "map": ["France"] }   (Geografía: a pin on the map, see geo/worldMap.js)
 //   true_false       { "correct": true }
 //   audio            { "audio_url": "…", "answers": ["Titi Me Preguntó"] }
+// Geografía's questions (mode "mundo") also carry data.kind (capital, flag or location) and data.country (ISO code);
+// they are built from geo/countries.js (geo/geoQuestions.js).
 
-export const QUESTION_TYPES = ["multiple_choice", "open", "true_false", "audio"];
+export const QUESTION_TYPES = ["multiple_choice", "open", "true_false", "audio", "location"];
 // Types the game can play so far; the others are accepted in the bank but not used yet.
-export const PLAYABLE_TYPES = ["multiple_choice"];
+export const PLAYABLE_TYPES = ["multiple_choice", "open", "location"];
 export const QUESTION_DIFFICULTIES = ["facil", "media", "dificil"];
 // Category ids as stored in the database, and the name players see.
 export const QUESTION_CATEGORIES = {
@@ -53,6 +57,19 @@ export function questionErrors(q) {
     }
     if (!Number.isInteger(correct) || correct < 0 || correct >= OPTION_COUNT) {
       errors.push(`data.correct debe ser un índice de 0 a ${OPTION_COUNT - 1}`);
+    }
+  } else if (q.type === "open") {
+    if (!isText(q.data.answer)) errors.push("falta data.answer");
+    for (const field of ["aliases", "reject"]) {
+      if (q.data[field] != null && !(Array.isArray(q.data[field]) && q.data[field].every(isText))) {
+        errors.push(`data.${field} debe ser una lista de textos`);
+      }
+    }
+    if (q.data.flag != null && !/^[a-z]{2}$/.test(q.data.flag)) errors.push("data.flag debe ser un código de país en minúsculas");
+  } else if (q.type === "location") {
+    if (!isText(q.data.name)) errors.push("falta data.name");
+    if (!Array.isArray(q.data.map) || !q.data.map.length || !q.data.map.every(isText)) {
+      errors.push("data.map debe tener al menos un país del mapa");
     }
   }
   return errors;

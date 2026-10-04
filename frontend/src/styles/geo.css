@@ -1,0 +1,280 @@
+/* Geografía. Loaded after home.css (and quiz.css, whose difficulty tiles it reuses); builds on their tv- classes.
+   The mode's colour is the palette's "world" slot (--p-world-*); difficulty reads as the depth of that blue, and the
+   right country on the reveal map is the meaning green (--p-ok). */
+
+:root {
+  --tv-geo-ocean: rgba(var(--p-world-rgb), 0.22);
+  --tv-geo-space: rgba(var(--p-world-rgb), 0.07);
+  --tv-geo-land: #353e54;
+  --tv-geo-border: #59647e;
+  --tv-geo-label: #ffffff;
+  --tv-geo-halo: rgba(10, 10, 15, 0.88);
+}
+[data-theme="light"] {
+  --tv-geo-ocean: rgba(var(--p-world-rgb), 0.2);
+  --tv-geo-space: rgba(var(--p-world-rgb), 0.06);
+  --tv-geo-land: #ffffff;
+  --tv-geo-border: #a3afc2;
+  --tv-geo-label: #1d1a33;
+  --tv-geo-halo: rgba(255, 255, 255, 0.92);
+}
+
+/* Difficulty: lighter and deeper shades of the mode's blue. */
+.tv-c-world-light {
+  --c1: color-mix(in srgb, var(--p-world-1) 50%, #ffffff);
+  --c2: color-mix(in srgb, var(--p-world-2) 55%, #ffffff);
+  --edge: color-mix(in srgb, var(--p-world-edge) 70%, #ffffff);
+  --on: var(--p-ink);
+}
+.tv-c-world-deep {
+  --c1: color-mix(in srgb, var(--p-world-1) 72%, #000000);
+  --c2: color-mix(in srgb, var(--p-world-2) 62%, #000000);
+  --edge: color-mix(in srgb, var(--p-world-edge) 55%, #000000);
+  --on: #ffffff;
+}
+
+/* ---------- Settings ---------- */
+.tv-geo-kinds { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.tv-geo-kind {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  align-content: start;
+  gap: 4px;
+  min-width: 0;
+  padding: 14px 8px 12px;
+  border: 0;
+  border-radius: 18px;
+  background: var(--tv-option-bg);
+  box-shadow: 0 4px 0 var(--tv-option-edge);
+  text-align: center;
+  cursor: pointer;
+  transition: transform 0.2s var(--tv-spring), box-shadow 0.2s ease;
+}
+.tv-app .tv-geo-kind { color: var(--tv-text); }
+.tv-geo-kind:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 6px 0 var(--tv-option-edge); }
+.tv-geo-kind:active:not(:disabled) { transform: translateY(4px); box-shadow: 0 0 0 var(--tv-option-edge); }
+.tv-geo-kind:disabled { cursor: default; }
+.tv-geo-kind strong { font-family: var(--tv-display); font-weight: 600; font-size: 16px; line-height: 1.15; }
+.tv-geo-kind small { font-weight: 700; font-size: 12px; line-height: 1.2; color: var(--tv-text-3); }
+.tv-geo-kind-icon {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  margin-bottom: 2px;
+  border-radius: 14px;
+  background: var(--tv-surface);
+  box-shadow: 0 3px 0 var(--tv-edge);
+  color: var(--tv-text-3);
+}
+.tv-geo-kind-check {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--tv-surface);
+  color: var(--tv-text-3);
+}
+.tv-geo-kind[aria-pressed="true"] {
+  background: linear-gradient(155deg, var(--c1), var(--c2));
+  box-shadow: 0 4px 0 var(--edge);
+  animation: tvPick 0.35s var(--tv-spring);
+}
+.tv-app .tv-geo-kind[aria-pressed="true"] { color: var(--on); }
+.tv-geo-kind[aria-pressed="true"] small { color: inherit; opacity: 0.8; }
+.tv-geo-kind[aria-pressed="true"] .tv-geo-kind-icon { background: #fff; box-shadow: none; color: var(--edge); }
+.tv-geo-kind[aria-pressed="true"] .tv-geo-kind-check { background: #fff; color: var(--edge); }
+.tv-geo-kind[aria-pressed="true"]:hover:not(:disabled) { box-shadow: 0 6px 0 var(--edge); }
+.tv-settings fieldset:disabled .tv-geo-kind[aria-pressed="false"] { opacity: 0.55; }
+@media (max-width: 480px) {
+  .tv-geo-kinds { grid-template-columns: minmax(0, 1fr); }
+  .tv-geo-kind { grid-template-columns: auto minmax(0, 1fr); justify-items: start; align-items: center; column-gap: 12px; padding: 8px 40px 8px 8px; text-align: left; }
+  .tv-geo-kind-icon { grid-row: span 2; margin: 0; }
+  .tv-geo-kind-check { top: 50%; transform: translateY(-50%); }
+}
+.tv-geo-note { display: flex; align-items: center; gap: 6px; }
+
+/* ---------- Summary ---------- */
+.tv-geo-preview {
+  background:
+    radial-gradient(120% 90% at 50% 0%, rgba(var(--p-world-rgb), 0.2), transparent 70%),
+    var(--tv-option-bg);
+}
+.tv-geo-preview-kinds { display: flex; gap: 8px; }
+.tv-geo-preview-kinds .tv-badge { animation: tvGeoHop 2.4s var(--tv-spring) infinite; animation-delay: calc(var(--i) * 0.3s); }
+@keyframes tvGeoHop {
+  0%, 60%, 100% { transform: none; }
+  20% { transform: translateY(-6px) rotate(-6deg); }
+  35% { transform: translateY(1px); }
+}
+.tv-geo-tiebreak-note { max-width: 36ch; text-align: center; }
+
+/* ---------- Game ---------- */
+.tv-geo-kind-kicker { display: inline-flex; align-items: center; gap: 6px; }
+.tv-geo-tiebreak .tv-party-kicker { color: var(--p-culture-2); }
+.tv-geo-tie-title { margin: 0; font-family: var(--tv-display); font-weight: 700; font-size: clamp(22px, 5vw, 30px); color: var(--tv-text); }
+
+.tv-geo-flag {
+  display: block;
+  width: auto;
+  max-width: min(100%, 320px);
+  height: auto;
+  max-height: 200px;
+  border-radius: 12px;
+  box-shadow: 0 0 0 2px var(--tv-edge), 0 6px 0 var(--tv-edge);
+  animation: tvFlipIn 0.6s var(--tv-spring) backwards;
+}
+.tv-geo-flag.is-missing {
+  display: grid;
+  place-items: center;
+  gap: 6px;
+  width: 240px;
+  height: 150px;
+  background: var(--tv-option-bg);
+  color: var(--tv-text-3);
+  font-weight: 700;
+  font-size: 13px;
+}
+.tv-geo-answer .tv-geo-flag { max-width: 120px; max-height: 80px; border-radius: 8px; }
+
+.tv-geo-map-card { gap: 14px; padding: 18px; }
+.tv-geo-ask { display: grid; justify-items: center; gap: 2px; text-align: center; }
+.tv-geo-country {
+  margin: 0;
+  font-family: var(--tv-display);
+  font-weight: 700;
+  font-size: clamp(28px, 7vw, 40px);
+  line-height: 1.1;
+  color: var(--tv-text);
+  animation: tvPop 0.5s var(--tv-spring);
+}
+
+.tv-geo-map {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 2 / 1;
+  overflow: hidden;
+  border-radius: 22px;
+  background: var(--tv-geo-space);
+  box-shadow: inset 0 0 0 2px var(--tv-edge);
+}
+@media (max-width: 640px) {
+  .tv-geo-map { aspect-ratio: 4 / 3; border-radius: 18px; }
+  .tv-geo-map-card { padding: 14px 12px; }
+}
+.tv-geo-map svg { display: block; width: 100%; height: 100%; touch-action: pan-y; user-select: none; -webkit-user-select: none; }
+.tv-geo-map.is-interactive svg { touch-action: none; cursor: crosshair; }
+.tv-app .tv-geo-map svg:focus-visible { outline: none; }
+.tv-app .tv-geo-map svg[data-keyboard]:focus { outline: 3px solid var(--tv-focus); outline-offset: -3px; border-radius: inherit; }
+.tv-geo-map--loading { display: grid; place-items: center; padding: 20px; text-align: center; font-weight: 700; color: var(--tv-text-3); }
+
+.tv-geo-sea { fill: var(--tv-geo-space); }
+.tv-geo-globe { fill: var(--tv-geo-ocean); }
+.tv-geo-land path {
+  fill: var(--tv-geo-land);
+  stroke: var(--tv-geo-border);
+  stroke-width: 0.6px;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+  transition: fill 0.4s ease;
+}
+.tv-geo-land path.is-target { fill: var(--p-ok); stroke: var(--p-ok-edge); stroke-width: 1.4px; }
+.tv-geo-target-ring {
+  fill: none;
+  stroke: var(--p-ok);
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: tvGeoRing 1.4s ease-in-out infinite;
+}
+@keyframes tvGeoRing {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(1.25); }
+}
+.tv-geo-line { stroke: var(--pin); stroke-linecap: round; fill: none; opacity: 0.95; }
+
+.tv-geo-pin path { fill: var(--pin); stroke: #ffffff; stroke-width: 2.5px; stroke-linejoin: round; }
+.tv-geo-pin circle { fill: #ffffff; }
+.tv-geo-pin.is-mine path { stroke-width: 3px; }
+.tv-geo-pin text {
+  fill: var(--tv-geo-label);
+  stroke: var(--tv-geo-halo);
+  stroke-width: 4px;
+  paint-order: stroke;
+  font-family: var(--tv-display);
+  font-weight: 700;
+  font-size: 13px;
+}
+.tv-geo-pin > * { animation: tvGeoDrop 0.45s var(--tv-spring) backwards; }
+@keyframes tvGeoDrop { from { transform: translateY(-18px); opacity: 0; } }
+
+/* The crosshair is the keyboard's pin: it only shows while the map has keyboard focus. */
+.tv-geo-crosshair { display: none; }
+.tv-geo-crosshair path { fill: none; stroke: var(--tv-text); stroke-width: 2.5px; stroke-linecap: round; }
+.tv-geo-map svg[data-keyboard]:focus .tv-geo-crosshair { display: inline; }
+
+.tv-geo-zoom {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  display: grid;
+  gap: 6px;
+}
+.tv-geo-zoom button {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: 14px;
+  background: var(--tv-surface);
+  box-shadow: 0 3px 0 var(--tv-edge);
+  color: var(--tv-text);
+  cursor: pointer;
+  transition: transform 0.18s var(--tv-spring), opacity 0.2s ease;
+}
+.tv-geo-zoom button:hover:not(:disabled) { transform: translateY(-2px); }
+.tv-geo-zoom button:active:not(:disabled) { transform: translateY(3px); box-shadow: none; }
+.tv-geo-zoom button:disabled { opacity: 0.4; cursor: default; }
+@media (max-width: 640px) {
+  .tv-geo-zoom { right: 8px; bottom: 8px; gap: 4px; }
+  .tv-geo-zoom button { width: 40px; height: 40px; border-radius: 12px; }
+}
+
+/* Who was closest, at the reveal of a map round. */
+.tv-geo-distances { gap: 12px; }
+.tv-geo-distance-list { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.tv-geo-distance-list li {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px 10px 12px;
+  border-radius: 16px;
+  background: var(--tv-option-bg);
+  box-shadow: 0 3px 0 var(--tv-option-edge);
+  font-weight: 800;
+  animation: tvRise 0.4s var(--tv-spring) backwards;
+  animation-delay: calc(var(--i) * 60ms + 0.2s);
+}
+.tv-geo-distance-list li.is-me { box-shadow: 0 3px 0 var(--tv-option-edge), inset 0 0 0 2px var(--brand); }
+.tv-geo-dot { width: 14px; height: 14px; border-radius: 50%; background: var(--pin); box-shadow: 0 0 0 2px #fff; }
+.tv-geo-distance-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tv-geo-distance { display: inline-flex; align-items: center; gap: 4px; font-variant-numeric: tabular-nums; color: var(--tv-text-2); }
+.tv-geo-distance.is-inside { color: var(--p-ok-text); }
+[data-theme="light"] .tv-geo-distance.is-inside { color: var(--p-ok-edge); }
+.tv-geo-distance-points { min-width: 52px; text-align: right; font-family: var(--tv-display); font-weight: 700; font-variant-numeric: tabular-nums; color: var(--tv-text); }
+
+@media (prefers-reduced-motion: reduce) {
+  .tv-geo-kind[aria-pressed="true"],
+  .tv-geo-preview-kinds .tv-badge,
+  .tv-geo-target-ring,
+  .tv-geo-pin > *,
+  .tv-geo-flag,
+  .tv-geo-country,
+  .tv-geo-distance-list li { animation: none; }
+}

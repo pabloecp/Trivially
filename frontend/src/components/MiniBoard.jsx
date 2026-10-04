@@ -4,7 +4,7 @@ import PlayerName from "./home/PlayerName.jsx";
 
 function BoardAnswer({ answer }) {
   if (!answer || answer.skipped || !answer.text) {
-    return <span className="tv-board-answer">{answer?.skipped ? "Saltó la canción" : "Sin respuesta"}</span>;
+    return <span className="tv-board-answer">{answer?.skipped ? "Se la saltó" : "Sin respuesta"}</span>;
   }
   return (
     <span className={`tv-board-answer ${answer.correct ? "is-right" : "is-wrong"}`} title={answer.text}>
@@ -43,7 +43,10 @@ export default function MiniBoard({ players, currentUserId, phase }) {
                   <PlayerName player={p} />
                   {isMe && <span className="tv-muted"> · tú</span>}
                 </span>
-                {showAnswers ? (
+                {p.status === "mirando" ? (
+                  // Geografía's tiebreak: the players who aren't tied only watch.
+                  <span className="tv-board-answer">Mira el desempate</span>
+                ) : showAnswers ? (
                   <BoardAnswer answer={p.lastAnswer} />
                 ) : (
                   p.streak > 1 && <span className="tv-board-streak">Racha {p.streak}</span>
@@ -51,7 +54,7 @@ export default function MiniBoard({ players, currentUserId, phase }) {
               </span>
               <span className="tv-board-right">
                 <span key={p.score} className="tv-board-score">{p.score}</span>
-                {showAnswers ? null : p.answered ? (
+                {showAnswers || p.status === "mirando" ? null : p.answered ? (
                   <span className="tv-board-state is-done">
                     <Icon name="check" size={12} strokeWidth={3.2} />
                     Listo

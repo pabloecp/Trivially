@@ -447,6 +447,13 @@ export function AppProvider({ children }) {
         if (res.state) setRoom(res.state);
       },
 
+      // Geografía's map rounds: `{ lng, lat, lock }`. Without `lock` the pin can still move (except in a tiebreak).
+      async placePin(pin) {
+        const res = await emitAck("game:pin", pin);
+        if (!res.ok) throw new Error(res.error);
+        if (res.state) setRoom(res.state);
+      },
+
       // "Saltar": give up on the current round.
       async skipSong() {
         const res = await emitAck("game:skip");

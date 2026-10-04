@@ -7,14 +7,18 @@
     "start": "node src/index.js",
     "catalog:upload": "node scripts/uploadCatalog.js",
     "questions:upload": "node scripts/uploadQuestions.js",
-    "test": "node src/game/answers.test.js && node src/game/openAnswers.test.js && node src/game/questionRoom.test.js && node src/catalog/questions/questions.test.js && node src/catalog/songSelector.test.js && node src/game/scoring.test.js && node src/game/options.test.js && node src/db/store.test.js && node src/game/roomPermissions.test.js && node src/game/roomLifecycle.test.js && node src/auth/roles.test.js && node src/auth/socketToken.test.js && node src/audio/mediaCache.test.js && node src/game/skip.test.js && node src/auth/spotify.test.js && node src/catalog/trackResolver.test.js && node src/game/spotifyRoom.test.js && node src/game/quiz.test.js"
+    "geo:upload": "node scripts/uploadGeoQuestions.js",
+    "test": "node src/game/answers.test.js && node src/game/openAnswers.test.js && node src/geo/geo.test.js && node src/game/geoRoom.test.js && node src/catalog/songSelector.test.js && node src/game/scoring.test.js && node src/game/options.test.js && node src/db/store.test.js && node src/game/roomPermissions.test.js && node src/game/roomLifecycle.test.js && node src/auth/roles.test.js && node src/auth/socketToken.test.js && node src/audio/mediaCache.test.js && node src/game/skip.test.js && node src/auth/spotify.test.js && node src/catalog/trackResolver.test.js && node src/game/spotifyRoom.test.js && node src/game/quiz.test.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.117.2",
     "cookie-session": "^2.1.0",
     "cors": "^2.8.5",
+    "d3-geo": "^3.1.1",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
-    "socket.io": "^4.8.1"
+    "socket.io": "^4.8.1",
+    "topojson-client": "^3.1.0",
+    "world-atlas": "^2.0.2"
   }
 }

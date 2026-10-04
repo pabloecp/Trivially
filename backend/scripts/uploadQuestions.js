@@ -2,6 +2,7 @@
 // Supabase table `questions` (create it first with backend/supabase/schema.sql). Questions are upserted by id;
 // a question without an id gets one here, written back into the file so the next upload updates it instead of
 // adding a copy. Questions that are only in the database are kept and listed; pass --prune to delete them.
+// Geografía's questions (mode "mundo") are uploaded by `npm run geo:upload` instead, and left alone here.
 //
 //   npm run questions:upload --prefix backend
 //   npm run questions:upload --prefix backend -- --prune
@@ -98,16 +99,16 @@ for (let i = 0; i < records.length; i += 500) {
   }
 }
 
-// What the database has that the file doesn't.
+// What the database has that the file doesn't. Geografía's rows (mode "mundo") belong to `npm run geo:upload`.
 const inFile = new Set(records.map((r) => r.id));
 const extra = [];
 for (let from = 0; ; from += 1000) {
-  const { data, error } = await db.from("questions").select("id").range(from, from + 999);
+  const { data, error } = await db.from("questions").select("id, mode").range(from, from + 999);
   if (error) {
     console.error(`No se pudo comparar con la base de datos: ${error.message}`);
     process.exit(1);
   }
-  extra.push(...data.map((r) => r.id).filter((id) => !inFile.has(id)));
+  extra.push(...data.filter((r) => r.mode !== "mundo" && !inFile.has(r.id)).map((r) => r.id));
   if (data.length < 1000) break;
 }
 if (extra.length && prune) {

@@ -3,6 +3,7 @@ import MusicStartButton from "./music/StartButton.jsx";
 import QuizLobbyPanel from "./quiz/LobbyPanel.jsx";
 import QuizStartButton from "./quiz/StartButton.jsx";
 import GeoLobbyPanel from "./mundo/LobbyPanel.jsx";
+import GeoStartButton from "./mundo/StartButton.jsx";
 
 // Game modes shown on the Home screen. To add a new mode, add an entry here with `available: true`, a `Lobby`
 // panel (shown on the room screen while the room waits in that mode) and a `path` for its in-match screens,
@@ -38,9 +39,9 @@ export const GAME_MODES = [
     icon: "globe",
     available: true,
     Lobby: GeoLobbyPanel,
-    // The start button is shared with the music mode: it only checks the questions ready against the rounds.
-    Start: MusicStartButton,
-    path: (room) => `/game/${room.code}`,
+    Start: GeoStartButton,
+    // Capitals, flags and the world map (modes/mundo/Game.jsx).
+    path: (room) => `/mundo/${room.code}`,
   },
 ];
 

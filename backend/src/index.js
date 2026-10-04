@@ -21,6 +21,7 @@ import {
 import { verifyAuthToken } from "./auth/socketToken.js";
 import { attachSockets } from "./realtime/sockets.js";
 import { getMedia, isCoverUrl, isPreviewUrl } from "./audio/mediaCache.js";
+import { flagForToken, getFlag } from "./geo/flags.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 dotenv.config();
@@ -121,6 +122,21 @@ app.get("/api/image/proxy", async (req, res) => {
     const image = await getMedia(url);
     res.setHeader("Content-Type", "image/jpeg");
     res.setHeader("Cache-Control", "public, max-age=86400");
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    res.send(image);
+  } catch (e) {
+    res.status(502).json({ error: e.message });
+  }
+});
+
+// Geografía's flags, by the token of the match's question (the address never says which country it is).
+app.get("/api/geo/flag/:token", async (req, res) => {
+  const code = flagForToken(req.params.token);
+  if (!code) return res.status(404).json({ error: "Bandera no encontrada" });
+  try {
+    const image = await getFlag(code);
+    res.setHeader("Content-Type", "image/png");
+    res.setHeader("Cache-Control", "private, max-age=21600");
     res.setHeader("Access-Control-Allow-Origin", "*");
     res.send(image);
   } catch (e) {

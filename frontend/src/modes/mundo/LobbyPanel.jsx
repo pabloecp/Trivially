@@ -1,80 +1,55 @@
-import { useState } from "react";
 import Avatar from "../../components/home/Avatar.jsx";
 import Icon from "../../components/home/Icon.jsx";
 import { useApp } from "../../lib/store.jsx";
-import Stepper from "../../components/home/Stepper.jsx";
-import { ROUNDS, SECONDS } from "../music/MusicSettings.jsx";
+import GeoSettings from "./GeoSettings.jsx";
+import { KINDS, findDifficulty, geoConfig, matchMinutes } from "./geoInfo.js";
+import "../../styles/quiz.css";
+import "../../styles/geo.css";
 
-// Geografía's waiting room, inside the room screen on Home: rounds and seconds per question, and a match summary.
-// The start button lives in PartyPanel (modes/music/StartButton.jsx is shared: it only needs `songsReady`).
+// Geografía's waiting room, inside the room screen on Home: the match settings and a summary of the match. The start
+// button lives in PartyPanel (./StartButton.jsx).
 export default function LobbyPanel({ room, onToast }) {
   const { user, updateConfig } = useApp();
   const me = room.players.find((p) => p.id === user?.id);
   const canEdit = room.hostId === user?.id || Boolean(me?.canEditConfig) || Boolean(room.coHosts?.includes(user?.id));
-  const [draft, setDraft] = useState({ rounds: room.config?.rounds || 10, roundMs: room.config?.roundMs || 15000 });
-  // Others' changes arrive through the room; ours show right away.
-  const rounds = canEdit ? draft.rounds : room.config?.rounds || 10;
-  const roundMs = canEdit ? draft.roundMs : room.config?.roundMs || 15000;
-  const seconds = Math.round(roundMs / 1000);
-  const minutes = Math.max(1, Math.round((rounds * (3 + seconds + 3)) / 60));
   const connected = room.players.filter((p) => p.connected);
-  const short = room.songsReady != null && room.songsReady < rounds;
 
-  async function save(change) {
-    const next = { ...draft, ...change };
-    setDraft(next);
-    try {
-      await updateConfig({ rounds: next.rounds, roundMs: next.roundMs });
-    } catch (err) {
-      setDraft({ rounds: room.config?.rounds || 10, roundMs: room.config?.roundMs || 15000 });
-      onToast?.(err.message || "No se pudieron guardar los ajustes");
-    }
-  }
+  const config = geoConfig(room);
+  const level = findDifficulty(config.difficulty);
+  const kinds = KINDS.filter((k) => config.kinds.includes(k.id));
+  const short = room.questionsReady != null && room.questionsReady < config.rounds;
 
   return (
     <div className="tv-lobby-grid has-settings">
-      <section className="tv-card tv-settings" aria-labelledby="tv-settings-title">
-        <h2 id="tv-settings-title" className="tv-card-title">Ajustes de la partida</h2>
-        {!canEdit && (
-          <p className="tv-readonly-note">
-            <Icon name="lock" size={15} strokeWidth={2.6} />
-            Solo {room.hostName || "el host"} puede cambiar los ajustes
-          </p>
-        )}
-        <fieldset className="tv-steppers" disabled={!canEdit}>
-          <Stepper label="Rondas" value={rounds} limits={ROUNDS} onChange={(n) => save({ rounds: n })} />
-          <Stepper label="Segundos por ronda" value={seconds} unit="s" limits={SECONDS} onChange={(n) => save({ roundMs: n * 1000 })} />
-        </fieldset>
-        {short && (
-          <p className="tv-playlist-total is-short" role="status">
-            <Icon name="lock" size={16} strokeWidth={2.6} />
-            <span>
-              Hay <strong>{room.songsReady} preguntas listas</strong> para {rounds} rondas. Baja las rondas.
-            </span>
-          </p>
-        )}
-      </section>
+      <GeoSettings room={room} updateConfig={updateConfig} onToast={onToast} readOnly={!canEdit} />
 
       <section className="tv-card tv-match" aria-label="Resumen de la partida">
         <h2 className="tv-card-title">Resumen de la partida</h2>
-        <div className="tv-match-preview">
-          <span className="tv-badge tv-c-world" aria-hidden="true">
-            <Icon name="globe" size={28} />
-          </span>
+        <div className="tv-match-preview tv-geo-preview">
+          <div className="tv-geo-preview-kinds" aria-hidden="true">
+            {kinds.map((k, i) => (
+              <span key={k.id} className="tv-badge tv-c-world" style={{ "--i": i }}>
+                <Icon name={k.icon} size={26} />
+              </span>
+            ))}
+          </div>
           <p className="tv-match-title">
-            <strong>{rounds}</strong> preguntas
+            <strong>{config.rounds}</strong> rondas
           </p>
           <div className="tv-match-chips">
-            <span className="tv-match-chip">
-              <Icon name="bolt" size={14} strokeWidth={2.6} />
-              {seconds} s cada una
-            </span>
-            <span className="tv-match-chip">
-              <Icon name="globe" size={14} strokeWidth={2.6} />
-              Respuesta escrita
-            </span>
-            <span className="tv-match-chip">≈ {minutes} min</span>
+            {kinds.map((k) => (
+              <span key={k.id} className="tv-match-chip">
+                <Icon name={k.icon} size={14} strokeWidth={2.6} />
+                {k.label}
+              </span>
+            ))}
+            <span className={`tv-match-chip tv-diff-chip tv-c-${level.color}`}>Dificultad {level.label.toLowerCase()}</span>
+            <span className="tv-match-chip">≈ {matchMinutes(config)} min</span>
           </div>
+          <p className="tv-hint tv-geo-tiebreak-note">
+            Si al final hay empate en el primer puesto, se juega un desempate en el mapa: gana el primero que encuentre el
+            país.
+          </p>
           <div className="tv-match-players">
             <span className="tv-avatar-stack" aria-hidden="true">
               {connected.slice(0, 5).map((p) => (
@@ -84,6 +59,15 @@ export default function LobbyPanel({ room, onToast }) {
             {connected.length === 1 ? "1 jugador en la sala" : `${connected.length} jugadores en la sala`}
           </div>
         </div>
+        {short && (
+          <p className="tv-playlist-total is-short" role="status">
+            <Icon name="lock" size={16} strokeWidth={2.6} />
+            <span>
+              Solo hay <strong>{room.questionsReady} preguntas</strong> con estos ajustes para {config.rounds} rondas. Baja
+              las rondas o elige más tipos.
+            </span>
+          </p>
+        )}
       </section>
     </div>
   );
