@@ -6,10 +6,10 @@ import { api } from "../../lib/api.js";
 import { useApp } from "../../lib/store.jsx";
 
 // Both steppers move in steps of 5. The server keeps the same limits (roomManager.updateConfig).
-const ROUNDS = { min: 5, max: 25, step: 5 };
-const SECONDS = { min: 10, max: 30, step: 5 };
+export const ROUNDS = { min: 5, max: 25, step: 5 };
+export const SECONDS = { min: 10, max: 30, step: 5 };
 
-function Stepper({ label, value, unit, limits, onChange }) {
+export function Stepper({ label, value, unit, limits, onChange }) {
   const { min, max, step } = limits;
   return (
     <div className="tv-stepper" role="group" aria-label={label}>
