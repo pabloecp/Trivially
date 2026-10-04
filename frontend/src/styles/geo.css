@@ -9,6 +9,8 @@
   --tv-geo-border: #59647e;
   --tv-geo-label: #ffffff;
   --tv-geo-halo: rgba(10, 10, 15, 0.88);
+  --tv-geo-hover: #46516b;
+  --tv-geo-picked: rgba(var(--brand-rgb), 0.45);
 }
 [data-theme="light"] {
   --tv-geo-ocean: rgba(var(--p-world-rgb), 0.2);
@@ -17,6 +19,8 @@
   --tv-geo-border: #a3afc2;
   --tv-geo-label: #1d1a33;
   --tv-geo-halo: rgba(255, 255, 255, 0.92);
+  --tv-geo-hover: #e3e9f3;
+  --tv-geo-picked: rgba(var(--brand-rgb), 0.3);
 }
 
 /* Difficulty: lighter and deeper shades of the mode's blue. */
@@ -142,35 +146,61 @@
 }
 .tv-geo-answer .tv-geo-flag { max-width: 120px; max-height: 80px; border-radius: 8px; }
 
-.tv-geo-map-card { gap: 14px; padding: 18px; }
-.tv-geo-ask { display: grid; justify-items: center; gap: 2px; text-align: center; }
+/* A map round takes the whole width (the scoreboard goes under it) and, scrolled to the top, the whole screen. */
+@media (min-width: 900px) {
+  .tv-game.tv-geo-game.is-map { grid-template-columns: minmax(0, 1fr); }
+}
+.tv-geo-find { display: grid; gap: 2px; }
 .tv-geo-country {
   margin: 0;
+  overflow-wrap: anywhere;
   font-family: var(--tv-display);
   font-weight: 700;
-  font-size: clamp(28px, 7vw, 40px);
+  font-size: clamp(26px, 6vw, 38px);
   line-height: 1.1;
   color: var(--tv-text);
   animation: tvPop 0.5s var(--tv-spring);
 }
+.tv-geo-find .tv-hint { font-size: 13px; }
+.tv-geo-map-card { gap: 10px; padding: 10px; border-radius: 26px; }
 
 .tv-geo-map {
   position: relative;
   width: 100%;
   aspect-ratio: 2 / 1;
   overflow: hidden;
-  border-radius: 22px;
+  border-radius: 18px;
   background: var(--tv-geo-space);
   box-shadow: inset 0 0 0 2px var(--tv-edge);
 }
-@media (max-width: 640px) {
-  .tv-geo-map { aspect-ratio: 4 / 3; border-radius: 18px; }
-  .tv-geo-map-card { padding: 14px 12px; }
+.tv-geo-map-card.is-playing .tv-geo-map {
+  aspect-ratio: auto;
+  height: clamp(300px, calc(100vh - 230px), 860px);
+  height: clamp(300px, calc(100dvh - 230px), 860px);
 }
-.tv-geo-map svg { display: block; width: 100%; height: 100%; touch-action: pan-y; user-select: none; -webkit-user-select: none; }
-.tv-geo-map.is-interactive svg { touch-action: none; cursor: crosshair; }
-.tv-app .tv-geo-map svg:focus-visible { outline: none; }
-.tv-app .tv-geo-map svg[data-keyboard]:focus { outline: 3px solid var(--tv-focus); outline-offset: -3px; border-radius: inherit; }
+.tv-geo-map-card.is-reveal .tv-geo-map {
+  aspect-ratio: auto;
+  height: clamp(240px, calc(100vh - 330px), 560px);
+  height: clamp(240px, calc(100dvh - 330px), 560px);
+}
+@media (max-width: 640px) {
+  .tv-geo-map { aspect-ratio: 4 / 3; border-radius: 16px; }
+  .tv-geo-map-card { padding: 6px; border-radius: 22px; }
+  .tv-geo-map-card.is-playing .tv-geo-map {
+    height: clamp(280px, calc(100vh - 250px), 760px);
+    height: clamp(280px, calc(100dvh - 250px), 760px);
+  }
+  .tv-geo-map-card.is-reveal .tv-geo-map {
+    height: clamp(220px, calc(100vh - 360px), 480px);
+    height: clamp(220px, calc(100dvh - 360px), 480px);
+  }
+}
+.tv-geo-map > svg { display: block; width: 100%; height: 100%; touch-action: pan-y; user-select: none; -webkit-user-select: none; cursor: grab; }
+.tv-geo-map.is-interactive > svg { touch-action: none; cursor: crosshair; }
+.tv-geo-map > svg:active,
+.tv-geo-map.is-dragging > svg { cursor: grabbing; }
+.tv-app .tv-geo-map > svg:focus-visible { outline: none; }
+.tv-app .tv-geo-map > svg[data-keyboard]:focus { outline: 3px solid var(--tv-focus); outline-offset: -3px; border-radius: inherit; }
 .tv-geo-map--loading { display: grid; place-items: center; padding: 20px; text-align: center; font-weight: 700; color: var(--tv-text-3); }
 
 .tv-geo-sea { fill: var(--tv-geo-space); }
@@ -181,9 +211,18 @@
   stroke-width: 0.6px;
   stroke-linejoin: round;
   vector-effect: non-scaling-stroke;
-  transition: fill 0.4s ease;
+  transition: fill 0.25s ease;
 }
+/* The country under the mouse, and the one this player's pin is in: only shapes, never names. */
+@media (hover: hover) {
+  .tv-geo-map.is-interactive .tv-geo-land path:hover { fill: var(--tv-geo-hover); transition: none; }
+}
+.tv-geo-land path.is-picked { fill: var(--tv-geo-picked); stroke: var(--brand); stroke-width: 1.4px; }
 .tv-geo-land path.is-target { fill: var(--p-ok); stroke: var(--p-ok-edge); stroke-width: 1.4px; }
+/* Islands and microstates too small to see get a dot. */
+.tv-geo-dot { fill: var(--tv-geo-land); stroke: var(--tv-geo-border); }
+.tv-geo-dot.is-picked { fill: var(--tv-geo-picked); stroke: var(--brand); }
+.tv-geo-dot.is-target { fill: var(--p-ok); stroke: var(--p-ok-edge); }
 .tv-geo-target-ring {
   fill: none;
   stroke: var(--p-ok);
@@ -200,6 +239,7 @@
 .tv-geo-pin path { fill: var(--pin); stroke: #ffffff; stroke-width: 2.5px; stroke-linejoin: round; }
 .tv-geo-pin circle { fill: #ffffff; }
 .tv-geo-pin.is-mine path { stroke-width: 3px; }
+.tv-geo-pin.is-dragging { filter: drop-shadow(0 6px 4px rgba(0, 0, 0, 0.45)); }
 .tv-geo-pin text {
   fill: var(--tv-geo-label);
   stroke: var(--tv-geo-halo);
@@ -210,12 +250,55 @@
   font-size: 13px;
 }
 .tv-geo-pin > * { animation: tvGeoDrop 0.45s var(--tv-spring) backwards; }
+.tv-geo-pin.is-dragging > * { animation: none; }
 @keyframes tvGeoDrop { from { transform: translateY(-18px); opacity: 0; } }
 
 /* The crosshair is the keyboard's pin: it only shows while the map has keyboard focus. */
 .tv-geo-crosshair { display: none; }
 .tv-geo-crosshair path { fill: none; stroke: var(--tv-text); stroke-width: 2.5px; stroke-linecap: round; }
-.tv-geo-map svg[data-keyboard]:focus .tv-geo-crosshair { display: inline; }
+.tv-geo-map > svg[data-keyboard]:focus .tv-geo-crosshair { display: inline; }
+
+/* Floating over the map: quick jumps to each continent (top), zoom (right) and the confirm button (bottom). */
+.tv-geo-regions {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  gap: 6px;
+  padding: 8px 8px 14px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.35), transparent);
+  pointer-events: none;
+}
+.tv-geo-regions::-webkit-scrollbar { display: none; }
+.tv-geo-regions button {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 5px;
+  height: 36px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--tv-surface);
+  box-shadow: 0 3px 0 var(--tv-edge);
+  color: var(--tv-text);
+  font: inherit;
+  font-weight: 800;
+  font-size: 13px;
+  white-space: nowrap;
+  cursor: pointer;
+  pointer-events: auto;
+  touch-action: pan-x;
+  transition: transform 0.18s var(--tv-spring), background 0.15s ease;
+}
+.tv-geo-regions button:hover { transform: translateY(-2px); }
+.tv-geo-regions button:active { transform: translateY(3px); box-shadow: none; background: var(--brand); color: var(--on-brand); }
+@media (min-width: 900px) {
+  .tv-geo-regions { flex-wrap: wrap; overflow: visible; right: 64px; }
+}
 
 .tv-geo-zoom {
   position: absolute;
@@ -224,11 +307,12 @@
   display: grid;
   gap: 6px;
 }
+.tv-geo-map-card.is-playing .tv-geo-zoom { top: 60px; bottom: auto; }
 .tv-geo-zoom button {
   display: grid;
   place-items: center;
-  width: 44px;
-  height: 44px;
+  width: 46px;
+  height: 46px;
   border: 0;
   border-radius: 14px;
   background: var(--tv-surface);
@@ -240,10 +324,52 @@
 .tv-geo-zoom button:hover:not(:disabled) { transform: translateY(-2px); }
 .tv-geo-zoom button:active:not(:disabled) { transform: translateY(3px); box-shadow: none; }
 .tv-geo-zoom button:disabled { opacity: 0.4; cursor: default; }
-@media (max-width: 640px) {
-  .tv-geo-zoom { right: 8px; bottom: 8px; gap: 4px; }
-  .tv-geo-zoom button { width: 40px; height: 40px; border-radius: 12px; }
+@media (min-width: 900px) {
+  .tv-geo-map-card.is-playing .tv-geo-zoom { top: 10px; }
 }
+@media (max-width: 640px) {
+  .tv-geo-zoom { right: 8px; gap: 5px; }
+  .tv-geo-map-card.is-playing .tv-geo-zoom { top: 58px; }
+}
+
+.tv-geo-confirm {
+  position: absolute;
+  left: 50%;
+  bottom: 12px;
+  transform: translateX(-50%);
+  max-width: calc(100% - 24px);
+}
+.tv-geo-confirm .tv-btn { box-shadow: 0 4px 0 var(--edge), 0 10px 24px -6px rgba(0, 0, 0, 0.6); white-space: nowrap; }
+.tv-geo-confirm .tv-btn:disabled { opacity: 1; background: var(--tv-surface); color: var(--tv-text-3); box-shadow: 0 4px 0 var(--tv-edge); }
+
+/* The end of a map round, in one line above the map. */
+.tv-geo-verdict {
+  position: relative;
+  overflow: hidden;
+  overflow: clip;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px 12px 12px;
+  border-radius: 22px;
+}
+.tv-geo-verdict-icon {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 16px;
+  color: var(--p-ink);
+  animation: tvPop 0.6s var(--tv-spring);
+}
+.tv-geo-verdict-text { display: grid; min-width: 0; }
+.tv-geo-verdict-text strong { font-family: var(--tv-display); font-weight: 700; font-size: 22px; line-height: 1.15; color: var(--tv-text); }
+.tv-geo-verdict-text small { overflow: hidden; text-overflow: ellipsis; font-weight: 700; font-size: 14px; color: var(--tv-text-2); }
+.tv-geo-verdict--ok { box-shadow: 0 6px 0 var(--tv-edge), inset 0 0 0 3px var(--p-ok); }
+.tv-geo-verdict--ok .tv-geo-verdict-icon { background: var(--p-ok); box-shadow: 0 4px 0 var(--p-ok-edge); }
+.tv-geo-verdict--bad { box-shadow: 0 6px 0 var(--tv-edge), inset 0 0 0 3px var(--p-bad); }
+.tv-geo-verdict--bad .tv-geo-verdict-icon { background: var(--p-bad); box-shadow: 0 4px 0 var(--p-bad-edge); color: #fff; }
+.tv-geo-verdict--timeout .tv-geo-verdict-icon { background: var(--p-accent-2); box-shadow: 0 4px 0 var(--p-accent-edge); }
 
 /* Who was closest, at the reveal of a map round. */
 .tv-geo-distances { gap: 12px; }
@@ -262,7 +388,7 @@
   animation-delay: calc(var(--i) * 60ms + 0.2s);
 }
 .tv-geo-distance-list li.is-me { box-shadow: 0 3px 0 var(--tv-option-edge), inset 0 0 0 2px var(--brand); }
-.tv-geo-dot { width: 14px; height: 14px; border-radius: 50%; background: var(--pin); box-shadow: 0 0 0 2px #fff; }
+.tv-geo-swatch { width: 14px; height: 14px; border-radius: 50%; background: var(--pin); box-shadow: 0 0 0 2px #fff; }
 .tv-geo-distance-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .tv-geo-distance { display: inline-flex; align-items: center; gap: 4px; font-variant-numeric: tabular-nums; color: var(--tv-text-2); }
 .tv-geo-distance.is-inside { color: var(--p-ok-text); }
@@ -276,5 +402,6 @@
   .tv-geo-pin > *,
   .tv-geo-flag,
   .tv-geo-country,
+  .tv-geo-verdict-icon,
   .tv-geo-distance-list li { animation: none; }
 }

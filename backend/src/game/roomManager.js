@@ -837,9 +837,9 @@ export class RoomManager {
 
   /**
    * Geografía's map rounds: the player taps the map. A pin can be moved until it is locked (`lock`, the "Confirmar"
-   * button); when the time runs out, the last pin counts. In a tiebreak there is one try: the first tap is final, and
-   * a pin inside the country ends the round on the spot (the first to find the country wins). Pins are only judged
-   * at the reveal (gradeMap), so nothing tells the other players where the country is before then.
+   * button, which sends the pin again); when the time runs out, the last pin counts. A locked pin is final. In a
+   * tiebreak, locking a pin inside the country ends the round on the spot: the first to confirm the country wins.
+   * Pins are only judged at the reveal (gradeMap), so nothing tells the other players where the country is before.
    * Returns true when the pin was locked (the room's state changed for everyone).
    */
   placePin(room, userId, value) {
@@ -856,9 +856,9 @@ export class RoomManager {
     }
     const round = (n) => Math.round(n * 10000) / 10000;
     player.pin = { lng: round(lng), lat: round(lat), at: Date.now() };
-    if (!room.tiebreak && !value.lock) return false;
+    if (!value.lock) return false;
 
-    player.lastAnswer = { pin: [player.pin.lng, player.pin.lat], at: player.pin.at };
+    player.lastAnswer = { pin: [player.pin.lng, player.pin.lat], at: player.pin.at, locked: true };
     const track = room.tracks[room.currentRound];
     if (room.tiebreak && locate(track.map, player.lastAnswer.pin).inside) {
       player.status = "respondió";
@@ -878,7 +878,9 @@ export class RoomManager {
   gradeMap(room, track) {
     for (const player of room.players.values()) {
       if (!this.isPlaying(room, player.id)) continue;
-      if (!player.lastAnswer && player.pin) player.lastAnswer = { pin: [player.pin.lng, player.pin.lat], at: player.pin.at };
+      if (!player.lastAnswer && player.pin) {
+        player.lastAnswer = { pin: [player.pin.lng, player.pin.lat], at: player.pin.at, locked: false };
+      }
       const answer = player.lastAnswer;
       if (!answer?.pin) continue;
       const spot = locate(track.map, answer.pin);
@@ -902,14 +904,17 @@ export class RoomManager {
   }
 
   /**
-   * Who won a tiebreak round: the tied player whose pin landed inside the country (the first one to do it, since that
-   * ends the round: see placePin); if nobody did, the closest pin, however long it took. No pins (or two at exactly
-   * the same distance) means another tiebreak.
+   * Who won a tiebreak round: the tied player who confirmed a pin inside the country (the first to do it ends the
+   * round: see placePin); a pin left unconfirmed inside only wins if nobody confirmed one, the earliest placed first.
+   * If nobody landed inside, the closest pin wins, however long it took. No pins (or two at exactly the same
+   * distance) means another tiebreak.
    */
   settleTiebreak(room) {
     const tb = room.tiebreak;
     const pins = tb.playerIds.map((id) => room.players.get(id)).filter((p) => p?.lastAnswer?.pin);
-    const inside = pins.filter((p) => p.lastAnswer.inside).sort((a, b) => a.lastAnswer.at - b.lastAnswer.at);
+    const inside = pins
+      .filter((p) => p.lastAnswer.inside)
+      .sort((a, b) => Boolean(b.lastAnswer.locked) - Boolean(a.lastAnswer.locked) || a.lastAnswer.at - b.lastAnswer.at);
     if (inside.length) {
       tb.winnerId = inside[0].id;
       tb.reason = "dentro";

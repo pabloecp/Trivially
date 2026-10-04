@@ -160,12 +160,16 @@ useSpain(t);
 mgr.beginPlaying(t);
 stop(t);
 assert.throws(() => mgr.placePin(t, "c", { lng: -3.7, lat: 40.4 }), /desempate/);
-// B taps first, outside; one try only: the pin is final.
-assert.equal(mgr.placePin(t, "b", { lng: 2.35, lat: 48.86 }), true);
-assert.equal(mgr.placePin(t, "b", { lng: -3.7, lat: 40.4 }), false, "no second try");
+// A pin can move until it is confirmed; an unconfirmed one inside the country doesn't end the round.
+assert.equal(mgr.placePin(t, "a", { lng: 2.35, lat: 48.86 }), false);
+assert.equal(mgr.placePin(t, "a", { lng: -4, lat: 40 }), false);
 assert.equal(t.phase, "playing");
-// A finds Spain: that ends the round there and then, and A wins.
-mgr.placePin(t, "a", { lng: -3.7, lat: 40.4 });
+// B confirms first, outside: a confirmed pin is final.
+assert.equal(mgr.placePin(t, "b", { lng: 2.35, lat: 48.86, lock: true }), true);
+assert.equal(mgr.placePin(t, "b", { lng: -3.7, lat: 40.4, lock: true }), false, "no second try");
+assert.equal(t.phase, "playing");
+// A confirms Spain: that ends the round there and then, and A wins.
+mgr.placePin(t, "a", { lng: -3.7, lat: 40.4, lock: true });
 stop(t);
 assert.equal(t.phase, "reveal");
 assert.equal(t.tiebreak.winnerId, "a");
@@ -178,22 +182,36 @@ assert.deepEqual(results.map((r) => r.id), ["a", "b", "c"]);
 assert.equal(results[0].tiebreakWinner, true);
 assert.equal(results[1].tiebreakWinner, false);
 
-// Whoever finds the country first wins, even if the other was going to be inside too.
+// Whoever confirms the country first wins, even if the other already had an unconfirmed pin inside.
+t = tiedRoom();
+useSpain(t);
+mgr.beginPlaying(t);
+mgr.placePin(t, "a", { lng: -3.7, lat: 40.4 });
+mgr.placePin(t, "b", { lng: -5, lat: 40, lock: true });
+stop(t);
+assert.equal(t.phase, "reveal");
+assert.equal(t.tiebreak.winnerId, "b");
+assert.equal(t.players.get("a").lastAnswer.inside, true);
+assert.throws(() => mgr.placePin(t, "a", { lng: -3.7, lat: 40.4, lock: true }), /No se aceptan/);
+
+// Nobody confirmed and time ran out: the pin that found the country first wins.
 t = tiedRoom();
 useSpain(t);
 mgr.beginPlaying(t);
 mgr.placePin(t, "b", { lng: -5, lat: 40 });
+mgr.placePin(t, "a", { lng: -3.7, lat: 40.4 });
+t.players.get("a").pin.at -= 5000;
+mgr.beginReveal(t);
 stop(t);
-assert.equal(t.tiebreak.winnerId, "b");
-assert.throws(() => mgr.placePin(t, "a", { lng: -3.7, lat: 40.4 }), /No se aceptan/);
+assert.equal(t.tiebreak.winnerId, "a");
 
 // Nobody inside: the closest pin wins, however late it came.
 t = tiedRoom();
 useSpain(t);
 mgr.beginPlaying(t);
-mgr.placePin(t, "a", { lng: 2.35, lat: 48.86 }); // París, ~680 km
+mgr.placePin(t, "a", { lng: 2.35, lat: 48.86, lock: true }); // París, ~680 km
 assert.equal(t.phase, "playing");
-mgr.placePin(t, "b", { lng: 7.27, lat: 43.7 }); // Niza, ~450 km
+mgr.placePin(t, "b", { lng: 7.27, lat: 43.7, lock: true }); // Niza, ~450 km
 stop(t);
 assert.equal(t.phase, "reveal");
 assert.equal(t.tiebreak.winnerId, "b");

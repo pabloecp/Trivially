@@ -47,6 +47,9 @@ function GameScreen() {
   const nav = useNavigate();
   const { world, error: mapError } = useWorld();
   const inputRef = useRef(null);
+  const gameRef = useRef(null);
+  // Phones and tablets get "toca" in the hints; a mouse gets "haz clic".
+  const [touch] = useState(() => Boolean(window.matchMedia?.("(pointer: coarse)").matches));
   const cheerOffset = useRef(Math.floor(Math.random() * CHEERS.length));
   const sending = useRef(false);
   // The phase right now, for replies that arrive after the round closed (their errors no longer matter).
@@ -113,6 +116,13 @@ function GameScreen() {
     if (room?.phase === "playing" && !isMap) setTimeout(() => inputRef.current?.focus(), 100);
   }, [room?.phase, round]);
 
+  // A map round fills the screen: as its countdown starts, the page scrolls to the top of the game.
+  useEffect(() => {
+    if (!isMap || room?.phase !== "countdown" || !gameRef.current) return;
+    const top = gameRef.current.getBoundingClientRect().top + window.scrollY - 12;
+    if (Math.abs(window.scrollY - top) > 4) window.scrollTo({ top, behavior: "smooth" });
+  }, [isMap, room?.phase, round]);
+
   // After a reload mid-round, the pin this player had placed comes back with the room.
   useEffect(() => {
     if (room?.me?.pin && !myPin && isMap) setPin({ round, lngLat: room.me.pin, locked: Boolean(room.me.lastAnswer) });
@@ -149,16 +159,13 @@ function GameScreen() {
     });
   }
 
-  // A tap on the map. In a tiebreak the first tap is final; otherwise the pin can move until "Confirmar".
+  // A tap on the map (or the pin let go after dragging it): the pin can move until "Confirmar".
   function onPick([lng, lat]) {
     if (locked) return;
-    const final = Boolean(tiebreak);
-    setPin({ round, lngLat: [lng, lat], locked: final });
+    setPin({ round, lngLat: [lng, lat], locked: false });
     setErr("");
     placePin({ lng, lat }).catch((e) => {
-      if (phaseRef.current !== "playing") return;
-      if (final) setPin(null);
-      setErr(e.message || "No se pudo poner tu pin");
+      if (phaseRef.current === "playing") setErr(e.message || "No se pudo poner tu pin");
     });
   }
 
@@ -228,26 +235,52 @@ function GameScreen() {
           }))
       : [];
 
+  const roundLabel = tiebreak ? `Desempate${tiebreak.round > 1 ? ` ${tiebreak.round}` : ""}` : `Ronda ${round + 1} de ${room.totalRounds}`;
+  const mapPlaying = isMap && room.phase === "playing" && question;
+  const pinLocked = Boolean(myPin?.locked) || Boolean(me?.answered);
+  // What to do right now on the map, under the country's name.
+  const mapHint = !iPlay
+    ? `Solo juegan ${joinNames(tiedNames)}: gana el primero que confirme su pin dentro del país.`
+    : pinLocked
+    ? tiebreak
+      ? "Pin confirmado. Si cayó dentro y fuiste el primero, ganas."
+      : "Pin confirmado. Esperando al resto…"
+    : myPin
+    ? `Arrástralo o ${touch ? "toca" : "haz clic en"} otro sitio para moverlo, y confirma.`
+    : touch
+    ? "Toca para poner tu pin. Doble toque o pellizca para acercar."
+    : "Haz clic para poner tu pin. Rueda o doble clic para acercar.";
+
   return (
-    <div className="tv-game tv-geo-game">
+    <div className={`tv-game tv-geo-game${isMap && room.phase !== "finished" ? " is-map" : ""}`} ref={gameRef}>
       <div className="tv-game-main">
         <section className="tv-card tv-game-top">
-          <div className="tv-game-round">
-            <p className="tv-party-kicker">
-              Sala {room.code} · {kind ? kindInfo.label : "Geografía"}
-            </p>
-            <h1 className="tv-card-title">
-              {tiebreak ? (
-                <>
-                  Desempate{tiebreak.round > 1 ? ` ${tiebreak.round}` : ""}
-                </>
-              ) : (
-                <>
-                  Ronda {round + 1} <span className="tv-muted">de {room.totalRounds}</span>
-                </>
-              )}
-            </h1>
-          </div>
+          {mapPlaying ? (
+            <div className="tv-game-round tv-geo-find">
+              <p className="tv-party-kicker">
+                {roundLabel} · ¿Dónde está…?
+              </p>
+              <h1 className="tv-card-title tv-geo-country">{question.name}</h1>
+              <p className="tv-hint" aria-live="polite">
+                {mapHint}
+              </p>
+            </div>
+          ) : (
+            <div className="tv-game-round">
+              <p className="tv-party-kicker">
+                Sala {room.code} · {kind ? kindInfo.label : "Geografía"}
+              </p>
+              <h1 className="tv-card-title">
+                {tiebreak ? (
+                  roundLabel
+                ) : (
+                  <>
+                    Ronda {round + 1} <span className="tv-muted">de {room.totalRounds}</span>
+                  </>
+                )}
+              </h1>
+            </div>
+          )}
 
           <div className={`tv-clock${urgent ? " is-urgent" : ""}`} role="timer" aria-label={`${seconds} segundos`}>
             <svg viewBox="0 0 44 44" aria-hidden="true">
@@ -292,7 +325,7 @@ function GameScreen() {
             <p className="tv-hint">
               {tiebreak
                 ? iPlay
-                  ? "Un solo intento: el primero que ponga el pin dentro del país gana. Si nadie lo encuentra, gana el más cercano."
+                  ? "Pon tu pin y confírmalo: gana el primero que confirme dentro del país. Si nadie lo encuentra, gana el más cercano."
                   : "Solo juegan los empatados. Tú miras cómo lo resuelven."
                 : kind === "location"
                 ? `Tendrás ${LOCATION_SECONDS} segundos para poner tu pin en el mapa.`
@@ -364,28 +397,12 @@ function GameScreen() {
           </section>
         )}
 
-        {isMap && (room.phase === "playing" || room.phase === "reveal") && question && (
-          <section className="tv-card tv-geo-map-card">
-            {room.phase === "playing" && (
-              <div className="tv-geo-ask">
-                <p className="tv-party-kicker">{iPlay ? "¿Dónde está…?" : `Desempate entre ${joinNames(tiedNames)}`}</p>
-                <h2 className="tv-geo-country">{question.name}</h2>
-                <p className="tv-hint" aria-live="polite">
-                  {!iPlay
-                    ? "Solo juegan los empatados: el primero que lo encuentre gana."
-                    : myPin?.locked || me?.answered
-                    ? tiebreak
-                      ? "Pin puesto. Esperando a tu rival…"
-                      : "Pin confirmado. Esperando al resto…"
-                    : tiebreak
-                    ? "Un solo intento: tu primer toque cuenta."
-                    : myPin
-                    ? "Puedes moverlo tocando otro sitio. Si no confirmas, cuenta donde esté al acabar el tiempo."
-                    : "Toca el mapa para poner tu pin. Acerca con dos dedos o la rueda."}
-                </p>
-              </div>
-            )}
+        {isMap && room.phase === "reveal" && room.reveal && (
+          <MapVerdict room={room} me={me} user={user} tiebreak={tiebreak} tiedNames={tiedNames} iPlay={iPlay} />
+        )}
 
+        {isMap && (room.phase === "playing" || room.phase === "reveal") && question && (
+          <section className={`tv-card tv-geo-map-card is-${room.phase}`}>
             {world ? (
               <WorldMap
                 key={round}
@@ -395,28 +412,32 @@ function GameScreen() {
                 myPin={room.phase === "playing" ? myPin?.lngLat || null : null}
                 pins={revealPins}
                 target={room.phase === "reveal" ? room.reveal?.map : null}
+                regions={room.phase === "playing"}
                 label={
                   room.phase === "playing"
-                    ? `Mapamundi. Toca para poner tu pin en ${question.name}. Flechas para moverte, más y menos para acercar, Enter para poner el pin en el centro.`
+                    ? `Mapamundi. Pon tu pin en ${question.name}. Flechas para moverte, más y menos para acercar, Enter para poner el pin en el centro.`
                     : `Mapamundi con ${room.reveal?.name || "el país"} marcado y los pines de los jugadores`
                 }
-              />
+              >
+                {room.phase === "playing" && iPlay && (
+                  <div className="tv-geo-confirm">
+                    <button
+                      type="button"
+                      className="tv-btn tv-c-world"
+                      onClick={confirmPin}
+                      disabled={!myPin || pinLocked}
+                      aria-live="polite"
+                    >
+                      <Icon name={pinLocked ? "check" : "pin"} size={20} strokeWidth={2.6} />
+                      {pinLocked ? "Pin confirmado" : myPin ? "Confirmar pin" : "Pon tu pin"}
+                    </button>
+                  </div>
+                )}
+              </WorldMap>
             ) : (
               <div className="tv-geo-map tv-geo-map--loading" role="status">
                 {mapError || "Cargando el mapa…"}
               </div>
-            )}
-
-            {room.phase === "playing" && iPlay && !tiebreak && (
-              <button
-                type="button"
-                className="tv-btn tv-btn--block tv-c-world"
-                onClick={confirmPin}
-                disabled={!myPin || Boolean(myPin?.locked) || Boolean(me?.answered)}
-              >
-                <Icon name={myPin?.locked || me?.answered ? "check" : "pin"} size={20} strokeWidth={2.6} />
-                {myPin?.locked || me?.answered ? "Pin confirmado" : myPin ? "Confirmar pin" : "Pon tu pin en el mapa"}
-              </button>
             )}
             {err && <p className="tv-lobby-error" role="alert">{err}</p>}
           </section>
@@ -424,7 +445,7 @@ function GameScreen() {
 
         {room.phase === "reveal" && room.reveal && (
           isMap ? (
-            <MapReveal room={room} me={me} user={user} tiebreak={tiebreak} tiedNames={tiedNames} colorOf={colorOf} iPlay={iPlay} />
+            <MapDistances room={room} user={user} tiebreak={tiebreak} colorOf={colorOf} />
           ) : (
             <WrittenReveal room={room} me={me} skipped={skipped} mySent={mySent} cheer={CHEERS[(round + cheerOffset.current) % CHEERS.length]} />
           )
@@ -495,88 +516,87 @@ function WrittenReveal({ room, me, skipped, mySent, cheer }) {
   );
 }
 
-// The end of a map round: this player's result (or who won the tiebreak) and everyone's distance.
-function MapReveal({ room, me, user, tiebreak, tiedNames, colorOf, iPlay }) {
+// The end of a map round, in one line above the map: how far this player's pin landed and its points, or who won
+// the tiebreak.
+function MapVerdict({ room, me, user, tiebreak, tiedNames, iPlay }) {
   const answer = me?.lastAnswer;
+  const name = room.reveal.name;
+  let tone;
+  let icon;
+  let title;
+  let detail;
+  let won = false;
+  if (tiebreak) {
+    const winner = room.players.find((p) => p.id === tiebreak.winnerId);
+    won = Boolean(winner) && winner.id === user?.id;
+    tone = winner ? (won || !iPlay ? "ok" : "bad") : "timeout";
+    icon = winner ? "crown" : "hash";
+    title = winner ? (won ? "¡Ganaste el desempate!" : `¡${winner.name} gana el desempate!`) : "Nadie lo resolvió";
+    detail = winner
+      ? tiebreak.reason === "dentro"
+        ? `${won ? "Confirmaste" : "Confirmó"} ${name} primero.`
+        : `Nadie cayó dentro de ${name}: ${won ? "tu" : "su"} pin quedó más cerca.`
+      : `${joinNames(tiedNames)} siguen empatados.`;
+  } else {
+    const inside = Boolean(answer?.inside);
+    const placed = Boolean(answer?.pin);
+    won = inside;
+    tone = inside ? "ok" : placed ? "bad" : "timeout";
+    icon = inside ? "check" : placed ? "pin" : "hash";
+    title = inside ? "¡Dentro!" : placed ? `A ${km(answer.distanceKm)}` : "¡Se acabó el tiempo!";
+    detail = inside ? `Tu pin cayó en ${name}.` : placed ? `de ${name}` : "No pusiste tu pin a tiempo.";
+  }
+  return (
+    <section className={`tv-card tv-geo-verdict tv-geo-verdict--${tone}`} role="status">
+      {won && <Confetti pieces={18} />}
+      <span className="tv-geo-verdict-icon">
+        <Icon name={icon} size={24} strokeWidth={tiebreak ? 2.6 : 3} />
+      </span>
+      <span className="tv-geo-verdict-text">
+        <strong>{title}</strong>
+        <small>{detail}</small>
+      </span>
+      {!tiebreak && answer?.pin && <span className="tv-tag tv-tag--points">+{me?.lastPoints || 0}</span>}
+    </section>
+  );
+}
+
+// Everyone's distance to the country at the end of a map round (only the tied players in a tiebreak).
+function MapDistances({ room, user, tiebreak, colorOf }) {
   const players = room.players
     .filter((p) => !tiebreak || tiebreak.playerIds.includes(p.id))
     .map((p) => ({ ...p, a: p.lastAnswer || {} }))
     .sort((x, y) => (y.a.inside ? 1 : 0) - (x.a.inside ? 1 : 0) || (x.a.pin ? x.a.distanceKm : Infinity) - (y.a.pin ? y.a.distanceKm : Infinity));
-
-  let head;
-  if (tiebreak) {
-    const winner = room.players.find((p) => p.id === tiebreak.winnerId);
-    const won = winner?.id === user?.id;
-    head = (
-      <section className={`tv-card tv-result tv-result--${winner ? (won || !iPlay ? "ok" : "bad") : "timeout"}`} role="status">
-        {won && <Confetti pieces={24} />}
-        <span className="tv-result-icon">
-          <Icon name={winner ? "crown" : "hash"} size={30} strokeWidth={2.6} />
-        </span>
-        <h2 className="tv-result-title">{winner ? (won ? "¡Ganaste el desempate!" : `¡${winner.name} gana el desempate!`) : "Nadie lo resolvió"}</h2>
-        <p className="tv-result-cheer">
-          {winner
-            ? tiebreak.reason === "dentro"
-              ? `${won ? "Encontraste" : "Encontró"} ${room.reveal.name} primero.`
-              : `Nadie cayó dentro de ${room.reveal.name}: ${won ? "tu" : "su"} pin quedó más cerca.`
-            : `${joinNames(tiedNames)} siguen empatados.`}
-        </p>
-      </section>
-    );
-  } else {
-    const inside = Boolean(answer?.inside);
-    const placed = Boolean(answer?.pin);
-    head = (
-      <section className={`tv-card tv-result tv-result--${inside ? "ok" : placed ? "bad" : "timeout"}`} role="status">
-        {inside && <Confetti pieces={18} />}
-        <span className="tv-result-icon">
-          <Icon name={inside ? "check" : placed ? "pin" : "hash"} size={30} strokeWidth={3} />
-        </span>
-        <h2 className="tv-result-title">{inside ? "¡Dentro!" : placed ? `A ${km(answer.distanceKm)}` : "¡Se acabó el tiempo!"}</h2>
-        <p className="tv-result-cheer">
-          {inside ? `Tu pin cayó en ${room.reveal.name}.` : placed ? `de ${room.reveal.name}` : "No pusiste tu pin a tiempo."}
-        </p>
-        <div className="tv-tags tv-tags--center">
-          {placed && <span className="tv-tag tv-tag--points">+{me?.lastPoints || 0} pts</span>}
-          {me?.streak > 1 && <span className="tv-tag tv-tag--streak">Racha de {me.streak}</span>}
-        </div>
-      </section>
-    );
-  }
-
   return (
-    <>
-      {head}
-      <section className="tv-card tv-geo-distances" aria-labelledby="tv-geo-distances-title">
-        <h2 id="tv-geo-distances-title" className="tv-card-title">
-          {room.reveal.name}: ¿quién quedó más cerca?
-        </h2>
-        <ol className="tv-geo-distance-list">
-          {players.map((p, i) => (
-            <li key={p.id} className={p.id === user?.id ? "is-me" : undefined} style={{ "--i": i, "--pin": colorOf(p.id) }}>
-              <span className="tv-geo-dot" aria-hidden="true" />
-              <span className="tv-geo-distance-name">
-                {p.name}
-                {p.id === user?.id && <span className="tv-muted"> · tú</span>}
-              </span>
-              <span className={`tv-geo-distance${p.a.inside ? " is-inside" : ""}`}>
-                {p.a.inside ? (
-                  <>
-                    <Icon name="check" size={14} strokeWidth={3.2} />
-                    Dentro
-                  </>
-                ) : p.a.pin ? (
-                  km(p.a.distanceKm)
-                ) : (
-                  "Sin pin"
-                )}
-              </span>
-              {!tiebreak && <span className="tv-geo-distance-points">+{p.lastPoints || 0}</span>}
-            </li>
-          ))}
-        </ol>
-      </section>
-    </>
+    <section className="tv-card tv-geo-distances" aria-labelledby="tv-geo-distances-title">
+      <h2 id="tv-geo-distances-title" className="tv-card-title">
+        {room.reveal.name}: ¿quién quedó más cerca?
+      </h2>
+      <ol className="tv-geo-distance-list">
+        {players.map((p, i) => (
+          <li key={p.id} className={p.id === user?.id ? "is-me" : undefined} style={{ "--i": i, "--pin": colorOf(p.id) }}>
+            <span className="tv-geo-swatch" aria-hidden="true" />
+            <span className="tv-geo-distance-name">
+              {p.name}
+              {p.id === user?.id && <span className="tv-muted"> · tú</span>}
+            </span>
+            <span className={`tv-geo-distance${p.a.inside ? " is-inside" : ""}`}>
+              {p.a.inside ? (
+                <>
+                  <Icon name="check" size={14} strokeWidth={3.2} />
+                  Dentro
+                </>
+              ) : p.a.pin ? (
+                km(p.a.distanceKm)
+              ) : (
+                "Sin pin"
+              )}
+            </span>
+            {!tiebreak && <span className="tv-geo-distance-points">+{p.lastPoints || 0}</span>}
+          </li>
+        ))}
+      </ol>
+    </section>
   );
 }
 

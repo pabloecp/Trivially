@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { geoArea, geoNaturalEarth1, geoPath } from "d3-geo";
+import { geoArea, geoCentroid, geoContains, geoNaturalEarth1, geoPath } from "d3-geo";
 import { feature } from "topojson-client";
 // The same file the server measures pins against (backend/src/geo/worldMap.js), so a pin is judged on the borders
 // the player saw. Loaded on demand: only Geografía needs it.
@@ -7,6 +7,20 @@ import worldUrl from "world-atlas/countries-50m.json?url";
 
 // The map is drawn in a 1000-unit-wide space; its height follows from the projection.
 export const MAP_WIDTH = 1000;
+// Countries whose main land is smaller than this (in map units, about 120 km) get a dot so they can be seen and hit.
+const TINY_SIZE = 4;
+
+// Quick jumps of the map, as [west, south, east, north] in degrees.
+export const REGIONS = [
+  { id: "mundo", label: "Mundo" },
+  { id: "norte", label: "Norteamérica", box: [-168, 7, -52, 72] },
+  { id: "caribe", label: "Caribe", box: [-92, 9, -59, 27] },
+  { id: "sur", label: "Sudamérica", box: [-92, -56, -33, 13] },
+  { id: "europa", label: "Europa", box: [-25, 34, 45, 71] },
+  { id: "africa", label: "África", box: [-19, -36, 53, 38] },
+  { id: "asia", label: "Asia", box: [25, -11, 150, 56] },
+  { id: "oceania", label: "Oceanía", box: [110, -48, 180, 12] },
+];
 
 let loading = null;
 
@@ -27,21 +41,55 @@ export function loadWorld() {
   return loading;
 }
 
+// The biggest polygon of a country: France without French Guiana, the United States without Alaska.
+function mainPolygon(f) {
+  const polygons = f.geometry.type === "Polygon" ? [f.geometry.coordinates] : f.geometry.coordinates;
+  let main = polygons[0];
+  let area = -1;
+  for (const coordinates of polygons) {
+    const a = geoArea({ type: "Polygon", coordinates });
+    if (a > area) {
+      area = a;
+      main = coordinates;
+    }
+  }
+  return { type: "Polygon", coordinates: main };
+}
+
+const flatBox = ([[x0, y0], [x1, y1]]) => [x0, y0, x1, y1];
+
 function buildWorld(topology) {
   // Antarctica is never asked and would take a third of the height.
-  const countries = feature(topology, topology.objects.countries).features.filter((f) => f.properties.name !== "Antarctica");
-  const collection = { type: "FeatureCollection", features: countries };
+  const features = feature(topology, topology.objects.countries).features.filter((f) => f.properties.name !== "Antarctica");
+  const collection = { type: "FeatureCollection", features };
   const projection = geoNaturalEarth1().fitWidth(MAP_WIDTH, collection);
   const path = geoPath(projection);
   const [, [, bottom]] = path.bounds(collection);
+  const countries = features.map((f) => {
+    const main = mainPolygon(f);
+    const mainBox = flatBox(path.bounds(main));
+    const centerLngLat = geoCentroid(main);
+    return {
+      name: f.properties.name,
+      d: path(f),
+      feature: f,
+      box: flatBox(path.bounds(f)),
+      mainBox,
+      size: Math.max(mainBox[2] - mainBox[0], mainBox[3] - mainBox[1]),
+      centerLngLat,
+      center: projection(centerLngLat),
+    };
+  });
   return {
     width: MAP_WIDTH,
     height: Math.ceil(bottom),
     projection,
     path,
     sphere: path({ type: "Sphere" }),
-    shapes: countries.map((f) => ({ name: f.properties.name, d: path(f) })),
-    byName: new Map(countries.map((f) => [f.properties.name, f])),
+    countries,
+    shapes: countries.map(({ name, d }) => ({ name, d })),
+    tiny: countries.filter((c) => c.size < TINY_SIZE),
+    byName: new Map(countries.map((c) => [c.name, c])),
   };
 }
 
@@ -68,27 +116,39 @@ export function toLngLat(world, point) {
   return lngLat;
 }
 
-/**
- * The box ([x0, y0, x1, y1]) around the main land of some countries: France without French Guiana, the United States
- * without Alaska. It is what the reveal zooms to.
- */
+/** The country (its name in the map file) a [lng, lat] point is in, or null at sea. */
+export function countryAt(world, lngLat) {
+  const p = world.projection(lngLat);
+  if (!p) return null;
+  for (const c of world.countries) {
+    const [x0, y0, x1, y1] = c.box;
+    if (p[0] < x0 || p[0] > x1 || p[1] < y0 || p[1] > y1) continue;
+    if (geoContains(c.feature, lngLat)) return c.name;
+  }
+  return null;
+}
+
+/** The box ([x0, y0, x1, y1]) around the main land of some countries: what the reveal zooms to. */
 export function mainBounds(world, names) {
   let box = null;
   for (const name of names || []) {
-    const f = world.byName.get(name);
-    if (!f) continue;
-    const polygons = f.geometry.type === "Polygon" ? [f.geometry.coordinates] : f.geometry.coordinates;
-    let main = polygons[0];
-    let area = -1;
-    for (const coordinates of polygons) {
-      const a = geoArea({ type: "Polygon", coordinates });
-      if (a > area) {
-        area = a;
-        main = coordinates;
-      }
-    }
-    const [[x0, y0], [x1, y1]] = world.path.bounds({ type: "Polygon", coordinates: main });
+    const c = world.byName.get(name);
+    if (!c) continue;
+    const [x0, y0, x1, y1] = c.mainBox;
     box = box ? [Math.min(box[0], x0), Math.min(box[1], y0), Math.max(box[2], x1), Math.max(box[3], y1)] : [x0, y0, x1, y1];
+  }
+  return box;
+}
+
+/** A region of REGIONS as a box on the map (the projection bends its edges, so they are sampled). */
+export function regionBounds(world, [west, south, east, north]) {
+  let box = [Infinity, Infinity, -Infinity, -Infinity];
+  for (let i = 0; i <= 8; i += 1) {
+    for (let j = 0; j <= 8; j += 1) {
+      const p = world.projection([west + ((east - west) * i) / 8, south + ((north - south) * j) / 8]);
+      if (!p) continue;
+      box = [Math.min(box[0], p[0]), Math.min(box[1], p[1]), Math.max(box[2], p[0]), Math.max(box[3], p[1])];
+    }
   }
   return box;
 }
