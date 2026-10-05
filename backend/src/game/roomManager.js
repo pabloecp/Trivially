@@ -728,7 +728,7 @@ export class RoomManager {
     const showTrack = room.phase === "reveal" || room.phase === "finished";
     const payload = {
       code: room.code,
-      name: room.config.name || "Partida YOAVLLY",
+      name: room.config.name || "Partida Trivially",
       mode: room.mode,
       game: room.game,
       hostId: room.hostId,

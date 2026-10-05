@@ -10,7 +10,7 @@ const DATA_DIR = path.join(__dirname, "../../data");
 const STORE_PATH = path.join(DATA_DIR, "store.json");
 
 const MAX_NAME_LENGTH = 24;
-export const DEFAULT_AVATAR = "#F050AE";
+export const DEFAULT_AVATAR = "#FF2D55";
 const HEX_COLOR = /^#[0-9a-f]{6}$/i;
 
 function emptyStore() {
@@ -362,7 +362,7 @@ export function linkGoogle(store, userId, { googleId, email, avatar }) {
 
   // Check that this googleId isn't linked to another account
   const conflict = Object.values(store.users).find((u) => u.googleId === googleId && u.id !== userId);
-  if (conflict) throw new Error("Esta cuenta de Google ya está vinculada a otro usuario de YOAVLLY");
+  if (conflict) throw new Error("Esta cuenta de Google ya está vinculada a otro usuario de Trivially");
 
   user.googleId = googleId;
   if (email && !user.email) user.email = email.trim().toLowerCase();

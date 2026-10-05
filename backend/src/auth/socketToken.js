@@ -7,7 +7,7 @@ import crypto from "node:crypto";
 const TTL_MS = 12 * 60 * 60 * 1000;
 
 function secret() {
-  return process.env.SESSION_SECRET || "yoavlly-dev-secret";
+  return process.env.SESSION_SECRET || "trivially-dev-secret";
 }
 
 function sign(payload) {

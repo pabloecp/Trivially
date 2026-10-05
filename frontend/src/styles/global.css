@@ -1,103 +1,55 @@
-/* YOAVLLY Design System — Modern Sonic Tech Aesthetic */
+/* Trivially Design System — Modern Sonic Tech Aesthetic */
 @import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Outfit:wght@500;600;700;800;900&display=swap");
 
 :root {
-  /* Night mode (default). Duolingo's colours: the site is macaw blue, with bee yellow as its second colour;
-     each game mode swaps the blue for its own (see data-mode below). */
-  --brand: #6366F1;
-  --brand-rgb: 99, 102, 241;
-  --brand-text: #818CF8; /* the brand colour as text: a darker shade on light backgrounds */
+  /* The only theme: a clean black page with vivid colours. These are the defaults; styles/palettes.css sets the
+     real values (the theme button's options and each game mode's colour). */
+  --brand: #2f6bff;
+  --brand-rgb: 47, 107, 255;
+  --brand-text: #5b8cff;
   --on-brand: #FFFFFF;
-  --brand-hover: #6366F1;
-  --brand-active: #4338CA;
+  --brand-hover: #2f6bff;
+  --brand-active: #1a3c99;
   --brand-subtle: rgba(var(--brand-rgb), 0.15);
   --brand-subtle-hover: rgba(var(--brand-rgb), 0.24);
   --brand-tint: rgba(var(--brand-rgb), 0.08);
 
-  /* Backgrounds & Surfaces (Duolingo night mode) */
-  --bg: #0A0A0F;
-  --bg-surface: #16161F;
-  --bg-surface-hover: #2A2A36;
-  --bg-subtle: #0A0A0F;
-  --nav-bg: rgba(22, 22, 31, 0.92);
+  --bg: #0a0b0c;
+  --bg-surface: #141517;
+  --bg-surface-hover: #1c1d20;
+  --bg-subtle: #0f1012;
+  --nav-bg: rgba(20, 21, 23, 0.92);
 
-  /* Typography Colors */
   --text: #FFFFFF;
-  --text-secondary: #E5E5E5;
-  --text-muted: #AFAFAF;
-  --text-inverse: #0A0A0F;
+  --text-secondary: #cbcbcb;
+  --text-muted: #949494;
+  --text-inverse: #0a0b0c;
 
-  /* Borders */
-  --border: #2A2A36;
-  --border-subtle: #2A2A36;
-  --border-focus: #6366F1;
-  --border-hover: #777777;
+  --border: #1c1d20;
+  --border-subtle: #1c1d20;
+  --border-focus: #2f6bff;
+  --border-hover: #949494;
 
-  /* Feedback Colors: feather = right, cardinal = wrong, fox = warning */
-  --ok: #3B82F6;
-  --ok-subtle: rgba(59, 130, 246, 0.15);
-  --ok-border: rgba(59, 130, 246, 0.35);
-  --bad: #A855F7;
-  --bad-subtle: rgba(168, 85, 247, 0.15);
-  --bad-border: rgba(168, 85, 247, 0.35);
-  --amber: #818CF8;
-  --amber-subtle: rgba(129, 140, 248, 0.15);
+  /* Right is green, wrong is red, warning is yellow (the logo's colours). */
+  --ok: #4be26c;
+  --ok-subtle: rgba(43, 217, 79, 0.15);
+  --ok-border: rgba(43, 217, 79, 0.35);
+  --bad: #ff5c7a;
+  --bad-subtle: rgba(255, 45, 85, 0.15);
+  --bad-border: rgba(255, 45, 85, 0.35);
+  --amber: #ffd60a;
+  --amber-subtle: rgba(255, 214, 10, 0.15);
 
-  /* Shadows */
   --shadow-sm: 0 2px 6px rgba(0, 0, 0, 0.35);
-  --shadow-md: 0 10px 30px -4px rgba(0, 0, 0, 0.6), 0 0 20px rgba(var(--brand-rgb), 0.06);
-  --shadow-lg: 0 24px 50px -8px rgba(0, 0, 0, 0.8), 0 0 35px rgba(var(--brand-rgb), 0.12);
+  --shadow-md: 0 10px 30px -4px rgba(0, 0, 0, 0.6);
+  --shadow-lg: 0 24px 50px -8px rgba(0, 0, 0, 0.8);
 
-  /* Radii */
   --radius-sm: 8px;
   --radius-md: 14px;
   --radius-lg: 20px;
   --radius-full: 9999px;
 
-  /* Transitions */
   --ease: cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-/* Light Theme (Día): white, Duolingo's greys */
-[data-theme="light"] {
-  --brand: #6366F1;
-  --brand-rgb: 99, 102, 241;
-  --brand-text: #4F46E5; /* humpback: the readable blue on white */
-  --on-brand: #FFFFFF;
-  --brand-hover: #6366F1;
-  --brand-active: #4338CA;
-  --brand-subtle: rgba(var(--brand-rgb), 0.12);
-  --brand-subtle-hover: rgba(var(--brand-rgb), 0.2);
-  --brand-tint: rgba(var(--brand-rgb), 0.08);
-
-  --bg: #FFFFFF;
-  --bg-surface: #FFFFFF;
-  --bg-surface-hover: #F7F7F7;
-  --bg-subtle: #F7F7F7;
-  --nav-bg: rgba(255, 255, 255, 0.92);
-
-  --text: #4B4B4B;
-  --text-secondary: #4B4B4B;
-  --text-muted: #777777;
-  --text-inverse: #FFFFFF;
-
-  --border: #E5E5E5;
-  --border-subtle: #E5E5E5;
-  --border-focus: #6366F1;
-  --border-hover: #AFAFAF;
-
-  --ok: #2563EB;
-  --ok-subtle: rgba(59, 130, 246, 0.14);
-  --ok-border: rgba(59, 130, 246, 0.4);
-  --bad: #7C3AED;
-  --bad-subtle: rgba(168, 85, 247, 0.12);
-  --bad-border: rgba(168, 85, 247, 0.35);
-  --amber: #4F46E5;
-  --amber-subtle: rgba(129, 140, 248, 0.14);
-
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06);
-  --shadow-md: 0 10px 25px -4px rgba(var(--brand-rgb), 0.09), 0 2px 8px rgba(0, 0, 0, 0.04);
-  --shadow-lg: 0 20px 40px -10px rgba(var(--brand-rgb), 0.15), 0 4px 16px rgba(0, 0, 0, 0.06);
 }
 
 * {
@@ -238,10 +190,6 @@ button, input, select {
 .nav-links a:hover {
   color: #FFFFFF;
   background: var(--bg-surface-hover);
-}
-[data-theme="light"] .nav-links a:hover {
-  color: var(--brand);
-  background: var(--brand-subtle);
 }
 .nav-links a.active {
   color: var(--brand);
@@ -564,7 +512,7 @@ button, input, select {
   position: absolute;
   inset: -14px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(var(--brand-rgb), 0.2) 0%, rgba(var(--brand-rgb), 0.04) 55%, transparent 70%);
+  display: none;
   animation: haloPulse 3.5s ease-in-out infinite;
   pointer-events: none;
 }
@@ -597,7 +545,7 @@ button, input, select {
   position: absolute;
   inset: 4px;
   border-radius: 50%;
-  background: conic-gradient(from 0deg, transparent 0deg, transparent 270deg, rgba(var(--brand-rgb), 0.1) 330deg, rgba(var(--brand-rgb), 0.26) 360deg);
+  display: none;
   animation: sonicSpin 6.5s linear infinite;
   pointer-events: none;
 }
@@ -627,7 +575,7 @@ button, input, select {
   width: 70px;
   height: 70px;
   border-radius: 50%;
-  background: radial-gradient(circle at 35% 35%, rgba(var(--brand-rgb), 0.2) 0%, rgba(var(--brand-rgb), 0.05) 70%, transparent 100%);
+  background: rgba(var(--brand-rgb), 0.12);
   border: 1px solid rgba(var(--brand-rgb), 0.35);
   display: flex;
   align-items: center;
@@ -1073,11 +1021,11 @@ button, input, select {
 .victory-card-preview {
   width: 100%;
   max-width: 440px;
-  background: linear-gradient(145deg, #161616 0%, #0A0A0A 50%, #0d0d0d 100%);
+  background: #141517;
   border: 2px solid #2A2A2A;
   border-radius: 24px;
   padding: 32px 28px;
-  box-shadow: 0 25px 60px -10px rgba(0, 0, 0, 0.9), 0 0 40px rgba(var(--brand-rgb), 0.35);
+  box-shadow: 0 25px 60px -10px rgba(0, 0, 0, 0.9);
   position: relative;
   overflow: hidden;
 }
@@ -1090,7 +1038,7 @@ button, input, select {
   width: 220px;
   height: 220px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(var(--brand-rgb), 0.3) 0%, transparent 70%);
+  display: none;
   pointer-events: none;
 }
 
@@ -1180,9 +1128,9 @@ button, input, select {
 }
 
 /* =========================================
-   YOAVLLY AUTOCOMPLETE SEARCH & SLIDEBAR
+   TRIVIALLY AUTOCOMPLETE SEARCH & SLIDEBAR
    ========================================= */
-.yoavlly-search-container {
+.trivially-search-container {
   width: 100%;
   max-width: 620px;
   margin: 0 auto;
@@ -1193,7 +1141,7 @@ button, input, select {
   z-index: 80;
 }
 
-.yoavlly-input-wrapper {
+.trivially-input-wrapper {
   display: flex;
   align-items: center;
   gap: 12px;
@@ -1205,18 +1153,18 @@ button, input, select {
   transition: all 0.2s var(--ease);
 }
 
-.yoavlly-input-wrapper:focus-within {
+.trivially-input-wrapper:focus-within {
   border-color: var(--brand);
   box-shadow: 0 0 0 3px var(--brand-subtle), var(--shadow-md);
   background: var(--bg-surface-hover);
 }
 
-.yoavlly-input-icon {
+.trivially-input-icon {
   font-size: 22px;
   user-select: none;
 }
 
-.yoavlly-search-input {
+.trivially-search-input {
   flex: 1;
   background: transparent;
   border: none;
@@ -1228,13 +1176,13 @@ button, input, select {
   min-width: 0;
 }
 
-.yoavlly-search-input::placeholder {
+.trivially-search-input::placeholder {
   color: var(--text-muted);
   font-weight: 400;
   font-size: 15px;
 }
 
-.yoavlly-search-submit-btn {
+.trivially-search-submit-btn {
   background: var(--brand);
   color: #FFFFFF;
   border: none;
@@ -1248,13 +1196,13 @@ button, input, select {
   font-family: inherit;
 }
 
-.yoavlly-search-submit-btn:hover {
+.trivially-search-submit-btn:hover {
   background: var(--brand-hover);
   transform: translateY(-1px);
 }
 
 /* Positioned absolute so suggestions float OVER without pushing page down */
-.yoavlly-suggestions-slidebar {
+.trivially-suggestions-slidebar {
   position: absolute;
   top: calc(100% + 6px);
   left: 0;
@@ -1264,14 +1212,14 @@ button, input, select {
   border-radius: var(--radius-md);
   box-shadow: 0 16px 36px rgba(0, 0, 0, 0.35), var(--shadow-lg);
   overflow: hidden;
-  animation: yoavllySlideDown 0.18s var(--ease);
+  animation: triviallySlideDown 0.18s var(--ease);
   display: flex;
   flex-direction: column;
   max-height: 270px;
   z-index: 100;
 }
 
-@keyframes yoavllySlideDown {
+@keyframes triviallySlideDown {
   from {
     opacity: 0;
     transform: translateY(-6px) scale(0.98);
@@ -1282,7 +1230,7 @@ button, input, select {
   }
 }
 
-.yoavlly-suggestions-header {
+.trivially-suggestions-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -1296,21 +1244,21 @@ button, input, select {
   letter-spacing: 0.5px;
 }
 
-.yoavlly-keyboard-hint {
+.trivially-keyboard-hint {
   font-size: 11px;
   font-weight: 500;
   color: var(--text-muted);
   text-transform: none;
 }
 
-.yoavlly-suggestions-list {
+.trivially-suggestions-list {
   overflow-y: auto;
   max-height: 220px;
   scrollbar-width: thin;
   scrollbar-color: var(--border) transparent;
 }
 
-.yoavlly-suggestion-item {
+.trivially-suggestion-item {
   display: flex;
   align-items: center;
   gap: 12px;
@@ -1322,22 +1270,22 @@ button, input, select {
   background: var(--bg-surface);
 }
 
-.yoavlly-suggestion-item:last-child {
+.trivially-suggestion-item:last-child {
   border-bottom: none;
 }
 
-.yoavlly-suggestion-item:hover,
-.yoavlly-suggestion-item.active {
+.trivially-suggestion-item:hover,
+.trivially-suggestion-item.active {
   background: var(--brand-subtle);
   border-left-color: var(--brand);
 }
 
-.yoavlly-suggestion-icon {
+.trivially-suggestion-icon {
   font-size: 18px;
   opacity: 0.8;
 }
 
-.yoavlly-suggestion-info {
+.trivially-suggestion-info {
   flex: 1;
   min-width: 0;
   display: flex;
@@ -1345,7 +1293,7 @@ button, input, select {
   gap: 2px;
 }
 
-.yoavlly-suggestion-title {
+.trivially-suggestion-title {
   font-size: 16px;
   font-weight: 700;
   color: var(--text);
@@ -1354,7 +1302,7 @@ button, input, select {
   white-space: nowrap;
 }
 
-.yoavlly-suggestion-artist {
+.trivially-suggestion-artist {
   font-size: 13px;
   color: var(--text-secondary);
   overflow: hidden;
@@ -1362,7 +1310,7 @@ button, input, select {
   white-space: nowrap;
 }
 
-.yoavlly-select-badge {
+.trivially-select-badge {
   font-size: 11px;
   font-weight: 700;
   padding: 4px 10px;
@@ -1373,20 +1321,20 @@ button, input, select {
   animation: fadeIn 0.15s ease;
 }
 
-.yoavlly-no-suggestions {
+.trivially-no-suggestions {
   padding: 20px 16px;
   text-align: center;
   color: var(--text-secondary);
   font-size: 14px;
 }
 
-.yoavlly-locked-container {
+.trivially-locked-container {
   max-width: 520px;
   margin: 0 auto;
   width: 100%;
 }
 
-.yoavlly-locked-card {
+.trivially-locked-card {
   background: var(--bg-surface);
   border: 2px solid var(--brand);
   border-radius: var(--radius-md);
@@ -1395,7 +1343,7 @@ button, input, select {
   box-shadow: 0 0 24px var(--brand-subtle);
 }
 
-.yoavlly-locked-badge {
+.trivially-locked-badge {
   display: inline-block;
   font-size: 12px;
   font-weight: 800;
@@ -1408,7 +1356,7 @@ button, input, select {
   margin-bottom: 10px;
 }
 
-.yoavlly-locked-title {
+.trivially-locked-title {
   font-size: 22px;
   margin: 4px 0;
   color: var(--text);
@@ -1631,16 +1579,15 @@ button, input, select {
 
 
 /* =====================================================================
-   Trivially look — Duolingo's flat colours on night blue-grey (or white). Between an app and a website:
+   Trivially look — vivid flat colours on a clean black page. Between an app and a website:
    a sticky bar and roomy pages like a site, soft rounded controls and
    springy motion like an app. Shared by Home, profiles, rooms and games.
    ===================================================================== */
 :root {
   --spring: cubic-bezier(0.34, 1.56, 0.64, 1);
-  --accent: #A855F7;
-  --accent-hover: #A855F7;
-  --accent-ink: #FFFFFF;
-  --glow: rgba(var(--brand-rgb), 0.35);
+  --accent: #ffd60a;
+  --accent-hover: #ffd60a;
+  --accent-ink: #0a0b0c;
 }
 
 body {
@@ -1681,13 +1628,13 @@ h1, h2, h3, h4 { font-family: "Outfit", "Plus Jakarta Sans", sans-serif; font-we
   border-radius: 20px;
   box-shadow: 0 1px 2px rgba(60, 10, 45, 0.06), 0 12px 28px -18px rgba(60, 10, 45, 0.3);
 }
-.card.interactive:hover, .card.selectable:hover { transform: translateY(-3px); box-shadow: 0 16px 34px -16px var(--glow); }
-.card.active { box-shadow: 0 0 0 2px var(--brand), 0 14px 30px -18px var(--glow); }
+.card.interactive:hover, .card.selectable:hover { transform: translateY(-3px); box-shadow: none; }
+.card.active { box-shadow: 0 0 0 2px var(--brand); }
 
 /* Buttons: solid, rounded, tactile press */
 .btn { border-radius: 14px; font-weight: 700; transition: transform 0.18s var(--spring), box-shadow 0.2s, background 0.2s, border-color 0.2s; }
-.btn.primary, .btn.spotify { background: linear-gradient(180deg, var(--brand-hover), var(--brand)); box-shadow: 0 8px 20px -8px var(--glow); }
-.btn.primary:hover:not(:disabled), .btn.spotify:hover:not(:disabled) { background: linear-gradient(180deg, var(--brand-hover), var(--brand)); transform: translateY(-2px); box-shadow: 0 12px 26px -8px var(--glow); }
+.btn.primary, .btn.spotify { background: var(--brand); box-shadow: none; }
+.btn.primary:hover:not(:disabled), .btn.spotify:hover:not(:disabled) { background: var(--brand); transform: translateY(-2px); box-shadow: none; }
 .btn.primary:active:not(:disabled), .btn.spotify:active:not(:disabled) { transform: translateY(1px) scale(0.98); }
 .btn.lg { border-radius: 16px; }
 
@@ -1710,7 +1657,7 @@ h1, h2, h3, h4 { font-family: "Outfit", "Plus Jakarta Sans", sans-serif; font-we
 .album-cover-card { border-radius: 16px; animation: tvgBob 4s ease-in-out infinite; transition: transform 0.3s var(--spring), box-shadow 0.25s; }
 .album-marquee-track > .album-cover-card:nth-child(3n) { animation-delay: -1.3s; }
 .album-marquee-track > .album-cover-card:nth-child(3n+1) { animation-delay: -2.6s; }
-.album-cover-card:hover { animation-play-state: paused; transform: translateY(-6px) rotate(-2deg) scale(1.05); box-shadow: 0 14px 26px -10px var(--glow); }
+.album-cover-card:hover { animation-play-state: paused; transform: translateY(-6px) rotate(-2deg) scale(1.05); box-shadow: none; }
 
 @keyframes tvgRise { from { opacity: 0; transform: translateY(16px); } }
 @keyframes tvgDrop { from { opacity: 0; transform: translateY(-14px); } }
@@ -1728,7 +1675,6 @@ h1, h2, h3, h4 { font-family: "Outfit", "Plus Jakarta Sans", sans-serif; font-we
 .kicker { color: var(--brand-text); }
 .nav-links a.active { background: var(--accent); color: var(--accent-ink); }
 .nav-links a:hover { background: var(--bg-subtle); color: var(--text); }
-[data-theme="light"] .nav-links a:hover { background: var(--bg-subtle); color: var(--text); }
 .tab-btn.active { background: var(--accent); color: var(--accent-ink); }
 
 /* Game-mode colours: each mode swaps the brand colour for its own slot (see palettes.css). */

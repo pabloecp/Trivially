@@ -73,7 +73,7 @@ app.use(express.json());
 app.use(
   cookieSession({
     name: "yoavlly",
-    secret: process.env.SESSION_SECRET || "yoavlly-dev-secret",
+    secret: process.env.SESSION_SECRET || "trivially-dev-secret",
     httpOnly: true,
     maxAge: 30 * 24 * 60 * 60 * 1000, // stay signed in for 30 days
     sameSite: isCrossSite ? "none" : "lax",
@@ -90,7 +90,7 @@ app.use((req, _res, next) => {
   next();
 });
 
-app.get("/health", (_req, res) => res.json({ ok: true, name: "YOAVLLY" }));
+app.get("/health", (_req, res) => res.json({ ok: true, name: "Trivially" }));
 
 // Audio proxy: re-serves iTunes preview URLs with audio/mp4 MIME type
 // Needed because iTunes returns audio/x-m4p which browsers don't play natively. Served from mediaCache, which a
@@ -160,5 +160,5 @@ for (const signal of ["SIGTERM", "SIGINT"]) {
 }
 
 server.listen(PORT, () => {
-  console.log(`YOAVLLY API en http://localhost:${PORT}`);
+  console.log(`Trivially API en http://localhost:${PORT}`);
 });

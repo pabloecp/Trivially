@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project
 
-Trivially is a real-time music trivia game ("Adivina la canción"): players hear a 30s audio preview and type the song title, solo or in multiplayer rooms with `XO····` codes. All UI copy and server error messages are in Spanish — keep new strings in Spanish. The project was previously called YOAVLLY; that name still appears in the session cookie and `localStorage` keys (`yoavlly-user`, `yoavlly_guest_id`, `yoavlly_theme`). Don't rename those keys without a migration or existing users lose their saved identity.
+Trivially is a real-time music trivia game ("Adivina la canción"): players hear a 30s audio preview and type the song title, solo or in multiplayer rooms with `XO····` codes. All UI copy and server error messages are in Spanish — keep new strings in Spanish. The project was previously called YOAVLLY. The only places left with that name are the session cookie (`yoavlly`) and the `SESSION_SECRET` values in the real `.env` files: renaming either logs every account out. The `localStorage` identity keys are now `trivially_user`, `trivially_guest_id` and `trivially_guest_name`; `lib/store.jsx` moves values saved under the old `yoavlly*` keys on load. Don't rename them again without a migration like that one, or existing users lose their saved identity.
 
 ## Commands
 

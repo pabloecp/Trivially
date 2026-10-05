@@ -18,9 +18,9 @@ assert.throws(() => {
   registerWithPassword(testStore, { name: "A", email: "a@b.com", password: "1" });
 }, /al menos 2 caracteres/);
 
-const user1 = registerWithPassword(testStore, { name: "User 2Chars", email: "2c@yoavlly.test", password: "ab" });
+const user1 = registerWithPassword(testStore, { name: "User 2Chars", email: "2c@trivially.test", password: "ab" });
 assert.equal(user1.name, "User 2Chars");
-assert.equal(user1.email, "2c@yoavlly.test");
+assert.equal(user1.email, "2c@trivially.test");
 assert.equal(typeof user1.id, "string");
 
 // Test 2: Public sanitization removes sensitive info
@@ -34,7 +34,7 @@ assert.equal(publicUser.passwordHash, undefined, "Hash must not be leaked");
 // Test 3: Link Google to existing password user
 const linkedUser = linkGoogle(testStore, user1.id, {
   googleId: "g_9999",
-  email: "2c@yoavlly.test",
+  email: "2c@trivially.test",
   avatar: "https://google.com/pic.jpg",
 });
 assert.equal(linkedUser.googleId, "g_9999");
@@ -55,7 +55,7 @@ assert.equal(testStore.users[user1.id], undefined);
 upsertUser(testStore, { id: "gst_test01", name: "Invitado", isGuest: true });
 assert.equal(deleteGuest(testStore, "gst_test01"), true);
 assert.equal(testStore.users.gst_test01, undefined);
-const user2 = registerWithPassword(testStore, { name: "Registrado", email: "r@yoavlly.test", password: "ab" });
+const user2 = registerWithPassword(testStore, { name: "Registrado", email: "r@trivially.test", password: "ab" });
 assert.equal(deleteGuest(testStore, user2.id), false);
 assert.ok(testStore.users[user2.id]);
 
@@ -63,11 +63,11 @@ assert.ok(testStore.users[user2.id]);
 assert.throws(() => updateUserAvatar(testStore, user2.id, "google"), /Google/);
 assert.throws(() => updateUserAvatar(testStore, user2.id, "https://evil.test/x.png"), /no válido/);
 assert.equal(updateUserAvatar(testStore, user2.id, "#33A8C7").avatar, "#33A8C7");
-const gUser = upsertGoogleUser(testStore, { name: "G", email: "g@yoavlly.test", avatar: "https://photo.test/g.jpg", googleId: "g_1" });
+const gUser = upsertGoogleUser(testStore, { name: "G", email: "g@trivially.test", avatar: "https://photo.test/g.jpg", googleId: "g_1" });
 assert.equal(gUser.avatar, "https://photo.test/g.jpg");
-updateUserAvatar(testStore, gUser.id, "#F050AE");
-upsertGoogleUser(testStore, { email: "g@yoavlly.test", avatar: "https://photo.test/g2.jpg", googleId: "g_1" });
-assert.equal(testStore.users[gUser.id].avatar, "#F050AE");
+updateUserAvatar(testStore, gUser.id, "#FF8A00");
+upsertGoogleUser(testStore, { email: "g@trivially.test", avatar: "https://photo.test/g2.jpg", googleId: "g_1" });
+assert.equal(testStore.users[gUser.id].avatar, "#FF8A00");
 assert.equal(updateUserAvatar(testStore, gUser.id, "google").avatar, "https://photo.test/g2.jpg");
 
 console.log("All store tests passed!");

@@ -65,7 +65,7 @@ Plataforma interactiva de trivia musical en tiempo real con buscador predictivo 
    ```env
    PORT=8080
    CLIENT_ORIGIN=http://localhost:5173
-   SESSION_SECRET=yoavlly-dev-secret-key-trivially
+   SESSION_SECRET=trivially-dev-secret-key
 
    # Google OAuth (Opcional)
    GOOGLE_CLIENT_ID=tu_google_client_id
@@ -105,7 +105,7 @@ Trivially/
 ├── frontend/
 │   ├── public/           # Activos estáticos, logos e imágenes de artistas
 │   ├── src/
-│   │   ├── components/   # Componentes modulares (Navbar, Modales, YoavllySymbol)
+│   │   ├── components/   # Componentes modulares (Navbar, Modales, TriviallySymbol)
 │   │   ├── pages/        # Vistas principales (Home, Setup, Lobby, Game, Leaderboard, etc.)
 │   │   ├── styles/       # Sistema de diseño, temas claro/oscuro y animaciones
 │   │   └── lib/          # Estado global (store), cliente Socket.IO y API

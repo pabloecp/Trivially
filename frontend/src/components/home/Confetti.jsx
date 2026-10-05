@@ -1,5 +1,5 @@
 // Blue, indigo and purple shades, plus white.
-const COLORS = ["#3b82f6", "#6366f1", "#8b5cf6", "#a855f7", "#60a5fa", "#ffffff"];
+const COLORS = ["#ff2d55", "#ff8a00", "#ffd60a", "#2bd94f", "#0a9bff", "#a63dff"];
 
 // Short one-shot confetti burst (pure CSS; hidden when reduced motion is on).
 export default function Confetti({ pieces = 28 }) {

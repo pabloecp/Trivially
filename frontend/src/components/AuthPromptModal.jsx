@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { useApp } from "../lib/store.jsx";
-import { YoavllySymbol } from "./YoavllySymbol.jsx";
+import { TriviallySymbol } from "./TriviallySymbol.jsx";
 
 export function AuthPromptModal({ isOpen, onClose, returnTo = "/", title = "Inicia Sesión para Jugar" }) {
   const { loginWithGoogle } = useApp();
@@ -56,7 +56,7 @@ export function AuthPromptModal({ isOpen, onClose, returnTo = "/", title = "Inic
 
         <div style={{ textAlign: "center", marginBottom: 24 }}>
           <div style={{ display: "flex", justifyContent: "center", marginBottom: 12 }}>
-            <YoavllySymbol size={44} />
+            <TriviallySymbol size={44} />
           </div>
           <h2 style={{ fontSize: 22, margin: "0 0 6px" }}>{title}</h2>
           <p className="muted" style={{ margin: 0, fontSize: 13 }}>

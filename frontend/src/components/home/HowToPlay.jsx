@@ -1,9 +1,9 @@
 import Icon from "./Icon.jsx";
 
 const STEPS = [
-  { icon: "hash", color: "pink", title: "Crea una sala", text: "Comparte el código con tus amigos o juega solo." },
-  { icon: "users", color: "violet", title: "Elige un modo", text: "Música, cultura general, cine o lo que más te guste." },
-  { icon: "bolt", color: "sky", title: "Responde antes que nadie", text: "Cuanto más rápido aciertes, más puntos sumas." },
+  { icon: "hash", color: "music", title: "Crea una sala", text: "Comparte el código con tus amigos o juega solo." },
+  { icon: "users", color: "culture", title: "Elige un modo", text: "Música, cultura general, cine o lo que más te guste." },
+  { icon: "bolt", color: "site", title: "Responde antes que nadie", text: "Cuanto más rápido aciertes, más puntos sumas." },
 ];
 
 // Home: how a game works, in three steps that fit every mode.

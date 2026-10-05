@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { Link, NavLink } from "react-router-dom";
 import { useApp } from "../lib/store.jsx";
 import { useTheme } from "../lib/theme.js";
-import { YoavllyLogo } from "./YoavllySymbol.jsx";
+import { TriviallyLogo } from "./TriviallySymbol.jsx";
 import UserAvatar from "./UserAvatar.jsx";
 
 export default function Layout({ children, mode }) {
@@ -21,7 +21,7 @@ export default function Layout({ children, mode }) {
       <header>
         <nav className="nav">
           <NavLink to="/" className="logo">
-            <YoavllyLogo size={32} />
+            <TriviallyLogo size={32} />
           </NavLink>
 
           <div className="nav-links">

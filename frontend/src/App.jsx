@@ -7,7 +7,7 @@ import Game from "./modes/music/Game.jsx";
 import { useApp } from "./lib/store.jsx";
 import { roomPath } from "./modes/index.js";
 
-// Screens tied to one room, e.g. /game/XOYOAV.
+// Screens tied to one room, e.g. /game/XOTRIV.
 const ROOM_SCREEN = /^\/(?:lobby|game|sala)\/([^/]+)/;
 
 // Old /lobby/CODE links: the waiting room now lives on the room screen, which /sala/CODE opens and joins.

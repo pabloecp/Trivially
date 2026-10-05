@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { api } from "../../lib/api.js";
 import { useApp } from "../../lib/store.jsx";
-import { YoavllySymbol } from "../../components/YoavllySymbol.jsx";
+import { TriviallySymbol } from "../../components/TriviallySymbol.jsx";
 import { AuthPromptModal } from "../../components/AuthPromptModal.jsx";
 
 const ROUND_OPTIONS = [5, 10, 15, 20, 25];
@@ -126,7 +126,7 @@ export default function Setup() {
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 14 }}>
         <div>
           <div className="kicker">
-            <YoavllySymbol size={16} /> Configuración de Partida
+            <TriviallySymbol size={16} /> Configuración de Partida
           </div>
           <h1 style={{ margin: "2px 0 0", fontSize: 28, letterSpacing: "-0.02em" }}>
             Ajustes de la Sala

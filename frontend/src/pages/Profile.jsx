@@ -182,19 +182,6 @@ function ProfileScreen() {
     }
   }
 
-  async function onUnlinkSpotify() {
-    setErr("");
-    setMsg("");
-    setSpotifyBusy(true);
-    try {
-      await unlinkSpotify();
-      setMsg("Spotify desconectado.");
-    } catch (e) {
-      setErr(e.message || "No se pudo desconectar Spotify");
-    } finally {
-      setSpotifyBusy(false);
-    }
-  }
 
   return (
     <div className="tv-page">
@@ -248,16 +235,16 @@ function ProfileScreen() {
                 Registrado
               </span>
             )}
+            {hasSpotify && (
+              <span className="tv-tag tv-tag--ok">
+                <SpotifyIcon size={13} color="#000" waves="#2bd94f" />
+                Spotify
+              </span>
+            )}
             {hasGoogle && (
               <span className="tv-tag">
                 <GoogleIcon size={13} />
                 Google
-              </span>
-            )}
-            {hasSpotify && (
-              <span className="tv-tag tv-tag--spotify">
-                <SpotifyIcon size={13} color="#000" waves="#1DB954" />
-                Spotify
               </span>
             )}
           </div>
@@ -396,10 +383,9 @@ function ProfileScreen() {
                       : "Vincula tu cuenta de Spotify a tu perfil."}
                   </span>
                 </div>
+                {/* Once linked, Spotify stays linked: there's no way to disconnect it. */}
                 {hasSpotify ? (
-                  <button type="button" className="tv-link-btn tv-link-btn--danger" onClick={onUnlinkSpotify} disabled={spotifyBusy}>
-                    Desconectar
-                  </button>
+                  <span className="tv-tag tv-tag--ok">Activo</span>
                 ) : (
                   <button type="button" className="tv-btn tv-btn--sm tv-btn--spotify" onClick={onConnectSpotify} disabled={spotifyBusy}>
                     {spotifyBusy ? "Abriendo…" : "Conectar"}

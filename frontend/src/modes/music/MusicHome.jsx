@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { useApp } from "../../lib/store.jsx";
-import { YoavllySymbol } from "../../components/YoavllySymbol.jsx";
+import { TriviallySymbol } from "../../components/TriviallySymbol.jsx";
 import AlbumShowcase from "../../components/AlbumShowcase.jsx";
 
 export default function MusicHome() {
@@ -12,7 +12,7 @@ export default function MusicHome() {
       <section className="hero">
         <div>
           <div className="kicker">
-            <YoavllySymbol size={16} /> La música es el reto
+            <TriviallySymbol size={16} /> La música es el reto
           </div>
 
           <h1 style={{ marginBottom: 16 }}>
@@ -135,7 +135,7 @@ export default function MusicHome() {
       <section className="grid grid-3" style={{ gap: 24 }}>
         <div className="card">
           <div style={{ width: 44, height: 44, borderRadius: 12, background: "var(--brand-subtle)", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 16 }}>
-            <YoavllySymbol size={24} />
+            <TriviallySymbol size={24} />
           </div>
           <h3>Filtros y Búsqueda en vivo</h3>
           <p className="muted" style={{ margin: 0, fontSize: 14 }}>
@@ -149,7 +149,7 @@ export default function MusicHome() {
           </div>
           <h3>Multiplayer en tiempo real</h3>
           <p className="muted" style={{ margin: 0, fontSize: 14 }}>
-            Salas privadas con código XO (ej. XOYOAV). Reloj centralizado y sincronización exacta de audio entre todos los jugadores.
+            Salas privadas con código XO (ej. XOTRIV). Reloj centralizado y sincronización exacta de audio entre todos los jugadores.
           </p>
         </div>
 

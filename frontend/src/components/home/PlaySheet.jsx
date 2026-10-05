@@ -262,7 +262,7 @@ export default function PlaySheet({ mode, joinCode, open, onClose }) {
                     setCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 6));
                     setError("");
                   }}
-                  placeholder="XOYOAV"
+                  placeholder="XOTRIV"
                   autoComplete="off"
                   autoCapitalize="characters"
                   spellCheck="false"

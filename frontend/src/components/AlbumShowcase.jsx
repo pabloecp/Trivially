@@ -1,4 +1,4 @@
-import { YoavllySymbol } from "./YoavllySymbol.jsx";
+import { TriviallySymbol } from "./TriviallySymbol.jsx";
 
 const ALBUMS_ROW_1 = [
   {
@@ -135,7 +135,7 @@ export default function AlbumShowcase({ style = {} }) {
       {/* Top Header */}
       <div className="row" style={{ justifyContent: "space-between", alignItems: "center" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <YoavllySymbol size={22} />
+          <TriviallySymbol size={22} />
           <div>
             <div className="kicker" style={{ fontSize: 11, margin: 0 }}>
               Álbumes en Rotación

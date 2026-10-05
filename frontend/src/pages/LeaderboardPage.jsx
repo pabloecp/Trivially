@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { api } from "../lib/api.js";
 import { useApp } from "../lib/store.jsx";
-import { YoavllySymbol } from "../components/YoavllySymbol.jsx";
+import { TriviallySymbol } from "../components/TriviallySymbol.jsx";
 import UserAvatar from "../components/UserAvatar.jsx";
 
 const SORTS = [
@@ -48,9 +48,9 @@ export default function LeaderboardPage() {
       <div className="row" style={{ justifyContent: "space-between", alignItems: "flex-end" }}>
         <div>
           <div className="kicker">
-            <YoavllySymbol size={16} /> Clasificación Global
+            <TriviallySymbol size={16} /> Clasificación Global
           </div>
-          <h1 style={{ margin: "4px 0" }}>Leaderboard YOAVLLY</h1>
+          <h1 style={{ margin: "4px 0" }}>Leaderboard Trivially</h1>
           <p className="muted" style={{ margin: 0 }}>
             Los mejores jugadores clasificados por rendimiento, velocidad y rachas de reconocimiento.
           </p>

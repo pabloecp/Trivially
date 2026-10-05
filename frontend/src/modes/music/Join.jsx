@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useApp } from "../../lib/store.jsx";
-import { YoavllySymbol } from "../../components/YoavllySymbol.jsx";
+import { TriviallySymbol } from "../../components/TriviallySymbol.jsx";
 
 export default function Join() {
   const [code, setCode] = useState("");
@@ -37,7 +37,7 @@ export default function Join() {
       <form className="card grid" style={{ padding: 36, gap: 20 }} onSubmit={onSubmit}>
         <div style={{ textAlign: "center" }}>
           <div style={{ display: "flex", justifyContent: "center", marginBottom: 12 }}>
-            <YoavllySymbol size={44} />
+            <TriviallySymbol size={44} />
           </div>
           <div className="kicker">Partida Multijugador</div>
           <h1 style={{ fontSize: 26, margin: "4px 0" }}>Unirse a una Sala</h1>

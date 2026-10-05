@@ -7,23 +7,41 @@ const AppContext = createContext(null);
 
 // The first one is the default. The profile adds an eighth option: the Google photo.
 export const AVATAR_COLORS = [
-  "#6366F1", // Índigo
-  "#3B82F6", // Azul
-  "#8B5CF6", // Violeta
-  "#2563EB", // Azul rey
-  "#A855F7", // Morado
+  "#FF2D55", // Rojo
+  "#FF8A00", // Naranja
+  "#2BD94F", // Verde
+  "#0A9BFF", // Azul
+  "#A63DFF", // Violeta
 ];
 
 // Per-tab, so a reload puts you back in the same room.
 const ROOM_KEY = "trivially_room";
 
+// The saved identity. These keys used the project's old name (YOAVLLY) until they were renamed; the values saved
+// under the old keys are moved over once, on load, so nobody loses their guest id or account.
+const USER_KEY = "trivially_user";
+export const GUEST_NAME_KEY = "trivially_guest_name";
+const GUEST_ID_KEY = "trivially_guest_id";
+const OLD_KEYS = { "yoavlly-user": USER_KEY, yoavlly_guest_name: GUEST_NAME_KEY, yoavlly_guest_id: GUEST_ID_KEY };
+
+try {
+  for (const [oldKey, newKey] of Object.entries(OLD_KEYS)) {
+    const value = localStorage.getItem(oldKey);
+    if (value === null) continue;
+    if (localStorage.getItem(newKey) === null) localStorage.setItem(newKey, value);
+    localStorage.removeItem(oldKey);
+  }
+} catch {
+  // No storage (private mode): nothing to move.
+}
+
 function loadSavedUser() {
   try {
-    const raw = localStorage.getItem("yoavlly-user");
+    const raw = localStorage.getItem(USER_KEY);
     if (raw) return JSON.parse(raw);
 
-    const guestName = localStorage.getItem("yoavlly_guest_name");
-    const guestId = localStorage.getItem("yoavlly_guest_id") || `gst_${Math.random().toString(36).slice(2, 10)}`;
+    const guestName = localStorage.getItem(GUEST_NAME_KEY);
+    const guestId = localStorage.getItem(GUEST_ID_KEY) || `gst_${Math.random().toString(36).slice(2, 10)}`;
     if (guestName) {
       return { id: guestId, name: guestName, isGuest: true, avatar: AVATAR_COLORS[0] };
     }
@@ -35,9 +53,9 @@ function loadSavedUser() {
 
 function persistUser(user) {
   if (user) {
-    localStorage.setItem("yoavlly-user", JSON.stringify(user));
+    localStorage.setItem(USER_KEY, JSON.stringify(user));
   } else {
-    localStorage.removeItem("yoavlly-user");
+    localStorage.removeItem(USER_KEY);
   }
 }
 
@@ -95,8 +113,8 @@ export function AppProvider({ children }) {
     clearRoom();
     setAuthToken(null);
     applyUser(null);
-    localStorage.removeItem("yoavlly_guest_name");
-    localStorage.removeItem("yoavlly_guest_id");
+    localStorage.removeItem(GUEST_NAME_KEY);
+    localStorage.removeItem(GUEST_ID_KEY);
     setLinkingStatus(null);
     reconnectSocket();
   }
@@ -113,7 +131,7 @@ export function AppProvider({ children }) {
 
   // A guest's id can be swapped by the server (see /api/session); keep localStorage in step.
   function adoptUser(next) {
-    if (next?.isGuest) localStorage.setItem("yoavlly_guest_id", next.id);
+    if (next?.isGuest) localStorage.setItem(GUEST_ID_KEY, next.id);
     applyUser(next);
   }
 
@@ -164,7 +182,7 @@ export function AppProvider({ children }) {
           setLinkingStatus(d.linkingStatus || null);
           if (d.user && !d.user.isGuest) {
             applyUser(d.user);
-            localStorage.removeItem("yoavlly_guest_id");
+            localStorage.removeItem(GUEST_ID_KEY);
             reconnectSocket();
           } else {
             googleFailed("tu navegador no guardó la sesión. Permite cookies para este sitio e inténtalo otra vez.");
@@ -236,12 +254,12 @@ export function AppProvider({ children }) {
       async saveGuest(name, avatar) {
         const cleanName = (name || "").trim();
         if (!cleanName) throw new Error("Por favor introduce un nombre");
-        let guestId = localStorage.getItem("yoavlly_guest_id");
+        let guestId = localStorage.getItem(GUEST_ID_KEY);
         if (!guestId) {
           guestId = `gst_${Math.random().toString(36).slice(2, 10)}`;
         }
-        localStorage.setItem("yoavlly_guest_id", guestId);
-        localStorage.setItem("yoavlly_guest_name", cleanName);
+        localStorage.setItem(GUEST_ID_KEY, guestId);
+        localStorage.setItem(GUEST_NAME_KEY, cleanName);
         const guestObj = { id: guestId, name: cleanName, avatar: avatar || AVATAR_COLORS[0], isGuest: true };
         applyUser(guestObj);
         let saved = guestObj;
@@ -263,7 +281,7 @@ export function AppProvider({ children }) {
         if (!clean) throw new Error("Por favor introduce un nombre de usuario");
         const res = await api(`/api/users/${current.id}/name`, { method: "PATCH", body: { name: clean } });
         if (res.user) {
-          localStorage.setItem("yoavlly_guest_name", res.user.name);
+          localStorage.setItem(GUEST_NAME_KEY, res.user.name);
           applyUser(res.user);
         }
         return res.user;
@@ -271,15 +289,15 @@ export function AppProvider({ children }) {
 
       async registerAccount({ name, email, password }) {
         const current = userRef.current;
-        const guestId = current?.isGuest ? current.id : localStorage.getItem("yoavlly_guest_id");
+        const guestId = current?.isGuest ? current.id : localStorage.getItem(GUEST_ID_KEY);
         const nextId = `usr_${Math.random().toString(36).slice(2, 10)}`;
         const res = await api("/api/auth/register", {
           method: "POST",
           body: { id: nextId, name, email, password, guestId, avatar: current?.avatar || AVATAR_COLORS[0] },
         });
         if (res.user) {
-          localStorage.setItem("yoavlly_guest_name", res.user.name);
-          localStorage.removeItem("yoavlly_guest_id");
+          localStorage.setItem(GUEST_NAME_KEY, res.user.name);
+          localStorage.removeItem(GUEST_ID_KEY);
           applyUser(res.user);
           reconnectSocket();
         }
@@ -288,11 +306,11 @@ export function AppProvider({ children }) {
 
       async loginAccount(identifier, password) {
         const current = userRef.current;
-        const guestId = current?.isGuest ? current.id : localStorage.getItem("yoavlly_guest_id");
+        const guestId = current?.isGuest ? current.id : localStorage.getItem(GUEST_ID_KEY);
         const res = await api("/api/auth/login", { method: "POST", body: { identifier, password, guestId } });
         if (res.user) {
-          localStorage.setItem("yoavlly_guest_name", res.user.name);
-          localStorage.removeItem("yoavlly_guest_id");
+          localStorage.setItem(GUEST_NAME_KEY, res.user.name);
+          localStorage.removeItem(GUEST_ID_KEY);
           applyUser(res.user);
           reconnectSocket();
         }
@@ -342,14 +360,6 @@ export function AppProvider({ children }) {
         if (url) window.location.href = url;
       },
 
-      async unlinkSpotify() {
-        const res = await api("/api/auth/unlink-spotify", { method: "POST" });
-        if (res.user) {
-          applyUser(res.user);
-          setLinkingStatus((prev) => ({ ...prev, spotifyLinked: false }));
-        }
-        return res.user;
-      },
 
       async deleteAccount(confirmName) {
         await api("/api/auth/delete-account", { method: "DELETE", body: { confirmName } });

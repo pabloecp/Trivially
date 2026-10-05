@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { useApp } from "../../lib/store.jsx";
+import { GUEST_NAME_KEY, useApp } from "../../lib/store.jsx";
 import AlbumShowcase from "../../components/AlbumShowcase.jsx";
 
 const FEATURED_ARTISTS = [
@@ -58,7 +58,7 @@ export default function ModeSelect() {
   const { user, saveGuest, updatePlayer, createRoom, joinRoom } = useApp();
   const [code, setCode] = useState("");
   const [playerName, setPlayerName] = useState(
-    () => user?.name || localStorage.getItem("yoavlly_guest_name") || ""
+    () => user?.name || localStorage.getItem(GUEST_NAME_KEY) || ""
   );
   const [joinErr, setJoinErr] = useState("");
   const [joining, setJoining] = useState(false);
@@ -197,7 +197,7 @@ export default function ModeSelect() {
                   const val = e.target.value;
                   setPlayerName(val);
                   if (val.trim()) {
-                    localStorage.setItem("yoavlly_guest_name", val.trim());
+                    localStorage.setItem(GUEST_NAME_KEY, val.trim());
                   }
                 }}
                 maxLength={20}
@@ -243,7 +243,7 @@ export default function ModeSelect() {
                   className="field"
                   value={code}
                   onChange={(e) => setCode(e.target.value.toUpperCase())}
-                  placeholder="(Ej. XOYOAV)"
+                  placeholder="(Ej. XOTRIV)"
                   maxLength={8}
                   style={{
                     width: "100%",
