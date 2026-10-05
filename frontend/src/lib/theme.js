@@ -4,15 +4,17 @@ import { PALETTES } from "./palettes.js";
 const PALETTE_KEY = "trivially_palette";
 const THEME_KEY = "trivially_theme";
 
-// A saved option that no longer exists falls back to the first one.
+const DEFAULT_PALETTE = PALETTES.find((p) => p.id === 5) || PALETTES[0];
+
+// No saved option, or one that no longer exists, falls back to the default (Mezcla).
 function loadPalette() {
   const saved = Number(localStorage.getItem(PALETTE_KEY));
   if (PALETTES.some((p) => p.id === saved)) return saved;
-  return PALETTES[0].id;
+  return DEFAULT_PALETTE.id;
 }
 
 function applyPalette(id) {
-  const palette = PALETTES.find((p) => p.id === id) || PALETTES[0];
+  const palette = PALETTES.find((p) => p.id === id) || DEFAULT_PALETTE;
   const root = document.documentElement;
   root.setAttribute("data-theme", palette.theme);
   root.setAttribute("data-palette", String(palette.id));
@@ -26,7 +28,7 @@ applyPalette(loadPalette());
 // Shared by every screen: the theme button walks through the colour options (lib/palettes.js).
 export function useTheme() {
   const [paletteId, setPaletteId] = useState(loadPalette);
-  const palette = PALETTES.find((p) => p.id === paletteId) || PALETTES[0];
+  const palette = PALETTES.find((p) => p.id === paletteId) || DEFAULT_PALETTE;
 
   useEffect(() => {
     applyPalette(paletteId);

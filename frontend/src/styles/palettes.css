@@ -65,6 +65,14 @@
   --logo-bg: conic-gradient(var(--tv-rb-red) 0 90deg, var(--tv-rb-blue) 0 180deg, var(--tv-rb-yellow) 0 270deg, var(--tv-rb-green) 0);
 }
 
+/* Opción 5: Mezcla. The confetti page of option 1, the Baloo 2 typeface of option 3 and the wave logo of option 3 too. */
+:root:root[data-palette="5"] {
+  --tv-page-bg: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E %3Cg fill='none' stroke='rgba(255,255,255,0.055)' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E %3Cpath d='M18 22l10-4 2 10z'/%3E %3Crect x='86' y='14' width='10' height='10' rx='2' transform='rotate(20 91 19)'/%3E %3Cpath d='M52 70q5-8 10 0t10 0'/%3E %3Ccircle cx='114' cy='78' r='5'/%3E %3Cpath d='M24 104l8 8M32 104l-8 8'/%3E %3Cpath d='M78 116l12-3-4 12z'/%3E %3Cpath d='M60 30h12'/%3E %3Cpath d='M120 124q4-6 8 0'/%3E %3C/g%3E%3C/svg%3E");
+  --tv-display: "Baloo 2", system-ui, sans-serif;
+  --tv-body: "Baloo 2", system-ui, sans-serif;
+  --logo-bg: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' preserveAspectRatio='none'%3E%3Crect width='100' height='100' fill='%23ff2d55'/%3E%3Cpath d='M0 18q12.5-6 25 0t25 0t25 0t25 0V100H0z' fill='%23ff8a00'/%3E%3Cpath d='M0 34q12.5-6 25 0t25 0t25 0t25 0V100H0z' fill='%23ffd60a'/%3E%3Cpath d='M0 50q12.5-6 25 0t25 0t25 0t25 0V100H0z' fill='%232bd94f'/%3E%3Cpath d='M0 66q12.5-6 25 0t25 0t25 0t25 0V100H0z' fill='%230a9bff'/%3E%3Cpath d='M0 82q12.5-6 25 0t25 0t25 0t25 0V100H0z' fill='%23a63dff'/%3E%3C/svg%3E") center / cover;
+}
+
 /* Vivid colours, the same in every option: one per role and one per game mode, always on the black/grey page.
    Per slot: --x-1 / --x-2 are the fill (flat), --x-edge the solid shadow under a tile, --x-text the colour as
    text on black and --p-on-x the letter on top of it. */
