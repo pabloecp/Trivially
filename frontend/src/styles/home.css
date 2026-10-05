@@ -1,21 +1,29 @@
 /* Trivially Home — casual game look. Everything here is namespaced with `tv-`. */
 
-/* ---------- Palette: the colours are slots, and each of the ten options (see lib/palettes.js) fills them ----------
+/* ---------- Palette: the colours are slots, and each of the options (see lib/palettes.js) fills them ----------
    site = the site's own colour, accent = its second colour, music / culture / cinema / world = the colour of each
-   game mode, extra = the odd one out (moderator tag, "blue" tiles). The slot colours of all ten options, Duolingo's
+   game mode, extra = the odd one out (moderator tag, "blue" tiles). The slot colours of all the options, Duolingo's
    (options 1 and 2) included, are in styles/palettes.css; this file only has the greys.
    Per slot: --x-1 / --x-2 are the fill (the same for a flat colour, two shades for a gradient) and --x-edge is the
    solid shadow under a tile. */
 :root {
   /* Meaning, not decoration: these two stay the same in every colour option. */
-  --p-ok: #22c55e;  --p-ok-edge: #15803d;  --p-ok-rgb: 34, 197, 94;   --p-ok-text: #4ade80;
-  --p-bad: #ef4444; --p-bad-edge: #b91c1c; --p-bad-rgb: 239, 68, 68;  --p-bad-text: #ff7070;
-  --p-ink: #0a0a0f; /* the page's black, used as the letter on light colours */
+  --p-ok: #2bd94f;  --p-ok-edge: #178a30;  --p-ok-rgb: 43, 217, 79;  --p-ok-text: #4be26c;
+  --p-bad: #ff2d55; --p-bad-edge: #a3112f; --p-bad-rgb: 255, 45, 85; --p-bad-text: #ff5c7a;
+  --p-ink: #0a0b0c; /* the page's black, used as the letter on light colours */
   --p-eel: #4b4b4b;
   --p-wolf: #777777;
   --p-hare: #afafaf;
   --p-swan: #e5e5e5;
   --p-polar: #f7f7f7;
+
+  /* The logo's rainbow: six vivid, solid bands (also the i-dots of the wordmark). */
+  --tv-rb-red: #ff2d55;
+  --tv-rb-orange: #ff8a00;
+  --tv-rb-yellow: #ffd60a;
+  --tv-rb-green: #2bd94f;
+  --tv-rb-blue: #0a9bff;
+  --tv-rb-violet: #a63dff;
 }
 
 /* Older class names kept so the markup doesn't change: "yellow" and "pink" are the site colour, "violet" is the
@@ -27,62 +35,35 @@
   --tv-mint: var(--p-music-1);     --tv-mint-2: var(--p-music-2);    --tv-mint-edge: var(--p-music-edge);
   --tv-blue: var(--p-extra-1);     --tv-blue-2: var(--p-extra-2);    --tv-blue-edge: var(--p-extra-edge);
 
-  /* Night mode (the default): Duolingo's dark surfaces. */
-  --tv-bg: #0a0a0f;
-  --tv-surface: #16161f;
-  --tv-edge: #2a2a36;
+  /* The page's black and greys (palettes.css sets them per option; these are option 1). */
+  --tv-bg: #0a0b0c;
+  --tv-surface: #141517;
+  --tv-edge: #000000;
   --tv-text: #ffffff;
-  --tv-text-2: var(--p-swan);
-  --tv-text-3: var(--p-hare);
+  --tv-text-2: #cbcbcb;
+  --tv-text-3: #949494;
   --tv-ink: #ffffff;
-  --tv-logo-shadow: #000000;
-  --tv-dots: rgba(255, 255, 255, 0.05);
-  --tv-blob-opacity: 0.3;
-  --tv-scrim: rgba(0, 0, 0, 0.72);
-  --tv-sheet-bg: #16161f;
-  --tv-option-bg: #0f0f16;
-  --tv-option-edge: #2a2a36;
+  --tv-logo-shadow: #030303;
+  --tv-scrim: rgba(0, 0, 0, 0.66);
+  --tv-sheet-bg: #141517;
+  --tv-option-bg: #0f1012;
+  --tv-option-edge: #1c1d20;
   --tv-handle: rgba(255, 255, 255, 0.22);
   --tv-toast-bg: #ffffff;
-  --tv-toast-fg: #0a0a0f;
+  --tv-toast-fg: #0a0b0c;
   --tv-focus: var(--p-site-2);
-  --tv-danger: var(--p-cinema-2);
-  --tv-danger-bg: rgba(168, 85, 247, 0.16);
-  --tv-glow: rgba(99, 102, 241, 0.4);
-  --tv-neutral: #2a2a36;
-  --tv-neutral-2: #2a2a36;
-  --tv-neutral-edge: #000000;
+  --tv-danger: var(--p-bad-text);
+  --tv-danger-bg: rgba(var(--p-bad-rgb), 0.16);
+  --tv-neutral: #26272b;
+  --tv-neutral-2: #26272b;
+  --tv-neutral-edge: #191919;
   --tv-neutral-on: #ffffff;
 
   --tv-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
   --tv-display: "Outfit", "Plus Jakarta Sans", system-ui, sans-serif;
-}
-
-[data-theme="light"] {
-  --tv-bg: #ffffff;
-  --tv-surface: #ffffff;
-  --tv-edge: var(--p-swan);
-  --tv-text: var(--p-eel);
-  --tv-text-2: var(--p-eel);
-  --tv-text-3: var(--p-wolf);
-  --tv-logo-shadow: var(--p-swan);
-  --tv-dots: rgba(75, 75, 75, 0.06);
-  --tv-blob-opacity: 0.22;
-  --tv-scrim: rgba(75, 75, 75, 0.4);
-  --tv-sheet-bg: #ffffff;
-  --tv-option-bg: var(--p-polar);
-  --tv-option-edge: var(--p-swan);
-  --tv-handle: rgba(75, 75, 75, 0.16);
-  --tv-toast-bg: #0a0a0f;
-  --tv-toast-fg: #ffffff;
-  --tv-focus: var(--p-extra-2);
-  --tv-danger: var(--p-cinema-edge);
-  --tv-danger-bg: rgba(168, 85, 247, 0.12);
-  --tv-glow: rgba(99, 102, 241, 0.35);
-  --tv-neutral: var(--p-swan);
-  --tv-neutral-2: var(--p-swan);
-  --tv-neutral-edge: var(--p-hare);
-  --tv-neutral-on: var(--p-eel);
+  --tv-body: "Nunito", "Plus Jakarta Sans", system-ui, sans-serif;
+  /* The logo keeps its font in every colour option. */
+  --tv-logo-font: "Outfit", "Plus Jakarta Sans", system-ui, sans-serif;
 }
 
 /* One class per slot, plus the older names. --on is the letter on top of the colour (palettes.css picks it by contrast). */
@@ -103,9 +84,9 @@
   min-height: 100vh;
   min-height: 100dvh;
   overflow-x: hidden;
-  /* Black fading into the main colour; see "The page" near the end of the file. */
+  /* Flat black; see "The page" near the end of the file. */
   color: var(--tv-text);
-  font-family: "Nunito", "Plus Jakarta Sans", system-ui, sans-serif;
+  font-family: var(--tv-body);
   -webkit-tap-highlight-color: transparent;
 }
 
@@ -130,41 +111,6 @@
   clip: rect(0 0 0 0);
   white-space: nowrap;
 }
-
-/* ---------- Background ---------- */
-/* Scrolls with the page instead of being fixed: iOS Safari paints its status and toolbar areas with the colour
-   of fixed elements at the screen edges, and a fixed transparent layer left them as solid black bars. */
-.tv-backdrop {
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  overflow: hidden;
-  pointer-events: none;
-}
-.tv-backdrop::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background-image: radial-gradient(var(--tv-dots) 1.3px, transparent 1.8px);
-  background-size: 24px 24px;
-  -webkit-mask-image: linear-gradient(to bottom, #000, transparent 70%);
-  mask-image: linear-gradient(to bottom, #000, transparent 70%);
-}
-.tv-blob {
-  position: absolute;
-  width: 44vmax;
-  height: 44vmax;
-  border-radius: 50%;
-  filter: blur(80px);
-  opacity: var(--tv-blob-opacity);
-  animation: tvDrift 24s ease-in-out infinite alternate;
-  will-change: transform;
-}
-.tv-blob--1 { background: var(--p-site-2); top: -26vmax; left: -20vmax; }
-.tv-blob--2 { background: var(--p-world-2); top: 6vmax; right: -28vmax; animation-duration: 28s; animation-delay: -8s; }
-.tv-blob--3 { background: var(--p-cinema-2); bottom: -34vmax; left: 4vmax; animation-duration: 32s; animation-delay: -14s; }
-.tv-blob--4 { background: var(--p-accent-2); top: 38vmax; right: -14vmax; width: 34vmax; height: 34vmax; animation-duration: 26s; animation-delay: -4s; }
-.tv-blob--5 { background: var(--p-music-2); top: 46vmax; left: -22vmax; width: 36vmax; height: 36vmax; animation-duration: 30s; animation-delay: -18s; }
 
 /* ---------- Top bar ---------- */
 .tv-topbar {
@@ -257,6 +203,16 @@
 .tv-stage.is-home { min-height: calc(100svh - 190px); align-content: center; }
 /* "Cómo se juega" is desktop only; on mobile the logo gets the whole screen. */
 @media (min-width: 721px) { .tv-stage.is-home { min-height: 0; align-content: normal; } }
+/* Desktop: logo and Jugar on the left, "Cómo se juega" on the right. */
+@media (min-width: 900px) {
+  .tv-stage.is-home {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 48px;
+    min-height: calc(100svh - 190px);
+    align-content: center;
+  }
+  .tv-stage.is-home .tv-howto { justify-self: stretch; max-width: 520px; }
+}
 @media (max-width: 720px) { .tv-howto { display: none; } }
 .tv-stage .tv-party { margin-top: 0; max-width: 560px; }
 /* In a room the code card is as wide as the game bar and settings under it, at every screen size. */
@@ -334,7 +290,7 @@
   border-radius: 32px;
   background: var(--tv-surface);
   border: 0;
-  box-shadow: 0 8px 0 var(--tv-edge), 0 24px 40px -18px var(--tv-glow);
+  box-shadow: 0 8px 0 var(--tv-edge);
 }
 @media (min-width: 900px) {
   .tv-split { grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); gap: 48px; }
@@ -364,9 +320,12 @@
   width: 132px;
   height: 132px;
   border-radius: var(--logo-radius, 38px);
-  background: var(--logo-bg, linear-gradient(155deg, var(--tv-yellow), var(--tv-yellow-2)));
+  /* Solid rainbow bands: every colour starts where the last one ends, so nothing blends. */
+  background: var(--logo-bg, linear-gradient(135deg,
+    var(--tv-rb-red) 0 16.67%, var(--tv-rb-orange) 0 33.33%, var(--tv-rb-yellow) 0 50%,
+    var(--tv-rb-green) 0 66.67%, var(--tv-rb-blue) 0 83.33%, var(--tv-rb-violet) 0));
   border: var(--logo-ring, 0);
-  box-shadow: var(--logo-shadow, 0 8px 0 var(--tv-yellow-edge), 0 24px 40px -12px var(--tv-glow));
+  box-shadow: var(--logo-shadow, 0 8px 0 var(--tv-neutral));
   color: var(--logo-mark, #fff);
   animation: tvBob 3.6s ease-in-out infinite;
 }
@@ -377,15 +336,15 @@
   width: 110px;
   height: 70px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, var(--logo-shine, 0.25));
+  background: rgba(255, 255, 255, var(--logo-shine, 0));
   transform: rotate(-24deg);
 }
 .tv-appicon-mark {
-  font-family: var(--tv-display);
+  font-family: var(--tv-logo-font);
   font-weight: 700;
   font-size: 96px;
   line-height: 1;
-  text-shadow: var(--logo-mark-shadow, 0 5px 0 rgba(0, 0, 0, 0.18));
+  text-shadow: var(--logo-mark-shadow, 0 5px 0 rgba(0, 0, 0, 0.28));
   transform: translateY(2px);
 }
 .tv-appicon-star {
@@ -397,8 +356,8 @@
   width: 34px;
   height: 34px;
   border-radius: var(--logo-star-radius, 12px);
-  background: var(--logo-star-bg, var(--p-accent-2));
-  box-shadow: var(--logo-star-shadow, 0 3px 0 var(--p-accent-edge));
+  background: var(--logo-star-bg, #ffffff);
+  box-shadow: var(--logo-star-shadow, 0 3px 0 rgba(0, 0, 0, 0.35));
   color: var(--logo-star-fg, var(--p-ink));
   display: var(--logo-star-display, grid);
   rotate: 12deg;
@@ -414,13 +373,11 @@
   filter: blur(5px);
   animation: tvShadow 3.6s ease-in-out infinite;
 }
-[data-theme="light"] .tv-appicon-shadow { background: rgba(75, 75, 75, 0.2); }
-
 .tv-wordmark {
   display: flex;
   justify-content: center;
   margin: 4px 0 0;
-  font-family: var(--tv-display);
+  font-family: var(--tv-logo-font);
   font-weight: 700;
   font-size: clamp(54px, 16vw, 74px);
   line-height: 1;
@@ -446,8 +403,8 @@
   animation: tvDotDrop 0.8s var(--tv-spring) backwards, tvDotHop 3.2s ease-in-out infinite;
   animation-delay: calc(0.65s + var(--i) * 60ms), calc(1.6s + var(--i) * 150ms);
 }
-.tv-dot--yellow { background: var(--tv-yellow); }
-.tv-dot--pink { background: var(--tv-violet-2); }
+.tv-dot--yellow { background: var(--tv-dot-1, var(--tv-rb-yellow)); }
+.tv-dot--pink { background: var(--tv-dot-2, var(--tv-rb-red)); }
 
 .tv-tagline {
   margin: 16px 0 0;
@@ -475,8 +432,8 @@
   margin-top: 30px;
   border: 0;
   border-radius: 26px;
-  background: linear-gradient(180deg, var(--tv-yellow), var(--tv-yellow-2));
-  box-shadow: 0 8px 0 var(--tv-yellow-edge), 0 20px 36px -10px var(--tv-glow);
+  background: var(--tv-yellow-2);
+  box-shadow: 0 8px 0 var(--tv-yellow-edge);
   font-family: var(--tv-display);
   font-weight: 700;
   font-size: 30px;
@@ -486,25 +443,13 @@
   transition: transform 0.14s ease, box-shadow 0.14s ease;
   animation: tvRise 0.6s var(--tv-spring) 0.6s backwards;
 }
-.tv-play::after {
-  content: "";
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: -45%;
-  width: 35%;
-  background: linear-gradient(100deg, transparent, rgba(255, 255, 255, 0.6), transparent);
-  transform: skewX(-20deg);
-  animation: tvShine 5s ease-in-out 1.8s infinite;
-  pointer-events: none;
-}
 .tv-play:hover {
   transform: translateY(-2px);
-  box-shadow: 0 10px 0 var(--tv-yellow-edge), 0 24px 40px -10px var(--tv-glow);
+  box-shadow: 0 10px 0 var(--tv-yellow-edge);
 }
 .tv-play:active {
   transform: translateY(7px);
-  box-shadow: 0 1px 0 var(--tv-yellow-edge), 0 8px 16px -8px var(--tv-glow);
+  box-shadow: 0 1px 0 var(--tv-yellow-edge);
 }
 .tv-play-icon {
   display: grid;
@@ -552,7 +497,7 @@
   padding: 14px;
   border: 0;
   border-radius: 26px;
-  background: linear-gradient(155deg, var(--c1), var(--c2));
+  background: var(--c2);
   box-shadow: 0 6px 0 var(--edge), 0 18px 28px -14px var(--edge);
   color: var(--on);
   text-align: left;
@@ -587,7 +532,7 @@
   width: 52px;
   height: 52px;
   border-radius: 17px;
-  background: linear-gradient(155deg, var(--c1), var(--c2));
+  background: var(--c2);
   box-shadow: 0 4px 0 var(--edge);
   color: var(--on);
 }
@@ -648,7 +593,7 @@
   content: "";
   position: absolute;
   inset: 0;
-  background: radial-gradient(120% 90% at 85% 100%, var(--c1), transparent 70%);
+  background: none;
   opacity: 0;
   transition: opacity 0.3s ease;
   pointer-events: none;
@@ -656,9 +601,9 @@
 /* Every mode fills with its full color on hover */
 .tv-mode:hover { transform: translateY(-3px); }
 .tv-mode:hover {
-  background: linear-gradient(155deg, var(--c1), var(--c2));
+  background: var(--c2);
   color: var(--on);
-  box-shadow: 0 9px 0 var(--edge), 0 18px 34px -8px var(--c1);
+  box-shadow: 0 9px 0 var(--edge);
 }
 .tv-mode:active { box-shadow: 0 1px 0 var(--edge); }
 .tv-mode:hover .tv-mode-name { color: var(--on); }
@@ -669,21 +614,21 @@
 .tv-mode .tv-mode-badge { transition: transform 0.3s var(--tv-spring); }
 .tv-mode:active { transform: translateY(5px); }
 .tv-mode .tv-mode-badge {
-  background: linear-gradient(155deg, var(--c1), var(--c2));
+  background: var(--c2);
   box-shadow: 0 3px 0 var(--edge);
   color: var(--on);
 }
 .tv-mode .tv-mode-watermark { color: var(--c2); opacity: 0.12; }
 .tv-mode.is-soon { cursor: default; }
 .tv-mode.is-soon:not(:hover) .tv-mode-name { color: var(--tv-text-2); }
-.tv-mode-go { background: linear-gradient(155deg, var(--c1), var(--c2)); color: var(--on); }
+.tv-mode-go { background: var(--c2); color: var(--on); }
 .tv-mode.is-shaking { animation: tvShake 0.45s ease; }
 
 /* Room screen: the picked game stays filled with its colour, and the tiles shrink once a game is picked. */
 .tv-mode.is-selected {
-  background: linear-gradient(155deg, var(--c1), var(--c2));
+  background: var(--c2);
   color: var(--on);
-  box-shadow: 0 6px 0 var(--edge), 0 18px 34px -12px var(--c1);
+  box-shadow: 0 6px 0 var(--edge);
   cursor: default;
   animation: tvModePick 0.55s var(--tv-spring);
 }
@@ -691,7 +636,7 @@
 .tv-mode.is-selected .tv-mode-badge { background: #fff; color: var(--c2); box-shadow: none; }
 .tv-mode.is-selected .tv-mode-watermark { color: var(--on); opacity: 0.16; }
 .tv-mode.is-selected:hover,
-.tv-mode.is-selected:active { transform: none; box-shadow: 0 6px 0 var(--edge), 0 18px 34px -12px var(--c1); }
+.tv-mode.is-selected:active { transform: none; box-shadow: 0 6px 0 var(--edge); }
 .tv-mode-grid .tv-mode { transition: transform 0.2s var(--tv-spring), box-shadow 0.2s ease, min-height 0.4s var(--tv-spring); }
 .tv-mode-grid.is-compact .tv-mode { min-height: 96px; }
 .tv-mode-grid.is-compact .tv-mode-name { margin-top: 10px; font-size: 17px; }
@@ -752,7 +697,7 @@
 }
 .tv-switch-btn .tv-badge { width: 38px; height: 38px; border-radius: 13px; transition: background 0.15s ease, color 0.15s ease; }
 .tv-switch-btn:hover { transform: translateY(-2px); box-shadow: 0 7px 0 var(--tv-edge); }
-.tv-switch-btn:active { transform: translateY(4px); box-shadow: 0 1px 0 var(--tv-edge); background: linear-gradient(155deg, var(--c1), var(--c2)); color: var(--on); }
+.tv-switch-btn:active { transform: translateY(4px); box-shadow: 0 1px 0 var(--tv-edge); background: var(--c2); color: var(--on); }
 .tv-switch-btn:active .tv-badge { background: var(--tv-surface); color: var(--c2); box-shadow: none; }
 .tv-switch-btn:focus-visible { outline: 3px solid var(--tv-focus); outline-offset: 3px; }
 .tv-room-game-title .tv-badge { width: 38px; height: 38px; border-radius: 13px; }
@@ -764,6 +709,40 @@
 @keyframes tvRoomIn {
   from { opacity: 0; transform: translateY(32px) scale(0.97); }
 }
+
+/* Home ↔ room (Home.jsx): the logo flies between the home screen and the room's header, so it skips its own
+   entrance (is-logo-flown stays on until the next flight: removing it would replay the letters). Going in, the
+   room card and the game panel come in just after it; is-entering-room only changes delays, so taking it off
+   later restarts nothing. */
+.tv-main.is-logo-flown .tv-hero .tv-appicon,
+.tv-main.is-logo-flown .tv-hero .tv-letter { animation: none; }
+.tv-main.is-logo-flown .tv-hero .tv-dot { animation-name: none, tvDotHop; }
+.tv-main.is-entering-room .tv-party { animation-delay: 0.2s; }
+.tv-main.is-entering-room .tv-room-game { animation-delay: 0.35s; animation-fill-mode: backwards; }
+
+/* Picking a game (Home.jsx), first beat: the tiles fade out, the picked one with a little bounce first. */
+.tv-modes.is-leaving { pointer-events: none; }
+.tv-modes.is-leaving .tv-section-title,
+.tv-modes.is-leaving .tv-mode { animation: tvTileOut 0.26s ease-in forwards; }
+.tv-modes.is-leaving .tv-mode.is-selected { animation: tvTilePicked 0.3s ease-in forwards; }
+@keyframes tvTileOut { to { opacity: 0; transform: translateY(14px) scale(0.96); } }
+@keyframes tvTilePicked {
+  35% { opacity: 1; transform: scale(1.05); }
+  to { opacity: 0; transform: scale(0.9); }
+}
+
+/* Second beat: the game's button drops into place and its badge pops, the panel's cards rise one after another,
+   and "Comenzar partida" (or the guests' waiting line) fades up in the room card while it grows. Only transform
+   and opacity, so it stays smooth while the panel loads. */
+.tv-main.is-mode-picked .tv-room-game { animation: none; }
+.tv-main.is-mode-picked .tv-room-game-head { animation: tvModeHead 0.5s var(--tv-spring) backwards; }
+.tv-main.is-mode-picked .tv-room-game-head .tv-switch-badge { animation: tvPop 0.5s var(--tv-spring) 0.2s backwards; }
+.tv-main.is-mode-picked .tv-lobby-grid > .tv-card { animation: tvModeCard 0.55s var(--tv-spring) 0.1s backwards; }
+.tv-main.is-mode-picked .tv-lobby-grid > .tv-card + .tv-card { animation-delay: 0.2s; }
+.tv-main.is-mode-picked .tv-party > .tv-btn,
+.tv-main.is-mode-picked .tv-party > .tv-party-status { animation: tvModeCard 0.45s var(--tv-spring) 0.15s backwards; }
+@keyframes tvModeHead { from { opacity: 0; transform: translateY(-18px) scale(0.9); } }
+@keyframes tvModeCard { from { opacity: 0; transform: translateY(24px) scale(0.97); } }
 
 /* ---------- Play sheet ---------- */
 .tv-sheet-root {
@@ -777,7 +756,7 @@
   display: flex;
   align-items: flex-end;
   justify-content: center;
-  font-family: "Nunito", "Plus Jakarta Sans", system-ui, sans-serif;
+  font-family: var(--tv-body);
 }
 .tv-sheet-backdrop {
   position: absolute;
@@ -998,7 +977,7 @@
   padding: 0 18px;
   border: 0;
   border-radius: 16px;
-  background: linear-gradient(180deg, var(--c1), var(--c2));
+  background: var(--c2);
   box-shadow: 0 4px 0 var(--edge);
   font-family: var(--tv-display);
   font-weight: 600;
@@ -1191,7 +1170,7 @@
   box-shadow: 0 6px 0 var(--tv-edge), 0 24px 40px -24px rgba(0, 0, 0, 0.5);
   animation: tvRise 0.5s var(--tv-spring) backwards;
 }
-.tv-lobby { display: grid; gap: 20px; width: 100%; max-width: 1000px; margin: 0 auto; }
+.tv-lobby { display: grid; gap: 20px; width: 100%; margin: 0 auto; }
 .tv-lobby-head { grid-template-columns: 1fr auto; align-items: center; }
 .tv-lobby-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; align-items: start; }
 .tv-lobby-grid > .tv-card { animation-delay: 0.08s; }
@@ -1209,7 +1188,7 @@
   gap: 12px;
   padding: 20px 14px;
   border-radius: 22px;
-  background: radial-gradient(120% 90% at 50% 0%, rgba(var(--brand-rgb), 0.16), var(--tv-option-bg) 70%);
+  background: var(--tv-option-bg);
   text-align: center;
 }
 .tv-eq--sm { gap: 5px; height: 38px; }
@@ -1252,7 +1231,9 @@
 }
 .tv-mini-btn:hover { transform: translateY(-2px); box-shadow: 0 5px 0 var(--tv-neutral-edge); }
 .tv-mini-btn:active { transform: translateY(3px); box-shadow: 0 0 0 var(--tv-neutral-edge); }
-.tv-mini-btn.is-on { background: var(--tv-danger-bg); color: var(--tv-danger); }
+.tv-mini-btn.is-on { background: var(--p-bad); color: #fff; box-shadow: 0 3px 0 var(--p-bad-edge); }
+.tv-mini-btn.is-on:hover { box-shadow: 0 5px 0 var(--p-bad-edge); }
+.tv-mini-btn.is-on:active { box-shadow: 0 0 0 var(--p-bad-edge); }
 .tv-btn--sm { height: 38px; padding: 0 14px; font-size: 15px; border-radius: 13px; }
 .tv-stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
 .tv-stat { display: grid; gap: 4px; padding: 12px 14px; border-radius: 20px; background: var(--tv-option-bg); box-shadow: 0 3px 0 var(--tv-option-edge); }
@@ -1269,7 +1250,8 @@
 
 
 /* ---------- Shared page pieces (login, profile, game) ---------- */
-.tv-page { display: grid; gap: 20px; width: 100%; max-width: 1000px; margin: 0 auto; }
+/* Pages fill the main column, so their left and right edges line up with the top bar's. */
+.tv-page { display: grid; gap: 20px; width: 100%; margin: 0 auto; }
 .tv-profile-back { justify-self: start; }
 .tv-page-title {
   margin: 0;
@@ -1373,8 +1355,8 @@
 .tv-btn--spotify { --c1: #1ed760; --c2: #1db954; --edge: #148a3d; --on: #000; }
 .tv-app .tv-btn--spotify { color: #000; }
 .tv-icon-btn--sm { width: 40px; height: 40px; border-radius: 13px; }
-.tv-app .tv-link-btn--danger { color: var(--tv-danger); }
-.tv-app .tv-link-btn--danger:hover { color: var(--tv-danger); background: var(--tv-danger-bg); }
+.tv-app .tv-link-btn--danger { background: var(--p-bad); color: #fff; box-shadow: 0 3px 0 var(--p-bad-edge); }
+.tv-app .tv-link-btn--danger:hover { color: #fff; background: var(--p-bad); box-shadow: 0 5px 0 var(--p-bad-edge); }
 
 /* Tags */
 .tv-tags { display: flex; flex-wrap: wrap; gap: 6px; }
@@ -1395,7 +1377,6 @@
 .tv-tag--owner { background: var(--tv-violet); color: var(--p-ink); }
 .tv-tag--admin { background: var(--p-site-2); color: var(--p-ink); }
 .tv-tag--moderator { background: var(--p-extra-2); color: #fff; }
-.tv-tag--spotify { background: #1db954; color: #000; }
 .tv-tag-sparkle { animation: ownerSparkleMain 2.2s ease-in-out infinite; }
 /* Registrado: Instagram-style verified badge that pulses like the owner star. */
 .tv-tag-verified { animation: verifiedBadgePulse 2.2s ease-in-out infinite; }
@@ -1474,7 +1455,7 @@
   height: 44px;
   border: 0;
   border-radius: 14px;
-  background: linear-gradient(155deg, var(--brand-hover), var(--brand));
+  background: var(--brand);
   box-shadow: 0 4px 0 var(--brand-active);
   color: var(--on-brand);
   cursor: pointer;
@@ -1536,8 +1517,8 @@
   width: 32px;
   height: 32px;
   border-radius: 10px;
-  background: linear-gradient(155deg, var(--tv-pink), var(--tv-pink-2));
-  color: var(--p-ink);
+  background: var(--brand);
+  color: var(--on-brand);
 }
 .tv-picks-tools { display: flex; gap: 4px; }
 .tv-playlist-total {
@@ -1564,6 +1545,7 @@
 .tv-pick--playlist[aria-pressed="true"] { animation: none; }
 /* Spotify playlists (owners): cover art, a name that can be long, and how many songs are ready while loading. */
 .tv-pick-art { overflow: hidden; flex-shrink: 0; }
+.tv-pick[aria-pressed="true"] .tv-pick-art:not(:has(img)) { background: rgba(0, 0, 0, 0.22); }
 .tv-pick-art img { width: 100%; height: 100%; object-fit: cover; }
 .tv-pick-art--spotify { background: #000; }
 .tv-pick--custom { max-width: 100%; }
@@ -1601,18 +1583,6 @@
   overflow: clip;
   position: relative;
 }
-.tv-profile-hero::after {
-  content: "";
-  position: absolute;
-  right: -60px;
-  top: -80px;
-  width: 260px;
-  height: 260px;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(var(--brand-rgb), 0.28), transparent 70%);
-  pointer-events: none;
-  animation: tvDrift 16s ease-in-out infinite alternate;
-}
 .tv-profile-avatar { position: relative; animation: tvPop 0.6s var(--tv-spring) 0.1s backwards; }
 .tv-avatar--xl {
   width: 88px;
@@ -1643,7 +1613,7 @@
   width: 12px;
   height: 12px;
   border-radius: 5px;
-  background: linear-gradient(155deg, var(--c1), var(--c2));
+  background: var(--c2);
   box-shadow: 0 2px 0 var(--edge);
 }
 .tv-stat--pop .tv-stat-value { font-variant-numeric: tabular-nums; }
@@ -1665,7 +1635,7 @@
 .tv-email { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 700; font-size: 14px; color: var(--tv-text-3); }
 
 /* ---------- Game ---------- */
-.tv-game { display: grid; gap: 20px; width: 100%; max-width: 1100px; margin: 0 auto; align-items: start; }
+.tv-game { display: grid; gap: 20px; width: 100%; margin: 0 auto; align-items: start; }
 @media (min-width: 900px) { .tv-game { grid-template-columns: minmax(0, 1fr) 320px; } }
 .tv-game-main { display: grid; gap: 20px; min-width: 0; }
 
@@ -1695,7 +1665,7 @@
   display: block;
   height: 100%;
   border-radius: inherit;
-  background: linear-gradient(90deg, var(--brand-hover), var(--brand));
+  background: var(--brand);
   transition: width 0.15s linear, background 0.3s ease;
 }
 .tv-timer-fill.is-urgent { background: var(--p-bad); }
@@ -1734,7 +1704,7 @@
   width: 10px;
   height: 100%;
   border-radius: 6px;
-  background: linear-gradient(180deg, var(--brand-hover), var(--brand));
+  background: var(--brand);
   transform-origin: bottom;
   animation: tvEq 0.9s ease-in-out infinite alternate;
   animation-delay: calc(var(--i) * -0.13s);
@@ -1862,7 +1832,7 @@
 }
 .tv-skip-btn:hover { color: var(--tv-text); transform: translateY(-2px); }
 .tv-skip-btn:active { transform: translateY(3px); box-shadow: none; }
-.tv-skip-btn.is-on, .tv-skip-btn.is-on:hover { background: var(--tv-danger-bg); color: var(--tv-danger); }
+.tv-skip-btn.is-on, .tv-skip-btn.is-on:hover { background: var(--p-bad); color: #fff; box-shadow: 0 3px 0 var(--p-bad-edge); }
 .tv-locked-check {
   display: grid;
   place-items: center;
@@ -1917,11 +1887,7 @@
 @media (min-width: 900px) { .tv-game-side { position: sticky; top: 16px; } }
 .tv-board-list { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
 .tv-board-row {
-  display: grid;
-  grid-template-columns: 26px auto minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 10px;
-  padding: 8px 12px 8px 8px;
+  position: relative;
   border-radius: 18px;
   background: var(--tv-option-bg);
   box-shadow: 0 3px 0 var(--tv-option-edge);
@@ -1929,6 +1895,24 @@
   animation-delay: calc(var(--i) * 50ms);
 }
 .tv-board-row.is-me { box-shadow: 0 3px 0 var(--tv-option-edge), inset 0 0 0 2px var(--brand); }
+/* Each row is a button that opens the player's menu, like the players in the room card. */
+.tv-board-btn {
+  display: grid;
+  grid-template-columns: 26px auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 12px 8px 8px;
+  border: 0;
+  border-radius: 18px;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.tv-board-row:hover,
+.tv-board-row.is-open { box-shadow: 0 3px 0 var(--tv-option-edge), inset 0 0 0 2px var(--tv-yellow); }
 .tv-board-pos { font-family: var(--tv-display); font-weight: 700; font-size: 18px; text-align: center; color: var(--tv-text-3); }
 .tv-board-row.is-top-1 .tv-board-pos { color: var(--p-accent-edge); }
 .tv-board-row.is-top-2 .tv-board-pos { color: var(--p-hare); }
@@ -1936,7 +1920,6 @@
 .tv-board-name { display: grid; min-width: 0; font-weight: 800; font-size: 15px; }
 .tv-board-line { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .tv-board-streak { font-weight: 800; font-size: 12px; color: var(--p-cinema-2); }
-[data-theme="light"] .tv-board-streak { color: var(--p-cinema-edge); }
 .tv-board-right { display: grid; justify-items: end; }
 .tv-board-score {
   font-family: var(--tv-display);
@@ -1971,7 +1954,7 @@
   width: 100%;
   padding-top: 10px;
   border-radius: 20px 20px 8px 8px;
-  background: linear-gradient(180deg, var(--c1, var(--tv-neutral)), var(--c2, var(--tv-neutral-2)));
+  background: var(--c2, var(--tv-neutral-2));
   box-shadow: 0 6px 0 var(--edge, var(--tv-neutral-edge));
   transform-origin: bottom;
   animation: tvGrow 0.8s var(--tv-spring) backwards;
@@ -2118,10 +2101,6 @@
   80% { translate: 0 -0.12em; }
   90% { translate: 0 0; }
 }
-@keyframes tvShine {
-  0% { transform: translateX(0) skewX(-20deg); }
-  30%, 100% { transform: translateX(560%) skewX(-20deg); }
-}
 @keyframes tvNudge {
   0%, 70%, 100% { transform: scale(1); }
   80% { transform: scale(1.15); }
@@ -2180,18 +2159,15 @@ fieldset.tv-steppers { margin: 0; padding: 0; border: 0; min-width: 0; }
 
 /* ---------- Room card: players you can tap, leave button ---------- */
 /* Inicio while in a room: the first tap turns it into the "leave?" question. */
-/* "¿Salir de la sala?": the same soft red as the "¿Seguro? Toca otra vez" button, all of it (fill, icon, letters). */
+/* "¿Salir de la sala?": solid vivid red with white letters, like the rest of the vivid colours. */
 .tv-app .tv-chip--home.is-confirm {
-  /* Solid: the soft red already blended into the box colour, so nothing shows through from the page behind. */
-  --confirm-bg: color-mix(in srgb, var(--p-bad) 16%, var(--tv-surface));
-  --confirm-edge: color-mix(in srgb, var(--p-bad) 28%, var(--tv-edge));
-  background: var(--confirm-bg);
-  box-shadow: 0 3px 0 var(--confirm-edge);
-  color: var(--tv-danger);
+  background: var(--p-bad);
+  box-shadow: 0 3px 0 var(--p-bad-edge);
+  color: #fff;
 }
-.tv-app .tv-chip--home.is-confirm:hover { box-shadow: 0 5px 0 var(--confirm-edge); }
-.tv-app .tv-chip--home.is-confirm:active { box-shadow: 0 0 0 var(--confirm-edge); }
-.tv-chip--home.is-confirm .tv-avatar { background: color-mix(in srgb, var(--p-bad) 24%, var(--tv-surface)); color: var(--tv-danger); }
+.tv-app .tv-chip--home.is-confirm:hover { box-shadow: 0 5px 0 var(--p-bad-edge); }
+.tv-app .tv-chip--home.is-confirm:active { box-shadow: 0 0 0 var(--p-bad-edge); }
+.tv-chip--home.is-confirm .tv-avatar { background: rgba(0, 0, 0, 0.2); color: #fff; }
 
 /* A player is a button: the whole chip lights up on hover, and tapping it opens their menu. */
 .tv-player { position: relative; padding: 0; transition: opacity 0.3s ease, box-shadow 0.15s ease; }
@@ -2257,8 +2233,9 @@ fieldset.tv-steppers { margin: 0; padding: 0; border: 0; min-width: 0; }
   padding: 7px 14px;
   border: 0;
   border-radius: 999px;
-  background: var(--tv-danger-bg);
-  color: var(--tv-danger);
+  background: var(--p-bad);
+  box-shadow: 0 3px 0 var(--p-bad-edge);
+  color: #fff;
   font: inherit;
   font-weight: 800;
   font-size: 13px;
@@ -2285,17 +2262,16 @@ fieldset.tv-steppers { margin: 0; padding: 0; border: 0; min-width: 0; }
   .tv-invite-btn { width: 46px; padding: 0; justify-content: center; }
   .tv-invite-label { display: none; }
 }
-.tv-theme-btn { width: auto; gap: 6px; padding: 0 14px; font-weight: 800; font-size: 14px; white-space: nowrap; display: inline-flex; align-items: center; }
+.tv-chip--theme { flex-shrink: 0; border: 0; cursor: pointer; }
 .tv-chip--back { margin-right: auto; flex-shrink: 0; }
-.tv-chip--back .tv-avatar { background: var(--brand); color: var(--on-brand); }
 @media (max-width: 520px) {
-  .tv-theme-btn span { display: none; }
-  .tv-theme-btn { width: 46px; padding: 0; justify-content: center; }
+  .tv-chip--theme .tv-chip-name { display: none; }
+  .tv-chip--theme { padding-right: 5px; }
   .tv-chip--back .tv-chip-name { display: none; }
   .tv-chip--back { padding-right: 5px; }
 }
-.tv-leave-btn:hover { transform: translateY(-2px); background: rgba(var(--p-bad-rgb), 0.26); }
-.tv-leave-btn:active { transform: translateY(1px); }
+.tv-leave-btn:hover { transform: translateY(-2px); box-shadow: 0 5px 0 var(--p-bad-edge); }
+.tv-leave-btn:active { transform: translateY(3px); box-shadow: 0 0 0 var(--p-bad-edge); }
 
 /* The host's "Cambiar juego" menu in the game's header. */
 .tv-mode-menu-wrap { position: relative; }
@@ -2337,24 +2313,25 @@ fieldset.tv-steppers { margin: 0; padding: 0; border: 0; min-width: 0; }
 .tv-mode-menu-check { color: var(--brand-text); }
 .tv-mode-menu-soon { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; color: var(--tv-text-3); }
 
-/* ---------- Backgrounds: a calm base with slow, colourful blobs ---------- */
-/* The blobs are the page's motion: five palette colours drifting behind everything. */
-
-/* The page: one straight linear gradient, the option's blue/purple at the top going straight into the black/grey
-   of the page (--tv-grad-top / --tv-grad-bottom from palettes.css). Inside a game mode the top takes that mode's
-   colour instead, still the same gradient, never a solid fill. */
+/* ---------- The page: a clean, flat black (no dots, blobs or gradient); colour lives only in the content ---------- */
+/* Colour options can swap the black for a pattern (--tv-page-bg in palettes.css), fixed to the screen so
+   it stays the same size however long the page is. */
 .tv-app,
 body:has(.tv-app) {
-  background: linear-gradient(180deg,
-    rgba(var(--tv-grad-top-mode, var(--tv-grad-top)), 0.5) 0%,
-    rgba(var(--tv-grad-bottom), 0.28) 40%,
-    var(--tv-bg) 85%);
+  background: var(--tv-page-bg, var(--tv-bg));
   background-color: var(--tv-bg);
   background-attachment: fixed;
 }
-/* No floating colour blobs on top: the gradient is the whole background. */
-.tv-backdrop .tv-blob { display: none; }
-:root[data-mode] { --tv-grad-top-mode: var(--brand-rgb); }
+/* Text straight on the page, not in a box: colour options with a coloured page set these (palettes.css). */
+.tv-wordmark,
+.tv-section-title,
+.tv-auth-head .tv-page-title,
+.tv-results-head .tv-page-title { color: var(--tv-page-text, var(--tv-text)); }
+.tv-tagline,
+.tv-auth-head .tv-page-sub,
+.tv-results-head .tv-party-kicker { color: var(--tv-page-text-2, var(--tv-text-2)); }
+.tv-wordmark { text-shadow: 0 5px 0 var(--tv-page-shadow, var(--tv-logo-shadow)); }
+.tv-dot { box-shadow: 0 5px 0 var(--tv-page-shadow, var(--tv-logo-shadow)); }
 
 /* Mobile: the game button is as wide as the room-code card above it, and its menu too. */
 @media (max-width: 720px) {

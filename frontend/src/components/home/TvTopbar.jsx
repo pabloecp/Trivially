@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { roomPath } from "../../modes/index.js";
 import { useTheme } from "../../lib/theme.js";
+import { PALETTES } from "../../lib/palettes.js";
 import { useApp } from "../../lib/store.jsx";
 import Icon from "./Icon.jsx";
 import ProfileChip from "./ProfileChip.jsx";
@@ -64,15 +65,18 @@ export default function TvTopbar() {
       )}
       <div className="tv-topbar-end">
         <ProfileChip user={user} />
+        {/* Same chip as Inicio and Entrar: icon in a circle, then the label. */}
         <button
           type="button"
-          className="tv-icon-btn tv-theme-btn"
+          className="tv-chip tv-chip--theme"
           onClick={toggleTheme}
-          aria-label={`Colores: opción ${palette.id} de 3 (${palette.name}). Toca para la siguiente.`}
+          aria-label={`Colores: opción ${palette.id} (${palette.name}), ${PALETTES.length} en total. Toca para la siguiente.`}
           title={palette.name}
         >
-          <Icon name={palette.theme === "dark" ? "moon" : "sun"} size={18} />
-          <span>Opción {palette.id}</span>
+          <span className="tv-avatar tv-avatar--empty">
+            <Icon name={palette.theme === "dark" ? "moon" : "sun"} size={18} />
+          </span>
+          <span className="tv-chip-name">Opción {palette.id}</span>
         </button>
       </div>
     </header>

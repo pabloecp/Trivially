@@ -1,126 +1,88 @@
-/* Generated: the three colour options of the theme button (lib/palettes.js lists them).
-   Only blue, blue-violet (indigo) and purple, on black and grey boxes with white letters. Option 1 is the
-   base; 2 and 3 change the shades and how the colours are filled. --tv-grad-top / --tv-grad-bottom are the
-   page's top-to-bottom gradient. Only colour variables live here: nothing in this file animates. */
+/* The options of the theme button (lib/palettes.js lists them). They change the page and the greys of its
+   boxes; the vivid colours of the site and of each game mode (below) are the same in all of
+   them. Only colour variables live here: nothing in this file animates. */
 
-/* Opción 1: Negro total (flat) */
+/* The base: the black page and greys every option builds on (the old option 1, no longer in the list). */
 :root:root {
-  --tv-bg: #050505;
-  --tv-surface: #111111;
-  --tv-sheet-bg: #111111;
+  --tv-bg: #0a0b0c;
+  --tv-surface: #141517;
+  --tv-sheet-bg: #141517;
   --tv-edge: #000000;
-  --tv-option-bg: #0a0a0a;
-  --tv-option-edge: #141414;
+  --tv-option-bg: #0f1012;
+  --tv-option-edge: #1c1d20;
   --tv-text: #ffffff;
   --tv-text-2: #cbcbcb;
   --tv-text-3: #949494;
   --tv-logo-shadow: #030303;
-  --tv-neutral: #272727;
-  --tv-neutral-2: #272727;
+  --tv-neutral: #26272b;
+  --tv-neutral-2: #26272b;
   --tv-neutral-edge: #191919;
   --tv-neutral-on: #ffffff;
   --tv-toast-bg: #ffffff;
-  --tv-toast-fg: #050505;
+  --tv-toast-fg: #0a0b0c;
   --tv-scrim: rgba(0, 0, 0, 0.66);
-  --tv-dots: rgba(255, 255, 255, 0.05);
-  --p-ink: #050505;
-  --tv-grad-top: 79, 70, 229;
-  --tv-grad-bottom: 168, 85, 247;
-  --p-site-1: #4f46e5; --p-site-2: #4f46e5; --p-site-edge: #242067;
-  --p-site-rgb: 79, 70, 229; --p-site-text: #4f46e5; --p-on-site: #ffffff;
-  --p-accent-1: #a855f7; --p-accent-2: #a855f7; --p-accent-edge: #4c266f;
-  --p-accent-rgb: 168, 85, 247; --p-accent-text: #a855f7; --p-on-accent: #ffffff;
-  --p-music-1: #2563eb; --p-music-2: #2563eb; --p-music-edge: #112d6a;
-  --p-music-rgb: 37, 99, 235; --p-music-text: #2563eb; --p-on-music: #ffffff;
-  --p-culture-1: #8b5cf6; --p-culture-2: #8b5cf6; --p-culture-edge: #3f296f;
-  --p-culture-rgb: 139, 92, 246; --p-culture-text: #8b5cf6; --p-on-culture: #ffffff;
-  --p-cinema-1: #6d28d9; --p-cinema-2: #6d28d9; --p-cinema-edge: #311262;
-  --p-cinema-rgb: 109, 40, 217; --p-cinema-text: #7c3edd; --p-on-cinema: #ffffff;
-  --p-world-1: #3b82f6; --p-world-2: #3b82f6; --p-world-edge: #1b3a6f;
-  --p-world-rgb: 59, 130, 246; --p-world-text: #3b82f6; --p-on-world: #ffffff;
-  --p-extra-1: #4338ca; --p-extra-2: #4338ca; --p-extra-edge: #1e195b;
-  --p-extra-rgb: 67, 56, 202; --p-extra-text: #5f56d2; --p-on-extra: #ffffff;
-  --tv-glow: rgba(79, 70, 229, 0.45);
+  --p-ink: #0a0b0c;
 }
 
-/* Opción 2: Azul (flat) */
+/* Opciones 1-4: the black page of the base with a flat pattern drawn in faint white lines (no colour, no
+   blending) and a different typeface. --tv-display is the titles' font and --tv-body the rest; the logo
+   (wordmark and app icon) always keeps its own font. */
+
+/* Opción 1: Confeti. A confetti of little shapes, with Bricolage Grotesque (editorial). */
+:root:root[data-palette="1"] {
+  --tv-page-bg: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E %3Cg fill='none' stroke='rgba(255,255,255,0.055)' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E %3Cpath d='M18 22l10-4 2 10z'/%3E %3Crect x='86' y='14' width='10' height='10' rx='2' transform='rotate(20 91 19)'/%3E %3Cpath d='M52 70q5-8 10 0t10 0'/%3E %3Ccircle cx='114' cy='78' r='5'/%3E %3Cpath d='M24 104l8 8M32 104l-8 8'/%3E %3Cpath d='M78 116l12-3-4 12z'/%3E %3Cpath d='M60 30h12'/%3E %3Cpath d='M120 124q4-6 8 0'/%3E %3C/g%3E%3C/svg%3E");
+  --tv-display: "Bricolage Grotesque", system-ui, sans-serif;
+  --tv-body: "Bricolage Grotesque", system-ui, sans-serif;
+}
+
+/* Opción 2: Rayas. Thin diagonal stripes, with Fredoka (round and soft). */
 :root:root[data-palette="2"] {
-  --tv-bg: #0d0e12;
-  --tv-surface: #17191f;
-  --tv-sheet-bg: #17191f;
-  --tv-edge: #08090c;
-  --tv-option-bg: #111318;
-  --tv-option-edge: #2a2d36;
-  --tv-text: #ffffff;
-  --tv-text-2: #ccccce;
-  --tv-text-3: #97989a;
-  --tv-logo-shadow: #08080b;
-  --tv-neutral: #2a2d36;
-  --tv-neutral-2: #2a2d36;
-  --tv-neutral-edge: #1b1d23;
-  --tv-neutral-on: #ffffff;
-  --tv-toast-bg: #ffffff;
-  --tv-toast-fg: #0d0e12;
-  --tv-scrim: rgba(0, 0, 0, 0.66);
-  --tv-dots: rgba(255, 255, 255, 0.05);
-  --p-ink: #0d0e12;
-  --tv-grad-top: 59, 130, 246;
-  --tv-grad-bottom: 139, 92, 246;
-  --p-site-1: #3b82f6; --p-site-2: #3b82f6; --p-site-edge: #295bac;
-  --p-site-rgb: 59, 130, 246; --p-site-text: #3b82f6; --p-on-site: #ffffff;
-  --p-accent-1: #60a5fa; --p-accent-2: #60a5fa; --p-accent-edge: #4374af;
-  --p-accent-rgb: 96, 165, 250; --p-accent-text: #60a5fa; --p-on-accent: #0d0e12;
-  --p-music-1: #2563eb; --p-music-2: #2563eb; --p-music-edge: #1a45a4;
-  --p-music-rgb: 37, 99, 235; --p-music-text: #2563eb; --p-on-music: #ffffff;
-  --p-culture-1: #6366f1; --p-culture-2: #6366f1; --p-culture-edge: #4547a9;
-  --p-culture-rgb: 99, 102, 241; --p-culture-text: #6366f1; --p-on-culture: #ffffff;
-  --p-cinema-1: #8b5cf6; --p-cinema-2: #8b5cf6; --p-cinema-edge: #6140ac;
-  --p-cinema-rgb: 139, 92, 246; --p-cinema-text: #8b5cf6; --p-on-cinema: #ffffff;
-  --p-world-1: #2f6bff; --p-world-2: #2f6bff; --p-world-edge: #214bb2;
-  --p-world-rgb: 47, 107, 255; --p-world-text: #2f6bff; --p-on-world: #ffffff;
-  --p-extra-1: #4f46e5; --p-extra-2: #4f46e5; --p-extra-edge: #3731a0;
-  --p-extra-rgb: 79, 70, 229; --p-extra-text: #584fe6; --p-on-extra: #ffffff;
-  --tv-glow: rgba(59, 130, 246, 0.45);
+  --tv-page-bg: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28'%3E %3Cpath d='M-7 7l14-14M0 28L28 0M21 35l14-14' stroke='rgba(255,255,255,0.055)' stroke-width='2'/%3E%3C/svg%3E");
+  --tv-display: "Fredoka", system-ui, sans-serif;
+  --tv-body: "Fredoka", system-ui, sans-serif;
+  /* Logo: a roulette, the six colours as equal slices from the centre. */
+  --logo-bg: conic-gradient(from -30deg,
+    var(--tv-rb-red) 0 60deg, var(--tv-rb-violet) 0 120deg, var(--tv-rb-blue) 0 180deg,
+    var(--tv-rb-green) 0 240deg, var(--tv-rb-yellow) 0 300deg, var(--tv-rb-orange) 0);
 }
 
-/* Opción 3: Ultravioleta (gradient) */
+/* Opción 3: Ondas. Waves, with Baloo 2 (playful). */
 :root:root[data-palette="3"] {
-  --tv-bg: #0e0c13;
-  --tv-surface: #18151f;
-  --tv-sheet-bg: #18151f;
-  --tv-edge: #09080c;
-  --tv-option-bg: #120f18;
-  --tv-option-edge: #2c2737;
-  --tv-text: #ffffff;
-  --tv-text-2: #ccccce;
-  --tv-text-3: #97969a;
-  --tv-logo-shadow: #08070b;
-  --tv-neutral: #2c2737;
-  --tv-neutral-2: #2c2737;
-  --tv-neutral-edge: #1d1924;
-  --tv-neutral-on: #ffffff;
-  --tv-toast-bg: #ffffff;
-  --tv-toast-fg: #0e0c13;
-  --tv-scrim: rgba(0, 0, 0, 0.66);
-  --tv-dots: rgba(255, 255, 255, 0.05);
-  --p-ink: #0e0c13;
-  --tv-grad-top: 99, 102, 241;
-  --tv-grad-bottom: 109, 40, 217;
-  --p-site-1: #8d57e1; --p-site-2: #6d28d9; --p-site-edge: #4c1c98;
-  --p-site-rgb: 109, 40, 217; --p-site-text: #7c3edd; --p-on-site: #ffffff;
-  --p-accent-1: #9da5fa; --p-accent-2: #818cf8; --p-accent-edge: #5a62ae;
-  --p-accent-rgb: 129, 140, 248; --p-accent-text: #818cf8; --p-on-accent: #0e0c13;
-  --p-music-1: #9965f1; --p-music-2: #7c3aed; --p-music-edge: #5729a6;
-  --p-music-rgb: 124, 58, 237; --p-music-text: #7c3aed; --p-on-music: #ffffff;
-  --p-culture-1: #8588f4; --p-culture-2: #6366f1; --p-culture-edge: #4547a9;
-  --p-culture-rgb: 99, 102, 241; --p-culture-text: #6366f1; --p-on-culture: #ffffff;
-  --p-cinema-1: #bb7af9; --p-cinema-2: #a855f7; --p-cinema-edge: #763cad;
-  --p-cinema-rgb: 168, 85, 247; --p-cinema-text: #a855f7; --p-on-cinema: #ffffff;
-  --p-world-1: #766feb; --p-world-2: #4f46e5; --p-world-edge: #3731a0;
-  --p-world-rgb: 79, 70, 229; --p-world-text: #584fe6; --p-on-world: #ffffff;
-  --p-extra-1: #a580f8; --p-extra-2: #8b5cf6; --p-extra-edge: #6140ac;
-  --p-extra-rgb: 139, 92, 246; --p-extra-text: #8b5cf6; --p-on-extra: #ffffff;
-  --tv-glow: rgba(109, 40, 217, 0.45);
+  --tv-page-bg: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='24'%3E %3Cpath d='M0 12q16-12 32 0t32 0' fill='none' stroke='rgba(255,255,255,0.055)' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E");
+  --tv-display: "Baloo 2", system-ui, sans-serif;
+  --tv-body: "Baloo 2", system-ui, sans-serif;
+  /* Logo: calm waves in the logo's six colours (the --tv-rb-* values, written out: an SVG can't read them),
+     red at the top down to violet. */
+  --logo-bg: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' preserveAspectRatio='none'%3E%3Crect width='100' height='100' fill='%23ff2d55'/%3E%3Cpath d='M0 18q12.5-6 25 0t25 0t25 0t25 0V100H0z' fill='%23ff8a00'/%3E%3Cpath d='M0 34q12.5-6 25 0t25 0t25 0t25 0V100H0z' fill='%23ffd60a'/%3E%3Cpath d='M0 50q12.5-6 25 0t25 0t25 0t25 0V100H0z' fill='%232bd94f'/%3E%3Cpath d='M0 66q12.5-6 25 0t25 0t25 0t25 0V100H0z' fill='%230a9bff'/%3E%3Cpath d='M0 82q12.5-6 25 0t25 0t25 0t25 0V100H0z' fill='%23a63dff'/%3E%3C/svg%3E") center / cover;
+}
+
+/* Opción 4: Triángulos. Small outlined triangles, with Righteous (retro) for titles. */
+:root:root[data-palette="4"] {
+  --tv-page-bg: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='42'%3E %3Cg fill='none' stroke='rgba(255,255,255,0.055)' stroke-width='1.8' stroke-linejoin='round'%3E %3Cpath d='M12 6l7 12H5z'/%3E%3Cpath d='M36 27l7 12H29z'/%3E%3C/g%3E%3C/svg%3E");
+  --tv-display: "Righteous", system-ui, sans-serif;
+  --tv-body: "Nunito", "Plus Jakarta Sans", system-ui, sans-serif;
+  /* Logo: the Simon memory game's four coloured quarters. */
+  --logo-bg: conic-gradient(var(--tv-rb-red) 0 90deg, var(--tv-rb-blue) 0 180deg, var(--tv-rb-yellow) 0 270deg, var(--tv-rb-green) 0);
+}
+
+/* Vivid colours, the same in every option: one per role and one per game mode, always on the black/grey page.
+   Per slot: --x-1 / --x-2 are the fill (flat), --x-edge the solid shadow under a tile, --x-text the colour as
+   text on black and --p-on-x the letter on top of it. */
+:root:root {
+  --p-site-1: #2f6bff; --p-site-2: #2f6bff; --p-site-edge: #1a3c99;
+  --p-site-rgb: 47, 107, 255; --p-site-text: #5b8cff; --p-on-site: #ffffff;
+  --p-accent-1: #ffd60a; --p-accent-2: #ffd60a; --p-accent-edge: #9e8400;
+  --p-accent-rgb: 255, 214, 10; --p-accent-text: #ffd60a; --p-on-accent: #0a0b0c;
+  --p-music-1: #ff2fc0; --p-music-2: #ff2fc0; --p-music-edge: #a3157a;
+  --p-music-rgb: 255, 47, 192; --p-music-text: #ff5ccd; --p-on-music: #ffffff;
+  --p-culture-1: #ff8a00; --p-culture-2: #ff8a00; --p-culture-edge: #9e5500;
+  --p-culture-rgb: 255, 138, 0; --p-culture-text: #ff9d29; --p-on-culture: #0a0b0c;
+  --p-cinema-1: #a63dff; --p-cinema-2: #a63dff; --p-cinema-edge: #6418a8;
+  --p-cinema-rgb: 166, 61, 255; --p-cinema-text: #b65cff; --p-on-cinema: #ffffff;
+  --p-world-1: #00d1c1; --p-world-2: #00d1c1; --p-world-edge: #007a71;
+  --p-world-rgb: 0, 209, 193; --p-world-text: #1fdccd; --p-on-world: #0a0b0c;
+  --p-extra-1: #a63dff; --p-extra-2: #a63dff; --p-extra-edge: #6418a8;
+  --p-extra-rgb: 166, 61, 255; --p-extra-text: #b65cff; --p-on-extra: #ffffff;
 }
 
 /* The brand tokens used across the app follow the slots of whichever option is on. Doubled :root so these win
@@ -154,7 +116,6 @@
   --tv-danger: var(--p-bad-text);
   --tv-danger-bg: rgba(var(--p-bad-rgb), 0.16);
 }
-
 :root:root[data-mode="musica"] {
   --brand: var(--p-music-2); --brand-rgb: var(--p-music-rgb); --brand-text: var(--p-music-text);
   --on-brand: var(--p-on-music); --brand-hover: var(--p-music-1); --brand-active: var(--p-music-edge);
