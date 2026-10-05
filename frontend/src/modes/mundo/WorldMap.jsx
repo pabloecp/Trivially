@@ -3,6 +3,7 @@ import Icon from "../../components/home/Icon.jsx";
 import { REGIONS, countryAt, mainBounds, regionBounds, toLngLat } from "./worldData.js";
 
 const MAX_ZOOM = 40;
+const OVERSHOOT = 0.3;
 // A press that moves less than this (in screen px) is a tap, not a drag. Fingers wobble more than a mouse.
 const TAP_SLOP = { mouse: 5, pen: 8, touch: 12 };
 // Two taps this close in time and place zoom in.
@@ -55,13 +56,25 @@ function Pin({ x, y, scale, color, label, mine, dragging }) {
 }
 
 /**
- * The world map of Geografía. While `interactive`, a tap (or Enter on the crosshair, from the keyboard) calls
- * `onPick([lng, lat])`, and the pin can also be dragged. Dragging the map pans it (with a little glide), and the wheel,
- * a pinch, a double tap or the buttons zoom; `regions` adds quick jumps to each continent. `myPin` is this player's
- * pin while the round is open. At the reveal, `target` (country names on the map) is painted, `pins` show everyone's
- * answer with a line to the closest border, and the view flies to them. `children` float over the map.
+ * The world map of Geografía, with a toolbar above it (quick jumps to each continent, enabled with `regions`, and
+ * zoom). While `interactive`, a tap (or Enter on the crosshair, from the keyboard) calls `onPick([lng, lat])`, and the
+ * pin can also be dragged. Dragging the map pans it (with a little glide), and the wheel, a pinch, a double tap or the
+ * buttons zoom; nothing moves while `frozen` (the countdown). `myPin` is this player's pin while the round is open. At
+ * the reveal, `target` (country names on the map) is painted, `pins` show everyone's answer with a line to the
+ * closest border, and the view flies to them. `children` float over the map.
  */
-export default function WorldMap({ world, interactive = false, onPick, myPin = null, pins = [], target = null, label, regions = false, children }) {
+export default function WorldMap({
+  world,
+  interactive = false,
+  frozen = false,
+  onPick,
+  myPin = null,
+  pins = [],
+  target = null,
+  label,
+  regions = false,
+  children,
+}) {
   const W = world.width;
   const H = world.height;
   const wrapRef = useRef(null);
@@ -82,12 +95,18 @@ export default function WorldMap({ world, interactive = false, onPick, myPin = n
   const pressedAt = useRef(0);
 
   const aspect = size.w ? size.h / size.w : H / W;
+  // The widest view: the whole world, whole in both directions (a wide, low frame shows sea at its sides).
+  const fullW = Math.max(W, H / aspect);
+  const WORLD = { x: 0, y: 0, w: Infinity };
+  const fitted = useRef(false);
 
+  // The view may go a little past the edge of the map (OVERSHOOT of its size), so a region near an edge (Europe at
+  // the top of a tall phone) can still sit in the middle of the frame.
   function clamp(v) {
-    const w = Math.min(W, Math.max(W / MAX_ZOOM, v.w));
+    const w = Math.min(fullW, Math.max(W / MAX_ZOOM, v.w));
     const h = w * aspect;
-    const x = w >= W ? (W - w) / 2 : Math.min(W - w, Math.max(0, v.x));
-    const y = h >= H ? (H - h) / 2 : Math.min(H - h, Math.max(0, v.y));
+    const x = w >= W ? (W - w) / 2 : Math.min(W - w + w * OVERSHOOT, Math.max(-w * OVERSHOOT, v.x));
+    const y = h >= H ? (H - h) / 2 : Math.min(H - h + h * OVERSHOOT, Math.max(-h * OVERSHOOT, v.y));
     return { x, y, w, h };
   }
 
@@ -144,7 +163,10 @@ export default function WorldMap({ world, interactive = false, onPick, myPin = n
     return () => ro.disconnect();
   }, []);
   useEffect(() => {
-    if (size.w) show(goal.current || viewRef.current);
+    if (!size.w) return;
+    // The first time the frame is measured, the whole world; after that a resize keeps what was in view.
+    show(fitted.current ? goal.current || viewRef.current : WORLD);
+    fitted.current = true;
   }, [size.w, size.h]);
   useEffect(() => () => cancelAnimationFrame(anim.current), []);
 
@@ -160,7 +182,7 @@ export default function WorldMap({ world, interactive = false, onPick, myPin = n
 
   function zoomAt(factor, [px, py], ms = 0) {
     const base = goal.current || viewRef.current;
-    const w = Math.min(W, Math.max(W / MAX_ZOOM, base.w / factor));
+    const w = Math.min(fullW, Math.max(W / MAX_ZOOM, base.w / factor));
     const k = w / base.w;
     const next = { x: px - (px - base.x) * k, y: py - (py - base.y) * k, w };
     if (ms) animateTo(next, ms, easeOut);
@@ -173,7 +195,7 @@ export default function WorldMap({ world, interactive = false, onPick, myPin = n
   }
 
   function goRegion(region) {
-    if (!region.box) return animateTo({ x: 0, y: 0, w: W }, 650);
+    if (!region.box) return animateTo(WORLD, 650);
     animateTo(fitView(regionBounds(world, region.box), { pad: 0.02, minW: 0 }), 650);
   }
 
@@ -256,6 +278,7 @@ export default function WorldMap({ world, interactive = false, onPick, myPin = n
     const svg = svgRef.current;
     if (!svg) return undefined;
     const onWheel = (e) => {
+      if (frozen) return;
       e.preventDefault();
       const dy = e.deltaY * (e.deltaMode === 1 ? 33 : e.deltaMode === 2 ? 400 : 1);
       const at = toMap(e.clientX, e.clientY);
@@ -270,7 +293,7 @@ export default function WorldMap({ world, interactive = false, onPick, myPin = n
   function onPointerDown(e) {
     pressedAt.current = Date.now();
     setKeyboard(false);
-    if (e.button && e.button !== 0) return;
+    if (frozen || (e.button && e.button !== 0)) return;
     try {
       svgRef.current.setPointerCapture(e.pointerId);
     } catch {
@@ -305,7 +328,7 @@ export default function WorldMap({ world, interactive = false, onPick, myPin = n
     if (g.pointers.size >= 2 && g.pinch) {
       const [a, b] = [...g.pointers.values()];
       const dist = Math.hypot(a.x - b.x, a.y - b.y) || 1;
-      const w = Math.min(W, Math.max(W / MAX_ZOOM, (g.pinch.view.w * g.pinch.dist) / dist));
+      const w = Math.min(fullW, Math.max(W / MAX_ZOOM, (g.pinch.view.w * g.pinch.dist) / dist));
       const mx = ((a.x + b.x) / 2 - rect.left) / rect.width;
       const my = ((a.y + b.y) / 2 - rect.top) / rect.height;
       apply({ x: g.pinch.mid[0] - mx * w, y: g.pinch.mid[1] - my * w * aspect, w });
@@ -359,6 +382,7 @@ export default function WorldMap({ world, interactive = false, onPick, myPin = n
 
   function onKeyDown(e) {
     setKeyboard(true);
+    if (frozen) return;
     const v = goal.current || viewRef.current;
     const step = 0.15;
     const moves = { ArrowLeft: [-step, 0], ArrowRight: [step, 0], ArrowUp: [0, -step], ArrowDown: [0, step] };
@@ -407,104 +431,101 @@ export default function WorldMap({ world, interactive = false, onPick, myPin = n
   const zoom = W / view.w;
 
   return (
-    <div className={`tv-geo-map${interactive ? " is-interactive" : ""}${dragPin ? " is-dragging" : ""}`} ref={wrapRef}>
-      <svg
-        ref={svgRef}
-        viewBox={`${view.x} ${view.y} ${view.w} ${view.h}`}
-        preserveAspectRatio="xMidYMid meet"
-        role="application"
-        aria-label={label}
-        tabIndex={0}
-        data-keyboard={keyboard || undefined}
-        onFocus={() => setKeyboard(Date.now() - pressedAt.current > 400)}
-        onBlur={() => setKeyboard(false)}
-        onPointerDown={onPointerDown}
-        onPointerMove={onPointerMove}
-        onPointerUp={onPointerUp}
-        onPointerCancel={onPointerUp}
-        onKeyDown={onKeyDown}
-      >
-        <rect className="tv-geo-sea" x={-W} y={-H} width={W * 3} height={H * 3} />
-        <path className="tv-geo-globe" d={world.sphere} />
-        <Land shapes={world.shapes} highlight={highlight} picked={picked} />
-
-        {world.tiny.map((c) =>
-          (zoom >= DOTS_FROM || highlight.has(c.name)) && c.size / px < DOT_UNTIL ? (
-            <circle
-              key={c.name}
-              className={`tv-geo-dot${highlight.has(c.name) ? " is-target" : c.name === picked ? " is-picked" : ""}`}
-              cx={c.center[0]}
-              cy={c.center[1]}
-              r={DOT_RADIUS * px}
-              style={{ strokeWidth: 1.5 * px }}
-            />
-          ) : null
-        )}
-
-        {tiny && (
-          <circle
-            className="tv-geo-target-ring"
-            cx={(targetBox[0] + targetBox[2]) / 2}
-            cy={(targetBox[1] + targetBox[3]) / 2}
-            r={16 * px}
-            style={{ strokeWidth: 3 * px }}
-          />
-        )}
-
-        {pins.map((p) => {
-          const from = p.lngLat && world.projection(p.lngLat);
-          const to = !p.inside && p.nearest && world.projection(p.nearest);
-          return from && to ? (
-            <line
-              key={`l-${p.id}`}
-              className="tv-geo-line"
-              x1={from[0]}
-              y1={from[1]}
-              x2={to[0]}
-              y2={to[1]}
-              style={{ "--pin": p.color, strokeWidth: 2.5 * px, strokeDasharray: `${6 * px} ${5 * px}` }}
-            />
-          ) : null;
-        })}
-        {pins.map((p) => {
-          const xy = p.lngLat && world.projection(p.lngLat);
-          return xy ? <Pin key={p.id} x={xy[0]} y={xy[1]} scale={px} color={p.color} label={p.label} mine={p.isMe} /> : null;
-        })}
-        {mine && <Pin x={mine[0]} y={mine[1]} scale={px} color="var(--brand)" mine dragging={Boolean(dragPin)} />}
-
-        {interactive && (
-          <g className="tv-geo-crosshair" transform={`translate(${view.x + view.w / 2} ${view.y + view.h / 2}) scale(${px})`}>
-            <path d="M-14 0H-5M5 0H14M0 -14V-5M0 5V14" />
-          </g>
-        )}
-      </svg>
-
-      {regions && (
+    <div className="tv-geo-mapbox">
+      {/* Above the map, never over it: a region the map flies to is never hidden under a button. */}
+      <div className="tv-geo-toolbar">
         <div className="tv-geo-regions" role="toolbar" aria-label="Ir a una región del mapa">
           {REGIONS.map((r) => (
-            <button key={r.id} type="button" onClick={() => goRegion(r)}>
+            <button key={r.id} type="button" onClick={() => goRegion(r)} disabled={!regions}>
               {r.id === "mundo" && <Icon name="globe" size={14} strokeWidth={2.6} />}
               {r.label}
             </button>
           ))}
         </div>
-      )}
-
-      <div className="tv-geo-zoom">
-        <button type="button" onClick={() => zoomCenter(1.8)} disabled={zoom >= MAX_ZOOM - 0.01} aria-label="Acercar">
-          <Icon name="plus" size={20} strokeWidth={3} />
-        </button>
-        <button type="button" onClick={() => zoomCenter(1 / 1.8)} disabled={zoom <= 1.01} aria-label="Alejar">
-          <Icon name="minus" size={20} strokeWidth={3} />
-        </button>
-        {!regions && (
-          <button type="button" onClick={() => animateTo({ x: 0, y: 0, w: W }, 650)} disabled={zoom <= 1.01} aria-label="Ver el mundo entero">
-            <Icon name="globe" size={20} strokeWidth={2.4} />
+        <div className="tv-geo-zoom">
+          <button type="button" onClick={() => zoomCenter(1 / 1.8)} disabled={frozen || view.w >= fullW - 0.5} aria-label="Alejar">
+            <Icon name="minus" size={20} strokeWidth={3} />
           </button>
-        )}
+          <button type="button" onClick={() => zoomCenter(1.8)} disabled={frozen || zoom >= MAX_ZOOM - 0.01} aria-label="Acercar">
+            <Icon name="plus" size={20} strokeWidth={3} />
+          </button>
+        </div>
       </div>
 
-      {children}
+      <div className={`tv-geo-map${interactive ? " is-interactive" : ""}${dragPin ? " is-dragging" : ""}`} ref={wrapRef}>
+        <svg
+          ref={svgRef}
+          viewBox={`${view.x} ${view.y} ${view.w} ${view.h}`}
+          preserveAspectRatio="xMidYMid meet"
+          role="application"
+          aria-label={label}
+          tabIndex={0}
+          data-keyboard={keyboard || undefined}
+          onFocus={() => setKeyboard(Date.now() - pressedAt.current > 400)}
+          onBlur={() => setKeyboard(false)}
+          onPointerDown={onPointerDown}
+          onPointerMove={onPointerMove}
+          onPointerUp={onPointerUp}
+          onPointerCancel={onPointerUp}
+          onKeyDown={onKeyDown}
+        >
+          <rect className="tv-geo-sea" x={-W} y={-H} width={W * 3} height={H * 3} />
+          <path className="tv-geo-globe" d={world.sphere} />
+          <Land shapes={world.shapes} highlight={highlight} picked={picked} />
+
+          {world.tiny.map((c) =>
+            (zoom >= DOTS_FROM || highlight.has(c.name)) && c.size / px < DOT_UNTIL ? (
+              <circle
+                key={c.name}
+                className={`tv-geo-dot${highlight.has(c.name) ? " is-target" : c.name === picked ? " is-picked" : ""}`}
+                cx={c.center[0]}
+                cy={c.center[1]}
+                r={DOT_RADIUS * px}
+                style={{ strokeWidth: 1.5 * px }}
+              />
+            ) : null
+          )}
+
+          {tiny && (
+            <circle
+              className="tv-geo-target-ring"
+              cx={(targetBox[0] + targetBox[2]) / 2}
+              cy={(targetBox[1] + targetBox[3]) / 2}
+              r={16 * px}
+              style={{ strokeWidth: 3 * px }}
+            />
+          )}
+
+          {pins.map((p) => {
+            const from = p.lngLat && world.projection(p.lngLat);
+            const to = !p.inside && p.nearest && world.projection(p.nearest);
+            return from && to ? (
+              <line
+                key={`l-${p.id}`}
+                className="tv-geo-line"
+                x1={from[0]}
+                y1={from[1]}
+                x2={to[0]}
+                y2={to[1]}
+                style={{ "--pin": p.color, strokeWidth: 2.5 * px, strokeDasharray: `${6 * px} ${5 * px}` }}
+              />
+            ) : null;
+          })}
+          {pins.map((p) => {
+            const xy = p.lngLat && world.projection(p.lngLat);
+            return xy ? <Pin key={p.id} x={xy[0]} y={xy[1]} scale={px} color={p.color} label={p.label} mine={p.isMe} /> : null;
+          })}
+          {mine && <Pin x={mine[0]} y={mine[1]} scale={px} color="var(--brand)" mine dragging={Boolean(dragPin)} />}
+
+          {interactive && (
+            <g className="tv-geo-crosshair" transform={`translate(${view.x + view.w / 2} ${view.y + view.h / 2}) scale(${px})`}>
+              <path d="M-14 0H-5M5 0H14M0 -14V-5M0 5V14" />
+            </g>
+          )}
+        </svg>
+
+        {children}
+      </div>
     </div>
   );
 }

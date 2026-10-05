@@ -120,8 +120,6 @@
 
 /* ---------- Game ---------- */
 .tv-geo-kind-kicker { display: inline-flex; align-items: center; gap: 6px; }
-.tv-geo-tiebreak .tv-party-kicker { color: var(--p-culture-2); }
-.tv-geo-tie-title { margin: 0; font-family: var(--tv-display); font-weight: 700; font-size: clamp(22px, 5vw, 30px); color: var(--tv-text); }
 
 .tv-geo-flag {
   display: block;
@@ -146,54 +144,76 @@
 }
 .tv-geo-answer .tv-geo-flag { max-width: 120px; max-height: 80px; border-radius: 8px; }
 
-/* A map round takes the whole width (the scoreboard goes under it) and, scrolled to the top, the whole screen. */
+/* ---------- The stage ----------
+   A match with map rounds keeps one frame for every round: one column (the scoreboard goes under it) that fills the
+   screen under the top bar, so nothing has to be scrolled (--geo-top, set by Game.jsx, is where the game starts).
+   The top card keeps its size and the card under it takes the rest; in a map round that card is the map, the same
+   one from its countdown to its reveal, so nothing jumps between phases. svh: the height doesn't change when a
+   phone's address bar hides. */
 @media (min-width: 900px) {
-  .tv-game.tv-geo-game.is-map { grid-template-columns: minmax(0, 1fr); }
+  .tv-game.tv-geo-game.is-stage { grid-template-columns: minmax(0, 1fr); }
 }
+.tv-geo-game.is-stage .tv-geo-stage {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-height: 440px;
+  min-height: max(440px, calc(100vh - var(--geo-top, 80px) - 14px));
+  min-height: max(440px, calc(100svh - var(--geo-top, 80px) - 14px));
+}
+.tv-geo-game.is-map .tv-geo-stage {
+  height: max(440px, calc(100vh - var(--geo-top, 80px) - 14px));
+  height: max(440px, calc(100svh - var(--geo-top, 80px) - 14px));
+}
+.tv-geo-game.is-stage .tv-game-top { flex: none; }
+.tv-geo-body { display: grid; gap: 14px; min-width: 0; }
+.tv-geo-game.is-stage .tv-geo-body { display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0; }
+/* Written rounds: their card fills the frame, its content in the middle. */
+.tv-geo-game.is-stage .tv-geo-body > .tv-card:first-child:not(.tv-geo-map-card) { flex: 1 0 auto; align-content: center; }
+
+/* The top card of a map round: kicker, the country (or "Prepárate…") and one hint, the same in every phase. */
 .tv-geo-find { display: grid; gap: 2px; }
 .tv-geo-country {
   margin: 0;
   overflow-wrap: anywhere;
   font-family: var(--tv-display);
   font-weight: 700;
-  font-size: clamp(26px, 6vw, 38px);
+  font-size: clamp(24px, 6vw, 36px);
   line-height: 1.1;
   color: var(--tv-text);
   animation: tvPop 0.5s var(--tv-spring);
 }
-.tv-geo-find .tv-hint { font-size: 13px; }
-.tv-geo-map-card { gap: 10px; padding: 10px; border-radius: 26px; }
+.tv-geo-find .tv-hint { min-height: 2.6em; font-size: 13px; line-height: 1.3; }
+@media (max-width: 640px) {
+  /* "Terminar" goes under the clock instead of taking a row of its own. */
+  .tv-geo-game .tv-game-top { grid-template-areas: "round clock" "round tools" "bar bar"; gap: 8px 12px; padding: 14px 16px; }
+  .tv-geo-game .tv-game-tools:empty { display: none; }
+  .tv-geo-find .tv-hint { font-size: 12px; }
+}
 
+.tv-geo-map-card {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  gap: 8px;
+  min-height: 0;
+  padding: 8px;
+  border-radius: 26px;
+}
+.tv-geo-mapbox { display: flex; flex-direction: column; flex: 1 1 auto; gap: 8px; min-height: 0; }
 .tv-geo-map {
   position: relative;
+  flex: 1 1 auto;
   width: 100%;
-  aspect-ratio: 2 / 1;
+  min-height: 200px;
   overflow: hidden;
   border-radius: 18px;
   background: var(--tv-geo-space);
   box-shadow: inset 0 0 0 2px var(--tv-edge);
 }
-.tv-geo-map-card.is-playing .tv-geo-map {
-  aspect-ratio: auto;
-  height: clamp(300px, calc(100vh - 230px), 860px);
-  height: clamp(300px, calc(100dvh - 230px), 860px);
-}
-.tv-geo-map-card.is-reveal .tv-geo-map {
-  aspect-ratio: auto;
-  height: clamp(240px, calc(100vh - 330px), 560px);
-  height: clamp(240px, calc(100dvh - 330px), 560px);
-}
 @media (max-width: 640px) {
-  .tv-geo-map { aspect-ratio: 4 / 3; border-radius: 16px; }
   .tv-geo-map-card { padding: 6px; border-radius: 22px; }
-  .tv-geo-map-card.is-playing .tv-geo-map {
-    height: clamp(280px, calc(100vh - 250px), 760px);
-    height: clamp(280px, calc(100dvh - 250px), 760px);
-  }
-  .tv-geo-map-card.is-reveal .tv-geo-map {
-    height: clamp(220px, calc(100vh - 360px), 480px);
-    height: clamp(220px, calc(100dvh - 360px), 480px);
-  }
+  .tv-geo-map { border-radius: 16px; }
 }
 .tv-geo-map > svg { display: block; width: 100%; height: 100%; touch-action: pan-y; user-select: none; -webkit-user-select: none; cursor: grab; }
 .tv-geo-map.is-interactive > svg { touch-action: none; cursor: crosshair; }
@@ -258,19 +278,18 @@
 .tv-geo-crosshair path { fill: none; stroke: var(--tv-text); stroke-width: 2.5px; stroke-linecap: round; }
 .tv-geo-map > svg[data-keyboard]:focus .tv-geo-crosshair { display: inline; }
 
-/* Floating over the map: quick jumps to each continent (top), zoom (right) and the confirm button (bottom). */
+/* Above the map, never over it: quick jumps to each continent (they scroll sideways on a phone) and zoom. */
+.tv-geo-toolbar { display: flex; align-items: center; gap: 8px; min-width: 0; }
 .tv-geo-regions {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
   display: flex;
+  flex: 1 1 auto;
   gap: 6px;
-  padding: 8px 8px 14px;
+  min-width: 0;
+  padding: 2px 2px 6px;
   overflow-x: auto;
   scrollbar-width: none;
-  background: linear-gradient(180deg, rgba(0, 0, 0, 0.35), transparent);
-  pointer-events: none;
+  -webkit-mask-image: linear-gradient(90deg, #000 88%, transparent);
+  mask-image: linear-gradient(90deg, #000 88%, transparent);
 }
 .tv-geo-regions::-webkit-scrollbar { display: none; }
 .tv-geo-regions button {
@@ -278,45 +297,37 @@
   flex-shrink: 0;
   align-items: center;
   gap: 5px;
-  height: 36px;
+  height: 38px;
   padding: 0 14px;
   border: 0;
   border-radius: 999px;
-  background: var(--tv-surface);
-  box-shadow: 0 3px 0 var(--tv-edge);
+  background: var(--tv-option-bg);
+  box-shadow: 0 3px 0 var(--tv-option-edge);
   color: var(--tv-text);
   font: inherit;
   font-weight: 800;
   font-size: 13px;
   white-space: nowrap;
   cursor: pointer;
-  pointer-events: auto;
-  touch-action: pan-x;
-  transition: transform 0.18s var(--tv-spring), background 0.15s ease;
+  transition: transform 0.18s var(--tv-spring), background 0.15s ease, opacity 0.2s ease;
 }
-.tv-geo-regions button:hover { transform: translateY(-2px); }
-.tv-geo-regions button:active { transform: translateY(3px); box-shadow: none; background: var(--brand); color: var(--on-brand); }
+.tv-geo-regions button:hover:not(:disabled) { transform: translateY(-2px); }
+.tv-geo-regions button:active:not(:disabled) { transform: translateY(3px); box-shadow: none; background: var(--brand); color: var(--on-brand); }
+.tv-geo-regions button:disabled { opacity: 0.45; cursor: default; }
 @media (min-width: 900px) {
-  .tv-geo-regions { flex-wrap: wrap; overflow: visible; right: 64px; }
+  .tv-geo-regions { -webkit-mask-image: none; mask-image: none; }
 }
 
-.tv-geo-zoom {
-  position: absolute;
-  right: 10px;
-  bottom: 10px;
-  display: grid;
-  gap: 6px;
-}
-.tv-geo-map-card.is-playing .tv-geo-zoom { top: 60px; bottom: auto; }
+.tv-geo-zoom { display: flex; flex: none; gap: 6px; padding-bottom: 4px; }
 .tv-geo-zoom button {
   display: grid;
   place-items: center;
-  width: 46px;
-  height: 46px;
+  width: 42px;
+  height: 38px;
   border: 0;
-  border-radius: 14px;
-  background: var(--tv-surface);
-  box-shadow: 0 3px 0 var(--tv-edge);
+  border-radius: 12px;
+  background: var(--tv-option-bg);
+  box-shadow: 0 3px 0 var(--tv-option-edge);
   color: var(--tv-text);
   cursor: pointer;
   transition: transform 0.18s var(--tv-spring), opacity 0.2s ease;
@@ -324,52 +335,66 @@
 .tv-geo-zoom button:hover:not(:disabled) { transform: translateY(-2px); }
 .tv-geo-zoom button:active:not(:disabled) { transform: translateY(3px); box-shadow: none; }
 .tv-geo-zoom button:disabled { opacity: 0.4; cursor: default; }
-@media (min-width: 900px) {
-  .tv-geo-map-card.is-playing .tv-geo-zoom { top: 10px; }
-}
-@media (max-width: 640px) {
-  .tv-geo-zoom { right: 8px; gap: 5px; }
-  .tv-geo-map-card.is-playing .tv-geo-zoom { top: 58px; }
-}
 
-.tv-geo-confirm {
+/* The countdown of a map round, over the (still) world map. */
+.tv-geo-countdown {
   position: absolute;
-  left: 50%;
-  bottom: 12px;
-  transform: translateX(-50%);
-  max-width: calc(100% - 24px);
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: rgba(0, 0, 0, 0.35);
+  pointer-events: none;
 }
-.tv-geo-confirm .tv-btn { box-shadow: 0 4px 0 var(--edge), 0 10px 24px -6px rgba(0, 0, 0, 0.6); white-space: nowrap; }
-.tv-geo-confirm .tv-btn:disabled { opacity: 1; background: var(--tv-surface); color: var(--tv-text-3); box-shadow: 0 4px 0 var(--tv-edge); }
+.tv-geo-countdown .tv-countdown-num { font-size: clamp(80px, 18vw, 130px); }
+.tv-geo-error {
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: calc(100% - 20px);
+  margin: 0;
+  padding: 8px 14px;
+  border-radius: 12px;
+  background: var(--p-bad);
+  color: #fff;
+  font-weight: 800;
+  font-size: 13px;
+  text-align: center;
+}
 
-/* The end of a map round, in one line above the map. */
+/* Under the map: the confirm button while the round is open, the result at its reveal. Always the same height. */
+.tv-geo-action { display: grid; flex: none; min-height: 52px; align-items: center; }
+.tv-geo-action .tv-btn { height: 52px; }
+.tv-geo-watch { text-align: center; }
+
 .tv-geo-verdict {
   position: relative;
-  overflow: hidden;
-  overflow: clip;
+  display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
-  gap: 12px;
-  padding: 12px 16px 12px 12px;
-  border-radius: 22px;
+  gap: 10px;
+  min-height: 52px;
+  padding: 6px 12px 6px 6px;
+  border-radius: 16px;
+  background: var(--tv-option-bg);
 }
 .tv-geo-verdict-icon {
   display: grid;
   place-items: center;
-  width: 48px;
-  height: 48px;
-  border-radius: 16px;
+  width: 40px;
+  height: 40px;
+  border-radius: 13px;
   color: var(--p-ink);
   animation: tvPop 0.6s var(--tv-spring);
 }
 .tv-geo-verdict-text { display: grid; min-width: 0; }
-.tv-geo-verdict-text strong { font-family: var(--tv-display); font-weight: 700; font-size: 22px; line-height: 1.15; color: var(--tv-text); }
-.tv-geo-verdict-text small { overflow: hidden; text-overflow: ellipsis; font-weight: 700; font-size: 14px; color: var(--tv-text-2); }
-.tv-geo-verdict--ok { box-shadow: 0 6px 0 var(--tv-edge), inset 0 0 0 3px var(--p-ok); }
-.tv-geo-verdict--ok .tv-geo-verdict-icon { background: var(--p-ok); box-shadow: 0 4px 0 var(--p-ok-edge); }
-.tv-geo-verdict--bad { box-shadow: 0 6px 0 var(--tv-edge), inset 0 0 0 3px var(--p-bad); }
-.tv-geo-verdict--bad .tv-geo-verdict-icon { background: var(--p-bad); box-shadow: 0 4px 0 var(--p-bad-edge); color: #fff; }
-.tv-geo-verdict--timeout .tv-geo-verdict-icon { background: var(--p-accent-2); box-shadow: 0 4px 0 var(--p-accent-edge); }
+.tv-geo-verdict-text strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: var(--tv-display); font-weight: 700; font-size: 18px; line-height: 1.15; color: var(--tv-text); }
+.tv-geo-verdict-text small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 700; font-size: 13px; color: var(--tv-text-2); }
+.tv-geo-verdict--ok { box-shadow: inset 0 0 0 2px var(--p-ok); }
+.tv-geo-verdict--ok .tv-geo-verdict-icon { background: var(--p-ok); box-shadow: 0 3px 0 var(--p-ok-edge); }
+.tv-geo-verdict--bad { box-shadow: inset 0 0 0 2px var(--p-bad); }
+.tv-geo-verdict--bad .tv-geo-verdict-icon { background: var(--p-bad); box-shadow: 0 3px 0 var(--p-bad-edge); color: #fff; }
+.tv-geo-verdict--timeout .tv-geo-verdict-icon { background: var(--p-accent-2); box-shadow: 0 3px 0 var(--p-accent-edge); }
 
 /* Who was closest, at the reveal of a map round. */
 .tv-geo-distances { gap: 12px; }

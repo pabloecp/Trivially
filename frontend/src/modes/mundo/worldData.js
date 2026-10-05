@@ -13,12 +13,13 @@ const TINY_SIZE = 4;
 // Quick jumps of the map, as [west, south, east, north] in degrees.
 export const REGIONS = [
   { id: "mundo", label: "Mundo" },
-  { id: "norte", label: "Norteamérica", box: [-168, 7, -52, 72] },
-  { id: "caribe", label: "Caribe", box: [-92, 9, -59, 27] },
+  { id: "norte", label: "Norteamérica", box: [-168, 14, -52, 72] },
+  { id: "caribe", label: "Caribe", box: [-92, 7, -59, 27] },
   { id: "sur", label: "Sudamérica", box: [-92, -56, -33, 13] },
-  { id: "europa", label: "Europa", box: [-25, 34, 45, 71] },
+  { id: "europa", label: "Europa", box: [-25, 35, 42, 71] },
   { id: "africa", label: "África", box: [-19, -36, 53, 38] },
-  { id: "asia", label: "Asia", box: [25, -11, 150, 56] },
+  { id: "oriente", label: "Oriente Medio", box: [25, 11, 63, 43] },
+  { id: "asia", label: "Asia", box: [60, -11, 150, 55] },
   { id: "oceania", label: "Oceanía", box: [110, -48, 180, 12] },
 ];
 
