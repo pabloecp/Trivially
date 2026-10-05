@@ -1,8 +1,8 @@
 import { useEffect } from "react";
 import MusicSettings from "./MusicSettings.jsx";
-import StartButton from "./StartButton.jsx";
 import Icon from "../../components/home/Icon.jsx";
 import ModeStage from "../../components/home/ModeStage.jsx";
+import ModeStart from "../../components/home/ModeStart.jsx";
 import SpotifyIcon from "../../components/home/SpotifyIcon.jsx";
 import { playlistLabel } from "./playlistLabel.js";
 import { useApp } from "../../lib/store.jsx";
@@ -62,7 +62,7 @@ export default function LobbyPanel({ room, onToast }) {
           </span>
         }
       >
-        <StartButton room={room} />
+        <ModeStart room={room} ready={enoughSongs} />
       </ModeStage>
 
       <MusicSettings room={room} catalog={catalog} updateConfig={updateConfig} onToast={onToast} readOnly={!canEditConfig}>

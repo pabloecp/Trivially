@@ -4,11 +4,33 @@ import { hydrateSong } from "../catalog/catalogProvider.js";
 import { cleanTitle } from "../catalog/trackResolver.js";
 import { applyMatchStats } from "../db/store.js";
 import { isCorrectAnswer, normalizeAnswer } from "./answers.js";
+import { countQuestions, defaultQuizConfig, mergeQuizConfig, pickQuizQuestions, QUIZ_REVEAL_MS } from "./quiz.js";
+import { isCorrectOpenAnswer } from "./openAnswers.js";
+import {
+  countGeoQuestions,
+  defaultGeoConfig,
+  GEO_GAME,
+  geoBank,
+  LOCATION_REVEAL_MS,
+  LOCATION_ROUND_MS,
+  locationPoints,
+  MAX_TIEBREAKS,
+  mergeGeoConfig,
+  pickGeoQuestions,
+  pickTiebreakQuestion,
+} from "./geo.js";
+import { flagToken, flagUrl } from "../geo/flags.js";
+import { locate } from "../geo/worldMap.js";
 import { COUNTDOWN_MS, REVEAL_MS, ROUND_MS, scoreAnswer } from "./scoring.js";
 
 const CODE_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 // Games the host can move a room into (ids match frontend/src/modes/index.js). `null` is the Home screen.
-export const GAME_IDS = ["musica"];
+// "mundo" (Geografía, GEO_GAME) asks capitals and flags (written answers checked by isCorrectOpenAnswer) and
+// locations (a pin on the world map); "opciones" (Opción múltiple) is a multiple-choice quiz (QUIZ_GAME). Both keep
+// their questions in room.tracks, in place of songs.
+export const GAME_IDS = ["musica", "opciones", "mundo"];
+// "Opción múltiple": its settings live in config.quiz and its questions take the place of songs in room.tracks.
+export const QUIZ_GAME = "opciones";
 // Custom playlists from an owner's Spotify go in config.playlistIds with this prefix ("sp:<spotify playlist id>").
 export const SPOTIFY_PREFIX = "sp:";
 // Rounds are chosen this many rounds ahead, so their audio and cover are downloaded before they start.
@@ -39,6 +61,8 @@ function defaultConfig(catalog) {
     rounds: 10,
     roundMs: ROUND_MS,
     playlistIds: playlist ? [playlist.id] : [],
+    quiz: defaultQuizConfig(),
+    geo: defaultGeoConfig(),
   };
 }
 
@@ -66,8 +90,12 @@ function publicPlayer(player, phase, room) {
 }
 
 export class RoomManager {
-  constructor({ catalog, store, resolver = null, reconnectGraceMs = RECONNECT_GRACE_MS }) {
+  constructor({ catalog, store, questions = [], resolver = null, reconnectGraceMs = RECONNECT_GRACE_MS }) {
     this.catalog = catalog;
+    // The trivia question bank (backend/src/questions/questionBank.js loadQuestions).
+    this.questions = questions;
+    // Geografía's part of it (filled in from geo/countries.js for any kind the bank lacks).
+    this.geoQuestions = geoBank(questions);
     this.resolver = resolver;
     this.store = store;
     this.reconnectGraceMs = reconnectGraceMs;
@@ -269,6 +297,8 @@ export class RoomManager {
     }
     if (room.phase !== "lobby") throw new Error("La partida ya comenzó");
     const next = { ...room.config, ...config };
+    if (config?.quiz) next.quiz = mergeQuizConfig(room.config.quiz, config.quiz);
+    if (config?.geo) next.geo = mergeGeoConfig(room.config.geo, config.geo);
     // Same limits as the settings on screen: 5–25 rounds, 10–30 seconds to guess.
     if (config?.rounds != null) next.rounds = Math.min(25, Math.max(5, Math.round(Number(config.rounds)) || 10));
     if (config?.roundMs != null) next.roundMs = Math.min(30000, Math.max(10000, Math.round(Number(config.roundMs)) || ROUND_MS));
@@ -384,7 +414,7 @@ export class RoomManager {
   // Chooses the songs of the coming rounds that haven't been chosen yet; songs already played are avoided while
   // there are others. Spotify songs found meanwhile join the draw.
   pickAhead(room) {
-    if (room.config?.customTracks?.length) return [];
+    if (room.game === QUIZ_GAME || room.game === GEO_GAME || room.config?.customTracks?.length) return [];
     const until = Math.min(room.totalRounds, room.currentRound + 1 + LOOKAHEAD);
     const added = [];
     while (room.tracks.length < until) {
@@ -422,14 +452,34 @@ export class RoomManager {
 
   start(room, userId) {
     if (room.hostId !== userId) throw new Error("Solo el Host puede iniciar");
-    if (room.game !== "musica") throw new Error("Elige un juego antes de empezar");
+    if (!room.game) throw new Error("Elige un juego antes de empezar");
     if (room.phase !== "lobby") throw new Error("La partida ya comenzó");
     const connected = [...room.players.values()].filter((p) => p.connected);
     if (connected.length < 1) {
       throw new Error("Se necesita al menos 1 jugador");
     }
     room.currentRound = 0;
-    if (room.config?.customTracks && room.config.customTracks.length > 0) {
+    if (room.game === QUIZ_GAME) {
+      const quiz = mergeQuizConfig(room.config.quiz);
+      const available = countQuestions(this.questions, quiz.difficulty);
+      if (available < quiz.rounds) {
+        throw new Error(`Solo hay ${available} preguntas de esa dificultad. Baja el número de preguntas.`);
+      }
+      room.tracks = pickQuizQuestions(this.questions, quiz.rounds, quiz.difficulty);
+      room.totalRounds = room.tracks.length;
+    } else if (room.game === GEO_GAME) {
+      // Geografía: the match's questions are drawn now (they are the "tracks" of the room).
+      const geo = mergeGeoConfig(room.config.geo);
+      const tracks = pickGeoQuestions(this.geoQuestions, geo);
+      if (tracks.length < geo.rounds) {
+        throw new Error(`Solo hay ${tracks.length} preguntas con esos ajustes para ${geo.rounds} rondas. Baja las rondas o elige más tipos.`);
+      }
+      // Flags are shown through a token, so the image's address doesn't name the country.
+      for (const t of tracks) if (t.flag) t.flagToken = flagToken(t.flag);
+      room.tracks = tracks;
+      room.totalRounds = tracks.length;
+      room.tiebreak = null;
+    } else if (room.config?.customTracks && room.config.customTracks.length > 0) {
       const shuffled = [...room.config.customTracks].sort(() => Math.random() - 0.5);
       room.tracks = shuffled.slice(0, Math.min(room.config.rounds || 10, shuffled.length));
       room.totalRounds = room.tracks.length;
@@ -535,37 +585,100 @@ export class RoomManager {
     room.players.forEach((p) => {
       p.lastAnswer = null;
       p.lastPoints = 0;
-      p.status = "jugando";
+      p.pin = null;
+      p.status = this.isPlaying(room, p.id) ? "jugando" : "mirando";
     });
     this.setPhase(room, "countdown", COUNTDOWN_MS, () => this.beginPlaying(room));
   }
 
+  /** How long players have to answer each round in the room's game. */
+  roundMs(room) {
+    if (room.game === QUIZ_GAME) return mergeQuizConfig(room.config.quiz).roundMs;
+    if (room.game === GEO_GAME) {
+      if (this.isMapRound(room)) return LOCATION_ROUND_MS;
+      return mergeGeoConfig(room.config.geo).roundMs;
+    }
+    return room.config.roundMs || ROUND_MS;
+  }
+
+  /** Geografía's "Ubicación" rounds (and every tiebreak): a pin on the world map instead of a written answer. */
+  isMapRound(room) {
+    return room.game === GEO_GAME && room.tracks[room.currentRound]?.kind === "location";
+  }
+
+  /** During a tiebreak only the tied players answer; the rest of the room watches. */
+  isPlaying(room, userId) {
+    return !room.tiebreak || room.tiebreak.playerIds.includes(userId);
+  }
+
   beginPlaying(room) {
-    this.setPhase(room, "playing", room.config.roundMs || ROUND_MS, () => this.beginReveal(room));
+    this.setPhase(room, "playing", this.roundMs(room), () => this.beginReveal(room));
   }
 
   beginReveal(room) {
     const track = room.tracks[room.currentRound];
     const now = Date.now();
-    const duration = room.config.roundMs || ROUND_MS;
+    const duration = this.roundMs(room);
+    if (room.game === QUIZ_GAME && track) this.gradeQuiz(room, track);
+    if (this.isMapRound(room)) this.gradeMap(room, track);
     room.players.forEach((player) => {
-      if (!player.lastAnswer) {
+      if (!player.lastAnswer && this.isPlaying(room, player.id)) {
         player.streak = 0;
         player.lastPoints = 0;
         player.lastAnswer = { text: "", correct: false, at: now };
       }
     });
-    this.setPhase(room, "reveal", REVEAL_MS, () => this.advance(room));
+    let revealMs = REVEAL_MS;
+    if (room.game === QUIZ_GAME) revealMs = QUIZ_REVEAL_MS;
+    else if (this.isMapRound(room)) revealMs = LOCATION_REVEAL_MS;
+    this.setPhase(room, "reveal", revealMs, () => this.advance(room));
     return { track, duration };
   }
 
   advance(room) {
     if (room.currentRound + 1 >= (room.totalRounds || room.tracks.length)) {
+      if (this.beginTiebreak(room)) return;
       this.finish(room);
       return;
     }
     room.currentRound += 1;
     this.beginCountdown(room);
+  }
+
+  /**
+   * Geografía, after the last round (or a tiebreak without a winner): if two or more players share the top score,
+   * they play a map round to settle it. Returns false when the match can end.
+   */
+  beginTiebreak(room) {
+    if (room.game !== GEO_GAME) return false;
+    const previous = room.tiebreak;
+    if (previous?.winnerId || (previous && previous.round >= MAX_TIEBREAKS)) return false;
+    const connected = [...room.players.values()].filter((p) => p.connected);
+    let tied;
+    if (previous) {
+      tied = connected.filter((p) => previous.playerIds.includes(p.id));
+    } else {
+      const top = Math.max(...connected.map((p) => p.score));
+      tied = connected.filter((p) => p.score === top);
+    }
+    if (tied.length < 2) {
+      // The other tied players left: the one still here wins the tiebreak.
+      if (previous && tied.length === 1) previous.winnerId = tied[0].id;
+      return false;
+    }
+    const question = pickTiebreakQuestion(this.geoQuestions, room.config.geo, room.tracks.map((t) => t.country));
+    if (!question) return false;
+    room.tiebreak = { playerIds: tied.map((p) => p.id), round: (previous?.round || 0) + 1, winnerId: null, reason: null };
+    room.tracks.push(question);
+    room.currentRound = room.tracks.length - 1;
+    this.beginCountdown(room);
+    return true;
+  }
+
+  /** Players by final position: by score, and a tiebreak's winner ahead of the players they were tied with. */
+  rankedPlayers(room) {
+    const winnerId = room.tiebreak?.winnerId;
+    return [...room.players.values()].sort((a, b) => b.score - a.score || (b.id === winnerId) - (a.id === winnerId));
   }
 
   finish(room) {
@@ -574,7 +687,7 @@ export class RoomManager {
     if (room.timer) clearTimeout(room.timer);
     if (!room.statsApplied) {
       room.statsApplied = true;
-      applyMatchStats(this.store, [...room.players.values()]);
+      applyMatchStats(this.store, this.rankedPlayers(room));
     }
   }
 
@@ -608,6 +721,7 @@ export class RoomManager {
     room.currentTrackId = null;
     room.answers = {};
     room.statsApplied = false;
+    room.tiebreak = null;
     for (const [id, p] of room.players) {
       // Players who left mid-match (and aren't reconnecting) have no seat in a fresh lobby.
       if (!p.connected && !p.dropTimer) {
@@ -622,6 +736,7 @@ export class RoomManager {
       p.answerTimes = [];
       p.lastAnswer = null;
       p.lastPoints = 0;
+      p.pin = null;
       p.status = p.connected ? "conectado" : "desconectado";
     }
   }
@@ -635,6 +750,8 @@ export class RoomManager {
     if (player.lastAnswer) {
       return player.lastAnswer;
     }
+    if (room.game === QUIZ_GAME) return this.submitQuizAnswer(room, player, answerText);
+    if (this.isMapRound(room)) throw new Error("Toca el mapa para poner tu pin");
 
     // Grace period for network latency if reveal just started
     const isPlaying = room.phase === "playing";
@@ -650,15 +767,19 @@ export class RoomManager {
     const remainingMs = Math.max(0, (room.phaseEndsAt || Date.now()) - Date.now());
 
     // Check if the answer matches
-    const correct = answerText === track.id || isCorrectAnswer(answerText, track);
+    const questionGame = room.game === GEO_GAME;
+    if (questionGame) answerText = String(answerText ?? "").slice(0, 100);
+    const correct = questionGame
+      ? isCorrectOpenAnswer(answerText, track)
+      : answerText === track.id || isCorrectAnswer(answerText, track);
     const scored = scoreAnswer({
       correct,
       remainingMs,
-      durationMs: room.config.roundMs || ROUND_MS,
+      durationMs: this.roundMs(room),
       streak: player.streak,
     });
     player.lastAnswer = {
-      text: this.answerLabel(room, track, answerText, correct),
+      text: questionGame ? String(answerText).slice(0, 80) : this.answerLabel(room, track, answerText, correct),
       correct,
       at: Date.now(),
     };
@@ -668,12 +789,142 @@ export class RoomManager {
     player.score += scored.points;
     if (correct) {
       player.correct += 1;
-      player.answerTimes.push((room.config.roundMs || ROUND_MS) - remainingMs);
-      if (!player.artistHits) player.artistHits = {};
-      const artistKey = track.artistId || (track.artistName ? track.artistName.toLowerCase().replace(/\s+/g, "-") : "varios");
-      player.artistHits[artistKey] = (player.artistHits[artistKey] || 0) + 1;
+      player.answerTimes.push(this.roundMs(room) - remainingMs);
+      if (!questionGame) {
+        if (!player.artistHits) player.artistHits = {};
+        const artistKey = track.artistId || (track.artistName ? track.artistName.toLowerCase().replace(/\s+/g, "-") : "varios");
+        player.artistHits[artistKey] = (player.artistHits[artistKey] || 0) + 1;
+      }
     }
     this.answered(room, player);
+  }
+
+  /**
+   * Opción múltiple: the player's choice (an option index) is only recorded here. It is graded at the reveal
+   * (gradeQuiz), so until then nothing that reaches any client (the answer ack, scores, streaks) says whether it was
+   * right. Answers are only taken while the question is open: during the reveal the right option is on screen.
+   */
+  submitQuizAnswer(room, player, value) {
+    if (room.phase !== "playing") throw new Error("No se aceptan respuestas ahora");
+    const question = room.tracks[room.currentRound];
+    if (!question) throw new Error("No hay pregunta activa");
+    const choice = Number(value);
+    if (!Number.isInteger(choice) || choice < 0 || choice >= question.options.length) throw new Error("Elige una de las opciones");
+    player.lastAnswer = { text: question.options[choice], choice, at: Date.now() };
+    player.answerRemainingMs = Math.max(0, (room.phaseEndsAt || Date.now()) - Date.now());
+    this.answered(room, player);
+  }
+
+  /** Opción múltiple, when the round ends: scores every answer to the question (same scoring as the songs). */
+  gradeQuiz(room, question) {
+    const durationMs = this.roundMs(room);
+    for (const player of room.players.values()) {
+      const answer = player.lastAnswer;
+      if (!answer || answer.skipped || !Number.isInteger(answer.choice)) continue;
+      const correct = answer.choice === question.answer;
+      const scored = scoreAnswer({ correct, remainingMs: player.answerRemainingMs || 0, durationMs, streak: player.streak });
+      answer.correct = correct;
+      player.lastPoints = scored.points;
+      player.streak = scored.streak;
+      player.bestStreak = Math.max(player.bestStreak, player.streak);
+      player.score += scored.points;
+      if (correct) {
+        player.correct += 1;
+        player.answerTimes.push(durationMs - (player.answerRemainingMs || 0));
+      }
+    }
+  }
+
+  /**
+   * Geografía's map rounds: the player taps the map. A pin can be moved until it is locked (`lock`, the "Confirmar"
+   * button, which sends the pin again); when the time runs out, the last pin counts. A locked pin is final. In a
+   * tiebreak, locking a pin inside the country ends the round on the spot: the first to confirm the country wins.
+   * Pins are only judged at the reveal (gradeMap), so nothing tells the other players where the country is before.
+   * Returns true when the pin was locked (the room's state changed for everyone).
+   */
+  placePin(room, userId, value) {
+    const player = room.players.get(userId);
+    if (!player) throw new Error("Jugador no encontrado");
+    if (!this.isMapRound(room)) throw new Error("Esta ronda no es de mapa");
+    if (room.phase !== "playing") throw new Error("No se aceptan respuestas ahora");
+    if (!this.isPlaying(room, userId)) throw new Error("Solo juegan el desempate los jugadores empatados");
+    if (player.lastAnswer) return false;
+    const lng = Number(value?.lng);
+    const lat = Number(value?.lat);
+    if (!Number.isFinite(lng) || !Number.isFinite(lat) || Math.abs(lng) > 180 || Math.abs(lat) > 90) {
+      throw new Error("Ese punto no está en el mapa");
+    }
+    const round = (n) => Math.round(n * 10000) / 10000;
+    player.pin = { lng: round(lng), lat: round(lat), at: Date.now() };
+    if (!value.lock) return false;
+
+    player.lastAnswer = { pin: [player.pin.lng, player.pin.lat], at: player.pin.at, locked: true };
+    const track = room.tracks[room.currentRound];
+    if (room.tiebreak && locate(track.map, player.lastAnswer.pin).inside) {
+      player.status = "respondió";
+      if (room.timer) clearTimeout(room.timer);
+      this.beginReveal(room);
+      this.onPhaseChange?.(room);
+      return true;
+    }
+    this.answered(room, player);
+    return true;
+  }
+
+  /**
+   * At the reveal of a map round: each pin (locked or the last one placed) is measured against the country. Inside it
+   * gets every point; outside, fewer the further it landed. In a tiebreak nobody scores: it decides who wins.
+   */
+  gradeMap(room, track) {
+    for (const player of room.players.values()) {
+      if (!this.isPlaying(room, player.id)) continue;
+      if (!player.lastAnswer && player.pin) {
+        player.lastAnswer = { pin: [player.pin.lng, player.pin.lat], at: player.pin.at, locked: false };
+      }
+      const answer = player.lastAnswer;
+      if (!answer?.pin) continue;
+      const spot = locate(track.map, answer.pin);
+      answer.inside = spot.inside;
+      answer.correct = spot.inside;
+      answer.distanceKm = Math.round(spot.distanceKm * 10) / 10;
+      answer.nearest = spot.nearest.map((n) => Math.round(n * 10000) / 10000);
+      answer.text = spot.inside ? "Dentro del país" : `A ${Math.round(answer.distanceKm).toLocaleString("es-ES")} km`;
+      if (room.tiebreak) continue;
+      const points = locationPoints(spot);
+      player.lastPoints = points;
+      player.score += points;
+      player.streak = spot.inside ? player.streak + 1 : 0;
+      player.bestStreak = Math.max(player.bestStreak, player.streak);
+      if (spot.inside) {
+        player.correct += 1;
+        player.answerTimes.push(Math.max(0, answer.at - room.phaseStartedAt));
+      }
+    }
+    if (room.tiebreak) this.settleTiebreak(room);
+  }
+
+  /**
+   * Who won a tiebreak round: the tied player who confirmed a pin inside the country (the first to do it ends the
+   * round: see placePin); a pin left unconfirmed inside only wins if nobody confirmed one, the earliest placed first.
+   * If nobody landed inside, the closest pin wins, however long it took. No pins (or two at exactly the same
+   * distance) means another tiebreak.
+   */
+  settleTiebreak(room) {
+    const tb = room.tiebreak;
+    const pins = tb.playerIds.map((id) => room.players.get(id)).filter((p) => p?.lastAnswer?.pin);
+    const inside = pins
+      .filter((p) => p.lastAnswer.inside)
+      .sort((a, b) => Boolean(b.lastAnswer.locked) - Boolean(a.lastAnswer.locked) || a.lastAnswer.at - b.lastAnswer.at);
+    if (inside.length) {
+      tb.winnerId = inside[0].id;
+      tb.reason = "dentro";
+      return;
+    }
+    const byDistance = pins.sort((a, b) => a.lastAnswer.distanceKm - b.lastAnswer.distanceKm);
+    if (byDistance.length && (byDistance.length === 1 || byDistance[0].lastAnswer.distanceKm < byDistance[1].lastAnswer.distanceKm)) {
+      tb.winnerId = byDistance[0].id;
+      tb.reason = "cerca";
+    }
   }
 
   /** What the player answered, as people read it: "As It Was - Harry Styles" for a picked suggestion (whose raw
@@ -692,6 +943,8 @@ export class RoomManager {
     if (!player) throw new Error("Jugador no encontrado");
     if (player.lastAnswer) return player.lastAnswer;
     if (room.phase !== "playing") throw new Error("No se aceptan respuestas ahora");
+    if (!this.isPlaying(room, userId)) throw new Error("Solo juegan el desempate los jugadores empatados");
+    player.pin = null;
     player.lastAnswer = { text: "", correct: false, skipped: true, at: Date.now() };
     player.lastPoints = 0;
     player.streak = 0;
@@ -702,7 +955,7 @@ export class RoomManager {
   answered(room, player) {
     player.status = "respondió";
     this.onPhaseChange?.(room);
-    const active = [...room.players.values()].filter((p) => p.connected);
+    const active = [...room.players.values()].filter((p) => p.connected && this.isPlaying(room, p.id));
     if (active.length && active.every((p) => p.lastAnswer)) {
       if (room.timer) clearTimeout(room.timer);
       this.beginReveal(room);
@@ -741,7 +994,15 @@ export class RoomManager {
       totalRounds: room.totalRounds || room.tracks.length || room.config.rounds,
       // In the lobby: how many different songs the chosen playlists have ready (a match needs one per round), and
       // whether iTunes is making the Spotify songs wait.
-      songsReady: room.phase === "lobby" ? this.songPool(room).length : undefined,
+      songsReady: room.phase === "lobby" && room.game !== QUIZ_GAME && room.game !== GEO_GAME ? this.songPool(room).length : undefined,
+      // Opción múltiple and Geografía, in the lobby: how many different questions the chosen settings have (one per
+      // round).
+      questionsReady: room.phase === "lobby" ? this.questionsReady(room) : undefined,
+      // Geografía: the players of a tiebreak and, from its reveal on, who won it and how ("dentro": found the country
+      // first; "cerca": nobody found it and theirs was the closest pin).
+      tiebreak: room.tiebreak
+        ? { playerIds: [...room.tiebreak.playerIds], round: room.tiebreak.round, winnerId: room.tiebreak.winnerId, reason: room.tiebreak.reason }
+        : null,
       itunesSlow: Boolean(this.resolver?.slow),
       // Spotify playlists the host added, with how many of their songs are ready to play.
       customPlaylists: Object.values(room.customPlaylists || {}).map((e) => ({
@@ -765,24 +1026,40 @@ export class RoomManager {
       players: [...room.players.values()].map((p) => publicPlayer(p, room.phase, room)),
       audio: null,
       reveal: null,
+      question: null,
       results: null,
     };
 
-    if (track && (room.phase === "countdown" || room.phase === "playing")) {
+    if (room.game === QUIZ_GAME) {
+      if (track) payload.question = this.publicQuestion(room, track);
+    } else if (room.game === GEO_GAME) {
+      if (track) payload.question = this.publicGeoQuestion(room, track);
+      if (track && showTrack) {
+        payload.reveal = {
+          kind: track.kind,
+          prompt: track.prompt,
+          answer: track.answer,
+          name: track.name,
+          flag: track.flagToken ? flagUrl(track.flagToken) : null,
+          map: track.map,
+        };
+      }
+    } else if (track && (room.phase === "countdown" || room.phase === "playing")) {
       payload.audio = {
         previewUrl: track.previewUrl,
         round: room.currentRound + 1,
       };
     }
     // Send full search catalog for autocomplete during playing phase
-    if (room.phase === "playing") {
+    const songRound = room.game !== QUIZ_GAME && room.game !== GEO_GAME;
+    if (room.phase === "playing" && songRound) {
       payload.searchCatalog = this.buildSearchCatalog(room);
     }
-    if (track && showTrack) {
+    if (track && showTrack && songRound) {
       payload.reveal = hydrateSong(this.catalog, track);
     }
     if (room.phase === "finished") {
-      const ranked = [...room.players.values()].sort((a, b) => b.score - a.score);
+      const ranked = this.rankedPlayers(room);
       payload.results = ranked.map((p, i) => ({
         position: i + 1,
         id: p.id,
@@ -795,6 +1072,7 @@ export class RoomManager {
         avgMs: p.answerTimes.length
           ? Math.round(p.answerTimes.reduce((s, n) => s + n, 0) / p.answerTimes.length)
           : null,
+        tiebreakWinner: p.id === room.tiebreak?.winnerId,
       }));
     }
     if (forUserId) {
@@ -804,11 +1082,62 @@ export class RoomManager {
             id: me.id,
             lastPoints: me.lastPoints,
             lastAnswer: me.lastAnswer,
+            // Geografía's map rounds: this player's pin, not locked yet (so a reload doesn't lose it).
+            pin: me.pin ? [me.pin.lng, me.pin.lat] : null,
             isHost: room.hostId === forUserId,
             canEditConfig: this.canEditConfig(room, forUserId),
           }
         : null;
     }
     return payload;
+  }
+
+  /** In the lobby: how many different questions the room's settings can draw (a match needs one per round). */
+  questionsReady(room) {
+    if (room.game === QUIZ_GAME) return countQuestions(this.questions, mergeQuizConfig(room.config.quiz).difficulty);
+    if (room.game === GEO_GAME) return countGeoQuestions(this.geoQuestions, room.config.geo);
+    return undefined;
+  }
+
+  /**
+   * The current question of Geografía. Nothing of it shows during the countdown but its kind, so every player gets
+   * the same seconds with it. A flag goes out as a token address (never the country code); a map round sends the
+   * country to find. The answer only goes out in `reveal`.
+   */
+  publicGeoQuestion(room, track) {
+    const shown = ["playing", "reveal", "finished"].includes(room.phase);
+    return {
+      round: room.currentRound + 1,
+      kind: track.kind,
+      difficulty: track.difficulty,
+      prompt: shown ? track.prompt : null,
+      name: shown && track.kind === "location" ? track.name : null,
+      flag: shown && track.flagToken ? flagUrl(track.flagToken) : null,
+    };
+  }
+
+  /**
+   * The current question of Opción múltiple. The options only show once the round is playing; which one is right,
+   * and how many players picked each, only from the reveal on.
+   */
+  publicQuestion(room, question) {
+    const showOptions = ["playing", "reveal", "finished"].includes(room.phase);
+    const showAnswer = room.phase === "reveal" || room.phase === "finished";
+    const picks = question.options.map(() => 0);
+    if (showAnswer) {
+      for (const p of room.players.values()) {
+        if (Number.isInteger(p.lastAnswer?.choice)) picks[p.lastAnswer.choice] += 1;
+      }
+    }
+    // No question id: with it a player could recognise a question they have seen before (or look it up).
+    return {
+      round: room.currentRound + 1,
+      text: question.text,
+      category: question.category,
+      difficulty: question.difficulty,
+      options: showOptions ? question.options : null,
+      answer: showAnswer ? question.answer : null,
+      picks: showAnswer ? picks : null,
+    };
   }
 }

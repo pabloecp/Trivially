@@ -1,24 +1,26 @@
 import { useState } from "react";
-import Dots from "../../components/home/Dots.jsx";
-import Icon from "../../components/home/Icon.jsx";
+import Dots from "./Dots.jsx";
+import Icon from "./Icon.jsx";
 import { useApp } from "../../lib/store.jsx";
 
-// "Comenzar partida" for the music mode, at the bottom of the mode's big card (LobbyPanel). Everyone else sees
-// that they're waiting for the host.
-export default function StartButton({ room }) {
+// "Comenzar partida" at the bottom of a game's big card (ModeStage); everyone else sees that they're waiting for
+// the host. `ready` is false while the game can't start yet (not enough songs or questions; the server checks too).
+export default function ModeStart({ room, ready = true }) {
   const { user, startGame } = useApp();
   const [err, setErr] = useState("");
+  const [busy, setBusy] = useState(false);
   const isHost = room.hostId === user?.id;
-  // A match needs a different song for every round (the server checks it too; older servers don't send songsReady).
-  const enoughSongs = room.songsReady == null || room.songsReady >= (room.config?.rounds || 10);
-  const canStart = room.players.some((p) => p.connected) && enoughSongs;
+  const canStart = room.players.some((p) => p.connected) && ready && !busy;
 
   async function onStart() {
     setErr("");
+    setBusy(true);
     try {
       await startGame();
     } catch (e) {
       setErr(e.message);
+    } finally {
+      setBusy(false);
     }
   }
 
@@ -36,7 +38,7 @@ export default function StartButton({ room }) {
       {err && <p className="tv-lobby-error">{err}</p>}
       <button className="tv-mstage-start tv-shine" onClick={onStart} disabled={!canStart} type="button">
         <Icon name="play" size={22} filled strokeWidth={1.5} />
-        Comenzar partida
+        {busy ? "Empezando…" : "Comenzar partida"}
       </button>
     </>
   );

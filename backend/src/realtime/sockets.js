@@ -1,6 +1,7 @@
 import { verifySocketToken } from "../auth/socketToken.js";
 import { prefetchMedia } from "../audio/mediaCache.js";
 import { readSpotifyPlaylist } from "../catalog/spotifyLibrary.js";
+import { prefetchFlags } from "../geo/flags.js";
 
 export function attachSockets(io, rooms) {
   // Who this connection is comes only from the signed token, never from ids the client puts in payloads.
@@ -143,8 +144,9 @@ export function attachSockets(io, rooms) {
       try {
         const { room, userId } = requireRoom(rooms, socket);
         rooms.start(room, userId);
-        // Download every round's preview and cover now, so nothing waits for iTunes once the match runs.
+        // Download every round's preview and cover (or flag) now, so nothing waits for iTunes once the match runs.
         prefetchMedia(room.tracks);
+        prefetchFlags(room.tracks);
         watchRoom(io, rooms, room);
         ack?.({ ok: true });
         io.to(room.code).emit("room:state", rooms.publicState(room));
@@ -204,6 +206,19 @@ export function attachSockets(io, rooms) {
         rooms.submitAnswer(room, userId, text);
         ack?.({ ok: true, state: rooms.publicState(room, userId) });
         io.to(room.code).emit("room:state", rooms.publicState(room));
+      } catch (err) {
+        ack?.({ ok: false, error: err.message });
+      }
+    });
+
+    // Geografía's map rounds: `{ lng, lat, lock }`. A pin that isn't locked only goes back to its player; locking it
+    // (or any pin in a tiebreak) is news for the whole room.
+    socket.on("game:pin", (pin, ack) => {
+      try {
+        const { room, userId } = requireRoom(rooms, socket);
+        const locked = rooms.placePin(room, userId, pin);
+        ack?.({ ok: true, state: rooms.publicState(room, userId) });
+        if (locked) io.to(room.code).emit("room:state", rooms.publicState(room));
       } catch (err) {
         ack?.({ ok: false, error: err.message });
       }

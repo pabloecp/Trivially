@@ -90,6 +90,27 @@ const PATHS = {
       <path d="M12 11v5M12 8h.01" />
     </>
   ),
+  minus: <path d="M5 12h14" />,
+  // Geografía's three kinds of question: capitals, flags and a pin on the map.
+  landmark: (
+    <>
+      <path d="M3 22h18" />
+      <path d="M6 18v-7M10 18v-7M14 18v-7M18 18v-7" />
+      <path d="M12 2l8 5H4z" />
+    </>
+  ),
+  flag: (
+    <>
+      <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" />
+      <path d="M4 22v-7" />
+    </>
+  ),
+  pin: (
+    <>
+      <path d="M20 10c0 5-5.54 10.19-7.4 11.8a1 1 0 0 1-1.2 0C9.54 20.19 4 15 4 10a8 8 0 0 1 16 0" />
+      <circle cx="12" cy="10" r="3" />
+    </>
+  ),
   link: (
     <>
       <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
@@ -117,6 +138,15 @@ const PATHS = {
   ),
   bolt: <path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z" />,
   star: <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />,
+  // Four answer tiles: the "Opción múltiple" mode.
+  grid: (
+    <>
+      <rect x="3" y="3" width="7.5" height="7.5" rx="2.2" />
+      <rect x="13.5" y="3" width="7.5" height="7.5" rx="2.2" />
+      <rect x="3" y="13.5" width="7.5" height="7.5" rx="2.2" />
+      <rect x="13.5" y="13.5" width="7.5" height="7.5" rx="2.2" />
+    </>
+  ),
   // Scalloped badge with a check cut out, like Instagram's verified mark. The badge takes the text colour.
   verified: (
     <>

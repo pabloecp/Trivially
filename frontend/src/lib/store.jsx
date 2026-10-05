@@ -77,7 +77,12 @@ function saveRoomCode(code) {
 export function AppProvider({ children }) {
   const [user, setUser] = useState(loadSavedUser);
   const [catalog, setCatalog] = useState(null);
-  const [room, setRoom] = useState(null);
+  const [room, setRoomState] = useState(null);
+  // Every snapshot is stamped, on arrival, with how far the server's clock is from ours (see remainingMs).
+  const setRoom = useCallback(
+    (state) => setRoomState(state ? { ...state, clockOffset: (state.serverNow || Date.now()) - Date.now() } : state),
+    []
+  );
   const [linkingStatus, setLinkingStatus] = useState(null);
   const [error, setError] = useState("");
   // Set when the host takes us out of the room; Home shows it once and clears it.
@@ -457,6 +462,13 @@ export function AppProvider({ children }) {
         if (res.state) setRoom(res.state);
       },
 
+      // Geografía's map rounds: `{ lng, lat, lock }`. Without `lock` the pin can still move (except in a tiebreak).
+      async placePin(pin) {
+        const res = await emitAck("game:pin", pin);
+        if (!res.ok) throw new Error(res.error);
+        if (res.state) setRoom(res.state);
+      },
+
       // "Saltar": give up on the current round.
       async skipSong() {
         const res = await emitAck("game:skip");
@@ -489,8 +501,23 @@ export function AppProvider({ children }) {
 
 export function useApp() { return useContext(AppContext); }
 
+// Time left in the phase. `clockOffset` (server time minus ours) was taken when the snapshot arrived, so this keeps
+// counting down between snapshots instead of repeating the value the server sent.
 export function remainingMs(room) {
   if (!room?.phaseEndsAt) return 0;
-  const skew = Date.now() - (room.serverNow || Date.now());
-  return Math.max(0, room.phaseEndsAt - (Date.now() - skew));
+  return Math.max(0, room.phaseEndsAt - (Date.now() + (room.clockOffset || 0)));
+}
+
+// remainingMs for a screen that shows a clock. It is worked out while rendering, so the first frame of a new phase
+// already has the right value (a `useState` copy refreshed by an interval was stale for up to 100 ms on every change
+// of phase: the countdown flashed "1", the bar was empty, the clock turned red). The interval only repaints.
+export function useRemainingMs(room) {
+  const [, repaint] = useState(0);
+  const running = Boolean(room?.phaseEndsAt);
+  useEffect(() => {
+    if (!running) return undefined;
+    const t = setInterval(() => repaint((n) => n + 1), 100);
+    return () => clearInterval(t);
+  }, [running]);
+  return remainingMs(room);
 }

@@ -1,50 +1,15 @@
 import { useEffect, useState } from "react";
 import Icon from "../../components/home/Icon.jsx";
 import SpotifyIcon from "../../components/home/SpotifyIcon.jsx";
+import SettingsHead from "../../components/home/SettingsHead.jsx";
+import Stepper from "../../components/home/Stepper.jsx";
 import { playlistLabel } from "./playlistLabel.js";
 import { api } from "../../lib/api.js";
 import { useApp } from "../../lib/store.jsx";
 
 // Both steppers move in steps of 5. The server keeps the same limits (roomManager.updateConfig).
-const ROUNDS = { min: 5, max: 25, step: 5 };
-const SECONDS = { min: 10, max: 30, step: 5 };
-
-function Stepper({ label, value, unit, limits, onChange }) {
-  const { min, max, step } = limits;
-  return (
-    <div className="tv-stepper" role="group" aria-label={label}>
-      <span className="tv-label">{label}</span>
-      <div className="tv-stepper-row">
-        <button
-          type="button"
-          className="tv-stepper-btn"
-          onClick={() => onChange(Math.max(min, value - step))}
-          disabled={value <= min}
-          aria-label={`Menos ${label.toLowerCase()}`}
-        >
-          <Icon name="chevron" size={22} strokeWidth={3} className="tv-stepper-down" />
-        </button>
-        <span key={value} className="tv-stepper-value" aria-live="polite">
-          {value}
-          {unit && <small>{unit}</small>}
-        </span>
-        <button
-          type="button"
-          className="tv-stepper-btn"
-          onClick={() => onChange(Math.min(max, value + step))}
-          disabled={value >= max}
-          aria-label={`Más ${label.toLowerCase()}`}
-        >
-          <Icon name="chevron" size={22} strokeWidth={3} className="tv-stepper-up" />
-        </button>
-      </div>
-      <span className="tv-stepper-range">
-        de {min} a {max}
-        {unit ? ` ${unit}` : ""}
-      </span>
-    </div>
-  );
-}
+export const ROUNDS = { min: 5, max: 25, step: 5 };
+export const SECONDS = { min: 10, max: 30, step: 5 };
 
 // The tick in the corner of a picked playlist.
 function PickCheck() {
@@ -257,12 +222,7 @@ export default function MusicSettings({ room, catalog, updateConfig, onToast, ch
 
   return (
     <section className="tv-settings-card tv-settings" aria-labelledby="tv-settings-title">
-      <div className="tv-settings-head">
-        <h2 id="tv-settings-title" className="tv-settings-title">Ajustes de la partida</h2>
-        <span className="tv-settings-who">
-          {readOnly ? `Solo lectura · los elige ${room.hostName || "el anfitrión"}` : "Puedes cambiarlos tú"}
-        </span>
-      </div>
+      <SettingsHead id="tv-settings-title" room={room} readOnly={readOnly} />
 
       <fieldset className="tv-fieldset" disabled={readOnly}>
         <legend className="tv-mono-label">Lista de canciones</legend>

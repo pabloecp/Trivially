@@ -144,8 +144,8 @@
   --p-accent-rgb: 198, 244, 50; --p-accent-text: #c6f432; --p-on-accent: #0e0f0c;
   --p-music-1: #c6f432; --p-music-2: #c6f432; --p-music-edge: #8fb51a;
   --p-music-rgb: 198, 244, 50; --p-music-text: #c6f432; --p-on-music: #0e0f0c;
-  --p-culture-1: #7cc7ff; --p-culture-2: #7cc7ff; --p-culture-edge: #3e8fcc;
-  --p-culture-rgb: 124, 199, 255; --p-culture-text: #7cc7ff; --p-on-culture: #06131e;
+  --p-culture-1: #c9a2ff; --p-culture-2: #c9a2ff; --p-culture-edge: #8a5fd1;
+  --p-culture-rgb: 201, 162, 255; --p-culture-text: #c9a2ff; --p-on-culture: #170a2b;
   --p-cinema-1: #ff8a66; --p-cinema-2: #ff8a66; --p-cinema-edge: #c24a2c;
   --p-cinema-rgb: 255, 138, 102; --p-cinema-text: #ff8a66; --p-on-cinema: #230a03;
   --p-world-1: #f7d046; --p-world-2: #f7d046; --p-world-edge: #b8951c;
@@ -163,8 +163,8 @@
   --p-accent-rgb: 255, 197, 61; --p-accent-text: #ffc53d; --p-on-accent: #241800;
   --p-music-1: #ff4d6d; --p-music-2: #ff4d6d; --p-music-edge: #b8203c;
   --p-music-rgb: 255, 77, 109; --p-music-text: #ff6f89; --p-on-music: #2a000a;
-  --p-culture-1: #4d8dff; --p-culture-2: #4d8dff; --p-culture-edge: #2a5cc2;
-  --p-culture-rgb: 77, 141, 255; --p-culture-text: #7aa9ff; --p-on-culture: #00112e;
+  --p-culture-1: #b77dff; --p-culture-2: #b77dff; --p-culture-edge: #7a45c4;
+  --p-culture-rgb: 183, 125, 255; --p-culture-text: #c89cff; --p-on-culture: #16052e;
   --p-cinema-1: #ffc53d; --p-cinema-2: #ffc53d; --p-cinema-edge: #b8871a;
   --p-cinema-rgb: 255, 197, 61; --p-cinema-text: #ffc53d; --p-on-cinema: #241800;
   --p-world-1: #2ee6a6; --p-world-2: #2ee6a6; --p-world-edge: #14a072;
@@ -224,3 +224,7 @@
   --on-brand: var(--p-on-world); --brand-hover: var(--p-world-1); --brand-active: var(--p-world-edge);
   --border-focus: var(--p-world-2); --tv-mode-bg: var(--p-world-2); --tv-on-mode: var(--p-on-world);
 }
+
+/* Opción múltiple's main blue follows Lima's and Medianoche's own blues (styles/quiz.css has the rest). */
+:root:root[data-palette="4"] { --tv-qm-1: #7cc7ff; --tv-qm: #7cc7ff; --tv-qm-edge: #3e8fcc; --tv-qm-on: #06131e; --tv-qm-rgb: 124, 199, 255; }
+:root:root[data-palette="5"] { --tv-qm-1: #4d8dff; --tv-qm: #4d8dff; --tv-qm-edge: #2a5cc2; --tv-qm-on: #00112e; --tv-qm-rgb: 77, 141, 255; }

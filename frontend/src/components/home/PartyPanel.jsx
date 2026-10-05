@@ -24,6 +24,7 @@ function MatchTag({ player, room }) {
       <span className="tv-player-tag">
         {r.correct} aciertos · racha {r.bestStreak}
         {r.avgMs ? ` · ${(r.avgMs / 1000).toFixed(1)} s` : ""}
+        {r.tiebreakWinner ? " · ganó el desempate" : ""}
       </span>
     );
   }
@@ -51,7 +52,8 @@ function MatchTag({ player, room }) {
 
 // The room's side column, on the room screen and during a match: the invite code, who's in and the way out.
 // With `scores` (a match) the players are ranked by points, each with their score and how their round is going.
-export default function PartyPanel({ room, onToast, scores = false }) {
+// `className` lets a game add its own (Geografía hides the column on phones, where it shows a strip instead).
+export default function PartyPanel({ room, onToast, scores = false, className = "" }) {
   const { user, leaveRoom } = useApp();
   const nav = useNavigate();
   const [copied, setCopied] = useState(false);
@@ -81,7 +83,7 @@ export default function PartyPanel({ room, onToast, scores = false }) {
   }
 
   return (
-    <aside className={`tv-party${scores ? " is-scores" : ""}`} aria-label="Tu sala">
+    <aside className={`tv-party${scores ? " is-scores" : ""} ${className}`.trim()} aria-label="Tu sala">
       <div className="tv-party-codebox">
         <p className="tv-mono-label">Código de sala</p>
         <p className="tv-party-code">{room.code}</p>

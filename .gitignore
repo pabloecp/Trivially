@@ -3,3 +3,6 @@ dist/
 .env
 .env.*
 !.env.example
+
+# Banco de preguntas real: nunca al repo (es público). Vive aquí y en Supabase (npm run questions:upload).
+backend/private/

@@ -1,0 +1,505 @@
+/* Geografía. Loaded after home.css (and quiz.css, whose difficulty tiles it reuses); builds on their tv- classes.
+   The mode's colour is the palette's "world" slot (--p-world-*); difficulty reads as the depth of that blue, and the
+   right country on the reveal map is the meaning green (--p-ok). */
+
+:root {
+  --tv-geo-ocean: rgba(var(--p-world-rgb), 0.22);
+  --tv-geo-space: rgba(var(--p-world-rgb), 0.07);
+  --tv-geo-land: #353e54;
+  --tv-geo-border: #59647e;
+  --tv-geo-label: #ffffff;
+  --tv-geo-halo: rgba(10, 10, 15, 0.88);
+  --tv-geo-hover: #46516b;
+  --tv-geo-picked: rgba(var(--brand-rgb), 0.45);
+}
+[data-theme="light"] {
+  --tv-geo-ocean: rgba(var(--p-world-rgb), 0.2);
+  --tv-geo-space: rgba(var(--p-world-rgb), 0.06);
+  --tv-geo-land: #ffffff;
+  --tv-geo-border: #a3afc2;
+  --tv-geo-label: #1d1a33;
+  --tv-geo-halo: rgba(255, 255, 255, 0.92);
+  --tv-geo-hover: #e3e9f3;
+  --tv-geo-picked: rgba(var(--brand-rgb), 0.3);
+}
+
+/* Difficulty: lighter and deeper shades of the mode's blue. */
+.tv-c-world-light {
+  --c1: color-mix(in srgb, var(--p-world-1) 50%, #ffffff);
+  --c2: color-mix(in srgb, var(--p-world-2) 55%, #ffffff);
+  --edge: color-mix(in srgb, var(--p-world-edge) 70%, #ffffff);
+  --on: var(--p-ink);
+}
+.tv-c-world-deep {
+  --c1: color-mix(in srgb, var(--p-world-1) 72%, #000000);
+  --c2: color-mix(in srgb, var(--p-world-2) 62%, #000000);
+  --edge: color-mix(in srgb, var(--p-world-edge) 55%, #000000);
+  --on: #ffffff;
+}
+
+/* ---------- Settings ---------- */
+.tv-geo-kinds { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.tv-geo-kind {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  align-content: start;
+  gap: 4px;
+  min-width: 0;
+  padding: 14px 8px 12px;
+  border: 0;
+  border-radius: 18px;
+  background: var(--tv-option-bg);
+  box-shadow: 0 4px 0 var(--tv-option-edge);
+  text-align: center;
+  cursor: pointer;
+  transition: transform 0.2s var(--tv-spring), box-shadow 0.2s ease;
+}
+.tv-app .tv-geo-kind { color: var(--tv-text); }
+.tv-geo-kind:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 6px 0 var(--tv-option-edge); }
+.tv-geo-kind:active:not(:disabled) { transform: translateY(4px); box-shadow: 0 0 0 var(--tv-option-edge); }
+.tv-geo-kind:disabled { cursor: default; }
+.tv-geo-kind strong { font-family: var(--tv-display); font-weight: 600; font-size: 16px; line-height: 1.15; }
+.tv-geo-kind small { font-weight: 700; font-size: 12px; line-height: 1.2; color: var(--tv-text-3); }
+.tv-geo-kind-icon {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  margin-bottom: 2px;
+  border-radius: 14px;
+  background: var(--tv-surface);
+  box-shadow: 0 3px 0 var(--tv-edge);
+  color: var(--tv-text-3);
+}
+.tv-geo-kind-check {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--tv-surface);
+  color: var(--tv-text-3);
+}
+.tv-geo-kind[aria-pressed="true"] {
+  background: linear-gradient(155deg, var(--c1), var(--c2));
+  box-shadow: 0 4px 0 var(--edge);
+  animation: tvPick 0.35s var(--tv-spring);
+}
+.tv-app .tv-geo-kind[aria-pressed="true"] { color: var(--on); }
+.tv-geo-kind[aria-pressed="true"] small { color: inherit; opacity: 0.8; }
+.tv-geo-kind[aria-pressed="true"] .tv-geo-kind-icon { background: #fff; box-shadow: none; color: var(--edge); }
+.tv-geo-kind[aria-pressed="true"] .tv-geo-kind-check { background: #fff; color: var(--edge); }
+.tv-geo-kind[aria-pressed="true"]:hover:not(:disabled) { box-shadow: 0 6px 0 var(--edge); }
+.tv-settings fieldset:disabled .tv-geo-kind[aria-pressed="false"] { opacity: 0.55; }
+@media (max-width: 480px) {
+  .tv-geo-kinds { grid-template-columns: minmax(0, 1fr); }
+  .tv-geo-kind { grid-template-columns: auto minmax(0, 1fr); justify-items: start; align-items: center; column-gap: 12px; padding: 8px 40px 8px 8px; text-align: left; }
+  .tv-geo-kind-icon { grid-row: span 2; margin: 0; }
+  .tv-geo-kind-check { top: 50%; transform: translateY(-50%); }
+}
+.tv-geo-note { display: flex; align-items: center; gap: 6px; }
+
+/* ---------- Summary ---------- */
+.tv-geo-preview {
+  background:
+    radial-gradient(120% 90% at 50% 0%, rgba(var(--p-world-rgb), 0.2), transparent 70%),
+    var(--tv-option-bg);
+}
+.tv-geo-preview-kinds { display: flex; gap: 8px; }
+.tv-geo-preview-kinds .tv-badge { animation: tvGeoHop 2.4s var(--tv-spring) infinite; animation-delay: calc(var(--i) * 0.3s); }
+@keyframes tvGeoHop {
+  0%, 60%, 100% { transform: none; }
+  20% { transform: translateY(-6px) rotate(-6deg); }
+  35% { transform: translateY(1px); }
+}
+.tv-geo-tiebreak-note { max-width: 36ch; text-align: center; }
+
+/* ---------- Game ---------- */
+.tv-geo-kind-kicker { display: inline-flex; align-items: center; gap: 6px; }
+
+.tv-geo-flag {
+  display: block;
+  width: auto;
+  max-width: min(100%, 320px);
+  height: auto;
+  max-height: 200px;
+  border-radius: 12px;
+  box-shadow: 0 0 0 2px var(--tv-edge), 0 6px 0 var(--tv-edge);
+  animation: tvFlipIn 0.6s var(--tv-spring) backwards;
+}
+.tv-geo-flag.is-missing {
+  display: grid;
+  place-items: center;
+  gap: 6px;
+  width: 240px;
+  height: 150px;
+  background: var(--tv-option-bg);
+  color: var(--tv-text-3);
+  font-weight: 700;
+  font-size: 13px;
+}
+
+/* ---------- The stage ----------
+   A Geografía match is one frame that fills the screen under the top bar, the same in every round and phase:
+   the top card (always three lines), on phones a strip with the scoreboard, and the map card, which takes the rest.
+   --geo-top (set by Game.jsx) is where the game starts on the page; svh doesn't change when a phone's address bar
+   hides. On a computer the scoreboard stays at the side, as tall as the frame. */
+.tv-geo-stage {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  height: max(440px, calc(100vh - var(--geo-top, 80px) - 14px));
+  height: max(440px, calc(100svh - var(--geo-top, 80px) - 14px));
+}
+.tv-geo-stage > .tv-game-top { flex: none; }
+.tv-geo-stage > .tv-geo-map-card { flex: 1 1 auto; min-height: 0; }
+@media (min-width: 900px) {
+  .tv-game.tv-geo-game { grid-template-columns: minmax(0, 1fr) 280px; }
+  .tv-geo-side { position: sticky; top: 14px; max-height: calc(100vh - 28px); max-height: calc(100svh - 28px); overflow-y: auto; scrollbar-width: thin; }
+}
+
+/* Phones and tablets: the match takes the whole screen and the page doesn't scroll (no top bar, no bounce), so
+   nothing moves between rounds or when the keyboard opens and closes. The scoreboard is the strip. */
+@media (max-width: 899px) {
+  html.tv-geo-playing,
+  html.tv-geo-playing body { overflow: hidden; overscroll-behavior: none; }
+  html.tv-geo-playing .tv-topbar { display: none; }
+  html.tv-geo-playing .tv-main--page { padding-top: 10px; padding-bottom: 0; }
+  .tv-geo-stage { gap: 8px; height: max(400px, calc(100vh - var(--geo-top, 10px) - 10px)); height: max(400px, calc(100svh - var(--geo-top, 10px) - 10px)); }
+  .tv-geo-side { display: none; }
+}
+
+/* The top card: kicker, title and one hint, the same in every phase. */
+.tv-geo-find { display: grid; gap: 2px; }
+.tv-geo-country {
+  margin: 0;
+  overflow-wrap: anywhere;
+  font-family: var(--tv-display);
+  font-weight: 700;
+  font-size: clamp(22px, 6vw, 34px);
+  line-height: 1.1;
+  color: var(--tv-text);
+  animation: tvPop 0.5s var(--tv-spring);
+}
+.tv-geo-find .tv-hint { min-height: 2.6em; font-size: 13px; line-height: 1.3; }
+@media (max-width: 640px) {
+  /* "Terminar" goes under the clock instead of taking a row of its own. */
+  .tv-geo-game .tv-game-top { grid-template-areas: "round clock" "round tools" "bar bar"; gap: 6px 12px; padding: 12px 14px; border-radius: 24px; }
+  .tv-geo-game .tv-game-tools:empty { display: none; }
+  .tv-geo-game .tv-clock { width: 54px; height: 54px; }
+  .tv-geo-find .tv-hint { font-size: 12px; }
+}
+
+/* The scoreboard as a strip of chips (phones and tablets). */
+.tv-geo-scores {
+  display: flex;
+  flex: none;
+  gap: 6px;
+  margin: 0;
+  padding: 0 0 4px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  list-style: none;
+}
+.tv-geo-scores::-webkit-scrollbar { display: none; }
+.tv-geo-scores li {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 12px 0 4px;
+  border-radius: 999px;
+  background: var(--tv-surface);
+  box-shadow: 0 3px 0 var(--tv-edge);
+  font-weight: 800;
+  font-size: 13px;
+}
+.tv-geo-scores li.is-me { box-shadow: 0 3px 0 var(--tv-edge), inset 0 0 0 2px var(--brand); }
+.tv-geo-scores li.is-away { opacity: 0.5; }
+.tv-geo-scores-pos {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--tv-option-bg);
+  color: var(--tv-text-3);
+  font-family: var(--tv-display);
+  font-size: 13px;
+}
+.tv-geo-scores li:first-child .tv-geo-scores-pos { background: var(--p-accent-2); color: var(--p-ink); }
+.tv-geo-scores-name { max-width: 9em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--tv-text-2); }
+.tv-geo-scores strong { font-family: var(--tv-display); font-variant-numeric: tabular-nums; color: var(--tv-text); animation: tvScore 0.6s var(--tv-spring); }
+.tv-geo-scores em { font-style: normal; color: var(--p-ok-text); }
+.tv-geo-scores svg { color: var(--p-ok-text); }
+/* A computer has the full scoreboard at the side. */
+@media (min-width: 900px) {
+  .tv-geo-scores { display: none; }
+}
+
+.tv-geo-map-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px;
+  border-radius: 26px;
+}
+.tv-geo-mapbox { display: flex; flex-direction: column; flex: 1 1 auto; gap: 8px; min-height: 0; }
+.tv-geo-map {
+  position: relative;
+  flex: 1 1 auto;
+  width: 100%;
+  min-height: 160px;
+  overflow: hidden;
+  border-radius: 18px;
+  background: var(--tv-geo-space);
+  box-shadow: inset 0 0 0 2px var(--tv-edge);
+}
+@media (max-width: 640px) {
+  .tv-geo-map-card { padding: 6px; border-radius: 22px; }
+  .tv-geo-map { border-radius: 16px; }
+}
+/* Written rounds don't use the map's buttons. */
+.tv-geo-map-card.is-written .tv-geo-toolbar { visibility: hidden; }
+
+/* A written question floats over the map: the flag (if any) and the answer box, near the top so a phone's keyboard
+   never covers them. */
+.tv-geo-veil {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 14px;
+  background: rgba(0, 0, 0, 0.38);
+}
+.tv-geo-ask {
+  display: grid;
+  justify-items: center;
+  gap: 14px;
+  width: min(100%, 540px);
+  padding: 16px;
+  border-radius: 22px;
+  background: var(--tv-surface);
+  box-shadow: 0 6px 0 var(--tv-edge), 0 24px 40px -18px rgba(0, 0, 0, 0.6);
+  animation: tvRise 0.4s var(--tv-spring) backwards;
+}
+.tv-geo-ask .tv-search { max-width: none; }
+.tv-geo-ask .tv-geo-flag { max-height: min(200px, 26vh); max-height: min(200px, 26svh); }
+.tv-geo-sent {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-family: var(--tv-display);
+  font-weight: 700;
+  font-size: 20px;
+  color: var(--tv-text);
+}
+.tv-geo-sent svg { color: var(--p-ok-text); }
+.tv-geo-sent.is-skipped svg { color: var(--tv-text-3); }
+@media (max-width: 640px) {
+  .tv-geo-veil { padding: 10px; }
+  .tv-geo-ask { gap: 10px; padding: 12px; border-radius: 18px; }
+}
+.tv-geo-map > svg { display: block; width: 100%; height: 100%; touch-action: pan-y; user-select: none; -webkit-user-select: none; cursor: grab; }
+.tv-geo-map.is-interactive > svg { touch-action: none; cursor: crosshair; }
+.tv-geo-map > svg:active,
+.tv-geo-map.is-dragging > svg { cursor: grabbing; }
+.tv-app .tv-geo-map > svg:focus-visible { outline: none; }
+.tv-app .tv-geo-map > svg[data-keyboard]:focus { outline: 3px solid var(--tv-focus); outline-offset: -3px; border-radius: inherit; }
+.tv-geo-map--loading { display: grid; place-items: center; padding: 20px; text-align: center; font-weight: 700; color: var(--tv-text-3); }
+
+.tv-geo-sea { fill: var(--tv-geo-space); }
+.tv-geo-globe { fill: var(--tv-geo-ocean); }
+.tv-geo-land path {
+  fill: var(--tv-geo-land);
+  stroke: var(--tv-geo-border);
+  stroke-width: 0.6px;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+  transition: fill 0.25s ease;
+}
+/* The country under the mouse, and the one this player's pin is in: only shapes, never names. */
+@media (hover: hover) {
+  .tv-geo-map.is-interactive .tv-geo-land path:hover { fill: var(--tv-geo-hover); transition: none; }
+}
+.tv-geo-land path.is-picked { fill: var(--tv-geo-picked); stroke: var(--brand); stroke-width: 1.4px; }
+.tv-geo-land path.is-target { fill: var(--p-ok); stroke: var(--p-ok-edge); stroke-width: 1.4px; }
+/* Islands and microstates too small to see get a dot. */
+.tv-geo-dot { fill: var(--tv-geo-land); stroke: var(--tv-geo-border); }
+.tv-geo-dot.is-picked { fill: var(--tv-geo-picked); stroke: var(--brand); }
+.tv-geo-dot.is-target { fill: var(--p-ok); stroke: var(--p-ok-edge); }
+.tv-geo-target-ring {
+  fill: none;
+  stroke: var(--p-ok);
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: tvGeoRing 1.4s ease-in-out infinite;
+}
+@keyframes tvGeoRing {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(1.25); }
+}
+.tv-geo-line { stroke: var(--pin); stroke-linecap: round; fill: none; opacity: 0.95; }
+
+.tv-geo-pin path { fill: var(--pin); stroke: #ffffff; stroke-width: 2.5px; stroke-linejoin: round; }
+.tv-geo-pin circle { fill: #ffffff; }
+.tv-geo-pin.is-mine path { stroke-width: 3px; }
+.tv-geo-pin.is-dragging { filter: drop-shadow(0 6px 4px rgba(0, 0, 0, 0.45)); }
+.tv-geo-pin text {
+  fill: var(--tv-geo-label);
+  stroke: var(--tv-geo-halo);
+  stroke-width: 4px;
+  paint-order: stroke;
+  font-family: var(--tv-display);
+  font-weight: 700;
+  font-size: 13px;
+}
+.tv-geo-pin > * { animation: tvGeoDrop 0.45s var(--tv-spring) backwards; }
+.tv-geo-pin.is-dragging > * { animation: none; }
+@keyframes tvGeoDrop { from { transform: translateY(-18px); opacity: 0; } }
+
+/* The crosshair is the keyboard's pin: it only shows while the map has keyboard focus. */
+.tv-geo-crosshair { display: none; }
+.tv-geo-crosshair path { fill: none; stroke: var(--tv-text); stroke-width: 2.5px; stroke-linecap: round; }
+.tv-geo-map > svg[data-keyboard]:focus .tv-geo-crosshair { display: inline; }
+
+/* Above the map, never over it: quick jumps to each continent (they scroll sideways on a phone) and zoom. */
+.tv-geo-toolbar { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.tv-geo-regions {
+  display: flex;
+  flex: 1 1 auto;
+  gap: 6px;
+  min-width: 0;
+  padding: 2px 2px 6px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-mask-image: linear-gradient(90deg, #000 88%, transparent);
+  mask-image: linear-gradient(90deg, #000 88%, transparent);
+}
+.tv-geo-regions::-webkit-scrollbar { display: none; }
+.tv-geo-regions button {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 5px;
+  height: 38px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--tv-option-bg);
+  box-shadow: 0 3px 0 var(--tv-option-edge);
+  color: var(--tv-text);
+  font: inherit;
+  font-weight: 800;
+  font-size: 13px;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: transform 0.18s var(--tv-spring), background 0.15s ease, opacity 0.2s ease;
+}
+.tv-geo-regions button:hover:not(:disabled) { transform: translateY(-2px); }
+.tv-geo-regions button:active:not(:disabled) { transform: translateY(3px); box-shadow: none; background: var(--brand); color: var(--on-brand); }
+.tv-geo-regions button:disabled { opacity: 0.45; cursor: default; }
+@media (min-width: 900px) {
+  /* With the scoreboard at the side the map column is narrower: smaller buttons, and a second row if needed. */
+  .tv-geo-regions { flex-wrap: wrap; gap: 5px; overflow: visible; -webkit-mask-image: none; mask-image: none; }
+  .tv-geo-regions button { height: 34px; padding: 0 8px; font-size: 12.5px; }
+}
+
+.tv-geo-zoom { display: flex; flex: none; gap: 6px; padding-bottom: 4px; }
+.tv-geo-zoom button {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 38px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--tv-option-bg);
+  box-shadow: 0 3px 0 var(--tv-option-edge);
+  color: var(--tv-text);
+  cursor: pointer;
+  transition: transform 0.18s var(--tv-spring), opacity 0.2s ease;
+}
+.tv-geo-zoom button:hover:not(:disabled) { transform: translateY(-2px); }
+.tv-geo-zoom button:active:not(:disabled) { transform: translateY(3px); box-shadow: none; }
+.tv-geo-zoom button:disabled { opacity: 0.4; cursor: default; }
+
+/* The countdown of a map round, over the (still) world map. */
+.tv-geo-countdown {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 4px;
+  background: rgba(0, 0, 0, 0.35);
+  pointer-events: none;
+}
+.tv-geo-countdown .tv-countdown-num { font-size: clamp(80px, 18vw, 130px); }
+.tv-geo-error {
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: calc(100% - 20px);
+  margin: 0;
+  padding: 8px 14px;
+  border-radius: 12px;
+  background: var(--p-bad);
+  color: #fff;
+  font-weight: 800;
+  font-size: 13px;
+  text-align: center;
+}
+
+/* Under the map: the confirm button while the round is open, the result at its reveal. Always the same height. */
+.tv-geo-action { display: grid; flex: none; min-height: 52px; align-items: center; }
+.tv-geo-action .tv-btn { height: 52px; }
+.tv-geo-watch { text-align: center; }
+.tv-app .tv-geo-skip.is-on { background: var(--tv-danger-bg); color: var(--tv-danger); box-shadow: 0 4px 0 var(--tv-edge); }
+
+.tv-geo-verdict {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  min-height: 52px;
+  padding: 6px 12px 6px 6px;
+  border-radius: 16px;
+  background: var(--tv-option-bg);
+}
+.tv-geo-verdict-icon {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 13px;
+  color: var(--p-ink);
+  animation: tvPop 0.6s var(--tv-spring);
+}
+.tv-geo-verdict-text { display: grid; min-width: 0; }
+.tv-geo-verdict-text strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: var(--tv-display); font-weight: 700; font-size: 18px; line-height: 1.15; color: var(--tv-text); }
+.tv-geo-verdict-text small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 700; font-size: 13px; color: var(--tv-text-2); }
+.tv-geo-verdict--ok { box-shadow: inset 0 0 0 2px var(--p-ok); }
+.tv-geo-verdict--ok .tv-geo-verdict-icon { background: var(--p-ok); box-shadow: 0 3px 0 var(--p-ok-edge); }
+.tv-geo-verdict--bad { box-shadow: inset 0 0 0 2px var(--p-bad); }
+.tv-geo-verdict--bad .tv-geo-verdict-icon { background: var(--p-bad); box-shadow: 0 3px 0 var(--p-bad-edge); color: #fff; }
+.tv-geo-verdict--timeout .tv-geo-verdict-icon { background: var(--p-accent-2); box-shadow: 0 3px 0 var(--p-accent-edge); }
+
+@media (prefers-reduced-motion: reduce) {
+  .tv-geo-kind[aria-pressed="true"],
+  .tv-geo-preview-kinds .tv-badge,
+  .tv-geo-target-ring,
+  .tv-geo-pin > *,
+  .tv-geo-flag,
+  .tv-geo-country,
+  .tv-geo-verdict-icon,
+  .tv-geo-ask { animation: none; }
+}
