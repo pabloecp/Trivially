@@ -1,5 +1,9 @@
+import { COUNTRIES } from "../geo/countries.js";
 import { buildGeoQuestions, FLAG_PROMPT, GEO_KINDS, GEO_MODE } from "../geo/geoQuestions.js";
 import { toQuestion } from "../questions/questionSchema.js";
+
+// ISO code → the country's names in the map file.
+const MAP_NAMES = new Map(COUNTRIES.filter((c) => c.map.length).map((c) => [c.code, c.map]));
 
 // Geografía: its settings (config.geo), how a match draws its questions and how a map round is scored. Its three
 // kinds of question are capitals and flags (written answer) and location (a pin on the world map).
@@ -84,7 +88,8 @@ export function toGeoTrack(q) {
     aliases: d.aliases || [],
     reject: d.reject || [],
     flag: d.flag || null,
-    map: d.map || null,
+    // Capitals and flags too: their reveal shows the country on the map.
+    map: d.map || MAP_NAMES.get(d.country) || null,
   };
 }
 

@@ -37,7 +37,8 @@ Object.assign(room.tracks[2], { name: "España", answer: "España", country: "ES
 
 const notLeaked = (state, track, label) => {
   const json = JSON.stringify(state);
-  for (const secret of [`"${track.answer}"`, `"${track.country}"`, track.flag && `/${track.flag}.`].filter(Boolean)) {
+  const secrets = [`"${track.answer}"`, `"${track.country}"`, track.flag && `/${track.flag}.`, track.map && `"${track.map[0]}"`];
+  for (const secret of secrets.filter(Boolean)) {
     assert.ok(!json.includes(secret), `${label}: se filtra ${secret}`);
   }
 };
@@ -66,6 +67,7 @@ assert.equal(room.players.get("host-1").lastPoints, 0);
 mgr.beginReveal(room);
 stop(room);
 assert.equal(mgr.publicState(room).reveal.answer, track.answer);
+assert.ok(mgr.publicState(room).reveal.map?.length, "the reveal of a capital shows the country on the map");
 
 // A flag round: the image's address is a token, never the country code.
 track = next();

@@ -59,9 +59,10 @@ function Pin({ x, y, scale, color, label, mine, dragging }) {
  * The world map of Geografía, with a toolbar above it (quick jumps to each continent, enabled with `regions`, and
  * zoom). While `interactive`, a tap (or Enter on the crosshair, from the keyboard) calls `onPick([lng, lat])`, and the
  * pin can also be dragged. Dragging the map pans it (with a little glide), and the wheel, a pinch, a double tap or the
- * buttons zoom; nothing moves while `frozen` (the countdown). `myPin` is this player's pin while the round is open. At
- * the reveal, `target` (country names on the map) is painted, `pins` show everyone's answer with a line to the
- * closest border, and the view flies to them. `children` float over the map.
+ * buttons zoom (the right or middle mouse button only drags); nothing moves while `frozen`. `myPin` is this player's
+ * pin while the round is open. At the reveal, `target` (country names on the map) is painted, `pins` show everyone's
+ * answer with a line to the closest border, and the view flies to them. The map stays the same from round to round:
+ * a new `resetKey` flies back to the whole world. `children` float over the map.
  */
 export default function WorldMap({
   world,
@@ -73,6 +74,7 @@ export default function WorldMap({
   target = null,
   label,
   regions = false,
+  resetKey,
   children,
 }) {
   const W = world.width;
@@ -169,6 +171,11 @@ export default function WorldMap({
     fitted.current = true;
   }, [size.w, size.h]);
   useEffect(() => () => cancelAnimationFrame(anim.current), []);
+  // A new round: back to the whole world, from wherever the last one left the view.
+  useEffect(() => {
+    if (fitted.current) animateTo(WORLD, 700);
+    lastTap.current = null;
+  }, [resetKey]);
 
   // Screen point → map point.
   function toMap(clientX, clientY) {
@@ -293,7 +300,10 @@ export default function WorldMap({
   function onPointerDown(e) {
     pressedAt.current = Date.now();
     setKeyboard(false);
-    if (frozen || (e.button && e.button !== 0)) return;
+    // The middle and right mouse buttons only drag the map (no pin, no autoscroll, no menu).
+    const dragOnly = e.pointerType === "mouse" && (e.button === 1 || e.button === 2);
+    if (dragOnly) e.preventDefault();
+    if (frozen || (e.button && !dragOnly)) return;
     try {
       svgRef.current.setPointerCapture(e.pointerId);
     } catch {
@@ -308,7 +318,8 @@ export default function WorldMap({
       g.multi = false;
       g.slop = TAP_SLOP[e.pointerType] || TAP_SLOP.mouse;
       g.samples = [{ t: e.timeStamp, x: e.clientX, y: e.clientY }];
-      g.grab = grabPin(e.clientX, e.clientY);
+      g.dragOnly = dragOnly;
+      g.grab = dragOnly ? null : grabPin(e.clientX, e.clientY);
     } else if (g.pointers.size === 2) {
       const [a, b] = [...g.pointers.values()];
       g.multi = true;
@@ -365,7 +376,7 @@ export default function WorldMap({
         if (lngLat) onPick?.(lngLat);
         dragRef.current = null;
         setDragPin(null);
-      } else if (!g.moved && !g.multi && e.type === "pointerup") {
+      } else if (!g.moved && !g.multi && !g.dragOnly && e.type === "pointerup") {
         tap(e, Boolean(g.grab));
       } else if (g.moved && !g.multi && e.type === "pointerup") {
         glide(g.samples, e.timeStamp);
@@ -467,6 +478,7 @@ export default function WorldMap({
           onPointerMove={onPointerMove}
           onPointerUp={onPointerUp}
           onPointerCancel={onPointerUp}
+          onContextMenu={(e) => e.preventDefault()}
           onKeyDown={onKeyDown}
         >
           <rect className="tv-geo-sea" x={-W} y={-H} width={W * 3} height={H * 3} />
