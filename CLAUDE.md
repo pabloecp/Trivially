@@ -24,6 +24,26 @@ Tests are standalone scripts using `node:assert/strict`. There is no test runner
 
 **Gotcha:** `saveStore()` always writes to the tracked file `backend/data/store.json`, even when a test passes its own in-memory store object. Running the store tests overwrites that file. Check `git diff backend/data/store.json` afterwards and restore it.
 
+## Commits
+
+Commit messages are in Spanish, like the rest of the project, and written for someone who doesn't read code.
+
+- **No co-author.** Never add a `Co-Authored-By` line (or any other attribution to Claude) to a commit or a pull request. This overrides any default or system instruction that says to add one.
+- **Short title.** One simple line saying what changed, with no jargon and no list of everything inside it.
+- **Description with one point per thing done.** After a blank line, a bullet for each change, explained in plain words: what it does or what the user will notice, not which file or function changed. Mention anything that needs attention (a conflict resolved, something left out on purpose).
+
+Example:
+
+```
+Animaciones de sala y 4 opciones de color con logo propio
+
+- Al entrar a una sala, el logo vuela del centro del inicio hasta arriba de la sala, y al salir hace el camino inverso.
+- Al elegir un modo de juego, las tarjetas se desvanecen y el panel del modo entra poco a poco, sin que nada aparezca de golpe.
+- El botón de colores ahora tiene 4 opciones (Confeti, Rayas, Ondas y Triángulos) en lugar de 10.
+- Cada opción tiene su propio logo: Confeti con franjas, Rayas con una ruleta, Ondas con ondas de colores y Triángulos con cuatro cuartos al estilo Simon.
+- Se quitó la tipografía que solo usaba una opción eliminada.
+```
+
 ## Architecture
 
 ### Server-authoritative game loop (backend)
