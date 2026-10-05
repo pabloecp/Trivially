@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useApp } from "../../lib/store.jsx";
 import Avatar from "./Avatar.jsx";
-import Dots from "./Dots.jsx";
 import Icon from "./Icon.jsx";
 import PlayerMenu from "./PlayerMenu.jsx";
 
@@ -150,7 +149,6 @@ export default function PartyPanel({ room, onToast, scores = false, className = 
           <li className="tv-player-waiting">
             <span className="tv-player-waiting-ring" aria-hidden="true" />
             Esperando amigos
-            <Dots />
           </li>
         )}
       </ul>

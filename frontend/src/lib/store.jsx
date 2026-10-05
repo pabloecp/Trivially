@@ -365,6 +365,12 @@ export function AppProvider({ children }) {
         if (url) window.location.href = url;
       },
 
+      async unlinkSpotify() {
+        const res = await api("/api/spotify/unlink", { method: "POST" });
+        if (res.user) applyUser(res.user);
+        return res.user;
+      },
+
 
       async deleteAccount(confirmName) {
         await api("/api/auth/delete-account", { method: "DELETE", body: { confirmName } });

@@ -4,7 +4,6 @@ import TvShell from "../../components/home/TvShell.jsx";
 import Confetti from "../../components/home/Confetti.jsx";
 import Icon from "../../components/home/Icon.jsx";
 import PartyPanel from "../../components/home/PartyPanel.jsx";
-import Dots from "../../components/home/Dots.jsx";
 import MatchResults from "../../components/home/MatchResults.jsx";
 import { useApp, useRemainingMs } from "../../lib/store.jsx";
 import { BACKEND_URL } from "../../lib/config.js";
@@ -485,17 +484,18 @@ function GameScreen() {
                   )}
                 </div>
 
-                {!query.trim() && (
-                  <button
-                    type="button"
-                    className={`tv-skip-btn${confirmSkip ? " is-on" : ""}`}
-                    onClick={handleSkip}
-                    aria-live="polite"
-                  >
-                    <Icon name={confirmSkip ? "lock" : "close"} size={16} strokeWidth={3} />
-                    {confirmSkip ? "No te dará puntos. Toca otra vez" : "Saltar"}
-                  </button>
-                )}
+                {/* Hidden while typing, but it keeps its space so the answer box never moves. */}
+                <button
+                  type="button"
+                  className={`tv-btn tv-btn--block tv-c-neutral tv-skip-btn${confirmSkip ? " is-on" : ""}${query.trim() ? " is-hidden" : ""}`}
+                  onClick={handleSkip}
+                  aria-live="polite"
+                  aria-hidden={query.trim() ? "true" : undefined}
+                  tabIndex={query.trim() ? -1 : undefined}
+                >
+                  <Icon name={confirmSkip ? "lock" : "close"} size={16} strokeWidth={3} />
+                  {confirmSkip ? "No te dará puntos. Toca otra vez" : "Saltar"}
+                </button>
 
                 {query.trim().length > 0 && (
                   <div className="tv-suggest" id="tv-suggest">
@@ -609,7 +609,6 @@ function GameScreen() {
 
               <p className="tv-next">
                 {room.currentRound + 1 >= room.totalRounds ? "Calculando resultados" : "Siguiente canción en breve"}
-                <Dots />
               </p>
             </section>
           );

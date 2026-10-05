@@ -1,5 +1,4 @@
 import { useState } from "react";
-import Dots from "./Dots.jsx";
 import Icon from "./Icon.jsx";
 import { useApp } from "../../lib/store.jsx";
 
@@ -28,7 +27,6 @@ export default function ModeStart({ room, ready = true }) {
     return (
       <p className="tv-mstage-wait">
         Esperando a que {room.hostName || "el anfitrión"} comience la partida
-        <Dots />
       </p>
     );
   }

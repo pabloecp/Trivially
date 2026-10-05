@@ -188,13 +188,29 @@ function GameScreen() {
                 <span className="tv-match-chip">{question.category}</span>
                 <span className={`tv-match-chip tv-diff-chip tv-c-${level.color}`}>{level.label}</span>
               </div>
-              {room.phase === "countdown" && (
-                <span key={Math.max(1, seconds)} className="tv-quiz-count" aria-label={`Empieza en ${Math.max(1, seconds)}`}>
-                  {Math.max(1, seconds)}
-                </span>
-              )}
               <h2 className="tv-quiz-q-text">{question.text}</h2>
-              {reveal && <Verdict me={me} myChoice={myChoice} />}
+              {/* Always the same height, so nothing moves: the countdown, what to do while answering (or that the
+                  answer is in), then the verdict. */}
+              <div className="tv-quiz-slot">
+                {room.phase === "countdown" && (
+                  <span key={Math.max(1, seconds)} className="tv-quiz-count" aria-label={`Empieza en ${Math.max(1, seconds)}`}>
+                    {Math.max(1, seconds)}
+                  </span>
+                )}
+                {room.phase === "playing" && (
+                  <span key={locked ? "sent" : "pick"} className={`tv-quiz-hint${locked ? " is-sent" : ""}`} role="status">
+                    <Icon name={locked ? "check" : "bolt"} size={16} strokeWidth={2.8} />
+                    {locked ? (
+                      "Respuesta enviada. Esperando al resto"
+                    ) : (
+                      <>
+                        Toca una opción<span className="tv-quiz-keys"> o pulsa 1–4</span>
+                      </>
+                    )}
+                  </span>
+                )}
+                {reveal && <Verdict me={me} myChoice={myChoice} />}
+              </div>
             </div>
 
             <div className={`tv-quiz-options${reveal ? " is-reveal" : ""}`} role="group" aria-label="Opciones">
@@ -252,24 +268,6 @@ function GameScreen() {
 
             {err && <p className="tv-lobby-error" role="alert">{err}</p>}
 
-            <p className="tv-party-status tv-next">
-              {room.phase === "countdown" ? (
-                "Prepárate: las opciones aparecen en un momento"
-              ) : room.phase === "playing" && !locked ? (
-                <>
-                  Toca una opción<span className="tv-quiz-keys"> o pulsa 1–4</span>
-                </>
-              ) : (
-                <>
-                  <span className="tv-pulse" aria-hidden="true" />
-                  {room.phase === "playing"
-                    ? "Respuesta enviada. Esperando al resto…"
-                    : room.currentRound + 1 >= room.totalRounds
-                    ? "Calculando resultados…"
-                    : "Siguiente pregunta en breve…"}
-                </>
-              )}
-            </p>
           </section>
         ) : (
           <section className="tv-game-stage tv-countdown">

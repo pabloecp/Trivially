@@ -1,25 +1,25 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useApp } from "../lib/store.jsx";
-import { GAME_MODES, findMode } from "../modes/index.js";
+import { GAME_MODES, SOON_TILE, dockModes, findMode } from "../modes/index.js";
 import Icon from "../components/home/Icon.jsx";
 import TvTopbar from "../components/home/TvTopbar.jsx";
 import HowToPlay from "../components/home/HowToPlay.jsx";
 import AppIcon from "../components/home/AppIcon.jsx";
-import Dots from "../components/home/Dots.jsx";
 import PageDecor from "../components/home/PageDecor.jsx";
 import PartyPanel from "../components/home/PartyPanel.jsx";
 import PlaySheet from "../components/home/PlaySheet.jsx";
 import Wordmark from "../components/home/Wordmark.jsx";
 import "../styles/home.css";
 
-// A big game tile of "Elige el juego", filled with the game's colour.
+// A big game tile of "Elige el juego", filled with the game's colour. The grey "Más juegos pronto" tile (SOON_TILE)
+// looks like one, with a lock, and has no "Pronto" tag of its own.
 function ModeTile({ mode, index, selected, onPick }) {
   return (
     <button
       type="button"
       className={`tv-mode tv-c-${mode.color}${mode.available ? "" : " is-soon"}${selected ? " is-selected" : ""}`}
-      aria-pressed={selected}
+      aria-pressed={mode.placeholder ? undefined : selected}
       style={{ "--i": index }}
       aria-disabled={mode.available ? undefined : "true"}
       onClick={(e) => onPick(mode, e.currentTarget)}
@@ -28,7 +28,7 @@ function ModeTile({ mode, index, selected, onPick }) {
       <span className="tv-mode-badge">
         <Icon name={mode.icon} size={28} strokeWidth={2.2} />
       </span>
-      {!mode.available && (
+      {!mode.available && !mode.placeholder && (
         <span className="tv-mode-soon">
           <Icon name="lock" size={12} strokeWidth={3} />
           Pronto
@@ -39,31 +39,34 @@ function ModeTile({ mode, index, selected, onPick }) {
   );
 }
 
-// The row of games under the picked game's panel: the host switches game from here, the rest only see which one
-// is on.
+// The row under the picked game's panel: the most popular games (and the picked one), so the host can switch
+// straight away; every game is back in "Elige el juego" (the card's back button). The rest only see which one is on.
 function ModeDock({ current, isHost, onPick }) {
+  const modes = dockModes(current);
+  const items = modes.length % 2 === 1 ? [...modes, SOON_TILE] : modes;
   return (
-    <nav className="tv-dock" aria-label="Juegos">
-      {GAME_MODES.map((mode) => {
+    <nav className="tv-dock" aria-label="Juegos populares">
+      {items.map((mode) => {
         const on = mode.id === current;
         return (
           <button
             key={mode.id}
             type="button"
-            className={`tv-dock-item tv-c-${mode.color}${on ? " is-on" : ""}${!isHost && !on ? " is-dim" : ""}`}
-            aria-pressed={on}
-            aria-label={mode.available ? mode.name : `${mode.name} (pronto)`}
+            className={`tv-dock-item tv-c-${mode.color}${on ? " is-on" : ""}${!isHost && !on && !mode.placeholder ? " is-dim" : ""}${
+              mode.placeholder ? " is-placeholder" : ""
+            }`}
+            aria-pressed={mode.placeholder ? undefined : on}
+            aria-label={mode.available || mode.placeholder ? mode.name : `${mode.name} (pronto)`}
             onClick={(e) => onPick(mode, e.currentTarget)}
           >
             <span className="tv-dock-icon">
               <Icon name={mode.icon} size={22} strokeWidth={2.2} />
             </span>
             <span className="tv-dock-name">{mode.short || mode.name}</span>
-            {!mode.available && <Icon name="lock" size={13} strokeWidth={3} className="tv-dock-lock" />}
+            {!mode.available && !mode.placeholder && <Icon name="lock" size={13} strokeWidth={3} className="tv-dock-lock" />}
           </button>
         );
       })}
-      <span className="tv-more-soon">Más juegos pronto</span>
     </nav>
   );
 }
@@ -194,7 +197,10 @@ export default function Home() {
   }, [inviteCode, user?.name]);
 
   function pickMode(mode, tile) {
-    if (!mode.available) {
+    if (mode.placeholder) {
+      shake(tile);
+      showToast("Pronto habrá más juegos");
+    } else if (!mode.available) {
       shake(tile);
       showToast(`${mode.name} llega muy pronto`);
     } else if (room.game === mode.id) {
@@ -265,8 +271,8 @@ export default function Home() {
                     {GAME_MODES.map((mode, i) => (
                       <ModeTile key={mode.id} mode={mode} index={i} selected={tilesOut === mode.id} onPick={pickMode} />
                     ))}
+                    {GAME_MODES.length % 2 === 1 && <ModeTile mode={SOON_TILE} index={GAME_MODES.length} onPick={pickMode} />}
                   </div>
-                  <span className="tv-more-soon">Más juegos pronto</span>
                 </section>
               ) : (
                 <section className={`tv-picker tv-picker--wait${tilesOut ? " is-leaving" : ""}`} aria-live="polite">
@@ -277,7 +283,6 @@ export default function Home() {
                   </div>
                   <h2 className="tv-picker-title">
                     {hostName} está eligiendo juego
-                    <Dots />
                   </h2>
                   <p className="tv-picker-sub">Cuando lo elija, lo verás aquí al momento con sus ajustes.</p>
                 </section>

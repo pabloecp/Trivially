@@ -19,8 +19,6 @@ npm run build --prefix frontend         # production build to frontend/dist
 npm run geo:upload --prefix backend     # Geografía's questions (geo/countries.js) to Supabase
 ```
 
-`.claude/launch.json` defines `trivially-dev` (root `npm run dev`, port 5173) for the preview tools. The preview tools pass `PORT=5173` to the whole command, which makes the API collide with Vite, so start `trivially-api` (port 8080) and `trivially-web` (port 5173) separately instead.
-
 Tests are standalone scripts using `node:assert/strict`. There is no test runner: each file runs top to bottom and prints `"<name> ok"`. A new test file must be appended to the `&&` chain in `backend/package.json` `scripts.test` or it won't run.
 
 **Gotcha:** `saveStore()` always writes to the tracked file `backend/data/store.json`, even when a test passes its own in-memory store object. Running the store tests overwrites that file. Check `git diff backend/data/store.json` afterwards and restore it.

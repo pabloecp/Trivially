@@ -16,6 +16,7 @@ import {
   sanitizeUserPublic,
   setUserRole,
   unlinkGoogle,
+  unlinkSpotify,
   updateUserAvatar,
   updateUserName,
   upsertGoogleUser,
@@ -172,6 +173,17 @@ export function createApiRouter({ catalog, store }) {
   router.get("/spotify/login", requireRole(store, "owner"), (req, res) => {
     try {
       res.json({ url: spotifyAuthUrl(createTicket(req.user.id, "spotify", 10 * 60 * 1000)) });
+    } catch (err) {
+      res.status(400).json({ error: err.message });
+    }
+  });
+
+  // Disconnects the Spotify account from the profile (the button on "Activo" in the profile, tapped twice).
+  router.post("/spotify/unlink", (req, res) => {
+    try {
+      const userId = req.session.userId;
+      if (!userId) return res.status(401).json({ error: "No autenticado" });
+      res.json({ ok: true, user: unlinkSpotify(store, userId) });
     } catch (err) {
       res.status(400).json({ error: err.message });
     }

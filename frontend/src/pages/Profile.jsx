@@ -38,6 +38,13 @@ function ProfileScreen() {
   const { user: currentUser, updateUsername, updateAvatar, linkGoogle, connectSpotify, unlinkSpotify, linkingStatus, logout } =
     useApp();
   const [spotifyBusy, setSpotifyBusy] = useState(false);
+  // "Activo" on Spotify: the first tap turns it into "Desconectar", the second one disconnects.
+  const [confirmUnlink, setConfirmUnlink] = useState(false);
+  useEffect(() => {
+    if (!confirmUnlink) return undefined;
+    const t = setTimeout(() => setConfirmUnlink(false), 3000);
+    return () => clearTimeout(t);
+  }, [confirmUnlink]);
   const { userId } = useParams();
   const [searchParams] = useSearchParams();
   const nav = useNavigate();
@@ -170,6 +177,24 @@ function ProfileScreen() {
   // Only owners (the ones with the tag) see the Spotify button for now.
   const canSpotify = !isOtherUser && activeUser?.role === "owner";
   const spotifyNotice = searchParams.get("spotify");
+
+  async function onSpotifyActive() {
+    if (!confirmUnlink) {
+      setConfirmUnlink(true);
+      return;
+    }
+    setConfirmUnlink(false);
+    setErr("");
+    setSpotifyBusy(true);
+    try {
+      await unlinkSpotify();
+      setMsg("Spotify desconectado de tu perfil.");
+    } catch (e) {
+      setErr(e.message || "No se pudo desconectar Spotify");
+    } finally {
+      setSpotifyBusy(false);
+    }
+  }
 
   async function onConnectSpotify() {
     setErr("");
@@ -375,9 +400,16 @@ function ProfileScreen() {
                       : "Vincula tu cuenta de Spotify a tu perfil."}
                   </span>
                 </div>
-                {/* Once linked, Spotify stays linked: there's no way to disconnect it. */}
                 {hasSpotify ? (
-                  <span className="tv-tag tv-tag--ok">Activo</span>
+                  <button
+                    type="button"
+                    className={`tv-tag tv-tag--ok tv-tag-btn${confirmUnlink ? " is-confirm" : ""}`}
+                    onClick={onSpotifyActive}
+                    disabled={spotifyBusy}
+                    aria-label={confirmUnlink ? "Toca otra vez para desconectar Spotify" : "Spotify activo. Toca para desconectarlo"}
+                  >
+                    {spotifyBusy ? "Desconectando…" : confirmUnlink ? "Desconectar" : "Activo"}
+                  </button>
                 ) : (
                   <button type="button" className="tv-btn tv-btn--sm tv-btn--spotify" onClick={onConnectSpotify} disabled={spotifyBusy}>
                     {spotifyBusy ? "Abriendo…" : "Conectar"}

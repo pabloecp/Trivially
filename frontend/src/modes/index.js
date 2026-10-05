@@ -5,7 +5,8 @@ import GeoLobbyPanel from "./mundo/LobbyPanel.jsx";
 // Game modes shown on the room screen. To add a new mode, add an entry here with `available: true`, a `Lobby`
 // panel (shown on the room screen while the room waits in that mode: the mode's big coloured card with its start
 // button, and its settings) and a `path` for its in-match screens, and add its id to GAME_IDS in
-// backend/src/game/roomManager.js. `short` is the name in the game dock, `desc` the line under the big name.
+// backend/src/game/roomManager.js. `short` is the name in the game dock, `desc` the line under the big name and
+// `popular` the game's place in the dock under the picked game, which shows only the most played ones.
 export const GAME_MODES = [
   {
     id: "musica",
@@ -15,6 +16,7 @@ export const GAME_MODES = [
     color: "music",
     icon: "music",
     available: true,
+    popular: 1,
     Lobby: MusicLobbyPanel,
     path: (room) => `/game/${room.code}`,
   },
@@ -27,11 +29,10 @@ export const GAME_MODES = [
     color: "quiz",
     icon: "grid",
     available: true,
+    popular: 2,
     Lobby: QuizLobbyPanel,
     path: (room) => `/quiz/${room.code}`,
   },
-  { id: "cultura", name: "Cultura general", short: "Cultura", color: "culture", icon: "bulb", available: false },
-  { id: "cine", name: "Cine y series", short: "Cine", color: "cinema", icon: "film", available: false },
   {
     id: "mundo",
     name: "Geografía",
@@ -40,11 +41,24 @@ export const GAME_MODES = [
     color: "world",
     icon: "globe",
     available: true,
+    popular: 3,
     Lobby: GeoLobbyPanel,
     // Capitals, flags and the world map (modes/mundo/Game.jsx).
     path: (room) => `/mundo/${room.code}`,
   },
+  { id: "cultura", name: "Cultura general", short: "Cultura", color: "culture", icon: "bulb", available: false },
+  { id: "cine", name: "Cine y series", short: "Cine", color: "cinema", icon: "film", available: false },
 ];
+
+// The grey, locked tile that closes the grid (and the dock) when the number of games is odd: more are on the way.
+export const SOON_TILE = { id: "soon", name: "Más juegos pronto", short: "Más juegos pronto", color: "soon", icon: "lock", placeholder: true };
+
+// The dock's games: the most popular ones, plus the picked one if it isn't among them.
+export function dockModes(current) {
+  const popular = GAME_MODES.filter((m) => m.popular).sort((a, b) => a.popular - b.popular);
+  const picked = GAME_MODES.find((m) => m.id === current);
+  return picked && !popular.includes(picked) ? [...popular, picked] : popular;
+}
 
 export function findMode(id) {
   return GAME_MODES.find((m) => m.id === id) || null;

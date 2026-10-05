@@ -2,7 +2,6 @@ import { useState } from "react";
 import Avatar from "./Avatar.jsx";
 import Confetti from "./Confetti.jsx";
 import CountUp from "./CountUp.jsx";
-import Dots from "./Dots.jsx";
 import Icon from "./Icon.jsx";
 import PartyPanel from "./PartyPanel.jsx";
 import PlayerName from "./PlayerName.jsx";
@@ -77,7 +76,6 @@ export default function MatchResults({ room, color = "green" }) {
             ) : (
               <p className="tv-mstage-wait tv-results-wait">
                 Esperando a que el anfitrión decida qué jugar
-                <Dots />
               </p>
             )}
           </div>

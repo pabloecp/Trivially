@@ -462,7 +462,6 @@
 .tv-geo-action { display: grid; flex: none; min-height: 52px; align-items: center; }
 .tv-geo-action .tv-btn { height: 52px; }
 .tv-geo-watch { text-align: center; }
-.tv-app .tv-geo-skip.is-on { background: var(--tv-danger-bg); color: var(--tv-danger); box-shadow: 0 4px 0 var(--tv-edge); }
 
 .tv-geo-verdict {
   position: relative;
