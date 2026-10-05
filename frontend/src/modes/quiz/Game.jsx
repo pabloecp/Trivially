@@ -5,7 +5,7 @@ import TvShell from "../../components/home/TvShell.jsx";
 import Confetti from "../../components/home/Confetti.jsx";
 import Icon from "../../components/home/Icon.jsx";
 import MatchResults from "../../components/home/MatchResults.jsx";
-import { remainingMs, useApp } from "../../lib/store.jsx";
+import { useApp, useRemainingMs } from "../../lib/store.jsx";
 import { OPTION_LETTERS, findDifficulty, quizConfig } from "./quizInfo.js";
 import "../../styles/home.css";
 import "../../styles/quiz.css";
@@ -40,7 +40,7 @@ function GameScreen() {
   const { user, room, joinRoom, answer, setGame } = useApp();
   const nav = useNavigate();
 
-  const [left, setLeft] = useState(0);
+  const left = useRemainingMs(room);
   const [err, setErr] = useState("");
   // The option this player tapped, shown straight away (before the server confirms): { round, choice }.
   const [picked, setPicked] = useState(null);
@@ -54,11 +54,6 @@ function GameScreen() {
       joinRoom(code).catch(() => nav("/"));
     }
   }, [code]);
-
-  useEffect(() => {
-    const t = setInterval(() => setLeft(remainingMs(room)), 100);
-    return () => clearInterval(t);
-  }, [room]);
 
   useEffect(() => {
     if (!confirmHub) return;

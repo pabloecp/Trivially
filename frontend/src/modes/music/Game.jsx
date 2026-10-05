@@ -5,7 +5,7 @@ import TvShell from "../../components/home/TvShell.jsx";
 import Confetti from "../../components/home/Confetti.jsx";
 import Icon from "../../components/home/Icon.jsx";
 import MatchResults from "../../components/home/MatchResults.jsx";
-import { remainingMs, useApp } from "../../lib/store.jsx";
+import { useApp, useRemainingMs } from "../../lib/store.jsx";
 import { BACKEND_URL } from "../../lib/config.js";
 
 function normalize(str = "") {
@@ -67,7 +67,7 @@ function GameScreen() {
   const suggestionsListRef = useRef(null);
   const cheerOffset = useRef(Math.floor(Math.random() * CHEERS.length));
 
-  const [left, setLeft] = useState(0);
+  const left = useRemainingMs(room);
   const [err, setErr] = useState("");
 
   // Search & autocomplete state
@@ -111,14 +111,6 @@ function GameScreen() {
   useEffect(() => {
     setConfirmSkip(false);
   }, [room?.currentRound]);
-
-  // Synchronized timer ticker
-  useEffect(() => {
-    const t = setInterval(() => {
-      setLeft(remainingMs(room));
-    }, 100);
-    return () => clearInterval(t);
-  }, [room]);
 
   // Convert an iTunes previewUrl to go through our backend proxy
   // (iTunes serves audio/x-m4p which browsers don't support; proxy re-serves as audio/mp4)
