@@ -46,6 +46,25 @@ function Stepper({ label, value, unit, limits, onChange }) {
   );
 }
 
+// The tick in the corner of a picked playlist.
+function PickCheck() {
+  return (
+    <span className="tv-pick-check" aria-hidden="true">
+      <Icon name="check" size={13} strokeWidth={3.4} />
+    </span>
+  );
+}
+
+// A playlist card's name and the line under it.
+function PickText({ title, sub }) {
+  return (
+    <span className="tv-pick-text">
+      <span className="tv-pick-name">{title}</span>
+      {sub && <span className="tv-pick-sub">{sub}</span>}
+    </span>
+  );
+}
+
 // A Spotify playlist's cover, or the Spotify logo when it has none.
 function PlaylistArt({ image }) {
   return (
@@ -237,17 +256,16 @@ export default function MusicSettings({ room, catalog, updateConfig, onToast, ch
   }
 
   return (
-    <section className="tv-card tv-settings" aria-labelledby="tv-settings-title">
-      <h2 id="tv-settings-title" className="tv-card-title">Ajustes de la partida</h2>
-      {readOnly && (
-        <p className="tv-readonly-note">
-          <Icon name="lock" size={15} strokeWidth={2.6} />
-          Solo {room.hostName || "el host"} puede cambiar los ajustes
-        </p>
-      )}
+    <section className="tv-settings-card tv-settings" aria-labelledby="tv-settings-title">
+      <div className="tv-settings-head">
+        <h2 id="tv-settings-title" className="tv-settings-title">Ajustes de la partida</h2>
+        <span className="tv-settings-who">
+          {readOnly ? `Solo lectura · los elige ${room.hostName || "el anfitrión"}` : "Puedes cambiarlos tú"}
+        </span>
+      </div>
 
       <fieldset className="tv-fieldset" disabled={readOnly}>
-        <legend className="tv-label">Playlists</legend>
+        <legend className="tv-mono-label">Lista de canciones</legend>
         <div className="tv-picks">
           {playlists.map((p) => {
             // "Most Streamed Songs on Spotify · Español" shows as "Top 100 Español"; the full name is the tooltip.
@@ -262,9 +280,10 @@ export default function MusicSettings({ room, catalog, updateConfig, onToast, ch
                 onClick={() => togglePlaylist(p.id)}
               >
                 <span className="tv-pick-art">
-                  <Icon name="music" size={18} strokeWidth={2.4} />
+                  <Icon name="music" size={22} strokeWidth={2.2} />
                 </span>
-                {label}
+                <PickText title={label} sub={p.trackCount ? `${p.trackCount} canciones` : "Lista de Trivially"} />
+                {selected.includes(p.id) && <PickCheck />}
               </button>
             );
           })}
@@ -278,10 +297,8 @@ export default function MusicSettings({ room, catalog, updateConfig, onToast, ch
               onClick={() => togglePlaylist(p.id)}
             >
               <PlaylistArt image={p.image} />
-              <span className="tv-pick-name">{p.name}</span>
-              <small className="tv-pick-progress">
-                {p.ready}/{p.total}
-              </small>
+              <PickText title={p.name} sub={`${p.ready} de ${p.total} listas`} />
+              <PickCheck />
             </button>
           ))}
           {isOwnerEditor &&
@@ -299,7 +316,7 @@ export default function MusicSettings({ room, catalog, updateConfig, onToast, ch
                   onClick={() => addSpotify(p.id)}
                 >
                   <PlaylistArt image={p.image} />
-                  <span className="tv-pick-name">{spotifyBusy === p.id ? "Añadiendo…" : p.name}</span>
+                  <PickText title={p.name} sub={spotifyBusy === p.id ? "Añadiendo…" : `${p.total} canciones`} />
                 </button>
               ))}
           {isOwnerEditor && (
@@ -312,11 +329,17 @@ export default function MusicSettings({ room, catalog, updateConfig, onToast, ch
               aria-label={spotifyOpen ? "Ocultar tus playlists de Spotify" : "Añadir tus playlists de Spotify"}
               title="Tus playlists de Spotify"
             >
-              {spotifyBusy === "list" ? (
-                <SpotifyIcon size={20} />
-              ) : (
-                <Icon name={spotifyOpen ? "close" : "plus"} size={20} strokeWidth={3} />
-              )}
+              <span className="tv-pick-art">
+                {spotifyBusy === "list" || !spotifyOpen ? (
+                  <SpotifyIcon size={22} />
+                ) : (
+                  <Icon name="close" size={20} strokeWidth={3} />
+                )}
+              </span>
+              <PickText
+                title="Mi Spotify"
+                sub={spotifyBusy === "list" ? "Cargando…" : spotifyOpen ? "Ocultar mis playlists" : "Usa tus playlists"}
+              />
             </button>
           )}
         </div>

@@ -35,7 +35,7 @@ function Notice({ tone, icon, children }) {
 }
 
 function ProfileScreen() {
-  const { room, user: currentUser, updateUsername, updateAvatar, linkGoogle, connectSpotify, unlinkSpotify, linkingStatus, logout } =
+  const { user: currentUser, updateUsername, updateAvatar, linkGoogle, connectSpotify, unlinkSpotify, linkingStatus, logout } =
     useApp();
   const [spotifyBusy, setSpotifyBusy] = useState(false);
   const { userId } = useParams();
@@ -185,14 +185,6 @@ function ProfileScreen() {
 
   return (
     <div className="tv-page">
-      {room && (
-        // Profiles open in the same tab from the room, so there has to be a way back. Home sends you to the
-        // room's current screen.
-        <Link to="/" className="tv-btn tv-c-pink tv-profile-back">
-          <Icon name="back" size={18} />
-          Volver a la sala
-        </Link>
-      )}
       {searchParams.get("new") === "1" && (
         <Notice tone="brand" icon="star">¡Tu cuenta está lista! Puedes cambiar tu nombre cuando quieras.</Notice>
       )}

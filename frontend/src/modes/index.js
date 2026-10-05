@@ -1,23 +1,24 @@
 import MusicLobbyPanel from "./music/LobbyPanel.jsx";
-import MusicStartButton from "./music/StartButton.jsx";
 
-// Game modes shown on the Home screen. To add a new mode, add an entry here with `available: true`, a `Lobby`
-// panel (shown on the room screen while the room waits in that mode) and a `path` for its in-match screens,
-// and add its id to GAME_IDS in backend/src/game/roomManager.js.
+// Game modes shown on the room screen. To add a new mode, add an entry here with `available: true`, a `Lobby`
+// panel (shown on the room screen while the room waits in that mode: the mode's big coloured card with its start
+// button, and its settings) and a `path` for its in-match screens, and add its id to GAME_IDS in
+// backend/src/game/roomManager.js. `short` is the name in the game dock, `desc` the line under the big name.
 export const GAME_MODES = [
   {
     id: "musica",
     name: "Adivina la canción",
+    short: "Canción",
+    desc: "Suena un fragmento. Gana quien escribe antes el título.",
     color: "music",
     icon: "music",
     available: true,
     Lobby: MusicLobbyPanel,
-    Start: MusicStartButton,
     path: (room) => `/game/${room.code}`,
   },
-  { id: "cultura", name: "Cultura general", color: "culture", icon: "bulb", available: false },
-  { id: "cine", name: "Cine y series", color: "cinema", icon: "film", available: false },
-  { id: "mundo", name: "Geografía", color: "world", icon: "globe", available: false },
+  { id: "cultura", name: "Cultura general", short: "Cultura", color: "culture", icon: "bulb", available: false },
+  { id: "cine", name: "Cine y series", short: "Cine", color: "cinema", icon: "film", available: false },
+  { id: "mundo", name: "Geografía", short: "Geografía", color: "world", icon: "globe", available: false },
 ];
 
 export function findMode(id) {

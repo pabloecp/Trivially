@@ -1,14 +1,16 @@
 import { useEffect } from "react";
 import MusicSettings from "./MusicSettings.jsx";
-import Avatar from "../../components/home/Avatar.jsx";
+import StartButton from "./StartButton.jsx";
 import Icon from "../../components/home/Icon.jsx";
+import ModeStage from "../../components/home/ModeStage.jsx";
 import SpotifyIcon from "../../components/home/SpotifyIcon.jsx";
 import { playlistLabel } from "./playlistLabel.js";
 import { useApp } from "../../lib/store.jsx";
+import { findMode } from "../index.js";
 
-// The music mode's waiting room, shown inside the room screen on Home once the host picks this game:
-// the match settings (playlists, rounds, time) for whoever may change them. The start button lives in PartyPanel.
-// Everyone sees the match settings; players without permission see them locked.
+// The music mode's waiting room, shown inside the room screen on Home once the host picks this game: the mode's big
+// card (summary of the match and the start button) and the match settings (playlists, rounds, time) beside it.
+// Everyone sees the settings; players without permission see them locked.
 export default function LobbyPanel({ room, onToast }) {
   const { user, catalog, refreshCatalog, updateConfig } = useApp();
 
@@ -19,7 +21,6 @@ export default function LobbyPanel({ room, onToast }) {
   const me = room.players.find((p) => p.id === user?.id);
   const isHost = room.hostId === user?.id;
   const canEditConfig = isHost || Boolean(me?.canEditConfig) || Boolean(room.coHosts?.includes(user?.id));
-  const connected = room.players.filter((p) => p.connected);
   // A match needs a different song for every round (the server checks it too; older servers don't send songsReady).
   const songsReady = room.songsReady;
   const roundsSet = room.config?.rounds || 10;
@@ -48,40 +49,23 @@ export default function LobbyPanel({ room, onToast }) {
   const minutes = Math.max(1, Math.round((rounds * (3 + seconds + 3)) / 60));
 
   return (
-    <div className="tv-lobby-grid has-settings">
-      <section className="tv-card tv-match" aria-label="Resumen de la partida">
-        <h2 className="tv-card-title">Resumen de la partida</h2>
-
-        <div className="tv-match-preview">
-          <div className="tv-eq tv-eq--sm" aria-hidden="true">
+    <>
+      <ModeStage
+        room={room}
+        mode={findMode("musica")}
+        chips={[playlistNames || "Cargando…", `${rounds} rondas`, `${seconds} s cada una`, `≈ ${minutes} min`]}
+        extra={
+          <span className="tv-eq tv-eq--stage" aria-hidden="true">
             {Array.from({ length: 7 }, (_, i) => (
               <span key={i} style={{ "--i": i }} />
             ))}
-          </div>
-          <p className="tv-match-title">
-            <strong>{rounds}</strong> rondas
-          </p>
-          <div className="tv-match-chips">
-            <span className="tv-match-chip">
-              <Icon name="bolt" size={14} strokeWidth={2.6} />
-              {seconds} s cada una
-            </span>
-            <span className="tv-match-chip">
-              <Icon name="music" size={14} strokeWidth={2.6} />
-              {playlistNames || "Cargando…"}
-            </span>
-            <span className="tv-match-chip">≈ {minutes} min</span>
-          </div>
-          <div className="tv-match-players">
-            <span className="tv-avatar-stack" aria-hidden="true">
-              {connected.slice(0, 5).map((p) => (
-                <Avatar key={p.id} name={p.name} avatar={p.avatar} />
-              ))}
-            </span>
-            {connected.length === 1 ? "1 jugador en la sala" : `${connected.length} jugadores en la sala`}
-          </div>
-        </div>
+          </span>
+        }
+      >
+        <StartButton room={room} />
+      </ModeStage>
 
+      <MusicSettings room={room} catalog={catalog} updateConfig={updateConfig} onToast={onToast} readOnly={!canEditConfig}>
         {loading.length > 0 && (
           <p className="tv-playlist-total tv-spotify-loading" aria-live="polite">
             <SpotifyIcon size={18} />
@@ -121,10 +105,11 @@ export default function LobbyPanel({ room, onToast }) {
             </span>
           </p>
         )}
-      </section>
-
-      <MusicSettings room={room} catalog={catalog} updateConfig={updateConfig} onToast={onToast} readOnly={!canEditConfig} />
-
-    </div>
+        <p className="tv-settings-note">
+          <Icon name="info" size={16} strokeWidth={2.2} />
+          Escribe el título mientras suena: el buscador te sugiere canciones.
+        </p>
+      </MusicSettings>
+    </>
   );
 }

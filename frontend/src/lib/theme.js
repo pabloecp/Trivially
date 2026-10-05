@@ -1,16 +1,22 @@
 import { useEffect, useState } from "react";
 import { PALETTES } from "./palettes.js";
 
-const PALETTE_KEY = "trivially_palette";
+// The list was renumbered (old 5 Mezcla is now 1, Rayas and Ondas kept 2 and 3, Confeti and Triángulos are gone and
+// 4 and 5 are the new Lima and Medianoche), so the saved choice moved to a new key; the old one is read once and
+// translated.
+const PALETTE_KEY = "trivially_palette_v2";
+const OLD_PALETTE_KEY = "trivially_palette";
+const OLD_TO_NEW = { 5: 1, 2: 2, 3: 3 };
 const THEME_KEY = "trivially_theme";
 
-const DEFAULT_PALETTE = PALETTES.find((p) => p.id === 5) || PALETTES[0];
+const DEFAULT_PALETTE = PALETTES.find((p) => p.id === 1) || PALETTES[0];
 
 // No saved option, or one that no longer exists, falls back to the default (Mezcla).
 function loadPalette() {
   const saved = Number(localStorage.getItem(PALETTE_KEY));
   if (PALETTES.some((p) => p.id === saved)) return saved;
-  return DEFAULT_PALETTE.id;
+  const old = OLD_TO_NEW[Number(localStorage.getItem(OLD_PALETTE_KEY))];
+  return old || DEFAULT_PALETTE.id;
 }
 
 function applyPalette(id) {

@@ -1,8 +1,10 @@
 import { useState } from "react";
+import Dots from "../../components/home/Dots.jsx";
 import Icon from "../../components/home/Icon.jsx";
 import { useApp } from "../../lib/store.jsx";
 
-// "Comenzar partida" for the music mode. Shown right under the players in the room card (PartyPanel).
+// "Comenzar partida" for the music mode, at the bottom of the mode's big card (LobbyPanel). Everyone else sees
+// that they're waiting for the host.
 export default function StartButton({ room }) {
   const { user, startGame } = useApp();
   const [err, setErr] = useState("");
@@ -22,9 +24,9 @@ export default function StartButton({ room }) {
 
   if (!isHost) {
     return (
-      <p className="tv-party-status">
-        <span className="tv-pulse" aria-hidden="true" />
-        Esperando a que {room.hostName || "el anfitrión"} comience la partida…
+      <p className="tv-mstage-wait">
+        Esperando a que {room.hostName || "el anfitrión"} comience la partida
+        <Dots />
       </p>
     );
   }
@@ -32,8 +34,8 @@ export default function StartButton({ room }) {
   return (
     <>
       {err && <p className="tv-lobby-error">{err}</p>}
-      <button className="tv-btn tv-btn--block tv-c-green" onClick={onStart} disabled={!canStart} type="button">
-        <Icon name="play" size={20} filled strokeWidth={1.5} />
+      <button className="tv-mstage-start tv-shine" onClick={onStart} disabled={!canStart} type="button">
+        <Icon name="play" size={22} filled strokeWidth={1.5} />
         Comenzar partida
       </button>
     </>

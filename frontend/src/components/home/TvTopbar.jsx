@@ -4,10 +4,12 @@ import { roomPath } from "../../modes/index.js";
 import { useTheme } from "../../lib/theme.js";
 import { PALETTES } from "../../lib/palettes.js";
 import { useApp } from "../../lib/store.jsx";
+import AppIcon from "./AppIcon.jsx";
 import Icon from "./Icon.jsx";
 import ProfileChip from "./ProfileChip.jsx";
 
-// Same top bar on every screen: Inicio on the left, profile and theme toggle on the right.
+// Same top bar on every screen: Inicio on the left (the small logo on the home screen itself, where Inicio would go
+// nowhere), profile and theme toggle on the right.
 export default function TvTopbar() {
   const { user, room, leaveRoom } = useApp();
   const { palette, toggleTheme } = useTheme();
@@ -17,6 +19,7 @@ export default function TvTopbar() {
   const roomTarget = room ? roomPath(room) : null;
   const showBack = Boolean(roomTarget) && pathname !== roomTarget;
   const inMatch = Boolean(room) && room.phase !== "lobby";
+  const onHome = !room && pathname === "/";
   // Inside a room, Inicio means leaving it: the first tap asks, the second one leaves.
   const [confirmLeave, setConfirmLeave] = useState(false);
 
@@ -43,24 +46,33 @@ export default function TvTopbar() {
   }
 
   return (
-    <header className="tv-topbar">
-      <Link
-        to="/"
-        className={`tv-chip tv-chip--home${confirmLeave ? " is-confirm" : ""}`}
-        aria-label={confirmLeave ? "Toca otra vez para salir de la sala e ir al inicio" : "Volver al inicio"}
-        onClick={goHome}
-      >
-        <span className="tv-avatar tv-avatar--empty">
-          <Icon name={confirmLeave ? "logout" : "home"} size={18} />
-        </span>
-        <span className="tv-chip-name">{confirmLeave ? "¿Salir de la sala?" : "Inicio"}</span>
-      </Link>
+    <header className={`tv-topbar${showBack && !confirmLeave ? " has-back" : ""}`}>
+      {onHome ? (
+        <Link to="/" className="tv-brand" aria-label="Trivially, inicio">
+          <AppIcon small />
+          <span className="tv-brand-name">trivially</span>
+        </Link>
+      ) : (
+        <Link
+          to="/"
+          className={`tv-chip tv-chip--home${confirmLeave ? " is-confirm" : ""}`}
+          aria-label={confirmLeave ? "Toca otra vez para salir de la sala e ir al inicio" : "Volver al inicio"}
+          onClick={goHome}
+        >
+          <span className="tv-avatar tv-avatar--empty">
+            <Icon name={confirmLeave ? "logout" : "home"} size={18} />
+          </span>
+          <span className="tv-chip-name">{confirmLeave ? "¿Salir de la sala?" : "Inicio"}</span>
+        </Link>
+      )}
       {showBack && !confirmLeave && (
         <Link to={roomTarget} className="tv-chip tv-chip--back" aria-label={inMatch ? "Volver a la partida" : "Volver a la sala"}>
           <span className="tv-avatar tv-avatar--empty">
             <Icon name={inMatch ? "play" : "users"} size={18} filled={inMatch} />
           </span>
-          <span className="tv-chip-name">{inMatch ? "Volver a la partida" : "Volver a la sala"}</span>
+          {/* Phones only have room for "Volver" (home.css). */}
+          <span className="tv-chip-name tv-chip-long">{inMatch ? "Volver a la partida" : "Volver a la sala"}</span>
+          <span className="tv-chip-name tv-chip-short">Volver</span>
         </Link>
       )}
       <div className="tv-topbar-end">

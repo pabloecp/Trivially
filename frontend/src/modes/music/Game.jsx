@@ -1,11 +1,12 @@
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import MiniBoard from "../../components/MiniBoard.jsx";
 import TvShell from "../../components/home/TvShell.jsx";
 import Avatar from "../../components/home/Avatar.jsx";
 import Confetti from "../../components/home/Confetti.jsx";
 import CountUp from "../../components/home/CountUp.jsx";
 import Icon from "../../components/home/Icon.jsx";
+import PartyPanel from "../../components/home/PartyPanel.jsx";
+import Dots from "../../components/home/Dots.jsx";
 import PlayerName from "../../components/home/PlayerName.jsx";
 import { remainingMs, useApp } from "../../lib/store.jsx";
 import { BACKEND_URL } from "../../lib/config.js";
@@ -61,7 +62,7 @@ const CHEERS = [
 
 function GameScreen() {
   const { code } = useParams();
-  const { user, room, joinRoom, answer, skipSong, restartGame, leaveRoom, setGame } = useApp();
+  const { user, room, joinRoom, answer, skipSong, restartGame, setGame } = useApp();
   const nav = useNavigate();
 
   const audioRef = useRef(null);
@@ -396,89 +397,63 @@ function GameScreen() {
     const podium = [top[1], top[0], top[2]]; // 2nd, 1st, 3rd
 
     return (
-      <div className="tv-page tv-results">
-        <Confetti />
-        <header className="tv-results-head">
-          <p className="tv-party-kicker">Partida terminada</p>
-          <h1 className="tv-page-title tv-results-title">
-            {top.length > 1 ? `¡Ganó ${winner?.name}!` : "¡Fin de la partida!"}
-          </h1>
-        </header>
+      <div className="tv-room tv-game">
+        <div className="tv-room-main">
+          <section className="tv-game-stage tv-results">
+            <Confetti />
+            <header className="tv-results-head">
+              <p className="tv-mono-label">Partida terminada</p>
+              <h1 className="tv-page-title tv-results-title">
+                {top.length > 1 ? `¡Ganó ${winner?.name}!` : "¡Fin de la partida!"}
+              </h1>
+            </header>
 
-        <div className="tv-podium" role="list" aria-label="Podio">
-          {podium.map((p, i) => {
-            const place = i === 1 ? 1 : i === 0 ? 2 : 3;
-            if (!p) return <div key={place} className="tv-podium-spot is-empty" aria-hidden="true" />;
-            return (
-              <div key={p.id} role="listitem" className={`tv-podium-spot is-${place}`}>
-                <span className="tv-podium-avatar">
-                  {place === 1 && <Icon name="crown" size={30} filled strokeWidth={1.6} className="tv-podium-crown" />}
-                  <Avatar name={p.name} avatar={p.avatar} className={place === 1 ? "tv-avatar--lg" : ""} />
-                </span>
-                <PlayerName player={p} className="tv-podium-name" />
-                <span className="tv-podium-score">
-                  <CountUp value={p.score} /> pts
-                </span>
-                <div className="tv-podium-block">
-                  <span className="tv-podium-place">{place}</span>
-                </div>
-              </div>
-            );
-          })}
+            <div className="tv-podium" role="list" aria-label="Podio">
+              {podium.map((p, i) => {
+                const place = i === 1 ? 1 : i === 0 ? 2 : 3;
+                if (!p) return <div key={place} className="tv-podium-spot is-empty" aria-hidden="true" />;
+                return (
+                  <div key={p.id} role="listitem" className={`tv-podium-spot is-${place}`}>
+                    <span className="tv-podium-avatar">
+                      {place === 1 && <Icon name="crown" size={30} filled strokeWidth={1.6} className="tv-podium-crown" />}
+                      <Avatar name={p.name} avatar={p.avatar} className={place === 1 ? "tv-avatar--lg" : ""} />
+                    </span>
+                    <PlayerName player={p} className="tv-podium-name" />
+                    <span className="tv-podium-score">
+                      <CountUp value={p.score} /> pts
+                    </span>
+                    <div className="tv-podium-block">
+                      <span className="tv-podium-place">{place}</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {err && <p className="tv-lobby-error" role="alert">{err}</p>}
+
+            <div className="tv-results-actions">
+              {isHost ? (
+                <>
+                  <button className="tv-btn tv-btn--block tv-c-green tv-shine" onClick={restartGame} type="button">
+                    <Icon name="play" size={20} filled strokeWidth={1.5} />
+                    Volver al lobby
+                  </button>
+                  <button className="tv-btn tv-btn--block tv-c-neutral" onClick={() => backToHub()} type="button">
+                    <Icon name="home" size={18} />
+                    Elegir otro juego
+                  </button>
+                </>
+              ) : (
+                <p className="tv-mstage-wait tv-results-wait">
+                  Esperando a que el anfitrión decida qué jugar
+                  <Dots />
+                </p>
+              )}
+            </div>
+          </section>
         </div>
-
-        <section className="tv-card" aria-labelledby="tv-breakdown">
-          <h2 id="tv-breakdown" className="tv-card-title">Resultados</h2>
-          <ol className="tv-rank-list">
-            {top.map((p, i) => (
-              <li key={p.id} className={`tv-rank-row${p.id === user?.id ? " is-me" : ""}`} style={{ "--i": i }}>
-                <span className="tv-rank-pos">{p.position}</span>
-                <Avatar name={p.name} avatar={p.avatar} />
-                <span className="tv-rank-name">
-                  <PlayerName player={p} />
-                  <span className="tv-rank-meta">
-                    {p.correct} aciertos · racha {p.bestStreak}
-                    {p.avgMs ? ` · ${(p.avgMs / 1000).toFixed(1)} s` : ""}
-                  </span>
-                </span>
-                <span className="tv-rank-score">{p.score}</span>
-              </li>
-            ))}
-          </ol>
-        </section>
-
-        {err && <p className="tv-lobby-error" role="alert">{err}</p>}
-
-        <div className="tv-results-actions">
-          {isHost ? (
-            <>
-              <button className="tv-btn tv-btn--block tv-c-green" onClick={restartGame} type="button">
-                <Icon name="play" size={20} filled strokeWidth={1.5} />
-                Volver al lobby
-              </button>
-              <button className="tv-btn tv-c-neutral" onClick={() => backToHub()} type="button">
-                <Icon name="home" size={18} />
-                Elegir otro juego
-              </button>
-            </>
-          ) : (
-            <p className="tv-party-status">
-              <span className="tv-pulse" aria-hidden="true" />
-              Esperando a que el anfitrión decida qué jugar…
-            </p>
-          )}
-          <button
-            type="button"
-            className="tv-link-btn"
-            onClick={() => {
-              leaveRoom();
-              nav("/");
-            }}
-          >
-            <Icon name="logout" size={18} />
-            Salir de la sala
-          </button>
-        </div>
+        <PartyPanel room={room} scores onToast={setErr} />
       </div>
     );
   }
@@ -490,13 +465,13 @@ function GameScreen() {
   const urgent = room.phase === "playing" && left <= 4000;
 
   return (
-    <div className="tv-game">
+    <div className="tv-room tv-game">
       <audio ref={audioRef} preload="auto" playsInline />
 
-      <div className="tv-game-main">
-        <section className="tv-card tv-game-top">
+      <div className="tv-room-main tv-game-main">
+        <section className="tv-game-top">
           <div className="tv-game-round">
-            <p className="tv-party-kicker">
+            <p className="tv-mono-label">
               Sala {room.code} · {room.mode === "solo" ? "Práctica" : "Multijugador"}
             </p>
             <h1 className="tv-card-title">
@@ -531,15 +506,15 @@ function GameScreen() {
         </section>
 
         {room.phase === "countdown" && (
-          <section className="tv-card tv-countdown">
-            <p className="tv-party-kicker">Prepárate para escuchar</p>
+          <section key={`c${room.currentRound}`} className="tv-game-stage tv-countdown">
+            <p className="tv-mono-label">Prepárate para escuchar</p>
             <span key={Math.max(1, seconds)} className="tv-countdown-num">{Math.max(1, seconds)}</span>
             <p className="tv-hint">Escribe el título en cuanto reconozcas la canción.</p>
           </section>
         )}
 
         {room.phase === "playing" && (
-          <section className="tv-card tv-play-card">
+          <section key={`p${room.currentRound}`} className="tv-game-stage tv-play-card">
             <div className="tv-eq" aria-hidden="true">
               {Array.from({ length: 7 }, (_, i) => (
                 <span key={i} style={{ "--i": i }} />
@@ -641,7 +616,7 @@ function GameScreen() {
                 <span className="tv-locked-check">
                   <Icon name={skipped ? "close" : "check"} size={28} strokeWidth={3.2} />
                 </span>
-                <p className="tv-party-kicker">{skipped ? "Sin respuesta" : "Respuesta enviada"}</p>
+                <p className="tv-mono-label">{skipped ? "Sin respuesta" : "Respuesta enviada"}</p>
                 <p className="tv-locked-title">
                   {skipped ? "Te la saltaste" : submittedSong || me?.lastAnswer?.text || "Canción enviada"}
                 </p>
@@ -658,8 +633,8 @@ function GameScreen() {
           const didAnswer = !skipped && Boolean(me?.lastAnswer?.text || submittedSong);
           const tone = isCorrect ? "ok" : didAnswer ? "bad" : "timeout";
           return (
-            <>
-              <section className={`tv-card tv-result tv-result--${tone}`} role="status">
+            <section key={`r${room.currentRound}`} className="tv-game-stage tv-reveal">
+              <div className={`tv-result tv-result--${tone}`} role="status">
                 {isCorrect && <Confetti pieces={18} />}
                 <span className="tv-result-icon">
                   <Icon name={isCorrect ? "check" : didAnswer ? "lock" : skipped ? "close" : "hash"} size={30} strokeWidth={3} />
@@ -677,9 +652,9 @@ function GameScreen() {
                 {didAnswer && !isCorrect && me?.lastAnswer?.text && (
                   <p className="tv-hint">Escribiste “{me.lastAnswer.text}”</p>
                 )}
-              </section>
+              </div>
 
-              <section className={`tv-card tv-song${coverReadyFor === room.reveal.title ? "" : " is-waiting"}`}>
+              <div className={`tv-song${coverReadyFor === room.reveal.title ? "" : " is-waiting"}`}>
                 {/* Flips in once the image has loaded, never half-drawn. */}
                 <img
                   key={room.reveal.title}
@@ -695,7 +670,7 @@ function GameScreen() {
                   }}
                 />
                 <div className="tv-song-text">
-                  <p className="tv-party-kicker">Era la canción</p>
+                  <p className="tv-mono-label">Era la canción</p>
                   <h3 className="tv-song-title">{room.reveal.title}</h3>
                   <p className="tv-song-meta">
                     {room.reveal.artistName}
@@ -703,20 +678,18 @@ function GameScreen() {
                     {room.reveal.year ? ` (${room.reveal.year})` : ""}
                   </p>
                 </div>
-              </section>
+              </div>
 
-              <p className="tv-party-status tv-next">
-                <span className="tv-pulse" aria-hidden="true" />
-                {room.currentRound + 1 >= room.totalRounds ? "Calculando resultados…" : "Siguiente canción en breve…"}
+              <p className="tv-next">
+                {room.currentRound + 1 >= room.totalRounds ? "Calculando resultados" : "Siguiente canción en breve"}
+                <Dots />
               </p>
-            </>
+            </section>
           );
         })()}
       </div>
 
-      <aside className="tv-game-side">
-        <MiniBoard players={room.players || []} currentUserId={user?.id} hostId={room.hostId} phase={room.phase} />
-      </aside>
+      <PartyPanel room={room} scores onToast={setErr} />
     </div>
   );
 }
