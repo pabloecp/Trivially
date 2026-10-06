@@ -58,7 +58,7 @@ export function createRoomCode(existing) {
 function defaultConfig(catalog) {
   const playlist = catalog?.playlists?.find((p) => p.isDefault) || catalog?.playlists?.[0];
   return {
-    rounds: 10,
+    rounds: 5,
     roundMs: ROUND_MS,
     playlistIds: playlist ? [playlist.id] : [],
     quiz: defaultQuizConfig(),
@@ -129,6 +129,9 @@ export class RoomManager {
       customPlaylists: {},
       config: { ...defaultConfig(this.catalog), ...config },
       players: new Map(),
+      // The room's scoreboard across its matches: how many were finished, and per player (even one who left) their
+      // name, avatar, matches played and wins.
+      board: { matches: 0, players: {} },
     };
     this.rooms.set(code, room);
     this.addPlayer(room, host, true);
@@ -299,9 +302,9 @@ export class RoomManager {
     const next = { ...room.config, ...config };
     if (config?.quiz) next.quiz = mergeQuizConfig(room.config.quiz, config.quiz);
     if (config?.geo) next.geo = mergeGeoConfig(room.config.geo, config.geo);
-    // Same limits as the settings on screen: 5–25 rounds, 10–30 seconds to guess.
-    if (config?.rounds != null) next.rounds = Math.min(25, Math.max(5, Math.round(Number(config.rounds)) || 10));
-    if (config?.roundMs != null) next.roundMs = Math.min(30000, Math.max(10000, Math.round(Number(config.roundMs)) || ROUND_MS));
+    // Same limits as the settings on screen: 5–25 rounds, 15–35 seconds to guess.
+    if (config?.rounds != null) next.rounds = Math.min(25, Math.max(5, Math.round(Number(config.rounds)) || 5));
+    if (config?.roundMs != null) next.roundMs = Math.min(35000, Math.max(15000, Math.round(Number(config.roundMs)) || ROUND_MS));
     if (config?.playlistIds) {
       // Spotify playlists can only be added by the host (addSpotifyPlaylist); here they can only stay or go.
       const known = new Set([...this.catalog.playlists.map((p) => p.id), ...Object.keys(room.customPlaylists || {})]);
@@ -481,11 +484,11 @@ export class RoomManager {
       room.tiebreak = null;
     } else if (room.config?.customTracks && room.config.customTracks.length > 0) {
       const shuffled = [...room.config.customTracks].sort(() => Math.random() - 0.5);
-      room.tracks = shuffled.slice(0, Math.min(room.config.rounds || 10, shuffled.length));
+      room.tracks = shuffled.slice(0, Math.min(room.config.rounds || 5, shuffled.length));
       room.totalRounds = room.tracks.length;
     } else {
       room.tracks = [];
-      room.totalRounds = room.config.rounds || 10;
+      room.totalRounds = room.config.rounds || 5;
       const available = this.songPool(room).length;
       const loading = (room.config.playlistIds || []).some((id) => {
         const entry = room.customPlaylists?.[id];
@@ -687,7 +690,29 @@ export class RoomManager {
     if (room.timer) clearTimeout(room.timer);
     if (!room.statsApplied) {
       room.statsApplied = true;
-      applyMatchStats(this.store, this.rankedPlayers(room));
+      const ranked = this.rankedPlayers(room);
+      applyMatchStats(this.store, ranked);
+      this.recordWin(room, ranked);
+    }
+  }
+
+  /**
+   * Adds a finished match to the room's scoreboard. The winner is first place with points; a tie for first counts
+   * for nobody unless a tiebreak settled it.
+   */
+  recordWin(room, ranked) {
+    if (!ranked.length) return;
+    const board = room.board || (room.board = { matches: 0, players: {} });
+    board.matches += 1;
+    const [first, second] = ranked;
+    const tied = second && second.score === first.score && first.id !== room.tiebreak?.winnerId;
+    const winnerId = first.score > 0 && !tied ? first.id : null;
+    for (const p of ranked) {
+      const entry = board.players[p.id] || (board.players[p.id] = { wins: 0, played: 0 });
+      entry.name = p.name;
+      entry.avatar = p.avatar;
+      entry.played += 1;
+      if (p.id === winnerId) entry.wins += 1;
     }
   }
 
@@ -1022,6 +1047,13 @@ export class RoomManager {
           .slice(0, 40),
       })),
       config: room.config,
+      // The room's scoreboard across matches (recordWin), most wins first.
+      board: {
+        matches: room.board?.matches || 0,
+        players: Object.entries(room.board?.players || {})
+          .map(([id, e]) => ({ id, name: e.name, avatar: e.avatar, wins: e.wins, played: e.played }))
+          .sort((a, b) => b.wins - a.wins || b.played - a.played),
+      },
       coHosts: [...(room.coHosts || [])],
       players: [...room.players.values()].map((p) => publicPlayer(p, room.phase, room)),
       audio: null,

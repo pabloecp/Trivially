@@ -70,7 +70,7 @@ export default function MatchResults({ room, color = "green" }) {
                   type="button"
                 >
                   <Icon name="home" size={18} />
-                  Elegir otro juego
+                  Elegir otro modo de juego
                 </button>
               </>
             ) : (

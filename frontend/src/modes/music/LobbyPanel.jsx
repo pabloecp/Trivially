@@ -3,13 +3,13 @@ import MusicSettings from "./MusicSettings.jsx";
 import Icon from "../../components/home/Icon.jsx";
 import ModeStage from "../../components/home/ModeStage.jsx";
 import ModeStart from "../../components/home/ModeStart.jsx";
+import SettingsPanel from "../../components/home/SettingsPanel.jsx";
 import SpotifyIcon from "../../components/home/SpotifyIcon.jsx";
-import { playlistLabel } from "./playlistLabel.js";
 import { useApp } from "../../lib/store.jsx";
 import { findMode } from "../index.js";
 
 // The music mode's waiting room, shown inside the room screen on Home once the host picks this game: the mode's big
-// card (summary of the match and the start button) and the match settings (playlists, rounds, time) beside it.
+// card (how it's played and the start button) and the match settings (playlists, rounds, time) beside it.
 // Everyone sees the settings; players without permission see them locked.
 export default function LobbyPanel({ room, onToast }) {
   const { user, catalog, refreshCatalog, updateConfig } = useApp();
@@ -21,19 +21,13 @@ export default function LobbyPanel({ room, onToast }) {
   const me = room.players.find((p) => p.id === user?.id);
   const isHost = room.hostId === user?.id;
   const canEditConfig = isHost || Boolean(me?.canEditConfig) || Boolean(room.coHosts?.includes(user?.id));
-  // A match needs a different song for every round (the server checks it too; older servers don't send songsReady).
+  const mode = findMode("musica");
   const songsReady = room.songsReady;
-  const roundsSet = room.config?.rounds || 10;
-  const enoughSongs = songsReady == null || songsReady >= roundsSet;
+  const roundsSet = room.config?.rounds || 5;
+  const enoughSongs = mode.ready(room);
 
-  const playlists = catalog?.playlists || [];
   const chosenIds = room.config?.playlistIds || [];
-  const chosen = playlists.filter((p) => chosenIds.includes(p.id));
   const custom = (room.customPlaylists || []).filter((p) => chosenIds.includes(p.id));
-  const playlistNames = [
-    ...(chosen.length || custom.length ? chosen : playlists.filter((p) => p.isDefault)).map(playlistLabel),
-    ...custom.map((p) => p.name),
-  ].join(", ");
   // Spotify songs still being looked up: the match can start already, the rest join as they are found.
   const loading = custom.filter((p) => p.loading);
   // Finished, but some songs aren't on iTunes (they can't come up in the match).
@@ -43,17 +37,12 @@ export default function LobbyPanel({ room, onToast }) {
   const loadingChecked = loading.reduce((n, p) => n + (p.checked ?? p.total), 0);
   // Every song was looked at once: what's left is the second search for the ones not found.
   const retrying = loadingChecked >= loadingTotal ? loading.reduce((n, p) => n + (p.retrying || 0), 0) : 0;
-  const rounds = room.config?.rounds || 10;
-  const seconds = Math.round((room.config?.roundMs || 15000) / 1000);
-  // Each round: 3 s countdown + the guessing time + 3 s showing the answer.
-  const minutes = Math.max(1, Math.round((rounds * (3 + seconds + 3)) / 60));
 
   return (
     <>
       <ModeStage
         room={room}
-        mode={findMode("musica")}
-        chips={[playlistNames || "Cargando…", `${rounds} rondas`, `${seconds} s cada una`, `≈ ${minutes} min`]}
+        mode={mode}
         extra={
           <span className="tv-eq tv-eq--stage" aria-hidden="true">
             {Array.from({ length: 7 }, (_, i) => (
@@ -62,54 +51,52 @@ export default function LobbyPanel({ room, onToast }) {
           </span>
         }
       >
-        <ModeStart room={room} ready={enoughSongs} />
+        <ModeStart room={room} />
       </ModeStage>
 
-      <MusicSettings room={room} catalog={catalog} updateConfig={updateConfig} onToast={onToast} readOnly={!canEditConfig}>
-        {loading.length > 0 && (
-          <p className="tv-playlist-total tv-spotify-loading" aria-live="polite">
-            <SpotifyIcon size={18} />
-            <span>
-              {retrying > 0 ? (
-                <>
-                  <strong>{loadingReady} de {loadingTotal}</strong> listas. Buscando otra vez {retrying}{" "}
-                  {retrying === 1 ? "canción que no se encontró" : "canciones que no se encontraron"}.
-                </>
-              ) : (
-                <>
-                  Cargando canciones de Spotify: <strong>{loadingReady} listas</strong>, {loadingChecked} de {loadingTotal}{" "}
-                  revisadas.
-                </>
-              )}
-              {room.itunesSlow && " iTunes nos está haciendo esperar, sigue buscando."}
-            </span>
-          </p>
-        )}
+      <SettingsPanel room={room} readOnly={!canEditConfig}>
+        <MusicSettings room={room} catalog={catalog} updateConfig={updateConfig} onToast={onToast} readOnly={!canEditConfig}>
+          {loading.length > 0 && (
+            <p className="tv-playlist-total tv-spotify-loading" aria-live="polite">
+              <SpotifyIcon size={18} />
+              <span>
+                {retrying > 0 ? (
+                  <>
+                    <strong>{loadingReady} de {loadingTotal}</strong> listas. Buscando otra vez {retrying}{" "}
+                    {retrying === 1 ? "canción que no se encontró" : "canciones que no se encontraron"}.
+                  </>
+                ) : (
+                  <>
+                    Cargando canciones de Spotify: <strong>{loadingReady} listas</strong>, {loadingChecked} de {loadingTotal}{" "}
+                    revisadas.
+                  </>
+                )}
+                {room.itunesSlow && " iTunes nos está haciendo esperar, sigue buscando."}
+              </span>
+            </p>
+          )}
 
-        {incomplete.map((p) => (
-          <p key={p.id} className="tv-playlist-total" role="status">
-            <SpotifyIcon size={18} />
-            <span>
-              {p.total - p.ready} de {p.total} canciones de <strong>{p.name}</strong> no están en iTunes, así que no
-              pueden salir en la partida.
-            </span>
-          </p>
-        ))}
+          {incomplete.map((p) => (
+            <p key={p.id} className="tv-playlist-total" role="status">
+              <SpotifyIcon size={18} />
+              <span>
+                {p.total - p.ready} de {p.total} canciones de <strong>{p.name}</strong> no están en iTunes, así que no
+                pueden salir en la partida.
+              </span>
+            </p>
+          ))}
 
-        {!enoughSongs && (
-          <p className="tv-playlist-total is-short" role="status">
-            <Icon name="lock" size={16} strokeWidth={2.6} />
-            <span>
-              Hay <strong>{songsReady} {songsReady === 1 ? "canción lista" : "canciones listas"}</strong> para {roundsSet} rondas.{" "}
-              {loading.length > 0 ? "Espera a que carguen más o baja las rondas." : "Baja las rondas o elige más playlists."}
-            </span>
-          </p>
-        )}
-        <p className="tv-settings-note">
-          <Icon name="info" size={16} strokeWidth={2.2} />
-          Escribe el título mientras suena: el buscador te sugiere canciones.
-        </p>
-      </MusicSettings>
+          {!enoughSongs && (
+            <p className="tv-playlist-total is-short" role="status">
+              <Icon name="lock" size={16} strokeWidth={2.6} />
+              <span>
+                Hay <strong>{songsReady} {songsReady === 1 ? "canción lista" : "canciones listas"}</strong> para {roundsSet} rondas.{" "}
+                {loading.length > 0 ? "Espera a que carguen más o baja las rondas." : "Baja las rondas o elige más playlists."}
+              </span>
+            </p>
+          )}
+        </MusicSettings>
+      </SettingsPanel>
     </>
   );
 }

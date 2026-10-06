@@ -4,15 +4,15 @@ import { categoryName } from "../questions/questionSchema.js";
 
 export const QUIZ_MODE = "opciones";
 export const QUIZ_DIFFICULTIES = ["facil", "media", "dificil", "mixta"];
-// Same limits as the steppers on screen (frontend/src/modes/quiz/quizInfo.js).
+// Same limits as the sliders on screen (frontend/src/modes/quiz/quizInfo.js).
 export const QUIZ_LIMITS = {
   rounds: { min: 5, max: 20 },
-  roundMs: { min: 5000, max: 30000 },
+  roundMs: { min: 15000, max: 35000 },
 };
 export const QUIZ_REVEAL_MS = 5000;
 
 export function defaultQuizConfig() {
-  return { rounds: 10, roundMs: 15000, difficulty: "mixta" };
+  return { rounds: 5, roundMs: 15000, difficulty: "mixta" };
 }
 
 const clamp = (n, { min, max }, fallback) => Math.min(max, Math.max(min, Math.round(Number(n)) || fallback));

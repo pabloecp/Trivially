@@ -8,19 +8,11 @@ import AppIcon from "./AppIcon.jsx";
 import Icon from "./Icon.jsx";
 import ProfileChip from "./ProfileChip.jsx";
 
-// Same top bar on every screen: Inicio on the left (the small logo on the home screen itself, where Inicio would go
-// nowhere), profile and theme toggle on the right.
-export default function TvTopbar() {
-  const { user, room, leaveRoom } = useApp();
-  const { palette, toggleTheme } = useTheme();
+// Inicio while in a room means leaving it: the first tap asks (`confirmLeave` for 3 s), the second one leaves.
+// `goHome` is the link's onClick; outside a room it lets the link go home.
+export function useLeaveConfirm() {
+  const { room, leaveRoom } = useApp();
   const nav = useNavigate();
-  const { pathname } = useLocation();
-  // Away from your room (profile, another page): a shortcut back to it, or to the match if one is running.
-  const roomTarget = room ? roomPath(room) : null;
-  const showBack = Boolean(roomTarget) && pathname !== roomTarget;
-  const inMatch = Boolean(room) && room.phase !== "lobby";
-  const onHome = !room && pathname === "/";
-  // Inside a room, Inicio means leaving it: the first tap asks, the second one leaves.
   const [confirmLeave, setConfirmLeave] = useState(false);
 
   useEffect(() => {
@@ -44,6 +36,22 @@ export default function TvTopbar() {
     leaveRoom();
     nav("/");
   }
+
+  return { confirmLeave, goHome };
+}
+
+// Same top bar on every screen: Inicio on the left (the small logo on the home screen itself, where Inicio would go
+// nowhere), profile and theme toggle on the right.
+export default function TvTopbar() {
+  const { user, room } = useApp();
+  const { palette, toggleTheme } = useTheme();
+  const { pathname } = useLocation();
+  // Away from your room (profile, another page): a shortcut back to it, or to the match if one is running.
+  const roomTarget = room ? roomPath(room) : null;
+  const showBack = Boolean(roomTarget) && pathname !== roomTarget;
+  const inMatch = Boolean(room) && room.phase !== "lobby";
+  const onHome = !room && pathname === "/";
+  const { confirmLeave, goHome } = useLeaveConfirm();
 
   return (
     <header className={`tv-topbar${showBack && !confirmLeave ? " has-back" : ""}`}>

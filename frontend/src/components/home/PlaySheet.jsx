@@ -226,7 +226,7 @@ export default function PlaySheet({ mode, joinCode, open, onClose }) {
                   </span>
                   <span className="tv-option-text">
                     <strong>{busy ? "Creando sala…" : "Crear sala"}</strong>
-                    <span>{mode ? "Juega solo o invita a tus amigos" : "Invita a tus amigos y elijan juego"}</span>
+                    <span>{mode ? "Juega solo o invita a tus amigos" : "Invita a tus amigos y elijan modo de juego"}</span>
                   </span>
                   <Icon name="chevron" size={22} className="tv-option-chevron" />
                 </button>

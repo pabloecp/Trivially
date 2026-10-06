@@ -494,13 +494,12 @@
 /* The panels: dark, very round, with a thin outline. */
 .tv-picker,
 .tv-settings-card,
-.tv-party,
-.tv-dock {
+.tv-party {
   background: var(--tv-surface);
   box-shadow: inset 0 0 0 1px var(--tv-line);
 }
 
-/* "Más juegos pronto": with an odd number of games, a grey tile with a lock closes the grid (and the dock), looking
+/* "Más juegos pronto": with an odd number of games, a grey tile with a lock closes the grid, looking
    like one more game. */
 .tv-c-soon { --c1: #8b9099; --c2: #8b9099; --edge: #5e636c; --on: #ffffff; }
 
@@ -620,9 +619,8 @@
   animation: tvExpand 0.75s cubic-bezier(0.2, 0.9, 0.25, 1.04) backwards;
 }
 .tv-mstage-top { position: relative; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
-.tv-mstage-top .tv-mstage-live { margin-left: auto; }
 /* The host's way back to "Elige el juego". */
-.tv-mstage-back {
+.tv-mstage-pill {
   display: inline-flex;
   align-items: center;
   gap: 7px;
@@ -638,24 +636,12 @@
   transition: transform 0.12s ease, background-color 0.2s ease;
   animation: tvPopIn 0.5s cubic-bezier(0.3, 1.7, 0.5, 1) 0.3s backwards;
 }
-.tv-mstage-back:hover { background: rgba(0, 0, 0, 0.26); }
-.tv-mstage-back:hover svg { transform: translateX(-3px); }
-.tv-mstage-back svg { transition: transform 0.2s var(--tv-spring); }
-.tv-mstage-back:active { transform: translateY(3px); }
-:root[data-palette="5"] .tv-mstage-back { background: rgba(255, 255, 255, 0.06); }
-:root[data-palette="5"] .tv-mstage-back:hover { background: rgba(255, 255, 255, 0.12); }
-.tv-mstage-live {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  padding: 8px 12px;
-  border-radius: 999px;
-  background: rgba(0, 0, 0, 0.13);
-  font-size: 13px;
-  font-weight: 700;
-  animation: tvPopIn 0.5s cubic-bezier(0.3, 1.7, 0.5, 1) 0.3s backwards;
-}
-.tv-mstage-live-dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; animation: tvBlink 1.4s ease-in-out infinite; }
+.tv-mstage-pill:hover { background: rgba(0, 0, 0, 0.26); }
+.tv-mstage-pill svg { transition: transform 0.3s var(--tv-spring); }
+.tv-mstage-pill:hover svg { transform: translateX(-3px); }
+.tv-mstage-pill:active { transform: translateY(3px); }
+:root[data-palette="5"] .tv-mstage-pill { background: rgba(255, 255, 255, 0.06); }
+:root[data-palette="5"] .tv-mstage-pill:hover { background: rgba(255, 255, 255, 0.12); }
 .tv-mstage-watermark {
   position: absolute;
   right: -90px;
@@ -688,22 +674,6 @@
   line-height: 0.88;
   letter-spacing: -0.03em;
   color: inherit;
-}
-.tv-mstage-desc { margin: 0; max-width: 400px; font-size: 17px; font-weight: 600; line-height: 1.4; color: inherit; }
-.tv-mstage .tv-mono-label { color: inherit; opacity: 0.7; }
-.tv-mstage-chips { display: flex; flex-wrap: wrap; gap: 6px; }
-.tv-mstage-chip {
-  max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  padding: 7px 12px;
-  border-radius: 999px;
-  background: rgba(0, 0, 0, 0.15);
-  font-size: 14px;
-  font-weight: 800;
-  animation: tvPopIn 0.5s cubic-bezier(0.3, 1.7, 0.5, 1) backwards;
-  animation-delay: calc(0.25s + var(--i) * 60ms);
 }
 .tv-mstage-start {
   display: flex;
@@ -750,13 +720,7 @@
   border-radius: 34px;
   animation: tvFromRight 0.6s cubic-bezier(0.2, 0.9, 0.3, 1.08) 80ms backwards;
 }
-.tv-settings-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 6px 10px; }
-.tv-settings-title { margin: 0; font-family: var(--tv-display); font-weight: 800; font-size: 26px; color: var(--tv-text); }
-.tv-settings-who { font-size: 13px; font-weight: 700; color: var(--tv-text-3); }
-.tv-settings-note { display: flex; align-items: center; gap: 8px; margin: 0; font-size: 13px; font-weight: 600; color: var(--tv-text-3); }
-.tv-settings-note svg { flex-shrink: 0; }
-
-/* Small capital labels ("CÓDIGO DE SALA", "RESUMEN"…), in the option's label font. */
+/* Small capital labels ("CÓDIGO DE SALA"…), in the option's label font. */
 .tv-mono-label {
   margin: 0;
   padding: 0;
@@ -767,53 +731,6 @@
   text-transform: uppercase;
   color: var(--tv-text-3);
 }
-
-/* The game dock under the panels. */
-.tv-dock {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  padding: 8px;
-  border-radius: 26px;
-  animation: tvUp 0.55s var(--tv-ease-out) 0.15s backwards;
-}
-.tv-dock-item {
-  flex: 1 1 150px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  min-width: 0;
-  padding: 10px;
-  border: 0;
-  border-radius: 18px;
-  background: var(--tv-option-bg);
-  color: var(--tv-text);
-  font-weight: 800;
-  font-size: 16px;
-  text-align: left;
-  cursor: pointer;
-  transition: transform 0.28s cubic-bezier(0.3, 1.5, 0.5, 1), background-color 0.5s, color 0.4s, box-shadow 0.4s, opacity 0.3s;
-}
-.tv-dock-item:hover { transform: translateY(-5px) rotate(-0.5deg); }
-.tv-dock-item:active { transform: translateY(3px); }
-.tv-dock-item.is-shaking { animation: tvShake 0.45s ease; }
-.tv-dock-icon {
-  display: grid;
-  place-items: center;
-  flex-shrink: 0;
-  width: 42px;
-  height: 42px;
-  border-radius: 13px;
-  background: var(--c2);
-  color: var(--on);
-  transition: background-color 0.6s ease, color 0.6s ease;
-}
-.tv-dock-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.tv-dock-lock { flex-shrink: 0; margin-left: auto; opacity: 0.55; }
-.tv-dock-item.is-on { background: var(--c2); color: var(--on); box-shadow: 0 4px 0 var(--edge); cursor: default; }
-.tv-dock-item.is-on:hover { transform: none; }
-.tv-dock-item.is-on .tv-dock-icon { background: var(--on); color: var(--c2); }
-.tv-dock-item.is-dim { opacity: 0.45; }
 
 
 /* The room's own column: code, players and the way out. */
@@ -923,8 +840,7 @@
 .tv-room.is-leaving .tv-mstage { animation: tvShrink 0.36s cubic-bezier(0.5, 0, 0.8, 0.4) forwards; }
 .tv-room.is-leaving .tv-settings-card,
 .tv-room.is-leaving .tv-party { animation: tvOutRight 0.3s ease-in forwards; }
-.tv-room.is-leaving .tv-dock { animation: tvOut 0.3s ease-in forwards; }
-/* Switching game from the dock: the panels stay and only their contents swap. */
+/* Switching straight from one game to another: the panels stay and only their contents swap. */
 .tv-room-row.is-switch .tv-mstage,
 .tv-room-row.is-switch .tv-settings-card { animation: none; }
 .tv-room-row.is-switch .tv-settings-card > * { animation: tvSwap 0.5s var(--tv-ease-out) backwards; }
@@ -1506,147 +1422,6 @@
   color: var(--tv-text-2);
 }
 
-/* Room settings (music mode) */
-.tv-settings { gap: 20px; }
-/* Covers of the chosen playlists sliding by (MusicSettings CoverStrip). */
-.tv-covers {
-  display: grid;
-  gap: 8px;
-  padding: 4px 0;
-  overflow: hidden;
-  -webkit-mask-image: linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent);
-  mask-image: linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent);
-  animation: tvFade 0.5s ease-out;
-}
-.tv-covers-track {
-  display: flex;
-  gap: 8px;
-  width: max-content;
-  padding-right: 8px; /* same as the gap, so half the track is exactly one copy of the row */
-  animation: tvMarquee calc(var(--n) * 2.4s) linear infinite;
-}
-.tv-covers-row.is-reverse .tv-covers-track { animation-direction: reverse; }
-.tv-covers img {
-  width: 64px;
-  height: 64px;
-  flex-shrink: 0;
-  border-radius: 14px;
-  object-fit: cover;
-  background: var(--tv-option-bg);
-  box-shadow: 0 3px 0 var(--tv-option-edge);
-}
-@keyframes tvMarquee { to { transform: translateX(-50%); } }
-/* Same height as two rows of covers, shown while they download. */
-.tv-covers--loading {
-  height: 144px;
-  border-radius: 16px;
-  background: linear-gradient(100deg, var(--tv-option-bg) 30%, var(--tv-surface) 50%, var(--tv-option-bg) 70%) 0 0 / 300% 100%;
-  animation: tvShimmer 1.2s ease-in-out infinite;
-}
-@keyframes tvShimmer { from { background-position: 100% 0; } to { background-position: 0 0; } }
-.tv-steppers { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
-.tv-stepper {
-  display: grid;
-  justify-items: center;
-  gap: 8px;
-  min-width: 0;
-  padding: 16px 10px 14px;
-  border-radius: 20px;
-  background: var(--tv-option-bg);
-  text-align: center;
-}
-.tv-stepper .tv-label { margin: 0; font-family: var(--tv-mono); font-weight: 700; letter-spacing: 0.08em; }
-.tv-stepper-row { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; }
-.tv-stepper-btn {
-  display: grid;
-  place-items: center;
-  flex-shrink: 0;
-  width: 48px;
-  height: 48px;
-  border: 0;
-  border-radius: 14px;
-  background: var(--brand);
-  box-shadow: 0 4px 0 var(--brand-active);
-  color: var(--on-brand);
-  cursor: pointer;
-  transition: transform 0.15s var(--tv-spring), box-shadow 0.15s ease, opacity 0.2s ease;
-}
-.tv-stepper-btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 6px 0 var(--brand-active); }
-.tv-stepper-btn:active:not(:disabled) { transform: translateY(4px); box-shadow: 0 0 0 var(--brand-active); }
-.tv-stepper-btn:disabled { background: var(--tv-surface); box-shadow: 0 4px 0 var(--tv-edge); color: var(--tv-text-3); opacity: 0.6; cursor: default; }
-.tv-stepper-down { transform: rotate(90deg); }
-.tv-stepper-up { transform: rotate(-90deg); }
-.tv-stepper-value {
-  min-width: 2.6ch;
-  font-family: var(--tv-display);
-  font-weight: 800;
-  font-size: 44px;
-  line-height: 1;
-  color: var(--tv-text);
-  font-variant-numeric: tabular-nums;
-  animation: tvPick 0.3s var(--tv-spring);
-}
-.tv-stepper-value small { margin-left: 2px; font-size: 18px; color: var(--tv-text-3); }
-.tv-stepper-range { font-weight: 700; font-size: 12px; color: var(--tv-text-3); }
-/* Phones: one counter per row, buttons at the edges. */
-@media (max-width: 560px) {
-  .tv-steppers { grid-template-columns: minmax(0, 1fr); }
-  .tv-stepper { grid-template-columns: minmax(0, 1fr); }
-  .tv-stepper-row { justify-content: space-between; padding: 0 6px; }
-}
-.tv-picks { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 180px), 1fr)); gap: 10px; }
-.tv-pick {
-  position: relative;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  min-width: 0;
-  padding: 12px;
-  border: 0;
-  border-radius: 18px;
-  background: var(--tv-option-bg);
-  text-align: left;
-  cursor: pointer;
-  transition: transform 0.12s ease, box-shadow 0.12s ease, background-color 0.5s, color 0.5s, filter 0.2s;
-}
-.tv-app .tv-pick { color: var(--tv-text); }
-.tv-pick:hover { filter: brightness(1.07); }
-.tv-pick:active { transform: translateY(4px); box-shadow: none; }
-.tv-pick[aria-pressed="true"] { background: var(--brand); box-shadow: 0 4px 0 var(--brand-active); }
-.tv-app .tv-pick[aria-pressed="true"] { color: var(--on-brand); }
-.tv-pick-art {
-  display: grid;
-  place-items: center;
-  flex-shrink: 0;
-  overflow: hidden;
-  width: 44px;
-  height: 44px;
-  border-radius: 13px;
-  background: rgba(255, 255, 255, 0.06);
-  color: var(--brand-text);
-  transition: background-color 0.6s ease, color 0.6s ease;
-}
-.tv-pick[aria-pressed="true"] .tv-pick-art { background: var(--on-brand); color: var(--brand); }
-.tv-pick-art img { width: 100%; height: 100%; object-fit: cover; }
-.tv-pick-art--spotify { background: #000; }
-.tv-pick-text { display: flex; flex-direction: column; min-width: 0; padding-right: 14px; }
-.tv-pick-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 800; font-size: 16px; line-height: 1.15; }
-.tv-pick-sub { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; font-size: 12px; color: var(--tv-text-3); }
-.tv-pick[aria-pressed="true"] .tv-pick-sub { color: inherit; opacity: 0.8; }
-.tv-pick-check {
-  position: absolute;
-  top: 6px;
-  right: 6px;
-  display: grid;
-  place-items: center;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background: var(--on-brand);
-  color: var(--brand);
-  animation: tvPopIn 0.5s cubic-bezier(0.3, 1.7, 0.5, 1);
-}
-.tv-pick:disabled { cursor: default; opacity: 0.7; }
 .tv-playlist-total {
   display: flex;
   align-items: center;
@@ -2225,27 +2000,6 @@
   }
 }
 
-/* ---------- Settings shown to players who can't change them ---------- */
-fieldset.tv-steppers { margin: 0; padding: 0; border: 0; min-width: 0; }
-.tv-readonly-note {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  justify-self: start;
-  margin: -6px 0 0;
-  padding: 5px 12px;
-  border-radius: 999px;
-  background: var(--tv-option-bg);
-  font-weight: 800;
-  font-size: 13px;
-  color: var(--tv-text-3);
-}
-.tv-settings fieldset:disabled .tv-pick,
-.tv-settings fieldset:disabled .tv-stepper-btn { cursor: default; }
-.tv-settings fieldset:disabled .tv-stepper-btn { opacity: 0.35; }
-.tv-settings fieldset:disabled .tv-pick[aria-pressed="false"] { opacity: 0.55; }
-.tv-settings fieldset:disabled .tv-pick[aria-pressed="true"] { opacity: 1; }
-
 /* ---------- Room card: players you can tap, leave button ---------- */
 /* Inicio while in a room: the first tap turns it into the "leave?" question. */
 /* "¿Salir de la sala?": solid vivid red with white letters, like the rest of the vivid colours. */
@@ -2421,8 +2175,8 @@ body:has(.tv-app) {
 :root[data-palette="5"] .tv-i-dotted { display: none; }
 
 /* ---------- Tinted look (Medianoche) ---------- */
-/* Instead of being filled with their colour, the game tiles, the game's card, the picked game in the dock and the
-   picked playlists are dark and lit by a ring of their colour; the icon boxes take the colour instead. */
+/* Instead of being filled with their colour, the game tiles, the game's card and the chosen settings are dark and
+   lit by a ring of their colour; the icon boxes take the colour instead. */
 :root[data-palette="5"] .tv-mode {
   background: var(--tv-option-bg);
   color: var(--tv-text);
@@ -2441,21 +2195,9 @@ body:has(.tv-app) {
 :root[data-palette="5"] .tv-mstage-name,
 :root[data-palette="5"] .tv-mstage-watermark,
 :root[data-palette="5"] .tv-eq--stage { color: var(--c2); }
-:root[data-palette="5"] .tv-mstage-live,
 :root[data-palette="5"] .tv-mstage-wait { background: rgba(255, 255, 255, 0.06); }
-:root[data-palette="5"] .tv-mstage-chip { background: color-mix(in srgb, var(--c2) 14%, transparent); }
+:root[data-palette="5"] .tv-mstage-step-icon { background: var(--c2); color: var(--on); }
 :root[data-palette="5"] .tv-mstage-start { background: var(--c2); color: var(--on); box-shadow: 0 7px 0 var(--edge); }
-:root[data-palette="5"] .tv-dock-item.is-on {
-  background: color-mix(in srgb, var(--c2) 12%, transparent);
-  color: var(--tv-text);
-  box-shadow: inset 0 0 0 2px var(--c2);
-}
-:root[data-palette="5"] .tv-dock-item.is-on .tv-dock-icon { background: var(--c2); color: var(--on); }
-:root[data-palette="5"] .tv-pick[aria-pressed="true"] { background: rgba(var(--brand-rgb), 0.12); box-shadow: inset 0 0 0 2px var(--brand); }
-:root[data-palette="5"] .tv-app .tv-pick[aria-pressed="true"] { color: var(--tv-text); }
-:root[data-palette="5"] .tv-pick[aria-pressed="true"] .tv-pick-art { background: var(--brand); color: var(--on-brand); }
-:root[data-palette="5"] .tv-pick[aria-pressed="true"] .tv-pick-sub { color: var(--tv-text-3); opacity: 1; }
-:root[data-palette="5"] .tv-pick-check { background: var(--brand); color: var(--on-brand); }
 
 /* ---------- Scoreboard rows (PartyPanel during a match) ---------- */
 .tv-player-pos {
@@ -2570,9 +2312,6 @@ body::-webkit-scrollbar,
 }
 
 /* ---------- The games that came from main, in the new frame ---------- */
-/* Next to the big icon on the game's card: Geografía's kinds of question, Opción múltiple's A-D tiles. */
-.tv-mstage-kinds { display: flex; align-items: center; gap: 10px; }
-.tv-quiz-tiles--stage { animation: tvPopIn 0.5s cubic-bezier(0.3, 1.7, 0.5, 1) 0.25s backwards; }
 /* Opción múltiple's question, options and status line, in the middle of the phase panel. */
 .tv-quiz-stage { justify-content: center; }
 .tv-quiz-stage > * { width: min(760px, 100%); }
@@ -2587,23 +2326,15 @@ body::-webkit-scrollbar,
 .tv-mstage-wait { display: block; }
 
 /* Big screens: switching game never changes the size of anything. The game's card and its settings stay in one
-   row as tall as the space left above the dock; settings longer than that scroll inside their panel, and the card
-   lets its description give way first so "Comenzar partida" always shows. */
+   row as tall as the screen; a panel longer than that scrolls inside, and the card lets its head give way first
+   so "Comenzar partida" always shows. */
 @media (min-width: 980px) and (min-height: 600px) {
   .tv-room,
   .tv-room-row { flex-wrap: nowrap; }
-  .tv-dock { flex-shrink: 0; }
   .tv-mstage { overflow: hidden; }
   .tv-mstage-top,
   .tv-mstage-foot { flex-shrink: 0; }
   .tv-mstage-head { flex-shrink: 1; min-height: 0; overflow: hidden; }
-  .tv-mstage-desc { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-}
-/* Tight windows: the summary chips (the settings beside say the same) give their room to the game's name. */
-@media (min-width: 980px) and (min-height: 600px) and (max-width: 1199px),
-  (min-width: 980px) and (min-height: 600px) and (max-height: 700px) {
-  .tv-mstage-foot > .tv-mono-label,
-  .tv-mstage-chips { display: none; }
 }
 .tv-mstage-start { white-space: nowrap; }
 @media (max-width: 1199px) { .tv-mstage-start { font-size: clamp(18px, 2.2vw, 24px); } }
@@ -2660,12 +2391,242 @@ body::-webkit-scrollbar,
   .tv-party-code { font-size: 30px; }
   .tv-app .tv-invite-btn { grid-column: 2; grid-row: 1 / span 2; width: auto; padding: 12px 18px; }
 
-  /* The game's card: the host's back button has the top row to itself. */
-  .tv-mstage-back + .tv-mstage-live { display: none; }
-
   /* The round's bar: "Terminar" beside the clock instead of a row of its own. */
   .tv-game-top { grid-template-columns: minmax(0, 1fr) auto auto; grid-template-areas: "round tools clock" "bar bar bar"; }
   .tv-game-tools .tv-mini-btn { max-width: 116px; white-space: normal; text-align: center; line-height: 1.2; }
   .tv-game-round .tv-card-title { white-space: normal; line-height: 1.15; }
   .tv-game-round .tv-card-title .tv-muted { white-space: nowrap; }
 }
+
+/* ---------- Room screen, simpler: how it's played inside the game's card, plain settings beside it ---------- */
+.tv-mstage-steps { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.tv-mstage-step {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 14px 8px 8px;
+  border-radius: 18px;
+  background: rgba(0, 0, 0, 0.13);
+  font-family: var(--tv-display);
+  font-weight: 700;
+  font-size: 17px;
+  line-height: 1.2;
+  animation: tvRise 0.45s var(--tv-spring) backwards;
+  animation-delay: calc(0.25s + var(--i) * 80ms);
+}
+.tv-mstage-step-icon {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  background: var(--on);
+  color: var(--c2);
+}
+:root[data-palette="5"] .tv-mstage-step { background: rgba(255, 255, 255, 0.06); }
+
+/* The settings beside the card. */
+.tv-settings-panel { gap: 20px; }
+.tv-settings-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 6px 10px; }
+.tv-settings-title { margin: 0; font-family: var(--tv-display); font-weight: 800; font-size: 26px; color: var(--tv-text); }
+.tv-settings-who { font-size: 13px; font-weight: 700; color: var(--tv-text-3); }
+
+/* One setting: its name, then its choices side by side on one dark strip; the chosen one is filled in. */
+fieldset.tv-settings { display: grid; gap: 18px; min-width: 0; margin: 0; padding: 0; border: 0; }
+.tv-optrow { display: grid; gap: 8px; min-width: 0; }
+.tv-optrow-label { font-weight: 800; font-size: 14px; color: var(--tv-text-2); }
+.tv-optrow-opts {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  gap: 4px;
+  padding: 5px;
+  border-radius: 16px;
+  background: var(--tv-option-bg);
+}
+.tv-optrow-opts.is-wrap { display: flex; flex-wrap: wrap; }
+.tv-optrow-opts.is-wrap .tv-optrow-btn { flex: 1 1 auto; padding: 0 16px; }
+.tv-optrow-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-width: 0;
+  height: 42px;
+  padding: 0 6px;
+  border: 0;
+  border-radius: 12px;
+  background: none;
+  font-weight: 800;
+  font-size: 14px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease, transform 0.12s ease;
+}
+.tv-app .tv-optrow-btn { color: var(--tv-text-3); }
+.tv-app .tv-optrow-btn:hover:not(:disabled) { color: var(--tv-text); }
+.tv-optrow-btn:active:not(:disabled) { transform: scale(0.96); }
+.tv-optrow-btn[aria-pressed="true"] { background: var(--brand); animation: tvPick 0.3s var(--tv-spring); }
+.tv-app .tv-optrow-btn[aria-pressed="true"],
+.tv-app .tv-optrow-btn[aria-pressed="true"]:hover { color: var(--on-brand); }
+.tv-optrow-btn.is-spotify { box-shadow: inset 0 0 0 2px rgba(30, 215, 96, 0.35); }
+.tv-optrow-btn.is-add svg { flex-shrink: 0; }
+.tv-optrow-btn:disabled { cursor: default; }
+.tv-settings:disabled .tv-optrow-btn[aria-pressed="false"] { opacity: 0.5; }
+
+@media (max-width: 640px) { .tv-optrow-btn { height: 40px; font-size: 13px; } }
+
+/* ---------- Phones: the room's bars, pinned to the top and the bottom ---------- */
+.tv-roomhead,
+.tv-roomdock { display: none; }
+@media (max-width: 640px) {
+  /* They take the place of the usual top bar, the room's column and the start button on the game's card. */
+  .tv-app:has(.tv-roomhead) .tv-topbar,
+  .tv-room > .tv-party,
+  .tv-mstage .tv-mstage-start,
+  .tv-mstage .tv-mstage-wait,
+  .tv-mstage .tv-lobby-error { display: none; }
+  .tv-main.is-room {
+    padding-top: calc(84px + env(safe-area-inset-top));
+    padding-bottom: calc(100px + env(safe-area-inset-bottom));
+  }
+  .tv-room { min-height: 0; }
+
+  .tv-roomhead {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 30;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: calc(10px + env(safe-area-inset-top)) 16px 10px;
+    background: var(--tv-bg);
+    box-shadow: 0 1px 0 var(--tv-line);
+    animation: tvFade 0.4s ease-out backwards;
+  }
+  .tv-roomhead-home {
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    width: 50px;
+    height: 50px;
+    border-radius: 17px;
+    background: var(--tv-surface);
+    box-shadow: inset 0 0 0 1px var(--tv-line), 0 3px 0 var(--tv-edge);
+    transition: transform 0.12s ease, background-color 0.2s ease;
+  }
+  .tv-roomhead-home:active { transform: translateY(3px); }
+  .tv-app .tv-roomhead-home.is-confirm { background: var(--p-bad); box-shadow: 0 3px 0 var(--p-bad-edge); color: #fff; }
+  .tv-roomhead-text { display: grid; min-width: 0; }
+  .tv-roomhead-kicker {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-weight: 800;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--tv-text-3);
+  }
+  .tv-roomhead-code { font-family: var(--tv-display); font-weight: 800; font-size: 25px; line-height: 1.05; letter-spacing: 0.02em; color: var(--tv-text); }
+  .tv-roomhead-players {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    min-width: 0;
+    margin-left: auto;
+    padding: 5px 8px 5px 5px;
+    border: 0;
+    border-radius: 999px;
+    background: var(--tv-surface);
+    box-shadow: inset 0 0 0 1px var(--tv-line);
+    cursor: pointer;
+  }
+  .tv-app .tv-roomhead-players { color: var(--tv-text-2); }
+  .tv-roomhead-stack { display: flex; min-width: 0; overflow: hidden; }
+  .tv-roomhead-stack .tv-avatar { width: 32px; height: 32px; font-size: 14px; box-shadow: 0 0 0 2px var(--tv-surface); }
+  .tv-roomhead-stack .tv-avatar + .tv-avatar { margin-left: -9px; }
+  .tv-roomhead-stack .tv-avatar.is-away { opacity: 0.45; }
+  .tv-roomhead-chevron { flex-shrink: 0; transform: rotate(90deg); transition: transform 0.25s var(--tv-spring); }
+  .tv-roomhead-players[aria-expanded="true"] .tv-roomhead-chevron { transform: rotate(-90deg); }
+  .tv-roomhead-me { flex-shrink: 0; border-radius: 50%; }
+  .tv-roomhead-me .tv-avatar { width: 46px; height: 46px; font-size: 20px; }
+  .tv-roomhead-drop {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 12px;
+    right: 12px;
+    max-height: calc(100dvh - 110px);
+    overflow-y: auto;
+    border-radius: 26px;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55);
+    animation: tvDropIn 0.25s var(--tv-spring);
+  }
+  .tv-roomhead-drop .tv-party { animation: none; }
+  .tv-roomhead-drop .tv-party-codebox { display: none; }
+
+  .tv-roomdock {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 30;
+    display: grid;
+    gap: 8px;
+    padding: 18px 16px calc(12px + env(safe-area-inset-bottom));
+    background: linear-gradient(to top, var(--tv-bg) 72%, transparent);
+    animation: tvUp 0.45s var(--tv-ease-out) 0.2s backwards;
+  }
+  .tv-roomdock .tv-lobby-error { margin: 0; text-align: center; }
+  .tv-roomdock-row { display: flex; gap: 10px; }
+  .tv-app .tv-roomdock-invite { flex-shrink: 0; width: 60px; height: 60px; padding: 0; border-radius: 18px; }
+  .tv-app .tv-roomdock-start { flex: 1; min-width: 0; height: 60px; border-radius: 18px; font-weight: 800; font-size: 22px; }
+  .tv-roomdock-wait {
+    display: grid;
+    place-items: center;
+    flex: 1;
+    min-width: 0;
+    margin: 0;
+    padding: 0 14px;
+    border-radius: 18px;
+    background: var(--tv-surface);
+    box-shadow: inset 0 0 0 1px var(--tv-line);
+    font-weight: 800;
+    font-size: 15px;
+    text-align: center;
+    color: var(--tv-text-2);
+  }
+}
+
+/* The room's scoreboard across matches, at the bottom of the settings panel. */
+.tv-board { display: grid; gap: 10px; margin-top: auto; padding: 16px; border-radius: 22px; background: var(--tv-bg); }
+.tv-board-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+.tv-board-title { margin: 0; font-family: var(--tv-display); font-weight: 800; font-size: 19px; color: var(--tv-text); }
+.tv-board-count { font-weight: 700; font-size: 13px; color: var(--tv-text-3); }
+.tv-board-empty { display: flex; align-items: center; gap: 10px; margin: 0; font-weight: 700; font-size: 14px; color: var(--tv-text-3); }
+.tv-board-empty svg { flex-shrink: 0; color: var(--p-accent-2); }
+.tv-board-list { display: grid; gap: 4px; margin: 0; padding: 0; list-style: none; }
+.tv-board-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  padding: 6px 12px 6px 6px;
+  border-radius: 16px;
+  background: var(--tv-surface);
+  animation: tvRise 0.4s var(--tv-spring) backwards;
+  animation-delay: calc(var(--i) * 60ms);
+}
+.tv-board-row.is-leader { box-shadow: inset 0 0 0 2px var(--p-accent-2); }
+.tv-board-row.is-gone { opacity: 0.5; }
+.tv-board-pos { width: 18px; flex-shrink: 0; text-align: center; font-family: var(--tv-display); font-weight: 800; font-size: 14px; color: var(--tv-text-3); }
+.tv-board-row .tv-avatar { width: 32px; height: 32px; font-size: 14px; }
+.tv-board-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 800; font-size: 15px; color: var(--tv-text); }
+.tv-board-crown { flex-shrink: 0; color: var(--p-accent-2); }
+.tv-board-wins { display: flex; align-items: baseline; gap: 5px; flex-shrink: 0; font-family: var(--tv-display); font-weight: 800; font-size: 20px; color: var(--tv-text); }
+.tv-board-wins small { font-family: var(--tv-body); font-weight: 700; font-size: 12px; color: var(--tv-text-3); }

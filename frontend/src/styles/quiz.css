@@ -78,52 +78,6 @@
   --on-brand: #ffffff;
 }
 
-/* ---------- Settings ---------- */
-.tv-diffs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
-.tv-diff {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  min-width: 0;
-  min-height: 60px;
-  padding: 8px 12px 8px 8px;
-  border: 0;
-  border-radius: 18px;
-  background: var(--tv-option-bg);
-  box-shadow: 0 4px 0 var(--tv-option-edge);
-  text-align: left;
-  cursor: pointer;
-  transition: transform 0.2s var(--tv-spring), box-shadow 0.2s ease;
-}
-.tv-app .tv-diff { color: var(--tv-text); }
-.tv-diff:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 6px 0 var(--tv-option-edge); }
-.tv-diff:active:not(:disabled) { transform: translateY(4px); box-shadow: 0 0 0 var(--tv-option-edge); }
-.tv-diff:disabled { cursor: default; }
-.tv-diff-icon {
-  display: grid;
-  place-items: center;
-  flex-shrink: 0;
-  width: 44px;
-  height: 44px;
-  border-radius: 14px;
-  background: linear-gradient(155deg, var(--c1), var(--c2));
-  box-shadow: 0 3px 0 var(--edge);
-  color: var(--on);
-}
-.tv-diff-stars { display: flex; gap: 1px; }
-.tv-diff-text { display: grid; min-width: 0; }
-.tv-diff-text strong { font-family: var(--tv-display); font-weight: 600; font-size: 17px; line-height: 1.15; }
-.tv-diff-text small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 700; font-size: 12px; color: var(--tv-text-3); }
-.tv-diff[aria-pressed="true"] {
-  background: linear-gradient(155deg, var(--c1), var(--c2));
-  box-shadow: 0 4px 0 var(--edge);
-  animation: tvPick 0.35s var(--tv-spring);
-}
-.tv-app .tv-diff[aria-pressed="true"] { color: var(--on); }
-.tv-diff[aria-pressed="true"] small { color: inherit; opacity: 0.7; }
-.tv-diff[aria-pressed="true"] .tv-diff-icon { background: #fff; box-shadow: none; color: var(--edge); }
-.tv-diff[aria-pressed="true"]:hover:not(:disabled) { box-shadow: 0 6px 0 var(--edge); }
-
 /* A difficulty as a small filled chip (summary and question). */
 .tv-app .tv-diff-chip { background: var(--c2); color: var(--on); }
 
@@ -133,28 +87,6 @@
     radial-gradient(120% 90% at 50% 0%, rgba(var(--tv-qm-rgb), 0.18), transparent 70%),
     var(--tv-option-bg);
 }
-.tv-quiz-tiles { display: grid; grid-template-columns: repeat(2, 30px); gap: 6px; }
-.tv-quiz-tile {
-  display: grid;
-  place-items: center;
-  width: 30px;
-  height: 30px;
-  border-radius: 9px;
-  background: linear-gradient(155deg, var(--c1), var(--c2));
-  box-shadow: 0 3px 0 var(--edge);
-  color: var(--on);
-  font-family: var(--tv-display);
-  font-weight: 700;
-  font-size: 14px;
-  animation: tvQuizHop 2.4s var(--tv-spring) infinite;
-  animation-delay: calc(var(--i) * 0.3s);
-}
-@keyframes tvQuizHop {
-  0%, 60%, 100% { transform: none; }
-  20% { transform: translateY(-6px) rotate(-6deg); }
-  35% { transform: translateY(1px); }
-}
-
 /* ---------- Game ---------- */
 .tv-quiz-q {
   position: relative;
@@ -323,15 +255,13 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .tv-quiz-tile,
   .tv-quiz-opt,
   .tv-quiz-opt.is-waiting,
   .tv-quiz-opt.is-picked,
   .tv-quiz-opt.is-right,
   .tv-quiz-count,
   .tv-quiz-q-text,
-  .tv-quiz-verdict,
-  .tv-diff[aria-pressed="true"] { animation: none; }
+  .tv-quiz-verdict { animation: none; }
   .tv-quiz-opt.is-picked,
   .tv-quiz-opt.is-out { transform: none; }
 }

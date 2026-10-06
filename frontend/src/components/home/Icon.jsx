@@ -147,6 +147,12 @@ const PATHS = {
       <rect x="13.5" y="13.5" width="7.5" height="7.5" rx="2.2" />
     </>
   ),
+  keyboard: (
+    <>
+      <rect x="2" y="4" width="20" height="16" rx="2" />
+      <path d="M6 8h.01M10 8h.01M14 8h.01M18 8h.01M8 12h.01M12 12h.01M16 12h.01M7 16h10" />
+    </>
+  ),
   // Scalloped badge with a check cut out, like Instagram's verified mark. The badge takes the text colour.
   verified: (
     <>

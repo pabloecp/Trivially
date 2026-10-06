@@ -34,7 +34,7 @@ for (const q of picked) {
 // Settings stay inside their limits.
 assert.deepEqual(mergeQuizConfig(undefined, { rounds: 99, roundMs: 1000, difficulty: "imposible" }), {
   rounds: 20,
-  roundMs: 5000,
+  roundMs: 15000,
   difficulty: "mixta",
 });
 
@@ -43,7 +43,7 @@ const room = mgr.create({ host: { id: "host-1", name: "Host", socketId: "s1" }, 
 mgr.addPlayer(room, { id: "guest-2", name: "Guest", socketId: "s2" });
 mgr.addPlayer(room, { id: "late-3", name: "Late", socketId: "s3" });
 assert.throws(() => mgr.updateConfig(room, "guest-2", { quiz: { rounds: 5 } }), /permisos/);
-mgr.updateConfig(room, "host-1", { quiz: { rounds: 5, roundMs: 10000, difficulty: "facil" } });
+mgr.updateConfig(room, "host-1", { quiz: { rounds: 5, roundMs: 20000, difficulty: "facil" } });
 assert.equal(mgr.publicState(room).questionsReady, countQuestions(bank, "facil"));
 
 mgr.start(room, "host-1");
@@ -61,7 +61,7 @@ assert.equal(state.audio, null);
 assert.throws(() => mgr.submitAnswer(room, "host-1", 0), /No se aceptan/);
 
 mgr.beginPlaying(room);
-assert.equal(mgr.roundMs(room), 10000);
+assert.equal(mgr.roundMs(room), 20000);
 state = mgr.publicState(room);
 assert.equal(state.question.options.length, 4);
 assert.equal(state.question.answer, null);

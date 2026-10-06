@@ -2,11 +2,10 @@ import { useState } from "react";
 import { useApp } from "../../lib/store.jsx";
 import Icon from "./Icon.jsx";
 
-// The picked game's big card on the room screen, in the game's colour: its icon, name and description, a summary
-// of the match (`chips`) and, at the bottom, `children` (the start button, or the guests' waiting line). `extra`
-// goes next to the icon. A mode's Lobby panel renders it next to its settings. The host's back button takes the whole
-// room back to "Elige el juego", to pick another game.
-export default function ModeStage({ room, mode, chips = [], extra = null, children }) {
+// The picked game's big card on the room screen, in the game's colour: its icon and name, how it's played (the
+// mode's three `steps`) and, at the bottom, `children` (the start button, or the guests' waiting line). `extra` goes
+// next to the icon. The host's back button takes the whole room back to "Elige el modo de juego".
+export default function ModeStage({ room, mode, extra = null, children }) {
   const { user, setGame } = useApp();
   const isHost = room.hostId === user?.id;
   const [backErr, setBackErr] = useState("");
@@ -17,17 +16,13 @@ export default function ModeStage({ room, mode, chips = [], extra = null, childr
         {isHost && (
           <button
             type="button"
-            className="tv-mstage-back"
-            onClick={() => setGame(null).catch((e) => setBackErr(e.message || "No se pudo volver a elegir juego"))}
+            className="tv-mstage-pill"
+            onClick={() => setGame(null).catch((e) => setBackErr(e.message || "No se pudo volver a elegir modo de juego"))}
           >
             <Icon name="back" size={18} strokeWidth={2.6} />
-            Elegir otro juego
+            Otro modo de juego
           </button>
         )}
-        <span className="tv-mstage-live">
-          <span className="tv-mstage-live-dot" aria-hidden="true" />
-          {isHost ? "Todos ven lo que eliges" : `Lo elige ${room.hostName || "el anfitrión"}`}
-        </span>
       </div>
       <Icon name={mode.icon} size={360} strokeWidth={1.2} className="tv-mstage-watermark" />
       <div className="tv-mstage-head">
@@ -38,17 +33,18 @@ export default function ModeStage({ room, mode, chips = [], extra = null, childr
           {extra}
         </div>
         <h2 className="tv-mstage-name">{mode.name}</h2>
-        {mode.desc && <p className="tv-mstage-desc">{mode.desc}</p>}
       </div>
       <div className="tv-mstage-foot">
-        <span className="tv-mono-label">Resumen</span>
-        <div className="tv-mstage-chips">
-          {chips.map((chip, i) => (
-            <span key={chip} className="tv-mstage-chip" style={{ "--i": i }}>
-              {chip}
-            </span>
+        <ol className="tv-mstage-steps" aria-label="Cómo se juega">
+          {(mode.steps || []).map((step, i) => (
+            <li key={step.text} className="tv-mstage-step" style={{ "--i": i }}>
+              <span className="tv-mstage-step-icon">
+                <Icon name={step.icon} size={20} strokeWidth={2.4} />
+              </span>
+              {step.text}
+            </li>
           ))}
-        </div>
+        </ol>
         {backErr && <p className="tv-lobby-error">{backErr}</p>}
         {children}
       </div>

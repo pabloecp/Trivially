@@ -1,23 +1,10 @@
 import { useEffect, useState } from "react";
-import Icon from "../../components/home/Icon.jsx";
-import SettingsHead from "../../components/home/SettingsHead.jsx";
-import Stepper from "../../components/home/Stepper.jsx";
+import OptionRow, { rangeOptions } from "../../components/home/OptionRow.jsx";
 import { DIFFICULTIES, QUESTIONS_LIMITS, SECONDS_LIMITS, quizConfig } from "./quizInfo.js";
 
-function Stars({ count }) {
-  if (!count) return <Icon name="swap" size={18} strokeWidth={2.8} />;
-  return (
-    <span className="tv-diff-stars">
-      {Array.from({ length: count }, (_, i) => (
-        <Icon key={i} name="star" size={14} filled strokeWidth={1.4} />
-      ))}
-    </span>
-  );
-}
-
-// Settings of an "Opción múltiple" match: how many questions, seconds to answer each one and the difficulty.
-// Every tap is saved straight away for the whole room, like the music settings. With `readOnly` (players without
-// permission) everything shows but nothing can be tapped.
+// Settings of an "Opción múltiple" match, in the settings panel: the difficulty, how many questions and seconds to
+// answer each one. Every tap is saved straight away for the whole room, like the music settings. With `readOnly`
+// (players without permission) everything shows but nothing can be tapped.
 export default function QuizSettings({ room, updateConfig, onToast, children, readOnly = false }) {
   const saved = quizConfig(room);
   const [draft, setDraft] = useState(saved);
@@ -40,43 +27,21 @@ export default function QuizSettings({ room, updateConfig, onToast, children, re
   }
 
   return (
-    <section className="tv-settings-card tv-settings tv-quiz-settings" aria-labelledby="tv-quiz-settings-title">
-      <SettingsHead id="tv-quiz-settings-title" room={room} readOnly={readOnly} />
-
-      <fieldset className="tv-steppers" disabled={readOnly}>
-        <Stepper label="Preguntas" value={draft.rounds} limits={QUESTIONS_LIMITS} onChange={(n) => save({ rounds: n })} />
-        <Stepper
-          label="Segundos por pregunta"
-          value={Math.round(draft.roundMs / 1000)}
-          unit="s"
-          limits={SECONDS_LIMITS}
-          onChange={(n) => save({ roundMs: n * 1000 })}
-        />
-      </fieldset>
-
-      <fieldset className="tv-fieldset" disabled={readOnly}>
-        <legend className="tv-mono-label">Dificultad</legend>
-        <div className="tv-diffs">
-          {DIFFICULTIES.map((d) => (
-            <button
-              key={d.id}
-              type="button"
-              className={`tv-diff tv-c-${d.color}`}
-              aria-pressed={draft.difficulty === d.id}
-              onClick={() => save({ difficulty: d.id })}
-            >
-              <span className="tv-diff-icon" aria-hidden="true">
-                <Stars count={d.stars} />
-              </span>
-              <span className="tv-diff-text">
-                <strong>{d.label}</strong>
-                <small>{d.hint}</small>
-              </span>
-            </button>
-          ))}
-        </div>
-      </fieldset>
+    <fieldset className="tv-settings" disabled={readOnly}>
+      <OptionRow
+        label="Dificultad"
+        options={DIFFICULTIES.map((d) => ({ value: d.id, label: d.label }))}
+        value={draft.difficulty}
+        onChange={(v) => save({ difficulty: v })}
+      />
+      <OptionRow label="Preguntas" options={rangeOptions(QUESTIONS_LIMITS)} value={draft.rounds} onChange={(n) => save({ rounds: n })} />
+      <OptionRow
+        label="Segundos por pregunta"
+        options={rangeOptions(SECONDS_LIMITS)}
+        value={Math.round(draft.roundMs / 1000)}
+        onChange={(n) => save({ roundMs: n * 1000 })}
+      />
       {children}
-    </section>
+    </fieldset>
   );
 }

@@ -75,7 +75,7 @@ assert.ok(near < 1000 && far < near && far > 0);
 // Settings.
 assert.deepEqual(mergeGeoConfig({}, { rounds: 99, roundMs: 1, kinds: ["flag", "nada", "capital"], difficulty: "x" }), {
   rounds: 25,
-  roundMs: 10000,
+  roundMs: 15000,
   kinds: ["capital", "flag"],
   difficulty: "mixta",
 });

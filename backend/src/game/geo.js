@@ -11,10 +11,10 @@ const MAP_NAMES = new Map(COUNTRIES.filter((c) => c.map.length).map((c) => [c.co
 export const GEO_GAME = GEO_MODE;
 export { GEO_KINDS };
 export const GEO_DIFFICULTIES = ["facil", "media", "dificil", "mixta"];
-// Same limits as the steppers on screen (frontend/src/modes/mundo/geoInfo.js).
+// Same limits as the sliders on screen (frontend/src/modes/mundo/geoInfo.js).
 export const GEO_LIMITS = {
   rounds: { min: 5, max: 25 },
-  roundMs: { min: 10000, max: 30000 },
+  roundMs: { min: 15000, max: 35000 },
 };
 // A map round always lasts 10 s, whatever the seconds chosen for written answers; its reveal stays longer on screen.
 export const LOCATION_ROUND_MS = 10000;
@@ -27,7 +27,7 @@ const LOCATION_NEAR_POINTS = 800;
 const LOCATION_FALLOFF_KM = 900;
 
 export function defaultGeoConfig() {
-  return { rounds: 10, roundMs: 15000, kinds: [...GEO_KINDS], difficulty: "mixta" };
+  return { rounds: 5, roundMs: 15000, kinds: [...GEO_KINDS], difficulty: "mixta" };
 }
 
 const clamp = (n, { min, max }, fallback) => Math.min(max, Math.max(min, Math.round(Number(n)) || fallback));

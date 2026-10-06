@@ -1,9 +1,10 @@
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useApp } from "../../lib/store.jsx";
 import Avatar from "./Avatar.jsx";
 import Icon from "./Icon.jsx";
 import PlayerMenu from "./PlayerMenu.jsx";
+import { useInvite } from "./useInvite.js";
 
 function playerTag(player, { isHost }) {
   if (!player.connected) return "Reconectando…";
@@ -55,11 +56,8 @@ function MatchTag({ player, room }) {
 export default function PartyPanel({ room, onToast, scores = false, className = "" }) {
   const { user, leaveRoom } = useApp();
   const nav = useNavigate();
-  const [copied, setCopied] = useState(false);
   const [menuFor, setMenuFor] = useState(null);
-  const copiedTimer = useRef(0);
-
-  useEffect(() => () => clearTimeout(copiedTimer.current), []);
+  const { copied, copy: copyInvite } = useInvite(room.code, onToast);
 
   function leave() {
     leaveRoom();
@@ -68,18 +66,6 @@ export default function PartyPanel({ room, onToast, scores = false, className = 
 
   const alone = room.players.length === 1;
   const players = scores ? [...room.players].sort((a, b) => b.score - a.score) : room.players;
-
-  async function copyInvite() {
-    const url = `${window.location.origin}/sala/${room.code}`;
-    try {
-      await navigator.clipboard.writeText(url);
-      setCopied(true);
-      clearTimeout(copiedTimer.current);
-      copiedTimer.current = setTimeout(() => setCopied(false), 2000);
-    } catch {
-      onToast?.(`Comparte este enlace: ${url}`, "link");
-    }
-  }
 
   return (
     <aside className={`tv-party${scores ? " is-scores" : ""} ${className}`.trim()} aria-label="Tu sala">

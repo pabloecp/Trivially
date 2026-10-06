@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useApp } from "../lib/store.jsx";
-import { GAME_MODES, SOON_TILE, dockModes, findMode } from "../modes/index.js";
+import { GAME_MODES, SOON_TILE, findMode } from "../modes/index.js";
 import Icon from "../components/home/Icon.jsx";
 import TvTopbar from "../components/home/TvTopbar.jsx";
 import HowToPlay from "../components/home/HowToPlay.jsx";
@@ -9,10 +9,11 @@ import AppIcon from "../components/home/AppIcon.jsx";
 import PageDecor from "../components/home/PageDecor.jsx";
 import PartyPanel from "../components/home/PartyPanel.jsx";
 import PlaySheet from "../components/home/PlaySheet.jsx";
+import { RoomDock, RoomHeader } from "../components/home/RoomBars.jsx";
 import Wordmark from "../components/home/Wordmark.jsx";
 import "../styles/home.css";
 
-// A big game tile of "Elige el juego", filled with the game's colour. The grey "Más juegos pronto" tile (SOON_TILE)
+// A big game tile of "Elige el modo de juego", filled with the game's colour. The grey "Más modos de juego pronto" tile (SOON_TILE)
 // looks like one, with a lock, and has no "Pronto" tag of its own.
 function ModeTile({ mode, index, selected, onPick }) {
   return (
@@ -36,38 +37,6 @@ function ModeTile({ mode, index, selected, onPick }) {
       )}
       <span className="tv-mode-name">{mode.name}</span>
     </button>
-  );
-}
-
-// The row under the picked game's panel: the most popular games (and the picked one), so the host can switch
-// straight away; every game is back in "Elige el juego" (the card's back button). The rest only see which one is on.
-function ModeDock({ current, isHost, onPick }) {
-  const modes = dockModes(current);
-  const items = modes.length % 2 === 1 ? [...modes, SOON_TILE] : modes;
-  return (
-    <nav className="tv-dock" aria-label="Juegos populares">
-      {items.map((mode) => {
-        const on = mode.id === current;
-        return (
-          <button
-            key={mode.id}
-            type="button"
-            className={`tv-dock-item tv-c-${mode.color}${on ? " is-on" : ""}${!isHost && !on && !mode.placeholder ? " is-dim" : ""}${
-              mode.placeholder ? " is-placeholder" : ""
-            }`}
-            aria-pressed={mode.placeholder ? undefined : on}
-            aria-label={mode.available || mode.placeholder ? mode.name : `${mode.name} (pronto)`}
-            onClick={(e) => onPick(mode, e.currentTarget)}
-          >
-            <span className="tv-dock-icon">
-              <Icon name={mode.icon} size={22} strokeWidth={2.2} />
-            </span>
-            <span className="tv-dock-name">{mode.short || mode.name}</span>
-            {!mode.available && !mode.placeholder && <Icon name="lock" size={13} strokeWidth={3} className="tv-dock-lock" />}
-          </button>
-        );
-      })}
-    </nav>
   );
 }
 
@@ -132,9 +101,8 @@ export default function Home() {
   const shownRoom = screen === "room" ? room || lastRoom.current : null;
 
   // Picking a game from the tiles happens in two beats, for every player at once: first the tiles (or the guests'
-  // "está eligiendo" panel) go, for TILES_OUT_MS; then the game's big card grows in, its settings slide in from the
-  // right and the game dock rises under them. Switching from the dock skips the first beat and only swaps the
-  // panel's contents.
+  // "está eligiendo" panel) go, for TILES_OUT_MS; then the game's big card grows in and "Cómo se juega" slides in
+  // from the right. Switching straight from one game to another skips the first beat and only swaps the contents.
   const [tilesOut, setTilesOut] = useState(null);
   const [enterKind, setEnterKind] = useState("pick");
   const lastGame = useRef({ code: room?.code, game });
@@ -199,7 +167,7 @@ export default function Home() {
   function pickMode(mode, tile) {
     if (mode.placeholder) {
       shake(tile);
-      showToast("Pronto habrá más juegos");
+      showToast("Pronto habrá más modos de juego");
     } else if (!mode.available) {
       shake(tile);
       showToast(`${mode.name} llega muy pronto`);
@@ -207,7 +175,7 @@ export default function Home() {
       return;
     } else if (!isHost) {
       shake(tile);
-      showToast("Solo el anfitrión elige el juego", "crown");
+      showToast("Solo el anfitrión elige el modo de juego", "crown");
     } else {
       // Every player's room screen switches to this game right away; nobody changes page.
       setGame(mode.id).catch((err) => showToast(err.message));
@@ -232,6 +200,8 @@ export default function Home() {
       <PageDecor />
 
       <TvTopbar />
+      {/* Phones: the room's own bars, pinned to the top and the bottom (home.css hides them on wider screens). */}
+      {shownRoom && <RoomHeader room={shownRoom} onToast={showToast} />}
 
       <main className={`tv-main${screen === "room" ? " is-room" : ""}`}>
         {screen === "home" ? (
@@ -253,19 +223,15 @@ export default function Home() {
           <div className={`tv-room${leaving ? " is-leaving" : ""}`}>
             <div className="tv-room-main">
               {roomMode && ModeLobby ? (
-                <>
-                  <div key={roomMode.id} className={`tv-room-row is-${enterKind}`}>
-                    <ModeLobby room={shownRoom} onToast={showToast} />
-                  </div>
-                  <ModeDock current={shownRoom.game} isHost={isHost} onPick={pickMode} />
-                </>
+                <div key={roomMode.id} className={`tv-room-row is-${enterKind}`}>
+                  <ModeLobby room={shownRoom} onToast={showToast} />
+                </div>
               ) : isHost ? (
                 // The games only show up once you're in a room; Jugar is the way in. Picking one swaps this panel
                 // for the game's, for every player at once.
                 <section className={`tv-picker${tilesOut ? " is-leaving" : ""}`} aria-labelledby="tv-picker-title">
                   <div className="tv-picker-head">
-                    <h2 id="tv-picker-title" className="tv-picker-title">Elige el juego</h2>
-                    <span className="tv-picker-sub">Todos verán el cambio al instante</span>
+                    <h2 id="tv-picker-title" className="tv-picker-title">Elige el modo de juego</h2>
                   </div>
                   <div className="tv-mode-grid">
                     {GAME_MODES.map((mode, i) => (
@@ -282,7 +248,7 @@ export default function Home() {
                     ))}
                   </div>
                   <h2 className="tv-picker-title">
-                    {hostName} está eligiendo juego
+                    {hostName} está eligiendo modo de juego
                   </h2>
                   <p className="tv-picker-sub">Cuando lo elija, lo verás aquí al momento con sus ajustes.</p>
                 </section>
@@ -292,6 +258,8 @@ export default function Home() {
           </div>
         )}
       </main>
+
+      {shownRoom && !leaving && <RoomDock room={shownRoom} onToast={showToast} />}
 
       <PlaySheet mode={sheetMode} joinCode={sheetJoinCode} open={sheetOpen} onClose={closeSheet} />
 
