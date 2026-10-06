@@ -87,6 +87,17 @@ export function AppProvider({ children }) {
   const [error, setError] = useState("");
   // Set when the host takes us out of the room; Home shows it once and clears it.
   const [kickedNotice, setKickedNotice] = useState("");
+  // "Volver" out of the room asks first (useRoomExit): true for 3 s after the first tap. It lives here because the
+  // top bar, the phones' room bar and the browser's Back button all share it.
+  const [leaveAsk, setLeaveAsk] = useState(false);
+  useEffect(() => {
+    if (!leaveAsk) return undefined;
+    const timer = setTimeout(() => setLeaveAsk(false), 3000);
+    return () => clearTimeout(timer);
+  }, [leaveAsk]);
+  useEffect(() => {
+    if (!room) setLeaveAsk(false);
+  }, [room]);
 
   // Actions read these refs instead of closing over state, so e.g. saveGuest() followed by joinRoom() sees the new user.
   const userRef = useRef(user);
@@ -499,7 +510,7 @@ export function AppProvider({ children }) {
   const spotify = useMemo(() => ({ configured: false, connected: false }), []);
 
   return (
-    <AppContext.Provider value={{ user, catalog, refreshCatalog, room, setRoom, kickedNotice, setKickedNotice, spotify, linkingStatus, error, setError, ...actions }}>
+    <AppContext.Provider value={{ user, catalog, refreshCatalog, room, setRoom, kickedNotice, setKickedNotice, leaveAsk, setLeaveAsk, spotify, linkingStatus, error, setError, ...actions }}>
       {children}
     </AppContext.Provider>
   );

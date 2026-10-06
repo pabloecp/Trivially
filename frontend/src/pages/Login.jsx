@@ -26,7 +26,9 @@ function Field({ label, ...props }) {
 
 function LoginScreen() {
   const { registerAccount, loginAccount, loginWithGoogle } = useApp();
-  const [accountMode, setAccountMode] = useState("register");
+  const [params] = useSearchParams();
+  // "/login?mode=login" opens on the sign-in tab (the profile's "Iniciar sesión" button).
+  const [accountMode, setAccountMode] = useState(params.get("mode") === "login" ? "login" : "register");
   const [accName, setAccName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -35,7 +37,6 @@ function LoginScreen() {
   const [msg, setMsg] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const [params] = useSearchParams();
   const nav = useNavigate();
   const returnTo = params.get("returnTo") || "/";
 

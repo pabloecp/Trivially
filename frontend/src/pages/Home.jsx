@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useApp } from "../lib/store.jsx";
 import { GAME_MODES, SOON_TILE, findMode } from "../modes/index.js";
@@ -46,9 +46,11 @@ function shake(tile) {
   tile.classList.add("is-shaking");
 }
 
-// How long a screen takes to leave (home ↔ room) before the next one comes in, and how long the game tiles take
-// to go after a pick, before the game's panel comes in. Both match the exit animations in home.css.
+// How long a screen takes to leave before the next one comes in: the room (its panels sink and slide off) before the
+// home screen, and the home screen (a quick fade, behind the sheet that is closing) before the room; and how long the
+// game tiles take to go after a pick, before the game's panel comes in. All match the exit animations in home.css.
 const SCREEN_OUT_MS = 360;
+const HOME_OUT_MS = 180;
 const TILES_OUT_MS = 320;
 
 function reducedMotion() {
@@ -71,7 +73,7 @@ export default function Home() {
   const hasRoom = Boolean(room);
   const game = room?.game ?? null;
 
-  // Home ↔ room: the screen on show leaves first (home zooms away, the room's cards sink and slide off), then the
+  // Home ↔ room: the screen on show leaves first (home fades away, the room's cards sink and slide off), then the
   // other one comes in. While the room leaves, it keeps showing the room as it last was.
   const lastRoom = useRef(room);
   if (room) lastRoom.current = room;
@@ -95,7 +97,7 @@ export default function Home() {
       return undefined;
     }
     setLeaving(true);
-    const t = setTimeout(swap, SCREEN_OUT_MS);
+    const t = setTimeout(swap, want === "room" ? HOME_OUT_MS : SCREEN_OUT_MS);
     return () => clearTimeout(t);
   }, [hasRoom]);
   const shownRoom = screen === "room" ? room || lastRoom.current : null;
@@ -103,26 +105,48 @@ export default function Home() {
   // Picking a game from the tiles happens in two beats, for every player at once: first the tiles (or the guests'
   // "está eligiendo" panel) go, for TILES_OUT_MS; then the game's big card grows in and "Cómo se juega" slides in
   // from the right. Switching straight from one game to another skips the first beat and only swaps the contents.
+  // Going back to the menu is the same in reverse: the game's card and settings go first (`lobbyOut`, the game that is
+  // leaving), then the menu grows in.
   const [tilesOut, setTilesOut] = useState(null);
+  const [lobbyOut, setLobbyOut] = useState(null);
   const [enterKind, setEnterKind] = useState("pick");
+  // The change is read while rendering, not in an effect: an effect would run after the first render with the new
+  // game, which would show its panel for a frame and remount the tiles (they'd replay their intro).
+  const [seen, setSeen] = useState({ code: room?.code, game });
+  if (seen.code !== room?.code || seen.game !== game) {
+    setSeen({ code: room?.code, game });
+    setTilesOut(null);
+    setLobbyOut(null);
+    if (seen.code === room?.code && !reducedMotion()) {
+      if (findMode(game)) {
+        if (seen.game) {
+          setEnterKind("switch");
+        } else {
+          setEnterKind("pick");
+          setTilesOut(game);
+        }
+      } else if (findMode(seen.game)) {
+        setLobbyOut(seen.game);
+      }
+    }
+  }
+  useEffect(() => {
+    if (!tilesOut && !lobbyOut) return undefined;
+    const t = setTimeout(() => {
+      setTilesOut(null);
+      setLobbyOut(null);
+    }, TILES_OUT_MS);
+    return () => clearTimeout(t);
+  }, [tilesOut, lobbyOut]);
+
+  // Everyone but the host hears about it, like the host's choice popping up on their screen.
   const lastGame = useRef({ code: room?.code, game });
-  useLayoutEffect(() => {
+  useEffect(() => {
     const before = lastGame.current;
     lastGame.current = { code: room?.code, game };
-    if (before.code !== room?.code || before.game === game) return undefined;
-    // Everyone but the host hears about it, like the host's choice popping up on their screen.
+    if (before.code !== room?.code || before.game === game) return;
     const picked = findMode(game);
     if (picked && !isHost) showToast(`${room.hostName || "El anfitrión"} ha elegido ${picked.name}`, "play");
-    setTilesOut(null);
-    if (!picked || reducedMotion()) return undefined;
-    if (before.game) {
-      setEnterKind("switch");
-      return undefined;
-    }
-    setEnterKind("pick");
-    setTilesOut(game);
-    const t = setTimeout(() => setTilesOut(null), TILES_OUT_MS);
-    return () => clearTimeout(t);
   }, [game, room?.code]);
 
   useEffect(() => () => clearTimeout(toastTimer.current), []);
@@ -182,11 +206,16 @@ export default function Home() {
     }
   }
 
-  // While the tiles go, the screen still shows the room without its new game (see tilesOut above).
-  const shownGame = shownRoom && !tilesOut ? shownRoom.game : null;
+  // While the tiles go, the screen still shows the room without its new game (see tilesOut above); while a game's panel
+  // goes, it still shows the room in that game.
+  const shownGame = shownRoom && !tilesOut ? lobbyOut || shownRoom.game : null;
+  const lobbyRoom = lobbyOut ? { ...shownRoom, game: lobbyOut } : shownRoom;
   const roomMode = findMode(shownGame);
   const ModeLobby = roomMode?.Lobby;
   const hostName = shownRoom?.hostName || "El anfitrión";
+  // Which panel to show follows the room on screen, not the live one: while the room leaves (`room` is already null) the
+  // host keeps seeing their menu instead of the guests' "está eligiendo" panel for the length of the exit.
+  const shownIsHost = shownRoom ? shownRoom.hostId === user?.id : false;
 
   // The site takes the picked game's colour while the room waits in it (see :root[data-mode] in global.css).
   useEffect(() => {
@@ -223,10 +252,10 @@ export default function Home() {
           <div className={`tv-room${leaving ? " is-leaving" : ""}`}>
             <div className="tv-room-main">
               {roomMode && ModeLobby ? (
-                <div key={roomMode.id} className={`tv-room-row is-${enterKind}`}>
-                  <ModeLobby room={shownRoom} onToast={showToast} />
+                <div key={roomMode.id} className={`tv-room-row is-${enterKind}${lobbyOut ? " is-out" : ""}`}>
+                  <ModeLobby room={lobbyRoom} onToast={showToast} />
                 </div>
-              ) : isHost ? (
+              ) : shownIsHost ? (
                 // The games only show up once you're in a room; Jugar is the way in. Picking one swaps this panel
                 // for the game's, for every player at once.
                 <section className={`tv-picker${tilesOut ? " is-leaving" : ""}`} aria-labelledby="tv-picker-title">

@@ -297,6 +297,29 @@ export default function WorldMap({
     return () => svg.removeEventListener("wheel", onWheel);
   });
 
+  // Every touch that starts on the map is the map's: a pinch zooms the map, never the page. touch-action: none
+  // (geo.css) is enough for most browsers; iOS Safari also needs its touch and gesture events cancelled.
+  useEffect(() => {
+    const svg = svgRef.current;
+    if (!svg) return undefined;
+    const block = (e) => {
+      if (e.cancelable) e.preventDefault();
+    };
+    const onTouchStart = (e) => {
+      if (e.touches.length > 1) block(e);
+    };
+    const events = [
+      ["touchstart", onTouchStart],
+      ["touchmove", block],
+      ["gesturestart", block],
+      ["gesturechange", block],
+    ];
+    for (const [type, fn] of events) svg.addEventListener(type, fn, { passive: false });
+    return () => {
+      for (const [type, fn] of events) svg.removeEventListener(type, fn);
+    };
+  }, []);
+
   function onPointerDown(e) {
     pressedAt.current = Date.now();
     setKeyboard(false);

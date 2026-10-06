@@ -7,20 +7,19 @@ import Avatar from "./Avatar.jsx";
 import Icon from "./Icon.jsx";
 import { useStartGame } from "./ModeStart.jsx";
 import PartyPanel from "./PartyPanel.jsx";
-import { useLeaveConfirm } from "./TvTopbar.jsx";
+import { useRoomExit } from "./TvTopbar.jsx";
 import { useInvite } from "./useInvite.js";
 
 const STACK = 5;
 
-// Phones only (home.css): the room screen's own top bar, pinned to the top in place of the usual one. The logo (two
-// taps to leave), the room's code and your role, the players' faces (tap: the room's column drops down, with
-// everyone and the way out) and your own avatar, to your profile. Once a game is picked, the host gets the top
-// bar's "Volver" (back to the game modes) in place of the code, which then shows in the dropdown.
+// Phones only (home.css): the room screen's own top bar, pinned to the top in place of the usual one. The button on
+// the left of the logo, which is not a button, is the top bar's "Volver" (see `useRoomExit`), only its arrow here:
+// back to the game modes for the host once a game is picked, otherwise out of the room after asking (two taps).
+// Then the room's code and your role, the players' faces (tap: the room's column drops down, with everyone and the
+// way out) and your own avatar, to your profile, which is only there on the game menu (not once a game is picked).
 export function RoomHeader({ room, onToast }) {
-  const { user, setGame } = useApp();
-  const { confirmLeave, goHome } = useLeaveConfirm();
-  // The host, once a game is picked: back to "Elige el modo de juego", like the top bar's chip on big screens.
-  const canPickMode = room.phase === "lobby" && Boolean(room.game) && room.hostId === user?.id;
+  const { user } = useApp();
+  const { toModes, confirmLeave, press } = useRoomExit({ onError: onToast });
   const [open, setOpen] = useState(false);
   const rootRef = useRef(null);
   const me = room.players.find((p) => p.id === user?.id);
@@ -46,32 +45,21 @@ export function RoomHeader({ room, onToast }) {
 
   return (
     <header ref={rootRef} className="tv-roomhead">
-      <Link
-        to="/"
-        className={`tv-roomhead-home${confirmLeave ? " is-confirm" : " is-logo"}`}
-        aria-label={confirmLeave ? "Toca otra vez para salir de la sala e ir al inicio" : "Volver al inicio"}
-        onClick={goHome}
-      >
-        {confirmLeave ? <Icon name="logout" size={22} strokeWidth={2.4} /> : <AppIcon small />}
-      </Link>
-      {canPickMode && !confirmLeave ? (
+      <div className="tv-roomhead-start">
         <button
           type="button"
-          className="tv-chip tv-chip--back tv-roomhead-back"
-          aria-label="Volver a modos de juego"
-          onClick={() => setGame(null).catch((e) => onToast?.(e.message || "No se pudo volver a elegir modo de juego"))}
+          className={`tv-roomhead-leave${confirmLeave ? " is-confirm" : ""}`}
+          aria-label={toModes ? "Volver a modos de juego" : confirmLeave ? "Toca otra vez para salir de la sala" : "Volver: salir de la sala"}
+          onClick={press}
         >
-          <span className="tv-avatar tv-avatar--empty">
-            <Icon name="back" size={18} strokeWidth={2.6} />
-          </span>
-          <span className="tv-chip-name">Volver</span>
+          <Icon name={confirmLeave ? "logout" : "back"} size={22} strokeWidth={2.6} />
         </button>
-      ) : (
-        <div className="tv-roomhead-text">
-          <span className="tv-roomhead-kicker">{confirmLeave ? "¿Salir? Toca otra vez" : `Sala · ${role}`}</span>
-          <span className="tv-roomhead-code">{room.code}</span>
-        </div>
-      )}
+        <AppIcon small />
+      </div>
+      <div className="tv-roomhead-text">
+        <span className="tv-roomhead-kicker">{confirmLeave ? "¿Salir? Otra vez" : `Sala · ${role}`}</span>
+        <span className="tv-roomhead-code">{room.code}</span>
+      </div>
       <button
         type="button"
         className="tv-roomhead-players"
@@ -87,7 +75,7 @@ export function RoomHeader({ room, onToast }) {
         </span>
         <Icon name="chevron" size={18} strokeWidth={3} className="tv-roomhead-chevron" />
       </button>
-      {user && (
+      {user && !room.game && (
         <Link to="/profile" className="tv-roomhead-me" aria-label={`Tu perfil: ${user.name}`}>
           <Avatar name={user.name} avatar={user.avatar} />
         </Link>

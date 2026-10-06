@@ -91,6 +91,8 @@
 }
 .tv-geo-stage > .tv-game-top { flex: none; }
 .tv-geo-stage > .tv-geo-map-card { flex: 1 1 auto; min-height: 0; }
+/* A pinch or a double tap during the match never zooms the page (the map has its own zoom). */
+html.tv-geo-playing { touch-action: pan-x pan-y; }
 @media (min-width: 900px) {
   .tv-game.tv-geo-game { grid-template-columns: minmax(0, 1fr) 280px; }
   .tv-geo-side { position: sticky; top: 14px; max-height: calc(100vh - 28px); max-height: calc(100svh - 28px); overflow-y: auto; scrollbar-width: thin; }
@@ -241,8 +243,8 @@
   .tv-geo-veil { padding: 10px; }
   .tv-geo-ask { gap: 10px; padding: 12px; border-radius: 18px; }
 }
-.tv-geo-map > svg { display: block; width: 100%; height: 100%; touch-action: pan-y; user-select: none; -webkit-user-select: none; cursor: grab; }
-.tv-geo-map.is-interactive > svg { touch-action: none; cursor: crosshair; }
+.tv-geo-map > svg { display: block; width: 100%; height: 100%; touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent; cursor: grab; }
+.tv-geo-map.is-interactive > svg { cursor: crosshair; }
 .tv-geo-map > svg:active,
 .tv-geo-map.is-dragging > svg { cursor: grabbing; }
 .tv-app .tv-geo-map > svg:focus-visible { outline: none; }

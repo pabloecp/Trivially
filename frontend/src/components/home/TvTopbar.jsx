@@ -5,57 +5,84 @@ import { useTheme } from "../../lib/theme.js";
 import { PALETTES } from "../../lib/palettes.js";
 import { useApp } from "../../lib/store.jsx";
 import AppIcon from "./AppIcon.jsx";
+import ConfirmDialog from "./ConfirmDialog.jsx";
 import Icon from "./Icon.jsx";
 import ProfileChip from "./ProfileChip.jsx";
 
-// Inicio while in a room means leaving it: the first tap asks (`confirmLeave` for 3 s), the second one leaves.
-// `goHome` is the link's onClick; outside a room it lets the link go home.
-export function useLeaveConfirm() {
-  const { room, leaveRoom } = useApp();
+// The button on the left of the logo goes back one step, which depends on where you are in the room:
+//  - the host, in a game's panel (`toModes`): back to the game menu, for everyone in the room;
+//  - anyone else in the room, the game menu included: out of the room. It asks first: the first tap turns it into
+//    "¿Salir de la sala?" (`confirmLeave`, for 3 s, shared through the store), the second one leaves;
+//  - on a match's own screen (`inGame`): the top bar turns it into an "X" that opens a modal instead (see TvTopbar),
+//    which calls `leaveNow` when it is confirmed.
+// `press` is the button's onClick; outside a room it lets the Inicio link go home. The browser's Back button does the
+// same through `step` (RoomNavigator, App.jsx). `onRoomScreen` is false away from the room's own screen (profile,
+// another page), where going back to the modes makes no sense. `onError` gets the message when going back to the
+// modes fails.
+export function useRoomExit({ onRoomScreen = true, onError } = {}) {
+  const { user, room, setGame, leaveRoom, leaveAsk, setLeaveAsk } = useApp();
   const nav = useNavigate();
-  const [confirmLeave, setConfirmLeave] = useState(false);
+  const toModes = onRoomScreen && Boolean(room) && room.phase === "lobby" && Boolean(room.game) && room.hostId === user?.id;
+  const inGame = onRoomScreen && Boolean(room) && room.phase !== "lobby";
+  const confirmLeave = leaveAsk && onRoomScreen && !toModes && !inGame;
 
-  useEffect(() => {
-    if (!confirmLeave) return undefined;
-    const timer = setTimeout(() => setConfirmLeave(false), 3000);
-    return () => clearTimeout(timer);
-  }, [confirmLeave]);
-
-  useEffect(() => {
-    if (!room) setConfirmLeave(false);
-  }, [room]);
-
-  function goHome(e) {
-    if (!room) return;
-    e.preventDefault();
-    if (!confirmLeave) {
-      setConfirmLeave(true);
-      return;
-    }
-    setConfirmLeave(false);
+  // Out of the room right away. `fromBack`: the browser's Back button is what asked, and it has already moved to
+  // Home, so there is nowhere to navigate.
+  function leaveNow({ fromBack = false } = {}) {
+    setLeaveAsk(false);
     leaveRoom();
-    nav("/");
+    // Replacing, not pushing: Back from Home must not return to the room's address (/sala/CODE), which joins it again.
+    if (!fromBack) nav("/", { replace: true });
   }
 
-  return { confirmLeave, goHome };
+  // One step back. Returns true when it left the room.
+  function step({ fromBack = false } = {}) {
+    if (toModes) {
+      setGame(null).catch((err) => onError?.(err.message || "No se pudo volver a elegir modo de juego"));
+      return false;
+    }
+    if (!confirmLeave) {
+      setLeaveAsk(true);
+      return false;
+    }
+    leaveNow({ fromBack });
+    return true;
+  }
+
+  function press(e) {
+    if (!room) return;
+    e.preventDefault();
+    step();
+  }
+
+  return { toModes, inGame, confirmLeave, press, step, leaveNow };
 }
 
-// Same top bar on every screen: on the left the small logo and "trivially", which is the way home (on the home
-// screen itself it goes nowhere), profile and theme toggle on the right.
+// Same top bar on every screen: on the left the way back and the small logo with "trivially", which is just the
+// brand and goes nowhere; profile and theme toggle on the right. The way back is "Volver" everywhere:
+//  - on the room's own screen (see `useRoomExit`): back to the game menu, or out of the room after asking;
+//  - on a match's screen it is an "X" that asks in a modal before leaving;
+//  - on any other page (profile...): back to the room, or to the match if one is running, and to Inicio when there is
+//    no room;
+//  - nothing on the home screen itself.
 export default function TvTopbar() {
-  const { user, room, setGame } = useApp();
+  const { user, room } = useApp();
   const { palette, toggleTheme } = useTheme();
   const { pathname } = useLocation();
-  // Away from your room (profile, another page): a shortcut back to it, or to the match if one is running.
   const roomTarget = room ? roomPath(room) : null;
-  const showBack = Boolean(roomTarget) && pathname !== roomTarget;
+  const awayFromRoom = Boolean(roomTarget) && pathname !== roomTarget;
   const inMatch = Boolean(room) && room.phase !== "lobby";
   const onHome = !room && pathname === "/";
-  const { confirmLeave, goHome } = useLeaveConfirm();
-  // The host, on the room screen with a game picked: a way back to "Elige el modo de juego" for everyone.
-  const showModes = Boolean(room) && room.phase === "lobby" && Boolean(room.game) && room.hostId === user?.id
-    && pathname === roomTarget;
+  // Your profile is one tap away only on Home and on the game menu; with a game picked, in a match or on any other
+  // page it stays out of the way.
+  const showProfile = onHome || (Boolean(room) && pathname === roomTarget && room.phase === "lobby" && !room.game);
   const [modesErr, setModesErr] = useState("");
+  const { toModes, inGame, confirmLeave, press, leaveNow } = useRoomExit({
+    onRoomScreen: pathname === roomTarget,
+    onError: setModesErr,
+  });
+  // The modal that asks before leaving a match; it only makes sense while the match's own screen is up.
+  const [leaving, setLeaving] = useState(false);
 
   useEffect(() => {
     if (!modesErr) return undefined;
@@ -63,80 +90,106 @@ export default function TvTopbar() {
     return () => clearTimeout(timer);
   }, [modesErr]);
 
-  function otherMode() {
-    setGame(null).catch((e) => setModesErr(e.message || "No se pudo volver a elegir modo de juego"));
+  useEffect(() => {
+    if (!inGame) setLeaving(false);
+  }, [inGame]);
+
+  let leaveButton = null;
+  if (inGame) {
+    leaveButton = (
+      <button
+        type="button"
+        className="tv-chip tv-chip--leave tv-chip--icon"
+        aria-label="Salir del juego"
+        aria-haspopup="dialog"
+        onClick={() => setLeaving(true)}
+      >
+        <span className="tv-avatar tv-avatar--empty">
+          <Icon name="close" size={18} strokeWidth={2.8} />
+        </span>
+      </button>
+    );
+  } else if (awayFromRoom) {
+    leaveButton = (
+      <Link to={roomTarget} className="tv-chip tv-chip--leave" aria-label={inMatch ? "Volver a la partida" : "Volver a la sala"}>
+        <span className="tv-avatar tv-avatar--empty">
+          <Icon name="back" size={18} strokeWidth={2.6} />
+        </span>
+        <span className="tv-chip-name tv-chip-long">Volver</span>
+      </Link>
+    );
+  } else if (room) {
+    leaveButton = (
+      <button
+        type="button"
+        className={`tv-chip tv-chip--leave${confirmLeave ? " is-confirm" : ""}`}
+        aria-label={toModes ? "Volver a modos de juego" : confirmLeave ? "Toca otra vez para salir de la sala" : "Volver: salir de la sala"}
+        onClick={press}
+      >
+        <span className="tv-avatar tv-avatar--empty">
+          <Icon name={confirmLeave ? "logout" : "back"} size={18} strokeWidth={2.6} />
+        </span>
+        {toModes && modesErr ? (
+          <span className="tv-chip-name">{modesErr}</span>
+        ) : (
+          <>
+            {/* Phones only have room for the icon (home.css), and "¿Salir?" while asking. */}
+            <span className="tv-chip-name tv-chip-long">{confirmLeave ? "¿Salir de la sala?" : "Volver"}</span>
+            {confirmLeave && <span className="tv-chip-name tv-chip-short">¿Salir?</span>}
+          </>
+        )}
+      </button>
+    );
+  } else if (!onHome) {
+    leaveButton = (
+      <Link to="/" className="tv-chip tv-chip--leave" aria-label="Volver al inicio">
+        <span className="tv-avatar tv-avatar--empty">
+          <Icon name="back" size={18} strokeWidth={2.6} />
+        </span>
+        <span className="tv-chip-name tv-chip-long">Volver</span>
+      </Link>
+    );
   }
 
   return (
-    <header className={`tv-topbar${(showBack || showModes) && !confirmLeave ? " has-back" : ""}`}>
-      {onHome ? (
-        <Link to="/" className="tv-brand" aria-label="Trivially, inicio">
-          <AppIcon small />
-          <span className="tv-brand-name">trivially</span>
-        </Link>
-      ) : (
-        <Link
-          to="/"
-          className={`tv-chip tv-chip--home${confirmLeave ? " is-confirm" : ""}`}
-          aria-label={confirmLeave ? "Toca otra vez para salir de la sala e ir al inicio" : "Volver al inicio"}
-          onClick={goHome}
-        >
-          {confirmLeave ? (
-            <>
-              <span className="tv-avatar tv-avatar--empty">
-                <Icon name="logout" size={18} />
-              </span>
-              <span className="tv-chip-name">¿Salir de la sala?</span>
-            </>
-          ) : (
-            <>
-              <AppIcon small />
-              <span className="tv-chip-name tv-brand-name">trivially</span>
-            </>
-          )}
-        </Link>
-      )}
-      {showBack && !confirmLeave && (
-        <Link to={roomTarget} className="tv-chip tv-chip--back" aria-label={inMatch ? "Volver a la partida" : "Volver a la sala"}>
-          <span className="tv-avatar tv-avatar--empty">
-            <Icon name={inMatch ? "play" : "users"} size={18} filled={inMatch} />
-          </span>
-          {/* Phones only have room for "Volver" (home.css). */}
-          <span className="tv-chip-name tv-chip-long">{inMatch ? "Volver a la partida" : "Volver a la sala"}</span>
-          <span className="tv-chip-name tv-chip-short">Volver</span>
-        </Link>
-      )}
-      {showModes && !confirmLeave && (
-        <button type="button" className="tv-chip tv-chip--back" onClick={otherMode} aria-label="Volver a modos de juego">
-          <span className="tv-avatar tv-avatar--empty">
-            <Icon name="back" size={18} strokeWidth={2.6} />
-          </span>
-          {modesErr ? (
-            <span className="tv-chip-name">{modesErr}</span>
-          ) : (
-            <>
-              <span className="tv-chip-name tv-chip-long">Volver a modos de juego</span>
-              <span className="tv-chip-name tv-chip-short">Volver</span>
-            </>
-          )}
-        </button>
-      )}
-      <div className="tv-topbar-end">
-        <ProfileChip user={user} compact={pathname === "/profile"} />
-        {/* Same chip as Inicio and Entrar: icon in a circle, then the label. */}
-        <button
-          type="button"
-          className="tv-chip tv-chip--theme"
-          onClick={toggleTheme}
-          aria-label={`Colores: opción ${palette.id} (${palette.name}), ${PALETTES.length} en total. Toca para la siguiente.`}
-          title={palette.name}
-        >
-          <span className="tv-avatar tv-avatar--empty">
-            <Icon name={palette.theme === "dark" ? "moon" : "sun"} size={18} />
-          </span>
-          <span className="tv-chip-name">Opción {palette.id}</span>
-        </button>
-      </div>
-    </header>
+    <>
+      <header className={`tv-topbar${confirmLeave ? " is-confirm" : ""}`}>
+        <div className="tv-topbar-start">
+          {leaveButton}
+          <div className="tv-brand">
+            <AppIcon small />
+            <span className="tv-brand-name">trivially</span>
+          </div>
+        </div>
+        <div className="tv-topbar-end">
+          {showProfile && <ProfileChip user={user} />}
+          {/* Same chip as Volver and Entrar: icon in a circle, then the label. */}
+          <button
+            type="button"
+            className="tv-chip tv-chip--theme"
+            onClick={toggleTheme}
+            aria-label={`Colores: opción ${palette.id} (${palette.name}), ${PALETTES.length} en total. Toca para la siguiente.`}
+            title={palette.name}
+          >
+            <span className="tv-avatar tv-avatar--empty">
+              <Icon name={palette.theme === "dark" ? "moon" : "sun"} size={18} />
+            </span>
+            <span className="tv-chip-name">Opción {palette.id}</span>
+          </button>
+        </div>
+      </header>
+      <ConfirmDialog
+        open={leaving && inGame}
+        title="¿Seguro que quieres salir del juego?"
+        text="Saldrás de la sala y dejarás la partida en curso."
+        cancelLabel="Seguir jugando"
+        confirmLabel="Salir"
+        onCancel={() => setLeaving(false)}
+        onConfirm={() => {
+          setLeaving(false);
+          leaveNow();
+        }}
+      />
+    </>
   );
 }

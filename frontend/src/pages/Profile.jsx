@@ -55,10 +55,14 @@ function ProfileScreen() {
   const [profileData, setProfileData] = useState(null);
   const [loadingUser, setLoadingUser] = useState(isOtherUser);
   const [stats, setStats] = useState(null);
+  // Your own stats come in a second request after the screen is already up; until then show a placeholder, not zeros.
+  const [statsLoading, setStatsLoading] = useState(!isOtherUser);
 
   const [newUserName, setNewUserName] = useState("");
-  const [savingName, setSavingName] = useState(false);
-  const [savingColor, setSavingColor] = useState(false);
+  // The color picked but not saved yet (a color from AVATAR_COLORS or "google"); null while nothing is pending.
+  // Picking only previews it here: nothing goes to the server (or to the other players) until "Guardar".
+  const [draftAvatar, setDraftAvatar] = useState(null);
+  const [saving, setSaving] = useState(false);
 
   const [msg, setMsg] = useState("");
   const [err, setErr] = useState("");
@@ -66,28 +70,41 @@ function ProfileScreen() {
 
   // Load user data
   useEffect(() => {
+    let alive = true;
     if (isOtherUser) {
+      setStatsLoading(false);
       setLoadingUser(true);
       setNotFound(false);
       api(`/api/users/${encodeURIComponent(userId)}`)
         .then((d) => {
+          if (!alive) return;
           setProfileData(d.user);
           setStats(d.user?.stats || null);
           setLoadingUser(false);
         })
         .catch(() => {
+          if (!alive) return;
           setNotFound(true);
           setLoadingUser(false);
         });
     } else if (currentUser?.id) {
       setProfileData(currentUser);
+      setStats(null);
+      setStatsLoading(true);
       api(`/api/users/${currentUser.id}`)
         .then((d) => {
+          if (!alive) return;
           setStats(d.user?.stats || null);
           if (d.user) setProfileData(d.user);
         })
-        .catch(() => {});
+        .catch(() => {})
+        .finally(() => {
+          if (alive) setStatsLoading(false);
+        });
     }
+    return () => {
+      alive = false;
+    };
   }, [userId, currentUser?.id, isOtherUser]);
 
   useEffect(() => {
@@ -96,25 +113,8 @@ function ProfileScreen() {
     return () => clearTimeout(t);
   }, [msg]);
 
-  async function onUpdateUsername(e) {
-    e.preventDefault();
-    const clean = newUserName.trim();
-    if (!clean) return;
-    setSavingName(true);
-    setErr("");
-    try {
-      await updateUsername(clean);
-      setMsg("Nombre de usuario actualizado.");
-      setNewUserName("");
-    } catch (e) {
-      setErr(e.message);
-    } finally {
-      setSavingName(false);
-    }
-  }
-
-  async function onPickColor(color) {
-    if (savingColor || color === currentUser?.avatar) return;
+  function onPickColor(color) {
+    if (saving) return;
     if (color === "google" && !googlePhoto) {
       setMsg("");
       setErr(
@@ -124,15 +124,39 @@ function ProfileScreen() {
       );
       return;
     }
-    setSavingColor(true);
+    setErr("");
+    setDraftAvatar(color);
+  }
+
+  // One button saves whatever was edited: the name, the color, or both.
+  async function onSaveProfile(e) {
+    e?.preventDefault();
+    if (!canSave || saving) return;
+    const withName = nameChanged;
+    const withColor = colorChanged;
+    setSaving(true);
     setErr("");
     try {
-      await updateAvatar(color);
-      setMsg("Color actualizado.");
+      if (withName) {
+        await updateUsername(newUserName.trim());
+        setNewUserName("");
+      }
+      if (withColor) {
+        await updateAvatar(draftAvatar);
+        setDraftAvatar(null);
+      }
+      setMsg(
+        withName && withColor
+          ? "Perfil actualizado."
+          : withName
+            ? "Nombre de usuario actualizado."
+            : "Color actualizado."
+      );
     } catch (e) {
+      // What was already saved is cleared above; the rest stays so it can be saved again.
       setErr(e.message);
     } finally {
-      setSavingColor(false);
+      setSaving(false);
     }
   }
 
@@ -171,6 +195,12 @@ function ProfileScreen() {
   const googlePhoto =
     activeUser?.googlePhoto || (hasGoogle && activeUser?.avatar?.startsWith("http") ? activeUser.avatar : null);
   const canLinkGoogle = !isOtherUser && !isGuest && !hasGoogle;
+  // What the avatar shows right now: the saved one, or the one picked and not saved yet.
+  const pickedAvatar = draftAvatar === "google" ? googlePhoto : draftAvatar;
+  const shownAvatar = pickedAvatar || activeUser?.avatar;
+  const colorChanged = Boolean(pickedAvatar) && pickedAvatar !== activeUser?.avatar;
+  const nameChanged = Boolean(newUserName.trim()) && newUserName.trim() !== activeUser?.name;
+  const canSave = nameChanged || colorChanged;
   const roleTag = ROLE_TAGS[activeUser?.role];
   const googleNotice = searchParams.get("google");
   const hasSpotify = Boolean(activeUser?.spotify || activeUser?.spotifyLinked);
@@ -231,8 +261,8 @@ function ProfileScreen() {
       {err && <Notice tone="bad" icon="lock">{err}</Notice>}
 
       <section className="tv-card tv-profile-hero">
-        <span className="tv-profile-avatar">
-          <Avatar name={activeUser?.name} avatar={activeUser?.avatar} className="tv-avatar--xl" />
+        <span className={`tv-profile-avatar${saving && colorChanged ? " is-saving" : ""}`}>
+          <Avatar name={activeUser?.name} avatar={shownAvatar} className="tv-avatar--xl" />
         </span>
         <div className="tv-profile-who">
           <p className="tv-party-kicker">{isOtherUser ? "Perfil de jugador" : "Tu perfil"}</p>
@@ -274,19 +304,25 @@ function ProfileScreen() {
             <h2 id="tv-stats-title" className="tv-card-title">Estadísticas</h2>
             <span className="tv-live">
               <span className="tv-pulse" aria-hidden="true" />
-              En vivo
+              {statsLoading && !isGuest ? "Cargando…" : "En vivo"}
             </span>
           </div>
           {isGuest ? (
             <p className="tv-hint">Los invitados no guardan estadísticas.</p>
           ) : (
-            <div className="tv-stat-grid">
+            <div className="tv-stat-grid" aria-busy={statsLoading}>
               {STATS.map((s, i) => (
                 <div key={s.key} className={`tv-stat tv-stat--pop tv-c-${s.color}`} style={{ "--i": i }}>
                   <span className="tv-stat-dot" aria-hidden="true" />
                   <span className="tv-stat-label">{s.label}</span>
                   <span className="tv-stat-value">
-                    <CountUp value={stats?.[s.key] || 0} />
+                    {statsLoading ? (
+                      <span className="tv-skeleton" aria-hidden="true" />
+                    ) : stats ? (
+                      <CountUp value={stats[s.key] || 0} />
+                    ) : (
+                      "—"
+                    )}
                   </span>
                 </div>
               ))}
@@ -296,23 +332,31 @@ function ProfileScreen() {
 
         {!isOtherUser && (
           <section className="tv-card" aria-labelledby="tv-account-title">
-            <h2 id="tv-account-title" className="tv-card-title">Tu cuenta</h2>
+            <div className="tv-card-head">
+              <h2 id="tv-account-title" className="tv-card-title">Tu cuenta</h2>
+              <button
+                type="button"
+                className="tv-btn tv-btn--sm tv-c-pink"
+                onClick={onSaveProfile}
+                disabled={!canSave || saving}
+                aria-busy={saving}
+              >
+                {saving && <span className="tv-spinner" aria-hidden="true" />}
+                {saving ? "Guardando…" : "Guardar"}
+              </button>
+            </div>
 
-            <form onSubmit={onUpdateUsername} className="tv-form">
+            <form onSubmit={onSaveProfile} className="tv-form">
               <label className="tv-form-row">
                 <span className="tv-label">Nombre de usuario</span>
-                <span className="tv-inline">
-                  <input
-                    className="tv-field tv-field--sm"
-                    value={newUserName}
-                    onChange={(e) => setNewUserName(e.target.value)}
-                    placeholder={activeUser?.name || "Tu nuevo nombre"}
-                    maxLength={24}
-                  />
-                  <button className="tv-btn tv-c-pink" type="submit" disabled={savingName || !newUserName.trim()}>
-                    {savingName ? "…" : "Guardar"}
-                  </button>
-                </span>
+                <input
+                  className="tv-field tv-field--sm"
+                  value={newUserName}
+                  onChange={(e) => setNewUserName(e.target.value)}
+                  placeholder={activeUser?.name || "Tu nuevo nombre"}
+                  maxLength={24}
+                  disabled={saving}
+                />
               </label>
             </form>
 
@@ -325,19 +369,19 @@ function ProfileScreen() {
                     type="button"
                     className="tv-swatch"
                     style={{ background: c }}
-                    aria-pressed={activeUser?.avatar === c}
+                    aria-pressed={shownAvatar === c}
                     aria-label={`Color ${i + 1}`}
-                    disabled={savingColor}
+                    disabled={saving}
                     onClick={() => onPickColor(c)}
                   />
                 ))}
                 <button
                   type="button"
                   className={`tv-swatch tv-swatch--photo${googlePhoto ? "" : " is-locked"}`}
-                  aria-pressed={Boolean(googlePhoto) && activeUser?.avatar === googlePhoto}
+                  aria-pressed={Boolean(googlePhoto) && shownAvatar === googlePhoto}
                   aria-label={googlePhoto ? "Usar tu foto de Google" : "Foto de perfil (requiere Google)"}
                   title={googlePhoto ? "Usar tu foto de Google" : "Inicia sesión con Google para usar tu foto"}
-                  disabled={savingColor}
+                  disabled={saving}
                   onClick={() => onPickColor("google")}
                 >
                   {googlePhoto ? (
@@ -359,11 +403,8 @@ function ProfileScreen() {
                 <Icon name="user" size={26} />
                 <div className="tv-row-card-text">
                   <strong>Estás como invitado</strong>
-                  <span>Crea una cuenta para guardar tus puntos.</span>
+                  <span>Crea una cuenta o inicia sesión para guardar tus puntos.</span>
                 </div>
-                <Link to="/login?returnTo=/profile" className="tv-btn tv-btn--sm tv-c-pink">
-                  Crear cuenta
-                </Link>
               </div>
             )}
 
@@ -418,22 +459,34 @@ function ProfileScreen() {
               </div>
             )}
 
-            <div className="tv-account-foot">
-              {activeUser?.email && (
-                <span className="tv-email" title={activeUser.email}>{activeUser.email}</span>
-              )}
-              <button
-                type="button"
-                className="tv-link-btn tv-link-btn--danger"
-                onClick={() => {
-                  logout();
-                  nav(isGuest ? "/" : "/login");
-                }}
-              >
-                <Icon name="logout" size={18} />
-                Cerrar sesión
-              </button>
-            </div>
+            {isGuest ? (
+              // A guest has nothing to sign out of: they sign in or create the account instead.
+              <div className="tv-account-foot tv-account-foot--guest">
+                <Link to="/login?mode=login&returnTo=/profile" className="tv-btn tv-btn--sm tv-c-neutral">
+                  Iniciar sesión
+                </Link>
+                <Link to="/login?returnTo=/profile" className="tv-btn tv-btn--sm tv-c-pink">
+                  Crear cuenta
+                </Link>
+              </div>
+            ) : (
+              <div className="tv-account-foot">
+                {activeUser?.email && (
+                  <span className="tv-email" title={activeUser.email}>{activeUser.email}</span>
+                )}
+                <button
+                  type="button"
+                  className="tv-link-btn tv-link-btn--danger"
+                  onClick={() => {
+                    logout();
+                    nav("/login");
+                  }}
+                >
+                  <Icon name="logout" size={18} />
+                  Cerrar sesión
+                </button>
+              </div>
+            )}
           </section>
         )}
       </div>

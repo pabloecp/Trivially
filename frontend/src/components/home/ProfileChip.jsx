@@ -2,8 +2,7 @@ import { Link } from "react-router-dom";
 import Icon from "./Icon.jsx";
 import Avatar from "./Avatar.jsx";
 
-// `compact`: only the avatar, without the name (on your own profile, which already shows it).
-export default function ProfileChip({ user, compact = false }) {
+export default function ProfileChip({ user }) {
   if (!user) {
     return (
       <Link to="/login" className="tv-chip">
@@ -16,9 +15,9 @@ export default function ProfileChip({ user, compact = false }) {
   }
 
   return (
-    <Link to="/profile" className={`tv-chip${compact ? " tv-chip--compact" : ""}`} aria-label={`Tu perfil: ${user.name}`}>
+    <Link to="/profile" className="tv-chip" aria-label={`Tu perfil: ${user.name}`}>
       <Avatar name={user.name} avatar={user.avatar} />
-      {!compact && <span className="tv-chip-name">{user.name}</span>}
+      <span className="tv-chip-name">{user.name}</span>
     </Link>
   );
 }

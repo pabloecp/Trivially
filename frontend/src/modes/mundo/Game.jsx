@@ -119,6 +119,8 @@ function GameScreen() {
   // The game is one frame that fills the screen under the top bar (see .tv-geo-stage); --geo-top is where it starts.
   // On a phone the page doesn't scroll at all during the match (html.tv-geo-playing hides the top bar and locks it),
   // so nothing moves when rounds change or the keyboard opens and closes.
+  // Nor does the page zoom: a pinch is for the map (WorldMap takes the ones that start on it), and a zoomed page
+  // would push the frame off the screen. maximum-scale also undoes a zoom from before the match.
   const hasGame = Boolean(room) && room.phase !== "finished";
   useLayoutEffect(() => {
     const el = gameRef.current;
@@ -128,9 +130,19 @@ function GameScreen() {
     const measure = () => el.style.setProperty("--geo-top", `${Math.round(el.getBoundingClientRect().top + window.scrollY)}px`);
     measure();
     window.addEventListener("resize", measure);
+    const viewport = document.querySelector('meta[name="viewport"]');
+    const pageViewport = viewport?.getAttribute("content");
+    viewport?.setAttribute("content", `${pageViewport}, maximum-scale=1, user-scalable=no`);
+    const noPinch = (e) => {
+      if (e.cancelable && (e.type !== "touchmove" || e.touches.length > 1)) e.preventDefault();
+    };
+    const pinchEvents = ["touchmove", "gesturestart", "gesturechange"];
+    for (const type of pinchEvents) document.addEventListener(type, noPinch, { passive: false });
     return () => {
       root.classList.remove("tv-geo-playing");
       window.removeEventListener("resize", measure);
+      if (pageViewport) viewport.setAttribute("content", pageViewport);
+      for (const type of pinchEvents) document.removeEventListener(type, noPinch);
     };
   }, [hasGame]);
 

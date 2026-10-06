@@ -128,6 +128,8 @@
   margin: 0 auto;
   padding: calc(14px + env(safe-area-inset-top)) 16px 0;
   animation: tvFade 0.5s ease-out backwards;
+  /* It's wider on the room screen (below): glides between the two when Home swaps screens. */
+  transition: max-width 0.4s cubic-bezier(0.2, 0.8, 0.3, 1);
 }
 .tv-chip {
   display: inline-flex;
@@ -185,8 +187,8 @@
 .tv-chip:hover { filter: brightness(1.12); }
 .tv-chip:active { transform: translateY(3px); }
 
-/* The small logo that stands in for Inicio on the home screen. */
-.tv-brand { display: flex; align-items: center; gap: 10px; padding: 4px; border-radius: 14px; }
+/* The small logo and "trivially" in the top bar. Only the brand: it is not a button, the way out is the chip beside it. */
+.tv-brand { display: flex; align-items: center; flex-shrink: 0; gap: 10px; padding: 4px; border-radius: 14px; }
 .tv-brand-name {
   font-family: var(--tv-logo-font);
   font-weight: 800;
@@ -219,12 +221,24 @@
   text-align: center;
   transition: transform 0.38s ease, filter 0.38s ease, opacity 0.38s ease;
 }
-/* Coming back from a room it zooms in from slightly big and blurred, the way it left. */
-.tv-home.is-in-back { animation: tvZoomIn 0.6s var(--tv-ease-out) backwards; }
-.tv-home.is-leaving { animation: tvZoomOut 0.38s cubic-bezier(0.5, 0, 0.8, 0.4) both; pointer-events: none; }
+/* Coming back from a room it zooms in from slightly big and blurred, the way it left. No overshoot, and a quick start,
+   so it is on screen the moment the room's panels are gone. */
+.tv-home.is-in-back { animation: tvZoomIn 0.5s cubic-bezier(0.2, 0.8, 0.3, 1) backwards; }
 /* Behind the Jugar sheet the home screen steps back. */
 .tv-home.is-behind { transform: scale(1.04); filter: blur(5px); opacity: 0.45; }
-@keyframes tvZoomOut { to { opacity: 0; transform: scale(1.12); filter: blur(6px); } }
+/* Leaving for a room: a transition, not an animation, so it goes on from how the screen looks right now (stepped back
+   behind the sheet) instead of jumping to full brightness first. It keeps the stepped-back look (same scale and blur as
+   .is-behind) and only fades, quickly and starting fast: it has to be gone before the sheet's scrim has lifted, or the
+   blurred home would show through for a moment as the sheet closes. Lasts HOME_OUT_MS (Home.jsx), so nothing is cut off
+   when the room comes in. Declared after .is-behind, which it overrides. */
+.tv-home.is-leaving {
+  opacity: 0;
+  transform: scale(1.04);
+  filter: blur(5px);
+  pointer-events: none;
+  transition-duration: 0.18s;
+  transition-timing-function: ease-out;
+}
 @keyframes tvZoomIn { from { opacity: 0; transform: scale(1.12); filter: blur(6px); } }
 /* "Cómo se juega" is for wider screens; on phones the logo and Jugar get the whole screen. */
 @media (max-width: 720px) { .tv-home .tv-howto { display: none; } }
@@ -291,15 +305,10 @@
 }
 .tv-play-icon { background: var(--p-on-site); color: var(--p-site-2); }
 .tv-topbar-end { display: flex; align-items: center; justify-content: flex-end; gap: 10px; min-width: 0; }
-/* Inicio never shrinks; a long player name gets cut with "…" instead. */
-.tv-chip--home { flex-shrink: 0; }
-/* Away from the home screen, the way home is the small logo and "trivially" in the logo's letters. */
-/* The logo is square and the chip's ends are round: a bit smaller and further in, its corners stay inside the
-   curve. The chip keeps the height it has with the 36px circle, so it doesn't move when it turns into "¿Salir de
-   la sala?". */
-.tv-chip--home { min-height: 46px; }
-.tv-chip--home .tv-appicon { --s: 30px; flex-shrink: 0; margin-left: 9px; }
-.tv-chip--home .tv-brand-name { font-size: 20px; line-height: 1; }
+/* The button that goes back a step ("Volver": leave the room or back to the game modes; or Inicio) and then the brand, together
+   on the left. The button never shrinks; a long player name gets cut with "…" instead. */
+.tv-topbar-start { display: flex; align-items: center; flex-shrink: 0; gap: 12px; }
+.tv-chip--leave { flex-shrink: 0; }
 .tv-topbar-end .tv-chip { max-width: min(62vw, 100%); }
 .tv-main--page { align-items: stretch; padding-top: 20px; }
 
@@ -783,6 +792,11 @@
 .tv-room-row.is-switch .tv-mstage,
 .tv-room-row.is-switch .tv-settings-card { animation: none; }
 .tv-room-row.is-switch .tv-settings-card > * { animation: tvSwap 0.5s var(--tv-ease-out) backwards; }
+/* Back to the game menu: the game's card sinks and its settings slide off before the menu grows in (Home.jsx,
+   TILES_OUT_MS), the way the menu's tiles go when a game is picked. After .is-switch, whose animation: none it overrides. */
+.tv-room-row.is-out { pointer-events: none; }
+.tv-room-row.is-out .tv-mstage { animation: tvShrink 0.32s cubic-bezier(0.5, 0, 0.8, 0.4) forwards; }
+.tv-room-row.is-out .tv-settings-card { animation: tvOutRight 0.3s ease-in forwards; }
 
 @keyframes tvUp { from { opacity: 0; transform: translateY(30px); } }
 @keyframes tvExpand {
@@ -959,6 +973,23 @@
   text-align: center;
 }
 
+/* ---------- Confirm dialog (ConfirmDialog.jsx): the sheet's look, smaller, with two buttons ---------- */
+.tv-sheet-pos--sm { max-width: 440px; }
+.tv-sheet--confirm { padding-top: 24px; }
+.tv-sheet--confirm .tv-sheet-head { align-items: flex-start; }
+.tv-badge--bad { --c2: var(--p-bad); --edge: var(--p-bad-edge); --on: #fff; }
+.tv-btn--bad { --c2: var(--p-bad); --edge: var(--p-bad-edge); --on: #fff; }
+.tv-confirm-text {
+  margin: 0 0 22px;
+  padding: 0 4px;
+  font-weight: 700;
+  font-size: 16px;
+  line-height: 1.4;
+  color: var(--tv-text-2);
+}
+.tv-confirm-actions { display: grid; grid-template-columns: 1.3fr 1fr; gap: 12px; }
+.tv-confirm-actions .tv-btn { padding: 0 12px; }
+
 /* ---------- Form bits ---------- */
 .tv-field {
   width: 100%;
@@ -1022,6 +1053,18 @@
 }
 .tv-swatch--photo img { width: 100%; height: 100%; object-fit: cover; }
 .tv-swatch--photo.is-locked { opacity: 0.6; }
+/* Spinner inside the account card's "Guardar" button while it saves. */
+.tv-swatch:disabled { cursor: progress; }
+.tv-spinner {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 3px solid currentColor;
+  border-top-color: transparent;
+  animation: tvSpin 0.7s linear infinite;
+}
+@keyframes tvSpin { to { transform: rotate(360deg); } }
 
 .tv-btn {
   display: inline-flex;
@@ -1409,6 +1452,19 @@
   position: relative;
 }
 .tv-profile-avatar { position: relative; animation: tvPop 0.6s var(--tv-spring) 0.1s backwards; }
+/* While a new color is being saved, a ring spins around the big avatar. */
+.tv-profile-avatar .tv-avatar { transition: opacity 0.2s ease; }
+.tv-profile-avatar.is-saving .tv-avatar { opacity: 0.7; }
+.tv-profile-avatar.is-saving::after {
+  content: "";
+  position: absolute;
+  inset: -12px;
+  border-radius: 50%;
+  border: 4px solid transparent;
+  border-top-color: var(--brand);
+  border-right-color: var(--brand);
+  animation: tvSpin 0.8s linear infinite;
+}
 .tv-avatar--xl {
   width: 88px;
   height: 88px;
@@ -1443,6 +1499,26 @@
 }
 .tv-stat--pop .tv-stat-value { font-variant-numeric: tabular-nums; }
 .tv-stat--pop .tv-stat-label { padding-right: 18px; }
+/* Stand-in for a number that hasn't arrived yet: same height as the value, with a light sweeping across. */
+.tv-skeleton {
+  position: relative;
+  display: block;
+  width: 62%;
+  max-width: 96px;
+  height: 1.1em;
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--tv-option-edge);
+}
+.tv-skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(128, 128, 128, 0.32), transparent);
+  transform: translateX(-100%);
+  animation: tvSkeleton 1.2s ease-in-out infinite;
+}
+@keyframes tvSkeleton { to { transform: translateX(100%); } }
 
 .tv-row-card {
   display: flex;
@@ -1457,6 +1533,7 @@
 .tv-row-card-text strong { font-weight: 800; font-size: 15px; }
 .tv-row-card-text span { font-weight: 700; font-size: 13px; color: var(--tv-text-3); }
 .tv-account-foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.tv-account-foot--guest > .tv-btn { flex: 1 1 0; }
 .tv-email { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 700; font-size: 14px; color: var(--tv-text-3); }
 
 /* ---------- Game ---------- */
@@ -1940,16 +2017,17 @@
 }
 
 /* ---------- Room card: players you can tap, leave button ---------- */
-/* Inicio while in a room: the first tap turns it into the "leave?" question. */
+/* "Volver" in the top bar, when it means leaving the room (in the game menu): the first tap turns it into the
+   "leave?" question. */
 /* "¿Salir de la sala?": solid vivid red with white letters, like the rest of the vivid colours. */
-.tv-app .tv-chip--home.is-confirm {
+.tv-app .tv-chip--leave.is-confirm {
   background: var(--p-bad);
   box-shadow: 0 3px 0 var(--p-bad-edge);
   color: #fff;
 }
-.tv-app .tv-chip--home.is-confirm:hover { box-shadow: 0 5px 0 var(--p-bad-edge); }
-.tv-app .tv-chip--home.is-confirm:active { box-shadow: 0 0 0 var(--p-bad-edge); }
-.tv-chip--home.is-confirm .tv-avatar { background: rgba(0, 0, 0, 0.2); color: #fff; }
+.tv-app .tv-chip--leave.is-confirm:hover { box-shadow: 0 5px 0 var(--p-bad-edge); }
+.tv-app .tv-chip--leave.is-confirm:active { box-shadow: 0 0 0 var(--p-bad-edge); }
+.tv-chip--leave.is-confirm .tv-avatar { background: rgba(0, 0, 0, 0.2); color: #fff; }
 
 .tv-player-menu {
   position: absolute;
@@ -1987,17 +2065,18 @@
 .tv-player-menu-note { margin: 0; padding: 10px 12px; font-weight: 700; font-size: 13px; color: var(--tv-text-3); }
 
 .tv-chip--theme { flex-shrink: 0; border: 0; cursor: pointer; }
-.tv-chip--back { margin-right: auto; flex-shrink: 0; }
-.tv-chip--compact { padding-right: 5px; }
-button.tv-chip--back { border: 0; font-family: inherit; color: inherit; cursor: pointer; }
+.tv-chip--icon { padding-right: 5px; }
+button.tv-chip--leave { border: 0; font-family: inherit; color: inherit; cursor: pointer; }
 .tv-chip-short { display: none; }
 @media (max-width: 520px) {
   .tv-chip--theme .tv-chip-name { display: none; }
   .tv-chip--theme { padding-right: 5px; }
-  .tv-chip--back .tv-chip-long { display: none; }
-  .tv-chip--back .tv-chip-short { display: inline; }
-  .tv-topbar.has-back .tv-chip--home .tv-chip-name { display: none; }
-  .tv-topbar.has-back .tv-chip--home { padding-right: 5px; }
+  /* The button left of the logo ("Volver") is only its icon, and "¿Salir?" while it asks. */
+  .tv-chip--leave .tv-chip-long { display: none; }
+  .tv-chip--leave .tv-chip-short { display: inline; }
+  .tv-chip--leave:not(.is-confirm) { padding-right: 5px; }
+  /* Not enough room for the name next to the question. */
+  .tv-topbar.is-confirm .tv-brand-name { display: none; }
 }
 /* ---------- The page: a clean, flat black (no dots, blobs or gradient); colour lives only in the content ---------- */
 /* Colour options can swap the black for a pattern (--tv-page-bg in palettes.css), fixed to the screen so
@@ -2387,7 +2466,7 @@ fieldset.tv-settings { display: grid; gap: 18px; min-width: 0; margin: 0; paddin
   .tv-mstage .tv-mstage-wait,
   .tv-mstage .tv-lobby-error { display: none; }
   .tv-main.is-room {
-    padding-top: calc(84px + env(safe-area-inset-top));
+    padding-top: calc(78px + env(safe-area-inset-top));
     padding-bottom: calc(100px + env(safe-area-inset-bottom));
   }
   .tv-room { min-height: 0; }
@@ -2400,32 +2479,34 @@ fieldset.tv-settings { display: grid; gap: 18px; min-width: 0; margin: 0; paddin
     z-index: 30;
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 8px;
     padding: calc(10px + env(safe-area-inset-top)) 16px 10px;
     background: var(--tv-bg);
     box-shadow: 0 1px 0 var(--tv-line);
     animation: tvFade 0.4s ease-out backwards;
   }
-  .tv-roomhead-home {
+  /* The button on the left of the logo (leave the room, or back to the game modes for the host), then the logo
+     (just the brand, not a button). Both are small and close so the code, the players and the avatar still fit in
+     the same row on a 360 px phone. */
+  .tv-roomhead-start { display: flex; align-items: center; flex-shrink: 0; gap: 6px; }
+  .tv-roomhead-start .tv-appicon { --s: 36px; flex-shrink: 0; }
+  .tv-roomhead-leave {
     display: grid;
     place-items: center;
     flex-shrink: 0;
-    width: 50px;
-    height: 50px;
-    border-radius: 17px;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    border: 0;
+    border-radius: 15px;
     background: var(--tv-surface);
     box-shadow: inset 0 0 0 1px var(--tv-line), 0 3px 0 var(--tv-edge);
+    cursor: pointer;
     transition: transform 0.12s ease, background-color 0.2s ease;
   }
-  .tv-roomhead-home:active { transform: translateY(3px); }
-  /* Not leaving: the button is the logo itself. */
-  /* Same 50px box as the red "salir" square, so nothing beside it moves when it turns into it. */
-  .tv-roomhead-home.is-logo { background: none; box-shadow: none; }
-  .tv-roomhead-home.is-logo .tv-appicon { --s: 46px; }
-  /* The host's "Volver" (to the game modes) takes the code's place; the code then shows in the dropdown. */
-  .tv-roomhead-back { margin-right: 0; }
-  .tv-roomhead:has(.tv-roomhead-back) .tv-roomhead-drop .tv-party-codebox { display: flex; }
-  .tv-app .tv-roomhead-home.is-confirm { background: var(--p-bad); box-shadow: 0 3px 0 var(--p-bad-edge); color: #fff; }
+  .tv-app .tv-roomhead-leave { color: var(--tv-text-2); }
+  .tv-roomhead-leave:active { transform: translateY(3px); }
+  .tv-app .tv-roomhead-leave.is-confirm { background: var(--p-bad); box-shadow: 0 3px 0 var(--p-bad-edge); color: #fff; }
   .tv-roomhead-text { display: grid; min-width: 0; }
   .tv-roomhead-kicker {
     overflow: hidden;
@@ -2459,7 +2540,7 @@ fieldset.tv-settings { display: grid; gap: 18px; min-width: 0; margin: 0; paddin
   .tv-roomhead-chevron { flex-shrink: 0; transform: rotate(90deg); transition: transform 0.25s var(--tv-spring); }
   .tv-roomhead-players[aria-expanded="true"] .tv-roomhead-chevron { transform: rotate(-90deg); }
   .tv-roomhead-me { flex-shrink: 0; border-radius: 50%; }
-  .tv-roomhead-me .tv-avatar { width: 46px; height: 46px; font-size: 20px; }
+  .tv-roomhead-me .tv-avatar { width: 42px; height: 42px; font-size: 19px; }
   .tv-roomhead-drop {
     position: absolute;
     top: calc(100% + 6px);

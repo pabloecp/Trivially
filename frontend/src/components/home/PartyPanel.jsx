@@ -61,7 +61,8 @@ export default function PartyPanel({ room, onToast, scores = false, className = 
 
   function leave() {
     leaveRoom();
-    nav("/");
+    // Replacing, not pushing: Back from Home must not return to /sala/CODE, which joins the room again.
+    nav("/", { replace: true });
   }
 
   const alone = room.players.length === 1;
