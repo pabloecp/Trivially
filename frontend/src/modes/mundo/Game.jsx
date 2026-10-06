@@ -5,6 +5,7 @@ import Confetti from "../../components/home/Confetti.jsx";
 import Icon from "../../components/home/Icon.jsx";
 import MatchResults from "../../components/home/MatchResults.jsx";
 import PartyPanel from "../../components/home/PartyPanel.jsx";
+import ScoreStrip from "../../components/home/ScoreStrip.jsx";
 import { useApp, useRemainingMs } from "../../lib/store.jsx";
 import { BACKEND_URL } from "../../lib/config.js";
 import WorldMap from "./WorldMap.jsx";
@@ -471,24 +472,6 @@ function GameScreen() {
 
       <PartyPanel room={room} scores className="tv-geo-side" />
     </div>
-  );
-}
-
-// The scoreboard as one strip of chips (position, name, score, and this round's points at the reveal).
-function ScoreStrip({ players, meId, phase }) {
-  const ranked = [...players].sort((a, b) => b.score - a.score);
-  return (
-    <ol className="tv-geo-scores" aria-label="Marcador">
-      {ranked.map((p, i) => (
-        <li key={p.id} className={`${p.id === meId ? "is-me" : ""}${p.connected === false ? " is-away" : ""}`}>
-          <span className="tv-geo-scores-pos">{i + 1}</span>
-          <span className="tv-geo-scores-name">{p.id === meId ? "Tú" : p.name}</span>
-          <strong key={p.score}>{p.score}</strong>
-          {phase === "reveal" && p.lastPoints > 0 && <em>+{p.lastPoints}</em>}
-          {phase === "playing" && p.answered && <Icon name="check" size={13} strokeWidth={3.2} />}
-        </li>
-      ))}
-    </ol>
   );
 }
 

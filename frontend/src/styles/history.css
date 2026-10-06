@@ -1,0 +1,360 @@
+/* Historia. Loaded after home.css and quiz.css (the game imports both) and builds on their tv- classes.
+   The mode's colour is terracotta, --tv-hm-*; difficulty reads as lighter or deeper shades of it. On the reveal's
+   timeline the right year is the meaning green (--p-ok) and each player's year has their own colour. */
+
+:root {
+  --tv-hm-1: #f2845a;
+  --tv-hm: #e8693f;
+  --tv-hm-edge: #a3401f;
+  --tv-hm-on: #ffffff;
+  --tv-hm-rgb: 232, 105, 63;
+  --tv-hm-text: #ff8d66;
+}
+
+/* ---------- Colours ---------- */
+.tv-c-history { --c1: var(--tv-hm-1); --c2: var(--tv-hm); --edge: var(--tv-hm-edge); --on: var(--tv-hm-on); }
+.tv-c-history-light {
+  --c1: color-mix(in srgb, var(--tv-hm-1) 50%, #ffffff);
+  --c2: color-mix(in srgb, var(--tv-hm) 55%, #ffffff);
+  --edge: color-mix(in srgb, var(--tv-hm-edge) 70%, #ffffff);
+  --on: var(--p-ink);
+}
+.tv-c-history-deep {
+  --c1: color-mix(in srgb, var(--tv-hm-1) 72%, #000000);
+  --c2: color-mix(in srgb, var(--tv-hm) 62%, #000000);
+  --edge: color-mix(in srgb, var(--tv-hm-edge) 55%, #000000);
+  --on: #ffffff;
+}
+
+/* The site's main colour becomes terracotta while the room is in this game (counters, timer, clock, chips...). */
+:root:root[data-mode="historia"] {
+  --brand: var(--tv-hm);
+  --brand-rgb: var(--tv-hm-rgb);
+  --brand-text: var(--tv-hm-text);
+  --brand-hover: var(--tv-hm-1);
+  --brand-active: var(--tv-hm-edge);
+  --border-focus: var(--tv-hm);
+  --on-brand: var(--tv-hm-on);
+  --tv-mode-bg: var(--tv-hm);
+  --tv-on-mode: var(--tv-hm-on);
+}
+:root[data-mode="historia"][data-theme="light"] {
+  --brand: #d4572d;
+  --brand-rgb: 212, 87, 45;
+  --brand-text: #c24b22;
+  --brand-hover: #e0663b;
+  --brand-active: #8f3417;
+  --border-focus: #d4572d;
+}
+
+/* ---------- Settings ---------- */
+/* The four ages, two by two. */
+.tv-hist-eras .tv-optrow-opts { grid-auto-flow: row; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+/* ---------- The round ---------- */
+/* Top to bottom, every part as tall in every phase so nothing moves: the event, the slot (countdown, the chosen year,
+   the verdict), the timeline and the row with "Confirmar". */
+.tv-hist-stage { justify-content: center; gap: 14px; }
+.tv-hist-stage > * { width: min(760px, 100%); }
+
+.tv-hist-event { display: grid; justify-items: center; gap: 10px; }
+.tv-hist-prompt {
+  margin: 0;
+  max-width: 30ch;
+  font-family: var(--tv-display);
+  font-weight: 600;
+  font-size: clamp(22px, 4.6vw, 32px);
+  line-height: 1.2;
+  color: var(--tv-text);
+  text-wrap: balance;
+  animation: tvRise 0.45s var(--tv-spring) 0.05s backwards;
+}
+.tv-hist-hint { min-height: 2.6em; max-width: 46ch; line-height: 1.3; }
+
+.tv-hist-slot { display: grid; place-items: center; height: 76px; }
+
+/* The chosen year, big, between the buttons that move it a year or a tenth of the line. */
+.tv-hist-picker { display: flex; align-items: center; justify-content: center; gap: 8px; animation: tvPopIn 0.45s cubic-bezier(0.3, 1.7, 0.5, 1) backwards; }
+.tv-hist-step {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  min-width: 48px;
+  height: 46px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: 14px;
+  background: var(--tv-neutral);
+  box-shadow: 0 4px 0 var(--tv-neutral-edge);
+  font-family: var(--tv-display);
+  font-weight: 700;
+  font-size: 16px;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  transition: transform 0.16s var(--tv-spring), box-shadow 0.16s ease, opacity 0.2s ease;
+}
+.tv-app .tv-hist-step { color: var(--tv-text); }
+.tv-hist-step:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 6px 0 var(--tv-neutral-edge); }
+.tv-hist-step:active:not(:disabled) { transform: translateY(4px); box-shadow: 0 0 0 var(--tv-neutral-edge); }
+.tv-hist-step:disabled { opacity: 0.35; cursor: default; }
+.tv-hist-year {
+  display: inline-flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 4px;
+  min-width: 4.4ch;
+  font-family: var(--tv-display);
+  font-weight: 700;
+  font-size: 52px;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  color: var(--tv-text);
+  text-shadow: 0 4px 0 var(--tv-edge);
+}
+.tv-hist-year small { font-size: 16px; font-weight: 800; color: var(--tv-text-3); text-shadow: none; }
+.tv-hist-year.is-empty { color: var(--tv-text-3); }
+.tv-hist-picker.is-locked .tv-hist-year { color: var(--brand-text); }
+
+/* ---------- The timeline ----------
+   A band for the players' names at the reveal (two rows), the rail, its ticks, and the scale under it. The whole
+   block takes taps and drags; the year comes from where they land along the rail. */
+.tv-hist-line {
+  position: relative;
+  padding: 48px 26px 0;
+  touch-action: pan-y;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.tv-hist-line.is-open { cursor: pointer; }
+.tv-app .tv-hist-line:focus-visible { outline: 3px solid var(--tv-focus); outline-offset: 2px; border-radius: 18px; }
+.tv-hist-rail {
+  position: relative;
+  height: 12px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--tv-text) 16%, var(--tv-surface));
+  box-shadow: inset 0 3px 0 rgba(0, 0, 0, 0.25);
+}
+.tv-hist-line.is-empty .tv-hist-rail { animation: tvQuizWait 1.2s ease-in-out infinite alternate; }
+.tv-hist-tick {
+  position: absolute;
+  top: calc(100% + 4px);
+  width: 2px;
+  height: 6px;
+  translate: -50% 0;
+  border-radius: 1px;
+  background: var(--tv-text-3);
+  opacity: 0.45;
+}
+.tv-hist-tick.is-major { height: 10px; opacity: 0.8; }
+
+/* The years still to come (a recent event's line can reach the next round year): striped, and not choosable. */
+.tv-hist-future {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  border-radius: 0 999px 999px 0;
+  background: repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.14) 0 3px, transparent 3px 7px);
+}
+.tv-hist-today {
+  position: absolute;
+  left: 0;
+  bottom: calc(100% + 6px);
+  translate: -50% 0;
+  font-weight: 800;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--tv-text-3);
+}
+.tv-hist-line.is-reveal .tv-hist-today { opacity: 0; }
+
+.tv-hist-scale { position: relative; height: 18px; margin-top: 18px; }
+.tv-hist-label {
+  position: absolute;
+  top: 0;
+  translate: -50% 0;
+  font-weight: 800;
+  font-size: 12px;
+  line-height: 18px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  color: var(--tv-text-3);
+  transition: opacity 0.3s ease;
+}
+.tv-hist-label.is-end { color: var(--tv-text-2); }
+.tv-hist-label.is-mid { display: none; }
+/* At the reveal, the years of the scale under the right year's label make way for it. */
+.tv-hist-label.is-hidden { opacity: 0; }
+@media (max-width: 559px) {
+  .tv-hist-label.is-wide { display: none; }
+  .tv-hist-label.is-mid { display: block; }
+}
+
+/* This player's year while the round is open. */
+.tv-hist-thumb { position: absolute; top: 50%; z-index: 2; pointer-events: none; }
+.tv-hist-thumb-dot {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 28px;
+  height: 28px;
+  translate: -50% -50%;
+  border-radius: 50%;
+  background: var(--brand);
+  box-shadow: 0 0 0 4px var(--tv-surface), 0 4px 0 4px var(--tv-edge), 0 0 0 10px rgba(var(--brand-rgb), 0.25);
+  animation: tvPopIn 0.3s cubic-bezier(0.3, 1.7, 0.5, 1);
+}
+.tv-hist-line.is-open .tv-hist-thumb-dot { cursor: grab; }
+
+/* The reveal: the right year in green (a line across the rail, and its year under it)... */
+.tv-hist-answer { position: absolute; top: 50%; z-index: 1; pointer-events: none; }
+.tv-hist-answer-stem {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 4px;
+  height: 34px;
+  translate: -50% -50%;
+  border-radius: 2px;
+  background: var(--p-ok);
+  box-shadow: 0 0 0 3px var(--tv-surface);
+  animation: tvGrow 0.4s var(--tv-spring);
+}
+.tv-hist-answer-flag {
+  position: absolute;
+  left: 0;
+  top: 22px;
+  translate: -50% 0;
+  padding: 3px 11px;
+  border-radius: 999px;
+  background: var(--p-ok);
+  box-shadow: 0 3px 0 var(--p-ok-edge);
+  font-family: var(--tv-display);
+  font-weight: 700;
+  font-size: 15px;
+  line-height: 1.3;
+  white-space: nowrap;
+  color: var(--p-ink);
+  animation: tvPop 0.5s var(--tv-spring) 0.1s backwards;
+}
+/* ...the distance from this player's year to it... */
+.tv-hist-gap {
+  position: absolute;
+  top: -2px;
+  bottom: -2px;
+  border-radius: 999px;
+  background: rgba(var(--brand-rgb), 0.4);
+  animation: tvFade 0.5s ease 0.2s backwards;
+}
+/* ...and everyone's year: a dot in their colour, with their name above (on two rows when names are close). */
+.tv-hist-mark { position: absolute; top: 50%; z-index: 3; pointer-events: none; animation: tvPopIn 0.4s cubic-bezier(0.3, 1.7, 0.5, 1) backwards; }
+.tv-hist-mark-dot {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 16px;
+  height: 16px;
+  translate: -50% -50%;
+  border-radius: 50%;
+  background: var(--mark);
+  box-shadow: 0 0 0 3px var(--tv-surface);
+}
+.tv-hist-mark.is-me .tv-hist-mark-dot { width: 22px; height: 22px; }
+.tv-hist-mark-stem {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 2px;
+  height: 16px;
+  translate: -50% 0;
+  background: var(--mark);
+}
+.tv-hist-mark.is-row-1 .tv-hist-mark-stem { height: 38px; }
+.tv-hist-mark-name {
+  position: absolute;
+  left: 0;
+  bottom: 14px;
+  max-width: 84px;
+  overflow: hidden;
+  translate: -50% 0;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--tv-surface);
+  box-shadow: inset 0 0 0 2px var(--mark);
+  font-weight: 800;
+  font-size: 12px;
+  line-height: 18px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--tv-text);
+}
+.tv-hist-mark.is-row-1 .tv-hist-mark-name { bottom: 36px; }
+.tv-hist-mark.is-me .tv-hist-mark-name { background: var(--mark); color: var(--p-ink); }
+
+/* ---------- Under the timeline ---------- */
+.tv-hist-action { display: grid; align-items: center; min-height: 58px; }
+.tv-hist-next { text-align: center; }
+
+/* The end of a round: icon, what happened, the points. */
+.tv-hist-verdict {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  width: min(100%, 520px);
+  min-height: 58px;
+  padding: 8px 12px 8px 8px;
+  border-radius: 18px;
+  background: var(--tv-option-bg);
+  text-align: left;
+  animation: tvPop 0.5s var(--tv-spring);
+}
+.tv-hist-verdict-icon {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 13px;
+  color: var(--p-ink);
+}
+.tv-hist-verdict-text { display: grid; min-width: 0; }
+.tv-hist-verdict-text strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: var(--tv-display); font-weight: 700; font-size: 20px; line-height: 1.15; color: var(--tv-text); }
+.tv-hist-verdict-text small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 700; font-size: 13px; color: var(--tv-text-2); }
+.tv-hist-verdict--ok { box-shadow: inset 0 0 0 2px var(--p-ok); }
+.tv-hist-verdict--ok .tv-hist-verdict-icon { background: var(--p-ok); box-shadow: 0 3px 0 var(--p-ok-edge); }
+.tv-hist-verdict--near { box-shadow: inset 0 0 0 2px var(--brand); }
+.tv-hist-verdict--near .tv-hist-verdict-icon { background: var(--brand); box-shadow: 0 3px 0 var(--brand-active); color: var(--on-brand); }
+.tv-hist-verdict--bad { box-shadow: inset 0 0 0 2px var(--p-bad); }
+.tv-hist-verdict--bad .tv-hist-verdict-icon { background: var(--p-bad); box-shadow: 0 3px 0 var(--p-bad-edge); color: #fff; }
+.tv-hist-verdict--timeout .tv-hist-verdict-icon { background: var(--p-accent-2); box-shadow: 0 3px 0 var(--p-accent-edge); }
+
+/* The scoreboard strip only on phones, where the room's column is hidden. */
+@media (min-width: 641px) {
+  .tv-hist-scores { display: none; }
+}
+
+@media (max-width: 640px) {
+  .tv-hist-stage { gap: 10px; }
+  .tv-hist-slot { height: 68px; }
+  .tv-hist-picker { gap: 6px; }
+  .tv-hist-step { min-width: 42px; height: 42px; padding: 0 6px; border-radius: 12px; font-size: 15px; }
+  .tv-hist-year { font-size: 40px; }
+  .tv-hist-line { padding: 46px 20px 0; }
+  .tv-hist-verdict-text strong { font-size: 18px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tv-hist-prompt,
+  .tv-hist-picker,
+  .tv-hist-thumb-dot,
+  .tv-hist-answer-stem,
+  .tv-hist-answer-flag,
+  .tv-hist-gap,
+  .tv-hist-mark,
+  .tv-hist-verdict,
+  .tv-hist-line.is-empty .tv-hist-rail { animation: none; }
+}

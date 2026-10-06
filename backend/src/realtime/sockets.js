@@ -224,6 +224,19 @@ export function attachSockets(io, rooms) {
       }
     });
 
+    // Historia: `{ year, lock }`. Like a pin: a year that isn't locked only goes back to its player; locking it is
+    // news for the whole room.
+    socket.on("game:year", (value, ack) => {
+      try {
+        const { room, userId } = requireRoom(rooms, socket);
+        const locked = rooms.placeYear(room, userId, value);
+        ack?.({ ok: true, state: rooms.publicState(room, userId) });
+        if (locked) io.to(room.code).emit("room:state", rooms.publicState(room));
+      } catch (err) {
+        ack?.({ ok: false, error: err.message });
+      }
+    });
+
     socket.on("disconnect", () => {
       const result = rooms.disconnect(socket.id);
       if (result?.room) io.to(result.room.code).emit("room:state", rooms.publicState(result.room));

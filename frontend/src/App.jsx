@@ -6,12 +6,13 @@ import Profile from "./pages/Profile.jsx";
 import Game from "./modes/music/Game.jsx";
 import QuizGame from "./modes/quiz/Game.jsx";
 import GeoGame from "./modes/mundo/Game.jsx";
+import HistoryGame from "./modes/historia/Game.jsx";
 import { useApp } from "./lib/store.jsx";
 import { useRoomExit } from "./components/home/TvTopbar.jsx";
 import { roomPath } from "./modes/index.js";
 
 // Screens tied to one room, e.g. /game/XOTRIV.
-const ROOM_SCREEN = /^\/(?:lobby|game|quiz|mundo|sala)\/([^/]+)/;
+const ROOM_SCREEN = /^\/(?:lobby|game|quiz|mundo|historia|sala)\/([^/]+)/;
 
 // Old /lobby/CODE links: the waiting room now lives on the room screen, which /sala/CODE opens and joins.
 function LobbyRedirect() {
@@ -95,6 +96,7 @@ export default function App() {
         <Route path="/game/:code" element={<Game />} />
         <Route path="/quiz/:code" element={<QuizGame />} />
         <Route path="/mundo/:code" element={<GeoGame />} />
+        <Route path="/historia/:code" element={<HistoryGame />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/profile/:userId" element={<Profile />} />
         {/* The old /play screens are gone: everything starts from Home. */}

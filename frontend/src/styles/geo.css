@@ -130,52 +130,10 @@ html.tv-geo-playing { touch-action: pan-x pan-y; }
   .tv-geo-find .tv-hint { font-size: 12px; }
 }
 
-/* The scoreboard as a strip of chips (phones and tablets). */
-.tv-geo-scores {
-  display: flex;
-  flex: none;
-  gap: 6px;
-  margin: 0;
-  padding: 0 0 4px;
-  overflow-x: auto;
-  scrollbar-width: none;
-  list-style: none;
-}
-.tv-geo-scores::-webkit-scrollbar { display: none; }
-.tv-geo-scores li {
-  display: inline-flex;
-  flex-shrink: 0;
-  align-items: center;
-  gap: 6px;
-  height: 32px;
-  padding: 0 12px 0 4px;
-  border-radius: 999px;
-  background: var(--tv-surface);
-  box-shadow: 0 3px 0 var(--tv-edge);
-  font-weight: 800;
-  font-size: 13px;
-}
-.tv-geo-scores li.is-me { box-shadow: 0 3px 0 var(--tv-edge), inset 0 0 0 2px var(--brand); }
-.tv-geo-scores li.is-away { opacity: 0.5; }
-.tv-geo-scores-pos {
-  display: grid;
-  place-items: center;
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  background: var(--tv-option-bg);
-  color: var(--tv-text-3);
-  font-family: var(--tv-display);
-  font-size: 13px;
-}
-.tv-geo-scores li:first-child .tv-geo-scores-pos { background: var(--p-accent-2); color: var(--p-ink); }
-.tv-geo-scores-name { max-width: 9em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--tv-text-2); }
-.tv-geo-scores strong { font-family: var(--tv-display); font-variant-numeric: tabular-nums; color: var(--tv-text); animation: tvScore 0.6s var(--tv-spring); }
-.tv-geo-scores em { font-style: normal; color: var(--p-ok-text); }
-.tv-geo-scores svg { color: var(--p-ok-text); }
-/* A computer has the full scoreboard at the side. */
+/* The scoreboard strip (components/home/ScoreStrip.jsx) is for phones and tablets: a computer has the full scoreboard
+   at the side. */
 @media (min-width: 900px) {
-  .tv-geo-scores { display: none; }
+  .tv-geo-game .tv-scores { display: none; }
 }
 
 .tv-geo-map-card {

@@ -5,14 +5,15 @@
 //   open             { "answer": "Madrid", "aliases": ["…"], "reject": ["…"], "flag": "es" }  (Geografía; checked by
 //                    game/openAnswers.js, `flag` only on flag questions)
 //   location         { "name": "Francia", "map": ["France"] }   (Geografía: a pin on the map, see geo/worldMap.js)
+//   year             { "year": 1492 }   (Historia: the year of the event, negative before Christ; there is no year 0)
 //   true_false       { "correct": true }
 //   audio            { "audio_url": "…", "answers": ["Titi Me Preguntó"] }
 // Geografía's questions (mode "mundo") also carry data.kind (capital, flag or location) and data.country (ISO code);
-// they are built from geo/countries.js (geo/geoQuestions.js).
+// they are built from geo/countries.js (geo/geoQuestions.js). Historia's (mode "historia") from history/events.js.
 
-export const QUESTION_TYPES = ["multiple_choice", "open", "true_false", "audio", "location"];
+export const QUESTION_TYPES = ["multiple_choice", "open", "true_false", "audio", "location", "year"];
 // Types the game can play so far; the others are accepted in the bank but not used yet.
-export const PLAYABLE_TYPES = ["multiple_choice", "open", "location"];
+export const PLAYABLE_TYPES = ["multiple_choice", "open", "location", "year"];
 export const QUESTION_DIFFICULTIES = ["facil", "media", "dificil"];
 // Category ids as stored in the database, and the name players see.
 export const QUESTION_CATEGORIES = {
@@ -70,6 +71,11 @@ export function questionErrors(q) {
     if (!isText(q.data.name)) errors.push("falta data.name");
     if (!Array.isArray(q.data.map) || !q.data.map.length || !q.data.map.every(isText)) {
       errors.push("data.map debe tener al menos un país del mapa");
+    }
+  } else if (q.type === "year") {
+    const { year } = q.data;
+    if (!Number.isInteger(year) || year === 0 || year < -5000 || year > new Date().getFullYear()) {
+      errors.push("data.year debe ser un año entero, distinto de 0 y no futuro");
     }
   }
   return errors;

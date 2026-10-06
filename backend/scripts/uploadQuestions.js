@@ -2,7 +2,8 @@
 // Supabase table `questions` (create it first with backend/supabase/schema.sql). Questions are upserted by id;
 // a question without an id gets one here, written back into the file so the next upload updates it instead of
 // adding a copy. Questions that are only in the database are kept and listed; pass --prune to delete them.
-// Geografía's questions (mode "mundo") are uploaded by `npm run geo:upload` instead, and left alone here.
+// Geografía's questions (mode "mundo") are uploaded by `npm run geo:upload` instead, and Historia's (mode
+// "historia") by `npm run history:upload`; both are left alone here.
 //
 //   npm run questions:upload --prefix backend
 //   npm run questions:upload --prefix backend -- --prune
@@ -99,7 +100,9 @@ for (let i = 0; i < records.length; i += 500) {
   }
 }
 
-// What the database has that the file doesn't. Geografía's rows (mode "mundo") belong to `npm run geo:upload`.
+// What the database has that the file doesn't. Geografía's rows (mode "mundo") belong to `npm run geo:upload`, and
+// Historia's (mode "historia") to `npm run history:upload`.
+const OWN_SCRIPT_MODES = ["mundo", "historia"];
 const inFile = new Set(records.map((r) => r.id));
 const extra = [];
 for (let from = 0; ; from += 1000) {
@@ -108,7 +111,7 @@ for (let from = 0; ; from += 1000) {
     console.error(`No se pudo comparar con la base de datos: ${error.message}`);
     process.exit(1);
   }
-  extra.push(...data.filter((r) => r.mode !== "mundo" && !inFile.has(r.id)).map((r) => r.id));
+  extra.push(...data.filter((r) => !OWN_SCRIPT_MODES.includes(r.mode) && !inFile.has(r.id)).map((r) => r.id));
   if (data.length < 1000) break;
 }
 if (extra.length && prune) {

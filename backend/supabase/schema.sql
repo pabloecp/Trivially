@@ -98,7 +98,7 @@ alter table public.spotify_songs enable row level security;
 -- ---------------------------------------------------------------------------
 create table if not exists public.questions (
   id          uuid primary key default gen_random_uuid(),
-  type        text not null check (type in ('multiple_choice', 'open', 'true_false', 'audio', 'location')),
+  type        text not null check (type in ('multiple_choice', 'open', 'true_false', 'audio', 'location', 'year')),
   mode        text,
   category    text not null,
   difficulty  text not null check (difficulty in ('facil', 'media', 'dificil')),
@@ -110,7 +110,8 @@ create table if not exists public.questions (
 );
 create index if not exists questions_pick_idx on public.questions (type, mode, difficulty) where active;
 alter table public.questions enable row level security;
--- Tablas creadas antes de las preguntas de ubicación: añade 'location' a los tipos permitidos.
+-- Tablas creadas antes de las preguntas de ubicación (Geografía) y de año (Historia): añade 'location' y 'year' a los
+-- tipos permitidos.
 alter table public.questions drop constraint if exists questions_type_check;
 alter table public.questions add constraint questions_type_check
-  check (type in ('multiple_choice', 'open', 'true_false', 'audio', 'location'));
+  check (type in ('multiple_choice', 'open', 'true_false', 'audio', 'location', 'year'));

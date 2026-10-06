@@ -19,6 +19,20 @@ import {
   pickGeoQuestions,
   pickTiebreakQuestion,
 } from "./geo.js";
+import {
+  countHistoryQuestions,
+  currentYear,
+  defaultHistoryConfig,
+  HISTORY_GAME,
+  HISTORY_REVEAL_MS,
+  historyBank,
+  mergeHistoryConfig,
+  pickHistoryQuestions,
+  pickHistoryTiebreak,
+  yearLabel,
+  yearPoints,
+  yearsApart,
+} from "./history.js";
 import { flagToken, flagUrl } from "../geo/flags.js";
 import { locate } from "../geo/worldMap.js";
 import { COUNTDOWN_MS, REVEAL_MS, ROUND_MS, scoreAnswer } from "./scoring.js";
@@ -26,11 +40,14 @@ import { COUNTDOWN_MS, REVEAL_MS, ROUND_MS, scoreAnswer } from "./scoring.js";
 const CODE_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 // Games the host can move a room into (ids match frontend/src/modes/index.js). `null` is the Home screen.
 // "mundo" (Geografía, GEO_GAME) asks capitals and flags (written answers checked by isCorrectOpenAnswer) and
-// locations (a pin on the world map); "opciones" (Opción múltiple) is a multiple-choice quiz (QUIZ_GAME). Both keep
-// their questions in room.tracks, in place of songs.
-export const GAME_IDS = ["musica", "opciones", "mundo"];
+// locations (a pin on the world map); "opciones" (Opción múltiple) is a multiple-choice quiz (QUIZ_GAME); "historia"
+// (HISTORY_GAME) shows an event and players choose its year on a timeline. All three keep their questions in
+// room.tracks, in place of songs.
+export const GAME_IDS = ["musica", "opciones", "mundo", "historia"];
 // "Opción múltiple": its settings live in config.quiz and its questions take the place of songs in room.tracks.
 export const QUIZ_GAME = "opciones";
+// The games that ask questions instead of playing songs.
+const QUESTION_GAMES = [QUIZ_GAME, GEO_GAME, HISTORY_GAME];
 // Custom playlists from an owner's Spotify go in config.playlistIds with this prefix ("sp:<spotify playlist id>").
 export const SPOTIFY_PREFIX = "sp:";
 // Rounds are chosen this many rounds ahead, so their audio and cover are downloaded before they start.
@@ -63,6 +80,7 @@ function defaultConfig(catalog) {
     playlistIds: playlist ? [playlist.id] : [],
     quiz: defaultQuizConfig(),
     geo: defaultGeoConfig(),
+    history: defaultHistoryConfig(),
   };
 }
 
@@ -96,6 +114,8 @@ export class RoomManager {
     this.questions = questions;
     // Geografía's part of it (filled in from geo/countries.js for any kind the bank lacks).
     this.geoQuestions = geoBank(questions);
+    // Historia's (from history/events.js when the bank has none).
+    this.historyQuestions = historyBank(questions);
     this.resolver = resolver;
     this.store = store;
     this.reconnectGraceMs = reconnectGraceMs;
@@ -302,6 +322,7 @@ export class RoomManager {
     const next = { ...room.config, ...config };
     if (config?.quiz) next.quiz = mergeQuizConfig(room.config.quiz, config.quiz);
     if (config?.geo) next.geo = mergeGeoConfig(room.config.geo, config.geo);
+    if (config?.history) next.history = mergeHistoryConfig(room.config.history, config.history);
     // Same limits as the settings on screen: 5–25 rounds, 15–35 seconds to guess.
     if (config?.rounds != null) next.rounds = Math.min(25, Math.max(5, Math.round(Number(config.rounds)) || 5));
     if (config?.roundMs != null) next.roundMs = Math.min(35000, Math.max(15000, Math.round(Number(config.roundMs)) || ROUND_MS));
@@ -417,7 +438,7 @@ export class RoomManager {
   // Chooses the songs of the coming rounds that haven't been chosen yet; songs already played are avoided while
   // there are others. Spotify songs found meanwhile join the draw.
   pickAhead(room) {
-    if (room.game === QUIZ_GAME || room.game === GEO_GAME || room.config?.customTracks?.length) return [];
+    if (QUESTION_GAMES.includes(room.game) || room.config?.customTracks?.length) return [];
     const until = Math.min(room.totalRounds, room.currentRound + 1 + LOOKAHEAD);
     const added = [];
     while (room.tracks.length < until) {
@@ -479,6 +500,16 @@ export class RoomManager {
       }
       // Flags are shown through a token, so the image's address doesn't name the country.
       for (const t of tracks) if (t.flag) t.flagToken = flagToken(t.flag);
+      room.tracks = tracks;
+      room.totalRounds = tracks.length;
+      room.tiebreak = null;
+    } else if (room.game === HISTORY_GAME) {
+      // Historia: the match's events are drawn now, each with its own range of years.
+      const history = mergeHistoryConfig(room.config.history);
+      const tracks = pickHistoryQuestions(this.historyQuestions, history);
+      if (tracks.length < history.rounds) {
+        throw new Error(`Solo hay ${tracks.length} eventos con esos ajustes para ${history.rounds} rondas. Baja las rondas o elige más épocas.`);
+      }
       room.tracks = tracks;
       room.totalRounds = tracks.length;
       room.tiebreak = null;
@@ -589,6 +620,7 @@ export class RoomManager {
       p.lastAnswer = null;
       p.lastPoints = 0;
       p.pin = null;
+      p.guess = null;
       p.status = this.isPlaying(room, p.id) ? "jugando" : "mirando";
     });
     this.setPhase(room, "countdown", COUNTDOWN_MS, () => this.beginPlaying(room));
@@ -601,12 +633,18 @@ export class RoomManager {
       if (this.isMapRound(room)) return LOCATION_ROUND_MS;
       return mergeGeoConfig(room.config.geo).roundMs;
     }
+    if (room.game === HISTORY_GAME) return mergeHistoryConfig(room.config.history).roundMs;
     return room.config.roundMs || ROUND_MS;
   }
 
   /** Geografía's "Ubicación" rounds (and every tiebreak): a pin on the world map instead of a written answer. */
   isMapRound(room) {
     return room.game === GEO_GAME && room.tracks[room.currentRound]?.kind === "location";
+  }
+
+  /** Historia's rounds: a year on the timeline instead of a written answer. */
+  isYearRound(room) {
+    return room.game === HISTORY_GAME && Boolean(room.tracks[room.currentRound]);
   }
 
   /** During a tiebreak only the tied players answer; the rest of the room watches. */
@@ -624,6 +662,7 @@ export class RoomManager {
     const duration = this.roundMs(room);
     if (room.game === QUIZ_GAME && track) this.gradeQuiz(room, track);
     if (this.isMapRound(room)) this.gradeMap(room, track);
+    if (this.isYearRound(room)) this.gradeYears(room, track);
     room.players.forEach((player) => {
       if (!player.lastAnswer && this.isPlaying(room, player.id)) {
         player.streak = 0;
@@ -634,6 +673,7 @@ export class RoomManager {
     let revealMs = REVEAL_MS;
     if (room.game === QUIZ_GAME) revealMs = QUIZ_REVEAL_MS;
     else if (this.isMapRound(room)) revealMs = LOCATION_REVEAL_MS;
+    else if (this.isYearRound(room)) revealMs = HISTORY_REVEAL_MS;
     this.setPhase(room, "reveal", revealMs, () => this.advance(room));
     return { track, duration };
   }
@@ -649,11 +689,12 @@ export class RoomManager {
   }
 
   /**
-   * Geografía, after the last round (or a tiebreak without a winner): if two or more players share the top score,
-   * they play a map round to settle it. Returns false when the match can end.
+   * Geografía and Historia, after the last round (or a tiebreak without a winner): if two or more players share the
+   * top score, they play one more round to settle it (a map round, or an event's year). Returns false when the match
+   * can end.
    */
   beginTiebreak(room) {
-    if (room.game !== GEO_GAME) return false;
+    if (room.game !== GEO_GAME && room.game !== HISTORY_GAME) return false;
     const previous = room.tiebreak;
     if (previous?.winnerId || (previous && previous.round >= MAX_TIEBREAKS)) return false;
     const connected = [...room.players.values()].filter((p) => p.connected);
@@ -669,7 +710,10 @@ export class RoomManager {
       if (previous && tied.length === 1) previous.winnerId = tied[0].id;
       return false;
     }
-    const question = pickTiebreakQuestion(this.geoQuestions, room.config.geo, room.tracks.map((t) => t.country));
+    const question =
+      room.game === GEO_GAME
+        ? pickTiebreakQuestion(this.geoQuestions, room.config.geo, room.tracks.map((t) => t.country))
+        : pickHistoryTiebreak(this.historyQuestions, room.config.history, room.tracks.map((t) => t.id));
     if (!question) return false;
     room.tiebreak = { playerIds: tied.map((p) => p.id), round: (previous?.round || 0) + 1, winnerId: null, reason: null };
     room.tracks.push(question);
@@ -762,6 +806,7 @@ export class RoomManager {
       p.lastAnswer = null;
       p.lastPoints = 0;
       p.pin = null;
+      p.guess = null;
       p.status = p.connected ? "conectado" : "desconectado";
     }
   }
@@ -777,6 +822,7 @@ export class RoomManager {
     }
     if (room.game === QUIZ_GAME) return this.submitQuizAnswer(room, player, answerText);
     if (this.isMapRound(room)) throw new Error("Toca el mapa para poner tu pin");
+    if (this.isYearRound(room)) throw new Error("Elige el año en la línea del tiempo");
 
     // Grace period for network latency if reveal just started
     const isPlaying = room.phase === "playing";
@@ -929,24 +975,89 @@ export class RoomManager {
   }
 
   /**
-   * Who won a tiebreak round: the tied player who confirmed a pin inside the country (the first to do it ends the
-   * round: see placePin); a pin left unconfirmed inside only wins if nobody confirmed one, the earliest placed first.
-   * If nobody landed inside, the closest pin wins, however long it took. No pins (or two at exactly the same
-   * distance) means another tiebreak.
+   * Historia: the player moves a marker along the timeline. Like a map pin, the year can change until it is locked
+   * (`lock`, the "Confirmar" button); when the time runs out, the last one counts. In a tiebreak, locking the exact
+   * year ends the round on the spot: the first to confirm it wins. Years are only judged at the reveal (gradeYears).
+   * Returns true when the year was locked (the room's state changed for everyone).
+   */
+  placeYear(room, userId, value) {
+    const player = room.players.get(userId);
+    if (!player) throw new Error("Jugador no encontrado");
+    if (!this.isYearRound(room)) throw new Error("Esta ronda no es de Historia");
+    if (room.phase !== "playing") throw new Error("No se aceptan respuestas ahora");
+    if (!this.isPlaying(room, userId)) throw new Error("Solo juegan el desempate los jugadores empatados");
+    if (player.lastAnswer) return false;
+    const track = room.tracks[room.currentRound];
+    const year = Number(value?.year);
+    if (!Number.isInteger(year) || year < track.min || year > track.max) throw new Error("Elige un año de la línea del tiempo");
+    if (year === 0) throw new Error("El año 0 no existe");
+    if (year > currentYear()) throw new Error("Ese año aún no ha llegado");
+    player.guess = { year, at: Date.now() };
+    if (!value.lock) return false;
+
+    player.lastAnswer = { year, at: player.guess.at, locked: true };
+    if (room.tiebreak && year === track.year) {
+      player.status = "respondió";
+      if (room.timer) clearTimeout(room.timer);
+      this.beginReveal(room);
+      this.onPhaseChange?.(room);
+      return true;
+    }
+    this.answered(room, player);
+    return true;
+  }
+
+  /**
+   * At the reveal of a Historia round: each year (locked or the last one chosen) is compared with the event's. The
+   * exact year gets every point; otherwise fewer the further it is. In a tiebreak nobody scores: it decides who wins.
+   */
+  gradeYears(room, track) {
+    for (const player of room.players.values()) {
+      if (!this.isPlaying(room, player.id)) continue;
+      if (!player.lastAnswer && player.guess) {
+        player.lastAnswer = { year: player.guess.year, at: player.guess.at, locked: false };
+      }
+      const answer = player.lastAnswer;
+      if (!Number.isInteger(answer?.year)) continue;
+      const diff = yearsApart(answer.year, track.year);
+      answer.diff = diff;
+      answer.correct = diff === 0;
+      answer.text = diff === 0 ? `${yearLabel(answer.year)}, año exacto` : `${yearLabel(answer.year)}, a ${diff} ${diff === 1 ? "año" : "años"}`;
+      if (room.tiebreak) continue;
+      const points = yearPoints(diff, track.era);
+      player.lastPoints = points;
+      player.score += points;
+      player.streak = answer.correct ? player.streak + 1 : 0;
+      player.bestStreak = Math.max(player.bestStreak, player.streak);
+      if (answer.correct) {
+        player.correct += 1;
+        player.answerTimes.push(Math.max(0, answer.at - room.phaseStartedAt));
+      }
+    }
+    if (room.tiebreak) this.settleTiebreak(room);
+  }
+
+  /**
+   * Who won a tiebreak round: the tied player who confirmed the right answer (a pin inside the country, or the exact
+   * year; the first to do it ends the round: see placePin and placeYear); one left unconfirmed only wins if nobody
+   * confirmed one, the earliest placed first. If nobody got it right, the closest answer wins, however long it took.
+   * No answers (or two equally close) means another tiebreak.
    */
   settleTiebreak(room) {
     const tb = room.tiebreak;
-    const pins = tb.playerIds.map((id) => room.players.get(id)).filter((p) => p?.lastAnswer?.pin);
-    const inside = pins
-      .filter((p) => p.lastAnswer.inside)
+    const map = room.game === GEO_GAME;
+    const miss = (answer) => (map ? answer.distanceKm : answer.diff);
+    const answers = tb.playerIds.map((id) => room.players.get(id)).filter((p) => p?.lastAnswer && miss(p.lastAnswer) != null);
+    const right = answers
+      .filter((p) => p.lastAnswer.correct)
       .sort((a, b) => Boolean(b.lastAnswer.locked) - Boolean(a.lastAnswer.locked) || a.lastAnswer.at - b.lastAnswer.at);
-    if (inside.length) {
-      tb.winnerId = inside[0].id;
-      tb.reason = "dentro";
+    if (right.length) {
+      tb.winnerId = right[0].id;
+      tb.reason = map ? "dentro" : "exacto";
       return;
     }
-    const byDistance = pins.sort((a, b) => a.lastAnswer.distanceKm - b.lastAnswer.distanceKm);
-    if (byDistance.length && (byDistance.length === 1 || byDistance[0].lastAnswer.distanceKm < byDistance[1].lastAnswer.distanceKm)) {
+    const byDistance = answers.sort((a, b) => miss(a.lastAnswer) - miss(b.lastAnswer));
+    if (byDistance.length && (byDistance.length === 1 || miss(byDistance[0].lastAnswer) < miss(byDistance[1].lastAnswer))) {
       tb.winnerId = byDistance[0].id;
       tb.reason = "cerca";
     }
@@ -1019,12 +1130,12 @@ export class RoomManager {
       totalRounds: room.totalRounds || room.tracks.length || room.config.rounds,
       // In the lobby: how many different songs the chosen playlists have ready (a match needs one per round), and
       // whether iTunes is making the Spotify songs wait.
-      songsReady: room.phase === "lobby" && room.game !== QUIZ_GAME && room.game !== GEO_GAME ? this.songPool(room).length : undefined,
-      // Opción múltiple and Geografía, in the lobby: how many different questions the chosen settings have (one per
-      // round).
+      songsReady: room.phase === "lobby" && !QUESTION_GAMES.includes(room.game) ? this.songPool(room).length : undefined,
+      // Opción múltiple, Geografía and Historia, in the lobby: how many different questions the chosen settings have
+      // (one per round).
       questionsReady: room.phase === "lobby" ? this.questionsReady(room) : undefined,
-      // Geografía: the players of a tiebreak and, from its reveal on, who won it and how ("dentro": found the country
-      // first; "cerca": nobody found it and theirs was the closest pin).
+      // Geografía and Historia: the players of a tiebreak and, from its reveal on, who won it and how ("dentro": found
+      // the country first; "exacto": confirmed the exact year first; "cerca": nobody got it and theirs was closest).
       tiebreak: room.tiebreak
         ? { playerIds: [...room.tiebreak.playerIds], round: room.tiebreak.round, winnerId: room.tiebreak.winnerId, reason: room.tiebreak.reason }
         : null,
@@ -1076,6 +1187,9 @@ export class RoomManager {
           map: track.map,
         };
       }
+    } else if (room.game === HISTORY_GAME) {
+      if (track) payload.question = this.publicHistoryQuestion(room, track);
+      if (track && showTrack) payload.reveal = { prompt: track.prompt, year: track.year, min: track.min, max: track.max };
     } else if (track && (room.phase === "countdown" || room.phase === "playing")) {
       payload.audio = {
         previewUrl: track.previewUrl,
@@ -1083,7 +1197,7 @@ export class RoomManager {
       };
     }
     // Send full search catalog for autocomplete during playing phase
-    const songRound = room.game !== QUIZ_GAME && room.game !== GEO_GAME;
+    const songRound = !QUESTION_GAMES.includes(room.game);
     if (room.phase === "playing" && songRound) {
       payload.searchCatalog = this.buildSearchCatalog(room);
     }
@@ -1116,6 +1230,8 @@ export class RoomManager {
             lastAnswer: me.lastAnswer,
             // Geografía's map rounds: this player's pin, not locked yet (so a reload doesn't lose it).
             pin: me.pin ? [me.pin.lng, me.pin.lat] : null,
+            // Historia: the year this player has on the timeline, not locked yet.
+            guess: me.guess ? me.guess.year : null,
             isHost: room.hostId === forUserId,
             canEditConfig: this.canEditConfig(room, forUserId),
           }
@@ -1128,6 +1244,7 @@ export class RoomManager {
   questionsReady(room) {
     if (room.game === QUIZ_GAME) return countQuestions(this.questions, mergeQuizConfig(room.config.quiz).difficulty);
     if (room.game === GEO_GAME) return countGeoQuestions(this.geoQuestions, room.config.geo);
+    if (room.game === HISTORY_GAME) return countHistoryQuestions(this.historyQuestions, room.config.history);
     return undefined;
   }
 
@@ -1145,6 +1262,22 @@ export class RoomManager {
       prompt: shown ? track.prompt : null,
       name: shown && track.kind === "location" ? track.name : null,
       flag: shown && track.flagToken ? flagUrl(track.flagToken) : null,
+    };
+  }
+
+  /**
+   * The current event of Historia. The event shows from the countdown on (everyone gets the same seconds to read it);
+   * its range of years, and so the timeline, once the round is playing. The year only goes out in `reveal`.
+   */
+  publicHistoryQuestion(room, track) {
+    const open = ["playing", "reveal", "finished"].includes(room.phase);
+    return {
+      round: room.currentRound + 1,
+      prompt: track.prompt,
+      era: track.era,
+      difficulty: track.difficulty,
+      min: open ? track.min : null,
+      max: open ? track.max : null,
     };
   }
 

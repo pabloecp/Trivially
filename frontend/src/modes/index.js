@@ -1,6 +1,7 @@
 import MusicLobbyPanel from "./music/LobbyPanel.jsx";
 import QuizLobbyPanel from "./quiz/LobbyPanel.jsx";
 import GeoLobbyPanel from "./mundo/LobbyPanel.jsx";
+import HistoryLobbyPanel from "./historia/LobbyPanel.jsx";
 
 // Game modes shown on the room screen. To add a new mode, add an entry here with `available: true`, a `Lobby`
 // panel (shown on the room screen while the room waits in that mode: the mode's big coloured card with its start
@@ -55,6 +56,23 @@ export const GAME_MODES = [
     Lobby: GeoLobbyPanel,
     // Capitals, flags and the world map (modes/mundo/Game.jsx).
     path: (room) => `/mundo/${room.code}`,
+  },
+  {
+    id: "historia",
+    name: "Historia",
+    // Terracotta (styles/history.css).
+    color: "history",
+    icon: "hourglass",
+    available: true,
+    steps: [
+      { icon: "scroll", text: "Lee el acontecimiento" },
+      { icon: "calendar", text: "Elige el año" },
+      { icon: "target", text: "Más cerca, más puntos" },
+    ],
+    ready: (room) => room.questionsReady == null || room.questionsReady >= (room.config?.history?.rounds || 5),
+    Lobby: HistoryLobbyPanel,
+    // An event and a timeline (modes/historia/Game.jsx).
+    path: (room) => `/historia/${room.code}`,
   },
   { id: "cultura", name: "Cultura general", color: "culture", icon: "bulb", available: false },
   { id: "cine", name: "Cine y series", color: "cinema", icon: "film", available: false },
