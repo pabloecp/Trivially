@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { useApp } from "../../lib/store.jsx";
 import { findMode } from "../../modes/index.js";
+import AppIcon from "./AppIcon.jsx";
 import Avatar from "./Avatar.jsx";
 import Icon from "./Icon.jsx";
 import { useStartGame } from "./ModeStart.jsx";
@@ -11,12 +12,15 @@ import { useInvite } from "./useInvite.js";
 
 const STACK = 5;
 
-// Phones only (home.css): the room screen's own top bar, pinned to the top in place of the usual one. Inicio (two
+// Phones only (home.css): the room screen's own top bar, pinned to the top in place of the usual one. The logo (two
 // taps to leave), the room's code and your role, the players' faces (tap: the room's column drops down, with
-// everyone and the way out) and your own avatar, to your profile.
+// everyone and the way out) and your own avatar, to your profile. Once a game is picked, the host gets the top
+// bar's "Volver" (back to the game modes) in place of the code, which then shows in the dropdown.
 export function RoomHeader({ room, onToast }) {
-  const { user } = useApp();
+  const { user, setGame } = useApp();
   const { confirmLeave, goHome } = useLeaveConfirm();
+  // The host, once a game is picked: back to "Elige el modo de juego", like the top bar's chip on big screens.
+  const canPickMode = room.phase === "lobby" && Boolean(room.game) && room.hostId === user?.id;
   const [open, setOpen] = useState(false);
   const rootRef = useRef(null);
   const me = room.players.find((p) => p.id === user?.id);
@@ -44,16 +48,30 @@ export function RoomHeader({ room, onToast }) {
     <header ref={rootRef} className="tv-roomhead">
       <Link
         to="/"
-        className={`tv-roomhead-home${confirmLeave ? " is-confirm" : ""}`}
+        className={`tv-roomhead-home${confirmLeave ? " is-confirm" : " is-logo"}`}
         aria-label={confirmLeave ? "Toca otra vez para salir de la sala e ir al inicio" : "Volver al inicio"}
         onClick={goHome}
       >
-        <Icon name={confirmLeave ? "logout" : "home"} size={22} strokeWidth={2.4} />
+        {confirmLeave ? <Icon name="logout" size={22} strokeWidth={2.4} /> : <AppIcon small />}
       </Link>
-      <div className="tv-roomhead-text">
-        <span className="tv-roomhead-kicker">{confirmLeave ? "¿Salir? Toca otra vez" : `Sala · ${role}`}</span>
-        <span className="tv-roomhead-code">{room.code}</span>
-      </div>
+      {canPickMode && !confirmLeave ? (
+        <button
+          type="button"
+          className="tv-chip tv-chip--back tv-roomhead-back"
+          aria-label="Volver a modos de juego"
+          onClick={() => setGame(null).catch((e) => onToast?.(e.message || "No se pudo volver a elegir modo de juego"))}
+        >
+          <span className="tv-avatar tv-avatar--empty">
+            <Icon name="back" size={18} strokeWidth={2.6} />
+          </span>
+          <span className="tv-chip-name">Volver</span>
+        </button>
+      ) : (
+        <div className="tv-roomhead-text">
+          <span className="tv-roomhead-kicker">{confirmLeave ? "¿Salir? Toca otra vez" : `Sala · ${role}`}</span>
+          <span className="tv-roomhead-code">{room.code}</span>
+        </div>
+      )}
       <button
         type="button"
         className="tv-roomhead-players"

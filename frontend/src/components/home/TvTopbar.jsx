@@ -40,10 +40,10 @@ export function useLeaveConfirm() {
   return { confirmLeave, goHome };
 }
 
-// Same top bar on every screen: Inicio on the left (the small logo on the home screen itself, where Inicio would go
-// nowhere), profile and theme toggle on the right.
+// Same top bar on every screen: on the left the small logo and "trivially", which is the way home (on the home
+// screen itself it goes nowhere), profile and theme toggle on the right.
 export default function TvTopbar() {
-  const { user, room } = useApp();
+  const { user, room, setGame } = useApp();
   const { palette, toggleTheme } = useTheme();
   const { pathname } = useLocation();
   // Away from your room (profile, another page): a shortcut back to it, or to the match if one is running.
@@ -52,9 +52,23 @@ export default function TvTopbar() {
   const inMatch = Boolean(room) && room.phase !== "lobby";
   const onHome = !room && pathname === "/";
   const { confirmLeave, goHome } = useLeaveConfirm();
+  // The host, on the room screen with a game picked: a way back to "Elige el modo de juego" for everyone.
+  const showModes = Boolean(room) && room.phase === "lobby" && Boolean(room.game) && room.hostId === user?.id
+    && pathname === roomTarget;
+  const [modesErr, setModesErr] = useState("");
+
+  useEffect(() => {
+    if (!modesErr) return undefined;
+    const timer = setTimeout(() => setModesErr(""), 3000);
+    return () => clearTimeout(timer);
+  }, [modesErr]);
+
+  function otherMode() {
+    setGame(null).catch((e) => setModesErr(e.message || "No se pudo volver a elegir modo de juego"));
+  }
 
   return (
-    <header className={`tv-topbar${showBack && !confirmLeave ? " has-back" : ""}`}>
+    <header className={`tv-topbar${(showBack || showModes) && !confirmLeave ? " has-back" : ""}`}>
       {onHome ? (
         <Link to="/" className="tv-brand" aria-label="Trivially, inicio">
           <AppIcon small />
@@ -67,10 +81,19 @@ export default function TvTopbar() {
           aria-label={confirmLeave ? "Toca otra vez para salir de la sala e ir al inicio" : "Volver al inicio"}
           onClick={goHome}
         >
-          <span className="tv-avatar tv-avatar--empty">
-            <Icon name={confirmLeave ? "logout" : "home"} size={18} />
-          </span>
-          <span className="tv-chip-name">{confirmLeave ? "¿Salir de la sala?" : "Inicio"}</span>
+          {confirmLeave ? (
+            <>
+              <span className="tv-avatar tv-avatar--empty">
+                <Icon name="logout" size={18} />
+              </span>
+              <span className="tv-chip-name">¿Salir de la sala?</span>
+            </>
+          ) : (
+            <>
+              <AppIcon small />
+              <span className="tv-chip-name tv-brand-name">trivially</span>
+            </>
+          )}
         </Link>
       )}
       {showBack && !confirmLeave && (
@@ -83,8 +106,23 @@ export default function TvTopbar() {
           <span className="tv-chip-name tv-chip-short">Volver</span>
         </Link>
       )}
+      {showModes && !confirmLeave && (
+        <button type="button" className="tv-chip tv-chip--back" onClick={otherMode} aria-label="Volver a modos de juego">
+          <span className="tv-avatar tv-avatar--empty">
+            <Icon name="back" size={18} strokeWidth={2.6} />
+          </span>
+          {modesErr ? (
+            <span className="tv-chip-name">{modesErr}</span>
+          ) : (
+            <>
+              <span className="tv-chip-name tv-chip-long">Volver a modos de juego</span>
+              <span className="tv-chip-name tv-chip-short">Volver</span>
+            </>
+          )}
+        </button>
+      )}
       <div className="tv-topbar-end">
-        <ProfileChip user={user} />
+        <ProfileChip user={user} compact={pathname === "/profile"} />
         {/* Same chip as Inicio and Entrar: icon in a circle, then the label. */}
         <button
           type="button"

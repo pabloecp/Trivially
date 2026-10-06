@@ -207,7 +207,7 @@ export default function Home() {
         {screen === "home" ? (
           <div className={`tv-home is-in-${entry}${leaving ? " is-leaving" : ""}${sheetOpen ? " is-behind" : ""}`}>
             <section className="tv-hero">
-              <AppIcon />
+              <AppIcon edge />
               <Wordmark />
               <p className="tv-tagline">Trivia rápida para jugar solo o con amigos.</p>
               <button ref={playRef} type="button" className="tv-play tv-shine" aria-haspopup="dialog" onClick={() => openSheet()}>

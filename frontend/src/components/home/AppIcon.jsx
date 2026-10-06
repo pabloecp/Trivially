@@ -1,38 +1,42 @@
-import Icon from "./Icon.jsx";
+import { useId } from "react";
 
-// The question mark drawn as a line, for the options whose logo uses it instead of the letter (home.css).
-function QuestionGlyph({ className }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.7" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M9 9a3 3 0 1 1 4 2.8c-.6.3-1 .9-1 1.6V14" />
-      <circle cx="12" cy="18" r="0.75" />
-    </svg>
-  );
-}
+// The question mark, drawn as a line on a 100×100 grid.
+const QUESTION = "M37 38a13 13 0 1 1 20 11c-5 3-7 6-7 11v3";
 
-// Logo mark: a rounded app-icon tile with a big question mark and a star. Each colour option shows its own version
-// of it (home.css, "App icon"): the letter on a coloured tile, the drawn mark on a lime tile, or four coloured
-// squares around a dark disc. `small` is the version for the top bar, without the floor shadow.
-export default function AppIcon({ small = false }) {
+// Logo mark: a dark rounded tile with a frame of five coloured slices around a white question mark. The slices
+// take the colour option's --logo-1…5 (palettes.css), so the logo follows the option that is on. `small` is the
+// version for the top bar, still and without the floor shadow. `edge` adds the dark edge under the tile, only for
+// the big logo on the home screen.
+export default function AppIcon({ small = false, edge = false }) {
+  const clip = `tv-icon-${useId().replace(/:/g, "")}`;
   return (
-    <div className={`tv-appicon${small ? " tv-appicon--sm" : ""}`} aria-hidden="true">
+    <div className={`tv-appicon${small ? " tv-appicon--sm" : ""}${edge ? " has-edge" : ""}`} aria-hidden="true">
       {!small && <span className="tv-appicon-shadow" />}
-      <span className="tv-appicon-tile">
-        <span className="tv-appicon-shine" />
-        <span className="tv-appicon-quads">
-          <span />
-          <span />
-          <span />
-          <span />
-        </span>
-        <span className="tv-appicon-mark">?</span>
-        <span className="tv-appicon-disc">
-          <QuestionGlyph className="tv-appicon-glyph" />
-        </span>
-        <span className="tv-appicon-star">
-          <Icon name="star" size={20} strokeWidth={2} filled />
-        </span>
-      </span>
+      <svg className="tv-appicon-tile" viewBox={edge ? "0 0 100 106" : "0 0 100 100"}>
+        <defs>
+          <clipPath id={clip}>
+            <rect width="100" height="100" rx="24" />
+          </clipPath>
+        </defs>
+        {edge && <rect y="6" width="100" height="100" rx="24" className="tv-appicon-edge" />}
+        <g clipPath={`url(#${clip})`}>
+          <rect width="100" height="100" className="tv-appicon-bg" />
+          <path d="M50 50 L50 -30 L126.1 25.3Z" fill="var(--logo-1)" />
+          <path d="M50 50 L126.1 25.3 L97 114.7Z" fill="var(--logo-2)" />
+          <path d="M50 50 L97 114.7 L3 114.7Z" fill="var(--logo-3)" />
+          <path d="M50 50 L3 114.7 L-26.1 25.3Z" fill="var(--logo-4)" />
+          <path d="M50 50 L-26.1 25.3 L50 -30Z" fill="var(--logo-5)" />
+          <rect x="12" y="12" width="76" height="76" rx="16" className="tv-appicon-bg" />
+        </g>
+        <g transform="translate(19 19) scale(0.62)">
+          <g transform="translate(0 3)" opacity="0.33">
+            <path d={QUESTION} fill="none" stroke="#000" strokeWidth="10" strokeLinecap="round" strokeLinejoin="round" />
+            <circle cx="50" cy="77" r="6.2" fill="#000" />
+          </g>
+          <path d={QUESTION} fill="none" stroke="#fff" strokeWidth="10" strokeLinecap="round" strokeLinejoin="round" />
+          <circle cx="50" cy="77" r="6.2" fill="#fff" />
+        </g>
+      </svg>
     </div>
   );
 }

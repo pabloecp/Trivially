@@ -1,7 +1,7 @@
 /* The options of the theme button (lib/palettes.js lists them). They change the page and the greys of its
    boxes, their typefaces and the logo's colours; options 4 and 5 also change the vivid colours of the site and of
    each game mode (below). Only variables live here: nothing in this file animates. The shapes that differ between
-   options (logo, page decoration, tinted look) are in home.css under [data-palette]. */
+   options (page decoration, tinted look) are in home.css under [data-palette]. */
 
 /* The base: the black page and greys every option builds on (the old option 1, no longer in the list). */
 :root:root {
@@ -29,14 +29,11 @@
    blending) and a different typeface. --tv-display is the titles' font, --tv-body the rest and --tv-mono the small
    capital labels; the logo (wordmark and app icon) keeps its own font unless the option sets --tv-logo-font. */
 
-/* Opción 1: Mezcla, the default. A confetti of little shapes, Baloo 2 (playful) and a logo of calm waves. */
+/* Opción 1: Mezcla, the default. A confetti of little shapes and Baloo 2 (playful). */
 :root:root[data-palette="1"] {
   --tv-page-bg: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E %3Cg fill='none' stroke='rgba(255,255,255,0.055)' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E %3Cpath d='M18 22l10-4 2 10z'/%3E %3Crect x='86' y='14' width='10' height='10' rx='2' transform='rotate(20 91 19)'/%3E %3Cpath d='M52 70q5-8 10 0t10 0'/%3E %3Ccircle cx='114' cy='78' r='5'/%3E %3Cpath d='M24 104l8 8M32 104l-8 8'/%3E %3Cpath d='M78 116l12-3-4 12z'/%3E %3Cpath d='M60 30h12'/%3E %3Cpath d='M120 124q4-6 8 0'/%3E %3C/g%3E%3C/svg%3E");
   --tv-display: "Baloo 2", system-ui, sans-serif;
   --tv-body: "Baloo 2", system-ui, sans-serif;
-  /* The waves are the logo's six colours (the --tv-rb-* values, written out: an SVG can't read them), red at the
-     top down to violet. */
-  --logo-bg: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' preserveAspectRatio='none'%3E%3Crect width='100' height='100' fill='%23ff2d55'/%3E%3Cpath d='M0 18q12.5-6 25 0t25 0t25 0t25 0V100H0z' fill='%23ff8a00'/%3E%3Cpath d='M0 34q12.5-6 25 0t25 0t25 0t25 0V100H0z' fill='%23ffd60a'/%3E%3Cpath d='M0 50q12.5-6 25 0t25 0t25 0t25 0V100H0z' fill='%232bd94f'/%3E%3Cpath d='M0 66q12.5-6 25 0t25 0t25 0t25 0V100H0z' fill='%230a9bff'/%3E%3Cpath d='M0 82q12.5-6 25 0t25 0t25 0t25 0V100H0z' fill='%23a63dff'/%3E%3C/svg%3E") center / cover;
 }
 
 /* Opción 2: Rayas. Thin diagonal stripes, with Fredoka (round and soft). */
@@ -44,22 +41,17 @@
   --tv-page-bg: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28'%3E %3Cpath d='M-7 7l14-14M0 28L28 0M21 35l14-14' stroke='rgba(255,255,255,0.055)' stroke-width='2'/%3E%3C/svg%3E");
   --tv-display: "Fredoka", system-ui, sans-serif;
   --tv-body: "Fredoka", system-ui, sans-serif;
-  /* Logo: a roulette, the six colours as equal slices from the centre. */
-  --logo-bg: conic-gradient(from -30deg,
-    var(--tv-rb-red) 0 60deg, var(--tv-rb-violet) 0 120deg, var(--tv-rb-blue) 0 180deg,
-    var(--tv-rb-green) 0 240deg, var(--tv-rb-yellow) 0 300deg, var(--tv-rb-orange) 0);
 }
 
-/* Opción 3: Ondas. Waves, with Baloo 2 and the same wave logo as option 1. */
+/* Opción 3: Ondas. Waves, with Baloo 2. */
 :root:root[data-palette="3"] {
   --tv-page-bg: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='24'%3E %3Cpath d='M0 12q16-12 32 0t32 0' fill='none' stroke='rgba(255,255,255,0.055)' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E");
   --tv-display: "Baloo 2", system-ui, sans-serif;
   --tv-body: "Baloo 2", system-ui, sans-serif;
-  --logo-bg: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' preserveAspectRatio='none'%3E%3Crect width='100' height='100' fill='%23ff2d55'/%3E%3Cpath d='M0 18q12.5-6 25 0t25 0t25 0t25 0V100H0z' fill='%23ff8a00'/%3E%3Cpath d='M0 34q12.5-6 25 0t25 0t25 0t25 0V100H0z' fill='%23ffd60a'/%3E%3Cpath d='M0 50q12.5-6 25 0t25 0t25 0t25 0V100H0z' fill='%232bd94f'/%3E%3Cpath d='M0 66q12.5-6 25 0t25 0t25 0t25 0V100H0z' fill='%230a9bff'/%3E%3Cpath d='M0 82q12.5-6 25 0t25 0t25 0t25 0V100H0z' fill='%23a63dff'/%3E%3C/svg%3E") center / cover;
 }
 
-/* Opción 4: Lima. Warm near-black with lime: Bricolage Grotesque, small labels in DM Mono, a lime logo tile with
-   the question mark drawn in black, and a few faint shapes floating over the page (PageDecor). */
+/* Opción 4: Lima. Warm near-black with lime: Bricolage Grotesque, small labels in DM Mono and a few faint shapes
+   floating over the page (PageDecor). */
 :root:root[data-palette="4"] {
   --tv-bg: #0e0f0c;
   --tv-surface: #191a16;
@@ -82,15 +74,11 @@
   --tv-mono: "DM Mono", ui-monospace, monospace;
   --tv-logo-font: "Bricolage Grotesque", system-ui, sans-serif;
   --tv-logo-tracking: -0.045em;
-  --logo-bg: #c6f432;
-  --logo-shadow: 0 9px 0 #8fb51a;
-  --logo-shadow-sm: 0 3px 0 #8fb51a;
-  --logo-ink: #0e0f0c;
 }
 
-/* Opción 5: Medianoche. Deep night blue with arcade colours: Outfit, a logo of four coloured squares around a dark
-   disc with the question mark, twinkling stars over the page (PageDecor) and the "tinted" look: picked things are
-   lit with their colour's outline instead of being filled with it (home.css, "Tinted look"). */
+/* Opción 5: Medianoche. Deep night blue with arcade colours: Outfit, twinkling stars over the page (PageDecor)
+   and the "tinted" look: picked things are lit with their colour's outline instead of being filled with it
+   (home.css, "Tinted look"). */
 :root:root[data-palette="5"] {
   --tv-bg: #0a0d18;
   --tv-surface: #121729;
@@ -112,7 +100,6 @@
   --tv-body: "Outfit", system-ui, sans-serif;
   --tv-logo-font: "Outfit", system-ui, sans-serif;
   --tv-logo-tracking: -0.04em;
-  --logo-ink: #eef1ff;
 }
 
 /* Vivid colours, the same in options 1-3 (4 and 5 have their own, below): one per role and one per game mode,
@@ -154,8 +141,7 @@
   --p-extra-rgb: 124, 199, 255; --p-extra-text: #7cc7ff; --p-on-extra: #ffffff;
 }
 
-/* Medianoche: the site is blue, the second colour yellow; the games are red, blue, green and yellow, the four
-   squares of the logo. */
+/* Medianoche: the site is blue, the second colour yellow; the games are red, blue, green and yellow. */
 :root:root[data-palette="5"] {
   --p-site-1: #4d8dff; --p-site-2: #4d8dff; --p-site-edge: #2a5cc2;
   --p-site-rgb: 77, 141, 255; --p-site-text: #7aa9ff; --p-on-site: #ffffff;
@@ -172,6 +158,11 @@
   --p-extra-1: #4d8dff; --p-extra-2: #4d8dff; --p-extra-edge: #2a5cc2;
   --p-extra-rgb: 77, 141, 255; --p-extra-text: #7aa9ff; --p-on-extra: #ffffff;
 }
+
+/* The logo's frame (AppIcon.jsx): five slices, clockwise from the top right, in each option's own colours. */
+:root:root { --logo-1: #ff2fc0; --logo-2: #ffd60a; --logo-3: #00d1c1; --logo-4: #2f6bff; --logo-5: #a63dff; }
+:root:root[data-palette="4"] { --logo-1: #c6f432; --logo-2: #f7d046; --logo-3: #ff8a66; --logo-4: #7cc7ff; --logo-5: #c9a2ff; }
+:root:root[data-palette="5"] { --logo-1: #ff4d6d; --logo-2: #ffc53d; --logo-3: #2ee6a6; --logo-4: #4d8dff; --logo-5: #b77dff; }
 
 /* The brand tokens used across the app follow the slots of whichever option is on. Doubled :root so these win
    over the defaults in global.css and home.css. */

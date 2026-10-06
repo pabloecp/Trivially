@@ -293,6 +293,13 @@
 .tv-topbar-end { display: flex; align-items: center; justify-content: flex-end; gap: 10px; min-width: 0; }
 /* Inicio never shrinks; a long player name gets cut with "…" instead. */
 .tv-chip--home { flex-shrink: 0; }
+/* Away from the home screen, the way home is the small logo and "trivially" in the logo's letters. */
+/* The logo is square and the chip's ends are round: a bit smaller and further in, its corners stay inside the
+   curve. The chip keeps the height it has with the 36px circle, so it doesn't move when it turns into "¿Salir de
+   la sala?". */
+.tv-chip--home { min-height: 46px; }
+.tv-chip--home .tv-appicon { --s: 30px; flex-shrink: 0; margin-left: 9px; }
+.tv-chip--home .tv-brand-name { font-size: 20px; line-height: 1; }
 .tv-topbar-end .tv-chip { max-width: min(62vw, 100%); }
 .tv-main--page { align-items: stretch; padding-top: 20px; }
 
@@ -313,63 +320,19 @@
   animation: tvPop 0.7s var(--tv-spring) 0.05s backwards;
 }
 @media (min-width: 721px) { .tv-hero .tv-appicon { --s: 150px; } }
-/* The app icon. Each colour option (palettes.css) can reshape it: --logo-radius, --logo-bg, --logo-ring,
-   --logo-shadow, --logo-mark, --logo-ink and the --logo-star-* variables; the options whose logo is drawn
-   differently switch parts on and off below ("App icon per option"). The defaults are the main look. */
+/* The app icon (AppIcon.jsx): a dark tile with a frame of five coloured slices and a white question mark, drawn
+   in one SVG. The slices take --logo-1…5 from the colour option (palettes.css); the tile, the page's surface. */
 .tv-appicon-tile {
   position: relative;
-  overflow: clip;
-  display: grid;
-  place-items: center;
+  display: block;
   width: var(--s);
   height: var(--s);
-  border-radius: var(--logo-radius, calc(var(--s) * 0.29));
-  /* Solid rainbow bands: every colour starts where the last one ends, so nothing blends. */
-  background: var(--logo-bg, linear-gradient(135deg,
-    var(--tv-rb-red) 0 16.67%, var(--tv-rb-orange) 0 33.33%, var(--tv-rb-yellow) 0 50%,
-    var(--tv-rb-green) 0 66.67%, var(--tv-rb-blue) 0 83.33%, var(--tv-rb-violet) 0));
-  border: var(--logo-ring, 0);
-  box-shadow: var(--logo-shadow, 0 8px 0 var(--tv-neutral));
-  color: var(--logo-mark, #fff);
+  overflow: visible;
   animation: tvBob 3.4s ease-in-out infinite;
 }
-.tv-appicon-shine {
-  position: absolute;
-  top: -30px;
-  left: -20px;
-  width: 110px;
-  height: 70px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, var(--logo-shine, 0));
-  transform: rotate(-24deg);
-}
-.tv-appicon-mark {
-  font-family: var(--tv-logo-font);
-  font-weight: 700;
-  font-size: calc(var(--s) * 0.73);
-  line-height: 1;
-  text-shadow: var(--logo-mark-shadow, 0 5px 0 rgba(0, 0, 0, 0.28));
-  transform: translateY(2px);
-}
-.tv-appicon-star {
-  position: absolute;
-  right: calc(var(--s) * 0.12);
-  top: calc(var(--s) * 0.1);
-  display: grid;
-  place-items: center;
-  width: calc(var(--s) * 0.26);
-  height: calc(var(--s) * 0.26);
-  border-radius: var(--logo-star-radius, 12px);
-  background: var(--logo-star-bg, #ffffff);
-  box-shadow: var(--logo-star-shadow, 0 3px 0 rgba(0, 0, 0, 0.35));
-  color: var(--logo-star-fg, var(--p-ink));
-  display: var(--logo-star-display, grid);
-  rotate: 12deg;
-}
-/* Parts only some options use (see "App icon per option"). */
-.tv-appicon-quads,
-.tv-appicon-disc { display: none; }
-.tv-appicon-glyph { width: 100%; height: 100%; }
+.has-edge .tv-appicon-tile { height: calc(var(--s) * 1.06); }
+.tv-appicon-bg { fill: var(--tv-surface); }
+.tv-appicon-edge { fill: var(--tv-logo-shadow); }
 .tv-appicon-shadow {
   position: absolute;
   left: calc(50% - 42px);
@@ -381,11 +344,9 @@
   filter: blur(5px);
   animation: tvShadow 3.4s ease-in-out infinite;
 }
-/* The top bar's small logo: the same tile, still and without its star. */
+/* The top bar's small logo: the same tile, still. */
 .tv-appicon--sm { --s: 36px; height: var(--s); animation: none; }
-.tv-appicon--sm .tv-appicon-tile { animation: none; box-shadow: var(--logo-shadow-sm, 0 3px 0 var(--tv-neutral)); }
-.tv-appicon--sm .tv-appicon-mark { text-shadow: none; transform: none; }
-.tv-appicon--sm .tv-appicon-star { display: none; }
+.tv-appicon--sm .tv-appicon-tile { animation: none; }
 
 .tv-wordmark {
   display: flex;
@@ -613,35 +574,13 @@
   border-radius: 34px;
   background: var(--c2);
   box-shadow: 0 8px 0 var(--edge);
+  /* Room for its 8px edge, so its bottom lines up with the panels beside it. */
+  margin-bottom: 8px;
   color: var(--on);
   transform-origin: 50% 100%;
   transition: background-color 0.6s ease, color 0.6s ease, box-shadow 0.6s ease;
   animation: tvExpand 0.75s cubic-bezier(0.2, 0.9, 0.25, 1.04) backwards;
 }
-.tv-mstage-top { position: relative; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
-/* The host's way back to "Elige el juego". */
-.tv-mstage-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  padding: 8px 14px 8px 10px;
-  border: 0;
-  border-radius: 999px;
-  background: rgba(0, 0, 0, 0.16);
-  color: inherit;
-  font: inherit;
-  font-weight: 800;
-  font-size: 14px;
-  cursor: pointer;
-  transition: transform 0.12s ease, background-color 0.2s ease;
-  animation: tvPopIn 0.5s cubic-bezier(0.3, 1.7, 0.5, 1) 0.3s backwards;
-}
-.tv-mstage-pill:hover { background: rgba(0, 0, 0, 0.26); }
-.tv-mstage-pill svg { transition: transform 0.3s var(--tv-spring); }
-.tv-mstage-pill:hover svg { transform: translateX(-3px); }
-.tv-mstage-pill:active { transform: translateY(3px); }
-:root[data-palette="5"] .tv-mstage-pill { background: rgba(255, 255, 255, 0.06); }
-:root[data-palette="5"] .tv-mstage-pill:hover { background: rgba(255, 255, 255, 0.12); }
 .tv-mstage-watermark {
   position: absolute;
   right: -90px;
@@ -741,7 +680,7 @@
   gap: 12px;
   min-width: 0;
   padding: 18px;
-  border-radius: 30px;
+  border-radius: 34px;
   animation: tvFromRight 0.6s cubic-bezier(0.2, 0.9, 0.3, 1.08) 0.16s backwards;
 }
 .tv-party-codebox { display: flex; flex-direction: column; gap: 10px; padding: 16px; border-radius: 22px; background: var(--tv-bg); }
@@ -831,7 +770,7 @@
   .tv-mstage { min-height: 0; padding: 22px; border-radius: 28px; }
   .tv-mstage-watermark { width: 240px; height: 240px; right: -70px; }
   .tv-settings-card { padding: 18px; border-radius: 28px; }
-  .tv-party { border-radius: 26px; }
+  .tv-party { border-radius: 28px; }
 }
 
 /* Leaving the room: the panels sink and slide away before the home screen comes back (Home.jsx). */
@@ -1931,7 +1870,7 @@
 
 
 @media (max-height: 700px) and (max-width: 640px) {
-  .tv-appicon { transform: scale(0.88); margin: -8px 0; }
+  .tv-hero .tv-appicon { transform: scale(0.88); margin: -8px 0; }
   .tv-play { margin-top: 22px; }
 }
 
@@ -2049,6 +1988,8 @@
 
 .tv-chip--theme { flex-shrink: 0; border: 0; cursor: pointer; }
 .tv-chip--back { margin-right: auto; flex-shrink: 0; }
+.tv-chip--compact { padding-right: 5px; }
+button.tv-chip--back { border: 0; font-family: inherit; color: inherit; cursor: pointer; }
 .tv-chip-short { display: none; }
 @media (max-width: 520px) {
   .tv-chip--theme .tv-chip-name { display: none; }
@@ -2128,42 +2069,7 @@ body:has(.tv-app) {
 /* Medianoche: tiny stars twinkling. */
 .tv-decor-stars span { position: absolute; border-radius: 50%; background: var(--tv-text); opacity: 0.5; animation: tvBlink 1.4s ease-in-out infinite; }
 
-/* ---------- App icon and wordmark per option ---------- */
-/* Lima: a lime tile with the question mark drawn in black. */
-:root[data-palette="4"] .tv-appicon-mark,
-:root[data-palette="4"] .tv-appicon-star,
-:root[data-palette="5"] .tv-appicon-mark,
-:root[data-palette="5"] .tv-appicon-star { display: none; }
-:root[data-palette="4"] .tv-appicon-tile { border-radius: calc(var(--s) * 0.28); }
-:root[data-palette="4"] .tv-appicon-disc { display: block; width: 55%; height: 55%; color: var(--logo-ink); }
-/* Medianoche: four coloured squares around a dark disc with the question mark. */
-:root[data-palette="5"] .tv-appicon-tile {
-  overflow: visible;
-  background: none;
-  box-shadow: none;
-  filter: drop-shadow(0 calc(var(--s) * 0.06) 0 rgba(0, 0, 0, 0.6));
-}
-:root[data-palette="5"] .tv-appicon-quads {
-  position: absolute;
-  inset: 0;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: calc(var(--s) * 0.035);
-}
-:root[data-palette="5"] .tv-appicon-quads span { border-radius: calc(var(--s) * 0.12); }
-:root[data-palette="5"] .tv-appicon-quads span:nth-child(1) { background: var(--p-music-2); }
-:root[data-palette="5"] .tv-appicon-quads span:nth-child(2) { background: var(--p-culture-2); }
-:root[data-palette="5"] .tv-appicon-quads span:nth-child(3) { background: var(--p-world-2); }
-:root[data-palette="5"] .tv-appicon-quads span:nth-child(4) { background: var(--p-cinema-2); }
-:root[data-palette="5"] .tv-appicon-disc {
-  position: absolute;
-  inset: 22%;
-  display: block;
-  padding: 9%;
-  border-radius: 50%;
-  background: var(--tv-bg);
-  color: var(--logo-ink);
-}
+/* ---------- Wordmark per option ---------- */
 /* Both write "trivially" plainly: heavy, tight, no shadow, and the i-dots in the text's colour. */
 :root[data-palette="4"] .tv-wordmark,
 :root[data-palette="5"] .tv-wordmark { font-weight: 800; text-shadow: none; }
@@ -2332,20 +2238,11 @@ body::-webkit-scrollbar,
   .tv-room,
   .tv-room-row { flex-wrap: nowrap; }
   .tv-mstage { overflow: hidden; }
-  .tv-mstage-top,
   .tv-mstage-foot { flex-shrink: 0; }
   .tv-mstage-head { flex-shrink: 1; min-height: 0; overflow: hidden; }
 }
 .tv-mstage-start { white-space: nowrap; }
 @media (max-width: 1199px) { .tv-mstage-start { font-size: clamp(18px, 2.2vw, 24px); } }
-/* When the settings are longer than their panel they scroll inside it; the bottom edge fades so it shows there's
-   more (it only covers the panel's own padding when everything fits). */
-@media (min-width: 980px) and (min-height: 600px) {
-  .tv-settings-card {
-    -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 26px), transparent);
-    mask-image: linear-gradient(to bottom, #000 calc(100% - 26px), transparent);
-  }
-}
 
 /* Profile: Spotify's "Activo" is a button; the first tap turns it red ("Desconectar"), the second disconnects. */
 .tv-tag-btn { border: 0; font: inherit; font-weight: 800; font-size: 13px; cursor: pointer; transition: background-color 0.2s ease, color 0.2s ease, transform 0.12s ease; }
@@ -2521,6 +2418,13 @@ fieldset.tv-settings { display: grid; gap: 18px; min-width: 0; margin: 0; paddin
     transition: transform 0.12s ease, background-color 0.2s ease;
   }
   .tv-roomhead-home:active { transform: translateY(3px); }
+  /* Not leaving: the button is the logo itself. */
+  /* Same 50px box as the red "salir" square, so nothing beside it moves when it turns into it. */
+  .tv-roomhead-home.is-logo { background: none; box-shadow: none; }
+  .tv-roomhead-home.is-logo .tv-appicon { --s: 46px; }
+  /* The host's "Volver" (to the game modes) takes the code's place; the code then shows in the dropdown. */
+  .tv-roomhead-back { margin-right: 0; }
+  .tv-roomhead:has(.tv-roomhead-back) .tv-roomhead-drop .tv-party-codebox { display: flex; }
   .tv-app .tv-roomhead-home.is-confirm { background: var(--p-bad); box-shadow: 0 3px 0 var(--p-bad-edge); color: #fff; }
   .tv-roomhead-text { display: grid; min-width: 0; }
   .tv-roomhead-kicker {
