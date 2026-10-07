@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { TrackResolver, cleanTitle, scoreCandidate } from "./trackResolver.js";
+import { TrackResolver, cleanTitle, displayTitle, isRemix, scoreCandidate } from "./trackResolver.js";
 
 assert.equal(cleanTitle("Bohemian Rhapsody - Remastered 2011"), "Bohemian Rhapsody");
 assert.equal(cleanTitle("Tusa (feat. Nicki Minaj)"), "Tusa");
@@ -17,6 +17,17 @@ assert.equal(scoreCandidate(nubes, { ...right, trackName: "Nubes", artistName: "
 assert.equal(scoreCandidate(track, { ...right, trackTimeMillis: 240000 }), 0);
 // Instrumental versions are never used.
 assert.equal(scoreCandidate(track, { ...right, trackName: "Ojitos Lindos (Instrumental)" }), 0);
+// A remix only matches a remix: "Loca - Remix" is not the original "Loca", and the original is not a remix.
+const loca = { spotifyId: "l", title: "Loca - Remix", artists: ["KHEA", "Bad Bunny"], durationMs: 0 };
+const locaRemix = { ...right, trackName: "Loca (feat. Cazzu) [Remix]", artistName: "KHEA, Bad Bunny & Duki", trackTimeMillis: null };
+assert.ok(scoreCandidate(loca, locaRemix) > 0);
+assert.equal(scoreCandidate(loca, { ...locaRemix, trackName: "Loca" }), 0);
+assert.equal(scoreCandidate({ ...loca, title: "Loca" }, locaRemix), 0);
+assert.ok(isRemix("Mayores (Remix)") && isRemix("X - Bad Bunny Remix") && !isRemix("Remixed Feelings"));
+assert.equal(displayTitle("Loca - Remix"), "Loca (Remix)");
+assert.equal(displayTitle("Mayores (Remix)"), "Mayores (Remix)");
+assert.equal(displayTitle("Tusa (feat. Nicki Minaj)"), "Tusa");
+
 // iTunes censors some titles: "F**K THAT" is "FUCK THAT".
 assert.ok(scoreCandidate({ ...track, title: "FUCK THAT", artists: ["Nicki Nicole"] }, { ...right, trackName: "F**K THAT", artistName: "Nicki Nicole" }) > 0);
 assert.equal(scoreCandidate({ ...track, title: "LUCK THAT", artists: ["Nicki Nicole"] }, { ...right, trackName: "F**K THAT", artistName: "Nicki Nicole" }), 0);

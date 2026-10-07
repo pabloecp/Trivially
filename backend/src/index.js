@@ -33,7 +33,10 @@ const PORT = Number(process.env.PORT || 8080);
 const catalog = await loadCatalog();
 const store = await initStore();
 const questions = await loadQuestions();
-const rooms = new RoomManager({ catalog, store, questions, resolver: new TrackResolver({ catalog }) });
+const resolver = new TrackResolver({ catalog });
+const rooms = new RoomManager({ catalog, store, questions, resolver });
+// Spotify songs found in earlier games join the search box too.
+resolver.preloadSaved().catch((err) => console.warn(`[Spotify] No se pudieron precargar las canciones (${err.message})`));
 
 const app = express();
 app.set("trust proxy", 1);
@@ -144,7 +147,7 @@ app.get("/api/geo/flag/:token", async (req, res) => {
   }
 });
 
-app.use("/api", createApiRouter({ catalog, store }));
+app.use("/api", createApiRouter({ catalog, store, songList: () => rooms.globalSongList() }));
 app.get("/auth/google", handleGoogleRedirect);
 app.get("/auth/google/callback", (req, res) => handleGoogleCallback(req, res, store));
 app.get("/auth/google/finish", handleGoogleFinish);

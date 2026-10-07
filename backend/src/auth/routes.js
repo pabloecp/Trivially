@@ -51,7 +51,7 @@ function safePath(path) {
   return typeof path === "string" && path.startsWith("/") && !path.startsWith("//") && !path.includes("\\") ? path : "/";
 }
 
-export function createApiRouter({ catalog, store }) {
+export function createApiRouter({ catalog, store, songList = () => [] }) {
   const router = Router();
 
   // Starts (or refreshes) the session of a guest, or of a registered user who is already signed in.
@@ -290,6 +290,12 @@ export function createApiRouter({ catalog, store }) {
   });
 
   // --- Catalog ---
+
+  // Every song in the database for the game's search box (catalog + Spotify songs found), downloaded once.
+  router.get("/songs", (_req, res) => {
+    res.set("Cache-Control", "public, max-age=300");
+    res.json({ songs: songList() });
+  });
 
   router.get("/catalog", (req, res) => {
     const images = new Map(catalog.songs.map((s) => [s.id, s.image]));

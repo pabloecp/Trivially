@@ -115,7 +115,7 @@ export default function MusicSettings({ room, catalog, updateConfig, onToast, ch
   }
 
   const listOptions = [
-    // "Most Streamed Songs on Spotify · Español" shows as "Top 100 Español"; the full name is the tooltip.
+    // "Most Streamed Songs on Spotify · Español" shows as "Top 500 Español"; the full name is the tooltip.
     ...playlists.map((p) => ({ value: p.id, label: playlistLabel(p), title: p.name })),
     ...chosenCustom.map((p) => ({ value: p.id, label: p.name, title: `${p.ready} de ${p.total} canciones listas` })),
   ];

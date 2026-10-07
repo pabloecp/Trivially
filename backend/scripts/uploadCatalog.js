@@ -28,10 +28,15 @@ async function run(label, query) {
   if (error) throw new Error(`${label}: ${error.message}`);
 }
 
+// Every id in a table, a page at a time (Supabase returns at most 1,000 rows per query).
 async function ids(table) {
-  const { data, error } = await db.from(table).select("id");
-  if (error) throw new Error(`${table}: ${error.message}`);
-  return data.map((r) => r.id);
+  const all = [];
+  for (let from = 0; ; from += 1000) {
+    const { data, error } = await db.from(table).select("id").order("id").range(from, from + 999);
+    if (error) throw new Error(`${table}: ${error.message}`);
+    all.push(...data.map((r) => r.id));
+    if (data.length < 1000) return all;
+  }
 }
 
 const songRows = catalog.songs.map((s) => ({

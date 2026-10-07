@@ -19,9 +19,9 @@ const fallback = selectSongs(catalog, { playlistIds: ["no-existe"] });
 const def = catalog.playlists.find((p) => p.isDefault);
 assert.equal(fallback.length, new Set(def.trackIds).size);
 
-// Every song can be played and every playlist has 100 of them.
+// Every song can be played and every playlist has 500 of them.
 assert.ok(catalog.songs.every((s) => s.id && s.title && s.artistName && s.previewUrl));
-assert.ok(catalog.playlists.every((p) => p.trackIds.length === 100));
+assert.ok(catalog.playlists.every((p) => p.trackIds.length === 500));
 assert.equal(pickRoundTracks(catalog, { playlistIds: [first.id] }, 5).length, 5);
 
 console.log("songSelector.test ok");

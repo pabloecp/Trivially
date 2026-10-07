@@ -7,6 +7,7 @@ import PartyPanel from "../../components/home/PartyPanel.jsx";
 import MatchResults from "../../components/home/MatchResults.jsx";
 import { useApp, useRemainingMs } from "../../lib/store.jsx";
 import { BACKEND_URL } from "../../lib/config.js";
+import { useSongList } from "../../lib/songList.js";
 
 function normalize(str = "") {
   return str
@@ -14,38 +15,6 @@ function normalize(str = "") {
     .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase()
     .trim();
-}
-
-// "Sebastián Yatra & Myke Towers" → ["Sebastián Yatra", "Myke Towers"]: each artist of a song can be searched.
-function splitArtists(name = "") {
-  return name
-    .split(/\s*(?:,|&|\s+feat\.?\s+|\s+ft\.?\s+|\s+x\s+|\s+y\s+|\s+with\s+)\s*/i)
-    .map((a) => a.trim())
-    .filter(Boolean);
-}
-
-function editDistance(a, b) {
-  let prev = Array.from({ length: b.length + 1 }, (_, j) => j);
-  for (let i = 1; i <= a.length; i += 1) {
-    const cur = [i];
-    for (let j = 1; j <= b.length; j += 1) {
-      cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
-    }
-    prev = cur;
-  }
-  return prev[b.length];
-}
-
-// How an artist's name matches what was typed: 3 starts with it, 2 contains it, 1 close with a typo
-// ("mike towers" for "Myke Towers"), 0 not at all.
-function artistMatch(normArtist, q) {
-  if (normArtist.startsWith(q)) return 3;
-  if (normArtist.includes(q)) return 2;
-  if (q.length >= 4) {
-    const allowed = q.length >= 8 ? 2 : 1;
-    if (editDistance(q, normArtist.slice(0, q.length)) <= allowed || editDistance(q, normArtist) <= allowed) return 1;
-  }
-  return 0;
 }
 
 // Shown under the result when the round didn't go your way; one per round, never the same twice in a row.
@@ -240,65 +209,28 @@ function GameScreen() {
       ? Math.max(0, Math.min(100, (left / 3000) * 100))
       : 100;
 
-  // Autocomplete: songs whose title matches go first; below them, each artist whose name matches with their songs.
-  const suggestionGroups = useMemo(() => {
+  // Every song in the database (downloaded once) plus what this room adds, e.g. its Spotify songs still loading.
+  const allSongs = useSongList();
+  const searchList = useMemo(() => {
+    const extras = room?.searchCatalog || [];
+    if (!extras.length) return allSongs;
+    const ids = new Set(allSongs.map((s) => s.id));
+    return [...allSongs, ...extras.filter((s) => !ids.has(s.id))];
+  }, [allSongs, room?.searchCatalog]);
+
+  // Autocomplete by song name only: titles that start with what was typed first, then titles that contain it.
+  const suggestions = useMemo(() => {
     const q = normalize(query);
-    if (!q || !room?.searchCatalog || locked) return { byTitle: [], byArtist: [] };
-
-    const titleMatches = [];
-    const artists = new Map();
-
-    for (const song of room.searchCatalog) {
-      const normTitle = normalize(song.title);
-      const normArtist = normalize(song.artistName);
-
-      if (normTitle.startsWith(q)) {
-        titleMatches.push({ song, score: 100 - (normTitle.length - q.length) });
-      } else if (normTitle.includes(q)) {
-        titleMatches.push({ song, score: 60 - normTitle.indexOf(q) });
-      }
-
-      // Every artist of the song counts, also the second one ("Myke Towers" finds "Pareja Del Año"), but under
-      // that artist the songs where they come first go on top and the ones where they are a guest at the bottom.
-      splitArtists(song.artistName).forEach((artist, position) => {
-        const match = artistMatch(normalize(artist), q);
-        if (!match) return;
-        const key = normalize(artist);
-        if (!artists.has(key)) artists.set(key, { name: artist, match, main: false, songs: [] });
-        const group = artists.get(key);
-        group.match = Math.max(group.match, match);
-        group.main = group.main || position === 0;
-        group.songs.push({ song, position });
-      });
+    if (!q || locked) return [];
+    const matches = [];
+    for (const song of searchList) {
+      const title = normalize(song.title);
+      if (title.startsWith(q)) matches.push({ song, score: 100 - (title.length - q.length) });
+      else if (title.includes(q)) matches.push({ song, score: 60 - title.indexOf(q) });
     }
-
-    titleMatches.sort((a, b) => b.score - a.score);
-    const byTitle = titleMatches.slice(0, 8).map((m) => m.song);
-    const shown = new Set(byTitle.map((s) => s.id));
-
-    const byArtist = [...artists.values()]
-      .sort((a, b) => b.match - a.match || b.main - a.main || a.name.localeCompare(b.name))
-      .map((a) => ({
-        name: a.name,
-        songs: a.songs
-          .filter(({ song }) => !shown.has(song.id))
-          .sort((x, y) => (x.position > 0) - (y.position > 0) || x.song.title.localeCompare(y.song.title))
-          .map(({ song }) => song)
-          // A song shows once: in its best group (groups are already sorted best first).
-          .filter((song) => !shown.has(song.id) && shown.add(song.id))
-          .slice(0, 5),
-      }))
-      .filter((a) => a.songs.length > 0)
-      .slice(0, 4);
-
-    return { byTitle, byArtist };
-  }, [query, room?.searchCatalog, locked]);
-
-  // Flat list in display order, for the arrow keys and Enter.
-  const suggestions = useMemo(
-    () => [...suggestionGroups.byTitle, ...suggestionGroups.byArtist.flatMap((a) => a.songs)],
-    [suggestionGroups]
-  );
+    matches.sort((a, b) => b.score - a.score || a.song.title.localeCompare(b.song.title));
+    return matches.slice(0, 12).map((m) => m.song);
+  }, [query, searchList, locked]);
 
   // Keep active index within bounds
   useEffect(() => {
@@ -502,17 +434,8 @@ function GameScreen() {
                     {suggestions.length > 0 ? (
                       <ul className="tv-suggest-list" ref={suggestionsListRef} role="listbox">
                         {suggestions.map((song, index) => {
-                          const firstOfArtist =
-                            index >= suggestionGroups.byTitle.length &&
-                            suggestionGroups.byArtist.find((a) => a.songs[0] === song);
                           return (
                             <Fragment key={song.id}>
-                              {firstOfArtist && (
-                                <li role="presentation" className="tv-suggest-group" style={{ "--i": index }}>
-                                  <Icon name="user" size={14} strokeWidth={2.6} />
-                                  {firstOfArtist.name}
-                                </li>
-                              )}
                               <li role="option" aria-selected={index === activeIndex} data-index={index} style={{ "--i": index }}>
                                 <button
                                   type="button"

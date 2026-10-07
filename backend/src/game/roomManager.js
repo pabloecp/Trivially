@@ -575,29 +575,34 @@ export class RoomManager {
   }
 
   /**
-   * The autocomplete list sent to players during a round: only the songs of the playlists being played (the chosen
-   * catalog playlists and every song of the chosen Spotify ones), plus custom tracks if available.
+   * Every song in the database, for the game's search box: the whole catalog (all playlists, not only the chosen
+   * ones) plus every Spotify song already found on iTunes. Players download it once (GET /api/songs), not with
+   * every room update. Rebuilt only when the number of songs changes.
    */
-  buildSearchCatalog(room) {
+  globalSongList() {
+    const found = this.resolver?.known ? [...this.resolver.known.values()].filter(Boolean) : [];
+    const key = `${this.catalog.songs.length}|${found.length}`;
+    if (this.songListCache?.key !== key) {
+      const seen = new Set();
+      const list = [];
+      for (const s of [...this.catalog.songs, ...found]) {
+        if (!s?.id || !s.title || seen.has(s.id)) continue;
+        seen.add(s.id);
+        list.push({ id: s.id, title: s.title, artistName: s.artistName || "Artista" });
+      }
+      this.songListCache = { key, list };
+    }
+    return this.songListCache.list;
+  }
+
+  /**
+   * What the room adds to the search box on top of globalSongList: custom tracks and the songs of its Spotify
+   * playlists not found on iTunes yet. Sent with the room during a round (small), so the list stays complete.
+   */
+  roomSearchExtras(room) {
+    const global = new Set(this.globalSongList().map((s) => s.id));
     const allSongs = [];
     const seen = new Set();
-
-    // Only the songs of the chosen playlists (the same catalog part as songPool); the whole catalog without a room.
-    const ids = room?.config?.playlistIds || [];
-    const catalogIds = ids.filter((id) => !id.startsWith(SPOTIFY_PREFIX));
-    const hasSpotify = ids.some((id) => room?.customPlaylists?.[id]);
-    let catalogSongs = this.catalog.songs;
-    if (room?.config?.customTracks?.length) catalogSongs = [];
-    else if (room) catalogSongs = catalogIds.length || !hasSpotify ? selectSongs(this.catalog, { playlistIds: catalogIds }) : [];
-    for (const s of catalogSongs) {
-      if (seen.has(s.id)) continue;
-      seen.add(s.id);
-      allSongs.push({
-        id: s.id,
-        title: s.title,
-        artistName: s.artistName || "Artista",
-      });
-    }
 
     // Add custom tracks (from playlists etc)
     const customPool = room?.config?.customTracks || [];
@@ -624,18 +629,12 @@ export class RoomManager {
       }
     }
 
-    // Also add room tracks (in case they came from Spotify playlists)
-    for (const s of (room?.tracks || [])) {
-      if (seen.has(s.id)) continue;
-      seen.add(s.id);
-      allSongs.push({
-        id: s.id,
-        title: s.title,
-        artistName: s.artistName || "Artista",
-      });
-    }
+    return allSongs.filter((s) => !global.has(s.id));
+  }
 
-    return allSongs;
+  /** The whole search list as the server sees it (to name a picked suggestion): every song plus the room's extras. */
+  buildSearchCatalog(room) {
+    return [...this.globalSongList(), ...this.roomSearchExtras(room), ...(room?.tracks || [])];
   }
 
   beginCountdown(room) {
@@ -1280,7 +1279,8 @@ export class RoomManager {
     // Send full search catalog for autocomplete during playing phase
     const songRound = !QUESTION_GAMES.includes(room.game);
     if (room.phase === "playing" && songRound) {
-      payload.searchCatalog = this.buildSearchCatalog(room);
+      // Only the room's extras: the full list comes once from GET /api/songs (see globalSongList).
+      payload.searchCatalog = this.roomSearchExtras(room);
     }
     if (track && showTrack && songRound) {
       payload.reveal = hydrateSong(this.catalog, track);

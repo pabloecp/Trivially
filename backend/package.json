@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "node --watch src/index.js",
     "start": "node src/index.js",
+    "catalog:build": "node scripts/buildCatalog.js",
     "catalog:upload": "node scripts/uploadCatalog.js",
     "questions:upload": "node scripts/uploadQuestions.js",
     "geo:upload": "node scripts/uploadGeoQuestions.js",

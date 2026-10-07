@@ -30,6 +30,17 @@ export function cleanTitle(title = "") {
 
 const plainLower = (v) => cleanTitle(v).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
 
+/** "Loca - Remix", "Mayores (Remix)", "X (Bad Bunny Remix)": the remix is a different recording from the original. */
+export function isRemix(title = "") {
+  return /\bremix\b/i.test(title);
+}
+
+/** The title players see: the clean title, keeping that it is the remix ("Loca (Remix)"). */
+export function displayTitle(title = "") {
+  const base = cleanTitle(title);
+  return isRemix(title) && !isRemix(base) ? `${base} (Remix)` : base;
+}
+
 function titleScore(a, b) {
   // iTunes censors some titles ("F**K THAT"): each * stands for any one letter of the Spotify title.
   if (b.includes("*")) {
@@ -64,6 +75,8 @@ export function scoreCandidate(track, result) {
   const title = titleScore(track.title, result.trackName);
   if (title < 0.8) return 0;
   if (!artistMatches(track.artists, result.artistName || "")) return 0;
+  // A remix only matches a remix, and the original only the original.
+  if (isRemix(track.title) !== isRemix(result.trackName)) return 0;
   if (UNWANTED.test(`${result.trackName} ${result.artistName} ${result.collectionName}`) && !UNWANTED.test(track.title)) return 0;
   const diff = track.durationMs && result.trackTimeMillis ? Math.abs(track.durationMs - result.trackTimeMillis) : null;
   if (diff != null && diff > MAX_LENGTH_DIFF_MS) return 0;
@@ -75,12 +88,13 @@ function songFromItunes(track, result) {
     id: `sp-${track.spotifyId}`,
     spotifyId: track.spotifyId,
     itunesId: result.trackId || null,
-    title: cleanTitle(track.title),
+    title: displayTitle(track.title),
     artistName: track.artists.join(" & ") || result.artistName,
     albumName: track.albumName || result.collectionName || "",
     year: track.year || Number(String(result.releaseDate || "").slice(0, 4)) || null,
     image: (result.artworkUrl100 || "").replace(/\/\d+x\d+bb\./, "/600x600bb.") || null,
     previewUrl: result.previewUrl,
+    genre: result.primaryGenreName || null,
   };
 }
 
@@ -141,7 +155,41 @@ export class TrackResolver {
 
   fromCatalog(track) {
     const list = this.catalogIndex.get(normalizeAnswer(cleanTitle(track.title))) || [];
-    return list.find((s) => artistMatches(track.artists, s.artistName || "")) || null;
+    return list.find((s) => artistMatches(track.artists, s.artistName || "") && isRemix(s.title) === isRemix(track.title)) || null;
+  }
+
+  /** A known song for this Spotify song, unless it was matched before remixes were told apart (an original for a remix). */
+  knownFor(track) {
+    if (!this.known.has(track.spotifyId)) return undefined;
+    const song = this.known.get(track.spotifyId);
+    if (song && isRemix(track.title) && !isRemix(song.title)) return undefined;
+    return song;
+  }
+
+  /**
+   * Loads every song already found and saved in Supabase, so the game's search box can offer all of them (see
+   * RoomManager.globalSongList). Best effort: without it, songs still load as playlists are picked.
+   */
+  async preloadSaved() {
+    if (!this.useDb) return 0;
+    const db = getSupabase();
+    let count = 0;
+    for (let from = 0; ; from += 1000) {
+      const { data, error } = await withTimeout(
+        db.from(TABLE).select("*").eq("found", true).range(from, from + 999),
+        15_000,
+        "Supabase"
+      );
+      if (error) throw error;
+      for (const row of data) {
+        if (new Date(row.updated_at).getTime() < RULES_SINCE || this.known.has(row.spotify_id)) continue;
+        this.known.set(row.spotify_id, songFromRow(row));
+        count += 1;
+      }
+      if (data.length < 1000) break;
+    }
+    console.log(`[Spotify] ${count} canciones guardadas listas para el buscador`);
+    return count;
   }
 
   /**
@@ -159,7 +207,7 @@ export class TrackResolver {
     // meantime are answered at once; songs the deep pass already missed aren't searched again.
     if (deep) {
       for (const t of tracks) {
-        const song = this.known.get(t.spotifyId);
+        const song = this.knownFor(t);
         if (song || this.deepMissed.has(t.spotifyId)) onResult(t.spotifyId, song || null);
         else enqueue(t, true);
       }
@@ -168,7 +216,8 @@ export class TrackResolver {
     }
     const missing = [];
     for (const t of tracks) {
-      if (this.known.has(t.spotifyId)) onResult(t.spotifyId, this.known.get(t.spotifyId));
+      const known = this.knownFor(t);
+      if (known !== undefined) onResult(t.spotifyId, known);
       else {
         const hit = this.fromCatalog(t);
         if (hit) {
@@ -187,7 +236,8 @@ export class TrackResolver {
         `${saved.size} guardadas en la base de datos, ${toSearch} por buscar en iTunes`
     );
     for (const t of missing) {
-      if (saved.has(t.spotifyId)) {
+      const savedSong = saved.get(t.spotifyId);
+      if (saved.has(t.spotifyId) && !(savedSong && isRemix(t.title) && !isRemix(savedSong.title))) {
         this.known.set(t.spotifyId, saved.get(t.spotifyId));
         onResult(t.spotifyId, saved.get(t.spotifyId));
       } else {
@@ -280,8 +330,9 @@ export class TrackResolver {
   async runJob(job) {
     if (job.isCancelled()) return;
     const id = job.track.spotifyId;
-    if (this.known.get(id) || (this.known.has(id) && !job.deep)) {
-      job.onResult(id, this.known.get(id));
+    const known = this.knownFor(job.track);
+    if (known || (known === null && !job.deep)) {
+      job.onResult(id, known);
       return;
     }
     let song = null;
@@ -435,7 +486,9 @@ export class TrackResolver {
   }
 
   async search(track, { deep = false } = {}) {
-    const title = cleanTitle(track.title);
+    // A remix is searched as one ("Loca remix"), so iTunes brings the remix and not only the original.
+    const base = cleanTitle(track.title);
+    const title = isRemix(track.title) && !isRemix(base) ? `${base} remix` : base;
     const [first, second] = track.artists;
     const searches = [];
     if (!deep) {

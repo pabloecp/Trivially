@@ -49,14 +49,12 @@ assert.equal(mgr.publicState(room).customPlaylists.find((p) => p.id === "sp:abc"
 // The whole playlist is in the autocomplete even before it is found on iTunes.
 assert.equal(mgr.buildSearchCatalog(room).filter((s) => s.id.startsWith("sp-")).length, 6);
 
-// With only the Spotify playlist chosen, the autocomplete has only its songs; adding Inglés adds that playlist's songs.
-assert.equal(mgr.buildSearchCatalog(room).length, 6);
-mgr.updateConfig(room, "owner", { playlistIds: ["sp:abc", "top-en"] });
-const english = mgr.catalog.playlists.find((p) => p.id === "top-en").trackIds;
+// The search box offers every song in the database, whatever playlists are chosen: the whole catalog plus the
+// room's Spotify songs. The room itself only sends its extras (the full list comes once from GET /api/songs).
 const search = mgr.buildSearchCatalog(room);
-assert.equal(search.length, 6 + english.length);
-assert.ok(search.every((s) => s.id.startsWith("sp-") || english.includes(s.id)), "no songs from playlists not chosen");
-mgr.updateConfig(room, "owner", { playlistIds: ["sp:abc"] });
+assert.equal(search.length, mgr.catalog.songs.length + 6);
+assert.equal(mgr.globalSongList().length, mgr.catalog.songs.length);
+assert.deepEqual(mgr.roomSearchExtras(room).map((s) => s.id).sort(), playlist.tracks.map((t) => `sp-${t.spotifyId}`).sort());
 
 // Nothing playable yet: the match can't start.
 assert.throws(() => mgr.start(room, "owner"), /se están cargando/);
