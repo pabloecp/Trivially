@@ -101,6 +101,8 @@ export function AppProvider({ children }) {
 
   // Actions read these refs instead of closing over state, so e.g. saveGuest() followed by joinRoom() sees the new user.
   const userRef = useRef(user);
+  // The game the host last pointed at on the menu, so hovering the same tile again sends nothing.
+  const previewRef = useRef(null);
   userRef.current = user;
   const roomCodeRef = useRef(loadSavedRoomCode());
 
@@ -432,9 +434,18 @@ export function AppProvider({ children }) {
 
       // Host only: moves every player in the room into `game` (null = back to the Home screen).
       async setGame(game) {
+        previewRef.current = null;
         const res = await emitAck("room:setGame", game ?? null);
         if (!res.ok) throw new Error(res.error);
         if (res.state) setRoom(res.state);
+      },
+
+      // Host only: lets everyone see which game on the menu the host is pointing at (null = none). Best effort.
+      previewGame(game) {
+        const next = game ?? null;
+        if (next === previewRef.current) return Promise.resolve();
+        previewRef.current = next;
+        return emitAck("room:preview", next).catch(() => {});
       },
 
       async updateConfig(config) {

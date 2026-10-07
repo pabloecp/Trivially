@@ -252,6 +252,7 @@ export class RoomManager {
   transferHost(room) {
     const next = [...room.players.values()].find((p) => p.connected);
     room.hostId = next ? next.id : null;
+    room.preview = null;
     if (room.hostId && Array.isArray(room.coHosts)) {
       room.coHosts = room.coHosts.filter((id) => id !== room.hostId);
     }
@@ -776,6 +777,15 @@ export class RoomManager {
     const next = assertGame(game ?? null);
     this.resetMatch(room);
     room.game = next;
+    room.preview = null;
+  }
+
+  // The game the host is pointing at on the menu, so every player sees it live before it is picked. Only while the
+  // room has no game; it is cleared as soon as one is picked (or the host changes).
+  previewGame(room, userId, game) {
+    if (room.hostId !== userId) throw new Error("Solo el Host puede elegir el juego");
+    if (room.game) return;
+    room.preview = assertGame(game ?? null);
   }
 
   resetMatch(room) {
@@ -1166,6 +1176,8 @@ export class RoomManager {
           .sort((a, b) => b.wins - a.wins || b.played - a.played),
       },
       coHosts: [...(room.coHosts || [])],
+      // What the host is pointing at on the game menu (null once a game is picked).
+      preview: room.game ? null : room.preview || null,
       players: [...room.players.values()].map((p) => publicPlayer(p, room.phase, room)),
       audio: null,
       reveal: null,

@@ -65,6 +65,18 @@ export function attachSockets(io, rooms) {
       ack?.({ ok: true });
     });
 
+    // The host pointing at a game on the menu: everyone else sees it highlighted at once.
+    socket.on("room:preview", (game, ack) => {
+      try {
+        const { room, userId } = requireRoom(rooms, socket);
+        rooms.previewGame(room, userId, game);
+        ack?.({ ok: true });
+        io.to(room.code).emit("room:state", rooms.publicState(room));
+      } catch (err) {
+        ack?.({ ok: false, error: err.message });
+      }
+    });
+
     socket.on("room:setGame", (game, ack) => {
       try {
         const { room, userId } = requireRoom(rooms, socket);
