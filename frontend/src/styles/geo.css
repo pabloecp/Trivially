@@ -144,7 +144,20 @@ html.tv-geo-playing { touch-action: pan-x pan-y; }
   overflow: hidden;
   border-radius: 18px;
   background: var(--tv-geo-ocean);
+  /* Safari ignores the rounded clip on children it draws in their own layer; this keeps the map inside the corners. */
+  isolation: isolate;
+  -webkit-mask-image: -webkit-radial-gradient(white, black);
+}
+/* The black edge is drawn over the map, not under it: the sea the map draws used to cover it at the sides and leave
+   only a piece of it at the top on a phone. */
+.tv-geo-map::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  border-radius: inherit;
   box-shadow: inset 0 0 0 2px var(--tv-edge);
+  pointer-events: none;
 }
 @media (max-width: 640px) {
   .tv-geo-map-card { padding: 6px; border-radius: 22px; }
