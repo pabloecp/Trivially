@@ -39,7 +39,8 @@ export default function MusicSettings({ room, catalog, updateConfig, onToast, ch
   }, [configKey(room.config)]);
 
   const known = (draft?.playlistIds || []).filter((id) => playlists.some((p) => p.id === id) || custom.some((p) => p.id === id));
-  const selected = known.length ? known : defaultIds;
+  // Every playlist unticked stays empty (the match then can't start); otherwise unknown ids fall back to the default.
+  const selected = draft?.playlistIds?.length === 0 ? [] : known.length ? known : defaultIds;
   const hasCustom = selected.some((id) => id.startsWith("sp:"));
   const chosenCustom = custom.filter((p) => selected.includes(p.id));
   const rounds = draft?.rounds || 5;
@@ -98,17 +99,16 @@ export default function MusicSettings({ room, catalog, updateConfig, onToast, ch
     const next = { ...draft, ...change };
     setDraft(next);
     try {
-      await updateConfig({ playlistIds: next.playlistIds || selected, rounds: next.rounds || rounds, roundMs: next.roundMs || seconds * 1000 });
+      await updateConfig({ playlistIds: next.playlistIds ?? selected, rounds: next.rounds || rounds, roundMs: next.roundMs || seconds * 1000 });
     } catch (err) {
       setDraft(room.config);
       onToast?.(err.message || "No se pudieron guardar los ajustes");
     }
   }
 
-  // One playlist always stays selected: tapping the last one does nothing.
   function togglePlaylist(id) {
     if (selected.includes(id)) {
-      if (selected.length > 1) save({ playlistIds: selected.filter((x) => x !== id) });
+      save({ playlistIds: selected.filter((x) => x !== id) });
     } else {
       save({ playlistIds: [...selected, id] });
     }
@@ -122,7 +122,15 @@ export default function MusicSettings({ room, catalog, updateConfig, onToast, ch
 
   return (
     <fieldset className="tv-settings" disabled={readOnly}>
-      <OptionRow label="Canciones" multi wrap options={listOptions} value={selected} onChange={togglePlaylist}>
+      <OptionRow
+        label="Canciones"
+        multi
+        wrap
+        options={listOptions}
+        value={selected}
+        onChange={togglePlaylist}
+        onSetAll={(playlistIds) => save({ playlistIds })}
+      >
         {isOwnerEditor &&
           spotifyOpen &&
           (spotifyLists || [])
@@ -172,7 +180,7 @@ export default function MusicSettings({ room, catalog, updateConfig, onToast, ch
       {isOwnerEditor && spotifyOpen && spotifyLists?.length === 0 && (
         <p className="tv-playlist-total">No encontramos playlists en tu Spotify.</p>
       )}
-      {!hasCustom && playlists.length > 0 && songCount < rounds && (
+      {!hasCustom && selected.length > 0 && playlists.length > 0 && songCount < rounds && (
         <p className="tv-playlist-total is-short" role="alert">
           <Icon name="lock" size={16} strokeWidth={2.6} />
           <span>

@@ -35,7 +35,7 @@ export function geoConfig(room) {
   return {
     rounds: geo.rounds || 5,
     roundMs: geo.roundMs || 15000,
-    kinds: geo.kinds?.length ? geo.kinds : KINDS.map((k) => k.id),
+    kinds: geo.kinds ?? KINDS.map((k) => k.id),
     difficulty: geo.difficulty || "mixta",
   };
 }

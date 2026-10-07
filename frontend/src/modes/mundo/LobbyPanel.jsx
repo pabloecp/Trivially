@@ -30,10 +30,14 @@ export default function LobbyPanel({ room, onToast }) {
           {!mode.ready(room) && (
             <p className="tv-playlist-total is-short" role="status">
               <Icon name="lock" size={16} strokeWidth={2.6} />
-              <span>
-                Solo hay <strong>{room.questionsReady} preguntas</strong> con estos ajustes para {config.rounds} rondas.
-                Baja las rondas o elige más tipos.
-              </span>
+              {config.kinds.length === 0 ? (
+                <span>Elige al menos un tipo de pregunta para empezar.</span>
+              ) : (
+                <span>
+                  Solo hay <strong>{room.questionsReady} preguntas</strong> con estos ajustes para {config.rounds} rondas.
+                  Baja las rondas o elige más tipos.
+                </span>
+              )}
             </p>
           )}
         </GeoSettings>

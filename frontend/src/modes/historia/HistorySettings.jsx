@@ -28,10 +28,6 @@ export default function HistorySettings({ room, updateConfig, onToast, children,
 
   function toggleEra(id) {
     const on = draft.eras.includes(id);
-    if (on && draft.eras.length === 1) {
-      onToast?.("Deja al menos una época");
-      return;
-    }
     save({ eras: ERAS.map((e) => e.id).filter((e) => (e === id ? !on : draft.eras.includes(e))) });
   }
 
@@ -44,6 +40,7 @@ export default function HistorySettings({ room, updateConfig, onToast, children,
           options={ERAS.map((e) => ({ value: e.id, label: e.label, title: e.hint }))}
           value={draft.eras}
           onChange={toggleEra}
+          onSetAll={(eras) => save({ eras })}
         />
       </div>
       <OptionRow

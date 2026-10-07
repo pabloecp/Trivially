@@ -8,7 +8,7 @@ import { findMode } from "../index.js";
 import "../../styles/home.css";
 import "../../styles/quiz.css";
 
-// "Opción múltiple" waiting room, shown inside the room screen on Home once the host picks this game: the mode's big
+// "Trivia" waiting room, shown inside the room screen on Home once the host picks this game: the mode's big
 // card (how it's played and the start button) and the match settings beside it.
 export default function LobbyPanel({ room, onToast }) {
   const { user, updateConfig } = useApp();
@@ -17,6 +17,16 @@ export default function LobbyPanel({ room, onToast }) {
   const isHost = room.hostId === user?.id;
   const canEditConfig = isHost || Boolean(me?.canEditConfig) || Boolean(room.coHosts?.includes(user?.id));
   const mode = findMode("opciones");
+  // A list with nothing ticked: what to tick.
+  const quiz = room.config?.quiz || {};
+  const empty =
+    quiz.categories?.length === 0
+      ? "un tema"
+      : quiz.formats?.length === 0
+      ? "una forma de responder"
+      : quiz.difficulties?.length === 0
+      ? "una dificultad"
+      : null;
 
   return (
     <>
@@ -29,10 +39,14 @@ export default function LobbyPanel({ room, onToast }) {
           {!mode.ready(room) && (
             <p className="tv-playlist-total is-short" role="status">
               <Icon name="lock" size={16} strokeWidth={2.6} />
-              <span>
-                Solo hay <strong>{room.questionsReady} preguntas</strong> de esa dificultad. Baja el número de preguntas o
-                elige otra dificultad.
-              </span>
+              {empty ? (
+                <span>Elige al menos {empty} para empezar.</span>
+              ) : (
+                <span>
+                  Solo hay <strong>{room.questionsReady} preguntas</strong> con esos ajustes. Baja el número de preguntas
+                  o elige más temas.
+                </span>
+              )}
             </p>
           )}
         </QuizSettings>

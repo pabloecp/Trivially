@@ -280,7 +280,7 @@ function GameScreen() {
     : "Siguiente pregunta en breve…";
 
   // The top card: the same three lines (kicker, title, hint) in every round and phase, so nothing below it moves.
-  let kicker = `${roundLabel} · ${kind ? kindInfo.label : "Geografía"}`;
+  let kicker = `${roundLabel} · ${kind ? kindInfo.label : "Encuentra el país"}`;
   let title;
   let hint;
   if (phase === "countdown") {

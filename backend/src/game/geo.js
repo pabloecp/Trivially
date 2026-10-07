@@ -36,7 +36,6 @@ const clamp = (n, { min, max }, fallback) => Math.min(max, Math.max(min, Math.ro
 export function mergeGeoConfig(current, change = {}) {
   const base = { ...defaultGeoConfig(), ...current };
   const kinds = Array.isArray(change.kinds) ? GEO_KINDS.filter((k) => change.kinds.includes(k)) : base.kinds;
-  if (Array.isArray(change.kinds) && !kinds.length) throw new Error("Elige al menos un tipo de pregunta");
   return {
     rounds: change.rounds != null ? clamp(change.rounds, GEO_LIMITS.rounds, base.rounds) : base.rounds,
     roundMs: change.roundMs != null ? clamp(change.roundMs, GEO_LIMITS.roundMs, base.roundMs) : base.roundMs,

@@ -79,7 +79,8 @@ assert.deepEqual(mergeGeoConfig({}, { rounds: 99, roundMs: 1, kinds: ["flag", "n
   kinds: ["capital", "flag"],
   difficulty: "mixta",
 });
-assert.throws(() => mergeGeoConfig({}, { kinds: [] }), /al menos un tipo/);
+// Every kind can be unticked: there is then nothing to play.
+assert.deepEqual(mergeGeoConfig({}, { kinds: [] }).kinds, []);
 
 // The bank: Supabase rows first; any kind they lack comes from countries.js.
 const built = rows.map(toQuestion);

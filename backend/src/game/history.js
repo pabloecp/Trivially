@@ -27,7 +27,7 @@ const TIMELINES = {
 // known (10 years off is a good guess for Roman times, a poor one for the 20th century). The pace doesn't depend on
 // how long the timeline is: a longer one only leaves more room to miss.
 export const YEAR_MAX_POINTS = 1000;
-const YEAR_NEAR_POINTS = 900;
+const YEAR_NEAR_POINTS = 800;
 const YEAR_FALLOFF = { antigua: 150, media: 75, moderna: 30, contemporanea: 15 };
 
 export function eraOf(year) {
@@ -47,7 +47,6 @@ const clamp = (n, { min, max }, fallback) => Math.min(max, Math.max(min, Math.ro
 export function mergeHistoryConfig(current, change = {}) {
   const base = { ...defaultHistoryConfig(), ...current };
   const eras = Array.isArray(change.eras) ? HISTORY_ERAS.filter((e) => change.eras.includes(e)) : base.eras;
-  if (Array.isArray(change.eras) && !eras.length) throw new Error("Elige al menos una época");
   return {
     rounds: change.rounds != null ? clamp(change.rounds, HISTORY_LIMITS.rounds, base.rounds) : base.rounds,
     roundMs: change.roundMs != null ? clamp(change.roundMs, HISTORY_LIMITS.roundMs, base.roundMs) : base.roundMs,

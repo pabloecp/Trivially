@@ -206,27 +206,6 @@ button, input, select {
   border-radius: var(--radius-full);
 }
 
-/* Theme Toggle Button */
-.theme-toggle-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
-  border-radius: var(--radius-full);
-  background: var(--bg-surface);
-  border: 1px solid var(--border);
-  color: var(--text);
-  cursor: pointer;
-  font-size: 16px;
-  transition: all 0.2s var(--ease);
-}
-.theme-toggle-btn:hover {
-  border-color: var(--brand);
-  background: var(--bg-surface-hover);
-  transform: scale(1.05);
-}
-
 /* Cards & Surfaces */
 .card {
   background: var(--bg-surface);
@@ -1620,8 +1599,6 @@ h1, h2, h3, h4 { font-family: "Outfit", "Plus Jakarta Sans", sans-serif; font-we
 .nav-links a { font-weight: 700; border-radius: 12px; transition: transform 0.18s var(--spring), background 0.2s, color 0.2s; }
 .nav-links a:hover { transform: translateY(-1px); }
 .user-nav-chip { border-radius: 14px; }
-.theme-toggle-btn { border-radius: 12px; transition: transform 0.25s var(--spring), border-color 0.2s; }
-.theme-toggle-btn:hover { transform: rotate(-14deg) scale(1.06); }
 
 /* Cards: hairline border, soft lift */
 .card {

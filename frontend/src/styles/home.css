@@ -1,9 +1,9 @@
 /* Trivially Home — casual game look. Everything here is namespaced with `tv-`. */
 
-/* ---------- Palette: the colours are slots, and each of the options (see lib/palettes.js) fills them ----------
+/* ---------- Palette: the colours are slots ----------
    site = the site's own colour, accent = its second colour, music / culture / cinema / world = the colour of each
-   game mode, extra = the odd one out (moderator tag, "blue" tiles). The slot colours of all the options, Duolingo's
-   (options 1 and 2) included, are in styles/palettes.css; this file only has the greys.
+   game mode, extra = the odd one out (moderator tag, "blue" tiles). The slot colours are in styles/palettes.css;
+   this file only has the greys.
    Per slot: --x-1 / --x-2 are the fill (the same for a flat colour, two shades for a gradient) and --x-edge is the
    solid shadow under a tile. */
 :root {
@@ -507,8 +507,9 @@
   animation-delay: calc(var(--i) * 0.25s);
 }
 
-.tv-mode-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-rows: minmax(150px, 240px); gap: 14px; }
-@media (min-width: 641px) { .tv-mode-grid { grid-auto-rows: minmax(190px, 240px); } }
+/* Two columns: "Trivia" across both, then the other modes two by two. Every tile has a fixed height, so on a computer
+   they stay small instead of filling the panel. */
+.tv-mode-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-content: start; gap: 14px; }
 .tv-mode {
   position: relative;
   overflow: hidden;
@@ -517,10 +518,10 @@
   flex-direction: column;
   align-items: flex-start;
   justify-content: space-between;
-  min-height: 190px;
-  padding: 20px;
+  height: 140px;
+  padding: 18px;
   border: 0;
-  border-radius: 28px;
+  border-radius: 26px;
   background: var(--c2);
   box-shadow: 0 6px 0 var(--edge);
   color: var(--on);
@@ -530,16 +531,17 @@
   animation: tvUp 0.55s var(--tv-ease-out) backwards;
   animation-delay: calc(0.1s + var(--i) * 80ms);
 }
-.tv-mode:hover { transform: translateY(-5px) rotate(-0.5deg); }
+/* Hover lifts the whole tile straight up, its edge showing a little more under it. */
+.tv-mode:hover { transform: translateY(-5px); box-shadow: 0 11px 0 var(--edge); }
 .tv-mode:active { transform: translateY(4px); box-shadow: 0 2px 0 var(--edge); }
 .tv-mode.is-soon { cursor: default; }
 .tv-mode.is-shaking { animation: tvShake 0.45s ease; }
-.tv-mode-watermark { position: absolute; right: -20px; bottom: -24px; opacity: 0.15; pointer-events: none; }
+.tv-mode-watermark { position: absolute; right: -20px; bottom: -24px; width: 120px; height: 120px; opacity: 0.15; pointer-events: none; }
 .tv-mode-badge {
   display: grid;
   place-items: center;
-  width: 54px;
-  height: 54px;
+  width: 46px;
+  height: 46px;
   border-radius: 15px;
   background: var(--on);
   color: var(--c2);
@@ -562,10 +564,12 @@
   position: relative;
   font-family: var(--tv-display);
   font-weight: 800;
-  font-size: clamp(22px, 2.6vw, 30px);
+  font-size: clamp(20px, 2vw, 26px);
   line-height: 1;
   color: inherit;
 }
+/* The main mode: as wide as two tiles, otherwise like the rest. */
+.tv-mode.is-main { grid-column: 1 / -1; }
 
 /* The picked game's big card, in the game's colour. */
 .tv-mstage {
@@ -774,8 +778,7 @@
 @media (max-width: 979px) { .tv-leave-btn { margin-top: 0; } }
 @media (max-width: 640px) {
   .tv-picker { padding: 20px; border-radius: 28px; }
-  .tv-mode { min-height: 150px; padding: 16px; border-radius: 24px; }
-  .tv-mode-badge { width: 46px; height: 46px; }
+  .tv-mode { padding: 16px; border-radius: 24px; }
   .tv-mstage { min-height: 0; padding: 22px; border-radius: 28px; }
   .tv-mstage-watermark { width: 240px; height: 240px; right: -70px; }
   .tv-settings-card { padding: 18px; border-radius: 28px; }
@@ -2064,13 +2067,10 @@
 .tv-player-menu-item--danger { color: var(--tv-danger); }
 .tv-player-menu-note { margin: 0; padding: 10px 12px; font-weight: 700; font-size: 13px; color: var(--tv-text-3); }
 
-.tv-chip--theme { flex-shrink: 0; border: 0; cursor: pointer; }
 .tv-chip--icon { padding-right: 5px; }
 button.tv-chip--leave { border: 0; font-family: inherit; color: inherit; cursor: pointer; }
 .tv-chip-short { display: none; }
 @media (max-width: 520px) {
-  .tv-chip--theme .tv-chip-name { display: none; }
-  .tv-chip--theme { padding-right: 5px; }
   /* The button left of the logo ("Volver") is only its icon, and "¿Salir?" while it asks. */
   .tv-chip--leave .tv-chip-long { display: none; }
   .tv-chip--leave .tv-chip-short { display: inline; }
@@ -2131,58 +2131,6 @@ body:has(.tv-app) {
   }
   .tv-sheet-root.is-closing .tv-sheet { animation: tvOut 0.24s ease-in forwards; }
 }
-
-/* ---------- Page decoration (PageDecor), only in the options that have one ---------- */
-.tv-decor { position: fixed; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; }
-.tv-decor-shapes,
-.tv-decor-stars { display: none; }
-:root[data-palette="4"] .tv-decor-shapes,
-:root[data-palette="5"] .tv-decor-stars { display: block; }
-/* Lima: four faint shapes floating. */
-.tv-decor-shape { position: absolute; animation: tvFloat 7s ease-in-out infinite; }
-.tv-decor-shape.is-circle { left: 8%; top: 18%; width: 14px; height: 14px; border-radius: 50%; background: rgba(var(--p-site-rgb), 0.2); }
-.tv-decor-shape.is-square { right: 12%; top: 26%; width: 22px; height: 22px; border: 2px solid rgba(var(--p-site-rgb), 0.2); border-radius: 6px; animation-delay: -2s; }
-.tv-decor-shape.is-ring { left: 18%; bottom: 16%; width: 18px; height: 18px; border: 2px solid rgba(var(--p-culture-rgb), 0.2); border-radius: 50%; animation-delay: -4s; }
-.tv-decor-shape.is-diamond { right: 22%; bottom: 22%; width: 12px; height: 12px; background: rgba(var(--p-world-rgb), 0.2); rotate: 45deg; animation-delay: -1s; }
-@keyframes tvFloat { 50% { transform: translateY(-18px) rotate(8deg); } }
-/* Medianoche: tiny stars twinkling. */
-.tv-decor-stars span { position: absolute; border-radius: 50%; background: var(--tv-text); opacity: 0.5; animation: tvBlink 1.4s ease-in-out infinite; }
-
-/* ---------- Wordmark per option ---------- */
-/* Both write "trivially" plainly: heavy, tight, no shadow, and the i-dots in the text's colour. */
-:root[data-palette="4"] .tv-wordmark,
-:root[data-palette="5"] .tv-wordmark { font-weight: 800; text-shadow: none; }
-/* The plain "i" (Wordmark.jsx) instead of the dotless one with a coloured dot, which these fonts place oddly. */
-.tv-i-plain { display: none; }
-:root[data-palette="4"] .tv-i-plain,
-:root[data-palette="5"] .tv-i-plain { display: inline; }
-:root[data-palette="4"] .tv-i-dotted,
-:root[data-palette="5"] .tv-i-dotted { display: none; }
-
-/* ---------- Tinted look (Medianoche) ---------- */
-/* Instead of being filled with their colour, the game tiles, the game's card and the chosen settings are dark and
-   lit by a ring of their colour; the icon boxes take the colour instead. */
-:root[data-palette="5"] .tv-mode {
-  background: var(--tv-option-bg);
-  color: var(--tv-text);
-  box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--c2) 40%, transparent);
-}
-:root[data-palette="5"] .tv-mode:active { box-shadow: inset 0 0 0 2px var(--c2); }
-:root[data-palette="5"] .tv-mode-badge { background: var(--c2); color: var(--on); }
-:root[data-palette="5"] .tv-mode-watermark { color: var(--c2); }
-:root[data-palette="5"] .tv-mode-soon { background: var(--tv-surface); color: var(--tv-text-2); }
-:root[data-palette="5"] .tv-mstage {
-  background: color-mix(in srgb, var(--c2) 7%, var(--tv-bg));
-  color: var(--tv-text);
-  box-shadow: inset 0 0 0 2px var(--c2), 0 30px 80px color-mix(in srgb, var(--c2) 12%, transparent);
-}
-:root[data-palette="5"] .tv-mstage-badge { background: var(--c2); color: var(--on); }
-:root[data-palette="5"] .tv-mstage-name,
-:root[data-palette="5"] .tv-mstage-watermark,
-:root[data-palette="5"] .tv-eq--stage { color: var(--c2); }
-:root[data-palette="5"] .tv-mstage-wait { background: rgba(255, 255, 255, 0.06); }
-:root[data-palette="5"] .tv-mstage-step-icon { background: var(--c2); color: var(--on); }
-:root[data-palette="5"] .tv-mstage-start { background: var(--c2); color: var(--on); box-shadow: 0 7px 0 var(--edge); }
 
 /* ---------- Scoreboard rows (PartyPanel during a match) ---------- */
 .tv-player-pos {
@@ -2261,8 +2209,7 @@ body::-webkit-scrollbar,
   .tv-settings-card,
   .tv-game-stage { min-height: 0; overflow-y: auto; }
   .tv-mstage { min-height: 0; }
-  .tv-mode-grid { flex: 1; min-height: 0; grid-auto-rows: minmax(0, 1fr); }
-  .tv-mode { min-height: 0; }
+
   .tv-party { min-height: 0; }
 }
 /* Shorter windows: smaller headings so the panels still fit. */
@@ -2350,8 +2297,6 @@ body::-webkit-scrollbar,
   .tv-geo-stage { height: auto; }
   .tv-geo-side { position: static; max-height: none; }
 }
-/* Five or more games: three columns on wide screens, so the tiles fill the panel without a gap. */
-@media (min-width: 1100px) { .tv-mode-grid:has(> .tv-mode:nth-child(5)) { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 /* Waiting lines wrap like normal text, so the hopping dots stay right after the last word. */
 .tv-mstage-wait { display: block; }
 
@@ -2389,8 +2334,8 @@ body::-webkit-scrollbar,
 .tv-game-round.tv-geo-find .tv-geo-country { white-space: normal; }
 @media (max-width: 640px) {
   /* "Elige el juego": tiles about half as tall, so all the games fit on the screen. */
-  .tv-mode-grid { grid-auto-rows: 116px; gap: 10px; }
-  .tv-mode { min-height: 0; padding: 14px; border-radius: 22px; }
+  .tv-mode-grid { gap: 10px; }
+  .tv-mode { height: 116px; padding: 14px; border-radius: 22px; }
   .tv-mode-badge { width: 42px; height: 42px; border-radius: 13px; }
   .tv-mode-name { font-size: 19px; }
   .tv-mode-watermark { width: 104px; height: 104px; right: -14px; bottom: -18px; }
@@ -2445,7 +2390,6 @@ body::-webkit-scrollbar,
   background: var(--on);
   color: var(--c2);
 }
-:root[data-palette="5"] .tv-mstage-step { background: rgba(255, 255, 255, 0.06); }
 
 /* The settings beside the card. */
 .tv-settings-panel { gap: 20px; }
@@ -2497,6 +2441,26 @@ fieldset.tv-settings { display: grid; gap: 18px; min-width: 0; margin: 0; paddin
 .tv-optrow-btn.is-add svg { flex-shrink: 0; }
 .tv-optrow-btn:disabled { cursor: default; }
 .tv-settings:disabled .tv-optrow-btn[aria-pressed="false"] { opacity: 0.5; }
+/* How many questions a choice has (Preguntas' topics and ways of answering); one without any is greyed out. */
+.tv-optrow-count { font-size: 11px; font-weight: 800; opacity: 0.7; }
+/* The setting's name, with a small action at the other end ("Seleccionar todos"). */
+.tv-optrow-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+.tv-optrow-action { padding: 0; border: 0; background: none; font: inherit; font-weight: 800; font-size: 13px; cursor: pointer; }
+.tv-app .tv-optrow-action { color: var(--brand-text); }
+.tv-optrow-action:hover { text-decoration: underline; }
+/* Settings where any number can be ticked: each choice has a little box, empty or ticked. */
+.tv-optrow-box {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  border-radius: 5px;
+  box-shadow: inset 0 0 0 2px currentColor;
+  opacity: 0.6;
+}
+.tv-optrow-btn[aria-pressed="true"] .tv-optrow-box { background: var(--on-brand); color: var(--brand); box-shadow: none; opacity: 1; }
+.tv-optrow-btn:disabled:not([aria-pressed="true"]) { opacity: 0.35; }
 
 @media (max-width: 640px) { .tv-optrow-btn { height: 40px; font-size: 13px; } }
 

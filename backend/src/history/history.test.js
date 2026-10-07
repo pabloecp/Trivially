@@ -77,7 +77,7 @@ assert.equal(yearLabel(1492), "1492");
 
 // Points: the exact year gets all of them, then fewer the further; the same miss counts less in older ages.
 assert.equal(yearPoints(0, "contemporanea"), 1000);
-assert.ok(yearPoints(1, "contemporanea") > 800 && yearPoints(1, "contemporanea") < 900);
+assert.ok(yearPoints(1, "contemporanea") > 700 && yearPoints(1, "contemporanea") <= 800);
 assert.ok(yearPoints(5, "contemporanea") > yearPoints(10, "contemporanea"));
 assert.ok(yearPoints(10, "contemporanea") > yearPoints(30, "contemporanea"));
 assert.ok(yearPoints(50, "contemporanea") < 50);
@@ -93,7 +93,8 @@ assert.deepEqual(mergeHistoryConfig({}, { rounds: 99, roundMs: 1000, eras: ["mod
   eras: ["moderna"],
   difficulty: "mixta",
 });
-assert.throws(() => mergeHistoryConfig({}, { eras: [] }), /al menos una época/);
+// Every age can be unticked: there is then nothing to play.
+assert.deepEqual(mergeHistoryConfig({}, { eras: [] }).eras, []);
 
 // The bank: the loaded rows of Historia when there are any, otherwise the list.
 const bank = historyBank([]);

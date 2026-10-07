@@ -4,7 +4,15 @@ import { hydrateSong } from "../catalog/catalogProvider.js";
 import { cleanTitle } from "../catalog/trackResolver.js";
 import { applyMatchStats } from "../db/store.js";
 import { isCorrectAnswer, normalizeAnswer } from "./answers.js";
-import { countQuestions, defaultQuizConfig, mergeQuizConfig, pickQuizQuestions, QUIZ_REVEAL_MS } from "./quiz.js";
+import {
+  countQuestions,
+  defaultQuizConfig,
+  mergeQuizConfig,
+  pickQuizQuestions,
+  questionCounts,
+  QUIZ_REVEAL_MS,
+  quizPool,
+} from "./quiz.js";
 import { isCorrectOpenAnswer } from "./openAnswers.js";
 import {
   countGeoQuestions,
@@ -39,12 +47,13 @@ import { COUNTDOWN_MS, REVEAL_MS, ROUND_MS, scoreAnswer } from "./scoring.js";
 
 const CODE_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 // Games the host can move a room into (ids match frontend/src/modes/index.js). `null` is the Home screen.
-// "mundo" (Geografía, GEO_GAME) asks capitals and flags (written answers checked by isCorrectOpenAnswer) and
-// locations (a pin on the world map); "opciones" (Opción múltiple) is a multiple-choice quiz (QUIZ_GAME); "historia"
-// (HISTORY_GAME) shows an event and players choose its year on a timeline. All three keep their questions in
-// room.tracks, in place of songs.
+// "opciones" (Trivia, QUIZ_GAME) is the main mode: questions of every topic, each answered its own way (four
+// options, a written answer or a year on a timeline). The extras: "musica" (Adivina la canción), "mundo" (Encuentra el país,
+// GEO_GAME: capitals and flags written, and countries pinned on the world map) and "historia" (Línea del tiempo,
+// HISTORY_GAME: an event's year on a timeline). The question games keep their questions in room.tracks, in place of
+// songs.
 export const GAME_IDS = ["musica", "opciones", "mundo", "historia"];
-// "Opción múltiple": its settings live in config.quiz and its questions take the place of songs in room.tracks.
+// "Trivia": its settings live in config.quiz and its questions take the place of songs in room.tracks.
 export const QUIZ_GAME = "opciones";
 // The games that ask questions instead of playing songs.
 const QUESTION_GAMES = [QUIZ_GAME, GEO_GAME, HISTORY_GAME];
@@ -116,6 +125,8 @@ export class RoomManager {
     this.geoQuestions = geoBank(questions);
     // Historia's (from history/events.js when the bank has none).
     this.historyQuestions = historyBank(questions);
+    // Trivia's: the bank's own plus Geografía's written questions and Historia's events.
+    this.quizQuestions = quizPool(questions, this.geoQuestions, this.historyQuestions);
     this.resolver = resolver;
     this.store = store;
     this.reconnectGraceMs = reconnectGraceMs;
@@ -329,8 +340,8 @@ export class RoomManager {
     if (config?.playlistIds) {
       // Spotify playlists can only be added by the host (addSpotifyPlaylist); here they can only stay or go.
       const known = new Set([...this.catalog.playlists.map((p) => p.id), ...Object.keys(room.customPlaylists || {})]);
+      // All of them may be unticked: the match then has no songs and can't start.
       next.playlistIds = [...new Set(config.playlistIds)].filter((id) => known.has(id));
-      if (!next.playlistIds.length) throw new Error("Elige al menos una playlist");
     }
     room.config = next;
     for (const entry of Object.values(room.customPlaylists || {})) {
@@ -416,9 +427,13 @@ export class RoomManager {
     room.progressTimer.unref?.();
   }
 
-  /** Every song the match can draw from right now: the chosen catalog playlists plus the playable Spotify songs. */
+  /**
+   * Every song the match can draw from right now: the chosen catalog playlists plus the playable Spotify songs. With
+   * every playlist unticked there are none.
+   */
   songPool(room) {
     const ids = room.config.playlistIds || [];
+    if (Array.isArray(room.config.playlistIds) && !ids.length && this.catalog.playlists?.length) return [];
     const custom = ids.map((id) => room.customPlaylists?.[id]).filter(Boolean);
     const catalogIds = ids.filter((id) => !id.startsWith(SPOTIFY_PREFIX));
     // With only Spotify playlists chosen, the default playlist isn't mixed in.
@@ -485,12 +500,18 @@ export class RoomManager {
     room.currentRound = 0;
     if (room.game === QUIZ_GAME) {
       const quiz = mergeQuizConfig(room.config.quiz);
-      const available = countQuestions(this.questions, quiz.difficulty);
+      const available = countQuestions(this.quizQuestions, quiz);
       if (available < quiz.rounds) {
-        throw new Error(`Solo hay ${available} preguntas de esa dificultad. Baja el número de preguntas.`);
+        throw new Error(`Solo hay ${available} preguntas con esos ajustes. Baja el número de preguntas o elige más temas.`);
       }
-      room.tracks = pickQuizQuestions(this.questions, quiz.rounds, quiz.difficulty);
-      room.totalRounds = room.tracks.length;
+      const tracks = pickQuizQuestions(this.quizQuestions, quiz);
+      if (tracks.length < quiz.rounds) {
+        throw new Error(`Solo hay ${tracks.length} preguntas distintas con esos ajustes. Baja el número de preguntas o elige más temas.`);
+      }
+      // Flags are shown through a token, so the image's address doesn't name the country.
+      for (const t of tracks) if (t.flag) t.flagToken = flagToken(t.flag);
+      room.tracks = tracks;
+      room.totalRounds = tracks.length;
     } else if (room.game === GEO_GAME) {
       // Geografía: the match's questions are drawn now (they are the "tracks" of the room).
       const geo = mergeGeoConfig(room.config.geo);
@@ -526,6 +547,7 @@ export class RoomManager {
         return entry && entry.done.size < entry.tracks.length;
       });
       if (!available) {
+        if (!(room.config.playlistIds || []).length) throw new Error("Elige al menos una playlist");
         throw new Error(loading ? "Tus canciones de Spotify se están cargando, espera unos segundos" : "Ninguna canción cumple esos filtros");
       }
       // Every round gets a different song: with fewer songs than rounds the same ones would keep coming back.
@@ -642,9 +664,16 @@ export class RoomManager {
     return room.game === GEO_GAME && room.tracks[room.currentRound]?.kind === "location";
   }
 
-  /** Historia's rounds: a year on the timeline instead of a written answer. */
+  /** Historia's rounds, and Trivia's year questions: a year on the timeline instead of a written answer. */
   isYearRound(room) {
-    return room.game === HISTORY_GAME && Boolean(room.tracks[room.currentRound]);
+    const track = room.tracks[room.currentRound];
+    if (room.game === QUIZ_GAME) return track?.type === "year";
+    return room.game === HISTORY_GAME && Boolean(track);
+  }
+
+  /** Trivia's questions with four options: the answer is an option's position. */
+  isChoiceRound(room) {
+    return room.game === QUIZ_GAME && room.tracks[room.currentRound]?.type === "choice";
   }
 
   /** During a tiebreak only the tied players answer; the rest of the room watches. */
@@ -660,7 +689,7 @@ export class RoomManager {
     const track = room.tracks[room.currentRound];
     const now = Date.now();
     const duration = this.roundMs(room);
-    if (room.game === QUIZ_GAME && track) this.gradeQuiz(room, track);
+    if (this.isChoiceRound(room)) this.gradeQuiz(room, track);
     if (this.isMapRound(room)) this.gradeMap(room, track);
     if (this.isYearRound(room)) this.gradeYears(room, track);
     room.players.forEach((player) => {
@@ -671,9 +700,9 @@ export class RoomManager {
       }
     });
     let revealMs = REVEAL_MS;
-    if (room.game === QUIZ_GAME) revealMs = QUIZ_REVEAL_MS;
-    else if (this.isMapRound(room)) revealMs = LOCATION_REVEAL_MS;
+    if (this.isMapRound(room)) revealMs = LOCATION_REVEAL_MS;
     else if (this.isYearRound(room)) revealMs = HISTORY_REVEAL_MS;
+    else if (room.game === QUIZ_GAME) revealMs = QUIZ_REVEAL_MS;
     this.setPhase(room, "reveal", revealMs, () => this.advance(room));
     return { track, duration };
   }
@@ -820,7 +849,7 @@ export class RoomManager {
     if (player.lastAnswer) {
       return player.lastAnswer;
     }
-    if (room.game === QUIZ_GAME) return this.submitQuizAnswer(room, player, answerText);
+    if (this.isChoiceRound(room)) return this.submitQuizAnswer(room, player, answerText);
     if (this.isMapRound(room)) throw new Error("Toca el mapa para poner tu pin");
     if (this.isYearRound(room)) throw new Error("Elige el año en la línea del tiempo");
 
@@ -838,7 +867,7 @@ export class RoomManager {
     const remainingMs = Math.max(0, (room.phaseEndsAt || Date.now()) - Date.now());
 
     // Check if the answer matches
-    const questionGame = room.game === GEO_GAME;
+    const questionGame = room.game === GEO_GAME || room.game === QUIZ_GAME;
     if (questionGame) answerText = String(answerText ?? "").slice(0, 100);
     const correct = questionGame
       ? isCorrectOpenAnswer(answerText, track)
@@ -983,7 +1012,7 @@ export class RoomManager {
   placeYear(room, userId, value) {
     const player = room.players.get(userId);
     if (!player) throw new Error("Jugador no encontrado");
-    if (!this.isYearRound(room)) throw new Error("Esta ronda no es de Historia");
+    if (!this.isYearRound(room)) throw new Error("Esta ronda no es de elegir el año");
     if (room.phase !== "playing") throw new Error("No se aceptan respuestas ahora");
     if (!this.isPlaying(room, userId)) throw new Error("Solo juegan el desempate los jugadores empatados");
     if (player.lastAnswer) return false;
@@ -1175,6 +1204,8 @@ export class RoomManager {
 
     if (room.game === QUIZ_GAME) {
       if (track) payload.question = this.publicQuestion(room, track);
+      // In the lobby: how many questions each topic and way of answering has, for the settings' chips.
+      if (room.phase === "lobby") payload.questionCounts = questionCounts(this.quizQuestions, room.config.quiz);
     } else if (room.game === GEO_GAME) {
       if (track) payload.question = this.publicGeoQuestion(room, track);
       if (track && showTrack) {
@@ -1242,7 +1273,7 @@ export class RoomManager {
 
   /** In the lobby: how many different questions the room's settings can draw (a match needs one per round). */
   questionsReady(room) {
-    if (room.game === QUIZ_GAME) return countQuestions(this.questions, mergeQuizConfig(room.config.quiz).difficulty);
+    if (room.game === QUIZ_GAME) return countQuestions(this.quizQuestions, room.config.quiz);
     if (room.game === GEO_GAME) return countGeoQuestions(this.geoQuestions, room.config.geo);
     if (room.game === HISTORY_GAME) return countHistoryQuestions(this.historyQuestions, room.config.history);
     return undefined;
@@ -1282,25 +1313,47 @@ export class RoomManager {
   }
 
   /**
-   * The current question of Opción múltiple. The options only show once the round is playing; which one is right,
-   * and how many players picked each, only from the reveal on.
+   * The current question of Trivia, by how it's answered. Its text shows from the countdown on (everyone gets the
+   * same seconds to read it); what to answer with (the options, the flag, the timeline's range) once the round is
+   * playing; the right answer, and how many players picked each option, only from the reveal on. No question id: with
+   * it a player could recognise a question they have seen before (or look it up).
    */
   publicQuestion(room, question) {
-    const showOptions = ["playing", "reveal", "finished"].includes(room.phase);
+    const open = ["playing", "reveal", "finished"].includes(room.phase);
     const showAnswer = room.phase === "reveal" || room.phase === "finished";
+    const base = {
+      round: room.currentRound + 1,
+      type: question.type || "choice",
+      text: question.text,
+      category: question.category,
+      difficulty: question.difficulty,
+    };
+    if (question.type === "open") {
+      return {
+        ...base,
+        kind: question.kind,
+        flag: open && question.flagToken ? flagUrl(question.flagToken) : null,
+        answer: showAnswer ? question.answer : null,
+      };
+    }
+    if (question.type === "year") {
+      return {
+        ...base,
+        era: question.era,
+        min: open ? question.min : null,
+        max: open ? question.max : null,
+        year: showAnswer ? question.year : null,
+      };
+    }
     const picks = question.options.map(() => 0);
     if (showAnswer) {
       for (const p of room.players.values()) {
         if (Number.isInteger(p.lastAnswer?.choice)) picks[p.lastAnswer.choice] += 1;
       }
     }
-    // No question id: with it a player could recognise a question they have seen before (or look it up).
     return {
-      round: room.currentRound + 1,
-      text: question.text,
-      category: question.category,
-      difficulty: question.difficulty,
-      options: showOptions ? question.options : null,
+      ...base,
+      options: open ? question.options : null,
       answer: showAnswer ? question.answer : null,
       picks: showAnswer ? picks : null,
     };

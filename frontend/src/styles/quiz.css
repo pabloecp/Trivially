@@ -1,28 +1,28 @@
 /* "Opción múltiple". Loaded after home.css (the quiz modules import both), and builds on its tv- classes.
    Two palettes, never blended into each other:
-   - the answers (A-D) keep four jewel tones, the same every question: --tv-q1 ... --tv-q4;
+   - the answers (A-D) keep four of the site's own colours (palettes.css), the same every question: --tv-q1 ... --tv-q4;
    - the rest of the mode (room screen, settings, buttons, timer) is sky blue with a butter accent: --tv-qm-*
      (main), --tv-ql-* (light), --tv-qd-* (deep) and --tv-qa-* (accent). Difficulty reads as depth of blue.
    To try other colours, change only these tokens and the matching --brand values below. */
 
 :root {
-  /* Answers: raspberry, teal, gold, indigo. */
-  --tv-q1-1: #ff6f8e;
-  --tv-q1: #f2456b;
-  --tv-q1-edge: #b82347;
-  --tv-q1-on: #ffffff;
-  --tv-q2-1: #3fd3c3;
-  --tv-q2: #14b8a6;
-  --tv-q2-edge: #0e8276;
-  --tv-q2-on: #ffffff;
-  --tv-q3-1: #ffcb5c;
-  --tv-q3: #ffb52e;
-  --tv-q3-edge: #c98a00;
-  --tv-q3-on: #ffffff;
-  --tv-q4-1: #7c80ff;
-  --tv-q4: #5b5fef;
-  --tv-q4-edge: #3b3fc4;
-  --tv-q4-on: #ffffff;
+  /* Answers: the site's pink, teal, yellow and violet, flat like every other tile. */
+  --tv-q1-1: var(--p-music-1);
+  --tv-q1: var(--p-music-2);
+  --tv-q1-edge: var(--p-music-edge);
+  --tv-q1-on: var(--p-on-music);
+  --tv-q2-1: var(--p-world-1);
+  --tv-q2: var(--p-world-2);
+  --tv-q2-edge: var(--p-world-edge);
+  --tv-q2-on: var(--p-on-world);
+  --tv-q3-1: var(--p-accent-1);
+  --tv-q3: var(--p-accent-2);
+  --tv-q3-edge: var(--p-accent-edge);
+  --tv-q3-on: var(--p-on-accent);
+  --tv-q4-1: var(--p-cinema-1);
+  --tv-q4: var(--p-cinema-2);
+  --tv-q4-edge: var(--p-cinema-edge);
+  --tv-q4-on: var(--p-on-cinema);
 
   /* Interface: sky blue, its light and deep shades, and butter. */
   --tv-qm-1: #82a8ff;
@@ -160,7 +160,7 @@
   padding: 12px 16px 12px 12px;
   border: 0;
   border-radius: 22px;
-  background: linear-gradient(155deg, var(--c1), var(--c2));
+  background: var(--c2);
   box-shadow: 0 6px 0 var(--edge);
   text-align: left;
   cursor: pointer;
@@ -223,24 +223,29 @@
 .tv-quiz-opt.is-waiting .tv-quiz-opt-letter { background: rgba(255, 255, 255, 0.55); }
 @keyframes tvQuizWait { to { opacity: 0.7; } }
 
-/* Answer sent: the chosen one stands out, the rest step back. */
+/* Answer sent: the chosen one stands out, the rest step back. A ringed option is pressed all the way in (its edge
+   gone, the tile down by the edge's height), so the ring hugs the whole button and nothing sticks out under it. */
+.tv-quiz-opt.is-picked,
+.tv-quiz-opt.is-right,
+.tv-quiz-opt.is-wrong { transform: translateY(6px); }
 .tv-quiz-opt.is-picked {
-  transform: translateY(2px) scale(1.02);
-  box-shadow: 0 4px 0 var(--edge), 0 0 0 4px var(--tv-surface), 0 0 0 7px var(--c2);
-  animation: tvPick 0.35s var(--tv-spring);
+  box-shadow: 0 0 0 4px var(--tv-surface), 0 0 0 7px var(--c2);
+  animation: tvQuizPick 0.35s var(--tv-spring);
 }
+@keyframes tvQuizPick { 40% { transform: translateY(6px) scale(1.04); } }
 .tv-quiz-opt.is-out { opacity: 0.35; filter: saturate(0.4); transform: scale(0.98); }
 /* Reveal: the right one glows, a wrong pick gets a red ring, the others fade out. */
 .tv-quiz-opt.is-right {
-  box-shadow: 0 6px 0 var(--edge), 0 0 0 4px var(--tv-surface), 0 0 0 7px #22c55e;
+  box-shadow: 0 0 0 4px var(--tv-surface), 0 0 0 7px #22c55e;
   animation: tvQuizRight 0.6s var(--tv-spring);
 }
 .tv-quiz-opt.is-wrong {
   opacity: 0.7;
-  box-shadow: 0 6px 0 var(--edge), 0 0 0 4px var(--tv-surface), 0 0 0 7px #ef4444;
+  box-shadow: 0 0 0 4px var(--tv-surface), 0 0 0 7px #ef4444;
 }
+/* A little bounce that ends where the pressed tile rests. */
 @keyframes tvQuizRight {
-  40% { transform: scale(1.05) rotate(-1deg); }
+  40% { transform: translateY(6px) scale(1.04); }
 }
 
 .tv-quiz-keys { color: var(--tv-text-3); }
@@ -292,3 +297,24 @@
 @media (max-width: 559px) {
   .tv-quiz-slot .tv-tag--streak { display: none; }
 }
+
+/* ---------- Preguntas: written answers and years ---------- */
+/* The verdict of a written answer says what it was. On narrow cards it may wrap onto a second line. */
+.tv-quiz-verdict-detail { font-weight: 700; font-size: 15px; color: var(--tv-text-2); }
+.tv-quiz-slot .tv-quiz-verdict:has(.tv-quiz-verdict-detail) { flex-wrap: wrap; justify-content: center; row-gap: 4px; }
+/* A flag question: the flag under the card, the answer box under it. */
+.tv-quiz-flag { display: grid; place-items: center; }
+.tv-quiz-write { justify-self: center; justify-items: center; }
+.tv-quiz-write .tv-search-box { width: 100%; }
+.tv-quiz-skip { justify-self: center; }
+.tv-quiz-sent { justify-self: center; }
+.tv-quiz-stage.is-open,
+.tv-quiz-stage.is-year { display: grid; justify-items: center; align-content: center; gap: 16px; }
+.tv-quiz-stage.is-year .tv-hist-action { width: min(420px, 100%); }
+/* Written questions: the countdown, the answer box (or what was sent) and the verdict take turns in one row of
+   constant height under the card; a flag question keeps the flag's place even before the flag shows. */
+.tv-quiz-answer { display: grid; place-items: center; width: min(560px, 100%); min-height: 112px; }
+.tv-quiz-answer > .tv-quiz-write { width: 100%; }
+.tv-quiz-flag { min-height: 150px; }
+/* Year questions: the confirm button keeps its place outside the round. */
+.tv-hist-action.is-hidden { visibility: hidden; }

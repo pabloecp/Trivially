@@ -6,20 +6,20 @@ import Icon from "../components/home/Icon.jsx";
 import TvTopbar from "../components/home/TvTopbar.jsx";
 import HowToPlay from "../components/home/HowToPlay.jsx";
 import AppIcon from "../components/home/AppIcon.jsx";
-import PageDecor from "../components/home/PageDecor.jsx";
 import PartyPanel from "../components/home/PartyPanel.jsx";
 import PlaySheet from "../components/home/PlaySheet.jsx";
 import { RoomDock, RoomHeader } from "../components/home/RoomBars.jsx";
 import Wordmark from "../components/home/Wordmark.jsx";
 import "../styles/home.css";
 
-// A big game tile of "Elige el modo de juego", filled with the game's colour. The grey "Más modos de juego pronto" tile (SOON_TILE)
-// looks like one, with a lock, and has no "Pronto" tag of its own.
+// A game tile of "Elige el modo de juego", filled with the game's colour. The main mode's is as wide as two. The grey
+// "Más modos pronto" tile (SOON_TILE) looks like one, with a lock, and has no "Pronto" tag of its own.
 function ModeTile({ mode, index, selected, onPick }) {
+  const main = mode.kind === "main";
   return (
     <button
       type="button"
-      className={`tv-mode tv-c-${mode.color}${mode.available ? "" : " is-soon"}${selected ? " is-selected" : ""}`}
+      className={`tv-mode tv-c-${mode.color}${main ? " is-main" : ""}${mode.available ? "" : " is-soon"}${selected ? " is-selected" : ""}`}
       aria-pressed={mode.placeholder ? undefined : selected}
       style={{ "--i": index }}
       aria-disabled={mode.available ? undefined : "true"}
@@ -226,7 +226,6 @@ export default function Home() {
 
   return (
     <div className="tv-app">
-      <PageDecor />
 
       <TvTopbar />
       {/* Phones: the room's own bars, pinned to the top and the bottom (home.css hides them on wider screens). */}
@@ -266,7 +265,9 @@ export default function Home() {
                     {GAME_MODES.map((mode, i) => (
                       <ModeTile key={mode.id} mode={mode} index={i} selected={tilesOut === mode.id} onPick={pickMode} />
                     ))}
-                    {GAME_MODES.length % 2 === 1 && <ModeTile mode={SOON_TILE} index={GAME_MODES.length} onPick={pickMode} />}
+                    {GAME_MODES.filter((m) => m.kind !== "main").length % 2 === 1 && (
+                      <ModeTile mode={SOON_TILE} index={GAME_MODES.length} onPick={pickMode} />
+                    )}
                   </div>
                 </section>
               ) : (

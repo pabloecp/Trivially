@@ -275,7 +275,7 @@ function GameScreen() {
       <div className="tv-room-main tv-game-main">
         <section className="tv-game-top">
           <div className="tv-game-round">
-            <p className="tv-mono-label">Sala {room.code} · Historia</p>
+            <p className="tv-mono-label">Sala {room.code} · Línea del tiempo</p>
             <h1 className="tv-card-title">
               {tiebreak ? (
                 `Desempate${tiebreak.round > 1 ? ` ${tiebreak.round}` : ""}`

@@ -1,8 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { roomPath } from "../../modes/index.js";
-import { useTheme } from "../../lib/theme.js";
-import { PALETTES } from "../../lib/palettes.js";
 import { useApp } from "../../lib/store.jsx";
 import AppIcon from "./AppIcon.jsx";
 import ConfirmDialog from "./ConfirmDialog.jsx";
@@ -67,7 +65,6 @@ export function useRoomExit({ onRoomScreen = true, onError } = {}) {
 //  - nothing on the home screen itself.
 export default function TvTopbar() {
   const { user, room } = useApp();
-  const { palette, toggleTheme } = useTheme();
   const { pathname } = useLocation();
   const roomTarget = room ? roomPath(room) : null;
   const awayFromRoom = Boolean(roomTarget) && pathname !== roomTarget;
@@ -163,19 +160,6 @@ export default function TvTopbar() {
         </div>
         <div className="tv-topbar-end">
           {showProfile && <ProfileChip user={user} />}
-          {/* Same chip as Volver and Entrar: icon in a circle, then the label. */}
-          <button
-            type="button"
-            className="tv-chip tv-chip--theme"
-            onClick={toggleTheme}
-            aria-label={`Colores: opción ${palette.id} (${palette.name}), ${PALETTES.length} en total. Toca para la siguiente.`}
-            title={palette.name}
-          >
-            <span className="tv-avatar tv-avatar--empty">
-              <Icon name={palette.theme === "dark" ? "moon" : "sun"} size={18} />
-            </span>
-            <span className="tv-chip-name">Opción {palette.id}</span>
-          </button>
         </div>
       </header>
       <ConfirmDialog

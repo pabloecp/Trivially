@@ -89,10 +89,14 @@ export default function LobbyPanel({ room, onToast }) {
           {!enoughSongs && (
             <p className="tv-playlist-total is-short" role="status">
               <Icon name="lock" size={16} strokeWidth={2.6} />
-              <span>
-                Hay <strong>{songsReady} {songsReady === 1 ? "canción lista" : "canciones listas"}</strong> para {roundsSet} rondas.{" "}
-                {loading.length > 0 ? "Espera a que carguen más o baja las rondas." : "Baja las rondas o elige más playlists."}
-              </span>
+              {room.config?.playlistIds?.length === 0 ? (
+                <span>Elige al menos una playlist para empezar.</span>
+              ) : (
+                <span>
+                  Hay <strong>{songsReady} {songsReady === 1 ? "canción lista" : "canciones listas"}</strong> para {roundsSet} rondas.{" "}
+                  {loading.length > 0 ? "Espera a que carguen más o baja las rondas." : "Baja las rondas o elige más playlists."}
+                </span>
+              )}
             </p>
           )}
         </MusicSettings>

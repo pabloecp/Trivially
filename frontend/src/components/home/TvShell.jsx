@@ -1,6 +1,5 @@
 import { useEffect } from "react";
 import TvTopbar from "./TvTopbar.jsx";
-import PageDecor from "./PageDecor.jsx";
 import "../../styles/home.css";
 
 // The Home look (black page, top bar, chunky cards) for screens that live inside a game mode.
@@ -14,7 +13,6 @@ export default function TvShell({ mode, children }) {
 
   return (
     <div className="tv-app">
-      <PageDecor />
 
       <TvTopbar />
 

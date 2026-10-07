@@ -221,7 +221,7 @@ export default function PlaySheet({ mode, joinCode, open, onClose }) {
                   onClick={() => run({ type: "create" })}
                   disabled={busy}
                 >
-                  <span className="tv-badge tv-c-pink">
+                  <span className="tv-badge tv-c-music">
                     <Icon name="users" size={24} />
                   </span>
                   <span className="tv-option-text">

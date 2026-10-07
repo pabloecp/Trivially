@@ -29,10 +29,14 @@ export default function LobbyPanel({ room, onToast }) {
           {!mode.ready(room) && (
             <p className="tv-playlist-total is-short" role="status">
               <Icon name="lock" size={16} strokeWidth={2.6} />
-              <span>
-                Solo hay <strong>{room.questionsReady} eventos</strong> con estos ajustes para {config.rounds} rondas.
-                Baja las rondas o elige más épocas.
-              </span>
+              {config.eras.length === 0 ? (
+                <span>Elige al menos una época para empezar.</span>
+              ) : (
+                <span>
+                  Solo hay <strong>{room.questionsReady} eventos</strong> con estos ajustes para {config.rounds} rondas.
+                  Baja las rondas o elige más épocas.
+                </span>
+              )}
             </p>
           )}
         </HistorySettings>

@@ -16,7 +16,10 @@ mgr.addPlayer(room, { id: "p-3", name: "Luis", socketId: "s3" });
 assert.deepEqual(room.config.geo.kinds, ["capital", "flag", "location"]);
 assert.ok(mgr.publicState(room).questionsReady > 400);
 assert.equal(mgr.publicState(room).songsReady, undefined);
-assert.throws(() => mgr.updateConfig(room, "host-1", { geo: { kinds: [] } }), /al menos un tipo/);
+// Every kind can be unticked: there is then nothing to play.
+mgr.updateConfig(room, "host-1", { geo: { kinds: [] } });
+assert.equal(mgr.publicState(room).questionsReady, 0);
+mgr.updateConfig(room, "host-1", { geo: { kinds: ["capital", "flag", "location"] } });
 mgr.updateConfig(room, "host-1", { geo: { rounds: 6, difficulty: "facil" } });
 const ready = mgr.publicState(room).questionsReady;
 mgr.updateConfig(room, "host-1", { geo: { kinds: ["location"] } });

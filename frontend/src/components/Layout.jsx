@@ -1,13 +1,11 @@
 import { useEffect } from "react";
 import { Link, NavLink } from "react-router-dom";
 import { useApp } from "../lib/store.jsx";
-import { useTheme } from "../lib/theme.js";
 import { TriviallyLogo } from "./TriviallySymbol.jsx";
 import UserAvatar from "./UserAvatar.jsx";
 
 export default function Layout({ children, mode }) {
   const { user, error } = useApp();
-  const { theme, toggleTheme } = useTheme();
 
   // A game mode swaps the site's main color (see :root[data-mode] in global.css).
   useEffect(() => {
@@ -26,16 +24,6 @@ export default function Layout({ children, mode }) {
 
           <div className="nav-links">
             <NavLink to="/">Jugar</NavLink>
-
-            {/* Theme Toggle Button */}
-            <button
-              type="button"
-              className="theme-toggle-btn"
-              onClick={toggleTheme}
-              title={theme === "dark" ? "Cambiar a modo claro" : "Cambiar a modo oscuro"}
-            >
-              {theme === "dark" ? "🌙" : "☀️"}
-            </button>
 
             {user && !user.isGuest ? (
               <NavLink to="/profile" className="user-nav-chip">

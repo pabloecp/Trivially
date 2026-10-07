@@ -31,7 +31,7 @@ export function historyConfig(room) {
   return {
     rounds: history.rounds || 5,
     roundMs: history.roundMs || 15000,
-    eras: history.eras?.length ? history.eras : ERAS.map((e) => e.id),
+    eras: history.eras ?? ERAS.map((e) => e.id),
     difficulty: history.difficulty || "mixta",
   };
 }

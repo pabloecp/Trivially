@@ -15,7 +15,10 @@ mgr.addPlayer(room, { id: "p-3", name: "Luis", socketId: "s3" });
 assert.deepEqual(room.config.history.eras, ["antigua", "media", "moderna", "contemporanea"]);
 assert.ok(mgr.publicState(room).questionsReady > 200);
 assert.equal(mgr.publicState(room).songsReady, undefined);
-assert.throws(() => mgr.updateConfig(room, "host-1", { history: { eras: [] } }), /al menos una época/);
+// Every age can be unticked: there is then nothing to play.
+mgr.updateConfig(room, "host-1", { history: { eras: [] } });
+assert.equal(mgr.publicState(room).questionsReady, 0);
+mgr.updateConfig(room, "host-1", { history: { eras: ["antigua", "media", "moderna", "contemporanea"] } });
 assert.throws(() => mgr.updateConfig(room, "p-2", { history: { rounds: 10 } }), /permisos/);
 const all = mgr.publicState(room).questionsReady;
 mgr.updateConfig(room, "host-1", { history: { eras: ["moderna"] } });

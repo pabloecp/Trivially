@@ -28,10 +28,6 @@ export default function GeoSettings({ room, updateConfig, onToast, children, rea
 
   function toggleKind(id) {
     const on = draft.kinds.includes(id);
-    if (on && draft.kinds.length === 1) {
-      onToast?.("Deja al menos un tipo de pregunta");
-      return;
-    }
     save({ kinds: KINDS.map((k) => k.id).filter((k) => (k === id ? !on : draft.kinds.includes(k))) });
   }
 
@@ -45,6 +41,7 @@ export default function GeoSettings({ room, updateConfig, onToast, children, rea
         options={KINDS.map((k) => ({ value: k.id, label: k.label, title: k.hint }))}
         value={draft.kinds}
         onChange={toggleKind}
+        onSetAll={(kinds) => save({ kinds })}
       />
       <OptionRow
         label="Dificultad"

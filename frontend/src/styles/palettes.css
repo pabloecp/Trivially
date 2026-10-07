@@ -1,9 +1,8 @@
-/* The options of the theme button (lib/palettes.js lists them). They change the page and the greys of its
-   boxes, their typefaces and the logo's colours; options 4 and 5 also change the vivid colours of the site and of
-   each game mode (below). Only variables live here: nothing in this file animates. The shapes that differ between
-   options (page decoration, tinted look) are in home.css under [data-palette]. */
+/* The site's colours: the black page and the greys of its boxes, its typefaces, the vivid colours of the site and
+   of each game mode, and the logo's. Only variables live here: nothing in this file animates. (There used to be
+   several colour options to switch between; this is the one that stayed.) */
 
-/* The base: the black page and greys every option builds on (the old option 1, no longer in the list). */
+/* The black page and its greys. */
 :root:root {
   --tv-bg: #0a0b0c;
   --tv-surface: #141517;
@@ -25,84 +24,14 @@
   --p-ink: #0a0b0c;
 }
 
-/* Opciones 1-3: the black page of the base with a flat pattern drawn in faint white lines (no colour, no
-   blending) and a different typeface. --tv-display is the titles' font, --tv-body the rest and --tv-mono the small
-   capital labels; the logo (wordmark and app icon) keeps its own font unless the option sets --tv-logo-font. */
-
-/* Opción 1: Mezcla, the default. A confetti of little shapes and Baloo 2 (playful). */
-:root:root[data-palette="1"] {
+/* The page: a confetti of little shapes drawn in faint white lines, and Baloo 2 (playful) for the text. */
+:root:root {
   --tv-page-bg: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E %3Cg fill='none' stroke='rgba(255,255,255,0.055)' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E %3Cpath d='M18 22l10-4 2 10z'/%3E %3Crect x='86' y='14' width='10' height='10' rx='2' transform='rotate(20 91 19)'/%3E %3Cpath d='M52 70q5-8 10 0t10 0'/%3E %3Ccircle cx='114' cy='78' r='5'/%3E %3Cpath d='M24 104l8 8M32 104l-8 8'/%3E %3Cpath d='M78 116l12-3-4 12z'/%3E %3Cpath d='M60 30h12'/%3E %3Cpath d='M120 124q4-6 8 0'/%3E %3C/g%3E%3C/svg%3E");
   --tv-display: "Baloo 2", system-ui, sans-serif;
   --tv-body: "Baloo 2", system-ui, sans-serif;
 }
 
-/* Opción 2: Rayas. Thin diagonal stripes, with Fredoka (round and soft). */
-:root:root[data-palette="2"] {
-  --tv-page-bg: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28'%3E %3Cpath d='M-7 7l14-14M0 28L28 0M21 35l14-14' stroke='rgba(255,255,255,0.055)' stroke-width='2'/%3E%3C/svg%3E");
-  --tv-display: "Fredoka", system-ui, sans-serif;
-  --tv-body: "Fredoka", system-ui, sans-serif;
-}
-
-/* Opción 3: Ondas. Waves, with Baloo 2. */
-:root:root[data-palette="3"] {
-  --tv-page-bg: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='24'%3E %3Cpath d='M0 12q16-12 32 0t32 0' fill='none' stroke='rgba(255,255,255,0.055)' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E");
-  --tv-display: "Baloo 2", system-ui, sans-serif;
-  --tv-body: "Baloo 2", system-ui, sans-serif;
-}
-
-/* Opción 4: Lima. Warm near-black with lime: Bricolage Grotesque, small labels in DM Mono and a few faint shapes
-   floating over the page (PageDecor). */
-:root:root[data-palette="4"] {
-  --tv-bg: #0e0f0c;
-  --tv-surface: #191a16;
-  --tv-sheet-bg: #191a16;
-  --tv-option-bg: #20221c;
-  --tv-option-edge: #2b2d27;
-  --tv-line: #2b2d27;
-  --tv-dash: #2b2d27;
-  --tv-text: #f4f4ee;
-  --tv-text-2: #b9bab1;
-  --tv-text-3: #8c8e84;
-  --tv-neutral: #20221c;
-  --tv-neutral-2: #20221c;
-  --tv-neutral-edge: #2b2d27;
-  --tv-toast-bg: #f4f4ee;
-  --tv-toast-fg: #0e0f0c;
-  --p-ink: #0e0f0c;
-  --tv-display: "Bricolage Grotesque", system-ui, sans-serif;
-  --tv-body: "Bricolage Grotesque", system-ui, sans-serif;
-  --tv-mono: "DM Mono", ui-monospace, monospace;
-  --tv-logo-font: "Bricolage Grotesque", system-ui, sans-serif;
-  --tv-logo-tracking: -0.045em;
-}
-
-/* Opción 5: Medianoche. Deep night blue with arcade colours: Outfit, twinkling stars over the page (PageDecor)
-   and the "tinted" look: picked things are lit with their colour's outline instead of being filled with it
-   (home.css, "Tinted look"). */
-:root:root[data-palette="5"] {
-  --tv-bg: #0a0d18;
-  --tv-surface: #121729;
-  --tv-sheet-bg: #121729;
-  --tv-option-bg: #1a2036;
-  --tv-option-edge: #262e4a;
-  --tv-line: #262e4a;
-  --tv-dash: #262e4a;
-  --tv-text: #eef1ff;
-  --tv-text-2: #c2c8e6;
-  --tv-text-3: #8d95b8;
-  --tv-neutral: #1a2036;
-  --tv-neutral-2: #1a2036;
-  --tv-neutral-edge: #262e4a;
-  --tv-toast-bg: #eef1ff;
-  --tv-toast-fg: #0a0d18;
-  --p-ink: #0a0d18;
-  --tv-display: "Outfit", system-ui, sans-serif;
-  --tv-body: "Outfit", system-ui, sans-serif;
-  --tv-logo-font: "Outfit", system-ui, sans-serif;
-  --tv-logo-tracking: -0.04em;
-}
-
-/* Vivid colours, the same in options 1-3 (4 and 5 have their own, below): one per role and one per game mode,
+/* Vivid colours: one per role and one per game mode,
    always on the dark page. Every game mode pairs its colour with white (its letters and icon boxes), never black.
    Per slot: --x-1 / --x-2 are the fill (flat), --x-edge the solid shadow under a tile, --x-text the colour as
    text on black and --p-on-x the letter on top of it. */
@@ -123,48 +52,10 @@
   --p-extra-rgb: 166, 61, 255; --p-extra-text: #b65cff; --p-on-extra: #ffffff;
 }
 
-/* Lima: the site is lime with black letters; the games are lime, sky blue, yellow and coral. */
-:root:root[data-palette="4"] {
-  --p-site-1: #c6f432; --p-site-2: #c6f432; --p-site-edge: #8fb51a;
-  --p-site-rgb: 198, 244, 50; --p-site-text: #c6f432; --p-on-site: #0e0f0c;
-  --p-accent-1: #c6f432; --p-accent-2: #c6f432; --p-accent-edge: #8fb51a;
-  --p-accent-rgb: 198, 244, 50; --p-accent-text: #c6f432; --p-on-accent: #0e0f0c;
-  --p-music-1: #c6f432; --p-music-2: #c6f432; --p-music-edge: #8fb51a;
-  --p-music-rgb: 198, 244, 50; --p-music-text: #c6f432; --p-on-music: #ffffff;
-  --p-culture-1: #c9a2ff; --p-culture-2: #c9a2ff; --p-culture-edge: #8a5fd1;
-  --p-culture-rgb: 201, 162, 255; --p-culture-text: #c9a2ff; --p-on-culture: #ffffff;
-  --p-cinema-1: #ff8a66; --p-cinema-2: #ff8a66; --p-cinema-edge: #c24a2c;
-  --p-cinema-rgb: 255, 138, 102; --p-cinema-text: #ff8a66; --p-on-cinema: #ffffff;
-  --p-world-1: #f7d046; --p-world-2: #f7d046; --p-world-edge: #b8951c;
-  --p-world-rgb: 247, 208, 70; --p-world-text: #f7d046; --p-on-world: #ffffff;
-  --p-extra-1: #7cc7ff; --p-extra-2: #7cc7ff; --p-extra-edge: #3e8fcc;
-  --p-extra-rgb: 124, 199, 255; --p-extra-text: #7cc7ff; --p-on-extra: #ffffff;
-}
-
-/* Medianoche: the site is blue, the second colour yellow; the games are red, blue, green and yellow. */
-:root:root[data-palette="5"] {
-  --p-site-1: #4d8dff; --p-site-2: #4d8dff; --p-site-edge: #2a5cc2;
-  --p-site-rgb: 77, 141, 255; --p-site-text: #7aa9ff; --p-on-site: #ffffff;
-  --p-accent-1: #ffc53d; --p-accent-2: #ffc53d; --p-accent-edge: #b8871a;
-  --p-accent-rgb: 255, 197, 61; --p-accent-text: #ffc53d; --p-on-accent: #241800;
-  --p-music-1: #ff4d6d; --p-music-2: #ff4d6d; --p-music-edge: #b8203c;
-  --p-music-rgb: 255, 77, 109; --p-music-text: #ff6f89; --p-on-music: #ffffff;
-  --p-culture-1: #b77dff; --p-culture-2: #b77dff; --p-culture-edge: #7a45c4;
-  --p-culture-rgb: 183, 125, 255; --p-culture-text: #c89cff; --p-on-culture: #ffffff;
-  --p-cinema-1: #ffc53d; --p-cinema-2: #ffc53d; --p-cinema-edge: #b8871a;
-  --p-cinema-rgb: 255, 197, 61; --p-cinema-text: #ffc53d; --p-on-cinema: #ffffff;
-  --p-world-1: #2ee6a6; --p-world-2: #2ee6a6; --p-world-edge: #14a072;
-  --p-world-rgb: 46, 230, 166; --p-world-text: #2ee6a6; --p-on-world: #ffffff;
-  --p-extra-1: #4d8dff; --p-extra-2: #4d8dff; --p-extra-edge: #2a5cc2;
-  --p-extra-rgb: 77, 141, 255; --p-extra-text: #7aa9ff; --p-on-extra: #ffffff;
-}
-
-/* The logo's frame (AppIcon.jsx): five slices, clockwise from the top right, in each option's own colours. */
+/* The logo's frame (AppIcon.jsx): five slices, clockwise from the top right. */
 :root:root { --logo-1: #ff2fc0; --logo-2: #ffd60a; --logo-3: #00d1c1; --logo-4: #2f6bff; --logo-5: #a63dff; }
-:root:root[data-palette="4"] { --logo-1: #c6f432; --logo-2: #f7d046; --logo-3: #ff8a66; --logo-4: #7cc7ff; --logo-5: #c9a2ff; }
-:root:root[data-palette="5"] { --logo-1: #ff4d6d; --logo-2: #ffc53d; --logo-3: #2ee6a6; --logo-4: #4d8dff; --logo-5: #b77dff; }
 
-/* The brand tokens used across the app follow the slots of whichever option is on. Doubled :root so these win
+/* The brand tokens used across the app follow the slots above. Doubled :root so these win
    over the defaults in global.css and home.css. */
 :root:root {
   --brand: var(--p-site-2);
@@ -215,7 +106,3 @@
   --on-brand: var(--p-on-world); --brand-hover: var(--p-world-1); --brand-active: var(--p-world-edge);
   --border-focus: var(--p-world-2); --tv-mode-bg: var(--p-world-2); --tv-on-mode: var(--p-on-world);
 }
-
-/* Opción múltiple's main blue follows Lima's and Medianoche's own blues (styles/quiz.css has the rest). */
-:root:root[data-palette="4"] { --tv-qm-1: #7cc7ff; --tv-qm: #7cc7ff; --tv-qm-edge: #3e8fcc; --tv-qm-on: #ffffff; --tv-qm-rgb: 124, 199, 255; }
-:root:root[data-palette="5"] { --tv-qm-1: #4d8dff; --tv-qm: #4d8dff; --tv-qm-edge: #2a5cc2; --tv-qm-on: #ffffff; --tv-qm-rgb: 77, 141, 255; }
