@@ -203,7 +203,10 @@ export class RoomManager {
     player.connected = true;
     player.socketId = user.socketId;
     // Someone who arrives while a match is running (not just its results) watches it; they play from the next one.
-    if (!existing && room.phase !== "lobby" && room.phase !== "finished") player.spectator = true;
+    // That includes a player who was in the room but not in this match (they were away when it started).
+    if (room.phase !== "lobby" && room.phase !== "finished" && (existing ? room.participants && !room.participants.has(user.id) : true)) {
+      player.spectator = true;
+    }
     player.status = player.spectator ? "mirando" : room.phase === "lobby" ? "conectado" : "jugando";
     room.players.set(user.id, player);
     this.socketToRoom.set(user.socketId, { code: room.code, userId: user.id });
@@ -506,6 +509,8 @@ export class RoomManager {
     if (connected.length < 1) {
       throw new Error("Se necesita al menos 1 jugador");
     }
+    // Who is in this match: anyone else who shows up while it runs only watches it.
+    room.participants = new Set(connected.map((p) => p.id));
     room.currentRound = 0;
     if (room.game === QUIZ_GAME) {
       const quiz = mergeQuizConfig(room.config.quiz);
@@ -879,6 +884,7 @@ export class RoomManager {
     room.answers = {};
     room.statsApplied = false;
     room.tiebreak = null;
+    room.participants = null;
     for (const [id, p] of room.players) {
       // Players who left mid-match (and aren't reconnecting) have no seat in a fresh lobby.
       if (!p.connected && !p.dropTimer) {
