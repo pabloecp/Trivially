@@ -86,7 +86,7 @@ assert.ok(yearPoints(10, "media") > yearPoints(10, "moderna"));
 assert.ok(yearPoints(10, "moderna") > yearPoints(10, "contemporanea"));
 
 // Settings: limits, at least one age.
-assert.deepEqual(mergeHistoryConfig(undefined), { rounds: 5, roundMs: 15000, eras: ["antigua", "media", "moderna", "contemporanea"], difficulty: "mixta" });
+assert.deepEqual(mergeHistoryConfig(undefined), { rounds: 5, roundMs: 10000, eras: ["antigua", "media", "moderna", "contemporanea"], difficulty: "mixta" });
 assert.deepEqual(mergeHistoryConfig({}, { rounds: 99, roundMs: 1000, eras: ["moderna", "inventada"], difficulty: "imposible" }), {
   rounds: 25,
   roundMs: 10000,

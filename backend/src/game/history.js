@@ -38,7 +38,7 @@ export function eraOf(year) {
 }
 
 export function defaultHistoryConfig() {
-  return { rounds: 5, roundMs: 15000, eras: [...HISTORY_ERAS], difficulty: "mixta" };
+  return { rounds: 5, roundMs: 10000, eras: [...HISTORY_ERAS], difficulty: "mixta" };
 }
 
 const clamp = (n, { min, max }, fallback) => Math.min(max, Math.max(min, Math.round(Number(n)) || fallback));
