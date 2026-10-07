@@ -41,9 +41,9 @@ function ModeTile({ mode, index, selected, watched, onPick, onPoint }) {
         </span>
       )}
       {watched && (
-        <span className="tv-mode-eye">
+        <span className="tv-mode-eye" aria-label="El anfitrión lo está viendo">
           <Icon name="crown" size={13} strokeWidth={2.4} filled />
-          Lo está viendo
+          <span className="tv-mode-eye-text">Lo está viendo</span>
         </span>
       )}
       <span className="tv-mode-name">{mode.name}</span>

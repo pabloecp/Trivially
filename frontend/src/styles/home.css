@@ -2688,3 +2688,8 @@ fieldset.tv-settings { display: grid; gap: 18px; min-width: 0; margin: 0; paddin
   .tv-mode.is-watched { transform: none; }
   .tv-mode-eye { animation: none; }
 }
+/* Phones: the tiles are narrow, so the "watching" tag shrinks to just the crown. */
+@media (max-width: 720px) {
+  .tv-mode-eye { top: 14px; right: 14px; width: 28px; height: 28px; padding: 0; justify-content: center; }
+  .tv-mode-eye-text { display: none; }
+}
