@@ -448,6 +448,16 @@ export function AppProvider({ children }) {
         return emitAck("room:preview", next).catch(() => {});
       },
 
+      // Any player but the host: suggests a game to the host (allowed once every 5 s; the error says how long to wait).
+      async suggestGame(game) {
+        // An older server doesn't know this event and never answers: don't leave the player waiting in silence.
+        const res = await Promise.race([
+          emitAck("room:suggest", game),
+          new Promise((resolve) => setTimeout(() => resolve({ ok: false, error: "No pudimos enviar la sugerencia. Inténtalo de nuevo." }), 4000)),
+        ]);
+        if (!res.ok) throw new Error(res.error);
+      },
+
       async updateConfig(config) {
         const res = await emitAck("room:config", config);
         if (!res.ok) throw new Error(res.error);

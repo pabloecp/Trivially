@@ -77,6 +77,18 @@ export function attachSockets(io, rooms) {
       }
     });
 
+    // A player suggests a game to the host (once every few seconds).
+    socket.on("room:suggest", (game, ack) => {
+      try {
+        const { room, userId } = requireRoom(rooms, socket);
+        rooms.suggestGame(room, userId, game);
+        ack?.({ ok: true });
+        io.to(room.code).emit("room:state", rooms.publicState(room));
+      } catch (err) {
+        ack?.({ ok: false, error: err.message });
+      }
+    });
+
     socket.on("room:setGame", (game, ack) => {
       try {
         const { room, userId } = requireRoom(rooms, socket);
