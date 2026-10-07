@@ -17,7 +17,7 @@ import "../styles/home.css";
 // looks like one, with a lock, and has no "Pronto" tag of its own.
 // `watched`: the host is pointing at it right now (guests see it live). `onPoint` tells the room which tile the host
 // is on (hover, focus or touch).
-function ModeTile({ mode, index, selected, watched, onPick, onPoint }) {
+function ModeTile({ mode, index, selected, watched, suggestable, onPick, onPoint }) {
   return (
     <button
       type="button"
@@ -38,6 +38,12 @@ function ModeTile({ mode, index, selected, watched, onPick, onPoint }) {
         <span className="tv-mode-soon">
           <Icon name="lock" size={12} strokeWidth={3} />
           Pronto
+        </span>
+      )}
+      {suggestable && mode.available && !watched && (
+        <span className="tv-mode-suggest">
+          <Icon name="bulb" size={13} strokeWidth={2.4} />
+          Sugerir
         </span>
       )}
       {watched && (
@@ -297,7 +303,14 @@ export default function Home() {
                     <h2 id="tv-picker-title" className="tv-picker-title">
                       {shownIsHost ? "Elige el modo de juego" : `${hostName} está eligiendo modo de juego`}
                     </h2>
-                    {!shownIsHost && <p className="tv-picker-sub">Verás aquí lo que mira. Toca un modo para sugerírselo.</p>}
+                    {!shownIsHost && (
+                      <p className="tv-picker-lock">
+                        <Icon name="crown" size={15} strokeWidth={2.4} filled />
+                        <span>
+                          Solo <strong>{hostName}</strong> elige el modo. Toca uno para sugerírselo.
+                        </span>
+                      </p>
+                    )}
                   </div>
                   {shownIsHost && suggestions.length > 0 && (
                     <ul className="tv-ideas" aria-label="Sugerencias de los jugadores">
@@ -339,6 +352,7 @@ export default function Home() {
                         index={i}
                         selected={tilesOut === mode.id}
                         watched={!shownIsHost && shownRoom.preview === mode.id}
+                        suggestable={!shownIsHost}
                         onPick={pickMode}
                         onPoint={shownIsHost ? previewGame : undefined}
                       />
