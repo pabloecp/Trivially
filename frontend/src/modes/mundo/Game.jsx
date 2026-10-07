@@ -92,7 +92,8 @@ function GameScreen() {
   const kind = question?.kind;
   const isMap = kind === "location";
   const tiebreak = room?.tiebreak || null;
-  const iPlay = !tiebreak || tiebreak.playerIds.includes(user?.id);
+  const spectator = Boolean(room?.players?.find((p) => p.id === user?.id)?.spectator);
+  const iPlay = !spectator && (!tiebreak || tiebreak.playerIds.includes(user?.id));
   const playerObj = room?.players?.find((p) => p.id === user?.id);
   const me = playerObj
     ? { ...playerObj, ...(room?.me?.id === user?.id ? room.me : {}), lastAnswer: playerObj.lastAnswer || room?.me?.lastAnswer }
@@ -304,9 +305,16 @@ function GameScreen() {
     else hint = `Escribe ${isFlag ? "el país" : "la capital"} y pulsa Enter. Se aceptan pequeños errores.`;
   }
 
+  // Someone who joined mid-match only watches: the same lines, without the instructions to answer.
+  if (spectator && phase !== "reveal") hint = "Estás viendo la partida. Entrarás a la sala cuando termine.";
+
   // Under the map, always the same height: what to do now, or how the round went.
   let action;
-  if (phase === "reveal" && room.reveal) {
+  if (spectator && phase !== "reveal") {
+    action = <p className="tv-hint tv-geo-watch">Mira cómo responden los demás</p>;
+  } else if (spectator && phase === "reveal") {
+    action = <p className="tv-hint tv-geo-watch">{nextText}</p>;
+  } else if (phase === "reveal" && room.reveal) {
     action = <Verdict room={room} me={me} user={user} tiebreak={tiebreak} tiedNames={tiedNames} iPlay={iPlay} isMap={isMap} skipped={skipped} />;
   } else if (isMap && !iPlay) {
     action = <p className="tv-hint tv-geo-watch">Mira el desempate entre {joinNames(tiedNames)}</p>;

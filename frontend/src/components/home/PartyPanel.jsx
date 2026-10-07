@@ -16,6 +16,7 @@ function playerTag(player, { isHost }) {
 // During a match the line under each name says how their round is going. The server sends everyone's answer only
 // once the round is over (reveal), and at the end each player's totals (results).
 function MatchTag({ player, room }) {
+  if (player.spectator) return <span className="tv-player-tag">Espectador</span>;
   if (!player.connected) return <span className="tv-player-tag">Reconectando…</span>;
   if (room.phase === "finished") {
     const r = room.results?.find((x) => x.id === player.id);
@@ -66,7 +67,10 @@ export default function PartyPanel({ room, onToast, scores = false, className = 
   }
 
   const alone = room.players.length === 1;
-  const players = scores ? [...room.players].sort((a, b) => b.score - a.score) : room.players;
+  // In a match, the ranking is of the players; those who joined mid-match (spectators) go below, without a place.
+  const players = scores
+    ? [...room.players.filter((p) => !p.spectator).sort((a, b) => b.score - a.score), ...room.players.filter((p) => p.spectator)]
+    : room.players;
 
   return (
     <aside className={`tv-party${scores ? " is-scores" : ""} ${className}`.trim()} aria-label="Tu sala">
@@ -91,8 +95,8 @@ export default function PartyPanel({ room, onToast, scores = false, className = 
           return (
             <li
               key={p.id}
-              className={`tv-player${isMe ? " is-me" : ""}${p.connected ? "" : " is-away"}${menuFor === p.id ? " is-open" : ""}${
-                scores && i < 3 ? ` is-top-${i + 1}` : ""
+              className={`tv-player${isMe ? " is-me" : ""}${p.spectator ? " is-spectator" : ""}${p.connected ? "" : " is-away"}${menuFor === p.id ? " is-open" : ""}${
+                scores && !p.spectator && i < 3 ? ` is-top-${i + 1}` : ""
               }`}
               style={{ "--i": i }}
             >
@@ -103,7 +107,7 @@ export default function PartyPanel({ room, onToast, scores = false, className = 
                 aria-expanded={menuFor === p.id}
                 onClick={() => setMenuFor((cur) => (cur === p.id ? null : p.id))}
               >
-                {scores && <span className="tv-player-pos">{i + 1}</span>}
+                {scores && !p.spectator && <span className="tv-player-pos">{i + 1}</span>}
                 <Avatar name={p.name} avatar={p.avatar} />
                 <span className="tv-player-text">
                   <span className="tv-player-name">{isMe ? `${p.name} · tú` : p.name}</span>
@@ -114,7 +118,7 @@ export default function PartyPanel({ room, onToast, scores = false, className = 
                   )}
                 </span>
                 {isHostPlayer && <Icon name="crown" size={18} strokeWidth={1.5} filled className="tv-player-crown" />}
-                {scores && (
+                {scores && !p.spectator && (
                   <span key={p.score} className="tv-player-score">
                     {p.score}
                   </span>

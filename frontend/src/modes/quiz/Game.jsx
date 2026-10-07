@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import TvShell from "../../components/home/TvShell.jsx";
 import Confetti from "../../components/home/Confetti.jsx";
 import Icon from "../../components/home/Icon.jsx";
+import SpectatorBanner from "../../components/home/SpectatorBanner.jsx";
 import MatchResults from "../../components/home/MatchResults.jsx";
 import PartyPanel from "../../components/home/PartyPanel.jsx";
 import { BACKEND_URL } from "../../lib/config.js";
@@ -95,7 +96,8 @@ function ChoiceRound({ room, question, me, answer, seconds }) {
   const sending = useRef(false);
   const localChoice = picked?.round === round ? picked.choice : null;
   const myChoice = Number.isInteger(me?.lastAnswer?.choice) ? me.lastAnswer.choice : localChoice;
-  const locked = room.phase !== "playing" || Boolean(me?.answered) || Number.isInteger(localChoice);
+  const spectator = Boolean(me?.spectator);
+  const locked = room.phase !== "playing" || Boolean(me?.answered) || Number.isInteger(localChoice) || spectator;
   const reveal = room.phase === "reveal";
   const multiplayer = room.players.length > 1;
 
@@ -132,8 +134,10 @@ function ChoiceRound({ room, question, me, answer, seconds }) {
       <QuestionCard question={question}>
         {room.phase === "countdown" && <Count seconds={seconds} />}
         {room.phase === "playing" && (
-          <Hint key={locked ? "sent" : "pick"} icon={locked ? "check" : "bolt"} sent={locked}>
-            {locked ? (
+          <Hint key={spectator ? "watch" : locked ? "sent" : "pick"} icon={spectator ? "info" : locked ? "check" : "bolt"} sent={locked}>
+            {spectator ? (
+              "Estás viendo la partida"
+            ) : locked ? (
               "Respuesta enviada. Esperando al resto"
             ) : (
               <>
@@ -142,7 +146,7 @@ function ChoiceRound({ room, question, me, answer, seconds }) {
             )}
           </Hint>
         )}
-        {reveal && <Verdict me={me} answered={Number.isInteger(myChoice)} />}
+        {reveal && !spectator && <Verdict me={me} answered={Number.isInteger(myChoice)} />}
       </QuestionCard>
 
       <div className={`tv-quiz-options${reveal ? " is-reveal" : ""}`} role="group" aria-label="Opciones">
@@ -157,7 +161,7 @@ function ChoiceRound({ room, question, me, answer, seconds }) {
           }
           const isRight = reveal && question.answer === i;
           const isMine = myChoice === i;
-          const state = reveal ? (isRight ? " is-right" : isMine ? " is-wrong" : " is-out") : isMine ? " is-picked" : locked ? " is-out" : "";
+          const state = reveal ? (isRight ? " is-right" : isMine ? " is-wrong" : " is-out") : isMine ? " is-picked" : locked && !spectator ? " is-out" : "";
           const picks = question.picks?.[i] || 0;
           return (
             <button
@@ -215,7 +219,8 @@ function WriteRound({ room, question, me, answer, skipSong, seconds }) {
   const sending = useRef(false);
   const inputRef = useRef(null);
   const mySent = sent?.round === round ? sent : null;
-  const locked = room.phase !== "playing" || Boolean(me?.answered) || Boolean(mySent);
+  const spectator = Boolean(me?.spectator);
+  const locked = room.phase !== "playing" || Boolean(me?.answered) || Boolean(mySent) || spectator;
   const reveal = room.phase === "reveal";
   const isFlag = question.kind === "flag";
 
@@ -264,7 +269,8 @@ function WriteRound({ room, question, me, answer, skipSong, seconds }) {
       {isFlag && <div className="tv-quiz-flag">{question.flag && <Flag src={flagSrc(question.flag)} />}</div>}
       <div className="tv-quiz-answer">
         {room.phase === "countdown" && <Count seconds={seconds} />}
-        {reveal && <Verdict me={me} answered={answered} detail={`Respuesta: ${question.answer}`} />}
+        {reveal && !spectator && <Verdict me={me} answered={answered} detail={`Respuesta: ${question.answer}`} />}
+        {reveal && spectator && <p className="tv-geo-sent tv-quiz-sent">Respuesta: {question.answer}</p>}
       {room.phase === "playing" &&
         (!locked ? (
           <form className="tv-search tv-quiz-write" onSubmit={submit}>
@@ -296,8 +302,8 @@ function WriteRound({ room, question, me, answer, skipSong, seconds }) {
           </form>
         ) : (
           <p className={`tv-geo-sent tv-quiz-sent${skipped ? " is-skipped" : ""}`}>
-            <Icon name={skipped ? "close" : "check"} size={18} strokeWidth={3} />
-            {skipped ? "Te la saltaste" : mySent?.text || me?.lastAnswer?.text || "Respuesta enviada"}
+            <Icon name={spectator ? "info" : skipped ? "close" : "check"} size={18} strokeWidth={3} />
+            {spectator ? "Estás viendo la partida" : skipped ? "Te la saltaste" : mySent?.text || me?.lastAnswer?.text || "Respuesta enviada"}
           </p>
         ))}
       </div>
@@ -323,7 +329,8 @@ function YearRound({ room, question, me, placeYear, seconds }) {
   const confirmed = Boolean(myGuess?.locked) || Boolean(me?.answered);
   const min = question.min ?? null;
   const max = question.max ?? null;
-  const open = phase === "playing" && !confirmed && min != null;
+  const spectator = Boolean(me?.spectator);
+  const open = phase === "playing" && !confirmed && min != null && !spectator;
   const limit = max != null ? Math.min(max, new Date().getFullYear()) : null;
   const step = min != null ? (max - min) / 10 : 10;
   const crossesZero = min != null && min < 0 && max > 0;
@@ -415,7 +422,7 @@ function YearRound({ room, question, me, placeYear, seconds }) {
     reveal && chose ? [{ id: me.id, year: answer.year, color: "#ffb52e", label: "Tú", isMe: true }] : [];
 
   let verdict = null;
-  if (reveal && question.year != null) {
+  if (reveal && !spectator && question.year != null) {
     const exact = Boolean(answer?.correct);
     const tone = exact ? "ok" : chose ? "near" : "timeout";
     verdict = (
@@ -484,7 +491,7 @@ function YearRound({ room, question, me, placeYear, seconds }) {
       <div className={`tv-hist-action${phase === "playing" ? "" : " is-hidden"}`}>
         <button type="button" className="tv-btn tv-btn--block tv-c-quiz" onClick={confirm} disabled={!open || myGuess?.year == null}>
           <Icon name={confirmed ? "check" : "calendar"} size={20} strokeWidth={2.6} />
-          {confirmed ? "Año confirmado" : myGuess ? `Confirmar ${fmt(myGuess.year)}` : "Elige un año en la línea"}
+          {spectator ? "Estás viendo la partida" : confirmed ? "Año confirmado" : myGuess ? `Confirmar ${fmt(myGuess.year)}` : "Elige un año en la línea"}
         </button>
       </div>
       {err && <p className="tv-lobby-error" role="alert">{err}</p>}
@@ -563,6 +570,7 @@ function GameScreen() {
   return (
     <div className="tv-room tv-game tv-quiz">
       <div className="tv-room-main tv-game-main">
+        {me?.spectator && <SpectatorBanner />}
         <section className="tv-game-top">
           <div className="tv-game-round">
             <p className="tv-mono-label">Sala {room.code} · Trivia</p>
