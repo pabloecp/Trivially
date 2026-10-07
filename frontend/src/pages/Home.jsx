@@ -14,12 +14,17 @@ import "../styles/home.css";
 
 // A game tile of "Elige el modo de juego", filled with the game's colour. The main mode's is as wide as two. The grey
 // "Más modos pronto" tile (SOON_TILE) looks like one, with a lock, and has no "Pronto" tag of its own.
-function ModeTile({ mode, index, selected, onPick }) {
+// `watched`: the host is pointing at it right now (guests see it live). `onPoint` tells the room which tile the host
+// is on (hover, focus or touch).
+function ModeTile({ mode, index, selected, watched, suggestable, onPick, onPoint }) {
   const main = mode.kind === "main";
   return (
     <button
       type="button"
-      className={`tv-mode tv-c-${mode.color}${main ? " is-main" : ""}${mode.available ? "" : " is-soon"}${selected ? " is-selected" : ""}`}
+      className={`tv-mode tv-c-${mode.color}${main ? " is-main" : ""}${mode.available ? "" : " is-soon"}${selected ? " is-selected" : ""}${watched ? " is-watched" : ""}`}
+      onPointerEnter={onPoint && mode.available ? () => onPoint(mode.id) : undefined}
+      onPointerDown={onPoint && mode.available ? () => onPoint(mode.id) : undefined}
+      onFocus={onPoint && mode.available ? () => onPoint(mode.id) : undefined}
       aria-pressed={mode.placeholder ? undefined : selected}
       style={{ "--i": index }}
       aria-disabled={mode.available ? undefined : "true"}
@@ -33,6 +38,18 @@ function ModeTile({ mode, index, selected, onPick }) {
         <span className="tv-mode-soon">
           <Icon name="lock" size={12} strokeWidth={3} />
           Pronto
+        </span>
+      )}
+      {suggestable && mode.available && !watched && (
+        <span className="tv-mode-suggest">
+          <Icon name="bulb" size={13} strokeWidth={2.4} />
+          Sugerir
+        </span>
+      )}
+      {watched && (
+        <span className="tv-mode-eye" aria-label="El anfitrión lo está viendo">
+          <Icon name="crown" size={13} strokeWidth={2.4} filled />
+          <span className="tv-mode-eye-text">Lo está viendo</span>
         </span>
       )}
       <span className="tv-mode-name">{mode.name}</span>
@@ -58,7 +75,7 @@ function reducedMotion() {
 }
 
 export default function Home() {
-  const { user, room, joinRoom, setGame, kickedNotice, setKickedNotice } = useApp();
+  const { user, room, joinRoom, setGame, previewGame, suggestGame, kickedNotice, setKickedNotice } = useApp();
   const { code: inviteParam } = useParams();
   const inviteCode = inviteParam?.toUpperCase();
   const nav = useNavigate();
@@ -198,13 +215,29 @@ export default function Home() {
     } else if (room.game === mode.id) {
       return;
     } else if (!isHost) {
-      shake(tile);
-      showToast("Solo el anfitrión elige el modo de juego", "crown");
+      // Players can't pick, but they can suggest it to the host (once every 5 s).
+      suggestGame(mode.id)
+        .then(() => showToast(`Le sugeriste ${mode.name} al anfitrión`, "play"))
+        .catch((err) => showToast(err.message));
     } else {
       // Every player's room screen switches to this game right away; nobody changes page.
       setGame(mode.id).catch((err) => showToast(err.message));
     }
   }
+
+  // Suggestions from the other players, for the host: a card each with an Accept button (or dismissed with the X).
+  const [dismissed, setDismissed] = useState(() => new Set());
+  const suggestions = (room?.suggestions || []).filter((s) => findMode(s.game)?.available && !dismissed.has(`${s.userId}:${s.at}`));
+  const seenSuggestions = useRef(new Set());
+  useEffect(() => {
+    if (!isHost) return;
+    for (const s of room?.suggestions || []) {
+      const key = `${s.userId}:${s.at}`;
+      if (seenSuggestions.current.has(key)) continue;
+      seenSuggestions.current.add(key);
+      showToast(`${s.name} sugiere ${findMode(s.game)?.name || "un modo"}`, "play");
+    }
+  }, [room?.suggestions, isHost]);
 
   // While the tiles go, the screen still shows the room without its new game (see tilesOut above); while a game's panel
   // goes, it still shows the room in that game.
@@ -254,33 +287,79 @@ export default function Home() {
                 <div key={roomMode.id} className={`tv-room-row is-${enterKind}${lobbyOut ? " is-out" : ""}`}>
                   <ModeLobby room={lobbyRoom} onToast={showToast} />
                 </div>
-              ) : shownIsHost ? (
-                // The games only show up once you're in a room; Jugar is the way in. Picking one swaps this panel
-                // for the game's, for every player at once.
-                <section className={`tv-picker${tilesOut ? " is-leaving" : ""}`} aria-labelledby="tv-picker-title">
+              ) : (
+                // The games only show up once you're in a room; Jugar is the way in. Everyone sees the menu: the
+                // host picks, the others watch the tile the host is on, and picking swaps this panel for the
+                // game's, for every player at once.
+                <section
+                  className={`tv-picker${shownIsHost ? "" : " is-watching"}${shownRoom.preview ? " has-preview" : ""}${tilesOut ? " is-leaving" : ""}`}
+                  aria-labelledby="tv-picker-title"
+                  aria-live={shownIsHost ? undefined : "polite"}
+                  onPointerLeave={shownIsHost ? () => previewGame(null) : undefined}
+                  onBlur={shownIsHost ? (e) => !e.currentTarget.contains(e.relatedTarget) && previewGame(null) : undefined}
+                >
                   <div className="tv-picker-head">
-                    <h2 id="tv-picker-title" className="tv-picker-title">Elige el modo de juego</h2>
+                    <h2 id="tv-picker-title" className="tv-picker-title">
+                      {shownIsHost ? "Elige el modo de juego" : `${hostName} está eligiendo modo de juego`}
+                    </h2>
+                    {!shownIsHost && (
+                      <p className="tv-picker-lock">
+                        <Icon name="crown" size={15} strokeWidth={2.4} filled />
+                        <span>
+                          Solo <strong>{hostName}</strong> elige el modo. Toca uno para sugerírselo.
+                        </span>
+                      </p>
+                    )}
                   </div>
+                  {shownIsHost && suggestions.length > 0 && (
+                    <ul className="tv-ideas" aria-label="Sugerencias de los jugadores">
+                      {suggestions.map((s) => {
+                        const m = findMode(s.game);
+                        return (
+                          <li key={`${s.userId}:${s.at}`} className="tv-idea">
+                            <span className={`tv-badge tv-c-${m.color}`} aria-hidden="true">
+                              <Icon name={m.icon} size={18} />
+                            </span>
+                            <p className="tv-idea-text">
+                              <strong>{s.name}</strong> sugiere <strong>{m.name}</strong>
+                            </p>
+                            <button
+                              type="button"
+                              className="tv-btn tv-btn--sm tv-c-green"
+                              onClick={() => setGame(m.id).catch((err) => showToast(err.message))}
+                            >
+                              Aceptar
+                            </button>
+                            <button
+                              type="button"
+                              className="tv-idea-x"
+                              aria-label={`Descartar la sugerencia de ${s.name}`}
+                              onClick={() => setDismissed((d) => new Set(d).add(`${s.userId}:${s.at}`))}
+                            >
+                              <Icon name="close" size={16} strokeWidth={3} />
+                            </button>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  )}
                   <div className="tv-mode-grid">
                     {GAME_MODES.map((mode, i) => (
-                      <ModeTile key={mode.id} mode={mode} index={i} selected={tilesOut === mode.id} onPick={pickMode} />
+                      <ModeTile
+                        key={mode.id}
+                        mode={mode}
+                        index={i}
+                        selected={tilesOut === mode.id}
+                        watched={!shownIsHost && shownRoom.preview === mode.id}
+                        suggestable={!shownIsHost}
+                        onPick={pickMode}
+                        onPoint={shownIsHost ? previewGame : undefined}
+                      />
                     ))}
                     {GAME_MODES.filter((m) => m.kind !== "main").length % 2 === 1 && (
                       <ModeTile mode={SOON_TILE} index={GAME_MODES.length} onPick={pickMode} />
                     )}
                   </div>
-                </section>
-              ) : (
-                <section className={`tv-picker tv-picker--wait${tilesOut ? " is-leaving" : ""}`} aria-live="polite">
-                  <div className="tv-wait-blocks" aria-hidden="true">
-                    {["music", "culture", "world", "cinema"].map((c, i) => (
-                      <span key={c} className={`tv-c-${c}`} style={{ "--i": i }} />
-                    ))}
-                  </div>
-                  <h2 className="tv-picker-title">
-                    {hostName} está eligiendo modo de juego
-                  </h2>
-                  <p className="tv-picker-sub">Cuando lo elija, lo verás aquí al momento con sus ajustes.</p>
                 </section>
               )}
             </div>

@@ -63,6 +63,9 @@ export const SPOTIFY_PREFIX = "sp:";
 const LOOKAHEAD = 2;
 // How long a dropped player keeps their seat (and host role) so a reload or network blip doesn't kick them.
 const RECONNECT_GRACE_MS = 20000;
+// A player can suggest a game this often, and a suggestion stays on the host's screen this long.
+export const SUGGEST_COOLDOWN_MS = 5000;
+const SUGGESTION_TTL_MS = 60000;
 
 export function assertGame(game) {
   if (game === null || GAME_IDS.includes(game)) return game;
@@ -263,6 +266,8 @@ export class RoomManager {
   transferHost(room) {
     const next = [...room.players.values()].find((p) => p.connected);
     room.hostId = next ? next.id : null;
+    room.preview = null;
+    room.suggestions = [];
     if (room.hostId && Array.isArray(room.coHosts)) {
       room.coHosts = room.coHosts.filter((id) => id !== room.hostId);
     }
@@ -805,6 +810,32 @@ export class RoomManager {
     const next = assertGame(game ?? null);
     this.resetMatch(room);
     room.game = next;
+    room.preview = null;
+    room.suggestions = [];
+  }
+
+  // A player (not the host) suggests a game while the room is on the menu: the host sees it and can accept. Each
+  // player can suggest once every SUGGEST_COOLDOWN_MS; a new suggestion replaces their previous one.
+  suggestGame(room, userId, game) {
+    const player = room.players.get(userId);
+    if (!player) throw new Error("Jugador no encontrado");
+    if (room.hostId === userId) throw new Error("Tú eliges el modo de juego");
+    if (room.game) throw new Error("Ya hay un modo de juego elegido");
+    if (!game) throw new Error("Elige un modo de juego");
+    assertGame(game);
+    const wait = (player.suggestedAt || 0) + SUGGEST_COOLDOWN_MS - Date.now();
+    if (wait > 0) throw new Error(`Espera ${Math.ceil(wait / 1000)} s para sugerir otra vez`);
+    player.suggestedAt = Date.now();
+    room.suggestions = (room.suggestions || []).filter((s) => s.userId !== userId);
+    room.suggestions.push({ userId, name: player.name, game, at: Date.now() });
+  }
+
+  // The game the host is pointing at on the menu, so every player sees it live before it is picked. Only while the
+  // room has no game; it is cleared as soon as one is picked (or the host changes).
+  previewGame(room, userId, game) {
+    if (room.hostId !== userId) throw new Error("Solo el Host puede elegir el juego");
+    if (room.game) return;
+    room.preview = assertGame(game ?? null);
   }
 
   resetMatch(room) {
@@ -1195,6 +1226,14 @@ export class RoomManager {
           .sort((a, b) => b.wins - a.wins || b.played - a.played),
       },
       coHosts: [...(room.coHosts || [])],
+      // What the host is pointing at on the game menu (null once a game is picked).
+      preview: room.game ? null : room.preview || null,
+      // Games the other players suggested to the host, newest last (only while the room is on the menu).
+      suggestions: room.game
+        ? []
+        : (room.suggestions || [])
+            .filter((s) => room.players.has(s.userId) && Date.now() - s.at < SUGGESTION_TTL_MS)
+            .map((s) => ({ userId: s.userId, name: room.players.get(s.userId).name, game: s.game, at: s.at })),
       players: [...room.players.values()].map((p) => publicPlayer(p, room.phase, room)),
       audio: null,
       reveal: null,

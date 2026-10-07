@@ -101,6 +101,8 @@ export function AppProvider({ children }) {
 
   // Actions read these refs instead of closing over state, so e.g. saveGuest() followed by joinRoom() sees the new user.
   const userRef = useRef(user);
+  // The game the host last pointed at on the menu, so hovering the same tile again sends nothing.
+  const previewRef = useRef(null);
   userRef.current = user;
   const roomCodeRef = useRef(loadSavedRoomCode());
 
@@ -432,9 +434,28 @@ export function AppProvider({ children }) {
 
       // Host only: moves every player in the room into `game` (null = back to the Home screen).
       async setGame(game) {
+        previewRef.current = null;
         const res = await emitAck("room:setGame", game ?? null);
         if (!res.ok) throw new Error(res.error);
         if (res.state) setRoom(res.state);
+      },
+
+      // Host only: lets everyone see which game on the menu the host is pointing at (null = none). Best effort.
+      previewGame(game) {
+        const next = game ?? null;
+        if (next === previewRef.current) return Promise.resolve();
+        previewRef.current = next;
+        return emitAck("room:preview", next).catch(() => {});
+      },
+
+      // Any player but the host: suggests a game to the host (allowed once every 5 s; the error says how long to wait).
+      async suggestGame(game) {
+        // An older server doesn't know this event and never answers: don't leave the player waiting in silence.
+        const res = await Promise.race([
+          emitAck("room:suggest", game),
+          new Promise((resolve) => setTimeout(() => resolve({ ok: false, error: "No pudimos enviar la sugerencia. Inténtalo de nuevo." }), 4000)),
+        ]);
+        if (!res.ok) throw new Error(res.error);
       },
 
       async updateConfig(config) {
