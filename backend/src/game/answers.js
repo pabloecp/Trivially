@@ -68,3 +68,12 @@ export function isCorrectAnswer(guess, song) {
   });
 }
 
+
+/** One key per recording, so the search box lists a song once even when the catalog and Spotify both have it:
+ *  the title (a remix apart from its original) and the main artist ("Myke Towers & Bad Bunny" → "myke towers"). */
+export function songKey(song = {}) {
+  const title = String(song.title || "").replace(/(vol\.?\s*\d+)\/\d+/i, "$1");
+  const remix = /\bremix\b/i.test(title) ? "|remix" : "";
+  const artist = String(song.artistName || "").split(/\s*(?:&|,|\bfeat\.?|\bft\.?|\bx\b|\by\b)\s*/i)[0];
+  return `${normalizeAnswer(title)}${remix}|${normalizeAnswer(artist)}`;
+}

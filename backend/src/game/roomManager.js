@@ -3,7 +3,7 @@ import { hasRole } from "../auth/roles.js";
 import { hydrateSong } from "../catalog/catalogProvider.js";
 import { cleanTitle } from "../catalog/trackResolver.js";
 import { applyMatchStats } from "../db/store.js";
-import { isCorrectAnswer, normalizeAnswer } from "./answers.js";
+import { isCorrectAnswer, normalizeAnswer, songKey } from "./answers.js";
 import {
   countQuestions,
   defaultQuizConfig,
@@ -586,8 +586,9 @@ export class RoomManager {
       const seen = new Set();
       const list = [];
       for (const s of [...this.catalog.songs, ...found]) {
-        if (!s?.id || !s.title || seen.has(s.id)) continue;
+        if (!s?.id || !s.title || seen.has(s.id) || seen.has(songKey(s))) continue;
         seen.add(s.id);
+        seen.add(songKey(s));
         list.push({ id: s.id, title: s.title, artistName: s.artistName || "Artista" });
       }
       this.songListCache = { key, list };
@@ -600,7 +601,7 @@ export class RoomManager {
    * playlists not found on iTunes yet. Sent with the room during a round (small), so the list stays complete.
    */
   roomSearchExtras(room) {
-    const global = new Set(this.globalSongList().map((s) => s.id));
+    const global = new Set(this.globalSongList().flatMap((s) => [s.id, songKey(s)]));
     const allSongs = [];
     const seen = new Set();
 
@@ -629,7 +630,12 @@ export class RoomManager {
       }
     }
 
-    return allSongs.filter((s) => !global.has(s.id));
+    return allSongs.filter((s) => {
+      const key = songKey(s);
+      if (global.has(s.id) || global.has(key)) return false;
+      global.add(key);
+      return true;
+    });
   }
 
   /** The whole search list as the server sees it (to name a picked suggestion): every song plus the room's extras. */
@@ -912,7 +918,7 @@ export class RoomManager {
     if (questionGame) answerText = String(answerText ?? "").slice(0, 100);
     const correct = questionGame
       ? isCorrectOpenAnswer(answerText, track)
-      : answerText === track.id || isCorrectAnswer(answerText, track);
+      : answerText === track.id || this.pickedSameSong(room, track, answerText) || isCorrectAnswer(answerText, track);
     const scored = scoreAnswer({
       correct,
       remainingMs,
@@ -1131,6 +1137,13 @@ export class RoomManager {
       tb.winnerId = byDistance[0].id;
       tb.reason = "cerca";
     }
+  }
+
+  /** A suggestion picked from the search box whose id isn't the round's but is the same recording (the catalog and
+   *  Spotify can each have it under their own id): it counts as the right song. */
+  pickedSameSong(room, track, answerText) {
+    const picked = this.buildSearchCatalog(room).find((s) => s.id === answerText);
+    return Boolean(picked) && songKey(picked) === songKey(track);
   }
 
   /** What the player answered, as people read it: "As It Was - Harry Styles" for a picked suggestion (whose raw

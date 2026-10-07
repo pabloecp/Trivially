@@ -24,6 +24,7 @@ const MAX_LENGTH_DIFF_MS = 6000;
 export function cleanTitle(title = "") {
   return title
     .replace(/\s+-\s+.*$/, "")
+    .replace(/(Vol\.\s*\d+)\/\d+/i, "$1") // "Bzrp Music Sessions, Vol. 53/66" → "…, Vol. 53"
     .replace(/\s*[([](feat\.?|ft\.?|with|con)\s[^)\]]*[)\]]/gi, "")
     .trim() || title.trim();
 }

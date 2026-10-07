@@ -1,4 +1,4 @@
-import { isCorrectAnswer, normalizeAnswer } from "./answers.js";
+import { isCorrectAnswer, normalizeAnswer, songKey } from "./answers.js";
 import assert from "node:assert/strict";
 
 assert.equal(normalizeAnswer("  Ojitos   Lindos!! "), "ojitos lindos");
@@ -15,5 +15,14 @@ assert.equal(isCorrectAnswer("Tití Me Preguntó", { title: "Neverita" }), false
 assert.equal(isCorrectAnswer("memorias", { title: "MEMORIAS" }), true);
 assert.equal(isCorrectAnswer("badtrip", { title: "BADTRIP :(" }), true);
 assert.equal(isCorrectAnswer("cancion cualquiera", { title: "Neverita" }), false);
+// One key per recording: the same song saved twice is listed once, a remix stays apart from its original.
+assert.equal(songKey({ title: "ADIVINO", artistName: "Myke Towers" }), songKey({ title: "ADIVINO", artistName: "Myke Towers & Bad Bunny" }));
+assert.equal(
+  songKey({ title: "Shakira: Bzrp Music Sessions, Vol. 53", artistName: "Bizarrap & Shakira" }),
+  songKey({ title: "Shakira: Bzrp Music Sessions, Vol. 53/66", artistName: "Bizarrap" }),
+);
+assert.notEqual(songKey({ title: "Loca", artistName: "Khea" }), songKey({ title: "Loca (Remix)", artistName: "Khea" }));
+assert.notEqual(songKey({ title: "Sorry", artistName: "Justin Bieber" }), songKey({ title: "Sorry", artistName: "Madonna" }));
+
 console.log("answers.test ok");
 

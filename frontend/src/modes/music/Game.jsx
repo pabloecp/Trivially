@@ -17,6 +17,12 @@ function normalize(str = "") {
     .trim();
 }
 
+// The same song once in the list even when it's saved twice ("ADIVINO" by Myke Towers, and by Myke Towers & Bad Bunny).
+function songKey(song) {
+  const artist = String(song.artistName || "").split(/\s*(?:&|,|\bfeat\.?|\bft\.?|\bx\b|\by\b)\s*/i)[0];
+  return `${normalize(song.title)}|${normalize(artist)}`;
+}
+
 // Shown under the result when the round didn't go your way; one per round, never the same twice in a row.
 const CHEERS = [
   "¡Estuviste cerca!",
@@ -223,7 +229,11 @@ function GameScreen() {
     const q = normalize(query);
     if (!q || locked) return [];
     const matches = [];
+    const seen = new Set();
     for (const song of searchList) {
+      const key = songKey(song);
+      if (seen.has(key)) continue;
+      seen.add(key);
       const title = normalize(song.title);
       if (title.startsWith(q)) matches.push({ song, score: 100 - (title.length - q.length) });
       else if (title.includes(q)) matches.push({ song, score: 60 - title.indexOf(q) });
