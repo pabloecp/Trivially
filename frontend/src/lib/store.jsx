@@ -448,6 +448,12 @@ export function AppProvider({ children }) {
         return emitAck("room:preview", next).catch(() => {});
       },
 
+      // Any player but the host: suggests a game to the host (allowed once every 5 s; the error says how long to wait).
+      async suggestGame(game) {
+        const res = await emitAck("room:suggest", game);
+        if (!res.ok) throw new Error(res.error);
+      },
+
       async updateConfig(config) {
         const res = await emitAck("room:config", config);
         if (!res.ok) throw new Error(res.error);

@@ -26,4 +26,28 @@ assert.equal(mgr.publicState(room).preview, null);
 mgr.previewGame(room, "host-1", "musica");
 assert.equal(room.preview, null);
 
+// Suggestions: guests suggest, the host can't, the same player waits 5 s, and picking a game clears them all.
+const room2 = mgr.create({ host: { id: "host-9", name: "Host", socketId: "s9" }, mode: "multi", game: null });
+mgr.addPlayer(room2, { id: "guest-8", name: "Ana", socketId: "s8" });
+mgr.addPlayer(room2, { id: "guest-7", name: "Beto", socketId: "s7" });
+mgr.suggestGame(room2, "guest-8", "musica");
+let pub = mgr.publicState(room2);
+assert.equal(pub.suggestions.length, 1);
+assert.deepEqual({ ...pub.suggestions[0], at: 0 }, { userId: "guest-8", name: "Ana", game: "musica", at: 0 });
+assert.throws(() => mgr.suggestGame(room2, "guest-8", "musica"), /Espera \d s para sugerir/);
+assert.throws(() => mgr.suggestGame(room2, "host-9", "musica"), /Tú eliges/);
+assert.throws(() => mgr.suggestGame(room2, "guest-7", "inexistente"), /no está disponible/);
+assert.throws(() => mgr.suggestGame(room2, "guest-7", null), /Elige un modo/);
+mgr.suggestGame(room2, "guest-7", "mundo");
+assert.equal(mgr.publicState(room2).suggestions.length, 2);
+// After the cooldown the same player can suggest again, and it replaces their previous one.
+room2.players.get("guest-8").suggestedAt -= 5001;
+mgr.suggestGame(room2, "guest-8", "mundo");
+pub = mgr.publicState(room2);
+assert.equal(pub.suggestions.length, 2);
+assert.equal(pub.suggestions.find((s) => s.userId === "guest-8").game, "mundo");
+mgr.setGame(room2, "host-9", "mundo");
+assert.deepEqual(mgr.publicState(room2).suggestions, []);
+assert.throws(() => mgr.suggestGame(room2, "guest-7", "musica"), /Ya hay un modo/);
+
 console.log("preview.test ok");
