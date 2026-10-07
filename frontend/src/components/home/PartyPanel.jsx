@@ -67,10 +67,9 @@ export default function PartyPanel({ room, onToast, scores = false, className = 
   }
 
   const alone = room.players.length === 1;
-  // In a match, the ranking is of the players; those who joined mid-match (spectators) go below, without a place.
-  const players = scores
-    ? [...room.players.filter((p) => !p.spectator).sort((a, b) => b.score - a.score), ...room.players.filter((p) => p.spectator)]
-    : room.players;
+  // In a match, the ranking is of the players; those who joined mid-match (spectators) have their own list below it.
+  const players = scores ? room.players.filter((p) => !p.spectator).sort((a, b) => b.score - a.score) : room.players;
+  const spectators = scores ? room.players.filter((p) => p.spectator) : [];
 
   return (
     <aside className={`tv-party${scores ? " is-scores" : ""} ${className}`.trim()} aria-label="Tu sala">
@@ -85,7 +84,7 @@ export default function PartyPanel({ room, onToast, scores = false, className = 
 
       <div className="tv-party-title">
         <h2>{scores ? "Marcador" : "En la sala"}</h2>
-        <span>{alone ? "1 jugador" : `${room.players.length} jugadores`}</span>
+        <span>{players.length === 1 ? "1 jugador" : `${players.length} jugadores`}</span>
       </div>
 
       <ul className="tv-party-players" aria-label={scores ? "Marcador" : "Jugadores en la sala"}>
@@ -143,6 +142,28 @@ export default function PartyPanel({ room, onToast, scores = false, className = 
           </li>
         )}
       </ul>
+
+      {spectators.length > 0 && (
+        <>
+          <div className="tv-party-title">
+            <h2>Espectadores</h2>
+            <span>{spectators.length === 1 ? "1 espectador" : `${spectators.length} espectadores`}</span>
+          </div>
+          <ul className="tv-party-players tv-party-spectators" aria-label="Espectadores">
+            {spectators.map((p) => (
+              <li key={p.id} className={`tv-player is-spectator${p.id === user?.id ? " is-me" : ""}${p.connected ? "" : " is-away"}`}>
+                <div className="tv-player-btn">
+                  <Avatar name={p.name} avatar={p.avatar} />
+                  <span className="tv-player-text">
+                    <span className="tv-player-name">{p.id === user?.id ? `${p.name} · tú` : p.name}</span>
+                    <span className="tv-player-tag">{p.connected ? "Entra en la próxima partida" : "Reconectando…"}</span>
+                  </span>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
 
       <button type="button" className="tv-leave-btn" onClick={leave}>
         <Icon name="logout" size={18} strokeWidth={2.4} />
