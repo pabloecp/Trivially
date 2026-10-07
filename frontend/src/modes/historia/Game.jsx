@@ -5,7 +5,6 @@ import Confetti from "../../components/home/Confetti.jsx";
 import Icon from "../../components/home/Icon.jsx";
 import MatchResults from "../../components/home/MatchResults.jsx";
 import PartyPanel from "../../components/home/PartyPanel.jsx";
-import ScoreStrip from "../../components/home/ScoreStrip.jsx";
 import { useApp, useRemainingMs } from "../../lib/store.jsx";
 import Timeline from "./Timeline.jsx";
 import { findDifficulty, findEra, historyConfig, yearLabel, yearsText } from "./historyInfo.js";
@@ -312,9 +311,6 @@ function GameScreen() {
             <span className={`tv-timer-fill${urgent ? " is-urgent" : ""}`} style={{ width: `${pct}%` }} />
           </div>
         </section>
-
-        {/* Phones: the scoreboard in a strip, since the room's column is hidden there. */}
-        <ScoreStrip players={room.players || []} meId={user?.id} phase={phase} className="tv-hist-scores" />
 
         {question ? (
           <section key={round} className="tv-game-stage tv-hist-stage">

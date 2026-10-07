@@ -200,6 +200,14 @@ clearTimeout(y.timer);
 assert.equal(y.phase, "reveal");
 assert.equal(y.players.get("y-1").lastPoints, 1000);
 assert.equal(empty.publicState(y).question.year, event.year);
+// "Volver a jugar": only once the match is over, a new one of the same game and settings starts straight away.
+assert.throws(() => empty.replay(y, "y-1"), /no ha terminado/);
+empty.finish(y);
+empty.replay(y, "y-1");
+assert.equal(y.phase, "countdown");
+assert.equal(y.game, "opciones");
+assert.equal(y.players.get("y-1").score, 0);
+assert.ok(y.tracks.length === 5 && y.tracks.every((t) => t.type === "year"));
 for (const r of [room, big, none, w, y]) clearTimeout(r.timer);
 
 console.log("quiz.test ok");

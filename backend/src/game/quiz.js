@@ -21,7 +21,8 @@ export const QUIZ_LIMITS = {
   rounds: { min: 5, max: 20 },
   roundMs: { min: 15000, max: 35000 },
 };
-export const QUIZ_REVEAL_MS = 5000;
+// The same wait between rounds as every mode (game/scoring.js).
+export { REVEAL_MS as QUIZ_REVEAL_MS } from "./scoring.js";
 
 export function defaultQuizConfig() {
   return { rounds: 5, roundMs: 15000, difficulties: [...QUIZ_LEVELS], categories: [...TOPICS], formats: [...QUIZ_FORMATS] };

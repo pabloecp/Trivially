@@ -127,7 +127,7 @@ assert.equal(room.players.get("p-3").lastAnswer.text, "", "no pin, no points");
 pub = mgr.publicState(room);
 assert.deepEqual(pub.reveal.map, ["Spain"]);
 assert.equal(pub.players.find((p) => p.id === "host-1").lastAnswer.nearest.length, 2);
-assert.equal(room.phaseEndsAt - room.phaseStartedAt, 6000, "the map stays longer on screen");
+assert.equal(room.phaseEndsAt - room.phaseStartedAt, 3000, "the same wait between rounds as every mode");
 
 // ---- Tiebreak ----
 // Ana and the host finish level; Luis is behind and only watches.

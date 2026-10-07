@@ -201,6 +201,24 @@ export function attachSockets(io, rooms) {
       }
     });
 
+    // "Volver a jugar": a new match straight away (RoomManager.replay). If it can't start, everyone is back in the
+    // game's lobby.
+    socket.on("room:replay", (ack) => {
+      let room = null;
+      try {
+        const ref = requireRoom(rooms, socket);
+        room = ref.room;
+        rooms.replay(room, ref.userId);
+        prefetchMedia(room.tracks);
+        prefetchFlags(room.tracks);
+        watchRoom(io, rooms, room);
+        ack?.({ ok: true });
+      } catch (err) {
+        ack?.({ ok: false, error: err.message });
+      }
+      if (room) io.to(room.code).emit("room:state", rooms.publicState(room));
+    });
+
     socket.on("room:restart", (ack) => {
       try {
         const { room, userId } = requireRoom(rooms, socket);

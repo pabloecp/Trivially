@@ -492,6 +492,7 @@ export function AppProvider({ children }) {
       async setReady(ready) { await emitAck("room:ready", ready); },
       async startGame() { const res = await emitAck("room:start"); if (!res.ok) throw new Error(res.error); },
       async restartGame() { const res = await emitAck("room:restart"); if (!res.ok) throw new Error(res.error); },
+      async replayGame() { const res = await emitAck("room:replay"); if (!res.ok) throw new Error(res.error); },
       async endGame() { await emitAck("room:end"); },
 
       async answer(answerTextOrId) {

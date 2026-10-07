@@ -16,9 +16,10 @@ export const GEO_LIMITS = {
   rounds: { min: 5, max: 25 },
   roundMs: { min: 15000, max: 35000 },
 };
-// A map round always lasts 10 s, whatever the seconds chosen for written answers; its reveal stays longer on screen.
+// A map round always lasts 10 s, whatever the seconds chosen for written answers; its reveal waits the same as every
+// mode's (game/scoring.js).
 export const LOCATION_ROUND_MS = 10000;
-export const LOCATION_REVEAL_MS = 6000;
+export { REVEAL_MS as LOCATION_REVEAL_MS } from "./scoring.js";
 // Ties for first place are settled with map rounds; after this many without a winner, the tie stands.
 export const MAX_TIEBREAKS = 3;
 // A pin inside the country gets all the points; outside, the points fall with the distance to its border.

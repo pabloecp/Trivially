@@ -81,7 +81,7 @@ assert.equal(room.phase, "playing", "Luis still has time");
 
 mgr.beginReveal(room);
 stop(room);
-assert.equal(room.phaseEndsAt - room.phaseStartedAt, 6000, "the timeline stays on screen");
+assert.equal(room.phaseEndsAt - room.phaseStartedAt, 3000, "the same wait between rounds as every mode");
 const ana = room.players.get("p-2");
 const host = room.players.get("host-1");
 const luis = room.players.get("p-3");

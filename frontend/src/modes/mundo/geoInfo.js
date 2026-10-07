@@ -27,7 +27,7 @@ export const SECONDS_LIMITS = { min: 15, max: 35, step: 5 };
 // Map rounds always last 10 s and their reveal 6 s; a written answer's reveal 3 s.
 export const LOCATION_SECONDS = 10;
 const COUNTDOWN_S = 3;
-const LOCATION_REVEAL_S = 6;
+const LOCATION_REVEAL_S = 3;
 const REVEAL_S = 3;
 
 export function geoConfig(room) {

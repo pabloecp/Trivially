@@ -1,6 +1,7 @@
 export const ROUND_MS = 15000;
 export const COUNTDOWN_MS = 3000;
-export const REVEAL_MS = 3000; // the answer stays on screen 3 s, then the next round counts down 3 s
+// Between two rounds, in every mode: the answer stays on screen 3 s, then the next round counts down 3 s.
+export const REVEAL_MS = 3000;
 
 // Every mode scores on the same scale: at most 1000 points a round. A right answer gets half of it, and the faster it
 // came the more of the other half (500 to 1000). Rounds judged by closeness (a pin on the map, a year on the timeline)

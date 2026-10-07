@@ -5,7 +5,6 @@ import Confetti from "../../components/home/Confetti.jsx";
 import Icon from "../../components/home/Icon.jsx";
 import MatchResults from "../../components/home/MatchResults.jsx";
 import PartyPanel from "../../components/home/PartyPanel.jsx";
-import ScoreStrip from "../../components/home/ScoreStrip.jsx";
 import { useApp, useRemainingMs } from "../../lib/store.jsx";
 import { BACKEND_URL } from "../../lib/config.js";
 import WorldMap from "./WorldMap.jsx";
@@ -118,8 +117,7 @@ function GameScreen() {
   }, [room?.phase, round]);
 
   // The game is one frame that fills the screen under the top bar (see .tv-geo-stage); --geo-top is where it starts.
-  // On a phone the page doesn't scroll at all during the match (html.tv-geo-playing hides the top bar and locks it),
-  // so nothing moves when rounds change or the keyboard opens and closes.
+  // On a phone the frame takes the whole screen (html.tv-geo-playing hides the top bar); the scoreboard is under it.
   // Nor does the page zoom: a pinch is for the map (WorldMap takes the ones that start on it), and a zoomed page
   // would push the frame off the screen. maximum-scale also undoes a zoom from before the match.
   const hasGame = Boolean(room) && room.phase !== "finished";
@@ -373,9 +371,6 @@ function GameScreen() {
             <span className={`tv-timer-fill${urgent ? " is-urgent" : ""}`} style={{ width: `${pct}%` }} />
           </div>
         </section>
-
-        {/* Phones and tablets: the scoreboard in a strip, since the full one (at the side on a computer) has no room. */}
-        <ScoreStrip players={room.players || []} meId={user?.id} phase={phase} />
 
         {/* The same map for the whole match: a map round puts pins on it, a written one floats over it and its reveal
             flies to the country. Only what's on it changes, never its size. */}

@@ -37,7 +37,7 @@ export const LEVELS = DIFFICULTIES.filter((d) => d.id !== "mixta");
 // Same limits as QUIZ_LIMITS on the server.
 export const QUESTIONS_LIMITS = { min: 5, max: 20, step: 5 };
 export const SECONDS_LIMITS = { min: 15, max: 35, step: 5 };
-export const QUIZ_REVEAL_S = 5;
+export const QUIZ_REVEAL_S = 3;
 
 export function quizConfig(room) {
   const quiz = room?.config?.quiz || {};

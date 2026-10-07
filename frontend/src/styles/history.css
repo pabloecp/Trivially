@@ -332,11 +332,6 @@
 .tv-hist-verdict--bad .tv-hist-verdict-icon { background: var(--p-bad); box-shadow: 0 3px 0 var(--p-bad-edge); color: #fff; }
 .tv-hist-verdict--timeout .tv-hist-verdict-icon { background: var(--p-accent-2); box-shadow: 0 3px 0 var(--p-accent-edge); }
 
-/* The scoreboard strip only on phones, where the room's column is hidden. */
-@media (min-width: 641px) {
-  .tv-hist-scores { display: none; }
-}
-
 @media (max-width: 640px) {
   .tv-hist-stage { gap: 10px; }
   .tv-hist-slot { height: 68px; }

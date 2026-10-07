@@ -3,8 +3,9 @@
    right country on the reveal map is the meaning green (--p-ok). */
 
 :root {
-  --tv-geo-ocean: rgba(var(--p-world-rgb), 0.22);
-  --tv-geo-space: rgba(var(--p-world-rgb), 0.07);
+  /* The sea, solid (the mode's teal over the card's grey), so the map box and the sea drawn in it are exactly the same
+     colour and no edge shows between them. */
+  --tv-geo-ocean: color-mix(in srgb, rgb(var(--p-world-rgb)) 22%, var(--tv-surface));
   --tv-geo-land: #353e54;
   --tv-geo-border: #59647e;
   --tv-geo-label: #ffffff;
@@ -13,8 +14,7 @@
   --tv-geo-picked: rgba(var(--brand-rgb), 0.45);
 }
 [data-theme="light"] {
-  --tv-geo-ocean: rgba(var(--p-world-rgb), 0.2);
-  --tv-geo-space: rgba(var(--p-world-rgb), 0.06);
+  --tv-geo-ocean: color-mix(in srgb, rgb(var(--p-world-rgb)) 20%, var(--tv-surface));
   --tv-geo-land: #ffffff;
   --tv-geo-border: #a3afc2;
   --tv-geo-label: #1d1a33;
@@ -79,9 +79,9 @@
 
 /* ---------- The stage ----------
    A Geografía match is one frame that fills the screen under the top bar, the same in every round and phase:
-   the top card (always three lines), on phones a strip with the scoreboard, and the map card, which takes the rest.
+   the top card (always three lines) and the map card, which takes the rest.
    --geo-top (set by Game.jsx) is where the game starts on the page; svh doesn't change when a phone's address bar
-   hides. On a computer the scoreboard stays at the side, as tall as the frame. */
+   hides. The scoreboard is the room's, like in every game: at the side on a computer, under the frame on phones. */
 .tv-geo-stage {
   display: flex;
   flex-direction: column;
@@ -98,15 +98,13 @@ html.tv-geo-playing { touch-action: pan-x pan-y; }
   .tv-geo-side { position: sticky; top: 14px; max-height: calc(100vh - 28px); max-height: calc(100svh - 28px); overflow-y: auto; scrollbar-width: thin; }
 }
 
-/* Phones and tablets: the match takes the whole screen and the page doesn't scroll (no top bar, no bounce), so
-   nothing moves between rounds or when the keyboard opens and closes. The scoreboard is the strip. */
+/* Phones and tablets: the match takes the whole screen (no top bar), and the scoreboard is under it: scroll down to
+   see it. */
 @media (max-width: 899px) {
-  html.tv-geo-playing,
-  html.tv-geo-playing body { overflow: hidden; overscroll-behavior: none; }
+  html.tv-geo-playing body { overscroll-behavior: none; }
   html.tv-geo-playing .tv-topbar { display: none; }
-  html.tv-geo-playing .tv-main--page { padding-top: 10px; padding-bottom: 0; }
+  html.tv-geo-playing .tv-main--page { padding-top: 10px; }
   .tv-geo-stage { gap: 8px; height: max(400px, calc(100vh - var(--geo-top, 10px) - 10px)); height: max(400px, calc(100svh - var(--geo-top, 10px) - 10px)); }
-  .tv-geo-side { display: none; }
 }
 
 /* The top card: kicker, title and one hint, the same in every phase. */
@@ -130,12 +128,6 @@ html.tv-geo-playing { touch-action: pan-x pan-y; }
   .tv-geo-find .tv-hint { font-size: 12px; }
 }
 
-/* The scoreboard strip (components/home/ScoreStrip.jsx) is for phones and tablets: a computer has the full scoreboard
-   at the side. */
-@media (min-width: 900px) {
-  .tv-geo-game .tv-scores { display: none; }
-}
-
 .tv-geo-map-card {
   display: flex;
   flex-direction: column;
@@ -151,7 +143,7 @@ html.tv-geo-playing { touch-action: pan-x pan-y; }
   min-height: 160px;
   overflow: hidden;
   border-radius: 18px;
-  background: var(--tv-geo-space);
+  background: var(--tv-geo-ocean);
   box-shadow: inset 0 0 0 2px var(--tv-edge);
 }
 @media (max-width: 640px) {
@@ -209,8 +201,9 @@ html.tv-geo-playing { touch-action: pan-x pan-y; }
 .tv-app .tv-geo-map > svg[data-keyboard]:focus { outline: 3px solid var(--tv-focus); outline-offset: -3px; border-radius: inherit; }
 .tv-geo-map--loading { display: grid; place-items: center; padding: 20px; text-align: center; font-weight: 700; color: var(--tv-text-3); }
 
-.tv-geo-sea { fill: var(--tv-geo-space); }
-.tv-geo-globe { fill: var(--tv-geo-ocean); }
+/* The ocean's colour all the way to the map's edges, so the globe's outline doesn't show (no land is added). */
+.tv-geo-sea { fill: var(--tv-geo-ocean); }
+.tv-geo-globe { fill: transparent; }
 .tv-geo-land path {
   fill: var(--tv-geo-land);
   stroke: var(--tv-geo-border);

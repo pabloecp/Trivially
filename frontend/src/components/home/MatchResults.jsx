@@ -8,9 +8,10 @@ import PlayerName from "./PlayerName.jsx";
 import { useApp } from "../../lib/store.jsx";
 
 // The end of a match in any game, in the room's frame: the podium and what to do next, with everyone's results in
-// the room's column (PartyPanel). `color` is the mode's tile colour for the host's main button.
+// the room's column (PartyPanel). `color` is the mode's tile colour for the host's main button. The host can play
+// again straight away (same game, same settings) or go back to the game's lobby to change them.
 export default function MatchResults({ room, color = "green" }) {
-  const { user, restartGame, setGame } = useApp();
+  const { user, restartGame, replayGame } = useApp();
   const [err, setErr] = useState("");
   const isHost = room.hostId === user?.id;
 
@@ -60,17 +61,21 @@ export default function MatchResults({ room, color = "green" }) {
           <div className="tv-results-actions">
             {isHost ? (
               <>
-                <button className={`tv-btn tv-btn--block tv-c-${color} tv-shine`} onClick={restartGame} type="button">
+                <button
+                  className={`tv-btn tv-btn--block tv-c-${color} tv-shine`}
+                  onClick={() => replayGame().catch((e) => setErr(e.message || "No se pudo empezar otra partida"))}
+                  type="button"
+                >
                   <Icon name="play" size={20} filled strokeWidth={1.5} />
-                  Volver al lobby
+                  Volver a jugar
                 </button>
                 <button
                   className="tv-btn tv-btn--block tv-c-neutral"
-                  onClick={() => setGame(null).catch((e) => setErr(e.message || "No se pudo volver a la sala"))}
+                  onClick={() => restartGame().catch((e) => setErr(e.message || "No se pudo volver al lobby"))}
                   type="button"
                 >
-                  <Icon name="home" size={18} />
-                  Elegir otro modo de juego
+                  <Icon name="back" size={18} />
+                  Volver al lobby
                 </button>
               </>
             ) : (

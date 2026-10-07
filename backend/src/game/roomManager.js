@@ -804,6 +804,17 @@ export class RoomManager {
     this.resetMatch(room);
   }
 
+  /**
+   * "Volver a jugar", once a match is over: a new one of the same game with the same settings, straight away. If it
+   * can't start (not enough songs any more...), the room is left in that game's lobby and the reason is thrown.
+   */
+  replay(room, userId) {
+    if (room.hostId !== userId) throw new Error("Solo el Host puede empezar otra partida");
+    if (room.phase !== "finished") throw new Error("La partida aún no ha terminado");
+    this.resetMatch(room);
+    this.start(room, userId);
+  }
+
   // Moves the whole room into another game (or back to the Home screen with `null`), abandoning any match in progress.
   setGame(room, userId, game) {
     if (room.hostId !== userId) throw new Error("Solo el Host puede cambiar de juego");

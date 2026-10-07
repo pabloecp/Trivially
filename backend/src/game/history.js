@@ -14,8 +14,8 @@ export const HISTORY_LIMITS = {
   rounds: { min: 5, max: 25 },
   roundMs: { min: 10000, max: 30000 },
 };
-// The reveal stays on screen long enough to see everyone's year on the timeline.
-export const HISTORY_REVEAL_MS = 6000;
+// The reveal waits the same as every mode's (game/scoring.js).
+export { REVEAL_MS as HISTORY_REVEAL_MS } from "./scoring.js";
 // The timeline of each age: how many years it covers, and the round number its ends fall on.
 const TIMELINES = {
   antigua: { span: 1500, round: 100 },
