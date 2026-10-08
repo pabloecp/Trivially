@@ -3,6 +3,9 @@ import Icon from "../../components/home/Icon.jsx";
 import OptionRow, { rangeOptions } from "../../components/home/OptionRow.jsx";
 import SpotifyIcon from "../../components/home/SpotifyIcon.jsx";
 import { playlistLabel } from "./playlistLabel.js";
+import { FORMATS } from "../quiz/quizInfo.js";
+
+const FORMAT_IDS = FORMATS.map((f) => f.id);
 import { useApp } from "../../lib/store.jsx";
 
 // Rounds and seconds go in steps of 5. The server keeps the same limits (roomManager.updateConfig).
@@ -10,7 +13,7 @@ const ROUNDS = { min: 5, max: 25, step: 5 };
 const SECONDS = { min: 15, max: 35, step: 5 };
 
 function configKey(config) {
-  return JSON.stringify([config?.playlistIds || [], config?.rounds, config?.roundMs]);
+  return JSON.stringify([config?.playlistIds || [], config?.rounds, config?.roundMs, config?.formats]);
 }
 
 // The match settings, in the settings panel. Every tap is saved straight away for the whole room; the local copy
@@ -99,11 +102,23 @@ export default function MusicSettings({ room, catalog, updateConfig, onToast, ch
     const next = { ...draft, ...change };
     setDraft(next);
     try {
-      await updateConfig({ playlistIds: next.playlistIds ?? selected, rounds: next.rounds || rounds, roundMs: next.roundMs || seconds * 1000 });
+      await updateConfig({
+        playlistIds: next.playlistIds ?? selected,
+        rounds: next.rounds || rounds,
+        roundMs: next.roundMs || seconds * 1000,
+        formats: next.formats ?? formats,
+      });
     } catch (err) {
       setDraft(room.config);
       onToast?.(err.message || "No se pudieron guardar los ajustes");
     }
+  }
+
+  // "Modos": closed rounds (four songs to choose from) and open ones (the title typed); both by default.
+  const formats = draft?.formats ?? FORMAT_IDS;
+  function toggleFormat(id) {
+    const on = formats.includes(id);
+    save({ formats: FORMAT_IDS.filter((f) => (f === id ? !on : formats.includes(f))) });
   }
 
   function togglePlaylist(id) {
@@ -122,6 +137,15 @@ export default function MusicSettings({ room, catalog, updateConfig, onToast, ch
 
   return (
     <fieldset className="tv-settings" disabled={readOnly}>
+      <OptionRow
+        label="Modos"
+        multi
+        wrap
+        options={FORMATS.map((f) => ({ value: f.id, label: f.label, title: f.id === "opciones" ? "Elige la canción entre cuatro" : "Escribe el título" }))}
+        value={formats}
+        onChange={toggleFormat}
+        onSetAll={(list) => save({ formats: list })}
+      />
       <OptionRow
         label="Canciones"
         multi

@@ -8,20 +8,14 @@ import MatchResults from "../../components/home/MatchResults.jsx";
 import PartyPanel from "../../components/home/PartyPanel.jsx";
 import { BACKEND_URL } from "../../lib/config.js";
 import { useApp, useRemainingMs } from "../../lib/store.jsx";
-import Timeline from "../historia/Timeline.jsx";
-import { yearLabel, yearsText } from "../historia/historyInfo.js";
 import { OPTION_LETTERS, findDifficulty, quizConfig } from "./quizInfo.js";
 import "../../styles/home.css";
 import "../../styles/quiz.css";
 import "../../styles/geo.css";
-import "../../styles/history.css";
 
 const COUNTDOWN_MS = 3000;
 // Keys that pick an option while a question is open: 1–4 or A–D.
 const KEYS = { 1: 0, 2: 1, 3: 2, 4: 3, a: 0, b: 1, c: 2, d: 3 };
-// A year being moved goes to the server once it stops for this long (and right away when it's let go or confirmed),
-// so the last one counts if the time runs out before "Confirmar".
-const SEND_DELAY_MS = 250;
 
 const flagSrc = (path) => (path ? `${BACKEND_URL}${path}` : null);
 
@@ -49,11 +43,11 @@ function Verdict({ me, answered, detail }) {
 }
 
 // How each question is answered, on its chip.
-const FORMAT_LABELS = { choice: "Opciones", open: "Escribir", year: "Año" };
+const FORMAT_LABELS = { choice: "Pregunta cerrada", open: "Pregunta abierta" };
 
 // The question's card: its topic, how it's answered and its difficulty, the question, and (for four options) under it
 // a slot that is always the same height (the countdown, what to do, or the verdict), so nothing moves between phases.
-// Written and year questions have no slot: their countdown and verdict go where the answer is given, under the card.
+// Written questions have no slot: their countdown and verdict go where the answer is given, under the card.
 function QuestionCard({ question, slot = true, children }) {
   const level = findDifficulty(question.difficulty);
   return (
@@ -250,8 +244,21 @@ function WriteRound({ room, question, me, answer, skipSong, seconds }) {
     }
   }
 
+  const [confirmSkip, setConfirmSkip] = useState(false);
+  useEffect(() => {
+    if (!confirmSkip) return undefined;
+    const t = setTimeout(() => setConfirmSkip(false), 3000);
+    return () => clearTimeout(t);
+  }, [confirmSkip]);
+
+  // "Saltar", like Adivina la canción's: the first tap asks, the second skips.
   function skip() {
     if (locked) return;
+    if (!confirmSkip) {
+      setConfirmSkip(true);
+      return;
+    }
+    setConfirmSkip(false);
     setSent({ round, skipped: true });
     skipSong().catch((e) => {
       setSent(null);
@@ -296,8 +303,17 @@ function WriteRound({ room, question, me, answer, skipSong, seconds }) {
                 </button>
               )}
             </div>
-            <button type="button" className="tv-mini-btn tv-quiz-skip" onClick={skip}>
-              No la sé, saltar
+            {/* Hidden while typing, but it keeps its space so the answer box never moves. */}
+            <button
+              type="button"
+              className={`tv-btn tv-btn--block tv-c-neutral tv-skip-btn${confirmSkip ? " is-on" : ""}${query.trim() ? " is-hidden" : ""}`}
+              onClick={skip}
+              aria-live="polite"
+              aria-hidden={query.trim() ? "true" : undefined}
+              tabIndex={query.trim() ? -1 : undefined}
+            >
+              <Icon name={confirmSkip ? "lock" : "close"} size={16} strokeWidth={3} />
+              {confirmSkip ? "No te dará puntos. Toca otra vez" : "Saltar"}
             </button>
           </form>
         ) : (
@@ -312,196 +328,9 @@ function WriteRound({ room, question, me, answer, skipSong, seconds }) {
   );
 }
 
-// A year on the timeline, like Línea del tiempo's: tap or drag the line, adjust with the buttons, then confirm. The
-// closer, the more points.
-function YearRound({ room, question, me, placeYear, seconds }) {
-  const round = room.currentRound;
-  const phase = room.phase;
-  const [guess, setGuess] = useState(null);
-  const [err, setErr] = useState("");
-  const sending = useRef(false);
-  const sendTimer = useRef(null);
-  const pending = useRef(null);
-  const phaseRef = useRef(phase);
-  phaseRef.current = phase;
-
-  const myGuess = guess?.round === round ? guess : null;
-  const confirmed = Boolean(myGuess?.locked) || Boolean(me?.answered);
-  const min = question.min ?? null;
-  const max = question.max ?? null;
-  const spectator = Boolean(me?.spectator);
-  const open = phase === "playing" && !confirmed && min != null && !spectator;
-  const limit = max != null ? Math.min(max, new Date().getFullYear()) : null;
-  const step = min != null ? (max - min) / 10 : 10;
-  const crossesZero = min != null && min < 0 && max > 0;
-  const fmt = (year) => yearLabel(year, { crossesZero });
-  const reveal = phase === "reveal";
-
-  useEffect(() => {
-    sending.current = false;
-    clearTimeout(sendTimer.current);
-    pending.current = null;
-  }, [round]);
-  useEffect(() => () => clearTimeout(sendTimer.current), []);
-  useEffect(() => {
-    if (room.me?.guess != null && !myGuess) setGuess({ round, year: room.me.guess, locked: Boolean(room.me.lastAnswer) });
-  }, [room.me?.guess, round]);
-
-  function flush() {
-    clearTimeout(sendTimer.current);
-    const year = pending.current;
-    if (year == null) return;
-    pending.current = null;
-    placeYear({ year }).catch((e) => {
-      if (phaseRef.current === "playing") setErr(e.message || "No se pudo guardar tu año");
-    });
-  }
-
-  function choose(year) {
-    if (!open || year == null) return;
-    setGuess({ round, year, locked: false });
-    setErr("");
-    pending.current = year;
-    clearTimeout(sendTimer.current);
-    sendTimer.current = setTimeout(flush, SEND_DELAY_MS);
-  }
-
-  // From the chosen year (or the middle of the line, before there is one), skipping the year 0, which doesn't exist.
-  function nudge(delta) {
-    if (!open) return;
-    const from = myGuess?.year ?? Math.round((min + max) / 2);
-    let year = from + delta;
-    if (year === 0 || (from < 0 !== year < 0 && from !== 0)) year += delta > 0 ? 1 : -1;
-    choose(Math.min(limit, Math.max(min, year === 0 ? 1 : year)));
-  }
-
-  async function confirm() {
-    if (!open || myGuess?.year == null || sending.current) return;
-    sending.current = true;
-    clearTimeout(sendTimer.current);
-    pending.current = null;
-    setGuess({ ...myGuess, locked: true });
-    try {
-      await placeYear({ year: myGuess.year, lock: true });
-    } catch (e) {
-      sending.current = false;
-      if (phaseRef.current !== "playing") return;
-      setGuess({ ...myGuess, locked: false });
-      setErr(e.message || "No se pudo confirmar tu año");
-    }
-  }
-
-  // ← → move a year (with Shift, ↑ ↓, a tenth of the line), Enter confirms.
-  useEffect(() => {
-    if (!open) return undefined;
-    const onKey = (e) => {
-      if (e.ctrlKey || e.metaKey || e.altKey) return;
-      const moves = { ArrowLeft: e.shiftKey ? -step : -1, ArrowRight: e.shiftKey ? step : 1, ArrowDown: -step, ArrowUp: step };
-      if (e.key in moves) {
-        e.preventDefault();
-        nudge(moves[e.key]);
-      } else if (e.key === "Enter" && !(e.target instanceof HTMLButtonElement)) {
-        e.preventDefault();
-        confirm();
-      }
-    };
-    const onKeyUp = (e) => {
-      if (e.key.startsWith("Arrow")) flush();
-    };
-    window.addEventListener("keydown", onKey);
-    window.addEventListener("keyup", onKeyUp);
-    return () => {
-      window.removeEventListener("keydown", onKey);
-      window.removeEventListener("keyup", onKeyUp);
-    };
-  });
-
-  const answer = me?.lastAnswer;
-  const chose = Number.isInteger(answer?.year);
-  const marks =
-    reveal && chose ? [{ id: me.id, year: answer.year, color: "#ffb52e", label: "Tú", isMe: true }] : [];
-
-  let verdict = null;
-  if (reveal && !spectator && question.year != null) {
-    const exact = Boolean(answer?.correct);
-    const tone = exact ? "ok" : chose ? "near" : "timeout";
-    verdict = (
-      <div className={`tv-hist-verdict tv-hist-verdict--${tone}`} role="status">
-        {exact && <Confetti pieces={18} />}
-        <span className="tv-hist-verdict-icon">
-          <Icon name={exact ? "check" : chose ? "target" : "hash"} size={22} strokeWidth={3} />
-        </span>
-        <span className="tv-hist-verdict-text">
-          <strong>{exact ? "¡Año exacto!" : chose ? `A ${yearsText(answer.diff)}` : "¡Se acabó el tiempo!"}</strong>
-          <small>{chose && !exact ? `Fue en ${fmt(question.year)} · elegiste ${fmt(answer.year)}` : `Fue en ${fmt(question.year)}.`}</small>
-        </span>
-        {chose && <span className="tv-tag tv-tag--points">+{me?.lastPoints || 0}</span>}
-      </div>
-    );
-  }
-
-  return (
-    <>
-      <QuestionCard question={question} slot={false} />
-      <div className="tv-hist-slot">
-        {phase === "countdown" && <Count seconds={seconds} />}
-        {phase === "playing" && (
-          <div className={`tv-hist-picker${confirmed ? " is-locked" : ""}`}>
-            <button type="button" className="tv-hist-step" onClick={() => nudge(-step)} disabled={!open} aria-label={`${step} años antes`}>
-              −{step}
-            </button>
-            <button type="button" className="tv-hist-step" onClick={() => nudge(-1)} disabled={!open} aria-label="Un año antes">
-              −1
-            </button>
-            <output className={`tv-hist-year${myGuess ? "" : " is-empty"}`} aria-live="polite">
-              {myGuess ? (
-                <>
-                  {Math.abs(myGuess.year)}
-                  {(myGuess.year < 0 || crossesZero) && <small>{myGuess.year < 0 ? "a. C." : "d. C."}</small>}
-                </>
-              ) : (
-                "¿?"
-              )}
-            </output>
-            <button type="button" className="tv-hist-step" onClick={() => nudge(1)} disabled={!open} aria-label="Un año después">
-              +1
-            </button>
-            <button type="button" className="tv-hist-step" onClick={() => nudge(step)} disabled={!open} aria-label={`${step} años después`}>
-              +{step}
-            </button>
-          </div>
-        )}
-        {verdict}
-      </div>
-
-      <Timeline
-        min={min}
-        max={max}
-        value={myGuess?.year ?? null}
-        onChoose={choose}
-        onRelease={flush}
-        disabled={!open}
-        answer={reveal ? question.year : null}
-        marks={marks}
-        format={fmt}
-        label={min != null ? `Línea del tiempo de ${fmt(min)} a ${fmt(max)}` : "Línea del tiempo"}
-      />
-
-      {/* Always there (hidden outside the round), so the timeline doesn't move when it comes and goes. */}
-      <div className={`tv-hist-action${phase === "playing" ? "" : " is-hidden"}`}>
-        <button type="button" className="tv-btn tv-btn--block tv-c-quiz" onClick={confirm} disabled={!open || myGuess?.year == null}>
-          <Icon name={confirmed ? "check" : "calendar"} size={20} strokeWidth={2.6} />
-          {spectator ? "Estás viendo la partida" : confirmed ? "Año confirmado" : myGuess ? `Confirmar ${fmt(myGuess.year)}` : "Elige un año en la línea"}
-        </button>
-      </div>
-      {err && <p className="tv-lobby-error" role="alert">{err}</p>}
-    </>
-  );
-}
-
 function GameScreen() {
   const { code } = useParams();
-  const { user, room, joinRoom, answer, skipSong, placeYear, setGame } = useApp();
+  const { user, room, joinRoom, answer, skipSong, setGame, pauseGame } = useApp();
   const nav = useNavigate();
 
   const left = useRemainingMs(room);
@@ -565,7 +394,7 @@ function GameScreen() {
       : 100;
   const seconds = Math.max(0, Math.ceil(left / 1000));
   const urgent = room.phase === "playing" && left <= 4000;
-  const props = { room, question, me, answer, skipSong, placeYear, seconds };
+  const props = { room, question, me, answer, skipSong, seconds };
 
   return (
     <div className="tv-room tv-game tv-quiz">
@@ -588,6 +417,16 @@ function GameScreen() {
           </div>
 
           <div className="tv-game-tools">
+            {isHost && ["countdown", "playing", "reveal"].includes(room.phase) && (
+              <button
+                type="button"
+                className={`tv-mini-btn${room.paused ? " is-on" : ""}`}
+                onClick={() => pauseGame(!room.paused).catch((e) => setErr(e.message || "No se pudo pausar la partida"))}
+                title={room.paused ? "La partida sigue donde se quedó" : "Detiene el tiempo para todos"}
+              >
+                {room.paused ? "Reanudar" : "Pausar"}
+              </button>
+            )}
             {isHost && (
               <button
                 type="button"
@@ -606,12 +445,18 @@ function GameScreen() {
         </section>
 
         {question ? (
-          <section key={round} className={`tv-game-stage tv-quiz-stage is-${type}`}>
+          <section key={round} className={`tv-game-stage tv-quiz-stage is-${type}${room.paused ? " is-paused" : ""}`}>
+            {room.paused && (
+              <div className="tv-pause-veil" role="status">
+                <Icon name="lock" size={28} strokeWidth={2.6} />
+                <strong>Partida en pausa</strong>
+                <span>{isHost ? "Toca Reanudar para seguir." : "El anfitrión la reanudará en breve."}</span>
+              </div>
+            )}
             {/* Every kind of round draws itself from the countdown on (empty option tiles, an empty timeline...), so
                 nothing jumps when the round opens. */}
             {type === "choice" && <ChoiceRound {...props} />}
             {type === "open" && <WriteRound {...props} />}
-            {type === "year" && <YearRound {...props} />}
 
             {err && <p className="tv-lobby-error" role="alert">{err}</p>}
           </section>

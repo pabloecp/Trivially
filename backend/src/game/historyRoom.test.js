@@ -23,6 +23,17 @@ assert.throws(() => mgr.updateConfig(room, "p-2", { history: { rounds: 10 } }), 
 const all = mgr.publicState(room).questionsReady;
 mgr.updateConfig(room, "host-1", { history: { eras: ["moderna"] } });
 assert.ok(mgr.publicState(room).questionsReady < all, "fewer ages, fewer events");
+// Topics and difficulties are ticked like the ages: fewer of them, fewer events, and the chips get their counts.
+mgr.updateConfig(room, "host-1", { history: { eras: ["antigua", "media", "moderna", "contemporanea"], categories: ["deportes"] } });
+const sports = mgr.publicState(room).questionsReady;
+assert.ok(sports > 0 && sports < all, "fewer topics, fewer events");
+assert.equal(mgr.publicState(room).questionCounts.categories.cultura > 0, true, "each topic is counted, ticked or not");
+mgr.updateConfig(room, "host-1", { history: { difficulties: ["facil"] } });
+assert.ok(mgr.publicState(room).questionsReady < sports, "fewer difficulties, fewer events");
+mgr.updateConfig(room, "host-1", { history: { categories: [], difficulties: ["facil", "media", "dificil"] } });
+assert.equal(mgr.publicState(room).questionsReady, 0, "no topic ticked: nothing to play");
+assert.throws(() => mgr.start(room, "host-1"), /Solo hay 0 eventos/);
+mgr.updateConfig(room, "host-1", { history: { categories: [...new Set(mgr.historyQuestions.map((q) => q.category))] } });
 mgr.updateConfig(room, "host-1", { history: { eras: ["antigua", "media", "moderna", "contemporanea"], rounds: 5, roundMs: 20000 } });
 
 mgr.start(room, "host-1");

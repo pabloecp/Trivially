@@ -21,9 +21,9 @@ export default function LobbyPanel({ room, onToast }) {
   const quiz = room.config?.quiz || {};
   const empty =
     quiz.categories?.length === 0
-      ? "un tema"
+      ? "una categoría"
       : quiz.formats?.length === 0
-      ? "una forma de responder"
+      ? "un modo"
       : quiz.difficulties?.length === 0
       ? "una dificultad"
       : null;
@@ -44,7 +44,7 @@ export default function LobbyPanel({ room, onToast }) {
               ) : (
                 <span>
                   Solo hay <strong>{room.questionsReady} preguntas</strong> con esos ajustes. Baja el número de preguntas
-                  o elige más temas.
+                  o elige más categorías.
                 </span>
               )}
             </p>

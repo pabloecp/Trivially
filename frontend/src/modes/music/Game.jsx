@@ -9,6 +9,12 @@ import MatchResults from "../../components/home/MatchResults.jsx";
 import { useApp, useRemainingMs } from "../../lib/store.jsx";
 import { BACKEND_URL } from "../../lib/config.js";
 import { useSongList } from "../../lib/songList.js";
+import "../../styles/quiz.css";
+
+// A closed round's four songs keep the same letters and colours as Trivia's options.
+const OPTION_LETTERS = ["A", "B", "C", "D"];
+// Keys that pick an option while a closed round is open: 1–4 or A–D.
+const OPTION_KEYS = { 1: 0, 2: 1, 3: 2, 4: 3, a: 0, b: 1, c: 2, d: 3 };
 
 function normalize(str = "") {
   return str
@@ -52,6 +58,8 @@ function GameScreen() {
   const [submittedSong, setSubmittedSong] = useState(null);
   // Round in which this player tapped "Saltar" (shown right away, before the server confirms).
   const [skippedRound, setSkippedRound] = useState(null);
+  // The option picked in a closed round: { round, index }.
+  const [pickedChoice, setPickedChoice] = useState(null);
   // Host's "back to the main room" mid-match needs a second tap, since it ends the match for everyone.
   const [confirmHub, setConfirmHub] = useState(false);
   // Skip works like "Terminar": the first tap warns that the round gives no points, the second one skips.
@@ -195,6 +203,44 @@ function GameScreen() {
   const skipped = skippedRound === room?.currentRound || Boolean(me?.lastAnswer?.skipped);
   const spectator = Boolean(me?.spectator);
   const locked = Boolean(me?.answered) || Boolean(submittedSong) || skipped || room?.phase !== "playing" || spectator;
+
+  // A closed round ("Preguntas Cerradas"): four songs to choose from instead of the search box.
+  const choice = room?.choice || null;
+  const closed = choice?.type === "choice";
+  const myChoice = Number.isInteger(me?.lastAnswer?.choice) ? me.lastAnswer.choice : pickedChoice?.round === room?.currentRound ? pickedChoice.index : null;
+
+  async function handleChoose(index) {
+    if (locked || isSubmittingRef.current || !choice?.options?.[index]) return;
+    isSubmittingRef.current = true;
+    setPickedChoice({ round: room.currentRound, index });
+    setSubmittedSong(choice.options[index]);
+    setErr("");
+    try {
+      await answer(index);
+    } catch (e) {
+      if (room?.phase === "playing") {
+        setErr(e.message || "Error al enviar respuesta");
+        setSubmittedSong(null);
+        setPickedChoice(null);
+        isSubmittingRef.current = false;
+      }
+    }
+  }
+
+  // 1–4 or A–D pick an option of a closed round.
+  useEffect(() => {
+    if (!closed || locked || room?.phase !== "playing") return undefined;
+    const onKey = (e) => {
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
+      const index = OPTION_KEYS[e.key.toLowerCase()];
+      if (index != null && index < (choice?.options?.length || 0)) {
+        e.preventDefault();
+        handleChoose(index);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  });
 
   function handleSkip() {
     if (locked) return;
@@ -380,11 +426,15 @@ function GameScreen() {
           <section key={`c${room.currentRound}`} className="tv-game-stage tv-countdown">
             <p className="tv-mono-label">Prepárate para escuchar</p>
             <span key={Math.max(1, seconds)} className="tv-countdown-num">{Math.max(1, seconds)}</span>
-            <p className="tv-hint">Escribe el título en cuanto reconozcas la canción.</p>
+            <p className="tv-hint">
+              {closed ? "Elige la canción entre cuatro opciones." : "Escribe el título en cuanto reconozcas la canción."}
+            </p>
           </section>
         )}
 
-        {room.phase === "playing" && (
+        {/* A closed round stays on this screen at the reveal, like Trivia: the right song ringed in green, a wrong
+            pick in red. */}
+        {(room.phase === "playing" || (room.phase === "reveal" && closed)) && (
           <section key={`p${room.currentRound}`} className="tv-game-stage tv-play-card">
             <div className="tv-eq" aria-hidden="true">
               {Array.from({ length: 7 }, (_, i) => (
@@ -392,8 +442,75 @@ function GameScreen() {
               ))}
             </div>
             <h2 className="tv-play-q">¿Qué canción está sonando?</h2>
+            {closed && room.phase === "reveal" && (() => {
+              const isCorrect = Boolean(me?.lastAnswer?.correct);
+              const tone = isCorrect ? "ok" : Number.isInteger(myChoice) ? "bad" : "timeout";
+              return (
+                <div className={`tv-quiz-verdict tv-quiz-verdict--${tone} tv-music-verdict`} role="status">
+                  {isCorrect && <Confetti pieces={18} />}
+                  <span className="tv-quiz-verdict-icon">
+                    <Icon name={isCorrect ? "check" : Number.isInteger(myChoice) ? "close" : "hash"} size={22} strokeWidth={3.2} />
+                  </span>
+                  <strong className="tv-quiz-verdict-title">
+                    {spectator ? "Era esta" : isCorrect ? "¡Correcto!" : Number.isInteger(myChoice) ? "Incorrecto" : skipped ? "Te la saltaste" : "¡Se acabó el tiempo!"}
+                  </strong>
+                  <span className="tv-tags">
+                    {isCorrect && <span className="tv-tag tv-tag--points">+{me?.lastPoints || 0} pts</span>}
+                    {me?.streak > 1 && <span className="tv-tag tv-tag--streak">Racha de {me.streak}</span>}
+                  </span>
+                </div>
+              );
+            })()}
 
-            {!locked ? (
+            {closed && (room.phase === "reveal" || (!spectator && (!locked || Number.isInteger(myChoice)))) ? (
+              <div className={`tv-quiz-options tv-music-options${room.phase === "reveal" ? " is-reveal" : ""}`} role="group" aria-label="Opciones">
+                {OPTION_LETTERS.map((letter, i) => {
+                  const text = choice?.options?.[i];
+                  if (text == null) return null;
+                  const isMine = myChoice === i;
+                  const reveal = room.phase === "reveal";
+                  const isRight = reveal && choice?.answer === i;
+                  const state = reveal
+                    ? isRight
+                      ? " is-right"
+                      : isMine
+                      ? " is-wrong"
+                      : " is-out"
+                    : isMine
+                    ? " is-picked"
+                    : locked
+                    ? " is-out"
+                    : "";
+                  const picks = choice?.picks?.[i] || 0;
+                  return (
+                    <button
+                      key={`${room.currentRound}-${i}`}
+                      type="button"
+                      className={`tv-quiz-opt tv-opt-${i}${state}`}
+                      style={{ "--i": i }}
+                      onClick={() => handleChoose(i)}
+                      disabled={locked}
+                      aria-pressed={isMine}
+                      aria-label={`${letter}: ${text}`}
+                    >
+                      <span className="tv-quiz-opt-letter">{letter}</span>
+                      <span className="tv-quiz-opt-text">{text}</span>
+                      {reveal && (isRight || isMine) && (
+                        <span className="tv-quiz-opt-mark">
+                          <Icon name={isRight ? "check" : "close"} size={18} strokeWidth={3.4} />
+                        </span>
+                      )}
+                      {reveal && room.players.length > 1 && (
+                        <span className="tv-quiz-opt-picks" title={`${picks} ${picks === 1 ? "jugador" : "jugadores"}`}>
+                          <Icon name="users" size={14} strokeWidth={2.6} />
+                          {picks}
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            ) : !locked ? (
               <div className="tv-search">
                 <div className="tv-search-box">
                   <Icon name="music" size={22} className="tv-search-icon" />
@@ -498,7 +615,7 @@ function GameScreen() {
           </section>
         )}
 
-        {room.phase === "reveal" && room.reveal && (() => {
+        {room.phase === "reveal" && room.reveal && !closed && (() => {
           const isCorrect = Boolean(me?.lastAnswer?.correct);
           const didAnswer = !skipped && Boolean(me?.lastAnswer?.text || submittedSong);
           const tone = isCorrect ? "ok" : didAnswer ? "bad" : "timeout";
@@ -521,7 +638,7 @@ function GameScreen() {
                   {me?.streak > 1 && <span className="tv-tag tv-tag--streak">Racha de {me.streak}</span>}
                 </div>
                 {didAnswer && !isCorrect && me?.lastAnswer?.text && (
-                  <p className="tv-hint">Escribiste “{me.lastAnswer.text}”</p>
+                  <p className="tv-hint">{closed ? "Elegiste" : "Escribiste"} “{me.lastAnswer.text}”</p>
                 )}
               </div>
               )}

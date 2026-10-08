@@ -20,7 +20,7 @@ export const GAME_MODES = [
     icon: "bulb",
     available: true,
     steps: [
-      { icon: "bulb", text: "Elige los temas" },
+      { icon: "bulb", text: "Elige las categorías" },
       { icon: "grid", text: "Responde como toque" },
       { icon: "bolt", text: "Más rápido, más puntos" },
     ],
@@ -37,11 +37,12 @@ export const GAME_MODES = [
     available: true,
     steps: [
       { icon: "music", text: "Escucha el fragmento" },
-      { icon: "keyboard", text: "Escribe el título" },
+      { icon: "keyboard", text: "Elige o escribe el título" },
       { icon: "bolt", text: "Más rápido, más puntos" },
     ],
     // A different song for every round (older servers don't send songsReady).
-    ready: (room) => room.songsReady == null || room.songsReady >= (room.config?.rounds || 5),
+    ready: (room) =>
+      room.config?.formats?.length !== 0 && (room.songsReady == null || room.songsReady >= (room.config?.rounds || 5)),
     Lobby: MusicLobbyPanel,
     path: (room) => `/game/${room.code}`,
   },

@@ -30,6 +30,7 @@ import {
 import {
   countHistoryQuestions,
   currentYear,
+  historyCounts,
   defaultHistoryConfig,
   HISTORY_GAME,
   HISTORY_REVEAL_MS,
@@ -83,6 +84,10 @@ export function createRoomCode(existing) {
   return code;
 }
 
+// Adivina la canción's ways of answering ("Modos"): closed questions, four songs to choose from ("opciones"), and open
+// ones, the title typed in the search box ("escribir"). Both are ticked in a new room; the rounds are shared evenly.
+export const MUSIC_FORMATS = ["opciones", "escribir"];
+
 // A new room plays the catalog's default playlist.
 function defaultConfig(catalog) {
   const playlist = catalog?.playlists?.find((p) => p.isDefault) || catalog?.playlists?.[0];
@@ -90,6 +95,7 @@ function defaultConfig(catalog) {
     rounds: 5,
     roundMs: ROUND_MS,
     playlistIds: playlist ? [playlist.id] : [],
+    formats: [...MUSIC_FORMATS],
     quiz: defaultQuizConfig(),
     geo: defaultGeoConfig(),
     history: defaultHistoryConfig(),
@@ -130,8 +136,8 @@ export class RoomManager {
     this.geoQuestions = geoBank(questions);
     // Historia's (from history/events.js when the bank has none).
     this.historyQuestions = historyBank(questions);
-    // Trivia's: the bank's own plus Geografía's written questions and Historia's events.
-    this.quizQuestions = quizPool(questions, this.geoQuestions, this.historyQuestions);
+    // Trivia's: the bank's own plus Geografía's written questions.
+    this.quizQuestions = quizPool(questions, this.geoQuestions);
     this.resolver = resolver;
     this.store = store;
     this.reconnectGraceMs = reconnectGraceMs;
@@ -349,6 +355,8 @@ export class RoomManager {
     // Same limits as the settings on screen: 5–25 rounds, 15–35 seconds to guess.
     if (config?.rounds != null) next.rounds = Math.min(25, Math.max(5, Math.round(Number(config.rounds)) || 5));
     if (config?.roundMs != null) next.roundMs = Math.min(35000, Math.max(15000, Math.round(Number(config.roundMs)) || ROUND_MS));
+    // Adivina la canción's ways of answering; both may be unticked (the match then can't start).
+    if (Array.isArray(config?.formats)) next.formats = MUSIC_FORMATS.filter((f) => config.formats.includes(f));
     if (config?.playlistIds) {
       // Spotify playlists can only be added by the host (addSpotifyPlaylist); here they can only stay or go.
       const known = new Set([...this.catalog.playlists.map((p) => p.id), ...Object.keys(room.customPlaylists || {})]);
@@ -477,12 +485,50 @@ export class RoomManager {
       if (!fresh.length && room.tracks.length > room.currentRound) break;
       const from = fresh.length ? fresh : pool.filter((s) => s.id !== room.tracks[room.tracks.length - 1]?.id);
       const list = from.length ? from : pool;
-      const track = list[Math.floor(Math.random() * list.length)];
+      const song = list[Math.floor(Math.random() * list.length)];
+      const track = this.withFormat(room, song, pool);
       room.tracks.push(track);
       added.push(track);
     }
     if (added.length) this.onNewTracks?.(added);
     return added;
+  }
+
+  /** Adivina la canción's ways of answering in this room (older rooms without the setting play both). */
+  musicFormats(room) {
+    return Array.isArray(room.config.formats) ? room.config.formats : MUSIC_FORMATS;
+  }
+
+  /**
+   * A song as a round of Adivina la canción, with its way of answering: the less used of the ticked ones so far (a tie
+   * drawn at random), so the rounds are shared evenly. A closed round ("choice") gets four songs to choose from, the
+   * right one and three others of the songs being played (other titles), shuffled; `answer` is the right one's position.
+   * These copies stay on the server: the options only go out while the round is playing (see publicState).
+   */
+  withFormat(room, song, pool) {
+    const formats = this.musicFormats(room);
+    if (!formats.includes("opciones")) return { ...song, type: "open" };
+    const used = (f) => room.tracks.filter((t) => (t.type === "choice" ? "opciones" : "escribir") === f).length;
+    const least = Math.min(...formats.map(used));
+    const candidates = formats.filter((f) => used(f) === least);
+    const format = candidates[Math.floor(Math.random() * candidates.length)];
+    if (format !== "opciones") return { ...song, type: "open" };
+    const label = (s) => (s.artistName ? `${s.title} - ${s.artistName}` : s.title);
+    const keys = new Set([songKey(song)]);
+    const others = [];
+    // The room's songs first; the whole catalog when they are too few for three wrong answers.
+    for (const from of [pool, this.catalog.songs || []]) {
+      const shuffled = [...from].sort(() => Math.random() - 0.5);
+      for (const s of shuffled) {
+        if (others.length >= 3) break;
+        if (!s?.title || keys.has(songKey(s))) continue;
+        keys.add(songKey(s));
+        others.push(s);
+      }
+    }
+    if (others.length < 3) return { ...song, type: "open" };
+    const options = [song, ...others].sort(() => Math.random() - 0.5);
+    return { ...song, type: "choice", options: options.map(label), answer: options.indexOf(song) };
   }
 
   updatePlayer(room, userId, { name, avatar }) {
@@ -565,6 +611,7 @@ export class RoomManager {
         throw new Error(loading ? "Tus canciones de Spotify se están cargando, espera unos segundos" : "Ninguna canción cumple esos filtros");
       }
       // Every round gets a different song: with fewer songs than rounds the same ones would keep coming back.
+      if (!this.musicFormats(room).length) throw new Error("Elige al menos un modo");
       if (available < room.totalRounds) {
         throw new Error(
           `Solo hay ${available} ${available === 1 ? "canción lista" : "canciones listas"} para ${room.totalRounds} rondas. ` +
@@ -683,16 +730,14 @@ export class RoomManager {
     return room.game === GEO_GAME && room.tracks[room.currentRound]?.kind === "location";
   }
 
-  /** Historia's rounds, and Trivia's year questions: a year on the timeline instead of a written answer. */
+  /** Línea del tiempo's rounds: a year on the timeline instead of a written answer. */
   isYearRound(room) {
-    const track = room.tracks[room.currentRound];
-    if (room.game === QUIZ_GAME) return track?.type === "year";
-    return room.game === HISTORY_GAME && Boolean(track);
+    return room.game === HISTORY_GAME && Boolean(room.tracks[room.currentRound]);
   }
 
-  /** Trivia's questions with four options: the answer is an option's position. */
+  /** Trivia's questions with four options, and Adivina la canción's closed rounds: the answer is an option's position. */
   isChoiceRound(room) {
-    return room.game === QUIZ_GAME && room.tracks[room.currentRound]?.type === "choice";
+    return (room.game === QUIZ_GAME || room.game === "musica") && room.tracks[room.currentRound]?.type === "choice";
   }
 
   /** During a tiebreak only the tied players answer; the rest of the room watches. */
@@ -702,8 +747,38 @@ export class RoomManager {
   }
 
   /** Spectators (who joined mid-match) can look but not answer. */
+  /** Whether this player may answer now: not a spectator, and the match isn't paused. */
   assertNotSpectator(room, userId) {
     if (room.players.get(userId)?.spectator) throw new Error("Estás viendo la partida: entrarás cuando termine");
+    if (room.paused) throw new Error("La partida está en pausa");
+  }
+
+  /**
+   * The host pauses the match: the clock of the current phase stops where it is (`room.paused.remainingMs`) and no
+   * answer is taken until it goes on. Resuming starts the same phase's clock again with the time it had left.
+   */
+  pause(room, userId) {
+    if (room.hostId !== userId) throw new Error("Solo el anfitrión puede pausar la partida");
+    if (!["countdown", "playing", "reveal"].includes(room.phase)) throw new Error("No hay ninguna partida en curso");
+    if (room.paused) return;
+    if (room.timer) clearTimeout(room.timer);
+    room.timer = null;
+    room.paused = { remainingMs: Math.max(0, (room.phaseEndsAt || Date.now()) - Date.now()), at: Date.now() };
+  }
+
+  resume(room, userId) {
+    if (room.hostId !== userId) throw new Error("Solo el anfitrión puede reanudar la partida");
+    if (!room.paused) return;
+    const { remainingMs, at } = room.paused;
+    room.paused = null;
+    // The phase started that much later, so what depends on its start (the song's position) carries on from there.
+    room.phaseStartedAt += Date.now() - at;
+    room.phaseEndsAt = Date.now() + remainingMs;
+    const onEnd = room.phaseOnEnd;
+    room.timer = setTimeout(() => {
+      onEnd?.();
+      this.onPhaseChange?.(room);
+    }, remainingMs);
   }
 
   beginPlaying(room) {
@@ -785,6 +860,7 @@ export class RoomManager {
   }
 
   finish(room) {
+    room.paused = null;
     room.phase = "finished";
     room.phaseEndsAt = null;
     if (room.timer) clearTimeout(room.timer);
@@ -873,6 +949,7 @@ export class RoomManager {
 
   resetMatch(room) {
     if (room.timer) clearTimeout(room.timer);
+    room.paused = null;
     room.timer = null;
     room.phase = "lobby";
     room.phaseStartedAt = Date.now();
@@ -1207,6 +1284,9 @@ export class RoomManager {
 
   setPhase(room, phase, duration, onEnd) {
     if (room.timer) clearTimeout(room.timer);
+    room.paused = null;
+    // Kept so a paused phase can start its clock again (resume).
+    room.phaseOnEnd = onEnd;
     room.phase = phase;
     room.phaseStartedAt = Date.now();
     room.phaseEndsAt = Date.now() + duration;
@@ -1231,6 +1311,8 @@ export class RoomManager {
       phase: room.phase,
       phaseStartedAt: room.phaseStartedAt,
       phaseEndsAt: room.phaseEndsAt,
+      // The host paused the match: the clock shows the time left, stopped.
+      paused: room.paused ? { remainingMs: room.paused.remainingMs } : null,
       serverNow: Date.now(),
       currentRound: room.currentRound,
       totalRounds: room.totalRounds || room.tracks.length || room.config.rounds,
@@ -1305,11 +1387,30 @@ export class RoomManager {
       }
     } else if (room.game === HISTORY_GAME) {
       if (track) payload.question = this.publicHistoryQuestion(room, track);
+      // In the lobby: how many events each topic, age and difficulty has, for the settings' chips.
+      if (room.phase === "lobby") payload.questionCounts = historyCounts(this.historyQuestions, room.config.history);
       if (track && showTrack) payload.reveal = { prompt: track.prompt, year: track.year, min: track.min, max: track.max };
     } else if (track && (room.phase === "countdown" || room.phase === "playing")) {
       payload.audio = {
         previewUrl: track.previewUrl,
         round: room.currentRound + 1,
+      };
+    }
+    // Adivina la canción: how this round is answered from the countdown on; a closed round's four songs while it plays,
+    // and the right one and how many picked each only at the reveal.
+    if (room.game === "musica" && track && room.phase !== "lobby") {
+      const closed = track.type === "choice";
+      const open = ["playing", "reveal", "finished"].includes(room.phase);
+      const showAnswer = room.phase === "reveal" || room.phase === "finished";
+      const picks = closed ? track.options.map(() => 0) : null;
+      if (closed && showAnswer) {
+        for (const p of room.players.values()) if (Number.isInteger(p.lastAnswer?.choice)) picks[p.lastAnswer.choice] += 1;
+      }
+      payload.choice = {
+        type: closed ? "choice" : "open",
+        options: closed && open ? track.options : null,
+        answer: closed && showAnswer ? track.answer : null,
+        picks: closed && showAnswer ? picks : null,
       };
     }
     // Send full search catalog for autocomplete during playing phase
@@ -1401,7 +1502,7 @@ export class RoomManager {
 
   /**
    * The current question of Trivia, by how it's answered. Its text shows from the countdown on (everyone gets the
-   * same seconds to read it); what to answer with (the options, the flag, the timeline's range) once the round is
+   * same seconds to read it); what to answer with (the options, the flag) once the round is
    * playing; the right answer, and how many players picked each option, only from the reveal on. No question id: with
    * it a player could recognise a question they have seen before (or look it up).
    */
@@ -1421,15 +1522,6 @@ export class RoomManager {
         kind: question.kind,
         flag: open && question.flagToken ? flagUrl(question.flagToken) : null,
         answer: showAnswer ? question.answer : null,
-      };
-    }
-    if (question.type === "year") {
-      return {
-        ...base,
-        era: question.era,
-        min: open ? question.min : null,
-        max: open ? question.max : null,
-        year: showAnswer ? question.year : null,
       };
     }
     const picks = question.options.map(() => 0);

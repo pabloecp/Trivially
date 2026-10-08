@@ -190,6 +190,19 @@ export function attachSockets(io, rooms) {
       }
     });
 
+    // The host pauses the match, or lets it go on (RoomManager.pause / resume).
+    socket.on("room:pause", (paused, ack) => {
+      try {
+        const { room, userId } = requireRoom(rooms, socket);
+        if (paused) rooms.pause(room, userId);
+        else rooms.resume(room, userId);
+        ack?.({ ok: true });
+        io.to(room.code).emit("room:state", rooms.publicState(room));
+      } catch (err) {
+        ack?.({ ok: false, error: err.message });
+      }
+    });
+
     socket.on("room:end", (ack) => {
       try {
         const { room, userId } = requireRoom(rooms, socket);

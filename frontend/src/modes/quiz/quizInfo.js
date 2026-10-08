@@ -25,12 +25,11 @@ export const TOPICS = [
   { id: "deportes", label: "Deportes" },
 ];
 
-// The ways of answering (QUIZ_FORMATS on the server): choosing one of four, writing, or a year on a timeline. The
-// timeline is not ticked by default (`off`): its questions only come up when the host ticks it.
+// The ways of answering, "Modos" (QUIZ_FORMATS on the server): closed questions, one of four to choose, or open ones,
+// the answer written. Adivina la canción uses the same two.
 export const FORMATS = [
-  { id: "opciones", label: "Opciones", hint: "Elige una de cuatro" },
-  { id: "escribir", label: "Escribir", hint: "Escribe la respuesta" },
-  { id: "linea", label: "Línea de tiempo", hint: "Elige el año en la línea del tiempo", off: true },
+  { id: "opciones", label: "Preguntas Cerradas", hint: "Elige una de cuatro opciones" },
+  { id: "escribir", label: "Preguntas Abiertas", hint: "Escribe la respuesta" },
 ];
 
 // The difficulties a match can mix (QUIZ_LEVELS on the server), any of them ticked.
@@ -48,7 +47,7 @@ export function quizConfig(room) {
     roundMs: quiz.roundMs || 15000,
     difficulties: quiz.difficulties || LEVELS.map((d) => d.id),
     categories: quiz.categories || TOPICS.map((t) => t.id),
-    formats: quiz.formats || FORMATS.filter((f) => !f.off).map((f) => f.id),
+    formats: quiz.formats || FORMATS.map((f) => f.id),
   };
 }
 

@@ -17,6 +17,8 @@ export default function LobbyPanel({ room, onToast }) {
 
   const mode = findMode("historia");
   const config = historyConfig(room);
+  // A list with nothing ticked: what to tick.
+  const empty = config.categories.length === 0 ? "una categoría" : config.difficulties.length === 0 ? "una dificultad" : null;
 
   return (
     <>
@@ -29,12 +31,12 @@ export default function LobbyPanel({ room, onToast }) {
           {!mode.ready(room) && (
             <p className="tv-playlist-total is-short" role="status">
               <Icon name="lock" size={16} strokeWidth={2.6} />
-              {config.eras.length === 0 ? (
-                <span>Elige al menos una época para empezar.</span>
+              {empty ? (
+                <span>Elige al menos {empty} para empezar.</span>
               ) : (
                 <span>
                   Solo hay <strong>{room.questionsReady} eventos</strong> con estos ajustes para {config.rounds} rondas.
-                  Baja las rondas o elige más épocas.
+                  Baja las rondas o elige más categorías.
                 </span>
               )}
             </p>

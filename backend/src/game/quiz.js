@@ -1,21 +1,20 @@
 import { categoryName, QUESTION_CATEGORIES } from "../questions/questionSchema.js";
 import { toGeoTrack } from "./geo.js";
-import { toHistoryTrack } from "./history.js";
 
-// "Trivia", the main mode: its settings (config.quiz) and how a match draws its questions. A match mixes every
-// kind of question the bank has: four options, a year on a timeline and a written answer (capitals, flags...). The
-// host picks the topics (`categories`), the ways of answering (`formats`) and the difficulties (`difficulties`): each
-// is a list of the chosen ones, all of them by default except the timeline, which only comes up when it is ticked.
+// "Trivia", the main mode: its settings (config.quiz) and how a match draws its questions. A match mixes the two ways
+// of answering: four options and a written answer (capitals, flags...). The host picks the topics (`categories`), the
+// ways of answering (`formats`) and the difficulties (`difficulties`): each is a list of the chosen ones, all of them
+// by default. Every four-option question of the bank can also be asked written, without its options, so one added for
+// "Opciones" shows up in "Escribir" too. (The years on a timeline are Línea del tiempo's, a mode of its own.)
 
 export const QUIZ_MODE = "opciones";
 export const QUIZ_LEVELS = ["facil", "media", "dificil"];
 // Older clients send one `difficulty`, "mixta" being all three.
 export const QUIZ_DIFFICULTIES = [...QUIZ_LEVELS, "mixta"];
-// The ways of answering, and the question types each one plays: choosing one of four ("opciones"), writing
-// ("escribir") or a year on the timeline ("linea"). The timeline is not ticked by default.
-export const QUIZ_FORMATS = ["opciones", "escribir", "linea"];
-export const DEFAULT_QUIZ_FORMATS = ["opciones", "escribir"];
-const FORMAT_OF_TYPE = { multiple_choice: "opciones", year: "linea", open: "escribir" };
+// The ways of answering, and the question types each one plays: choosing one of four ("opciones") or writing
+// ("escribir").
+export const QUIZ_FORMATS = ["opciones", "escribir"];
+const FORMAT_OF_TYPE = { multiple_choice: "opciones", open: "escribir" };
 const TOPICS = Object.keys(QUESTION_CATEGORIES);
 // Same limits as the settings on screen (frontend/src/modes/quiz/quizInfo.js).
 export const QUIZ_LIMITS = {
@@ -26,7 +25,7 @@ export const QUIZ_LIMITS = {
 export { REVEAL_MS as QUIZ_REVEAL_MS } from "./scoring.js";
 
 export function defaultQuizConfig() {
-  return { rounds: 5, roundMs: 15000, difficulties: [...QUIZ_LEVELS], categories: [...TOPICS], formats: [...DEFAULT_QUIZ_FORMATS] };
+  return { rounds: 5, roundMs: 15000, difficulties: [...QUIZ_LEVELS], categories: [...TOPICS], formats: [...QUIZ_FORMATS] };
 }
 
 const clamp = (n, { min, max }, fallback) => Math.min(max, Math.max(min, Math.round(Number(n)) || fallback));
@@ -53,15 +52,41 @@ export function mergeQuizConfig(current, change = {}) {
   };
 }
 
+// Four-option questions that only make sense with the options in view ("¿Cuál de estos…?", "todas las anteriores").
+const NEEDS_OPTIONS = /\b(de (los|las) siguientes|de (estos|estas|ellos|ellas)|cu[aá]l(es)? de|ninguna|todas las anteriores|todos los anteriores|ambas)\b/i;
+
 /**
- * Every question this mode can ask: the bank's own (for any mode, or this one), plus Geografía's capitals and flags
- * (`geoQuestions`) and Historia's events (`historyQuestions`), which the extras also play on their own.
+ * A four-option question as a written one: the right option is the answer and the other three are rejected (so the
+ * typo tolerance never accepts a wrong option). It keeps the id of the original with ":escribir" after it, and
+ * `baseId` says they are the same question (a match never asks both).
  */
-export function quizPool(bank = [], geoQuestions = [], historyQuestions = []) {
-  const own = bank.filter((q) => FORMAT_OF_TYPE[q.type] && (q.mode == null || q.mode === QUIZ_MODE));
-  const written = geoQuestions.filter((q) => q.type === "open");
-  return [...own, ...written, ...historyQuestions.filter((q) => q.type === "year")];
+function asWritten(q) {
+  const { options, correct } = q.data;
+  const answer = options[correct];
+  if (NEEDS_OPTIONS.test(q.prompt) || NEEDS_OPTIONS.test(answer)) return null;
+  return {
+    ...q,
+    id: `${q.id}:escribir`,
+    baseId: q.id,
+    type: "open",
+    data: { answer, aliases: [], reject: options.filter((_, i) => i !== correct) },
+  };
 }
+
+/**
+ * Every question this mode can ask: the bank's own (for any mode, or this one), each four-option one also as a
+ * written question, plus Encuentra el país's capitals and flags (`geoQuestions`), which that mode also plays on its
+ * own.
+ */
+export function quizPool(bank = [], geoQuestions = []) {
+  const own = bank.filter((q) => FORMAT_OF_TYPE[q.type] && (q.mode == null || q.mode === QUIZ_MODE));
+  const written = own.filter((q) => q.type === "multiple_choice").map(asWritten).filter(Boolean);
+  const capitals = geoQuestions.filter((q) => q.type === "open");
+  return [...own, ...written, ...capitals];
+}
+
+/** What makes two pool entries the same question: a country, or the id of the question they come from. */
+const sameQuestion = (q) => (q.data?.country ? `country:${q.data.country}` : q.baseId || q.id);
 
 export const formatOf = (q) => FORMAT_OF_TYPE[q.type];
 
@@ -78,7 +103,7 @@ function questionsFor(pool, config, ignore = null) {
 
 /** How many different questions a match with these settings can draw from (it needs one per round). */
 export function countQuestions(pool, config) {
-  return questionsFor(pool, config).length;
+  return new Set(questionsFor(pool, config).map(sameQuestion)).size;
 }
 
 /**
@@ -109,18 +134,14 @@ function shuffle(list) {
 
 /**
  * A question as a round of the room (these objects stay on the server; see RoomManager.publicQuestion). `type` says
- * how it's answered: "choice" (options shuffled, `answer` is the right one's position), "open" (written, checked by
- * isCorrectOpenAnswer) or "year" (a timeline with its range of years).
+ * how it's answered: "choice" (options shuffled, `answer` is the right one's position) or "open" (written, checked by
+ * isCorrectOpenAnswer).
  */
 export function toQuizTrack(q) {
   const category = categoryName(q.category);
   if (q.type === "open") {
     const track = toGeoTrack(q);
     return { ...track, type: "open", text: track.prompt, category };
-  }
-  if (q.type === "year") {
-    const track = toHistoryTrack(q);
-    return { ...track, type: "year", text: track.prompt, category };
   }
   const order = shuffle(q.data.options.map((_, i) => i));
   return {
@@ -135,8 +156,8 @@ export function toQuizTrack(q) {
 }
 
 /**
- * The questions of a match: the kinds of question (four options, a year, a written answer) share the rounds as evenly
- * as they can (10 rounds of three = 4 + 3 + 3), never two about the same country or of the same year, in random order.
+ * The questions of a match: the kinds of question (four options, a written answer) share the rounds as evenly as they
+ * can (10 rounds = 5 + 5), never two about the same country or the same question, in random order.
  */
 export function pickQuizQuestions(pool, config) {
   const settings = mergeQuizConfig(config);
@@ -151,7 +172,7 @@ export function pickQuizQuestions(pool, config) {
       if (picked.length >= settings.rounds) break;
       while (p.length) {
         const q = p.pop();
-        const key = q.data?.country ? `country:${q.data.country}` : q.type === "year" ? `year:${q.data.year}` : q.id;
+        const key = sameQuestion(q);
         if (seen.has(key)) continue;
         seen.add(key);
         picked.push(q);

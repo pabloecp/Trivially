@@ -1,4 +1,6 @@
-// Historia's settings and labels (same ids and limits as backend/src/game/history.js).
+// Historia's settings and labels (same ids and limits as backend/src/game/history.js). Its topics are Trivia's.
+import { TOPICS } from "../quiz/quizInfo.js";
+export { TOPICS };
 
 export const ERAS = [
   { id: "antigua", label: "Antigüedad", hint: "Hasta el año 476" },
@@ -23,6 +25,9 @@ export function findDifficulty(id) {
   return DIFFICULTIES.find((d) => d.id === id) || DIFFICULTIES[0];
 }
 
+// The difficulties a match can mix (HISTORY_LEVELS on the server), any of them ticked.
+export const LEVELS = DIFFICULTIES.filter((d) => d.id !== "mixta");
+
 export const ROUNDS_LIMITS = { min: 5, max: 25, step: 5 };
 export const SECONDS_LIMITS = { min: 10, max: 30, step: 5 };
 
@@ -32,7 +37,8 @@ export function historyConfig(room) {
     rounds: history.rounds || 5,
     roundMs: history.roundMs || 10000,
     eras: history.eras ?? ERAS.map((e) => e.id),
-    difficulty: history.difficulty || "mixta",
+    categories: history.categories ?? TOPICS.map((t) => t.id),
+    difficulties: history.difficulties ?? LEVELS.map((d) => d.id),
   };
 }
 

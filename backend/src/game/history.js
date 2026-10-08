@@ -1,5 +1,5 @@
 import { buildHistoryQuestions, HISTORY_MODE } from "../history/historyQuestions.js";
-import { toQuestion } from "../questions/questionSchema.js";
+import { QUESTION_CATEGORIES, toQuestion } from "../questions/questionSchema.js";
 
 // Historia: its settings (config.history), how a match draws its events, the range of years each one is shown with
 // and how a year is scored. Players choose a year on a timeline: the exact year gets every point, and the closer
@@ -8,7 +8,11 @@ import { toQuestion } from "../questions/questionSchema.js";
 export const HISTORY_GAME = HISTORY_MODE;
 // The four ages, by the event's year. The event that opens an age belongs to it (476, 1492, 1789).
 export const HISTORY_ERAS = ["antigua", "media", "moderna", "contemporanea"];
-export const HISTORY_DIFFICULTIES = ["facil", "media", "dificil", "mixta"];
+export const HISTORY_LEVELS = ["facil", "media", "dificil"];
+// Older clients send one `difficulty`, "mixta" being all three.
+export const HISTORY_DIFFICULTIES = [...HISTORY_LEVELS, "mixta"];
+// The topics of the events (the ids of QUESTION_CATEGORIES, the same "Temas" as Trivia).
+const TOPICS = Object.keys(QUESTION_CATEGORIES);
 // Same limits as the settings on screen (frontend/src/modes/historia/historyInfo.js).
 export const HISTORY_LIMITS = {
   rounds: { min: 5, max: 25 },
@@ -38,39 +42,71 @@ export function eraOf(year) {
 }
 
 export function defaultHistoryConfig() {
-  return { rounds: 5, roundMs: 10000, eras: [...HISTORY_ERAS], difficulty: "mixta" };
+  return { rounds: 5, roundMs: 10000, eras: [...HISTORY_ERAS], categories: [...TOPICS], difficulties: [...HISTORY_LEVELS] };
 }
 
 const clamp = (n, { min, max }, fallback) => Math.min(max, Math.max(min, Math.round(Number(n)) || fallback));
 
-/** Merges a settings change into the current Historia settings, keeping every value valid. */
+const pickList = (change, allowed, fallback) => (Array.isArray(change) ? allowed.filter((v) => change.includes(v)) : fallback);
+// A single difficulty of an older client as the list of levels it means.
+const levelsOf = (difficulty) => (difficulty === "mixta" ? [...HISTORY_LEVELS] : HISTORY_LEVELS.includes(difficulty) ? [difficulty] : null);
+
+/**
+ * Merges a settings change into the current Historia settings, keeping every value valid. Any list may be left empty
+ * (the match then has no events and can't start).
+ */
 export function mergeHistoryConfig(current, change = {}) {
   const base = { ...defaultHistoryConfig(), ...current };
-  const eras = Array.isArray(change.eras) ? HISTORY_ERAS.filter((e) => change.eras.includes(e)) : base.eras;
+  const baseLevels = levelsOf(current?.difficulty) && !current?.difficulties ? levelsOf(current.difficulty) : base.difficulties;
   return {
     rounds: change.rounds != null ? clamp(change.rounds, HISTORY_LIMITS.rounds, base.rounds) : base.rounds,
     roundMs: change.roundMs != null ? clamp(change.roundMs, HISTORY_LIMITS.roundMs, base.roundMs) : base.roundMs,
-    eras,
-    difficulty: HISTORY_DIFFICULTIES.includes(change.difficulty) ? change.difficulty : base.difficulty,
+    eras: pickList(change.eras, HISTORY_ERAS, base.eras),
+    categories: pickList(change.categories, TOPICS, base.categories),
+    difficulties: pickList(change.difficulties, HISTORY_LEVELS, levelsOf(change.difficulty) || baseLevels),
   };
 }
 
 /**
- * The Historia questions of the loaded bank (questions/questionBank.js: Supabase, the private file...). Without any
- * (Supabase not set up yet, or not uploaded) they come from history/events.js.
+ * The Historia questions: the events of history/events.js (the source of truth, with their topics) plus any other
+ * Historia rows of the loaded bank (questions/questionBank.js: Supabase...), so an event added to the list is played
+ * before it is uploaded, and a row only in the database is still played. Where both have the same id, the list wins.
  */
 export function historyBank(questions = []) {
-  const rows = questions.filter((q) => q.mode === HISTORY_MODE && q.type === "year");
-  return rows.length ? rows : buildHistoryQuestions().map(toQuestion);
+  const built = buildHistoryQuestions().map(toQuestion);
+  const known = new Set(built.map((q) => q.id));
+  const extra = questions.filter((q) => q.mode === HISTORY_MODE && q.type === "year" && !known.has(q.id));
+  return [...built, ...extra];
 }
 
-function questionsFor(bank, { eras, difficulty }) {
-  return bank.filter((q) => eras.includes(eraOf(q.data.year)) && (difficulty === "mixta" || q.difficulty === difficulty));
+/** The events that match the settings. `ignore` leaves one filter out (to count what each chip would add). */
+function questionsFor(bank, config, ignore = null) {
+  const { eras, categories, difficulties } = mergeHistoryConfig(config);
+  return bank.filter(
+    (q) =>
+      (ignore === "eras" || eras.includes(eraOf(q.data.year))) &&
+      (ignore === "categories" || categories.includes(q.category)) &&
+      (ignore === "difficulties" || difficulties.includes(q.difficulty))
+  );
 }
 
 /** How many events a match with these settings can draw from (it needs one per round). */
 export function countHistoryQuestions(bank, config) {
-  return questionsFor(bank, mergeHistoryConfig(config)).length;
+  return questionsFor(bank, config).length;
+}
+
+/** For the settings' chips: how many events each topic, age and difficulty has with the other settings. */
+export function historyCounts(bank, config) {
+  const tally = (ignore, key) => {
+    const out = {};
+    for (const q of questionsFor(bank, config, ignore)) out[key(q)] = (out[key(q)] || 0) + 1;
+    return out;
+  };
+  return {
+    categories: tally("categories", (q) => q.category),
+    eras: tally("eras", (q) => eraOf(q.data.year)),
+    difficulties: tally("difficulties", (q) => q.difficulty),
+  };
 }
 
 function shuffle(list) {
@@ -153,14 +189,14 @@ export function pickHistoryQuestions(bank, config) {
 }
 
 /**
- * The event of a tiebreak: one not asked in this match, from the chosen ages, of the match's difficulty (a middling
- * one when it was mixed).
+ * The event of a tiebreak: one not asked in this match, from the chosen ages and topics, of a middling difficulty when
+ * the match had it, else of the one it had.
  */
 export function pickHistoryTiebreak(bank, config, usedIds = []) {
-  const { eras, difficulty } = mergeHistoryConfig(config);
+  const settings = mergeHistoryConfig(config);
   const used = new Set(usedIds);
-  const left = questionsFor(bank, { eras, difficulty: "mixta" }).filter((q) => !used.has(q.id));
-  const level = difficulty === "mixta" ? "media" : difficulty;
+  const left = questionsFor(bank, { ...settings, difficulties: [...HISTORY_LEVELS] }).filter((q) => !used.has(q.id));
+  const level = settings.difficulties.includes("media") ? "media" : settings.difficulties[0];
   const pool = left.filter((q) => q.difficulty === level);
   const from = pool.length ? pool : left;
   return from.length ? toHistoryTrack(from[Math.floor(Math.random() * from.length)]) : null;

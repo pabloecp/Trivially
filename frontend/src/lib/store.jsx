@@ -494,6 +494,7 @@ export function AppProvider({ children }) {
       async restartGame() { const res = await emitAck("room:restart"); if (!res.ok) throw new Error(res.error); },
       async replayGame() { const res = await emitAck("room:replay"); if (!res.ok) throw new Error(res.error); },
       async endGame() { await emitAck("room:end"); },
+      async pauseGame(paused) { const res = await emitAck("room:pause", paused); if (!res.ok) throw new Error(res.error); },
 
       async answer(answerTextOrId) {
         const res = await emitAck("game:answer", answerTextOrId);
@@ -550,6 +551,8 @@ export function useApp() { return useContext(AppContext); }
 // Time left in the phase. `clockOffset` (server time minus ours) was taken when the snapshot arrived, so this keeps
 // counting down between snapshots instead of repeating the value the server sent.
 export function remainingMs(room) {
+  // Paused by the host: the time left stays where it stopped.
+  if (room?.paused) return room.paused.remainingMs;
   if (!room?.phaseEndsAt) return 0;
   return Math.max(0, room.phaseEndsAt - (Date.now() + (room.clockOffset || 0)));
 }
