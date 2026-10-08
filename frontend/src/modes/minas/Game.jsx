@@ -96,7 +96,8 @@ function GameScreen() {
   const cells = question?.cells || null;
   const me = room?.players?.find((p) => p.id === user?.id);
   // In a race ("carrera") there are no turns: each player picks as many cells as they like until they step on a mine.
-  const race = minesConfig(room).style === "carrera";
+  // Each round has its own way, when both are ticked.
+  const race = question?.style === "carrera";
   // Joined mid-match: watches the board and plays from the next match.
   const spectator = Boolean(me?.spectator);
   const out = phase === "playing" ? me?.out || null : null;

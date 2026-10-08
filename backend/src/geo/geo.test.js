@@ -77,8 +77,13 @@ assert.deepEqual(mergeGeoConfig({}, { rounds: 99, roundMs: 1, kinds: ["flag", "n
   rounds: 25,
   roundMs: 15000,
   kinds: ["capital", "flag"],
-  difficulty: "mixta",
+  difficulties: ["facil", "media", "dificil"],
 });
+// Several difficulties at once; an older client's single one (or "mixta") still works.
+assert.deepEqual(mergeGeoConfig({}, { difficulties: ["dificil", "facil", "x"] }).difficulties, ["facil", "dificil"]);
+assert.deepEqual(mergeGeoConfig({}, { difficulty: "media" }).difficulties, ["media"]);
+assert.deepEqual(mergeGeoConfig({ difficulty: "mixta" }).difficulties, ["facil", "media", "dificil"]);
+assert.deepEqual(mergeGeoConfig({}, { difficulties: [] }).difficulties, []);
 // Every kind can be unticked: there is then nothing to play.
 assert.deepEqual(mergeGeoConfig({}, { kinds: [] }).kinds, []);
 
@@ -99,7 +104,9 @@ assert.deepEqual(perKind, [3, 3, 4]);
 assert.equal(new Set(match.map((t) => t.country)).size, 10);
 assert.ok(match.every((t) => t.difficulty === "facil"));
 assert.equal(countGeoQuestions(bank, { kinds: ["location"], difficulty: "facil" }), rows.filter((q) => q.data.kind === "location" && q.difficulty === "facil").length);
-const tiebreak = pickTiebreakQuestion(bank, { difficulty: "mixta" }, match.map((t) => t.country));
+const two = pickGeoQuestions(bank, { rounds: 10, kinds: ["capital"], difficulties: ["facil", "dificil"] });
+assert.ok(two.every((t) => t.difficulty === "facil" || t.difficulty === "dificil"));
+const tiebreak = pickTiebreakQuestion(bank, {}, match.map((t) => t.country));
 assert.equal(tiebreak.kind, "location");
 assert.equal(tiebreak.difficulty, "media");
 assert.ok(!match.some((t) => t.country === tiebreak.country));

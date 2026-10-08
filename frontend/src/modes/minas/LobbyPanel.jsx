@@ -5,7 +5,7 @@ import SettingsPanel from "../../components/home/SettingsPanel.jsx";
 import { useApp } from "../../lib/store.jsx";
 import { findMode } from "../index.js";
 import MinesSettings from "./MinesSettings.jsx";
-import { findStyle, minesConfig } from "./minesInfo.js";
+import { MIXED_STEPS, findStyle, minesConfig } from "./minesInfo.js";
 import "../../styles/mines.css";
 
 // Campo de minas' waiting room, inside the room screen on Home: the mode's big card (how it's played, by turns or as
@@ -17,11 +17,12 @@ export default function LobbyPanel({ room, onToast }) {
 
   const mode = findMode("minas");
   const config = minesConfig(room);
-  const style = findStyle(config.style);
+  // The steps of the ticked way, or of both mixed.
+  const steps = config.styles.length === 1 ? findStyle(config.styles[0]).steps : MIXED_STEPS;
 
   return (
     <>
-      <ModeStage room={room} mode={{ ...mode, steps: style.steps }}>
+      <ModeStage room={room} mode={{ ...mode, steps }}>
         <ModeStart room={room} />
       </ModeStage>
 
@@ -30,7 +31,9 @@ export default function LobbyPanel({ room, onToast }) {
           {!mode.ready(room) && (
             <p className="tv-playlist-total is-short" role="status">
               <Icon name="lock" size={16} strokeWidth={2.6} />
-              {config.categories.length === 0 ? (
+              {config.styles.length === 0 ? (
+                <span>Elige al menos un modo de juego para empezar.</span>
+              ) : config.categories.length === 0 ? (
                 <span>Elige al menos una categoría para empezar.</span>
               ) : config.difficulties.length === 0 ? (
                 <span>Elige al menos una dificultad para empezar.</span>

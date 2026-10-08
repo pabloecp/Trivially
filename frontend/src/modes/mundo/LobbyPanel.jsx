@@ -32,10 +32,12 @@ export default function LobbyPanel({ room, onToast }) {
               <Icon name="lock" size={16} strokeWidth={2.6} />
               {config.kinds.length === 0 ? (
                 <span>Elige al menos un tipo de pregunta para empezar.</span>
+              ) : config.difficulties.length === 0 ? (
+                <span>Elige al menos una dificultad para empezar.</span>
               ) : (
                 <span>
                   Solo hay <strong>{room.questionsReady} preguntas</strong> con estos ajustes para {config.rounds} rondas.
-                  Baja las rondas o elige más tipos.
+                  Baja las rondas o elige más tipos o dificultades.
                 </span>
               )}
             </p>
