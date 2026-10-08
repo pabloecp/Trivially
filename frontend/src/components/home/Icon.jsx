@@ -193,6 +193,33 @@ const PATHS = {
     </>
   ),
   // Scalloped badge with a check cut out, like Instagram's verified mark. The badge takes the text colour.
+  send: (
+    <>
+      <path d="M14.5 21.2a.5.5 0 0 0 .94-.03l6.5-19a.5.5 0 0 0-.64-.63l-19 6.5a.5.5 0 0 0-.03.93l7.93 3.18a2 2 0 0 1 1.11 1.11Z" />
+      <path d="m21.85 2.15-10.94 10.94" />
+    </>
+  ),
+  chat: <path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z" />,
+  musicOff: (
+    <>
+      <path d="M9 18V5l12-2v13" />
+      <circle cx="6" cy="18" r="3" />
+      <circle cx="18" cy="16" r="3" />
+      <path d="M3 3l18 18" />
+    </>
+  ),
+  volume: (
+    <>
+      <path d="M11 4.7a.7.7 0 0 0-1.2-.5L6.4 7.6A1.4 1.4 0 0 1 5.4 8H3a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2.4a1.4 1.4 0 0 1 1 .4l3.4 3.4a.7.7 0 0 0 1.2-.5Z" />
+      <path d="M16 9a5 5 0 0 1 0 6M19.4 18.4a9 9 0 0 0 0-12.8" />
+    </>
+  ),
+  mute: (
+    <>
+      <path d="M11 4.7a.7.7 0 0 0-1.2-.5L6.4 7.6A1.4 1.4 0 0 1 5.4 8H3a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2.4a1.4 1.4 0 0 1 1 .4l3.4 3.4a.7.7 0 0 0 1.2-.5Z" />
+      <path d="m22 9-6 6M16 9l6 6" />
+    </>
+  ),
   verified: (
     <>
       <path

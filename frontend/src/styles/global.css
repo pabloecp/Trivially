@@ -776,7 +776,7 @@ button, input, select {
   flex-shrink: 0;
 }
 
-/* Avatar Component */
+/* Avatar Component: flat, no border or shadow, like the new design's faces. */
 .avatar {
   display: inline-flex;
   align-items: center;
@@ -786,8 +786,6 @@ button, input, select {
   font-weight: 800;
   text-transform: uppercase;
   flex-shrink: 0;
-  border: 2px solid var(--border);
-  box-shadow: var(--shadow-sm);
 }
 
 /* Podium & Results */

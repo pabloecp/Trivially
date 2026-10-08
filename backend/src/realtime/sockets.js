@@ -77,6 +77,18 @@ export function attachSockets(io, rooms) {
       }
     });
 
+    // A chat message to everyone in the room.
+    socket.on("room:chat", (text, ack) => {
+      try {
+        const { room, userId } = requireRoom(rooms, socket);
+        rooms.sendChat(room, userId, text);
+        ack?.({ ok: true });
+        io.to(room.code).emit("room:state", rooms.publicState(room));
+      } catch (err) {
+        ack?.({ ok: false, error: err.message });
+      }
+    });
+
     // A player suggests a game to the host (once every few seconds).
     socket.on("room:suggest", (game, ack) => {
       try {
@@ -131,6 +143,18 @@ export function attachSockets(io, rooms) {
         const { room, userId } = requireRoom(rooms, socket);
         const result = rooms.toggleConfigPermission(room, userId, targetUserId);
         ack?.({ ok: true, ...result, state: rooms.publicState(room, userId) });
+        io.to(room.code).emit("room:state", rooms.publicState(room));
+      } catch (err) {
+        ack?.({ ok: false, error: err.message });
+      }
+    });
+
+    // The host makes another player the host.
+    socket.on("room:giveHost", (targetUserId, ack) => {
+      try {
+        const { room, userId } = requireRoom(rooms, socket);
+        rooms.giveHost(room, userId, targetUserId);
+        ack?.({ ok: true, state: rooms.publicState(room, userId) });
         io.to(room.code).emit("room:state", rooms.publicState(room));
       } catch (err) {
         ack?.({ ok: false, error: err.message });

@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { hydrateSong } from "../catalog/catalogProvider.js";
+import { BACKGROUND_MUSIC } from "../music/background.js";
 import { selectSongs } from "../catalog/songSelector.js";
 import { listSpotifyPlaylists } from "../catalog/spotifyLibrary.js";
 import {
@@ -321,6 +322,13 @@ export function createApiRouter({ catalog, store, songList = () => [] }) {
       return { id: h.id, title: h.title, artistName: h.artistName, albumName: h.albumName, year: h.year, image: h.image, previewUrl: h.previewUrl };
     });
     res.json({ count: songs.length, matchingCount: songs.length, songs });
+  });
+
+  // The site's background music (frontend/src/lib/music.js): its options, each with its songs' previews.
+  router.get("/music/background", (_req, res) => {
+    // Asked again every time, so a change to the list shows on the next reload.
+    res.set("Cache-Control", "no-cache");
+    res.json({ options: BACKGROUND_MUSIC });
   });
 
   // --- Leaderboard ---

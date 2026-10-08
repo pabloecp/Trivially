@@ -71,6 +71,7 @@ export default function MatchResults({ room, color = "green" }) {
                 </button>
                 <button
                   className="tv-btn tv-btn--block tv-c-neutral"
+                  data-sound="back"
                   onClick={() => restartGame().catch((e) => setErr(e.message || "No se pudo volver al lobby"))}
                   type="button"
                 >

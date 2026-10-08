@@ -47,7 +47,7 @@ export default function MinesSettings({ room, updateConfig, onToast, children, r
   return (
     <fieldset className="tv-settings" disabled={readOnly}>
       <OptionRow
-        label="Modos de Juego"
+        label="Modos de juego"
         options={STYLES.map((s) => ({ value: s.id, label: s.label, title: s.hint }))}
         value={draft.style}
         onChange={(style) => save({ style })}

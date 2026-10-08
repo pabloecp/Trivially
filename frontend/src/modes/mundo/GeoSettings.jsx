@@ -2,8 +2,9 @@ import { useEffect, useState } from "react";
 import OptionRow, { rangeOptions } from "../../components/home/OptionRow.jsx";
 import { DIFFICULTIES, KINDS, ROUNDS_LIMITS, SECONDS_LIMITS, geoConfig } from "./geoInfo.js";
 
-// Settings of a Geografía match, in the settings panel: which kinds of question, the difficulty, how many rounds and
-// the seconds to write an answer (map rounds always last 10 s). Every tap is saved straight away for the whole room.
+// Settings of a Geografía match, in the settings panel: which kinds of question and difficulties (tick as many as you
+// like; with one list empty the match can't start), how many rounds and the seconds to write an answer (map rounds
+// always last 10 s). Every tap is saved straight away for the whole room.
 // With `readOnly` (players without permission) everything shows but nothing can be tapped.
 export default function GeoSettings({ room, updateConfig, onToast, children, readOnly = false }) {
   const saved = geoConfig(room);
@@ -12,7 +13,7 @@ export default function GeoSettings({ room, updateConfig, onToast, children, rea
   // Another player with permission may change them too.
   useEffect(() => {
     setDraft(saved);
-  }, [saved.rounds, saved.roundMs, saved.difficulty, saved.kinds.join()]);
+  }, [saved.rounds, saved.roundMs, saved.difficulties.join(), saved.kinds.join()]);
 
   async function save(change) {
     if (readOnly) return;
@@ -26,9 +27,11 @@ export default function GeoSettings({ room, updateConfig, onToast, children, rea
     }
   }
 
-  function toggleKind(id) {
-    const on = draft.kinds.includes(id);
-    save({ kinds: KINDS.map((k) => k.id).filter((k) => (k === id ? !on : draft.kinds.includes(k))) });
+  // Ticks or unticks one choice of a list, keeping the list's order.
+  function toggle(key, all, id) {
+    const list = draft[key];
+    const on = list.includes(id);
+    save({ [key]: all.filter((v) => (v === id ? !on : list.includes(v))) });
   }
 
   const writtenKinds = draft.kinds.some((k) => k !== "location");
@@ -36,18 +39,20 @@ export default function GeoSettings({ room, updateConfig, onToast, children, rea
   return (
     <fieldset className="tv-settings" disabled={readOnly}>
       <OptionRow
-        label="Modos de Juego"
+        label="Modos de juego"
         multi
         options={KINDS.map((k) => ({ value: k.id, label: k.label, title: k.hint }))}
         value={draft.kinds}
-        onChange={toggleKind}
+        onChange={(id) => toggle("kinds", KINDS.map((k) => k.id), id)}
         onSetAll={(kinds) => save({ kinds })}
       />
       <OptionRow
         label="Dificultad"
-        options={DIFFICULTIES.map((d) => ({ value: d.id, label: d.label }))}
-        value={draft.difficulty}
-        onChange={(v) => save({ difficulty: v })}
+        multi
+        options={DIFFICULTIES.map((d) => ({ value: d.id, label: d.label, title: d.hint }))}
+        value={draft.difficulties}
+        onChange={(id) => toggle("difficulties", DIFFICULTIES.map((d) => d.id), id)}
+        onSetAll={(difficulties) => save({ difficulties })}
       />
       <OptionRow label="Rondas" options={rangeOptions(ROUNDS_LIMITS)} value={draft.rounds} onChange={(n) => save({ rounds: n })} />
       {writtenKinds && (

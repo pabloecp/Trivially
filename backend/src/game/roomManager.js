@@ -81,6 +81,10 @@ const RECONNECT_GRACE_MS = 20000;
 // A player can suggest a game this often, and a suggestion stays on the host's screen this long.
 export const SUGGEST_COOLDOWN_MS = 5000;
 const SUGGESTION_TTL_MS = 60000;
+// The room's chat: how long a message can be, how many the room keeps (the newest), and how often one player can send.
+export const CHAT_MAX_LENGTH = 200;
+const CHAT_KEEP = 40;
+const CHAT_GAP_MS = 700;
 
 export function assertGame(game) {
   if (game === null || GAME_IDS.includes(game)) return game;
@@ -355,6 +359,23 @@ export class RoomManager {
       granted = true;
     }
     return { granted, coHosts: [...room.coHosts] };
+  }
+
+  // The host hands the room to another connected player, who becomes the host; the old host keeps the permission to
+  // change the settings (a co-host). Like a host who leaves, it clears what the old host was pointing at on the game
+  // menu and the suggestions sent to them.
+  giveHost(room, hostUserId, targetUserId) {
+    if (!room) throw new Error("Sala no encontrada");
+    if (room.hostId !== hostUserId) throw new Error("Solo el anfitrión puede pasar el anfitrión");
+    if (hostUserId === targetUserId) throw new Error("Ya eres el anfitrión");
+    const player = room.players.get(targetUserId);
+    if (!player) throw new Error("El jugador no está en la sala");
+    if (!player.connected) throw new Error("Ese jugador no está conectado ahora");
+    room.hostId = targetUserId;
+    room.coHosts = [...(room.coHosts || []).filter((id) => id !== targetUserId && id !== hostUserId), hostUserId];
+    room.preview = null;
+    room.suggestions = [];
+    return { name: player.name };
   }
 
   // The host removes a player for good: their seat goes (even mid-match) and they can't join this room again.
@@ -1008,6 +1029,26 @@ export class RoomManager {
     room.suggestions.push({ userId, name: player.name, game, at: Date.now() });
   }
 
+  /**
+   * A chat message from a player of the room (PartyPanel's chat). Spaces are squeezed and it is cut at CHAT_MAX_LENGTH;
+   * the room keeps the newest CHAT_KEEP, and a player can send one every CHAT_GAP_MS. It is closed while a round is
+   * played (countdown and playing), so nobody can pass on the answer. Like the rest of the room it lives only in memory.
+   */
+  sendChat(room, userId, text) {
+    const player = room.players.get(userId);
+    if (!player) throw new Error("Jugador no encontrado");
+    if (room.phase === "countdown" || room.phase === "playing") throw new Error("El chat se pausa mientras se juega la ronda");
+    const clean = String(text ?? "").replace(/\s+/g, " ").trim().slice(0, CHAT_MAX_LENGTH);
+    if (!clean) throw new Error("Escribe un mensaje");
+    const now = Date.now();
+    if (now - (player.chattedAt || 0) < CHAT_GAP_MS) throw new Error("Espera un momento antes de mandar otro mensaje");
+    player.chattedAt = now;
+    room.chatSeq = (room.chatSeq || 0) + 1;
+    room.chat = [...(room.chat || []), { id: room.chatSeq, userId, name: player.name, avatar: player.avatar, text: clean, at: now }].slice(
+      -CHAT_KEEP
+    );
+  }
+
   // The game the host is pointing at on the menu, so every player sees it live before it is picked. Only while the
   // room has no game; it is cleared as soon as one is picked (or the host changes).
   previewGame(room, userId, game) {
@@ -1432,15 +1473,14 @@ export class RoomManager {
     return !hitsLeft || !standing;
   }
 
-  /** Campo de minas, at the reveal: each player's round in one line ("3 aciertos, luego una mina"), and its points. */
+  /** Campo de minas, at the reveal: each player's round in a few words ("3 aciertos", "Pisó una mina"), and its points. */
   gradeMines(room) {
     for (const player of room.players.values()) {
       const field = player.minefield;
       if (!field) continue;
-      const hits = field.hits === 1 ? "1 acierto" : `${field.hits} aciertos`;
-      let text = field.hits ? hits : "Sin aciertos";
-      if (field.out === "mina") text = field.hits ? `${hits}, luego una mina` : "Mina a la primera";
-      else if (field.out === "tiempo") text = field.hits ? `${hits}, sin tiempo` : "Sin tiempo";
+      let text = field.hits === 1 ? "1 acierto" : field.hits ? `${field.hits} aciertos` : "Sin aciertos";
+      if (field.out === "mina") text = "Pisó una mina";
+      else if (field.out === "tiempo") text = "Sin tiempo";
       player.lastPoints = field.points;
       player.lastAnswer = { text, correct: field.hits > 0, hits: field.hits, out: field.out, at: Date.now() };
     }
@@ -1556,6 +1596,8 @@ export class RoomManager {
           .sort((a, b) => b.wins - a.wins || b.played - a.played),
       },
       coHosts: [...(room.coHosts || [])],
+      // The room's chat, oldest first (sendChat).
+      chat: room.chat || [],
       // What the host is pointing at on the game menu (null once a game is picked).
       preview: room.game ? null : room.preview || null,
       // Games the other players suggested to the host, newest last (only while the room is on the menu).

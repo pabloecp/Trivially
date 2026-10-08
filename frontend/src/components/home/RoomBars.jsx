@@ -7,8 +7,10 @@ import Avatar from "./Avatar.jsx";
 import Icon from "./Icon.jsx";
 import { useStartGame } from "./ModeStart.jsx";
 import PartyPanel from "./PartyPanel.jsx";
+import { ChatButton } from "./RoomChat.jsx";
 import { useRoomExit } from "./TvTopbar.jsx";
 import { useInvite } from "./useInvite.js";
+import VolumeMenu from "./VolumeMenu.jsx";
 
 const STACK = 5;
 
@@ -16,7 +18,7 @@ const STACK = 5;
 // the left of the logo, which is not a button, is the top bar's "Volver" (see `useRoomExit`), only its arrow here:
 // back to the game modes for the host once a game is picked, otherwise out of the room after asking (two taps).
 // Then the room's code and your role, the players' faces (tap: the room's column drops down, with everyone and the
-// way out) and your own avatar, to your profile, which is only there on the game menu (not once a game is picked).
+// way out), the volume and your own avatar, to your profile.
 export function RoomHeader({ room, onToast }) {
   const { user } = useApp();
   const { toModes, confirmLeave, press } = useRoomExit({ onError: onToast });
@@ -75,7 +77,8 @@ export function RoomHeader({ room, onToast }) {
         </span>
         <Icon name="chevron" size={18} strokeWidth={3} className="tv-roomhead-chevron" />
       </button>
-      {user && !room.game && (
+      <VolumeMenu />
+      {user && (
         <Link to="/profile" className="tv-roomhead-me" aria-label={`Tu perfil: ${user.name}`}>
           <Avatar name={user.name} avatar={user.avatar} />
         </Link>
@@ -89,8 +92,9 @@ export function RoomHeader({ room, onToast }) {
   );
 }
 
-// Phones only (home.css): the bar pinned to the bottom of the room screen. The invite link, and the host's
-// "Empezar" (in the picked game's colour; "Elige un modo de juego" until there is one). Everyone else sees who they wait for.
+// Phones only (home.css): the bar pinned to the bottom of the room screen. The invite link, the chat (with how many
+// messages from others came since it was last open), and the host's "Empezar" (in the picked game's colour; "Elige un
+// modo de juego" until there is one). Everyone else sees who they wait for.
 export function RoomDock({ room, onToast }) {
   const mode = findMode(room.game);
   const { isHost, canStart, busy, err, start } = useStartGame(room);
@@ -108,10 +112,11 @@ export function RoomDock({ room, onToast }) {
         >
           <Icon name={copied ? "check" : "link"} size={22} strokeWidth={2.6} />
         </button>
+        <ChatButton room={room} className="tv-btn tv-c-neutral tv-roomdock-invite" />
         {isHost ? (
           <button
             type="button"
-            className={`tv-btn tv-c-${mode?.color || "neutral"} tv-roomdock-start`}
+            className={`tv-btn tv-c-${mode?.color || "neutral"} tv-roomdock-start${mode ? "" : " is-pick"}`}
             onClick={start}
             disabled={!canStart}
           >

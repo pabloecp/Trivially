@@ -75,10 +75,10 @@ export default function ConfirmDialog({ open, title, text, icon = "logout", canc
           </div>
           <p id="tv-confirm-text" className="tv-confirm-text">{text}</p>
           <div className="tv-confirm-actions">
-            <button ref={cancelRef} type="button" className="tv-btn tv-c-neutral" onClick={onCancel}>
+            <button ref={cancelRef} type="button" className="tv-btn tv-c-neutral" data-sound="back" onClick={onCancel}>
               {cancelLabel}
             </button>
-            <button type="button" className="tv-btn tv-btn--bad" onClick={onConfirm}>
+            <button type="button" className="tv-btn tv-btn--bad" data-sound="back" onClick={onConfirm}>
               {confirmLabel}
             </button>
           </div>

@@ -220,7 +220,7 @@ function GameScreen() {
           id: p.id,
           year: p.lastAnswer.year,
           color: colorOf(p.id),
-          label: p.id === user?.id ? "Tú" : p.name.slice(0, 12),
+          label: p.name.slice(0, 12),
           isMe: p.id === user?.id,
         }))
     : [];
@@ -409,10 +409,10 @@ function closestText(room, user, fmt) {
   if (room.players.length < 2) return "";
   if (!answers.length) return "Nadie eligió un año a tiempo.";
   const best = Math.min(...answers.map((p) => p.lastAnswer.diff));
-  const names = answers.filter((p) => p.lastAnswer.diff === best).map((p) => (p.id === user?.id ? "tú" : p.name));
+  const names = answers.filter((p) => p.lastAnswer.diff === best).map((p) => p.name);
   const who = joinNames(names);
   const label = who[0].toUpperCase() + who.slice(1);
-  if (best === 0) return names.length > 1 ? `¡${label} clavaron el año!` : `¡${label} ${names[0] === "tú" ? "clavaste" : "clavó"} el año!`;
+  if (best === 0) return names.length > 1 ? `¡${label} clavaron el año!` : `¡${label} clavó el año!`;
   return sentence(`Más cerca: ${label}, a ${yearsText(best)} de ${fmt(room.reveal.year)}`);
 }
 

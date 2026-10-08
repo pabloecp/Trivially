@@ -6,6 +6,8 @@ import AppIcon from "./AppIcon.jsx";
 import ConfirmDialog from "./ConfirmDialog.jsx";
 import Icon from "./Icon.jsx";
 import ProfileChip from "./ProfileChip.jsx";
+import TempSoundMenu from "./TempSoundMenu.jsx";
+import VolumeMenu from "./VolumeMenu.jsx";
 
 // The button on the left of the logo goes back one step, which depends on where you are in the room:
 //  - the host, in a game's panel (`toModes`): back to the game menu, for everyone in the room;
@@ -57,7 +59,7 @@ export function useRoomExit({ onRoomScreen = true, onError } = {}) {
 }
 
 // Same top bar on every screen: on the left the way back and the small logo with "trivially", which is just the
-// brand and goes nowhere; profile and theme toggle on the right. The way back is "Volver" everywhere:
+// brand and goes nowhere; the volume (music and sounds) and the profile on the right. The way back is "Volver" everywhere:
 //  - on the room's own screen (see `useRoomExit`): back to the game menu, or out of the room after asking;
 //  - on a match's screen it is an "X" that asks in a modal before leaving;
 //  - on any other page (profile...): back to the room, or to the match if one is running, and to Inicio when there is
@@ -70,9 +72,6 @@ export default function TvTopbar() {
   const awayFromRoom = Boolean(roomTarget) && pathname !== roomTarget;
   const inMatch = Boolean(room) && room.phase !== "lobby";
   const onHome = !room && pathname === "/";
-  // Your profile is one tap away only on Home and on the game menu; with a game picked, in a match or on any other
-  // page it stays out of the way.
-  const showProfile = onHome || (Boolean(room) && pathname === roomTarget && room.phase === "lobby" && !room.game);
   const [modesErr, setModesErr] = useState("");
   const { toModes, inGame, confirmLeave, press, leaveNow } = useRoomExit({
     onRoomScreen: pathname === roomTarget,
@@ -159,12 +158,15 @@ export default function TvTopbar() {
           </div>
         </div>
         <div className="tv-topbar-end">
-          {showProfile && <ProfileChip user={user} />}
+          {/* TEMPORARY: the music and sounds menu, while one of each is chosen. */}
+          <TempSoundMenu />
+          <VolumeMenu />
+          <ProfileChip user={user} />
         </div>
       </header>
       <ConfirmDialog
         open={leaving && inGame}
-        title="¿Seguro que quieres salir del juego?"
+        title="¿Seguro que quieres salir?"
         text="Saldrás de la sala y dejarás la partida en curso."
         cancelLabel="Seguir jugando"
         confirmLabel="Salir"

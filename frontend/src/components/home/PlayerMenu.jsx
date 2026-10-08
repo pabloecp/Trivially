@@ -1,14 +1,16 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { useApp } from "../../lib/store.jsx";
 import Icon from "./Icon.jsx";
 import { profilePath } from "./PlayerName.jsx";
 
 // What tapping a player offers, in the room card and on the live scoreboard: their profile (registered players),
-// and for the host, letting them change the match settings or not.
+// and for the host, letting them change the match settings or not, making them the host (a second tap confirms it)
+// and taking them out of the room.
 export default function PlayerMenu({ player, isMe, canManage, onClose, onToast }) {
-  const { toggleConfigPermission, kickPlayer } = useApp();
+  const { toggleConfigPermission, kickPlayer, giveHost } = useApp();
   const ref = useRef(null);
+  const [confirmHost, setConfirmHost] = useState(false);
 
   useEffect(() => {
     const away = (e) => {
@@ -30,6 +32,20 @@ export default function PlayerMenu({ player, isMe, canManage, onClose, onToast }
       onToast?.(res?.granted ? `${player.name} ya puede cambiar los ajustes` : `${player.name} ya no puede cambiar los ajustes`, "check");
     } catch (err) {
       onToast?.(err.message || "No se pudieron cambiar los permisos");
+    }
+  }
+
+  async function makeHost() {
+    if (!confirmHost) {
+      setConfirmHost(true);
+      return;
+    }
+    onClose();
+    try {
+      await giveHost(player.id);
+      onToast?.(`${player.name} ahora es el anfitrión`, "check");
+    } catch (err) {
+      onToast?.(err.message || "No se pudo pasar el anfitrión");
     }
   }
 
@@ -58,6 +74,18 @@ export default function PlayerMenu({ player, isMe, canManage, onClose, onToast }
         <button type="button" role="menuitem" className="tv-player-menu-item" onClick={togglePermission}>
           <Icon name={player.canEditConfig ? "lock" : "check"} size={16} strokeWidth={2.8} />
           {player.canEditConfig ? "Quitar permiso de ajustes" : "Dar permiso de ajustes"}
+        </button>
+      )}
+      {canManage && player.connected && (
+        <button
+          type="button"
+          role="menuitem"
+          className={`tv-player-menu-item${confirmHost ? " is-confirm" : ""}`}
+          data-sound={confirmHost ? "next" : undefined}
+          onClick={makeHost}
+        >
+          <Icon name="crown" size={16} strokeWidth={2.2} />
+          {confirmHost ? "¿Seguro? Toca otra vez" : "Hacer anfitrión"}
         </button>
       )}
       {canManage && (

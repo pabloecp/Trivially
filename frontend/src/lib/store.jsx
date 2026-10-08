@@ -448,6 +448,12 @@ export function AppProvider({ children }) {
         return emitAck("room:preview", next).catch(() => {});
       },
 
+      // A message to the room's chat (the server refuses it while a round is played, or too soon after the last one).
+      async sendChat(text) {
+        const res = await emitAck("room:chat", text);
+        if (!res.ok) throw new Error(res.error);
+      },
+
       // Any player but the host: suggests a game to the host (allowed once every 5 s; the error says how long to wait).
       async suggestGame(game) {
         // An older server doesn't know this event and never answers: don't leave the player waiting in silence.
@@ -481,6 +487,13 @@ export function AppProvider({ children }) {
         if (!res.ok) throw new Error(res.error);
         if (res.state) setRoom(res.state);
         return res;
+      },
+
+      // The host makes another player the host (and keeps the permission to change the settings).
+      async giveHost(targetUserId) {
+        const res = await emitAck("room:giveHost", targetUserId);
+        if (!res.ok) throw new Error(res.error);
+        if (res.state) setRoom(res.state);
       },
 
       async kickPlayer(targetUserId) {

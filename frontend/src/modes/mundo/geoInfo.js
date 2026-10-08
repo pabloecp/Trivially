@@ -6,9 +6,8 @@ export const KINDS = [
   { id: "location", label: "Ubicación", hint: "Pin en el mapa · 10 s", icon: "pin" },
 ];
 
-// The harder, the deeper the mode's blue; mixed takes the site's accent (colours in styles/geo.css).
+// The harder, the deeper the mode's blue (colours in styles/geo.css). A match mixes any of them that are ticked.
 export const DIFFICULTIES = [
-  { id: "mixta", label: "Mixta", hint: "Las tres mezcladas", color: "accent", stars: 0 },
   { id: "facil", label: "Fácil", hint: "Los más conocidos", color: "world-light", stars: 1 },
   { id: "media", label: "Media", hint: "Un poco de todo", color: "world", stars: 2 },
   { id: "dificil", label: "Difícil", hint: "Solo expertos", color: "world-deep", stars: 3 },
@@ -36,7 +35,7 @@ export function geoConfig(room) {
     rounds: geo.rounds || 5,
     roundMs: geo.roundMs || 15000,
     kinds: geo.kinds ?? KINDS.map((k) => k.id),
-    difficulty: geo.difficulty || "mixta",
+    difficulties: geo.difficulties ?? DIFFICULTIES.map((d) => d.id),
   };
 }
 

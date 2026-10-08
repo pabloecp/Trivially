@@ -10,7 +10,9 @@ const MAP_NAMES = new Map(COUNTRIES.filter((c) => c.map.length).map((c) => [c.co
 
 export const GEO_GAME = GEO_MODE;
 export { GEO_KINDS };
-export const GEO_DIFFICULTIES = ["facil", "media", "dificil", "mixta"];
+export const GEO_LEVELS = ["facil", "media", "dificil"];
+// Older clients send one `difficulty`, "mixta" being all three.
+export const GEO_DIFFICULTIES = [...GEO_LEVELS, "mixta"];
 // Same limits as the sliders on screen (frontend/src/modes/mundo/geoInfo.js).
 export const GEO_LIMITS = {
   rounds: { min: 5, max: 25 },
@@ -28,20 +30,27 @@ const LOCATION_NEAR_POINTS = 800;
 const LOCATION_FALLOFF_KM = 900;
 
 export function defaultGeoConfig() {
-  return { rounds: 5, roundMs: 15000, kinds: [...GEO_KINDS], difficulty: "mixta" };
+  return { rounds: 5, roundMs: 15000, kinds: [...GEO_KINDS], difficulties: [...GEO_LEVELS] };
 }
 
 const clamp = (n, { min, max }, fallback) => Math.min(max, Math.max(min, Math.round(Number(n)) || fallback));
 
-/** Merges a settings change into the current Geografía settings, keeping every value valid. */
+const pickList = (change, allowed, fallback) => (Array.isArray(change) ? allowed.filter((v) => change.includes(v)) : fallback);
+// A single difficulty of an older client as the list of levels it means.
+const levelsOf = (difficulty) => (difficulty === "mixta" ? [...GEO_LEVELS] : GEO_LEVELS.includes(difficulty) ? [difficulty] : null);
+
+/**
+ * Merges a settings change into the current Geografía settings, keeping every value valid. The kinds and the
+ * difficulties may be left empty (the match then has no questions and can't start).
+ */
 export function mergeGeoConfig(current, change = {}) {
   const base = { ...defaultGeoConfig(), ...current };
-  const kinds = Array.isArray(change.kinds) ? GEO_KINDS.filter((k) => change.kinds.includes(k)) : base.kinds;
+  const baseLevels = levelsOf(current?.difficulty) && !current?.difficulties ? levelsOf(current.difficulty) : base.difficulties;
   return {
     rounds: change.rounds != null ? clamp(change.rounds, GEO_LIMITS.rounds, base.rounds) : base.rounds,
     roundMs: change.roundMs != null ? clamp(change.roundMs, GEO_LIMITS.roundMs, base.roundMs) : base.roundMs,
-    kinds,
-    difficulty: GEO_DIFFICULTIES.includes(change.difficulty) ? change.difficulty : base.difficulty,
+    kinds: pickList(change.kinds, GEO_KINDS, base.kinds),
+    difficulties: pickList(change.difficulties, GEO_LEVELS, levelsOf(change.difficulty) || baseLevels),
   };
 }
 
@@ -56,8 +65,8 @@ export function geoBank(questions = []) {
   return [...rows, ...buildGeoQuestions().filter((q) => missing.includes(q.data.kind)).map(toQuestion)];
 }
 
-function questionsFor(bank, { kinds, difficulty }) {
-  return bank.filter((q) => kinds.includes(q.data.kind) && (difficulty === "mixta" || q.difficulty === difficulty));
+function questionsFor(bank, { kinds, difficulties }) {
+  return bank.filter((q) => kinds.includes(q.data.kind) && difficulties.includes(q.difficulty));
 }
 
 /** How many questions a match with these settings can draw from (it needs one per round). */
@@ -119,13 +128,13 @@ export function pickGeoQuestions(bank, config) {
 
 /**
  * The map question of a tiebreak: a country not asked in this match, of the match's difficulty (a middling one when
- * it was mixed, so somebody can find it).
+ * several were ticked, so somebody can find it).
  */
 export function pickTiebreakQuestion(bank, config, usedCountries = []) {
-  const { difficulty } = mergeGeoConfig(config);
+  const { difficulties } = mergeGeoConfig(config);
   const used = new Set(usedCountries);
   const maps = bank.filter((q) => q.data.kind === "location" && !used.has(q.data.country));
-  const level = difficulty === "mixta" ? "media" : difficulty;
+  const level = difficulties.length !== 1 ? "media" : difficulties[0];
   const pool = maps.filter((q) => q.difficulty === level);
   const from = pool.length ? pool : maps;
   return from.length ? toGeoTrack(from[Math.floor(Math.random() * from.length)]) : null;
