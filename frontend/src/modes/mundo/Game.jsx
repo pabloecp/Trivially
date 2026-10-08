@@ -12,6 +12,7 @@ import { useWorld } from "./worldData.js";
 import { LOCATION_SECONDS, findKind } from "./geoInfo.js";
 import "../../styles/home.css";
 import "../../styles/geo.css";
+import { PauseButton, PauseVeil } from "../../components/home/PauseControls.jsx";
 
 const COUNTDOWN_MS = 3000;
 // One colour per player for the pins on the reveal map (never the green and red of right and wrong).
@@ -363,6 +364,7 @@ function GameScreen() {
           </div>
 
           <div className="tv-game-tools">
+            <PauseButton room={room} isHost={isHost} onError={setErr} />
             {isHost && (
               <button
                 type="button"
@@ -383,6 +385,7 @@ function GameScreen() {
         {/* The same map for the whole match: a map round puts pins on it, a written one floats over it and its reveal
             flies to the country. Only what's on it changes, never its size. */}
         <section className={`tv-card tv-geo-map-card is-${phase}${isMap ? " is-map" : " is-written"}`}>
+          <PauseVeil room={room} isHost={isHost} />
           {world ? (
             <WorldMap
               world={world}

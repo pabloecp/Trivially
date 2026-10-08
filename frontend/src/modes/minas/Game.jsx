@@ -11,6 +11,7 @@ import { findDifficulty, hitsText, minesConfig } from "./minesInfo.js";
 import "../../styles/home.css";
 import "../../styles/quiz.css";
 import "../../styles/mines.css";
+import { PauseButton, PauseVeil } from "../../components/home/PauseControls.jsx";
 
 const COUNTDOWN_MS = 3000;
 const CELLS = 25;
@@ -259,6 +260,7 @@ function GameScreen() {
           </div>
 
           <div className="tv-game-tools">
+            <PauseButton room={room} isHost={isHost} onError={setErr} />
             {isHost && (
               <button
                 type="button"
@@ -278,6 +280,7 @@ function GameScreen() {
 
         {question ? (
           <section key={round} className="tv-game-stage tv-mines-stage">
+            <PauseVeil room={room} isHost={isHost} />
             {/* One row over the board, always as tall: the board's counters, and at the reveal how this player's
                 round went. */}
             <div className="tv-mines-bar">
@@ -355,6 +358,7 @@ function GameScreen() {
           </section>
         ) : (
           <section className="tv-game-stage tv-countdown">
+            <PauseVeil room={room} isHost={isHost} />
             <p className="tv-party-status">
               <span className="tv-pulse" aria-hidden="true" />
               Cargando el tablero…

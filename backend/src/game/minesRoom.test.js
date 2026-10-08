@@ -223,6 +223,29 @@ stop(r2);
 assert.equal(r2.turn, 2, "the turn moved on without B");
 stop(r2);
 
+// Paused: nobody can pick, and a player leaving doesn't move the turn on until "Reanudar".
+const r3 = mgr.create({ host: { id: "h", name: "H", socketId: "ph" }, mode: "multi", game: "minas" });
+mgr.addPlayer(r3, { id: "g", name: "G", socketId: "pg" });
+mgr.addPlayer(r3, { id: "k", name: "K", socketId: "pk" });
+mgr.updateConfig(r3, "h", { mines: { styles: ["turnos"] } });
+mgr.start(r3, "h");
+stop(r3);
+known(r3);
+mgr.beginPlaying(r3);
+stop(r3);
+mgr.pickCell(r3, "h", { cell: 0, turn: 1 });
+mgr.pickCell(r3, "g", { cell: 1, turn: 1 });
+mgr.pause(r3, "h");
+assert.throws(() => mgr.pickCell(r3, "k", { cell: 2, turn: 1 }), /pausa/);
+mgr.kick(r3, "h", "k");
+assert.equal(r3.turn, 1, "paused: the turn waits");
+assert.ok(r3.paused, "still paused");
+mgr.resume(r3, "h");
+stop(r3);
+assert.equal(r3.turn, 2, "on Reanudar the turn moves on without K");
+assert.equal(r3.paused, null);
+stop(r3);
+
 // ---- A race ("carrera"): no turns, each player picks as many cells as they like until they step on a mine ----
 const race = mgr.create({ host: { id: "c1", name: "Carla", socketId: "c1" }, mode: "multi", game: "minas" });
 mgr.addPlayer(race, { id: "c2", name: "Dani", socketId: "c2" });

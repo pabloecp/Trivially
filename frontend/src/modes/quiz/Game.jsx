@@ -10,6 +10,7 @@ import { BACKEND_URL } from "../../lib/config.js";
 import { useApp, useRemainingMs } from "../../lib/store.jsx";
 import { OPTION_LETTERS, findDifficulty, quizConfig } from "./quizInfo.js";
 import "../../styles/home.css";
+import { PauseButton, PauseVeil } from "../../components/home/PauseControls.jsx";
 import "../../styles/quiz.css";
 import "../../styles/geo.css";
 
@@ -330,7 +331,7 @@ function WriteRound({ room, question, me, answer, skipSong, seconds }) {
 
 function GameScreen() {
   const { code } = useParams();
-  const { user, room, joinRoom, answer, skipSong, setGame, pauseGame } = useApp();
+  const { user, room, joinRoom, answer, skipSong, setGame } = useApp();
   const nav = useNavigate();
 
   const left = useRemainingMs(room);
@@ -417,16 +418,7 @@ function GameScreen() {
           </div>
 
           <div className="tv-game-tools">
-            {isHost && ["countdown", "playing", "reveal"].includes(room.phase) && (
-              <button
-                type="button"
-                className={`tv-mini-btn${room.paused ? " is-on" : ""}`}
-                onClick={() => pauseGame(!room.paused).catch((e) => setErr(e.message || "No se pudo pausar la partida"))}
-                title={room.paused ? "La partida sigue donde se quedó" : "Detiene el tiempo para todos"}
-              >
-                {room.paused ? "Reanudar" : "Pausar"}
-              </button>
-            )}
+            <PauseButton room={room} isHost={isHost} onError={setErr} />
             {isHost && (
               <button
                 type="button"
@@ -445,14 +437,8 @@ function GameScreen() {
         </section>
 
         {question ? (
-          <section key={round} className={`tv-game-stage tv-quiz-stage is-${type}${room.paused ? " is-paused" : ""}`}>
-            {room.paused && (
-              <div className="tv-pause-veil" role="status">
-                <Icon name="lock" size={28} strokeWidth={2.6} />
-                <strong>Partida en pausa</strong>
-                <span>{isHost ? "Toca Reanudar para seguir." : "El anfitrión la reanudará en breve."}</span>
-              </div>
-            )}
+          <section key={round} className={`tv-game-stage tv-quiz-stage is-${type}`}>
+            <PauseVeil room={room} isHost={isHost} />
             {/* Every kind of round draws itself from the countdown on (empty option tiles, an empty timeline...), so
                 nothing jumps when the round opens. */}
             {type === "choice" && <ChoiceRound {...props} />}

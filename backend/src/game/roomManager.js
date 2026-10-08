@@ -845,6 +845,8 @@ export class RoomManager {
       onEnd?.();
       this.onPhaseChange?.(room);
     }, remainingMs);
+    // Campo de minas: someone may have left during the pause, and the turn was only waiting for them.
+    this.checkMinesTurn(room);
   }
 
   beginPlaying(room) {
@@ -1390,7 +1392,8 @@ export class RoomManager {
    * true when the turn or the round ended.
    */
   checkMinesTurn(room) {
-    if (!this.isMinesRound(room) || room.phase !== "playing") return false;
+    // While paused nothing moves on (someone leaving included): it's checked again on "Reanudar".
+    if (!this.isMinesRound(room) || room.phase !== "playing" || room.paused) return false;
     if (this.minesRoundOver(room)) {
       this.beginReveal(room);
       return true;
