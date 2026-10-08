@@ -114,6 +114,8 @@ function publicPlayer(player, phase, room) {
     lastPoints: player.lastPoints || 0,
     lastAnswer: showAnswer ? player.lastAnswer : null,
     connected: player.connected,
+    // Joined in the middle of a match: watches it and joins the room's next one.
+    spectator: Boolean(player.spectator),
     isHost,
     canEditConfig,
   };
@@ -200,7 +202,12 @@ export class RoomManager {
     player.isGuest = isGuest;
     player.connected = true;
     player.socketId = user.socketId;
-    player.status = room.phase === "lobby" ? "conectado" : "jugando";
+    // Someone who arrives while a match is running (not just its results) watches it; they play from the next one.
+    // That includes a player who was in the room but not in this match (they were away when it started).
+    if (room.phase !== "lobby" && room.phase !== "finished" && (existing ? room.participants && !room.participants.has(user.id) : true)) {
+      player.spectator = true;
+    }
+    player.status = player.spectator ? "mirando" : room.phase === "lobby" ? "conectado" : "jugando";
     room.players.set(user.id, player);
     this.socketToRoom.set(user.socketId, { code: room.code, userId: user.id });
     return player;
@@ -502,6 +509,8 @@ export class RoomManager {
     if (connected.length < 1) {
       throw new Error("Se necesita al menos 1 jugador");
     }
+    // Who is in this match: anyone else who shows up while it runs only watches it.
+    room.participants = new Set(connected.map((p) => p.id));
     room.currentRound = 0;
     if (room.game === QUIZ_GAME) {
       const quiz = mergeQuizConfig(room.config.quiz);
@@ -688,7 +697,13 @@ export class RoomManager {
 
   /** During a tiebreak only the tied players answer; the rest of the room watches. */
   isPlaying(room, userId) {
+    if (room.players.get(userId)?.spectator) return false;
     return !room.tiebreak || room.tiebreak.playerIds.includes(userId);
+  }
+
+  /** Spectators (who joined mid-match) can look but not answer. */
+  assertNotSpectator(room, userId) {
+    if (room.players.get(userId)?.spectator) throw new Error("Estás viendo la partida: entrarás cuando termine");
   }
 
   beginPlaying(room) {
@@ -736,7 +751,7 @@ export class RoomManager {
     if (room.game !== GEO_GAME && room.game !== HISTORY_GAME) return false;
     const previous = room.tiebreak;
     if (previous?.winnerId || (previous && previous.round >= MAX_TIEBREAKS)) return false;
-    const connected = [...room.players.values()].filter((p) => p.connected);
+    const connected = [...room.players.values()].filter((p) => p.connected && !p.spectator);
     let tied;
     if (previous) {
       tied = connected.filter((p) => previous.playerIds.includes(p.id));
@@ -764,7 +779,9 @@ export class RoomManager {
   /** Players by final position: by score, and a tiebreak's winner ahead of the players they were tied with. */
   rankedPlayers(room) {
     const winnerId = room.tiebreak?.winnerId;
-    return [...room.players.values()].sort((a, b) => b.score - a.score || (b.id === winnerId) - (a.id === winnerId));
+    return [...room.players.values()]
+      .filter((p) => !p.spectator)
+      .sort((a, b) => b.score - a.score || (b.id === winnerId) - (a.id === winnerId));
   }
 
   finish(room) {
@@ -867,6 +884,7 @@ export class RoomManager {
     room.answers = {};
     room.statsApplied = false;
     room.tiebreak = null;
+    room.participants = null;
     for (const [id, p] of room.players) {
       // Players who left mid-match (and aren't reconnecting) have no seat in a fresh lobby.
       if (!p.connected && !p.dropTimer) {
@@ -874,6 +892,7 @@ export class RoomManager {
         room.coHosts = (room.coHosts || []).filter((c) => c !== id);
         continue;
       }
+      p.spectator = false;
       p.score = 0;
       p.correct = 0;
       p.streak = 0;
@@ -891,6 +910,7 @@ export class RoomManager {
   submitAnswer(room, userId, answerText) {
     const player = room.players.get(userId);
     if (!player) throw new Error("Jugador no encontrado");
+    this.assertNotSpectator(room, userId);
 
     // If already answered this round, gracefully accept without throwing duplicate error
     if (player.lastAnswer) {
@@ -992,6 +1012,7 @@ export class RoomManager {
   placePin(room, userId, value) {
     const player = room.players.get(userId);
     if (!player) throw new Error("Jugador no encontrado");
+    this.assertNotSpectator(room, userId);
     if (!this.isMapRound(room)) throw new Error("Esta ronda no es de mapa");
     if (room.phase !== "playing") throw new Error("No se aceptan respuestas ahora");
     if (!this.isPlaying(room, userId)) throw new Error("Solo juegan el desempate los jugadores empatados");
@@ -1059,6 +1080,7 @@ export class RoomManager {
   placeYear(room, userId, value) {
     const player = room.players.get(userId);
     if (!player) throw new Error("Jugador no encontrado");
+    this.assertNotSpectator(room, userId);
     if (!this.isYearRound(room)) throw new Error("Esta ronda no es de elegir el año");
     if (room.phase !== "playing") throw new Error("No se aceptan respuestas ahora");
     if (!this.isPlaying(room, userId)) throw new Error("Solo juegan el desempate los jugadores empatados");
@@ -1160,6 +1182,7 @@ export class RoomManager {
   skip(room, userId) {
     const player = room.players.get(userId);
     if (!player) throw new Error("Jugador no encontrado");
+    this.assertNotSpectator(room, userId);
     if (player.lastAnswer) return player.lastAnswer;
     if (room.phase !== "playing") throw new Error("No se aceptan respuestas ahora");
     if (!this.isPlaying(room, userId)) throw new Error("Solo juegan el desempate los jugadores empatados");
@@ -1320,6 +1343,7 @@ export class RoomManager {
       payload.me = me
         ? {
             id: me.id,
+            spectator: Boolean(me.spectator),
             lastPoints: me.lastPoints,
             lastAnswer: me.lastAnswer,
             // Geografía's map rounds: this player's pin, not locked yet (so a reload doesn't lose it).

@@ -63,7 +63,8 @@ function GameScreen() {
   const phase = room?.phase;
   const question = room?.question;
   const tiebreak = room?.tiebreak || null;
-  const iPlay = !tiebreak || tiebreak.playerIds.includes(user?.id);
+  const spectator = Boolean(room?.players?.find((p) => p.id === user?.id)?.spectator);
+  const iPlay = !spectator && (!tiebreak || tiebreak.playerIds.includes(user?.id));
   const playerObj = room?.players?.find((p) => p.id === user?.id);
   const me = playerObj
     ? { ...playerObj, ...(room?.me?.id === user?.id ? room.me : {}), lastAnswer: playerObj.lastAnswer || room?.me?.lastAnswer }
@@ -248,9 +249,13 @@ function GameScreen() {
   else if (myGuess) hint = `Ajusta con los botones${touch ? "" : " o las flechas"} y confirma.`;
   else hint = touch ? "Toca la línea del tiempo para elegir un año." : "Haz clic en la línea del tiempo o usa las flechas del teclado.";
 
+  if (spectator && phase !== "reveal") hint = "Estás viendo la partida. Entrarás a la sala cuando termine.";
+
   // The row under the timeline, always the same height: confirm, or what's going on.
   let action;
-  if (phase === "reveal") {
+  if (spectator && phase !== "reveal") {
+    action = <p className="tv-hint tv-hist-next">Mira cómo responden los demás</p>;
+  } else if (phase === "reveal") {
     action = <p className="tv-hint tv-hist-next">{nextText}</p>;
   } else if (!iPlay) {
     action = <p className="tv-hint tv-hist-next">Mira el desempate entre {joinNames(tiedNames)}</p>;
@@ -359,7 +364,7 @@ function GameScreen() {
                   </button>
                 </div>
               )}
-              {reveal && <Verdict room={room} me={me} user={user} tiebreak={tiebreak} tiedNames={tiedNames} iPlay={iPlay} fmt={fmt} />}
+              {reveal && !spectator && <Verdict room={room} me={me} user={user} tiebreak={tiebreak} tiedNames={tiedNames} iPlay={iPlay} fmt={fmt} />}
             </div>
 
             <Timeline

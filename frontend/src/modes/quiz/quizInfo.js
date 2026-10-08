@@ -25,10 +25,12 @@ export const TOPICS = [
   { id: "deportes", label: "Deportes" },
 ];
 
-// The ways of answering (QUIZ_FORMATS on the server): choosing (one of four, or the year on a timeline) or writing.
+// The ways of answering (QUIZ_FORMATS on the server): choosing one of four, writing, or a year on a timeline. The
+// timeline is not ticked by default (`off`): its questions only come up when the host ticks it.
 export const FORMATS = [
-  { id: "opciones", label: "Opciones", hint: "Elige una de cuatro o el año en la línea del tiempo" },
+  { id: "opciones", label: "Opciones", hint: "Elige una de cuatro" },
   { id: "escribir", label: "Escribir", hint: "Escribe la respuesta" },
+  { id: "linea", label: "Línea de tiempo", hint: "Elige el año en la línea del tiempo", off: true },
 ];
 
 // The difficulties a match can mix (QUIZ_LEVELS on the server), any of them ticked.
@@ -46,7 +48,7 @@ export function quizConfig(room) {
     roundMs: quiz.roundMs || 15000,
     difficulties: quiz.difficulties || LEVELS.map((d) => d.id),
     categories: quiz.categories || TOPICS.map((t) => t.id),
-    formats: quiz.formats || FORMATS.map((f) => f.id),
+    formats: quiz.formats || FORMATS.filter((f) => !f.off).map((f) => f.id),
   };
 }
 

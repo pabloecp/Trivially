@@ -4,6 +4,7 @@ import TvShell from "../../components/home/TvShell.jsx";
 import Confetti from "../../components/home/Confetti.jsx";
 import Icon from "../../components/home/Icon.jsx";
 import PartyPanel from "../../components/home/PartyPanel.jsx";
+import SpectatorBanner from "../../components/home/SpectatorBanner.jsx";
 import MatchResults from "../../components/home/MatchResults.jsx";
 import { useApp, useRemainingMs } from "../../lib/store.jsx";
 import { BACKEND_URL } from "../../lib/config.js";
@@ -192,7 +193,8 @@ function GameScreen() {
 
   const isHost = room?.hostId === user?.id;
   const skipped = skippedRound === room?.currentRound || Boolean(me?.lastAnswer?.skipped);
-  const locked = Boolean(me?.answered) || Boolean(submittedSong) || skipped || room?.phase !== "playing";
+  const spectator = Boolean(me?.spectator);
+  const locked = Boolean(me?.answered) || Boolean(submittedSong) || skipped || room?.phase !== "playing" || spectator;
 
   function handleSkip() {
     if (locked) return;
@@ -337,6 +339,7 @@ function GameScreen() {
       <audio ref={audioRef} preload="auto" playsInline />
 
       <div className="tv-room-main tv-game-main">
+        {spectator && <SpectatorBanner />}
         <section className="tv-game-top">
           <div className="tv-game-round">
             <p className="tv-mono-label">
@@ -472,6 +475,12 @@ function GameScreen() {
                 )}
               </div>
             ) : (
+              spectator ? (
+                <div className="tv-locked">
+                  <p className="tv-mono-label">Espectador</p>
+                  <p className="tv-locked-title">Escucha y mira cómo responden los demás</p>
+                </div>
+              ) : (
               <div className={`tv-locked${skipped ? " is-skipped" : ""}`}>
                 <span className="tv-locked-check">
                   <Icon name={skipped ? "close" : "check"} size={28} strokeWidth={3.2} />
@@ -482,6 +491,7 @@ function GameScreen() {
                 </p>
                 <p className="tv-hint">Esperando al resto de jugadores…</p>
               </div>
+              )
             )}
 
             {err && <p className="tv-lobby-error" role="alert">{err}</p>}
@@ -494,6 +504,7 @@ function GameScreen() {
           const tone = isCorrect ? "ok" : didAnswer ? "bad" : "timeout";
           return (
             <section key={`r${room.currentRound}`} className="tv-game-stage tv-reveal">
+              {!spectator && (
               <div className={`tv-result tv-result--${tone}`} role="status">
                 {isCorrect && <Confetti pieces={18} />}
                 <span className="tv-result-icon">
@@ -513,6 +524,7 @@ function GameScreen() {
                   <p className="tv-hint">Escribiste “{me.lastAnswer.text}”</p>
                 )}
               </div>
+              )}
 
               <div className={`tv-song${coverReadyFor === room.reveal.title ? "" : " is-waiting"}`}>
                 {/* Flips in once the image has loaded, never half-drawn. */}

@@ -5,16 +5,17 @@ import { toHistoryTrack } from "./history.js";
 // "Trivia", the main mode: its settings (config.quiz) and how a match draws its questions. A match mixes every
 // kind of question the bank has: four options, a year on a timeline and a written answer (capitals, flags...). The
 // host picks the topics (`categories`), the ways of answering (`formats`) and the difficulties (`difficulties`): each
-// is a list of the chosen ones, all of them by default.
+// is a list of the chosen ones, all of them by default except the timeline, which only comes up when it is ticked.
 
 export const QUIZ_MODE = "opciones";
 export const QUIZ_LEVELS = ["facil", "media", "dificil"];
 // Older clients send one `difficulty`, "mixta" being all three.
 export const QUIZ_DIFFICULTIES = [...QUIZ_LEVELS, "mixta"];
-// The ways of answering, and the question types each one plays: choosing ("opciones": one of four, or a year on the
-// timeline) or writing.
-export const QUIZ_FORMATS = ["opciones", "escribir"];
-const FORMAT_OF_TYPE = { multiple_choice: "opciones", year: "opciones", open: "escribir" };
+// The ways of answering, and the question types each one plays: choosing one of four ("opciones"), writing
+// ("escribir") or a year on the timeline ("linea"). The timeline is not ticked by default.
+export const QUIZ_FORMATS = ["opciones", "escribir", "linea"];
+export const DEFAULT_QUIZ_FORMATS = ["opciones", "escribir"];
+const FORMAT_OF_TYPE = { multiple_choice: "opciones", year: "linea", open: "escribir" };
 const TOPICS = Object.keys(QUESTION_CATEGORIES);
 // Same limits as the settings on screen (frontend/src/modes/quiz/quizInfo.js).
 export const QUIZ_LIMITS = {
@@ -25,7 +26,7 @@ export const QUIZ_LIMITS = {
 export { REVEAL_MS as QUIZ_REVEAL_MS } from "./scoring.js";
 
 export function defaultQuizConfig() {
-  return { rounds: 5, roundMs: 15000, difficulties: [...QUIZ_LEVELS], categories: [...TOPICS], formats: [...QUIZ_FORMATS] };
+  return { rounds: 5, roundMs: 15000, difficulties: [...QUIZ_LEVELS], categories: [...TOPICS], formats: [...DEFAULT_QUIZ_FORMATS] };
 }
 
 const clamp = (n, { min, max }, fallback) => Math.min(max, Math.max(min, Math.round(Number(n)) || fallback));
