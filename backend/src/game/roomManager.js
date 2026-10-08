@@ -42,6 +42,19 @@ import {
   yearPoints,
   yearsApart,
 } from "./history.js";
+import {
+  countMinesQuestions,
+  defaultMinesConfig,
+  hitPoints,
+  MINES_FIRST_TURN_EXTRA_MS,
+  MINES_GAME,
+  MINES_REVEAL_MS,
+  mergeMinesConfig,
+  minesBank,
+  minesCounts,
+  pickMinesQuestions,
+} from "./mines.js";
+import { categoryName } from "../questions/questionSchema.js";
 import { flagToken, flagUrl } from "../geo/flags.js";
 import { locate } from "../geo/worldMap.js";
 import { COUNTDOWN_MS, REVEAL_MS, ROUND_MS, scoreAnswer } from "./scoring.js";
@@ -50,14 +63,15 @@ const CODE_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 // Games the host can move a room into (ids match frontend/src/modes/index.js). `null` is the Home screen.
 // "opciones" (Trivia, QUIZ_GAME) is the main mode: questions of every topic, each answered its own way (four
 // options, a written answer or a year on a timeline). The extras: "musica" (Adivina la canción), "mundo" (Encuentra el país,
-// GEO_GAME: capitals and flags written, and countries pinned on the world map) and "historia" (Línea del tiempo,
-// HISTORY_GAME: an event's year on a timeline). The question games keep their questions in room.tracks, in place of
-// songs.
-export const GAME_IDS = ["musica", "opciones", "mundo", "historia"];
+// GEO_GAME: capitals and flags written, and countries pinned on the world map), "historia" (Línea del tiempo,
+// HISTORY_GAME: an event's year on a timeline) and "minas" (Campo de minas, MINES_GAME: a prompt and a 5 × 5 board of
+// answers, some right and some mines, picked one per turn). The question games keep their questions in room.tracks,
+// in place of songs.
+export const GAME_IDS = ["musica", "opciones", "mundo", "historia", "minas"];
 // "Trivia": its settings live in config.quiz and its questions take the place of songs in room.tracks.
 export const QUIZ_GAME = "opciones";
 // The games that ask questions instead of playing songs.
-const QUESTION_GAMES = [QUIZ_GAME, GEO_GAME, HISTORY_GAME];
+const QUESTION_GAMES = [QUIZ_GAME, GEO_GAME, HISTORY_GAME, MINES_GAME];
 // Custom playlists from an owner's Spotify go in config.playlistIds with this prefix ("sp:<spotify playlist id>").
 export const SPOTIFY_PREFIX = "sp:";
 // Rounds are chosen this many rounds ahead, so their audio and cover are downloaded before they start.
@@ -99,6 +113,7 @@ function defaultConfig(catalog) {
     quiz: defaultQuizConfig(),
     geo: defaultGeoConfig(),
     history: defaultHistoryConfig(),
+    mines: defaultMinesConfig(),
   };
 }
 
@@ -106,7 +121,17 @@ function publicPlayer(player, phase, room) {
   const showAnswer = phase === "reveal" || phase === "finished";
   const isHost = Boolean(room && room.hostId === player.id);
   const canEditConfig = isHost || Boolean(room?.coHosts?.includes(player.id));
+  // Campo de minas: while a round is played, "answered" means picked a cell in this turn (never, in a race: there are
+  // no turns to wait for).
+  const mines = room?.game === MINES_GAME;
+  const field = mines ? player.minefield : null;
+  const race = mines && mergeMinesConfig(room.config.mines).style === "carrera";
+  const answered =
+    mines && phase === "playing" ? Boolean(field && !field.out && !race && field.pickedTurn === room.turn) : Boolean(player.lastAnswer);
   return {
+    // Campo de minas: why the player is out of the round ("mina" or "tiempo"), or null while still in, and how many
+    // right answers they found in it.
+    ...(mines ? { out: field?.out || null, hits: field?.hits || 0 } : {}),
     id: player.id,
     name: player.name,
     avatar: player.avatar,
@@ -116,7 +141,7 @@ function publicPlayer(player, phase, room) {
     correct: player.correct,
     streak: player.streak,
     bestStreak: player.bestStreak,
-    answered: Boolean(player.lastAnswer),
+    answered,
     lastPoints: player.lastPoints || 0,
     lastAnswer: showAnswer ? player.lastAnswer : null,
     connected: player.connected,
@@ -138,6 +163,8 @@ export class RoomManager {
     this.historyQuestions = historyBank(questions);
     // Trivia's: the bank's own plus Geografía's written questions.
     this.quizQuestions = quizPool(questions, this.geoQuestions);
+    // Campo de minas' (from mines/boards/ when the bank has none).
+    this.minesQuestions = minesBank(questions);
     this.resolver = resolver;
     this.store = store;
     this.reconnectGraceMs = reconnectGraceMs;
@@ -249,6 +276,8 @@ export class RoomManager {
       if (result.room) this.onPhaseChange?.(result.room);
     }, this.reconnectGraceMs);
     player.dropTimer.unref?.();
+    // Campo de minas: the turn doesn't wait for a player who isn't there.
+    this.checkMinesTurn(room);
     return { room };
   }
 
@@ -273,6 +302,7 @@ export class RoomManager {
       this.destroy(room);
       return { room: null, left: true };
     }
+    this.checkMinesTurn(room);
     return { room, left: true };
   }
 
@@ -340,6 +370,7 @@ export class RoomManager {
     room.coHosts = (room.coHosts || []).filter((id) => id !== targetUserId);
     room.kicked ||= new Set();
     room.kicked.add(targetUserId);
+    this.checkMinesTurn(room);
     return { socketId: player.socketId, name: player.name };
   }
 
@@ -352,6 +383,7 @@ export class RoomManager {
     if (config?.quiz) next.quiz = mergeQuizConfig(room.config.quiz, config.quiz);
     if (config?.geo) next.geo = mergeGeoConfig(room.config.geo, config.geo);
     if (config?.history) next.history = mergeHistoryConfig(room.config.history, config.history);
+    if (config?.mines) next.mines = mergeMinesConfig(room.config.mines, config.mines);
     // Same limits as the settings on screen: 5–25 rounds, 15–35 seconds to guess.
     if (config?.rounds != null) next.rounds = Math.min(25, Math.max(5, Math.round(Number(config.rounds)) || 5));
     if (config?.roundMs != null) next.roundMs = Math.min(35000, Math.max(15000, Math.round(Number(config.roundMs)) || ROUND_MS));
@@ -594,6 +626,18 @@ export class RoomManager {
       room.tracks = tracks;
       room.totalRounds = tracks.length;
       room.tiebreak = null;
+    } else if (room.game === MINES_GAME) {
+      // Campo de minas: the match's boards are drawn now, each with its cells shuffled.
+      const mines = mergeMinesConfig(room.config.mines);
+      if (!mines.categories.length) throw new Error("Elige al menos una categoría");
+      if (!mines.difficulties.length) throw new Error("Elige al menos una dificultad");
+      const tracks = pickMinesQuestions(this.minesQuestions, mines);
+      if (tracks.length < mines.rounds) {
+        throw new Error(`Solo hay ${tracks.length} tableros con esos ajustes para ${mines.rounds} rondas. Baja las rondas o elige más categorías o dificultades.`);
+      }
+      room.tracks = tracks;
+      room.totalRounds = tracks.length;
+      room.tiebreak = null;
     } else if (room.config?.customTracks && room.config.customTracks.length > 0) {
       const shuffled = [...room.config.customTracks].sort(() => Math.random() - 0.5);
       room.tracks = shuffled.slice(0, Math.min(room.config.rounds || 5, shuffled.length));
@@ -704,11 +748,15 @@ export class RoomManager {
     const track = room.tracks[room.currentRound];
     room.currentTrackId = track.id;
     room.answers = {};
+    room.turn = 0;
     room.players.forEach((p) => {
       p.lastAnswer = null;
       p.lastPoints = 0;
       p.pin = null;
       p.guess = null;
+      // Campo de minas: this round's hits and points, why the player is out (null while in) and the last turn they
+      // picked in. Spectators have none: they don't play.
+      p.minefield = room.game === MINES_GAME && !p.spectator ? { hits: 0, points: 0, out: null, pickedTurn: 0 } : null;
       p.status = this.isPlaying(room, p.id) ? "jugando" : "mirando";
     });
     this.setPhase(room, "countdown", COUNTDOWN_MS, () => this.beginPlaying(room));
@@ -722,6 +770,11 @@ export class RoomManager {
       return mergeGeoConfig(room.config.geo).roundMs;
     }
     if (room.game === HISTORY_GAME) return mergeHistoryConfig(room.config.history).roundMs;
+    // Campo de minas: the time of each turn (a round has as many as it takes), or of the whole round in a race.
+    if (room.game === MINES_GAME) {
+      const mines = mergeMinesConfig(room.config.mines);
+      return mines.style === "carrera" ? mines.roundMs : mines.turnMs;
+    }
     return room.config.roundMs || ROUND_MS;
   }
 
@@ -738,6 +791,16 @@ export class RoomManager {
   /** Trivia's questions with four options, and Adivina la canción's closed rounds: the answer is an option's position. */
   isChoiceRound(room) {
     return (room.game === QUIZ_GAME || room.game === "musica") && room.tracks[room.currentRound]?.type === "choice";
+  }
+
+  /** Campo de minas' rounds: a board of cells, picked one per turn (or as fast as each player can, in a race). */
+  isMinesRound(room) {
+    return room.game === MINES_GAME && Boolean(room.tracks[room.currentRound]);
+  }
+
+  /** Campo de minas played as a race ("carrera"): no turns, each player picks cells until they step on a mine. */
+  isMinesRace(room) {
+    return this.isMinesRound(room) && mergeMinesConfig(room.config.mines).style === "carrera";
   }
 
   /** During a tiebreak only the tied players answer; the rest of the room watches. */
@@ -782,6 +845,10 @@ export class RoomManager {
   }
 
   beginPlaying(room) {
+    if (this.isMinesRound(room)) {
+      this.beginTurn(room);
+      return;
+    }
     this.setPhase(room, "playing", this.roundMs(room), () => this.beginReveal(room));
   }
 
@@ -792,6 +859,7 @@ export class RoomManager {
     if (this.isChoiceRound(room)) this.gradeQuiz(room, track);
     if (this.isMapRound(room)) this.gradeMap(room, track);
     if (this.isYearRound(room)) this.gradeYears(room, track);
+    if (this.isMinesRound(room)) this.gradeMines(room);
     room.players.forEach((player) => {
       if (!player.lastAnswer && this.isPlaying(room, player.id)) {
         player.streak = 0;
@@ -803,6 +871,7 @@ export class RoomManager {
     if (this.isMapRound(room)) revealMs = LOCATION_REVEAL_MS;
     else if (this.isYearRound(room)) revealMs = HISTORY_REVEAL_MS;
     else if (room.game === QUIZ_GAME) revealMs = QUIZ_REVEAL_MS;
+    else if (this.isMinesRound(room)) revealMs = MINES_REVEAL_MS;
     this.setPhase(room, "reveal", revealMs, () => this.advance(room));
     return { track, duration };
   }
@@ -962,6 +1031,7 @@ export class RoomManager {
     room.statsApplied = false;
     room.tiebreak = null;
     room.participants = null;
+    room.turn = 0;
     for (const [id, p] of room.players) {
       // Players who left mid-match (and aren't reconnecting) have no seat in a fresh lobby.
       if (!p.connected && !p.dropTimer) {
@@ -979,6 +1049,7 @@ export class RoomManager {
       p.lastPoints = 0;
       p.pin = null;
       p.guess = null;
+      p.minefield = null;
       p.status = p.connected ? "conectado" : "desconectado";
     }
   }
@@ -996,6 +1067,7 @@ export class RoomManager {
     if (this.isChoiceRound(room)) return this.submitQuizAnswer(room, player, answerText);
     if (this.isMapRound(room)) throw new Error("Toca el mapa para poner tu pin");
     if (this.isYearRound(room)) throw new Error("Elige el año en la línea del tiempo");
+    if (this.isMinesRound(room)) throw new Error("Toca una casilla del tablero");
 
     // Grace period for network latency if reveal just started
     const isPlaying = room.phase === "playing";
@@ -1245,6 +1317,135 @@ export class RoomManager {
     return Boolean(picked) && songKey(picked) === songKey(track);
   }
 
+  /**
+   * Campo de minas: a turn of the round. Everyone still in picks one cell; the turn ends when they all have (or when
+   * its time runs out, and whoever didn't pick is out). Each turn restarts the phase's clock (`phaseStartedAt` is the
+   * turn's start); the first one of a round is longer, to read the board. A race is one long turn: the whole round.
+   */
+  beginTurn(room) {
+    room.turn = (room.turn || 0) + 1;
+    room.players.forEach((p) => {
+      if (p.minefield && !p.minefield.out) p.status = "jugando";
+    });
+    const firstTurn = room.turn === 1 && !this.isMinesRace(room);
+    const duration = this.roundMs(room) + (firstTurn ? MINES_FIRST_TURN_EXTRA_MS : 0);
+    this.setPhase(room, "playing", duration, () => this.endTurn(room, true));
+  }
+
+  /**
+   * Campo de minas: the player picks a cell (`{ cell, turn }`; `turn` is the one they saw, so a tap that arrives after
+   * it closed doesn't count for the next one). The first to pick a cell keeps it. A right answer scores at once, 100
+   * points more than the player's previous hit of the round; a mine leaves them out until the next round, with the
+   * points they had. By turns it's one cell per turn; in a race, as many as the player likes. Returns whether the
+   * cell was right.
+   */
+  pickCell(room, userId, value) {
+    const player = room.players.get(userId);
+    if (!player) throw new Error("Jugador no encontrado");
+    this.assertNotSpectator(room, userId);
+    if (!this.isMinesRound(room)) throw new Error("Esta ronda no es de Campo de minas");
+    if (room.phase !== "playing") throw new Error("No se aceptan respuestas ahora");
+    const field = player.minefield;
+    if (!field) throw new Error("Llegaste con la ronda empezada: juegas desde la siguiente");
+    if (field.out) throw new Error("Estás fuera hasta la próxima ronda");
+    if (value?.turn != null && Number(value.turn) !== room.turn) throw new Error("Ese turno ya terminó");
+    const race = this.isMinesRace(room);
+    if (!race && field.pickedTurn === room.turn) throw new Error("Ya elegiste en este turno");
+    const board = room.tracks[room.currentRound];
+    const index = Number(value?.cell);
+    if (!Number.isInteger(index) || index < 0 || index >= board.cells.length) throw new Error("Esa casilla no existe");
+    const cell = board.cells[index];
+    if (cell.by) throw new Error(`${room.players.get(cell.by)?.name || "Otro jugador"} ya eligió esa casilla`);
+
+    const now = Date.now();
+    cell.by = userId;
+    cell.at = now;
+    cell.turn = room.turn;
+    field.pickedTurn = room.turn;
+    if (!race) player.status = "respondió";
+    if (cell.correct) {
+      field.hits += 1;
+      const points = hitPoints(field.hits);
+      field.points += points;
+      player.lastPoints = field.points;
+      player.score += points;
+      player.correct += 1;
+      player.streak += 1;
+      player.bestStreak = Math.max(player.bestStreak, player.streak);
+      player.answerTimes.push(Math.max(0, now - room.phaseStartedAt));
+    } else {
+      field.out = "mina";
+      player.streak = 0;
+    }
+    this.checkMinesTurn(room);
+    return cell.correct;
+  }
+
+  /**
+   * Campo de minas, after a pick (or a player leaving): the round ends when no right answer is left or nobody is left
+   * standing; otherwise, by turns, the next turn starts once everyone still in (and connected) has picked. Returns
+   * true when the turn or the round ended.
+   */
+  checkMinesTurn(room) {
+    if (!this.isMinesRound(room) || room.phase !== "playing") return false;
+    if (this.minesRoundOver(room)) {
+      this.beginReveal(room);
+      return true;
+    }
+    if (this.isMinesRace(room)) return false;
+    const waiting = [...room.players.values()].some(
+      (p) => p.connected && p.minefield && !p.minefield.out && p.minefield.pickedTurn !== room.turn
+    );
+    if (waiting) return false;
+    this.endTurn(room, false);
+    return true;
+  }
+
+  /**
+   * Campo de minas: the end of a turn. When its time ran out, whoever was still in and didn't pick is out. A race's
+   * time is the round's: when it runs out the round ends, and whoever is still standing survived it.
+   */
+  endTurn(room, timeUp) {
+    if (!this.isMinesRound(room) || room.phase !== "playing") return;
+    if (this.isMinesRace(room)) {
+      this.beginReveal(room);
+      return;
+    }
+    if (timeUp) {
+      for (const p of room.players.values()) {
+        const field = p.minefield;
+        if (field && !field.out && field.pickedTurn !== room.turn) {
+          field.out = "tiempo";
+          p.streak = 0;
+        }
+      }
+    }
+    if (this.minesRoundOver(room)) this.beginReveal(room);
+    else this.beginTurn(room);
+  }
+
+  /** Campo de minas: every right answer of the board was found, or every connected player is out. */
+  minesRoundOver(room) {
+    const board = room.tracks[room.currentRound];
+    const hitsLeft = board.cells.some((c) => c.correct && !c.by);
+    const standing = [...room.players.values()].some((p) => p.connected && p.minefield && !p.minefield.out);
+    return !hitsLeft || !standing;
+  }
+
+  /** Campo de minas, at the reveal: each player's round in one line ("3 aciertos, luego una mina"), and its points. */
+  gradeMines(room) {
+    for (const player of room.players.values()) {
+      const field = player.minefield;
+      if (!field) continue;
+      const hits = field.hits === 1 ? "1 acierto" : `${field.hits} aciertos`;
+      let text = field.hits ? hits : "Sin aciertos";
+      if (field.out === "mina") text = field.hits ? `${hits}, luego una mina` : "Mina a la primera";
+      else if (field.out === "tiempo") text = field.hits ? `${hits}, sin tiempo` : "Sin tiempo";
+      player.lastPoints = field.points;
+      player.lastAnswer = { text, correct: field.hits > 0, hits: field.hits, out: field.out, at: Date.now() };
+    }
+  }
+
   /** What the player answered, as people read it: "As It Was - Harry Styles" for a picked suggestion (whose raw
    *  value is a song id such as "harry-styles-as-it-was") or for the right song; the typed text otherwise. */
   answerLabel(room, track, answerText, correct) {
@@ -1260,6 +1461,7 @@ export class RoomManager {
     const player = room.players.get(userId);
     if (!player) throw new Error("Jugador no encontrado");
     this.assertNotSpectator(room, userId);
+    if (this.isMinesRound(room)) throw new Error("En Campo de minas no se puede saltar");
     if (player.lastAnswer) return player.lastAnswer;
     if (room.phase !== "playing") throw new Error("No se aceptan respuestas ahora");
     if (!this.isPlaying(room, userId)) throw new Error("Solo juegan el desempate los jugadores empatados");
@@ -1390,6 +1592,11 @@ export class RoomManager {
       // In the lobby: how many events each topic, age and difficulty has, for the settings' chips.
       if (room.phase === "lobby") payload.questionCounts = historyCounts(this.historyQuestions, room.config.history);
       if (track && showTrack) payload.reveal = { prompt: track.prompt, year: track.year, min: track.min, max: track.max };
+    } else if (room.game === MINES_GAME) {
+      // The whole board (which cells were right) only goes out with the question at the reveal.
+      if (track) payload.question = this.publicMinesQuestion(room, track);
+      // In the lobby: how many boards each category and difficulty has, for the settings' chips.
+      if (room.phase === "lobby") payload.questionCounts = minesCounts(this.minesQuestions, room.config.mines);
     } else if (track && (room.phase === "countdown" || room.phase === "playing")) {
       payload.audio = {
         previewUrl: track.previewUrl,
@@ -1464,7 +1671,31 @@ export class RoomManager {
     if (room.game === QUIZ_GAME) return countQuestions(this.quizQuestions, room.config.quiz);
     if (room.game === GEO_GAME) return countGeoQuestions(this.geoQuestions, room.config.geo);
     if (room.game === HISTORY_GAME) return countHistoryQuestions(this.historyQuestions, room.config.history);
+    if (room.game === MINES_GAME) return countMinesQuestions(this.minesQuestions, room.config.mines);
     return undefined;
+  }
+
+  /**
+   * The current board of Campo de minas. The prompt shows from the countdown on; the cells' texts once the round is
+   * playing. Whether a cell is right or a mine only goes out once someone picked it, and for every cell at the reveal.
+   * `total` is how many right answers the board has and `found` how many were picked; `turn` is the turn being played
+   * (the one a pick must name).
+   */
+  publicMinesQuestion(room, board) {
+    const open = ["playing", "reveal", "finished"].includes(room.phase);
+    const showAll = room.phase === "reveal" || room.phase === "finished";
+    return {
+      round: room.currentRound + 1,
+      prompt: board.prompt,
+      category: categoryName(board.category),
+      difficulty: board.difficulty,
+      turn: room.phase === "playing" ? room.turn : null,
+      total: board.cells.filter((c) => c.correct).length,
+      found: board.cells.filter((c) => c.correct && c.by).length,
+      cells: open
+        ? board.cells.map((c) => ({ text: c.text, by: c.by, turn: c.turn, correct: c.by || showAll ? c.correct : null }))
+        : null,
+    };
   }
 
   /**

@@ -39,6 +39,15 @@ function MatchTag({ player, room }) {
       </span>
     );
   }
+  // Campo de minas: out of the round (stepped on a mine, or didn't pick a cell in time).
+  if (room.phase === "playing" && player.out) {
+    return (
+      <span className="tv-player-tag tv-player-answer is-wrong">
+        <Icon name={player.out === "mina" ? "bomb" : "close"} size={12} strokeWidth={3.2} />
+        <span>{player.out === "mina" ? "Pisó una mina" : "Sin tiempo"}</span>
+      </span>
+    );
+  }
   if (player.answered) {
     return (
       <span className="tv-player-tag is-done">
@@ -46,6 +55,10 @@ function MatchTag({ player, room }) {
         Listo
       </span>
     );
+  }
+  // Campo de minas: the right answers found so far in this round.
+  if (room.phase === "playing" && player.hits > 0) {
+    return <span className="tv-player-tag is-streak">{player.hits === 1 ? "1 acierto" : `${player.hits} aciertos`}</span>;
   }
   if (player.streak > 1) return <span className="tv-player-tag is-streak">Racha de {player.streak}</span>;
   return <span className="tv-player-tag">{room.phase === "playing" ? "Pensando…" : "Conectado"}</span>;

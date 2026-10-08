@@ -1,20 +1,3 @@
 {
-  "users": {
-    "gst_3ky68431": {
-      "id": "gst_3ky68431",
-      "name": "Jugador815",
-      "avatar": "#1DB954",
-      "isGuest": true,
-      "email": null,
-      "stats": {
-        "totalScore": 0,
-        "bestScore": 0,
-        "gamesPlayed": 0,
-        "wins": 0,
-        "bestStreak": 0,
-        "correctAnswers": 0,
-        "artistHits": {}
-      }
-    }
-  }
+  "users": {}
 }
