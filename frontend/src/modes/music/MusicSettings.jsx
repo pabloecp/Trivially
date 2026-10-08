@@ -138,7 +138,7 @@ export default function MusicSettings({ room, catalog, updateConfig, onToast, ch
   return (
     <fieldset className="tv-settings" disabled={readOnly}>
       <OptionRow
-        label="Modos"
+        label="Modos de Juego"
         multi
         wrap
         options={FORMATS.map((f) => ({ value: f.id, label: f.label, title: f.id === "opciones" ? "Elige la canción entre cuatro" : "Escribe el título" }))}

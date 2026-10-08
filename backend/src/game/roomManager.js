@@ -655,7 +655,7 @@ export class RoomManager {
         throw new Error(loading ? "Tus canciones de Spotify se están cargando, espera unos segundos" : "Ninguna canción cumple esos filtros");
       }
       // Every round gets a different song: with fewer songs than rounds the same ones would keep coming back.
-      if (!this.musicFormats(room).length) throw new Error("Elige al menos un modo");
+      if (!this.musicFormats(room).length) throw new Error("Elige al menos un modo de juego");
       if (available < room.totalRounds) {
         throw new Error(
           `Solo hay ${available} ${available === 1 ? "canción lista" : "canciones listas"} para ${room.totalRounds} rondas. ` +

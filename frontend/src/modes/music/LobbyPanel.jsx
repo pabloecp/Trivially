@@ -90,7 +90,7 @@ export default function LobbyPanel({ room, onToast }) {
             <p className="tv-playlist-total is-short" role="status">
               <Icon name="lock" size={16} strokeWidth={2.6} />
               {room.config?.formats?.length === 0 ? (
-                <span>Elige al menos un modo para empezar.</span>
+                <span>Elige al menos un modo de juego para empezar.</span>
               ) : room.config?.playlistIds?.length === 0 ? (
                 <span>Elige al menos una playlist para empezar.</span>
               ) : (

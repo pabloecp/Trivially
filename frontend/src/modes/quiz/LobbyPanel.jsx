@@ -23,7 +23,7 @@ export default function LobbyPanel({ room, onToast }) {
     quiz.categories?.length === 0
       ? "una categoría"
       : quiz.formats?.length === 0
-      ? "un modo"
+      ? "un modo de juego"
       : quiz.difficulties?.length === 0
       ? "una dificultad"
       : null;
