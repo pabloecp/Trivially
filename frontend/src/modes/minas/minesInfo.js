@@ -34,6 +34,13 @@ export function findStyle(id) {
   return STYLES.find((s) => s.id === id) || STYLES[0];
 }
 
+// The mode's card when both ways are ticked: each round is played one way or the other.
+export const MIXED_STEPS = [
+  { icon: "scroll", text: "Lee el tema" },
+  { icon: "grid", text: "Por turnos o en carrera" },
+  { icon: "bomb", text: "Si pisas una mina, fuera" },
+];
+
 // The difficulties a match can mix (MINES_LEVELS on the server), any of them ticked. The harder, the deeper the mode's
 // colour (colours in styles/mines.css).
 export const DIFFICULTIES = [
@@ -54,7 +61,8 @@ export const RACE_SECONDS_LIMITS = { min: 30, max: 90, step: 15 };
 export function minesConfig(room) {
   const mines = room?.config?.mines || {};
   return {
-    style: findStyle(mines.style).id,
+    // The ways to play that are ticked (both by default); an older room had only one, `style`.
+    styles: mines.styles ?? (mines.style ? [findStyle(mines.style).id] : STYLES.map((s) => s.id)),
     rounds: mines.rounds || 5,
     turnMs: mines.turnMs || 10000,
     roundMs: mines.roundMs || 45000,

@@ -33,7 +33,8 @@ export default function MusicSettings({ room, catalog, updateConfig, onToast, ch
   const [askLink, setAskLink] = useState(false);
   const [spotifyLists, setSpotifyLists] = useState(null);
   const [spotifyBusy, setSpotifyBusy] = useState("");
-  const defaultIds = playlists.filter((p) => p.isDefault).map((p) => p.id);
+  // Like a new room: every playlist of the catalog ticked.
+  const defaultIds = playlists.map((p) => p.id);
   const [draft, setDraft] = useState(room.config);
 
   // Another player with permission may change them too.
@@ -42,7 +43,7 @@ export default function MusicSettings({ room, catalog, updateConfig, onToast, ch
   }, [configKey(room.config)]);
 
   const known = (draft?.playlistIds || []).filter((id) => playlists.some((p) => p.id === id) || custom.some((p) => p.id === id));
-  // Every playlist unticked stays empty (the match then can't start); otherwise unknown ids fall back to the default.
+  // Every playlist unticked stays empty (the match then can't start); otherwise unknown ids fall back to all of them.
   const selected = draft?.playlistIds?.length === 0 ? [] : known.length ? known : defaultIds;
   const hasCustom = selected.some((id) => id.startsWith("sp:"));
   const chosenCustom = custom.filter((p) => selected.includes(p.id));

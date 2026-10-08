@@ -11,6 +11,7 @@ import { findDifficulty, findEra, historyConfig, yearLabel, yearsText } from "./
 import "../../styles/home.css";
 import "../../styles/quiz.css";
 import "../../styles/history.css";
+import { PauseButton, PauseVeil } from "../../components/home/PauseControls.jsx";
 
 const COUNTDOWN_MS = 3000;
 // One colour per player for their year on the reveal's timeline (never the green and red of right and wrong).
@@ -300,6 +301,7 @@ function GameScreen() {
           </div>
 
           <div className="tv-game-tools">
+            <PauseButton room={room} isHost={isHost} onError={setErr} />
             {isHost && (
               <button
                 type="button"
@@ -319,6 +321,7 @@ function GameScreen() {
 
         {question ? (
           <section key={round} className="tv-game-stage tv-hist-stage">
+            <PauseVeil room={room} isHost={isHost} />
             <div className="tv-hist-event">
               <div className="tv-quiz-q-meta">
                 {era && <span className="tv-match-chip">{era.label}</span>}
@@ -390,6 +393,7 @@ function GameScreen() {
           </section>
         ) : (
           <section className="tv-game-stage tv-countdown">
+            <PauseVeil room={room} isHost={isHost} />
             <p className="tv-party-status">
               <span className="tv-pulse" aria-hidden="true" />
               Cargando el acontecimiento…

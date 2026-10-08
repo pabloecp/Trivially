@@ -11,6 +11,7 @@ import { findDifficulty, hitsText, minesConfig } from "./minesInfo.js";
 import "../../styles/home.css";
 import "../../styles/quiz.css";
 import "../../styles/mines.css";
+import { PauseButton, PauseVeil } from "../../components/home/PauseControls.jsx";
 
 const COUNTDOWN_MS = 3000;
 const CELLS = 25;
@@ -96,7 +97,8 @@ function GameScreen() {
   const cells = question?.cells || null;
   const me = room?.players?.find((p) => p.id === user?.id);
   // In a race ("carrera") there are no turns: each player picks as many cells as they like until they step on a mine.
-  const race = minesConfig(room).style === "carrera";
+  // Each round has its own way, when both are ticked.
+  const race = question?.style === "carrera";
   // Joined mid-match: watches the board and plays from the next match.
   const spectator = Boolean(me?.spectator);
   const out = phase === "playing" ? me?.out || null : null;
@@ -258,6 +260,7 @@ function GameScreen() {
           </div>
 
           <div className="tv-game-tools">
+            <PauseButton room={room} isHost={isHost} onError={setErr} />
             {isHost && (
               <button
                 type="button"
@@ -277,6 +280,7 @@ function GameScreen() {
 
         {question ? (
           <section key={round} className="tv-game-stage tv-mines-stage">
+            <PauseVeil room={room} isHost={isHost} />
             {/* One row over the board, always as tall: the board's counters, and at the reveal how this player's
                 round went. */}
             <div className="tv-mines-bar">
@@ -354,6 +358,7 @@ function GameScreen() {
           </section>
         ) : (
           <section className="tv-game-stage tv-countdown">
+            <PauseVeil room={room} isHost={isHost} />
             <p className="tv-party-status">
               <span className="tv-pulse" aria-hidden="true" />
               Cargando el tablero…

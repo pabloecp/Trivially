@@ -6,7 +6,8 @@ import { QUESTION_CATEGORIES, toQuestion } from "../questions/questionSchema.js"
 // it. A right answer scores; a mine leaves the player out until the next round, with the points they had. Two ways to
 // play it (`style`): "turnos", where every player still in picks one cell per turn and the turn waits for them all,
 // and "carrera", with no turns: everyone picks as many cells as they like, as fast as they can, until they step on a
-// mine or the round's time runs out. The round ends when every right answer has been found or nobody is left standing.
+// mine or the round's time runs out. Any of them can be ticked (`styles`, both by default): each round is played in one
+// of the ticked ways, shared as evenly as the rounds allow. The round ends when every right answer has been found or nobody is left standing.
 
 export const MINES_GAME = MINES_MODE;
 export const MINES_CATEGORIES = Object.keys(QUESTION_CATEGORIES);
@@ -35,7 +36,7 @@ export function hitPoints(nth) {
 
 export function defaultMinesConfig() {
   return {
-    style: "turnos",
+    styles: [...MINES_STYLES],
     rounds: 5,
     turnMs: 10000,
     roundMs: 45000,
@@ -54,8 +55,11 @@ const pickList = (change, allowed, fallback) => (Array.isArray(change) ? allowed
  */
 export function mergeMinesConfig(current, change = {}) {
   const base = { ...defaultMinesConfig(), ...current };
+  // Rooms (and clients) from before could only choose one way: `style`.
+  if (!Array.isArray(current?.styles) && MINES_STYLES.includes(current?.style)) base.styles = [current.style];
+  const oneStyle = MINES_STYLES.includes(change.style) ? [change.style] : base.styles;
   return {
-    style: MINES_STYLES.includes(change.style) ? change.style : base.style,
+    styles: pickList(change.styles, MINES_STYLES, oneStyle),
     rounds: change.rounds != null ? clamp(change.rounds, MINES_LIMITS.rounds, base.rounds) : base.rounds,
     turnMs: change.turnMs != null ? clamp(change.turnMs, MINES_LIMITS.turnMs, base.turnMs) : base.turnMs,
     roundMs: change.roundMs != null ? clamp(change.roundMs, MINES_LIMITS.roundMs, base.roundMs) : base.roundMs,
@@ -130,7 +134,7 @@ export function toMinesBoard(q) {
 
 /**
  * The boards of a match: the chosen categories share the rounds as evenly as they can (5 rounds of three categories =
- * 2 + 2 + 1), in random order.
+ * 2 + 2 + 1), in random order. Each board gets the way it's played (`style`), the ticked ones shared the same way.
  */
 export function pickMinesQuestions(bank, config) {
   const settings = mergeMinesConfig(config);
@@ -142,5 +146,7 @@ export function pickMinesQuestions(bank, config) {
       if (pool.length) picked.push(pool.pop());
     }
   }
-  return shuffle(picked).map(toMinesBoard);
+  const styles = settings.styles.length ? settings.styles : [MINES_STYLES[0]];
+  const roundStyles = shuffle(picked.map((_, i) => styles[i % styles.length]));
+  return shuffle(picked).map((q, i) => ({ ...toMinesBoard(q), style: roundStyles[i] }));
 }

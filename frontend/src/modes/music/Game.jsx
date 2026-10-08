@@ -10,6 +10,7 @@ import { useApp, useRemainingMs } from "../../lib/store.jsx";
 import { BACKEND_URL } from "../../lib/config.js";
 import { useSongList } from "../../lib/songList.js";
 import "../../styles/quiz.css";
+import { PauseButton, PauseVeil } from "../../components/home/PauseControls.jsx";
 
 // A closed round's four songs keep the same letters and colours as Trivia's options.
 const OPTION_LETTERS = ["A", "B", "C", "D"];
@@ -126,7 +127,8 @@ function GameScreen() {
 
     audio.volume = 0.8;
 
-    if (room.phase === "playing" && room.audio?.previewUrl) {
+    // Paused by the host: the song stops, and on "Reanudar" it goes on from the same moment (phaseStartedAt moves).
+    if (room.phase === "playing" && room.audio?.previewUrl && !room.paused) {
       const src = proxyUrl(room.audio.previewUrl);
       if (currentAudioSrc.current !== room.audio.previewUrl) {
         currentAudioSrc.current = room.audio.previewUrl;
@@ -156,13 +158,13 @@ function GameScreen() {
         }
       }
     }
-  }, [room?.phase, room?.currentRound, room?.audio?.previewUrl]);
+  }, [room?.phase, room?.currentRound, room?.audio?.previewUrl, Boolean(room?.paused), room?.phaseStartedAt]);
 
   // Unlock audio on any click/key press if browser blocked initial autoplay
   useEffect(() => {
     const unlock = () => {
       const audio = audioRef.current;
-      if (audio && room?.phase === "playing" && audio.paused) {
+      if (audio && room?.phase === "playing" && !room?.paused && audio.paused) {
         audio.play().catch(() => {});
       }
     };
@@ -172,7 +174,7 @@ function GameScreen() {
       window.removeEventListener("click", unlock);
       window.removeEventListener("keydown", unlock);
     };
-  }, [room?.phase]);
+  }, [room?.phase, room?.paused]);
 
   const isSubmittingRef = useRef(false);
 
@@ -405,6 +407,7 @@ function GameScreen() {
           </div>
 
           <div className="tv-game-tools">
+            <PauseButton room={room} isHost={isHost} onError={setErr} />
             {isHost && (
               <button
                 type="button"
@@ -424,6 +427,7 @@ function GameScreen() {
 
         {room.phase === "countdown" && (
           <section key={`c${room.currentRound}`} className="tv-game-stage tv-countdown">
+            <PauseVeil room={room} isHost={isHost} />
             <p className="tv-mono-label">Prepárate para escuchar</p>
             <span key={Math.max(1, seconds)} className="tv-countdown-num">{Math.max(1, seconds)}</span>
             <p className="tv-hint">
@@ -436,6 +440,7 @@ function GameScreen() {
             pick in red. */}
         {(room.phase === "playing" || (room.phase === "reveal" && closed)) && (
           <section key={`p${room.currentRound}`} className="tv-game-stage tv-play-card">
+            <PauseVeil room={room} isHost={isHost} />
             <div className="tv-eq" aria-hidden="true">
               {Array.from({ length: 7 }, (_, i) => (
                 <span key={i} style={{ "--i": i }} />
@@ -621,6 +626,7 @@ function GameScreen() {
           const tone = isCorrect ? "ok" : didAnswer ? "bad" : "timeout";
           return (
             <section key={`r${room.currentRound}`} className="tv-game-stage tv-reveal">
+              <PauseVeil room={room} isHost={isHost} />
               {!spectator && (
               <div className={`tv-result tv-result--${tone}`} role="status">
                 {isCorrect && <Confetti pieces={18} />}

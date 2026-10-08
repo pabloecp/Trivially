@@ -1,8 +1,7 @@
 import Icon from "./Icon.jsx";
 
 // One setting of the settings panel: its name, then its choices side by side; the chosen one is filled in.
-// `options` are { value, label, title?, count?, disabled? }: `count` shows small after the label (how many questions
-// that choice has) and `disabled` greys it out. With `multi`, `value` is a list, every chosen option is filled in and
+// `options` are { value, label, title?, disabled? }: `disabled` greys it out. With `multi`, `value` is a list, every chosen option is filled in and
 // each choice has a little box, ticked or empty, so it reads as "pick as many as you like". `onSetAll(list)` adds
 // a small button beside the setting's name: "Seleccionar todos" ticks every choice, or "Deseleccionar todos" when they
 // already are. `children` go after the choices (the music mode's Spotify button). Inside a disabled fieldset nothing
@@ -37,7 +36,6 @@ export default function OptionRow({ label, options, value, onChange, multi = fal
               </span>
             )}
             {o.label}
-            {o.count != null && <small className="tv-optrow-count">{o.count}</small>}
           </button>
         ))}
         {children}

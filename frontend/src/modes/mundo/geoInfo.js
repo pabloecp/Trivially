@@ -6,7 +6,8 @@ export const KINDS = [
   { id: "location", label: "Ubicación", hint: "Pin en el mapa · 10 s", icon: "pin" },
 ];
 
-// The harder, the deeper the mode's blue (colours in styles/geo.css). A match mixes any of them that are ticked.
+// The difficulties a match can mix (GEO_LEVELS on the server), any of them ticked. The harder, the deeper the mode's
+// blue (colours in styles/geo.css).
 export const DIFFICULTIES = [
   { id: "facil", label: "Fácil", hint: "Los más conocidos", color: "world-light", stars: 1 },
   { id: "media", label: "Media", hint: "Un poco de todo", color: "world", stars: 2 },
@@ -35,7 +36,11 @@ export function geoConfig(room) {
     rounds: geo.rounds || 5,
     roundMs: geo.roundMs || 15000,
     kinds: geo.kinds ?? KINDS.map((k) => k.id),
-    difficulties: geo.difficulties ?? DIFFICULTIES.map((d) => d.id),
+    // An empty list is kept: it shows unticked, and the match can't start until one is ticked. An older room had only
+    // one, `difficulty` ("mixta" being the three).
+    difficulties:
+      geo.difficulties ??
+      (DIFFICULTIES.some((d) => d.id === geo.difficulty) ? [geo.difficulty] : DIFFICULTIES.map((d) => d.id)),
   };
 }
 

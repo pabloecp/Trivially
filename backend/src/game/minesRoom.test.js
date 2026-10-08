@@ -16,6 +16,10 @@ const luis = room.players.get("p-3");
 
 // Lobby: the settings, and how many boards they can draw.
 assert.equal(room.config.mines.categories.length, 10);
+assert.deepEqual(room.config.mines.styles, ["turnos", "carrera"], "both ways of playing ticked by default");
+mgr.updateConfig(room, "host-1", { mines: { styles: [] } });
+assert.throws(() => mgr.start(room, "host-1"), /al menos un modo de juego/, "no way of playing ticked: the match can't start");
+mgr.updateConfig(room, "host-1", { mines: { styles: ["turnos"] } });
 assert.equal(mgr.publicState(room).questionsReady, 300);
 assert.equal(mgr.publicState(room).songsReady, undefined);
 mgr.updateConfig(room, "host-1", { mines: { categories: [] } });
@@ -37,11 +41,13 @@ stop(room);
 assert.equal(room.tracks.length, 3);
 assert.equal(room.totalRounds, 3);
 assert.equal(room.tracks[0].cells.length, 25);
+assert.ok(room.tracks.every((t) => t.style === "turnos"));
 
 // The rounds below use a known board: the first `hits` cells are right, the rest are mines.
 function known(r, hits = 4) {
   const cells = Array.from({ length: 25 }, (_, i) => ({ text: `Casilla ${i}`, correct: i < hits, by: null, at: null, turn: null }));
-  r.tracks[r.currentRound] = { id: `t${r.currentRound}`, prompt: "Tablero de prueba", category: "ciencia", difficulty: "media", cells };
+  const style = r.tracks[r.currentRound]?.style || "turnos";
+  r.tracks[r.currentRound] = { id: `t${r.currentRound}`, style, prompt: "Tablero de prueba", category: "ciencia", difficulty: "media", cells };
 }
 const next = () => {
   mgr.advance(room);
@@ -204,6 +210,7 @@ assert.equal(room.phase, "lobby");
 // A kicked player isn't waited for either.
 const r2 = mgr.create({ host: { id: "a", name: "A", socketId: "ka" }, mode: "multi", game: "minas" });
 mgr.addPlayer(r2, { id: "b", name: "B", socketId: "kb" });
+mgr.updateConfig(r2, "a", { mines: { styles: ["turnos"] } });
 mgr.start(r2, "a");
 stop(r2);
 known(r2);
@@ -216,12 +223,36 @@ stop(r2);
 assert.equal(r2.turn, 2, "the turn moved on without B");
 stop(r2);
 
+// Paused: nobody can pick, and a player leaving doesn't move the turn on until "Reanudar".
+const r3 = mgr.create({ host: { id: "h", name: "H", socketId: "ph" }, mode: "multi", game: "minas" });
+mgr.addPlayer(r3, { id: "g", name: "G", socketId: "pg" });
+mgr.addPlayer(r3, { id: "k", name: "K", socketId: "pk" });
+mgr.updateConfig(r3, "h", { mines: { styles: ["turnos"] } });
+mgr.start(r3, "h");
+stop(r3);
+known(r3);
+mgr.beginPlaying(r3);
+stop(r3);
+mgr.pickCell(r3, "h", { cell: 0, turn: 1 });
+mgr.pickCell(r3, "g", { cell: 1, turn: 1 });
+mgr.pause(r3, "h");
+assert.throws(() => mgr.pickCell(r3, "k", { cell: 2, turn: 1 }), /pausa/);
+mgr.kick(r3, "h", "k");
+assert.equal(r3.turn, 1, "paused: the turn waits");
+assert.ok(r3.paused, "still paused");
+mgr.resume(r3, "h");
+stop(r3);
+assert.equal(r3.turn, 2, "on Reanudar the turn moves on without K");
+assert.equal(r3.paused, null);
+stop(r3);
+
 // ---- A race ("carrera"): no turns, each player picks as many cells as they like until they step on a mine ----
 const race = mgr.create({ host: { id: "c1", name: "Carla", socketId: "c1" }, mode: "multi", game: "minas" });
 mgr.addPlayer(race, { id: "c2", name: "Dani", socketId: "c2" });
 mgr.addPlayer(race, { id: "c3", name: "Eva", socketId: "c3" });
+// An older client still sends a single `style`.
 mgr.updateConfig(race, "c1", { mines: { style: "carrera", roundMs: 60000, rounds: 3 } });
-assert.equal(race.config.mines.style, "carrera");
+assert.deepEqual(race.config.mines.styles, ["carrera"]);
 mgr.start(race, "c1");
 stop(race);
 known(race, 5);
@@ -284,4 +315,16 @@ assert.equal(race.phase, "playing", "Dani is still standing");
 mgr.pickCell(race, "c2", { cell: 23, turn: 1 });
 stop(race);
 assert.equal(race.phase, "reveal", "nobody left standing");
+// Both ways ticked: the rounds share them evenly, and each round is played its own way.
+const mix = mgr.create({ host: { id: "m1", name: "M", socketId: "m1" }, mode: "multi", game: "minas" });
+mgr.updateConfig(mix, "m1", { mines: { styles: ["turnos", "carrera"], rounds: 4, turnMs: 5000, roundMs: 30000 } });
+mgr.start(mix, "m1");
+stop(mix);
+assert.deepEqual(mix.tracks.map((t) => t.style).sort(), ["carrera", "carrera", "turnos", "turnos"]);
+mix.currentRound = mix.tracks.findIndex((t) => t.style === "carrera");
+assert.equal(mgr.roundMs(mix), 30000, "a race round lasts the round's seconds");
+assert.equal(mgr.publicState(mix).question.style, "carrera");
+mix.currentRound = mix.tracks.findIndex((t) => t.style === "turnos");
+assert.equal(mgr.roundMs(mix), 5000, "a round by turns lasts the turn's seconds");
+
 console.log("minesRoom.test ok");

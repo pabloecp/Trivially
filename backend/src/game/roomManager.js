@@ -106,13 +106,12 @@ export function createRoomCode(existing) {
 // ones, the title typed in the search box ("escribir"). Both are ticked in a new room; the rounds are shared evenly.
 export const MUSIC_FORMATS = ["opciones", "escribir"];
 
-// A new room plays the catalog's default playlist.
+// A new room plays every playlist of the catalog (Top 500 Español and Top 500 Inglés).
 function defaultConfig(catalog) {
-  const playlist = catalog?.playlists?.find((p) => p.isDefault) || catalog?.playlists?.[0];
   return {
     rounds: 5,
     roundMs: ROUND_MS,
-    playlistIds: playlist ? [playlist.id] : [],
+    playlistIds: (catalog?.playlists || []).map((p) => p.id),
     formats: [...MUSIC_FORMATS],
     quiz: defaultQuizConfig(),
     geo: defaultGeoConfig(),
@@ -129,7 +128,7 @@ function publicPlayer(player, phase, room) {
   // no turns to wait for).
   const mines = room?.game === MINES_GAME;
   const field = mines ? player.minefield : null;
-  const race = mines && mergeMinesConfig(room.config.mines).style === "carrera";
+  const race = mines && room.tracks?.[room.currentRound]?.style === "carrera";
   const answered =
     mines && phase === "playing" ? Boolean(field && !field.out && !race && field.pickedTurn === room.turn) : Boolean(player.lastAnswer);
   return {
@@ -628,9 +627,11 @@ export class RoomManager {
     } else if (room.game === GEO_GAME) {
       // Geografía: the match's questions are drawn now (they are the "tracks" of the room).
       const geo = mergeGeoConfig(room.config.geo);
+      if (!geo.kinds.length) throw new Error("Elige al menos un tipo de pregunta");
+      if (!geo.difficulties.length) throw new Error("Elige al menos una dificultad");
       const tracks = pickGeoQuestions(this.geoQuestions, geo);
       if (tracks.length < geo.rounds) {
-        throw new Error(`Solo hay ${tracks.length} preguntas con esos ajustes para ${geo.rounds} rondas. Baja las rondas o elige más tipos.`);
+        throw new Error(`Solo hay ${tracks.length} preguntas con esos ajustes para ${geo.rounds} rondas. Baja las rondas o elige más tipos o dificultades.`);
       }
       // Flags are shown through a token, so the image's address doesn't name the country.
       for (const t of tracks) if (t.flag) t.flagToken = flagToken(t.flag);
@@ -650,6 +651,7 @@ export class RoomManager {
     } else if (room.game === MINES_GAME) {
       // Campo de minas: the match's boards are drawn now, each with its cells shuffled.
       const mines = mergeMinesConfig(room.config.mines);
+      if (!mines.styles.length) throw new Error("Elige al menos un modo de juego");
       if (!mines.categories.length) throw new Error("Elige al menos una categoría");
       if (!mines.difficulties.length) throw new Error("Elige al menos una dificultad");
       const tracks = pickMinesQuestions(this.minesQuestions, mines);
@@ -794,7 +796,7 @@ export class RoomManager {
     // Campo de minas: the time of each turn (a round has as many as it takes), or of the whole round in a race.
     if (room.game === MINES_GAME) {
       const mines = mergeMinesConfig(room.config.mines);
-      return mines.style === "carrera" ? mines.roundMs : mines.turnMs;
+      return this.isMinesRace(room) ? mines.roundMs : mines.turnMs;
     }
     return room.config.roundMs || ROUND_MS;
   }
@@ -819,9 +821,10 @@ export class RoomManager {
     return room.game === MINES_GAME && Boolean(room.tracks[room.currentRound]);
   }
 
-  /** Campo de minas played as a race ("carrera"): no turns, each player picks cells until they step on a mine. */
+  /** A Campo de minas round played as a race ("carrera"): no turns, each player picks cells until they step on a mine.
+   *  Each round has its own way (`style`), drawn from the ticked ones when the match starts. */
   isMinesRace(room) {
-    return this.isMinesRound(room) && mergeMinesConfig(room.config.mines).style === "carrera";
+    return this.isMinesRound(room) && room.tracks[room.currentRound].style === "carrera";
   }
 
   /** During a tiebreak only the tied players answer; the rest of the room watches. */
@@ -863,6 +866,8 @@ export class RoomManager {
       onEnd?.();
       this.onPhaseChange?.(room);
     }, remainingMs);
+    // Campo de minas: someone may have left during the pause, and the turn was only waiting for them.
+    this.checkMinesTurn(room);
   }
 
   beginPlaying(room) {
@@ -1428,7 +1433,8 @@ export class RoomManager {
    * true when the turn or the round ended.
    */
   checkMinesTurn(room) {
-    if (!this.isMinesRound(room) || room.phase !== "playing") return false;
+    // While paused nothing moves on (someone leaving included): it's checked again on "Reanudar".
+    if (!this.isMinesRound(room) || room.phase !== "playing" || room.paused) return false;
     if (this.minesRoundOver(room)) {
       this.beginReveal(room);
       return true;
@@ -1731,6 +1737,8 @@ export class RoomManager {
       prompt: board.prompt,
       category: categoryName(board.category),
       difficulty: board.difficulty,
+      // How this round is played: "turnos" or "carrera".
+      style: board.style,
       turn: room.phase === "playing" ? room.turn : null,
       total: board.cells.filter((c) => c.correct).length,
       found: board.cells.filter((c) => c.correct && c.by).length,

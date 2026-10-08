@@ -79,13 +79,11 @@ assert.deepEqual(mergeGeoConfig({}, { rounds: 99, roundMs: 1, kinds: ["flag", "n
   kinds: ["capital", "flag"],
   difficulties: ["facil", "media", "dificil"],
 });
-// Several difficulties can be ticked, in their order; none means nothing to play.
-assert.deepEqual(mergeGeoConfig({}, { difficulties: ["dificil", "x", "facil"] }).difficulties, ["facil", "dificil"]);
-assert.deepEqual(mergeGeoConfig({}, { difficulties: [] }).difficulties, []);
-// An older client's single difficulty is still understood.
+// Several difficulties at once; an older client's single one (or "mixta") still works.
+assert.deepEqual(mergeGeoConfig({}, { difficulties: ["dificil", "facil", "x"] }).difficulties, ["facil", "dificil"]);
 assert.deepEqual(mergeGeoConfig({}, { difficulty: "media" }).difficulties, ["media"]);
-assert.deepEqual(mergeGeoConfig({}, { difficulty: "mixta" }).difficulties, ["facil", "media", "dificil"]);
-assert.deepEqual(mergeGeoConfig({ difficulty: "dificil" }).difficulties, ["dificil"]);
+assert.deepEqual(mergeGeoConfig({ difficulty: "mixta" }).difficulties, ["facil", "media", "dificil"]);
+assert.deepEqual(mergeGeoConfig({}, { difficulties: [] }).difficulties, []);
 // Every kind can be unticked: there is then nothing to play.
 assert.deepEqual(mergeGeoConfig({}, { kinds: [] }).kinds, []);
 
@@ -99,17 +97,16 @@ assert.ok(mixed.some((q) => q.data.kind === "location") && mixed.every((q) => q.
 
 // A match: balanced kinds, never the same country twice, nothing secret beyond what the round needs.
 const bank = geoBank(built);
-const match = pickGeoQuestions(bank, { rounds: 10, kinds: ["capital", "flag", "location"], difficulties: ["facil"] });
+const match = pickGeoQuestions(bank, { rounds: 10, kinds: ["capital", "flag", "location"], difficulty: "facil" });
 assert.equal(match.length, 10);
 const perKind = GEO_KINDS.map((k) => match.filter((t) => t.kind === k).length).sort();
 assert.deepEqual(perKind, [3, 3, 4]);
 assert.equal(new Set(match.map((t) => t.country)).size, 10);
 assert.ok(match.every((t) => t.difficulty === "facil"));
-assert.equal(countGeoQuestions(bank, { kinds: ["location"], difficulties: ["facil"] }), rows.filter((q) => q.data.kind === "location" && q.difficulty === "facil").length);
-assert.equal(countGeoQuestions(bank, { kinds: ["location"], difficulties: [] }), 0);
-const twoLevels = pickGeoQuestions(bank, { rounds: 10, kinds: ["capital"], difficulties: ["facil", "dificil"] });
-assert.ok(twoLevels.every((t) => t.difficulty === "facil" || t.difficulty === "dificil"));
-const tiebreak = pickTiebreakQuestion(bank, { difficulties: ["facil", "media", "dificil"] }, match.map((t) => t.country));
+assert.equal(countGeoQuestions(bank, { kinds: ["location"], difficulty: "facil" }), rows.filter((q) => q.data.kind === "location" && q.difficulty === "facil").length);
+const two = pickGeoQuestions(bank, { rounds: 10, kinds: ["capital"], difficulties: ["facil", "dificil"] });
+assert.ok(two.every((t) => t.difficulty === "facil" || t.difficulty === "dificil"));
+const tiebreak = pickTiebreakQuestion(bank, {}, match.map((t) => t.country));
 assert.equal(tiebreak.kind, "location");
 assert.equal(tiebreak.difficulty, "media");
 assert.ok(!match.some((t) => t.country === tiebreak.country));

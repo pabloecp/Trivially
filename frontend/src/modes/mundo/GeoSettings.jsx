@@ -3,8 +3,8 @@ import OptionRow, { rangeOptions } from "../../components/home/OptionRow.jsx";
 import { DIFFICULTIES, KINDS, ROUNDS_LIMITS, SECONDS_LIMITS, geoConfig } from "./geoInfo.js";
 
 // Settings of a Geografía match, in the settings panel: which kinds of question and difficulties (tick as many as you
-// like; with one list empty the match can't start), how many rounds and the seconds to write an answer (map rounds
-// always last 10 s). Every tap is saved straight away for the whole room.
+// like, all by default), how many rounds and
+// the seconds to write an answer (map rounds always last 10 s). Every tap is saved straight away for the whole room.
 // With `readOnly` (players without permission) everything shows but nothing can be tapped.
 export default function GeoSettings({ room, updateConfig, onToast, children, readOnly = false }) {
   const saved = geoConfig(room);
@@ -31,7 +31,7 @@ export default function GeoSettings({ room, updateConfig, onToast, children, rea
   function toggle(key, all, id) {
     const list = draft[key];
     const on = list.includes(id);
-    save({ [key]: all.filter((v) => (v === id ? !on : list.includes(v))) });
+    save({ [key]: all.map((c) => c.id).filter((c) => (c === id ? !on : list.includes(c))) });
   }
 
   const writtenKinds = draft.kinds.some((k) => k !== "location");
@@ -43,7 +43,7 @@ export default function GeoSettings({ room, updateConfig, onToast, children, rea
         multi
         options={KINDS.map((k) => ({ value: k.id, label: k.label, title: k.hint }))}
         value={draft.kinds}
-        onChange={(id) => toggle("kinds", KINDS.map((k) => k.id), id)}
+        onChange={(id) => toggle("kinds", KINDS, id)}
         onSetAll={(kinds) => save({ kinds })}
       />
       <OptionRow
@@ -51,7 +51,7 @@ export default function GeoSettings({ room, updateConfig, onToast, children, rea
         multi
         options={DIFFICULTIES.map((d) => ({ value: d.id, label: d.label, title: d.hint }))}
         value={draft.difficulties}
-        onChange={(id) => toggle("difficulties", DIFFICULTIES.map((d) => d.id), id)}
+        onChange={(id) => toggle("difficulties", DIFFICULTIES, id)}
         onSetAll={(difficulties) => save({ difficulties })}
       />
       <OptionRow label="Rondas" options={rangeOptions(ROUNDS_LIMITS)} value={draft.rounds} onChange={(n) => save({ rounds: n })} />

@@ -318,23 +318,4 @@
 /* Trivia's "Saltar" is Adivina la canción's: as wide as the answer box. */
 .tv-quiz-write .tv-skip-btn { width: 100%; }
 /* The host paused the match: a veil over the round, nothing can be answered. */
-.tv-quiz-stage.is-paused { position: relative; }
-.tv-quiz-stage > .tv-pause-veil,
-.tv-pause-veil {
-  width: auto;
-  position: absolute;
-  inset: 0;
-  z-index: 5;
-  display: grid;
-  place-content: center;
-  justify-items: center;
-  gap: 8px;
-  border-radius: inherit;
-  background: color-mix(in srgb, var(--tv-surface) 88%, transparent);
-  backdrop-filter: blur(4px);
-  text-align: center;
-  animation: tvFade 0.25s ease-out;
-}
-.tv-pause-veil strong { font-family: var(--tv-display); font-size: 26px; color: var(--tv-text); }
-.tv-pause-veil span { font-weight: 700; color: var(--tv-text-2); }
 .tv-music-verdict { justify-self: center; margin: -6px 0 4px; }

@@ -91,9 +91,11 @@ export const GAME_MODES = [
     color: "mines",
     icon: "bomb",
     available: true,
-    // How it's played by turns; the lobby shows the steps of the chosen way (minesInfo.js STYLES).
+    // How it's played by turns; the lobby shows the steps of the ticked ways (minesInfo.js STYLES).
     steps: MINES_STYLES[0].steps,
-    ready: (room) => room.questionsReady == null || room.questionsReady >= (room.config?.mines?.rounds || 5),
+    ready: (room) =>
+      room.config?.mines?.styles?.length !== 0 &&
+      (room.questionsReady == null || room.questionsReady >= (room.config?.mines?.rounds || 5)),
     Lobby: MinesLobbyPanel,
     // A prompt and a 5 × 5 board (modes/minas/Game.jsx).
     path: (room) => `/minas/${room.code}`,
