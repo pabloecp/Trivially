@@ -2,6 +2,8 @@ import MusicLobbyPanel from "./music/LobbyPanel.jsx";
 import QuizLobbyPanel from "./quiz/LobbyPanel.jsx";
 import GeoLobbyPanel from "./mundo/LobbyPanel.jsx";
 import HistoryLobbyPanel from "./historia/LobbyPanel.jsx";
+import MinesLobbyPanel from "./minas/LobbyPanel.jsx";
+import { STYLES as MINES_STYLES } from "./minas/minesInfo.js";
 
 // Game modes shown on the room screen. "Trivia" is the main one (`kind: "main"`, its tile as wide as two): questions
 // of every topic, each answered its own way. The others (`kind: "extra"`) have their own way of playing; their tiles
@@ -79,6 +81,21 @@ export const GAME_MODES = [
     Lobby: HistoryLobbyPanel,
     // An event and a timeline (modes/historia/Game.jsx).
     path: (room) => `/historia/${room.code}`,
+  },
+  {
+    id: "minas",
+    name: "Campo de minas",
+    kind: "extra",
+    // The site's violet (styles/mines.css).
+    color: "mines",
+    icon: "bomb",
+    available: true,
+    // How it's played by turns; the lobby shows the steps of the chosen way (minesInfo.js STYLES).
+    steps: MINES_STYLES[0].steps,
+    ready: (room) => room.questionsReady == null || room.questionsReady >= (room.config?.mines?.rounds || 5),
+    Lobby: MinesLobbyPanel,
+    // A prompt and a 5 × 5 board (modes/minas/Game.jsx).
+    path: (room) => `/minas/${room.code}`,
   },
 ];
 

@@ -279,6 +279,18 @@ export function attachSockets(io, rooms) {
       }
     });
 
+    // Campo de minas: `{ cell, turn }`, one cell per turn. The first to pick a cell keeps it, and everyone sees it.
+    socket.on("game:cell", (value, ack) => {
+      try {
+        const { room, userId } = requireRoom(rooms, socket);
+        rooms.pickCell(room, userId, value);
+        ack?.({ ok: true, state: rooms.publicState(room, userId) });
+        io.to(room.code).emit("room:state", rooms.publicState(room));
+      } catch (err) {
+        ack?.({ ok: false, error: err.message });
+      }
+    });
+
     socket.on("disconnect", () => {
       const result = rooms.disconnect(socket.id);
       if (result?.room) io.to(result.room.code).emit("room:state", rooms.publicState(result.room));

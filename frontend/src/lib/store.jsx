@@ -515,6 +515,13 @@ export function AppProvider({ children }) {
         if (res.state) setRoom(res.state);
       },
 
+      // Campo de minas: `{ cell, turn }`, one cell of the board per turn (`turn` is the one on screen).
+      async pickCell(value) {
+        const res = await emitAck("game:cell", value);
+        if (!res.ok) throw new Error(res.error);
+        if (res.state) setRoom(res.state);
+      },
+
       // "Saltar": give up on the current round.
       async skipSong() {
         const res = await emitAck("game:skip");

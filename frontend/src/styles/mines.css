@@ -1,0 +1,318 @@
+/* Campo de minas. Loaded after home.css and quiz.css (the game imports both) and builds on their tv- classes.
+   The mode's colour is the site's violet (palettes.css, the slot the old "Cine y series" tile used), flat like every
+   other tile: --tv-mn-*; difficulty reads as lighter or deeper shades of it. On the board a right answer is the
+   meaning green (--p-ok) and a mine the meaning red (--p-bad); this player's cells are ringed in white and everyone
+   else's in their own colour (--owner). */
+
+:root {
+  --tv-mn-1: var(--p-cinema-1);
+  --tv-mn: var(--p-cinema-2);
+  --tv-mn-edge: var(--p-cinema-edge);
+  --tv-mn-on: var(--p-on-cinema);
+  --tv-mn-rgb: var(--p-cinema-rgb);
+  --tv-mn-text: var(--p-cinema-text);
+}
+
+/* ---------- Colours ---------- */
+.tv-c-mines { --c1: var(--tv-mn-1); --c2: var(--tv-mn); --edge: var(--tv-mn-edge); --on: var(--tv-mn-on); }
+.tv-c-mines-light {
+  --c1: color-mix(in srgb, var(--tv-mn-1) 50%, #ffffff);
+  --c2: color-mix(in srgb, var(--tv-mn) 55%, #ffffff);
+  --edge: color-mix(in srgb, var(--tv-mn-edge) 70%, #ffffff);
+  --on: var(--p-ink);
+}
+.tv-c-mines-deep {
+  --c1: color-mix(in srgb, var(--tv-mn-1) 72%, #000000);
+  --c2: color-mix(in srgb, var(--tv-mn) 62%, #000000);
+  --edge: color-mix(in srgb, var(--tv-mn-edge) 55%, #000000);
+  --on: #ffffff;
+}
+
+/* The site's main colour becomes the mode's violet while the room is in this game (counters, timer, clock, chips...). */
+:root:root[data-mode="minas"] {
+  --brand: var(--tv-mn);
+  --brand-rgb: var(--tv-mn-rgb);
+  --brand-text: var(--tv-mn-text);
+  --brand-hover: var(--tv-mn-1);
+  --brand-active: var(--tv-mn-edge);
+  --border-focus: var(--tv-mn);
+  --on-brand: var(--tv-mn-on);
+  --tv-mode-bg: var(--tv-mn);
+  --tv-on-mode: var(--tv-mn-on);
+}
+/* ---------- The round ---------- */
+/* The match is one frame as tall as the screen under the top bar, the same in every phase, so the whole board shows
+   without scrolling: the top card (the round, the prompt and what to do now) and the stage under it, which is all
+   board but one row of counters. --mines-top (Game.jsx) is where the frame starts on the page. On big screens the
+   room's frame already fills the window. The scoreboard is the room's, like in every game: at the side on a
+   computer, under the frame on phones. */
+.tv-mines-frame {
+  height: max(500px, calc(100vh - var(--mines-top, 80px) - 14px));
+  height: max(500px, calc(100svh - var(--mines-top, 80px) - 14px));
+}
+@media (min-width: 980px) and (min-height: 600px) {
+  .tv-mines-frame { height: auto; }
+}
+.tv-mines-frame > * { flex: none; }
+
+/* The top card: kicker, prompt and one line of what to do, like the one of Encuentra el país. */
+.tv-mines-find { display: grid; gap: 2px; }
+.tv-app .tv-game-round .tv-mines-prompt {
+  white-space: normal;
+  text-wrap: balance;
+  font-family: var(--tv-display);
+  font-weight: 700;
+  font-size: clamp(22px, 2.4vw, 30px);
+  line-height: 1.15;
+  color: var(--tv-text);
+  animation: tvPop 0.5s var(--tv-spring);
+}
+/* A long prompt gets a smaller letter, so it still fits on one line. */
+.tv-app .tv-game-round .tv-mines-prompt.is-long { font-size: clamp(19px, 1.9vw, 24px); }
+.tv-mines-hint {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 1.35em;
+  font-size: 14px;
+  line-height: 1.35;
+  animation: tvFade 0.35s ease;
+}
+.tv-mines-hint svg { flex-shrink: 0; color: var(--brand-text); }
+.tv-mines-hint.is-sent svg { color: var(--p-ok-text); }
+.tv-app .tv-mines-hint.is-out { color: var(--p-bad-text); }
+.tv-mines-hint.is-out svg { color: var(--p-bad-text); }
+
+/* The stage: the counters' row and the board, which takes all the height left (centred, if the board is already as
+   big as it gets). Only a window too short for rows of --row-min scrolls the stage (without a bar). */
+.tv-app .tv-mines-frame > .tv-mines-stage {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  justify-content: center;
+  gap: 12px;
+  padding: 16px 24px 20px;
+  scrollbar-width: none;
+}
+.tv-mines-stage > * { flex: none; width: 100%; }
+
+/* Always as tall, so the board never moves: the counters, or at the reveal the verdict. */
+.tv-mines-bar { display: grid; place-items: center; height: 40px; }
+.tv-mines-chips { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; }
+.tv-mines-chips .tv-match-chip { background: var(--tv-option-bg); }
+.tv-mines-count { font-variant-numeric: tabular-nums; }
+
+/* ---------- The board ----------
+   5 × 5 cells as big as the stage lets them (up to 1000 × 600px, never rows thinner than --row-min). The rows are
+   further apart than the columns, since a cell's edge and a picked cell's ring hang under it. The letter grows with
+   the board (--cell-font, from the board's size) and the longest texts get a smaller one (is-long, is-xlong). */
+.tv-mines-board {
+  --press: 5px;
+  --row-min: 46px;
+  --row-gap: 16px;
+  --col-gap: 12px;
+  position: relative;
+  container-type: size;
+  gap: var(--row-gap) var(--col-gap);
+}
+.tv-app .tv-mines-stage > .tv-mines-board {
+  flex: 1 1 auto;
+  align-self: center;
+  width: min(1000px, 100%);
+  max-height: 600px;
+  min-height: calc(5 * var(--row-min) + 4 * var(--row-gap) + var(--press));
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-rows: repeat(5, minmax(var(--row-min), 1fr));
+  padding-bottom: var(--press);
+}
+.tv-mines-cell {
+  --cell-font: clamp(14px, min(calc(8px + 1.9cqh), calc(4px + 1.6cqw)), 20px);
+  position: relative;
+  display: grid;
+  /* One column no wider than the cell, so a long word wraps (with a hyphen) instead of spilling out. */
+  grid-template-columns: minmax(0, 1fr);
+  place-items: center;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  padding: 8px;
+  border: 0;
+  border-radius: 16px;
+  background: var(--tv-neutral);
+  box-shadow: 0 5px 0 var(--tv-neutral-edge);
+  font-family: var(--tv-display);
+  font-weight: 600;
+  font-size: var(--cell-font);
+  line-height: 1.15;
+  text-align: center;
+  cursor: pointer;
+  transition: transform 0.18s var(--tv-spring), box-shadow 0.18s ease, opacity 0.3s ease, filter 0.3s ease, background 0.3s ease;
+  animation: tvRise 0.4s var(--tv-spring) backwards;
+  animation-delay: calc(var(--i, 0) * 18ms);
+}
+.tv-app .tv-mines-cell { color: var(--tv-text); }
+.tv-mines-cell.is-long { font-size: calc(var(--cell-font) * 0.87); }
+.tv-mines-cell.is-xlong { font-size: calc(var(--cell-font) * 0.76); }
+/* The text takes the cell's whole width. A word too long for it splits between syllables, with a hyphen (Game.jsx
+   marks them), and only as a last resort anywhere, never spilling out of the cell. */
+.tv-mines-cell-text { justify-self: stretch; min-width: 0; overflow-wrap: break-word; }
+/* Hover lifts the cell straight up, its edge showing a little more under it (like the game tiles). */
+.tv-mines-cell:hover:not(:disabled) { transform: translateY(-3px); box-shadow: 0 8px 0 var(--tv-neutral-edge); }
+.tv-mines-cell:active:not(:disabled) { transform: translateY(5px); box-shadow: 0 0 0 var(--tv-neutral-edge); }
+.tv-mines-cell:disabled { cursor: default; }
+
+/* Before the board shows (countdown): squares that breathe, and the countdown over them. */
+.tv-mines-cell.is-waiting { cursor: default; opacity: 0.45; animation: tvQuizWait 1.2s ease-in-out infinite alternate; }
+.tv-mines-countdown { position: absolute; inset: 0; display: grid; place-items: center; pointer-events: none; }
+.tv-mines-countdown .tv-quiz-count { font-size: clamp(64px, 22cqh, 110px); }
+/* This player already picked this turn, or is out: the free cells step back. */
+.tv-mines-cell.is-locked { opacity: 0.6; }
+/* A picked cell (or the one just tapped, waiting for the server) is pressed all the way in: its edge gone and the
+   cell down by the edge's height (--press), so a ring hugs the whole cell and nothing sticks out under it (like
+   Trivia's answers). This player's cells get a white ring; everyone else's, their colour (--owner). */
+.tv-mines-cell.is-pending,
+.tv-mines-cell.is-hit,
+.tv-mines-cell.is-mine { transform: translateY(var(--press)); }
+.tv-mines-cell.is-pending {
+  box-shadow: 0 0 0 3px var(--tv-surface), 0 0 0 6px #ffffff;
+  animation: tvMinesPress 0.35s var(--tv-spring), tvMinesPulse 0.9s ease-in-out 0.35s infinite alternate;
+}
+@keyframes tvMinesPulse { to { filter: brightness(1.25); } }
+
+/* Picked cells: green with a check, or red with a bomb, ringed in the colour of whoever picked it (white for this
+   player, Game.jsx). */
+.tv-mines-cell.is-hit,
+.tv-mines-cell.is-mine {
+  opacity: 1;
+  box-shadow: 0 0 0 3px var(--tv-surface), 0 0 0 6px var(--owner, transparent);
+}
+.tv-mines-cell.is-hit { background: var(--p-ok); animation: tvMinesPress 0.5s var(--tv-spring); }
+.tv-mines-cell.is-mine { background: var(--p-bad); animation: tvMinesBoom 0.55s ease; }
+.tv-app .tv-mines-cell.is-hit { color: var(--p-ink); }
+.tv-app .tv-mines-cell.is-mine { color: #ffffff; }
+/* Little bounces that end where the pressed cell rests. */
+@keyframes tvMinesPress { 40% { transform: translateY(var(--press)) scale(1.06); } }
+@keyframes tvMinesBoom {
+  0% { transform: translateY(var(--press)); filter: brightness(2.2); }
+  25% { transform: translateY(var(--press)) scale(1.1) rotate(3deg); }
+  50% { transform: translateY(var(--press)) scale(0.95) rotate(-3deg); }
+  75% { transform: translateY(var(--press)) scale(1.03) rotate(1deg); }
+}
+
+/* The reveal: the right answers nobody found (dashed green) and the mines nobody stepped on (faded red). */
+.tv-mines-cell.is-missed { background: var(--tv-option-bg); box-shadow: inset 0 0 0 2px var(--p-ok); opacity: 0.9; }
+.tv-mines-cell.is-buried { background: var(--tv-option-bg); box-shadow: inset 0 0 0 2px rgba(var(--p-bad-rgb), 0.55); opacity: 0.55; }
+.tv-mines-board.is-reveal .tv-mines-cell { animation: none; }
+.tv-mines-board.is-reveal .tv-mines-cell.is-missed,
+.tv-mines-board.is-reveal .tv-mines-cell.is-buried { animation: tvFade 0.5s ease backwards; animation-delay: calc(var(--i, 0) * 20ms); }
+
+/* The corner marks: right or mine (top right), and whose cell it is (bottom left). */
+.tv-mines-cell-mark {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--p-ok-edge);
+}
+.tv-mines-cell.is-mine .tv-mines-cell-mark,
+.tv-mines-cell.is-buried .tv-mines-cell-mark { color: var(--p-bad-edge); }
+.tv-mines-cell.is-missed .tv-mines-cell-mark,
+.tv-mines-cell.is-buried .tv-mines-cell-mark { background: transparent; color: var(--p-ok-text); }
+.tv-mines-cell.is-buried .tv-mines-cell-mark { color: var(--p-bad-text); }
+.tv-mines-owner {
+  position: absolute;
+  left: 5px;
+  bottom: 5px;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: var(--owner);
+  font-family: var(--tv-body);
+  font-weight: 900;
+  font-size: 11px;
+  line-height: 20px;
+  color: var(--p-ink);
+}
+
+/* ---------- The verdict at the reveal, in the counters' row: icon, what happened, the points ---------- */
+.tv-mines-verdict {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  max-width: 100%;
+  height: 40px;
+  padding: 4px 6px 4px 4px;
+  border-radius: 999px;
+  background: var(--tv-option-bg);
+  text-align: left;
+  animation: tvPop 0.5s var(--tv-spring);
+}
+.tv-mines-verdict-icon { display: grid; place-items: center; flex-shrink: 0; width: 32px; height: 32px; border-radius: 50%; color: var(--p-ink); }
+.tv-mines-verdict-text { display: flex; align-items: baseline; gap: 8px; min-width: 0; padding-right: 6px; white-space: nowrap; }
+.tv-mines-verdict-text strong { font-family: var(--tv-display); font-weight: 700; font-size: 17px; color: var(--tv-text); }
+.tv-mines-verdict-text small { overflow: hidden; text-overflow: ellipsis; font-weight: 700; font-size: 13px; color: var(--tv-text-2); }
+.tv-mines-verdict .tv-tag { flex-shrink: 0; }
+.tv-mines-verdict--ok { box-shadow: inset 0 0 0 2px var(--p-ok); }
+.tv-mines-verdict--ok .tv-mines-verdict-icon { background: var(--p-ok); }
+.tv-mines-verdict--bad { box-shadow: inset 0 0 0 2px var(--p-bad); animation: tvPop 0.5s var(--tv-spring), tvShake 0.5s ease 0.3s; }
+.tv-mines-verdict--bad .tv-mines-verdict-icon { background: var(--p-bad); color: #fff; }
+.tv-mines-verdict--timeout .tv-mines-verdict-icon { background: var(--p-accent-2); }
+
+@media (max-width: 640px) {
+  /* Everything a little tighter, so the board keeps most of the screen. "Terminar" goes under the clock. */
+  .tv-mines .tv-game-top { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "round clock" "round tools" "bar bar"; gap: 6px 12px; padding: 12px 14px; border-radius: 24px; }
+  .tv-mines .tv-game-tools:empty { display: none; }
+  .tv-mines .tv-clock { width: 54px; height: 54px; }
+  .tv-app .tv-game-round .tv-mines-prompt { font-size: 21px; }
+  .tv-app .tv-game-round .tv-mines-prompt.is-long { font-size: 17px; }
+  .tv-app .tv-mines-frame > .tv-mines-stage { gap: 10px; padding: 12px 10px 14px; }
+  .tv-mines-hint { align-items: flex-start; min-height: 2.7em; font-size: 12.5px; }
+  .tv-mines-hint svg { margin-top: 1px; }
+  .tv-mines-bar { height: 34px; }
+  .tv-mines-chips { gap: 4px; }
+  .tv-mines-chips .tv-match-chip { padding: 4px 9px; font-size: 12px; }
+  .tv-mines-board { --press: 3px; --row-min: 44px; --row-gap: 10px; --col-gap: 8px; }
+  .tv-mines-cell { padding: 4px 3px; border-radius: 11px; font-size: 12px; box-shadow: 0 3px 0 var(--tv-neutral-edge); }
+  .tv-mines-cell.is-long,
+  .tv-mines-cell.is-word { font-size: 10.5px; }
+  .tv-mines-cell.is-xlong,
+  .tv-mines-cell.is-xword { font-size: 9.5px; }
+  /* A thinner ring, so two picked cells side by side don't touch. */
+  .tv-mines-cell.is-pending,
+  .tv-mines-cell.is-hit,
+  .tv-mines-cell.is-mine { box-shadow: 0 0 0 2px var(--tv-surface), 0 0 0 4px var(--owner, #ffffff); }
+  .tv-mines-cell-mark { top: 2px; right: 2px; width: 15px; height: 15px; }
+  .tv-mines-cell-mark svg { width: 10px; height: 10px; }
+  .tv-mines-owner { left: 2px; bottom: 2px; min-width: 15px; height: 15px; padding: 0 3px; font-size: 9px; line-height: 15px; }
+  .tv-mines-verdict { height: 34px; gap: 8px; }
+  .tv-mines-verdict-icon { width: 26px; height: 26px; }
+  .tv-mines-verdict-icon svg { width: 16px; height: 16px; }
+  .tv-mines-verdict-text { gap: 6px; }
+  .tv-mines-verdict-text strong { font-size: 15px; }
+  .tv-mines-verdict-text small { font-size: 12px; }
+}
+
+/* Short windows (a laptop, a phone on its side): less air around the board, so its rows stay comfortable. */
+@media (max-height: 760px) {
+  .tv-app .tv-mines-frame > .tv-mines-stage { gap: 10px; padding-top: 12px; padding-bottom: 14px; }
+  .tv-mines-board { --row-min: 40px; --row-gap: 14px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tv-mines-prompt,
+  .tv-mines-hint,
+  .tv-mines-cell,
+  .tv-mines-cell.is-waiting,
+  .tv-mines-cell.is-pending,
+  .tv-mines-cell.is-hit,
+  .tv-mines-cell.is-mine,
+  .tv-mines-verdict { animation: none; }
+}

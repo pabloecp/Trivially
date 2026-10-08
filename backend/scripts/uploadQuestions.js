@@ -2,8 +2,8 @@
 // Supabase table `questions` (create it first with backend/supabase/schema.sql). Questions are upserted by id;
 // a question without an id gets one here, written back into the file so the next upload updates it instead of
 // adding a copy. Questions that are only in the database are kept and listed; pass --prune to delete them.
-// Geografía's questions (mode "mundo") are uploaded by `npm run geo:upload` instead, and Historia's (mode
-// "historia") by `npm run history:upload`; both are left alone here.
+// Geografía's questions (mode "mundo") are uploaded by `npm run geo:upload` instead, Historia's (mode "historia") by
+// `npm run history:upload` and Campo de minas' (mode "minas") by `npm run mines:upload`; they are left alone here.
 //
 //   npm run questions:upload --prefix backend
 //   npm run questions:upload --prefix backend -- --prune
@@ -100,9 +100,9 @@ for (let i = 0; i < records.length; i += 500) {
   }
 }
 
-// What the database has that the file doesn't. Geografía's rows (mode "mundo") belong to `npm run geo:upload`, and
-// Historia's (mode "historia") to `npm run history:upload`.
-const OWN_SCRIPT_MODES = ["mundo", "historia"];
+// What the database has that the file doesn't. Geografía's rows (mode "mundo") belong to `npm run geo:upload`,
+// Historia's (mode "historia") to `npm run history:upload` and Campo de minas' (mode "minas") to `npm run mines:upload`.
+const OWN_SCRIPT_MODES = ["mundo", "historia", "minas"];
 const inFile = new Set(records.map((r) => r.id));
 const extra = [];
 for (let from = 0; ; from += 1000) {

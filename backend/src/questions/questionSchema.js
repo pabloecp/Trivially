@@ -6,14 +6,17 @@
 //                    game/openAnswers.js, `flag` only on flag questions)
 //   location         { "name": "Francia", "map": ["France"] }   (Geografía: a pin on the map, see geo/worldMap.js)
 //   year             { "year": 1492 }   (Historia: the year of the event, negative before Christ; there is no year 0)
+//   minefield        { "correct": ["España", …], "wrong": ["Marruecos", …] }   (Campo de minas: the 25 cells of the
+//                    board, the right answers and the mines)
 //   true_false       { "correct": true }
 //   audio            { "audio_url": "…", "answers": ["Titi Me Preguntó"] }
 // Geografía's questions (mode "mundo") also carry data.kind (capital, flag or location) and data.country (ISO code);
-// they are built from geo/countries.js (geo/geoQuestions.js). Historia's (mode "historia") from history/events.js.
+// they are built from geo/countries.js (geo/geoQuestions.js). Historia's (mode "historia") from history/events.js, and
+// Campo de minas' (mode "minas") from mines/boards/ (mines/minesQuestions.js).
 
-export const QUESTION_TYPES = ["multiple_choice", "open", "true_false", "audio", "location", "year"];
+export const QUESTION_TYPES = ["multiple_choice", "open", "true_false", "audio", "location", "year", "minefield"];
 // Types the game can play so far; the others are accepted in the bank but not used yet.
-export const PLAYABLE_TYPES = ["multiple_choice", "open", "location", "year"];
+export const PLAYABLE_TYPES = ["multiple_choice", "open", "location", "year", "minefield"];
 export const QUESTION_DIFFICULTIES = ["facil", "media", "dificil"];
 // Category ids as stored in the database, and the name players see.
 export const QUESTION_CATEGORIES = {
@@ -30,12 +33,17 @@ export const QUESTION_CATEGORIES = {
 };
 // Multiple-choice questions have exactly this many options (the game shows them as A–D).
 export const OPTION_COUNT = 4;
+// A board of Campo de minas is 5 × 5, with this many right answers at least and at most (the rest are mines).
+export const MINEFIELD_CELLS = 25;
+export const MINEFIELD_CORRECT = { min: 8, max: 17 };
 
 export function categoryName(id) {
   return QUESTION_CATEGORIES[id] || id;
 }
 
 const isText = (v) => typeof v === "string" && v.trim().length > 0;
+// How two answers compare when looking for repeats: no case, no accents.
+const plain = (v) => v.trim().toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
 
 /** Every problem with a question row, in Spanish; an empty list means it is valid. */
 export function questionErrors(q) {
@@ -76,6 +84,23 @@ export function questionErrors(q) {
     const { year } = q.data;
     if (!Number.isInteger(year) || year === 0 || year < -5000 || year > new Date().getFullYear()) {
       errors.push("data.year debe ser un año entero, distinto de 0 y no futuro");
+    }
+  } else if (q.type === "minefield") {
+    const { correct, wrong } = q.data;
+    if (!Array.isArray(correct) || !correct.every(isText) || !Array.isArray(wrong) || !wrong.every(isText)) {
+      errors.push("data.correct y data.wrong deben ser listas de textos");
+    } else {
+      if (correct.length + wrong.length !== MINEFIELD_CELLS) {
+        errors.push(`el tablero debe tener ${MINEFIELD_CELLS} casillas (tiene ${correct.length + wrong.length})`);
+      }
+      if (correct.length < MINEFIELD_CORRECT.min || correct.length > MINEFIELD_CORRECT.max) {
+        errors.push(`data.correct debe tener de ${MINEFIELD_CORRECT.min} a ${MINEFIELD_CORRECT.max} respuestas`);
+      }
+      const seen = new Set();
+      for (const text of [...correct, ...wrong]) {
+        if (seen.has(plain(text))) errors.push(`casilla repetida: ${text}`);
+        seen.add(plain(text));
+      }
     }
   }
   return errors;
