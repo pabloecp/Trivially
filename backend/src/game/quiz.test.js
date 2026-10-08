@@ -44,7 +44,9 @@ assert.deepEqual(
 );
 // Everything is chosen by default; an older client's single difficulty still works.
 assert.deepEqual(mergeQuizConfig().difficulties, ["facil", "media", "dificil"]);
+// The timeline is the exception: its questions only come up when "Línea de tiempo" is ticked.
 assert.deepEqual(mergeQuizConfig().formats, ["opciones", "escribir"]);
+assert.deepEqual(mergeQuizConfig(undefined, { formats: ["linea", "opciones"] }).formats, ["opciones", "linea"]);
 assert.equal(mergeQuizConfig().categories.length, 10);
 assert.deepEqual(mergeQuizConfig(undefined, { difficulty: "facil" }).difficulties, ["facil"]);
 // Every list can be unticked: there is then nothing to play.
@@ -57,16 +59,22 @@ const pool = quizPool(bank, geoBank(bank), historyBank(bank));
 const types = new Set(pool.map((q) => q.type));
 assert.deepEqual([...types].sort(), ["multiple_choice", "open", "year"]);
 const counts = questionCounts(pool, {});
-// "Opciones" is choosing: one of four, or a year on the timeline.
-assert.equal(counts.formats.opciones, bank.length + historyBank(bank).length);
+// "Opciones" is the four-option questions, and "Línea de tiempo" the years; by default only the first and "Escribir"
+// are ticked, so no year ever comes up unless it is ticked.
+assert.equal(counts.formats.opciones, bank.length);
+assert.equal(counts.formats.linea, historyBank(bank).length);
+assert.ok(pickQuizQuestions(pool, { rounds: 20 }).every((q) => q.type !== "year"), "no timeline questions by default");
+assert.ok(pickQuizQuestions(pool, { rounds: 5, formats: ["linea"] }).every((q) => q.type === "year"));
+const everyFormat = { formats: ["opciones", "escribir", "linea"] };
 assert.ok(counts.formats.escribir > 100);
 assert.ok(counts.difficulties.facil > 0 && counts.difficulties.dificil > 0);
-assert.ok(counts.categories.geografia > 100 && counts.categories.historia > 20);
+assert.ok(counts.categories.geografia > 100);
+assert.ok(questionCounts(pool, everyFormat).categories.historia > 20);
 // A topic narrows the counts of the ways of answering, and a way of answering those of the topics.
 assert.equal(questionCounts(pool, { categories: ["historia"] }).formats.escribir, undefined);
 assert.equal(questionCounts(pool, { formats: ["escribir"] }).categories.historia, undefined);
 // A mixed match shares the rounds between the ways of answering.
-const mixed = pickQuizQuestions(pool, { rounds: 9 });
+const mixed = pickQuizQuestions(pool, { rounds: 9, ...everyFormat });
 assert.deepEqual(
   ["choice", "open", "year"].map((t) => mixed.filter((q) => q.type === t).length),
   [3, 3, 3]
@@ -182,10 +190,10 @@ assert.equal(w.players.get("w-1").lastAnswer.correct, true);
 assert.ok(w.players.get("w-1").score >= 500 && w.players.get("w-1").score <= 1000);
 assert.equal(mgr.publicState(w).question.answer, written.answer);
 
-// A year question (with no bank, "Opciones" are only Historia's events): chosen on the timeline like Línea del
-// tiempo's, judged by closeness at the reveal.
+// A year question (only when "Línea de tiempo" is ticked): chosen on the timeline like Línea del tiempo's, judged by
+// closeness at the reveal.
 const y = empty.create({ host: { id: "y-1", name: "Y", socketId: "s7" }, mode: "multi", game: "opciones" });
-empty.updateConfig(y, "y-1", { quiz: { rounds: 5, formats: ["opciones"] } });
+empty.updateConfig(y, "y-1", { quiz: { rounds: 5, formats: ["linea"] } });
 empty.start(y, "y-1");
 const event = y.tracks[0];
 assert.equal(event.type, "year");
