@@ -2396,7 +2396,6 @@ fieldset.tv-settings { display: grid; gap: 18px; min-width: 0; margin: 0; paddin
 .tv-optrow-btn:disabled { cursor: default; }
 .tv-settings:disabled .tv-optrow-btn[aria-pressed="false"] { opacity: 0.5; }
 /* How many questions a choice has (Preguntas' topics and ways of answering); one without any is greyed out. */
-.tv-optrow-count { font-size: 11px; font-weight: 800; opacity: 0.7; }
 /* The setting's name, with a small action at the other end ("Seleccionar todos"). */
 .tv-optrow-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
 .tv-optrow-action { padding: 0; border: 0; background: none; font: inherit; font-weight: 800; font-size: 13px; cursor: pointer; }
