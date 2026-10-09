@@ -1,13 +1,10 @@
-// Historia's settings and labels (same ids and limits as backend/src/game/history.js). Its topics are Trivia's.
+// Rango's settings and labels (same ids and limits as backend/src/game/history.js). Its categories are Trivia's.
 import { TOPICS } from "../quiz/quizInfo.js";
 export { TOPICS };
 
-export const ERAS = [
-  { id: "antigua", label: "Antigüedad", hint: "Hasta el año 476" },
-  { id: "media", label: "Edad Media", hint: "476–1492" },
-  { id: "moderna", label: "Edad Moderna", hint: "1492–1789" },
-  { id: "contemporanea", label: "Contemporánea", hint: "Desde 1789" },
-];
+// Its ways of playing, "Modos de Juego". "Línea del tiempo" (an event's year) is the only one for now, so it shows
+// ticked and can't be changed.
+export const STYLES = [{ id: "linea", label: "Línea del tiempo", hint: "Elige en qué año pasó cada acontecimiento" }];
 
 // The harder, the deeper the mode's colour; mixed takes the site's accent (colours in styles/history.css).
 export const DIFFICULTIES = [
@@ -16,10 +13,6 @@ export const DIFFICULTIES = [
   { id: "media", label: "Media", color: "history" },
   { id: "dificil", label: "Difícil", color: "history-deep" },
 ];
-
-export function findEra(id) {
-  return ERAS.find((e) => e.id === id) || null;
-}
 
 export function findDifficulty(id) {
   return DIFFICULTIES.find((d) => d.id === id) || DIFFICULTIES[0];
@@ -36,7 +29,6 @@ export function historyConfig(room) {
   return {
     rounds: history.rounds || 5,
     roundMs: history.roundMs || 10000,
-    eras: history.eras ?? ERAS.map((e) => e.id),
     categories: history.categories ?? TOPICS.map((t) => t.id),
     difficulties: history.difficulties ?? LEVELS.map((d) => d.id),
   };

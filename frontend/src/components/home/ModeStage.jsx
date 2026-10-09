@@ -1,8 +1,8 @@
 import Icon from "./Icon.jsx";
 
 // The picked game's big card on the room screen, in the game's colour: its icon and name, how it's played (the
-// mode's three `steps`) and, at the bottom, `children` (the start button, or the guests' waiting line). `extra` goes
-// next to the icon. The host's way back to "Elige el modo de juego" is in the top bar (TvTopbar).
+// game's three `steps`) and, at the bottom, `children` (the start button, or the guests' waiting line). `extra` goes
+// next to the icon. The host's way back to "Elige el juego" is in the top bar (TvTopbar).
 export default function ModeStage({ mode, extra = null, children }) {
   return (
     <section className={`tv-mstage tv-c-${mode.color}`} aria-label={mode.name}>

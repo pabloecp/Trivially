@@ -9,6 +9,7 @@ import { useStartGame } from "./ModeStart.jsx";
 import PartyPanel from "./PartyPanel.jsx";
 import { useRoomExit } from "./TvTopbar.jsx";
 import { useInvite } from "./useInvite.js";
+import VolumeControl from "./VolumeControl.jsx";
 
 const STACK = 5;
 
@@ -49,7 +50,7 @@ export function RoomHeader({ room, onToast }) {
         <button
           type="button"
           className={`tv-roomhead-leave${confirmLeave ? " is-confirm" : ""}`}
-          aria-label={toModes ? "Volver a modos de juego" : confirmLeave ? "Toca otra vez para salir de la sala" : "Volver: salir de la sala"}
+          aria-label={toModes ? "Volver a los juegos" : confirmLeave ? "Toca otra vez para salir de la sala" : "Volver: salir de la sala"}
           onClick={press}
         >
           <Icon name={confirmLeave ? "logout" : "back"} size={22} strokeWidth={2.6} />
@@ -90,7 +91,8 @@ export function RoomHeader({ room, onToast }) {
 }
 
 // Phones only (home.css): the bar pinned to the bottom of the room screen. The invite link, and the host's
-// "Empezar" (in the picked game's colour; "Elige un modo de juego" until there is one). Everyone else sees who they wait for.
+// "Empezar" (in the picked game's colour; "Elige un juego" until there is one). Everyone else sees who they wait for.
+// The volume button lives here too: the header above has no room left for it.
 export function RoomDock({ room, onToast }) {
   const mode = findMode(room.game);
   const { isHost, canStart, busy, err, start } = useStartGame(room);
@@ -108,6 +110,7 @@ export function RoomDock({ room, onToast }) {
         >
           <Icon name={copied ? "check" : "link"} size={22} strokeWidth={2.6} />
         </button>
+        <VolumeControl variant="dock" />
         {isHost ? (
           <button
             type="button"
@@ -115,7 +118,7 @@ export function RoomDock({ room, onToast }) {
             onClick={start}
             disabled={!canStart}
           >
-            {mode ? (busy ? "Empezando…" : "Empezar") : "Elige un modo de juego"}
+            {mode ? (busy ? "Empezando…" : "Empezar") : "Elige un juego"}
           </button>
         ) : (
           <p className="tv-roomdock-wait">Esperando a {room.hostName || "el anfitrión"}…</p>

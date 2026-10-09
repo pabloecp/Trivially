@@ -103,7 +103,7 @@ export default function Join() {
 
         <div style={{ textAlign: "center" }}>
           <Link to="/play" className="btn ghost sm">
-            Volver a Modos de Juego
+            Volver a los juegos
           </Link>
         </div>
       </form>

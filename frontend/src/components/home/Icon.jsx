@@ -1,4 +1,8 @@
 // Stroke icons (paths adapted from Lucide, ISC license).
+const SPEAKER = (
+  <path d="M11 4.702a.705.705 0 0 0-1.203-.498L6.413 7.587A1.4 1.4 0 0 1 5.416 8H3a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2.416a1.4 1.4 0 0 1 .997.413l3.383 3.384A.705.705 0 0 0 11 19.298z" />
+);
+
 const PATHS = {
   music: (
     <>
@@ -196,6 +200,27 @@ const PATHS = {
     <>
       <rect x="2" y="4" width="20" height="16" rx="2" />
       <path d="M6 8h.01M10 8h.01M14 8h.01M18 8h.01M8 12h.01M12 12h.01M16 12h.01M7 16h10" />
+    </>
+  ),
+  // The volume button: the speaker with no waves (muted), one wave and two.
+  "volume-off": (
+    <>
+      {SPEAKER}
+      <path d="m22 9-6 6" />
+      <path d="m16 9 6 6" />
+    </>
+  ),
+  "volume-low": (
+    <>
+      {SPEAKER}
+      <path d="M16 9a5 5 0 0 1 0 6" />
+    </>
+  ),
+  volume: (
+    <>
+      {SPEAKER}
+      <path d="M16 9a5 5 0 0 1 0 6" />
+      <path d="M19.364 18.364a9 9 0 0 0 0-12.728" />
     </>
   ),
   // Scalloped badge with a check cut out, like Instagram's verified mark. The badge takes the text colour.

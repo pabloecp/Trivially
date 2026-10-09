@@ -6,6 +6,7 @@ import AppIcon from "./AppIcon.jsx";
 import ConfirmDialog from "./ConfirmDialog.jsx";
 import Icon from "./Icon.jsx";
 import ProfileChip from "./ProfileChip.jsx";
+import VolumeControl from "./VolumeControl.jsx";
 
 // The button on the left of the logo goes back one step, which depends on where you are in the room:
 //  - the host, in a game's panel (`toModes`): back to the game menu, for everyone in the room;
@@ -36,7 +37,7 @@ export function useRoomExit({ onRoomScreen = true, onError } = {}) {
   // One step back. Returns true when it left the room.
   function step({ fromBack = false } = {}) {
     if (toModes) {
-      setGame(null).catch((err) => onError?.(err.message || "No se pudo volver a elegir modo de juego"));
+      setGame(null).catch((err) => onError?.(err.message || "No se pudo volver a elegir juego"));
       return false;
     }
     if (!confirmLeave) {
@@ -120,7 +121,7 @@ export default function TvTopbar() {
       <button
         type="button"
         className={`tv-chip tv-chip--leave${confirmLeave ? " is-confirm" : ""}`}
-        aria-label={toModes ? "Volver a modos de juego" : confirmLeave ? "Toca otra vez para salir de la sala" : "Volver: salir de la sala"}
+        aria-label={toModes ? "Volver a los juegos" : confirmLeave ? "Toca otra vez para salir de la sala" : "Volver: salir de la sala"}
         onClick={press}
       >
         <span className="tv-avatar tv-avatar--empty">
@@ -159,6 +160,7 @@ export default function TvTopbar() {
           </div>
         </div>
         <div className="tv-topbar-end">
+          <VolumeControl />
           {showProfile && <ProfileChip user={user} />}
         </div>
       </header>

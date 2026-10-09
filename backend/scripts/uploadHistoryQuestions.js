@@ -1,4 +1,4 @@
-// Copies Historia's events (backend/src/history/events.js) to the Supabase table `questions`, as rows with mode
+// Copies Rango's events (backend/src/history/events.js) to the Supabase table `questions`, as rows with mode
 // "historia" and type "year". Their ids come from each event's text, so running it again updates the same rows; rows
 // of mode "historia" that the list no longer has are deleted. Questions of other modes are never touched.
 //
@@ -14,8 +14,7 @@ dotenv.config({ path: path.resolve(__dirname, "../../.env") });
 
 const { getSupabase, supabaseEnabled } = await import("../src/db/store.js");
 const { buildHistoryQuestions, HISTORY_MODE } = await import("../src/history/historyQuestions.js");
-const { eraOf, HISTORY_ERAS } = await import("../src/game/history.js");
-const { questionErrors } = await import("../src/questions/questionSchema.js");
+const { QUESTION_CATEGORIES, questionErrors } = await import("../src/questions/questionSchema.js");
 
 const checkOnly = process.argv.includes("--check");
 const rows = buildHistoryQuestions();
@@ -34,11 +33,10 @@ if (problems.length) {
   process.exit(1);
 }
 
-const ERA_NAMES = { antigua: "Antigüedad", media: "Edad Media", moderna: "Edad Moderna", contemporanea: "Contemporánea" };
-console.log(`${rows.length} eventos de Historia válidos`);
-for (const era of HISTORY_ERAS) {
-  const count = (difficulty) => rows.filter((q) => eraOf(q.data.year) === era && q.difficulty === difficulty).length;
-  console.log(`  ${ERA_NAMES[era].padEnd(14)} fácil ${count("facil")}  media ${count("media")}  difícil ${count("dificil")}`);
+console.log(`${rows.length} eventos de Rango válidos`);
+for (const [category, name] of Object.entries(QUESTION_CATEGORIES)) {
+  const count = (difficulty) => rows.filter((q) => q.category === category && q.difficulty === difficulty).length;
+  console.log(`  ${name.padEnd(19)} fácil ${count("facil")}  media ${count("media")}  difícil ${count("dificil")}`);
 }
 if (checkOnly) process.exit(0);
 
@@ -64,7 +62,7 @@ for (let i = 0; i < rows.length; i += 500) {
   }
 }
 
-// Historia rows the list no longer has (an event removed or reworded): deleted.
+// Rango rows the list no longer has (an event removed or reworded): deleted.
 const stale = [];
 for (let from = 0; ; from += 1000) {
   const { data, error } = await db.from("questions").select("id").eq("mode", HISTORY_MODE).range(from, from + 999);
@@ -83,4 +81,4 @@ for (let i = 0; i < stale.length; i += 200) {
   }
 }
 
-console.log(`Subidos ${rows.length} eventos de Historia.${stale.length ? ` Borrados ${stale.length} que ya no estaban.` : ""}`);
+console.log(`Subidos ${rows.length} eventos de Rango.${stale.length ? ` Borrados ${stale.length} que ya no estaban.` : ""}`);

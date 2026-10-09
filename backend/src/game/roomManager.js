@@ -63,8 +63,8 @@ const CODE_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 // Games the host can move a room into (ids match frontend/src/modes/index.js). `null` is the Home screen.
 // "opciones" (Trivia, QUIZ_GAME) is the main mode: questions of every topic, each answered its own way (four
 // options, a written answer or a year on a timeline). The extras: "musica" (Adivina la canción), "mundo" (Encuentra el país,
-// GEO_GAME: capitals and flags written, and countries pinned on the world map), "historia" (Línea del tiempo,
-// HISTORY_GAME: an event's year on a timeline) and "minas" (Campo de minas, MINES_GAME: a prompt and a 5 × 5 board of
+// GEO_GAME: capitals and flags written, and countries pinned on the world map), "historia" (Rango, HISTORY_GAME:
+// getting as close as you can on a range; for now only "Línea del tiempo", an event's year) and "minas" (Campo de minas, MINES_GAME: a prompt and a 5 × 5 board of
 // answers, some right and some mines, picked one per turn). The question games keep their questions in room.tracks,
 // in place of songs.
 export const GAME_IDS = ["musica", "opciones", "mundo", "historia", "minas"];
@@ -618,11 +618,11 @@ export class RoomManager {
       room.totalRounds = tracks.length;
       room.tiebreak = null;
     } else if (room.game === HISTORY_GAME) {
-      // Historia: the match's events are drawn now, each with its own range of years.
+      // Rango: the match's events are drawn now, each with its own range of years.
       const history = mergeHistoryConfig(room.config.history);
       const tracks = pickHistoryQuestions(this.historyQuestions, history);
       if (tracks.length < history.rounds) {
-        throw new Error(`Solo hay ${tracks.length} eventos con esos ajustes para ${history.rounds} rondas. Baja las rondas o elige más épocas.`);
+        throw new Error(`Solo hay ${tracks.length} preguntas con esos ajustes para ${history.rounds} rondas. Baja las rondas o elige más categorías.`);
       }
       room.tracks = tracks;
       room.totalRounds = tracks.length;
@@ -1002,9 +1002,9 @@ export class RoomManager {
   suggestGame(room, userId, game) {
     const player = room.players.get(userId);
     if (!player) throw new Error("Jugador no encontrado");
-    if (room.hostId === userId) throw new Error("Tú eliges el modo de juego");
-    if (room.game) throw new Error("Ya hay un modo de juego elegido");
-    if (!game) throw new Error("Elige un modo de juego");
+    if (room.hostId === userId) throw new Error("Tú eliges el juego");
+    if (room.game) throw new Error("Ya hay un juego elegido");
+    if (!game) throw new Error("Elige un juego");
     assertGame(game);
     const wait = (player.suggestedAt || 0) + SUGGEST_COOLDOWN_MS - Date.now();
     if (wait > 0) throw new Error(`Espera ${Math.ceil(wait / 1000)} s para sugerir otra vez`);
@@ -1724,15 +1724,16 @@ export class RoomManager {
   }
 
   /**
-   * The current event of Historia. The event shows from the countdown on (everyone gets the same seconds to read it);
-   * its range of years, and so the timeline, once the round is playing. The year only goes out in `reveal`.
+   * The current event of Rango, with the name of its category. The event shows from the countdown on (everyone gets
+   * the same seconds to read it); its range of years, and so the timeline, once the round is playing. The year only
+   * goes out in `reveal`.
    */
   publicHistoryQuestion(room, track) {
     const open = ["playing", "reveal", "finished"].includes(room.phase);
     return {
       round: room.currentRound + 1,
       prompt: track.prompt,
-      era: track.era,
+      category: track.category ? categoryName(track.category) : null,
       difficulty: track.difficulty,
       min: open ? track.min : null,
       max: open ? track.max : null,

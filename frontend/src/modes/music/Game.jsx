@@ -9,6 +9,7 @@ import MatchResults from "../../components/home/MatchResults.jsx";
 import { useApp, useRemainingMs } from "../../lib/store.jsx";
 import { BACKEND_URL } from "../../lib/config.js";
 import { useSongList } from "../../lib/songList.js";
+import { useMasterVolume } from "../../lib/volume.js";
 import "../../styles/quiz.css";
 import { PauseButton, PauseVeil } from "../../components/home/PauseControls.jsx";
 
@@ -117,6 +118,9 @@ function GameScreen() {
     return url;
   }
 
+  // The songs play at 80% of the page's volume (the button in the top bar, lib/volume.js).
+  useMasterVolume(audioRef, 0.8);
+
   // Track the currently loaded audio source to avoid re-setting it
   const currentAudioSrc = useRef(null);
 
@@ -124,8 +128,6 @@ function GameScreen() {
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio || !room) return;
-
-    audio.volume = 0.8;
 
     // Paused by the host: the song stops, and on "Reanudar" it goes on from the same moment (phaseStartedAt moves).
     if (room.phase === "playing" && room.audio?.previewUrl && !room.paused) {

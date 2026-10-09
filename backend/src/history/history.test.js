@@ -15,7 +15,7 @@ import {
 } from "../game/history.js";
 import { buildHistoryQuestions } from "./historyQuestions.js";
 
-// Historia's events, the timeline each one gets and how a year is scored.
+// Rango's events, the timeline each one gets and how a year is scored.
 const rows = buildHistoryQuestions();
 const today = new Date().getFullYear();
 
@@ -86,25 +86,26 @@ assert.ok(yearPoints(10, "antigua") > yearPoints(10, "media"));
 assert.ok(yearPoints(10, "media") > yearPoints(10, "moderna"));
 assert.ok(yearPoints(10, "moderna") > yearPoints(10, "contemporanea"));
 
-// Settings: limits, at least one age.
+// Settings: limits, the categories and difficulties ticked. There are no ages to choose any more: an older client's
+// are ignored.
 const everyTopic = Object.keys(QUESTION_CATEGORIES);
 assert.deepEqual(mergeHistoryConfig(undefined), {
   rounds: 5,
   roundMs: 10000,
-  eras: ["antigua", "media", "moderna", "contemporanea"],
   categories: everyTopic,
   difficulties: ["facil", "media", "dificil"],
 });
 assert.deepEqual(
-  mergeHistoryConfig({}, { rounds: 99, roundMs: 1000, eras: ["moderna", "inventada"], categories: ["arte", "cocina"], difficulties: ["media", "imposible"] }),
-  { rounds: 25, roundMs: 10000, eras: ["moderna"], categories: ["arte"], difficulties: ["media"] }
+  mergeHistoryConfig({}, { rounds: 99, roundMs: 1000, eras: ["moderna"], categories: ["arte", "cocina"], difficulties: ["media", "imposible"] }),
+  { rounds: 25, roundMs: 10000, categories: ["arte"], difficulties: ["media"] }
 );
+assert.equal("eras" in mergeHistoryConfig({ eras: ["antigua"] }), false, "an older room's ages are dropped");
 // An older client's single difficulty still works ("mixta" is all three).
 assert.deepEqual(mergeHistoryConfig({}, { difficulty: "facil" }).difficulties, ["facil"]);
 assert.deepEqual(mergeHistoryConfig({}, { difficulty: "mixta" }).difficulties, ["facil", "media", "dificil"]);
 // Every list can be unticked: there is then nothing to play.
-const blank = mergeHistoryConfig({}, { eras: [], categories: [], difficulties: [] });
-assert.deepEqual([blank.eras, blank.categories, blank.difficulties], [[], [], []]);
+const blank = mergeHistoryConfig({}, { categories: [], difficulties: [] });
+assert.deepEqual([blank.categories, blank.difficulties], [[], []]);
 
 // The bank: the list's events (with their topics) plus any other Historia row of the loaded bank; where both have the
 // same id the list wins, so a topic added to an event is used before it is uploaded.
@@ -114,40 +115,49 @@ const own = toQuestion({ ...rows[0], id: "propia", prompt: "Un evento propio" })
 const stale = toQuestion({ ...rows[1], category: "historia" });
 assert.deepEqual(historyBank([own, stale, { id: "x", type: "multiple_choice", mode: "opciones", data: {} }]), [...bank, own]);
 assert.equal(countHistoryQuestions(bank, {}), rows.length);
-assert.ok(countHistoryQuestions(bank, { eras: ["antigua"], difficulties: ["facil"] }) >= 5);
-for (const era of ["antigua", "media", "moderna", "contemporanea"]) {
-  for (const difficulty of ["facil", "media", "dificil"]) {
-    assert.ok(countHistoryQuestions(bank, { eras: [era], difficulties: [difficulty] }) >= 5, `${era} ${difficulty}: menos de 5 eventos`);
-  }
+assert.equal(countHistoryQuestions(bank, { eras: ["antigua"] }), rows.length, "ages don't filter any more");
+for (const difficulty of ["facil", "media", "dificil"]) {
+  assert.ok(countHistoryQuestions(bank, { difficulties: [difficulty] }) >= 25, `${difficulty}: menos de 25 eventos`);
 }
 
-// Topics: every event has one of the ten, and each topic has enough events for a match of 5 rounds in two ages at least.
+// Categories: every event has one of the ten, and each one alone has enough events (of different years) for the
+// longest match.
 const counts = historyCounts(bank, {});
-for (const topic of everyTopic) assert.ok(counts.categories[topic] >= 8, `${topic}: solo ${counts.categories[topic]} eventos`);
+assert.deepEqual(Object.keys(counts).sort(), ["categories", "difficulties"]);
+for (const topic of everyTopic) {
+  assert.ok(counts.categories[topic] >= 30, `${topic}: solo ${counts.categories[topic]} eventos`);
+  const match = pickHistoryQuestions(bank, { rounds: 25, categories: [topic] });
+  assert.equal(match.length, 25, `${topic}: no llega a 25 rondas`);
+  assert.ok(match.every((t) => t.category === topic));
+}
 assert.equal(Object.values(counts.categories).reduce((a, b) => a + b, 0), bank.length);
 assert.equal(countHistoryQuestions(bank, { categories: ["videojuegos"] }), counts.categories.videojuegos);
-assert.ok(pickHistoryQuestions(bank, { rounds: 5, categories: ["deportes"] }).every((t) => bank.find((q) => q.id === t.id).category === "deportes"));
-// A topic narrows the counts of the other settings, and the other settings those of the topics.
-assert.equal(historyCounts(bank, { categories: ["videojuegos"] }).eras.antigua, undefined);
-assert.ok(historyCounts(bank, { eras: ["antigua"] }).categories.deportes < counts.categories.deportes);
+// A category narrows the counts of the difficulties, and a difficulty those of the categories.
+const games = historyCounts(bank, { categories: ["videojuegos"] }).difficulties;
+assert.equal(Object.values(games).reduce((a, b) => a + b, 0), counts.categories.videojuegos);
+assert.ok(historyCounts(bank, { difficulties: ["facil"] }).categories.deportes < counts.categories.deportes);
 
-// A match: the ages share the rounds, never two events of the same year, each with its timeline.
-const picked = pickHistoryQuestions(bank, { rounds: 8 });
+// A match: the chosen categories share the rounds, never two events of the same year, each with its timeline.
+const four = ["arte", "musica", "deportes", "videojuegos"];
+const picked = pickHistoryQuestions(bank, { rounds: 8, categories: four });
 assert.equal(picked.length, 8);
-for (const era of ["antigua", "media", "moderna", "contemporanea"]) assert.equal(picked.filter((t) => t.era === era).length, 2);
+for (const topic of four) assert.equal(picked.filter((t) => t.category === topic).length, 2);
 assert.equal(new Set(picked.map((t) => t.year)).size, 8);
 for (const t of picked) {
   assert.ok(t.min < t.year && t.year < t.max);
-  assert.ok(t.prompt && t.id && t.era);
+  assert.ok(t.prompt && t.id && t.era && t.category);
 }
-const recent = pickHistoryQuestions(bank, { rounds: 25, eras: ["contemporanea"], difficulties: ["media"] });
-assert.equal(recent.length, 25);
-assert.ok(recent.every((t) => t.era === "contemporanea" && t.difficulty === "media"));
+const everything = pickHistoryQuestions(bank, { rounds: 10 });
+assert.equal(new Set(everything.map((t) => t.category)).size, 10, "ten rounds, one of each category");
+const hard = pickHistoryQuestions(bank, { rounds: 25, categories: ["historia"], difficulties: ["media"] });
+assert.equal(hard.length, 25);
+assert.ok(hard.every((t) => t.category === "historia" && t.difficulty === "media"));
 
-// A tiebreak never repeats an event of the match.
-const used = bank.filter((q) => eraOf(q.data.year) === "antigua").map((q) => q.id).slice(1);
-const tiebreak = pickHistoryTiebreak(bank, { eras: ["antigua"] }, used);
-assert.equal(tiebreak.era, "antigua");
-assert.ok(!used.includes(tiebreak.id));
+// A tiebreak never repeats an event of the match, and stays in the chosen categories.
+const art = bank.filter((q) => q.category === "arte");
+const used = art.map((q) => q.id).slice(1);
+const tiebreak = pickHistoryTiebreak(bank, { categories: ["arte"] }, used);
+assert.equal(tiebreak.category, "arte");
+assert.equal(tiebreak.id, art[0].id);
 
 console.log("history.test ok");

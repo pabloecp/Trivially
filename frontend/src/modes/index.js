@@ -5,10 +5,11 @@ import HistoryLobbyPanel from "./historia/LobbyPanel.jsx";
 import MinesLobbyPanel from "./minas/LobbyPanel.jsx";
 import { STYLES as MINES_STYLES } from "./minas/minesInfo.js";
 
-// Game modes shown on the room screen. "Trivia" is the main one (`kind: "main"`, its tile as wide as two): questions
-// of every topic, each answered its own way. The others (`kind: "extra"`) have their own way of playing; their tiles
-// go two by two under it. To add a mode, add an entry here with `available: true`, a `Lobby` panel (shown on the room
-// screen while the room waits in that mode: the mode's big coloured card with its start button and how it's played,
+// The games shown on the room screen ("Elige el juego"; a game may have its own "Modos de Juego" in its settings).
+// "Trivia" is the main one (`kind: "main"`, its tile as wide as two): questions of every topic, each answered its own
+// way. The others (`kind: "extra"`) have their own way of playing; their tiles go two by two under it. To add a game,
+// add an entry here with `available: true`, a `Lobby` panel (shown on the room screen while the room waits in that
+// game: the game's big coloured card with its start button and how it's played,
 // and its settings beside it), a `path` for its in-match screens and `ready(room)` (false while the match can't
 // start: not enough songs or questions; the server checks too), and add its id to GAME_IDS in
 // backend/src/game/roomManager.js. `steps` are the three short lines of how it's played, on the card.
@@ -66,8 +67,10 @@ export const GAME_MODES = [
     path: (room) => `/mundo/${room.code}`,
   },
   {
+    // Rango: get as close as you can on a range. Its only way of playing for now is "Línea del tiempo" (an event's
+    // year), so the steps are that one's. The id is the old one on purpose (see GAME_IDS on the server).
     id: "historia",
-    name: "Línea del tiempo",
+    name: "Rango",
     kind: "extra",
     // Terracotta (styles/history.css).
     color: "history",
@@ -104,7 +107,7 @@ export const GAME_MODES = [
 
 
 // The grey, locked tile that closes the grid when a row would be left half empty: more are on the way.
-export const SOON_TILE = { id: "soon", name: "Más modos pronto", color: "soon", icon: "lock", placeholder: true };
+export const SOON_TILE = { id: "soon", name: "Más juegos pronto", color: "soon", icon: "lock", placeholder: true };
 
 export function findMode(id) {
   return GAME_MODES.find((m) => m.id === id) || null;
