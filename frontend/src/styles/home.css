@@ -2337,7 +2337,9 @@ button.tv-chip--sound { border: 0; font-family: inherit; color: inherit; cursor:
   top: calc(100% + 8px);
   right: 0;
   z-index: 60;
-  width: 280px;
+  width: 340px;
+  max-height: min(78vh, 640px);
+  overflow-y: auto;
   padding: 14px;
   border-radius: 20px;
   background: var(--tv-surface);
@@ -2345,6 +2347,31 @@ button.tv-chip--sound { border: 0; font-family: inherit; color: inherit; cursor:
   box-shadow: inset 0 0 0 1px var(--tv-line), 0 14px 36px rgba(0, 0, 0, 0.45);
 }
 .tv-volume-rows { display: grid; gap: 14px; }
+/* The sound sets, under the slider. */
+.tv-volume-packs { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--tv-line); }
+.tv-volume-packs-title { margin: 0 4px 8px; font-size: 12px; font-weight: 700; opacity: 0.6; text-transform: uppercase; letter-spacing: 0.06em; }
+.tv-volume-packs-list { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
+.tv-volume-pack {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  min-width: 0;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: inherit;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.tv-volume-pack span { display: grid; gap: 1px; min-width: 0; }
+.tv-volume-pack strong { font-size: 14px; }
+.tv-volume-pack small { font-size: 12px; opacity: 0.65; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tv-volume-pack svg { flex: none; }
+.tv-volume-pack:hover { background: rgba(255, 255, 255, 0.06); }
+.tv-volume-pack.is-on { background: rgba(255, 255, 255, 0.12); }
 .tv-volume-row { display: flex; align-items: center; gap: 12px; }
 .tv-volume-toggle {
   display: grid;
@@ -2362,7 +2389,6 @@ button.tv-chip--sound { border: 0; font-family: inherit; color: inherit; cursor:
 .tv-volume-field { display: grid; gap: 6px; flex: 1; min-width: 0; }
 .tv-volume-label { display: flex; justify-content: space-between; font-size: 14px; }
 .tv-volume-label span { opacity: 0.65; font-variant-numeric: tabular-nums; }
-.tv-volume-detail { font-size: 12px; opacity: 0.6; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .tv-volume-field input[type="range"] {
   width: 100%;
   height: 8px;
@@ -2410,91 +2436,6 @@ button.tv-chip--sound { border: 0; font-family: inherit; color: inherit; cursor:
   .tv-roomhead-players { min-width: 0; }
 }
 
-/* TEMPORARY: the music and sounds menu (TempSoundMenu.jsx). A chip of the top bar whose panel drops below it; the
-   floating copy (bottom left) only shows where the top bar is hidden: phones in a room, a Geografía match. */
-.tv-tempmenu { position: relative; flex-shrink: 0; font-family: var(--tv-body); }
-.tv-tempmenu > .tv-tempmenu-panel { position: absolute; top: calc(100% + 8px); right: 0; z-index: 60; }
-.tv-tempmenu--floating {
-  position: fixed;
-  left: calc(16px + env(safe-area-inset-left));
-  bottom: calc(16px + env(safe-area-inset-bottom));
-  z-index: 1000;
-  display: none;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 10px;
-}
-.tv-tempmenu--floating > .tv-tempmenu-panel { position: static; }
-html.tv-geo-playing .tv-tempmenu--floating { display: flex; }
-@media (max-width: 640px) {
-  body:has(.tv-roomhead) .tv-tempmenu--floating { display: flex; }
-  /* Above the phones' bottom bar of the room. */
-  body:has(.tv-roomdock) .tv-tempmenu--floating { bottom: calc(96px + env(safe-area-inset-bottom)); }
-  .tv-tempmenu-chip .tv-chip-name { display: none; }
-  .tv-tempmenu-chip { padding-right: 5px; }
-  /* The top bar's panel spans the screen, under the bar. */
-  .tv-tempmenu:not(.tv-tempmenu--floating) > .tv-tempmenu-panel {
-    position: fixed;
-    top: calc(70px + env(safe-area-inset-top));
-    left: 16px;
-    right: 16px;
-    width: auto;
-  }
-}
-.tv-tempmenu-btn {
-  display: grid;
-  place-items: center;
-  width: 52px;
-  height: 52px;
-  border: 0;
-  border-radius: 50%;
-  background: var(--p-cinema-1, #a63dff);
-  color: #fff;
-  box-shadow: 0 4px 0 var(--p-cinema-edge, #6418a8), 0 8px 20px rgba(0, 0, 0, 0.35);
-  cursor: pointer;
-  transition: transform 0.15s ease;
-}
-.tv-tempmenu-btn:hover { transform: translateY(-2px); }
-.tv-tempmenu-btn:active { transform: translateY(2px); }
-.tv-tempmenu-panel {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
-  width: min(480px, calc(100vw - 32px));
-  max-height: min(70vh, 620px);
-  overflow-y: auto;
-  padding: 10px;
-  border-radius: 20px;
-  background: var(--tv-surface);
-  color: var(--tv-text);
-  box-shadow: inset 0 0 0 1px var(--tv-line), 0 14px 36px rgba(0, 0, 0, 0.45);
-}
-.tv-tempmenu-volume { grid-column: 1 / -1; padding: 6px 6px 12px; border-bottom: 1px solid var(--tv-line); }
-.tv-tempmenu-section { display: grid; align-content: start; gap: 3px; min-width: 0; }
-.tv-tempmenu-title { margin: 4px 10px 6px; font-size: 12px; font-weight: 700; opacity: 0.6; text-transform: uppercase; letter-spacing: 0.06em; }
-.tv-tempmenu-empty { margin: 4px 10px; font-size: 13px; opacity: 0.6; }
-.tv-tempmenu-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  padding: 8px 10px;
-  border: 0;
-  border-radius: 12px;
-  background: transparent;
-  color: inherit;
-  font-family: inherit;
-  text-align: left;
-  cursor: pointer;
-}
-.tv-tempmenu-item span { display: grid; gap: 1px; min-width: 0; }
-.tv-tempmenu-item strong { font-size: 14px; }
-.tv-tempmenu-item small { font-size: 12px; opacity: 0.65; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.tv-tempmenu-item:hover { background: rgba(255, 255, 255, 0.06); }
-.tv-tempmenu-item.is-on { background: rgba(255, 255, 255, 0.12); }
-@media (max-width: 420px) {
-  .tv-tempmenu-panel { grid-template-columns: 1fr; }
-}
 .tv-chip-short { display: none; }
 @media (max-width: 520px) {
   /* The button left of the logo ("Volver") is only its icon, and "¿Salir?" while it asks. */

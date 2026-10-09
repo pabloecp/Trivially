@@ -6,7 +6,6 @@ import AppIcon from "./AppIcon.jsx";
 import ConfirmDialog from "./ConfirmDialog.jsx";
 import Icon from "./Icon.jsx";
 import ProfileChip from "./ProfileChip.jsx";
-import TempSoundMenu from "./TempSoundMenu.jsx";
 import VolumeMenu from "./VolumeMenu.jsx";
 
 // The button on the left of the logo goes back one step, which depends on where you are in the room:
@@ -158,8 +157,6 @@ export default function TvTopbar() {
           </div>
         </div>
         <div className="tv-topbar-end">
-          {/* TEMPORARY: the music and sounds menu, while one of each is chosen. */}
-          <TempSoundMenu />
           <VolumeMenu />
           <ProfileChip user={user} />
         </div>

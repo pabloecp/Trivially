@@ -10,7 +10,6 @@ import HistoryGame from "./modes/historia/Game.jsx";
 import MinesGame from "./modes/minas/Game.jsx";
 import { useApp } from "./lib/store.jsx";
 import RoomSounds from "./lib/RoomSounds.jsx";
-import TempSoundMenu from "./components/home/TempSoundMenu.jsx";
 import VolumeMenu from "./components/home/VolumeMenu.jsx";
 import { useRoomExit } from "./components/home/TvTopbar.jsx";
 import { roomPath } from "./modes/index.js";
@@ -94,8 +93,6 @@ export default function App() {
     <>
       <RoomNavigator />
       <RoomSounds />
-      {/* TEMPORARY: the music and sounds menu, while one of each is chosen. */}
-      <TempSoundMenu floating />
       {/* The volume where no bar shows it (a Geografía match on a phone). */}
       <VolumeMenu floating />
       <Routes>

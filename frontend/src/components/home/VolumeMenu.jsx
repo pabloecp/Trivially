@@ -1,39 +1,29 @@
 import { useEffect, useRef, useState } from "react";
-import { currentSong, musicEnabled, musicVolume, onMusicChange, setMusicEnabled, setMusicVolume } from "../../lib/music.js";
-import { onSoundChange, setSoundEnabled, setSoundVolume, soundEnabled, soundVolume } from "../../lib/sounds.js";
+import {
+  SOUND_PACKS,
+  onSoundChange,
+  setSoundEnabled,
+  setSoundPack,
+  setSoundVolume,
+  soundEnabled,
+  soundPack,
+  soundVolume,
+} from "../../lib/sounds.js";
 import Icon from "./Icon.jsx";
 
-// The music's and the sounds' volume, one row each: the icon turns it off and on, the slider sets how loud (lib/music.js,
-// lib/sounds.js; kept in this browser). The sounds play a tap at the new volume when the slider is let go.
-export function VolumeRows() {
+// The sounds' volume: the icon turns them off and on, the slider sets how loud (lib/sounds.js; kept in this browser). A
+// tap plays at the new volume when the slider is let go.
+function VolumeRows() {
   const [, refresh] = useState(0);
   useEffect(() => {
     const update = () => refresh((n) => n + 1);
-    const offMusic = onMusicChange(update);
-    const offSound = onSoundChange(update);
-    return () => {
-      offMusic();
-      offSound();
-    };
+    return onSoundChange(update);
   }, []);
 
-  const song = currentSong();
   const rows = [
-    {
-      id: "music",
-      label: "Música",
-      detail: musicEnabled() && song ? `${song.title} - ${song.artistName}` : null,
-      on: musicEnabled(),
-      value: musicVolume(),
-      icon: musicEnabled() ? "music" : "musicOff",
-      toggle: () => setMusicEnabled(!musicEnabled()),
-      change: (v) => setMusicVolume(v),
-      release: () => {},
-    },
     {
       id: "sound",
       label: "Sonidos",
-      detail: null,
       on: soundEnabled(),
       value: soundVolume(),
       icon: soundEnabled() ? "volume" : "mute",
@@ -75,7 +65,6 @@ export function VolumeRows() {
               onPointerUp={(e) => r.release(e.currentTarget.value)}
               onKeyUp={(e) => r.release(e.currentTarget.value)}
             />
-            {r.detail && <small className="tv-volume-detail">{r.detail}</small>}
           </label>
         </div>
       ))}
@@ -83,7 +72,39 @@ export function VolumeRows() {
   );
 }
 
-// The volume button: a speaker (crossed out when both are off) that opens the two sliders. It is in the top bar and in
+// The sound sets (SOUND_PACKS), under the slider: picking one plays a sample of it and keeps it in this browser.
+function SoundPacks() {
+  const current = soundPack();
+  return (
+    <section className="tv-volume-packs" aria-label="Tipo de sonido">
+      <p className="tv-volume-packs-title">Tipo de sonido</p>
+      <div className="tv-volume-packs-list" role="radiogroup" aria-label="Tipo de sonido">
+        {SOUND_PACKS.map((p) => {
+          const on = p.id === current;
+          return (
+            <button
+              key={p.id}
+              type="button"
+              role="radio"
+              aria-checked={on}
+              data-sound="none"
+              className={`tv-volume-pack${on ? " is-on" : ""}`}
+              onClick={() => setSoundPack(p.id)}
+            >
+              <span>
+                <strong>{p.label}</strong>
+                <small>{p.hint}</small>
+              </span>
+              {on && <Icon name="check" size={16} strokeWidth={3} />}
+            </button>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
+// The volume button: a speaker (crossed out when the sounds are off) that opens the slider and the sound sets. It is in the top bar and in
 // the phones' room header (RoomBars.jsx); with `floating` it is pinned to the top right corner (App.jsx), only shown
 // where neither is (home.css: a Geografía match on a phone).
 export default function VolumeMenu({ floating = false }) {
@@ -93,12 +114,7 @@ export default function VolumeMenu({ floating = false }) {
 
   useEffect(() => {
     const update = () => refresh((n) => n + 1);
-    const offMusic = onMusicChange(update);
-    const offSound = onSoundChange(update);
-    return () => {
-      offMusic();
-      offSound();
-    };
+    return onSoundChange(update);
   }, []);
 
   useEffect(() => {
@@ -115,7 +131,7 @@ export default function VolumeMenu({ floating = false }) {
     };
   }, [open]);
 
-  const silent = (!musicEnabled() || !musicVolume()) && (!soundEnabled() || !soundVolume());
+  const silent = !soundEnabled() || !soundVolume();
   return (
     <div className={`tv-volume${floating ? " tv-volume--floating" : ""}`} ref={rootRef}>
       <button
@@ -133,6 +149,7 @@ export default function VolumeMenu({ floating = false }) {
       {open && (
         <div className="tv-volume-panel" role="dialog" aria-label="Volumen">
           <VolumeRows />
+          <SoundPacks />
         </div>
       )}
     </div>

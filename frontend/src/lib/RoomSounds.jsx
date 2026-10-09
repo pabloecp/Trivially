@@ -1,6 +1,5 @@
 import { useEffect, useRef } from "react";
 import { useApp } from "./store.jsx";
-import { installMusic, setMusicDucked, setMusicMuted } from "./music.js";
 import { installClickSounds, play } from "./sounds.js";
 
 // The sounds that come from the room rather than from a click of this player's:
@@ -9,20 +8,12 @@ import { installClickSounds, play } from "./sounds.js";
 //  - a chat message from someone else: a soft tap;
 //  - what the host does, for everyone else: a game picked or a match started (next), back to the menu or the lobby
 //    (back). The host already heard their own click.
-// It also installs the clicks' sounds (lib/sounds.js) and the background music (lib/music.js), which is lower during a
-// match and silent during one of Adivina la canción, whose songs are the game.
+// It also installs the clicks' sounds (lib/sounds.js).
 export default function RoomSounds() {
   const { user, room } = useApp();
   const prev = useRef(null);
 
   useEffect(() => installClickSounds(), []);
-  useEffect(() => installMusic(), []);
-
-  const inMatch = Boolean(room) && ["countdown", "playing", "reveal"].includes(room.phase);
-  useEffect(() => {
-    setMusicDucked(inMatch);
-    setMusicMuted(inMatch && room?.game === "musica");
-  }, [inMatch, room?.game]);
 
   // A chat message from someone else (not the ones already there when the room was entered).
   const lastChat = useRef(null);
