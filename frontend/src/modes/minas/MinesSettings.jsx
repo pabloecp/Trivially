@@ -56,7 +56,7 @@ export default function MinesSettings({ room, updateConfig, onToast, children, r
         onSetAll={(categories) => save({ categories })}
       />
       <OptionRow
-        label="Modos de Juego"
+        label="Modos de juego"
         multi
         options={STYLES.map((s) => ({ value: s.id, label: s.label, title: s.hint }))}
         value={draft.styles}

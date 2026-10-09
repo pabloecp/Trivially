@@ -136,10 +136,10 @@ assert.equal(ana.streak, 3);
 assert.equal(ana.lastPoints, 600);
 assert.equal(ana.lastAnswer.text, "3 aciertos");
 assert.equal(ana.lastAnswer.correct, true);
-assert.equal(host.lastAnswer.text, "Mina a la primera");
+assert.equal(host.lastAnswer.text, "Pisó una mina");
 assert.equal(host.lastAnswer.correct, false);
 assert.equal(host.lastPoints, 0);
-assert.equal(luis.lastAnswer.text, "1 acierto, sin tiempo");
+assert.equal(luis.lastAnswer.text, "Sin tiempo");
 assert.equal(luis.lastPoints, 100);
 pub = mgr.publicState(room);
 assert.ok(cellsOf(pub).every((c) => typeof c.correct === "boolean"), "the reveal shows every cell");
@@ -169,8 +169,8 @@ assert.equal(room.phase, "playing", "Ana is still standing");
 mgr.pickCell(room, "p-2", { cell: 22, turn: 2 });
 stop(room);
 assert.equal(room.phase, "reveal", "nobody left standing ends the round");
-assert.equal(host.lastAnswer.text, "1 acierto, luego una mina");
-assert.equal(luis.lastAnswer.text, "Mina a la primera");
+assert.equal(host.lastAnswer.text, "Pisó una mina");
+assert.equal(luis.lastAnswer.text, "Pisó una mina");
 assert.equal(host.streak, 0);
 
 // ---- Round 3 (the last): a player who arrives mid-match watches it, and the turns don't wait for them ----
@@ -285,7 +285,7 @@ assert.equal(race.phase, "reveal");
 assert.equal(carla.lastAnswer.text, "4 aciertos");
 assert.equal(carla.lastPoints, 1000);
 assert.equal(dani.lastAnswer.text, "1 acierto");
-assert.equal(eva.lastAnswer.text, "Mina a la primera");
+assert.equal(eva.lastAnswer.text, "Pisó una mina");
 
 // Round 2: the time runs out with players still standing. They survived it: nobody is out for not picking.
 mgr.advance(race);

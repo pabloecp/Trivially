@@ -1,6 +1,14 @@
 // The site has a single look (the dark page, styles/palettes.css). There used to be several colour options behind a
-// button in the top bar; their saved choice is dropped so it doesn't linger in the browser.
-for (const key of ["trivially_palette_v2", "trivially_palette", "trivially_theme"]) {
+// button in the top bar; their saved choice is dropped so it doesn't linger in the browser. So are the settings of the
+// background music, which was removed (only the sounds stayed).
+for (const key of [
+  "trivially_palette_v2",
+  "trivially_palette",
+  "trivially_theme",
+  "trivially_music",
+  "trivially_music_option",
+  "trivially_music_volume",
+]) {
   try {
     localStorage.removeItem(key);
   } catch {

@@ -20,7 +20,7 @@ assert.equal(mgr.publicState(room).songsReady, undefined);
 mgr.updateConfig(room, "host-1", { geo: { kinds: [] } });
 assert.equal(mgr.publicState(room).questionsReady, 0);
 mgr.updateConfig(room, "host-1", { geo: { kinds: ["capital", "flag", "location"] } });
-mgr.updateConfig(room, "host-1", { geo: { rounds: 6, difficulty: "facil" } });
+mgr.updateConfig(room, "host-1", { geo: { rounds: 6, difficulties: ["facil"] } });
 const ready = mgr.publicState(room).questionsReady;
 mgr.updateConfig(room, "host-1", { geo: { kinds: ["location"] } });
 assert.ok(mgr.publicState(room).questionsReady < ready, "fewer kinds, fewer questions");

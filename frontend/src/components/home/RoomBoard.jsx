@@ -37,7 +37,7 @@ export default function RoomBoard({ room }) {
               >
                 <span className="tv-board-pos">{i + 1}</span>
                 <Avatar name={p.name} avatar={p.avatar} />
-                <span className="tv-board-name">{p.id === user?.id ? `${p.name} · tú` : p.name}</span>
+                <span className="tv-board-name">{p.name}</span>
                 {leader && <Icon name="crown" size={18} strokeWidth={1.5} filled className="tv-board-crown" />}
                 <span className="tv-board-wins" title={`${p.wins} de ${p.played} partidas ganadas`}>
                   {p.wins}

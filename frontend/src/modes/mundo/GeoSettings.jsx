@@ -39,7 +39,7 @@ export default function GeoSettings({ room, updateConfig, onToast, children, rea
   return (
     <fieldset className="tv-settings" disabled={readOnly}>
       <OptionRow
-        label="Modos de Juego"
+        label="Modos de juego"
         multi
         options={KINDS.map((k) => ({ value: k.id, label: k.label, title: k.hint }))}
         value={draft.kinds}

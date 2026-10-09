@@ -263,7 +263,7 @@ function GameScreen() {
             nearest: p.lastAnswer.nearest,
             inside: p.lastAnswer.inside,
             color: colorOf(p.id),
-            label: p.id === user?.id ? "Tú" : p.name.slice(0, 12),
+            label: p.name.slice(0, 12),
             isMe: p.id === user?.id,
           }))
       : [];

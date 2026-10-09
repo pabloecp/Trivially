@@ -145,6 +145,7 @@
   font-size: 15px;
   transition: transform 0.12s ease, filter 0.2s ease;
 }
+/* Players' faces are flat: no shadow and no border (only the profile page's big one has its ring, .tv-avatar--xl). */
 .tv-avatar {
   display: grid;
   place-items: center;
@@ -311,90 +312,6 @@
 .tv-chip--leave { flex-shrink: 0; }
 .tv-topbar-end .tv-chip { max-width: min(62vw, 100%); }
 .tv-main--page { align-items: stretch; padding-top: 20px; }
-
-/* ---------- Volume: a round button that opens a panel with mute and a slider (VolumeControl.jsx) ---------- */
-.tv-vol { position: relative; flex-shrink: 0; }
-button.tv-vol-btn { border: 0; font-family: inherit; color: inherit; cursor: pointer; }
-.tv-chip.tv-vol-btn[aria-expanded="true"] { box-shadow: inset 0 0 0 2px var(--brand); }
-/* On phones' room screen it sits in the bottom bar (RoomDock) and its panel opens upwards. */
-.tv-vol--dock .tv-vol-pop { top: auto; bottom: calc(100% + 10px); left: 0; right: auto; }
-.tv-vol-pop {
-  position: absolute;
-  top: calc(100% + 8px);
-  right: 0;
-  z-index: 40;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  width: min(280px, calc(100vw - 32px));
-  padding: 8px 16px 8px 8px;
-  border-radius: 999px;
-  background: var(--tv-surface);
-  box-shadow: 0 0 0 1px var(--tv-edge), 0 18px 36px -12px rgba(0, 0, 0, 0.6);
-  animation: tvDropIn 0.2s var(--tv-spring);
-}
-.tv-vol-mute {
-  display: grid;
-  place-items: center;
-  flex-shrink: 0;
-  width: 40px;
-  height: 40px;
-  padding: 0;
-  border: 0;
-  border-radius: 50%;
-  background: var(--tv-neutral);
-  color: var(--tv-neutral-on);
-  cursor: pointer;
-  transition: transform 0.12s ease, background-color 0.2s ease;
-}
-.tv-vol-mute:active { transform: translateY(2px); }
-.tv-vol-mute[aria-pressed="true"] { background: var(--p-bad); color: #fff; }
-.tv-vol-slider {
-  flex: 1;
-  min-width: 0;
-  height: 28px;
-  margin: 0;
-  background: transparent;
-  cursor: pointer;
-  -webkit-appearance: none;
-  appearance: none;
-}
-/* The part up to the thumb is the mode's colour (--fill is set by the component). */
-.tv-vol-slider::-webkit-slider-runnable-track {
-  height: 10px;
-  border-radius: 999px;
-  background: linear-gradient(to right, var(--brand) var(--fill), var(--tv-neutral) var(--fill));
-}
-.tv-vol-slider::-moz-range-track { height: 10px; border-radius: 999px; background: var(--tv-neutral); }
-.tv-vol-slider::-moz-range-progress { height: 10px; border-radius: 999px; background: var(--brand); }
-.tv-vol-slider::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  width: 22px;
-  height: 22px;
-  margin-top: -6px;
-  border: 0;
-  border-radius: 50%;
-  background: #fff;
-  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.35);
-}
-.tv-vol-slider::-moz-range-thumb {
-  width: 22px;
-  height: 22px;
-  border: 0;
-  border-radius: 50%;
-  background: #fff;
-  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.35);
-}
-.tv-vol-num {
-  flex-shrink: 0;
-  width: 5ch;
-  font-weight: 800;
-  font-size: 14px;
-  font-variant-numeric: tabular-nums;
-  white-space: nowrap;
-  text-align: right;
-  color: var(--tv-text-2);
-}
 
 /* ---------- Hero ---------- */
 .tv-hero {
@@ -823,7 +740,7 @@ button.tv-vol-btn { border: 0; font-family: inherit; color: inherit; cursor: poi
   text-align: left;
   cursor: pointer;
 }
-.tv-player-btn .tv-avatar { width: 38px; height: 38px; font-size: 16px; box-shadow: 0 3px 0 rgba(0, 0, 0, 0.4); }
+.tv-player-btn .tv-avatar { width: 38px; height: 38px; font-size: 16px; }
 .tv-player-text { display: flex; flex-direction: column; flex: 1; min-width: 0; }
 .tv-player-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 700; font-size: 15px; line-height: 1.25; }
 .tv-player-tag { font-size: 12px; font-weight: 600; color: var(--tv-text-3); }
@@ -854,10 +771,271 @@ button.tv-vol-btn { border: 0; font-family: inherit; color: inherit; cursor: poi
 .tv-leave-btn:hover { filter: brightness(1.08); }
 .tv-leave-btn:active { transform: translateY(4px); box-shadow: 0 0 0 var(--p-bad-edge); }
 
+/* The room's chat (RoomChat.jsx), between the players and "Salir de la sala": it takes the column's free height. */
+.tv-chat { display: flex; flex-direction: column; gap: 8px; flex: 1 1 auto; min-height: 220px; margin-top: 6px; }
+.tv-chat-list {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  flex: 1 1 0;
+  min-height: 140px;
+  max-height: 340px;
+  margin: 0;
+  padding: 10px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.18) transparent;
+  list-style: none;
+  /* The messages fade out at the top instead of being cut. */
+  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 48px);
+  mask-image: linear-gradient(to bottom, transparent, #000 48px);
+}
+.tv-chat-area { display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0; }
+/* In the room's column (PartyPanel): the chat opens in place of the players' list. The list folds into a row of
+   faces and the chat grows into the freed height (both animated); tapping the faces does it backwards. */
+.tv-fold {
+  display: grid;
+  grid-template-rows: 1fr;
+  opacity: 1;
+  transition: grid-template-rows 0.4s cubic-bezier(0.3, 0.9, 0.3, 1), opacity 0.3s ease, margin 0.4s ease;
+}
+.tv-fold > div { min-height: 0; overflow: hidden; }
+.tv-party.is-chat .tv-party-people,
+.tv-party:not(.is-chat) .tv-party-faces { grid-template-rows: 0fr; opacity: 0; margin-top: -12px; pointer-events: none; }
+.tv-party-faces > div { overflow: visible; }
+/* The players' list only clips while it is folded: open, a player's menu can hang below it, over the chat's space. */
+.tv-party-people > div { overflow: visible; }
+.tv-party.is-chat .tv-party-people > div { overflow: hidden; }
+.tv-party:not(.is-chat) .tv-party-faces > div { overflow: hidden; }
+.tv-party-stack {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--tv-text);
+  font-family: inherit;
+  font-weight: 800;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+.tv-party-stack:hover { background: rgba(255, 255, 255, 0.09); }
+.tv-party-stack-faces { display: flex; }
+.tv-party-stack-faces .tv-avatar { width: 32px; height: 32px; font-size: 14px; box-shadow: 0 0 0 3px var(--tv-surface); }
+.tv-party-stack-faces .tv-avatar + .tv-avatar { margin-left: -10px; }
+.tv-party-stack-faces .tv-avatar.is-away { opacity: 0.45; }
+.tv-party-stack-text { flex: 1; text-align: left; color: var(--tv-text-2, rgba(255, 255, 255, 0.7)); }
+.tv-party-stack-chevron { transform: rotate(90deg); opacity: 0.7; }
+.tv-party-chatwrap {
+  display: grid;
+  grid-template-rows: 1fr;
+  flex: 0 0 0;
+  min-height: 0;
+  opacity: 0;
+  transition: flex-grow 0.45s cubic-bezier(0.3, 0.9, 0.3, 1), min-height 0.45s cubic-bezier(0.3, 0.9, 0.3, 1), opacity 0.3s ease;
+}
+/* It takes the column's free height. */
+.tv-party.is-chat .tv-party-chatwrap { flex-grow: 1; opacity: 1; }
+/* Narrower or short windows, where the column is only as tall as what it holds: a few messages' worth. */
+@media (max-width: 979px), (max-height: 599px) {
+  .tv-party.is-chat .tv-party-chatwrap { min-height: 280px; }
+}
+.tv-party-chatwrap > div { display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
+.tv-chat--side { flex: 1 1 0; min-height: 0; margin-top: 0; gap: 8px; }
+.tv-chat--side .tv-chat-area { position: relative; }
+.tv-chat--side .tv-chat-list { position: absolute; inset: 0; min-height: 0; max-height: none; padding: 40px 0 4px; }
+.tv-chat--side .tv-chat-list > :first-child { margin-top: auto; }
+.tv-chat--side .tv-chat-empty { flex: 0 0 auto; padding-bottom: 6px; }
+/* The bar under the chat: the "Chat" button and the box to write, one over the other in the same place. Opening the
+   chat swaps them there (the button shrinks away, the box comes in); it never moves. */
+/* Its auto margin keeps it (and "Salir de la sala" under it) at the bottom: while the chat grows it only takes the
+   space the chat hasn't reached yet. */
+.tv-party-chatbar { position: relative; flex-shrink: 0; height: 48px; margin-top: auto; }
+.tv-party-chatbar + .tv-leave-btn { margin-top: 0; }
+.tv-party-chatbtn,
+.tv-party-chatform {
+  position: absolute;
+  inset: 0;
+  transition: opacity 0.25s ease, transform 0.3s cubic-bezier(0.3, 1.3, 0.5, 1);
+}
+.tv-party-chatbtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px;
+  border: 0;
+  border-radius: 16px;
+  background: var(--tv-bg);
+  box-shadow: inset 0 0 0 1px var(--tv-line);
+  color: var(--tv-text);
+  font-family: inherit;
+  font-weight: 800;
+  font-size: 15px;
+  cursor: pointer;
+}
+.tv-party-chatbtn:hover { filter: brightness(1.15); }
+.tv-party-chatform { display: flex; align-items: center; }
+.tv-party-chatform .tv-chat-form { flex: 1; }
+.tv-party:not(.is-chat) .tv-party-chatform,
+.tv-party.is-chat .tv-party-chatbtn { opacity: 0; transform: scale(0.94); pointer-events: none; }
+.tv-party.is-chat .tv-party-chatform,
+.tv-party:not(.is-chat) .tv-party-chatbtn { transition-delay: 0.08s; }
+/* "Salir de la sala" stays at the bottom of the column the whole time: while the chat opens and closes only what is
+   above it moves. */
+.tv-chat-list::-webkit-scrollbar { width: 6px; height: 0; }
+.tv-chat-list::-webkit-scrollbar-thumb { border-radius: 999px; background: rgba(255, 255, 255, 0.18); }
+.tv-chat-list::-webkit-scrollbar-track { background: transparent; }
+.tv-chat-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  flex: 1;
+  color: var(--tv-muted, rgba(255, 255, 255, 0.5));
+  font-size: 14px;
+  font-weight: 700;
+  opacity: 0.7;
+}
+.tv-chat-msg { display: flex; align-items: flex-end; gap: 8px; max-width: 100%; animation: tvPopIn 0.3s cubic-bezier(0.3, 1.5, 0.5, 1) backwards; }
+.tv-chat-msg.is-first { margin-top: 6px; }
+.tv-chat-msg.is-first:first-child { margin-top: 0; }
+.tv-chat-msg .tv-avatar { width: 28px; height: 28px; font-size: 13px; }
+.tv-chat-gap { flex-shrink: 0; width: 28px; }
+.tv-chat-msg.is-mine { flex-direction: row-reverse; }
+.tv-chat-msg.is-mine .tv-chat-bubble { align-items: flex-end; }
+.tv-chat-msg.is-mine .tv-chat-name { color: rgba(255, 255, 255, 0.85); }
+.tv-chat-bubble {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+  max-width: 80%;
+  padding: 7px 11px;
+  border-radius: 16px 16px 16px 6px;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--tv-text);
+}
+.tv-chat-msg.is-mine .tv-chat-bubble { border-radius: 16px 16px 6px 16px; background: var(--p-cinema-1, #a63dff); color: #fff; }
+.tv-chat-name { font-size: 12px; font-weight: 800; color: var(--p-cinema-text, #b65cff); }
+.tv-chat-text { font-size: 14px; line-height: 1.35; overflow-wrap: anywhere; white-space: pre-wrap; }
+.tv-chat-error { position: absolute; bottom: calc(100% + 6px); left: 4px; right: 4px; margin: 0; font-size: 13px; font-weight: 700; color: var(--p-bad, #ff4d6d); }
+.tv-chat-form { position: relative; display: flex; gap: 8px; }
+.tv-chat-input {
+  flex: 1;
+  min-width: 0;
+  height: 44px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 14px;
+  background: var(--tv-bg);
+  box-shadow: inset 0 0 0 1px var(--tv-line);
+  color: var(--tv-text);
+  font-family: inherit;
+  font-size: 15px;
+}
+.tv-chat-input:focus { outline: none; box-shadow: inset 0 0 0 2px var(--p-cinema-1, #a63dff); }
+.tv-chat-input:disabled { opacity: 0.6; }
+.tv-chat-send {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: 14px;
+  background: var(--p-cinema-1, #a63dff);
+  box-shadow: 0 3px 0 var(--p-cinema-edge, #6418a8);
+  color: #fff;
+  cursor: pointer;
+  transition: transform 0.12s ease, opacity 0.15s ease;
+}
+.tv-chat-send:active:not(:disabled) { transform: translateY(3px); box-shadow: 0 0 0 var(--p-cinema-edge, #6418a8); }
+.tv-chat-send:disabled { opacity: 0.45; cursor: default; }
+
+/* The phones' chat button (ChatButton), in the bottom bar. */
+.tv-chat-btn { position: relative; }
+.tv-chat-badge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  display: grid;
+  place-items: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--p-bad);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 800;
+  box-shadow: 0 0 0 3px var(--tv-surface);
+}
+/* The chat's window (ChatSheet): a box in the middle, a sheet from the bottom on phones. */
+.tv-chatsheet {
+  position: fixed;
+  inset: 0;
+  z-index: 1100;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  /* It is put at the end of the page, outside .tv-app: the site's letter and colour again. */
+  color: var(--tv-text);
+  font-family: var(--tv-body);
+}
+.tv-chatsheet-backdrop { position: absolute; inset: 0; background: rgba(0, 0, 0, 0.55); animation: tvFade 0.2s ease-out; }
+.tv-chatsheet-body {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: min(440px, 100%);
+  height: min(70vh, 620px);
+  padding: 18px;
+  border-radius: 26px;
+  background: var(--tv-surface);
+  box-shadow: inset 0 0 0 1px var(--tv-line), 0 20px 50px rgba(0, 0, 0, 0.5);
+  animation: tvPopIn 0.3s cubic-bezier(0.3, 1.4, 0.5, 1);
+}
+.tv-chatsheet .tv-chat { flex: 1; min-height: 0; margin-top: 0; }
+.tv-chatsheet .tv-chat-list { max-height: none; }
+.tv-chatsheet-close {
+  position: absolute;
+  top: 14px;
+  right: 16px;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--tv-neutral);
+  color: var(--tv-neutral-on);
+  cursor: pointer;
+}
+@media (max-width: 640px) {
+  /* The same 16px side margins as the rest of the screen, and down to the bottom edge. */
+  .tv-chatsheet { place-items: end stretch; padding: 0 16px; }
+  .tv-chatsheet-body {
+    width: 100%;
+    height: min(75dvh, 600px);
+    padding: 16px 16px calc(16px + env(safe-area-inset-bottom));
+    border-radius: 26px 26px 0 0;
+    animation: tvUp 0.3s var(--tv-ease-out);
+  }
+}
+
 /* Wide screens: the room's column keeps to the right. Narrower: it goes first, so the code is the first thing. */
 @media (min-width: 980px) { .tv-party { max-width: 320px; } }
 @media (min-width: 1200px) { .tv-party { flex-basis: 320px; max-width: 340px; } }
-@media (max-width: 979px) { .tv-leave-btn { margin-top: 0; } }
+@media (max-width: 979px) { .tv-leave-btn, .tv-party-chatbar { margin-top: 0; } }
 @media (max-width: 640px) {
   .tv-picker { padding: 20px; border-radius: 28px; }
   .tv-mode { padding: 16px; border-radius: 24px; }
@@ -1105,7 +1283,6 @@ button.tv-vol-btn { border: 0; font-family: inherit; color: inherit; cursor: poi
   width: 56px;
   height: 56px;
   font-size: 24px;
-  box-shadow: 0 3px 0 rgba(0, 0, 0, 0.25);
 }
 .tv-swatches {
   display: flex;
@@ -1925,8 +2102,6 @@ button.tv-vol-btn { border: 0; font-family: inherit; color: inherit; cursor: poi
 .tv-results-title { animation: tvPop 0.7s var(--tv-spring) 0.1s backwards; }
 .tv-podium { margin-top: 30px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: end; gap: 10px; }
 .tv-podium-spot { display: grid; justify-items: center; gap: 6px; min-width: 0; text-align: center; }
-/* A ring keeps a green avatar visible on the music mode's green background. */
-.tv-podium-avatar .tv-avatar { box-shadow: 0 0 0 4px var(--tv-surface), 0 6px 0 4px var(--tv-edge); }
 .tv-podium-avatar .tv-avatar:not(.tv-avatar--lg) { width: 48px; height: 48px; font-size: 22px; }
 .tv-podium-avatar { position: relative; animation: tvPop 0.6s var(--tv-spring) backwards; }
 .tv-podium-crown { position: absolute; top: -26px; left: 50%; translate: -50% 0; color: var(--p-accent-2); stroke: var(--p-accent-edge); animation: tvBob 2.4s ease-in-out infinite; }
@@ -2147,16 +2322,127 @@ button.tv-vol-btn { border: 0; font-family: inherit; color: inherit; cursor: poi
 .tv-player-menu-item:hover,
 .tv-player-menu-item:focus-visible { background: var(--tv-option-bg); }
 .tv-player-menu-item--danger { color: var(--tv-danger); }
+/* "Hacer anfitrión" asking for the second tap. */
+.tv-player-menu-item.is-confirm { color: var(--tv-yellow, #ffd60a); font-weight: 800; }
 .tv-player-menu-note { margin: 0; padding: 10px 12px; font-weight: 700; font-size: 13px; color: var(--tv-text-3); }
 
 .tv-chip--icon { padding-right: 5px; }
-button.tv-chip--leave { border: 0; font-family: inherit; color: inherit; cursor: pointer; }
+button.tv-chip--leave,
+button.tv-chip--sound { border: 0; font-family: inherit; color: inherit; cursor: pointer; }
+.tv-chip--sound { flex-shrink: 0; }
+/* The top bar's volume panel (VolumeMenu.jsx): music and sounds, an on/off icon and a slider each. */
+.tv-volume { position: relative; flex-shrink: 0; font-family: var(--tv-body); color: var(--tv-text); }
+.tv-volume-panel {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 60;
+  width: 340px;
+  max-height: min(78vh, 640px);
+  overflow-y: auto;
+  padding: 14px;
+  border-radius: 20px;
+  background: var(--tv-surface);
+  color: var(--tv-text);
+  box-shadow: inset 0 0 0 1px var(--tv-line), 0 14px 36px rgba(0, 0, 0, 0.45);
+}
+.tv-volume-rows { display: grid; gap: 14px; }
+/* The sound sets, under the slider. */
+.tv-volume-packs { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--tv-line); }
+.tv-volume-packs-title { margin: 0 4px 8px; font-size: 12px; font-weight: 700; opacity: 0.6; text-transform: uppercase; letter-spacing: 0.06em; }
+.tv-volume-packs-list { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
+.tv-volume-pack {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  min-width: 0;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: inherit;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.tv-volume-pack span { display: grid; gap: 1px; min-width: 0; }
+.tv-volume-pack strong { font-size: 14px; }
+.tv-volume-pack small { font-size: 12px; opacity: 0.65; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tv-volume-pack svg { flex: none; }
+.tv-volume-pack:hover { background: rgba(255, 255, 255, 0.06); }
+.tv-volume-pack.is-on { background: rgba(255, 255, 255, 0.12); }
+.tv-volume-row { display: flex; align-items: center; gap: 12px; }
+.tv-volume-toggle {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--p-cinema-1, #a63dff);
+  color: #fff;
+  cursor: pointer;
+}
+.tv-volume-row.is-off .tv-volume-toggle { background: var(--tv-neutral); color: var(--tv-neutral-on); }
+.tv-volume-field { display: grid; gap: 6px; flex: 1; min-width: 0; }
+.tv-volume-label { display: flex; justify-content: space-between; font-size: 14px; }
+.tv-volume-label span { opacity: 0.65; font-variant-numeric: tabular-nums; }
+.tv-volume-field input[type="range"] {
+  width: 100%;
+  height: 8px;
+  margin: 4px 0;
+  border-radius: 999px;
+  appearance: none;
+  background: linear-gradient(to right, var(--p-cinema-1, #a63dff) var(--fill), rgba(255, 255, 255, 0.14) var(--fill));
+  cursor: pointer;
+}
+.tv-volume-field input[type="range"]:disabled { opacity: 0.4; cursor: default; }
+.tv-volume-field input[type="range"]::-webkit-slider-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  appearance: none;
+  background: #fff;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+}
+.tv-volume-field input[type="range"]::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border: 0;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+}
+.tv-volume--floating {
+  position: fixed;
+  top: calc(10px + env(safe-area-inset-top));
+  right: calc(12px + env(safe-area-inset-right));
+  z-index: 1000;
+  display: none;
+}
+@media (max-width: 899px) {
+  html.tv-geo-playing .tv-volume--floating { display: block; }
+}
+@media (max-width: 640px) {
+  .tv-volume-panel { position: fixed; top: calc(70px + env(safe-area-inset-top)); left: 16px; right: 16px; width: auto; }
+  /* Phones: your profile is only your avatar, never your name. */
+  .tv-chip--profile .tv-chip-name { display: none; }
+  .tv-chip--profile { padding-right: 5px; }
+  /* The room header is narrow: a smaller volume button, and the face stack gives way. */
+  .tv-roomhead .tv-volume .tv-chip { padding: 3px; }
+  .tv-roomhead .tv-volume .tv-avatar { width: 36px; height: 36px; }
+  .tv-roomhead-players { min-width: 0; }
+}
+
 .tv-chip-short { display: none; }
 @media (max-width: 520px) {
   /* The button left of the logo ("Volver") is only its icon, and "¿Salir?" while it asks. */
   .tv-chip--leave .tv-chip-long { display: none; }
   .tv-chip--leave .tv-chip-short { display: inline; }
   .tv-chip--leave:not(.is-confirm) { padding-right: 5px; }
+  .tv-topbar-end { gap: 6px; }
   /* Not enough room for the name next to the question. */
   .tv-topbar.is-confirm .tv-brand-name { display: none; }
 }
@@ -2615,9 +2901,14 @@ fieldset.tv-settings { display: grid; gap: 18px; min-width: 0; margin: 0; paddin
   }
   .tv-roomdock .tv-lobby-error { margin: 0; text-align: center; }
   .tv-roomdock-row { display: flex; gap: 10px; }
-  .tv-app .tv-roomdock-invite,
-  .tv-app .tv-roomdock-vol { flex-shrink: 0; width: 60px; height: 60px; padding: 0; border-radius: 18px; }
+  .tv-app .tv-roomdock-invite { flex-shrink: 0; width: 60px; height: 60px; padding: 0; border-radius: 18px; }
   .tv-app .tv-roomdock-start { flex: 1; min-width: 0; height: 60px; border-radius: 18px; font-weight: 800; font-size: 22px; }
+  /* "Elige un modo de juego" is long: smaller, on two lines if it needs them, never wider than the bar. */
+  .tv-app .tv-roomdock-start { overflow: hidden; }
+  .tv-app .tv-roomdock-start.is-pick { padding: 0 12px; font-size: 16px; line-height: 1.15; white-space: normal; text-align: center; }
+  /* The chat has its own button in the bottom bar: not again in the players' drop-down. */
+  .tv-party--drop .tv-party-chatwrap,
+  .tv-party--drop .tv-party-chatbar { display: none; }
   .tv-roomdock-wait {
     display: grid;
     place-items: center;

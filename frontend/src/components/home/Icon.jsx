@@ -1,8 +1,4 @@
 // Stroke icons (paths adapted from Lucide, ISC license).
-const SPEAKER = (
-  <path d="M11 4.702a.705.705 0 0 0-1.203-.498L6.413 7.587A1.4 1.4 0 0 1 5.416 8H3a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2.416a1.4 1.4 0 0 1 .997.413l3.383 3.384A.705.705 0 0 0 11 19.298z" />
-);
-
 const PATHS = {
   music: (
     <>
@@ -202,25 +198,23 @@ const PATHS = {
       <path d="M6 8h.01M10 8h.01M14 8h.01M18 8h.01M8 12h.01M12 12h.01M16 12h.01M7 16h10" />
     </>
   ),
-  // The volume button: the speaker with no waves (muted), one wave and two.
-  "volume-off": (
+  send: (
     <>
-      {SPEAKER}
-      <path d="m22 9-6 6" />
-      <path d="m16 9 6 6" />
+      <path d="M14.5 21.2a.5.5 0 0 0 .94-.03l6.5-19a.5.5 0 0 0-.64-.63l-19 6.5a.5.5 0 0 0-.03.93l7.93 3.18a2 2 0 0 1 1.11 1.11Z" />
+      <path d="m21.85 2.15-10.94 10.94" />
     </>
   ),
-  "volume-low": (
-    <>
-      {SPEAKER}
-      <path d="M16 9a5 5 0 0 1 0 6" />
-    </>
-  ),
+  chat: <path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z" />,
   volume: (
     <>
-      {SPEAKER}
-      <path d="M16 9a5 5 0 0 1 0 6" />
-      <path d="M19.364 18.364a9 9 0 0 0 0-12.728" />
+      <path d="M11 4.7a.7.7 0 0 0-1.2-.5L6.4 7.6A1.4 1.4 0 0 1 5.4 8H3a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2.4a1.4 1.4 0 0 1 1 .4l3.4 3.4a.7.7 0 0 0 1.2-.5Z" />
+      <path d="M16 9a5 5 0 0 1 0 6M19.4 18.4a9 9 0 0 0 0-12.8" />
+    </>
+  ),
+  mute: (
+    <>
+      <path d="M11 4.7a.7.7 0 0 0-1.2-.5L6.4 7.6A1.4 1.4 0 0 1 5.4 8H3a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2.4a1.4 1.4 0 0 1 1 .4l3.4 3.4a.7.7 0 0 0 1.2-.5Z" />
+      <path d="m22 9-6 6M16 9l6 6" />
     </>
   ),
   // Scalloped badge with a check cut out, like Instagram's verified mark. The badge takes the text colour.

@@ -186,7 +186,7 @@ function GameScreen() {
   const reveal = phase === "reveal";
   const playerIndex = (id) => Math.max(0, room.players.findIndex((p) => p.id === id));
   const colorOf = (id) => (id === user?.id ? MY_COLOR : PLAYER_COLORS[playerIndex(id) % PLAYER_COLORS.length]);
-  const nameOf = (id) => (id === user?.id ? "Tú" : room.players.find((p) => p.id === id)?.name || "Jugador");
+  const nameOf = (id) => room.players.find((p) => p.id === id)?.name || "Jugador";
   const toFind = question ? question.total - question.found : 0;
   const standing = room.players.filter((p) => p.connected && !p.spectator && !p.out);
   const waitingFor = standing.filter((p) => !p.answered && p.id !== user?.id).map((p) => p.name);
@@ -339,7 +339,7 @@ function GameScreen() {
                         )}
                         {owned && (
                           <span className="tv-mines-owner" aria-hidden="true" title={nameOf(c.by)}>
-                            {c.by === user?.id ? "Tú" : nameOf(c.by).slice(0, 1).toUpperCase()}
+                            {nameOf(c.by).slice(0, 1).toUpperCase()}
                           </span>
                         )}
                       </button>
@@ -389,17 +389,14 @@ function Verdict({ me }) {
     tone = "bad";
     icon = "bomb";
     title = "¡Pisaste una mina!";
-    detail = hits ? `${hitsText(hits)} antes de la mina` : "A la primera";
   } else if (answer.out === "tiempo") {
     tone = "timeout";
     icon = "close";
     title = "Se te acabó el tiempo";
-    detail = hits ? `${hitsText(hits)} antes` : "Sin aciertos";
   } else {
     tone = "ok";
     icon = "check";
     title = "¡Sobreviviste!";
-    detail = hits ? hitsText(hits) : "Sin aciertos";
   }
   return (
     <div className={`tv-mines-verdict tv-mines-verdict--${tone}`} role="status">
@@ -409,7 +406,7 @@ function Verdict({ me }) {
       </span>
       <span className="tv-mines-verdict-text">
         <strong>{title}</strong>
-        <small>{detail}</small>
+        {detail && <small>{detail}</small>}
       </span>
       {hits > 0 && <span className="tv-tag tv-tag--points">+{me?.lastPoints || 0}</span>}
     </div>
