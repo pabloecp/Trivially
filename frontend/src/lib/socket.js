@@ -42,3 +42,13 @@ export function emitAck(event, ...args) {
     s.emit(event, ...args, (res) => resolve(res || { ok: false, error: "Sin respuesta" }));
   });
 }
+
+/** Like emitAck, but gives up after `ms` (a server that doesn't know the event, or a slow outside service). */
+export function emitAckWithin(ms, event, ...args) {
+  const s = getSocket();
+  return new Promise((resolve) => {
+    s.timeout(ms).emit(event, ...args, (err, res) =>
+      resolve(err ? { ok: false, error: "El servidor no respondió. Inténtalo otra vez." } : res || { ok: false, error: "Sin respuesta" })
+    );
+  });
+}

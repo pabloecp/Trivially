@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { api, setAuthToken } from "./api.js";
-import { emitAck, getSocket, reconnectSocket, setSocketTokenProvider } from "./socket.js";
+import { emitAck, emitAckWithin, getSocket, reconnectSocket, setSocketTokenProvider } from "./socket.js";
 import { BACKEND_URL } from "./config.js";
 
 const AppContext = createContext(null);
@@ -484,7 +484,8 @@ export function AppProvider({ children }) {
 
       // Anyone who may change the settings: a public Spotify playlist pasted as a link.
       async addSpotifyLink(link) {
-        const res = await emitAck("room:spotifyLink", link);
+        // Reading Spotify takes a moment; past 25 s it is given up instead of waiting forever.
+        const res = await emitAckWithin(25000, "room:spotifyLink", link);
         if (!res.ok) throw new Error(res.error);
         if (res.state) setRoom(res.state);
       },

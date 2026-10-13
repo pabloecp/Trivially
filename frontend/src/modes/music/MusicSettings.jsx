@@ -228,7 +228,7 @@ export default function MusicSettings({ room, catalog, updateConfig, onToast, ch
       </OptionRow>
       {!readOnly && linkOpen && (
         <form className="tv-spotify-link" onSubmit={onAddLink} onKeyDown={(e) => e.key === "Escape" && setLinkOpen(false)}>
-          {/* Like the game's answer box: one field with the icon in it and the button at its end. */}
+          {/* Like the game's answer box: one field with the icon in it and the send button at its end. */}
           <div className="tv-spotify-link-box">
             <SpotifyIcon size={20} />
             <input
@@ -242,8 +242,15 @@ export default function MusicSettings({ room, catalog, updateConfig, onToast, ch
               disabled={linkBusy}
               autoFocus
             />
-            <button type="submit" className="tv-btn tv-btn--sm tv-c-music" disabled={linkBusy || !link.trim()}>
-              {linkBusy ? "Leyendo…" : "Añadir"}
+            {/* An arrow up to send it, and a spinner while Spotify is read. */}
+            <button
+              type="submit"
+              className="tv-btn tv-btn--sm tv-c-music tv-spotify-link-send"
+              disabled={linkBusy || !link.trim()}
+              aria-label={linkBusy ? "Leyendo la playlist" : "Agregar la playlist"}
+              aria-busy={linkBusy}
+            >
+              {linkBusy ? <span className="tv-spinner" aria-hidden="true" /> : <Icon name="upload" size={20} strokeWidth={3} />}
             </button>
           </div>
           <small className="tv-spotify-link-hint">Tiene que ser pública. Se usan sus primeras 100 canciones.</small>
