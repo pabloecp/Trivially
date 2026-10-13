@@ -205,10 +205,10 @@ export default function MusicSettings({ room, catalog, updateConfig, onToast, ch
             className="tv-optrow-btn is-add"
             onClick={() => setLinkOpen((v) => !v)}
             aria-expanded={linkOpen}
-            title="Añadir una playlist pública de Spotify con su link"
+            title="Agregar una playlist pública de Spotify con su link"
           >
-            <Icon name={linkOpen ? "close" : "plus"} size={16} strokeWidth={3} />
-            {linkOpen ? "Cancelar" : "Añadir playlist"}
+            {linkOpen ? <Icon name="close" size={16} strokeWidth={3} /> : <SpotifyIcon size={18} />}
+            {linkOpen ? "Cancelar" : "Agregar playlist de Spotify"}
           </button>
         )}
         {isOwnerEditor && (
@@ -228,24 +228,25 @@ export default function MusicSettings({ room, catalog, updateConfig, onToast, ch
       </OptionRow>
       {!readOnly && linkOpen && (
         <form className="tv-spotify-link" onSubmit={onAddLink} onKeyDown={(e) => e.key === "Escape" && setLinkOpen(false)}>
-          <div className="tv-spotify-link-row">
-            <SpotifyIcon size={22} />
+          {/* Like the game's answer box: one field with the icon in it and the button at its end. */}
+          <div className="tv-spotify-link-box">
+            <SpotifyIcon size={20} />
             <input
-              className="tv-field tv-field--sm"
+              className="tv-spotify-link-input"
               type="url"
               inputMode="url"
               value={link}
               onChange={(e) => setLink(e.target.value)}
-              placeholder="Link de playlist de Spotify"
+              placeholder="Pega el link de la playlist"
               aria-label="Link de una playlist de Spotify"
               disabled={linkBusy}
               autoFocus
             />
-            <button type="submit" className="tv-btn tv-btn--sm tv-btn--spotify" disabled={linkBusy || !link.trim()}>
+            <button type="submit" className="tv-btn tv-btn--sm tv-c-music" disabled={linkBusy || !link.trim()}>
               {linkBusy ? "Leyendo…" : "Añadir"}
             </button>
           </div>
-          <small className="tv-spotify-link-hint">La playlist tiene que ser pública. Se usan sus primeras 100 canciones.</small>
+          <small className="tv-spotify-link-hint">Tiene que ser pública. Se usan sus primeras 100 canciones.</small>
         </form>
       )}
       {isOwnerEditor && askLink && !spotifyLinked && (
