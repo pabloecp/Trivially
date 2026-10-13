@@ -20,7 +20,7 @@ import {
 } from "./auth/routes.js";
 import { verifyAuthToken } from "./auth/socketToken.js";
 import { attachSockets } from "./realtime/sockets.js";
-import { getMedia, isCoverUrl, isPreviewUrl } from "./audio/mediaCache.js";
+import { getMedia, isCoverUrl, isPreviewUrl, isSpotifyPreviewUrl } from "./audio/mediaCache.js";
 import { flagForToken, getFlag } from "./geo/flags.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -98,7 +98,7 @@ app.use((req, _res, next) => {
 
 app.get("/health", (_req, res) => res.json({ ok: true, name: "Trivially" }));
 
-// Audio proxy: re-serves iTunes preview URLs with audio/mp4 MIME type
+// Audio proxy: re-serves iTunes preview URLs with audio/mp4 MIME type (and Spotify's MP3 previews as they are)
 // Needed because iTunes returns audio/x-m4p which browsers don't play natively. Served from mediaCache, which a
 // match fills ahead of time.
 app.get("/api/audio/proxy", async (req, res) => {
@@ -108,7 +108,7 @@ app.get("/api/audio/proxy", async (req, res) => {
   }
   try {
     const audio = await getMedia(url);
-    res.setHeader("Content-Type", "audio/mp4");
+    res.setHeader("Content-Type", isSpotifyPreviewUrl(url) ? "audio/mpeg" : "audio/mp4");
     res.setHeader("Cache-Control", "public, max-age=86400");
     res.setHeader("Access-Control-Allow-Origin", "*");
     res.send(audio);

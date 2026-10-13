@@ -20,7 +20,7 @@ function configKey(config) {
 // only keeps the tap visible until the server's new state arrives. `children` go at the bottom.
 // With `readOnly` (players without permission to change them) everything shows but nothing can be tapped.
 export default function MusicSettings({ room, catalog, updateConfig, onToast, children, readOnly = false }) {
-  const { user, listSpotifyPlaylists, addSpotifyPlaylist, connectSpotify } = useApp();
+  const { user, listSpotifyPlaylists, addSpotifyPlaylist, addSpotifyLink, connectSpotify } = useApp();
   const playlists = catalog?.playlists || [];
   // Spotify playlists already added to the room.
   const custom = room.customPlaylists || [];
@@ -33,6 +33,9 @@ export default function MusicSettings({ room, catalog, updateConfig, onToast, ch
   const [askLink, setAskLink] = useState(false);
   const [spotifyLists, setSpotifyLists] = useState(null);
   const [spotifyBusy, setSpotifyBusy] = useState("");
+  // A public Spotify playlist pasted as a link (anyone who may change the settings, no Spotify account needed).
+  const [link, setLink] = useState("");
+  const [linkBusy, setLinkBusy] = useState(false);
   // Like a new room: every playlist of the catalog ticked.
   const defaultIds = playlists.map((p) => p.id);
   const [draft, setDraft] = useState(room.config);
@@ -62,6 +65,20 @@ export default function MusicSettings({ room, catalog, updateConfig, onToast, ch
     }
     setSpotifyOpen(true);
     if (!spotifyLists) await showSpotifyPlaylists();
+  }
+
+  async function onAddLink(event) {
+    event.preventDefault();
+    if (!link.trim() || linkBusy) return;
+    setLinkBusy(true);
+    try {
+      await addSpotifyLink(link.trim());
+      setLink("");
+    } catch (err) {
+      onToast?.(err.message || "No se pudo añadir esa playlist");
+    } finally {
+      setLinkBusy(false);
+    }
   }
 
   async function onConnectSpotify() {
@@ -133,7 +150,12 @@ export default function MusicSettings({ room, catalog, updateConfig, onToast, ch
   const listOptions = [
     // "Most Streamed Songs on Spotify · Español" shows as "Top 500 Español"; the full name is the tooltip.
     ...playlists.map((p) => ({ value: p.id, label: playlistLabel(p), title: p.name })),
-    ...chosenCustom.map((p) => ({ value: p.id, label: p.name, title: `${p.ready} de ${p.total} canciones listas` })),
+    // Spotify playlists keep their own name, cut short when it's long; the full name is the tooltip.
+    ...chosenCustom.map((p) => ({
+      value: p.id,
+      label: p.name.length > 30 ? `${p.name.slice(0, 28).trimEnd()}…` : p.name,
+      title: `${p.name} · ${p.ready} de ${p.total} canciones listas`,
+    })),
   ];
 
   return (
@@ -188,6 +210,27 @@ export default function MusicSettings({ room, catalog, updateConfig, onToast, ch
           </button>
         )}
       </OptionRow>
+      {!readOnly && (
+        <form className="tv-spotify-link" onSubmit={onAddLink}>
+          <div className="tv-spotify-link-row">
+            <SpotifyIcon size={22} />
+            <input
+              className="tv-field tv-field--sm"
+              type="url"
+              inputMode="url"
+              value={link}
+              onChange={(e) => setLink(e.target.value)}
+              placeholder="Link de playlist de Spotify"
+              aria-label="Link de una playlist de Spotify"
+              disabled={linkBusy}
+            />
+            <button type="submit" className="tv-btn tv-btn--sm tv-btn--spotify" disabled={linkBusy || !link.trim()}>
+              {linkBusy ? "Leyendo…" : "Añadir"}
+            </button>
+          </div>
+          <small className="tv-spotify-link-hint">La playlist tiene que ser pública. Se usan sus primeras 100 canciones.</small>
+        </form>
+      )}
       {isOwnerEditor && askLink && !spotifyLinked && (
         <div className="tv-spotify-ask">
           <SpotifyIcon size={26} />

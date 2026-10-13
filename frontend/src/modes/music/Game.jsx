@@ -101,7 +101,8 @@ function GameScreen() {
   // (iTunes serves audio/x-m4p which browsers don't support; proxy re-serves as audio/mp4)
   function proxyUrl(url) {
     if (!url) return url;
-    if (url.startsWith("https://audio-ssl.itunes.apple.com/")) {
+    // Spotify's previews too (public playlists pasted as a link): downloaded ahead by the server, like iTunes'.
+    if (url.startsWith("https://audio-ssl.itunes.apple.com/") || url.startsWith("https://p.scdn.co/mp3-preview/")) {
       return `${BACKEND_URL}/api/audio/proxy?url=${encodeURIComponent(url)}`;
     }
     return url;
@@ -135,10 +136,13 @@ function GameScreen() {
         audio.src = src;
         audio.load();
       }
+      // A preview shorter than the round (Spotify's last 15–22 s, iTunes' 30 s) starts again instead of going quiet.
+      audio.loop = true;
       const elapsed = Math.max(0, (Date.now() - (room.phaseStartedAt || Date.now())) / 1000);
-      if (Math.abs(audio.currentTime - elapsed) > 1.2) {
+      const target = Number.isFinite(audio.duration) && audio.duration > 0 ? elapsed % audio.duration : elapsed;
+      if (Math.abs(audio.currentTime - target) > 1.2) {
         try {
-          audio.currentTime = elapsed;
+          audio.currentTime = target;
         } catch {}
       }
       const p = audio.play();

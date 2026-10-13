@@ -482,6 +482,13 @@ export function AppProvider({ children }) {
         if (res.state) setRoom(res.state);
       },
 
+      // Anyone who may change the settings: a public Spotify playlist pasted as a link.
+      async addSpotifyLink(link) {
+        const res = await emitAck("room:spotifyLink", link);
+        if (!res.ok) throw new Error(res.error);
+        if (res.state) setRoom(res.state);
+      },
+
       async toggleConfigPermission(targetUserId) {
         const res = await emitAck("room:toggleConfigPermission", targetUserId);
         if (!res.ok) throw new Error(res.error);

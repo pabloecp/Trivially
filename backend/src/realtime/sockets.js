@@ -1,5 +1,6 @@
 import { verifySocketToken } from "../auth/socketToken.js";
 import { prefetchMedia } from "../audio/mediaCache.js";
+import { playlistIdFromLink, readPublicPlaylist } from "../catalog/spotifyEmbed.js";
 import { readSpotifyPlaylist } from "../catalog/spotifyLibrary.js";
 import { prefetchFlags } from "../geo/flags.js";
 
@@ -131,6 +132,21 @@ export function attachSockets(io, rooms) {
         const playlist = await readSpotifyPlaylist(rooms.store, userId, String(playlistId || ""));
         if (!playlist.tracks.length) throw new Error("Esa playlist no tiene canciones que se puedan usar");
         rooms.addSpotifyPlaylist(room, userId, playlist);
+        ack?.({ ok: true, state: rooms.publicState(room, userId) });
+        io.to(room.code).emit("room:state", rooms.publicState(room));
+      } catch (err) {
+        ack?.({ ok: false, error: err.message });
+      }
+    });
+
+    // Anyone who may change the settings pastes a public Spotify playlist's link: no Spotify account needed.
+    socket.on("room:spotifyLink", async (link, ack) => {
+      try {
+        const { room, userId } = requireRoom(rooms, socket);
+        rooms.assertPlaylistEditor(room, userId);
+        const playlist = await readPublicPlaylist(await playlistIdFromLink(link));
+        if (!playlist.tracks.length) throw new Error("Esa playlist no tiene canciones que se puedan usar");
+        rooms.addSpotifyPlaylist(room, userId, playlist, { fromLink: true });
         ack?.({ ok: true, state: rooms.publicState(room, userId) });
         io.to(room.code).emit("room:state", rooms.publicState(room));
       } catch (err) {

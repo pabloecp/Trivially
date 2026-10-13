@@ -1,7 +1,7 @@
 import { selectSongs } from "../catalog/songSelector.js";
 import { hasRole } from "../auth/roles.js";
 import { hydrateSong } from "../catalog/catalogProvider.js";
-import { cleanTitle } from "../catalog/trackResolver.js";
+import { cleanTitle, displayTitle } from "../catalog/trackResolver.js";
 import { applyMatchStats } from "../db/store.js";
 import { isCorrectAnswer, normalizeAnswer, songKey } from "./answers.js";
 import {
@@ -428,10 +428,15 @@ export class RoomManager {
    * player the host gave permission to). Their own Spotify is the one read.
    */
   assertSpotifyEditor(room, userId) {
-    if (!this.canEditConfig(room, userId)) throw new Error("Necesitas permiso del host para cambiar las playlists");
+    this.assertPlaylistEditor(room, userId);
     const user = this.store?.users?.[userId];
     if (!user || !hasRole(user, "owner")) throw new Error("Las playlists de Spotify son solo para owners");
     if (!user.spotify) throw new Error("Conecta tu Spotify en tu perfil primero");
+  }
+
+  /** Pasting a public playlist's link (catalog/spotifyEmbed.js): anyone who may change the room's settings. */
+  assertPlaylistEditor(room, userId) {
+    if (!this.canEditConfig(room, userId)) throw new Error("Necesitas permiso del host para cambiar las playlists");
     if (room.phase !== "lobby") throw new Error("La partida ya comenzó");
   }
 
@@ -439,12 +444,29 @@ export class RoomManager {
    * Adds (and selects) one of the host's Spotify playlists, read by catalog/spotifyLibrary.js. Its songs are looked
    * up on iTunes in the background; the match can start as soon as any song of the selection is playable.
    */
-  addSpotifyPlaylist(room, userId, playlist) {
-    this.assertSpotifyEditor(room, userId);
+  addSpotifyPlaylist(room, userId, playlist, { fromLink = false } = {}) {
+    if (fromLink) this.assertPlaylistEditor(room, userId);
+    else this.assertSpotifyEditor(room, userId);
     const id = `${SPOTIFY_PREFIX}${playlist.id}`;
     let entry = room.customPlaylists[id];
     if (!entry) {
       entry = { id, name: playlist.name, image: playlist.image, tracks: playlist.tracks, songs: new Map(), done: new Set(), active: true };
+      // A pasted public playlist brings each song's own preview (15–22 s): they can be played at once. iTunes is still
+      // asked in the background, and what it finds (a 30 s preview, the album's cover and year) replaces it.
+      for (const t of playlist.tracks) {
+        if (!t.previewUrl) continue;
+        entry.songs.set(t.spotifyId, {
+          id: `sp-${t.spotifyId}`,
+          spotifyId: t.spotifyId,
+          title: displayTitle(t.title),
+          artistName: t.artists.join(" & ") || "Artista",
+          albumName: "",
+          year: null,
+          image: playlist.image || null,
+          previewUrl: t.previewUrl,
+        });
+      }
+      entry.instant = entry.songs.size > 0;
       room.customPlaylists[id] = entry;
     }
     entry.active = true;
@@ -474,6 +496,8 @@ export class RoomManager {
         onResult: (spotifyId, song) => {
           entry.done.add(spotifyId);
           if (deep) entry.retried.add(spotifyId);
+          // A pasted playlist's song was already playable with Spotify's preview (15–22 s); iTunes' (30 s, with the
+          // album's cover and year) takes its place once found.
           if (song) entry.songs.set(spotifyId, song);
           this.progressChanged(room);
           // The first pass just finished: start the second one.
@@ -1586,7 +1610,8 @@ export class RoomManager {
         // Songs looked at once, and the not-found ones waiting for the second, deeper search.
         checked: e.done.size,
         retrying: e.active ? this.missingSongs(e).length : 0,
-        loading: e.active && (e.done.size < e.tracks.length || this.missingSongs(e).length > 0),
+        // A pasted public playlist is playable at once; what still runs is only looking up covers.
+        loading: e.active && !e.instant && (e.done.size < e.tracks.length || this.missingSongs(e).length > 0),
         // Small covers of the songs found so far, for the strip under the playlists.
         covers: [...e.songs.values()]
           .map((song) => song.image?.replace(/\/\d+x\d+bb\./, "/160x160bb."))

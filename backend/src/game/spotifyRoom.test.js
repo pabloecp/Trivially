@@ -110,4 +110,42 @@ assert.equal(waiting[2].tracks.length, 5, "only the songs it didn't have yet");
 assert.equal(waiting[2].job.isCancelled(), false);
 mgr.destroy(lobby);
 
+// A public playlist pasted as a link: anyone who may change the settings, no owner role or Spotify needed, and its
+// songs play at once with Spotify's own preview (iTunes, looked up after, swaps in its own with the cover and year).
+const linkRoom = mgr.create({ host: { id: "user", name: "User", socketId: "l1" }, game: "musica" });
+mgr.addPlayer(linkRoom, { id: "guest", name: "Guest", socketId: "l2" });
+const pasted = {
+  id: "pub",
+  name: "Pública",
+  image: "https://image-cdn-ak.spotifycdn.com/image/x",
+  tracks: [
+    ...Array.from({ length: 5 }, (_, i) => ({ spotifyId: `p${i}`, title: `Pública ${i}`, artists: ["Artista"], previewUrl: `https://p.scdn.co/mp3-preview/${i}` })),
+    { spotifyId: "p5", title: "Sin muestra", artists: ["Artista"], previewUrl: null },
+  ],
+};
+assert.throws(() => mgr.addSpotifyPlaylist(linkRoom, "guest", pasted, { fromLink: true }), /permiso del host/);
+const before = waiting.length;
+const entry = mgr.addSpotifyPlaylist(linkRoom, "user", pasted, { fromLink: true });
+assert.ok(linkRoom.config.playlistIds.includes("sp:pub"));
+assert.equal(entry.songs.size, 5, "the 5 songs with a preview are playable at once");
+assert.equal(entry.songs.get("p0").previewUrl, "https://p.scdn.co/mp3-preview/0");
+const shown = mgr.publicState(linkRoom).customPlaylists.find((p) => p.id === "sp:pub");
+assert.equal(shown.ready, 5);
+assert.equal(shown.loading, false, "nothing to wait for");
+// iTunes is still asked; what it finds (a longer preview, the cover, the year) takes the place of Spotify's.
+assert.equal(waiting.length, before + 1);
+const linkJob = waiting.at(-1).job;
+linkJob.onResult("p0", { id: "sp-p0", spotifyId: "p0", title: "Pública 0", artistName: "Artista", image: "https://is1-ssl.mzstatic.com/a.jpg", year: 2020, previewUrl: "https://audio-ssl.itunes.apple.com/x.m4a" });
+assert.equal(entry.songs.get("p0").image, "https://is1-ssl.mzstatic.com/a.jpg");
+assert.equal(entry.songs.get("p0").year, 2020);
+assert.equal(entry.songs.get("p0").previewUrl, "https://audio-ssl.itunes.apple.com/x.m4a", "iTunes' 30 s preview");
+assert.equal(entry.songs.get("p1").previewUrl, "https://p.scdn.co/mp3-preview/1", "not found yet: Spotify's");
+linkJob.onResult("p5", { id: "sp-p5", spotifyId: "p5", title: "Sin muestra", artistName: "Artista", previewUrl: "https://audio-ssl.itunes.apple.com/y.m4a" });
+assert.equal(entry.songs.get("p5").previewUrl, "https://audio-ssl.itunes.apple.com/y.m4a", "one without a preview gets iTunes'");
+mgr.updateConfig(linkRoom, "user", { rounds: 5, playlistIds: ["sp:pub"] });
+mgr.start(linkRoom, "user");
+clearTimeout(linkRoom.timer);
+assert.equal(linkRoom.phase, "countdown", "a match starts straight away");
+mgr.destroy(linkRoom);
+
 console.log("spotifyRoom.test ok");
