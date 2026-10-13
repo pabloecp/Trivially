@@ -102,6 +102,54 @@ export function createRoomCode(existing) {
   return code;
 }
 
+// Acts whose own name has a comma, an "&" or a "+": one artist, never split ("Tyler, The Creator", "Jesse & Joy").
+const ONE_ARTIST = [
+  "Tyler, The Creator",
+  "Earth, Wind & Fire",
+  "Crosby, Stills, Nash & Young",
+  "Crosby, Stills & Nash",
+  "Emerson, Lake & Palmer",
+  "Jesse & Joy",
+  "Chino & Nacho",
+  "Wisin & Yandel",
+  "Jowell & Randy",
+  "Zion & Lennox",
+  "Alexis & Fido",
+  "Angel & Khriz",
+  "Baby Rasta & Gringo",
+  "Hector & Tito",
+  "Rakim & Ken-Y",
+  "R.K.M & Ken-Y",
+  "Simon & Garfunkel",
+  "Hall & Oates",
+  "Daryl Hall & John Oates",
+  "Mumford & Sons",
+  "Kool & The Gang",
+  "Sly & The Family Stone",
+  "Bob Marley & The Wailers",
+  "Florence + The Machine",
+  "Macklemore & Ryan Lewis",
+  "Sam & Dave",
+  "Ike & Tina Turner",
+  "Brooks & Dunn",
+  "Dan + Shay",
+  "Chase & Status",
+  "Above & Beyond",
+];
+const escapeRe = (text) => text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+const ONE_ARTIST_RE = new RegExp(`(?:^|(?<=[\\s,&]))(?:${ONE_ARTIST.map(escapeRe).join("|")})(?=$|[\\s,&])`, "gi");
+
+// A song's artists, written the same way whatever the source: "Tainy, Alvaro Diaz", "Bad Bunny & Drake" or
+// "ROSALÍA feat. The Weeknd" give each one apart ("tainy", "alvaro diaz"), but "Tyler, The Creator" stays one. The
+// first one is the main artist.
+export function artistsOf(name = "") {
+  return String(name)
+    .replace(ONE_ARTIST_RE, (act) => act.replace(/[,&+]/g, "\u0001"))
+    .split(/\s*(?:,|&|\bfeat\.?|\bft\.?|\s+x\s+|\bwith\b)\s*/i)
+    .map((a) => normalizeAnswer(a.replace(/\u0001/g, " ")))
+    .filter(Boolean);
+}
+
 // Adivina la canción's ways of answering ("Modos"): closed questions, four songs to choose from ("opciones"), and open
 // ones, the title typed in the search box ("escribir"). Both are ticked in a new room; the rounds are shared evenly.
 export const MUSIC_FORMATS = ["opciones", "escribir"];
@@ -578,7 +626,10 @@ export class RoomManager {
   /**
    * A song as a round of Adivina la canción, with its way of answering: the less used of the ticked ones so far (a tie
    * drawn at random), so the rounds are shared evenly. A closed round ("choice") gets four songs to choose from, the
-   * right one and three others of the songs being played (other titles), shuffled; `answer` is the right one's position.
+   * right one and three others (other titles), shuffled; `answer` is the right one's position. The others are by the
+   * same main artist when there are enough (a Bad Bunny song among three more of Bad Bunny's, his duets included),
+   * then by the song's other artists, looked for in the songs being played, then the catalog and the songs found for
+   * Spotify playlists; any song fills what is left.
    * These copies stay on the server: the options only go out while the round is playing (see publicState).
    */
   withFormat(room, song, pool) {
@@ -592,16 +643,24 @@ export class RoomManager {
     const label = (s) => (s.artistName ? `${s.title} - ${s.artistName}` : s.title);
     const keys = new Set([songKey(song)]);
     const others = [];
-    // The room's songs first; the whole catalog when they are too few for three wrong answers.
-    for (const from of [pool, this.catalog.songs || []]) {
-      const shuffled = [...from].sort(() => Math.random() - 0.5);
-      for (const s of shuffled) {
-        if (others.length >= 3) break;
-        if (!s?.title || keys.has(songKey(s))) continue;
-        keys.add(songKey(s));
-        others.push(s);
+    const sources = [pool, this.catalog.songs || [], this.globalSongList()];
+    const add = (accept) => {
+      for (const from of sources) {
+        const shuffled = [...from].sort(() => Math.random() - 0.5);
+        for (const s of shuffled) {
+          if (others.length >= 3) return;
+          if (!s?.title || keys.has(songKey(s)) || !accept(s)) continue;
+          keys.add(songKey(s));
+          others.push(s);
+        }
       }
-    }
+    };
+    // Songs where the main artist is, then any of the song's other artists, then any song (the room's songs before
+    // the whole catalog).
+    const [main, ...rest] = artistsOf(song.artistName);
+    if (main) add((s) => artistsOf(s.artistName).includes(main));
+    if (rest.length) add((s) => artistsOf(s.artistName).some((a) => rest.includes(a)));
+    add(() => true);
     if (others.length < 3) return { ...song, type: "open" };
     const options = [song, ...others].sort(() => Math.random() - 0.5);
     return { ...song, type: "choice", options: options.map(label), answer: options.indexOf(song) };
