@@ -9,18 +9,31 @@ import {
   soundPack,
   soundVolume,
 } from "../../lib/sounds.js";
+import { setVolume, toggleMute, useVolume } from "../../lib/volume.js";
 import Icon from "./Icon.jsx";
 
-// The sounds' volume: the icon turns them off and on, the slider sets how loud (lib/sounds.js; kept in this browser). A
-// tap plays at the new volume when the slider is let go.
+// The volume rows: "Canciones" (the songs of Adivina la canción and any other <audio>, lib/volume.js) and "Sonidos"
+// (the taps and results, lib/sounds.js). In each the icon turns it off and on and the slider sets how loud (kept in this
+// browser). The sounds' tap plays at the new volume when the slider is let go.
 function VolumeRows() {
   const [, refresh] = useState(0);
+  const songs = useVolume();
   useEffect(() => {
     const update = () => refresh((n) => n + 1);
     return onSoundChange(update);
   }, []);
 
   const rows = [
+    {
+      id: "songs",
+      label: "Canciones",
+      on: !songs.muted,
+      value: Math.round(songs.level * 100),
+      icon: songs.shown === 0 ? "mute" : "volume",
+      toggle: toggleMute,
+      change: (v) => setVolume(Number(v) / 100),
+      release: () => {},
+    },
     {
       id: "sound",
       label: "Sonidos",
@@ -131,7 +144,9 @@ export default function VolumeMenu({ floating = false }) {
     };
   }, [open]);
 
-  const silent = !soundEnabled() || !soundVolume();
+  const songs = useVolume();
+  // Crossed out only when nothing makes a sound: neither the songs nor the effects.
+  const silent = (!soundEnabled() || !soundVolume()) && songs.shown === 0;
   return (
     <div className={`tv-volume${floating ? " tv-volume--floating" : ""}`} ref={rootRef}>
       <button

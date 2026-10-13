@@ -8,8 +8,8 @@ import HistorySettings from "./HistorySettings.jsx";
 import { historyConfig } from "./historyInfo.js";
 import "../../styles/history.css";
 
-// Historia's waiting room, inside the room screen on Home: the mode's big card (how it's played and the start
-// button) and the match settings beside it.
+// Rango's waiting room, inside the room screen on Home: the game's big card (how it's played and the start button) and
+// the match settings beside it.
 export default function LobbyPanel({ room, onToast }) {
   const { user, updateConfig } = useApp();
   const me = room.players.find((p) => p.id === user?.id);
@@ -35,7 +35,7 @@ export default function LobbyPanel({ room, onToast }) {
                 <span>Elige al menos {empty} para empezar.</span>
               ) : (
                 <span>
-                  Solo hay <strong>{room.questionsReady} eventos</strong> con estos ajustes para {config.rounds} rondas.
+                  Solo hay <strong>{room.questionsReady} preguntas</strong> con estos ajustes para {config.rounds} rondas.
                   Baja las rondas o elige más categorías.
                 </span>
               )}

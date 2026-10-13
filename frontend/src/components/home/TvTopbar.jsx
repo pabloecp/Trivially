@@ -37,7 +37,7 @@ export function useRoomExit({ onRoomScreen = true, onError } = {}) {
   // One step back. Returns true when it left the room.
   function step({ fromBack = false } = {}) {
     if (toModes) {
-      setGame(null).catch((err) => onError?.(err.message || "No se pudo volver a elegir modo de juego"));
+      setGame(null).catch((err) => onError?.(err.message || "No se pudo volver a elegir juego"));
       return false;
     }
     if (!confirmLeave) {
@@ -118,7 +118,7 @@ export default function TvTopbar() {
       <button
         type="button"
         className={`tv-chip tv-chip--leave${confirmLeave ? " is-confirm" : ""}`}
-        aria-label={toModes ? "Volver a modos de juego" : confirmLeave ? "Toca otra vez para salir de la sala" : "Volver: salir de la sala"}
+        aria-label={toModes ? "Volver a los juegos" : confirmLeave ? "Toca otra vez para salir de la sala" : "Volver: salir de la sala"}
         onClick={press}
       >
         <span className="tv-avatar tv-avatar--empty">

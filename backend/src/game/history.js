@@ -1,17 +1,16 @@
 import { buildHistoryQuestions, HISTORY_MODE } from "../history/historyQuestions.js";
 import { QUESTION_CATEGORIES, toQuestion } from "../questions/questionSchema.js";
 
-// Historia: its settings (config.history), how a match draws its events, the range of years each one is shown with
-// and how a year is scored. Players choose a year on a timeline: the exact year gets every point, and the closer
-// a guess lands, the more it gets.
+// Rango (game id "historia", the old one on purpose): its settings (config.history), how a match draws its events, the
+// range of years each one is shown with and how a year is scored. Its only way of playing for now is "Línea del
+// tiempo": players choose a year on a timeline, the exact year gets every point, and the closer a guess lands, the
+// more it gets.
 
 export const HISTORY_GAME = HISTORY_MODE;
-// The four ages, by the event's year. The event that opens an age belongs to it (476, 1492, 1789).
-export const HISTORY_ERAS = ["antigua", "media", "moderna", "contemporanea"];
 export const HISTORY_LEVELS = ["facil", "media", "dificil"];
 // Older clients send one `difficulty`, "mixta" being all three.
 export const HISTORY_DIFFICULTIES = [...HISTORY_LEVELS, "mixta"];
-// The topics of the events (the ids of QUESTION_CATEGORIES, the same "Temas" as Trivia).
+// The topics of the events (the ids of QUESTION_CATEGORIES, the same "Categorías" as Trivia).
 const TOPICS = Object.keys(QUESTION_CATEGORIES);
 // Same limits as the settings on screen (frontend/src/modes/historia/historyInfo.js).
 export const HISTORY_LIMITS = {
@@ -34,6 +33,9 @@ export const YEAR_MAX_POINTS = 1000;
 const YEAR_NEAR_POINTS = 800;
 const YEAR_FALLOFF = { antigua: 150, media: 75, moderna: 30, contemporanea: 15 };
 
+// The age of an event, by its year: "antigua", "media", "moderna" or "contemporanea". It is not a setting, only how
+// long the event's timeline is and how fast its points fall (TIMELINES, YEAR_FALLOFF). The event that opens an age
+// belongs to it (476, 1492, 1789).
 export function eraOf(year) {
   if (year <= 476) return "antigua";
   if (year < 1492) return "media";
@@ -42,7 +44,7 @@ export function eraOf(year) {
 }
 
 export function defaultHistoryConfig() {
-  return { rounds: 5, roundMs: 10000, eras: [...HISTORY_ERAS], categories: [...TOPICS], difficulties: [...HISTORY_LEVELS] };
+  return { rounds: 5, roundMs: 10000, categories: [...TOPICS], difficulties: [...HISTORY_LEVELS] };
 }
 
 const clamp = (n, { min, max }, fallback) => Math.min(max, Math.max(min, Math.round(Number(n)) || fallback));
@@ -52,8 +54,8 @@ const pickList = (change, allowed, fallback) => (Array.isArray(change) ? allowed
 const levelsOf = (difficulty) => (difficulty === "mixta" ? [...HISTORY_LEVELS] : HISTORY_LEVELS.includes(difficulty) ? [difficulty] : null);
 
 /**
- * Merges a settings change into the current Historia settings, keeping every value valid. Any list may be left empty
- * (the match then has no events and can't start).
+ * Merges a settings change into the current Rango settings, keeping every value valid. Either list may be left empty
+ * (the match then has no events and can't start). The ages an older client may still send are ignored.
  */
 export function mergeHistoryConfig(current, change = {}) {
   const base = { ...defaultHistoryConfig(), ...current };
@@ -61,15 +63,14 @@ export function mergeHistoryConfig(current, change = {}) {
   return {
     rounds: change.rounds != null ? clamp(change.rounds, HISTORY_LIMITS.rounds, base.rounds) : base.rounds,
     roundMs: change.roundMs != null ? clamp(change.roundMs, HISTORY_LIMITS.roundMs, base.roundMs) : base.roundMs,
-    eras: pickList(change.eras, HISTORY_ERAS, base.eras),
     categories: pickList(change.categories, TOPICS, base.categories),
     difficulties: pickList(change.difficulties, HISTORY_LEVELS, levelsOf(change.difficulty) || baseLevels),
   };
 }
 
 /**
- * The Historia questions: the events of history/events.js (the source of truth, with their topics) plus any other
- * Historia rows of the loaded bank (questions/questionBank.js: Supabase...), so an event added to the list is played
+ * The Rango questions: the events of history/events.js (the source of truth, with their topics) plus any other
+ * row of mode "historia" in the loaded bank (questions/questionBank.js: Supabase...), so an event added to the list is played
  * before it is uploaded, and a row only in the database is still played. Where both have the same id, the list wins.
  */
 export function historyBank(questions = []) {
@@ -81,10 +82,9 @@ export function historyBank(questions = []) {
 
 /** The events that match the settings. `ignore` leaves one filter out (to count what each chip would add). */
 function questionsFor(bank, config, ignore = null) {
-  const { eras, categories, difficulties } = mergeHistoryConfig(config);
+  const { categories, difficulties } = mergeHistoryConfig(config);
   return bank.filter(
     (q) =>
-      (ignore === "eras" || eras.includes(eraOf(q.data.year))) &&
       (ignore === "categories" || categories.includes(q.category)) &&
       (ignore === "difficulties" || difficulties.includes(q.difficulty))
   );
@@ -95,7 +95,7 @@ export function countHistoryQuestions(bank, config) {
   return questionsFor(bank, config).length;
 }
 
-/** For the settings' chips: how many events each topic, age and difficulty has with the other settings. */
+/** For the settings' chips: how many events each topic and difficulty has with the other settings. */
 export function historyCounts(bank, config) {
   const tally = (ignore, key) => {
     const out = {};
@@ -104,7 +104,6 @@ export function historyCounts(bank, config) {
   };
   return {
     categories: tally("categories", (q) => q.category),
-    eras: tally("eras", (q) => eraOf(q.data.year)),
     difficulties: tally("difficulties", (q) => q.difficulty),
   };
 }
@@ -161,16 +160,17 @@ export function yearPoints(diff, era) {
 export function toHistoryTrack(q) {
   const year = q.data.year;
   const { min, max } = yearRange(year);
-  return { id: q.id, prompt: q.prompt, year, era: eraOf(year), difficulty: q.difficulty, min, max };
+  return { id: q.id, prompt: q.prompt, year, era: eraOf(year), category: q.category, difficulty: q.difficulty, min, max };
 }
 
 /**
- * The events of a match: the chosen ages share the rounds as evenly as they can (10 rounds of four ages = 3 + 3 + 2 +
- * 2), never two events of the same year, in random order.
+ * The events of a match: the chosen categories share the rounds as evenly as they can (10 rounds of four categories =
+ * 3 + 3 + 2 + 2; a category that runs out leaves its rounds to the others), never two events of the same year, in
+ * random order.
  */
 export function pickHistoryQuestions(bank, config) {
   const settings = mergeHistoryConfig(config);
-  const pools = shuffle(settings.eras).map((era) => shuffle(questionsFor(bank, { ...settings, eras: [era] })));
+  const pools = shuffle(settings.categories).map((topic) => shuffle(questionsFor(bank, { ...settings, categories: [topic] })));
   const years = new Set();
   const picked = [];
   while (picked.length < settings.rounds && pools.some((p) => p.length)) {
@@ -189,8 +189,8 @@ export function pickHistoryQuestions(bank, config) {
 }
 
 /**
- * The event of a tiebreak: one not asked in this match, from the chosen ages and topics, of a middling difficulty when
- * the match had it, else of the one it had.
+ * The event of a tiebreak: one not asked in this match, from the chosen categories, of a middling difficulty when the
+ * match had it, else of the one it had.
  */
 export function pickHistoryTiebreak(bank, config, usedIds = []) {
   const settings = mergeHistoryConfig(config);

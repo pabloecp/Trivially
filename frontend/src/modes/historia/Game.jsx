@@ -7,7 +7,7 @@ import MatchResults from "../../components/home/MatchResults.jsx";
 import PartyPanel from "../../components/home/PartyPanel.jsx";
 import { useApp, useRemainingMs } from "../../lib/store.jsx";
 import Timeline from "./Timeline.jsx";
-import { findDifficulty, findEra, historyConfig, yearLabel, yearsText } from "./historyInfo.js";
+import { findDifficulty, historyConfig, yearLabel, yearsText } from "./historyInfo.js";
 import "../../styles/home.css";
 import "../../styles/quiz.css";
 import "../../styles/history.css";
@@ -207,7 +207,6 @@ function GameScreen() {
       ? Math.max(0, Math.min(100, (left / COUNTDOWN_MS) * 100))
       : 100;
   const urgent = phase === "playing" && left <= 4000;
-  const era = findEra(question?.era);
   const level = findDifficulty(question?.difficulty);
   const reveal = phase === "reveal" ? room.reveal : null;
   const tiedNames = tiebreak ? tiebreak.playerIds.map((id) => room.players.find((p) => p.id === id)?.name || "Jugador") : [];
@@ -280,7 +279,7 @@ function GameScreen() {
       <div className="tv-room-main tv-game-main">
         <section className="tv-game-top">
           <div className="tv-game-round">
-            <p className="tv-mono-label">Sala {room.code} · Línea del tiempo</p>
+            <p className="tv-mono-label">Sala {room.code} · Rango</p>
             <h1 className="tv-card-title">
               {tiebreak ? (
                 `Desempate${tiebreak.round > 1 ? ` ${tiebreak.round}` : ""}`
@@ -324,7 +323,7 @@ function GameScreen() {
             <PauseVeil room={room} isHost={isHost} />
             <div className="tv-hist-event">
               <div className="tv-quiz-q-meta">
-                {era && <span className="tv-match-chip">{era.label}</span>}
+                {question.category && <span className="tv-match-chip">{question.category}</span>}
                 <span className={`tv-match-chip tv-diff-chip tv-c-${level.color}`}>{level.label}</span>
               </div>
               <h2 className="tv-hist-prompt">{question.prompt}</h2>

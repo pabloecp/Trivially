@@ -198,7 +198,6 @@ const PATHS = {
       <path d="M6 8h.01M10 8h.01M14 8h.01M18 8h.01M8 12h.01M12 12h.01M16 12h.01M7 16h10" />
     </>
   ),
-  // Scalloped badge with a check cut out, like Instagram's verified mark. The badge takes the text colour.
   send: (
     <>
       <path d="M14.5 21.2a.5.5 0 0 0 .94-.03l6.5-19a.5.5 0 0 0-.64-.63l-19 6.5a.5.5 0 0 0-.03.93l7.93 3.18a2 2 0 0 1 1.11 1.11Z" />
@@ -218,6 +217,7 @@ const PATHS = {
       <path d="m22 9-6 6M16 9l6 6" />
     </>
   ),
+  // Scalloped badge with a check cut out, like Instagram's verified mark. The badge takes the text colour.
   verified: (
     <>
       <path

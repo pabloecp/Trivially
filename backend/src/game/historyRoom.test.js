@@ -3,7 +3,7 @@ import { readLocalCatalog } from "../catalog/catalogProvider.js";
 import { eraOf } from "./history.js";
 import { RoomManager } from "./roomManager.js";
 
-// Historia: an event, a timeline and a year per player; the closer, the more points. Ties for first place are settled
+// Rango (Línea del tiempo): an event, a timeline and a year per player; the closer, the more points. Ties for first place are settled
 // like Geografía's: the first to confirm the exact year wins, otherwise the closest.
 const mgr = new RoomManager({ catalog: readLocalCatalog(), store: { users: {} } });
 const stop = (room) => clearTimeout(room.timer);
@@ -11,30 +11,29 @@ const room = mgr.create({ host: { id: "host-1", name: "Host", socketId: "s1" }, 
 mgr.addPlayer(room, { id: "p-2", name: "Ana", socketId: "s2" });
 mgr.addPlayer(room, { id: "p-3", name: "Luis", socketId: "s3" });
 
-// Lobby: the settings, and how many events they can draw.
-assert.deepEqual(room.config.history.eras, ["antigua", "media", "moderna", "contemporanea"]);
+// Lobby: the settings, and how many events they can draw. There are no ages: every category is ticked.
+assert.equal(room.config.history.eras, undefined);
+assert.equal(room.config.history.categories.length, 10);
 assert.ok(mgr.publicState(room).questionsReady > 200);
 assert.equal(mgr.publicState(room).songsReady, undefined);
-// Every age can be unticked: there is then nothing to play.
-mgr.updateConfig(room, "host-1", { history: { eras: [] } });
-assert.equal(mgr.publicState(room).questionsReady, 0);
-mgr.updateConfig(room, "host-1", { history: { eras: ["antigua", "media", "moderna", "contemporanea"] } });
 assert.throws(() => mgr.updateConfig(room, "p-2", { history: { rounds: 10 } }), /permisos/);
 const all = mgr.publicState(room).questionsReady;
+// Ages an older client may send change nothing.
 mgr.updateConfig(room, "host-1", { history: { eras: ["moderna"] } });
-assert.ok(mgr.publicState(room).questionsReady < all, "fewer ages, fewer events");
-// Topics and difficulties are ticked like the ages: fewer of them, fewer events, and the chips get their counts.
-mgr.updateConfig(room, "host-1", { history: { eras: ["antigua", "media", "moderna", "contemporanea"], categories: ["deportes"] } });
+assert.equal(mgr.publicState(room).questionsReady, all);
+// Categories and difficulties: fewer of them, fewer events, and the chips get their counts.
+mgr.updateConfig(room, "host-1", { history: { categories: ["deportes"] } });
 const sports = mgr.publicState(room).questionsReady;
-assert.ok(sports > 0 && sports < all, "fewer topics, fewer events");
-assert.equal(mgr.publicState(room).questionCounts.categories.cultura > 0, true, "each topic is counted, ticked or not");
+assert.ok(sports > 0 && sports < all, "fewer categories, fewer events");
+assert.equal(mgr.publicState(room).questionCounts.categories.cultura > 0, true, "each category is counted, ticked or not");
+assert.equal(mgr.publicState(room).questionCounts.eras, undefined);
 mgr.updateConfig(room, "host-1", { history: { difficulties: ["facil"] } });
 assert.ok(mgr.publicState(room).questionsReady < sports, "fewer difficulties, fewer events");
 mgr.updateConfig(room, "host-1", { history: { categories: [], difficulties: ["facil", "media", "dificil"] } });
-assert.equal(mgr.publicState(room).questionsReady, 0, "no topic ticked: nothing to play");
-assert.throws(() => mgr.start(room, "host-1"), /Solo hay 0 eventos/);
+assert.equal(mgr.publicState(room).questionsReady, 0, "no category ticked: nothing to play");
+assert.throws(() => mgr.start(room, "host-1"), /Solo hay 0 preguntas/);
 mgr.updateConfig(room, "host-1", { history: { categories: [...new Set(mgr.historyQuestions.map((q) => q.category))] } });
-mgr.updateConfig(room, "host-1", { history: { eras: ["antigua", "media", "moderna", "contemporanea"], rounds: 5, roundMs: 20000 } });
+mgr.updateConfig(room, "host-1", { history: { rounds: 5, roundMs: 20000 } });
 
 mgr.start(room, "host-1");
 stop(room);
@@ -60,6 +59,8 @@ let pub = mgr.publicState(room, "p-2");
 assert.equal(pub.phase, "countdown");
 assert.equal(pub.question.prompt, "Evento de prueba", "the event can be read during the countdown");
 assert.equal(pub.question.min, null, "the timeline only comes with the round");
+assert.equal(typeof pub.question.category, "string", "the event's category, by its name");
+assert.ok(!("era" in pub.question));
 noYearShown(pub, 1989, "cuenta atrás");
 assert.throws(() => mgr.placeYear(room, "p-2", { year: 1989 }), /No se aceptan/);
 

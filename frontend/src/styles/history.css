@@ -1,4 +1,4 @@
-/* Historia. Loaded after home.css and quiz.css (the game imports both) and builds on their tv- classes.
+/* Rango (game id "historia"). Loaded after home.css and quiz.css (the game imports both) and builds on their tv- classes.
    The mode's colour is terracotta, --tv-hm-*; difficulty reads as lighter or deeper shades of it. On the reveal's
    timeline the right year is the meaning green (--p-ok) and each player's year has their own colour. */
 
@@ -46,10 +46,6 @@
   --brand-active: #8f3417;
   --border-focus: #d4572d;
 }
-
-/* ---------- Settings ---------- */
-/* The four ages, two by two. */
-.tv-hist-eras .tv-optrow-opts { grid-auto-flow: row; grid-template-columns: repeat(2, minmax(0, 1fr)); }
 
 /* ---------- The round ---------- */
 /* Top to bottom, every part as tall in every phase so nothing moves: the event, the slot (countdown, the chosen year,

@@ -2,11 +2,11 @@ import Icon from "./Icon.jsx";
 
 const STEPS = [
   { icon: "hash", color: "music", title: "Crea una sala", text: "Comparte el código con tus amigos o juega solo." },
-  { icon: "users", color: "culture", title: "Elige un modo", text: "Trivia de muchos temas, canciones, países o la línea del tiempo." },
+  { icon: "users", color: "culture", title: "Elige un juego", text: "Trivia, canciones, países, rango o campo de minas." },
   { icon: "bolt", color: "site", title: "Responde antes que nadie", text: "Cuanto más rápido aciertes, más puntos sumas." },
 ];
 
-// Home: how a game works, in three steps that fit every mode.
+// Home: how a game works, in three steps that fit every game.
 export default function HowToPlay() {
   return (
     <section className="tv-card tv-howto" aria-labelledby="tv-howto-title">

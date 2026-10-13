@@ -12,8 +12,8 @@ import { RoomDock, RoomHeader } from "../components/home/RoomBars.jsx";
 import Wordmark from "../components/home/Wordmark.jsx";
 import "../styles/home.css";
 
-// A game tile of "Elige el modo de juego", filled with the game's colour. The main mode's is as wide as two. The grey
-// "Más modos pronto" tile (SOON_TILE) looks like one, with a lock, and has no "Pronto" tag of its own.
+// A game tile of "Elige el juego", filled with the game's colour. The main game's is as wide as two. The grey
+// "Más juegos pronto" tile (SOON_TILE) looks like one, with a lock, and has no "Pronto" tag of its own.
 // `watched`: the host is pointing at it right now (guests see it live). `onPoint` tells the room which tile the host
 // is on (hover, focus or touch).
 function ModeTile({ mode, index, selected, watched, suggestable, onPick, onPoint }) {
@@ -208,7 +208,7 @@ export default function Home() {
   function pickMode(mode, tile) {
     if (mode.placeholder) {
       shake(tile);
-      showToast("Pronto habrá más modos de juego");
+      showToast("Pronto habrá más juegos");
     } else if (!mode.available) {
       shake(tile);
       showToast(`${mode.name} llega muy pronto`);
@@ -235,7 +235,7 @@ export default function Home() {
       const key = `${s.userId}:${s.at}`;
       if (seenSuggestions.current.has(key)) continue;
       seenSuggestions.current.add(key);
-      showToast(`${s.name} sugiere ${findMode(s.game)?.name || "un modo"}`, "play");
+      showToast(`${s.name} sugiere ${findMode(s.game)?.name || "un juego"}`, "play");
     }
   }, [room?.suggestions, isHost]);
 
@@ -300,13 +300,13 @@ export default function Home() {
                 >
                   <div className="tv-picker-head">
                     <h2 id="tv-picker-title" className="tv-picker-title">
-                      {shownIsHost ? "Elige el modo de juego" : `${hostName} está eligiendo modo de juego`}
+                      {shownIsHost ? "Elige el juego" : `${hostName} está eligiendo el juego`}
                     </h2>
                     {!shownIsHost && (
                       <p className="tv-picker-lock">
                         <Icon name="crown" size={15} strokeWidth={2.4} filled />
                         <span>
-                          Solo <strong>{hostName}</strong> elige el modo. Toca uno para sugerírselo.
+                          Solo <strong>{hostName}</strong> elige el juego. Toca uno para sugerírselo.
                         </span>
                       </p>
                     )}
