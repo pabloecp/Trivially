@@ -205,10 +205,10 @@ export default function MusicSettings({ room, catalog, updateConfig, onToast, ch
             className="tv-optrow-btn is-add"
             onClick={() => setLinkOpen((v) => !v)}
             aria-expanded={linkOpen}
-            title="Agregar una playlist pública de Spotify con su link"
+            title="Agregar una playlist pública o un álbum de Spotify con su link"
           >
             {linkOpen ? <Icon name="close" size={16} strokeWidth={3} /> : <SpotifyIcon size={18} />}
-            {linkOpen ? "Cancelar" : "Agregar playlist de Spotify"}
+            {linkOpen ? "Cancelar" : "Agregar de Spotify"}
           </button>
         )}
         {isOwnerEditor && (
@@ -237,8 +237,8 @@ export default function MusicSettings({ room, catalog, updateConfig, onToast, ch
               inputMode="url"
               value={link}
               onChange={(e) => setLink(e.target.value)}
-              placeholder="Pega el link de la playlist"
-              aria-label="Link de una playlist de Spotify"
+              placeholder="Pega el link de una playlist o álbum"
+              aria-label="Link de una playlist o un álbum de Spotify"
               disabled={linkBusy}
               autoFocus
             />
@@ -247,13 +247,13 @@ export default function MusicSettings({ room, catalog, updateConfig, onToast, ch
               type="submit"
               className="tv-btn tv-btn--sm tv-c-music tv-spotify-link-send"
               disabled={linkBusy || !link.trim()}
-              aria-label={linkBusy ? "Leyendo la playlist" : "Agregar la playlist"}
+              aria-label={linkBusy ? "Leyendo de Spotify" : "Agregar de Spotify"}
               aria-busy={linkBusy}
             >
               {linkBusy ? <span className="tv-spinner" aria-hidden="true" /> : <Icon name="upload" size={20} strokeWidth={3} />}
             </button>
           </div>
-          <small className="tv-spotify-link-hint">Tiene que ser pública. Se usan sus primeras 100 canciones.</small>
+          <small className="tv-spotify-link-hint">Una playlist pública o un álbum. Se usan sus primeras 100 canciones.</small>
         </form>
       )}
       {isOwnerEditor && askLink && !spotifyLinked && (

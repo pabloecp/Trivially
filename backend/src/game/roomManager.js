@@ -508,8 +508,8 @@ export class RoomManager {
           spotifyId: t.spotifyId,
           title: displayTitle(t.title),
           artistName: t.artists.join(" & ") || "Artista",
-          albumName: "",
-          year: null,
+          albumName: t.albumName || "",
+          year: t.year || null,
           image: playlist.image || null,
           previewUrl: t.previewUrl,
         });

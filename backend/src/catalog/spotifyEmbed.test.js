@@ -1,17 +1,21 @@
 import assert from "node:assert/strict";
-import { parseEmbedPage, playlistIdFromLink, readPublicPlaylist } from "./spotifyEmbed.js";
+import { parseEmbedPage, readPublicSpotify, spotifyLinkFrom } from "./spotifyEmbed.js";
 
 // The link, however Spotify's "Copiar enlace" writes it.
 const id = "5KA5qtQU9zuaXpOeskKe3b";
-assert.equal(await playlistIdFromLink(`https://open.spotify.com/playlist/${id}?si=Qj6A6rTaT_eKqbVXZD1H3A&utm_source=copy-link&pi=9lrB1pRMSS-XR`), id);
-assert.equal(await playlistIdFromLink(`https://open.spotify.com/intl-es/playlist/${id}`), id);
-assert.equal(await playlistIdFromLink(`spotify:playlist:${id}`), id);
-assert.equal(await playlistIdFromLink(` ${id} `), id);
-await assert.rejects(playlistIdFromLink(`https://open.spotify.com/album/${id}`), /no parece un link/);
-await assert.rejects(playlistIdFromLink("hola"), /no parece un link/);
+const playlistLink = (v) => ({ kind: "playlist", id: v });
+assert.deepEqual(await spotifyLinkFrom(`https://open.spotify.com/playlist/${id}?si=Qj6A6rTaT_eKqbVXZD1H3A&utm_source=copy-link&pi=9lrB1pRMSS-XR`), playlistLink(id));
+assert.deepEqual(await spotifyLinkFrom(`https://open.spotify.com/intl-es/playlist/${id}`), playlistLink(id));
+assert.deepEqual(await spotifyLinkFrom(`spotify:playlist:${id}`), playlistLink(id));
+assert.deepEqual(await spotifyLinkFrom(` ${id} `), playlistLink(id));
+// An album's link too.
+assert.deepEqual(await spotifyLinkFrom(`https://open.spotify.com/album/${id}?si=7DVRPRcFTgedfNDrXO2lpA&utm_source=copy-link`), { kind: "album", id });
+assert.deepEqual(await spotifyLinkFrom(`spotify:album:${id}`), { kind: "album", id });
+await assert.rejects(spotifyLinkFrom(`https://open.spotify.com/artist/${id}`), /no parece un link/);
+await assert.rejects(spotifyLinkFrom("hola"), /no parece un link/);
 // A short link is opened to see where it goes.
 const shortFetch = async () => ({ url: `https://open.spotify.com/playlist/${id}?si=x`, text: async () => "" });
-assert.equal(await playlistIdFromLink("https://spotify.link/abc", shortFetch), id);
+assert.deepEqual(await spotifyLinkFrom("https://spotify.link/abc", shortFetch), playlistLink(id));
 
 // The page's data: name, cover and each song with its artists and its own preview.
 const page = (entity) =>
@@ -40,8 +44,31 @@ assert.equal(playlist.tracks[0].durationMs, 162637);
 // A private playlist: the page has no data, or answers 404.
 const notFound = `<script id="__NEXT_DATA__" type="application/json">${JSON.stringify({ props: { pageProps: { status: 404 } } })}</script>`;
 assert.throws(() => parseEmbedPage(notFound, id), /pública/);
-await assert.rejects(readPublicPlaylist(id, async () => ({ status: 404, ok: false })), /pública/);
-await assert.rejects(readPublicPlaylist(id, async () => { throw new Error("red"); }), /no respondió/);
-assert.equal((await readPublicPlaylist(id, async () => ({ status: 200, ok: true, text: async () => html }))).tracks.length, 2);
+await assert.rejects(readPublicSpotify(playlistLink(id), async () => ({ status: 404, ok: false })), /pública/);
+await assert.rejects(readPublicSpotify(playlistLink(id), async () => { throw new Error("red"); }), /no respondió/);
+let asked = null;
+const served = await readPublicSpotify(playlistLink(id), async (url) => ((asked = url), { status: 200, ok: true, text: async () => html }));
+assert.equal(served.tracks.length, 2);
+assert.equal(asked, `https://open.spotify.com/embed/playlist/${id}`);
+
+// An album: its own id ("album:…", never mixed with a playlist's), its cover from visualIdentity (the biggest), and
+// its name, year and cover on every song.
+const albumHtml = page({
+  type: "album",
+  id: "alb",
+  name: "Corridos Tumbados",
+  releaseDate: { isoString: "2019-09-27T00:00:00Z" },
+  visualIdentity: { image: [{ url: "https://x/300", maxWidth: 300 }, { url: "https://x/64", maxWidth: 64 }, { url: "https://x/640", maxWidth: 640 }] },
+  trackList: [{ uri: "spotify:track:t1", title: "El Drip", subtitle: "Natanael Cano", duration: 150000, audioPreview: { url: "https://p.scdn.co/mp3-preview/a" }, entityType: "track" }],
+});
+const album = parseEmbedPage(albumHtml, "alb", "album");
+assert.equal(album.id, "album:alb");
+assert.equal(album.name, "Corridos Tumbados");
+assert.equal(album.image, "https://x/640");
+assert.equal(album.tracks[0].albumName, "Corridos Tumbados");
+assert.equal(album.tracks[0].year, 2019);
+await assert.rejects(readPublicSpotify({ kind: "album", id: "alb" }, async () => ({ status: 404, ok: false })), /ese álbum/);
+// A playlist's link that leads to an album page (or the other way) is refused.
+assert.throws(() => parseEmbedPage(albumHtml, "alb", "playlist"), /no parece un link/);
 
 console.log("spotifyEmbed.test ok");
