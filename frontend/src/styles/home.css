@@ -1696,7 +1696,7 @@
 }
 .tv-spotify-ask span { flex: 1; }
 /* A public Spotify playlist pasted as a link, under the playlists. */
-.tv-spotify-link { display: grid; gap: 6px; }
+.tv-spotify-link { display: grid; gap: 6px; animation: tvDropIn 0.3s var(--tv-spring); }
 .tv-spotify-link-row { display: flex; align-items: center; gap: 10px; }
 .tv-spotify-link-row > svg { flex: none; }
 .tv-spotify-link-row .tv-field { flex: 1; min-width: 0; }

@@ -34,6 +34,9 @@ export default function MusicSettings({ room, catalog, updateConfig, onToast, ch
   const [spotifyLists, setSpotifyLists] = useState(null);
   const [spotifyBusy, setSpotifyBusy] = useState("");
   // A public Spotify playlist pasted as a link (anyone who may change the settings, no Spotify account needed).
+  // It is a button among the playlists that opens the box to paste the link; once added, the playlist is one more
+  // option of the row, with its tick box.
+  const [linkOpen, setLinkOpen] = useState(false);
   const [link, setLink] = useState("");
   const [linkBusy, setLinkBusy] = useState(false);
   // Like a new room: every playlist of the catalog ticked.
@@ -74,6 +77,7 @@ export default function MusicSettings({ room, catalog, updateConfig, onToast, ch
     try {
       await addSpotifyLink(link.trim());
       setLink("");
+      setLinkOpen(false);
     } catch (err) {
       onToast?.(err.message || "No se pudo añadir esa playlist");
     } finally {
@@ -195,6 +199,18 @@ export default function MusicSettings({ room, catalog, updateConfig, onToast, ch
                 {spotifyBusy === p.id ? "Añadiendo…" : p.name}
               </button>
             ))}
+        {!readOnly && (
+          <button
+            type="button"
+            className="tv-optrow-btn is-add"
+            onClick={() => setLinkOpen((v) => !v)}
+            aria-expanded={linkOpen}
+            title="Añadir una playlist pública de Spotify con su link"
+          >
+            <Icon name={linkOpen ? "close" : "plus"} size={16} strokeWidth={3} />
+            {linkOpen ? "Cancelar" : "Añadir playlist"}
+          </button>
+        )}
         {isOwnerEditor && (
           <button
             type="button"
@@ -210,8 +226,8 @@ export default function MusicSettings({ room, catalog, updateConfig, onToast, ch
           </button>
         )}
       </OptionRow>
-      {!readOnly && (
-        <form className="tv-spotify-link" onSubmit={onAddLink}>
+      {!readOnly && linkOpen && (
+        <form className="tv-spotify-link" onSubmit={onAddLink} onKeyDown={(e) => e.key === "Escape" && setLinkOpen(false)}>
           <div className="tv-spotify-link-row">
             <SpotifyIcon size={22} />
             <input
@@ -223,6 +239,7 @@ export default function MusicSettings({ room, catalog, updateConfig, onToast, ch
               placeholder="Link de playlist de Spotify"
               aria-label="Link de una playlist de Spotify"
               disabled={linkBusy}
+              autoFocus
             />
             <button type="submit" className="tv-btn tv-btn--sm tv-btn--spotify" disabled={linkBusy || !link.trim()}>
               {linkBusy ? "Leyendo…" : "Añadir"}
