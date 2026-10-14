@@ -69,7 +69,7 @@ assert.equal(o.players.get("o-1").lastAnswer.correct, true);
 // Nothing ticked: the match can't start.
 const n = mgr.create({ host: { id: "n-1", name: "N", socketId: "s6" }, mode: "multi", game: "musica" });
 mgr.updateConfig(n, "n-1", { formats: [] });
-assert.throws(() => mgr.start(n, "n-1"), /al menos un modo/);
+assert.throws(() => mgr.start(n, "n-1"), /al menos un tipo de respuesta/);
 
 // Each artist of a song apart, the main one first; acts whose name has a comma or an "&" stay one.
 assert.deepEqual(artistsOf("Tainy, Alvaro Diaz"), ["tainy", "alvaro diaz"]);

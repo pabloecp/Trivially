@@ -38,12 +38,13 @@ assert.ok(room.config.playlistIds.includes("sp:fromOwner2"), "an owner with perm
 mgr.toggleConfigPermission(room, "owner", "user");
 assert.throws(() => mgr.addSpotifyPlaylist(room, "user", playlist), /solo para owners/, "permission alone isn't enough");
 waiting.length = 0;
-// …and nobody can sneak one in through the normal settings.
+// …and nobody can sneak one in through the normal settings (nor an older client's catalog playlist).
 mgr.updateConfig(room, "owner", { playlistIds: ["top-es", "sp:other"] });
-assert.deepEqual(room.config.playlistIds, ["top-es"]);
+assert.deepEqual(room.config.playlistIds, []);
 
 mgr.addSpotifyPlaylist(room, "owner", playlist);
-mgr.updateConfig(room, "owner", { playlistIds: ["sp:abc"], rounds: 5 });
+// No language ticked: only the Spotify playlist plays.
+mgr.updateConfig(room, "owner", { playlistIds: ["sp:abc"], rounds: 5, languages: [] });
 assert.deepEqual(room.config.playlistIds, ["sp:abc"]);
 assert.equal(mgr.publicState(room).customPlaylists.find((p) => p.id === "sp:abc").loading, true);
 // The whole playlist is in the autocomplete even before it is found on iTunes.
@@ -147,5 +148,17 @@ mgr.start(linkRoom, "user");
 clearTimeout(linkRoom.timer);
 assert.equal(linkRoom.phase, "countdown", "a match starts straight away");
 mgr.destroy(linkRoom);
+
+// A playlist can be taken out of the room for good: it stops loading and is no longer ticked.
+const removable = mgr.create({ host: { id: "owner", name: "Owner", socketId: "r1" }, game: "musica" });
+mgr.addPlayer(removable, { id: "user", name: "User", socketId: "r2" });
+const gone = mgr.addSpotifyPlaylist(removable, "owner", { ...playlist, id: "gone" });
+assert.throws(() => mgr.removeSpotifyPlaylist(removable, "user", "sp:gone"), /permiso del host/);
+mgr.removeSpotifyPlaylist(removable, "owner", "sp:gone");
+assert.equal(gone.active, false);
+assert.equal(removable.customPlaylists["sp:gone"], undefined);
+assert.deepEqual(removable.config.playlistIds, []);
+assert.throws(() => mgr.removeSpotifyPlaylist(removable, "owner", "sp:gone"), /no está en la sala/);
+mgr.destroy(removable);
 
 console.log("spotifyRoom.test ok");

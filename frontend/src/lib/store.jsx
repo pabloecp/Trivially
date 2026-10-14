@@ -482,6 +482,13 @@ export function AppProvider({ children }) {
         if (res.state) setRoom(res.state);
       },
 
+      // Anyone who may change the settings: takes a Spotify playlist out of the room.
+      async removePlaylist(playlistId) {
+        const res = await emitAck("room:removePlaylist", playlistId);
+        if (!res.ok) throw new Error(res.error);
+        if (res.state) setRoom(res.state);
+      },
+
       // Anyone who may change the settings: a public Spotify playlist pasted as a link.
       async addSpotifyLink(link) {
         // Reading Spotify takes a moment; past 25 s it is given up instead of waiting forever.

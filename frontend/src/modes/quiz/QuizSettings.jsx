@@ -58,7 +58,7 @@ export default function QuizSettings({ room, updateConfig, onToast, children, re
         onSetAll={(list) => save({ categories: list })}
       />
       <OptionRow
-        label="Modos de juego"
+        label="Tipo de respuestas"
         multi
         wrap
         options={FORMATS.map(choice("formats", "formats"))}

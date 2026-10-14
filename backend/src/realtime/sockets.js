@@ -140,6 +140,18 @@ export function attachSockets(io, rooms) {
       }
     });
 
+    // Anyone who may change the settings takes a Spotify playlist out of the room.
+    socket.on("room:removePlaylist", (playlistId, ack) => {
+      try {
+        const { room, userId } = requireRoom(rooms, socket);
+        rooms.removeSpotifyPlaylist(room, userId, String(playlistId || ""));
+        ack?.({ ok: true, state: rooms.publicState(room, userId) });
+        io.to(room.code).emit("room:state", rooms.publicState(room));
+      } catch (err) {
+        ack?.({ ok: false, error: err.message });
+      }
+    });
+
     // Anyone who may change the settings pastes a public Spotify playlist's (or an album's) link: no Spotify needed.
     socket.on("room:spotifyLink", async (link, ack) => {
       try {

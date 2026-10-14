@@ -1,4 +1,4 @@
-import { selectSongs } from "../catalog/songSelector.js";
+import { SONG_DIFFICULTIES, SONG_GENRES, SONG_LANGUAGES, filterSongs, songCounts } from "../catalog/songFilters.js";
 import { hasRole } from "../auth/roles.js";
 import { hydrateSong } from "../catalog/catalogProvider.js";
 import { cleanTitle, displayTitle } from "../catalog/trackResolver.js";
@@ -154,12 +154,16 @@ export function artistsOf(name = "") {
 // ones, the title typed in the search box ("escribir"). Both are ticked in a new room; the rounds are shared evenly.
 export const MUSIC_FORMATS = ["opciones", "escribir"];
 
-// A new room plays every playlist of the catalog (Top 500 Español and Top 500 Inglés).
-function defaultConfig(catalog) {
+// A new room plays the whole catalog (every language, genre and difficulty ticked) and no Spotify playlists;
+// `playlistIds` are the ticked Spotify ones ("sp:<id>").
+function defaultConfig() {
   return {
     rounds: 5,
     roundMs: ROUND_MS,
-    playlistIds: (catalog?.playlists || []).map((p) => p.id),
+    languages: [...SONG_LANGUAGES],
+    genres: [...SONG_GENRES],
+    difficulties: [...SONG_DIFFICULTIES],
+    playlistIds: [],
     formats: [...MUSIC_FORMATS],
     quiz: defaultQuizConfig(),
     geo: defaultGeoConfig(),
@@ -247,7 +251,7 @@ export class RoomManager {
       timer: null,
       // "sp:<id>" -> a Spotify playlist the host added: its songs and which ones are already playable.
       customPlaylists: {},
-      config: { ...defaultConfig(this.catalog), ...config },
+      config: { ...defaultConfig(), ...config },
       players: new Map(),
       // The room's scoreboard across its matches: how many were finished, and per player (even one who left) their
       // name, avatar, matches played and wins.
@@ -457,16 +461,31 @@ export class RoomManager {
     if (config?.roundMs != null) next.roundMs = Math.min(35000, Math.max(15000, Math.round(Number(config.roundMs)) || ROUND_MS));
     // Adivina la canción's ways of answering; both may be unticked (the match then can't start).
     if (Array.isArray(config?.formats)) next.formats = MUSIC_FORMATS.filter((f) => config.formats.includes(f));
+    // The catalog's filters; any list may be left empty (only the Spotify playlists then play, if any).
+    if (Array.isArray(config?.languages)) next.languages = SONG_LANGUAGES.filter((v) => config.languages.includes(v));
+    if (Array.isArray(config?.genres)) next.genres = SONG_GENRES.filter((v) => config.genres.includes(v));
+    if (Array.isArray(config?.difficulties)) next.difficulties = SONG_DIFFICULTIES.filter((v) => config.difficulties.includes(v));
     if (config?.playlistIds) {
-      // Spotify playlists can only be added by the host (addSpotifyPlaylist); here they can only stay or go.
-      const known = new Set([...this.catalog.playlists.map((p) => p.id), ...Object.keys(room.customPlaylists || {})]);
-      // All of them may be unticked: the match then has no songs and can't start.
+      // Spotify playlists can only be added by addSpotifyPlaylist; here they can only stay or go. (An older client's
+      // catalog playlists are dropped: the catalog is chosen with the filters now.)
+      const known = new Set(Object.keys(room.customPlaylists || {}));
       next.playlistIds = [...new Set(config.playlistIds)].filter((id) => known.has(id));
     }
     room.config = next;
+    this.syncPlaylists(room);
+  }
+
+  /** The room's Spotify playlists that play: the ticked ones. */
+  activePlaylists(room) {
+    return (room.config.playlistIds || []).map((id) => room.customPlaylists?.[id]).filter(Boolean);
+  }
+
+  // Only the playlists that play keep loading; one that starts playing again picks up where it stopped.
+  syncPlaylists(room) {
+    const active = new Set(this.activePlaylists(room));
     for (const entry of Object.values(room.customPlaylists || {})) {
       const wasActive = entry.active;
-      entry.active = room.config.playlistIds.includes(entry.id);
+      entry.active = active.has(entry);
       if (entry.active && !wasActive) this.loadPlaylist(room, entry);
     }
   }
@@ -517,10 +536,22 @@ export class RoomManager {
       entry.instant = entry.songs.size > 0;
       room.customPlaylists[id] = entry;
     }
+    // Adding one ticks it.
+    const ids = room.config.playlistIds || [];
+    if (!ids.includes(id)) room.config = { ...room.config, playlistIds: [...ids, id] };
     entry.active = true;
-    if (!room.config.playlistIds.includes(id)) room.config = { ...room.config, playlistIds: [...room.config.playlistIds, id] };
     this.loadPlaylist(room, entry);
     return entry;
+  }
+
+  /** Takes a Spotify playlist out of the room for good (its waiting searches stop); anyone who may change the settings. */
+  removeSpotifyPlaylist(room, userId, playlistId) {
+    this.assertPlaylistEditor(room, userId);
+    const entry = room.customPlaylists?.[playlistId];
+    if (!entry) throw new Error("Esa playlist no está en la sala");
+    entry.active = false;
+    delete room.customPlaylists[playlistId];
+    room.config = { ...room.config, playlistIds: (room.config.playlistIds || []).filter((id) => id !== playlistId) };
   }
 
   /**
@@ -572,18 +603,13 @@ export class RoomManager {
   }
 
   /**
-   * Every song the match can draw from right now: the chosen catalog playlists plus the playable Spotify songs. With
-   * every playlist unticked there are none.
+   * Every song the match can draw from right now: the catalog's songs that pass the filters plus the playable songs
+   * of the Spotify playlists that play (those have no filters).
    */
   songPool(room) {
-    const ids = room.config.playlistIds || [];
-    if (Array.isArray(room.config.playlistIds) && !ids.length && this.catalog.playlists?.length) return [];
-    const custom = ids.map((id) => room.customPlaylists?.[id]).filter(Boolean);
-    const catalogIds = ids.filter((id) => !id.startsWith(SPOTIFY_PREFIX));
-    // With only Spotify playlists chosen, the default playlist isn't mixed in.
-    const pool = catalogIds.length || !custom.length ? selectSongs(this.catalog, { playlistIds: catalogIds }) : [];
+    const pool = filterSongs(this.catalog, room.config);
     const seen = new Set(pool.map((s) => s.id));
-    for (const entry of custom) {
+    for (const entry of this.activePlaylists(room)) {
       for (const song of entry.songs.values()) {
         if (!seen.has(song.id)) {
           seen.add(song.id);
@@ -752,20 +778,16 @@ export class RoomManager {
       room.tracks = [];
       room.totalRounds = room.config.rounds || 5;
       const available = this.songPool(room).length;
-      const loading = (room.config.playlistIds || []).some((id) => {
-        const entry = room.customPlaylists?.[id];
-        return entry && entry.done.size < entry.tracks.length;
-      });
+      const loading = this.activePlaylists(room).some((entry) => entry.done.size < entry.tracks.length);
       if (!available) {
-        if (!(room.config.playlistIds || []).length) throw new Error("Elige al menos una playlist");
         throw new Error(loading ? "Tus canciones de Spotify se están cargando, espera unos segundos" : "Ninguna canción cumple esos filtros");
       }
       // Every round gets a different song: with fewer songs than rounds the same ones would keep coming back.
-      if (!this.musicFormats(room).length) throw new Error("Elige al menos un modo de juego");
+      if (!this.musicFormats(room).length) throw new Error("Elige al menos un tipo de respuesta");
       if (available < room.totalRounds) {
         throw new Error(
           `Solo hay ${available} ${available === 1 ? "canción lista" : "canciones listas"} para ${room.totalRounds} rondas. ` +
-            (loading ? "Espera a que carguen más o baja las rondas." : "Baja las rondas o elige más playlists.")
+            (loading ? "Espera a que carguen más o baja las rondas." : "Baja las rondas o marca más idiomas, géneros o dificultades.")
         );
       }
     }
@@ -823,10 +845,8 @@ export class RoomManager {
       });
     }
 
-    // Every song of the chosen Spotify playlists, found on iTunes yet or not.
-    for (const id of room?.config?.playlistIds || []) {
-      const entry = room.customPlaylists?.[id];
-      if (!entry) continue;
+    // Every song of the Spotify playlists that play, found on iTunes yet or not.
+    for (const entry of room ? this.activePlaylists(room) : []) {
       for (const t of entry.tracks) {
         const song = entry.songs.get(t.spotifyId);
         const id = song?.id || `sp-${t.spotifyId}`;
@@ -1707,6 +1727,9 @@ export class RoomManager {
       if (track) payload.question = this.publicQuestion(room, track);
       // In the lobby: how many questions each topic and way of answering has, for the settings' chips.
       if (room.phase === "lobby") payload.questionCounts = questionCounts(this.quizQuestions, room.config.quiz);
+    } else if (room.game === "musica" && room.phase === "lobby") {
+      // The catalog's songs per language, genre and difficulty, for the settings' chips.
+      payload.songCounts = songCounts(this.catalog, room.config);
     } else if (room.game === GEO_GAME) {
       if (track) payload.question = this.publicGeoQuestion(room, track);
       if (track && showTrack) {

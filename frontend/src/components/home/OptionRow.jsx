@@ -4,19 +4,24 @@ import Icon from "./Icon.jsx";
 // `options` are { value, label, title?, disabled? }: `disabled` greys it out. With `multi`, `value` is a list, every chosen option is filled in and
 // each choice has a little box, ticked or empty, so it reads as "pick as many as you like". `onSetAll(list)` adds
 // a small button beside the setting's name: "Seleccionar todos" ticks every choice, or "Deseleccionar todos" when they
-// already are. `children` go after the choices (the music mode's Spotify button). Inside a disabled fieldset nothing
-// can be tapped.
-export default function OptionRow({ label, options, value, onChange, multi = false, wrap = false, onSetAll = null, children }) {
+// already are. `actions` go beside it, on its left, and look the same (the music mode's "Mis playlists"). `children`
+// go after the choices. Inside a disabled fieldset nothing can be tapped.
+export default function OptionRow({ label, options, value, onChange, multi = false, wrap = false, onSetAll = null, actions = null, children }) {
   const isOn = (v) => (multi ? value.includes(v) : value === v);
   const allOn = multi && options.every((o) => value.includes(o.value));
   return (
     <div className="tv-optrow" role="group" aria-label={label}>
       <div className="tv-optrow-head">
         <span className="tv-optrow-label">{label}</span>
-        {multi && onSetAll && (
-          <button type="button" className="tv-optrow-action" onClick={() => onSetAll(allOn ? [] : options.map((o) => o.value))}>
-            {allOn ? "Deseleccionar todos" : "Seleccionar todos"}
-          </button>
+        {(actions || (multi && onSetAll)) && (
+          <span className="tv-optrow-actions">
+            {actions}
+            {multi && onSetAll && (
+              <button type="button" className="tv-optrow-action" onClick={() => onSetAll(allOn ? [] : options.map((o) => o.value))}>
+                {allOn ? "Deseleccionar todos" : "Seleccionar todos"}
+              </button>
+            )}
+          </span>
         )}
       </div>
       <div className={`tv-optrow-opts${wrap ? " is-wrap" : ""}${multi ? " is-multi" : ""}`}>
