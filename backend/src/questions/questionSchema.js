@@ -1,7 +1,8 @@
 // What a question of the trivia modes looks like (the `questions` table in backend/supabase/schema.sql):
 //   id, type, mode, category, difficulty, language, prompt, data, active, created_at
 // `data` depends on the type:
-//   multiple_choice  { "options": ["…", "…", "…", "…"], "correct": 2 }                       (Opción múltiple)
+//   multiple_choice  { "options": ["…", "…", "…", "…"], "correct": 2, "aliases": ["…"] }    (Opción múltiple;
+//                    aliases: other right ways to write the answer when it's played written)
 //   open             { "answer": "Madrid", "aliases": ["…"], "reject": ["…"], "flag": "es" }  (Geografía; checked by
 //                    game/openAnswers.js, `flag` only on flag questions)
 //   location         { "name": "Francia", "map": ["France"] }   (Geografía: a pin on the map, see geo/worldMap.js)
@@ -66,6 +67,10 @@ export function questionErrors(q) {
     }
     if (!Number.isInteger(correct) || correct < 0 || correct >= OPTION_COUNT) {
       errors.push(`data.correct debe ser un índice de 0 a ${OPTION_COUNT - 1}`);
+    }
+    // Other right ways to write the answer, for when the question is played written (game/quiz.js asWritten).
+    if (q.data.aliases != null && !(Array.isArray(q.data.aliases) && q.data.aliases.every(isText))) {
+      errors.push("data.aliases debe ser una lista de textos");
     }
   } else if (q.type === "open") {
     if (!isText(q.data.answer)) errors.push("falta data.answer");

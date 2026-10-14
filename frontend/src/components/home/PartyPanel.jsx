@@ -103,8 +103,18 @@ export default function PartyPanel({ room, onToast, scores = false, className = 
   }
 
   const alone = room.players.length === 1;
+  // Between matches, the room's scoreboard (the server's room.board): each player's wins, most first, once a match
+  // has been played. The one with most wins (if any) is highlighted.
+  const board = room.board || { matches: 0, players: [] };
+  const winsOf = (id) => board.players.find((b) => b.id === id)?.wins || 0;
+  const showBoard = !scores && board.matches > 0;
+  const topWins = showBoard ? Math.max(0, ...room.players.map((p) => winsOf(p.id))) : 0;
   // In a match, the ranking is of the players; those who joined mid-match (spectators) have their own list below it.
-  const players = scores ? room.players.filter((p) => !p.spectator).sort((a, b) => b.score - a.score) : room.players;
+  const players = scores
+    ? room.players.filter((p) => !p.spectator).sort((a, b) => b.score - a.score)
+    : showBoard
+    ? [...room.players].sort((a, b) => winsOf(b.id) - winsOf(a.id))
+    : room.players;
   const spectators = scores ? room.players.filter((p) => p.spectator) : [];
 
   return (
@@ -120,7 +130,10 @@ export default function PartyPanel({ room, onToast, scores = false, className = 
 
       <div className="tv-party-title">
         <h2>{scores ? "Marcador" : "En la sala"}</h2>
-        <span>{players.length === 1 ? "1 jugador" : `${players.length} jugadores`}</span>
+        <span>
+          {players.length === 1 ? "1 jugador" : `${players.length} jugadores`}
+          {showBoard && ` · ${board.matches === 1 ? "1 partida" : `${board.matches} partidas`}`}
+        </span>
       </div>
 
       {/* Folds away (and the row of faces unfolds) while the chat is open. */}
@@ -130,12 +143,13 @@ export default function PartyPanel({ room, onToast, scores = false, className = 
             {players.map((p, i) => {
               const isMe = p.id === user?.id;
               const isHostPlayer = p.id === room.hostId;
+              const wins = winsOf(p.id);
               return (
                 <li
                   key={p.id}
                   className={`tv-player${isMe ? " is-me" : ""}${p.spectator ? " is-spectator" : ""}${p.connected ? "" : " is-away"}${menuFor === p.id ? " is-open" : ""}${
                     scores && !p.spectator && i < 3 ? ` is-top-${i + 1}` : ""
-                  }`}
+                  }${showBoard && topWins > 0 && wins === topWins ? " is-leader" : ""}`}
                   style={{ "--i": i }}
                 >
                   <button
@@ -155,12 +169,19 @@ export default function PartyPanel({ room, onToast, scores = false, className = 
                         <span className={`tv-player-tag${isHostPlayer ? " is-host" : ""}`}>{playerTag(p, { isHost: isHostPlayer })}</span>
                       )}
                     </span>
-                    {isHostPlayer && <Icon name="crown" size={18} strokeWidth={1.5} filled className="tv-player-crown" />}
                     {scores && !p.spectator && (
                       <span key={p.score} className="tv-player-score">
                         {p.score}
                       </span>
                     )}
+                    {showBoard && (
+                      <span className="tv-player-wins" aria-label={`${wins} ${wins === 1 ? "victoria" : "victorias"}`}>
+                        {wins}
+                        <small>{wins === 1 ? "victoria" : "victorias"}</small>
+                      </span>
+                    )}
+                    {/* The host's crown, always last on the right. */}
+                    {isHostPlayer && <Icon name="crown" size={18} strokeWidth={1.5} filled className="tv-player-crown" />}
                   </button>
                   {menuFor === p.id && (
                     <PlayerMenu

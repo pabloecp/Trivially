@@ -288,9 +288,24 @@ function GameScreen() {
                 <Verdict me={me} />
               ) : (
                 <div className="tv-mines-chips" aria-live="polite">
-                  <span className="tv-match-chip tv-mines-count">
+                  {/* What's left to find, bigger than the rest, with a bar of how many are found already. */}
+                  <span
+                    className={`tv-match-chip tv-mines-count tv-mines-left${toFind === 0 ? " is-done" : ""}`}
+                    aria-label={reveal ? `${question.found} de ${question.total} encontrados` : `Faltan ${toFind} de ${question.total}`}
+                  >
                     <Icon name="check" size={14} strokeWidth={3} />
-                    {reveal ? `${question.found} de ${question.total} encontrados` : `${toFind} por encontrar`}
+                    {reveal ? (
+                      <span>
+                        <strong>{question.found}</strong> de {question.total}
+                      </span>
+                    ) : (
+                      <span>
+                        Faltan <strong>{toFind}</strong>
+                      </span>
+                    )}
+                    <span className="tv-mines-progress" aria-hidden="true">
+                      <span style={{ width: `${question.total ? (100 * question.found) / question.total : 0}%` }} />
+                    </span>
                   </span>
                   <span className="tv-match-chip tv-mines-count">
                     <Icon name="bomb" size={14} strokeWidth={2.6} />

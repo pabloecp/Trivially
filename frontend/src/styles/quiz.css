@@ -18,7 +18,7 @@
   --tv-q3-1: var(--p-accent-1);
   --tv-q3: var(--p-accent-2);
   --tv-q3-edge: var(--p-accent-edge);
-  --tv-q3-on: var(--p-on-accent);
+  --tv-q3-on: var(--p-on-music); /* white like the other three, not the dark text yellow gets elsewhere */
   --tv-q4-1: var(--p-cinema-1);
   --tv-q4: var(--p-cinema-2);
   --tv-q4-edge: var(--p-cinema-edge);

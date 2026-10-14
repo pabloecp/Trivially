@@ -153,7 +153,7 @@ export default function TvTopbar() {
           {leaveButton}
           <div className="tv-brand">
             <AppIcon small />
-            <span className="tv-brand-name">trivially</span>
+            <span className="tv-brand-name">trivially.online</span>
           </div>
         </div>
         <div className="tv-topbar-end">

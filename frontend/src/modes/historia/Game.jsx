@@ -233,7 +233,7 @@ function GameScreen() {
       : "Nadie ganó: otro desempate en breve…"
     : round + 1 >= room.totalRounds
     ? "Calculando resultados…"
-    : "Siguiente acontecimiento en breve…";
+    : "Siguiente pregunta en breve…";
 
   // Under the event: what to do now.
   let hint;
@@ -395,7 +395,7 @@ function GameScreen() {
             <PauseVeil room={room} isHost={isHost} />
             <p className="tv-party-status">
               <span className="tv-pulse" aria-hidden="true" />
-              Cargando el acontecimiento…
+              Cargando la pregunta…
             </p>
           </section>
         )}

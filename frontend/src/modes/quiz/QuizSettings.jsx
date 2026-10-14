@@ -75,7 +75,7 @@ export default function QuizSettings({ room, updateConfig, onToast, children, re
         onChange={(id) => toggle("difficulties", levelIds, id)}
         onSetAll={(list) => save({ difficulties: list })}
       />
-      <OptionRow label="Preguntas" options={rangeOptions(QUESTIONS_LIMITS)} value={draft.rounds} onChange={(n) => save({ rounds: n })} />
+      <OptionRow label="Rondas" options={rangeOptions(QUESTIONS_LIMITS)} value={draft.rounds} onChange={(n) => save({ rounds: n })} />
       <OptionRow
         label="Segundos por pregunta"
         options={rangeOptions(SECONDS_LIMITS)}

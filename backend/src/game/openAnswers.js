@@ -59,9 +59,15 @@ function allowedErrors(length) {
   return 3;
 }
 
+// Palabras que distinguen una respuesta de otra y no admiten errores: números ("PlayStation 4" ≠ "5"), números
+// romanos ("Luis XIV" ≠ "XVI") y letras sueltas ("Vitamina C" ≠ "D").
+const ROMAN = /^(?=[ivxlcdm]+$)m{0,3}(cm|cd|d?c{0,3})(xc|xl|l?x{0,3})(ix|iv|v?i{0,3})$/;
+const strict = (w) => /\d/.test(w) || w.length === 1 || (w.length <= 5 && ROMAN.test(w));
+
 // Dos palabras "son la misma" si coinciden, o si difieren poco y empiezan igual (un typo rara vez cambia la inicial).
 function sameWord(a, b) {
   if (a === b) return true;
+  if (strict(a) || strict(b)) return false;
   if (a[0] !== b[0]) return false;
   return editDistance(a, b) <= allowedErrors(Math.max(a.length, b.length));
 }
@@ -79,25 +85,49 @@ function coveredBy(from, to) {
 
 const NUMERIC = /^[\d\s.,]+$/;
 const digitsOf = (s) => s.replace(/\D/g, "");
+// Units after a number in an answer ("42,195 km", "100 °C", "300 000 km/s"): the number alone is enough.
+const UNITS = new Set(["km", "kms", "m", "metro", "metros", "cm", "mm", "kg", "g", "s", "c", "f", "pies", "pie", "h", "mph", "kmh"]);
+
+// "300 000 km s" → "300000" when only units follow the number; null otherwise ("16 de septiembre" isn't a measure).
+function measureOf(candidate) {
+  const words = candidate.split(" ");
+  const i = words.findIndex((w) => !/^\d+$/.test(w));
+  if (i <= 0) return null;
+  return words.slice(i).every((w) => UNITS.has(w)) ? words.slice(0, i).join("") : null;
+}
 
 function matchesCandidate(guess, candidate, answerType) {
   if (guess === candidate) return true;
 
-  // Números y años: exactos (1492 ≠ 1429); "1.000" = "1000".
-  if (NUMERIC.test(candidate)) return NUMERIC.test(guess) && digitsOf(guess) === digitsOf(candidate);
+  // Números y años: exactos (1492 ≠ 1429); "1.000" = "1000"; "el 13" = "13"; una medida, sin su unidad.
+  const plain = tokens(candidate).join(" ");
+  if (NUMERIC.test(plain)) return NUMERIC.test(guess) && digitsOf(guess) === digitsOf(plain);
+  const measure = measureOf(candidate);
+  if (measure && NUMERIC.test(guess)) return digitsOf(guess) === measure;
   if (NUMERIC.test(guess)) return false;
 
   const g = tokens(guess);
   const c = tokens(candidate);
   if (!g.length || !c.length) return false;
 
+  // Siglas y palabras juntas o separadas: "eeuu" = "ee uu", "estadosunidos" = "estados unidos".
+  if (g.join("") === c.join("")) return true;
+
   // Mismas palabras (con typos), en cualquier orden y sin palabras de más ni de menos.
   if (g.length === c.length && coveredBy(g, c)) return true;
 
-  // Escrito sin espacios o con espacios de más: "buenosaires".
+  // Escrito sin espacios o con espacios de más: "buenosaires". Solo cuando cambian los espacios (si no, palabra por
+  // palabra ya lo decidió), y con los números y letras sueltas iguales.
   const gj = g.join("");
   const cj = c.join("");
-  if (gj[0] === cj[0] && editDistance(gj, cj) <= allowedErrors(Math.max(gj.length, cj.length)) && Math.min(gj.length, cj.length) >= 5) {
+  const strictOf = (list) => list.filter(strict).join(" ");
+  if (
+    g.length !== c.length &&
+    strictOf(g) === strictOf(c) &&
+    gj[0] === cj[0] &&
+    editDistance(gj, cj) <= allowedErrors(Math.max(gj.length, cj.length)) &&
+    Math.min(gj.length, cj.length) >= 5
+  ) {
     return true;
   }
 

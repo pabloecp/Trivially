@@ -1,3 +1,5 @@
+import { OTHER_NAMES } from "./otherNames.js";
+
 // Los países de Geografía: de aquí salen sus tres tipos de pregunta (capitales, banderas y ubicación), que
 // `npm run geo:upload --prefix backend` sube a la tabla `questions` de Supabase (ver geo/geoQuestions.js).
 //
@@ -275,3 +277,11 @@ export const COUNTRIES = [
   country("TV", null, "Tuvalu", "Funafuti", [3, 3, 0]),
   country("VU", "Vanuatu", "Vanuatu", "Port Vila", [3, 3, 3]),
 ];
+
+// More ways to write each country and capital (English names, initials…), from geo/otherNames.js.
+for (const c of COUNTRIES) {
+  const more = OTHER_NAMES[c.code] || {};
+  const add = (list, extra = []) => [...new Set([...list, ...extra])].filter((a) => a !== c.name && a !== c.capital);
+  c.aliases = add(c.aliases, more.country);
+  c.capitalAliases = add(c.capitalAliases, more.capital);
+}
