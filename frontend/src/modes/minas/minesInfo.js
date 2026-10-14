@@ -53,10 +53,10 @@ export function findDifficulty(id) {
   return DIFFICULTIES.find((d) => d.id === id) || DIFFICULTIES[0];
 }
 
-export const ROUND_OPTIONS = [3, 5, 7, 10];
+export const ROUND_OPTIONS = [5, 10, 15, 20, 25];
 // Seconds of each turn ("turnos"), and of a whole round in a race ("carrera").
-export const SECONDS_LIMITS = { min: 5, max: 20, step: 5 };
-export const RACE_SECONDS_LIMITS = { min: 30, max: 90, step: 15 };
+export const SECONDS_LIMITS = { min: 5, max: 25, step: 5 };
+export const RACE_SECONDS_LIMITS = { min: 30, max: 50, step: 5 };
 
 export function minesConfig(room) {
   const mines = room?.config?.mines || {};
@@ -64,8 +64,9 @@ export function minesConfig(room) {
     // The ways to play that are ticked (both by default); an older room had only one, `style`.
     styles: mines.styles ?? (mines.style ? [findStyle(mines.style).id] : STYLES.map((s) => s.id)),
     rounds: mines.rounds || 5,
-    turnMs: mines.turnMs || 10000,
-    roundMs: mines.roundMs || 45000,
+    // A new room starts at the shortest of each (as the server does).
+    turnMs: mines.turnMs || 5000,
+    roundMs: mines.roundMs || 30000,
     // An empty list is kept: it shows unticked, and the match can't start until one is ticked.
     categories: mines.categories ?? CATEGORIES.map((c) => c.id),
     difficulties: mines.difficulties ?? DIFFICULTIES.map((d) => d.id),

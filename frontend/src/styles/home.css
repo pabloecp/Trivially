@@ -1239,7 +1239,9 @@
 /* ---------- Confirm dialog (ConfirmDialog.jsx): the sheet's look, smaller, with two buttons ---------- */
 .tv-sheet-pos--sm { max-width: 440px; }
 .tv-sheet--confirm { padding-top: 24px; }
-.tv-sheet--confirm .tv-sheet-head { align-items: flex-start; }
+/* The title beside the icon, centred on it (one or two lines). */
+.tv-sheet--confirm .tv-sheet-head { align-items: center; }
+.tv-sheet--confirm .tv-sheet-title { line-height: 1.15; }
 .tv-badge--bad { --c2: var(--p-bad); --edge: var(--p-bad-edge); --on: #fff; }
 .tv-btn--bad { --c2: var(--p-bad); --edge: var(--p-bad-edge); --on: #fff; }
 .tv-confirm-text {

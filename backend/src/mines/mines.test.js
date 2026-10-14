@@ -41,8 +41,8 @@ assert.ok(questionErrors({ ...board, data: { correct: "España" } }).length, "no
 assert.deepEqual(mergeMinesConfig(), {
   styles: ["turnos", "carrera"],
   rounds: 5,
-  turnMs: 10000,
-  roundMs: 45000,
+  turnMs: 5000,
+  roundMs: 30000,
   categories: MINES_CATEGORIES,
   difficulties: ["facil", "media", "dificil"],
 });
@@ -51,11 +51,11 @@ assert.deepEqual(mergeMinesConfig({}, { styles: [] }).styles, [], "every way can
 // An older client or room with a single `style`.
 assert.deepEqual(mergeMinesConfig({}, { style: "carrera" }).styles, ["carrera"]);
 assert.deepEqual(mergeMinesConfig({ style: "carrera" }, { style: "a ciegas" }).styles, ["carrera"]);
-assert.equal(mergeMinesConfig({}, { roundMs: 999999 }).roundMs, 90000);
+assert.equal(mergeMinesConfig({}, { roundMs: 999999 }).roundMs, 50000);
 assert.equal(mergeMinesConfig({}, { roundMs: 1000 }).roundMs, 30000);
-assert.equal(mergeMinesConfig({}, { rounds: 99 }).rounds, 10);
-assert.equal(mergeMinesConfig({}, { rounds: 1 }).rounds, 3);
-assert.equal(mergeMinesConfig({}, { turnMs: 999999 }).turnMs, 20000);
+assert.equal(mergeMinesConfig({}, { rounds: 99 }).rounds, 25);
+assert.equal(mergeMinesConfig({}, { rounds: 1 }).rounds, 5);
+assert.equal(mergeMinesConfig({}, { turnMs: 999999 }).turnMs, 25000);
 assert.equal(mergeMinesConfig({}, { turnMs: 1000 }).turnMs, 5000);
 assert.deepEqual(mergeMinesConfig({}, { difficulties: ["dificil", "imposible", "facil"] }).difficulties, ["facil", "dificil"]);
 assert.deepEqual(mergeMinesConfig({}, { difficulties: [] }).difficulties, [], "every difficulty can be unticked");

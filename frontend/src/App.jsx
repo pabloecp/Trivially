@@ -42,6 +42,13 @@ function RoomNavigator() {
   const { pathname } = useLocation();
   const { step } = useRoomExit();
 
+  // Every game: as a match starts and each round counts down, the page goes back to the top, so on a phone (where the
+  // scoreboard is under the game, and the settings left the page scrolled down) the question and the clock show.
+  const counting = room?.phase === "countdown";
+  useEffect(() => {
+    if (counting && window.scrollY > 4) window.scrollTo({ top: 0 });
+  }, [counting, room?.currentRound, pathname]);
+
   // Taken out of the room by the host: leave its screens (Home shows why).
   useEffect(() => {
     if (kickedNotice && !room) nav("/", { replace: true });
