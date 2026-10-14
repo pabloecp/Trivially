@@ -10,7 +10,7 @@ import { BACKEND_URL } from "../../lib/config.js";
 import { useApp, useRemainingMs } from "../../lib/store.jsx";
 import { OPTION_LETTERS, findDifficulty, quizConfig } from "./quizInfo.js";
 import "../../styles/home.css";
-import { PauseButton, PauseVeil } from "../../components/home/PauseControls.jsx";
+import { PauseButton, ReportButton, PauseVeil } from "../../components/home/PauseControls.jsx";
 import "../../styles/quiz.css";
 import "../../styles/geo.css";
 
@@ -418,6 +418,7 @@ function GameScreen() {
           </div>
 
           <div className="tv-game-tools">
+            <ReportButton room={room} onError={setErr} />
             <PauseButton room={room} isHost={isHost} onError={setErr} />
             {isHost && (
               <button

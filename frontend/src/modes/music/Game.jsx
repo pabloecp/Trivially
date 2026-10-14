@@ -11,7 +11,7 @@ import { BACKEND_URL } from "../../lib/config.js";
 import { useSongList } from "../../lib/songList.js";
 import { useMasterVolume } from "../../lib/volume.js";
 import "../../styles/quiz.css";
-import { PauseButton, PauseVeil } from "../../components/home/PauseControls.jsx";
+import { PauseButton, ReportButton, PauseVeil } from "../../components/home/PauseControls.jsx";
 
 // A closed round's four songs keep the same letters and colours as Trivia's options.
 const OPTION_LETTERS = ["A", "B", "C", "D"];
@@ -30,6 +30,12 @@ function normalize(str = "") {
 function songKey(song) {
   const artist = String(song.artistName || "").split(/\s*(?:&|,|\bfeat\.?|\bft\.?|\bx\b|\by\b)\s*/i)[0];
   return `${normalize(song.title)}|${normalize(artist)}`;
+}
+
+// Every artist of a song, the last after "&" (like the server's joinArtists): "Tyler, The Creator & Kali Uchis".
+function joinArtists(list) {
+  const names = Array.isArray(list) ? list.filter(Boolean) : [];
+  return names.length > 1 ? `${names.slice(0, -1).join(", ")} & ${names[names.length - 1]}` : names[0] || "";
 }
 
 // Shown under the result when the round didn't go your way; one per round, never the same twice in a row.
@@ -413,6 +419,7 @@ function GameScreen() {
           </div>
 
           <div className="tv-game-tools">
+            <ReportButton room={room} onError={setErr} />
             <PauseButton room={room} isHost={isHost} onError={setErr} />
             {isHost && (
               <button
@@ -477,6 +484,8 @@ function GameScreen() {
                 {OPTION_LETTERS.map((letter, i) => {
                   const text = choice?.options?.[i];
                   if (text == null) return null;
+                  // The title big and every artist under it (an older server only sends "Título - Artista").
+                  const detail = choice?.details?.[i];
                   const isMine = myChoice === i;
                   const reveal = room.phase === "reveal";
                   const isRight = reveal && choice?.answer === i;
@@ -504,7 +513,14 @@ function GameScreen() {
                       aria-label={`${letter}: ${text}`}
                     >
                       <span className="tv-quiz-opt-letter">{letter}</span>
-                      <span className="tv-quiz-opt-text">{text}</span>
+                      {detail ? (
+                        <span className="tv-quiz-opt-text tv-music-opt-text">
+                          <span className="tv-music-opt-title">{detail.title}</span>
+                          {detail.artists && <span className="tv-music-opt-artists">{detail.artists}</span>}
+                        </span>
+                      ) : (
+                        <span className="tv-quiz-opt-text">{text}</span>
+                      )}
                       {reveal && (isRight || isMine) && (
                         <span className="tv-quiz-opt-mark">
                           <Icon name={isRight ? "check" : "close"} size={18} strokeWidth={3.4} />
@@ -584,7 +600,7 @@ function GameScreen() {
                                   onMouseEnter={() => setActiveIndex(index)}
                                 >
                                   <span className="tv-suggest-title">{song.title}</span>
-                                  <span className="tv-suggest-artist">{song.artistName}</span>
+                                  <span className="tv-suggest-artist">{song.artists || song.artistName}</span>
                                   {index === activeIndex && <kbd className="tv-kbd">Enter</kbd>}
                                 </button>
                               </li>
@@ -673,7 +689,7 @@ function GameScreen() {
                   <p className="tv-mono-label">Era la canción</p>
                   <h3 className="tv-song-title">{room.reveal.title}</h3>
                   <p className="tv-song-meta">
-                    {room.reveal.artistName}
+                    {joinArtists(room.reveal.artists) || room.reveal.artistName}
                     {room.reveal.albumName ? ` · ${room.reveal.albumName}` : ""}
                     {room.reveal.year ? ` (${room.reveal.year})` : ""}
                   </p>

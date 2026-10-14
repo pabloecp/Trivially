@@ -12,7 +12,7 @@ import { useWorld } from "./worldData.js";
 import { LOCATION_SECONDS, findKind } from "./geoInfo.js";
 import "../../styles/home.css";
 import "../../styles/geo.css";
-import { PauseButton, PauseVeil } from "../../components/home/PauseControls.jsx";
+import { PauseButton, ReportButton, PauseVeil } from "../../components/home/PauseControls.jsx";
 
 const COUNTDOWN_MS = 3000;
 // One colour per player for the pins on the reveal map (never the green and red of right and wrong).
@@ -364,6 +364,7 @@ function GameScreen() {
           </div>
 
           <div className="tv-game-tools">
+            <ReportButton room={room} onError={setErr} />
             <PauseButton room={room} isHost={isHost} onError={setErr} />
             {isHost && (
               <button

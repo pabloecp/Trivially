@@ -150,6 +150,25 @@ export function artistsOf(name = "") {
     .filter(Boolean);
 }
 
+/** A list of artists as people read it: "Peso Pluma, Gabito Ballesteros & Junior H". The last one goes after "&", so
+ *  a name with a comma in it stays readable as one: "Tyler, The Creator & Kali Uchis". */
+export function joinArtists(list) {
+  const names = (list || []).filter(Boolean);
+  return names.length > 1 ? `${names.slice(0, -1).join(", ")} & ${names[names.length - 1]}` : names[0] || "";
+}
+
+/** Every artist of a song (the full list from Spotify), else its credit as it is. */
+export function artistLine(song) {
+  if (Array.isArray(song?.artists) && song.artists.length) return joinArtists(song.artists);
+  // The search box's list already carries them as one line.
+  return (typeof song?.artists === "string" && song.artists) || song?.artistName || "";
+}
+
+// A song's artists to compare them: each name of its list whole ("Tyler, The Creator" is one), else split from its credit.
+function artistKeys(song) {
+  return Array.isArray(song?.artists) && song.artists.length ? song.artists.map((a) => normalizeAnswer(a)) : artistsOf(song?.artistName);
+}
+
 // Adivina la canción's ways of answering ("Modos"): closed questions, four songs to choose from ("opciones"), and open
 // ones, the title typed in the search box ("escribir"). Both are ticked in a new room; the rounds are shared evenly.
 export const MUSIC_FORMATS = ["opciones", "escribir"];
@@ -527,6 +546,7 @@ export class RoomManager {
           spotifyId: t.spotifyId,
           title: displayTitle(t.title),
           artistName: t.artists.join(" & ") || "Artista",
+          artists: t.artists,
           albumName: t.albumName || "",
           year: t.year || null,
           image: playlist.image || null,
@@ -577,7 +597,7 @@ export class RoomManager {
           if (deep) entry.retried.add(spotifyId);
           // A pasted playlist's song was already playable with Spotify's preview (15–22 s); iTunes' (30 s, with the
           // album's cover and year) takes its place once found.
-          if (song) entry.songs.set(spotifyId, song);
+          if (song) entry.songs.set(spotifyId, { ...song, artists: entry.tracks.find((t) => t.spotifyId === spotifyId)?.artists || song.artists });
           this.progressChanged(room);
           // The first pass just finished: start the second one.
           if (!deep && entry.run === run && entry.done.size === entry.tracks.length) this.loadPlaylist(room, entry);
@@ -666,7 +686,7 @@ export class RoomManager {
     const candidates = formats.filter((f) => used(f) === least);
     const format = candidates[Math.floor(Math.random() * candidates.length)];
     if (format !== "opciones") return { ...song, type: "open" };
-    const label = (s) => (s.artistName ? `${s.title} - ${s.artistName}` : s.title);
+    const label = (s) => (artistLine(s) ? `${s.title} - ${artistLine(s)}` : s.title);
     const keys = new Set([songKey(song)]);
     const others = [];
     const sources = [pool, this.catalog.songs || [], this.globalSongList()];
@@ -683,13 +703,21 @@ export class RoomManager {
     };
     // Songs where the main artist is, then any of the song's other artists, then any song (the room's songs before
     // the whole catalog).
-    const [main, ...rest] = artistsOf(song.artistName);
-    if (main) add((s) => artistsOf(s.artistName).includes(main));
-    if (rest.length) add((s) => artistsOf(s.artistName).some((a) => rest.includes(a)));
+    const [main, ...rest] = artistKeys(song);
+    if (main) add((s) => artistKeys(s).includes(main));
+    if (rest.length) add((s) => artistKeys(s).some((a) => rest.includes(a)));
     add(() => true);
     if (others.length < 3) return { ...song, type: "open" };
     const options = [song, ...others].sort(() => Math.random() - 0.5);
-    return { ...song, type: "choice", options: options.map(label), answer: options.indexOf(song) };
+    // `options` is the text of each (what a pick is recorded as); `details` the same split, to show the title big and
+    // every artist under it.
+    return {
+      ...song,
+      type: "choice",
+      options: options.map(label),
+      details: options.map((s) => ({ title: s.title, artists: artistLine(s) })),
+      answer: options.indexOf(song),
+    };
   }
 
   updatePlayer(room, userId, { name, avatar }) {
@@ -817,7 +845,7 @@ export class RoomManager {
         if (!s?.id || !s.title || seen.has(s.id) || seen.has(songKey(s))) continue;
         seen.add(s.id);
         seen.add(songKey(s));
-        list.push({ id: s.id, title: s.title, artistName: s.artistName || "Artista" });
+        list.push({ id: s.id, title: s.title, artistName: s.artistName || "Artista", artists: artistLine(s) || "Artista" });
       }
       this.songListCache = { key, list };
     }
@@ -852,7 +880,12 @@ export class RoomManager {
         const id = song?.id || `sp-${t.spotifyId}`;
         if (seen.has(id)) continue;
         seen.add(id);
-        allSongs.push({ id, title: song?.title || cleanTitle(t.title), artistName: song?.artistName || t.artists.join(" & ") || "Artista" });
+        allSongs.push({
+          id,
+          title: song?.title || cleanTitle(t.title),
+          artistName: song?.artistName || t.artists.join(" & ") || "Artista",
+          artists: joinArtists(t.artists) || artistLine(song) || "Artista",
+        });
       }
     }
 
@@ -941,6 +974,67 @@ export class RoomManager {
   assertNotSpectator(room, userId) {
     if (room.players.get(userId)?.spectator) throw new Error("Estás viendo la partida: entrarás cuando termine");
     if (room.paused) throw new Error("La partida está en pausa");
+  }
+
+  /**
+   * An owner reports the question being played (db/reports.js keeps it): the question as the server has it (with its
+   * answer), the game's settings and who was in the room, so it can be checked later. `reporterId` must be the
+   * socket's verified account; each owner reports a round once.
+   */
+  questionReport(room, reporterId) {
+    const reporter = this.store?.users?.[reporterId];
+    if (!reporter || !hasRole(reporter, "owner")) throw new Error("Solo los owners pueden reportar preguntas");
+    if (!["countdown", "playing", "reveal"].includes(room.phase)) throw new Error("No hay ninguna pregunta en juego");
+    const track = room.tracks[room.currentRound];
+    if (!track) throw new Error("No hay ninguna pregunta en juego");
+    // Who reported each round's question (the round objects are new in every match, so a replay starts clean).
+    this.reportedBy ||= new WeakMap();
+    const reporters = this.reportedBy.get(track) || new Set();
+    if (reporters.has(reporterId)) throw new Error("Ya reportaste esta pregunta");
+    reporters.add(reporterId);
+    this.reportedBy.set(track, reporters);
+
+    const settings = {
+      [QUIZ_GAME]: room.config.quiz,
+      [GEO_GAME]: room.config.geo,
+      [HISTORY_GAME]: room.config.history,
+      [MINES_GAME]: room.config.mines,
+    }[room.game] ?? {
+      rounds: room.config.rounds,
+      roundMs: room.config.roundMs,
+      formats: room.config.formats,
+      languages: room.config.languages,
+      genres: room.config.genres,
+      difficulties: room.config.difficulties,
+      playlistIds: room.config.playlistIds,
+    };
+    const players = [...room.players.values()];
+    return {
+      game: room.game,
+      prompt: track.prompt || (track.title ? `${track.title} - ${track.artistName || ""}`.trim() : null),
+      question: JSON.parse(JSON.stringify(track)),
+      round: room.currentRound + 1,
+      totalRounds: room.totalRounds,
+      phase: room.phase,
+      tiebreak: Boolean(room.tiebreak),
+      settings: JSON.parse(JSON.stringify(settings || {})),
+      room: {
+        code: room.code,
+        players: players.length,
+        connected: players.filter((p) => p.connected).length,
+        spectators: players.filter((p) => p.spectator).length,
+      },
+      players: players.map((p) => ({
+        id: p.id,
+        name: p.name,
+        connected: p.connected,
+        spectator: Boolean(p.spectator),
+        score: p.score,
+        answer: p.lastAnswer ?? null,
+      })),
+      reporter: { id: reporterId, name: reporter.name },
+      createdAt: new Date().toISOString(),
+    };
   }
 
   /**
@@ -1598,7 +1692,7 @@ export class RoomManager {
   /** What the player answered, as people read it: "As It Was - Harry Styles" for a picked suggestion (whose raw
    *  value is a song id such as "harry-styles-as-it-was") or for the right song; the typed text otherwise. */
   answerLabel(room, track, answerText, correct) {
-    const label = (song) => (song.artistName ? `${song.title} - ${song.artistName}` : song.title);
+    const label = (song) => (artistLine(song) ? `${song.title} - ${artistLine(song)}` : song.title);
     if (correct) return label(track);
     const raw = String(answerText);
     const picked = this.buildSearchCatalog(room).find((s) => s.id === raw);
@@ -1771,6 +1865,7 @@ export class RoomManager {
       payload.choice = {
         type: closed ? "choice" : "open",
         options: closed && open ? track.options : null,
+        details: closed && open ? track.details || null : null,
         answer: closed && showAnswer ? track.answer : null,
         picks: closed && showAnswer ? picks : null,
       };

@@ -92,7 +92,7 @@ export default function LobbyPanel({ room, onToast }) {
               {room.config?.formats?.length === 0 ? (
                 <span>Elige al menos un tipo de respuesta para empezar.</span>
               ) : songsReady === 0 && loading.length === 0 ? (
-                <span>Ninguna canción cumple esos filtros. Marca más idiomas, géneros o dificultades.</span>
+                <span>Ninguna canción con esos filtros.</span>
               ) : (
                 <span>
                   Hay <strong>{songsReady} {songsReady === 1 ? "canción lista" : "canciones listas"}</strong> para {roundsSet} rondas.{" "}

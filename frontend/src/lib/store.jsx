@@ -538,6 +538,9 @@ export function AppProvider({ children }) {
       async endGame() { await emitAck("room:end"); },
       async pauseGame(paused) { const res = await emitAck("room:pause", paused); if (!res.ok) throw new Error(res.error); },
 
+      // Owners: reports the question being played, to check it later.
+      async reportQuestion() { const res = await emitAck("room:report"); if (!res.ok) throw new Error(res.error); },
+
       async answer(answerTextOrId) {
         const res = await emitAck("game:answer", answerTextOrId);
         if (!res.ok) throw new Error(res.error);

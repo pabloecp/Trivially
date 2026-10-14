@@ -314,6 +314,10 @@
 .tv-quiz-answer > .tv-quiz-write { width: 100%; }
 .tv-quiz-flag { min-height: 150px; }
 .tv-music-options { width: min(760px, 100%); }
+/* A song option: its title big, every artist smaller under it. */
+.tv-music-opt-text { display: grid; gap: 3px; }
+.tv-music-opt-title { line-height: 1.15; }
+.tv-music-opt-artists { font-family: var(--tv-body, inherit); font-size: 13px; font-weight: 700; line-height: 1.25; opacity: 0.75; }
 
 /* Trivia's "Saltar" is Adivina la canción's: as wide as the answer box. */
 .tv-quiz-write .tv-skip-btn { width: 100%; }

@@ -11,7 +11,7 @@ import { findDifficulty, historyConfig, yearLabel, yearsText } from "./historyIn
 import "../../styles/home.css";
 import "../../styles/quiz.css";
 import "../../styles/history.css";
-import { PauseButton, PauseVeil } from "../../components/home/PauseControls.jsx";
+import { PauseButton, ReportButton, PauseVeil } from "../../components/home/PauseControls.jsx";
 
 const COUNTDOWN_MS = 3000;
 // One colour per player for their year on the reveal's timeline (never the green and red of right and wrong).
@@ -300,6 +300,7 @@ function GameScreen() {
           </div>
 
           <div className="tv-game-tools">
+            <ReportButton room={room} onError={setErr} />
             <PauseButton room={room} isHost={isHost} onError={setErr} />
             {isHost && (
               <button

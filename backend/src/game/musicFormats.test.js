@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { readLocalCatalog } from "../catalog/catalogProvider.js";
-import { RoomManager, artistsOf } from "./roomManager.js";
+import { RoomManager, artistLine, artistsOf, joinArtists } from "./roomManager.js";
 
 // Adivina la canción's "Modos": closed rounds (four songs, one right) and open ones (the title typed).
 const mgr = new RoomManager({ catalog: readLocalCatalog(), store: { users: {} } });
@@ -25,6 +25,9 @@ for (const t of closed) {
   assert.equal(t.options.length, 4);
   assert.equal(new Set(t.options).size, 4);
   assert.ok(t.options[t.answer].startsWith(t.title));
+  // Each option also goes split: the title, and every artist of the song.
+  assert.equal(t.details[t.answer].title, t.title);
+  assert.equal(t.details[t.answer].artists, artistLine(t));
 }
 clearTimeout(room.timer);
 
@@ -39,6 +42,7 @@ assert.equal(state.choice.options, null, "no options during the countdown");
 mgr.beginPlaying(c);
 state = mgr.publicState(c);
 assert.equal(state.choice.options.length, 4);
+assert.equal(state.choice.details.length, 4);
 assert.equal(state.choice.answer, null);
 const track = c.tracks[0];
 assert.throws(() => mgr.submitAnswer(c, "c-1", 9), /opciones/);
@@ -104,5 +108,12 @@ const alone = { id: "x-solo", title: "Canción única", artistName: "Artista Que
 const t = mgr.withFormat(a, alone, [alone]);
 assert.equal(t.type, "choice", "other artists fill in");
 assert.equal(new Set(t.options).size, 4);
+
+// Every artist, the last after "&"; a name with a comma in it stays one artist.
+assert.equal(joinArtists(["Peso Pluma", "Gabito Ballesteros", "Junior H"]), "Peso Pluma, Gabito Ballesteros & Junior H");
+assert.equal(joinArtists(["Tyler, The Creator", "Kali Uchis"]), "Tyler, The Creator & Kali Uchis");
+assert.equal(joinArtists(["Adele"]), "Adele");
+const tyler = mgr.catalog.songs.find((s) => s.title === "See You Again" && /^Tyler/.test(s.artistName));
+assert.deepEqual(tyler.artists.slice(0, 1), ["Tyler, The Creator"]);
 
 console.log("musicFormats.test ok");

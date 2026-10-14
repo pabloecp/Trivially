@@ -193,8 +193,8 @@ export function languageOf(song) {
   return song?.language === "es" ? "es" : "en";
 }
 
-// Difficulty by how well known a song is: its place in the ranking of its playlist (the catalog's playlists are
-// ordered by streams), in thirds. Worked out once per catalog.
+// Difficulty by how well known a song is: its place in the ranking of its language (catalogProvider's withRankings,
+// by Spotify streams), in thirds. Worked out once per catalog.
 const levels = new WeakMap();
 export function difficultyOf(catalog, song) {
   let map = levels.get(catalog);

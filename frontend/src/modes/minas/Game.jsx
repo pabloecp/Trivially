@@ -11,7 +11,7 @@ import { findDifficulty, hitsText, minesConfig } from "./minesInfo.js";
 import "../../styles/home.css";
 import "../../styles/quiz.css";
 import "../../styles/mines.css";
-import { PauseButton, PauseVeil } from "../../components/home/PauseControls.jsx";
+import { PauseButton, ReportButton, PauseVeil } from "../../components/home/PauseControls.jsx";
 
 const COUNTDOWN_MS = 3000;
 const CELLS = 25;
@@ -260,6 +260,7 @@ function GameScreen() {
           </div>
 
           <div className="tv-game-tools">
+            <ReportButton room={room} onError={setErr} />
             <PauseButton room={room} isHost={isHost} onError={setErr} />
             {isHost && (
               <button

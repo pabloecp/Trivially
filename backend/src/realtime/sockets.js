@@ -2,6 +2,7 @@ import { verifySocketToken } from "../auth/socketToken.js";
 import { prefetchMedia } from "../audio/mediaCache.js";
 import { readPublicSpotify, spotifyLinkFrom } from "../catalog/spotifyEmbed.js";
 import { readSpotifyPlaylist } from "../catalog/spotifyLibrary.js";
+import { saveQuestionReport } from "../db/reports.js";
 import { forgetSpotifyLink, saveSpotifyLink, savedSpotifyLinks } from "../db/store.js";
 import { prefetchFlags } from "../geo/flags.js";
 
@@ -270,6 +271,18 @@ export function attachSockets(io, rooms) {
         else rooms.resume(room, userId);
         ack?.({ ok: true });
         io.to(room.code).emit("room:state", rooms.publicState(room));
+      } catch (err) {
+        ack?.({ ok: false, error: err.message });
+      }
+    });
+
+    // An owner reports the question being played. Only the socket's verified account counts as the reporter.
+    socket.on("room:report", async (ack) => {
+      try {
+        const { room } = requireRoom(rooms, socket);
+        const report = rooms.questionReport(room, socket.data.userId);
+        await saveQuestionReport(report);
+        ack?.({ ok: true });
       } catch (err) {
         ack?.({ ok: false, error: err.message });
       }
