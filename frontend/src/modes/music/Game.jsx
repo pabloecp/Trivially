@@ -419,7 +419,6 @@ function GameScreen() {
                 type="button"
                 className={`tv-mini-btn${confirmHub ? " is-on" : ""}`}
                 onClick={() => backToHub({ confirm: true })}
-                title="Termina la partida y lleva a todos al inicio"
               >
                 {confirmHub ? "¿Seguro? Toca otra vez" : "Terminar"}
               </button>
@@ -512,7 +511,7 @@ function GameScreen() {
                         </span>
                       )}
                       {reveal && room.players.length > 1 && (
-                        <span className="tv-quiz-opt-picks" title={`${picks} ${picks === 1 ? "jugador" : "jugadores"}`}>
+                        <span className="tv-quiz-opt-picks">
                           <Icon name="users" size={14} strokeWidth={2.6} />
                           {picks}
                         </span>

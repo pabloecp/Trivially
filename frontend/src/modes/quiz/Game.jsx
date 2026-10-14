@@ -177,7 +177,7 @@ function ChoiceRound({ room, question, me, answer, seconds }) {
                 </span>
               )}
               {reveal && multiplayer && (
-                <span className="tv-quiz-opt-picks" title={`${picks} ${picks === 1 ? "jugador" : "jugadores"}`}>
+                <span className="tv-quiz-opt-picks">
                   <Icon name="users" size={14} strokeWidth={2.6} />
                   {picks}
                 </span>
@@ -424,7 +424,6 @@ function GameScreen() {
                 type="button"
                 className={`tv-mini-btn${confirmHub ? " is-on" : ""}`}
                 onClick={backToHub}
-                title="Termina la partida y lleva a todos al inicio"
               >
                 {confirmHub ? "¿Seguro? Toca otra vez" : "Terminar"}
               </button>

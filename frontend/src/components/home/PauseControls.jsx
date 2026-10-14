@@ -12,7 +12,6 @@ export function PauseButton({ room, isHost, onError }) {
       type="button"
       className={`tv-mini-btn tv-pause-btn${room.paused ? " is-on" : ""}`}
       onClick={() => pauseGame(!room.paused).catch((e) => onError?.(e.message || "No se pudo pausar la partida"))}
-      title={room.paused ? "La partida sigue donde se quedó" : "Detiene el tiempo para todos"}
       aria-label={room.paused ? "Reanudar" : "Pausar"}
     >
       <Icon name={room.paused ? "play" : "pause"} size={13} filled strokeWidth={0} />

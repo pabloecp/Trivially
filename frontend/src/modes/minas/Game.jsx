@@ -266,7 +266,6 @@ function GameScreen() {
                 type="button"
                 className={`tv-mini-btn${confirmHub ? " is-on" : ""}`}
                 onClick={backToHub}
-                title="Termina la partida y lleva a todos al inicio"
               >
                 {confirmHub ? "¿Seguro? Toca otra vez" : "Terminar"}
               </button>
@@ -338,7 +337,7 @@ function GameScreen() {
                           </span>
                         )}
                         {owned && (
-                          <span className="tv-mines-owner" aria-hidden="true" title={nameOf(c.by)}>
+                          <span className="tv-mines-owner" aria-hidden="true">
                             {nameOf(c.by).slice(0, 1).toUpperCase()}
                           </span>
                         )}

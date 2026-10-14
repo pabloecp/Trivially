@@ -123,7 +123,6 @@ export default function Timeline({ min, max, value, onChoose, onRelease, disable
             key={m.id}
             className={`tv-hist-mark is-row-${m.row}${m.isMe ? " is-me" : ""}`}
             style={{ left: `${m.p}%`, "--mark": m.color }}
-            title={`${m.label}: ${format(m.year)}`}
           >
             <span className="tv-hist-mark-stem" />
             <span className="tv-hist-mark-dot" />

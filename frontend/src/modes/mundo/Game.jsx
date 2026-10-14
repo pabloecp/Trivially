@@ -370,7 +370,6 @@ function GameScreen() {
                 type="button"
                 className={`tv-mini-btn${confirmHub ? " is-on" : ""}`}
                 onClick={backToHub}
-                title="Termina la partida y lleva a todos al inicio"
               >
                 {confirmHub ? "¿Seguro? Toca otra vez" : "Terminar"}
               </button>

@@ -380,7 +380,6 @@ function ProfileScreen() {
                   className={`tv-swatch tv-swatch--photo${googlePhoto ? "" : " is-locked"}`}
                   aria-pressed={Boolean(googlePhoto) && shownAvatar === googlePhoto}
                   aria-label={googlePhoto ? "Usar tu foto de Google" : "Foto de perfil (requiere Google)"}
-                  title={googlePhoto ? "Usar tu foto de Google" : "Inicia sesión con Google para usar tu foto"}
                   disabled={saving}
                   onClick={() => onPickColor("google")}
                 >
@@ -472,7 +471,7 @@ function ProfileScreen() {
             ) : (
               <div className="tv-account-foot">
                 {activeUser?.email && (
-                  <span className="tv-email" title={activeUser.email}>{activeUser.email}</span>
+                  <span className="tv-email">{activeUser.email}</span>
                 )}
                 <button
                   type="button"

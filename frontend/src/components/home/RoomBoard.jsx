@@ -39,7 +39,7 @@ export default function RoomBoard({ room }) {
                 <Avatar name={p.name} avatar={p.avatar} />
                 <span className="tv-board-name">{p.name}</span>
                 {leader && <Icon name="crown" size={18} strokeWidth={1.5} filled className="tv-board-crown" />}
-                <span className="tv-board-wins" title={`${p.wins} de ${p.played} partidas ganadas`}>
+                <span className="tv-board-wins">
                   {p.wins}
                   <small>{p.wins === 1 ? "victoria" : "victorias"}</small>
                 </span>

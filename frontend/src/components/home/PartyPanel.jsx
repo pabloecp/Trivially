@@ -34,7 +34,7 @@ function MatchTag({ player, room }) {
     const a = player.lastAnswer;
     if (!a || a.skipped || !a.text) return <span className="tv-player-tag">{a?.skipped ? "Se la saltó" : "Sin respuesta"}</span>;
     return (
-      <span className={`tv-player-tag tv-player-answer ${a.correct ? "is-right" : "is-wrong"}`} title={a.text}>
+      <span className={`tv-player-tag tv-player-answer ${a.correct ? "is-right" : "is-wrong"}`}>
         <Icon name={a.correct ? "check" : "close"} size={12} strokeWidth={3.2} />
         <span>{a.text}</span>
       </span>

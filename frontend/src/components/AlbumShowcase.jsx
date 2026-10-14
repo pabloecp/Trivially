@@ -168,7 +168,6 @@ export default function AlbumShowcase({ style = {} }) {
               <div
                 key={`r1-${album.id}-${index}`}
                 className="album-cover-card"
-                title={`${album.name} - ${album.artist} (${album.year})`}
               >
                 <img
                   src={album.image}
@@ -192,7 +191,6 @@ export default function AlbumShowcase({ style = {} }) {
               <div
                 key={`r2-${album.id}-${index}`}
                 className="album-cover-card"
-                title={`${album.name} - ${album.artist} (${album.year})`}
               >
                 <img
                   src={album.image}

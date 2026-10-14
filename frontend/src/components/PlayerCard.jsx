@@ -89,7 +89,6 @@ export default function PlayerCard({
                 alignItems: "center",
                 gap: 3,
               }}
-              title="Este usuario tiene permisos para modificar los settings de la partida"
             >
               ⚙️ Ajustes
             </span>
@@ -131,11 +130,6 @@ export default function PlayerCard({
                 whiteSpace: "nowrap",
                 transition: "all 0.15s ease",
               }}
-              title={
-                player.canEditConfig
-                  ? "Quitar permisos para modificar ajustes"
-                  : "Dar privilegios para modificar los ajustes de la partida"
-              }
             >
               {player.canEditConfig ? "✕ Quitar permisos" : "+ Dar permisos de ajustes"}
             </button>

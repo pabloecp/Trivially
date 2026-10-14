@@ -277,7 +277,6 @@ export default function MusicSettings({ room, updateConfig, onToast, children, r
             onClick={() => deleteRow(row)}
             onBlur={() => asking && setConfirmForget("")}
             aria-label={asking ? `Confirmar: borrar ${row.name}` : `Borrar ${row.name}`}
-            title={row.savedItem ? "Borrar de la sala y de tus playlists" : "Quitar de la sala"}
           >
             {asking ? "¿Borrar?" : <Icon name="trash" size={18} strokeWidth={2.4} />}
           </button>
@@ -327,7 +326,6 @@ export default function MusicSettings({ room, updateConfig, onToast, children, r
               className="tv-optrow-btn is-add"
               onClick={() => setLinkOpen((v) => !v)}
               aria-expanded={linkOpen}
-              title="Agregar una playlist pública o un álbum de Spotify con su link"
             >
               {linkOpen ? <Icon name="close" size={16} strokeWidth={3} /> : <SpotifyIcon size={18} />}
               {linkOpen ? "Cancelar" : "Agregar de Spotify"}

@@ -31,7 +31,6 @@ export default function OptionRow({ label, options, value, onChange, multi = fal
             type="button"
             className="tv-optrow-btn"
             aria-pressed={isOn(o.value)}
-            title={o.title}
             disabled={o.disabled}
             onClick={() => onChange(o.value)}
           >
