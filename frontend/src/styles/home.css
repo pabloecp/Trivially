@@ -1695,6 +1695,39 @@
   animation: tvDropIn 0.3s var(--tv-spring);
 }
 .tv-spotify-ask span { flex: 1; }
+/* "Mis playlists": the Spotify playlists and albums kept on the account, under the playlists' row, on the same
+   background as the option rows. */
+.tv-saved { padding: 6px; border-radius: 16px; background: var(--tv-option-bg); animation: tvDropIn 0.3s var(--tv-spring); }
+.tv-saved-empty { margin: 0; padding: 10px 12px; font-size: 13px; font-weight: 700; color: var(--tv-text-3); }
+.tv-saved-list { display: grid; gap: 2px; max-height: 300px; margin: 0; padding: 0; overflow-y: auto; list-style: none; scrollbar-width: thin; }
+.tv-saved-item { display: flex; align-items: center; gap: 10px; min-width: 0; padding: 6px; border-radius: 12px; }
+.tv-saved-item:hover { background: rgba(255, 255, 255, 0.04); }
+.tv-saved-item > img,
+.tv-saved-item > svg { flex: none; width: 40px; height: 40px; border-radius: 8px; object-fit: cover; }
+.tv-saved-text { display: grid; gap: 1px; flex: 1; min-width: 0; }
+.tv-saved-text strong { overflow: hidden; font-size: 14px; text-overflow: ellipsis; white-space: nowrap; }
+.tv-saved-text small { font-size: 12px; font-weight: 700; color: var(--tv-text-3); }
+.tv-saved-forget {
+  display: grid;
+  flex: none;
+  place-items: center;
+  min-width: 38px;
+  height: 38px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--tv-text-3);
+  font-family: inherit;
+  font-weight: 800;
+  font-size: 13px;
+  cursor: pointer;
+}
+.tv-saved-forget:hover { background: rgba(255, 255, 255, 0.06); color: var(--tv-text); }
+.tv-saved-forget.is-asking { background: var(--p-bad); color: #fff; }
+.tv-saved-add { flex: none; width: 38px; padding: 0; }
+.tv-saved-add .tv-spinner { width: 16px; height: 16px; }
+
 /* A public Spotify playlist pasted as a link: under the playlists, one field like the game's answer box (the icon in
    it, the button at its end), on the same background as the option rows. */
 .tv-spotify-link { display: grid; gap: 6px; animation: tvDropIn 0.3s var(--tv-spring); }

@@ -2,6 +2,7 @@ import { verifySocketToken } from "../auth/socketToken.js";
 import { prefetchMedia } from "../audio/mediaCache.js";
 import { readPublicSpotify, spotifyLinkFrom } from "../catalog/spotifyEmbed.js";
 import { readSpotifyPlaylist } from "../catalog/spotifyLibrary.js";
+import { forgetSpotifyLink, saveSpotifyLink, savedSpotifyLinks } from "../db/store.js";
 import { prefetchFlags } from "../geo/flags.js";
 
 export function attachSockets(io, rooms) {
@@ -144,11 +145,30 @@ export function attachSockets(io, rooms) {
       try {
         const { room, userId } = requireRoom(rooms, socket);
         rooms.assertPlaylistEditor(room, userId);
-        const playlist = await readPublicSpotify(await spotifyLinkFrom(link));
+        const target = await spotifyLinkFrom(link);
+        const playlist = await readPublicSpotify(target);
         if (!playlist.tracks.length) throw new Error("No tiene canciones que se puedan usar");
         rooms.addSpotifyPlaylist(room, userId, playlist, { fromLink: true });
-        ack?.({ ok: true, state: rooms.publicState(room, userId) });
+        // Someone with an account keeps it on their profile, to add it again from "Mis playlists" in any room.
+        const saved = saveSpotifyLink(rooms.store, userId, { ...target, name: playlist.name, image: playlist.image, total: playlist.tracks.length });
+        ack?.({ ok: true, state: rooms.publicState(room, userId), saved });
         io.to(room.code).emit("room:state", rooms.publicState(room));
+      } catch (err) {
+        ack?.({ ok: false, error: err.message });
+      }
+    });
+
+    // The Spotify playlists and albums this account saved ("Mis playlists"); a guest has none. Only the verified
+    // id of this socket's own account is read or changed.
+    socket.on("spotify:saved", (ack) => {
+      const userId = socket.data.userId;
+      const account = userId && rooms.store?.users?.[userId];
+      ack?.({ ok: true, canSave: Boolean(account && !account.isGuest), saved: savedSpotifyLinks(rooms.store, userId) });
+    });
+
+    socket.on("spotify:forget", (key, ack) => {
+      try {
+        ack?.({ ok: true, saved: forgetSpotifyLink(rooms.store, socket.data.userId, String(key || "")) });
       } catch (err) {
         ack?.({ ok: false, error: err.message });
       }

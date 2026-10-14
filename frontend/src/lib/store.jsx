@@ -488,6 +488,20 @@ export function AppProvider({ children }) {
         const res = await emitAckWithin(25000, "room:spotifyLink", link);
         if (!res.ok) throw new Error(res.error);
         if (res.state) setRoom(res.state);
+        return res.saved || null;
+      },
+
+      // The Spotify playlists and albums kept on this account ({ canSave, saved }), and deleting one for good.
+      async listSavedSpotify() {
+        const res = await emitAck("spotify:saved");
+        if (!res.ok) throw new Error(res.error);
+        return { canSave: Boolean(res.canSave), saved: res.saved || [] };
+      },
+
+      async forgetSavedSpotify(key) {
+        const res = await emitAck("spotify:forget", key);
+        if (!res.ok) throw new Error(res.error);
+        return res.saved || [];
       },
 
       async toggleConfigPermission(targetUserId) {

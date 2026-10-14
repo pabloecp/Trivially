@@ -20,7 +20,8 @@ function configKey(config) {
 // only keeps the tap visible until the server's new state arrives. `children` go at the bottom.
 // With `readOnly` (players without permission to change them) everything shows but nothing can be tapped.
 export default function MusicSettings({ room, catalog, updateConfig, onToast, children, readOnly = false }) {
-  const { user, listSpotifyPlaylists, addSpotifyPlaylist, addSpotifyLink, connectSpotify } = useApp();
+  const { user, listSpotifyPlaylists, addSpotifyPlaylist, addSpotifyLink, connectSpotify, listSavedSpotify, forgetSavedSpotify } =
+    useApp();
   const playlists = catalog?.playlists || [];
   // Spotify playlists already added to the room.
   const custom = room.customPlaylists || [];
@@ -39,6 +40,13 @@ export default function MusicSettings({ room, catalog, updateConfig, onToast, ch
   const [linkOpen, setLinkOpen] = useState(false);
   const [link, setLink] = useState("");
   const [linkBusy, setLinkBusy] = useState(false);
+  // "Mis playlists": what this account added with a link before, kept on its profile (guests have none). A button
+  // among the playlists opens the list: each one is added again with one tap, or deleted for good (two taps).
+  const hasAccount = Boolean(user && !user.isGuest);
+  const [savedOpen, setSavedOpen] = useState(false);
+  const [saved, setSaved] = useState(null);
+  const [savedBusy, setSavedBusy] = useState("");
+  const [confirmForget, setConfirmForget] = useState("");
   // Like a new room: every playlist of the catalog ticked.
   const defaultIds = playlists.map((p) => p.id);
   const [draft, setDraft] = useState(room.config);
@@ -75,13 +83,58 @@ export default function MusicSettings({ room, catalog, updateConfig, onToast, ch
     if (!link.trim() || linkBusy) return;
     setLinkBusy(true);
     try {
-      await addSpotifyLink(link.trim());
+      const list = await addSpotifyLink(link.trim());
+      if (list) setSaved(list);
       setLink("");
       setLinkOpen(false);
     } catch (err) {
       onToast?.(err.message || "No se pudo añadir esa playlist");
     } finally {
       setLinkBusy(false);
+    }
+  }
+
+  // The room's id of a saved one, to tell whether it is already in the room.
+  const roomIdOf = (item) => `sp:${item.kind === "album" ? `album:${item.id}` : item.id}`;
+
+  async function toggleSaved() {
+    if (savedOpen) {
+      setSavedOpen(false);
+      return;
+    }
+    setLinkOpen(false);
+    setSavedOpen(true);
+    setConfirmForget("");
+    try {
+      setSaved((await listSavedSpotify()).saved);
+    } catch (err) {
+      onToast?.(err.message || "No se pudieron cargar tus playlists");
+    }
+  }
+
+  async function addSaved(item) {
+    if (savedBusy) return;
+    setSavedBusy(item.key);
+    try {
+      const list = await addSpotifyLink(`spotify:${item.kind}:${item.id}`);
+      if (list) setSaved(list);
+    } catch (err) {
+      onToast?.(err.message || "No se pudo agregar");
+    } finally {
+      setSavedBusy("");
+    }
+  }
+
+  async function forgetSaved(item) {
+    if (confirmForget !== item.key) {
+      setConfirmForget(item.key);
+      return;
+    }
+    setConfirmForget("");
+    try {
+      setSaved(await forgetSavedSpotify(item.key));
+    } catch (err) {
+      onToast?.(err.message || "No se pudo borrar");
     }
   }
 
@@ -199,11 +252,26 @@ export default function MusicSettings({ room, catalog, updateConfig, onToast, ch
                 {spotifyBusy === p.id ? "Añadiendo…" : p.name}
               </button>
             ))}
+        {!readOnly && hasAccount && (
+          <button
+            type="button"
+            className="tv-optrow-btn is-add"
+            onClick={toggleSaved}
+            aria-expanded={savedOpen}
+            title="Las playlists y álbumes que agregaste antes"
+          >
+            <Icon name={savedOpen ? "close" : "plus"} size={16} strokeWidth={3} />
+            {savedOpen ? "Cerrar" : "Mis playlists"}
+          </button>
+        )}
         {!readOnly && (
           <button
             type="button"
             className="tv-optrow-btn is-add"
-            onClick={() => setLinkOpen((v) => !v)}
+            onClick={() => {
+              setSavedOpen(false);
+              setLinkOpen((v) => !v);
+            }}
             aria-expanded={linkOpen}
             title="Agregar una playlist pública o un álbum de Spotify con su link"
           >
@@ -256,6 +324,62 @@ export default function MusicSettings({ room, catalog, updateConfig, onToast, ch
           <small className="tv-spotify-link-hint">Una playlist pública o un álbum. Se usan sus primeras 100 canciones.</small>
         </form>
       )}
+      {!readOnly && hasAccount && savedOpen && (
+        <section className="tv-saved" aria-label="Mis playlists">
+          {saved === null ? (
+            <p className="tv-saved-empty">Cargando…</p>
+          ) : saved.length === 0 ? (
+            <p className="tv-saved-empty">
+              Aún no tienes playlists guardadas. Las que agregues con su link se guardan aquí, en tu cuenta.
+            </p>
+          ) : (
+            <ul className="tv-saved-list">
+              {saved.map((item) => {
+                const inRoom = custom.some((p) => p.id === roomIdOf(item));
+                const asking = confirmForget === item.key;
+                return (
+                  <li key={item.key} className="tv-saved-item">
+                    <SavedCover src={item.image} />
+                    <span className="tv-saved-text">
+                      <strong>{item.name}</strong>
+                      <small>
+                        {item.kind === "album" ? "Álbum" : "Playlist"}
+                        {item.total ? ` · ${item.total} canciones` : ""}
+                      </small>
+                    </span>
+                    <button
+                      type="button"
+                      className={`tv-saved-forget${asking ? " is-asking" : ""}`}
+                      onClick={() => forgetSaved(item)}
+                      onBlur={() => asking && setConfirmForget("")}
+                      aria-label={asking ? `Confirmar: borrar ${item.name}` : `Borrar ${item.name} de tus playlists`}
+                      title="Borrar de tus playlists"
+                    >
+                      {asking ? "¿Borrar?" : <Icon name="trash" size={18} strokeWidth={2.4} />}
+                    </button>
+                    <button
+                      type="button"
+                      className="tv-btn tv-btn--sm tv-c-music tv-saved-add"
+                      onClick={() => addSaved(item)}
+                      disabled={inRoom || Boolean(savedBusy)}
+                      aria-label={inRoom ? `${item.name} ya está en la sala` : `Agregar ${item.name}`}
+                      aria-busy={savedBusy === item.key}
+                    >
+                      {savedBusy === item.key ? (
+                        <span className="tv-spinner" aria-hidden="true" />
+                      ) : inRoom ? (
+                        <Icon name="check" size={18} strokeWidth={3} />
+                      ) : (
+                        <Icon name="plus" size={18} strokeWidth={3} />
+                      )}
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </section>
+      )}
       {isOwnerEditor && askLink && !spotifyLinked && (
         <div className="tv-spotify-ask">
           <SpotifyIcon size={26} />
@@ -293,4 +417,11 @@ export default function MusicSettings({ room, catalog, updateConfig, onToast, ch
       {children}
     </fieldset>
   );
+}
+
+// A saved playlist's or album's cover, or the Spotify icon when there is none or it doesn't load.
+function SavedCover({ src }) {
+  const [failed, setFailed] = useState(false);
+  if (!src || failed) return <SpotifyIcon size={40} />;
+  return <img src={src} alt="" loading="lazy" onError={() => setFailed(true)} />;
 }

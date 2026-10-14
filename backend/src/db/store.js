@@ -568,3 +568,39 @@ export function leaderboard(store, sort = "totalScore") {
       ...u.stats,
     }));
 }
+
+// Spotify playlists and albums an account added with their link (the "Agregar de Spotify" box of Adivina la canción),
+// kept on the account so they can be added again with one tap from any room ("Mis playlists"). Newest first, at most
+// MAX_SAVED_SPOTIFY. Guests keep nothing: they have no account to keep it on.
+const MAX_SAVED_SPOTIFY = 60;
+const SPOTIFY_KINDS = ["playlist", "album"];
+
+function savableAccount(store, userId) {
+  const user = store.users[userId];
+  return user && !user.isGuest ? user : null;
+}
+
+/** The account's saved Spotify playlists and albums ([] for a guest or nobody). */
+export function savedSpotifyLinks(store, userId) {
+  return savableAccount(store, userId)?.savedSpotify || [];
+}
+
+/** Keeps a playlist or album on the account (moved to the top if it was there). Returns the list, or null for a guest. */
+export function saveSpotifyLink(store, userId, { kind, id, name, image = null, total = 0 }) {
+  const user = savableAccount(store, userId);
+  if (!user || !SPOTIFY_KINDS.includes(kind) || !/^[A-Za-z0-9]{22}$/.test(String(id))) return null;
+  const key = `${kind}:${id}`;
+  const item = { key, kind, id, name: String(name || "").slice(0, 120) || "Playlist", image, total: Number(total) || 0, addedAt: new Date().toISOString() };
+  user.savedSpotify = [item, ...(user.savedSpotify || []).filter((s) => s.key !== key)].slice(0, MAX_SAVED_SPOTIFY);
+  saveStore(store);
+  return user.savedSpotify;
+}
+
+/** Deletes one for good from the account. Returns the list left. */
+export function forgetSpotifyLink(store, userId, key) {
+  const user = savableAccount(store, userId);
+  if (!user) throw new Error("Necesitas una cuenta para guardar playlists");
+  user.savedSpotify = (user.savedSpotify || []).filter((s) => s.key !== key);
+  saveStore(store);
+  return user.savedSpotify;
+}
