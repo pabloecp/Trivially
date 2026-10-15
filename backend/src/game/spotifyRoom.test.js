@@ -28,6 +28,9 @@ const song = (i) => ({ id: `sp-t${i}`, title: `Canción ${i}`, artistName: "Arti
 const other = mgr.create({ host: { id: "user", name: "User", socketId: "s0" }, game: "musica" });
 assert.throws(() => mgr.addSpotifyPlaylist(other, "user", playlist), /solo para owners/);
 const room = mgr.create({ host: { id: "owner", name: "Owner", socketId: "s1" }, game: "musica" });
+// A code is checked before the name is asked: a wrong one says so straight away.
+assert.equal(mgr.findToJoin(room.code.toLowerCase()), room);
+assert.throws(() => mgr.findToJoin("ZZZZZZ"), /ninguna sala/);
 mgr.addPlayer(room, { id: "user", name: "User", socketId: "s2" });
 assert.throws(() => mgr.addSpotifyPlaylist(room, "user", playlist), /Necesitas permiso/);
 mgr.addPlayer(room, { id: "owner2", name: "Owner 2", socketId: "s3" });
@@ -56,6 +59,14 @@ const search = mgr.buildSearchCatalog(room);
 assert.equal(search.length, mgr.catalog.songs.length + 6);
 assert.equal(mgr.globalSongList().length, mgr.catalog.songs.length);
 assert.deepEqual(mgr.roomSearchExtras(room).map((s) => s.id).sort(), playlist.tracks.map((t) => `sp-${t.spotifyId}`).sort());
+
+// The catalog turned off: only the ticked playlists play, whatever the filters say.
+mgr.updateConfig(room, "owner", { languages: ["es", "en"], useCatalog: false });
+assert.equal(room.config.useCatalog, false);
+assert.equal(mgr.songPool(room).length, 0);
+mgr.updateConfig(room, "owner", { useCatalog: true });
+assert.ok(mgr.songPool(room).length > 0);
+mgr.updateConfig(room, "owner", { languages: [] });
 
 // Nothing playable yet: the match can't start.
 assert.throws(() => mgr.start(room, "owner"), /se están cargando/);

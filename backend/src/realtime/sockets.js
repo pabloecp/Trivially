@@ -51,13 +51,22 @@ export function attachSockets(io, rooms) {
     socket.on("room:join", (payload, ack) => {
       try {
         const user = bindUser(socket, payload?.user, rooms);
-        const room = rooms.get(payload.code || "");
-        if (!room) throw new Error("Sala no encontrada");
+        const room = rooms.findToJoin(payload.code, user.id);
         leaveCurrentRoom(io, rooms, socket, room.code);
         rooms.addPlayer(room, user);
         socket.join(room.code);
         ack?.({ ok: true, state: rooms.publicState(room, user.id) });
         io.to(room.code).emit("room:state", rooms.publicState(room));
+      } catch (err) {
+        ack?.({ ok: false, error: err.message });
+      }
+    });
+
+    // Whether a code opens a room, before the player writes their name. It sends nothing about the room.
+    socket.on("room:check", (code, ack) => {
+      try {
+        rooms.findToJoin(code, socket.data.userId);
+        ack?.({ ok: true });
       } catch (err) {
         ack?.({ ok: false, error: err.message });
       }

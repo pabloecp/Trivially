@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import TvShell from "../../components/home/TvShell.jsx";
 import Confetti from "../../components/home/Confetti.jsx";
 import Icon from "../../components/home/Icon.jsx";
+import WaitingPill from "../../components/home/WaitingPill.jsx";
 import MatchResults from "../../components/home/MatchResults.jsx";
 import PartyPanel from "../../components/home/PartyPanel.jsx";
 import SpectatorBanner from "../../components/home/SpectatorBanner.jsx";
@@ -107,6 +108,55 @@ function GameScreen() {
   const canPick = phase === "playing" && Boolean(cells) && !spectator && !out && !pickedThisTurn;
 
   useEffect(() => setErr(""), [round, phase, turn]);
+  // What just happened shows for a moment in the middle of the board, like the countdown. This player stepping on a
+  // mine or running out of time: straight away, with the round's points (and not again at the reveal). Someone else
+  // stepping on one: a quieter card with their name. At the reveal, how the round went for whoever was still in.
+  const [burst, setBurst] = useState(null);
+  const burstTimer = useRef(null);
+  const outShown = useRef(null);
+  const othersOut = useRef({ round: null, ids: new Set() });
+  function showBurst(next, ms) {
+    clearTimeout(burstTimer.current);
+    setBurst(next);
+    burstTimer.current = setTimeout(() => setBurst(null), ms);
+  }
+  useEffect(() => () => clearTimeout(burstTimer.current), []);
+  useEffect(() => {
+    if (!out || outShown.current === round) return;
+    outShown.current = round;
+    showBurst({ key: `${round}:me`, mine: true, ...roundBurst({ ...me, lastPoints: roundPoints(me?.hits) }, question, { out, hits: me?.hits || 0 }) }, 2600);
+  }, [out, round]);
+  // Other players stepping on a mine in a race, unless this player's own card is showing. (By turns it isn't shown:
+  // whoever waits sees who they wait for instead.)
+  const fallen = phase === "playing" && race ? room?.players.filter((p) => p.id !== user?.id && p.out === "mina") || [] : [];
+  const fallenKey = fallen.map((p) => p.id).join(",");
+  useEffect(() => {
+    if (othersOut.current.round !== round) othersOut.current = { round, ids: new Set() };
+    const fresh = fallen.filter((p) => !othersOut.current.ids.has(p.id));
+    fresh.forEach((p) => othersOut.current.ids.add(p.id));
+    if (!fresh.length || phase !== "playing") return;
+    setBurst((current) => {
+      if (current?.mine) return current;
+      clearTimeout(burstTimer.current);
+      burstTimer.current = setTimeout(() => setBurst(null), 1800);
+      return {
+        key: `${round}:${fresh.map((p) => p.id).join(",")}`,
+        tone: "other",
+        icon: "bomb",
+        title: fresh.length === 1 ? `${fresh[0].name} pisó una mina` : `${joinNames(fresh.map((p) => p.name))} pisaron una mina`,
+        detail: fresh.length === 1 ? "Queda fuera de esta ronda" : "Quedan fuera de esta ronda",
+      };
+    });
+  }, [fallenKey, round, phase]);
+  useEffect(() => {
+    if (phase !== "reveal") {
+      if (phase !== "playing") setBurst(null);
+      return;
+    }
+    // Whoever was already out saw their card when it happened.
+    if (spectator || !question || outShown.current === round) return;
+    showBurst({ key: `${round}:reveal`, mine: true, ...roundBurst(me, question) }, 2600);
+  }, [phase, round]);
   // A failed pick (someone was faster) shows for a moment in the top card, then what to do comes back.
   useEffect(() => {
     if (!err) return undefined;
@@ -281,47 +331,40 @@ function GameScreen() {
         {question ? (
           <section key={round} className="tv-game-stage tv-mines-stage">
             <PauseVeil room={room} isHost={isHost} />
-            {/* One row over the board, always as tall: the board's counters, and at the reveal how this player's
-                round went. */}
+            {/* One row over the board, always there: the board's counters, which only update (how this player's round
+                went shows over the board). */}
             <div className="tv-mines-bar">
-              {reveal && !spectator ? (
-                <Verdict me={me} />
-              ) : (
                 <div className="tv-mines-chips" aria-live="polite">
-                  {/* What's left to find, bigger than the rest, with a bar of how many are found already. */}
-                  <span
-                    className={`tv-match-chip tv-mines-count tv-mines-left${toFind === 0 ? " is-done" : ""}`}
-                    aria-label={reveal ? `${question.found} de ${question.total} encontrados` : `Faltan ${toFind} de ${question.total}`}
-                  >
-                    <Icon name="check" size={14} strokeWidth={3} />
-                    {reveal ? (
-                      <span>
-                        <strong>{question.found}</strong> de {question.total}
-                      </span>
-                    ) : (
-                      <span>
-                        Faltan <strong>{toFind}</strong>
-                      </span>
-                    )}
-                    <span className="tv-mines-progress" aria-hidden="true">
-                      <span style={{ width: `${question.total ? (100 * question.found) / question.total : 0}%` }} />
+                  {/* The board's counters, only an icon in its colour and a number (each says what it is to a screen
+                      reader): right answers found out of the board's total, mines, and players still standing. The
+                      numbers pop when they change. */}
+                  <span className={`tv-mines-stat is-left${toFind === 0 ? " is-done" : ""}`} aria-label={`${question.found} de ${question.total} encontradas`}>
+                    <span className="tv-mines-stat-icon" aria-hidden="true">
+                      <Icon name="check" size={16} strokeWidth={3.2} />
                     </span>
+                    <strong key={question.found} className="tv-mines-stat-num" aria-hidden="true">
+                      {question.found}
+                      <span className="tv-mines-stat-of">/{question.total}</span>
+                    </strong>
                   </span>
-                  <span className="tv-match-chip tv-mines-count">
-                    <Icon name="bomb" size={14} strokeWidth={2.6} />
-                    {CELLS - question.total} minas
-                  </span>
-                  {phase === "playing" && (
-                    <span className="tv-match-chip tv-mines-count">
-                      <Icon name="users" size={14} strokeWidth={2.6} />
-                      {standing.length} en pie
+                  <span className="tv-mines-stat is-mines" aria-label={`${CELLS - question.total} minas`}>
+                    <span className="tv-mines-stat-icon" aria-hidden="true">
+                      <Icon name="bomb" size={16} strokeWidth={2.6} />
                     </span>
-                  )}
+                    <strong aria-hidden="true">{CELLS - question.total}</strong>
+                  </span>
+                  <span className="tv-mines-stat is-alive" aria-label={`${standing.length} en pie`}>
+                    <span className="tv-mines-stat-icon" aria-hidden="true">
+                      <Icon name="users" size={16} strokeWidth={2.6} />
+                    </span>
+                    <strong key={standing.length} className="tv-mines-stat-num" aria-hidden="true">
+                      {standing.length}
+                    </strong>
+                  </span>
                 </div>
-              )}
             </div>
 
-            <div className={`tv-mines-board${reveal ? " is-reveal" : ""}`} role="group" aria-label="Tablero">
+            <div className={`tv-mines-board${reveal ? " is-reveal" : ""}${burst?.shake ? " is-boom" : ""}`} role="group" aria-label="Tablero">
               {cells
                 ? cells.map((c, i) => {
                     const mine = myPick === i && !c.by;
@@ -368,6 +411,25 @@ function GameScreen() {
                   </span>
                 </div>
               )}
+              {/* By turns, once this player picked (or is out), who the turn still waits for, over the board. */}
+              {!burst && phase === "playing" && !race && !spectator && (pickedThisTurn || out) && waitingFor.length > 0 && (
+                <div className="tv-mines-wait" role="status">
+                  <WaitingPill names={waitingFor} className="is-float" />
+                </div>
+              )}
+              {burst && (
+                <div key={burst.key} className={`tv-mines-burst is-${burst.tone}${burst.long ? " is-long" : ""}`} role="alert">
+                  <span className="tv-mines-burst-card">
+                    {burst.confetti && <Confetti pieces={28} />}
+                    <span className="tv-mines-burst-icon">
+                      <Icon name={burst.icon} size={30} strokeWidth={2.8} />
+                    </span>
+                    <strong>{burst.title}</strong>
+                    {burst.detail && <small>{burst.detail}</small>}
+                    {burst.points > 0 && <span className="tv-tag tv-tag--points">+{burst.points}</span>}
+                  </span>
+                </div>
+              )}
             </div>
 
           </section>
@@ -387,45 +449,23 @@ function GameScreen() {
   );
 }
 
-// The end of a round: whether this player survived, how many right answers they found and their points.
-function Verdict({ me }) {
-  const answer = me?.lastAnswer;
+// A round's points from its hits: 100 for the first, 200 for the second… up to 500 each (hitPoints on the server).
+function roundPoints(hits = 0) {
+  let total = 0;
+  for (let n = 1; n <= hits; n += 1) total += Math.min(500, 100 * n);
+  return total;
+}
+
+// The card over the board at the reveal: how this player's round went, and a party when the whole board was found.
+function roundBurst(me, question, live = null) {
+  const answer = live || me?.lastAnswer;
   const hits = answer?.hits || 0;
-  let tone;
-  let icon;
-  let title;
-  let detail;
-  if (answer?.hits == null) {
-    tone = "timeout";
-    icon = "hash";
-    title = "Miraste esta ronda";
-    detail = "Juegas desde la siguiente";
-  } else if (answer.out === "mina") {
-    tone = "bad";
-    icon = "bomb";
-    title = "¡Pisaste una mina!";
-  } else if (answer.out === "tiempo") {
-    tone = "timeout";
-    icon = "close";
-    title = "Se te acabó el tiempo";
-  } else {
-    tone = "ok";
-    icon = "check";
-    title = "¡Sobreviviste!";
-  }
-  return (
-    <div className={`tv-mines-verdict tv-mines-verdict--${tone}`} role="status">
-      {tone === "ok" && hits > 0 && <Confetti pieces={18} />}
-      <span className="tv-mines-verdict-icon">
-        <Icon name={icon} size={22} strokeWidth={2.8} />
-      </span>
-      <span className="tv-mines-verdict-text">
-        <strong>{title}</strong>
-        {detail && <small>{detail}</small>}
-      </span>
-      {hits > 0 && <span className="tv-tag tv-tag--points">+{me?.lastPoints || 0}</span>}
-    </div>
-  );
+  const points = me?.lastPoints || 0;
+  const cleared = question.total > 0 && question.found >= question.total;
+  if (answer?.out === "mina") return { tone: "mina", shake: true, icon: "bomb", title: "¡Pisaste una mina!", detail: hits ? `Te llevas ${hitsText(hits)}` : "Suerte en la próxima", points };
+  if (answer?.out === "tiempo") return { tone: "tiempo", icon: "hourglass", title: "¡Se te acabó el tiempo!", detail: hits ? `Te llevas ${hitsText(hits)}` : "Suerte en la próxima", points };
+  if (cleared) return { tone: "win", icon: "star", title: "¡Tablero limpio!", detail: hits ? `Encontraste ${hitsText(hits)}` : "Encontraron todas las correctas", points, confetti: true, long: true };
+  return { tone: "ok", icon: "check", title: "¡Sobreviviste!", detail: hits ? `Encontraste ${hitsText(hits)}` : "Sin aciertos esta vez", points, confetti: hits > 0 };
 }
 
 export default function Game() {

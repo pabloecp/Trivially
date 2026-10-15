@@ -293,6 +293,30 @@
 }
 .tv-quiz-hint svg { color: var(--brand-text); }
 .tv-quiz-hint.is-sent svg { color: var(--p-ok-text); }
+/* The hint and every verdict (four options, written answers, Adivina la canción's closed rounds) are the same pill:
+   as tall, as round, the same padding, so going from one to the other only changes what's inside. */
+.tv-quiz-hint,
+.tv-quiz-verdict { box-sizing: border-box; height: 48px; padding: 0 18px; border-radius: 999px; gap: 10px; }
+.tv-quiz-verdict { flex-wrap: nowrap; max-width: 100%; padding: 0 16px 0 7px; }
+.tv-quiz-verdict:has(.tv-tag--points) { padding-right: 7px; }
+.tv-quiz-verdict-icon { flex-shrink: 0; width: 34px; height: 34px; border-radius: 50%; }
+.tv-app .tv-quiz-verdict .tv-quiz-verdict-icon { box-shadow: none; }
+.tv-quiz-verdict-icon svg { width: 18px; height: 18px; }
+.tv-quiz-verdict-title { font-size: 19px; white-space: nowrap; }
+.tv-quiz-verdict .tv-tags { flex-wrap: nowrap; }
+.tv-quiz-verdict-detail { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* A long answer on a narrow screen: the verdict grows to two lines instead of cutting it. */
+@media (max-width: 559px) {
+  .tv-quiz-verdict:has(.tv-quiz-verdict-detail) { flex-wrap: wrap; justify-content: center; row-gap: 2px; height: auto; min-height: 48px; padding: 7px 16px; border-radius: 24px; }
+  .tv-quiz-verdict-detail { white-space: normal; }
+}
+/* Four options: the slot is as tall as the countdown's number, and the card leaves no padding under it, so the pill
+   sits as far from the question as from the answers. */
+.tv-quiz-slot { height: 64px; }
+.tv-quiz-q:has(.tv-quiz-slot) { padding-bottom: 0; }
+/* Written answers: the box, the countdown or the verdict start right under the question instead of floating in the
+   middle of their row, so they stay as close to it as the four options' pill. */
+.tv-quiz-answer { place-items: start center; }
 /* Phones: the verdict keeps to one line; the streak is already in the scoreboard. */
 @media (max-width: 559px) {
   .tv-quiz-slot .tv-tag--streak { display: none; }
@@ -301,7 +325,6 @@
 /* ---------- Preguntas: written answers and years ---------- */
 /* The verdict of a written answer says what it was. On narrow cards it may wrap onto a second line. */
 .tv-quiz-verdict-detail { font-weight: 700; font-size: 15px; color: var(--tv-text-2); }
-.tv-quiz-slot .tv-quiz-verdict:has(.tv-quiz-verdict-detail) { flex-wrap: wrap; justify-content: center; row-gap: 4px; }
 /* A flag question: the flag under the card, the answer box under it. */
 .tv-quiz-flag { display: grid; place-items: center; }
 .tv-quiz-write { justify-self: center; justify-items: center; }
@@ -310,7 +333,7 @@
 .tv-quiz-stage.is-open { display: grid; justify-items: center; align-content: center; gap: 16px; }
 /* Written questions: the countdown, the answer box (or what was sent) and the verdict take turns in one row of
    constant height under the card; a flag question keeps the flag's place even before the flag shows. */
-.tv-quiz-answer { display: grid; place-items: center; width: min(560px, 100%); min-height: 112px; }
+.tv-quiz-answer { display: grid; place-items: center; width: min(560px, 100%); min-height: 116px; }
 .tv-quiz-answer > .tv-quiz-write { width: 100%; }
 .tv-quiz-flag { min-height: 150px; }
 .tv-music-options { width: min(760px, 100%); }
@@ -323,3 +346,19 @@
 .tv-quiz-write .tv-skip-btn { width: 100%; }
 /* The host paused the match: a veil over the round, nothing can be answered. */
 .tv-music-verdict { justify-self: center; margin: -6px 0 4px; }
+
+/* Written questions: the question sits as close to the answer box as the box to "Saltar", and "Saltar" looks as tall
+   as the box (its 58 px plus its 4 px edge). */
+.tv-quiz-q:not(:has(.tv-quiz-slot)) { padding-bottom: 0; }
+.tv-quiz-write .tv-skip-btn { height: 60px; }
+@media (max-width: 640px) { .tv-quiz-write .tv-skip-btn { height: 52px; } }
+/* A flag question's countdown: a card the shape of a flag, with the number in it, where the flag will appear. */
+.tv-quiz-flag-wait {
+  display: grid;
+  place-items: center;
+  width: 240px;
+  height: 150px;
+  border-radius: 12px;
+  background: var(--tv-option-bg);
+  box-shadow: inset 0 0 0 2px var(--tv-line);
+}

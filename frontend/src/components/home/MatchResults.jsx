@@ -63,8 +63,9 @@ export default function MatchResults({ room, color = "green" }) {
               <>
                 <button
                   className={`tv-btn tv-btn--block tv-c-${color} tv-shine`}
-                  onClick={() => replayGame().catch((e) => setErr(e.message || "No se pudo empezar otra partida"))}
+                  onClick={() => withSound(replayGame).catch((e) => setErr(e.message || "No se pudo empezar otra partida"))}
                   type="button"
+                  data-sound="none"
                 >
                   <Icon name="play" size={20} filled strokeWidth={1.5} />
                   Volver a jugar

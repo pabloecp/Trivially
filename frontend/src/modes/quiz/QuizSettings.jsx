@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
 import OptionRow, { rangeOptions } from "../../components/home/OptionRow.jsx";
+import SettingsTabs, { countNote } from "../../components/home/SettingsTabs.jsx";
 import { FORMATS, LEVELS, QUESTIONS_LIMITS, SECONDS_LIMITS, TOPICS, quizConfig } from "./quizInfo.js";
 
-// Settings of a "Trivia" match, in the settings panel: the categories, the modes (closed or open questions) and the difficulties (tick as
-// many as you like), how many questions and the seconds to answer each one. A choice with no questions with the other
+// Settings of a "Trivia" match, in the settings panel, in two tabs: "Partida" (the modes, closed or open questions,
+// how many questions and the seconds to answer each one) and "Preguntas" (the categories and the difficulties; tick
+// as many as you like). A choice with no questions with the other
 // settings (room.questionCounts) is greyed out and can't be ticked. Each list has "Seleccionar todos" / "Deseleccionar todos"; with one left empty the match can't start.
 // Every tap is saved straight away for the whole room. With `readOnly` (players without permission) everything shows
 // but nothing can be tapped.
@@ -46,43 +48,72 @@ export default function QuizSettings({ room, updateConfig, onToast, children, re
   const formatIds = FORMATS.map((f) => f.id);
   const levelIds = LEVELS.map((d) => d.id);
 
+  const seconds = Math.round(draft.roundMs / 1000);
+
   return (
-    <fieldset className="tv-settings" disabled={readOnly}>
-      <OptionRow
-        label="Categorías"
-        multi
-        wrap
-        options={TOPICS.map(choice("categories", "categories"))}
-        value={draft.categories}
-        onChange={(id) => toggle("categories", topicIds, id)}
-        onSetAll={(list) => save({ categories: list })}
-      />
-      <OptionRow
-        label="Tipo de respuestas"
-        multi
-        wrap
-        options={FORMATS.map(choice("formats", "formats"))}
-        value={draft.formats}
-        onChange={(id) => toggle("formats", formatIds, id)}
-        onSetAll={(list) => save({ formats: list })}
-      />
-      <OptionRow
-        label="Dificultad"
-        multi
-        wrap
-        options={LEVELS.map(choice("difficulties", "difficulties"))}
-        value={draft.difficulties}
-        onChange={(id) => toggle("difficulties", levelIds, id)}
-        onSetAll={(list) => save({ difficulties: list })}
-      />
-      <OptionRow label="Rondas" options={rangeOptions(QUESTIONS_LIMITS)} value={draft.rounds} onChange={(n) => save({ rounds: n })} />
-      <OptionRow
-        label="Segundos por pregunta"
-        options={rangeOptions(SECONDS_LIMITS)}
-        value={Math.round(draft.roundMs / 1000)}
-        onChange={(n) => save({ roundMs: n * 1000 })}
-      />
+    <SettingsTabs
+      readOnly={readOnly}
+      storageKey="opciones"
+      tabs={[
+        {
+          id: "partida",
+          label: "Partida",
+          icon: "hourglass",
+          note: `${draft.rounds} rondas · ${seconds} s`,
+          alert: !draft.formats.length,
+          content: (
+            <>
+              <OptionRow
+                label="Tipo de respuestas"
+                multi
+                wrap
+                options={FORMATS.map(choice("formats", "formats"))}
+                value={draft.formats}
+                onChange={(id) => toggle("formats", formatIds, id)}
+                onSetAll={(list) => save({ formats: list })}
+              />
+              <OptionRow label="Rondas" options={rangeOptions(QUESTIONS_LIMITS)} value={draft.rounds} onChange={(n) => save({ rounds: n })} />
+              <OptionRow
+                label="Segundos por pregunta"
+                options={rangeOptions(SECONDS_LIMITS)}
+                value={seconds}
+                onChange={(n) => save({ roundMs: n * 1000 })}
+              />
+            </>
+          ),
+        },
+        {
+          id: "preguntas",
+          label: "Preguntas",
+          icon: "bulb",
+          note: countNote(draft.categories, topicIds.length),
+          alert: !draft.categories.length || !draft.difficulties.length,
+          content: (
+            <>
+              <OptionRow
+                label="Categorías"
+                multi
+                wrap
+                options={TOPICS.map(choice("categories", "categories"))}
+                value={draft.categories}
+                onChange={(id) => toggle("categories", topicIds, id)}
+                onSetAll={(list) => save({ categories: list })}
+              />
+              <OptionRow
+                label="Dificultad"
+                multi
+                wrap
+                options={LEVELS.map(choice("difficulties", "difficulties"))}
+                value={draft.difficulties}
+                onChange={(id) => toggle("difficulties", levelIds, id)}
+                onSetAll={(list) => save({ difficulties: list })}
+              />
+            </>
+          ),
+        },
+      ]}
+    >
       {children}
-    </fieldset>
+    </SettingsTabs>
   );
 }

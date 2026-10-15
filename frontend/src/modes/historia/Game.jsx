@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import TvShell from "../../components/home/TvShell.jsx";
 import Confetti from "../../components/home/Confetti.jsx";
 import Icon from "../../components/home/Icon.jsx";
+import WaitingPill, { joinNames as joinWaiting, waitingNames } from "../../components/home/WaitingPill.jsx";
 import MatchResults from "../../components/home/MatchResults.jsx";
 import PartyPanel from "../../components/home/PartyPanel.jsx";
 import { useApp, useRemainingMs } from "../../lib/store.jsx";
@@ -72,6 +73,8 @@ function GameScreen() {
     : room?.me;
   const myGuess = guess?.round === round ? guess : null;
   const confirmed = Boolean(myGuess?.locked) || Boolean(me?.answered);
+  // Who the round still waits for, once this player confirmed.
+  const waiting = waitingNames(room, user?.id);
   const open = phase === "playing" && iPlay && !confirmed && question?.min != null;
   const min = question?.min ?? null;
   const max = question?.max ?? null;
@@ -245,7 +248,12 @@ function GameScreen() {
     } else hint = "¿En qué año ocurrió? Prepárate para elegirlo en la línea del tiempo.";
   } else if (phase === "reveal") hint = tiebreak ? "" : closestText(room, user, fmt);
   else if (!iPlay) hint = `Solo juegan ${joinNames(tiedNames)}: gana el primero que confirme el año exacto.`;
-  else if (confirmed) hint = tiebreak ? "Año confirmado. Si es el exacto y fuiste el primero, ganas." : "Año confirmado. Esperando al resto…";
+  else if (confirmed)
+    hint = tiebreak
+      ? "Año confirmado. Si es el exacto y fuiste el primero, ganas."
+      : waiting.length
+      ? `Año confirmado. Esperando a ${joinWaiting(waiting)}…`
+      : "Año confirmado.";
   else if (myGuess) hint = `Ajusta con los botones${touch ? "" : " o las flechas"} y confirma.`;
   else hint = touch ? "Toca la línea del tiempo para elegir un año." : "Haz clic en la línea del tiempo o usa las flechas del teclado.";
 
@@ -268,8 +276,14 @@ function GameScreen() {
         disabled={!open || myGuess?.year == null}
         aria-live="polite"
       >
-        <Icon name={confirmed ? "check" : "calendar"} size={20} strokeWidth={2.6} />
-        {confirmed ? "Año confirmado" : myGuess ? `Confirmar ${fmt(myGuess.year)}` : "Elige un año en la línea"}
+        {confirmed && !tiebreak && phase === "playing" && waiting.length ? (
+          <WaitingPill names={waiting} inline />
+        ) : (
+          <>
+            <Icon name={confirmed ? "check" : "calendar"} size={20} strokeWidth={2.6} />
+            {confirmed ? "Año confirmado" : myGuess ? `Confirmar ${fmt(myGuess.year)}` : "Elige un año en la línea"}
+          </>
+        )}
       </button>
     );
   }

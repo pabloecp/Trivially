@@ -5,14 +5,18 @@ import Icon from "./Icon.jsx";
 // each choice has a little box, ticked or empty, so it reads as "pick as many as you like". `onSetAll(list)` adds
 // a small button beside the setting's name: "Seleccionar todos" ticks every choice, or "Deseleccionar todos" when they
 // already are. `actions` go beside it, on its left, and look the same (the music mode's "Mis playlists"). `children`
-// go after the choices. Inside a disabled fieldset nothing can be tapped.
-export default function OptionRow({ label, options, value, onChange, multi = false, wrap = false, onSetAll = null, actions = null, children }) {
+// go after the choices. `hint` is a short line under the name, for a setting whose meaning isn't obvious.
+// Inside a disabled fieldset nothing can be tapped.
+export default function OptionRow({ label, hint = null, options, value, onChange, multi = false, wrap = false, onSetAll = null, actions = null, children }) {
   const isOn = (v) => (multi ? value.includes(v) : value === v);
   const allOn = multi && options.every((o) => value.includes(o.value));
   return (
     <div className="tv-optrow" role="group" aria-label={label}>
       <div className="tv-optrow-head">
-        <span className="tv-optrow-label">{label}</span>
+        <span className="tv-optrow-name">
+          <span className="tv-optrow-label">{label}</span>
+          {hint && <small className="tv-optrow-hint">{hint}</small>}
+        </span>
         {(actions || (multi && onSetAll)) && (
           <span className="tv-optrow-actions">
             {actions}

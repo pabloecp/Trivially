@@ -368,7 +368,7 @@ function ProfileScreen() {
                     key={c}
                     type="button"
                     className="tv-swatch"
-                    style={{ background: c }}
+                    style={{ "--sw": c }}
                     aria-pressed={shownAvatar === c}
                     aria-label={`Color ${i + 1}`}
                     disabled={saving}
@@ -386,7 +386,7 @@ function ProfileScreen() {
                   {googlePhoto ? (
                     <img src={googlePhoto} alt="" referrerPolicy="no-referrer" />
                   ) : (
-                    <Icon name="user" size={18} strokeWidth={2.4} />
+                    <Icon name="user" size={16} strokeWidth={2.6} />
                   )}
                 </button>
               </div>

@@ -389,6 +389,22 @@ export function play(name) {
   }
 }
 
+/**
+ * Runs what a button does and sounds how it ended: `success` ("correct" by default; null for none) when it works,
+ * "wrong" when it fails, and the error is passed on. The button gets `data-sound="none"` so the click itself is quiet
+ * (creating a room, joining one, starting a match, signing in).
+ */
+export async function withSound(action, success = "correct") {
+  try {
+    const result = await action();
+    if (success) play(success);
+    return result;
+  } catch (err) {
+    play("wrong");
+    throw err;
+  }
+}
+
 const CLICKABLE = "button, a[href], [role='button'], [role='tab'], [role='option'], label";
 
 // What a click on `el` sounds like: its `data-sound`, "back" for the ways back, "next" for the big buttons and the game
@@ -396,7 +412,7 @@ const CLICKABLE = "button, a[href], [role='button'], [role='tab'], [role='option
 function soundFor(el) {
   const own = el.closest("[data-sound]")?.dataset.sound;
   if (own) return own === "none" ? null : own;
-  if (el.matches(".tv-chip--leave, .tv-roomhead-leave")) return "back";
+  if (el.matches(".tv-chip--leave, .tv-roomhead-leave, .tv-sheet-back")) return "back";
   if (el.matches(".tv-btn, .tv-mode")) return "next";
   return "tap";
 }

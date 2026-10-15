@@ -173,12 +173,13 @@ function artistKeys(song) {
 // ones, the title typed in the search box ("escribir"). Both are ticked in a new room; the rounds are shared evenly.
 export const MUSIC_FORMATS = ["opciones", "escribir"];
 
-// A new room plays the whole catalog (every language, genre and difficulty ticked) and no Spotify playlists;
-// `playlistIds` are the ticked Spotify ones ("sp:<id>").
+// A new room plays the whole catalog (`useCatalog`, every language, genre and difficulty ticked) and no Spotify
+// playlists; `playlistIds` are the ticked Spotify ones ("sp:<id>"). With `useCatalog` false only those play.
 function defaultConfig() {
   return {
     rounds: 5,
     roundMs: ROUND_MS,
+    useCatalog: true,
     languages: [...SONG_LANGUAGES],
     genres: [...SONG_GENRES],
     difficulties: [...SONG_DIFFICULTIES],
@@ -248,6 +249,17 @@ export class RoomManager {
 
   get(code) {
     return this.rooms.get(code.toUpperCase());
+  }
+
+  /**
+   * The room a code opens, checked before asking for a name (the Jugar sheet's "Tengo un código"): it throws when no
+   * room has that code, or when the host took this player out of it.
+   */
+  findToJoin(code, userId = null) {
+    const room = this.get(String(code || ""));
+    if (!room) throw new Error("No hay ninguna sala con ese código");
+    if (userId && room.kicked?.has(userId)) throw new Error("El anfitrión te sacó de esta sala");
+    return room;
   }
 
   create({ host, mode, config, game = null }) {
@@ -480,6 +492,8 @@ export class RoomManager {
     if (config?.roundMs != null) next.roundMs = Math.min(35000, Math.max(15000, Math.round(Number(config.roundMs)) || ROUND_MS));
     // Adivina la canción's ways of answering; both may be unticked (the match then can't start).
     if (Array.isArray(config?.formats)) next.formats = MUSIC_FORMATS.filter((f) => config.formats.includes(f));
+    // The catalog on or off (off: only the ticked Spotify playlists play). Missing in an older room means on.
+    if (config?.useCatalog != null) next.useCatalog = config.useCatalog !== false;
     // The catalog's filters; any list may be left empty (only the Spotify playlists then play, if any).
     if (Array.isArray(config?.languages)) next.languages = SONG_LANGUAGES.filter((v) => config.languages.includes(v));
     if (Array.isArray(config?.genres)) next.genres = SONG_GENRES.filter((v) => config.genres.includes(v));
@@ -627,7 +641,7 @@ export class RoomManager {
    * of the Spotify playlists that play (those have no filters).
    */
   songPool(room) {
-    const pool = filterSongs(this.catalog, room.config);
+    const pool = room.config.useCatalog === false ? [] : filterSongs(this.catalog, room.config);
     const seen = new Set(pool.map((s) => s.id));
     for (const entry of this.activePlaylists(room)) {
       for (const song of entry.songs.values()) {
@@ -808,7 +822,12 @@ export class RoomManager {
       const available = this.songPool(room).length;
       const loading = this.activePlaylists(room).some((entry) => entry.done.size < entry.tracks.length);
       if (!available) {
-        throw new Error(loading ? "Tus canciones de Spotify se están cargando, espera unos segundos" : "Ninguna canción cumple esos filtros");
+        if (loading) throw new Error("Tus canciones de Spotify se están cargando, espera unos segundos");
+        throw new Error(
+          room.config.useCatalog === false && !this.activePlaylists(room).length
+            ? "Activa el catálogo o elige una playlist"
+            : "Ninguna canción cumple esos filtros"
+        );
       }
       // Every round gets a different song: with fewer songs than rounds the same ones would keep coming back.
       if (!this.musicFormats(room).length) throw new Error("Elige al menos un tipo de respuesta");
@@ -1003,6 +1022,7 @@ export class RoomManager {
       rounds: room.config.rounds,
       roundMs: room.config.roundMs,
       formats: room.config.formats,
+      useCatalog: room.config.useCatalog !== false,
       languages: room.config.languages,
       genres: room.config.genres,
       difficulties: room.config.difficulties,

@@ -2,9 +2,12 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import Icon from "../../components/home/Icon.jsx";
 import OptionRow, { rangeOptions } from "../../components/home/OptionRow.jsx";
+import SettingsSection from "../../components/home/SettingsSection.jsx";
+import SettingsTabs from "../../components/home/SettingsTabs.jsx";
 import SpotifyIcon from "../../components/home/SpotifyIcon.jsx";
 import { FORMATS, LEVELS } from "../quiz/quizInfo.js";
 import { useApp } from "../../lib/store.jsx";
+import { withSound } from "../../lib/sounds.js";
 
 const FORMAT_IDS = FORMATS.map((f) => f.id);
 // The catalog's filters (SONG_LANGUAGES, SONG_GENRES and SONG_DIFFICULTIES on the server).
@@ -32,15 +35,18 @@ function configKey(config) {
     config?.rounds,
     config?.roundMs,
     config?.formats,
+    config?.useCatalog,
     config?.languages,
     config?.genres,
     config?.difficulties,
   ]);
 }
 
-// The match settings, in the settings panel: how to answer, the catalog's filters (language, genre, difficulty), and
-// "Tus playlists", always open: the Spotify playlists, which play whole (the filters don't touch them). Every tap is saved straight away for the whole room; the local copy
-// only keeps the tap visible until the server's new state arrives. `children` go at the bottom.
+// The match settings, in the settings panel, in two tabs (SettingsTabs, like every game's) so each fits without
+// scrolling: "Partida" (the ways of answering, rounds, seconds) and "Canciones", itself split in "Catálogo" (a switch
+// and its filters: language, genre, difficulty) and "Tus playlists" (the Spotify ones, which play whole and add to the
+// catalog). Every tap is saved straight away for the whole room; the local copy only keeps the tap visible until the
+// server's new state arrives. `children` go at the bottom, under the tabs.
 // With `readOnly` (players without permission to change them) everything shows but nothing can be tapped.
 export default function MusicSettings({ room, updateConfig, onToast, children, readOnly = false }) {
   const { user, listSpotifyPlaylists, addSpotifyPlaylist, addSpotifyLink, listSavedSpotify, forgetSavedSpotify, removePlaylist } =
@@ -95,13 +101,15 @@ export default function MusicSettings({ room, updateConfig, onToast, children, r
   const seconds = Math.round((draft?.roundMs || 15000) / 1000);
   // A list missing (an older room) means everything ticked.
   const listOf = (key) => draft?.[key] ?? FILTERS[key].map((o) => o.id);
+  // The catalog's switch; missing (an older room) means on.
+  const useCatalog = draft?.useCatalog !== false;
 
   async function onAddLink(event) {
     event.preventDefault();
     if (!link.trim() || linkBusy) return;
     setLinkBusy(true);
     try {
-      const list = await addSpotifyLink(link.trim());
+      const list = await withSound(() => addSpotifyLink(link.trim()));
       if (list) setSaved(list);
       setLink("");
       setLinkOpen(false);
@@ -183,6 +191,7 @@ export default function MusicSettings({ room, updateConfig, onToast, children, r
         rounds: next.rounds || rounds,
         roundMs: next.roundMs || seconds * 1000,
         formats: next.formats ?? formats,
+        useCatalog: next.useCatalog ?? useCatalog,
         languages: next.languages ?? listOf("languages"),
         genres: next.genres ?? listOf("genres"),
         difficulties: next.difficulties ?? listOf("difficulties"),
@@ -194,11 +203,12 @@ export default function MusicSettings({ room, updateConfig, onToast, children, r
   }
 
   // A filter's chip: one without songs with the other filters can't be ticked (but can be unticked).
-  function filterRow(key, label) {
+  function filterRow(key, label, hint) {
     const list = listOf(key);
     return (
       <OptionRow
         label={label}
+        hint={hint}
         multi
         wrap
         options={FILTERS[key].map((o) => ({
@@ -304,34 +314,32 @@ export default function MusicSettings({ room, updateConfig, onToast, children, r
     );
   }
 
-  return (
-    <fieldset className="tv-settings" disabled={readOnly}>
-      <OptionRow
-        label="Tipo de respuestas"
-        multi
-        wrap
-        options={FORMATS.map((f) => ({ value: f.id, label: f.label, title: f.id === "opciones" ? "Elige la canción entre cuatro" : "Escribe el título" }))}
-        value={formats}
-        onChange={toggleFormat}
-        onSetAll={(list) => save({ formats: list })}
-      />
+  const songsReady = room.songsReady;
+  const showPlaylists = !readOnly || rows.length > 0;
+
+  const catalog = (
+    <SettingsSection
+      title="Usar el catálogo de Trivially"
+      sub
+      hint={useCatalog ? null : "Solo suenan tus playlists."}
+      toggle={{ on: useCatalog, onChange: (on) => save({ useCatalog: on }) }}
+    >
       {filterRow("languages", "Idioma")}
       {filterRow("genres", "Género")}
       {filterRow("difficulties", "Dificultad")}
-      {(!readOnly || rows.length > 0) && (
-        <OptionRow label="Tus playlists" options={[]} value={[]} onChange={() => {}}>
-          {!readOnly && (
-            <button
-              type="button"
-              className="tv-optrow-btn is-add"
-              onClick={() => setLinkOpen((v) => !v)}
-              aria-expanded={linkOpen}
-            >
-              {linkOpen ? <Icon name="close" size={16} strokeWidth={3} /> : <SpotifyIcon size={18} />}
-              {linkOpen ? "Cancelar" : "Agregar de Spotify"}
-            </button>
-          )}
-        </OptionRow>
+    </SettingsSection>
+  );
+
+  const playlists = (
+    <>
+      <p className="tv-setsec-hint">Las marcadas suenan completas, sin filtros.</p>
+      {!readOnly && (
+        <div className="tv-optrow-opts is-wrap">
+          <button type="button" className="tv-optrow-btn is-add" onClick={() => setLinkOpen((v) => !v)} aria-expanded={linkOpen}>
+            {linkOpen ? <Icon name="close" size={16} strokeWidth={3} /> : <SpotifyIcon size={18} />}
+            {linkOpen ? "Cancelar" : "Agregar de Spotify"}
+          </button>
+        </div>
       )}
       {!readOnly && linkOpen && (
         <form className="tv-spotify-link" onSubmit={onAddLink} onKeyDown={(e) => e.key === "Escape" && setLinkOpen(false)}>
@@ -353,6 +361,7 @@ export default function MusicSettings({ room, updateConfig, onToast, children, r
             <button
               type="submit"
               className="tv-btn tv-btn--sm tv-c-music tv-spotify-link-send"
+              data-sound="none"
               disabled={linkBusy || !link.trim()}
               aria-label={linkBusy ? "Leyendo de Spotify" : "Agregar de Spotify"}
               aria-busy={linkBusy}
@@ -362,39 +371,81 @@ export default function MusicSettings({ room, updateConfig, onToast, children, r
           </div>
         </form>
       )}
+      {!readOnly && linkOpen && (
+        <p className="tv-setsec-hint">
+          Pública, hasta 100 canciones.
+          {!hasAccount && (
+            <>
+              {" "}
+              <Link to="/login">Inicia sesión</Link> para guardarla.
+            </>
+          )}
+        </p>
+      )}
       {(rows.length > 0 || (!readOnly && hasAccount)) && (
         <section className="tv-saved" aria-label="Tus playlists">
           {rows.length > 0 && <ul className="tv-saved-list">{rows.map(playlistRow)}</ul>}
           {!readOnly && hasAccount && saved === null && <p className="tv-saved-empty">Cargando…</p>}
           {!readOnly && rows.length === 0 && saved !== null && <p className="tv-saved-empty">Aún no tienes playlists guardadas.</p>}
-          {isOwnerEditor && spotifyLinked && spotifyBusy === "list" && (
-            <p className="tv-saved-empty">Cargando tus playlists de Spotify…</p>
-          )}
+          {isOwnerEditor && spotifyLinked && spotifyBusy === "list" && <p className="tv-saved-empty">Cargando tus playlists de Spotify…</p>}
         </section>
       )}
-      {/* The notes about the playlists share one box; what can be added always goes first. */}
-      {(!readOnly || chosenCustom.length > 0) && (
-        <div className="tv-playlist-total tv-playlist-notes">
-          {!readOnly && <span>Una playlist pública o un álbum. Se usan sus primeras 100 canciones.</span>}
-          {!readOnly && !hasAccount && (
-            <span>
-              <Link to="/login">Inicia sesión</Link> para que tus playlists se guarden en tu cuenta.
-            </span>
-          )}
-          {chosenCustom.length > 0 && <span>Las canciones de tus playlists no usan los filtros seleccionados.</span>}
-        </div>
-      )}
+    </>
+  );
 
-      <OptionRow label="Rondas" options={rangeOptions(ROUNDS)} value={rounds} onChange={(n) => save({ rounds: n })} />
-      <OptionRow
-        label="Segundos por ronda"
-        options={rangeOptions(SECONDS)}
-        value={seconds}
-        onChange={(n) => save({ roundMs: n * 1000 })}
-      />
-
+  return (
+    <SettingsTabs
+      readOnly={readOnly}
+      storageKey="musica"
+      tabs={[
+        {
+          id: "partida",
+          label: "Partida",
+          icon: "hourglass",
+          note: `${rounds} rondas · ${seconds} s`,
+          alert: !formats.length,
+          content: (
+            <>
+              <OptionRow
+                label="Tipo de respuestas"
+                multi
+                wrap
+                options={FORMATS.map((f) => ({ value: f.id, label: f.label, title: f.id === "opciones" ? "Elige la canción entre cuatro" : "Escribe el título" }))}
+                value={formats}
+                onChange={toggleFormat}
+                onSetAll={(list) => save({ formats: list })}
+              />
+              <OptionRow label="Rondas" options={rangeOptions(ROUNDS)} value={rounds} onChange={(n) => save({ rounds: n })} />
+              <OptionRow
+                label="Segundos por ronda"
+                options={rangeOptions(SECONDS)}
+                value={seconds}
+                onChange={(n) => save({ roundMs: n * 1000 })}
+              />
+            </>
+          ),
+        },
+        {
+          id: "canciones",
+          label: "Canciones",
+          icon: "music",
+          note: songsReady != null ? `${songsReady} ${songsReady === 1 ? "canción" : "canciones"}` : null,
+          alert: songsReady === 0 && !chosenCustom.some((p) => p.loading),
+          content: catalog,
+          sub: showPlaylists && [
+            { id: "catalogo", label: "Catálogo", note: useCatalog ? null : "Apagado", content: catalog },
+            {
+              id: "playlists",
+              label: "Tus playlists",
+              note: selected.length ? String(selected.length) : null,
+              content: playlists,
+            },
+          ],
+        },
+      ]}
+    >
       {children}
-    </fieldset>
+    </SettingsTabs>
   );
 }
 

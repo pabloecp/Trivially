@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
 import OptionRow, { rangeOptions } from "../../components/home/OptionRow.jsx";
+import SettingsTabs from "../../components/home/SettingsTabs.jsx";
 import { DIFFICULTIES, KINDS, ROUNDS_LIMITS, SECONDS_LIMITS, geoConfig } from "./geoInfo.js";
 
-// Settings of a Geografía match, in the settings panel: which kinds of question and difficulties (tick as many as you
-// like, all by default), how many rounds and
-// the seconds to write an answer (map rounds always last 10 s). Every tap is saved straight away for the whole room.
+// Settings of a Geografía match, in the settings panel, in two tabs: "Partida" (how many rounds and the seconds to
+// write an answer; map rounds always last 10 s) and "Preguntas" (which kinds of question and difficulties, tick as
+// many as you like, all by default). Every tap is saved straight away for the whole room.
 // With `readOnly` (players without permission) everything shows but nothing can be tapped.
 export default function GeoSettings({ room, updateConfig, onToast, children, readOnly = false }) {
   const saved = geoConfig(room);
@@ -36,34 +37,63 @@ export default function GeoSettings({ room, updateConfig, onToast, children, rea
 
   const writtenKinds = draft.kinds.some((k) => k !== "location");
 
+  const seconds = Math.round(draft.roundMs / 1000);
+
   return (
-    <fieldset className="tv-settings" disabled={readOnly}>
-      <OptionRow
-        label="Modos de juego"
-        multi
-        options={KINDS.map((k) => ({ value: k.id, label: k.label, title: k.hint }))}
-        value={draft.kinds}
-        onChange={(id) => toggle("kinds", KINDS, id)}
-        onSetAll={(kinds) => save({ kinds })}
-      />
-      <OptionRow
-        label="Dificultad"
-        multi
-        options={DIFFICULTIES.map((d) => ({ value: d.id, label: d.label, title: d.hint }))}
-        value={draft.difficulties}
-        onChange={(id) => toggle("difficulties", DIFFICULTIES, id)}
-        onSetAll={(difficulties) => save({ difficulties })}
-      />
-      <OptionRow label="Rondas" options={rangeOptions(ROUNDS_LIMITS)} value={draft.rounds} onChange={(n) => save({ rounds: n })} />
-      {writtenKinds && (
-        <OptionRow
-          label="Segundos para escribir"
-          options={rangeOptions(SECONDS_LIMITS)}
-          value={Math.round(draft.roundMs / 1000)}
-          onChange={(n) => save({ roundMs: n * 1000 })}
-        />
-      )}
+    <SettingsTabs
+      readOnly={readOnly}
+      storageKey="mundo"
+      tabs={[
+        {
+          id: "partida",
+          label: "Partida",
+          icon: "hourglass",
+          note: writtenKinds ? `${draft.rounds} rondas · ${seconds} s` : `${draft.rounds} rondas`,
+          content: (
+            <>
+              <OptionRow label="Rondas" options={rangeOptions(ROUNDS_LIMITS)} value={draft.rounds} onChange={(n) => save({ rounds: n })} />
+              {writtenKinds && (
+                <OptionRow
+                  label="Segundos para escribir"
+                  hint="Las rondas del mapa duran 10 s"
+                  options={rangeOptions(SECONDS_LIMITS)}
+                  value={seconds}
+                  onChange={(n) => save({ roundMs: n * 1000 })}
+                />
+              )}
+            </>
+          ),
+        },
+        {
+          id: "preguntas",
+          label: "Preguntas",
+          icon: "globe",
+          note: draft.kinds.length ? KINDS.filter((k) => draft.kinds.includes(k.id)).map((k) => k.label).join(" · ") : "Ningún modo",
+          alert: !draft.kinds.length || !draft.difficulties.length,
+          content: (
+            <>
+              <OptionRow
+                label="Modos de juego"
+                multi
+                options={KINDS.map((k) => ({ value: k.id, label: k.label, title: k.hint }))}
+                value={draft.kinds}
+                onChange={(id) => toggle("kinds", KINDS, id)}
+                onSetAll={(kinds) => save({ kinds })}
+              />
+              <OptionRow
+                label="Dificultad"
+                multi
+                options={DIFFICULTIES.map((d) => ({ value: d.id, label: d.label, title: d.hint }))}
+                value={draft.difficulties}
+                onChange={(id) => toggle("difficulties", DIFFICULTIES, id)}
+                onSetAll={(difficulties) => save({ difficulties })}
+              />
+            </>
+          ),
+        },
+      ]}
+    >
       {children}
-    </fieldset>
+    </SettingsTabs>
   );
 }

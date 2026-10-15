@@ -54,7 +54,7 @@ export function RoomHeader({ room, onToast }) {
           aria-label={toModes ? "Volver a los juegos" : confirmLeave ? "Toca otra vez para salir de la sala" : "Volver: salir de la sala"}
           onClick={press}
         >
-          <Icon name={confirmLeave ? "logout" : "back"} size={22} strokeWidth={2.6} />
+          <Icon name={confirmLeave ? "logout" : "back"} size={20} strokeWidth={2.6} />
         </button>
         <AppIcon small />
       </div>
@@ -112,11 +112,11 @@ export function RoomDock({ room, onToast }) {
         >
           <Icon name={copied ? "check" : "link"} size={22} strokeWidth={2.6} />
         </button>
-        <ChatButton room={room} className="tv-btn tv-c-neutral tv-roomdock-invite" />
         {isHost ? (
           <button
             type="button"
             className={`tv-btn tv-c-${mode?.color || "neutral"} tv-roomdock-start${mode ? "" : " is-pick"}`}
+            data-sound="none"
             onClick={start}
             disabled={!canStart}
           >
@@ -125,6 +125,8 @@ export function RoomDock({ room, onToast }) {
         ) : (
           <p className="tv-roomdock-wait">Esperando a {room.hostName || "el anfitrión"}…</p>
         )}
+        {/* The chat on the other side of the start button, so that one stays in the middle. */}
+        <ChatButton room={room} className="tv-btn tv-c-neutral tv-roomdock-invite" />
       </div>
     </div>
   );

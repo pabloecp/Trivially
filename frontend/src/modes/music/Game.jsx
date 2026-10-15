@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import TvShell from "../../components/home/TvShell.jsx";
 import Confetti from "../../components/home/Confetti.jsx";
 import Icon from "../../components/home/Icon.jsx";
+import WaitingPill, { waitingNames } from "../../components/home/WaitingPill.jsx";
 import PartyPanel from "../../components/home/PartyPanel.jsx";
 import SpectatorBanner from "../../components/home/SpectatorBanner.jsx";
 import MatchResults from "../../components/home/MatchResults.jsx";
@@ -479,6 +480,7 @@ function GameScreen() {
               );
             })()}
 
+            {closed && room.phase === "playing" && !spectator && Number.isInteger(myChoice) && <WaitingPill room={room} userId={user?.id} />}
             {closed && (room.phase === "reveal" || (!spectator && (!locked || Number.isInteger(myChoice)))) ? (
               <div className={`tv-quiz-options tv-music-options${room.phase === "reveal" ? " is-reveal" : ""}`} role="group" aria-label="Opciones">
                 {OPTION_LETTERS.map((letter, i) => {
@@ -632,7 +634,7 @@ function GameScreen() {
                 <p className="tv-locked-title">
                   {skipped ? "Te la saltaste" : submittedSong || me?.lastAnswer?.text || "Canción enviada"}
                 </p>
-                <p className="tv-hint">Esperando al resto de jugadores…</p>
+                <WaitingPill room={room} userId={user?.id} fallback={<p className="tv-hint">Esperando al resto de jugadores…</p>} />
               </div>
               )
             )}

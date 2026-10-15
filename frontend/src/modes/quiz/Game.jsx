@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import TvShell from "../../components/home/TvShell.jsx";
 import Confetti from "../../components/home/Confetti.jsx";
 import Icon from "../../components/home/Icon.jsx";
+import WaitingPill, { waitingNames } from "../../components/home/WaitingPill.jsx";
 import SpectatorBanner from "../../components/home/SpectatorBanner.jsx";
 import MatchResults from "../../components/home/MatchResults.jsx";
 import PartyPanel from "../../components/home/PartyPanel.jsx";
@@ -133,7 +134,7 @@ function ChoiceRound({ room, question, me, answer, seconds }) {
             {spectator ? (
               "Estás viendo la partida"
             ) : locked ? (
-              "Respuesta enviada. Esperando al resto"
+              <WaitingPill room={room} userId={me?.id} inline fallback="Respuesta enviada" />
             ) : (
               <>
                 Toca una opción<span className="tv-quiz-keys"> o pulsa 1–4</span>
@@ -274,9 +275,20 @@ function WriteRound({ room, question, me, answer, skipSong, seconds }) {
     <>
       <QuestionCard question={question} slot={false} />
       {/* A flag question keeps the flag's place from the countdown on, so nothing jumps when it shows. */}
-      {isFlag && <div className="tv-quiz-flag">{question.flag && <Flag src={flagSrc(question.flag)} />}</div>}
+      {/* During the countdown that place is a flag-shaped card with the number in it, so nothing floats far below. */}
+      {isFlag && (
+        <div className="tv-quiz-flag">
+          {question.flag ? (
+            <Flag src={flagSrc(question.flag)} />
+          ) : room.phase === "countdown" ? (
+            <div className="tv-quiz-flag-wait">
+              <Count seconds={seconds} />
+            </div>
+          ) : null}
+        </div>
+      )}
       <div className="tv-quiz-answer">
-        {room.phase === "countdown" && <Count seconds={seconds} />}
+        {room.phase === "countdown" && !isFlag && <Count seconds={seconds} />}
         {reveal && !spectator && <Verdict me={me} answered={answered} detail={`Respuesta: ${question.answer}`} />}
         {reveal && spectator && <p className="tv-geo-sent tv-quiz-sent">Respuesta: {question.answer}</p>}
       {room.phase === "playing" &&
@@ -304,14 +316,12 @@ function WriteRound({ room, question, me, answer, skipSong, seconds }) {
                 </button>
               )}
             </div>
-            {/* Hidden while typing, but it keeps its space so the answer box never moves. */}
+            {/* Always there, even with something typed: a player may still give up on the question. */}
             <button
               type="button"
-              className={`tv-btn tv-btn--block tv-c-neutral tv-skip-btn${confirmSkip ? " is-on" : ""}${query.trim() ? " is-hidden" : ""}`}
+              className={`tv-btn tv-btn--block tv-c-neutral tv-skip-btn${confirmSkip ? " is-on" : ""}`}
               onClick={skip}
               aria-live="polite"
-              aria-hidden={query.trim() ? "true" : undefined}
-              tabIndex={query.trim() ? -1 : undefined}
             >
               <Icon name={confirmSkip ? "lock" : "close"} size={16} strokeWidth={3} />
               {confirmSkip ? "No te dará puntos. Toca otra vez" : "Saltar"}
@@ -323,6 +333,7 @@ function WriteRound({ room, question, me, answer, skipSong, seconds }) {
             {spectator ? "Estás viendo la partida" : skipped ? "Te la saltaste" : mySent?.text || me?.lastAnswer?.text || "Respuesta enviada"}
           </p>
         ))}
+        {room.phase === "playing" && locked && !spectator && <WaitingPill room={room} userId={me?.id} />}
       </div>
       {err && <p className="tv-lobby-error" role="alert">{err}</p>}
     </>

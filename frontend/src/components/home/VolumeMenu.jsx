@@ -158,7 +158,7 @@ export default function VolumeMenu({ floating = false }) {
         onClick={() => setOpen((v) => !v)}
       >
         <span className="tv-avatar tv-avatar--empty">
-          <Icon name={silent ? "mute" : "volume"} size={18} strokeWidth={2.4} />
+          <Icon name={silent ? "mute" : "volume"} size={20} strokeWidth={2.6} />
         </span>
       </button>
       {open && (

@@ -7,7 +7,7 @@ export default function ProfileChip({ user }) {
     return (
       <Link to="/login" className="tv-chip tv-chip--profile" aria-label="Entrar">
         <span className="tv-avatar tv-avatar--empty">
-          <Icon name="user" size={18} />
+          <Icon name="user" size={20} strokeWidth={2.6} />
         </span>
         <span className="tv-chip-name">Entrar</span>
       </Link>
