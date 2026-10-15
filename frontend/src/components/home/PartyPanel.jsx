@@ -1,7 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
 import { useApp } from "../../lib/store.jsx";
 import Avatar from "./Avatar.jsx";
+import CentralSpot, { DragGhost, useCentralDrag } from "./CentralSpot.jsx";
+import ConfirmDialog from "./ConfirmDialog.jsx";
 import Icon from "./Icon.jsx";
 import PlayerMenu from "./PlayerMenu.jsx";
 import { ChatForm, ChatMessages, ChatSheet, useChatUnread, usePhone, useRoomChat } from "./RoomChat.jsx";
@@ -74,17 +77,34 @@ const inertUnless = (shown) => (el) => {
 // The room's side column, on the room screen and during a match: the invite code, who's in and the way out.
 // With `scores` (a match) the players are ranked by points, each with their score and how their round is going.
 // `className` lets a game add its own (Geografía hides the column on phones, where it shows a strip instead).
-export default function PartyPanel({ room, onToast, scores = false, className = "" }) {
-  const { user, leaveRoom } = useApp();
+// At the top of the players, the "Dispositivo central" spot (CentralSpot): the host drags a player onto it (or picks
+// it in the player's menu) to make that player's device the screen that shows the match. On the central device itself
+// the column only shows (`display`): no menus, chat or way out, and the code to join instead of "Invitar".
+export default function PartyPanel({ room, onToast, scores = false, display = false, className = "" }) {
+  const { user, isCentral, leaveRoom, makeCentral } = useApp();
   const nav = useNavigate();
   const [menuFor, setMenuFor] = useState(null);
   const { copied, copy: copyInvite } = useInvite(room.code, onToast);
+  // Who "you" are in the list: nobody on the central device, even when its account is one of the players'.
+  const viewerId = isCentral ? null : user?.id;
+  const isHost = Boolean(viewerId) && room.hostId === viewerId;
+  const spotRef = useRef(null);
+  const { drag, bind } = useCentralDrag({
+    enabled: isHost && !display && room.phase === "lobby",
+    spotRef,
+    onDrop: (player) =>
+      makeCentral(player.id)
+        .then(() => onToast?.(`La pantalla de ${player.name} es ahora el dispositivo central`, "check"))
+        .catch((err) => onToast?.(err.message || "No se pudo cambiar el dispositivo central")),
+  });
   // The chat opens in the column (while the room waits and in a match): the players' list (or the scoreboard) folds
   // into a row of faces (tap it, or Escape, to close the chat and unfold it again).
   // On phones the same button opens the chat in a sheet from the bottom, as in the room's bottom bar, so it looks the
   // same in the room and in a match.
   const [chatOpen, setChatOpen] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
+  // "Salir de la sala" asks first, in the same modal as the top bar's "X" during a match.
+  const [leaving, setLeaving] = useState(false);
   const phone = usePhone();
   const chatting = chatOpen && !phone;
   const unread = useChatUnread(room, chatting || sheetOpen);
@@ -97,6 +117,7 @@ export default function PartyPanel({ room, onToast, scores = false, className = 
   }, [chatting]);
 
   function leave() {
+    setLeaving(false);
     leaveRoom();
     // Replacing, not pushing: Back from Home must not return to /sala/CODE, which joins the room again.
     nav("/", { replace: true });
@@ -107,15 +128,26 @@ export default function PartyPanel({ room, onToast, scores = false, className = 
   const players = scores ? room.players.filter((p) => !p.spectator).sort((a, b) => b.score - a.score) : room.players;
   const spectators = scores ? room.players.filter((p) => p.spectator) : [];
 
+  const inMatch = room.phase !== "lobby";
+  // The spot: always while the room waits (that's where it's set); in a match only while there is a central device.
+  const showSpot = !display && (!inMatch || Boolean(room.central));
+
   return (
-    <aside className={`tv-party${scores ? " is-scores" : ""}${chatting ? " is-chat" : ""} ${className}`.trim()} aria-label="Tu sala">
+    <aside
+      className={`tv-party${scores ? " is-scores" : ""}${chatting ? " is-chat" : ""}${display ? " is-display" : ""}${drag ? " is-dragging" : ""} ${className}`.trim()}
+      aria-label="Tu sala"
+    >
       <div className="tv-party-codebox">
         <p className="tv-mono-label">Código de sala</p>
         <p className="tv-party-code">{room.code}</p>
-        <button type="button" className="tv-btn tv-c-violet tv-invite-btn tv-shine" onClick={copyInvite} aria-label="Invitar con enlace">
-          <Icon name={copied ? "check" : "link"} size={20} strokeWidth={2.6} />
-          {copied ? "¡Copiado!" : "Invitar"}
-        </button>
+        {display ? (
+          <p className="tv-party-joinhint">Entra a trivially, toca Jugar y escribe este código</p>
+        ) : (
+          <button type="button" className="tv-btn tv-c-violet tv-invite-btn tv-shine" onClick={copyInvite} aria-label="Invitar con enlace">
+            <Icon name={copied ? "check" : "link"} size={20} strokeWidth={2.6} />
+            {copied ? "¡Copiado!" : "Invitar"}
+          </button>
+        )}
       </div>
 
       <div className="tv-party-title">
@@ -126,24 +158,27 @@ export default function PartyPanel({ room, onToast, scores = false, className = 
       {/* Folds away (and the row of faces unfolds) while the chat is open. */}
       <div className="tv-fold tv-party-people" ref={inertUnless(!chatting)}>
         <div>
+          {showSpot && <CentralSpot room={room} spotRef={spotRef} drag={drag} isHost={isHost} onToast={onToast} />}
           <ul className="tv-party-players" aria-label={scores ? "Marcador" : "Jugadores en la sala"}>
             {players.map((p, i) => {
-              const isMe = p.id === user?.id;
+              const isMe = p.id === viewerId;
               const isHostPlayer = p.id === room.hostId;
               return (
                 <li
                   key={p.id}
                   className={`tv-player${isMe ? " is-me" : ""}${p.spectator ? " is-spectator" : ""}${p.connected ? "" : " is-away"}${menuFor === p.id ? " is-open" : ""}${
                     scores && !p.spectator && i < 3 ? ` is-top-${i + 1}` : ""
-                  }`}
+                  }${drag?.player.id === p.id ? " is-dragged" : ""}`}
                   style={{ "--i": i }}
                 >
                   <button
                     type="button"
                     className="tv-player-btn"
-                    aria-haspopup="menu"
-                    aria-expanded={menuFor === p.id}
+                    aria-haspopup={display ? undefined : "menu"}
+                    aria-expanded={display ? undefined : menuFor === p.id}
+                    disabled={display}
                     onClick={() => setMenuFor((cur) => (cur === p.id ? null : p.id))}
+                    {...bind(p, !isHostPlayer && p.connected)}
                   >
                     {scores && !p.spectator && <span className="tv-player-pos">{i + 1}</span>}
                     <Avatar name={p.name} avatar={p.avatar} />
@@ -162,11 +197,12 @@ export default function PartyPanel({ room, onToast, scores = false, className = 
                       </span>
                     )}
                   </button>
-                  {menuFor === p.id && (
+                  {menuFor === p.id && !display && (
                     <PlayerMenu
                       player={p}
                       isMe={isMe}
-                      canManage={room.hostId === user?.id && !isMe}
+                      canManage={isHost && !isMe}
+                      canCentral={isHost && !isMe && !inMatch}
                       onClose={() => setMenuFor(null)}
                       onToast={onToast}
                     />
@@ -189,7 +225,7 @@ export default function PartyPanel({ room, onToast, scores = false, className = 
               </div>
               <ul className="tv-party-players tv-party-spectators" aria-label="Espectadores">
                 {spectators.map((p) => (
-                  <li key={p.id} className={`tv-player is-spectator${p.id === user?.id ? " is-me" : ""}${p.connected ? "" : " is-away"}`}>
+                  <li key={p.id} className={`tv-player is-spectator${p.id === viewerId ? " is-me" : ""}${p.connected ? "" : " is-away"}`}>
                     <div className="tv-player-btn">
                       <Avatar name={p.name} avatar={p.avatar} />
                       <span className="tv-player-text">
@@ -219,40 +255,58 @@ export default function PartyPanel({ room, onToast, scores = false, className = 
         </div>
       </div>
 
+      <DragGhost drag={drag} />
+
       {/* The chat, while the room waits and in a match. Its messages grow in place of the players' list; its box takes the
-          "Chat" button's place, swapping with it where it stands. */}
-      <section className="tv-party-chatwrap" aria-label="Chat de la sala" ref={inertUnless(chatting)}>
-        <div className="tv-chat tv-chat--side">
-          <ChatMessages chat={chat} />
-        </div>
-      </section>
-      <div className="tv-party-chatbar">
-        <button
-          type="button"
-          className="tv-party-chatbtn"
-          ref={inertUnless(!chatting)}
-          onClick={() => {
-            setMenuFor(null);
-            if (phone) setSheetOpen(true);
-            else setChatOpen(true);
-          }}
-          aria-label={unread ? `Chat: ${unread} mensajes nuevos` : "Abrir el chat"}
-        >
-          <Icon name="chat" size={18} strokeWidth={2.6} />
-          Chat
-          {unread > 0 && <span className="tv-chat-badge">{unread > 9 ? "9+" : unread}</span>}
-        </button>
-        <div className="tv-party-chatform" ref={inertUnless(chatting)}>
-          <ChatForm chat={chat} />
-        </div>
-      </div>
+          "Chat" button's place, swapping with it where it stands. The central device only shows the room. */}
+      {!display && (
+        <>
+          <section className="tv-party-chatwrap" aria-label="Chat de la sala" ref={inertUnless(chatting)}>
+            <div className="tv-chat tv-chat--side">
+              <ChatMessages chat={chat} />
+            </div>
+          </section>
+          <div className="tv-party-chatbar">
+            <button
+              type="button"
+              className="tv-party-chatbtn"
+              ref={inertUnless(!chatting)}
+              onClick={() => {
+                setMenuFor(null);
+                if (phone) setSheetOpen(true);
+                else setChatOpen(true);
+              }}
+              aria-label={unread ? `Chat: ${unread} mensajes nuevos` : "Abrir el chat"}
+            >
+              <Icon name="chat" size={18} strokeWidth={2.6} />
+              Chat
+              {unread > 0 && <span className="tv-chat-badge">{unread > 9 ? "9+" : unread}</span>}
+            </button>
+            <div className="tv-party-chatform" ref={inertUnless(chatting)}>
+              <ChatForm chat={chat} />
+            </div>
+          </div>
 
-      {sheetOpen && <ChatSheet room={room} onClose={() => setSheetOpen(false)} />}
+          {sheetOpen && <ChatSheet room={room} onClose={() => setSheetOpen(false)} />}
 
-      <button type="button" className="tv-leave-btn" onClick={leave}>
-        <Icon name="logout" size={18} strokeWidth={2.4} />
-        Salir de la sala
-      </button>
+          <button type="button" className="tv-leave-btn" aria-haspopup="dialog" onClick={() => setLeaving(true)}>
+            <Icon name="logout" size={18} strokeWidth={2.4} />
+            Salir de la sala
+          </button>
+        </>
+      )}
+      {createPortal(
+        <ConfirmDialog
+          open={leaving}
+          title="¿Seguro que quieres salir?"
+          text={inMatch ? "Saldrás de la sala y dejarás la partida en curso." : "Saldrás de la sala. Para volver a entrar necesitarás el código o el enlace de invitación."}
+          cancelLabel={inMatch ? "Seguir jugando" : "Quedarme"}
+          confirmLabel="Salir"
+          onCancel={() => setLeaving(false)}
+          onConfirm={leave}
+        />,
+        document.querySelector(".tv-app") || document.body
+      )}
     </aside>
   );
 }

@@ -5,11 +5,11 @@ import Confetti from "../../components/home/Confetti.jsx";
 import Icon from "../../components/home/Icon.jsx";
 import MatchResults from "../../components/home/MatchResults.jsx";
 import PartyPanel from "../../components/home/PartyPanel.jsx";
-import { useApp, useRemainingMs } from "../../lib/store.jsx";
-import { BACKEND_URL } from "../../lib/config.js";
+import { PhoneHint, RoomVerdict, roundPlayers } from "../../components/home/CentralBits.jsx";
+import { useApp, useRemainingMs, useView } from "../../lib/store.jsx";
 import WorldMap from "./WorldMap.jsx";
 import { useWorld } from "./worldData.js";
-import { LOCATION_SECONDS, findKind } from "./geoInfo.js";
+import { LOCATION_SECONDS, STYLES } from "./geoInfo.js";
 import "../../styles/home.css";
 import "../../styles/geo.css";
 import { PauseButton, PauseVeil } from "../../components/home/PauseControls.jsx";
@@ -18,7 +18,6 @@ const COUNTDOWN_MS = 3000;
 // One colour per player for the pins on the reveal map (never the green and red of right and wrong).
 const PIN_COLORS = ["#ffb52e", "#a58bff", "#ff6a55", "#2ea8ff", "#f2456b", "#14b8a6", "#ff9f1c", "#e879f9"];
 
-const flagSrc = (path) => (path ? `${BACKEND_URL}${path}` : null);
 const km = (n) => `${Math.round(n).toLocaleString("es-ES")} km`;
 
 // "Ana", "Ana y Luis", "Ana, Luis y Eva".
@@ -27,32 +26,15 @@ function joinNames(names) {
   return `${names.slice(0, -1).join(", ")} y ${names[names.length - 1]}`;
 }
 
-// "¿Cuál es la capital del Reino Unido?" → "Capital del Reino Unido", short enough for the top card.
-function capitalTitle(prompt = "") {
-  const short = prompt.replace(/^¿\s*cuál es la\s+/i, "").replace(/\?$/, "").trim();
-  return short ? short[0].toUpperCase() + short.slice(1) : "Capitales";
-}
-
-function Flag({ src, alt }) {
-  const [failed, setFailed] = useState(false);
-  useEffect(() => setFailed(false), [src]);
-  if (!src || failed) {
-    return (
-      <div className="tv-geo-flag is-missing" role="img" aria-label={alt}>
-        <Icon name="flag" size={40} />
-        <span>No se pudo cargar la bandera</span>
-      </div>
-    );
-  }
-  return <img key={src} className="tv-geo-flag" src={src} alt={alt} onError={() => setFailed(true)} />;
-}
-
 function GameScreen() {
   const { code } = useParams();
-  const { user, room, joinRoom, answer, skipSong, placePin, setGame } = useApp();
+  const { user, room, joinRoom, placePin, setGame } = useApp();
   const nav = useNavigate();
   const { world, error: mapError } = useWorld();
-  const inputRef = useRef(null);
+  // The players keep their map to put the pin (beside a central device they only lose the clock and the scoreboard,
+  // which are on the big screen); the room's central device shows the country to find and, when the round ends, flies
+  // to where it was with everyone's pins.
+  const { central, controller, viewerId } = useView(room);
   const gameRef = useRef(null);
   // Phones and tablets get "toca" in the hints; a mouse gets "haz clic".
   const [touch] = useState(() => Boolean(window.matchMedia?.("(pointer: coarse)").matches));
@@ -63,13 +45,9 @@ function GameScreen() {
 
   const left = useRemainingMs(room);
   const [err, setErr] = useState("");
-  const [query, setQuery] = useState("");
-  // What this player sent this round, shown before the server confirms: { round, text } / { round, skipped }.
-  const [sent, setSent] = useState(null);
-  // This player's pin on the map round being played: { round, lngLat, locked }.
+  // This player's pin on the round being played: { round, lngLat, locked }.
   const [pin, setPin] = useState(null);
   const [confirmHub, setConfirmHub] = useState(false);
-  const [confirmSkip, setConfirmSkip] = useState(false);
 
   // Join the room after a reload. Going back to the room screen is handled by RoomNavigator (App.jsx).
   useEffect(() => {
@@ -82,41 +60,25 @@ function GameScreen() {
     return () => clearTimeout(t);
   }, [confirmHub]);
 
-  useEffect(() => {
-    if (!confirmSkip) return undefined;
-    const t = setTimeout(() => setConfirmSkip(false), 3000);
-    return () => clearTimeout(t);
-  }, [confirmSkip]);
-
   const round = room?.currentRound;
   const question = room?.question;
-  const kind = question?.kind;
-  const isMap = kind === "location";
   const tiebreak = room?.tiebreak || null;
-  const spectator = Boolean(room?.players?.find((p) => p.id === user?.id)?.spectator);
-  const iPlay = !spectator && (!tiebreak || tiebreak.playerIds.includes(user?.id));
-  const playerObj = room?.players?.find((p) => p.id === user?.id);
-  const me = playerObj
+  const spectator = Boolean(room?.players?.find((p) => p.id === viewerId)?.spectator);
+  const iPlay = !central && !spectator && (!tiebreak || tiebreak.playerIds.includes(viewerId));
+  const playerObj = room?.players?.find((p) => p.id === viewerId);
+  const me = central
+    ? null
+    : playerObj
     ? { ...playerObj, ...(room?.me?.id === user?.id ? room.me : {}), lastAnswer: playerObj.lastAnswer || room?.me?.lastAnswer }
     : room?.me;
-  const mySent = sent?.round === round ? sent : null;
   const myPin = pin?.round === round ? pin : null;
-  const skipped = Boolean(mySent?.skipped) || Boolean(me?.lastAnswer?.skipped);
-  const locked = room?.phase !== "playing" || Boolean(me?.answered) || Boolean(mySent) || Boolean(myPin?.locked) || !iPlay;
+  const locked = room?.phase !== "playing" || Boolean(me?.answered) || Boolean(myPin?.locked) || !iPlay;
 
   // A new round: clean slate.
   useEffect(() => {
     sending.current = false;
-    setQuery("");
-    setConfirmSkip(false);
   }, [round]);
   useEffect(() => setErr(""), [round, room?.phase]);
-
-  // Focus the answer box as a written question opens (only with a mouse: on a phone it would pop the keyboard up
-  // over the map before the player even looked).
-  useEffect(() => {
-    if (room?.phase === "playing" && !isMap && !touch) setTimeout(() => inputRef.current?.focus(), 100);
-  }, [room?.phase, round]);
 
   // The game is one frame that fills the screen under the top bar (see .tv-geo-stage); --geo-top is where it starts.
   // On a phone the frame takes the whole screen (html.tv-geo-playing hides the top bar); the scoreboard is under it.
@@ -154,40 +116,8 @@ function GameScreen() {
 
   // After a reload mid-round, the pin this player had placed comes back with the room.
   useEffect(() => {
-    if (room?.me?.pin && !myPin && isMap) setPin({ round, lngLat: room.me.pin, locked: Boolean(room.me.lastAnswer) });
+    if (room?.me?.pin && !myPin) setPin({ round, lngLat: room.me.pin, locked: Boolean(room.me.lastAnswer) });
   }, [room?.me?.pin, round]);
-
-  async function submitText() {
-    const text = query.trim();
-    if (locked || sending.current || !text) return;
-    sending.current = true;
-    setSent({ round, text });
-    setErr("");
-    inputRef.current?.blur();
-    try {
-      await answer(text);
-    } catch (e) {
-      if (phaseRef.current === "playing") {
-        setSent(null);
-        sending.current = false;
-        setErr(e.message || "No se pudo enviar tu respuesta");
-      }
-    }
-  }
-
-  function handleSkip() {
-    if (locked) return;
-    if (!confirmSkip) {
-      setConfirmSkip(true);
-      return;
-    }
-    setConfirmSkip(false);
-    setSent({ round, skipped: true });
-    skipSong().catch((e) => {
-      setSent(null);
-      setErr(e.message || "No se pudo saltar la pregunta");
-    });
-  }
 
   // A tap on the map (or the pin let go after dragging it): the pin can move until "Confirmar".
   function onPick([lng, lat]) {
@@ -236,25 +166,24 @@ function GameScreen() {
   if (room.phase === "finished" && room.results) return <MatchResults room={room} color="world" />;
 
   const phase = room.phase;
-  const isHost = room.hostId === user?.id;
-  const kindInfo = findKind(kind);
-  const isFlag = kind === "flag";
+  const isHost = !central && room.hostId === user?.id;
+  const style = STYLES[0];
   const seconds = Math.max(0, Math.ceil(left / 1000));
-  const totalMs = isMap ? LOCATION_SECONDS * 1000 : room.config?.geo?.roundMs || 15000;
+  const totalMs = LOCATION_SECONDS * 1000;
   const pct =
     phase === "playing"
       ? Math.max(0, Math.min(100, (left / totalMs) * 100))
       : phase === "countdown"
       ? Math.max(0, Math.min(100, (left / COUNTDOWN_MS) * 100))
       : 100;
-  const urgent = phase === "playing" && left <= (isMap ? 3000 : 4000);
+  const urgent = phase === "playing" && left <= 3000;
   const tiedNames = tiebreak ? tiebreak.playerIds.map((id) => room.players.find((p) => p.id === id)?.name || "Jugador") : [];
   const colorOf = (id) => PIN_COLORS[Math.max(0, room.players.findIndex((p) => p.id === id)) % PIN_COLORS.length];
   const pinLocked = Boolean(myPin?.locked) || Boolean(me?.answered);
 
-  // Everyone's pins at the reveal of a map round (only the tied players' in a tiebreak).
+  // Everyone's pins at the reveal (only the tied players' in a tiebreak).
   const revealPins =
-    phase === "reveal" && isMap
+    phase === "reveal"
       ? room.players
           .filter((p) => p.lastAnswer?.pin && (!tiebreak || tiebreak.playerIds.includes(p.id)))
           .map((p) => ({
@@ -264,7 +193,7 @@ function GameScreen() {
             inside: p.lastAnswer.inside,
             color: colorOf(p.id),
             label: p.name.slice(0, 12),
-            isMe: p.id === user?.id,
+            isMe: p.id === viewerId,
           }))
       : [];
 
@@ -279,8 +208,8 @@ function GameScreen() {
     ? "Calculando resultados…"
     : "Siguiente pregunta en breve…";
 
-  // The top card: the same three lines (kicker, title, hint) in every round and phase, so nothing below it moves.
-  let kicker = `${roundLabel} · ${kind ? kindInfo.label : "Encuentra el país"}`;
+  // The top card: the same three lines (kicker, title, hint) in every phase, so nothing below it moves.
+  let kicker = `${roundLabel} · ${style.label}`;
   let title;
   let hint;
   if (phase === "countdown") {
@@ -289,9 +218,8 @@ function GameScreen() {
       hint = iPlay
         ? "Pon tu pin y confírmalo: gana el primero que confirme dentro del país. Si nadie lo encuentra, el más cercano."
         : "Solo juegan los empatados. Tú miras cómo lo resuelven.";
-    } else if (isMap) hint = `Tendrás ${LOCATION_SECONDS} segundos para poner tu pin en el mapa.`;
-    else hint = isFlag ? "Saldrá una bandera: escribe de qué país es." : "Escribe la capital en cuanto la sepas.";
-  } else if (isMap) {
+    } else hint = `Tendrás ${LOCATION_SECONDS} segundos para poner tu pin en el mapa.`;
+  } else {
     kicker = `${roundLabel} · ¿Dónde está…?`;
     title = question?.name || room.reveal?.name || "";
     if (phase === "reveal") hint = nextText;
@@ -299,50 +227,44 @@ function GameScreen() {
     else if (pinLocked) hint = tiebreak ? "Pin confirmado. Si cayó dentro y fuiste el primero, ganas." : "Pin confirmado. Esperando al resto…";
     else if (myPin) hint = `Arrástralo o ${touch ? "toca" : "haz clic en"} otro sitio para moverlo, y confirma.`;
     else hint = touch ? "Toca para poner tu pin. Doble toque o pellizca para acercar." : "Haz clic para poner tu pin. Rueda, doble clic o arrastra para moverte.";
-  } else {
-    title = isFlag ? "¿De qué país es esta bandera?" : capitalTitle(question?.prompt);
-    if (phase === "reveal") hint = nextText;
-    else if (locked) hint = "Esperando al resto de jugadores…";
-    else hint = `Escribe ${isFlag ? "el país" : "la capital"} y pulsa Enter. Se aceptan pequeños errores.`;
   }
 
   // Someone who joined mid-match only watches: the same lines, without the instructions to answer.
   if (spectator && phase !== "reveal") hint = "Estás viendo la partida. Entrarás a la sala cuando termine.";
+  // The central device talks to the whole room: they put their pins from their phones.
+  if (central && phase === "countdown" && !tiebreak) hint = `Tendrán ${LOCATION_SECONDS} segundos para poner su pin desde su teléfono.`;
+  else if (central && phase === "countdown") hint = `Desempate entre ${joinNames(tiedNames)}: gana el primero que confirme su pin dentro del país.`;
+  else if (central && phase === "playing") hint = tiebreak ? `Solo juegan ${joinNames(tiedNames)}.` : "Pongan su pin en el mapa desde su teléfono.";
 
   // Under the map, always the same height: what to do now, or how the round went.
   let action;
-  if (spectator && phase !== "reveal") {
+  if (central && phase === "playing") {
+    action = <PhoneHint room={room}>Pongan su pin desde su teléfono</PhoneHint>;
+  } else if (central && phase === "reveal" && room.reveal && !tiebreak) {
+    action = <RoomVerdict room={room} right={(p) => Boolean(p.lastAnswer?.inside)} detail={closestPin(room)} />;
+  } else if (central && phase === "reveal" && room.reveal) {
+    action = <Verdict room={room} me={null} user={null} tiebreak={tiebreak} tiedNames={tiedNames} iPlay={false} />;
+  } else if (central) {
+    action = <p className="tv-hint tv-geo-watch">{phase === "reveal" ? nextText : "Prepárense…"}</p>;
+  } else if (spectator && phase !== "reveal") {
     action = <p className="tv-hint tv-geo-watch">Mira cómo responden los demás</p>;
   } else if (spectator && phase === "reveal") {
     action = <p className="tv-hint tv-geo-watch">{nextText}</p>;
   } else if (phase === "reveal" && room.reveal) {
-    action = <Verdict room={room} me={me} user={user} tiebreak={tiebreak} tiedNames={tiedNames} iPlay={iPlay} isMap={isMap} skipped={skipped} />;
-  } else if (isMap && !iPlay) {
+    action = <Verdict room={room} me={me} user={user} tiebreak={tiebreak} tiedNames={tiedNames} iPlay={iPlay} />;
+  } else if (!iPlay) {
     action = <p className="tv-hint tv-geo-watch">Mira el desempate entre {joinNames(tiedNames)}</p>;
-  } else if (isMap) {
+  } else {
     action = (
       <button type="button" className="tv-btn tv-btn--block tv-c-world" onClick={confirmPin} disabled={phase !== "playing" || !myPin || pinLocked} aria-live="polite">
         <Icon name={pinLocked ? "check" : "pin"} size={20} strokeWidth={2.6} />
         {pinLocked ? "Pin confirmado" : myPin ? "Confirmar pin" : "Pon tu pin en el mapa"}
       </button>
     );
-  } else {
-    action = (
-      <button
-        type="button"
-        className={`tv-btn tv-btn--block tv-c-neutral tv-geo-skip${confirmSkip ? " is-on" : ""}`}
-        onClick={handleSkip}
-        disabled={phase !== "playing" || locked}
-        aria-live="polite"
-      >
-        <Icon name={skipped ? "close" : mySent ? "check" : confirmSkip ? "lock" : "close"} size={18} strokeWidth={3} />
-        {skipped ? "Te la saltaste" : mySent || me?.answered ? "Respuesta enviada" : confirmSkip ? "No te dará puntos. Toca otra vez" : "Saltar"}
-      </button>
-    );
   }
 
   return (
-    <div className="tv-room tv-game tv-geo-game" ref={gameRef}>
+    <div className={`tv-room tv-game tv-geo-game${central ? " is-central" : ""}${controller ? " is-controller" : ""}`} ref={gameRef}>
       <div className="tv-room-main tv-game-main tv-geo-stage">
         <section className="tv-game-top">
           <div className="tv-game-round tv-geo-find">
@@ -382,23 +304,22 @@ function GameScreen() {
           </div>
         </section>
 
-        {/* The same map for the whole match: a map round puts pins on it, a written one floats over it and its reveal
-            flies to the country. Only what's on it changes, never its size. */}
-        <section className={`tv-card tv-geo-map-card is-${phase}${isMap ? " is-map" : " is-written"}`}>
+        {/* The same map for the whole match. Only what's on it changes, never its size. */}
+        <section className={`tv-card tv-geo-map-card is-${phase}`}>
           <PauseVeil room={room} isHost={isHost} />
           {world ? (
             <WorldMap
               world={world}
               resetKey={round}
-              frozen={phase === "countdown" || !isMap}
-              interactive={isMap && phase === "playing" && !locked}
+              frozen={phase === "countdown"}
+              interactive={phase === "playing" && !locked}
               onPick={onPick}
-              myPin={isMap && phase === "playing" ? myPin?.lngLat || null : null}
+              myPin={phase === "playing" ? myPin?.lngLat || null : null}
               pins={revealPins}
               target={phase === "reveal" ? room.reveal?.map : null}
-              regions={isMap && phase === "playing"}
+              regions={phase === "playing" && !central}
               label={
-                isMap && phase === "playing"
+                phase === "playing"
                   ? `Mapamundi. Pon tu pin en ${question?.name}. Flechas para moverte, más y menos para acercar, Enter para poner el pin en el centro.`
                   : phase === "reveal"
                   ? `Mapamundi con ${room.reveal?.name || "el país"} marcado`
@@ -408,55 +329,10 @@ function GameScreen() {
               {phase === "countdown" && (
                 <div className="tv-geo-countdown" aria-hidden="true">
                   <p className="tv-mono-label tv-geo-kind-kicker">
-                    <Icon name={kindInfo.icon} size={16} strokeWidth={2.6} />
-                    {tiebreak ? "Desempate" : kindInfo.label}
+                    <Icon name={style.icon} size={16} strokeWidth={2.6} />
+                    {tiebreak ? "Desempate" : style.label}
                   </p>
                   <span key={Math.max(1, seconds)} className="tv-countdown-num">{Math.max(1, seconds)}</span>
-                </div>
-              )}
-
-              {!isMap && phase === "playing" && question && (
-                <div className="tv-geo-veil">
-                  <div className="tv-geo-ask">
-                    {isFlag && <Flag src={flagSrc(question.flag)} alt="Bandera de un país misterioso" />}
-                    {!locked ? (
-                      <form
-                        className="tv-search"
-                        onSubmit={(e) => {
-                          e.preventDefault();
-                          submitText();
-                        }}
-                      >
-                        <div className="tv-search-box">
-                          <Icon name={kindInfo.icon} size={22} className="tv-search-icon" />
-                          <input
-                            ref={inputRef}
-                            type="text"
-                            className="tv-search-input"
-                            placeholder={isFlag ? "Escribe el país…" : "Escribe la capital…"}
-                            value={query}
-                            onChange={(e) => setQuery(e.target.value)}
-                            autoComplete="off"
-                            autoCapitalize="words"
-                            spellCheck="false"
-                            enterKeyHint="send"
-                            maxLength={80}
-                            aria-label={isFlag ? "País de la bandera" : "Capital"}
-                          />
-                          {query.trim() && (
-                            <button type="submit" className="tv-btn tv-btn--sm tv-c-green">
-                              Enviar
-                            </button>
-                          )}
-                        </div>
-                      </form>
-                    ) : (
-                      <p className={`tv-geo-sent${skipped ? " is-skipped" : ""}`}>
-                        <Icon name={skipped ? "close" : "check"} size={18} strokeWidth={3} />
-                        {skipped ? "Te la saltaste" : mySent?.text || me?.lastAnswer?.text || "Respuesta enviada"}
-                      </p>
-                    )}
-                  </div>
                 </div>
               )}
 
@@ -476,17 +352,26 @@ function GameScreen() {
         </section>
       </div>
 
-      <PartyPanel room={room} scores className="tv-geo-side" />
+      {/* The scoreboard is the central device's, when there is one. */}
+      {!controller && <PartyPanel room={room} scores display={central} className="tv-geo-side" />}
     </div>
   );
 }
 
-// The end of a round, in the row under the map: how this player did (the pin's distance, or whether the written
-// answer was right, and what it was), or who won the tiebreak.
-function Verdict({ room, me, user, tiebreak, tiedNames, iPlay, isMap, skipped }) {
+// At the reveal on the central device, when nobody's pin fell inside: whose came closest ("Más cerca: Ana, a 120 km").
+function closestPin(room) {
+  const pins = roundPlayers(room).filter((p) => p.lastAnswer?.distanceKm != null);
+  if (pins.some((p) => p.lastAnswer.inside)) return "";
+  if (!pins.length) return "Nadie puso su pin a tiempo";
+  const best = pins.reduce((a, b) => (b.lastAnswer.distanceKm < a.lastAnswer.distanceKm ? b : a));
+  return `Más cerca: ${best.name}, a ${km(best.lastAnswer.distanceKm)}`;
+}
+
+// The end of a round, in the row under the map: how this player did (how far their pin landed), or who won the
+// tiebreak.
+function Verdict({ room, me, user, tiebreak, tiedNames, iPlay }) {
   const answer = me?.lastAnswer;
-  const reveal = room.reveal;
-  const name = reveal.name;
+  const name = room.reveal.name;
   let tone;
   let icon;
   let title;
@@ -504,7 +389,7 @@ function Verdict({ room, me, user, tiebreak, tiedNames, iPlay, isMap, skipped })
         ? `${won ? "Confirmaste" : "Confirmó"} ${name} primero.`
         : `Nadie cayó dentro: ${won ? "tu" : "su"} pin quedó más cerca.`
       : `${joinNames(tiedNames)} siguen empatados.`;
-  } else if (isMap) {
+  } else {
     const inside = Boolean(answer?.inside);
     const placed = Boolean(answer?.pin);
     won = inside;
@@ -513,16 +398,6 @@ function Verdict({ room, me, user, tiebreak, tiedNames, iPlay, isMap, skipped })
     icon = inside ? "check" : placed ? "pin" : "hash";
     title = inside ? "¡Dentro!" : placed ? `A ${km(answer.distanceKm)}` : "¡Se acabó el tiempo!";
     detail = inside ? `Tu pin cayó en ${name}.` : placed ? `de ${name}` : "No pusiste tu pin a tiempo.";
-  } else {
-    const correct = Boolean(answer?.correct);
-    const wrote = !skipped && Boolean(answer?.text);
-    won = correct;
-    points = correct;
-    tone = correct ? "ok" : wrote ? "bad" : "timeout";
-    icon = correct ? "check" : wrote || skipped ? "close" : "hash";
-    title = correct ? "¡Correcto!" : wrote ? "Incorrecto" : skipped ? "Te la saltaste" : "¡Se acabó el tiempo!";
-    const solution = reveal.kind === "flag" ? `Era la bandera de ${reveal.answer}` : `Era ${reveal.answer}`;
-    detail = correct ? (reveal.kind === "flag" ? `Es la bandera de ${reveal.answer}.` : `${reveal.answer}, la capital.`) : wrote ? `${solution} · escribiste “${answer.text}”` : `${solution}.`;
   }
   return (
     <div className={`tv-geo-verdict tv-geo-verdict--${tone}`} role="status">

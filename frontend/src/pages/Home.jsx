@@ -6,6 +6,7 @@ import Icon from "../components/home/Icon.jsx";
 import TvTopbar from "../components/home/TvTopbar.jsx";
 import HowToPlay from "../components/home/HowToPlay.jsx";
 import AppIcon from "../components/home/AppIcon.jsx";
+import CentralLobby from "../components/home/CentralLobby.jsx";
 import PartyPanel from "../components/home/PartyPanel.jsx";
 import PlaySheet from "../components/home/PlaySheet.jsx";
 import { RoomDock, RoomHeader } from "../components/home/RoomBars.jsx";
@@ -57,6 +58,52 @@ function ModeTile({ mode, index, selected, watched, suggestable, onPick, onPoint
   );
 }
 
+// "Crear una playlist", under the games. A playlist isn't one more game but several of them in a row, so it isn't a
+// tile: a dark bar with a dashed outline and a small stack of the games' colours (styles/playlist.css). It points and
+// picks like a tile (`mode` is its entry of GAME_MODES): guests see when the host is on it, and can suggest it.
+function PlaylistEntry({ mode, selected, watched, suggestable, onPick, onPoint }) {
+  const point = onPoint ? () => onPoint(mode.id) : undefined;
+  return (
+    <button
+      type="button"
+      className={`tv-pl-entry${selected ? " is-selected" : ""}${watched ? " is-watched" : ""}`}
+      onPointerEnter={point}
+      onPointerDown={point}
+      onFocus={point}
+      aria-pressed={selected}
+      onClick={(e) => onPick(mode, e.currentTarget)}
+    >
+      <span className="tv-pl-entry-stack" aria-hidden="true">
+        {GAME_MODES.filter((m) => m.kind !== "playlist").map((m, i) => (
+          <span key={m.id} className={`tv-c-${m.color}`} style={{ "--i": i }}>
+            <Icon name={m.icon} size={15} strokeWidth={2.6} />
+          </span>
+        ))}
+      </span>
+      <span className="tv-pl-entry-text">
+        <span className="tv-pl-entry-title">Crear una playlist</span>
+        <span className="tv-pl-entry-sub">Varios juegos seguidos, cada uno con sus ajustes</span>
+      </span>
+      {watched ? (
+        <span className="tv-pl-entry-tag is-watched" aria-label="El anfitrión lo está viendo">
+          <Icon name="crown" size={13} strokeWidth={2.4} filled />
+          <span className="tv-pl-entry-tag-text">Lo está viendo</span>
+        </span>
+      ) : suggestable ? (
+        <span className="tv-pl-entry-tag">
+          <Icon name="bulb" size={13} strokeWidth={2.4} />
+          <span className="tv-pl-entry-tag-text">Sugerir</span>
+        </span>
+      ) : (
+        <Icon name="chevron" size={22} strokeWidth={3} className="tv-pl-entry-arrow" />
+      )}
+    </button>
+  );
+}
+
+// How a choice of the menu reads in a sentence: "Trivia", or "una playlist" (it isn't a game).
+const choiceName = (mode) => (mode?.kind === "playlist" ? "una playlist" : mode?.name || "un juego");
+
 function shake(tile) {
   tile.classList.remove("is-shaking");
   void tile.getBoundingClientRect(); // restart the shake animation
@@ -75,7 +122,7 @@ function reducedMotion() {
 }
 
 export default function Home() {
-  const { user, room, joinRoom, setGame, previewGame, suggestGame, kickedNotice, setKickedNotice } = useApp();
+  const { user, room, isCentral, joinRoom, setGame, previewGame, suggestGame, kickedNotice, setKickedNotice } = useApp();
   const { code: inviteParam } = useParams();
   const inviteCode = inviteParam?.toUpperCase();
   const nav = useNavigate();
@@ -86,7 +133,8 @@ export default function Home() {
   const playRef = useRef(null);
   const toastTimer = useRef(0);
 
-  const isHost = Boolean(room) && room.hostId === user?.id;
+  // The room's central device is never the host, even with the host's account: it only shows the room.
+  const isHost = Boolean(room) && room.hostId === user?.id && !isCentral;
   const hasRoom = Boolean(room);
   const game = room?.game ?? null;
 
@@ -163,7 +211,10 @@ export default function Home() {
     lastGame.current = { code: room?.code, game };
     if (before.code !== room?.code || before.game === game) return;
     const picked = findMode(game);
-    if (picked && !isHost) showToast(`${room.hostName || "El anfitrión"} ha elegido ${picked.name}`, "play");
+    if (picked && !isHost) {
+      const host = room.hostName || "El anfitrión";
+      showToast(picked.kind === "playlist" ? `${host} está preparando una playlist` : `${host} ha elegido ${picked.name}`, "play");
+    }
   }, [game, room?.code]);
 
   useEffect(() => () => clearTimeout(toastTimer.current), []);
@@ -200,7 +251,8 @@ export default function Home() {
       return;
     }
     joinRoom(inviteCode).catch((err) => {
-      showToast(err.message || "No pudimos entrar a esa sala");
+      // Already playing in it from another device: CentralOffer asks whether this one is its central device.
+      if (!err.offer) showToast(err.message || "No pudimos entrar a esa sala");
       nav("/", { replace: true });
     });
   }, [inviteCode, user?.name]);
@@ -217,7 +269,7 @@ export default function Home() {
     } else if (!isHost) {
       // Players can't pick, but they can suggest it to the host (once every 5 s).
       suggestGame(mode.id)
-        .then(() => showToast(`Le sugeriste ${mode.name} al anfitrión`, "play"))
+        .then(() => showToast(`Le sugeriste ${choiceName(mode)} al anfitrión`, "play"))
         .catch((err) => showToast(err.message));
     } else {
       // Every player's room screen switches to this game right away; nobody changes page.
@@ -235,7 +287,7 @@ export default function Home() {
       const key = `${s.userId}:${s.at}`;
       if (seenSuggestions.current.has(key)) continue;
       seenSuggestions.current.add(key);
-      showToast(`${s.name} sugiere ${findMode(s.game)?.name || "un juego"}`, "play");
+      showToast(`${s.name} sugiere ${choiceName(findMode(s.game))}`, "play");
     }
   }, [room?.suggestions, isHost]);
 
@@ -248,7 +300,9 @@ export default function Home() {
   const hostName = shownRoom?.hostName || "El anfitrión";
   // Which panel to show follows the room on screen, not the live one: while the room leaves (`room` is already null) the
   // host keeps seeing their menu instead of the guests' "está eligiendo" panel for the length of the exit.
-  const shownIsHost = shownRoom ? shownRoom.hostId === user?.id : false;
+  const shownIsHost = shownRoom ? shownRoom.hostId === user?.id && !isCentral : false;
+  // On the room's central device the room screen is the big waiting screen (CentralLobby): nothing to pick or change.
+  const centralScreen = isCentral && screen === "room";
 
   // The site takes the picked game's colour while the room waits in it (see :root[data-mode] in global.css).
   useEffect(() => {
@@ -262,10 +316,12 @@ export default function Home() {
 
       <TvTopbar />
       {/* Phones: the room's own bars, pinned to the top and the bottom (home.css hides them on wider screens). */}
-      {shownRoom && <RoomHeader room={shownRoom} onToast={showToast} />}
+      {shownRoom && !isCentral && <RoomHeader room={shownRoom} onToast={showToast} />}
 
-      <main className={`tv-main${screen === "room" ? " is-room" : ""}`}>
-        {screen === "home" ? (
+      <main className={`tv-main${screen === "room" ? " is-room" : ""}${centralScreen ? " is-central" : ""}`}>
+        {centralScreen ? (
+          <CentralLobby room={shownRoom} />
+        ) : screen === "home" ? (
           <div className={`tv-home is-in-${entry}${leaving ? " is-leaving" : ""}${sheetOpen ? " is-behind" : ""}`}>
             <section className="tv-hero">
               <AppIcon edge />
@@ -321,7 +377,7 @@ export default function Home() {
                               <Icon name={m.icon} size={18} />
                             </span>
                             <p className="tv-idea-text">
-                              <strong>{s.name}</strong> sugiere <strong>{m.name}</strong>
+                              <strong>{s.name}</strong> sugiere <strong>{choiceName(m)}</strong>
                             </p>
                             <button
                               type="button"
@@ -344,7 +400,7 @@ export default function Home() {
                     </ul>
                   )}
                   <div className="tv-mode-grid">
-                    {GAME_MODES.map((mode, i) => (
+                    {GAME_MODES.filter((m) => m.kind !== "playlist").map((mode, i) => (
                       <ModeTile
                         key={mode.id}
                         mode={mode}
@@ -356,10 +412,22 @@ export default function Home() {
                         onPoint={shownIsHost ? previewGame : undefined}
                       />
                     ))}
-                    {GAME_MODES.filter((m) => m.kind !== "main").length % 2 === 1 && (
+                    {GAME_MODES.filter((m) => m.kind === "extra").length % 2 === 1 && (
                       <ModeTile mode={SOON_TILE} index={GAME_MODES.length} onPick={pickMode} />
                     )}
                   </div>
+                  {/* Not one more game: several of them in a row, so it goes apart, under the games. */}
+                  {GAME_MODES.filter((m) => m.kind === "playlist").map((mode) => (
+                    <PlaylistEntry
+                      key={mode.id}
+                      mode={mode}
+                      selected={tilesOut === mode.id}
+                      watched={!shownIsHost && shownRoom.preview === mode.id}
+                      suggestable={!shownIsHost}
+                      onPick={pickMode}
+                      onPoint={shownIsHost ? previewGame : undefined}
+                    />
+                  ))}
                 </section>
               )}
             </div>
@@ -368,7 +436,7 @@ export default function Home() {
         )}
       </main>
 
-      {shownRoom && !leaving && <RoomDock room={shownRoom} onToast={showToast} />}
+      {shownRoom && !leaving && !isCentral && <RoomDock room={shownRoom} onToast={showToast} />}
 
       <PlaySheet mode={sheetMode} joinCode={sheetJoinCode} open={sheetOpen} onClose={closeSheet} />
 

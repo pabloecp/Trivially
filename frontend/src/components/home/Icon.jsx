@@ -97,7 +97,7 @@ const PATHS = {
     </>
   ),
   minus: <path d="M5 12h14" />,
-  // Geografía's three kinds of question: capitals, flags and a pin on the map.
+  // Capitals and flags (Trivia's written questions about countries).
   landmark: (
     <>
       <path d="M3 22h18" />
@@ -215,6 +215,38 @@ const PATHS = {
     <>
       <path d="M11 4.7a.7.7 0 0 0-1.2-.5L6.4 7.6A1.4 1.4 0 0 1 5.4 8H3a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2.4a1.4 1.4 0 0 1 1 .4l3.4 3.4a.7.7 0 0 0 1.2-.5Z" />
       <path d="m22 9-6 6M16 9l6 6" />
+    </>
+  ),
+  // Playlists: the mode (a list with a play mark), played in order or shuffled, and its items' and sharing buttons.
+  playlist: (
+    <>
+      <path d="M3 6h12M3 12h8M3 18h8" />
+      <path d="M15 12.5v7a.6.6 0 0 0 .9.5l5.6-3.5a.6.6 0 0 0 0-1l-5.6-3.5a.6.6 0 0 0-.9.5Z" />
+    </>
+  ),
+  list: <path d="M10 6h11M10 12h11M10 18h11M4 6h1M4 12h1M4 18h1" />,
+  shuffle: <path d="m18 14 4 4-4 4M18 2l4 4-4 4M2 18h1.97a4 4 0 0 0 3.3-1.7l5.46-8.6a4 4 0 0 1 3.3-1.7H22M2 6h1.97a4 4 0 0 1 3.3 1.7l.6.94M22 18h-6.04a4 4 0 0 1-3.3-1.8l-.57-.9" />,
+  trash: <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6M10 11v6M14 11v6" />,
+  copy: (
+    <>
+      <rect x="8" y="8" width="14" height="14" rx="2" />
+      <path d="M4 16a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2" />
+    </>
+  ),
+  download: <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3" />,
+  upload: <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12" />,
+  save: <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2ZM17 21v-8H7v8M7 3v5h8" />,
+  // The room's central device (a screen everyone looks at) and the players' phones.
+  tv: (
+    <>
+      <rect width="20" height="14" x="2" y="7" rx="2" />
+      <path d="m17 2-5 5-5-5" />
+    </>
+  ),
+  phone: (
+    <>
+      <rect width="14" height="20" x="5" y="2" rx="2" />
+      <path d="M12 18h.01" />
     </>
   ),
   // Scalloped badge with a check cut out, like Instagram's verified mark. The badge takes the text colour.

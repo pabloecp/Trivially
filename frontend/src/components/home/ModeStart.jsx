@@ -7,11 +7,11 @@ import { findMode } from "../../modes/index.js";
 // `canStart` is false while nothing is picked, nobody is connected or the game isn't ready yet (not enough songs or
 // questions: the mode's `ready`; the server checks too).
 export function useStartGame(room) {
-  const { user, startGame } = useApp();
+  const { user, isCentral, startGame } = useApp();
   const [err, setErr] = useState("");
   const [busy, setBusy] = useState(false);
   const mode = findMode(room.game);
-  const isHost = room.hostId === user?.id;
+  const isHost = room.hostId === user?.id && !isCentral;
   const ready = Boolean(mode?.available) && (mode.ready ? mode.ready(room) : true);
   const canStart = isHost && room.players.some((p) => p.connected) && ready && !busy;
 

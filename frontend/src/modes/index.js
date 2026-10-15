@@ -3,11 +3,14 @@ import QuizLobbyPanel from "./quiz/LobbyPanel.jsx";
 import GeoLobbyPanel from "./mundo/LobbyPanel.jsx";
 import HistoryLobbyPanel from "./historia/LobbyPanel.jsx";
 import MinesLobbyPanel from "./minas/LobbyPanel.jsx";
+import PlaylistLobbyPanel from "./playlist/LobbyPanel.jsx";
 import { STYLES as MINES_STYLES } from "./minas/minesInfo.js";
 
 // The games shown on the room screen ("Elige el juego"; a game may have its own "Modos de Juego" in its settings).
 // "Trivia" is the main one (`kind: "main"`, its tile as wide as two): questions of every topic, each answered its own
-// way. The others (`kind: "extra"`) have their own way of playing; their tiles go two by two under it. To add a game,
+// way. The others (`kind: "extra"`) have their own way of playing; their tiles go two by two under it. The "Playlist"
+// (`kind: "playlist"`) isn't a game but several of them one after another, each with its settings: it has no tile, but
+// its own bar under the games ("Crear una playlist", PlaylistEntry in pages/Home.jsx). To add a game,
 // add an entry here with `available: true`, a `Lobby` panel (shown on the room screen while the room waits in that
 // game: the game's big coloured card with its start button and how it's played,
 // and its settings beside it), a `path` for its in-match screens and `ready(room)` (false while the match can't
@@ -57,13 +60,13 @@ export const GAME_MODES = [
     icon: "globe",
     available: true,
     steps: [
-      { icon: "pin", text: "Encuentra el país en el mapa" },
-      { icon: "landmark", text: "Capitales y banderas" },
+      { icon: "globe", text: "Mira qué país te piden" },
+      { icon: "pin", text: "Ponle tu pin en el mapa" },
       { icon: "target", text: "Más cerca, más puntos" },
     ],
     ready: (room) => room.questionsReady == null || room.questionsReady >= (room.config?.geo?.rounds || 5),
     Lobby: GeoLobbyPanel,
-    // Capitals, flags and the world map (modes/mundo/Game.jsx).
+    // The world map (modes/mundo/Game.jsx).
     path: (room) => `/mundo/${room.code}`,
   },
   {
@@ -102,6 +105,30 @@ export const GAME_MODES = [
     Lobby: MinesLobbyPanel,
     // A prompt and a 5 × 5 board (modes/minas/Game.jsx).
     path: (room) => `/minas/${room.code}`,
+  },
+  {
+    // Not a game of its own: the room plays the playlist's games one after another (backend/src/game/playlist.js).
+    // While one of them is played the room is in that game, so its screens are the game's; only the end of the
+    // playlist (who won the most games) has a screen of its own.
+    id: "playlist",
+    name: "Playlist",
+    kind: "playlist",
+    // Orange (styles/playlist.css).
+    color: "playlist",
+    icon: "playlist",
+    available: true,
+    steps: [
+      { icon: "list", text: "Elige los juegos y su orden" },
+      { icon: "grid", text: "Cada uno con sus ajustes" },
+      { icon: "crown", text: "Gana quien gane más juegos" },
+    ],
+    // At least one game, and every game playable with its settings (the server says why one isn't: playlistStatus).
+    ready: (room) => {
+      const items = room.playlist?.items || [];
+      return items.length > 0 && items.every((i) => !room.playlistStatus?.[i.id]?.problem);
+    },
+    Lobby: PlaylistLobbyPanel,
+    path: (room) => `/playlist/${room.code}`,
   },
 ];
 

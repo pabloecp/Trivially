@@ -6,7 +6,8 @@ import Icon from "../../components/home/Icon.jsx";
 import MatchResults from "../../components/home/MatchResults.jsx";
 import PartyPanel from "../../components/home/PartyPanel.jsx";
 import SpectatorBanner from "../../components/home/SpectatorBanner.jsx";
-import { useApp, useRemainingMs } from "../../lib/store.jsx";
+import { ControllerBar, GetReady } from "../../components/home/CentralBits.jsx";
+import { useApp, useRemainingMs, useView } from "../../lib/store.jsx";
 import { findDifficulty, hitsText, minesConfig } from "./minesInfo.js";
 import "../../styles/home.css";
 import "../../styles/quiz.css";
@@ -67,6 +68,9 @@ function GameScreen() {
   const { code } = useParams();
   const { user, room, joinRoom, pickCell, setGame } = useApp();
   const nav = useNavigate();
+  // With a central device in the room, the prompt, everyone's picks and the scoreboard show there; the players'
+  // phones only have the board to pick from (and what to do now).
+  const { central, controller, viewerId } = useView(room);
 
   const left = useRemainingMs(room);
   const [err, setErr] = useState("");
@@ -95,7 +99,7 @@ function GameScreen() {
   const turn = question?.turn ?? null;
   turnRef.current = phase === "playing" ? turn : null;
   const cells = question?.cells || null;
-  const me = room?.players?.find((p) => p.id === user?.id);
+  const me = room?.players?.find((p) => p.id === viewerId);
   // In a race ("carrera") there are no turns: each player picks as many cells as they like until they step on a mine.
   // Each round has its own way, when both are ticked.
   const race = question?.style === "carrera";
@@ -104,7 +108,7 @@ function GameScreen() {
   const out = phase === "playing" ? me?.out || null : null;
   const myPick = picked && picked.round === round && picked.turn === turn ? picked.cell : null;
   const pickedThisTurn = !race && (Boolean(me?.answered) || myPick != null);
-  const canPick = phase === "playing" && Boolean(cells) && !spectator && !out && !pickedThisTurn;
+  const canPick = phase === "playing" && Boolean(cells) && !spectator && !out && !pickedThisTurn && !central;
 
   useEffect(() => setErr(""), [round, phase, turn]);
   // A failed pick (someone was faster) shows for a moment in the top card, then what to do comes back.
@@ -171,7 +175,7 @@ function GameScreen() {
 
   if (phase === "finished" && room.results) return <MatchResults room={room} color="mines" />;
 
-  const isHost = room.hostId === user?.id;
+  const isHost = !central && room.hostId === user?.id;
   // A turn's length, from the phase itself: the first turn of a round is longer than the others.
   const totalMs = room.phaseEndsAt && room.phaseStartedAt ? room.phaseEndsAt - room.phaseStartedAt : minesConfig(room).turnMs;
   const seconds = Math.max(0, Math.ceil(left / 1000));
@@ -185,12 +189,13 @@ function GameScreen() {
   const level = findDifficulty(question?.difficulty);
   const reveal = phase === "reveal";
   const playerIndex = (id) => Math.max(0, room.players.findIndex((p) => p.id === id));
-  const colorOf = (id) => (id === user?.id ? MY_COLOR : PLAYER_COLORS[playerIndex(id) % PLAYER_COLORS.length]);
+  // The central device has no "you": every player's cells in their own colour.
+  const colorOf = (id) => (id === viewerId ? MY_COLOR : PLAYER_COLORS[playerIndex(id) % PLAYER_COLORS.length]);
   const nameOf = (id) => room.players.find((p) => p.id === id)?.name || "Jugador";
   const toFind = question ? question.total - question.found : 0;
   const standing = room.players.filter((p) => p.connected && !p.spectator && !p.out);
-  const waitingFor = standing.filter((p) => !p.answered && p.id !== user?.id).map((p) => p.name);
-  const myHits = cells ? cells.filter((c) => c.correct && c.by === user?.id).length : 0;
+  const waitingFor = standing.filter((p) => !p.answered && p.id !== viewerId).map((p) => p.name);
+  const myHits = cells && viewerId ? cells.filter((c) => c.correct && c.by === viewerId).length : 0;
   const last = round + 1 >= room.totalRounds;
 
   // The top card's last line: what to do now (with an icon, and red when this player is out or a pick failed).
@@ -201,6 +206,11 @@ function GameScreen() {
     hint = err;
     hintIcon = "close";
     hintTone = " is-out";
+  } else if (phase === "countdown" && central) {
+    hint = race
+      ? "Sin turnos: cada uno elige en su teléfono todas las correctas que pueda. Quien pise una mina, fuera."
+      : "Una casilla por turno, desde el teléfono. Quien pise una mina queda fuera hasta la próxima ronda.";
+    hintIcon = "bomb";
   } else if (phase === "countdown") {
     hint = race
       ? "Sin turnos: elige todas las correctas que puedas. Si pisas una mina, fuera."
@@ -209,6 +219,11 @@ function GameScreen() {
   } else if (reveal) {
     hint = `${question ? `${question.found} de ${question.total} encontrados. ` : ""}${last ? "Calculando resultados…" : "Siguiente ronda en breve…"}`;
     hintIcon = "check";
+  } else if (central) {
+    // The central device talks to the whole room: they pick on their phones.
+    hintIcon = "phone";
+    if (race) hint = "¡Carrera! Elijan en su teléfono las correctas antes que los demás.";
+    else hint = waitingFor.length ? `Turno ${turn}: esperando a ${joinNames(waitingFor)}…` : `Turno ${turn}: siguiente turno…`;
   } else if (spectator) {
     hint = "Estás viendo la partida. Jugarás en la siguiente.";
     hintIcon = "info";
@@ -230,62 +245,80 @@ function GameScreen() {
     hint = `Turno ${turn}: elige una casilla.`;
   }
 
+  // The host's controls of the match: in the top card, or in the thin bar of a phone beside a central device.
+  const tools = (
+    <>
+      <PauseButton room={room} isHost={isHost} onError={setErr} />
+      {isHost && (
+        <button
+          type="button"
+          className={`tv-mini-btn${confirmHub ? " is-on" : ""}`}
+          onClick={backToHub}
+          title="Termina la partida y lleva a todos al inicio"
+        >
+          {confirmHub ? "¿Seguro? Toca otra vez" : "Terminar"}
+        </button>
+      )}
+    </>
+  );
+  // What to do now: in the top card, or over the board on a phone beside a central device.
+  const hintLine = (
+    <p key={`${phase}-${turn}-${hintIcon}-${myHits}`} className={`tv-hint tv-mines-hint${hintTone}`} role="status">
+      <Icon name={hintIcon} size={15} strokeWidth={2.8} />
+      <span>{hint}</span>
+    </p>
+  );
+
   return (
-    <div className="tv-room tv-game tv-mines">
+    <div className={`tv-room tv-game tv-mines${central ? " is-central" : ""}${controller ? " is-controller" : ""}`}>
       <div ref={frameRef} className="tv-room-main tv-game-main tv-mines-frame">
         {spectator && <SpectatorBanner />}
         {/* The top card, like the one of Encuentra el país: the round, the topic and its difficulty; the prompt; and
-            what to do now. Always three lines, so the board under it never moves. */}
-        <section className="tv-game-top">
-          <div className="tv-game-round tv-mines-find">
-            <p className="tv-mono-label">
-              Ronda {round + 1} de {room.totalRounds}
-              {question ? ` · ${question.category} · ${level.label}` : " · Campo de minas"}
-            </p>
-            <h1 key={round} className={`tv-card-title tv-mines-prompt${question?.prompt?.length > 40 ? " is-long" : ""}`}>
-              {question?.prompt || "Prepárate…"}
-            </h1>
-            <p key={`${phase}-${turn}-${hintIcon}-${myHits}`} className={`tv-hint tv-mines-hint${hintTone}`} role="status">
-              <Icon name={hintIcon} size={15} strokeWidth={2.8} />
-              <span>{hint}</span>
-            </p>
-          </div>
+            what to do now. Always three lines, so the board under it never moves. A phone beside the central device
+            has only a thin bar: the prompt, the round and the clock are on the big screen. */}
+        {controller ? (
+          <ControllerBar isHost={isHost} seconds={seconds} pct={pct} urgent={urgent}>
+            {tools}
+          </ControllerBar>
+        ) : (
+          <section className="tv-game-top">
+            <div className="tv-game-round tv-mines-find">
+              <p className="tv-mono-label">
+                Ronda {round + 1} de {room.totalRounds}
+                {question ? ` · ${question.category} · ${level.label}` : " · Campo de minas"}
+              </p>
+              <h1 key={round} className={`tv-card-title tv-mines-prompt${question?.prompt?.length > 40 ? " is-long" : ""}`}>
+                {question?.prompt || "Prepárate…"}
+              </h1>
+              {hintLine}
+            </div>
 
-          <div className={`tv-clock${urgent ? " is-urgent" : ""}`} role="timer" aria-label={`${seconds} segundos`}>
-            <svg viewBox="0 0 44 44" aria-hidden="true">
-              <circle className="tv-clock-track" cx="22" cy="22" r="19" />
-              <circle className="tv-clock-fill" cx="22" cy="22" r="19" style={{ strokeDashoffset: 119.4 * (1 - pct / 100) }} />
-            </svg>
-            <span key={seconds} className="tv-clock-num">{seconds}</span>
-          </div>
+            <div className={`tv-clock${urgent ? " is-urgent" : ""}`} role="timer" aria-label={`${seconds} segundos`}>
+              <svg viewBox="0 0 44 44" aria-hidden="true">
+                <circle className="tv-clock-track" cx="22" cy="22" r="19" />
+                <circle className="tv-clock-fill" cx="22" cy="22" r="19" style={{ strokeDashoffset: 119.4 * (1 - pct / 100) }} />
+              </svg>
+              <span key={seconds} className="tv-clock-num">{seconds}</span>
+            </div>
 
-          <div className="tv-game-tools">
-            <PauseButton room={room} isHost={isHost} onError={setErr} />
-            {isHost && (
-              <button
-                type="button"
-                className={`tv-mini-btn${confirmHub ? " is-on" : ""}`}
-                onClick={backToHub}
-                title="Termina la partida y lleva a todos al inicio"
-              >
-                {confirmHub ? "¿Seguro? Toca otra vez" : "Terminar"}
-              </button>
-            )}
-          </div>
+            <div className="tv-game-tools">{tools}</div>
 
-          <div className="tv-timer" aria-hidden="true">
-            <span className={`tv-timer-fill${urgent ? " is-urgent" : ""}`} style={{ width: `${pct}%` }} />
-          </div>
-        </section>
+            <div className="tv-timer" aria-hidden="true">
+              <span className={`tv-timer-fill${urgent ? " is-urgent" : ""}`} style={{ width: `${pct}%` }} />
+            </div>
+          </section>
+        )}
 
         {question ? (
           <section key={round} className="tv-game-stage tv-mines-stage">
             <PauseVeil room={room} isHost={isHost} />
-            {/* One row over the board, always as tall: the board's counters, and at the reveal how this player's
-                round went. */}
+            {/* One row over the board, always as tall: the board's counters (on a phone beside the central device,
+                what to do now), and at the reveal how this player's round went. */}
             <div className="tv-mines-bar">
-              {reveal && !spectator ? (
+              {reveal && !spectator && !central ? (
                 <Verdict me={me} />
+              ) : controller ? (
+                hintLine
               ) : (
                 <div className="tv-mines-chips" aria-live="polite">
                   <span className="tv-match-chip tv-mines-count">
@@ -315,7 +348,7 @@ function GameScreen() {
                     if (owned) state = c.correct ? " is-hit" : " is-mine";
                     else if (reveal) state = c.correct ? " is-missed" : " is-buried";
                     else if (mine) state = " is-pending";
-                    else if (!canPick && !spectator) state = " is-locked";
+                    else if (!canPick && !spectator && !central) state = " is-locked";
                     const label = owned
                       ? `${c.text}: ${c.correct ? "correcta" : "mina"}, de ${nameOf(c.by)}`
                       : reveal
@@ -348,9 +381,13 @@ function GameScreen() {
                 : Array.from({ length: CELLS }, (_, i) => <div key={i} className="tv-mines-cell is-waiting" style={{ "--i": i }} aria-hidden="true" />)}
               {phase === "countdown" && (
                 <div className="tv-mines-countdown">
-                  <span key={Math.max(1, seconds)} className="tv-quiz-count" aria-label={`Empieza en ${Math.max(1, seconds)}`}>
-                    {Math.max(1, seconds)}
-                  </span>
+                  {controller ? (
+                    <GetReady />
+                  ) : (
+                    <span key={Math.max(1, seconds)} className="tv-quiz-count" aria-label={`Empieza en ${Math.max(1, seconds)}`}>
+                      {Math.max(1, seconds)}
+                    </span>
+                  )}
                 </div>
               )}
             </div>
@@ -367,7 +404,8 @@ function GameScreen() {
         )}
       </div>
 
-      <PartyPanel room={room} scores onToast={setErr} />
+      {/* The scoreboard is the central device's, when there is one. */}
+      {!controller && <PartyPanel room={room} scores display={central} onToast={setErr} />}
     </div>
   );
 }

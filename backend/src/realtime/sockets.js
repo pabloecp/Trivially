@@ -19,6 +19,23 @@ export function attachSockets(io, rooms) {
     }
   };
 
+  // A connection's place in a room changed (RoomManager's central device): it becomes the central device, plays again
+  // ("player") or is out (null). It joins or leaves the room's broadcasts, and hears it with the room as it is now.
+  rooms.onRoleChange = (socketId, { code, role, notice }) => {
+    const target = io.sockets.sockets.get(socketId);
+    if (!target) return;
+    if (role) target.join(code);
+    else target.leave(code);
+    const room = role ? rooms.get(code) : null;
+    const userId = rooms.socketToRoom.get(socketId)?.userId;
+    target.emit("room:role", {
+      code,
+      role,
+      notice: notice || null,
+      state: room ? rooms.publicState(room, role === "player" ? userId : undefined) : null,
+    });
+  };
+
   io.on("connection", (socket) => {
     socket.on("identify", (profile) => {
       try {
@@ -26,9 +43,10 @@ export function attachSockets(io, rooms) {
       } catch {}
     });
 
-    socket.on("room:create", (payload, ack) => {
+    socket.on("room:create", async (payload, ack) => {
       try {
         const user = bindUser(socket, payload?.user, rooms);
+        await assertAccountFree(io, rooms, socket, user.id);
         leaveCurrentRoom(io, rooms, socket);
         const room = rooms.create({
           host: user,
@@ -41,19 +59,106 @@ export function attachSockets(io, rooms) {
         ack?.({ ok: true, state: rooms.publicState(room, user.id) });
         io.to(room.code).emit("room:state", rooms.publicState(room));
       } catch (err) {
+        ack?.({ ok: false, error: err.message, busy: err.busy });
+      }
+    });
+
+    // Entering a room as a player, or coming back to it (a reload, a dropped connection). `central`: this tab was the
+    // room's central device and comes back as it.
+    socket.on("room:join", async (payload, ack) => {
+      try {
+        const user = bindUser(socket, payload?.user, rooms);
+        const room = rooms.get(payload?.code || "");
+        if (!room) throw new Error("Sala no encontrada");
+        // Also when this connection is still the room's central device but its tab lost track of it.
+        const ref = rooms.socketToRoom.get(socket.id);
+        const isCentral = Boolean(ref?.central) && ref.code === room.code;
+        if (payload?.central || isCentral) {
+          if (!isCentral) leaveCurrentRoom(io, rooms, socket);
+          if (!rooms.reattachCentral(room, user)) throw new Error("Este dispositivo ya no es el dispositivo central de la sala");
+          socket.join(room.code);
+          ack?.({ ok: true, role: "central", state: rooms.publicState(room) });
+          io.to(room.code).emit("room:state", rooms.publicState(room));
+          return;
+        }
+        await assertAccountFree(io, rooms, socket, user.id, room);
+        leaveCurrentRoom(io, rooms, socket, room.code);
+        rooms.addPlayer(room, user);
+        socket.join(room.code);
+        ack?.({ ok: true, role: "player", state: rooms.publicState(room, user.id) });
+        io.to(room.code).emit("room:state", rooms.publicState(room));
+      } catch (err) {
+        ack?.({ ok: false, error: err.message, busy: err.busy, sameRoom: err.sameRoom, isHost: err.isHost, hostName: err.hostName });
+      }
+    });
+
+    // The host's account, from another device than the one they play on (after "Ya estás jugando en esta sala"): this
+    // device becomes the room's central device straight away.
+    socket.on("room:joinCentral", (payload, ack) => {
+      try {
+        const user = bindUser(socket, payload?.user, rooms);
+        const room = rooms.get(payload?.code || "");
+        if (!room) throw new Error("Sala no encontrada");
+        const ref = rooms.socketToRoom.get(socket.id);
+        if (!(ref?.central && ref.code === room.code)) leaveCurrentRoom(io, rooms, socket);
+        rooms.joinAsCentral(room, user);
+        socket.join(room.code);
+        ack?.({ ok: true, role: "central", state: rooms.publicState(room) });
+        io.to(room.code).emit("room:state", rooms.publicState(room));
+      } catch (err) {
         ack?.({ ok: false, error: err.message });
       }
     });
 
-    socket.on("room:join", (payload, ack) => {
+    // Any other player, the same way: the host has to accept it (room:centralAnswer). The answer comes as "room:role".
+    socket.on("room:requestCentral", (payload, ack) => {
       try {
         const user = bindUser(socket, payload?.user, rooms);
-        const room = rooms.get(payload.code || "");
+        const room = rooms.get(payload?.code || "");
         if (!room) throw new Error("Sala no encontrada");
-        leaveCurrentRoom(io, rooms, socket, room.code);
-        rooms.addPlayer(room, user);
-        socket.join(room.code);
-        ack?.({ ok: true, state: rooms.publicState(room, user.id) });
+        const request = rooms.requestCentral(room, user);
+        ack?.({ ok: true, requestId: request.id });
+        io.to(room.code).emit("room:state", rooms.publicState(room));
+      } catch (err) {
+        ack?.({ ok: false, error: err.message });
+      }
+    });
+
+    socket.on("room:cancelCentralRequest", (ack) => {
+      for (const room of rooms.dropCentralRequests(socket.id)) io.to(room.code).emit("room:state", rooms.publicState(room));
+      ack?.({ ok: true });
+    });
+
+    // The host accepts (`accept: true`) or turns down a request to be the central device.
+    socket.on("room:centralAnswer", (payload, ack) => {
+      try {
+        const { room, userId } = requireRoom(rooms, socket);
+        const result = rooms.answerCentralRequest(room, userId, payload?.id, Boolean(payload?.accept));
+        ack?.({ ok: true, ...result, state: rooms.publicState(room, userId) });
+        io.to(room.code).emit("room:state", rooms.publicState(room));
+      } catch (err) {
+        ack?.({ ok: false, error: err.message });
+      }
+    });
+
+    // The host drops a player onto the "Dispositivo central" spot: that player's device becomes the central one.
+    socket.on("room:makeCentral", (targetUserId, ack) => {
+      try {
+        const { room, userId } = requireRoom(rooms, socket);
+        const result = rooms.makeCentral(room, userId, targetUserId);
+        ack?.({ ok: true, ...result, state: rooms.publicState(room, userId) });
+        io.to(room.code).emit("room:state", rooms.publicState(room));
+      } catch (err) {
+        ack?.({ ok: false, error: err.message });
+      }
+    });
+
+    // The host's "Quitar" on the spot: the room goes back to everyone playing on their own screen.
+    socket.on("room:removeCentral", (ack) => {
+      try {
+        const { room, userId } = requireRoom(rooms, socket);
+        rooms.removeCentral(room, userId);
+        ack?.({ ok: true, state: rooms.publicState(room, userId) });
         io.to(room.code).emit("room:state", rooms.publicState(room));
       } catch (err) {
         ack?.({ ok: false, error: err.message });
@@ -123,6 +228,36 @@ export function attachSockets(io, rooms) {
       }
     });
 
+    // The room's playlist of games, all of it (its name, order and games with their settings), from its panel.
+    socket.on("room:playlist", (playlist, ack) => {
+      try {
+        const { room, userId } = requireRoom(rooms, socket);
+        rooms.updatePlaylist(room, userId, playlist);
+        ack?.({ ok: true, state: rooms.publicState(room, userId) });
+        io.to(room.code).emit("room:state", rooms.publicState(room));
+      } catch (err) {
+        ack?.({ ok: false, error: err.message });
+      }
+    });
+
+    // "Siguiente juego" on a playlist game's results: the next game starts (or, after the last one, the playlist's
+    // results show). If the next game can't start after all, the playlist is over and everyone is back in its panel.
+    socket.on("room:playlistNext", (ack) => {
+      let room = null;
+      try {
+        const ref = requireRoom(rooms, socket);
+        room = ref.room;
+        rooms.nextInPlaylist(room, ref.userId);
+        prefetchMedia(room.tracks);
+        prefetchFlags(room.tracks);
+        watchRoom(io, rooms, room);
+        ack?.({ ok: true });
+      } catch (err) {
+        ack?.({ ok: false, error: err.message });
+      }
+      if (room) io.to(room.code).emit("room:state", rooms.publicState(room));
+    });
+
     // An owner who may change the settings adds one of their Spotify playlists; its songs load in the background.
     socket.on("room:spotifyPlaylist", async (playlistId, ack) => {
       try {
@@ -161,21 +296,24 @@ export function attachSockets(io, rooms) {
       }
     });
 
-    socket.on("room:kick", (targetUserId, ack) => {
+    // The host takes a player out of the room: "kick" lets them come back with the code, "block" doesn't.
+    const takeOut = (block) => (targetUserId, ack) => {
       try {
         const { room, userId } = requireRoom(rooms, socket);
-        const { socketId } = rooms.kick(room, userId, targetUserId);
+        const { socketId } = rooms.kick(room, userId, targetUserId, { block });
         const target = socketId && io.sockets.sockets.get(socketId);
         if (target) {
           target.leave(room.code);
-          target.emit("room:kicked", { code: room.code });
+          target.emit("room:kicked", { code: room.code, blocked: block });
         }
         ack?.({ ok: true, state: rooms.publicState(room, userId) });
         io.to(room.code).emit("room:state", rooms.publicState(room));
       } catch (err) {
         ack?.({ ok: false, error: err.message });
       }
-    });
+    };
+    socket.on("room:kick", takeOut(false));
+    socket.on("room:block", takeOut(true));
 
     socket.on("room:ready", (ready, ack) => {
       try {
@@ -329,10 +467,43 @@ export function attachSockets(io, rooms) {
     });
 
     socket.on("disconnect", () => {
+      for (const room of rooms.dropCentralRequests(socket.id)) io.to(room.code).emit("room:state", rooms.publicState(room));
       const result = rooms.disconnect(socket.id);
       if (result?.room) io.to(result.room.code).emit("room:state", rooms.publicState(result.room));
     });
   });
+}
+
+// How long another connection of the account gets to answer the "room:ping" before it counts as gone.
+const SEAT_PING_MS = 1500;
+
+// An account sits in one room through one connection at a time: a second tab or device would take the seat over and
+// leave the first one stuck on a room it can no longer act in. A connection that dropped silently (the server hasn't
+// noticed yet) stays "connected" for a while, so the other connection has to answer a ping; if it doesn't, it's a
+// reload or a dropped connection coming back, and the new one takes the seat as usual. When the account is already
+// playing in the very room being joined (`room`), the error says so (`sameRoom`): that device can be the room's
+// central device instead, straight away for the host (`isHost`), or if the host accepts it for anyone else.
+async function assertAccountFree(io, rooms, socket, userId, room = null) {
+  for (const seat of rooms.otherSeatSockets(userId, socket.id)) {
+    const other = io.sockets.sockets.get(seat.socketId);
+    if (!other?.connected) continue;
+    const alive = await other.timeout(SEAT_PING_MS).emitWithAck("room:ping").then(
+      () => true,
+      () => false,
+    );
+    if (!alive) continue;
+    if (room && seat.code === room.code) {
+      const err = new Error("Ya estás jugando en esta sala desde otro dispositivo.");
+      err.busy = true;
+      err.sameRoom = true;
+      err.isHost = room.hostId === userId;
+      err.hostName = room.players.get(room.hostId)?.name || "el anfitrión";
+      throw err;
+    }
+    const err = new Error("Ya estás en una sala con esta cuenta (en otra pestaña o dispositivo). Sal de ella primero.");
+    err.busy = true;
+    throw err;
+  }
 }
 
 // Takes the socket out of the room it's in (unless it's `keepCode`), so it stops getting that room's updates.
@@ -363,9 +534,12 @@ function bindUser(socket, user, rooms) {
   return { ...profile, socketId: socket.id };
 }
 
+// The room of a player's connection. The central device only shows the match: nothing it sends is taken, even when
+// its account is the host's (the host controls everything from the device they play on).
 function requireRoom(rooms, socket) {
   const ref = rooms.socketToRoom.get(socket.id);
   if (!ref) throw new Error("No estás en una sala");
+  if (ref.central) throw new Error("El dispositivo central solo muestra la partida: se juega desde los teléfonos");
   const room = rooms.get(ref.code);
   if (!room) throw new Error("Sala no encontrada");
   return { room, userId: ref.userId };

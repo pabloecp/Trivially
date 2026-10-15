@@ -6,11 +6,14 @@ import { profilePath } from "./PlayerName.jsx";
 
 // What tapping a player offers, in the room card and on the live scoreboard: their profile (registered players),
 // and for the host, letting them change the match settings or not, making them the host (a second tap confirms it)
-// and taking them out of the room.
-export default function PlayerMenu({ player, isMe, canManage, onClose, onToast }) {
-  const { toggleConfigPermission, kickPlayer, giveHost } = useApp();
+// taking them out of the room (they can come back with the code) and blocking them (a second tap confirms it: they
+// can't join the room again). `canCentral` (the host, while the room waits): making that player's device the room's
+// central device, the same as dragging them onto the spot.
+export default function PlayerMenu({ player, isMe, canManage, canCentral = false, onClose, onToast }) {
+  const { toggleConfigPermission, kickPlayer, blockPlayer, giveHost, makeCentral } = useApp();
   const ref = useRef(null);
   const [confirmHost, setConfirmHost] = useState(false);
+  const [confirmBlock, setConfirmBlock] = useState(false);
 
   useEffect(() => {
     const away = (e) => {
@@ -49,6 +52,16 @@ export default function PlayerMenu({ player, isMe, canManage, onClose, onToast }
     }
   }
 
+  async function toCentral() {
+    onClose();
+    try {
+      await makeCentral(player.id);
+      onToast?.(`La pantalla de ${player.name} es ahora el dispositivo central`, "check");
+    } catch (err) {
+      onToast?.(err.message || "No se pudo cambiar el dispositivo central");
+    }
+  }
+
   async function kick() {
     onClose();
     try {
@@ -56,6 +69,20 @@ export default function PlayerMenu({ player, isMe, canManage, onClose, onToast }
       onToast?.(`Sacaste a ${player.name} de la sala`, "check");
     } catch (err) {
       onToast?.(err.message || "No se pudo sacar al jugador");
+    }
+  }
+
+  async function block() {
+    if (!confirmBlock) {
+      setConfirmBlock(true);
+      return;
+    }
+    onClose();
+    try {
+      await blockPlayer(player.id);
+      onToast?.(`Bloqueaste a ${player.name}: ya no puede volver a esta sala`, "check");
+    } catch (err) {
+      onToast?.(err.message || "No se pudo bloquear al jugador");
     }
   }
 
@@ -88,10 +115,28 @@ export default function PlayerMenu({ player, isMe, canManage, onClose, onToast }
           {confirmHost ? "¿Seguro? Toca otra vez" : "Hacer anfitrión"}
         </button>
       )}
+      {canCentral && player.connected && (
+        <button type="button" role="menuitem" className="tv-player-menu-item" onClick={toCentral}>
+          <Icon name="tv" size={16} strokeWidth={2.4} />
+          Usar su pantalla como central
+        </button>
+      )}
       {canManage && (
         <button type="button" role="menuitem" className="tv-player-menu-item tv-player-menu-item--danger" onClick={kick}>
           <Icon name="logout" size={16} strokeWidth={2.6} />
           Sacar de la sala
+        </button>
+      )}
+      {canManage && (
+        <button
+          type="button"
+          role="menuitem"
+          className={`tv-player-menu-item tv-player-menu-item--danger${confirmBlock ? " is-confirm" : ""}`}
+          data-sound={confirmBlock ? "next" : undefined}
+          onClick={block}
+        >
+          <Icon name="close" size={16} strokeWidth={2.8} />
+          {confirmBlock ? "¿Seguro? No podrá volver" : "Bloquear"}
         </button>
       )}
     </div>

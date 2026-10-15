@@ -6,8 +6,9 @@ import Icon from "../../components/home/Icon.jsx";
 import SpectatorBanner from "../../components/home/SpectatorBanner.jsx";
 import MatchResults from "../../components/home/MatchResults.jsx";
 import PartyPanel from "../../components/home/PartyPanel.jsx";
+import { ControllerBar, GetReady, PhoneHint, RoomVerdict } from "../../components/home/CentralBits.jsx";
 import { BACKEND_URL } from "../../lib/config.js";
-import { useApp, useRemainingMs } from "../../lib/store.jsx";
+import { useApp, useRemainingMs, useView } from "../../lib/store.jsx";
 import { OPTION_LETTERS, findDifficulty, quizConfig } from "./quizInfo.js";
 import "../../styles/home.css";
 import { PauseButton, PauseVeil } from "../../components/home/PauseControls.jsx";
@@ -64,6 +65,16 @@ function QuestionCard({ question, slot = true, children }) {
   );
 }
 
+// A player's phone while the room's central device shows the question: only the slot (what to do, the verdict), no
+// question; where to look is in its bar (ControllerBar).
+function ControllerCard({ children }) {
+  return (
+    <div className="tv-quiz-q is-controller">
+      <div className="tv-quiz-slot">{children}</div>
+    </div>
+  );
+}
+
 function Count({ seconds }) {
   const n = Math.max(1, seconds);
   return (
@@ -83,8 +94,9 @@ function Hint({ icon, sent, children }) {
   );
 }
 
-// Four options, A to D (tap, or the keys 1–4 / A–D).
-function ChoiceRound({ room, question, me, answer, seconds }) {
+// Four options, A to D (tap, or the keys 1–4 / A–D). On the room's central device they only show (with how many picked
+// each at the reveal); on a player's phone beside it (`controller`) only the options are there, not the question.
+function ChoiceRound({ room, question, me, answer, seconds, central, controller }) {
   const round = room.currentRound;
   const [picked, setPicked] = useState(null);
   const [err, setErr] = useState("");
@@ -92,9 +104,10 @@ function ChoiceRound({ room, question, me, answer, seconds }) {
   const localChoice = picked?.round === round ? picked.choice : null;
   const myChoice = Number.isInteger(me?.lastAnswer?.choice) ? me.lastAnswer.choice : localChoice;
   const spectator = Boolean(me?.spectator);
-  const locked = room.phase !== "playing" || Boolean(me?.answered) || Number.isInteger(localChoice) || spectator;
+  const locked = room.phase !== "playing" || Boolean(me?.answered) || Number.isInteger(localChoice) || spectator || central;
   const reveal = room.phase === "reveal";
   const multiplayer = room.players.length > 1;
+  const Card = controller ? ControllerCard : QuestionCard;
 
   async function choose(choice) {
     if (locked || sending.current || !question.options) return;
@@ -126,9 +139,10 @@ function ChoiceRound({ room, question, me, answer, seconds }) {
 
   return (
     <>
-      <QuestionCard question={question}>
-        {room.phase === "countdown" && <Count seconds={seconds} />}
-        {room.phase === "playing" && (
+      <Card question={question}>
+        {room.phase === "countdown" && (controller ? <GetReady /> : <Count seconds={seconds} />)}
+        {room.phase === "playing" && central && <PhoneHint room={room}>Respondan desde su teléfono</PhoneHint>}
+        {room.phase === "playing" && !central && (
           <Hint key={spectator ? "watch" : locked ? "sent" : "pick"} icon={spectator ? "info" : locked ? "check" : "bolt"} sent={locked}>
             {spectator ? (
               "Estás viendo la partida"
@@ -141,8 +155,9 @@ function ChoiceRound({ room, question, me, answer, seconds }) {
             )}
           </Hint>
         )}
-        {reveal && !spectator && <Verdict me={me} answered={Number.isInteger(myChoice)} />}
-      </QuestionCard>
+        {reveal && central && <RoomVerdict room={room} />}
+        {reveal && !spectator && !central && <Verdict me={me} answered={Number.isInteger(myChoice)} />}
+      </Card>
 
       <div className={`tv-quiz-options${reveal ? " is-reveal" : ""}`} role="group" aria-label="Opciones">
         {OPTION_LETTERS.map((letter, i) => {
@@ -156,7 +171,17 @@ function ChoiceRound({ room, question, me, answer, seconds }) {
           }
           const isRight = reveal && question.answer === i;
           const isMine = myChoice === i;
-          const state = reveal ? (isRight ? " is-right" : isMine ? " is-wrong" : " is-out") : isMine ? " is-picked" : locked && !spectator ? " is-out" : "";
+          const state = reveal
+            ? isRight
+              ? " is-right"
+              : isMine
+              ? " is-wrong"
+              : " is-out"
+            : isMine
+            ? " is-picked"
+            : locked && !spectator && !central
+            ? " is-out"
+            : "";
           const picks = question.picks?.[i] || 0;
           return (
             <button
@@ -176,7 +201,7 @@ function ChoiceRound({ room, question, me, answer, seconds }) {
                   <Icon name={isRight ? "check" : "close"} size={18} strokeWidth={3.4} />
                 </span>
               )}
-              {reveal && multiplayer && (
+              {reveal && (multiplayer || central) && !controller && (
                 <span className="tv-quiz-opt-picks" title={`${picks} ${picks === 1 ? "jugador" : "jugadores"}`}>
                   <Icon name="users" size={14} strokeWidth={2.6} />
                   {picks}
@@ -205,8 +230,10 @@ function Flag({ src }) {
   return <img key={src} className="tv-geo-flag" src={src} alt="Bandera de un país misterioso" onError={() => setFailed(true)} />;
 }
 
-// A written answer (a capital, the country of a flag...), checked with the same typo tolerance as Encuentra el país'.
-function WriteRound({ room, question, me, answer, skipSong, seconds }) {
+// A written answer (a capital, the country of a flag...), checked with some tolerance for typos. On the room's central
+// device the question (and the flag) shows while the players write on their phones, which (`controller`) have only the
+// box; the answer and how many got it show at the reveal.
+function WriteRound({ room, question, me, answer, skipSong, seconds, central, controller }) {
   const round = room.currentRound;
   const [query, setQuery] = useState("");
   const [sent, setSent] = useState(null);
@@ -215,7 +242,7 @@ function WriteRound({ room, question, me, answer, skipSong, seconds }) {
   const inputRef = useRef(null);
   const mySent = sent?.round === round ? sent : null;
   const spectator = Boolean(me?.spectator);
-  const locked = room.phase !== "playing" || Boolean(me?.answered) || Boolean(mySent) || spectator;
+  const locked = room.phase !== "playing" || Boolean(me?.answered) || Boolean(mySent) || spectator || central;
   const reveal = room.phase === "reveal";
   const isFlag = question.kind === "flag";
 
@@ -272,14 +299,21 @@ function WriteRound({ room, question, me, answer, skipSong, seconds }) {
 
   return (
     <>
-      <QuestionCard question={question} slot={false} />
+      {!controller && <QuestionCard question={question} slot={false} />}
       {/* A flag question keeps the flag's place from the countdown on, so nothing jumps when it shows. */}
-      {isFlag && <div className="tv-quiz-flag">{question.flag && <Flag src={flagSrc(question.flag)} />}</div>}
+      {isFlag && !controller && <div className="tv-quiz-flag">{question.flag && <Flag src={flagSrc(question.flag)} />}</div>}
       <div className="tv-quiz-answer">
-        {room.phase === "countdown" && <Count seconds={seconds} />}
-        {reveal && !spectator && <Verdict me={me} answered={answered} detail={`Respuesta: ${question.answer}`} />}
+        {room.phase === "countdown" && (controller ? <GetReady /> : <Count seconds={seconds} />)}
+        {reveal && central && (
+          <>
+            <p className="tv-central-answer">{question.answer}</p>
+            <RoomVerdict room={room} />
+          </>
+        )}
+        {reveal && !spectator && !central && <Verdict me={me} answered={answered} detail={controller ? "" : `Respuesta: ${question.answer}`} />}
         {reveal && spectator && <p className="tv-geo-sent tv-quiz-sent">Respuesta: {question.answer}</p>}
-      {room.phase === "playing" &&
+        {room.phase === "playing" && central && <PhoneHint room={room}>Escriban la respuesta en su teléfono</PhoneHint>}
+      {room.phase === "playing" && !central &&
         (!locked ? (
           <form className="tv-search tv-quiz-write" onSubmit={submit}>
             <div className="tv-search-box">
@@ -333,6 +367,8 @@ function GameScreen() {
   const { code } = useParams();
   const { user, room, joinRoom, answer, skipSong, setGame } = useApp();
   const nav = useNavigate();
+  // The room's central device shows the question to everyone; beside it, the players' phones only the ways to answer.
+  const { central, controller, viewerId } = useView(room);
 
   const left = useRemainingMs(room);
   const [err, setErr] = useState("");
@@ -378,14 +414,16 @@ function GameScreen() {
     return <MatchResults room={room} color="quiz" />;
   }
 
-  const playerObj = room.players?.find((p) => p.id === user?.id);
-  const me = playerObj
+  const playerObj = room.players?.find((p) => p.id === viewerId);
+  const me = central
+    ? null
+    : playerObj
     ? { ...playerObj, ...(room.me?.id === user?.id ? room.me : {}), lastAnswer: playerObj.lastAnswer || room.me?.lastAnswer }
     : room.me;
   const question = room.question;
   const round = room.currentRound;
   const type = question?.type || "choice";
-  const isHost = room.hostId === user?.id;
+  const isHost = !central && room.hostId === user?.id;
   const totalMs = quizConfig(room).roundMs;
   const pct =
     room.phase === "playing"
@@ -395,46 +433,57 @@ function GameScreen() {
       : 100;
   const seconds = Math.max(0, Math.ceil(left / 1000));
   const urgent = room.phase === "playing" && left <= 4000;
-  const props = { room, question, me, answer, skipSong, seconds };
+  const props = { room, question, me, answer, skipSong, seconds, central, controller };
+  // The host's controls of the match: in the round's card, or in the thin bar of a phone beside a central device.
+  const tools = (
+    <>
+      <PauseButton room={room} isHost={isHost} onError={setErr} />
+      {isHost && (
+        <button
+          type="button"
+          className={`tv-mini-btn${confirmHub ? " is-on" : ""}`}
+          onClick={backToHub}
+          title="Termina la partida y lleva a todos al inicio"
+        >
+          {confirmHub ? "¿Seguro? Toca otra vez" : "Terminar"}
+        </button>
+      )}
+    </>
+  );
 
   return (
-    <div className="tv-room tv-game tv-quiz">
+    <div className={`tv-room tv-game tv-quiz${central ? " is-central" : ""}${controller ? " is-controller" : ""}`}>
       <div className="tv-room-main tv-game-main">
         {me?.spectator && <SpectatorBanner />}
-        <section className="tv-game-top">
-          <div className="tv-game-round">
-            <p className="tv-mono-label">Sala {room.code} · Trivia</p>
-            <h1 className="tv-card-title">
-              Pregunta {round + 1} <span className="tv-muted">de {room.totalRounds}</span>
-            </h1>
-          </div>
+        {/* Beside a central device the round, the clock and the question are on the big screen: only the options here. */}
+        {controller ? (
+          <ControllerBar isHost={isHost} seconds={seconds} pct={pct} urgent={urgent}>
+            {tools}
+          </ControllerBar>
+        ) : (
+          <section className="tv-game-top">
+            <div className="tv-game-round">
+              <p className="tv-mono-label">Sala {room.code} · Trivia</p>
+              <h1 className="tv-card-title">
+                Pregunta {round + 1} <span className="tv-muted">de {room.totalRounds}</span>
+              </h1>
+            </div>
 
-          <div className={`tv-clock${urgent ? " is-urgent" : ""}`} role="timer" aria-label={`${seconds} segundos`}>
-            <svg viewBox="0 0 44 44" aria-hidden="true">
-              <circle className="tv-clock-track" cx="22" cy="22" r="19" />
-              <circle className="tv-clock-fill" cx="22" cy="22" r="19" style={{ strokeDashoffset: 119.4 * (1 - pct / 100) }} />
-            </svg>
-            <span key={seconds} className="tv-clock-num">{seconds}</span>
-          </div>
+            <div className={`tv-clock${urgent ? " is-urgent" : ""}`} role="timer" aria-label={`${seconds} segundos`}>
+              <svg viewBox="0 0 44 44" aria-hidden="true">
+                <circle className="tv-clock-track" cx="22" cy="22" r="19" />
+                <circle className="tv-clock-fill" cx="22" cy="22" r="19" style={{ strokeDashoffset: 119.4 * (1 - pct / 100) }} />
+              </svg>
+              <span key={seconds} className="tv-clock-num">{seconds}</span>
+            </div>
 
-          <div className="tv-game-tools">
-            <PauseButton room={room} isHost={isHost} onError={setErr} />
-            {isHost && (
-              <button
-                type="button"
-                className={`tv-mini-btn${confirmHub ? " is-on" : ""}`}
-                onClick={backToHub}
-                title="Termina la partida y lleva a todos al inicio"
-              >
-                {confirmHub ? "¿Seguro? Toca otra vez" : "Terminar"}
-              </button>
-            )}
-          </div>
+            <div className="tv-game-tools">{tools}</div>
 
-          <div className="tv-timer" aria-hidden="true">
-            <span className={`tv-timer-fill${urgent ? " is-urgent" : ""}`} style={{ width: `${pct}%` }} />
-          </div>
-        </section>
+            <div className="tv-timer" aria-hidden="true">
+              <span className={`tv-timer-fill${urgent ? " is-urgent" : ""}`} style={{ width: `${pct}%` }} />
+            </div>
+          </section>
+        )}
 
         {question ? (
           <section key={round} className={`tv-game-stage tv-quiz-stage is-${type}`}>
@@ -456,7 +505,8 @@ function GameScreen() {
         )}
       </div>
 
-      <PartyPanel room={room} scores onToast={setErr} />
+      {/* The scoreboard is the central device's, when there is one. */}
+      {!controller && <PartyPanel room={room} scores display={central} onToast={setErr} />}
     </div>
   );
 }

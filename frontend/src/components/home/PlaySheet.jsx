@@ -144,6 +144,11 @@ export default function PlaySheet({ mode, joinCode, open, onClose }) {
       else await joinRoom(action.code);
       onClose(); // the room navigator takes the player wherever the room is
     } catch (err) {
+      // This account already plays in that room from another device: CentralOffer asks about this one instead.
+      if (err.offer) {
+        onClose();
+        return;
+      }
       setError(err.message || "Algo salió mal, inténtalo otra vez");
       setBusy(false);
     }

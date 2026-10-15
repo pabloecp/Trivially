@@ -163,33 +163,7 @@ html.tv-geo-playing { touch-action: pan-x pan-y; }
   .tv-geo-map-card { padding: 6px; border-radius: 22px; }
   .tv-geo-map { border-radius: 16px; }
 }
-/* Written rounds don't use the map's buttons. */
-.tv-geo-map-card.is-written .tv-geo-toolbar { visibility: hidden; }
-
-/* A written question floats over the map: the flag (if any) and the answer box, near the top so a phone's keyboard
-   never covers them. */
-.tv-geo-veil {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 14px;
-  background: rgba(0, 0, 0, 0.38);
-}
-.tv-geo-ask {
-  display: grid;
-  justify-items: center;
-  gap: 14px;
-  width: min(100%, 540px);
-  padding: 16px;
-  border-radius: 22px;
-  background: var(--tv-surface);
-  box-shadow: 0 6px 0 var(--tv-edge), 0 24px 40px -18px rgba(0, 0, 0, 0.6);
-  animation: tvRise 0.4s var(--tv-spring) backwards;
-}
-.tv-geo-ask .tv-search { max-width: none; }
-.tv-geo-ask .tv-geo-flag { max-height: min(200px, 26vh); max-height: min(200px, 26svh); }
+/* "Respuesta enviada" line (Trivia's written answers use it too). */
 .tv-geo-sent {
   display: inline-flex;
   align-items: center;
@@ -202,10 +176,6 @@ html.tv-geo-playing { touch-action: pan-x pan-y; }
 }
 .tv-geo-sent svg { color: var(--p-ok-text); }
 .tv-geo-sent.is-skipped svg { color: var(--tv-text-3); }
-@media (max-width: 640px) {
-  .tv-geo-veil { padding: 10px; }
-  .tv-geo-ask { gap: 10px; padding: 12px; border-radius: 18px; }
-}
 .tv-geo-map > svg { display: block; width: 100%; height: 100%; touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent; cursor: grab; }
 .tv-geo-map.is-interactive > svg { cursor: crosshair; }
 .tv-geo-map > svg:active,
@@ -398,6 +368,5 @@ html.tv-geo-playing { touch-action: pan-x pan-y; }
   .tv-geo-pin > *,
   .tv-geo-flag,
   .tv-geo-country,
-  .tv-geo-verdict-icon,
-  .tv-geo-ask { animation: none; }
+  .tv-geo-verdict-icon { animation: none; }
 }

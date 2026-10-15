@@ -54,6 +54,16 @@ import {
   minesCounts,
   pickMinesQuestions,
 } from "./mines.js";
+import {
+  cleanPlaylist,
+  configWithItem,
+  emptyPlaylist,
+  GAME_NAMES,
+  newRun,
+  PLAYLIST_GAME,
+  publicRun,
+  recordGame,
+} from "./playlist.js";
 import { categoryName } from "../questions/questionSchema.js";
 import { flagToken, flagUrl } from "../geo/flags.js";
 import { locate } from "../geo/worldMap.js";
@@ -63,11 +73,12 @@ const CODE_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 // Games the host can move a room into (ids match frontend/src/modes/index.js). `null` is the Home screen.
 // "opciones" (Trivia, QUIZ_GAME) is the main mode: questions of every topic, each answered its own way (four
 // options, a written answer or a year on a timeline). The extras: "musica" (Adivina la canción), "mundo" (Encuentra el país,
-// GEO_GAME: capitals and flags written, and countries pinned on the world map), "historia" (Rango, HISTORY_GAME:
+// GEO_GAME: countries pinned on the world map), "historia" (Rango, HISTORY_GAME:
 // getting as close as you can on a range; for now only "Línea del tiempo", an event's year) and "minas" (Campo de minas, MINES_GAME: a prompt and a 5 × 5 board of
 // answers, some right and some mines, picked one per turn). The question games keep their questions in room.tracks,
-// in place of songs.
-export const GAME_IDS = ["musica", "opciones", "mundo", "historia", "minas"];
+// in place of songs. "playlist" isn't a game of its own: it's where the room makes a playlist of them (game/playlist.js),
+// and while one is played the room is in each of its games in turn.
+export const GAME_IDS = ["musica", "opciones", "mundo", "historia", "minas", PLAYLIST_GAME];
 // "Trivia": its settings live in config.quiz and its questions take the place of songs in room.tracks.
 export const QUIZ_GAME = "opciones";
 // The games that ask questions instead of playing songs.
@@ -85,6 +96,9 @@ const SUGGESTION_TTL_MS = 60000;
 export const CHAT_MAX_LENGTH = 200;
 const CHAT_KEEP = 40;
 const CHAT_GAP_MS = 700;
+// A player can ask to use another device as the central one this often, and a room keeps this many requests at once.
+export const CENTRAL_ASK_GAP_MS = 5000;
+const CENTRAL_REQUESTS_KEEP = 5;
 
 export function assertGame(game) {
   if (game === null || GAME_IDS.includes(game)) return game;
@@ -105,6 +119,9 @@ export function createRoomCode(existing) {
 // Adivina la canción's ways of answering ("Modos"): closed questions, four songs to choose from ("opciones"), and open
 // ones, the title typed in the search box ("escribir"). Both are ticked in a new room; the rounds are shared evenly.
 export const MUSIC_FORMATS = ["opciones", "escribir"];
+// Same limits as its settings on screen: 5–25 rounds, 15–35 seconds to guess.
+const MUSIC_LIMITS = { rounds: { min: 5, max: 25 }, roundMs: { min: 15000, max: 35000 } };
+const clampTo = (n, { min, max }, fallback) => Math.min(max, Math.max(min, Math.round(Number(n)) || fallback));
 
 // A new room plays every playlist of the catalog (Top 500 Español and Top 500 Inglés).
 function defaultConfig(catalog) {
@@ -204,6 +221,13 @@ export class RoomManager {
       // The room's scoreboard across its matches: how many were finished, and per player (even one who left) their
       // name, avatar, matches played and wins.
       board: { matches: 0, players: {} },
+      // The playlist being made in the room's "Playlist" panel, and the one being played (null when none is).
+      playlist: emptyPlaylist(),
+      run: null,
+      // The room's central device (a screen that only shows the match, see setCentral) and the players asking to
+      // use another device of theirs as it (requestCentral).
+      central: null,
+      centralRequests: [],
     };
     this.rooms.set(code, room);
     this.addPlayer(room, host, true);
@@ -211,7 +235,7 @@ export class RoomManager {
   }
 
   addPlayer(room, user, isHost = false) {
-    if (room.kicked?.has(user.id)) throw new Error("El anfitrión te sacó de esta sala");
+    if (room.blocked?.has(user.id)) throw new Error("El anfitrión te bloqueó de esta sala");
     const existing = room.players.get(user.id);
     const isGuest = Boolean(user.isGuest ?? (user.id?.startsWith("gst_") || !user.email));
     const player = existing || {
@@ -249,23 +273,57 @@ export class RoomManager {
     return player;
   }
 
-  // Explicit "leave room".
+  // The connections (other than `exceptSocketId`) this account is seated with in any room right now, with the room's
+  // code. A central device is no seat: it doesn't play.
+  otherSeatSockets(userId, exceptSocketId) {
+    const seats = [];
+    for (const room of this.rooms.values()) {
+      const p = room.players.get(userId);
+      if (p?.connected && p.socketId && p.socketId !== exceptSocketId) seats.push({ socketId: p.socketId, code: room.code });
+    }
+    return seats;
+  }
+
+  // Explicit "leave room". The central device leaving only takes it off the room's screen.
   leave(socketId) {
     const ref = this.socketToRoom.get(socketId);
     if (!ref) return null;
     const room = this.get(ref.code);
     this.socketToRoom.delete(socketId);
     if (!room) return null;
+    if (ref.central) {
+      if (room.central?.socketId === socketId) {
+        clearTimeout(room.central.dropTimer);
+        room.central = null;
+      }
+      return { room };
+    }
     return this.removePlayer(room, ref.userId);
   }
 
-  // Lost connection: keep the seat for a grace period in case the player comes back.
+  // Lost connection: keep the seat for a grace period in case the player comes back. The central device keeps its
+  // place the same way (a reload puts it back, see reattachCentral); meanwhile the players see the whole match again.
   disconnect(socketId) {
     const ref = this.socketToRoom.get(socketId);
     if (!ref) return null;
     this.socketToRoom.delete(socketId);
     const room = this.get(ref.code);
     if (!room) return null;
+    if (ref.central) {
+      const central = room.central;
+      if (!central || central.socketId !== socketId) return { room };
+      central.connected = false;
+      central.socketId = null;
+      clearTimeout(central.dropTimer);
+      central.dropTimer = setTimeout(() => {
+        central.dropTimer = null;
+        if (room.central !== central || central.connected || this.rooms.get(room.code) !== room) return;
+        room.central = null;
+        this.onPhaseChange?.(room);
+      }, this.reconnectGraceMs);
+      central.dropTimer.unref?.();
+      return { room };
+    }
     const player = room.players.get(ref.userId);
     if (!player) return { room };
     player.connected = false;
@@ -326,6 +384,20 @@ export class RoomManager {
       clearTimeout(p.dropTimer);
       if (p.socketId) this.socketToRoom.delete(p.socketId);
     });
+    // The central device and whoever was waiting to be it hear that the room is gone.
+    const central = room.central;
+    room.central = null;
+    if (central) {
+      clearTimeout(central.dropTimer);
+      if (central.socketId) {
+        this.socketToRoom.delete(central.socketId);
+        this.onRoleChange?.(central.socketId, { code: room.code, role: null, notice: "La sala se cerró" });
+      }
+    }
+    for (const request of room.centralRequests || []) {
+      this.onRoleChange?.(request.socketId, { code: room.code, role: null, notice: "La sala se cerró" });
+    }
+    room.centralRequests = [];
     this.rooms.delete(room.code);
   }
 
@@ -377,8 +449,9 @@ export class RoomManager {
     return { name: player.name };
   }
 
-  // The host removes a player for good: their seat goes (even mid-match) and they can't join this room again.
-  kick(room, hostUserId, targetUserId) {
+  // The host takes a player out of the room: their seat goes (even mid-match). By default it isn't a ban: entering the
+  // code again joins as a new player (a spectator if a match is running). With `block` they can't join this room again.
+  kick(room, hostUserId, targetUserId, { block = false } = {}) {
     if (!room) throw new Error("Sala no encontrada");
     if (room.hostId !== hostUserId) throw new Error("Solo el anfitrión puede sacar jugadores");
     if (hostUserId === targetUserId) throw new Error("No puedes sacarte a ti mismo");
@@ -388,10 +461,182 @@ export class RoomManager {
     if (player.socketId) this.socketToRoom.delete(player.socketId);
     room.players.delete(targetUserId);
     room.coHosts = (room.coHosts || []).filter((id) => id !== targetUserId);
-    room.kicked ||= new Set();
-    room.kicked.add(targetUserId);
+    if (block) (room.blocked ||= new Set()).add(targetUserId);
     this.checkMinesTurn(room);
     return { socketId: player.socketId, name: player.name };
+  }
+
+  /*
+   * The central device ("dispositivo central"): one connection of the room that only shows the match (the questions,
+   * the songs, the board, the scoreboard) on a screen everyone sees, while the players answer from their phones,
+   * which then show only the ways to answer. It is no player and can do nothing in the room: the host keeps every
+   * control (sockets.js refuses any action from it). `room.central` is { userId, name, avatar, isGuest, socketId,
+   * connected }; the account is whoever opened that device. It gets there three ways:
+   *  - the host drags a player onto the "Dispositivo central" spot (makeCentral): that player's device stops playing;
+   *  - the host opens the room on another device with their account (joinAsCentral);
+   *  - another player does the same and the host accepts it (requestCentral, answerCentralRequest).
+   * `onRoleChange(socketId, { code, role, notice })` tells a connection what it is in the room now: "central",
+   * "player" (a central device that plays again) or null (out of the room).
+   */
+
+  /** Makes `device` (an account and its connection) the room's central device, in place of the one there was. */
+  setCentral(room, device) {
+    if (room.central) this.releaseCentral(room, { replaced: true });
+    room.centralRequests = (room.centralRequests || []).filter((r) => r.socketId !== device.socketId);
+    room.central = {
+      userId: device.id,
+      name: device.name,
+      avatar: device.avatar,
+      isGuest: Boolean(device.isGuest),
+      socketId: device.socketId,
+      connected: true,
+      dropTimer: null,
+    };
+    this.socketToRoom.set(device.socketId, { code: room.code, userId: device.id, central: true });
+    this.onRoleChange?.(device.socketId, { code: room.code, role: "central" });
+    return room.central;
+  }
+
+  /**
+   * The central device stops being it (taken off by the host, or another one took its place). A device that was a
+   * player's (dragged onto the spot) plays again when its account has no other seat in the room; otherwise it leaves.
+   */
+  releaseCentral(room, { replaced = false } = {}) {
+    const central = room.central;
+    if (!central) return null;
+    clearTimeout(central.dropTimer);
+    room.central = null;
+    if (!central.socketId) return null;
+    const why = replaced ? "Otro dispositivo es ahora el central" : "Este dispositivo ya no es el central";
+    if (!room.players.has(central.userId) && !room.blocked?.has(central.userId)) {
+      this.addPlayer(room, { id: central.userId, name: central.name, avatar: central.avatar, isGuest: central.isGuest, socketId: central.socketId });
+      this.onRoleChange?.(central.socketId, { code: room.code, role: "player", notice: `${why}: vuelves a jugar desde aquí` });
+      return { socketId: central.socketId, role: "player" };
+    }
+    this.socketToRoom.delete(central.socketId);
+    this.onRoleChange?.(central.socketId, { code: room.code, role: null, notice: `${why} de la sala` });
+    return { socketId: central.socketId, role: null };
+  }
+
+  /**
+   * The host drags a player onto the "Dispositivo central" spot: that player's device becomes the room's central device
+   * and their seat goes (they play again if it stops being the central, see releaseCentral). Only while the room waits:
+   * mid-match it would take a player out of it. The host can't be it, or nobody would control the match.
+   */
+  makeCentral(room, hostUserId, targetUserId) {
+    if (room.hostId !== hostUserId) throw new Error("Solo el anfitrión elige el dispositivo central");
+    if (room.phase !== "lobby") throw new Error("Cambia el dispositivo central antes de empezar la partida");
+    if (targetUserId === room.hostId) {
+      throw new Error("El anfitrión no puede ser el dispositivo central: pásale el anfitrión a otro jugador primero");
+    }
+    const player = room.players.get(targetUserId);
+    if (!player) throw new Error("El jugador no está en la sala");
+    if (!player.connected || !player.socketId) throw new Error("Ese jugador no está conectado ahora");
+    clearTimeout(player.dropTimer);
+    room.players.delete(targetUserId);
+    room.coHosts = (room.coHosts || []).filter((id) => id !== targetUserId);
+    room.suggestions = (room.suggestions || []).filter((s) => s.userId !== targetUserId);
+    this.setCentral(room, { ...player, socketId: player.socketId });
+    return { name: player.name };
+  }
+
+  /** The host's account, from another device than the one they play on: it becomes the central device straight away. */
+  joinAsCentral(room, user) {
+    if (room.blocked?.has(user.id)) throw new Error("El anfitrión te bloqueó de esta sala");
+    if (room.hostId !== user.id) throw new Error("Pídele al anfitrión que acepte este dispositivo como central");
+    if (room.central?.socketId === user.socketId) return room.central;
+    return this.setCentral(room, user);
+  }
+
+  /**
+   * A player (not the host), from another device than the one they play on, asks to make it the central device: the
+   * host sees the request and accepts or turns it down (answerCentralRequest). One request per account (a new one
+   * replaces it), one every CENTRAL_ASK_GAP_MS.
+   */
+  requestCentral(room, user) {
+    if (room.blocked?.has(user.id)) throw new Error("El anfitrión te bloqueó de esta sala");
+    if (room.hostId === user.id) throw new Error("Eres el anfitrión: puedes entrar directamente como dispositivo central");
+    const player = room.players.get(user.id);
+    if (!player) throw new Error("Entra primero a la sala como jugador");
+    if (room.central?.socketId === user.socketId) throw new Error("Este dispositivo ya es el central");
+    const wait = (player.centralAskedAt || 0) + CENTRAL_ASK_GAP_MS - Date.now();
+    if (wait > 0) throw new Error(`Espera ${Math.ceil(wait / 1000)} s para pedirlo otra vez`);
+    player.centralAskedAt = Date.now();
+    const requests = room.centralRequests || [];
+    for (const old of requests) {
+      if (old.userId === user.id && old.socketId !== user.socketId) {
+        this.onRoleChange?.(old.socketId, { code: room.code, role: null, notice: "Lo pediste desde otro dispositivo" });
+      }
+    }
+    room.centralSeq = (room.centralSeq || 0) + 1;
+    const request = {
+      id: room.centralSeq,
+      userId: user.id,
+      name: user.name,
+      avatar: user.avatar,
+      isGuest: Boolean(user.isGuest),
+      socketId: user.socketId,
+      at: Date.now(),
+    };
+    room.centralRequests = [...requests.filter((r) => r.userId !== user.id && r.socketId !== user.socketId), request].slice(
+      -CENTRAL_REQUESTS_KEEP
+    );
+    return request;
+  }
+
+  /** The host's answer to a request: accepted, that device is the central one; turned down, it hears so. */
+  answerCentralRequest(room, hostUserId, requestId, accept) {
+    if (room.hostId !== hostUserId) throw new Error("Solo el anfitrión elige el dispositivo central");
+    const request = (room.centralRequests || []).find((r) => r.id === Number(requestId));
+    if (!request) throw new Error("Esa solicitud ya no está");
+    room.centralRequests = room.centralRequests.filter((r) => r !== request);
+    if (!accept) {
+      const host = room.players.get(room.hostId)?.name || "El anfitrión";
+      this.onRoleChange?.(request.socketId, { code: room.code, role: null, notice: `${host} no aceptó este dispositivo como central` });
+      return { accepted: false, name: request.name };
+    }
+    this.setCentral(room, { ...request, id: request.userId });
+    return { accepted: true, name: request.name };
+  }
+
+  /** The requests made from this connection go (it closed, or gave up waiting). Returns the rooms that changed. */
+  dropCentralRequests(socketId) {
+    const changed = [];
+    for (const room of this.rooms.values()) {
+      const requests = room.centralRequests || [];
+      if (!requests.some((r) => r.socketId === socketId)) continue;
+      room.centralRequests = requests.filter((r) => r.socketId !== socketId);
+      changed.push(room);
+    }
+    return changed;
+  }
+
+  /** The host's "Quitar" on the spot. */
+  removeCentral(room, hostUserId) {
+    if (room.hostId !== hostUserId) throw new Error("Solo el anfitrión elige el dispositivo central");
+    if (!room.central) throw new Error("La sala no tiene dispositivo central");
+    return this.releaseCentral(room);
+  }
+
+  /**
+   * The central device coming back after a reload or a dropped connection, with the same account: it takes its place
+   * again (a second tab of it takes it over from the first). False when the room's central device isn't this account's.
+   */
+  reattachCentral(room, user) {
+    const central = room.central;
+    if (!central || central.userId !== user.id) return false;
+    if (central.socketId && central.socketId !== user.socketId) {
+      this.socketToRoom.delete(central.socketId);
+      this.onRoleChange?.(central.socketId, { code: room.code, role: null, notice: "El dispositivo central se abrió en otra pestaña" });
+    }
+    clearTimeout(central.dropTimer);
+    central.dropTimer = null;
+    central.socketId = user.socketId;
+    central.connected = true;
+    central.name = user.name || central.name;
+    central.avatar = user.avatar || central.avatar;
+    this.socketToRoom.set(user.socketId, { code: room.code, userId: user.id, central: true });
+    return true;
   }
 
   updateConfig(room, userId, config) {
@@ -405,22 +650,141 @@ export class RoomManager {
     if (config?.history) next.history = mergeHistoryConfig(room.config.history, config.history);
     if (config?.mines) next.mines = mergeMinesConfig(room.config.mines, config.mines);
     // Same limits as the settings on screen: 5–25 rounds, 15–35 seconds to guess.
-    if (config?.rounds != null) next.rounds = Math.min(25, Math.max(5, Math.round(Number(config.rounds)) || 5));
-    if (config?.roundMs != null) next.roundMs = Math.min(35000, Math.max(15000, Math.round(Number(config.roundMs)) || ROUND_MS));
+    if (config?.rounds != null) next.rounds = clampTo(config.rounds, MUSIC_LIMITS.rounds, 5);
+    if (config?.roundMs != null) next.roundMs = clampTo(config.roundMs, MUSIC_LIMITS.roundMs, ROUND_MS);
     // Adivina la canción's ways of answering; both may be unticked (the match then can't start).
     if (Array.isArray(config?.formats)) next.formats = MUSIC_FORMATS.filter((f) => config.formats.includes(f));
     if (config?.playlistIds) {
       // Spotify playlists can only be added by the host (addSpotifyPlaylist); here they can only stay or go.
-      const known = new Set([...this.catalog.playlists.map((p) => p.id), ...Object.keys(room.customPlaylists || {})]);
+      const known = this.knownPlaylistIds(room);
       // All of them may be unticked: the match then has no songs and can't start.
       next.playlistIds = [...new Set(config.playlistIds)].filter((id) => known.has(id));
     }
     room.config = next;
+    this.syncSpotifyPlaylists(room);
+  }
+
+  /** The song playlists the room can play: the catalog's and the Spotify ones the host added. */
+  knownPlaylistIds(room) {
+    return new Set([...this.catalog.playlists.map((p) => p.id), ...Object.keys(room.customPlaylists || {})]);
+  }
+
+  /** Only the Spotify playlists the room's settings choose keep loading their songs (see loadPlaylist). */
+  syncSpotifyPlaylists(room) {
     for (const entry of Object.values(room.customPlaylists || {})) {
       const wasActive = entry.active;
-      entry.active = room.config.playlistIds.includes(entry.id);
+      entry.active = (room.config.playlistIds || []).includes(entry.id);
       if (entry.active && !wasActive) this.loadPlaylist(room, entry);
     }
+  }
+
+  /**
+   * The settings of a playlist's game, valid whatever was sent (an edit, or an imported JSON): each game's own merge
+   * from its defaults. Adivina la canción's are its rounds, seconds, ways of answering and song playlists; ids the room
+   * doesn't know are dropped, and when none of them is known (a JSON from somewhere else) it plays the whole catalog.
+   */
+  cleanItemConfig(room, game, change = {}) {
+    if (game === QUIZ_GAME) return mergeQuizConfig(undefined, change);
+    if (game === GEO_GAME) return mergeGeoConfig(undefined, change);
+    if (game === HISTORY_GAME) return mergeHistoryConfig(undefined, change);
+    if (game === MINES_GAME) return mergeMinesConfig(undefined, change);
+    const base = defaultConfig(this.catalog);
+    const known = this.knownPlaylistIds(room);
+    let playlistIds = base.playlistIds;
+    if (Array.isArray(change.playlistIds)) {
+      const ids = [...new Set(change.playlistIds)].filter((id) => known.has(id));
+      playlistIds = ids.length || !change.playlistIds.length ? ids : base.playlistIds;
+    }
+    return {
+      rounds: change.rounds != null ? clampTo(change.rounds, MUSIC_LIMITS.rounds, base.rounds) : base.rounds,
+      roundMs: change.roundMs != null ? clampTo(change.roundMs, MUSIC_LIMITS.roundMs, base.roundMs) : base.roundMs,
+      playlistIds,
+      formats: Array.isArray(change.formats) ? MUSIC_FORMATS.filter((f) => change.formats.includes(f)) : base.formats,
+    };
+  }
+
+  /**
+   * The room's playlist changes (its name, order, games or one game's settings; or a whole one loaded or imported):
+   * the client sends all of it and it's kept cleaned (cleanPlaylist). Like the settings, the host and whoever has the
+   * permission can change it, while the room waits.
+   */
+  updatePlaylist(room, userId, playlist) {
+    if (!this.canEditConfig(room, userId)) throw new Error("No tienes permisos para cambiar la playlist");
+    if (room.phase !== "lobby") throw new Error("La partida ya comenzó");
+    room.playlist = cleanPlaylist(playlist, (game, config) => this.cleanItemConfig(room, game, config));
+    return room.playlist;
+  }
+
+  /**
+   * Why a game of the playlist can't be played with its settings (a Spanish sentence), or null when it can: a list
+   * left empty, or fewer questions, boards or songs than rounds. `exact` draws them as a match would (some can't be
+   * asked together: the same question twice, two events of the same year...), to check before the playlist starts;
+   * otherwise only counts them, cheap enough for every update of the room. `base` is the room's own settings.
+   */
+  itemProblem(room, item, base = room.config, { exact = false } = {}) {
+    const config = item.config;
+    const short = (n, what, rounds, more) =>
+      `Solo hay ${n} ${what} con esos ajustes para ${rounds} rondas. Baja las rondas o elige más ${more}.`;
+    if (item.game === QUIZ_GAME) {
+      const quiz = mergeQuizConfig(config);
+      if (!quiz.categories.length) return "Elige al menos una categoría.";
+      if (!quiz.formats.length) return "Elige al menos un modo de juego.";
+      if (!quiz.difficulties.length) return "Elige al menos una dificultad.";
+      const n = exact ? pickQuizQuestions(this.quizQuestions, quiz).length : this.cachedCount(item, () => countQuestions(this.quizQuestions, quiz));
+      return n < quiz.rounds ? short(n, "preguntas", quiz.rounds, "categorías") : null;
+    }
+    if (item.game === GEO_GAME) {
+      const geo = mergeGeoConfig(config);
+      if (!geo.difficulties.length) return "Elige al menos una dificultad.";
+      const n = exact ? pickGeoQuestions(this.geoQuestions, geo).length : this.cachedCount(item, () => countGeoQuestions(this.geoQuestions, geo));
+      return n < geo.rounds ? short(n, "países", geo.rounds, "dificultades") : null;
+    }
+    if (item.game === HISTORY_GAME) {
+      const history = mergeHistoryConfig(config);
+      if (!history.categories.length) return "Elige al menos una categoría.";
+      if (!history.difficulties.length) return "Elige al menos una dificultad.";
+      const n = exact
+        ? pickHistoryQuestions(this.historyQuestions, history).length
+        : this.cachedCount(item, () => countHistoryQuestions(this.historyQuestions, history));
+      return n < history.rounds ? short(n, "acontecimientos", history.rounds, "categorías") : null;
+    }
+    if (item.game === MINES_GAME) {
+      const mines = mergeMinesConfig(config);
+      if (!mines.styles.length) return "Elige al menos un modo de juego.";
+      if (!mines.categories.length) return "Elige al menos una categoría.";
+      if (!mines.difficulties.length) return "Elige al menos una dificultad.";
+      const n = exact ? pickMinesQuestions(this.minesQuestions, mines).length : this.cachedCount(item, () => countMinesQuestions(this.minesQuestions, mines));
+      return n < mines.rounds ? short(n, "tableros", mines.rounds, "categorías o dificultades") : null;
+    }
+    // Adivina la canción: a different song for every round, from its playlists (Spotify songs may still be loading).
+    if (!config.formats?.length) return "Elige al menos un modo de juego.";
+    if (!config.playlistIds?.length) return "Elige al menos una playlist de canciones.";
+    const n = this.songPool({ ...room, config: configWithItem(base, item) }).length;
+    return n < config.rounds ? short(n, "canciones", config.rounds, "playlists") : null;
+  }
+
+  /** The question banks don't change while the server runs: what some settings can draw is counted once. */
+  cachedCount(item, count, what = "count") {
+    this.countCache ||= new Map();
+    const key = `${what}|${item.game}|${JSON.stringify(item.config)}`;
+    if (!this.countCache.has(key)) {
+      if (this.countCache.size > 500) this.countCache.clear();
+      this.countCache.set(key, count());
+    }
+    return this.countCache.get(key);
+  }
+
+  /** In the playlist's panel: for each game, why it can't be played yet (null when it can) and its chips' counts. */
+  playlistStatus(room) {
+    const status = {};
+    for (const item of room.playlist?.items || []) {
+      let counts;
+      if (item.game === QUIZ_GAME) counts = this.cachedCount(item, () => questionCounts(this.quizQuestions, item.config), "chips");
+      else if (item.game === HISTORY_GAME) counts = this.cachedCount(item, () => historyCounts(this.historyQuestions, item.config), "chips");
+      else if (item.game === MINES_GAME) counts = this.cachedCount(item, () => minesCounts(this.minesQuestions, item.config), "chips");
+      status[item.id] = { problem: this.itemProblem(room, item), counts };
+    }
+    return status;
   }
 
   /**
@@ -607,6 +971,10 @@ export class RoomManager {
     if (connected.length < 1) {
       throw new Error("Se necesita al menos 1 jugador");
     }
+    if (room.game === PLAYLIST_GAME) {
+      this.startPlaylist(room);
+      return;
+    }
     // Who is in this match: anyone else who shows up while it runs only watches it.
     room.participants = new Set(connected.map((p) => p.id));
     room.currentRound = 0;
@@ -625,16 +993,13 @@ export class RoomManager {
       room.tracks = tracks;
       room.totalRounds = tracks.length;
     } else if (room.game === GEO_GAME) {
-      // Geografía: the match's questions are drawn now (they are the "tracks" of the room).
+      // Encuentra el país: the match's countries are drawn now (they are the "tracks" of the room).
       const geo = mergeGeoConfig(room.config.geo);
-      if (!geo.kinds.length) throw new Error("Elige al menos un tipo de pregunta");
       if (!geo.difficulties.length) throw new Error("Elige al menos una dificultad");
       const tracks = pickGeoQuestions(this.geoQuestions, geo);
       if (tracks.length < geo.rounds) {
-        throw new Error(`Solo hay ${tracks.length} preguntas con esos ajustes para ${geo.rounds} rondas. Baja las rondas o elige más tipos o dificultades.`);
+        throw new Error(`Solo hay ${tracks.length} preguntas con esos ajustes para ${geo.rounds} rondas. Baja las rondas o elige más dificultades.`);
       }
-      // Flags are shown through a token, so the image's address doesn't name the country.
-      for (const t of tracks) if (t.flag) t.flagToken = flagToken(t.flag);
       room.tracks = tracks;
       room.totalRounds = tracks.length;
       room.tiebreak = null;
@@ -788,10 +1153,7 @@ export class RoomManager {
   /** How long players have to answer each round in the room's game. */
   roundMs(room) {
     if (room.game === QUIZ_GAME) return mergeQuizConfig(room.config.quiz).roundMs;
-    if (room.game === GEO_GAME) {
-      if (this.isMapRound(room)) return LOCATION_ROUND_MS;
-      return mergeGeoConfig(room.config.geo).roundMs;
-    }
+    if (room.game === GEO_GAME) return LOCATION_ROUND_MS;
     if (room.game === HISTORY_GAME) return mergeHistoryConfig(room.config.history).roundMs;
     // Campo de minas: the time of each turn (a round has as many as it takes), or of the whole round in a race.
     if (room.game === MINES_GAME) {
@@ -801,7 +1163,7 @@ export class RoomManager {
     return room.config.roundMs || ROUND_MS;
   }
 
-  /** Geografía's "Ubicación" rounds (and every tiebreak): a pin on the world map instead of a written answer. */
+  /** Encuentra el país's rounds (and every tiebreak): a pin on the world map instead of a written answer. */
   isMapRound(room) {
     return room.game === GEO_GAME && room.tracks[room.currentRound]?.kind === "location";
   }
@@ -964,20 +1326,25 @@ export class RoomManager {
       const ranked = this.rankedPlayers(room);
       applyMatchStats(this.store, ranked);
       this.recordWin(room, ranked);
+      // A game of a playlist: its winner adds a win to the playlist's tally.
+      if (room.run && !room.run.finished && ranked.length) recordGame(room.run, room.game, ranked, this.matchWinner(room, ranked));
     }
   }
 
-  /**
-   * Adds a finished match to the room's scoreboard. The winner is first place with points; a tie for first counts
-   * for nobody unless a tiebreak settled it.
-   */
+  /** Who won a finished match: first place with points; a tie for first is nobody's unless a tiebreak settled it. */
+  matchWinner(room, ranked) {
+    const [first, second] = ranked;
+    if (!first) return null;
+    const tied = second && second.score === first.score && first.id !== room.tiebreak?.winnerId;
+    return first.score > 0 && !tied ? first.id : null;
+  }
+
+  /** Adds a finished match to the room's scoreboard (see matchWinner). */
   recordWin(room, ranked) {
     if (!ranked.length) return;
     const board = room.board || (room.board = { matches: 0, players: {} });
     board.matches += 1;
-    const [first, second] = ranked;
-    const tied = second && second.score === first.score && first.id !== room.tiebreak?.winnerId;
-    const winnerId = first.score > 0 && !tied ? first.id : null;
+    const winnerId = this.matchWinner(room, ranked);
     for (const p of ranked) {
       const entry = board.players[p.id] || (board.players[p.id] = { wins: 0, played: 0 });
       entry.name = p.name;
@@ -992,26 +1359,109 @@ export class RoomManager {
     this.finish(room);
   }
 
+  // "Volver al lobby": during a playlist (or at its end), the playlist is over and the room is back in its panel.
   restart(room, userId) {
     if (room.hostId !== userId) throw new Error("Solo el Host puede reiniciar la sala");
+    this.stopPlaylist(room);
     this.resetMatch(room);
   }
 
   /**
    * "Volver a jugar", once a match is over: a new one of the same game with the same settings, straight away. If it
-   * can't start (not enough songs any more...), the room is left in that game's lobby and the reason is thrown.
+   * can't start (not enough songs any more...), the room is left in that game's lobby and the reason is thrown. At the
+   * end of a playlist it plays the whole playlist again (shuffled again if it's played in random order).
    */
   replay(room, userId) {
     if (room.hostId !== userId) throw new Error("Solo el Host puede empezar otra partida");
     if (room.phase !== "finished") throw new Error("La partida aún no ha terminado");
+    if (room.run && !room.run.finished) throw new Error("Sigue con la playlist o termínala primero");
+    this.stopPlaylist(room);
     this.resetMatch(room);
     this.start(room, userId);
   }
 
+  /**
+   * Starts the room's playlist (from start(), with the room in its panel): every game is checked first, so it doesn't
+   * stop halfway for settings that can't be played, then the first one starts. The room's own settings are kept to
+   * be put back when the playlist ends.
+   */
+  startPlaylist(room) {
+    const items = room.playlist?.items || [];
+    if (!items.length) throw new Error("Añade al menos un juego a la playlist");
+    items.forEach((item, i) => {
+      const problem = this.itemProblem(room, item, room.config, { exact: true });
+      if (problem) throw new Error(`Revisa el juego ${i + 1}, ${GAME_NAMES[item.game]}. ${problem}`);
+    });
+    room.run = newRun(room.playlist, room.config);
+    this.playItem(room);
+  }
+
+  /**
+   * Plays the run's current game: the room moves into it with its settings and its match starts at once. If it can't
+   * start after all, the playlist is over (the room goes back to its panel) and the reason is thrown.
+   */
+  playItem(room) {
+    const run = room.run;
+    const item = run.items[run.index];
+    this.resetMatch(room);
+    room.game = item.game;
+    room.config = configWithItem(run.savedConfig, item);
+    this.syncSpotifyPlaylists(room);
+    try {
+      this.start(room, room.hostId);
+    } catch (err) {
+      this.stopPlaylist(room);
+      this.resetMatch(room);
+      throw err;
+    }
+  }
+
+  /**
+   * The host's "Siguiente juego", on a playlist game's results: the next game starts. After the last one, the room
+   * shows the playlist's results instead (still `finished`, back in the playlist), with who won the most games.
+   */
+  nextInPlaylist(room, userId) {
+    if (room.hostId !== userId) throw new Error("Solo el anfitrión puede seguir con la playlist");
+    const run = room.run;
+    if (!run || run.finished) throw new Error("No hay ninguna playlist en curso");
+    if (room.phase !== "finished") throw new Error("Espera a que termine este juego");
+    if (run.index + 1 < run.items.length) {
+      const item = run.items[run.index + 1];
+      const problem = this.itemProblem(room, item, run.savedConfig, { exact: true });
+      if (problem) throw new Error(`No se puede jugar ${GAME_NAMES[item.game]}. ${problem}`);
+      run.index += 1;
+      this.playItem(room);
+      return;
+    }
+    run.finished = true;
+    room.game = PLAYLIST_GAME;
+    room.config = run.savedConfig;
+    this.syncSpotifyPlaylists(room);
+    // The last game's rounds are done with; its scores stay until the room goes back to a lobby.
+    room.tracks = [];
+    room.totalRounds = 0;
+    room.currentRound = 0;
+    room.currentTrackId = null;
+    room.tiebreak = null;
+  }
+
+  /** The playlist is over or abandoned: the room is back in the playlist's panel with its own settings. */
+  stopPlaylist(room) {
+    if (!room.run) return;
+    room.config = room.run.savedConfig;
+    room.run = null;
+    room.game = PLAYLIST_GAME;
+    this.syncSpotifyPlaylists(room);
+  }
+
   // Moves the whole room into another game (or back to the Home screen with `null`), abandoning any match in progress.
+  // A game's "Terminar" during a playlist (back to the menu, `null`) ends the playlist instead: the room goes back to
+  // the playlist's panel, where it came from.
   setGame(room, userId, game) {
     if (room.hostId !== userId) throw new Error("Solo el Host puede cambiar de juego");
-    const next = assertGame(game ?? null);
+    const inPlaylist = Boolean(room.run);
+    const next = assertGame(game ?? null) ?? (inPlaylist ? PLAYLIST_GAME : null);
+    this.stopPlaylist(room);
     this.resetMatch(room);
     room.game = next;
     room.preview = null;
@@ -1129,7 +1579,7 @@ export class RoomManager {
     const remainingMs = Math.max(0, (room.phaseEndsAt || Date.now()) - Date.now());
 
     // Check if the answer matches
-    const questionGame = room.game === GEO_GAME || room.game === QUIZ_GAME;
+    const questionGame = room.game === QUIZ_GAME;
     if (questionGame) answerText = String(answerText ?? "").slice(0, 100);
     const correct = questionGame
       ? isCorrectOpenAnswer(answerText, track)
@@ -1566,7 +2016,8 @@ export class RoomManager {
       totalRounds: room.totalRounds || room.tracks.length || room.config.rounds,
       // In the lobby: how many different songs the chosen playlists have ready (a match needs one per round), and
       // whether iTunes is making the Spotify songs wait.
-      songsReady: room.phase === "lobby" && !QUESTION_GAMES.includes(room.game) ? this.songPool(room).length : undefined,
+      songsReady:
+        room.phase === "lobby" && room.game !== PLAYLIST_GAME && !QUESTION_GAMES.includes(room.game) ? this.songPool(room).length : undefined,
       // Opción múltiple, Geografía and Historia, in the lobby: how many different questions the chosen settings have
       // (one per round).
       questionsReady: room.phase === "lobby" ? this.questionsReady(room) : undefined,
@@ -1602,8 +2053,20 @@ export class RoomManager {
           .sort((a, b) => b.wins - a.wins || b.played - a.played),
       },
       coHosts: [...(room.coHosts || [])],
+      // The room's central device (whose account opened it, and whether it's connected: while it is, the players'
+      // screens show only the ways to answer), and the players asking to use another device of theirs as it.
+      central: room.central
+        ? { userId: room.central.userId, name: room.central.name, avatar: room.central.avatar, connected: room.central.connected }
+        : null,
+      centralRequests: (room.centralRequests || []).map((r) => ({ id: r.id, userId: r.userId, name: r.name, avatar: r.avatar, at: r.at })),
       // The room's chat, oldest first (sendChat).
       chat: room.chat || [],
+      // The playlist being made, while the room is in its panel or playing it; in the panel, also why each of its games
+      // can't be played yet (null when it can) and the counts for its settings' chips.
+      playlist: room.game === PLAYLIST_GAME || room.run ? room.playlist : undefined,
+      playlistStatus: room.game === PLAYLIST_GAME && room.phase === "lobby" ? this.playlistStatus(room) : undefined,
+      // The playlist being played: its games in play order, which one is on, who won each one and the tally.
+      run: room.run ? publicRun(room.run) : null,
       // What the host is pointing at on the game menu (null once a game is picked).
       preview: room.game ? null : room.preview || null,
       // Games the other players suggested to the host, newest last (only while the room is on the menu).
@@ -1631,7 +2094,6 @@ export class RoomManager {
           prompt: track.prompt,
           answer: track.answer,
           name: track.name,
-          flag: track.flagToken ? flagUrl(track.flagToken) : null,
           map: track.map,
         };
       }
@@ -1749,9 +2211,9 @@ export class RoomManager {
   }
 
   /**
-   * The current question of Geografía. Nothing of it shows during the countdown but its kind, so every player gets
-   * the same seconds with it. A flag goes out as a token address (never the country code); a map round sends the
-   * country to find. The answer only goes out in `reveal`.
+   * The current question of Encuentra el país. Nothing of it shows during the countdown but its kind, so every player
+   * gets the same seconds with it; the country to find goes out once the round is playing. The answer (where it is)
+   * only goes out in `reveal`.
    */
   publicGeoQuestion(room, track) {
     const shown = ["playing", "reveal", "finished"].includes(room.phase);
@@ -1760,8 +2222,7 @@ export class RoomManager {
       kind: track.kind,
       difficulty: track.difficulty,
       prompt: shown ? track.prompt : null,
-      name: shown && track.kind === "location" ? track.name : null,
-      flag: shown && track.flagToken ? flagUrl(track.flagToken) : null,
+      name: shown ? track.name : null,
     };
   }
 

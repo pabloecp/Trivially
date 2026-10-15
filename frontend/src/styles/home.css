@@ -2005,9 +2005,8 @@
 .tv-locked { display: grid; justify-items: center; gap: 6px; }
 .tv-locked.is-skipped .tv-locked-check { background: var(--tv-neutral); box-shadow: 0 5px 0 var(--tv-neutral-edge); color: var(--tv-text-2); }
 /* "Saltar": a quiet way out, under the answer box. */
-/* "Saltar" is a full-width button under the answer box (like Geografía's); the confirming tap turns it solid red. */
-.tv-skip-btn.is-on,
-.tv-geo-skip.is-on { --c1: var(--p-bad); --c2: var(--p-bad); --edge: var(--p-bad-edge); --on: #ffffff; }
+/* "Saltar" is a full-width button under the answer box; the confirming tap turns it solid red. */
+.tv-skip-btn.is-on { --c1: var(--p-bad); --c2: var(--p-bad); --edge: var(--p-bad-edge); --on: #ffffff; }
 .tv-locked-check {
   display: grid;
   place-items: center;

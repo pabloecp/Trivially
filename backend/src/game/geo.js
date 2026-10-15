@@ -5,11 +5,11 @@ import { toQuestion } from "../questions/questionSchema.js";
 // ISO code → the country's names in the map file.
 const MAP_NAMES = new Map(COUNTRIES.filter((c) => c.map.length).map((c) => [c.code, c.map]));
 
-// Geografía: its settings (config.geo), how a match draws its questions and how a map round is scored. Its three
-// kinds of question are capitals and flags (written answer) and location (a pin on the world map).
+// Encuentra el país: its settings (config.geo), how a match draws its countries and how a map round is scored. Its only
+// way of playing is "location" (a pin on the world map). The bank also has capitals and flags (written answers), but
+// they are Trivia's: game/quiz.js takes them from geoBank().
 
 export const GEO_GAME = GEO_MODE;
-export { GEO_KINDS };
 // The difficulties a match can mix, any of them ticked (all by default), like Trivia's.
 export const GEO_LEVELS = ["facil", "media", "dificil"];
 // Older clients send one `difficulty`, "mixta" being all three.
@@ -17,10 +17,8 @@ export const GEO_DIFFICULTIES = [...GEO_LEVELS, "mixta"];
 // Same limits as the sliders on screen (frontend/src/modes/mundo/geoInfo.js).
 export const GEO_LIMITS = {
   rounds: { min: 5, max: 25 },
-  roundMs: { min: 15000, max: 35000 },
 };
-// A map round always lasts 10 s, whatever the seconds chosen for written answers; its reveal waits the same as every
-// mode's (game/scoring.js).
+// A map round always lasts 10 s; its reveal waits the same as every mode's (game/scoring.js).
 export const LOCATION_ROUND_MS = 10000;
 export { REVEAL_MS as LOCATION_REVEAL_MS } from "./scoring.js";
 // Ties for first place are settled with map rounds; after this many without a winner, the tie stands.
@@ -31,7 +29,7 @@ const LOCATION_NEAR_POINTS = 800;
 const LOCATION_FALLOFF_KM = 900;
 
 export function defaultGeoConfig() {
-  return { rounds: 5, roundMs: 15000, kinds: [...GEO_KINDS], difficulties: [...GEO_LEVELS] };
+  return { rounds: 5, difficulties: [...GEO_LEVELS] };
 }
 
 // A single difficulty of an older client (or room) as the list of levels it means.
@@ -40,27 +38,26 @@ const levelsOf = (difficulty) => (difficulty === "mixta" ? [...GEO_LEVELS] : GEO
 const clamp = (n, { min, max }, fallback) => Math.min(max, Math.max(min, Math.round(Number(n)) || fallback));
 
 /**
- * Merges a settings change into the current Geografía settings, keeping every value valid. The kinds and the
- * difficulties can be left all unticked: the match then has no questions and can't start.
+ * Merges a settings change into the current Encuentra el país settings, keeping every value valid. The difficulties
+ * can be left all unticked: the match then has no questions and can't start. The `kinds` and `roundMs` an older client
+ * may send are dropped: every round is a map round of 10 s.
  */
 export function mergeGeoConfig(current, change = {}) {
   const base = { ...defaultGeoConfig(), ...current };
-  const kinds = Array.isArray(change.kinds) ? GEO_KINDS.filter((k) => change.kinds.includes(k)) : base.kinds;
   const baseLevels = !Array.isArray(current?.difficulties) && levelsOf(current?.difficulty) ? levelsOf(current.difficulty) : base.difficulties;
   const difficulties = Array.isArray(change.difficulties)
     ? GEO_LEVELS.filter((d) => change.difficulties.includes(d))
     : levelsOf(change.difficulty) || baseLevels;
   return {
     rounds: change.rounds != null ? clamp(change.rounds, GEO_LIMITS.rounds, base.rounds) : base.rounds,
-    roundMs: change.roundMs != null ? clamp(change.roundMs, GEO_LIMITS.roundMs, base.roundMs) : base.roundMs,
-    kinds,
     difficulties,
   };
 }
 
 /**
- * The Geografía questions of the loaded bank (questions/questionBank.js: Supabase, the private file...). A kind the
- * bank has no questions of (Supabase not set up yet, or not uploaded) comes from geo/countries.js instead.
+ * The geography questions of the loaded bank (questions/questionBank.js: Supabase, the private file...), of every kind:
+ * this game plays the "location" ones and Trivia the written ones (capitals, flags). A kind the bank has no questions
+ * of (Supabase not set up yet, or not uploaded) comes from geo/countries.js instead.
  */
 export function geoBank(questions = []) {
   const rows = questions.filter((q) => q.mode === GEO_MODE && GEO_KINDS.includes(q.data?.kind));
@@ -69,8 +66,9 @@ export function geoBank(questions = []) {
   return [...rows, ...buildGeoQuestions().filter((q) => missing.includes(q.data.kind)).map(toQuestion)];
 }
 
-function questionsFor(bank, { kinds, difficulties }) {
-  return bank.filter((q) => kinds.includes(q.data.kind) && difficulties.includes(q.difficulty));
+// The map questions of the bank in these difficulties.
+function questionsFor(bank, { difficulties }) {
+  return bank.filter((q) => q.data.kind === "location" && difficulties.includes(q.difficulty));
 }
 
 /** How many questions a match with these settings can draw from (it needs one per round). */
@@ -106,28 +104,18 @@ export function toGeoTrack(q) {
   };
 }
 
-/**
- * The questions of a match: as many of each chosen kind as possible (10 rounds of three kinds = 4 + 3 + 3), never
- * two about the same country, in random order.
- */
+/** The countries of a match, in random order, never the same one twice. */
 export function pickGeoQuestions(bank, config) {
   const settings = mergeGeoConfig(config);
-  const pools = shuffle(settings.kinds).map((kind) => shuffle(questionsFor(bank, { ...settings, kinds: [kind] })));
   const used = new Set();
   const picked = [];
-  while (picked.length < settings.rounds && pools.some((p) => p.length)) {
-    for (const pool of pools) {
-      if (picked.length >= settings.rounds) break;
-      while (pool.length) {
-        const q = pool.pop();
-        if (used.has(q.data.country)) continue;
-        used.add(q.data.country);
-        picked.push(q);
-        break;
-      }
-    }
+  for (const q of shuffle(questionsFor(bank, settings))) {
+    if (picked.length >= settings.rounds) break;
+    if (used.has(q.data.country)) continue;
+    used.add(q.data.country);
+    picked.push(q);
   }
-  return shuffle(picked).map(toGeoTrack);
+  return picked.map(toGeoTrack);
 }
 
 /**

@@ -8,14 +8,17 @@ import QuizGame from "./modes/quiz/Game.jsx";
 import GeoGame from "./modes/mundo/Game.jsx";
 import HistoryGame from "./modes/historia/Game.jsx";
 import MinesGame from "./modes/minas/Game.jsx";
+import PlaylistResults from "./modes/playlist/Results.jsx";
 import { useApp } from "./lib/store.jsx";
 import RoomSounds from "./lib/RoomSounds.jsx";
 import VolumeMenu from "./components/home/VolumeMenu.jsx";
+import CentralOffer from "./components/home/CentralOffer.jsx";
+import CentralRequests from "./components/home/CentralRequests.jsx";
 import { useRoomExit } from "./components/home/TvTopbar.jsx";
 import { roomPath } from "./modes/index.js";
 
 // Screens tied to one room, e.g. /game/XOTRIV.
-const ROOM_SCREEN = /^\/(?:lobby|game|quiz|mundo|historia|minas|sala)\/([^/]+)/;
+const ROOM_SCREEN = /^\/(?:lobby|game|quiz|mundo|historia|minas|playlist|sala)\/([^/]+)/;
 
 // Old /lobby/CODE links: the waiting room now lives on the room screen, which /sala/CODE opens and joins.
 function LobbyRedirect() {
@@ -95,6 +98,10 @@ export default function App() {
       <RoomSounds />
       {/* The volume where no bar shows it (a Geografía match on a phone). */}
       <VolumeMenu floating />
+      {/* Opening a room this account already plays in from another device: it can be the room's central device. */}
+      <CentralOffer />
+      {/* The host, on every screen: players asking to use another device of theirs as the central one. */}
+      <CentralRequests />
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/sala/:code" element={<Home />} />
@@ -104,6 +111,8 @@ export default function App() {
         <Route path="/mundo/:code" element={<GeoGame />} />
         <Route path="/historia/:code" element={<HistoryGame />} />
         <Route path="/minas/:code" element={<MinesGame />} />
+        {/* The end of a playlist: who won the most games. Its games are played on their own screens. */}
+        <Route path="/playlist/:code" element={<PlaylistResults />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/profile/:userId" element={<Profile />} />
         {/* The old /play screens are gone: everything starts from Home. */}

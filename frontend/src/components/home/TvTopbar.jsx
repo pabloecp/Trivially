@@ -19,9 +19,11 @@ import VolumeMenu from "./VolumeMenu.jsx";
 // another page), where going back to the modes makes no sense. `onError` gets the message when going back to the
 // modes fails.
 export function useRoomExit({ onRoomScreen = true, onError } = {}) {
-  const { user, room, setGame, leaveRoom, leaveAsk, setLeaveAsk } = useApp();
+  const { user, room, isCentral, setGame, leaveRoom, leaveAsk, setLeaveAsk } = useApp();
   const nav = useNavigate();
-  const toModes = onRoomScreen && Boolean(room) && room.phase === "lobby" && Boolean(room.game) && room.hostId === user?.id;
+  // The room's central device only leaves (it is never the host, even with the host's account).
+  const toModes =
+    onRoomScreen && Boolean(room) && room.phase === "lobby" && Boolean(room.game) && room.hostId === user?.id && !isCentral;
   const inGame = onRoomScreen && Boolean(room) && room.phase !== "lobby";
   const confirmLeave = leaveAsk && onRoomScreen && !toModes && !inGame;
 
@@ -65,7 +67,7 @@ export function useRoomExit({ onRoomScreen = true, onError } = {}) {
 //    no room;
 //  - nothing on the home screen itself.
 export default function TvTopbar() {
-  const { user, room } = useApp();
+  const { user, room, isCentral } = useApp();
   const { pathname } = useLocation();
   const roomTarget = room ? roomPath(room) : null;
   const awayFromRoom = Boolean(roomTarget) && pathname !== roomTarget;
@@ -163,9 +165,14 @@ export default function TvTopbar() {
       </header>
       <ConfirmDialog
         open={leaving && inGame}
-        title="¿Seguro que quieres salir?"
-        text="Saldrás de la sala y dejarás la partida en curso."
-        cancelLabel="Seguir jugando"
+        icon={isCentral ? "tv" : "logout"}
+        title={isCentral ? "¿Dejar de ser el dispositivo central?" : "¿Seguro que quieres salir?"}
+        text={
+          isCentral
+            ? "Esta pantalla saldrá de la sala y cada jugador volverá a ver la partida en su teléfono."
+            : "Saldrás de la sala y dejarás la partida en curso."
+        }
+        cancelLabel={isCentral ? "Seguir mostrándola" : "Seguir jugando"}
         confirmLabel="Salir"
         onCancel={() => setLeaving(false)}
         onConfirm={() => {

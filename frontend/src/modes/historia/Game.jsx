@@ -5,7 +5,8 @@ import Confetti from "../../components/home/Confetti.jsx";
 import Icon from "../../components/home/Icon.jsx";
 import MatchResults from "../../components/home/MatchResults.jsx";
 import PartyPanel from "../../components/home/PartyPanel.jsx";
-import { useApp, useRemainingMs } from "../../lib/store.jsx";
+import { ControllerBar, GetReady, PhoneHint } from "../../components/home/CentralBits.jsx";
+import { useApp, useRemainingMs, useView } from "../../lib/store.jsx";
 import Timeline from "./Timeline.jsx";
 import { findDifficulty, historyConfig, yearLabel, yearsText } from "./historyInfo.js";
 import "../../styles/home.css";
@@ -33,6 +34,9 @@ function GameScreen() {
   const { code } = useParams();
   const { user, room, joinRoom, placeYear, setGame } = useApp();
   const nav = useNavigate();
+  // With a central device in the room, the event shows there (and, at the reveal, everyone's year on its timeline);
+  // the players' phones only have the timeline and the buttons to pick the year.
+  const { central, controller, viewerId } = useView(room);
   // Phones and tablets get "toca" in the hints; a mouse gets "haz clic".
   const [touch] = useState(() => Boolean(window.matchMedia?.("(pointer: coarse)").matches));
 
@@ -64,10 +68,12 @@ function GameScreen() {
   const phase = room?.phase;
   const question = room?.question;
   const tiebreak = room?.tiebreak || null;
-  const spectator = Boolean(room?.players?.find((p) => p.id === user?.id)?.spectator);
-  const iPlay = !spectator && (!tiebreak || tiebreak.playerIds.includes(user?.id));
-  const playerObj = room?.players?.find((p) => p.id === user?.id);
-  const me = playerObj
+  const spectator = Boolean(room?.players?.find((p) => p.id === viewerId)?.spectator);
+  const iPlay = !central && !spectator && (!tiebreak || tiebreak.playerIds.includes(viewerId));
+  const playerObj = room?.players?.find((p) => p.id === viewerId);
+  const me = central
+    ? null
+    : playerObj
     ? { ...playerObj, ...(room?.me?.id === user?.id ? room.me : {}), lastAnswer: playerObj.lastAnswer || room?.me?.lastAnswer }
     : room?.me;
   const myGuess = guess?.round === round ? guess : null;
@@ -197,7 +203,7 @@ function GameScreen() {
 
   if (phase === "finished" && room.results) return <MatchResults room={room} color="history" />;
 
-  const isHost = room.hostId === user?.id;
+  const isHost = !central && room.hostId === user?.id;
   const totalMs = historyConfig(room).roundMs;
   const seconds = Math.max(0, Math.ceil(left / 1000));
   const pct =
@@ -221,7 +227,7 @@ function GameScreen() {
           year: p.lastAnswer.year,
           color: colorOf(p.id),
           label: p.name.slice(0, 12),
-          isMe: p.id === user?.id,
+          isMe: p.id === viewerId,
         }))
     : [];
 
@@ -250,10 +256,20 @@ function GameScreen() {
   else hint = touch ? "Toca la línea del tiempo para elegir un año." : "Haz clic en la línea del tiempo o usa las flechas del teclado.";
 
   if (spectator && phase !== "reveal") hint = "Estás viendo la partida. Entrarás a la sala cuando termine.";
+  // The central device talks to the whole room: they pick the year on their phones.
+  if (central && phase === "countdown") {
+    hint = tiebreak
+      ? `Desempate entre ${joinNames(tiedNames)}: gana el primero que confirme el año exacto.`
+      : "¿En qué año ocurrió? Elíjanlo en su teléfono.";
+  } else if (central && phase === "playing") {
+    hint = tiebreak ? `Solo juegan ${joinNames(tiedNames)}.` : "Elijan el año en la línea del tiempo de su teléfono.";
+  }
 
   // The row under the timeline, always the same height: confirm, or what's going on.
   let action;
-  if (spectator && phase !== "reveal") {
+  if (central) {
+    action = <p className="tv-hint tv-hist-next">{phase === "reveal" ? nextText : phase === "countdown" ? "Prepárense…" : ""}</p>;
+  } else if (spectator && phase !== "reveal") {
     action = <p className="tv-hint tv-hist-next">Mira cómo responden los demás</p>;
   } else if (phase === "reveal") {
     action = <p className="tv-hint tv-hist-next">{nextText}</p>;
@@ -274,59 +290,75 @@ function GameScreen() {
     );
   }
 
+  // The host's controls of the match: in the round's card, or in the thin bar of a phone beside a central device.
+  const tools = (
+    <>
+      <PauseButton room={room} isHost={isHost} onError={setErr} />
+      {isHost && (
+        <button
+          type="button"
+          className={`tv-mini-btn${confirmHub ? " is-on" : ""}`}
+          onClick={backToHub}
+          title="Termina la partida y lleva a todos al inicio"
+        >
+          {confirmHub ? "¿Seguro? Toca otra vez" : "Terminar"}
+        </button>
+      )}
+    </>
+  );
+
   return (
-    <div className="tv-room tv-game tv-hist">
+    <div className={`tv-room tv-game tv-hist${central ? " is-central" : ""}${controller ? " is-controller" : ""}`}>
       <div className="tv-room-main tv-game-main">
-        <section className="tv-game-top">
-          <div className="tv-game-round">
-            <p className="tv-mono-label">Sala {room.code} · Rango</p>
-            <h1 className="tv-card-title">
-              {tiebreak ? (
-                `Desempate${tiebreak.round > 1 ? ` ${tiebreak.round}` : ""}`
-              ) : (
-                <>
-                  Ronda {round + 1} <span className="tv-muted">de {room.totalRounds}</span>
-                </>
-              )}
-            </h1>
-          </div>
+        {/* Beside a central device the round and the clock are on the big screen: only the timeline here. */}
+        {controller ? (
+          <ControllerBar isHost={isHost} seconds={seconds} pct={pct} urgent={urgent}>
+            {tools}
+          </ControllerBar>
+        ) : (
+          <section className="tv-game-top">
+            <div className="tv-game-round">
+              <p className="tv-mono-label">Sala {room.code} · Rango</p>
+              <h1 className="tv-card-title">
+                {tiebreak ? (
+                  `Desempate${tiebreak.round > 1 ? ` ${tiebreak.round}` : ""}`
+                ) : (
+                  <>
+                    Ronda {round + 1} <span className="tv-muted">de {room.totalRounds}</span>
+                  </>
+                )}
+              </h1>
+            </div>
 
-          <div className={`tv-clock${urgent ? " is-urgent" : ""}`} role="timer" aria-label={`${seconds} segundos`}>
-            <svg viewBox="0 0 44 44" aria-hidden="true">
-              <circle className="tv-clock-track" cx="22" cy="22" r="19" />
-              <circle className="tv-clock-fill" cx="22" cy="22" r="19" style={{ strokeDashoffset: 119.4 * (1 - pct / 100) }} />
-            </svg>
-            <span key={seconds} className="tv-clock-num">{seconds}</span>
-          </div>
+            <div className={`tv-clock${urgent ? " is-urgent" : ""}`} role="timer" aria-label={`${seconds} segundos`}>
+              <svg viewBox="0 0 44 44" aria-hidden="true">
+                <circle className="tv-clock-track" cx="22" cy="22" r="19" />
+                <circle className="tv-clock-fill" cx="22" cy="22" r="19" style={{ strokeDashoffset: 119.4 * (1 - pct / 100) }} />
+              </svg>
+              <span key={seconds} className="tv-clock-num">{seconds}</span>
+            </div>
 
-          <div className="tv-game-tools">
-            <PauseButton room={room} isHost={isHost} onError={setErr} />
-            {isHost && (
-              <button
-                type="button"
-                className={`tv-mini-btn${confirmHub ? " is-on" : ""}`}
-                onClick={backToHub}
-                title="Termina la partida y lleva a todos al inicio"
-              >
-                {confirmHub ? "¿Seguro? Toca otra vez" : "Terminar"}
-              </button>
-            )}
-          </div>
+            <div className="tv-game-tools">{tools}</div>
 
-          <div className="tv-timer" aria-hidden="true">
-            <span className={`tv-timer-fill${urgent ? " is-urgent" : ""}`} style={{ width: `${pct}%` }} />
-          </div>
-        </section>
+            <div className="tv-timer" aria-hidden="true">
+              <span className={`tv-timer-fill${urgent ? " is-urgent" : ""}`} style={{ width: `${pct}%` }} />
+            </div>
+          </section>
+        )}
 
         {question ? (
           <section key={round} className="tv-game-stage tv-hist-stage">
             <PauseVeil room={room} isHost={isHost} />
             <div className="tv-hist-event">
-              <div className="tv-quiz-q-meta">
-                {question.category && <span className="tv-match-chip">{question.category}</span>}
-                <span className={`tv-match-chip tv-diff-chip tv-c-${level.color}`}>{level.label}</span>
-              </div>
-              <h2 className="tv-hist-prompt">{question.prompt}</h2>
+              {!controller && (
+                <>
+                  <div className="tv-quiz-q-meta">
+                    {question.category && <span className="tv-match-chip">{question.category}</span>}
+                    <span className={`tv-match-chip tv-diff-chip tv-c-${level.color}`}>{level.label}</span>
+                  </div>
+                  <h2 className="tv-hist-prompt">{question.prompt}</h2>
+                </>
+              )}
               <p className="tv-hint tv-hist-hint" aria-live="polite">
                 {hint}
               </p>
@@ -335,12 +367,22 @@ function GameScreen() {
             {/* Always the same height, so nothing moves: the countdown, the chosen year with its buttons, then the
                 verdict. */}
             <div className="tv-hist-slot">
-              {phase === "countdown" && (
+              {phase === "countdown" && controller && <GetReady />}
+              {phase === "countdown" && !controller && (
                 <span key={Math.max(1, seconds)} className="tv-quiz-count" aria-label={`Empieza en ${Math.max(1, seconds)}`}>
                   {Math.max(1, seconds)}
                 </span>
               )}
-              {phase === "playing" && (
+              {phase === "playing" && central && <PhoneHint room={room}>Respondan desde su teléfono</PhoneHint>}
+              {reveal && central && !tiebreak && (
+                <p className="tv-central-answer">
+                  <small>Fue en</small> {fmt(reveal.year)}
+                </p>
+              )}
+              {reveal && central && tiebreak && (
+                <Verdict room={room} me={null} user={null} tiebreak={tiebreak} tiedNames={tiedNames} iPlay={false} fmt={fmt} />
+              )}
+              {phase === "playing" && !central && (
                 <div className={`tv-hist-picker${confirmed ? " is-locked" : ""}`}>
                   <button type="button" className="tv-hist-step" onClick={() => nudge(-step)} disabled={!open} aria-label={`${step} años antes`}>
                     −{step}
@@ -366,7 +408,7 @@ function GameScreen() {
                   </button>
                 </div>
               )}
-              {reveal && !spectator && <Verdict room={room} me={me} user={user} tiebreak={tiebreak} tiedNames={tiedNames} iPlay={iPlay} fmt={fmt} />}
+              {reveal && !spectator && !central && <Verdict room={room} me={me} user={user} tiebreak={tiebreak} tiedNames={tiedNames} iPlay={iPlay} fmt={fmt} />}
             </div>
 
             <Timeline
@@ -401,7 +443,8 @@ function GameScreen() {
         )}
       </div>
 
-      <PartyPanel room={room} scores onToast={setErr} />
+      {/* The scoreboard is the central device's, when there is one. */}
+      {!controller && <PartyPanel room={room} scores display={central} onToast={setErr} />}
     </div>
   );
 }

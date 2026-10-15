@@ -6,7 +6,8 @@ import Icon from "../../components/home/Icon.jsx";
 import PartyPanel from "../../components/home/PartyPanel.jsx";
 import SpectatorBanner from "../../components/home/SpectatorBanner.jsx";
 import MatchResults from "../../components/home/MatchResults.jsx";
-import { useApp, useRemainingMs } from "../../lib/store.jsx";
+import { ControllerBar, GetReady, PhoneHint, RoomVerdict } from "../../components/home/CentralBits.jsx";
+import { useApp, useRemainingMs, useView } from "../../lib/store.jsx";
 import { BACKEND_URL } from "../../lib/config.js";
 import { useSongList } from "../../lib/songList.js";
 import { useMasterVolume } from "../../lib/volume.js";
@@ -45,6 +46,9 @@ function GameScreen() {
   const { code } = useParams();
   const { user, room, joinRoom, answer, skipSong, setGame } = useApp();
   const nav = useNavigate();
+  // With a central device in the room, the song plays there and shows the round; the players' phones only have the
+  // options or the search box (and say how their round went).
+  const { central, controller, viewerId } = useView(room);
 
   const audioRef = useRef(null);
   const inputRef = useRef(null);
@@ -128,6 +132,11 @@ function GameScreen() {
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio || !room) return;
+    // The room's central device plays the song for everyone: a phone beside it stays quiet.
+    if (controller) {
+      audio.pause();
+      return;
+    }
 
     // Paused by the host: the song stops, and on "Reanudar" it goes on from the same moment (phaseStartedAt moves).
     if (room.phase === "playing" && room.audio?.previewUrl && !room.paused) {
@@ -160,13 +169,13 @@ function GameScreen() {
         }
       }
     }
-  }, [room?.phase, room?.currentRound, room?.audio?.previewUrl, Boolean(room?.paused), room?.phaseStartedAt]);
+  }, [room?.phase, room?.currentRound, room?.audio?.previewUrl, Boolean(room?.paused), room?.phaseStartedAt, controller]);
 
   // Unlock audio on any click/key press if browser blocked initial autoplay
   useEffect(() => {
     const unlock = () => {
       const audio = audioRef.current;
-      if (audio && room?.phase === "playing" && !room?.paused && audio.paused) {
+      if (audio && !controller && room?.phase === "playing" && !room?.paused && audio.paused) {
         audio.play().catch(() => {});
       }
     };
@@ -176,7 +185,7 @@ function GameScreen() {
       window.removeEventListener("click", unlock);
       window.removeEventListener("keydown", unlock);
     };
-  }, [room?.phase, room?.paused]);
+  }, [room?.phase, room?.paused, controller]);
 
   const isSubmittingRef = useRef(false);
 
@@ -198,15 +207,17 @@ function GameScreen() {
     }
   }, [room?.phase, room?.currentRound]);
 
-  const playerObj = room?.players?.find((p) => p.id === user?.id);
-  const me = playerObj
+  const playerObj = room?.players?.find((p) => p.id === viewerId);
+  const me = central
+    ? null
+    : playerObj
     ? { ...playerObj, ...(room?.me?.id === user?.id ? room.me : {}), lastAnswer: playerObj.lastAnswer || room?.me?.lastAnswer }
     : room?.me;
 
-  const isHost = room?.hostId === user?.id;
+  const isHost = !central && room?.hostId === user?.id;
   const skipped = skippedRound === room?.currentRound || Boolean(me?.lastAnswer?.skipped);
   const spectator = Boolean(me?.spectator);
-  const locked = Boolean(me?.answered) || Boolean(submittedSong) || skipped || room?.phase !== "playing" || spectator;
+  const locked = Boolean(me?.answered) || Boolean(submittedSong) || skipped || room?.phase !== "playing" || spectator || central;
 
   // A closed round ("Preguntas Cerradas"): four songs to choose from instead of the search box.
   const choice = room?.choice || null;
@@ -384,56 +395,84 @@ function GameScreen() {
   const seconds = Math.max(0, Math.ceil(left / 1000));
   const urgent = room.phase === "playing" && left <= 4000;
 
+  // The host's controls of the match: in the round's card, or in the thin bar of a phone beside a central device.
+  const tools = (
+    <>
+      <PauseButton room={room} isHost={isHost} onError={setErr} />
+      {isHost && (
+        <button
+          type="button"
+          className={`tv-mini-btn${confirmHub ? " is-on" : ""}`}
+          onClick={() => backToHub({ confirm: true })}
+          title="Termina la partida y lleva a todos al inicio"
+        >
+          {confirmHub ? "¿Seguro? Toca otra vez" : "Terminar"}
+        </button>
+      )}
+    </>
+  );
+
   return (
-    <div className="tv-room tv-game">
+    <div className={`tv-room tv-game${central ? " is-central" : ""}${controller ? " is-controller" : ""}`}>
       <audio ref={audioRef} preload="auto" playsInline />
 
       <div className="tv-room-main tv-game-main">
         {spectator && <SpectatorBanner />}
-        <section className="tv-game-top">
-          <div className="tv-game-round">
-            <p className="tv-mono-label">
-              Sala {room.code} · {room.mode === "solo" ? "Práctica" : "Multijugador"}
-            </p>
-            <h1 className="tv-card-title">
-              Ronda {room.currentRound + 1} <span className="tv-muted">de {room.totalRounds}</span>
-            </h1>
-          </div>
+        {/* Beside a central device the round and the clock are on the big screen: only the ways to answer here. */}
+        {controller ? (
+          <ControllerBar isHost={isHost} seconds={seconds} pct={pct} urgent={urgent}>
+            {tools}
+          </ControllerBar>
+        ) : (
+          <section className="tv-game-top">
+            <div className="tv-game-round">
+              <p className="tv-mono-label">
+                Sala {room.code} · {room.mode === "solo" ? "Práctica" : "Multijugador"}
+              </p>
+              <h1 className="tv-card-title">
+                Ronda {room.currentRound + 1} <span className="tv-muted">de {room.totalRounds}</span>
+              </h1>
+            </div>
 
-          <div className={`tv-clock${urgent ? " is-urgent" : ""}`} role="timer" aria-label={`${seconds} segundos`}>
-            <svg viewBox="0 0 44 44" aria-hidden="true">
-              <circle className="tv-clock-track" cx="22" cy="22" r="19" />
-              <circle className="tv-clock-fill" cx="22" cy="22" r="19" style={{ strokeDashoffset: 119.4 * (1 - pct / 100) }} />
-            </svg>
-            <span key={seconds} className="tv-clock-num">{seconds}</span>
-          </div>
+            <div className={`tv-clock${urgent ? " is-urgent" : ""}`} role="timer" aria-label={`${seconds} segundos`}>
+              <svg viewBox="0 0 44 44" aria-hidden="true">
+                <circle className="tv-clock-track" cx="22" cy="22" r="19" />
+                <circle className="tv-clock-fill" cx="22" cy="22" r="19" style={{ strokeDashoffset: 119.4 * (1 - pct / 100) }} />
+              </svg>
+              <span key={seconds} className="tv-clock-num">{seconds}</span>
+            </div>
 
-          <div className="tv-game-tools">
-            <PauseButton room={room} isHost={isHost} onError={setErr} />
-            {isHost && (
-              <button
-                type="button"
-                className={`tv-mini-btn${confirmHub ? " is-on" : ""}`}
-                onClick={() => backToHub({ confirm: true })}
-                title="Termina la partida y lleva a todos al inicio"
-              >
-                {confirmHub ? "¿Seguro? Toca otra vez" : "Terminar"}
-              </button>
-            )}
-          </div>
+            <div className="tv-game-tools">{tools}</div>
 
-          <div className="tv-timer" aria-hidden="true">
-            <span className={`tv-timer-fill${urgent ? " is-urgent" : ""}`} style={{ width: `${pct}%` }} />
-          </div>
-        </section>
+            <div className="tv-timer" aria-hidden="true">
+              <span className={`tv-timer-fill${urgent ? " is-urgent" : ""}`} style={{ width: `${pct}%` }} />
+            </div>
+          </section>
+        )}
 
         {room.phase === "countdown" && (
           <section key={`c${room.currentRound}`} className="tv-game-stage tv-countdown">
             <PauseVeil room={room} isHost={isHost} />
-            <p className="tv-mono-label">Prepárate para escuchar</p>
-            <span key={Math.max(1, seconds)} className="tv-countdown-num">{Math.max(1, seconds)}</span>
+            {controller ? (
+              <GetReady />
+            ) : (
+              <>
+                <p className="tv-mono-label">Prepárate para escuchar</p>
+                <span key={Math.max(1, seconds)} className="tv-countdown-num">{Math.max(1, seconds)}</span>
+              </>
+            )}
             <p className="tv-hint">
-              {closed ? "Elige la canción entre cuatro opciones." : "Escribe el título en cuanto reconozcas la canción."}
+              {central
+                ? closed
+                  ? "Elijan la canción en su teléfono entre cuatro opciones."
+                  : "Escriban el título en su teléfono en cuanto reconozcan la canción."
+                : controller
+                ? closed
+                  ? "Escucha la pantalla central y elige entre cuatro opciones."
+                  : "Escucha la pantalla central y escribe el título en cuanto la reconozcas."
+                : closed
+                ? "Elige la canción entre cuatro opciones."
+                : "Escribe el título en cuanto reconozcas la canción."}
             </p>
           </section>
         )}
@@ -443,13 +482,18 @@ function GameScreen() {
         {(room.phase === "playing" || (room.phase === "reveal" && closed)) && (
           <section key={`p${room.currentRound}`} className="tv-game-stage tv-play-card">
             <PauseVeil room={room} isHost={isHost} />
-            <div className="tv-eq" aria-hidden="true">
-              {Array.from({ length: 7 }, (_, i) => (
-                <span key={i} style={{ "--i": i }} />
-              ))}
-            </div>
-            <h2 className="tv-play-q">¿Qué canción está sonando?</h2>
-            {closed && room.phase === "reveal" && (() => {
+            {!controller && (
+              <>
+                <div className="tv-eq" aria-hidden="true">
+                  {Array.from({ length: 7 }, (_, i) => (
+                    <span key={i} style={{ "--i": i }} />
+                  ))}
+                </div>
+                <h2 className="tv-play-q">¿Qué canción está sonando?</h2>
+              </>
+            )}
+            {closed && room.phase === "reveal" && central && <RoomVerdict room={room} />}
+            {closed && room.phase === "reveal" && !central && (() => {
               const isCorrect = Boolean(me?.lastAnswer?.correct);
               const tone = isCorrect ? "ok" : Number.isInteger(myChoice) ? "bad" : "timeout";
               return (
@@ -469,7 +513,10 @@ function GameScreen() {
               );
             })()}
 
-            {closed && (room.phase === "reveal" || (!spectator && (!locked || Number.isInteger(myChoice)))) ? (
+            {closed && room.phase === "playing" && central && <PhoneHint room={room}>Elijan desde su teléfono</PhoneHint>}
+            {!closed && room.phase === "playing" && central ? (
+              <PhoneHint room={room}>Escriban el título en su teléfono</PhoneHint>
+            ) : closed && (room.phase === "reveal" || central || (!spectator && (!locked || Number.isInteger(myChoice)))) ? (
               <div className={`tv-quiz-options tv-music-options${room.phase === "reveal" ? " is-reveal" : ""}`} role="group" aria-label="Opciones">
                 {OPTION_LETTERS.map((letter, i) => {
                   const text = choice?.options?.[i];
@@ -485,7 +532,7 @@ function GameScreen() {
                       : " is-out"
                     : isMine
                     ? " is-picked"
-                    : locked
+                    : locked && !central
                     ? " is-out"
                     : "";
                   const picks = choice?.picks?.[i] || 0;
@@ -507,7 +554,7 @@ function GameScreen() {
                           <Icon name={isRight ? "check" : "close"} size={18} strokeWidth={3.4} />
                         </span>
                       )}
-                      {reveal && room.players.length > 1 && (
+                      {reveal && (room.players.length > 1 || central) && !controller && (
                         <span className="tv-quiz-opt-picks" title={`${picks} ${picks === 1 ? "jugador" : "jugadores"}`}>
                           <Icon name="users" size={14} strokeWidth={2.6} />
                           {picks}
@@ -629,7 +676,9 @@ function GameScreen() {
           return (
             <section key={`r${room.currentRound}`} className="tv-game-stage tv-reveal">
               <PauseVeil room={room} isHost={isHost} />
-              {!spectator && (
+              {/* The central device says how the room did; each phone how its player did (the song is on the big screen). */}
+              {central && <RoomVerdict room={room} />}
+              {!spectator && !central && (
               <div className={`tv-result tv-result--${tone}`} role="status">
                 {isCorrect && <Confetti pieces={18} />}
                 <span className="tv-result-icon">
@@ -651,31 +700,33 @@ function GameScreen() {
               </div>
               )}
 
-              <div className={`tv-song${coverReadyFor === room.reveal.title ? "" : " is-waiting"}`}>
-                {/* Flips in once the image has loaded, never half-drawn. */}
-                <img
-                  key={room.reveal.title}
-                  className="tv-song-cover"
-                  src={coverUrl(room.reveal.image)}
-                  alt={`Portada de ${room.reveal.title}`}
-                  onLoad={(e) => {
-                    e.currentTarget.classList.add("is-loaded");
-                    setCoverReadyFor(room.reveal.title);
-                  }}
-                  onError={(e) => {
-                    e.currentTarget.src = "/logo.svg";
-                  }}
-                />
-                <div className="tv-song-text">
-                  <p className="tv-mono-label">Era la canción</p>
-                  <h3 className="tv-song-title">{room.reveal.title}</h3>
-                  <p className="tv-song-meta">
-                    {room.reveal.artistName}
-                    {room.reveal.albumName ? ` · ${room.reveal.albumName}` : ""}
-                    {room.reveal.year ? ` (${room.reveal.year})` : ""}
-                  </p>
+              {!controller && (
+                <div className={`tv-song${coverReadyFor === room.reveal.title ? "" : " is-waiting"}`}>
+                  {/* Flips in once the image has loaded, never half-drawn. */}
+                  <img
+                    key={room.reveal.title}
+                    className="tv-song-cover"
+                    src={coverUrl(room.reveal.image)}
+                    alt={`Portada de ${room.reveal.title}`}
+                    onLoad={(e) => {
+                      e.currentTarget.classList.add("is-loaded");
+                      setCoverReadyFor(room.reveal.title);
+                    }}
+                    onError={(e) => {
+                      e.currentTarget.src = "/logo.svg";
+                    }}
+                  />
+                  <div className="tv-song-text">
+                    <p className="tv-mono-label">Era la canción</p>
+                    <h3 className="tv-song-title">{room.reveal.title}</h3>
+                    <p className="tv-song-meta">
+                      {room.reveal.artistName}
+                      {room.reveal.albumName ? ` · ${room.reveal.albumName}` : ""}
+                      {room.reveal.year ? ` (${room.reveal.year})` : ""}
+                    </p>
+                  </div>
                 </div>
-              </div>
+              )}
 
               <p className="tv-next">
                 {room.currentRound + 1 >= room.totalRounds ? "Calculando resultados" : "Siguiente canción en breve"}
@@ -685,7 +736,8 @@ function GameScreen() {
         })()}
       </div>
 
-      <PartyPanel room={room} scores onToast={setErr} />
+      {/* The scoreboard is the central device's, when there is one. */}
+      {!controller && <PartyPanel room={room} scores display={central} onToast={setErr} />}
     </div>
   );
 }

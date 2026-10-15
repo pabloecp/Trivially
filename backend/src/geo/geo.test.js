@@ -73,10 +73,13 @@ const far = locationPoints({ inside: false, distanceKm: 2000 });
 assert.ok(near < 1000 && far < near && far > 0);
 
 // Settings.
-assert.deepEqual(mergeGeoConfig({}, { rounds: 99, roundMs: 1, kinds: ["flag", "nada", "capital"], difficulty: "x" }), {
+assert.deepEqual(mergeGeoConfig({}, { rounds: 99, difficulty: "x" }), {
   rounds: 25,
-  roundMs: 15000,
-  kinds: ["capital", "flag"],
+  difficulties: ["facil", "media", "dificil"],
+});
+// The only way of playing is a pin on the map: the kinds and the seconds to write of an older client or room are dropped.
+assert.deepEqual(mergeGeoConfig({ rounds: 7, roundMs: 20000, kinds: ["capital"] }, { kinds: ["flag"], roundMs: 30000 }), {
+  rounds: 7,
   difficulties: ["facil", "media", "dificil"],
 });
 // Several difficulties at once; an older client's single one (or "mixta") still works.
@@ -84,8 +87,6 @@ assert.deepEqual(mergeGeoConfig({}, { difficulties: ["dificil", "facil", "x"] })
 assert.deepEqual(mergeGeoConfig({}, { difficulty: "media" }).difficulties, ["media"]);
 assert.deepEqual(mergeGeoConfig({ difficulty: "mixta" }).difficulties, ["facil", "media", "dificil"]);
 assert.deepEqual(mergeGeoConfig({}, { difficulties: [] }).difficulties, []);
-// Every kind can be unticked: there is then nothing to play.
-assert.deepEqual(mergeGeoConfig({}, { kinds: [] }).kinds, []);
 
 // The bank: Supabase rows first; any kind they lack comes from countries.js.
 const built = rows.map(toQuestion);
@@ -95,17 +96,18 @@ const mixed = geoBank([...onlyCapitals, { mode: "opciones", type: "multiple_choi
 assert.equal(mixed.filter((q) => q.data.kind === "capital").length, 3, "the bank's capitals are used as they are");
 assert.ok(mixed.some((q) => q.data.kind === "location") && mixed.every((q) => q.mode === "mundo"));
 
-// A match: balanced kinds, never the same country twice, nothing secret beyond what the round needs.
+// A match: only map rounds (the bank's capitals and flags are Trivia's), never the same country twice.
 const bank = geoBank(built);
-const match = pickGeoQuestions(bank, { rounds: 10, kinds: ["capital", "flag", "location"], difficulty: "facil" });
+assert.ok(bank.some((q) => q.data.kind === "capital") && bank.some((q) => q.data.kind === "flag"), "Trivia still gets them from the bank");
+const match = pickGeoQuestions(bank, { rounds: 10, difficulty: "facil" });
 assert.equal(match.length, 10);
-const perKind = GEO_KINDS.map((k) => match.filter((t) => t.kind === k).length).sort();
-assert.deepEqual(perKind, [3, 3, 4]);
+assert.ok(match.every((t) => t.kind === "location"));
 assert.equal(new Set(match.map((t) => t.country)).size, 10);
 assert.ok(match.every((t) => t.difficulty === "facil"));
-assert.equal(countGeoQuestions(bank, { kinds: ["location"], difficulty: "facil" }), rows.filter((q) => q.data.kind === "location" && q.difficulty === "facil").length);
+assert.equal(countGeoQuestions(bank, { difficulty: "facil" }), rows.filter((q) => q.data.kind === "location" && q.difficulty === "facil").length);
+// An older client asking for capitals still gets map rounds.
 const two = pickGeoQuestions(bank, { rounds: 10, kinds: ["capital"], difficulties: ["facil", "dificil"] });
-assert.ok(two.every((t) => t.difficulty === "facil" || t.difficulty === "dificil"));
+assert.ok(two.every((t) => t.kind === "location" && (t.difficulty === "facil" || t.difficulty === "dificil")));
 const tiebreak = pickTiebreakQuestion(bank, {}, match.map((t) => t.country));
 assert.equal(tiebreak.kind, "location");
 assert.equal(tiebreak.difficulty, "media");

@@ -1,0 +1,406 @@
+/* The room's central device ("dispositivo central"): the spot in the room's column where the host drops a player,
+   the offer to make another device of yours the central one, the big waiting screen on that device, and the games'
+   screens on it ("is-central": the whole match, bigger, nothing to tap) and on the phones beside it ("is-controller":
+   only the ways to answer). Builds on home.css's tv- classes and tokens. */
+
+/* ---------- The spot, at the top of the room's column ---------- */
+.tv-central-spot {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+  padding: 9px 10px 9px 9px;
+  border: 2px dashed var(--tv-dash);
+  border-radius: 18px;
+  transition: border-color 0.2s ease, background-color 0.2s ease, transform 0.25s var(--tv-spring);
+}
+.tv-central-spot.is-set {
+  border-style: solid;
+  border-color: rgba(var(--p-ok-rgb), 0.55);
+  background: rgba(var(--p-ok-rgb), 0.08);
+}
+.tv-central-spot.is-away { border-color: var(--tv-dash); background: none; }
+.tv-central-spot.is-away .tv-central-spot-icon { opacity: 0.5; }
+/* A player is being dragged: the spot calls for it, and grows a little under it. */
+.tv-central-spot.is-armed { border-color: var(--p-accent-1); background: rgba(255, 255, 255, 0.04); animation: tvSpotCall 1s ease-in-out infinite; }
+.tv-central-spot.is-over { border-style: solid; border-color: var(--p-accent-1); background: rgba(255, 255, 255, 0.1); transform: scale(1.03); animation: none; }
+@keyframes tvSpotCall { 50% { border-color: var(--tv-dash); } }
+.tv-central-spot-icon {
+  position: relative;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: var(--tv-option-bg);
+  color: var(--tv-text-2);
+}
+.tv-central-spot-icon .tv-avatar { width: 38px; height: 38px; font-size: 16px; }
+.tv-central-spot-badge {
+  position: absolute;
+  right: -4px;
+  bottom: -4px;
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--p-ok);
+  box-shadow: 0 0 0 2px var(--tv-surface);
+  color: #fff;
+}
+.tv-central-spot-text { display: flex; flex-direction: column; flex: 1; min-width: 0; }
+.tv-central-spot-text strong { font-weight: 800; font-size: 14px; line-height: 1.25; color: var(--tv-text); }
+.tv-central-spot-text span { font-size: 12px; font-weight: 600; line-height: 1.3; color: var(--tv-text-3); }
+.tv-central-spot.is-set .tv-central-spot-text span { color: var(--p-ok-text); }
+.tv-central-spot.is-away .tv-central-spot-text span { color: var(--tv-text-3); }
+.tv-central-spot-x {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  min-width: 32px;
+  height: 32px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: 10px;
+  background: var(--tv-neutral);
+  color: var(--tv-neutral-on);
+  font-family: inherit;
+  font-weight: 800;
+  font-size: 13px;
+  cursor: pointer;
+}
+.tv-central-spot-x:hover { filter: brightness(1.2); }
+.tv-central-spot-x.is-confirm { background: var(--p-bad); color: #fff; }
+
+/* The host's players can be dragged onto it: a finger held on one doesn't open the phone's own menu. */
+.tv-player-btn[data-draggable] { -webkit-touch-callout: none; touch-action: manipulation; }
+@media (hover: hover) { .tv-player-btn[data-draggable]:active { cursor: grabbing; } }
+.tv-player.is-dragged { opacity: 0.4; }
+.tv-party.is-dragging .tv-player:hover { background: none; }
+
+/* What's being dragged, under the pointer. */
+.tv-central-ghost {
+  position: fixed;
+  z-index: 1200;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 14px 8px 8px;
+  border-radius: 999px;
+  background: var(--tv-surface);
+  box-shadow: inset 0 0 0 2px var(--p-accent-1), 0 16px 40px rgba(0, 0, 0, 0.55);
+  color: var(--tv-text);
+  font-family: var(--tv-body);
+  font-weight: 800;
+  font-size: 15px;
+  pointer-events: none;
+  transform: translate(-24px, -50%) rotate(-3deg);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.tv-central-ghost .tv-avatar { width: 32px; height: 32px; font-size: 14px; }
+.tv-central-ghost svg { color: var(--tv-text-3); }
+.tv-central-ghost.is-over { transform: translate(-24px, -50%) rotate(0) scale(1.06); box-shadow: inset 0 0 0 2px var(--p-ok), 0 16px 40px rgba(0, 0, 0, 0.55); }
+.tv-central-ghost.is-over svg { color: var(--p-ok-text); }
+
+/* Players asking to use another device of theirs as the central one (CentralRequests.jsx): cards pinned under the top
+   bar, on every screen, where the host accepts or turns them down. They sit outside .tv-app, so they set the site's
+   letter and colour themselves. */
+.tv-central-requests {
+  position: fixed;
+  top: calc(76px + env(safe-area-inset-top));
+  left: 50%;
+  z-index: 1050;
+  display: grid;
+  gap: 8px;
+  width: min(460px, calc(100% - 32px));
+  transform: translateX(-50%);
+  color: var(--tv-text);
+  font-family: var(--tv-body);
+}
+.tv-central-requests :focus-visible { outline: 3px solid var(--tv-focus); outline-offset: 3px; }
+.tv-central-requests-error { margin: 0; padding: 8px 12px; border-radius: 12px; background: var(--tv-danger-bg); color: var(--tv-danger); font-weight: 800; font-size: 13px; }
+.tv-central-request {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 10px 10px 12px;
+  border-radius: 20px;
+  background: var(--tv-surface);
+  box-shadow: inset 0 0 0 2px var(--p-accent-1), 0 18px 40px rgba(0, 0, 0, 0.55);
+  animation: tvDropIn 0.35s var(--tv-spring) backwards;
+}
+.tv-central-request-face { position: relative; flex-shrink: 0; }
+.tv-central-request .tv-avatar { width: 36px; height: 36px; font-size: 15px; }
+.tv-central-request p { flex: 1; min-width: 0; margin: 0; font-size: 14px; font-weight: 700; line-height: 1.3; color: var(--tv-text-2); }
+.tv-central-request strong { color: var(--tv-text); }
+.tv-central-request-actions { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+.tv-central-request .tv-btn { color: var(--on); }
+.tv-central-request .tv-btn--sm { height: 36px; padding: 0 12px; font-size: 15px; }
+.tv-central-request-no {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border: 0;
+  border-radius: 11px;
+  background: var(--tv-neutral);
+  color: var(--tv-neutral-on);
+  cursor: pointer;
+}
+
+/* The room's column on the central device: nothing in it can be tapped. */
+.tv-party.is-display .tv-player-btn { cursor: default; }
+.tv-party-joinhint { margin: 0; font-weight: 700; font-size: 14px; line-height: 1.35; color: var(--tv-text-3); }
+
+/* ---------- "Ya estás jugando en esta sala" (CentralOffer.jsx) ---------- */
+/* Outside .tv-app too: the site's colour and its buttons' letter colour. */
+.tv-central-offer { color: var(--tv-text); }
+.tv-central-offer .tv-btn { color: var(--on); }
+.tv-central-offer :focus-visible { outline: 3px solid var(--tv-focus); outline-offset: 4px; }
+.tv-central-offer .tv-confirm-actions { grid-template-columns: minmax(0, 1fr) minmax(0, 1.7fr); }
+.tv-central-offer .tv-confirm-actions.is-single { grid-template-columns: minmax(0, 1fr); }
+.tv-central-offer .tv-confirm-actions .tv-btn { height: auto; min-height: 50px; padding: 8px 12px; white-space: normal; line-height: 1.15; }
+.tv-central-offer .tv-confirm-text { display: flex; align-items: baseline; gap: 10px; }
+.tv-central-offer .tv-confirm-text .tv-pulse { position: relative; top: -1px; }
+.tv-central-offer .tv-sheet-error { margin: -8px 0 16px; }
+
+/* ---------- The central device's waiting screen (CentralLobby.jsx) ---------- */
+/* No phone bars on it (RoomHeader, RoomDock): the usual top bar stays, so no room is kept for them. */
+.tv-main.is-room.is-central { padding-top: 14px; padding-bottom: 16px; }
+.tv-central-lobby {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(16px, 3vh, 30px);
+  min-height: 0;
+  padding: clamp(22px, 4vw, 40px);
+  border-radius: 34px;
+  background: var(--tv-surface);
+  box-shadow: inset 0 0 0 1px var(--tv-line);
+  text-align: center;
+  animation: tvExpand 0.75s cubic-bezier(0.2, 0.9, 0.25, 1.04) backwards;
+}
+.tv-central-kicker { display: inline-flex; align-items: center; gap: 8px; color: var(--tv-text-3); }
+.tv-central-join { display: grid; gap: 6px; }
+.tv-central-join-text { margin: 0; font-weight: 700; font-size: clamp(16px, 1.8vw, 22px); color: var(--tv-text-2); }
+.tv-central-join-text strong { color: var(--tv-text); }
+.tv-central-join-code {
+  margin: 0;
+  font-family: var(--tv-display);
+  font-weight: 800;
+  font-size: clamp(56px, 10vw, 128px);
+  line-height: 1;
+  letter-spacing: 0.08em;
+  color: var(--tv-text);
+  animation: tvPopIn 0.6s cubic-bezier(0.3, 1.7, 0.5, 1) 0.2s backwards;
+}
+.tv-central-game {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 14px 18px;
+  width: min(640px, 100%);
+  padding: 20px 24px;
+  border-radius: 28px;
+  background: var(--c2);
+  box-shadow: 0 6px 0 var(--edge);
+  color: var(--on);
+  text-align: left;
+  animation: tvSwap 0.5s var(--tv-ease-out) backwards;
+}
+.tv-central-game.is-picking {
+  display: flex;
+  justify-content: center;
+  background: var(--tv-option-bg);
+  box-shadow: none;
+  color: var(--tv-text-2);
+  font-weight: 800;
+  font-size: 18px;
+}
+.tv-central-game.is-picking p { margin: 0; }
+.tv-central-game-badge {
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  border-radius: 20px;
+  background: var(--on);
+  color: var(--c2);
+}
+.tv-central-game-kicker { margin: 0; font-size: 13px; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; opacity: 0.75; }
+.tv-central-game-name { margin: 0; font-family: var(--tv-display); font-weight: 800; font-size: clamp(30px, 3.6vw, 46px); line-height: 1.05; overflow-wrap: anywhere; }
+.tv-central-steps { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.tv-central-steps li {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px 8px 10px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.14);
+  font-family: var(--tv-display);
+  font-weight: 700;
+  font-size: 16px;
+  animation: tvRise 0.45s var(--tv-spring) backwards;
+  animation-delay: calc(0.15s + var(--i) * 60ms);
+}
+.tv-central-faces { display: flex; flex-wrap: wrap; justify-content: center; gap: 14px 18px; margin: 0; padding: 0; list-style: none; }
+.tv-central-faces li {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  width: 84px;
+  animation: tvPopIn 0.5s cubic-bezier(0.3, 1.7, 0.5, 1) backwards;
+  animation-delay: calc(0.2s + var(--i) * 50ms);
+}
+.tv-central-faces .tv-avatar { width: 56px; height: 56px; font-size: 24px; }
+.tv-central-faces span { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 800; font-size: 14px; color: var(--tv-text-2); }
+.tv-app .tv-central-wait { display: inline-flex; align-items: center; gap: 10px; background: var(--tv-option-bg); color: var(--tv-text-2); }
+
+/* ---------- During a match ---------- */
+/* On the central device: they answer from their phones, and each one's face lights up once they have. */
+.tv-phone-hint {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 8px 10px;
+  margin: 0;
+  padding: 8px 10px 8px 18px;
+  border-radius: 999px;
+  background: var(--tv-option-bg);
+  color: var(--tv-text-2);
+  font-weight: 800;
+  font-size: 16px;
+}
+.tv-phone-hint > svg { flex-shrink: 0; }
+.tv-answer-faces { display: flex; margin: 0; padding: 0; list-style: none; }
+.tv-answer-faces li { position: relative; margin-left: -6px; transition: transform 0.3s var(--tv-spring); }
+.tv-answer-faces li:first-child { margin-left: 0; }
+.tv-answer-faces .tv-avatar {
+  width: 30px;
+  height: 30px;
+  font-size: 13px;
+  box-shadow: 0 0 0 3px var(--tv-option-bg);
+  opacity: 0.35;
+  filter: grayscale(0.8);
+  transition: opacity 0.25s ease, filter 0.25s ease;
+}
+.tv-answer-faces li.is-done { transform: translateY(-2px); }
+.tv-answer-faces li.is-done .tv-avatar { opacity: 1; filter: none; }
+.tv-answer-faces-check {
+  position: absolute;
+  right: -3px;
+  bottom: -3px;
+  display: grid;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--p-ok);
+  box-shadow: 0 0 0 2px var(--tv-option-bg);
+  color: #fff;
+  animation: tvPopIn 0.35s cubic-bezier(0.3, 1.7, 0.5, 1);
+}
+/* The answer at the reveal, big, on the central device. */
+.tv-central-answer {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 10px;
+  margin: 0;
+  font-family: var(--tv-display);
+  font-weight: 800;
+  font-size: clamp(28px, 3.4vw, 44px);
+  line-height: 1.1;
+  color: var(--p-ok-text);
+  animation: tvPop 0.5s var(--tv-spring);
+}
+.tv-central-answer small { font-size: 0.5em; font-weight: 700; color: var(--tv-text-3); }
+.tv-quiz-answer .tv-central-answer { margin-bottom: 10px; }
+.tv-central-verdict { flex-wrap: wrap; }
+
+/* The central device is the screen everyone looks at: the round, the clock, the question and the answers it offers
+   are all bigger, to be read from across the room. Sizes follow the screen's height too, so a 720p laptop and a
+   1080p TV both show everything without scrolling. */
+.tv-game.is-central .tv-game-top { padding: 14px 22px; }
+.tv-game.is-central .tv-game-round .tv-card-title { font-size: clamp(24px, min(2.4vw, 4vh), 36px); }
+.tv-game.is-central .tv-clock { width: clamp(64px, min(7vw, 11vh), 108px); height: clamp(64px, min(7vw, 11vh), 108px); }
+.tv-game.is-central .tv-clock-num { font-size: clamp(26px, min(2.8vw, 4.4vh), 44px); }
+.tv-game.is-central .tv-timer { height: 16px; }
+.tv-game.is-central .tv-game-stage { padding: clamp(14px, 2.4vh, 28px); }
+.tv-game.is-central .tv-quiz-q { gap: clamp(8px, 1.4vh, 14px); padding: clamp(6px, 1.6vh, 26px) 20px; }
+.tv-game.is-central .tv-quiz-q-text,
+.tv-game.is-central .tv-hist-prompt { max-width: 34ch; font-size: clamp(26px, min(3.4vw, 4.6vh), 56px); }
+.tv-game.is-central .tv-quiz-opt { min-height: clamp(64px, 10vh, 140px); padding: 10px 20px 10px 12px; }
+.tv-game.is-central .tv-quiz-opt-letter { width: clamp(42px, min(4vw, 6vh), 60px); height: clamp(42px, min(4vw, 6vh), 60px); font-size: clamp(22px, min(2.2vw, 3.4vh), 30px); }
+.tv-game.is-central .tv-quiz-opt-text { font-size: clamp(19px, min(2.1vw, 3.4vh), 32px); }
+.tv-app .tv-game.is-central .tv-game-round .tv-mines-prompt { font-size: clamp(26px, min(3.2vw, 5vh), 46px); }
+.tv-game.is-central .tv-mines-cell-text { font-weight: 800; }
+.tv-game.is-central .tv-play-q { font-size: clamp(28px, min(3.4vw, 5.4vh), 50px); }
+.tv-game.is-central .tv-geo-country { font-size: clamp(28px, min(3.4vw, 5.4vh), 48px); }
+.tv-game.is-central .tv-quiz-opt:disabled { cursor: default; }
+.tv-game.is-central .tv-mines-cell:disabled { cursor: default; }
+
+/* ---------- A player's phone beside it ("is-controller"): only the ways to answer ---------- */
+/* A thin bar in place of the round's card: where to look, the time left (the clock and its bar) and, for the host,
+   Pausar and Terminar. */
+.tv-ctrl-bar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  grid-template-areas: "look tools clock" "bar bar bar";
+  align-items: center;
+  gap: 8px 10px;
+  padding: 8px 10px 12px 16px;
+  border-radius: 24px;
+  background: var(--tv-surface);
+  box-shadow: inset 0 0 0 1px var(--tv-line);
+  animation: tvUp 0.45s var(--tv-ease-out) backwards;
+}
+.tv-ctrl-look { grid-area: look; display: inline-flex; align-items: center; gap: 8px; min-width: 0; margin: 0; font-weight: 800; font-size: 14px; color: var(--tv-text-3); }
+.tv-ctrl-look svg { flex-shrink: 0; color: var(--brand-text, var(--tv-text-2)); }
+.tv-ctrl-tools { grid-area: tools; display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+.tv-ctrl-bar .tv-ctrl-clock { grid-area: clock; width: 52px; height: 52px; }
+.tv-ctrl-bar .tv-ctrl-clock .tv-clock-num { font-size: 20px; }
+.tv-ctrl-bar .tv-ctrl-timer { grid-area: bar; height: 10px; }
+/* While the round counts down on the big screen. */
+.tv-ctrl-ready {
+  margin: 0;
+  font-family: var(--tv-display);
+  font-weight: 800;
+  font-size: clamp(26px, 7vw, 40px);
+  line-height: 1;
+  color: var(--brand-text, var(--tv-text));
+  animation: tvPulseText 1.2s ease-in-out infinite;
+}
+@keyframes tvPulseText { 50% { opacity: 0.55; transform: scale(0.97); } }
+
+/* The ways to answer fill the screen: no room's column beside them, and the stage as tall as what's left under the top
+   bar (big screens already fit the window). */
+.tv-game.is-controller > .tv-room-main { flex-basis: 100%; }
+.tv-game.is-controller .tv-game-stage { flex: 1 1 auto; }
+@media (max-width: 979px), (max-height: 599px) {
+  .tv-room.tv-game.is-controller { min-height: calc(100svh - 104px - env(safe-area-inset-bottom)); }
+}
+.tv-quiz-q.is-controller { justify-items: center; padding: 6px 12px 10px; }
+.tv-game.is-controller .tv-quiz-stage { justify-content: flex-start; }
+.tv-game.is-controller .tv-quiz-stage.is-choice .tv-quiz-options {
+  flex: 1 1 auto;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-auto-rows: minmax(clamp(120px, 26vh, 260px), 1fr);
+  gap: 12px;
+}
+.tv-game.is-controller .tv-quiz-opt {
+  flex-direction: column;
+  justify-content: center;
+  padding: 14px 10px;
+  text-align: center;
+}
+.tv-game.is-controller .tv-quiz-opt-letter { width: 54px; height: 54px; font-size: 28px; }
+.tv-game.is-controller .tv-quiz-opt-text { flex: 0 1 auto; font-size: clamp(16px, 4.2vw, 22px); }
+.tv-game.is-controller .tv-quiz-stage.is-open,
+.tv-game.is-controller .tv-play-card { justify-content: center; padding-top: 22px; }
+.tv-game.is-controller .tv-countdown { justify-content: center; }
+.tv-game.is-controller .tv-hist-event { min-height: 0; }

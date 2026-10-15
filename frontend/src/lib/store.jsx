@@ -14,8 +14,10 @@ export const AVATAR_COLORS = [
   "#A63DFF", // Violeta
 ];
 
-// Per-tab, so a reload puts you back in the same room.
+// Per-tab, so a reload puts you back in the same room, and as what: a player, or the room's central device
+// ("central": the screen that only shows the match).
 const ROOM_KEY = "trivially_room";
+const ROLE_KEY = "trivially_room_role";
 
 // The saved identity. These keys used the project's old name (YOAVLLY) until they were renamed; the values saved
 // under the old keys are moved over once, on load, so nobody loses their guest id or account.
@@ -74,6 +76,21 @@ function saveRoomCode(code) {
   } catch {}
 }
 
+function loadSavedRole() {
+  try {
+    return sessionStorage.getItem(ROLE_KEY) === "central" ? "central" : "player";
+  } catch {
+    return "player";
+  }
+}
+
+function saveRole(role) {
+  try {
+    if (role === "central") sessionStorage.setItem(ROLE_KEY, role);
+    else sessionStorage.removeItem(ROLE_KEY);
+  } catch {}
+}
+
 export function AppProvider({ children }) {
   const [user, setUser] = useState(loadSavedUser);
   const [catalog, setCatalog] = useState(null);
@@ -87,6 +104,17 @@ export function AppProvider({ children }) {
   const [error, setError] = useState("");
   // Set when the host takes us out of the room; Home shows it once and clears it.
   const [kickedNotice, setKickedNotice] = useState("");
+  // What this device is in its room: "player", or "central" (the room's central device: it only shows the match).
+  const [role, setRoleState] = useState(loadSavedRole);
+  const roleRef = useRef(role);
+  // Joining a room this account already plays in from another device: this one can be the room's central device
+  // instead (CentralOffer). { code, isHost, hostName, status: "offer" | "sending" | "waiting" | "denied", error }.
+  const [centralOffer, setCentralOfferState] = useState(null);
+  const offerRef = useRef(null);
+  function setCentralOffer(next) {
+    offerRef.current = next;
+    setCentralOfferState(next);
+  }
   // "Volver" out of the room asks first (useRoomExit): true for 3 s after the first tap. It lives here because the
   // top bar, the phones' room bar and the browser's Back button all share it.
   const [leaveAsk, setLeaveAsk] = useState(false);
@@ -112,9 +140,16 @@ export function AppProvider({ children }) {
     setUser(next);
   }
 
-  function enterRoom(state) {
+  function applyRole(next) {
+    roleRef.current = next;
+    saveRole(next);
+    setRoleState(next);
+  }
+
+  function enterRoom(state, nextRole = "player") {
     roomCodeRef.current = state.code;
     saveRoomCode(state.code);
+    applyRole(nextRole);
     setRoom(state);
     return state;
   }
@@ -122,7 +157,18 @@ export function AppProvider({ children }) {
   function clearRoom() {
     roomCodeRef.current = null;
     saveRoomCode(null);
+    applyRole("player");
     setRoom(null);
+  }
+
+  // A room this account already plays in from another device: instead of joining, offer to make this device the
+  // room's central device. The error that comes with it is marked (`offer`), so whoever was joining stays quiet:
+  // CentralOffer says it.
+  function offerCentral(code, res) {
+    setCentralOffer({ code, isHost: Boolean(res.isHost), hostName: res.hostName || "el anfitrión", status: "offer", error: "" });
+    const err = new Error(res.error);
+    err.offer = true;
+    return err;
   }
 
   // Signing out (or deleting the account/guest) also leaves the room, so nobody stays seated as a ghost.
@@ -241,28 +287,68 @@ export function AppProvider({ children }) {
       // A broadcast for a room we already left can still be in flight.
       if (state?.code === roomCodeRef.current) setRoom(state);
     };
-    // Re-enter our room after a reload or a dropped connection; the server holds the seat for a few seconds.
+    // Re-enter our room after a reload or a dropped connection; the server holds the seat (or the central device's
+    // place) for a few seconds.
     const rejoin = async () => {
+      // A request to be a room's central device dies with the connection: it has to be asked again.
+      const offer = offerRef.current;
+      if (offer?.status === "waiting") setCentralOffer({ ...offer, status: "offer", error: "Se cortó la conexión. Pídelo otra vez." });
       const code = roomCodeRef.current;
       const current = userRef.current;
       if (!code || !current?.name) return;
-      const res = await emitAck("room:join", { user: current, code });
+      const central = roleRef.current === "central";
+      const res = await emitAck("room:join", { user: current, code, central });
       if (roomCodeRef.current !== code) return;
-      if (res.ok) setRoom(res.state);
-      else clearRoom();
+      if (res.ok) enterRoom(res.state, res.role || "player");
+      else {
+        clearRoom();
+        // The same account plays in this room from another device: this one can be its central device instead.
+        if (res.sameRoom) offerCentral(code, res);
+        // Same account already in a room from another tab or device, or no longer the central device: say why.
+        else if (res.busy || central) setKickedNotice(res.error);
+      }
     };
-    const onKicked = ({ code } = {}) => {
+    // The server moved this connection: it became the room's central device (the host dragged this player onto the
+    // spot, or accepted this device's request), plays again, or is out of the room (taken off the spot, turned down,
+    // the room closed).
+    const onRole = ({ code, role: next, notice, state } = {}) => {
+      const offer = offerRef.current;
+      if (offer?.code === code && (offer.status === "waiting" || offer.status === "sending")) {
+        if (next === "central" && state) {
+          setCentralOffer(null);
+          enterRoom(state, "central");
+        } else if (!next) {
+          setCentralOffer({ ...offer, status: "denied", error: notice || "" });
+        }
+        return;
+      }
+      if (code !== roomCodeRef.current) return;
+      if (next && state) enterRoom(state, next);
+      else if (next) applyRole(next);
+      else {
+        clearRoom();
+        if (notice) setKickedNotice(notice);
+      }
+      if (next && notice) setKickedNotice(notice);
+    };
+    // The server asks whether this tab is alive when the same account tries to enter a room from somewhere else.
+    const onPing = (ack) => ack?.();
+    const onKicked = ({ code, blocked } = {}) => {
       if (code !== roomCodeRef.current) return;
       clearRoom();
-      setKickedNotice("El anfitrión te sacó de la sala");
+      setKickedNotice(blocked ? "El anfitrión te bloqueó de la sala" : "El anfitrión te sacó de la sala. Puedes volver con el código");
     };
     s.on("room:state", onState);
     s.on("room:kicked", onKicked);
+    s.on("room:role", onRole);
+    s.on("room:ping", onPing);
     s.on("connect", rejoin);
     if (s.connected) rejoin();
     return () => {
       s.off("room:state", onState);
       s.off("room:kicked", onKicked);
+      s.off("room:role", onRole);
+      s.off("room:ping", onPing);
       s.off("connect", rejoin);
     };
   }, []);
@@ -424,12 +510,73 @@ export function AppProvider({ children }) {
         return enterRoom(res.state);
       },
 
+      // Also coming back to the room after a reload, as what this tab was in it (a player or its central device).
+      // An error with `offer` means this account already plays in that room from another device: CentralOffer asks
+      // whether to make this one its central device, so the caller shouldn't show the error itself.
       async joinRoom(code, explicitUser) {
         const current = explicitUser || userRef.current;
         if (!current?.name) throw new Error("Debes identificarte antes de unirte");
-        const res = await emitAck("room:join", { user: current, code: code.toUpperCase() });
+        const upper = code.toUpperCase();
+        const central = roleRef.current === "central" && roomCodeRef.current === upper;
+        const res = await emitAck("room:join", { user: current, code: upper, central });
+        if (!res.ok) throw res.sameRoom ? offerCentral(upper, res) : new Error(res.error);
+        return enterRoom(res.state, res.role || "player");
+      },
+
+      // CentralOffer, for the host: this device becomes the room's central device straight away.
+      async joinAsCentral() {
+        const offer = offerRef.current;
+        if (!offer) return;
+        setCentralOffer({ ...offer, status: "sending", error: "" });
+        const res = await emitAck("room:joinCentral", { user: userRef.current, code: offer.code });
+        if (!res.ok) {
+          setCentralOffer({ ...offer, status: "offer", error: res.error || "No se pudo entrar como dispositivo central" });
+          return;
+        }
+        setCentralOffer(null);
+        enterRoom(res.state, "central");
+      },
+
+      // CentralOffer, for anyone else: asks the host, and waits for the answer ("room:role").
+      async requestCentral() {
+        const offer = offerRef.current;
+        if (!offer) return;
+        setCentralOffer({ ...offer, status: "sending", error: "" });
+        const res = await emitAck("room:requestCentral", { user: userRef.current, code: offer.code });
+        if (offerRef.current?.code !== offer.code || offerRef.current.status !== "sending") return;
+        if (!res.ok) setCentralOffer({ ...offer, status: "offer", error: res.error || "No se pudo enviar la solicitud" });
+        else setCentralOffer({ ...offer, status: "waiting", error: "" });
+      },
+
+      // Closes CentralOffer, taking back the request if one was waiting.
+      dismissCentralOffer() {
+        if (offerRef.current?.status === "waiting" || offerRef.current?.status === "sending") {
+          emitAck("room:cancelCentralRequest").catch(() => {});
+        }
+        setCentralOffer(null);
+      },
+
+      // Host only: the player dropped onto the "Dispositivo central" spot; that player's device becomes the central one.
+      async makeCentral(targetUserId) {
+        const res = await emitAck("room:makeCentral", targetUserId);
         if (!res.ok) throw new Error(res.error);
-        return enterRoom(res.state);
+        if (res.state) setRoom(res.state);
+        return res;
+      },
+
+      // Host only: the room goes back to everyone playing on their own screen.
+      async removeCentral() {
+        const res = await emitAck("room:removeCentral");
+        if (!res.ok) throw new Error(res.error);
+        if (res.state) setRoom(res.state);
+      },
+
+      // Host only: accepts or turns down a player's request to use another device of theirs as the central one.
+      async answerCentralRequest(id, accept) {
+        const res = await emitAck("room:centralAnswer", { id, accept });
+        if (!res.ok) throw new Error(res.error);
+        if (res.state) setRoom(res.state);
+        return res;
       },
 
       // Host only: moves every player in the room into `game` (null = back to the Home screen).
@@ -496,10 +643,31 @@ export function AppProvider({ children }) {
         if (res.state) setRoom(res.state);
       },
 
+      // Host only: takes a player out of the room; they can come back with the code.
       async kickPlayer(targetUserId) {
         const res = await emitAck("room:kick", targetUserId);
         if (!res.ok) throw new Error(res.error);
         if (res.state) setRoom(res.state);
+      },
+
+      // Host only: takes a player out of the room for good (they can't join it again).
+      async blockPlayer(targetUserId) {
+        const res = await emitAck("room:block", targetUserId);
+        if (!res.ok) throw new Error(res.error);
+        if (res.state) setRoom(res.state);
+      },
+
+      // The room's playlist, all of it (name, order and games with their settings); the server keeps it valid.
+      async updatePlaylist(playlist) {
+        const res = await emitAck("room:playlist", playlist);
+        if (!res.ok) throw new Error(res.error);
+        if (res.state) setRoom(res.state);
+      },
+
+      // Host only, on a playlist game's results: the next game (or, after the last one, the playlist's results).
+      async nextInPlaylist() {
+        const res = await emitAck("room:playlistNext");
+        if (!res.ok) throw new Error(res.error);
       },
 
       async setReady(ready) { await emitAck("room:ready", ready); },
@@ -559,14 +727,51 @@ export function AppProvider({ children }) {
   // spotify prop provided as safe inert object for any backward compat
   const spotify = useMemo(() => ({ configured: false, connected: false }), []);
 
+  // This device is its room's central device: it only shows the match, and is never the host nor a player, even when
+  // its account is one of theirs.
+  const isCentral = role === "central" && Boolean(room);
+
   return (
-    <AppContext.Provider value={{ user, catalog, refreshCatalog, room, setRoom, kickedNotice, setKickedNotice, leaveAsk, setLeaveAsk, spotify, linkingStatus, error, setError, ...actions }}>
+    <AppContext.Provider
+      value={{
+        user,
+        catalog,
+        refreshCatalog,
+        room,
+        setRoom,
+        isCentral,
+        centralOffer,
+        kickedNotice,
+        setKickedNotice,
+        leaveAsk,
+        setLeaveAsk,
+        spotify,
+        linkingStatus,
+        error,
+        setError,
+        ...actions,
+      }}
+    >
       {children}
     </AppContext.Provider>
   );
 }
 
 export function useApp() { return useContext(AppContext); }
+
+// How this device shows a room's match:
+//  - "central": it's the room's central device, the screen everyone looks at: the whole match, without any way to
+//    answer or control it;
+//  - "controller": a player while the room has a central device connected: only the ways to answer (the options, the
+//    box to write, the board...), since the question is on that screen;
+//  - "full": everything, as when each player plays on their own screen.
+// `viewerId` is who "you" are on screen: nobody on the central device.
+export function useView(room) {
+  const { user, isCentral } = useApp();
+  if (isCentral) return { view: "central", central: true, controller: false, viewerId: null };
+  const controller = Boolean(room?.central?.connected);
+  return { view: controller ? "controller" : "full", central: false, controller, viewerId: user?.id ?? null };
+}
 
 // Time left in the phase. `clockOffset` (server time minus ours) was taken when the snapshot arrived, so this keeps
 // counting down between snapshots instead of repeating the value the server sent.

@@ -19,7 +19,8 @@ function configKey(config) {
 // The match settings, in the settings panel. Every tap is saved straight away for the whole room; the local copy
 // only keeps the tap visible until the server's new state arrives. `children` go at the bottom.
 // With `readOnly` (players without permission to change them) everything shows but nothing can be tapped.
-export default function MusicSettings({ room, catalog, updateConfig, onToast, children, readOnly = false }) {
+// `spotify={false}` hides the Spotify button (a playlist's game, which only chooses among the room's songs).
+export default function MusicSettings({ room, catalog, updateConfig, onToast, children, readOnly = false, spotify = true }) {
   const { user, listSpotifyPlaylists, addSpotifyPlaylist, connectSpotify } = useApp();
   const playlists = catalog?.playlists || [];
   // Spotify playlists already added to the room.
@@ -27,7 +28,7 @@ export default function MusicSettings({ room, catalog, updateConfig, onToast, ch
   // Among those who may change the settings (the host or a player with permission), owners get the Spotify button.
   // Without Spotify connected it asks to connect it; with it, it opens their playlists. Closed, only the chosen ones
   // show.
-  const isOwnerEditor = !readOnly && user?.role === "owner";
+  const isOwnerEditor = spotify && !readOnly && user?.role === "owner";
   const spotifyLinked = Boolean(user?.spotify);
   const [spotifyOpen, setSpotifyOpen] = useState(false);
   const [askLink, setAskLink] = useState(false);

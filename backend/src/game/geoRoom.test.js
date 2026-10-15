@@ -1,10 +1,9 @@
 import assert from "node:assert/strict";
 import { readLocalCatalog } from "../catalog/catalogProvider.js";
-import { flagForToken } from "../geo/flags.js";
 import { LOCATION_ROUND_MS } from "./geo.js";
 import { RoomManager } from "./roomManager.js";
 
-// Geografía: capitals and flags (written answers), map rounds (pins) and the tiebreak for first place.
+// Encuentra el país: map rounds (pins) and the tiebreak for first place.
 const mgr = new RoomManager({ catalog: readLocalCatalog(), store: { users: {} } });
 const stop = (room) => clearTimeout(room.timer);
 const host = { id: "host-1", name: "Host", socketId: "s1" };
@@ -12,88 +11,36 @@ const room = mgr.create({ host, mode: "multi", game: "mundo" });
 mgr.addPlayer(room, { id: "p-2", name: "Ana", socketId: "s2" });
 mgr.addPlayer(room, { id: "p-3", name: "Luis", socketId: "s3" });
 
-// Lobby: the settings, and how many questions they can draw.
-assert.deepEqual(room.config.geo.kinds, ["capital", "flag", "location"]);
-assert.ok(mgr.publicState(room).questionsReady > 400);
+// Lobby: the settings (no kinds of question and no seconds to write: it is only a pin on the map), and how many
+// countries they can draw.
+const DIFFICULTIES = ["facil", "media", "dificil"];
+assert.deepEqual(room.config.geo, { rounds: 5, difficulties: DIFFICULTIES });
+const all = mgr.publicState(room).questionsReady;
+assert.ok(all > 150 && all < 250, `one question per country (${all})`);
 assert.equal(mgr.publicState(room).songsReady, undefined);
-// Every kind can be unticked: there is then nothing to play.
-mgr.updateConfig(room, "host-1", { geo: { kinds: [] } });
+// An older client's kinds and seconds are ignored.
+mgr.updateConfig(room, "host-1", { geo: { kinds: ["capital"], roundMs: 30000 } });
+assert.deepEqual(room.config.geo, { rounds: 5, difficulties: DIFFICULTIES });
+assert.equal(mgr.publicState(room).questionsReady, all);
+// Every difficulty can be unticked: there is then nothing to play.
+mgr.updateConfig(room, "host-1", { geo: { difficulties: [] } });
 assert.equal(mgr.publicState(room).questionsReady, 0);
-mgr.updateConfig(room, "host-1", { geo: { kinds: ["capital", "flag", "location"] } });
+assert.throws(() => mgr.start(room, "host-1"), /dificultad/);
 mgr.updateConfig(room, "host-1", { geo: { rounds: 6, difficulties: ["facil"] } });
-const ready = mgr.publicState(room).questionsReady;
-mgr.updateConfig(room, "host-1", { geo: { kinds: ["location"] } });
-assert.ok(mgr.publicState(room).questionsReady < ready, "fewer kinds, fewer questions");
-mgr.updateConfig(room, "host-1", { geo: { kinds: ["capital", "flag", "location"] } });
+assert.ok(mgr.publicState(room).questionsReady < all, "fewer difficulties, fewer questions");
 
 mgr.start(room, "host-1");
 stop(room);
 assert.equal(room.tracks.length, 6);
-for (const kind of ["capital", "flag", "location"]) assert.equal(room.tracks.filter((t) => t.kind === kind).length, 2);
+assert.ok(room.tracks.every((t) => t.kind === "location"), "never a capital or a flag");
 assert.equal(new Set(room.tracks.map((t) => t.country)).size, 6, "never the same country twice");
-
-// From here on the rounds go capital, flag, location, and the map round asks for Spain.
-const ORDER = ["capital", "flag", "location"];
-room.tracks.sort((a, b) => ORDER.indexOf(a.kind) - ORDER.indexOf(b.kind) || 0);
-room.tracks = [0, 2, 4, 1, 3, 5].map((i) => room.tracks[i]);
-Object.assign(room.tracks[2], { name: "España", answer: "España", country: "ES", map: ["Spain"] });
-
-const notLeaked = (state, track, label) => {
-  const json = JSON.stringify(state);
-  const secrets = [`"${track.answer}"`, `"${track.country}"`, track.flag && `/${track.flag}.`, track.map && `"${track.map[0]}"`];
-  for (const secret of secrets.filter(Boolean)) {
-    assert.ok(!json.includes(secret), `${label}: se filtra ${secret}`);
-  }
-};
-function next() {
-  mgr.advance(room);
-  stop(room);
-  return room.tracks[room.currentRound];
-}
-
-// A written round: during the countdown only its kind is known. Ana answers right, the host wrong, Luis not at all.
-let track = room.tracks[0];
-let pub = mgr.publicState(room, "p-2");
-assert.equal(pub.phase, "countdown");
-assert.deepEqual(pub.question, { round: room.currentRound + 1, kind: "capital", difficulty: "facil", prompt: null, name: null, flag: null });
-mgr.beginPlaying(room);
-stop(room);
-pub = mgr.publicState(room, "p-2");
-assert.ok(pub.question.prompt.startsWith("¿Cuál es la capital"));
-notLeaked(pub, track, "capital (jugando)");
-assert.throws(() => mgr.placePin(room, "p-2", { lng: 0, lat: 0 }), /no es de mapa/);
-mgr.submitAnswer(room, "p-2", track.answer);
-mgr.submitAnswer(room, "host-1", "respuesta absurda");
-assert.equal(room.players.get("p-2").lastAnswer.correct, true);
-assert.ok(room.players.get("p-2").lastPoints > 800);
-assert.equal(room.players.get("host-1").lastPoints, 0);
-mgr.beginReveal(room);
-stop(room);
-assert.equal(mgr.publicState(room).reveal.answer, track.answer);
-assert.ok(mgr.publicState(room).reveal.map?.length, "the reveal of a capital shows the country on the map");
-
-// A flag round: the image's address is a token, never the country code.
-track = next();
-assert.equal(track.kind, "flag");
-mgr.beginPlaying(room);
-stop(room);
-pub = mgr.publicState(room, "p-2");
-assert.equal(pub.question.prompt, "¿De qué país es esta bandera?");
-assert.equal(pub.question.name, null);
-assert.match(pub.question.flag, /^\/api\/geo\/flag\/[\w-]+$/);
-assert.equal(flagForToken(pub.question.flag.split("/").pop()), track.flag);
-notLeaked(pub, track, "bandera (jugando)");
-mgr.submitAnswer(room, "p-2", track.answer);
-mgr.beginReveal(room);
-stop(room);
-pub = mgr.publicState(room);
-assert.equal(pub.reveal.answer, track.answer);
-assert.equal(pub.reveal.flag, `/api/geo/flag/${track.flagToken}`);
+// The first round asks for Spain.
+Object.assign(room.tracks[0], { name: "España", answer: "España", country: "ES", map: ["Spain"] });
 
 // A map round: 10 s; pins can move until locked, the last one counts, and nothing says where the country is.
-track = next();
-assert.equal(track.kind, "location");
-assert.equal(mgr.publicState(room).question.name, null, "not even the country during the countdown");
+let pub = mgr.publicState(room, "p-2");
+assert.equal(pub.phase, "countdown");
+assert.deepEqual(pub.question, { round: 1, kind: "location", difficulty: "facil", prompt: null, name: null });
 mgr.beginPlaying(room);
 stop(room);
 assert.equal(room.phaseEndsAt - room.phaseStartedAt, LOCATION_ROUND_MS);
