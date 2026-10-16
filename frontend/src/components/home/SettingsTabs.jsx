@@ -5,15 +5,16 @@ import Icon from "./Icon.jsx";
 // it's played and how long: ways of answering, modes, rounds, seconds) and what comes up ("Preguntas", "Canciones",
 // "Eventos", "Tableros": topics, difficulty).
 // `tabs` are { id, label, icon?, note?, alert?, content } or, for a tab with parts, { …, sub: [{ id, label, note?,
-// alert?, content }] }, shown as a smaller row of tabs inside (Adivina la canción's "Catálogo" | "Tus playlists").
+// alert?, toggle?, content }] }, shown as a smaller row of tabs inside (Adivina la canción's "Catálogo" | "Tus playlists").
 // `note` is a short summary under the name ("10 rondas · 20 s", "Todas"), so what a tab holds shows without opening
 // it; `alert` puts a red dot on it when something there keeps the match from starting. A falsy tab is left out.
 // Each tab's `content` goes in the read-only fieldset, so players without permission can still switch tabs to look.
-// The open tab is remembered for this viewer under `storageKey` (sessionStorage). `children` go under the tabs.
+// They always open on the first tab ("Partida"), and inside a tab with parts on its first part; nothing is remembered
+// between visits. (`storageKey` is still accepted, unused.) `children` go under the tabs.
 export default function SettingsTabs({ tabs, readOnly = false, storageKey = null, label = "Ajustes", children }) {
   const list = tabs.filter(Boolean);
-  const [open, setOpen] = useState(() => remembered(storageKey, list));
-  const [subOpen, setSubOpen] = useState(() => remembered(storageKey && `${storageKey}:sub`, null) || {});
+  const [open, setOpen] = useState(() => list[0].id);
+  const [subOpen, setSubOpen] = useState({});
   const current = list.find((t) => t.id === open) || list[0];
   const sub = Array.isArray(current.sub) ? current.sub.filter(Boolean) : null;
   const subCurrent = sub?.find((s) => s.id === subOpen[current.id]) || sub?.[0];
@@ -22,13 +23,11 @@ export default function SettingsTabs({ tabs, readOnly = false, storageKey = null
 
   function choose(id) {
     setOpen(id);
-    remember(storageKey, id);
   }
 
   function chooseSub(id) {
     const next = { ...subOpen, [current.id]: id };
     setSubOpen(next);
-    remember(storageKey && `${storageKey}:sub`, next);
   }
 
   return (
@@ -70,13 +69,14 @@ function TabRow({ tabs, value, onChange, label, panelId, sub = false }) {
       style={{ "--n": tabs.length, "--i": index }}
       onKeyDown={onKeyDown}
     >
-      {tabs.map((t, i) => (
+      {tabs.map((t, i) => {
+        const tab = (
         <button
           key={t.id}
           ref={(el) => (refs.current[i] = el)}
           type="button"
           role="tab"
-          className="tv-settab"
+          className={`tv-settab${t.toggle ? " has-toggle" : ""}`}
           aria-selected={t.id === value}
           aria-controls={panelId}
           tabIndex={t.id === value ? 0 : -1}
@@ -90,7 +90,27 @@ function TabRow({ tabs, value, onChange, label, panelId, sub = false }) {
           </span>
           {t.note && <small className="tv-settab-note">{t.note}</small>}
         </button>
-      ))}
+        );
+        if (!t.toggle) return tab;
+        // A tab with an on/off switch at its end (Adivina la canción's catalog): the switch sits over the tab, beside
+        // it in the page's order, so tapping it only switches and tapping the rest opens the tab.
+        return (
+          <div key={t.id} className="tv-settab-wrap">
+            {tab}
+            <button
+              type="button"
+              role="switch"
+              className="tv-switch tv-settab-switch"
+              aria-checked={t.toggle.on}
+              aria-label={t.toggle.label}
+              disabled={t.toggle.disabled}
+              onClick={() => t.toggle.onChange(!t.toggle.on)}
+            >
+              <span className="tv-switch-knob" aria-hidden="true" />
+            </button>
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -100,25 +120,4 @@ export function countNote(chosen, total, noun = "categorías") {
   if (!chosen.length) return `Sin ${noun}`;
   if (chosen.length >= total) return `Todas las ${noun}`;
   return `${chosen.length} de ${total} ${noun}`;
-}
-
-// The tab open last time (sessionStorage, which may be unavailable), if it still exists.
-function remembered(key, tabs) {
-  if (!key) return tabs ? tabs[0].id : null;
-  try {
-    const value = sessionStorage.getItem(`trivially_settings_${key}`);
-    if (!tabs) return value ? JSON.parse(value) : null;
-    return tabs.some((t) => t.id === value) ? value : tabs[0].id;
-  } catch {
-    return tabs ? tabs[0].id : null;
-  }
-}
-
-function remember(key, value) {
-  if (!key) return;
-  try {
-    sessionStorage.setItem(`trivially_settings_${key}`, typeof value === "string" ? value : JSON.stringify(value));
-  } catch {
-    // Without storage the tab just isn't remembered.
-  }
 }

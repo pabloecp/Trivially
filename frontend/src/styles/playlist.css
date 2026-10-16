@@ -179,8 +179,6 @@ input.tv-pl-name:focus { outline: none; }
 }
 /* The chosen one keeps its colour and gets a white ring. */
 .tv-pl-item.is-selected { box-shadow: 0 4px 0 var(--edge), 0 0 0 3px #ffffff; }
-.tv-pl-item.has-problem { box-shadow: 0 4px 0 var(--edge), inset 0 0 0 3px var(--p-bad); }
-.tv-pl-item.is-selected.has-problem { box-shadow: 0 4px 0 var(--edge), 0 0 0 3px #ffffff, inset 0 0 0 3px var(--p-bad); }
 /* Its icon on the game's colour: a lighter square instead of the game's own badge. */
 .tv-pl-item .tv-pl-badge { background: rgba(255, 255, 255, 0.22); box-shadow: none; }
 .tv-pl-item-main {
@@ -616,7 +614,6 @@ input.tv-pl-name:focus { outline: none; }
    row keeps its look). */
 .tv-pl-item.is-selected,
 .tv-pl-item.is-selected.has-problem { box-shadow: 0 4px 0 var(--edge); }
-.tv-pl-item.is-selected.has-problem { box-shadow: 0 4px 0 var(--edge), inset 0 0 0 3px var(--p-bad); }
 .tv-pl-num { display: grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; transition: background-color 0.2s ease, color 0.2s ease; }
 .tv-pl-item.is-selected .tv-pl-num {
   width: 26px;
@@ -631,22 +628,6 @@ input.tv-pl-name:focus { outline: none; }
 .tv-pl-shuffle:disabled:hover { background: rgba(0, 0, 0, 0.2); }
 .tv-pl-shuffle:disabled:hover svg { transform: none; }
 
-/* "Guardar esta" asks for the name first: a box with the playlist's own name already written, then Guardar. */
-.tv-pl-saveas { display: grid; gap: 8px; animation: tvGrowIn 0.3s var(--tv-ease-out) backwards; }
-.tv-pl-saveas-label { font-weight: 800; font-size: 13px; color: var(--tv-text-2); }
-.tv-pl-saveas-box {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  height: 50px;
-  padding: 0 14px;
-  border-radius: 16px;
-  background: var(--tv-option-bg);
-  box-shadow: 0 0 0 2px var(--brand);
-}
-.tv-pl-saveas-box svg { flex-shrink: 0; color: var(--brand-text); }
-.tv-pl-saveas-box input { flex: 1; min-width: 0; height: 100%; border: 0; background: none; color: var(--tv-text); font: inherit; font-family: var(--tv-display); font-weight: 700; font-size: 18px; }
-.tv-pl-saveas-box input:focus { outline: none; }
 
 /* A saved playlist's name, changed in its row: a box in place of its name and games. */
 .tv-pl-saved-rename { flex: 1; min-width: 0; }
@@ -819,3 +800,238 @@ input.tv-pl-name:focus { outline: none; }
 .tv-pl-edit-dots > button::before { max-width: 10px; height: 10px; border-radius: 3px; }
 .tv-pl-edit-dots > button.is-on::before { max-width: 22px; }
 @media (max-width: 640px) { .tv-pl-views, .tv-pl-edit-nav { width: auto; } }
+
+/* The space under the games: a tray sunk into the card (darker, its edges dashed, rounded), different from the rest.
+   Each game's icon is a button in its own colour that adds that game; the two lines say how a playlist works. */
+.tv-pl-fill { opacity: 1; pointer-events: auto; padding: 4px 0; }
+.tv-pl-tray {
+  display: grid;
+  justify-items: center;
+  gap: 12px;
+  width: 100%;
+  height: 100%;
+  place-content: center;
+  padding: 18px 16px;
+  border-radius: 22px;
+  background: rgba(0, 0, 0, 0.14);
+  box-shadow: inset 0 3px 10px rgba(0, 0, 0, 0.18);
+  outline: 2px dashed rgba(255, 255, 255, 0.28);
+  outline-offset: -8px;
+}
+.tv-pl-fill-icons { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
+.tv-pl-fill-icons > button {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  padding: 0;
+  border: 0;
+  border-radius: 14px;
+  background: var(--c2);
+  box-shadow: 0 4px 0 var(--edge);
+  cursor: pointer;
+  transition: transform 0.15s var(--tv-spring), box-shadow 0.15s ease;
+}
+.tv-app .tv-pl-fill-icons > button { color: var(--on); }
+.tv-pl-fill-icons > button:hover:not(:disabled) { transform: translateY(-3px); box-shadow: 0 7px 0 var(--edge); }
+.tv-pl-fill-icons > button:active:not(:disabled) { transform: translateY(4px); box-shadow: 0 0 0 var(--edge); }
+.tv-pl-fill-icons > button:disabled { opacity: 0.4; cursor: default; }
+.tv-pl-fill-text { opacity: 0.85; }
+@container (max-height: 150px) { .tv-pl-fill-text { display: none; } }
+@container (max-height: 96px) { .tv-pl-tray { display: none; } }
+
+/* The tray is how games are added (no "Añadir juego" button): always there under the list, at least as tall as its
+   tiles. White tiles, each with its game's icon in the game's colour and a small "+" badge. */
+.tv-pl-fill { flex: 1 1 0; min-height: 96px; }
+.tv-pl-fill-icons > button {
+  position: relative;
+  width: 52px;
+  height: 52px;
+  border-radius: 15px;
+  background: #ffffff;
+  box-shadow: 0 4px 0 rgba(0, 0, 0, 0.2);
+}
+.tv-app .tv-pl-fill-icons > button { color: var(--c2); }
+.tv-pl-fill-icons > button:hover:not(:disabled) { box-shadow: 0 7px 0 rgba(0, 0, 0, 0.2); }
+.tv-pl-fill-icons > button:active:not(:disabled) { box-shadow: 0 0 0 rgba(0, 0, 0, 0.2); }
+.tv-pl-fill-plus {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--p-ink, #111);
+  color: #ffffff;
+  box-shadow: 0 0 0 2px #ffffff;
+}
+@container (max-height: 120px) { .tv-pl-tray { display: grid; } .tv-pl-fill-icons { display: flex; } .tv-pl-fill-text { display: none; } }
+@media (max-width: 640px) {
+  .tv-pl-fill { display: grid; flex: none; min-height: 0; container-type: normal; }
+  .tv-pl-fill-icons > button { width: 48px; height: 48px; }
+}
+
+/* ---------- The games' colours (as they were first) ----------
+   Each game on a dark strip of the card's orange, with its own icon in its colour; the chosen one turns white with
+   dark letters, so which one you're editing is plain to see. */
+.tv-pl-item,
+.tv-pl-item.has-problem { background: rgba(0, 0, 0, 0.17); box-shadow: none; color: inherit; }
+.tv-pl-item .tv-pl-badge { background: var(--c2); box-shadow: 0 3px 0 var(--edge); color: var(--on); }
+.tv-pl-item.is-selected,
+.tv-pl-item.is-selected.has-problem { background: var(--on, #ffffff); color: var(--p-ink); box-shadow: 0 4px 0 rgba(0, 0, 0, 0.25); }
+.tv-pl-stage .tv-pl-item.is-selected { background: #ffffff; }
+.tv-pl-item.is-selected .tv-pl-num { width: 26px; background: none; color: inherit; font-size: inherit; box-shadow: none; animation: none; }
+.tv-pl-item.is-selected .tv-pl-sum { opacity: 0.7; }
+.tv-pl-item.is-selected .tv-pl-tool { background: rgba(0, 0, 0, 0.07); }
+.tv-pl-item.is-selected .tv-pl-tool:hover:not(:disabled) { background: rgba(0, 0, 0, 0.14); }
+/* The tiles share the tray's whole width (as wide as the games above), one fifth each. */
+.tv-pl-tray { justify-items: stretch; padding: 16px 14px; }
+.tv-pl-fill-icons { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; width: 100%; }
+.tv-pl-fill-icons > button { width: 100%; }
+.tv-pl-fill-text { text-align: center; }
+@container (max-height: 120px) { .tv-pl-fill-icons { display: grid; } }
+@media (max-width: 640px) { .tv-pl-fill-icons { gap: 8px; } .tv-pl-fill-icons > button { width: 100%; } }
+/* The tray fills the space's whole width (the space centred its content, which shrank the tray to its tiles). */
+.tv-pl-fill { place-content: stretch; justify-items: stretch; align-items: stretch; }
+.tv-pl-tray { width: 100%; box-sizing: border-box; align-content: center; justify-content: stretch; }
+.tv-pl-fill-icons > button { height: 52px; }
+@media (max-width: 640px) { .tv-pl-fill-icons > button { height: 48px; } }
+/* The tray: full width, no dashed edge. Its tiles keep their square size (52px), spread evenly across it. */
+.tv-pl-tray { outline: 0; }
+.tv-pl-fill-icons { display: flex; justify-content: space-evenly; gap: 10px; }
+.tv-pl-fill-icons > button { flex: 0 0 auto; width: 52px; }
+@container (max-height: 120px) { .tv-pl-fill-icons { display: flex; } }
+@media (max-width: 640px) { .tv-pl-fill-icons > button { width: 48px; } }
+/* The list never gives way to the tray: it keeps the whole rows LobbyPanel measured (fitRows), and the tray takes
+   only what's left, down to its tiles alone (84px: no text, less padding). */
+.tv-pl-body { flex: 0 0 auto; }
+.tv-pl-fill { flex: 1 1 0; min-height: 84px; }
+.tv-pl-tray { padding: 14px; }
+@container (max-height: 120px) { .tv-pl-tray { padding: 12px 14px; } }
+
+/* Deleting is always red on hover (and while it asks), whichever row it is in, the chosen white one too. */
+.tv-pl-item .tv-pl-tool.is-danger:hover:not(:disabled),
+.tv-pl-item .tv-pl-tool.is-confirm,
+.tv-pl-saved-row .tv-pl-tool.is-danger:hover:not(:disabled),
+.tv-pl-saved-row .tv-pl-tool.is-confirm { background: var(--p-bad); }
+.tv-app .tv-pl-item .tv-pl-tool.is-danger:hover:not(:disabled),
+.tv-app .tv-pl-item .tv-pl-tool.is-confirm,
+.tv-app .tv-pl-saved-row .tv-pl-tool.is-danger:hover:not(:disabled),
+.tv-app .tv-pl-saved-row .tv-pl-tool.is-confirm { color: #ffffff; }
+/* The tray is compact: just its row of tiles (and, when the playlist is empty, its two lines), at the bottom of the
+   list's space; it never grows, so the list keeps as many games in sight as fit (three at least on a usual screen). */
+.tv-pl-fill { flex: 0 0 auto; min-height: 0; margin-top: auto; container-type: normal; }
+.tv-pl-tray { height: auto; padding: 12px 14px; gap: 10px; }
+.tv-pl-fill-icons > button { width: 48px; height: 48px; }
+.tv-pl-fill-text { display: none; }
+.tv-pl-fill.has-text .tv-pl-fill-text { display: grid; }
+/* A little tighter so three games fit above the tray on a usual window: rows a bit shorter (one line of summary
+   now), a smaller tray. */
+.tv-pl-item { min-height: 0; padding-top: 3px; padding-bottom: 3px; }
+.tv-pl-item-main { padding-top: 3px; padding-bottom: 3px; }
+.tv-pl-list { gap: 8px; }
+.tv-pl-bodywrap { gap: 8px; }
+.tv-pl-tray { padding: 10px 14px; }
+.tv-pl-fill-icons > button { width: 44px; height: 44px; border-radius: 13px; }
+/* Each game's row hugs its content: a smaller icon square and almost no space above and below it. */
+.tv-pl-item { padding-top: 2px; padding-bottom: 2px; }
+.tv-pl-item-main { padding-top: 2px; padding-bottom: 2px; }
+.tv-pl-item .tv-pl-badge { width: 36px; height: 36px; border-radius: 11px; }
+.tv-pl-item .tv-pl-badge svg { width: 18px; height: 18px; }
+.tv-pl-text { gap: 0; }
+.tv-pl-game { line-height: 1.1; }
+.tv-pl-sum { line-height: 1.25; }
+/* The icon and the name closer to the number. */
+.tv-pl-item-main { gap: 8px; }
+.tv-pl-num { width: 20px; }
+.tv-pl-item-main > .tv-pl-badge { margin-right: 2px; }
+.tv-pl-item .tv-pl-num,
+.tv-pl-item.is-selected .tv-pl-num { width: 20px; }
+/* Room for four games at once: the card's parts a little closer together and a lower tray. */
+.tv-mstage.tv-pl-stage { gap: 12px; }
+.tv-pl-foot { gap: 10px; }
+.tv-pl-tray { padding: 8px 14px; }
+.tv-pl-fill-icons > button { width: 40px; height: 40px; border-radius: 12px; }
+.tv-pl-fill-plus { top: -5px; right: -5px; width: 18px; height: 18px; }
+
+/* "Nueva", at the end of the kicker's row: starts an empty playlist (asks first when this one has games). */
+.tv-pl-new {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  height: 38px;
+  margin-left: auto;
+  padding: 0 14px 0 12px;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.18);
+  font: inherit;
+  font-weight: 800;
+  font-size: 14px;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+.tv-app .tv-pl-new { color: inherit; }
+.tv-pl-new:hover { background: rgba(0, 0, 0, 0.28); }
+.tv-pl-new.is-confirm { background: #ffffff; }
+.tv-app .tv-pl-new.is-confirm { color: var(--c2); }
+.tv-pl-head .tv-mstage-badges { width: 100%; }
+/* The settings panel with no games yet: one small box with the three steps, a line each. */
+.tv-pl-howto {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 14px 16px;
+  border-radius: 16px;
+  background: var(--tv-option-bg);
+  list-style: none;
+  color: var(--tv-text-2);
+  font-weight: 700;
+  font-size: 13px;
+  line-height: 1.4;
+}
+.tv-pl-howto { gap: 14px; padding: 16px 18px; font-size: 15px; }
+.tv-pl-howto li { display: grid; gap: 2px; }
+.tv-pl-howto strong { font-family: var(--tv-display); font-size: 17px; color: var(--tv-text); }
+/* The game switcher's squares are always the same size, however many games there are (10 at most fit): 8px each,
+   the chosen one 18px wide. */
+.tv-pl-edit-dots { gap: 0; }
+.tv-pl-edit-dots > button { flex: none; width: auto; padding: 0 2px; }
+.tv-pl-edit-dots > button::before { width: 8px; max-width: none; height: 8px; border-radius: 3px; }
+.tv-pl-edit-dots > button.is-on { flex: none; }
+.tv-pl-edit-dots > button.is-on::before { width: 18px; max-width: none; }
+
+/* "Tus playlists" (Adivina la canción) and "Mis playlists" (a playlist of games): like the playlist's games, a fixed
+   number of whole rows in sight (4), the rest scrolling with a thin bar without arrows, snapping to rows. Every row
+   is the same height, so the list's height is exactly four of them. */
+.tv-saved-list,
+.tv-pl-saved {
+  --row: 60px;
+  --gap: 4px;
+  gap: var(--gap);
+  max-height: calc(4 * var(--row) + 3 * var(--gap));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scroll-snap-type: y mandatory;
+}
+.tv-pl-saved { --gap: 8px; }
+.tv-saved-item,
+.tv-pl-saved-row { box-sizing: border-box; height: var(--row); scroll-snap-align: start; }
+.tv-app .tv-saved-list,
+.tv-app .tv-pl-saved { scrollbar-width: auto; scrollbar-color: auto; padding-right: 4px; }
+@supports not selector(::-webkit-scrollbar) {
+  .tv-app .tv-saved-list,
+  .tv-app .tv-pl-saved { scrollbar-width: thin; scrollbar-color: rgba(255, 255, 255, 0.28) transparent; }
+}
+.tv-app .tv-saved-list::-webkit-scrollbar,
+.tv-app .tv-pl-saved::-webkit-scrollbar { display: block; width: 6px; }
+.tv-app .tv-saved-list::-webkit-scrollbar-button,
+.tv-app .tv-pl-saved::-webkit-scrollbar-button { display: none; width: 0; height: 0; }
+.tv-app .tv-saved-list::-webkit-scrollbar-track,
+.tv-app .tv-pl-saved::-webkit-scrollbar-track { border-radius: 3px; background: rgba(255, 255, 255, 0.05); }
+.tv-app .tv-saved-list::-webkit-scrollbar-thumb,
+.tv-app .tv-pl-saved::-webkit-scrollbar-thumb { border-radius: 3px; background: rgba(255, 255, 255, 0.28); }

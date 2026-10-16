@@ -172,4 +172,19 @@ assert.deepEqual(removable.config.playlistIds, []);
 assert.throws(() => mgr.removeSpotifyPlaylist(removable, "owner", "sp:gone"), /no está en la sala/);
 mgr.destroy(removable);
 
+
+// A pasted (or default) playlist read again brings Spotify's current songs: gone ones leave, new ones come in.
+{
+  const fresh = mgr.create({ host: { id: "owner", name: "Owner", socketId: "s9" }, game: "musica" });
+  const tracks = (ids) => ids.map((i) => ({ spotifyId: `r${i}`, title: `Canción ${i}`, artists: ["Artista"], previewUrl: "https://p.scdn.co/mp3-preview/x" }));
+  mgr.addSpotifyPlaylist(fresh, "owner", { id: "live", name: "Viva", image: null, tracks: tracks([1, 2, 3]) }, { fromLink: true });
+  mgr.addSpotifyPlaylist(fresh, "owner", { id: "live", name: "Viva", image: null, tracks: tracks([2, 3, 4]) }, { fromLink: true });
+  const entry = fresh.customPlaylists["sp:live"];
+  assert.deepEqual([...entry.songs.keys()].sort(), ["r2", "r3", "r4"]);
+  assert.deepEqual(entry.tracks.map((t) => t.spotifyId), ["r2", "r3", "r4"]);
+  // The default playlists can't be taken out of a room.
+  mgr.addSpotifyPlaylist(fresh, "owner", { id: "37i9dQZEVXbMDoHDwVN2tF", name: "Top 50: Global", image: null, tracks: tracks([5]) }, { fromLink: true });
+  assert.throws(() => mgr.removeSpotifyPlaylist(fresh, "owner", "sp:37i9dQZEVXbMDoHDwVN2tF"), /no se puede borrar/);
+}
+
 console.log("spotifyRoom.test ok");

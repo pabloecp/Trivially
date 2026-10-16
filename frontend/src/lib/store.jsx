@@ -685,7 +685,8 @@ export function AppProvider({ children }) {
         const res = await emitAckWithin(25000, "room:spotifyLink", link);
         if (!res.ok) throw new Error(res.error);
         if (res.state) setRoom(res.state);
-        return res.saved || null;
+        // `saved`: the account's list ("Mis playlists"); `added`: the room's id of the playlist just read.
+        return { saved: res.saved || null, added: res.added || null };
       },
 
       // The Spotify playlists and albums kept on this account ({ canSave, saved }), and deleting one for good.

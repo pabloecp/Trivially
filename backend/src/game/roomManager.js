@@ -1,3 +1,4 @@
+import { isDefaultSpotify } from "../catalog/defaultPlaylists.js";
 import { SONG_DIFFICULTIES, SONG_GENRES, SONG_LANGUAGES, filterSongs, songCounts } from "../catalog/songFilters.js";
 import { hasRole } from "../auth/roles.js";
 import { hydrateSong } from "../catalog/catalogProvider.js";
@@ -913,6 +914,31 @@ export class RoomManager {
     else this.assertSpotifyEditor(room, userId);
     const id = `${SPOTIFY_PREFIX}${playlist.id}`;
     let entry = room.customPlaylists[id];
+    // Read again (a pasted or default playlist ticked once more): its songs become Spotify's current ones. Songs no
+    // longer in it go; new ones come with their own preview and are looked up on iTunes like the rest.
+    if (entry && fromLink) {
+      const now = new Set(playlist.tracks.map((t) => t.spotifyId));
+      for (const key of [...entry.songs.keys()]) if (!now.has(key)) entry.songs.delete(key);
+      for (const key of [...entry.done]) if (!now.has(key)) entry.done.delete(key);
+      entry.retried?.forEach((key) => !now.has(key) && entry.retried.delete(key));
+      entry.tracks = playlist.tracks;
+      entry.name = playlist.name || entry.name;
+      entry.image = playlist.image || entry.image;
+      for (const t of playlist.tracks) {
+        if (!t.previewUrl || entry.songs.has(t.spotifyId)) continue;
+        entry.songs.set(t.spotifyId, {
+          id: `sp-${t.spotifyId}`,
+          spotifyId: t.spotifyId,
+          title: displayTitle(t.title),
+          artistName: t.artists.join(" & ") || "Artista",
+          artists: t.artists,
+          albumName: t.albumName || "",
+          year: t.year || null,
+          image: playlist.image || null,
+          previewUrl: t.previewUrl,
+        });
+      }
+    }
     if (!entry) {
       entry = { id, name: playlist.name, image: playlist.image, tracks: playlist.tracks, songs: new Map(), done: new Set(), active: true };
       // A pasted public playlist brings each song's own preview (15–22 s): they can be played at once. iTunes is still
@@ -945,6 +971,7 @@ export class RoomManager {
   /** Takes a Spotify playlist out of the room for good (its waiting searches stop); anyone who may change the settings. */
   removeSpotifyPlaylist(room, userId, playlistId) {
     this.assertPlaylistEditor(room, userId);
+    if (isDefaultSpotify(playlistId)) throw new Error("Esta playlist viene con el juego: no se puede borrar");
     const entry = room.customPlaylists?.[playlistId];
     if (!entry) throw new Error("Esa playlist no está en la sala");
     entry.active = false;

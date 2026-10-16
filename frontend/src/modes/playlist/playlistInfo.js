@@ -1,7 +1,7 @@
-import { FORMATS, LEVELS, TOPICS, quizConfig } from "../quiz/quizInfo.js";
-import { DIFFICULTIES as GEO_LEVELS, geoConfig } from "../mundo/geoInfo.js";
+import { FORMATS, quizConfig } from "../quiz/quizInfo.js";
+import { geoConfig } from "../mundo/geoInfo.js";
 import { historyConfig } from "../historia/historyInfo.js";
-import { STYLES as MINES_STYLES, minesConfig } from "../minas/minesInfo.js";
+import { minesConfig } from "../minas/minesInfo.js";
 import { GAME_MODES, findMode } from "../index.js";
 
 // Playlists of games (backend/src/game/playlist.js): the games a playlist can have, each item's settings, a line
@@ -48,49 +48,22 @@ export function newItemId() {
   return Math.random().toString(36).slice(2, 10);
 }
 
-// "Historia", "Historia y Arte", "4 categorías"; "Todas" when every one is ticked.
-function listText(ids = [], all, { allText, none, many }) {
-  if (!ids.length) return none;
-  if (ids.length === all.length) return allText;
-  if (ids.length > 2) return `${ids.length} ${many}`;
-  return ids.map((id) => all.find((x) => x.id === id)?.label || id).join(" y ");
-}
-
-const topicsText = (ids) => listText(ids, TOPICS, { allText: "Todas las categorías", none: "Sin categorías", many: "categorías" });
-const levelsText = (ids, all = LEVELS) => listText(ids, all, { allText: "Todas las dificultades", none: "Sin dificultad", many: "dificultades" });
 const secondsText = (ms) => `${Math.round(ms / 1000)} s`;
 
-function formatsText(ids = []) {
-  if (ids.length === FORMATS.length) return null;
-  if (!ids.length) return "Sin modo de juego";
-  return ids[0] === "opciones" ? "Solo cerradas" : "Solo abiertas";
-}
-
-/** One line with an item's settings: "5 tableros · Por turnos · Historia · Fácil". */
-export function itemSummary(item, catalog) {
+/**
+ * One line with an item's rounds and seconds per round, the same words in every game: "5 rondas · 15 s por ronda".
+ * Campo de minas by turns counts the seconds of a turn ("5 s por turno"); played only as a race, of the whole round.
+ */
+export function itemSummary(item) {
   const c = item.config || {};
-  let parts;
-  if (item.game === "opciones") {
-    parts = [`${c.rounds} preguntas`, topicsText(c.categories), levelsText(c.difficulties), formatsText(c.formats), secondsText(c.roundMs)];
-  } else if (item.game === "musica") {
-    // The catalog (with its filters) and the room's Spotify playlists.
-    const lists = (c.playlistIds || []).length;
-    const catalogOn = c.useCatalog !== false;
-    const listsText = lists ? `${lists} ${lists === 1 ? "playlist" : "playlists"}` : "";
-    const songs = catalogOn ? (lists ? `Catálogo y ${listsText}` : "Catálogo") : listsText || "Sin canciones";
-    parts = [`${c.rounds} canciones`, songs, formatsText(c.formats), secondsText(c.roundMs)];
-  } else if (item.game === "mundo") {
-    parts = [`${c.rounds} países`, levelsText(c.difficulties, GEO_LEVELS), secondsText(c.roundMs)];
-  } else if (item.game === "historia") {
-    parts = [`${c.rounds} acontecimientos`, topicsText(c.categories), levelsText(c.difficulties), secondsText(c.roundMs)];
-  } else if (item.game === "minas") {
-    const styles = c.styles || [];
-    const style = styles.length === 2 ? "Turnos y carrera" : styles.length ? MINES_STYLES.find((s) => s.id === styles[0])?.label : "Sin modo de juego";
-    parts = [`${c.rounds} tableros`, style, topicsText(c.categories), levelsText(c.difficulties)];
-  } else {
-    parts = [];
-  }
-  return parts.filter(Boolean).join(" · ");
+  const byTurns = item.game === "minas" && !(c.styles?.length === 1 && c.styles[0] === "carrera");
+  const ms = item.game === "minas" ? (byTurns ? c.turnMs : c.roundMs) : c.roundMs;
+  return [
+    c.rounds ? `${c.rounds} ${c.rounds === 1 ? "ronda" : "rondas"}` : null,
+    ms ? `${secondsText(ms)} por ${byTurns ? "turno" : "ronda"}` : null,
+  ]
+    .filter(Boolean)
+    .join(" · ");
 }
 
 /* ---------- Sharing: the JSON a playlist is copied, downloaded and imported in ---------- */

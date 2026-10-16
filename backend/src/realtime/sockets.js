@@ -1,3 +1,4 @@
+import { isDefaultSpotify } from "../catalog/defaultPlaylists.js";
 import { verifySocketToken } from "../auth/socketToken.js";
 import { prefetchMedia } from "../audio/mediaCache.js";
 import { readPublicSpotify, spotifyLinkFrom } from "../catalog/spotifyEmbed.js";
@@ -306,9 +307,13 @@ export function attachSockets(io, rooms) {
         const playlist = await readPublicSpotify(target);
         if (!playlist.tracks.length) throw new Error("No tiene canciones que se puedan usar");
         rooms.addSpotifyPlaylist(room, userId, playlist, { fromLink: true });
-        // Someone with an account keeps it on their profile, to add it again from "Mis playlists" in any room.
-        const saved = saveSpotifyLink(rooms.store, userId, { ...target, name: playlist.name, image: playlist.image, total: playlist.tracks.length });
-        ack?.({ ok: true, state: rooms.publicState(room, userId), saved });
+        // Someone with an account keeps it on their profile, to add it again from "Mis playlists" in any room (not the
+        // default playlists: every room has them already).
+        const saved = isDefaultSpotify(target)
+          ? savedSpotifyLinks(rooms.store, userId)
+          : saveSpotifyLink(rooms.store, userId, { ...target, name: playlist.name, image: playlist.image, total: playlist.tracks.length });
+        // `added`: the room's id of what was read, so a game of a playlist of games can tick it in its own settings.
+        ack?.({ ok: true, state: rooms.publicState(room, userId), saved, added: `sp:${playlist.id}` });
         io.to(room.code).emit("room:state", rooms.publicState(room));
       } catch (err) {
         ack?.({ ok: false, error: err.message });

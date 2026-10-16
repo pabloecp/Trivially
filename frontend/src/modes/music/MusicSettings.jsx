@@ -24,6 +24,11 @@ const GENRES = [
   { id: "electronica", label: "Electrónica" },
 ];
 const FILTERS = { languages: LANGUAGES, genres: GENRES, difficulties: LEVELS };
+// The Spotify playlists every room offers in "Tus playlists" (DEFAULT_SPOTIFY on the server): always listed first,
+// they can't be deleted, and each tick reads them again from Spotify, so their songs are always the current ones.
+const DEFAULT_PLAYLISTS = [{ kind: "playlist", id: "37i9dQZEVXbMDoHDwVN2tF", name: "Top 50: Global" }];
+const defaultRoomId = (p) => `sp:${p.kind === "album" ? `album:${p.id}` : p.id}`;
+const DEFAULT_IDS = new Set(DEFAULT_PLAYLISTS.map(defaultRoomId));
 
 // Rounds and seconds go in steps of 5. The server keeps the same limits (roomManager.updateConfig).
 const ROUNDS = { min: 5, max: 25, step: 5 };
@@ -48,8 +53,9 @@ function configKey(config) {
 // catalog). Every tap is saved straight away for the whole room; the local copy only keeps the tap visible until the
 // server's new state arrives. `children` go at the bottom, under the tabs.
 // With `readOnly` (players without permission to change them) everything shows but nothing can be tapped.
-// `spotify={false}` (a game of a playlist of games) only ticks the Spotify playlists the room already has: nothing
-// is added or deleted from there.
+// `spotify={false}`: a game of a playlist of games. Everything works the same (the default, saved and own playlists,
+// pasting a link, the bin), but what is ticked or added is ticked in that game's settings (playlistIds of the item);
+// adding one also puts it in the room, since that's where its songs are read.
 export default function MusicSettings({ room, updateConfig, onToast, children, readOnly = false, spotify = true }) {
   const { user, listSpotifyPlaylists, addSpotifyPlaylist, addSpotifyLink, listSavedSpotify, forgetSavedSpotify, removePlaylist } =
     useApp();
@@ -57,7 +63,8 @@ export default function MusicSettings({ room, updateConfig, onToast, children, r
   const custom = room.customPlaylists || [];
   // Among those who may change the settings (the host or a player with permission), owners also see their own
   // Spotify playlists in "Tus playlists" (when their Spotify is connected).
-  const isOwnerEditor = spotify && !readOnly && user?.role === "owner";
+  const isOwnerEditor = !readOnly && user?.role === "owner";
+  const inItem = !spotify;
   const spotifyLinked = Boolean(user?.spotify);
   const [spotifyLists, setSpotifyLists] = useState(null);
   const [spotifyBusy, setSpotifyBusy] = useState("");
@@ -78,7 +85,7 @@ export default function MusicSettings({ room, updateConfig, onToast, children, r
 
   // The list is always open, so it loads straight away (and the owner's own Spotify playlists with it).
   useEffect(() => {
-    if (readOnly || !hasAccount || !spotify) return;
+    if (readOnly || !hasAccount) return;
     let gone = false;
     listSavedSpotify()
       .then((res) => !gone && setSaved(res.saved))
@@ -111,7 +118,8 @@ export default function MusicSettings({ room, updateConfig, onToast, children, r
     if (!link.trim() || linkBusy) return;
     setLinkBusy(true);
     try {
-      const list = await withSound(() => addSpotifyLink(link.trim()));
+      const { saved: list, added } = await withSound(() => addSpotifyLink(link.trim()));
+      if (added) await tickInItem(added);
       if (list) setSaved(list);
       setLink("");
       setLinkOpen(false);
@@ -122,6 +130,30 @@ export default function MusicSettings({ room, updateConfig, onToast, children, r
     }
   }
 
+  // A default playlist: ticking it reads it again from Spotify (as its link; that also puts it in the room), unticking
+  // only unticks it. In a game of a playlist of games it is then ticked in that game's settings (tickInItem).
+  async function toggleDefault(p) {
+    const roomId = defaultRoomId(p);
+    if (selected.includes(roomId)) return togglePlaylist(roomId);
+    if (savedBusy) return;
+    setSavedBusy(`default:${p.id}`);
+    try {
+      await addSpotifyLink(`spotify:${p.kind}:${p.id}`);
+      await tickInItem(roomId);
+    } catch (err) {
+      onToast?.(err.message || "No se pudo leer la playlist de Spotify");
+    } finally {
+      setSavedBusy("");
+    }
+  }
+
+  // In a game of a playlist of games, something just added to the room is ticked in that game too (in the room's own
+  // settings the server already ticked it).
+  async function tickInItem(roomId) {
+    if (!inItem || !roomId) return;
+    await save({ playlistIds: [...selected.filter((id) => id !== roomId), roomId] });
+  }
+
   async function addSaved(item) {
     if (savedBusy) return;
     // Already in the room: it only needs ticking or unticking.
@@ -129,7 +161,8 @@ export default function MusicSettings({ room, updateConfig, onToast, children, r
     if (custom.some((p) => p.id === roomId)) return togglePlaylist(roomId);
     setSavedBusy(item.key);
     try {
-      const list = await addSpotifyLink(`spotify:${item.kind}:${item.id}`);
+      const { saved: list } = await addSpotifyLink(`spotify:${item.kind}:${item.id}`);
+      await tickInItem(roomId);
       if (list) setSaved(list);
     } catch (err) {
       onToast?.(err.message || "No se pudo agregar");
@@ -171,6 +204,7 @@ export default function MusicSettings({ room, updateConfig, onToast, children, r
     setSavedBusy(`own:${id}`);
     try {
       await addSpotifyPlaylist(id);
+      await tickInItem(`sp:${id}`);
     } catch (err) {
       onToast?.(err.message || "No se pudo añadir la playlist");
     } finally {
@@ -249,7 +283,21 @@ export default function MusicSettings({ room, updateConfig, onToast, children, r
   const rows = readOnly
     ? chosenCustom.map((p) => ({ key: p.id, image: p.image, name: p.name, kind: p.id.startsWith("sp:album:") ? "album" : "playlist", total: p.total }))
     : [
-        ...custom.map((p) => ({
+        ...DEFAULT_PLAYLISTS.map((p) => {
+          const inRoom = custom.find((c) => c.id === defaultRoomId(p));
+          return {
+            key: defaultRoomId(p),
+            busyKey: `default:${p.id}`,
+            image: inRoom?.image || null,
+            name: inRoom?.name || p.name,
+            kind: p.kind,
+            total: inRoom?.total,
+            on: selected.includes(defaultRoomId(p)),
+            fixed: true,
+            onToggle: () => toggleDefault(p),
+          };
+        }),
+        ...custom.filter((p) => !DEFAULT_IDS.has(p.id)).map((p) => ({
           key: p.id,
           image: p.image,
           name: p.name,
@@ -261,12 +309,12 @@ export default function MusicSettings({ room, updateConfig, onToast, children, r
           savedItem: savedOf(p.id),
         })),
         ...(saved || [])
-          .filter((item) => !inRoomIds.has(roomIdOf(item)))
+          .filter((item) => !inRoomIds.has(roomIdOf(item)) && !DEFAULT_IDS.has(roomIdOf(item)))
           .map((item) => ({ key: roomIdOf(item), busyKey: item.key, image: item.image, name: item.name, kind: item.kind, total: item.total, onToggle: () => addSaved(item), savedItem: item })),
         ...ownLists
           .filter((p) => !inRoomIds.has(`sp:${p.id}`))
           .map((p) => ({ key: `sp:${p.id}`, busyKey: `own:${p.id}`, image: p.image, name: p.name, kind: "spotify", total: p.total, onToggle: () => addSpotify(p.id) })),
-      ].sort((a, b) => Number(Boolean(b.on)) - Number(Boolean(a.on)));
+      ].sort((a, b) => Number(Boolean(b.fixed)) - Number(Boolean(a.fixed)) || Number(Boolean(b.on)) - Number(Boolean(a.on)));
 
   function playlistRow(row) {
     const asking = confirmForget === row.key;
@@ -278,11 +326,11 @@ export default function MusicSettings({ room, updateConfig, onToast, children, r
           <strong>{row.name}</strong>
           <small>
             {row.on && <span className="tv-saved-on">En la partida · </span>}
-            {row.kind === "album" ? "Álbum" : row.kind === "spotify" ? "Tu Spotify" : "Playlist"}
+            {row.fixed ? "Spotify" : row.kind === "album" ? "Álbum" : row.kind === "spotify" ? "Tu Spotify" : "Playlist"}
             {row.total ? ` · ${row.total} canciones` : ""}
           </small>
         </span>
-        {!readOnly && spotify && (row.inRoom || row.savedItem) && (
+        {!readOnly && !row.fixed && (row.inRoom || row.savedItem) && (
           <button
             type="button"
             className={`tv-saved-forget${asking ? " is-asking" : ""}`}
@@ -320,12 +368,8 @@ export default function MusicSettings({ room, updateConfig, onToast, children, r
   const showPlaylists = !readOnly || rows.length > 0;
 
   const catalog = (
-    <SettingsSection
-      title="Usar el catálogo de Trivially"
-      sub
-      hint={useCatalog ? null : "Solo suenan tus playlists."}
-      toggle={{ on: useCatalog, onChange: (on) => save({ useCatalog: on }) }}
-    >
+    // Its on/off switch is on the "Catálogo" tab itself (below), so it takes no row of its own.
+    <SettingsSection sub off={!useCatalog}>
       {filterRow("languages", "Idioma")}
       {filterRow("genres", "Género")}
       {filterRow("difficulties", "Dificultad")}
@@ -334,12 +378,13 @@ export default function MusicSettings({ room, updateConfig, onToast, children, r
 
   const playlists = (
     <>
-      <p className="tv-setsec-hint">Las marcadas suenan completas, sin filtros.</p>
-      {!readOnly && spotify && (
+      {/* "Agregar de Spotify" and the box to paste the link are the same place: the button turns into the box, with an
+          X at its end to close it again. */}
+      {!readOnly && !linkOpen && (
         <div className="tv-optrow-opts is-wrap">
-          <button type="button" className="tv-optrow-btn is-add" onClick={() => setLinkOpen((v) => !v)} aria-expanded={linkOpen}>
-            {linkOpen ? <Icon name="close" size={16} strokeWidth={3} /> : <SpotifyIcon size={18} />}
-            {linkOpen ? "Cancelar" : "Agregar de Spotify"}
+          <button type="button" className="tv-optrow-btn is-add tv-spotify-open" onClick={() => setLinkOpen(true)} aria-expanded={false}>
+            <SpotifyIcon size={18} />
+            Agregar de Spotify
           </button>
         </div>
       )}
@@ -370,28 +415,41 @@ export default function MusicSettings({ room, updateConfig, onToast, children, r
             >
               {linkBusy ? <span className="tv-spinner" aria-hidden="true" /> : <Icon name="upload" size={20} strokeWidth={3} />}
             </button>
+            <button
+              type="button"
+              className="tv-spotify-link-close"
+              data-sound="back"
+              onClick={() => {
+                setLinkOpen(false);
+                setLink("");
+              }}
+              disabled={linkBusy}
+              aria-label="Cancelar"
+            >
+              <Icon name="close" size={18} strokeWidth={3} />
+            </button>
           </div>
         </form>
       )}
       {!readOnly && linkOpen && (
-        <p className="tv-setsec-hint">
-          Pública, hasta 100 canciones.
+        <p className="tv-spotify-note">
+          <Icon name="info" size={16} strokeWidth={2.6} />
+          <span>
+          La playlist tiene que ser pública. Se usan hasta 100 canciones.
           {!hasAccount && (
             <>
               {" "}
               <Link to="/login">Inicia sesión</Link> para guardarla.
             </>
           )}
+          </span>
         </p>
       )}
-      {(rows.length > 0 || (!readOnly && (hasAccount || !spotify))) && (
+      {(rows.length > 0 || (!readOnly && hasAccount)) && (
         <section className="tv-saved" aria-label="Tus playlists">
           {rows.length > 0 && <ul className="tv-saved-list">{rows.map(playlistRow)}</ul>}
-          {!readOnly && spotify && hasAccount && saved === null && <p className="tv-saved-empty">Cargando…</p>}
-          {!readOnly && spotify && rows.length === 0 && saved !== null && <p className="tv-saved-empty">Aún no tienes playlists guardadas.</p>}
-          {!readOnly && !spotify && rows.length === 0 && (
-            <p className="tv-saved-empty">La sala no tiene playlists de Spotify: agrégalas en los ajustes de Adivina la canción.</p>
-          )}
+          {!readOnly && hasAccount && saved === null && <p className="tv-saved-empty">Cargando…</p>}
+          {!readOnly && rows.length === 0 && saved !== null && <p className="tv-saved-empty">Aún no tienes playlists guardadas.</p>}
           {isOwnerEditor && spotifyLinked && spotifyBusy === "list" && <p className="tv-saved-empty">Cargando tus playlists de Spotify…</p>}
         </section>
       )}
@@ -438,7 +496,12 @@ export default function MusicSettings({ room, updateConfig, onToast, children, r
           alert: songsReady === 0 && !chosenCustom.some((p) => p.loading),
           content: catalog,
           sub: showPlaylists && [
-            { id: "catalogo", label: "Catálogo", note: useCatalog ? null : "Apagado", content: catalog },
+            {
+              id: "catalogo",
+              label: "Catálogo",
+              content: catalog,
+              toggle: { on: useCatalog, onChange: (on) => save({ useCatalog: on }), label: "Usar el catálogo de Trivially", disabled: readOnly },
+            },
             {
               id: "playlists",
               label: "Tus playlists",

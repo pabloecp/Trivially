@@ -19,7 +19,7 @@ export function PlaylistProgress({ run }) {
           <li
             key={i}
             className={`tv-pl-step${played ? " is-played" : ""}${now ? " is-now" : ""}`}
-            title={`${i + 1}. ${mode?.name || game}${played ? ` · ${played.winnerName ? `ganó ${played.winnerName}` : "sin ganador"}` : ""}`}
+            aria-label={`${i + 1}. ${mode?.name || game}${played ? ` · ${played.winnerName ? `ganó ${played.winnerName}` : "sin ganador"}` : ""}`}
           >
             <span className={`tv-pl-step-badge tv-c-${mode?.color || "neutral"}`}>
               <Icon name={mode?.icon || "play"} size={18} strokeWidth={2.4} />
