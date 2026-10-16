@@ -10,7 +10,7 @@ import { PhoneHint, RoomVerdict, roundPlayers } from "../../components/home/Cent
 import { useApp, useRemainingMs, useView } from "../../lib/store.jsx";
 import WorldMap from "./WorldMap.jsx";
 import { useWorld } from "./worldData.js";
-import { LOCATION_SECONDS, STYLES } from "./geoInfo.js";
+import { STYLES, geoConfig } from "./geoInfo.js";
 import "../../styles/home.css";
 import "../../styles/geo.css";
 import { PauseButton, ReportButton, PauseVeil } from "../../components/home/PauseControls.jsx";
@@ -170,7 +170,9 @@ function GameScreen() {
   const isHost = !central && room.hostId === user?.id;
   const style = STYLES[0];
   const seconds = Math.max(0, Math.ceil(left / 1000));
-  const totalMs = LOCATION_SECONDS * 1000;
+  // The round's length, from the phase itself (the setting's, or a playlist game's).
+  const roundSeconds = Math.round(geoConfig(room).roundMs / 1000);
+  const totalMs = room.phaseEndsAt && room.phaseStartedAt && phase === "playing" ? room.phaseEndsAt - room.phaseStartedAt : roundSeconds * 1000;
   const pct =
     phase === "playing"
       ? Math.max(0, Math.min(100, (left / totalMs) * 100))
@@ -222,7 +224,7 @@ function GameScreen() {
       hint = iPlay
         ? "Pon tu pin y confírmalo: gana el primero que confirme dentro del país. Si nadie lo encuentra, el más cercano."
         : "Solo juegan los empatados. Tú miras cómo lo resuelven.";
-    } else hint = `Tendrás ${LOCATION_SECONDS} segundos para poner tu pin en el mapa.`;
+    } else hint = `Tendrás ${roundSeconds} segundos para poner tu pin en el mapa.`;
   } else {
     kicker = `${roundLabel} · ¿Dónde está…?`;
     title = question?.name || room.reveal?.name || "";
@@ -236,7 +238,7 @@ function GameScreen() {
   // Someone who joined mid-match only watches: the same lines, without the instructions to answer.
   if (spectator && phase !== "reveal") hint = "Estás viendo la partida. Entrarás a la sala cuando termine.";
   // The central device talks to the whole room: they put their pins from their phones.
-  if (central && phase === "countdown" && !tiebreak) hint = `Tendrán ${LOCATION_SECONDS} segundos para poner su pin desde su teléfono.`;
+  if (central && phase === "countdown" && !tiebreak) hint = `Tendrán ${roundSeconds} segundos para poner su pin desde su teléfono.`;
   else if (central && phase === "countdown") hint = `Desempate entre ${joinNames(tiedNames)}: gana el primero que confirme su pin dentro del país.`;
   else if (central && phase === "playing") hint = tiebreak ? `Solo juegan ${joinNames(tiedNames)}.` : "Pongan su pin en el mapa desde su teléfono.";
 

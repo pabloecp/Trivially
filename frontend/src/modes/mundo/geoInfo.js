@@ -2,7 +2,7 @@
 
 // The way of playing ("Modos de juego"): a pin on the world map, the only one. The settings show it ticked and locked;
 // nothing about it is stored.
-export const STYLES = [{ id: "location", label: "Ubicación", hint: "Pin en el mapa · 10 s", icon: "pin" }];
+export const STYLES = [{ id: "location", label: "Ubicación", hint: "Pin en el mapa", icon: "pin" }];
 
 // The difficulties a match can mix (GEO_LEVELS on the server), any of them ticked. The harder, the deeper the mode's
 // blue (colours in styles/geo.css).
@@ -13,13 +13,15 @@ export const DIFFICULTIES = [
 ];
 
 export const ROUNDS_LIMITS = { min: 5, max: 25, step: 5 };
-// A map round always lasts 10 s.
-export const LOCATION_SECONDS = 10;
+// Seconds to put the pin, like Adivina la canción's (GEO_LIMITS.roundMs on the server); 15 in a new room.
+export const SECONDS_LIMITS = { min: 15, max: 35, step: 5 };
+export const LOCATION_SECONDS = 15;
 
 export function geoConfig(room) {
   const geo = room?.config?.geo || {};
   return {
     rounds: geo.rounds || 5,
+    roundMs: geo.roundMs || LOCATION_SECONDS * 1000,
     // An empty list is kept: it shows unticked, and the match can't start until one is ticked. An older room had only
     // one, `difficulty` ("mixta" being the three).
     difficulties:

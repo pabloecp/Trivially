@@ -158,6 +158,8 @@ export default function TvTopbar() {
             <span className="tv-brand-name">trivially</span>
           </div>
         </div>
+        {/* The site's address, faint, in the middle of the bar (computers; never in a match). */}
+        {!inGame && <span className="tv-topbar-url">playtrivially.com</span>}
         <div className="tv-topbar-end">
           <VolumeMenu />
           <ProfileChip user={user} />

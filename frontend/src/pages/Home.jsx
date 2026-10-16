@@ -319,6 +319,8 @@ export default function Home() {
       {shownRoom && !isCentral && <RoomHeader room={shownRoom} onToast={showToast} />}
 
       <main className={`tv-main${screen === "room" ? " is-room" : ""}${centralScreen ? " is-central" : ""}`}>
+        {/* The site's address, at the top in plain letters but faint: only on Home and the room screen. */}
+        {!centralScreen && <p className="tv-site-url">playtrivially.com</p>}
         {centralScreen ? (
           <CentralLobby room={shownRoom} />
         ) : screen === "home" ? (
@@ -434,8 +436,6 @@ export default function Home() {
             <PartyPanel room={shownRoom} onToast={showToast} />
           </div>
         )}
-        {/* The site's address, small and out of the way: only on Home and the room screen (a match has its own pages). */}
-        {!centralScreen && <p className="tv-site-url">playtrivially.com</p>}
       </main>
 
       {shownRoom && !leaving && !isCentral && <RoomDock room={shownRoom} onToast={showToast} />}

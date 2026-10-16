@@ -80,12 +80,6 @@ export function ChatMessages({ chat }) {
   return (
     <div className="tv-chat-area">
       <ol className="tv-chat-list" ref={listRef} onScroll={onScroll} aria-live="polite" aria-label="Mensajes del chat">
-        {messages.length === 0 && (
-          <li className="tv-chat-empty">
-            <Icon name="chat" size={22} strokeWidth={2.2} />
-            Saluda a la sala
-          </li>
-        )}
         {messages.map((m, i) => {
           const mine = m.userId === user?.id;
           const first = messages[i - 1]?.userId !== m.userId;

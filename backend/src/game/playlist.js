@@ -16,7 +16,7 @@ export const GAME_NAMES = {
   minas: "Campo de minas",
 };
 export const PLAYLIST_ORDERS = ["orden", "aleatorio"];
-export const PLAYLIST_LIMITS = { items: 20, name: 40 };
+export const PLAYLIST_LIMITS = { items: 10, name: 40 };
 const DEFAULT_NAME = "Mi playlist";
 // Where each game keeps its settings in room.config (Adivina la canción's are at the top of it).
 const CONFIG_KEY = { opciones: "quiz", mundo: "geo", historia: "history", minas: "mines", musica: null };

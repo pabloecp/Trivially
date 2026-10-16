@@ -84,28 +84,9 @@
 
 /* ---------- The playlist's card: its name, its games and how it starts ---------- */
 /* Clipped, never scrolled: focusing one of its many buttons mustn't slide the card sideways (its watermark sticks out
-   on the right). It grows with its games: nothing in it scrolls or is cut (see "The whole panel shows" below). */
+   on the right). Its head and foot keep their size; the games between them fit (see "Fits the window" below). */
 .tv-mstage.tv-pl-stage { justify-content: flex-start; gap: 16px; overflow: clip; }
 .tv-mstage-head.tv-pl-head { flex-shrink: 0; gap: 12px; overflow: visible; }
-/* "Reordenar": a small round button at the end of the kicker's row, out of the way of the name and the games. */
-.tv-pl-reorder {
-  display: grid;
-  place-items: center;
-  flex-shrink: 0;
-  width: 38px;
-  height: 38px;
-  margin-left: auto;
-  padding: 0;
-  border: 0;
-  border-radius: 50%;
-  background: rgba(0, 0, 0, 0.18);
-  cursor: pointer;
-  transition: background-color 0.15s ease, transform 0.25s var(--tv-spring);
-}
-.tv-app .tv-pl-reorder { color: inherit; }
-.tv-pl-reorder:hover { background: rgba(0, 0, 0, 0.3); transform: rotate(180deg); }
-.tv-pl-reorder:active { transform: rotate(180deg) scale(0.9); }
-.tv-pl-reorder:focus-visible { outline: 3px solid var(--on); outline-offset: 2px; }
 .tv-pl-kicker { font-weight: 800; font-size: 15px; letter-spacing: 0.04em; text-transform: uppercase; opacity: 0.9; }
 .tv-pl-name {
   width: 100%;
@@ -124,19 +105,51 @@
   letter-spacing: -0.02em;
   overflow-wrap: anywhere;
 }
-input.tv-pl-name { text-overflow: ellipsis; transition: border-color 0.2s ease; }
-input.tv-pl-name:hover { border-bottom-color: rgba(255, 255, 255, 0.35); }
-input.tv-pl-name:focus { outline: none; border-bottom-color: var(--on); }
+input.tv-pl-name { text-overflow: ellipsis; }
+/* Written in place, with no line under it: a pencil beside it (always there; a check while writing) says it can be
+   changed. */
+input.tv-pl-name:focus { outline: none; }
+.tv-pl-namerow { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.tv-pl-namerow .tv-pl-name { flex: 1 1 auto; border-bottom: 0; }
+.tv-pl-rename {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.18);
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+.tv-app .tv-pl-rename { color: inherit; }
+.tv-pl-rename:hover { background: rgba(0, 0, 0, 0.28); }
+.tv-pl-rename.is-on { background: var(--on); }
+.tv-app .tv-pl-rename.is-on { color: var(--c2); }
 
-/* The games, all of them: the card grows with the list. */
+
+/* The games, between the card's head and foot (the wrap is that space). They are compact (one line each) so a usual
+   playlist fits; a long one scrolls inside this list only, without a bar, cut to whole rows (LobbyPanel sets its
+   height) and snapping to rows. */
+.tv-pl-bodywrap { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; gap: 10px; }
 .tv-pl-body {
   position: relative;
-  flex: 0 0 auto;
+  flex: 0 1 auto;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  scroll-snap-type: y mandatory;
+  scroll-padding-top: 2px;
   display: flex;
   flex-direction: column;
   gap: 10px;
   margin: 0 -6px;
-  padding: 2px 6px 6px;
+  /* 8 at the bottom: the last row's edge (4) and the space LobbyPanel leaves under it (4), so scrolled to the end the
+     top row starts exactly where the first one did, never cut. */
+  padding: 2px 6px 8px;
 }
 .tv-pl-empty {
   margin: 0;
@@ -344,19 +357,6 @@ input.tv-pl-name:focus { outline: none; border-bottom-color: var(--on); }
 }
 .tv-pl-blocked svg { flex-shrink: 0; margin-top: 1px; }
 
-/* ---------- The whole panel shows ---------- */
-/* On big screens every room screen fits the window and long panels scroll inside (home.css). The playlist's would
-   then cut its games and its settings, so while it shows the page grows instead: the card, the settings and the
-   room's column are as tall as the longest of them and the page scrolls as a whole. */
-@media (min-width: 980px) and (min-height: 600px) {
-  .tv-app:has(.tv-pl-stage) { height: auto; min-height: 100vh; min-height: 100dvh; overflow: visible; }
-  .tv-app:has(.tv-pl-stage) .tv-main { flex: 1 0 auto; overflow: visible; }
-  .tv-app:has(.tv-pl-stage) .tv-home,
-  .tv-app:has(.tv-pl-stage) .tv-room { flex: 1 0 auto; }
-  .tv-app:has(.tv-pl-stage) .tv-settings-card { overflow: visible; }
-  .tv-mstage.tv-pl-stage .tv-mstage-head { flex-shrink: 0; }
-}
-
 /* ---------- Beside it: the chosen game's settings, sharing and "Mis playlists" ---------- */
 .tv-pl-edit { display: grid; gap: 16px; min-width: 0; }
 /* The chosen game's settings take that game's colour, as in its own lobby (the same variables its
@@ -545,3 +545,277 @@ input.tv-pl-name:focus { outline: none; border-bottom-color: var(--on); }
   .tv-pl-entry-tag { animation: none; }
   .tv-pl-entry-stack span { transition: none; }
 }
+
+/* ---------- Fits the window ---------- */
+/* Each game on one line: its number, icon, name and settings (cut with "…"), and the tools. */
+.tv-pl-list { gap: 10px; }
+.tv-pl-item { flex-wrap: nowrap; gap: 4px; padding: 5px 7px 5px 5px; border-radius: 18px; }
+.tv-pl-item-main { flex: 1 1 auto; gap: 12px; padding: 5px; }
+.tv-pl-item .tv-pl-badge { width: 40px; height: 40px; border-radius: 12px; }
+.tv-pl-item .tv-pl-badge svg { width: 20px; height: 20px; }
+.tv-pl-num { width: 20px; font-size: 17px; }
+.tv-pl-game { overflow: hidden; font-size: 17px; text-overflow: ellipsis; white-space: nowrap; }
+.tv-pl-sum { overflow: hidden; font-size: 13px; text-overflow: ellipsis; white-space: nowrap; }
+.tv-pl-tools { flex-shrink: 0; gap: 4px; }
+.tv-pl-tool { width: 34px; height: 34px; border-radius: 10px; }
+.tv-pl-tool svg { width: 16px; height: 16px; }
+
+/* The order and, while it's "En orden", "Mezclar" beside it: shuffles the list once. */
+.tv-pl-orderrow { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; }
+.tv-pl-orderrow.has-shuffle { grid-template-columns: minmax(0, 1fr) auto; }
+.tv-pl-shuffle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 54px;
+  padding: 0 18px;
+  border: 0;
+  border-radius: 18px;
+  background: rgba(0, 0, 0, 0.2);
+  font: inherit;
+  font-weight: 800;
+  font-size: 15px;
+  cursor: pointer;
+  transition: background-color 0.15s ease, transform 0.12s ease;
+}
+.tv-app .tv-pl-shuffle { color: inherit; }
+.tv-pl-shuffle:hover { background: rgba(0, 0, 0, 0.3); }
+.tv-pl-shuffle:hover svg { transform: rotate(180deg); }
+.tv-pl-shuffle svg { transition: transform 0.3s var(--tv-spring); }
+.tv-pl-shuffle:active { transform: scale(0.96); }
+
+/* The settings panel shows one thing at a time, picked with a small switch at the end of its title's row. */
+.tv-settings-head:has(.tv-pl-views) { align-items: center; }
+.tv-pl-views { display: inline-flex; gap: 2px; margin-left: auto; padding: 3px; border-radius: 12px; background: var(--tv-option-bg); }
+.tv-pl-view {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  height: 32px;
+  padding: 0 11px;
+  border: 0;
+  border-radius: 9px;
+  background: none;
+  font: inherit;
+  font-weight: 800;
+  font-size: 13px;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+.tv-pl-view svg { flex-shrink: 0; }
+.tv-app .tv-pl-view { color: var(--tv-text-3); }
+.tv-app .tv-pl-view:hover { color: var(--tv-text); }
+.tv-pl-view[aria-selected="true"] { background: rgba(255, 255, 255, 0.1); }
+.tv-app .tv-pl-view[aria-selected="true"] { color: var(--tv-text); }
+/* The first section shown needs no line above it. */
+.tv-settings-head + .tv-pl-side { padding-top: 0; border-top: 0; }
+
+/* The chosen game: its number turns into a small white circle with the number in the game's colour (the rest of the
+   row keeps its look). */
+.tv-pl-item.is-selected,
+.tv-pl-item.is-selected.has-problem { box-shadow: 0 4px 0 var(--edge); }
+.tv-pl-item.is-selected.has-problem { box-shadow: 0 4px 0 var(--edge), inset 0 0 0 3px var(--p-bad); }
+.tv-pl-num { display: grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; transition: background-color 0.2s ease, color 0.2s ease; }
+.tv-pl-item.is-selected .tv-pl-num {
+  width: 26px;
+  background: #ffffff;
+  color: var(--c2);
+  font-size: 15px;
+  opacity: 1;
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.18);
+  animation: tvPick 0.3s var(--tv-spring);
+}
+.tv-pl-shuffle:disabled { opacity: 0.45; cursor: default; }
+.tv-pl-shuffle:disabled:hover { background: rgba(0, 0, 0, 0.2); }
+.tv-pl-shuffle:disabled:hover svg { transform: none; }
+
+/* "Guardar esta" asks for the name first: a box with the playlist's own name already written, then Guardar. */
+.tv-pl-saveas { display: grid; gap: 8px; animation: tvGrowIn 0.3s var(--tv-ease-out) backwards; }
+.tv-pl-saveas-label { font-weight: 800; font-size: 13px; color: var(--tv-text-2); }
+.tv-pl-saveas-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 50px;
+  padding: 0 14px;
+  border-radius: 16px;
+  background: var(--tv-option-bg);
+  box-shadow: 0 0 0 2px var(--brand);
+}
+.tv-pl-saveas-box svg { flex-shrink: 0; color: var(--brand-text); }
+.tv-pl-saveas-box input { flex: 1; min-width: 0; height: 100%; border: 0; background: none; color: var(--tv-text); font: inherit; font-family: var(--tv-display); font-weight: 700; font-size: 18px; }
+.tv-pl-saveas-box input:focus { outline: none; }
+
+/* A saved playlist's name, changed in its row: a box in place of its name and games. */
+.tv-pl-saved-rename { flex: 1; min-width: 0; }
+.tv-pl-saved-rename input {
+  width: 100%;
+  height: 40px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--tv-option-bg);
+  box-shadow: inset 0 0 0 2px var(--brand);
+  color: var(--tv-text);
+  font: inherit;
+  font-weight: 800;
+  font-size: 15px;
+}
+.tv-pl-saved-rename input:focus { outline: none; }
+.tv-pl-saved-row .tv-pl-saved-edit.is-on { background: var(--brand); }
+.tv-app .tv-pl-saved-row .tv-pl-saved-edit.is-on { color: var(--on-brand); }
+
+.tv-pl-item { scroll-snap-align: start; }
+@media (max-width: 640px) { .tv-pl-bodywrap { flex: none; } }
+
+/* The list's own scroll bar, thin and light on the card's colour: the only one in the room screen (the rest hide it),
+   so it's clear there are more games and that this list is what scrolls. */
+/* Chrome and Safari draw it with the ::-webkit-scrollbar rules below (no arrows), which they only use while
+   scrollbar-width and scrollbar-color are "auto" (home.css sets "none" for everything in .tv-app). Firefox has only
+   the standard properties: a thin bar in the same colours. */
+.tv-app .tv-pl-body { scrollbar-width: auto; scrollbar-color: auto; }
+@supports not selector(::-webkit-scrollbar) {
+  .tv-app .tv-pl-body { scrollbar-width: thin; scrollbar-color: rgba(255, 255, 255, 0.55) rgba(0, 0, 0, 0.12); }
+}
+.tv-app .tv-pl-body::-webkit-scrollbar { display: block; width: 6px; }
+.tv-app .tv-pl-body::-webkit-scrollbar-button { display: none; width: 0; height: 0; }
+.tv-app .tv-pl-body::-webkit-scrollbar-track { border-radius: 3px; background: rgba(0, 0, 0, 0.12); }
+.tv-app .tv-pl-body::-webkit-scrollbar-thumb { border-radius: 3px; background: rgba(255, 255, 255, 0.55); }
+
+/* The disk beside the pencil: saves the playlist in "Mis playlists" at once (a check for a moment after). */
+.tv-pl-namerow { gap: 8px; }
+.tv-pl-quicksave:disabled { opacity: 0.45; cursor: default; }
+.tv-pl-quicksave:disabled:hover { background: rgba(0, 0, 0, 0.18); }
+
+/* The list and "Añadir juego" sit over the card's big faded icon (an absolutely placed watermark would otherwise be
+   painted on top of them). The games to add open over the bottom of the list, on a solid darker background. */
+.tv-pl-bodywrap { position: relative; }
+.tv-pl-add-menu {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 3;
+  background: color-mix(in srgb, var(--c2) 72%, #000000);
+  box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.25);
+}
+/* Opened from "Añadir juego" down (top set by LobbyPanel) or up from the list's bottom (bottom: 0). */
+.tv-pl-add-menu { bottom: auto; }
+.tv-pl-add-menu[style*="bottom"] { top: auto; }
+/* A game coming into the list fades in, a little smaller at first: it never moves below its place, where the list
+   (which scrolls) would cut it and show a scroll bar for a moment. */
+.tv-pl-item { animation-name: tvPlIn; }
+@keyframes tvPlIn { from { opacity: 0; transform: scale(0.96); } }
+
+/* The card's spare height (few games): faint icons of the games and a line, in the middle of the space between the
+   games and "Añadir juego", which stays at the bottom. It takes no room of its own (it hides when the space is small)
+   and never moves anything. */
+.tv-pl-fill {
+  flex: 1 1 0;
+  min-height: 0;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 10px;
+  overflow: hidden;
+  container-type: size;
+  opacity: 0.55;
+  pointer-events: none;
+  text-align: center;
+}
+.tv-pl-fill-icons { display: flex; gap: 8px; }
+.tv-pl-fill-icons > span { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 11px; background: rgba(0, 0, 0, 0.16); color: var(--on); }
+.tv-pl-fill-text { display: grid; gap: 2px; font-weight: 800; font-size: 14px; line-height: 1.35; }
+@container (max-height: 96px) { .tv-pl-fill-icons, .tv-pl-fill-text { display: none; } }
+/* Phones have no spare height: it only shows there while the playlist has no games yet. */
+@media (max-width: 640px) {
+  .tv-pl-fill { display: none; }
+  .tv-pl-fill.is-empty { display: grid; flex: none; padding: 14px 0; container-type: normal; }
+}
+
+/* Beside the chosen game's name: ‹ › to the previous or next game, and a dot per game in its colour (the chosen one
+   long), each a shortcut to it. Rounded squares like the site's buttons, big enough to tap easily: every dot has a wide invisible area around it. */
+.tv-pl-edit-text { flex: 1; }
+.tv-pl-edit-nav {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  gap: 2px;
+  padding: 4px;
+  border-radius: 16px;
+  background: var(--tv-option-bg);
+}
+.tv-pl-edit-step {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  padding: 0;
+  border: 0;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.06);
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease, transform 0.12s ease;
+}
+.tv-app .tv-pl-edit-step { color: var(--tv-text); }
+.tv-app .tv-pl-edit-step:hover:not(:disabled) { background: rgba(255, 255, 255, 0.14); }
+.tv-pl-edit-step:active:not(:disabled) { transform: scale(0.92); }
+.tv-pl-edit-step:disabled { opacity: 0.3; cursor: default; }
+.tv-pl-edit-step .is-prev { transform: rotate(180deg); }
+.tv-pl-edit-dots { display: flex; align-items: center; flex-wrap: wrap; justify-content: center; max-width: 220px; padding: 0 4px; }
+.tv-pl-edit-dots > button {
+  display: grid;
+  place-items: center;
+  height: 34px;
+  padding: 0 4px;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+.tv-pl-edit-dots > button::before {
+  content: "";
+  width: 12px;
+  height: 12px;
+  border-radius: 4px;
+  background: var(--c2);
+  opacity: 0.45;
+  transition: width 0.2s var(--tv-ease-out), opacity 0.2s ease, transform 0.15s ease;
+}
+.tv-pl-edit-dots > button:hover::before { opacity: 0.85; transform: scale(1.15); }
+.tv-pl-edit-dots > button.is-on::before { width: 28px; opacity: 1; transform: none; }
+@media (max-width: 640px) { .tv-pl-edit-dots { display: none; } }
+
+/* The switch in the title's row and the game switcher under it are as wide as each other, and the game switcher
+   never grows or wraps: its dots share its width, and get thinner when there are many games. */
+.tv-pl-views,
+.tv-pl-edit-nav { width: 296px; max-width: 100%; box-sizing: border-box; }
+.tv-pl-views { display: grid; grid-template-columns: auto 1fr; }
+.tv-pl-view { justify-content: center; }
+.tv-pl-edit-dots { flex: 1 1 0; flex-wrap: nowrap; min-width: 0; max-width: none; justify-content: center; gap: 0; }
+.tv-pl-edit-dots > button { flex: 0 1 20px; min-width: 0; padding: 0 2px; }
+.tv-pl-edit-dots > button::before { width: 100%; max-width: 12px; }
+.tv-pl-edit-dots > button.is-on { flex-basis: 36px; }
+.tv-pl-edit-dots > button.is-on::before { width: 100%; max-width: 28px; }
+@media (max-width: 640px) {
+  .tv-pl-views { width: auto; }
+  .tv-pl-edit-nav { width: auto; }
+}
+/* The game's name always on one line: the switcher beside it gives way first (its dots get thinner, down to the two
+   arrows and a little room), and only then the name is cut with "…". */
+.tv-pl-edit-text { flex: 0 0.05 auto; min-width: 0; }
+.tv-pl-edit-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tv-pl-edit-nav { flex: 0 1 296px; width: auto; min-width: 140px; margin-left: auto; }
+@media (max-width: 640px) { .tv-pl-edit-nav { flex: none; min-width: 0; } }
+/* Narrower: the switch and the game switcher take 240px, their buttons smaller, so the game's whole name fits. */
+.tv-pl-views,
+.tv-pl-edit-nav { width: 240px; }
+.tv-pl-edit-nav { flex-basis: 240px; min-width: 120px; }
+.tv-pl-view { gap: 5px; height: 30px; padding: 0 8px; font-size: 12px; }
+.tv-pl-edit-step { width: 34px; height: 34px; border-radius: 10px; }
+.tv-pl-edit-nav { padding: 3px; border-radius: 13px; }
+.tv-pl-edit-dots > button { height: 28px; }
+.tv-pl-edit-dots > button::before { max-width: 10px; height: 10px; border-radius: 3px; }
+.tv-pl-edit-dots > button.is-on::before { max-width: 22px; }
+@media (max-width: 640px) { .tv-pl-views, .tv-pl-edit-nav { width: auto; } }

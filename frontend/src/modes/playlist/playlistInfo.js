@@ -7,7 +7,7 @@ import { GAME_MODES, findMode } from "../index.js";
 // Playlists of games (backend/src/game/playlist.js): the games a playlist can have, each item's settings, a line
 // that sums them up, and the JSON they're shared in.
 
-export const MAX_ITEMS = 20;
+export const MAX_ITEMS = 10;
 export const NAME_MAX = 40;
 
 // The games a playlist can have: every game of the menu but the playlist itself.
@@ -80,7 +80,7 @@ export function itemSummary(item, catalog) {
     const songs = catalogOn ? (lists ? `Catálogo y ${listsText}` : "Catálogo") : listsText || "Sin canciones";
     parts = [`${c.rounds} canciones`, songs, formatsText(c.formats), secondsText(c.roundMs)];
   } else if (item.game === "mundo") {
-    parts = [`${c.rounds} países`, levelsText(c.difficulties, GEO_LEVELS)];
+    parts = [`${c.rounds} países`, levelsText(c.difficulties, GEO_LEVELS), secondsText(c.roundMs)];
   } else if (item.game === "historia") {
     parts = [`${c.rounds} acontecimientos`, topicsText(c.categories), levelsText(c.difficulties), secondsText(c.roundMs)];
   } else if (item.game === "minas") {
@@ -207,6 +207,17 @@ export function saveToLibrary(playlist) {
   };
   const list = [entry, ...loadLibrary().filter((p) => fold(p.name) !== fold(playlist.name))].slice(0, LIBRARY_MAX);
   if (!storeLibrary(list)) throw new Error("Tu navegador no deja guardar playlists aquí. Descárgala como archivo.");
+  return list;
+}
+
+/** Renames a saved playlist (another saved one with that name is replaced). Returns the new list, or throws. */
+export function renameInLibrary(id, name) {
+  const clean = String(name || "").replace(/\s+/g, " ").trim().slice(0, NAME_MAX);
+  if (!clean) throw new Error("Escribe un nombre");
+  const list = loadLibrary()
+    .filter((p) => p.id === id || fold(p.name) !== fold(clean))
+    .map((p) => (p.id === id ? { ...p, name: clean } : p));
+  if (!storeLibrary(list)) throw new Error("Tu navegador no deja guardar playlists aquí.");
   return list;
 }
 

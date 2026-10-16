@@ -20,7 +20,6 @@ import {
   GEO_GAME,
   geoBank,
   LOCATION_REVEAL_MS,
-  LOCATION_ROUND_MS,
   locationPoints,
   MAX_TIEBREAKS,
   mergeGeoConfig,
@@ -1310,7 +1309,7 @@ export class RoomManager {
   /** How long players have to answer each round in the room's game. */
   roundMs(room) {
     if (room.game === QUIZ_GAME) return mergeQuizConfig(room.config.quiz).roundMs;
-    if (room.game === GEO_GAME) return LOCATION_ROUND_MS;
+    if (room.game === GEO_GAME) return mergeGeoConfig(room.config.geo).roundMs;
     if (room.game === HISTORY_GAME) return mergeHistoryConfig(room.config.history).roundMs;
     // Campo de minas: the time of each turn (a round has as many as it takes), or of the whole round in a race.
     if (room.game === MINES_GAME) {

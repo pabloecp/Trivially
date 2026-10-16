@@ -1,8 +1,9 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import Icon from "../../components/home/Icon.jsx";
 import SettingsPanel from "../../components/home/SettingsPanel.jsx";
 import { useStartGame } from "../../components/home/ModeStart.jsx";
 import { useApp } from "../../lib/store.jsx";
+import { play } from "../../lib/sounds.js";
 import { findMode } from "../index.js";
 import ItemSettings from "./ItemSettings.jsx";
 import {
@@ -17,6 +18,7 @@ import {
   parsePlaylistJson,
   playlistGames,
   removeFromLibrary,
+  renameInLibrary,
   saveToLibrary,
   toShareJson,
 } from "./playlistInfo.js";
@@ -38,6 +40,9 @@ const gamesText = (n) => `${n} ${n === 1 ? "juego" : "juegos"}`;
 // and the start button; beside it, the chosen game's settings (each game's own panel, fed with that game's settings),
 // and how to share it (its JSON, copied, downloaded or imported) and keep it ("Mis playlists", in this browser).
 // The host and whoever has the permission change it, and every change reaches the whole room; the rest see it locked.
+// On a phone the list shows this many games at most, and scrolls for the rest.
+const PHONE_ROWS = 4;
+
 export default function LobbyPanel({ room, onToast }) {
   const { user, catalog, updatePlaylist } = useApp();
   const me = room.players.find((p) => p.id === user?.id);
@@ -52,6 +57,56 @@ export default function LobbyPanel({ room, onToast }) {
   useEffect(() => setName(saved.name), [saved.name]);
   const [selectedId, setSelectedId] = useState(saved.items[0]?.id || null);
   const [adding, setAdding] = useState(false);
+  // The games to add open over the card, never pushing anything: up from "Añadir juego" (fixed at the bottom of the
+  // list's space) on a computer; down from it on a phone, where it's right under the games.
+  const [menuAt, setMenuAt] = useState(null);
+  function openAdd() {
+    const add = wrapRef.current?.querySelector(":scope > .tv-pl-add");
+    const phone = window.matchMedia("(max-width: 640px)").matches;
+    setMenuAt(phone ? { top: add?.offsetTop || 0 } : { bottom: 0 });
+    setAdding(true);
+  }
+  // What the settings panel shows: the chosen game's settings, sharing, or the saved playlists. One at a time, so the
+  // panel always fits the window.
+  const [side, setSide] = useState("juego");
+  // A long list scrolls inside the card, with its own scroll bar. It is cut to whole rows (never one showing by half):
+  // the list is as tall as the rows that fit in the space between the card's head and foot, and scrolling snaps to rows.
+  const wrapRef = useRef(null);
+  const bodyRef = useRef(null);
+  function fitRows() {
+    const wrap = wrapRef.current;
+    const body = bodyRef.current;
+    if (!wrap || !body) return;
+    body.style.height = "";
+    // "Añadir juego" stays under the list, outside what scrolls.
+    const add = wrap.querySelector(":scope > .tv-pl-add");
+    // Measured from the layout (offsetTop), not from where a row is drawn: a game just added still slides in with an
+    // animation, and its drawn position would make it look like it doesn't fit.
+    const bottomOf = (el) => el.offsetTop + el.offsetHeight + 4;
+    const pad = 4; // under the last row: less than the gap between rows, so the next one never peeks in
+    const rows = body.querySelectorAll(".tv-pl-item");
+    // Phones: the page scrolls, so the list just shows its first PHONE_ROWS games and scrolls for the rest.
+    const phone = window.matchMedia("(max-width: 640px)").matches;
+    const room = phone
+      ? rows.length > PHONE_ROWS
+        ? bottomOf(rows[PHONE_ROWS - 1]) + pad
+        : Infinity
+      : wrap.clientHeight - (add ? add.offsetHeight + 10 : 0);
+    if (body.scrollHeight <= room) {
+      return;
+    }
+    let fit = 0;
+    for (const el of rows) {
+      const bottom = bottomOf(el);
+      if (bottom + pad <= room) fit = bottom;
+    }
+    if (fit) body.style.height = `${fit + pad}px`;
+  }
+  useLayoutEffect(() => {
+    fitRows();
+    window.addEventListener("resize", fitRows);
+    return () => window.removeEventListener("resize", fitRows);
+  });
 
   const items = draft.items;
   const found = items.findIndex((i) => i.id === selectedId);
@@ -125,6 +180,51 @@ export default function LobbyPanel({ room, onToast }) {
     else if (clean !== draft.name) commit({ ...draft, name: clean });
   }
 
+  // "Cambiar nombre": the name is written in place; the button stays, and while writing it says it's done.
+  const nameRef = useRef(null);
+  const [editingName, setEditingName] = useState(false);
+  function toggleName() {
+    if (editingName) {
+      nameRef.current?.blur();
+      return;
+    }
+    nameRef.current?.focus();
+    nameRef.current?.select();
+  }
+
+  // The disk beside the name: keeps the playlist in "Mis playlists" straight away, under its name (in place of a saved
+  // one with the same name). It shows a check for a moment.
+  const [justSaved, setJustSaved] = useState(false);
+  useEffect(() => {
+    if (!justSaved) return undefined;
+    const t = setTimeout(() => setJustSaved(false), 1800);
+    return () => clearTimeout(t);
+  }, [justSaved]);
+  function quickSave() {
+    const clean = name.replace(/\s+/g, " ").trim();
+    const named = clean && clean !== draft.name ? renameTo(clean) : draft;
+    try {
+      saveToLibrary(named);
+      window.dispatchEvent(new Event("trivially:playlists"));
+      setJustSaved(true);
+      play("correct");
+      onToast?.(`«${named.name}» guardada en Mis playlists`, "check");
+    } catch (err) {
+      play("wrong");
+      onToast?.(err.message);
+    }
+  }
+
+  // Saving under another name renames the room's playlist too, so both say the same.
+  function renameTo(next) {
+    const clean = next.replace(/\s+/g, " ").trim().slice(0, NAME_MAX);
+    if (!clean || clean === draft.name) return draft;
+    setName(clean);
+    const renamed = { ...draft, name: clean };
+    commit(renamed);
+    return renamed;
+  }
+
   function replaceWith(playlist) {
     setSelectedId(playlist.items[0]?.id || null);
     return save(playlist);
@@ -152,41 +252,54 @@ export default function LobbyPanel({ room, onToast }) {
             <span className="tv-pl-kicker">
               Playlist · {gamesText(items.length)}
             </span>
-            {canEdit && draft.order === "orden" && items.length > 1 && (
-              <button
-                type="button"
-                className="tv-pl-reorder"
-                aria-label="Reordenar los juegos al azar"
-                title="Reordenar al azar"
-                onClick={reshuffle}
-              >
-                <Icon name="reorder" size={18} strokeWidth={2.6} />
-              </button>
-            )}
           </div>
           {canEdit ? (
-            <input
-              className="tv-pl-name"
-              value={name}
-              maxLength={NAME_MAX}
-              onChange={(e) => setName(e.target.value)}
-              onBlur={saveName}
-              onKeyDown={(e) => e.key === "Enter" && e.currentTarget.blur()}
-              aria-label="Nombre de la playlist"
-              spellCheck={false}
-            />
+            <div className="tv-pl-namerow">
+              <input
+                ref={nameRef}
+                className="tv-pl-name"
+                value={name}
+                maxLength={NAME_MAX}
+                onChange={(e) => setName(e.target.value)}
+                onFocus={() => setEditingName(true)}
+                onBlur={() => {
+                  setEditingName(false);
+                  saveName();
+                }}
+                onKeyDown={(e) => e.key === "Enter" && e.currentTarget.blur()}
+                aria-label="Nombre de la playlist"
+                spellCheck={false}
+              />
+              <button
+                type="button"
+                className={`tv-pl-rename${editingName ? " is-on" : ""}`}
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={toggleName}
+                aria-label={editingName ? "Listo" : "Cambiar el nombre"}
+              >
+                <Icon name={editingName ? "check" : "pencil"} size={18} strokeWidth={2.6} />
+              </button>
+              <button
+                type="button"
+                className={`tv-pl-rename tv-pl-quicksave${justSaved ? " is-on" : ""}`}
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={quickSave}
+                disabled={!items.length}
+                aria-label={justSaved ? "Guardada en Mis playlists" : "Guardar en Mis playlists"}
+                data-sound="none"
+              >
+                <Icon name={justSaved ? "check" : "save"} size={18} strokeWidth={2.4} />
+              </button>
+            </div>
           ) : (
             <h2 className="tv-pl-name">{draft.name}</h2>
           )}
         </div>
 
-        <div className="tv-pl-body">
+        <div className="tv-pl-bodywrap" ref={wrapRef}>
+        <div className={`tv-pl-body${selectedId ? " has-selected" : ""}`} ref={bodyRef}>
           {items.length === 0 ? (
-            <p className="tv-pl-empty">
-              {canEdit
-                ? "Añade los juegos que quieras, en el orden en que se juegan. Puedes repetir un juego con otros ajustes."
-                : `${room.hostName || "El anfitrión"} está preparando la playlist.`}
-            </p>
+            !canEdit && <p className="tv-pl-empty">{room.hostName || "El anfitrión"} está preparando la playlist.</p>
           ) : (
             <ol className="tv-pl-list" aria-label="Juegos de la playlist">
               {items.map((item, i) => {
@@ -202,7 +315,10 @@ export default function LobbyPanel({ room, onToast }) {
                       type="button"
                       className="tv-pl-item-main"
                       aria-pressed={item.id === selected?.id}
-                      onClick={() => setSelectedId(item.id)}
+                      onClick={() => {
+                        setSelectedId(item.id);
+                        setSide("juego");
+                      }}
                       title={problem || "Ver sus ajustes"}
                     >
                       <span className="tv-pl-num">{i + 1}</span>
@@ -243,9 +359,42 @@ export default function LobbyPanel({ room, onToast }) {
             </ol>
           )}
 
-          {canEdit &&
-            (adding ? (
-              <div className="tv-pl-add-menu" role="group" aria-label="Elige qué juego añadir">
+        </div>
+          {/* The card's spare height (few games), between the games and "Añadir juego" (always at the bottom): the
+              games a playlist can have, faint, and how to fill it (only for whoever may edit it), so it never looks empty. It hides when there's little room, and never
+              takes room from the games. */}
+          {canEdit && (
+            <div className={`tv-pl-fill${items.length === 0 ? " is-empty" : ""}`} aria-hidden={items.length > 0 || undefined}>
+              <span className="tv-pl-fill-icons">
+                {playlistGames().map((g) => (
+                  <span key={g.id} className={`tv-c-${g.color}`}>
+                    <Icon name={g.icon} size={18} strokeWidth={2.4} />
+                  </span>
+                ))}
+              </span>
+              <span className="tv-pl-fill-text">
+                <span>Añade juegos en el orden en que se juegan.</span>
+                <span>Hasta {MAX_ITEMS}, y puedes repetir uno con otros ajustes.</span>
+              </span>
+            </div>
+          )}
+          {/* "Añadir juego" keeps its place and size; the menu opens over the card (see openAdd), so nothing moves. */}
+          {canEdit && (
+            <button
+              type="button"
+              className="tv-pl-add"
+              onClick={openAdd}
+              disabled={full || adding}
+              aria-hidden={adding || undefined}
+              tabIndex={adding ? -1 : undefined}
+              style={adding ? { visibility: "hidden" } : undefined}
+            >
+              <Icon name="plus" size={20} strokeWidth={3} />
+              {full ? `Máximo ${MAX_ITEMS} juegos` : "Añadir juego"}
+            </button>
+          )}
+          {canEdit && adding && (
+              <div className="tv-pl-add-menu" style={menuAt || undefined} role="group" aria-label="Elige qué juego añadir" onKeyDown={(e) => e.key === "Escape" && setAdding(false)}>
                 {playlistGames().map((g) => (
                   <button key={g.id} type="button" className={`tv-pl-add-game tv-c-${g.color}`} onClick={() => addGame(g.id)}>
                     <Icon name={g.icon} size={18} strokeWidth={2.4} />
@@ -256,15 +405,12 @@ export default function LobbyPanel({ room, onToast }) {
                   <Icon name="close" size={18} strokeWidth={3} />
                 </button>
               </div>
-            ) : (
-              <button type="button" className="tv-pl-add" onClick={() => setAdding(true)} disabled={full}>
-                <Icon name="plus" size={20} strokeWidth={3} />
-                {full ? `Máximo ${MAX_ITEMS} juegos` : "Añadir juego"}
-              </button>
-            ))}
+          )}
         </div>
 
+
         <div className="tv-mstage-foot tv-pl-foot">
+          <div className={`tv-pl-orderrow${canEdit ? " has-shuffle" : ""}`}>
           <div className="tv-pl-order" role="radiogroup" aria-label="Orden de los juegos">
             {ORDERS.map((o) => (
               <button
@@ -282,6 +428,21 @@ export default function LobbyPanel({ room, onToast }) {
               </button>
             ))}
           </div>
+          {/* "En orden" plays them as listed: this shuffles that list once (it stays as it comes out). With "Aleatorio"
+              (or fewer than two games) it stays, greyed out. */}
+          {canEdit && (
+            <button
+              type="button"
+              className="tv-pl-shuffle"
+              onClick={reshuffle}
+              disabled={draft.order !== "orden" || items.length < 2}
+              aria-label="Mezclar el orden de los juegos"
+            >
+              <Icon name="reorder" size={18} strokeWidth={2.6} />
+              Mezclar
+            </button>
+          )}
+          </div>
           {blocked && (
             <p className="tv-pl-blocked" role="status">
               <Icon name="lock" size={15} strokeWidth={2.6} />
@@ -292,8 +453,32 @@ export default function LobbyPanel({ room, onToast }) {
         </div>
       </section>
 
-      <SettingsPanel room={room} readOnly={!canEdit}>
-        {selected ? (
+      <SettingsPanel
+        room={room}
+        readOnly={!canEdit}
+        actions={
+          // Small, in the title's row: the chosen game's settings, or saving and sharing the playlist.
+          <div className="tv-pl-views" role="tablist" aria-label="Qué ver">
+            {[
+              { id: "juego", label: "Juego", icon: "hourglass" },
+              { id: "guardar", label: "Guardar y compartir", icon: "save" },
+            ].map((v) => (
+              <button
+                key={v.id}
+                type="button"
+                role="tab"
+                aria-selected={side === v.id}
+                className="tv-pl-view"
+                onClick={() => setSide(v.id)}
+              >
+                <Icon name={v.icon} size={15} strokeWidth={2.6} />
+                <span>{v.label}</span>
+              </button>
+            ))}
+          </div>
+        }
+      >
+        {side === "juego" && (selected ? (
           // In the chosen game's colour (styles/playlist.css), as in its own lobby.
           <div className={`tv-pl-edit is-${selected.game}`} key={selected.id}>
             <div className="tv-pl-edit-head">
@@ -306,6 +491,40 @@ export default function LobbyPanel({ room, onToast }) {
                 </p>
                 <h3 className="tv-pl-edit-title">{findMode(selected.game)?.name}</h3>
               </div>
+              {/* Back and forth between the playlist's games without going to the list. */}
+              {items.length > 1 && (
+                <div className="tv-pl-edit-nav" role="group" aria-label="Cambiar de juego">
+                  <button
+                    type="button"
+                    className="tv-pl-edit-step"
+                    aria-label="Juego anterior"
+                    disabled={selectedIndex <= 0}
+                    onClick={() => setSelectedId(items[selectedIndex - 1].id)}
+                  >
+                    <Icon name="chevron" size={18} strokeWidth={3} className="is-prev" />
+                  </button>
+                  <span className="tv-pl-edit-dots" aria-hidden="true">
+                    {items.map((item, i) => (
+                      <button
+                        key={item.id}
+                        type="button"
+                        tabIndex={-1}
+                        className={`tv-c-${findMode(item.game)?.color || "neutral"}${i === selectedIndex ? " is-on" : ""}`}
+                        onClick={() => setSelectedId(item.id)}
+                      />
+                    ))}
+                  </span>
+                  <button
+                    type="button"
+                    className="tv-pl-edit-step"
+                    aria-label="Juego siguiente"
+                    disabled={selectedIndex >= items.length - 1}
+                    onClick={() => setSelectedId(items[selectedIndex + 1].id)}
+                  >
+                    <Icon name="chevron" size={18} strokeWidth={3} />
+                  </button>
+                </div>
+              )}
             </div>
             <ItemSettings
               room={room}
@@ -327,9 +546,9 @@ export default function LobbyPanel({ room, onToast }) {
             <Icon name="playlist" size={22} strokeWidth={2.2} />
             Cuando añadas juegos, toca uno para elegir sus ajustes: categorías, dificultad, rondas…
           </p>
-        )}
-        <PlaylistShare playlist={draft} canEdit={canEdit} onImport={replaceWith} onToast={onToast} />
-        <PlaylistLibrary playlist={draft} canEdit={canEdit} onLoad={replaceWith} onToast={onToast} />
+        ))}
+        {side === "guardar" && <PlaylistLibrary playlist={draft} canEdit={canEdit} onLoad={replaceWith} onRename={renameTo} onToast={onToast} />}
+        {side === "guardar" && <PlaylistShare playlist={draft} canEdit={canEdit} onImport={replaceWith} onToast={onToast} />}
       </SettingsPanel>
     </>
   );
@@ -501,8 +720,28 @@ function PlaylistShare({ playlist, canEdit, onImport, onToast }) {
 
 // "Mis playlists": the ones kept in this browser, to play again. Anyone can keep the room's playlist; whoever may change
 // it can load a kept one into the room. Taking one out asks for a second tap.
-function PlaylistLibrary({ playlist, canEdit, onLoad, onToast }) {
+function PlaylistLibrary({ playlist, canEdit, onLoad, onRename, onToast }) {
   const [list, setList] = useState(loadLibrary);
+  // "Guardar esta" first asks under what name, with the playlist's own already written (and selected, to change it).
+  const [saving, setSaving] = useState(false);
+  const [saveName, setSaveName] = useState("");
+  // A saved one's name, changed in its own row: the pencil turns it into a box, the check (or Enter) keeps it.
+  const [renaming, setRenaming] = useState(null);
+  const [renameText, setRenameText] = useState("");
+  function startRename(entry) {
+    setRenaming(entry.id);
+    setRenameText(entry.name);
+  }
+  function finishRename(e) {
+    e?.preventDefault();
+    if (!renaming) return;
+    try {
+      if (renameText.trim()) setList(renameInLibrary(renaming, renameText));
+    } catch (err) {
+      onToast?.(err.message);
+    }
+    setRenaming(null);
+  }
   const [confirmId, setConfirmId] = useState(null);
   const [loading, setLoading] = useState(null);
 
@@ -523,10 +762,20 @@ function PlaylistLibrary({ playlist, canEdit, onLoad, onToast }) {
     return () => clearTimeout(t);
   }, [confirmId]);
 
-  function keep() {
+  function startSaving() {
+    setSaveName(playlist.name);
+    setSaving(true);
+  }
+
+  function keep(e) {
+    e?.preventDefault();
+    const clean = saveName.replace(/\s+/g, " ").trim();
+    if (!clean) return;
+    const named = canEdit && onRename ? onRename(clean) : { ...playlist, name: clean };
     try {
-      setList(saveToLibrary(playlist));
-      onToast?.(`«${playlist.name}» guardada en Mis playlists`, "check");
+      setList(saveToLibrary({ ...named, name: clean }));
+      onToast?.(`«${clean}» guardada en Mis playlists`, "check");
+      setSaving(false);
     } catch (err) {
       onToast?.(err.message);
     }
@@ -559,11 +808,41 @@ function PlaylistLibrary({ playlist, canEdit, onLoad, onToast }) {
         <h3 id="tv-pl-library-title" className="tv-pl-side-title">
           Mis playlists
         </h3>
-        <button type="button" className="tv-btn tv-btn--sm tv-c-neutral" onClick={keep} disabled={!playlist.items.length}>
-          <Icon name="save" size={16} strokeWidth={2.4} />
-          Guardar esta
-        </button>
+        {!saving && (
+          <button type="button" className="tv-btn tv-btn--sm tv-c-neutral" onClick={startSaving} disabled={!playlist.items.length}>
+            <Icon name="save" size={16} strokeWidth={2.4} />
+            Guardar esta
+          </button>
+        )}
       </div>
+      {saving && (
+        <form className="tv-pl-saveas" onSubmit={keep} onKeyDown={(e) => e.key === "Escape" && setSaving(false)}>
+          <label className="tv-pl-saveas-label" htmlFor="tv-pl-saveas">
+            Nombre de la playlist
+          </label>
+          <div className="tv-pl-saveas-box">
+            <Icon name="pencil" size={18} strokeWidth={2.4} />
+            <input
+              id="tv-pl-saveas"
+              value={saveName}
+              maxLength={NAME_MAX}
+              onChange={(e) => setSaveName(e.target.value)}
+              onFocus={(e) => e.target.select()}
+              autoFocus
+              spellCheck={false}
+            />
+          </div>
+          <div className="tv-pl-side-actions">
+            <button type="submit" className="tv-btn tv-btn--sm tv-c-playlist" disabled={!saveName.trim()}>
+              <Icon name="save" size={16} strokeWidth={2.4} />
+              Guardar
+            </button>
+            <button type="button" className="tv-btn tv-btn--sm tv-c-neutral" data-sound="back" onClick={() => setSaving(false)}>
+              Cancelar
+            </button>
+          </div>
+        </form>
+      )}
       {list.length === 0 ? (
         <p className="tv-pl-side-note">Guarda aquí tus playlists para volver a jugarlas. Se quedan en este navegador.</p>
       ) : (
@@ -575,12 +854,36 @@ function PlaylistLibrary({ playlist, canEdit, onLoad, onToast }) {
                   <span key={i} className={`tv-c-${findMode(item.game)?.color || "neutral"}`} />
                 ))}
               </span>
-              <span className="tv-pl-saved-text">
-                <strong>{entry.name}</strong>
-                <small>
-                  {gamesText(entry.items.length)} · {entry.order === "aleatorio" ? "Aleatorio" : "En orden"}
-                </small>
-              </span>
+              {renaming === entry.id ? (
+                <form className="tv-pl-saved-rename" onSubmit={finishRename} onKeyDown={(e) => e.key === "Escape" && setRenaming(null)}>
+                  <input
+                    value={renameText}
+                    maxLength={NAME_MAX}
+                    onChange={(e) => setRenameText(e.target.value)}
+                    onFocus={(e) => e.target.select()}
+                    onBlur={finishRename}
+                    aria-label={`Nuevo nombre de ${entry.name}`}
+                    autoFocus
+                    spellCheck={false}
+                  />
+                </form>
+              ) : (
+                <span className="tv-pl-saved-text">
+                  <strong>{entry.name}</strong>
+                  <small>
+                    {gamesText(entry.items.length)} · {entry.order === "aleatorio" ? "Aleatorio" : "En orden"}
+                  </small>
+                </span>
+              )}
+              <button
+                type="button"
+                className={`tv-pl-tool tv-pl-saved-edit${renaming === entry.id ? " is-on" : ""}`}
+                aria-label={renaming === entry.id ? "Guardar el nombre" : `Cambiar el nombre de ${entry.name}`}
+                onMouseDown={(e) => renaming === entry.id && e.preventDefault()}
+                onClick={() => (renaming === entry.id ? finishRename() : startRename(entry))}
+              >
+                <Icon name={renaming === entry.id ? "check" : "pencil"} size={17} strokeWidth={2.6} />
+              </button>
               {canEdit && (
                 <button type="button" className="tv-btn tv-btn--sm tv-c-playlist" onClick={() => load(entry)} disabled={Boolean(loading)}>
                   {loading === entry.id ? "Cargando…" : "Cargar"}

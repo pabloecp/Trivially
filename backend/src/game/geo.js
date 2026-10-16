@@ -17,9 +17,11 @@ export const GEO_DIFFICULTIES = [...GEO_LEVELS, "mixta"];
 // Same limits as the sliders on screen (frontend/src/modes/mundo/geoInfo.js).
 export const GEO_LIMITS = {
   rounds: { min: 5, max: 25 },
+  // Seconds to put the pin, like Adivina la canción's: 15–35 s in steps of 5.
+  roundMs: { min: 15000, max: 35000 },
 };
-// A map round always lasts 10 s; its reveal waits the same as every mode's (game/scoring.js).
-export const LOCATION_ROUND_MS = 10000;
+// A map round lasts config.geo.roundMs (15 s in a new room); its reveal waits the same as every mode's (game/scoring.js).
+export const LOCATION_ROUND_MS = 15000;
 export { REVEAL_MS as LOCATION_REVEAL_MS } from "./scoring.js";
 // Ties for first place are settled with map rounds; after this many without a winner, the tie stands.
 export const MAX_TIEBREAKS = 3;
@@ -29,7 +31,7 @@ const LOCATION_NEAR_POINTS = 800;
 const LOCATION_FALLOFF_KM = 900;
 
 export function defaultGeoConfig() {
-  return { rounds: 5, difficulties: [...GEO_LEVELS] };
+  return { rounds: 5, roundMs: LOCATION_ROUND_MS, difficulties: [...GEO_LEVELS] };
 }
 
 // A single difficulty of an older client (or room) as the list of levels it means.
@@ -39,8 +41,8 @@ const clamp = (n, { min, max }, fallback) => Math.min(max, Math.max(min, Math.ro
 
 /**
  * Merges a settings change into the current Encuentra el país settings, keeping every value valid. The difficulties
- * can be left all unticked: the match then has no questions and can't start. The `kinds` and `roundMs` an older client
- * may send are dropped: every round is a map round of 10 s.
+ * can be left all unticked: the match then has no questions and can't start. The `kinds` an older client may send are
+ * dropped: every round is a map round. `roundMs` goes in steps of 5 s.
  */
 export function mergeGeoConfig(current, change = {}) {
   const base = { ...defaultGeoConfig(), ...current };
@@ -50,6 +52,10 @@ export function mergeGeoConfig(current, change = {}) {
     : levelsOf(change.difficulty) || baseLevels;
   return {
     rounds: change.rounds != null ? clamp(change.rounds, GEO_LIMITS.rounds, base.rounds) : base.rounds,
+    roundMs:
+      change.roundMs != null
+        ? Math.round(clamp(change.roundMs, GEO_LIMITS.roundMs, base.roundMs) / 5000) * 5000
+        : clamp(base.roundMs, GEO_LIMITS.roundMs, LOCATION_ROUND_MS),
     difficulties,
   };
 }

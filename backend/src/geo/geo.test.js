@@ -75,11 +75,14 @@ assert.ok(near < 1000 && far < near && far > 0);
 // Settings.
 assert.deepEqual(mergeGeoConfig({}, { rounds: 99, difficulty: "x" }), {
   rounds: 25,
+  roundMs: 15000,
   difficulties: ["facil", "media", "dificil"],
 });
-// The only way of playing is a pin on the map: the kinds and the seconds to write of an older client or room are dropped.
+// The only way of playing is a pin on the map: the kinds of an older client or room are dropped. The seconds to put the
+// pin are a setting (15–35 s, like Adivina la canción's).
 assert.deepEqual(mergeGeoConfig({ rounds: 7, roundMs: 20000, kinds: ["capital"] }, { kinds: ["flag"], roundMs: 30000 }), {
   rounds: 7,
+  roundMs: 30000,
   difficulties: ["facil", "media", "dificil"],
 });
 // Several difficulties at once; an older client's single one (or "mixta") still works.
