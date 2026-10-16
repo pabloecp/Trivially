@@ -9,10 +9,10 @@ import { useApp } from "../../lib/store.jsx";
 import { findMode } from "../index.js";
 
 // The music mode's waiting room, shown inside the room screen on Home once the host picks this game: the mode's big
-// card (how it's played and the start button) and the match settings (playlists, rounds, time) beside it.
+// card (how it's played and the start button) and the match settings (filters, Spotify playlists, rounds, time) beside it.
 // Everyone sees the settings; players without permission see them locked.
 export default function LobbyPanel({ room, onToast }) {
-  const { user, catalog, refreshCatalog, updateConfig } = useApp();
+  const { user, refreshCatalog, updateConfig } = useApp();
 
   useEffect(() => {
     refreshCatalog?.();
@@ -25,6 +25,7 @@ export default function LobbyPanel({ room, onToast }) {
   const songsReady = room.songsReady;
   const roundsSet = room.config?.rounds || 5;
   const enoughSongs = mode.ready(room);
+  const catalogOff = room.config?.useCatalog === false;
 
   const chosenIds = room.config?.playlistIds || [];
   const custom = (room.customPlaylists || []).filter((p) => chosenIds.includes(p.id));
@@ -55,7 +56,7 @@ export default function LobbyPanel({ room, onToast }) {
       </ModeStage>
 
       <SettingsPanel room={room} readOnly={!canEditConfig}>
-        <MusicSettings room={room} catalog={catalog} updateConfig={updateConfig} onToast={onToast} readOnly={!canEditConfig}>
+        <MusicSettings room={room} updateConfig={updateConfig} onToast={onToast} readOnly={!canEditConfig}>
           {loading.length > 0 && (
             <p className="tv-playlist-total tv-spotify-loading" aria-live="polite">
               <SpotifyIcon size={18} />
@@ -90,13 +91,17 @@ export default function LobbyPanel({ room, onToast }) {
             <p className="tv-playlist-total is-short" role="status">
               <Icon name="lock" size={16} strokeWidth={2.6} />
               {room.config?.formats?.length === 0 ? (
-                <span>Elige al menos un modo de juego para empezar.</span>
-              ) : room.config?.playlistIds?.length === 0 ? (
-                <span>Elige al menos una playlist para empezar.</span>
+                <span>Elige al menos un tipo de respuesta para empezar.</span>
+              ) : songsReady === 0 && loading.length === 0 ? (
+                <span>{catalogOff && !custom.length ? "Activa el catálogo o marca una playlist." : "Ninguna canción con esos filtros."}</span>
               ) : (
                 <span>
                   Hay <strong>{songsReady} {songsReady === 1 ? "canción lista" : "canciones listas"}</strong> para {roundsSet} rondas.{" "}
-                  {loading.length > 0 ? "Espera a que carguen más o baja las rondas." : "Baja las rondas o elige más playlists."}
+                  {loading.length > 0
+                    ? "Espera a que carguen más o baja las rondas."
+                    : catalogOff
+                      ? "Baja las rondas, activa el catálogo o marca otra playlist."
+                      : "Baja las rondas o marca más idiomas, géneros o dificultades."}
                 </span>
               )}
             </p>

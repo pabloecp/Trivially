@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { AVATAR_COLORS, useApp } from "../../lib/store.jsx";
+import { AVATAR_COLORS, savedGuest, useApp } from "../../lib/store.jsx";
+import { withSound } from "../../lib/sounds.js";
 import Avatar from "./Avatar.jsx";
 import Icon from "./Icon.jsx";
 
@@ -14,9 +15,10 @@ const TITLES = {
 
 // Bottom sheet to create or join a room. With `mode`, a new room goes straight into that game; without it the
 // room starts on Home so the host can pick. With `joinCode` (an invite link opened by someone with no name yet)
-// it asks for a name and then joins that room.
+// it asks for a name and then joins that room. Without an account, creating or joining always asks for the name
+// first, already filled in with the one used last time (and its colour), so a guest can keep it with one tap.
 export default function PlaySheet({ mode, joinCode, open, onClose }) {
-  const { user, saveGuest, createRoom, joinRoom } = useApp();
+  const { user, saveGuest, createRoom, joinRoom, checkRoom } = useApp();
   const sheetRef = useRef(null);
   const dragStart = useRef(null);
   const [mounted, setMounted] = useState(open);
@@ -29,6 +31,7 @@ export default function PlaySheet({ mode, joinCode, open, onClose }) {
   const [color, setColor] = useState(AVATAR_COLORS[0]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const codeRef = useRef(null);
 
   useEffect(() => {
     if (open) {
@@ -39,6 +42,9 @@ export default function PlaySheet({ mode, joinCode, open, onClose }) {
       setCode(joinCode || "");
       setPending(joinCode ? { type: "join", code: joinCode } : null);
       setStep(joinCode ? "name" : "menu");
+      const last = user?.isGuest ? { name: user.name, avatar: user.avatar } : savedGuest();
+      setName(last.name || "");
+      setColor(AVATAR_COLORS.includes(last.avatar) ? last.avatar : AVATAR_COLORS[0]);
     }
   }, [open]);
 
@@ -128,7 +134,7 @@ export default function PlaySheet({ mode, joinCode, open, onClose }) {
   }
 
   function run(action) {
-    if (!user?.name) {
+    if (!user?.name || user.isGuest) {
       setPending(action);
       goTo("name");
       return;
@@ -140,8 +146,7 @@ export default function PlaySheet({ mode, joinCode, open, onClose }) {
     setBusy(true);
     setError("");
     try {
-      if (action.type === "create") await createRoom("multi", {}, mode?.id ?? null);
-      else await joinRoom(action.code);
+      await withSound(() => (action.type === "create" ? createRoom("multi", {}, mode?.id ?? null) : joinRoom(action.code)));
       onClose(); // the room navigator takes the player wherever the room is
     } catch (err) {
       // This account already plays in that room from another device: CentralOffer asks about this one instead.
@@ -160,7 +165,7 @@ export default function PlaySheet({ mode, joinCode, open, onClose }) {
     setBusy(true);
     setError("");
     try {
-      await saveGuest(name, color);
+      await withSound(() => saveGuest(name, color), null);
     } catch (err) {
       setError(err.message);
       setBusy(false);
@@ -174,9 +179,25 @@ export default function PlaySheet({ mode, joinCode, open, onClose }) {
     }
   }
 
-  function submitCode(e) {
+  // The code is checked first, so a wrong one is said here and not after writing a name. The message stays while
+  // it's checked again (so nothing jumps), and a wrong code shakes the box each time.
+  async function submitCode(e) {
     e.preventDefault();
-    if (code.length < 4) return;
+    if (code.length < 4 || busy) return;
+    const asksName = !user?.name || user.isGuest;
+    setBusy(true);
+    try {
+      await withSound(() => checkRoom(code), asksName ? "next" : null);
+    } catch (err) {
+      setError(err.message || "No hay ninguna sala con ese código");
+      setBusy(false);
+      codeRef.current?.animate(
+        [{ transform: "translateX(0)" }, { transform: "translateX(-7px)" }, { transform: "translateX(6px)" }, { transform: "translateX(-3px)" }, { transform: "translateX(0)" }],
+        { duration: 320, easing: "ease-out" }
+      );
+      return;
+    }
+    setBusy(false);
     run({ type: "join", code });
   }
 
@@ -206,6 +227,19 @@ export default function PlaySheet({ mode, joinCode, open, onClose }) {
           >
             <span className="tv-sheet-handle" />
             <div className="tv-sheet-head">
+              {/* Back to the menu: a square arrow button at the start of the head (it stops the drag from starting). */}
+              {step !== "menu" && (
+                <button
+                  type="button"
+                  className="tv-sheet-back"
+                  onPointerDown={(e) => e.stopPropagation()}
+                  onClick={() => goTo("menu")}
+                  disabled={busy}
+                  aria-label="Atrás"
+                >
+                  <Icon name="back" size={24} strokeWidth={2.6} />
+                </button>
+              )}
               <span className={`tv-badge tv-c-${mode?.color || "yellow"}`}>
                 <Icon name={mode?.icon || "users"} size={26} />
               </span>
@@ -223,6 +257,7 @@ export default function PlaySheet({ mode, joinCode, open, onClose }) {
                   type="button"
                   className="tv-option"
                   style={{ "--i": 0 }}
+                  data-sound={!user?.name || user.isGuest ? undefined : "none"}
                   onClick={() => run({ type: "create" })}
                   disabled={busy}
                 >
@@ -260,8 +295,11 @@ export default function PlaySheet({ mode, joinCode, open, onClose }) {
                   Código de sala
                 </label>
                 <input
+                  ref={codeRef}
                   id="tv-code"
                   className="tv-field tv-field--code"
+                  aria-invalid={Boolean(error) || undefined}
+                  aria-describedby={error ? "tv-sheet-error" : undefined}
                   value={code}
                   onChange={(e) => {
                     setCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 6));
@@ -272,31 +310,35 @@ export default function PlaySheet({ mode, joinCode, open, onClose }) {
                   autoCapitalize="characters"
                   spellCheck="false"
                 />
-                <button type="submit" className="tv-btn tv-btn--block tv-c-yellow" disabled={busy || code.length < 4}>
-                  {busy ? "Entrando…" : "Entrar a la sala"}
+                <button type="submit" className="tv-btn tv-btn--block tv-c-yellow" data-sound="none" disabled={busy || code.length < 4}>
+                  Entrar a la sala
                 </button>
               </form>
             )}
 
             {step === "name" && (
               <form className="tv-sheet-form" onSubmit={submitName}>
+                {/* The avatar beside the name box, and its colours in a row under both, as wide as the sheet. */}
                 <div className="tv-name-row">
                   <Avatar name={name.trim() || "?"} avatar={color} className="tv-avatar--lg" />
-                  <label className="tv-sr-only" htmlFor="tv-name">
-                    Tu nombre
-                  </label>
-                  <input
-                    id="tv-name"
-                    className="tv-field"
-                    value={name}
-                    onChange={(e) => {
-                      setName(e.target.value);
-                      setError("");
-                    }}
-                    placeholder="Tu nombre o apodo"
-                    maxLength={20}
-                    autoComplete="nickname"
-                  />
+                  <div className="tv-name-fields">
+                    <label className="tv-sr-only" htmlFor="tv-name">
+                      Tu nombre
+                    </label>
+                    <input
+                      id="tv-name"
+                      className="tv-field"
+                      value={name}
+                      onChange={(e) => {
+                        setName(e.target.value);
+                        setError("");
+                      }}
+                      placeholder="Tu nombre o apodo"
+                      onFocus={(e) => e.target.select()}
+                      maxLength={20}
+                      autoComplete="nickname"
+                    />
+                  </div>
                 </div>
                 <div className="tv-swatches" role="group" aria-label="Color de tu avatar">
                   {AVATAR_COLORS.map((c, i) => (
@@ -304,34 +346,37 @@ export default function PlaySheet({ mode, joinCode, open, onClose }) {
                       key={c}
                       type="button"
                       className="tv-swatch"
-                      style={{ background: c }}
+                      style={{ "--sw": c }}
                       aria-pressed={color === c}
                       aria-label={`Color ${i + 1}`}
                       onClick={() => setColor(c)}
                     />
                   ))}
                 </div>
-                <button type="submit" className="tv-btn tv-btn--block tv-c-yellow" disabled={busy || !name.trim()}>
+                <button type="submit" className="tv-btn tv-btn--block tv-c-yellow" data-sound="none" disabled={busy || !name.trim()}>
                   {busy ? "Entrando…" : "Continuar"}
                 </button>
-                <p className="tv-sheet-note">
-                  ¿Tienes cuenta? <Link to="/login">Inicia sesión</Link> para guardar tus puntos.
-                </p>
+                {/* Without an account nothing is kept: one quiet line, with its two ways in. */}
+                <div className="tv-sheet-account">
+                  <span>Guarda tus puntos con una cuenta</span>
+                  <span className="tv-sheet-account-links">
+                    <Link to="/login" className="tv-sheet-account-btn is-main" onClick={onClose}>
+                      Crear cuenta
+                    </Link>
+                    <Link to="/login?mode=login" className="tv-sheet-account-btn" onClick={onClose}>
+                      Iniciar sesión
+                    </Link>
+                  </span>
+                </div>
               </form>
             )}
 
             {error && (
-              <p className="tv-sheet-error" role="alert">
+              <p id="tv-sheet-error" className="tv-sheet-error" role="alert">
                 {error}
               </p>
             )}
 
-            {step !== "menu" && (
-              <button type="button" className="tv-link-btn" onClick={() => goTo("menu")} disabled={busy}>
-                <Icon name="back" size={18} />
-                Atrás
-              </button>
-            )}
           </div>
         </div>
       </div>

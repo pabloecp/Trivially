@@ -15,7 +15,6 @@ export default function PlayerName({ player, className = "", children }) {
       target="_blank"
       rel="noopener"
       className={`tv-player-link ${className}`.trim()}
-      title={`Ver el perfil de ${player.name}`}
     >
       {label}
     </Link>

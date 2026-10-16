@@ -4,12 +4,31 @@ import { fileURLToPath } from "node:url";
 import { getSupabase, supabaseEnabled } from "../db/store.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-// The songs and playlists, also kept in the repo so local development works without Supabase.
-// `npm run catalog:upload` copies this file to the Supabase tables (see backend/supabase/schema.sql).
+// The songs, also kept in the repo so local development works without Supabase.
+// `npm run catalog:upload` copies this file to the Supabase table `songs` (see backend/supabase/schema.sql).
 export const LOCAL_CATALOG_PATH = path.join(__dirname, "catalog.json");
 
+// The catalog is only songs. Its two rankings, the most-streamed songs in Spanish and in English, are worked out from
+// each song's language and Spotify streams, as the playlists the rest of the code reads (difficulty is a song's third
+// of its ranking; `top-es` is the default one).
+const RANKINGS = [
+  { id: "top-es", language: "es", name: "Most Streamed Songs on Spotify · Español", isDefault: true, what: "en español" },
+  { id: "top-en", language: "en", name: "Most Streamed Songs on Spotify · Inglés", isDefault: false, what: "en inglés" },
+];
+
+export function withRankings(songs) {
+  const playlists = RANKINGS.map(({ id, language, name, isDefault, what }) => {
+    const trackIds = songs
+      .filter((s) => (language === "es" ? s.language === "es" : s.language !== "es"))
+      .sort((a, b) => (b.streams || 0) - (a.streams || 0))
+      .map((s) => s.id);
+    return { id, name, description: `Las ${trackIds.length} canciones ${what} más escuchadas de la historia de Spotify.`, isDefault, trackIds };
+  });
+  return { songs, playlists };
+}
+
 export function readLocalCatalog() {
-  return JSON.parse(fs.readFileSync(LOCAL_CATALOG_PATH, "utf8"));
+  return withRankings(JSON.parse(fs.readFileSync(LOCAL_CATALOG_PATH, "utf8")).songs);
 }
 
 function songFromRow(row) {
@@ -17,6 +36,7 @@ function songFromRow(row) {
     id: row.id,
     title: row.title,
     artistName: row.artist_name,
+    artists: row.artists || null,
     albumName: row.album_name,
     year: row.year,
     image: row.image,
@@ -40,34 +60,19 @@ async function selectAll(db, table, columns, order) {
 }
 
 async function loadFromSupabase() {
-  const db = getSupabase();
-  const [songs, playlists, links] = await Promise.all([
-    selectAll(db, "songs", "*", "id"),
-    selectAll(db, "playlists", "*", "position"),
-    selectAll(db, "playlist_songs", "playlist_id, song_id, position", "position"),
-  ]);
-  return {
-    songs: songs.map(songFromRow),
-    playlists: playlists.map((p) => ({
-      id: p.id,
-      name: p.name,
-      description: p.description,
-      isDefault: p.is_default,
-      trackIds: links.filter((l) => l.playlist_id === p.id).map((l) => l.song_id),
-    })),
-  };
+  return withRankings((await selectAll(getSupabase(), "songs", "*", "id")).map(songFromRow));
 }
 
-/** The catalog: from Supabase when it is configured and has playlists, otherwise from catalog.json. */
+/** The catalog: from Supabase when it is configured and has songs, otherwise from catalog.json. */
 export async function loadCatalog() {
   if (supabaseEnabled()) {
     try {
       const catalog = await loadFromSupabase();
-      if (catalog.playlists.length) {
-        console.log(`[Supabase] ${catalog.songs.length} canciones y ${catalog.playlists.length} playlists cargadas`);
+      if (catalog.songs.length) {
+        console.log(`[Supabase] ${catalog.songs.length} canciones cargadas`);
         return catalog;
       }
-      console.warn("[Supabase] No hay playlists en la base de datos; uso backend/src/catalog/catalog.json");
+      console.warn("[Supabase] No hay canciones en la base de datos; uso backend/src/catalog/catalog.json");
     } catch (err) {
       console.warn(`[Supabase] No se pudo cargar el catálogo (${err.message}); uso backend/src/catalog/catalog.json`);
     }

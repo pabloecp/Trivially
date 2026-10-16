@@ -29,7 +29,6 @@ export default function UserAvatar({
   return (
     <div
       className={`avatar ${className}`}
-      title={title || name}
       style={{
         width: size,
         height: size,

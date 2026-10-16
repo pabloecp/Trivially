@@ -102,7 +102,7 @@ export default function TvTopbar() {
         onClick={() => setLeaving(true)}
       >
         <span className="tv-avatar tv-avatar--empty">
-          <Icon name="close" size={18} strokeWidth={2.8} />
+          <Icon name="close" size={20} strokeWidth={2.6} />
         </span>
       </button>
     );
@@ -110,7 +110,7 @@ export default function TvTopbar() {
     leaveButton = (
       <Link to={roomTarget} className="tv-chip tv-chip--leave" aria-label={inMatch ? "Volver a la partida" : "Volver a la sala"}>
         <span className="tv-avatar tv-avatar--empty">
-          <Icon name="back" size={18} strokeWidth={2.6} />
+          <Icon name="back" size={20} strokeWidth={2.6} />
         </span>
         <span className="tv-chip-name tv-chip-long">Volver</span>
       </Link>
@@ -124,7 +124,7 @@ export default function TvTopbar() {
         onClick={press}
       >
         <span className="tv-avatar tv-avatar--empty">
-          <Icon name={confirmLeave ? "logout" : "back"} size={18} strokeWidth={2.6} />
+          <Icon name={confirmLeave ? "logout" : "back"} size={20} strokeWidth={2.6} />
         </span>
         {toModes && modesErr ? (
           <span className="tv-chip-name">{modesErr}</span>
@@ -141,7 +141,7 @@ export default function TvTopbar() {
     leaveButton = (
       <Link to="/" className="tv-chip tv-chip--leave" aria-label="Volver al inicio">
         <span className="tv-avatar tv-avatar--empty">
-          <Icon name="back" size={18} strokeWidth={2.6} />
+          <Icon name="back" size={20} strokeWidth={2.6} />
         </span>
         <span className="tv-chip-name tv-chip-long">Volver</span>
       </Link>
@@ -155,7 +155,7 @@ export default function TvTopbar() {
           {leaveButton}
           <div className="tv-brand">
             <AppIcon small />
-            <span className="tv-brand-name">trivially</span>
+            <span className="tv-brand-name">trivially.online</span>
           </div>
         </div>
         <div className="tv-topbar-end">

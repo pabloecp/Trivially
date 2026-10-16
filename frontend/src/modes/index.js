@@ -70,8 +70,8 @@ export const GAME_MODES = [
     path: (room) => `/mundo/${room.code}`,
   },
   {
-    // Rango: get as close as you can on a range. Its only way of playing for now is "Línea del tiempo" (an event's
-    // year), so the steps are that one's. The id is the old one on purpose (see GAME_IDS on the server).
+    // Rango: get as close as you can on a range. Its steps are general, since "Línea del tiempo" (an event's year) is
+    // only its first way of playing. The id is the old one on purpose (see GAME_IDS on the server).
     id: "historia",
     name: "Rango",
     kind: "extra",
@@ -80,9 +80,9 @@ export const GAME_MODES = [
     icon: "hourglass",
     available: true,
     steps: [
-      { icon: "scroll", text: "Lee el acontecimiento" },
-      { icon: "calendar", text: "Elige el año" },
-      { icon: "target", text: "Más cerca, más puntos" },
+      { icon: "info", text: "Lee la pregunta" },
+      { icon: "target", text: "Elige en el rango" },
+      { icon: "star", text: "Más cerca, más puntos" },
     ],
     ready: (room) => room.questionsReady == null || room.questionsReady >= (room.config?.history?.rounds || 5),
     Lobby: HistoryLobbyPanel,

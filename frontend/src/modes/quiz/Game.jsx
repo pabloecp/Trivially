@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import TvShell from "../../components/home/TvShell.jsx";
 import Confetti from "../../components/home/Confetti.jsx";
 import Icon from "../../components/home/Icon.jsx";
+import WaitingPill, { waitingNames } from "../../components/home/WaitingPill.jsx";
 import SpectatorBanner from "../../components/home/SpectatorBanner.jsx";
 import MatchResults from "../../components/home/MatchResults.jsx";
 import PartyPanel from "../../components/home/PartyPanel.jsx";
@@ -11,7 +12,7 @@ import { BACKEND_URL } from "../../lib/config.js";
 import { useApp, useRemainingMs, useView } from "../../lib/store.jsx";
 import { OPTION_LETTERS, findDifficulty, quizConfig } from "./quizInfo.js";
 import "../../styles/home.css";
-import { PauseButton, PauseVeil } from "../../components/home/PauseControls.jsx";
+import { PauseButton, ReportButton, PauseVeil } from "../../components/home/PauseControls.jsx";
 import "../../styles/quiz.css";
 import "../../styles/geo.css";
 
@@ -147,7 +148,7 @@ function ChoiceRound({ room, question, me, answer, seconds, central, controller 
             {spectator ? (
               "Estás viendo la partida"
             ) : locked ? (
-              "Respuesta enviada. Esperando al resto"
+              <WaitingPill room={room} userId={me?.id} inline fallback="Respuesta enviada" />
             ) : (
               <>
                 Toca una opción<span className="tv-quiz-keys"> o pulsa 1–4</span>
@@ -202,7 +203,7 @@ function ChoiceRound({ room, question, me, answer, seconds, central, controller 
                 </span>
               )}
               {reveal && (multiplayer || central) && !controller && (
-                <span className="tv-quiz-opt-picks" title={`${picks} ${picks === 1 ? "jugador" : "jugadores"}`}>
+                <span className="tv-quiz-opt-picks">
                   <Icon name="users" size={14} strokeWidth={2.6} />
                   {picks}
                 </span>
@@ -301,9 +302,22 @@ function WriteRound({ room, question, me, answer, skipSong, seconds, central, co
     <>
       {!controller && <QuestionCard question={question} slot={false} />}
       {/* A flag question keeps the flag's place from the countdown on, so nothing jumps when it shows. */}
-      {isFlag && !controller && <div className="tv-quiz-flag">{question.flag && <Flag src={flagSrc(question.flag)} />}</div>}
+      {/* During the countdown that place is a flag-shaped card with the number in it, so nothing floats far below. A
+          phone beside the central device has no flag: it's on the big screen. */}
+      {isFlag && !controller && (
+        <div className="tv-quiz-flag">
+          {question.flag ? (
+            <Flag src={flagSrc(question.flag)} />
+          ) : room.phase === "countdown" ? (
+            <div className="tv-quiz-flag-wait">
+              <Count seconds={seconds} />
+            </div>
+          ) : null}
+        </div>
+      )}
       <div className="tv-quiz-answer">
-        {room.phase === "countdown" && (controller ? <GetReady /> : <Count seconds={seconds} />)}
+        {room.phase === "countdown" && controller && <GetReady />}
+        {room.phase === "countdown" && !controller && !isFlag && <Count seconds={seconds} />}
         {reveal && central && (
           <>
             <p className="tv-central-answer">{question.answer}</p>
@@ -338,14 +352,12 @@ function WriteRound({ room, question, me, answer, skipSong, seconds, central, co
                 </button>
               )}
             </div>
-            {/* Hidden while typing, but it keeps its space so the answer box never moves. */}
+            {/* Always there, even with something typed: a player may still give up on the question. */}
             <button
               type="button"
-              className={`tv-btn tv-btn--block tv-c-neutral tv-skip-btn${confirmSkip ? " is-on" : ""}${query.trim() ? " is-hidden" : ""}`}
+              className={`tv-btn tv-btn--block tv-c-neutral tv-skip-btn${confirmSkip ? " is-on" : ""}`}
               onClick={skip}
               aria-live="polite"
-              aria-hidden={query.trim() ? "true" : undefined}
-              tabIndex={query.trim() ? -1 : undefined}
             >
               <Icon name={confirmSkip ? "lock" : "close"} size={16} strokeWidth={3} />
               {confirmSkip ? "No te dará puntos. Toca otra vez" : "Saltar"}
@@ -357,6 +369,7 @@ function WriteRound({ room, question, me, answer, skipSong, seconds, central, co
             {spectator ? "Estás viendo la partida" : skipped ? "Te la saltaste" : mySent?.text || me?.lastAnswer?.text || "Respuesta enviada"}
           </p>
         ))}
+        {room.phase === "playing" && locked && !spectator && !central && <WaitingPill room={room} userId={me?.id} />}
       </div>
       {err && <p className="tv-lobby-error" role="alert">{err}</p>}
     </>
@@ -437,13 +450,13 @@ function GameScreen() {
   // The host's controls of the match: in the round's card, or in the thin bar of a phone beside a central device.
   const tools = (
     <>
+      <ReportButton room={room} onError={setErr} />
       <PauseButton room={room} isHost={isHost} onError={setErr} />
       {isHost && (
         <button
           type="button"
           className={`tv-mini-btn${confirmHub ? " is-on" : ""}`}
           onClick={backToHub}
-          title="Termina la partida y lleva a todos al inicio"
         >
           {confirmHub ? "¿Seguro? Toca otra vez" : "Terminar"}
         </button>
@@ -457,7 +470,7 @@ function GameScreen() {
         {me?.spectator && <SpectatorBanner />}
         {/* Beside a central device the round, the clock and the question are on the big screen: only the options here. */}
         {controller ? (
-          <ControllerBar isHost={isHost} seconds={seconds} pct={pct} urgent={urgent}>
+          <ControllerBar seconds={seconds} pct={pct} urgent={urgent}>
             {tools}
           </ControllerBar>
         ) : (

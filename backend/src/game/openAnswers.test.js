@@ -85,4 +85,33 @@ assert.equal(ok("miguel", cervantes), false);
 assert.equal(ok("ana", cervantes), false);
 assert.equal(ok("cervantes", q("Miguel de Cervantes")), false); // tipo "text" exige todo
 
+// Siglas con o sin puntos y espacios, y palabras juntas
+const eeuu = q("Estados Unidos", { aliases: ["EE. UU.", "USA", "EUA"] });
+assert.equal(ok("EEUU", eeuu), true);
+assert.equal(ok("ee uu", eeuu), true);
+assert.equal(ok("EstadosUnidos", eeuu), true);
+assert.equal(ok("eua", eeuu), true);
+assert.equal(ok("Ganondof", q("Ganondorf")), true); // una letra de menos
+assert.equal(ok("GANONDORF", q("Ganondorf")), true);
+
+// Medidas: el número basta, sin la unidad; un número con otras palabras no ("16 de septiembre")
+assert.equal(ok("42195", q("42,195 km")), true);
+assert.equal(ok("42,195", q("42,195 km")), true);
+assert.equal(ok("42", q("42,195 km")), false);
+assert.equal(ok("100", q("100 °C")), true);
+assert.equal(ok("300000", q("300 000 km/s")), true);
+assert.equal(ok("13", q("El 13")), true);
+assert.equal(ok("16", q("16 de septiembre")), false);
+assert.equal(ok("16 septiembre", q("16 de septiembre")), true);
+
+// Números, romanos y letras sueltas distinguen respuestas: sin margen de error
+assert.equal(ok("vitamina c", q("Vitamina D")), false);
+assert.equal(ok("vitamina d", q("Vitamina D")), true);
+assert.equal(ok("playstation 4", q("PlayStation 5")), false);
+assert.equal(ok("luis xvi", q("Luis XIV")), false);
+assert.equal(ok("luis xiv", q("Luis XIV")), true);
+assert.equal(ok("cada 2 años", q("Cada 4 años")), false);
+assert.equal(ok("guerra de los siete años", q("La guerra de los Cien Años")), false);
+assert.equal(ok("guera de los cien años", q("La guerra de los Cien Años")), true);
+
 console.log("openAnswers.test ok");

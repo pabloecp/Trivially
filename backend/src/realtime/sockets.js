@@ -1,6 +1,9 @@
 import { verifySocketToken } from "../auth/socketToken.js";
 import { prefetchMedia } from "../audio/mediaCache.js";
+import { readPublicSpotify, spotifyLinkFrom } from "../catalog/spotifyEmbed.js";
 import { readSpotifyPlaylist } from "../catalog/spotifyLibrary.js";
+import { saveQuestionReport } from "../db/reports.js";
+import { forgetSpotifyLink, saveSpotifyLink, savedSpotifyLinks } from "../db/store.js";
 import { prefetchFlags } from "../geo/flags.js";
 
 export function attachSockets(io, rooms) {
@@ -68,8 +71,7 @@ export function attachSockets(io, rooms) {
     socket.on("room:join", async (payload, ack) => {
       try {
         const user = bindUser(socket, payload?.user, rooms);
-        const room = rooms.get(payload?.code || "");
-        if (!room) throw new Error("Sala no encontrada");
+        const room = rooms.findToJoin(payload?.code, user.id);
         // Also when this connection is still the room's central device but its tab lost track of it.
         const ref = rooms.socketToRoom.get(socket.id);
         const isCentral = Boolean(ref?.central) && ref.code === room.code;
@@ -160,6 +162,16 @@ export function attachSockets(io, rooms) {
         rooms.removeCentral(room, userId);
         ack?.({ ok: true, state: rooms.publicState(room, userId) });
         io.to(room.code).emit("room:state", rooms.publicState(room));
+      } catch (err) {
+        ack?.({ ok: false, error: err.message });
+      }
+    });
+
+    // Whether a code opens a room, before the player writes their name. It sends nothing about the room.
+    socket.on("room:check", (code, ack) => {
+      try {
+        rooms.findToJoin(code, socket.data.userId);
+        ack?.({ ok: true });
       } catch (err) {
         ack?.({ ok: false, error: err.message });
       }
@@ -273,6 +285,52 @@ export function attachSockets(io, rooms) {
       }
     });
 
+    // Anyone who may change the settings takes a Spotify playlist out of the room.
+    socket.on("room:removePlaylist", (playlistId, ack) => {
+      try {
+        const { room, userId } = requireRoom(rooms, socket);
+        rooms.removeSpotifyPlaylist(room, userId, String(playlistId || ""));
+        ack?.({ ok: true, state: rooms.publicState(room, userId) });
+        io.to(room.code).emit("room:state", rooms.publicState(room));
+      } catch (err) {
+        ack?.({ ok: false, error: err.message });
+      }
+    });
+
+    // Anyone who may change the settings pastes a public Spotify playlist's (or an album's) link: no Spotify needed.
+    socket.on("room:spotifyLink", async (link, ack) => {
+      try {
+        const { room, userId } = requireRoom(rooms, socket);
+        rooms.assertPlaylistEditor(room, userId);
+        const target = await spotifyLinkFrom(link);
+        const playlist = await readPublicSpotify(target);
+        if (!playlist.tracks.length) throw new Error("No tiene canciones que se puedan usar");
+        rooms.addSpotifyPlaylist(room, userId, playlist, { fromLink: true });
+        // Someone with an account keeps it on their profile, to add it again from "Mis playlists" in any room.
+        const saved = saveSpotifyLink(rooms.store, userId, { ...target, name: playlist.name, image: playlist.image, total: playlist.tracks.length });
+        ack?.({ ok: true, state: rooms.publicState(room, userId), saved });
+        io.to(room.code).emit("room:state", rooms.publicState(room));
+      } catch (err) {
+        ack?.({ ok: false, error: err.message });
+      }
+    });
+
+    // The Spotify playlists and albums this account saved ("Mis playlists"); a guest has none. Only the verified
+    // id of this socket's own account is read or changed.
+    socket.on("spotify:saved", (ack) => {
+      const userId = socket.data.userId;
+      const account = userId && rooms.store?.users?.[userId];
+      ack?.({ ok: true, canSave: Boolean(account && !account.isGuest), saved: savedSpotifyLinks(rooms.store, userId) });
+    });
+
+    socket.on("spotify:forget", (key, ack) => {
+      try {
+        ack?.({ ok: true, saved: forgetSpotifyLink(rooms.store, socket.data.userId, String(key || "")) });
+      } catch (err) {
+        ack?.({ ok: false, error: err.message });
+      }
+    });
+
     socket.on("room:toggleConfigPermission", (targetUserId, ack) => {
       try {
         const { room, userId } = requireRoom(rooms, socket);
@@ -360,6 +418,18 @@ export function attachSockets(io, rooms) {
         else rooms.resume(room, userId);
         ack?.({ ok: true });
         io.to(room.code).emit("room:state", rooms.publicState(room));
+      } catch (err) {
+        ack?.({ ok: false, error: err.message });
+      }
+    });
+
+    // An owner reports the question being played. Only the socket's verified account counts as the reporter.
+    socket.on("room:report", async (ack) => {
+      try {
+        const { room } = requireRoom(rooms, socket);
+        const report = rooms.questionReport(room, socket.data.userId);
+        await saveQuestionReport(report);
+        ack?.({ ok: true });
       } catch (err) {
         ack?.({ ok: false, error: err.message });
       }

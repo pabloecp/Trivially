@@ -1,6 +1,7 @@
 import { useState } from "react";
 import Icon from "./Icon.jsx";
 import { useApp } from "../../lib/store.jsx";
+import { withSound } from "../../lib/sounds.js";
 import { findMode } from "../../modes/index.js";
 
 // Starting the room's match, shared by the button on the game's card and the phone's bottom bar (RoomDock).
@@ -19,7 +20,7 @@ export function useStartGame(room) {
     setErr("");
     setBusy(true);
     try {
-      await startGame();
+      await withSound(startGame);
     } catch (e) {
       setErr(e.message);
     } finally {
@@ -46,7 +47,7 @@ export default function ModeStart({ room }) {
   return (
     <>
       {err && <p className="tv-lobby-error">{err}</p>}
-      <button className="tv-mstage-start tv-shine" onClick={start} disabled={!canStart} type="button">
+      <button className="tv-mstage-start tv-shine" onClick={start} disabled={!canStart} type="button" data-sound="none">
         <Icon name="play" size={22} filled strokeWidth={1.5} />
         {busy ? "Empezando…" : "Comenzar partida"}
       </button>

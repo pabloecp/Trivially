@@ -28,6 +28,9 @@ const song = (i) => ({ id: `sp-t${i}`, title: `Canción ${i}`, artistName: "Arti
 const other = mgr.create({ host: { id: "user", name: "User", socketId: "s0" }, game: "musica" });
 assert.throws(() => mgr.addSpotifyPlaylist(other, "user", playlist), /solo para owners/);
 const room = mgr.create({ host: { id: "owner", name: "Owner", socketId: "s1" }, game: "musica" });
+// A code is checked before the name is asked: a wrong one says so straight away.
+assert.equal(mgr.findToJoin(room.code.toLowerCase()), room);
+assert.throws(() => mgr.findToJoin("ZZZZZZ"), /ninguna sala/);
 mgr.addPlayer(room, { id: "user", name: "User", socketId: "s2" });
 assert.throws(() => mgr.addSpotifyPlaylist(room, "user", playlist), /Necesitas permiso/);
 mgr.addPlayer(room, { id: "owner2", name: "Owner 2", socketId: "s3" });
@@ -38,12 +41,13 @@ assert.ok(room.config.playlistIds.includes("sp:fromOwner2"), "an owner with perm
 mgr.toggleConfigPermission(room, "owner", "user");
 assert.throws(() => mgr.addSpotifyPlaylist(room, "user", playlist), /solo para owners/, "permission alone isn't enough");
 waiting.length = 0;
-// …and nobody can sneak one in through the normal settings.
+// …and nobody can sneak one in through the normal settings (nor an older client's catalog playlist).
 mgr.updateConfig(room, "owner", { playlistIds: ["top-es", "sp:other"] });
-assert.deepEqual(room.config.playlistIds, ["top-es"]);
+assert.deepEqual(room.config.playlistIds, []);
 
 mgr.addSpotifyPlaylist(room, "owner", playlist);
-mgr.updateConfig(room, "owner", { playlistIds: ["sp:abc"], rounds: 5 });
+// No language ticked: only the Spotify playlist plays.
+mgr.updateConfig(room, "owner", { playlistIds: ["sp:abc"], rounds: 5, languages: [] });
 assert.deepEqual(room.config.playlistIds, ["sp:abc"]);
 assert.equal(mgr.publicState(room).customPlaylists.find((p) => p.id === "sp:abc").loading, true);
 // The whole playlist is in the autocomplete even before it is found on iTunes.
@@ -55,6 +59,14 @@ const search = mgr.buildSearchCatalog(room);
 assert.equal(search.length, mgr.catalog.songs.length + 6);
 assert.equal(mgr.globalSongList().length, mgr.catalog.songs.length);
 assert.deepEqual(mgr.roomSearchExtras(room).map((s) => s.id).sort(), playlist.tracks.map((t) => `sp-${t.spotifyId}`).sort());
+
+// The catalog turned off: only the ticked playlists play, whatever the filters say.
+mgr.updateConfig(room, "owner", { languages: ["es", "en"], useCatalog: false });
+assert.equal(room.config.useCatalog, false);
+assert.equal(mgr.songPool(room).length, 0);
+mgr.updateConfig(room, "owner", { useCatalog: true });
+assert.ok(mgr.songPool(room).length > 0);
+mgr.updateConfig(room, "owner", { languages: [] });
 
 // Nothing playable yet: the match can't start.
 assert.throws(() => mgr.start(room, "owner"), /se están cargando/);
@@ -109,5 +121,55 @@ assert.equal(waiting.length, 3, "playlist 1 starts loading again");
 assert.equal(waiting[2].tracks.length, 5, "only the songs it didn't have yet");
 assert.equal(waiting[2].job.isCancelled(), false);
 mgr.destroy(lobby);
+
+// A public playlist pasted as a link: anyone who may change the settings, no owner role or Spotify needed, and its
+// songs play at once with Spotify's own preview (iTunes, looked up after, swaps in its own with the cover and year).
+const linkRoom = mgr.create({ host: { id: "user", name: "User", socketId: "l1" }, game: "musica" });
+mgr.addPlayer(linkRoom, { id: "guest", name: "Guest", socketId: "l2" });
+const pasted = {
+  id: "pub",
+  name: "Pública",
+  image: "https://image-cdn-ak.spotifycdn.com/image/x",
+  tracks: [
+    ...Array.from({ length: 5 }, (_, i) => ({ spotifyId: `p${i}`, title: `Pública ${i}`, artists: ["Artista"], previewUrl: `https://p.scdn.co/mp3-preview/${i}` })),
+    { spotifyId: "p5", title: "Sin muestra", artists: ["Artista"], previewUrl: null },
+  ],
+};
+assert.throws(() => mgr.addSpotifyPlaylist(linkRoom, "guest", pasted, { fromLink: true }), /permiso del host/);
+const before = waiting.length;
+const entry = mgr.addSpotifyPlaylist(linkRoom, "user", pasted, { fromLink: true });
+assert.ok(linkRoom.config.playlistIds.includes("sp:pub"));
+assert.equal(entry.songs.size, 5, "the 5 songs with a preview are playable at once");
+assert.equal(entry.songs.get("p0").previewUrl, "https://p.scdn.co/mp3-preview/0");
+const shown = mgr.publicState(linkRoom).customPlaylists.find((p) => p.id === "sp:pub");
+assert.equal(shown.ready, 5);
+assert.equal(shown.loading, false, "nothing to wait for");
+// iTunes is still asked; what it finds (a longer preview, the cover, the year) takes the place of Spotify's.
+assert.equal(waiting.length, before + 1);
+const linkJob = waiting.at(-1).job;
+linkJob.onResult("p0", { id: "sp-p0", spotifyId: "p0", title: "Pública 0", artistName: "Artista", image: "https://is1-ssl.mzstatic.com/a.jpg", year: 2020, previewUrl: "https://audio-ssl.itunes.apple.com/x.m4a" });
+assert.equal(entry.songs.get("p0").image, "https://is1-ssl.mzstatic.com/a.jpg");
+assert.equal(entry.songs.get("p0").year, 2020);
+assert.equal(entry.songs.get("p0").previewUrl, "https://audio-ssl.itunes.apple.com/x.m4a", "iTunes' 30 s preview");
+assert.equal(entry.songs.get("p1").previewUrl, "https://p.scdn.co/mp3-preview/1", "not found yet: Spotify's");
+linkJob.onResult("p5", { id: "sp-p5", spotifyId: "p5", title: "Sin muestra", artistName: "Artista", previewUrl: "https://audio-ssl.itunes.apple.com/y.m4a" });
+assert.equal(entry.songs.get("p5").previewUrl, "https://audio-ssl.itunes.apple.com/y.m4a", "one without a preview gets iTunes'");
+mgr.updateConfig(linkRoom, "user", { rounds: 5, playlistIds: ["sp:pub"] });
+mgr.start(linkRoom, "user");
+clearTimeout(linkRoom.timer);
+assert.equal(linkRoom.phase, "countdown", "a match starts straight away");
+mgr.destroy(linkRoom);
+
+// A playlist can be taken out of the room for good: it stops loading and is no longer ticked.
+const removable = mgr.create({ host: { id: "owner", name: "Owner", socketId: "r1" }, game: "musica" });
+mgr.addPlayer(removable, { id: "user", name: "User", socketId: "r2" });
+const gone = mgr.addSpotifyPlaylist(removable, "owner", { ...playlist, id: "gone" });
+assert.throws(() => mgr.removeSpotifyPlaylist(removable, "user", "sp:gone"), /permiso del host/);
+mgr.removeSpotifyPlaylist(removable, "owner", "sp:gone");
+assert.equal(gone.active, false);
+assert.equal(removable.customPlaylists["sp:gone"], undefined);
+assert.deepEqual(removable.config.playlistIds, []);
+assert.throws(() => mgr.removeSpotifyPlaylist(removable, "owner", "sp:gone"), /no está en la sala/);
+mgr.destroy(removable);
 
 console.log("spotifyRoom.test ok");

@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import TvShell from "../../components/home/TvShell.jsx";
 import Confetti from "../../components/home/Confetti.jsx";
 import Icon from "../../components/home/Icon.jsx";
+import WaitingPill, { waitingNames } from "../../components/home/WaitingPill.jsx";
 import PartyPanel from "../../components/home/PartyPanel.jsx";
 import SpectatorBanner from "../../components/home/SpectatorBanner.jsx";
 import MatchResults from "../../components/home/MatchResults.jsx";
@@ -12,7 +13,7 @@ import { BACKEND_URL } from "../../lib/config.js";
 import { useSongList } from "../../lib/songList.js";
 import { useMasterVolume } from "../../lib/volume.js";
 import "../../styles/quiz.css";
-import { PauseButton, PauseVeil } from "../../components/home/PauseControls.jsx";
+import { PauseButton, ReportButton, PauseVeil } from "../../components/home/PauseControls.jsx";
 
 // A closed round's four songs keep the same letters and colours as Trivia's options.
 const OPTION_LETTERS = ["A", "B", "C", "D"];
@@ -31,6 +32,12 @@ function normalize(str = "") {
 function songKey(song) {
   const artist = String(song.artistName || "").split(/\s*(?:&|,|\bfeat\.?|\bft\.?|\bx\b|\by\b)\s*/i)[0];
   return `${normalize(song.title)}|${normalize(artist)}`;
+}
+
+// Every artist of a song, the last after "&" (like the server's joinArtists): "Tyler, The Creator & Kali Uchis".
+function joinArtists(list) {
+  const names = Array.isArray(list) ? list.filter(Boolean) : [];
+  return names.length > 1 ? `${names.slice(0, -1).join(", ")} & ${names[names.length - 1]}` : names[0] || "";
 }
 
 // Shown under the result when the round didn't go your way; one per round, never the same twice in a row.
@@ -106,7 +113,8 @@ function GameScreen() {
   // (iTunes serves audio/x-m4p which browsers don't support; proxy re-serves as audio/mp4)
   function proxyUrl(url) {
     if (!url) return url;
-    if (url.startsWith("https://audio-ssl.itunes.apple.com/")) {
+    // Spotify's previews too (public playlists pasted as a link): downloaded ahead by the server, like iTunes'.
+    if (url.startsWith("https://audio-ssl.itunes.apple.com/") || url.startsWith("https://p.scdn.co/mp3-preview/")) {
       return `${BACKEND_URL}/api/audio/proxy?url=${encodeURIComponent(url)}`;
     }
     return url;
@@ -146,10 +154,13 @@ function GameScreen() {
         audio.src = src;
         audio.load();
       }
+      // A preview shorter than the round (Spotify's last 15–22 s, iTunes' 30 s) starts again instead of going quiet.
+      audio.loop = true;
       const elapsed = Math.max(0, (Date.now() - (room.phaseStartedAt || Date.now())) / 1000);
-      if (Math.abs(audio.currentTime - elapsed) > 1.2) {
+      const target = Number.isFinite(audio.duration) && audio.duration > 0 ? elapsed % audio.duration : elapsed;
+      if (Math.abs(audio.currentTime - target) > 1.2) {
         try {
-          audio.currentTime = elapsed;
+          audio.currentTime = target;
         } catch {}
       }
       const p = audio.play();
@@ -398,13 +409,13 @@ function GameScreen() {
   // The host's controls of the match: in the round's card, or in the thin bar of a phone beside a central device.
   const tools = (
     <>
+      <ReportButton room={room} onError={setErr} />
       <PauseButton room={room} isHost={isHost} onError={setErr} />
       {isHost && (
         <button
           type="button"
           className={`tv-mini-btn${confirmHub ? " is-on" : ""}`}
           onClick={() => backToHub({ confirm: true })}
-          title="Termina la partida y lleva a todos al inicio"
         >
           {confirmHub ? "¿Seguro? Toca otra vez" : "Terminar"}
         </button>
@@ -420,7 +431,7 @@ function GameScreen() {
         {spectator && <SpectatorBanner />}
         {/* Beside a central device the round and the clock are on the big screen: only the ways to answer here. */}
         {controller ? (
-          <ControllerBar isHost={isHost} seconds={seconds} pct={pct} urgent={urgent}>
+          <ControllerBar seconds={seconds} pct={pct} urgent={urgent}>
             {tools}
           </ControllerBar>
         ) : (
@@ -514,6 +525,9 @@ function GameScreen() {
             })()}
 
             {closed && room.phase === "playing" && central && <PhoneHint room={room}>Elijan desde su teléfono</PhoneHint>}
+            {closed && room.phase === "playing" && !central && !spectator && Number.isInteger(myChoice) && (
+              <WaitingPill room={room} userId={user?.id} />
+            )}
             {!closed && room.phase === "playing" && central ? (
               <PhoneHint room={room}>Escriban el título en su teléfono</PhoneHint>
             ) : closed && (room.phase === "reveal" || central || (!spectator && (!locked || Number.isInteger(myChoice)))) ? (
@@ -521,6 +535,8 @@ function GameScreen() {
                 {OPTION_LETTERS.map((letter, i) => {
                   const text = choice?.options?.[i];
                   if (text == null) return null;
+                  // The title big and every artist under it (an older server only sends "Título - Artista").
+                  const detail = choice?.details?.[i];
                   const isMine = myChoice === i;
                   const reveal = room.phase === "reveal";
                   const isRight = reveal && choice?.answer === i;
@@ -548,14 +564,21 @@ function GameScreen() {
                       aria-label={`${letter}: ${text}`}
                     >
                       <span className="tv-quiz-opt-letter">{letter}</span>
-                      <span className="tv-quiz-opt-text">{text}</span>
+                      {detail ? (
+                        <span className="tv-quiz-opt-text tv-music-opt-text">
+                          <span className="tv-music-opt-title">{detail.title}</span>
+                          {detail.artists && <span className="tv-music-opt-artists">{detail.artists}</span>}
+                        </span>
+                      ) : (
+                        <span className="tv-quiz-opt-text">{text}</span>
+                      )}
                       {reveal && (isRight || isMine) && (
                         <span className="tv-quiz-opt-mark">
                           <Icon name={isRight ? "check" : "close"} size={18} strokeWidth={3.4} />
                         </span>
                       )}
                       {reveal && (room.players.length > 1 || central) && !controller && (
-                        <span className="tv-quiz-opt-picks" title={`${picks} ${picks === 1 ? "jugador" : "jugadores"}`}>
+                        <span className="tv-quiz-opt-picks">
                           <Icon name="users" size={14} strokeWidth={2.6} />
                           {picks}
                         </span>
@@ -628,7 +651,7 @@ function GameScreen() {
                                   onMouseEnter={() => setActiveIndex(index)}
                                 >
                                   <span className="tv-suggest-title">{song.title}</span>
-                                  <span className="tv-suggest-artist">{song.artistName}</span>
+                                  <span className="tv-suggest-artist">{song.artists || song.artistName}</span>
                                   {index === activeIndex && <kbd className="tv-kbd">Enter</kbd>}
                                 </button>
                               </li>
@@ -660,7 +683,7 @@ function GameScreen() {
                 <p className="tv-locked-title">
                   {skipped ? "Te la saltaste" : submittedSong || me?.lastAnswer?.text || "Canción enviada"}
                 </p>
-                <p className="tv-hint">Esperando al resto de jugadores…</p>
+                <WaitingPill room={room} userId={user?.id} fallback={<p className="tv-hint">Esperando al resto de jugadores…</p>} />
               </div>
               )
             )}
@@ -720,7 +743,7 @@ function GameScreen() {
                     <p className="tv-mono-label">Era la canción</p>
                     <h3 className="tv-song-title">{room.reveal.title}</h3>
                     <p className="tv-song-meta">
-                      {room.reveal.artistName}
+                      {joinArtists(room.reveal.artists) || room.reveal.artistName}
                       {room.reveal.albumName ? ` · ${room.reveal.albumName}` : ""}
                       {room.reveal.year ? ` (${room.reveal.year})` : ""}
                     </p>

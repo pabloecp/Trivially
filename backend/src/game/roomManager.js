@@ -1,7 +1,7 @@
-import { selectSongs } from "../catalog/songSelector.js";
+import { SONG_DIFFICULTIES, SONG_GENRES, SONG_LANGUAGES, filterSongs, songCounts } from "../catalog/songFilters.js";
 import { hasRole } from "../auth/roles.js";
 import { hydrateSong } from "../catalog/catalogProvider.js";
-import { cleanTitle } from "../catalog/trackResolver.js";
+import { cleanTitle, displayTitle } from "../catalog/trackResolver.js";
 import { applyMatchStats } from "../db/store.js";
 import { isCorrectAnswer, normalizeAnswer, songKey } from "./answers.js";
 import {
@@ -116,6 +116,73 @@ export function createRoomCode(existing) {
   return code;
 }
 
+// Acts whose own name has a comma, an "&" or a "+": one artist, never split ("Tyler, The Creator", "Jesse & Joy").
+const ONE_ARTIST = [
+  "Tyler, The Creator",
+  "Earth, Wind & Fire",
+  "Crosby, Stills, Nash & Young",
+  "Crosby, Stills & Nash",
+  "Emerson, Lake & Palmer",
+  "Jesse & Joy",
+  "Chino & Nacho",
+  "Wisin & Yandel",
+  "Jowell & Randy",
+  "Zion & Lennox",
+  "Alexis & Fido",
+  "Angel & Khriz",
+  "Baby Rasta & Gringo",
+  "Hector & Tito",
+  "Rakim & Ken-Y",
+  "R.K.M & Ken-Y",
+  "Simon & Garfunkel",
+  "Hall & Oates",
+  "Daryl Hall & John Oates",
+  "Mumford & Sons",
+  "Kool & The Gang",
+  "Sly & The Family Stone",
+  "Bob Marley & The Wailers",
+  "Florence + The Machine",
+  "Macklemore & Ryan Lewis",
+  "Sam & Dave",
+  "Ike & Tina Turner",
+  "Brooks & Dunn",
+  "Dan + Shay",
+  "Chase & Status",
+  "Above & Beyond",
+];
+const escapeRe = (text) => text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+const ONE_ARTIST_RE = new RegExp(`(?:^|(?<=[\\s,&]))(?:${ONE_ARTIST.map(escapeRe).join("|")})(?=$|[\\s,&])`, "gi");
+
+// A song's artists, written the same way whatever the source: "Tainy, Alvaro Diaz", "Bad Bunny & Drake" or
+// "ROSALÍA feat. The Weeknd" give each one apart ("tainy", "alvaro diaz"), but "Tyler, The Creator" stays one. The
+// first one is the main artist.
+export function artistsOf(name = "") {
+  return String(name)
+    .replace(ONE_ARTIST_RE, (act) => act.replace(/[,&+]/g, "\u0001"))
+    .split(/\s*(?:,|&|\bfeat\.?|\bft\.?|\s+x\s+|\bwith\b)\s*/i)
+    .map((a) => normalizeAnswer(a.replace(/\u0001/g, " ")))
+    .filter(Boolean);
+}
+
+/** A list of artists as people read it: "Peso Pluma, Gabito Ballesteros & Junior H". The last one goes after "&", so
+ *  a name with a comma in it stays readable as one: "Tyler, The Creator & Kali Uchis". */
+export function joinArtists(list) {
+  const names = (list || []).filter(Boolean);
+  return names.length > 1 ? `${names.slice(0, -1).join(", ")} & ${names[names.length - 1]}` : names[0] || "";
+}
+
+/** Every artist of a song (the full list from Spotify), else its credit as it is. */
+export function artistLine(song) {
+  if (Array.isArray(song?.artists) && song.artists.length) return joinArtists(song.artists);
+  // The search box's list already carries them as one line.
+  return (typeof song?.artists === "string" && song.artists) || song?.artistName || "";
+}
+
+// A song's artists to compare them: each name of its list whole ("Tyler, The Creator" is one), else split from its credit.
+function artistKeys(song) {
+  return Array.isArray(song?.artists) && song.artists.length ? song.artists.map((a) => normalizeAnswer(a)) : artistsOf(song?.artistName);
+}
+
 // Adivina la canción's ways of answering ("Modos"): closed questions, four songs to choose from ("opciones"), and open
 // ones, the title typed in the search box ("escribir"). Both are ticked in a new room; the rounds are shared evenly.
 export const MUSIC_FORMATS = ["opciones", "escribir"];
@@ -123,12 +190,17 @@ export const MUSIC_FORMATS = ["opciones", "escribir"];
 const MUSIC_LIMITS = { rounds: { min: 5, max: 25 }, roundMs: { min: 15000, max: 35000 } };
 const clampTo = (n, { min, max }, fallback) => Math.min(max, Math.max(min, Math.round(Number(n)) || fallback));
 
-// A new room plays every playlist of the catalog (Top 500 Español and Top 500 Inglés).
-function defaultConfig(catalog) {
+// A new room plays the whole catalog (`useCatalog`, every language, genre and difficulty ticked) and no Spotify
+// playlists; `playlistIds` are the ticked Spotify ones ("sp:<id>"). With `useCatalog` false only those play.
+function defaultConfig() {
   return {
     rounds: 5,
     roundMs: ROUND_MS,
-    playlistIds: (catalog?.playlists || []).map((p) => p.id),
+    useCatalog: true,
+    languages: [...SONG_LANGUAGES],
+    genres: [...SONG_GENRES],
+    difficulties: [...SONG_DIFFICULTIES],
+    playlistIds: [],
     formats: [...MUSIC_FORMATS],
     quiz: defaultQuizConfig(),
     geo: defaultGeoConfig(),
@@ -196,6 +268,17 @@ export class RoomManager {
     return this.rooms.get(code.toUpperCase());
   }
 
+  /**
+   * The room a code opens, checked before asking for a name (the Jugar sheet's "Tengo un código"): it throws when no
+   * room has that code, or when the host took this player out of it.
+   */
+  findToJoin(code, userId = null) {
+    const room = this.get(String(code || ""));
+    if (!room) throw new Error("No hay ninguna sala con ese código");
+    if (userId && room.blocked?.has(userId)) throw new Error("El anfitrión te bloqueó de esta sala");
+    return room;
+  }
+
   create({ host, mode, config, game = null }) {
     const code = createRoomCode(this.rooms);
     const room = {
@@ -216,7 +299,7 @@ export class RoomManager {
       timer: null,
       // "sp:<id>" -> a Spotify playlist the host added: its songs and which ones are already playable.
       customPlaylists: {},
-      config: { ...defaultConfig(this.catalog), ...config },
+      config: { ...defaultConfig(), ...config },
       players: new Map(),
       // The room's scoreboard across its matches: how many were finished, and per player (even one who left) their
       // name, avatar, matches played and wins.
@@ -654,52 +737,60 @@ export class RoomManager {
     if (config?.roundMs != null) next.roundMs = clampTo(config.roundMs, MUSIC_LIMITS.roundMs, ROUND_MS);
     // Adivina la canción's ways of answering; both may be unticked (the match then can't start).
     if (Array.isArray(config?.formats)) next.formats = MUSIC_FORMATS.filter((f) => config.formats.includes(f));
+    // The catalog on or off (off: only the ticked Spotify playlists play). Missing in an older room means on.
+    if (config?.useCatalog != null) next.useCatalog = config.useCatalog !== false;
+    // The catalog's filters; any list may be left empty (only the Spotify playlists then play, if any).
+    if (Array.isArray(config?.languages)) next.languages = SONG_LANGUAGES.filter((v) => config.languages.includes(v));
+    if (Array.isArray(config?.genres)) next.genres = SONG_GENRES.filter((v) => config.genres.includes(v));
+    if (Array.isArray(config?.difficulties)) next.difficulties = SONG_DIFFICULTIES.filter((v) => config.difficulties.includes(v));
     if (config?.playlistIds) {
-      // Spotify playlists can only be added by the host (addSpotifyPlaylist); here they can only stay or go.
-      const known = this.knownPlaylistIds(room);
-      // All of them may be unticked: the match then has no songs and can't start.
+      // Spotify playlists can only be added by addSpotifyPlaylist; here they can only stay or go. (An older client's
+      // catalog playlists are dropped: the catalog is chosen with the filters now.)
+      const known = new Set(Object.keys(room.customPlaylists || {}));
       next.playlistIds = [...new Set(config.playlistIds)].filter((id) => known.has(id));
     }
     room.config = next;
-    this.syncSpotifyPlaylists(room);
+    this.syncPlaylists(room);
   }
 
-  /** The song playlists the room can play: the catalog's and the Spotify ones the host added. */
-  knownPlaylistIds(room) {
-    return new Set([...this.catalog.playlists.map((p) => p.id), ...Object.keys(room.customPlaylists || {})]);
+  /** The room's Spotify playlists that play: the ticked ones. */
+  activePlaylists(room) {
+    return (room.config.playlistIds || []).map((id) => room.customPlaylists?.[id]).filter(Boolean);
   }
 
-  /** Only the Spotify playlists the room's settings choose keep loading their songs (see loadPlaylist). */
-  syncSpotifyPlaylists(room) {
+  // Only the playlists that play keep loading; one that starts playing again picks up where it stopped.
+  syncPlaylists(room) {
+    const active = new Set(this.activePlaylists(room));
     for (const entry of Object.values(room.customPlaylists || {})) {
       const wasActive = entry.active;
-      entry.active = (room.config.playlistIds || []).includes(entry.id);
+      entry.active = active.has(entry);
       if (entry.active && !wasActive) this.loadPlaylist(room, entry);
     }
   }
 
   /**
    * The settings of a playlist's game, valid whatever was sent (an edit, or an imported JSON): each game's own merge
-   * from its defaults. Adivina la canción's are its rounds, seconds, ways of answering and song playlists; ids the room
-   * doesn't know are dropped, and when none of them is known (a JSON from somewhere else) it plays the whole catalog.
+   * from its defaults. Adivina la canción's are its rounds, seconds, ways of answering, the catalog and its filters
+   * (languages, genres, difficulties) and the room's Spotify playlists; ids the room doesn't know are dropped (a JSON
+   * from somewhere else plays the catalog with its filters).
    */
   cleanItemConfig(room, game, change = {}) {
     if (game === QUIZ_GAME) return mergeQuizConfig(undefined, change);
     if (game === GEO_GAME) return mergeGeoConfig(undefined, change);
     if (game === HISTORY_GAME) return mergeHistoryConfig(undefined, change);
     if (game === MINES_GAME) return mergeMinesConfig(undefined, change);
-    const base = defaultConfig(this.catalog);
-    const known = this.knownPlaylistIds(room);
-    let playlistIds = base.playlistIds;
-    if (Array.isArray(change.playlistIds)) {
-      const ids = [...new Set(change.playlistIds)].filter((id) => known.has(id));
-      playlistIds = ids.length || !change.playlistIds.length ? ids : base.playlistIds;
-    }
+    const base = defaultConfig();
+    const known = new Set(Object.keys(room.customPlaylists || {}));
+    const pick = (list, all, fallback) => (Array.isArray(list) ? all.filter((v) => list.includes(v)) : fallback);
     return {
       rounds: change.rounds != null ? clampTo(change.rounds, MUSIC_LIMITS.rounds, base.rounds) : base.rounds,
       roundMs: change.roundMs != null ? clampTo(change.roundMs, MUSIC_LIMITS.roundMs, base.roundMs) : base.roundMs,
-      playlistIds,
-      formats: Array.isArray(change.formats) ? MUSIC_FORMATS.filter((f) => change.formats.includes(f)) : base.formats,
+      formats: pick(change.formats, MUSIC_FORMATS, base.formats),
+      useCatalog: change.useCatalog != null ? change.useCatalog !== false : base.useCatalog,
+      languages: pick(change.languages, SONG_LANGUAGES, base.languages),
+      genres: pick(change.genres, SONG_GENRES, base.genres),
+      difficulties: pick(change.difficulties, SONG_DIFFICULTIES, base.difficulties),
+      playlistIds: Array.isArray(change.playlistIds) ? [...new Set(change.playlistIds)].filter((id) => known.has(id)) : [],
     };
   }
 
@@ -756,11 +847,12 @@ export class RoomManager {
       const n = exact ? pickMinesQuestions(this.minesQuestions, mines).length : this.cachedCount(item, () => countMinesQuestions(this.minesQuestions, mines));
       return n < mines.rounds ? short(n, "tableros", mines.rounds, "categorías o dificultades") : null;
     }
-    // Adivina la canción: a different song for every round, from its playlists (Spotify songs may still be loading).
-    if (!config.formats?.length) return "Elige al menos un modo de juego.";
-    if (!config.playlistIds?.length) return "Elige al menos una playlist de canciones.";
+    // Adivina la canción: a different song for every round, from the catalog with its filters and its Spotify
+    // playlists (whose songs may still be loading).
+    if (!config.formats?.length) return "Elige al menos un tipo de respuesta.";
+    if (config.useCatalog === false && !config.playlistIds?.length) return "Activa el catálogo o elige una playlist.";
     const n = this.songPool({ ...room, config: configWithItem(base, item) }).length;
-    return n < config.rounds ? short(n, "canciones", config.rounds, "playlists") : null;
+    return n < config.rounds ? short(n, "canciones", config.rounds, "idiomas, géneros o dificultades") : null;
   }
 
   /** The question banks don't change while the server runs: what some settings can draw is counted once. */
@@ -774,15 +866,23 @@ export class RoomManager {
     return this.countCache.get(key);
   }
 
-  /** In the playlist's panel: for each game, why it can't be played yet (null when it can) and its chips' counts. */
+  /**
+   * In the playlist's panel: for each game, why it can't be played yet (null when it can) and its chips' counts; for
+   * Adivina la canción, also how many songs its settings have ready.
+   */
   playlistStatus(room) {
     const status = {};
     for (const item of room.playlist?.items || []) {
       let counts;
+      let songsReady;
       if (item.game === QUIZ_GAME) counts = this.cachedCount(item, () => questionCounts(this.quizQuestions, item.config), "chips");
       else if (item.game === HISTORY_GAME) counts = this.cachedCount(item, () => historyCounts(this.historyQuestions, item.config), "chips");
       else if (item.game === MINES_GAME) counts = this.cachedCount(item, () => minesCounts(this.minesQuestions, item.config), "chips");
-      status[item.id] = { problem: this.itemProblem(room, item), counts };
+      else if (item.game === "musica") {
+        counts = this.cachedCount(item, () => songCounts(this.catalog, item.config), "chips");
+        songsReady = this.songPool({ ...room, config: configWithItem(room.config, item) }).length;
+      }
+      status[item.id] = { problem: this.itemProblem(room, item), counts, songsReady };
     }
     return status;
   }
@@ -792,10 +892,15 @@ export class RoomManager {
    * player the host gave permission to). Their own Spotify is the one read.
    */
   assertSpotifyEditor(room, userId) {
-    if (!this.canEditConfig(room, userId)) throw new Error("Necesitas permiso del host para cambiar las playlists");
+    this.assertPlaylistEditor(room, userId);
     const user = this.store?.users?.[userId];
     if (!user || !hasRole(user, "owner")) throw new Error("Las playlists de Spotify son solo para owners");
     if (!user.spotify) throw new Error("Conecta tu Spotify en tu perfil primero");
+  }
+
+  /** Pasting a public playlist's link (catalog/spotifyEmbed.js): anyone who may change the room's settings. */
+  assertPlaylistEditor(room, userId) {
+    if (!this.canEditConfig(room, userId)) throw new Error("Necesitas permiso del host para cambiar las playlists");
     if (room.phase !== "lobby") throw new Error("La partida ya comenzó");
   }
 
@@ -803,18 +908,48 @@ export class RoomManager {
    * Adds (and selects) one of the host's Spotify playlists, read by catalog/spotifyLibrary.js. Its songs are looked
    * up on iTunes in the background; the match can start as soon as any song of the selection is playable.
    */
-  addSpotifyPlaylist(room, userId, playlist) {
-    this.assertSpotifyEditor(room, userId);
+  addSpotifyPlaylist(room, userId, playlist, { fromLink = false } = {}) {
+    if (fromLink) this.assertPlaylistEditor(room, userId);
+    else this.assertSpotifyEditor(room, userId);
     const id = `${SPOTIFY_PREFIX}${playlist.id}`;
     let entry = room.customPlaylists[id];
     if (!entry) {
       entry = { id, name: playlist.name, image: playlist.image, tracks: playlist.tracks, songs: new Map(), done: new Set(), active: true };
+      // A pasted public playlist brings each song's own preview (15–22 s): they can be played at once. iTunes is still
+      // asked in the background, and what it finds (a 30 s preview, the album's cover and year) replaces it.
+      for (const t of playlist.tracks) {
+        if (!t.previewUrl) continue;
+        entry.songs.set(t.spotifyId, {
+          id: `sp-${t.spotifyId}`,
+          spotifyId: t.spotifyId,
+          title: displayTitle(t.title),
+          artistName: t.artists.join(" & ") || "Artista",
+          artists: t.artists,
+          albumName: t.albumName || "",
+          year: t.year || null,
+          image: playlist.image || null,
+          previewUrl: t.previewUrl,
+        });
+      }
+      entry.instant = entry.songs.size > 0;
       room.customPlaylists[id] = entry;
     }
+    // Adding one ticks it.
+    const ids = room.config.playlistIds || [];
+    if (!ids.includes(id)) room.config = { ...room.config, playlistIds: [...ids, id] };
     entry.active = true;
-    if (!room.config.playlistIds.includes(id)) room.config = { ...room.config, playlistIds: [...room.config.playlistIds, id] };
     this.loadPlaylist(room, entry);
     return entry;
+  }
+
+  /** Takes a Spotify playlist out of the room for good (its waiting searches stop); anyone who may change the settings. */
+  removeSpotifyPlaylist(room, userId, playlistId) {
+    this.assertPlaylistEditor(room, userId);
+    const entry = room.customPlaylists?.[playlistId];
+    if (!entry) throw new Error("Esa playlist no está en la sala");
+    entry.active = false;
+    delete room.customPlaylists[playlistId];
+    room.config = { ...room.config, playlistIds: (room.config.playlistIds || []).filter((id) => id !== playlistId) };
   }
 
   /**
@@ -838,7 +973,9 @@ export class RoomManager {
         onResult: (spotifyId, song) => {
           entry.done.add(spotifyId);
           if (deep) entry.retried.add(spotifyId);
-          if (song) entry.songs.set(spotifyId, song);
+          // A pasted playlist's song was already playable with Spotify's preview (15–22 s); iTunes' (30 s, with the
+          // album's cover and year) takes its place once found.
+          if (song) entry.songs.set(spotifyId, { ...song, artists: entry.tracks.find((t) => t.spotifyId === spotifyId)?.artists || song.artists });
           this.progressChanged(room);
           // The first pass just finished: start the second one.
           if (!deep && entry.run === run && entry.done.size === entry.tracks.length) this.loadPlaylist(room, entry);
@@ -864,18 +1001,13 @@ export class RoomManager {
   }
 
   /**
-   * Every song the match can draw from right now: the chosen catalog playlists plus the playable Spotify songs. With
-   * every playlist unticked there are none.
+   * Every song the match can draw from right now: the catalog's songs that pass the filters plus the playable songs
+   * of the Spotify playlists that play (those have no filters).
    */
   songPool(room) {
-    const ids = room.config.playlistIds || [];
-    if (Array.isArray(room.config.playlistIds) && !ids.length && this.catalog.playlists?.length) return [];
-    const custom = ids.map((id) => room.customPlaylists?.[id]).filter(Boolean);
-    const catalogIds = ids.filter((id) => !id.startsWith(SPOTIFY_PREFIX));
-    // With only Spotify playlists chosen, the default playlist isn't mixed in.
-    const pool = catalogIds.length || !custom.length ? selectSongs(this.catalog, { playlistIds: catalogIds }) : [];
+    const pool = room.config.useCatalog === false ? [] : filterSongs(this.catalog, room.config);
     const seen = new Set(pool.map((s) => s.id));
-    for (const entry of custom) {
+    for (const entry of this.activePlaylists(room)) {
       for (const song of entry.songs.values()) {
         if (!seen.has(song.id)) {
           seen.add(song.id);
@@ -918,7 +1050,10 @@ export class RoomManager {
   /**
    * A song as a round of Adivina la canción, with its way of answering: the less used of the ticked ones so far (a tie
    * drawn at random), so the rounds are shared evenly. A closed round ("choice") gets four songs to choose from, the
-   * right one and three others of the songs being played (other titles), shuffled; `answer` is the right one's position.
+   * right one and three others (other titles), shuffled; `answer` is the right one's position. The others are by the
+   * same main artist when there are enough (a Bad Bunny song among three more of Bad Bunny's, his duets included),
+   * then by the song's other artists, looked for in the songs being played, then the catalog and the songs found for
+   * Spotify playlists; any song fills what is left.
    * These copies stay on the server: the options only go out while the round is playing (see publicState).
    */
   withFormat(room, song, pool) {
@@ -929,22 +1064,38 @@ export class RoomManager {
     const candidates = formats.filter((f) => used(f) === least);
     const format = candidates[Math.floor(Math.random() * candidates.length)];
     if (format !== "opciones") return { ...song, type: "open" };
-    const label = (s) => (s.artistName ? `${s.title} - ${s.artistName}` : s.title);
+    const label = (s) => (artistLine(s) ? `${s.title} - ${artistLine(s)}` : s.title);
     const keys = new Set([songKey(song)]);
     const others = [];
-    // The room's songs first; the whole catalog when they are too few for three wrong answers.
-    for (const from of [pool, this.catalog.songs || []]) {
-      const shuffled = [...from].sort(() => Math.random() - 0.5);
-      for (const s of shuffled) {
-        if (others.length >= 3) break;
-        if (!s?.title || keys.has(songKey(s))) continue;
-        keys.add(songKey(s));
-        others.push(s);
+    const sources = [pool, this.catalog.songs || [], this.globalSongList()];
+    const add = (accept) => {
+      for (const from of sources) {
+        const shuffled = [...from].sort(() => Math.random() - 0.5);
+        for (const s of shuffled) {
+          if (others.length >= 3) return;
+          if (!s?.title || keys.has(songKey(s)) || !accept(s)) continue;
+          keys.add(songKey(s));
+          others.push(s);
+        }
       }
-    }
+    };
+    // Songs where the main artist is, then any of the song's other artists, then any song (the room's songs before
+    // the whole catalog).
+    const [main, ...rest] = artistKeys(song);
+    if (main) add((s) => artistKeys(s).includes(main));
+    if (rest.length) add((s) => artistKeys(s).some((a) => rest.includes(a)));
+    add(() => true);
     if (others.length < 3) return { ...song, type: "open" };
     const options = [song, ...others].sort(() => Math.random() - 0.5);
-    return { ...song, type: "choice", options: options.map(label), answer: options.indexOf(song) };
+    // `options` is the text of each (what a pick is recorded as); `details` the same split, to show the title big and
+    // every artist under it.
+    return {
+      ...song,
+      type: "choice",
+      options: options.map(label),
+      details: options.map((s) => ({ title: s.title, artists: artistLine(s) })),
+      answer: options.indexOf(song),
+    };
   }
 
   updatePlayer(room, userId, { name, avatar }) {
@@ -1034,20 +1185,21 @@ export class RoomManager {
       room.tracks = [];
       room.totalRounds = room.config.rounds || 5;
       const available = this.songPool(room).length;
-      const loading = (room.config.playlistIds || []).some((id) => {
-        const entry = room.customPlaylists?.[id];
-        return entry && entry.done.size < entry.tracks.length;
-      });
+      const loading = this.activePlaylists(room).some((entry) => entry.done.size < entry.tracks.length);
       if (!available) {
-        if (!(room.config.playlistIds || []).length) throw new Error("Elige al menos una playlist");
-        throw new Error(loading ? "Tus canciones de Spotify se están cargando, espera unos segundos" : "Ninguna canción cumple esos filtros");
+        if (loading) throw new Error("Tus canciones de Spotify se están cargando, espera unos segundos");
+        throw new Error(
+          room.config.useCatalog === false && !this.activePlaylists(room).length
+            ? "Activa el catálogo o elige una playlist"
+            : "Ninguna canción cumple esos filtros"
+        );
       }
       // Every round gets a different song: with fewer songs than rounds the same ones would keep coming back.
-      if (!this.musicFormats(room).length) throw new Error("Elige al menos un modo de juego");
+      if (!this.musicFormats(room).length) throw new Error("Elige al menos un tipo de respuesta");
       if (available < room.totalRounds) {
         throw new Error(
           `Solo hay ${available} ${available === 1 ? "canción lista" : "canciones listas"} para ${room.totalRounds} rondas. ` +
-            (loading ? "Espera a que carguen más o baja las rondas." : "Baja las rondas o elige más playlists.")
+            (loading ? "Espera a que carguen más o baja las rondas." : "Baja las rondas o marca más idiomas, géneros o dificultades.")
         );
       }
     }
@@ -1077,7 +1229,7 @@ export class RoomManager {
         if (!s?.id || !s.title || seen.has(s.id) || seen.has(songKey(s))) continue;
         seen.add(s.id);
         seen.add(songKey(s));
-        list.push({ id: s.id, title: s.title, artistName: s.artistName || "Artista" });
+        list.push({ id: s.id, title: s.title, artistName: s.artistName || "Artista", artists: artistLine(s) || "Artista" });
       }
       this.songListCache = { key, list };
     }
@@ -1105,16 +1257,19 @@ export class RoomManager {
       });
     }
 
-    // Every song of the chosen Spotify playlists, found on iTunes yet or not.
-    for (const id of room?.config?.playlistIds || []) {
-      const entry = room.customPlaylists?.[id];
-      if (!entry) continue;
+    // Every song of the Spotify playlists that play, found on iTunes yet or not.
+    for (const entry of room ? this.activePlaylists(room) : []) {
       for (const t of entry.tracks) {
         const song = entry.songs.get(t.spotifyId);
         const id = song?.id || `sp-${t.spotifyId}`;
         if (seen.has(id)) continue;
         seen.add(id);
-        allSongs.push({ id, title: song?.title || cleanTitle(t.title), artistName: song?.artistName || t.artists.join(" & ") || "Artista" });
+        allSongs.push({
+          id,
+          title: song?.title || cleanTitle(t.title),
+          artistName: song?.artistName || t.artists.join(" & ") || "Artista",
+          artists: joinArtists(t.artists) || artistLine(song) || "Artista",
+        });
       }
     }
 
@@ -1200,6 +1355,68 @@ export class RoomManager {
   assertNotSpectator(room, userId) {
     if (room.players.get(userId)?.spectator) throw new Error("Estás viendo la partida: entrarás cuando termine");
     if (room.paused) throw new Error("La partida está en pausa");
+  }
+
+  /**
+   * An owner reports the question being played (db/reports.js keeps it): the question as the server has it (with its
+   * answer), the game's settings and who was in the room, so it can be checked later. `reporterId` must be the
+   * socket's verified account; each owner reports a round once.
+   */
+  questionReport(room, reporterId) {
+    const reporter = this.store?.users?.[reporterId];
+    if (!reporter || !hasRole(reporter, "owner")) throw new Error("Solo los owners pueden reportar preguntas");
+    if (!["countdown", "playing", "reveal"].includes(room.phase)) throw new Error("No hay ninguna pregunta en juego");
+    const track = room.tracks[room.currentRound];
+    if (!track) throw new Error("No hay ninguna pregunta en juego");
+    // Who reported each round's question (the round objects are new in every match, so a replay starts clean).
+    this.reportedBy ||= new WeakMap();
+    const reporters = this.reportedBy.get(track) || new Set();
+    if (reporters.has(reporterId)) throw new Error("Ya reportaste esta pregunta");
+    reporters.add(reporterId);
+    this.reportedBy.set(track, reporters);
+
+    const settings = {
+      [QUIZ_GAME]: room.config.quiz,
+      [GEO_GAME]: room.config.geo,
+      [HISTORY_GAME]: room.config.history,
+      [MINES_GAME]: room.config.mines,
+    }[room.game] ?? {
+      rounds: room.config.rounds,
+      roundMs: room.config.roundMs,
+      formats: room.config.formats,
+      useCatalog: room.config.useCatalog !== false,
+      languages: room.config.languages,
+      genres: room.config.genres,
+      difficulties: room.config.difficulties,
+      playlistIds: room.config.playlistIds,
+    };
+    const players = [...room.players.values()];
+    return {
+      game: room.game,
+      prompt: track.prompt || (track.title ? `${track.title} - ${track.artistName || ""}`.trim() : null),
+      question: JSON.parse(JSON.stringify(track)),
+      round: room.currentRound + 1,
+      totalRounds: room.totalRounds,
+      phase: room.phase,
+      tiebreak: Boolean(room.tiebreak),
+      settings: JSON.parse(JSON.stringify(settings || {})),
+      room: {
+        code: room.code,
+        players: players.length,
+        connected: players.filter((p) => p.connected).length,
+        spectators: players.filter((p) => p.spectator).length,
+      },
+      players: players.map((p) => ({
+        id: p.id,
+        name: p.name,
+        connected: p.connected,
+        spectator: Boolean(p.spectator),
+        score: p.score,
+        answer: p.lastAnswer ?? null,
+      })),
+      reporter: { id: reporterId, name: reporter.name },
+      createdAt: new Date().toISOString(),
+    };
   }
 
   /**
@@ -1406,7 +1623,7 @@ export class RoomManager {
     this.resetMatch(room);
     room.game = item.game;
     room.config = configWithItem(run.savedConfig, item);
-    this.syncSpotifyPlaylists(room);
+    this.syncPlaylists(room);
     try {
       this.start(room, room.hostId);
     } catch (err) {
@@ -1436,7 +1653,7 @@ export class RoomManager {
     run.finished = true;
     room.game = PLAYLIST_GAME;
     room.config = run.savedConfig;
-    this.syncSpotifyPlaylists(room);
+    this.syncPlaylists(room);
     // The last game's rounds are done with; its scores stay until the room goes back to a lobby.
     room.tracks = [];
     room.totalRounds = 0;
@@ -1451,7 +1668,7 @@ export class RoomManager {
     room.config = room.run.savedConfig;
     room.run = null;
     room.game = PLAYLIST_GAME;
-    this.syncSpotifyPlaylists(room);
+    this.syncPlaylists(room);
   }
 
   // Moves the whole room into another game (or back to the Home screen with `null`), abandoning any match in progress.
@@ -1945,7 +2162,7 @@ export class RoomManager {
   /** What the player answered, as people read it: "As It Was - Harry Styles" for a picked suggestion (whose raw
    *  value is a song id such as "harry-styles-as-it-was") or for the right song; the typed text otherwise. */
   answerLabel(room, track, answerText, correct) {
-    const label = (song) => (song.artistName ? `${song.title} - ${song.artistName}` : song.title);
+    const label = (song) => (artistLine(song) ? `${song.title} - ${artistLine(song)}` : song.title);
     if (correct) return label(track);
     const raw = String(answerText);
     const picked = this.buildSearchCatalog(room).find((s) => s.id === raw);
@@ -2037,7 +2254,8 @@ export class RoomManager {
         // Songs looked at once, and the not-found ones waiting for the second, deeper search.
         checked: e.done.size,
         retrying: e.active ? this.missingSongs(e).length : 0,
-        loading: e.active && (e.done.size < e.tracks.length || this.missingSongs(e).length > 0),
+        // A pasted public playlist is playable at once; what still runs is only looking up covers.
+        loading: e.active && !e.instant && (e.done.size < e.tracks.length || this.missingSongs(e).length > 0),
         // Small covers of the songs found so far, for the strip under the playlists.
         covers: [...e.songs.values()]
           .map((song) => song.image?.replace(/\/\d+x\d+bb\./, "/160x160bb."))
@@ -2086,6 +2304,9 @@ export class RoomManager {
       if (track) payload.question = this.publicQuestion(room, track);
       // In the lobby: how many questions each topic and way of answering has, for the settings' chips.
       if (room.phase === "lobby") payload.questionCounts = questionCounts(this.quizQuestions, room.config.quiz);
+    } else if (room.game === "musica" && room.phase === "lobby") {
+      // The catalog's songs per language, genre and difficulty, for the settings' chips.
+      payload.songCounts = songCounts(this.catalog, room.config);
     } else if (room.game === GEO_GAME) {
       if (track) payload.question = this.publicGeoQuestion(room, track);
       if (track && showTrack) {
@@ -2126,6 +2347,7 @@ export class RoomManager {
       payload.choice = {
         type: closed ? "choice" : "open",
         options: closed && open ? track.options : null,
+        details: closed && open ? track.details || null : null,
         answer: closed && showAnswer ? track.answer : null,
         picks: closed && showAnswer ? picks : null,
       };

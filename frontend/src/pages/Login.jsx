@@ -55,7 +55,7 @@ function LoginScreen() {
     setLoading(true);
     setMsg("");
     try {
-      await registerAccount({ name: accName.trim(), email: email.trim(), password });
+      await withSound(() => registerAccount({ name: accName.trim(), email: email.trim(), password }));
       nav(returnTo);
     } catch (err) {
       setMsg(err.message);
@@ -69,7 +69,7 @@ function LoginScreen() {
     setLoading(true);
     setMsg("");
     try {
-      await loginAccount(loginIdentifier.trim(), loginPassword);
+      await withSound(() => loginAccount(loginIdentifier.trim(), loginPassword));
       nav(returnTo);
     } catch (err) {
       setMsg(err.message);
@@ -136,7 +136,7 @@ function LoginScreen() {
               required
             />
             {msg && <p className="tv-lobby-error" role="alert">{msg}</p>}
-            <button className="tv-btn tv-btn--block tv-c-pink" type="submit" disabled={loading || !loginIdentifier.trim() || !loginPassword}>
+            <button className="tv-btn tv-btn--block tv-c-pink" type="submit" data-sound="none" disabled={loading || !loginIdentifier.trim() || !loginPassword}>
               {loading ? "Entrando…" : "Iniciar sesión"}
             </button>
           </form>
@@ -170,7 +170,7 @@ function LoginScreen() {
               required
             />
             {msg && <p className="tv-lobby-error" role="alert">{msg}</p>}
-            <button className="tv-btn tv-btn--block tv-c-pink" type="submit" disabled={loading || !accName.trim() || !email.trim() || !password}>
+            <button className="tv-btn tv-btn--block tv-c-pink" type="submit" data-sound="none" disabled={loading || !accName.trim() || !email.trim() || !password}>
               {loading ? "Creando cuenta…" : "Crear cuenta"}
             </button>
           </form>

@@ -7,7 +7,12 @@ const MAX_ENTRIES = 240; // ~120 previews of ~1 MB plus their small covers
 const cache = new Map(); // url -> Promise<Buffer>; Map keeps insertion order, so the first key is the oldest
 
 export function isPreviewUrl(url) {
-  return typeof url === "string" && url.startsWith("https://audio-ssl.itunes.apple.com/");
+  return typeof url === "string" && (url.startsWith("https://audio-ssl.itunes.apple.com/") || isSpotifyPreviewUrl(url));
+}
+
+/** Spotify's own 30 s previews (MP3), which come with the public playlists pasted as a link. */
+export function isSpotifyPreviewUrl(url) {
+  return typeof url === "string" && url.startsWith("https://p.scdn.co/mp3-preview/");
 }
 
 export function isCoverUrl(url) {

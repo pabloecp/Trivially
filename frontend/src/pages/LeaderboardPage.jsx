@@ -127,7 +127,6 @@ export default function LeaderboardPage() {
                           alignItems: "center",
                           cursor: "pointer",
                         }}
-                        title={`Ver perfil de ${e.name}`}
                       >
                         <UserAvatar
                           avatar={e.avatar}

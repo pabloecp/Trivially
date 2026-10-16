@@ -1,5 +1,5 @@
-// Builds backend/src/catalog/catalog.json: the two playlists of most-streamed songs on Spotify, in Spanish and in
-// English (500 each), with their 30 s preview and cover from iTunes.
+// Builds backend/src/catalog/catalog.json: the most-streamed songs on Spotify, in Spanish and in English (500 each),
+// with their 30 s preview and cover from iTunes.
 //
 //   NODE_USE_ENV_PROXY=1 node scripts/buildCatalog.js [--size 500] [--cache cache.json] [--out otro.json]
 //
@@ -260,26 +260,8 @@ async function main() {
   const esIds = ids(spanish);
   const enIds = ids(english);
 
-  const catalog = {
-    source: old.source,
-    playlists: [
-      {
-        id: "top-es",
-        name: "Most Streamed Songs on Spotify · Español",
-        description: `Las ${esIds.length} canciones en español más escuchadas de la historia de Spotify.`,
-        isDefault: true,
-        trackIds: esIds,
-      },
-      {
-        id: "top-en",
-        name: "Most Streamed Songs on Spotify · Inglés",
-        description: `Las ${enIds.length} canciones en inglés más escuchadas de la historia de Spotify.`,
-        isDefault: false,
-        trackIds: enIds,
-      },
-    ],
-    songs: [...songs.values()].sort((a, b) => a.id.localeCompare(b.id)),
-  };
+  // Only songs: the rankings (and the difficulty) come from each song's language and streams.
+  const catalog = { source: old.source, songs: [...songs.values()].sort((a, b) => a.id.localeCompare(b.id)) };
   fs.writeFileSync(OUT_PATH, `${JSON.stringify(catalog, null, 1)}\n`);
   console.log(`Listo: ${esIds.length} en español, ${enIds.length} en inglés, ${catalog.songs.length} canciones en ${OUT_PATH}`);
 }

@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import TvShell from "../../components/home/TvShell.jsx";
 import Confetti from "../../components/home/Confetti.jsx";
 import Icon from "../../components/home/Icon.jsx";
+import WaitingPill, { waitingNames } from "../../components/home/WaitingPill.jsx";
 import MatchResults from "../../components/home/MatchResults.jsx";
 import PartyPanel from "../../components/home/PartyPanel.jsx";
 import { PhoneHint, RoomVerdict, roundPlayers } from "../../components/home/CentralBits.jsx";
@@ -12,7 +13,7 @@ import { useWorld } from "./worldData.js";
 import { LOCATION_SECONDS, STYLES } from "./geoInfo.js";
 import "../../styles/home.css";
 import "../../styles/geo.css";
-import { PauseButton, PauseVeil } from "../../components/home/PauseControls.jsx";
+import { PauseButton, ReportButton, PauseVeil } from "../../components/home/PauseControls.jsx";
 
 const COUNTDOWN_MS = 3000;
 // One colour per player for the pins on the reveal map (never the green and red of right and wrong).
@@ -180,6 +181,9 @@ function GameScreen() {
   const tiedNames = tiebreak ? tiebreak.playerIds.map((id) => room.players.find((p) => p.id === id)?.name || "Jugador") : [];
   const colorOf = (id) => PIN_COLORS[Math.max(0, room.players.findIndex((p) => p.id === id)) % PIN_COLORS.length];
   const pinLocked = Boolean(myPin?.locked) || Boolean(me?.answered);
+  // Who the round still waits for, once this player answered: on the button under the map and in the top card.
+  const waiting = waitingNames(room, user?.id);
+  const waitLine = (done) => (waiting.length ? `${done}. Esperando a ${joinNames(waiting)}…` : `${done}.`);
 
   // Everyone's pins at the reveal (only the tied players' in a tiebreak).
   const revealPins =
@@ -224,7 +228,7 @@ function GameScreen() {
     title = question?.name || room.reveal?.name || "";
     if (phase === "reveal") hint = nextText;
     else if (!iPlay) hint = `Solo juegan ${joinNames(tiedNames)}: gana el primero que confirme su pin dentro del país.`;
-    else if (pinLocked) hint = tiebreak ? "Pin confirmado. Si cayó dentro y fuiste el primero, ganas." : "Pin confirmado. Esperando al resto…";
+    else if (pinLocked) hint = tiebreak ? "Pin confirmado. Si cayó dentro y fuiste el primero, ganas." : waitLine("Pin confirmado");
     else if (myPin) hint = `Arrástralo o ${touch ? "toca" : "haz clic en"} otro sitio para moverlo, y confirma.`;
     else hint = touch ? "Toca para poner tu pin. Doble toque o pellizca para acercar." : "Haz clic para poner tu pin. Rueda, doble clic o arrastra para moverte.";
   }
@@ -242,8 +246,6 @@ function GameScreen() {
     action = <PhoneHint room={room}>Pongan su pin desde su teléfono</PhoneHint>;
   } else if (central && phase === "reveal" && room.reveal && !tiebreak) {
     action = <RoomVerdict room={room} right={(p) => Boolean(p.lastAnswer?.inside)} detail={closestPin(room)} />;
-  } else if (central && phase === "reveal" && room.reveal) {
-    action = <Verdict room={room} me={null} user={null} tiebreak={tiebreak} tiedNames={tiedNames} iPlay={false} />;
   } else if (central) {
     action = <p className="tv-hint tv-geo-watch">{phase === "reveal" ? nextText : "Prepárense…"}</p>;
   } else if (spectator && phase !== "reveal") {
@@ -251,14 +253,21 @@ function GameScreen() {
   } else if (spectator && phase === "reveal") {
     action = <p className="tv-hint tv-geo-watch">{nextText}</p>;
   } else if (phase === "reveal" && room.reveal) {
-    action = <Verdict room={room} me={me} user={user} tiebreak={tiebreak} tiedNames={tiedNames} iPlay={iPlay} />;
+    // How the round went shows over the map (Verdict); this row only says what comes next.
+    action = <p className="tv-hint tv-geo-watch">{nextText}</p>;
   } else if (!iPlay) {
     action = <p className="tv-hint tv-geo-watch">Mira el desempate entre {joinNames(tiedNames)}</p>;
   } else {
     action = (
       <button type="button" className="tv-btn tv-btn--block tv-c-world" onClick={confirmPin} disabled={phase !== "playing" || !myPin || pinLocked} aria-live="polite">
-        <Icon name={pinLocked ? "check" : "pin"} size={20} strokeWidth={2.6} />
-        {pinLocked ? "Pin confirmado" : myPin ? "Confirmar pin" : "Pon tu pin en el mapa"}
+        {pinLocked && !tiebreak && waiting.length ? (
+          <WaitingPill names={waiting} inline />
+        ) : (
+          <>
+            <Icon name={pinLocked ? "check" : "pin"} size={20} strokeWidth={2.6} />
+            {pinLocked ? "Pin confirmado" : myPin ? "Confirmar pin" : "Pon tu pin en el mapa"}
+          </>
+        )}
       </button>
     );
   }
@@ -286,13 +295,13 @@ function GameScreen() {
           </div>
 
           <div className="tv-game-tools">
+            <ReportButton room={room} onError={setErr} />
             <PauseButton room={room} isHost={isHost} onError={setErr} />
             {isHost && (
               <button
                 type="button"
                 className={`tv-mini-btn${confirmHub ? " is-on" : ""}`}
                 onClick={backToHub}
-                title="Termina la partida y lleva a todos al inicio"
               >
                 {confirmHub ? "¿Seguro? Toca otra vez" : "Terminar"}
               </button>
@@ -336,6 +345,12 @@ function GameScreen() {
                 </div>
               )}
 
+              {/* How the round went, in a card over the map: this player's, or on the central device who won a
+                  tiebreak (how the whole room did is in the row under the map). */}
+              {phase === "reveal" && room.reveal && !spectator && (!central || tiebreak) && (
+                <Verdict room={room} me={me} user={central ? null : user} tiebreak={tiebreak} tiedNames={tiedNames} iPlay={iPlay} />
+              )}
+
               {err && (
                 <p className="tv-geo-error" role="alert">
                   {err}
@@ -367,15 +382,16 @@ function closestPin(room) {
   return `Más cerca: ${best.name}, a ${km(best.lastAnswer.distanceKm)}`;
 }
 
-// The end of a round, in the row under the map: how this player did (how far their pin landed), or who won the
-// tiebreak.
+// The end of a round, in a card over the top of the map (the country stays in sight under it): how far this player's
+// pin landed and the points, or who won the tiebreak.
 function Verdict({ room, me, user, tiebreak, tiedNames, iPlay }) {
   const answer = me?.lastAnswer;
   const name = room.reveal.name;
   let tone;
   let icon;
-  let title;
-  let detail;
+  let kicker;
+  let big;
+  let detail = null;
   let won = false;
   let points = false;
   if (tiebreak) {
@@ -383,12 +399,13 @@ function Verdict({ room, me, user, tiebreak, tiedNames, iPlay }) {
     won = Boolean(winner) && winner.id === user?.id;
     tone = winner ? (won || !iPlay ? "ok" : "bad") : "timeout";
     icon = winner ? "crown" : "hash";
-    title = winner ? (won ? "¡Ganaste el desempate!" : `¡${winner.name} gana el desempate!`) : "Nadie lo resolvió";
+    kicker = "Desempate";
+    big = winner ? (won ? "¡Ganaste!" : `¡Gana ${winner.name}!`) : "Nadie lo resolvió";
     detail = winner
       ? tiebreak.reason === "dentro"
-        ? `${won ? "Confirmaste" : "Confirmó"} ${name} primero.`
-        : `Nadie cayó dentro: ${won ? "tu" : "su"} pin quedó más cerca.`
-      : `${joinNames(tiedNames)} siguen empatados.`;
+        ? `${won ? "Confirmaste" : "Confirmó"} ${name} primero`
+        : `Nadie cayó dentro: ${won ? "tu" : "su"} pin quedó más cerca`
+      : `${joinNames(tiedNames)} siguen empatados`;
   } else {
     const inside = Boolean(answer?.inside);
     const placed = Boolean(answer?.pin);
@@ -396,20 +413,24 @@ function Verdict({ room, me, user, tiebreak, tiedNames, iPlay }) {
     points = placed;
     tone = inside ? "ok" : placed ? "bad" : "timeout";
     icon = inside ? "check" : placed ? "pin" : "hash";
-    title = inside ? "¡Dentro!" : placed ? `A ${km(answer.distanceKm)}` : "¡Se acabó el tiempo!";
-    detail = inside ? `Tu pin cayó en ${name}.` : placed ? `de ${name}` : "No pusiste tu pin a tiempo.";
+    kicker = inside ? "¡Dentro!" : placed ? "Tu pin quedó" : "¡Se acabó el tiempo!";
+    big = inside ? name : placed ? `a ${km(answer.distanceKm)}` : name;
+    detail = inside ? null : placed ? `de ${name}` : "No pusiste tu pin a tiempo";
   }
   return (
-    <div className={`tv-geo-verdict tv-geo-verdict--${tone}`} role="status">
-      {won && <Confetti pieces={18} />}
-      <span className="tv-geo-verdict-icon">
-        <Icon name={icon} size={22} strokeWidth={tiebreak ? 2.6 : 3} />
-      </span>
-      <span className="tv-geo-verdict-text">
-        <strong>{title}</strong>
-        <small>{detail}</small>
-      </span>
-      {points && <span className="tv-tag tv-tag--points">+{me?.lastPoints || 0}</span>}
+    <div className={`tv-geo-reveal tv-geo-reveal--${tone}`} role="status">
+      <div className="tv-geo-reveal-card">
+        {won && <Confetti pieces={22} />}
+        <span className="tv-geo-reveal-icon">
+          <Icon name={icon} size={24} strokeWidth={tiebreak ? 2.6 : 3} />
+        </span>
+        <span className="tv-geo-reveal-text">
+          <small>{kicker}</small>
+          <strong>{big}</strong>
+          {detail && <em>{detail}</em>}
+        </span>
+        {points && <span className="tv-tag tv-tag--points">+{me?.lastPoints || 0}</span>}
+      </div>
     </div>
   );
 }

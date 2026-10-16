@@ -25,13 +25,15 @@ alter table public.users
 create index if not exists users_role_idx on public.users (role);
 
 -- ---------------------------------------------------------------------------
--- Catálogo de canciones: playlists y sus canciones. Se rellena con `npm run catalog:upload --prefix backend`
--- (copia backend/src/catalog/catalog.json). El backend lo lee al arrancar.
+-- Catálogo de canciones. Se rellena con `npm run catalog:upload --prefix backend` (copia
+-- backend/src/catalog/catalog.json). El backend lo lee al arrancar; los rankings en español y en inglés (y con ellos la
+-- dificultad) salen del idioma y las reproducciones de cada canción, sin tablas de playlists.
 -- ---------------------------------------------------------------------------
 create table if not exists public.songs (
   id           text primary key,
   title        text   not null,
   artist_name  text   not null,
+  artists      text[],                                 -- todos los artistas de la canción, en el orden de Spotify
   album_name   text,
   year         int,
   image        text,
@@ -39,30 +41,15 @@ create table if not exists public.songs (
   genre        text,
   language     text,                                   -- es, en u otro
   itunes_id    bigint,
-  streams      bigint,                                 -- reproducciones en Spotify al crear la lista
+  streams      bigint,                                 -- reproducciones totales en Spotify
   updated_at   timestamptz not null default now()
 );
 
-create table if not exists public.playlists (
-  id           text primary key,
-  name         text   not null,
-  description  text,
-  position     int    not null default 0,              -- orden en los ajustes
-  is_default   boolean not null default false,         -- la que usa una sala nueva
-  updated_at   timestamptz not null default now()
-);
-
-create table if not exists public.playlist_songs (
-  playlist_id  text not null references public.playlists (id) on delete cascade,
-  song_id      text not null references public.songs (id) on delete cascade,
-  position     int  not null,                          -- puesto en el ranking (1 = la más escuchada)
-  primary key (playlist_id, song_id)
-);
-create index if not exists playlist_songs_playlist_idx on public.playlist_songs (playlist_id, position);
-
+alter table public.songs add column if not exists artists text[];
 alter table public.songs enable row level security;
-alter table public.playlists enable row level security;
-alter table public.playlist_songs enable row level security;
+-- Las tablas de playlists ya no se usan.
+drop table if exists public.playlist_songs;
+drop table if exists public.playlists;
 
 -- ---------------------------------------------------------------------------
 -- Canciones de Spotify ya buscadas en iTunes (playlists personalizadas de los owners). Se rellena sola: cada canción
@@ -119,3 +106,22 @@ alter table public.questions enable row level security;
 alter table public.questions drop constraint if exists questions_type_check;
 alter table public.questions add constraint questions_type_check
   check (type in ('multiple_choice', 'open', 'true_false', 'audio', 'location', 'year', 'minefield'));
+
+-- ---------------------------------------------------------------------------
+-- Reportes de preguntas: un owner toca "Reportar" durante una partida y aquí queda la pregunta tal como se jugó
+-- (con su respuesta), los ajustes de la partida y quiénes estaban en la sala, para revisarla después. Solo el backend
+-- (service_role) lee y escribe: RLS activado y sin políticas.
+-- ---------------------------------------------------------------------------
+create table if not exists public.question_reports (
+  id           uuid primary key default gen_random_uuid(),
+  created_at   timestamptz not null default now(),
+  game         text not null,                           -- opciones, musica, mundo, historia, minas
+  question_id  text,                                    -- id de la pregunta o canción (questions.id / songs.id)
+  prompt       text,                                    -- el texto de la pregunta, o "Título - Artista"
+  reporter_id  text not null,
+  room_code    text,
+  resolved     boolean not null default false,          -- marcarlo a mano al revisarlo
+  data         jsonb not null                           -- todo lo demás: pregunta completa, ajustes, jugadores
+);
+create index if not exists question_reports_created_idx on public.question_reports (created_at desc);
+alter table public.question_reports enable row level security;

@@ -69,7 +69,8 @@ function asWritten(q) {
     id: `${q.id}:escribir`,
     baseId: q.id,
     type: "open",
-    data: { answer, aliases: [], reject: options.filter((_, i) => i !== correct) },
+    // Other right ways to write it (another language, a short form, initials), if the question has them.
+    data: { answer, aliases: q.data.aliases || [], reject: options.filter((_, i) => i !== correct) },
   };
 }
 

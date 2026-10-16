@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import TvShell from "../../components/home/TvShell.jsx";
 import Confetti from "../../components/home/Confetti.jsx";
 import Icon from "../../components/home/Icon.jsx";
+import WaitingPill, { joinNames as joinWaiting, waitingNames } from "../../components/home/WaitingPill.jsx";
 import MatchResults from "../../components/home/MatchResults.jsx";
 import PartyPanel from "../../components/home/PartyPanel.jsx";
 import { ControllerBar, GetReady, PhoneHint } from "../../components/home/CentralBits.jsx";
@@ -12,7 +13,7 @@ import { findDifficulty, historyConfig, yearLabel, yearsText } from "./historyIn
 import "../../styles/home.css";
 import "../../styles/quiz.css";
 import "../../styles/history.css";
-import { PauseButton, PauseVeil } from "../../components/home/PauseControls.jsx";
+import { PauseButton, ReportButton, PauseVeil } from "../../components/home/PauseControls.jsx";
 
 const COUNTDOWN_MS = 3000;
 // One colour per player for their year on the reveal's timeline (never the green and red of right and wrong).
@@ -78,6 +79,8 @@ function GameScreen() {
     : room?.me;
   const myGuess = guess?.round === round ? guess : null;
   const confirmed = Boolean(myGuess?.locked) || Boolean(me?.answered);
+  // Who the round still waits for, once this player confirmed.
+  const waiting = waitingNames(room, user?.id);
   const open = phase === "playing" && iPlay && !confirmed && question?.min != null;
   const min = question?.min ?? null;
   const max = question?.max ?? null;
@@ -239,7 +242,7 @@ function GameScreen() {
       : "Nadie ganó: otro desempate en breve…"
     : round + 1 >= room.totalRounds
     ? "Calculando resultados…"
-    : "Siguiente acontecimiento en breve…";
+    : "Siguiente pregunta en breve…";
 
   // Under the event: what to do now.
   let hint;
@@ -251,7 +254,12 @@ function GameScreen() {
     } else hint = "¿En qué año ocurrió? Prepárate para elegirlo en la línea del tiempo.";
   } else if (phase === "reveal") hint = tiebreak ? "" : closestText(room, user, fmt);
   else if (!iPlay) hint = `Solo juegan ${joinNames(tiedNames)}: gana el primero que confirme el año exacto.`;
-  else if (confirmed) hint = tiebreak ? "Año confirmado. Si es el exacto y fuiste el primero, ganas." : "Año confirmado. Esperando al resto…";
+  else if (confirmed)
+    hint = tiebreak
+      ? "Año confirmado. Si es el exacto y fuiste el primero, ganas."
+      : waiting.length
+      ? `Año confirmado. Esperando a ${joinWaiting(waiting)}…`
+      : "Año confirmado.";
   else if (myGuess) hint = `Ajusta con los botones${touch ? "" : " o las flechas"} y confirma.`;
   else hint = touch ? "Toca la línea del tiempo para elegir un año." : "Haz clic en la línea del tiempo o usa las flechas del teclado.";
 
@@ -284,8 +292,14 @@ function GameScreen() {
         disabled={!open || myGuess?.year == null}
         aria-live="polite"
       >
-        <Icon name={confirmed ? "check" : "calendar"} size={20} strokeWidth={2.6} />
-        {confirmed ? "Año confirmado" : myGuess ? `Confirmar ${fmt(myGuess.year)}` : "Elige un año en la línea"}
+        {confirmed && !tiebreak && phase === "playing" && waiting.length ? (
+          <WaitingPill names={waiting} inline />
+        ) : (
+          <>
+            <Icon name={confirmed ? "check" : "calendar"} size={20} strokeWidth={2.6} />
+            {confirmed ? "Año confirmado" : myGuess ? `Confirmar ${fmt(myGuess.year)}` : "Elige un año en la línea"}
+          </>
+        )}
       </button>
     );
   }
@@ -293,13 +307,13 @@ function GameScreen() {
   // The host's controls of the match: in the round's card, or in the thin bar of a phone beside a central device.
   const tools = (
     <>
+      <ReportButton room={room} onError={setErr} />
       <PauseButton room={room} isHost={isHost} onError={setErr} />
       {isHost && (
         <button
           type="button"
           className={`tv-mini-btn${confirmHub ? " is-on" : ""}`}
           onClick={backToHub}
-          title="Termina la partida y lleva a todos al inicio"
         >
           {confirmHub ? "¿Seguro? Toca otra vez" : "Terminar"}
         </button>
@@ -312,7 +326,7 @@ function GameScreen() {
       <div className="tv-room-main tv-game-main">
         {/* Beside a central device the round and the clock are on the big screen: only the timeline here. */}
         {controller ? (
-          <ControllerBar isHost={isHost} seconds={seconds} pct={pct} urgent={urgent}>
+          <ControllerBar seconds={seconds} pct={pct} urgent={urgent}>
             {tools}
           </ControllerBar>
         ) : (
@@ -437,7 +451,7 @@ function GameScreen() {
             <PauseVeil room={room} isHost={isHost} />
             <p className="tv-party-status">
               <span className="tv-pulse" aria-hidden="true" />
-              Cargando el acontecimiento…
+              Cargando la pregunta…
             </p>
           </section>
         )}

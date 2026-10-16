@@ -45,14 +45,12 @@ assert.notEqual(list.items[1].id, "a1", "repeated ids get a new one");
 assert.ok(list.items[2].id, "items without an id get one");
 assert.deepEqual(list.items[0].config.categories, ["historia"]);
 assert.deepEqual(list.items[0].config.styles, ["turnos"]);
-assert.equal(list.items[0].config.rounds, 10, "at most 10 boards");
+assert.equal(list.items[0].config.rounds, 25, "at most 25 boards");
 assert.equal(list.items[1].config.rounds, 5, "at least 5 songs");
 assert.deepEqual(list.items[1].config.formats, ["opciones"]);
-assert.deepEqual(
-  list.items[1].config.playlistIds,
-  catalog.playlists.map((p) => p.id),
-  "song playlists this server doesn't have: the whole catalog"
-);
+assert.deepEqual(list.items[1].config.playlistIds, [], "Spotify playlists the room doesn't have are dropped");
+assert.equal(list.items[1].config.useCatalog, true, "the catalog plays, with every filter ticked");
+assert.equal(list.items[1].config.languages.length > 0, true);
 assert.equal(list.items[2].config.rounds, 5, "settings that aren't an object: the game's defaults");
 assert.equal(list.items[2].config.categories.length, 10);
 
@@ -60,7 +58,7 @@ assert.equal(list.items[2].config.categories.length, 10);
 mgr.updatePlaylist(room, "host-1", {
   ...list,
   items: [
-    { ...list.items[0], config: { ...list.items[0].config, rounds: 3 } },
+    { ...list.items[0], config: { ...list.items[0].config, rounds: 5 } },
     list.items[1],
     { ...list.items[2], config: { ...list.items[2].config, categories: [] } },
   ],
@@ -89,7 +87,7 @@ mgr.start(room, "host-1");
 stop(room);
 assert.equal(room.game, "minas", "the first game of the list");
 assert.equal(room.phase, "countdown");
-assert.equal(room.tracks.length, 3);
+assert.equal(room.tracks.length, 5);
 assert.ok(room.tracks.every((t) => t.category === "historia" && t.difficulty === "facil" && t.style === "turnos"), "with its own settings");
 pub = mgr.publicState(room);
 assert.deepEqual(pub.run.games, ["minas", "musica", "historia"]);
@@ -233,8 +231,8 @@ mgr.updatePlaylist(room, "host-1", { ...room.playlist, order: "orden" });
 mgr.start(room, "host-1");
 stop(room);
 mgr.finish(room);
-room.run.items[1] = { ...room.run.items[1], config: { ...room.run.items[1].config, playlistIds: [] } };
-assert.throws(() => mgr.nextInPlaylist(room, "host-1"), /No se puede jugar Adivina la canción\. Elige al menos una playlist/);
+room.run.items[1] = { ...room.run.items[1], config: { ...room.run.items[1].config, useCatalog: false, playlistIds: [] } };
+assert.throws(() => mgr.nextInPlaylist(room, "host-1"), /No se puede jugar Adivina la canción\. Activa el catálogo o elige una playlist/);
 assert.equal(room.run.index, 0, "still on the last results: the host can end it");
 mgr.restart(room, "host-1");
 assert.equal(room.run, null);

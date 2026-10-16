@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { readLocalCatalog } from "../catalog/catalogProvider.js";
-import { RoomManager } from "./roomManager.js";
+import { RoomManager, artistLine, artistsOf, joinArtists } from "./roomManager.js";
 
 // Adivina la canción's "Modos": closed rounds (four songs, one right) and open ones (the title typed).
 const mgr = new RoomManager({ catalog: readLocalCatalog(), store: { users: {} } });
@@ -25,6 +25,9 @@ for (const t of closed) {
   assert.equal(t.options.length, 4);
   assert.equal(new Set(t.options).size, 4);
   assert.ok(t.options[t.answer].startsWith(t.title));
+  // Each option also goes split: the title, and every artist of the song.
+  assert.equal(t.details[t.answer].title, t.title);
+  assert.equal(t.details[t.answer].artists, artistLine(t));
 }
 clearTimeout(room.timer);
 
@@ -39,6 +42,7 @@ assert.equal(state.choice.options, null, "no options during the countdown");
 mgr.beginPlaying(c);
 state = mgr.publicState(c);
 assert.equal(state.choice.options.length, 4);
+assert.equal(state.choice.details.length, 4);
 assert.equal(state.choice.answer, null);
 const track = c.tracks[0];
 assert.throws(() => mgr.submitAnswer(c, "c-1", 9), /opciones/);
@@ -69,6 +73,47 @@ assert.equal(o.players.get("o-1").lastAnswer.correct, true);
 // Nothing ticked: the match can't start.
 const n = mgr.create({ host: { id: "n-1", name: "N", socketId: "s6" }, mode: "multi", game: "musica" });
 mgr.updateConfig(n, "n-1", { formats: [] });
-assert.throws(() => mgr.start(n, "n-1"), /al menos un modo/);
+assert.throws(() => mgr.start(n, "n-1"), /al menos un tipo de respuesta/);
+
+// Each artist of a song apart, the main one first; acts whose name has a comma or an "&" stay one.
+assert.deepEqual(artistsOf("Tainy, Alvaro Diaz"), ["tainy", "alvaro diaz"]);
+assert.deepEqual(artistsOf("Bad Bunny & Drake"), ["bad bunny", "drake"]);
+assert.deepEqual(artistsOf("Anuel AA, Daddy Yankee & KAROL G"), ["anuel aa", "daddy yankee", "karol g"]);
+assert.deepEqual(artistsOf("ROSALÍA feat. The Weeknd"), ["rosalia", "the weeknd"]);
+assert.deepEqual(artistsOf("Tyler, The Creator"), ["tyler the creator"]);
+assert.deepEqual(artistsOf("Tyler, The Creator, Kali Uchis"), ["tyler the creator", "kali uchis"]);
+assert.deepEqual(artistsOf("Earth, Wind & Fire"), ["earth wind fire"]);
+assert.deepEqual(artistsOf("Bad Bunny, Jowell & Randy & Ñengo Flow"), ["bad bunny", "jowell randy", "nengo flow"]);
+assert.deepEqual(artistsOf("Jesse & Joy"), ["jesse joy"]);
+assert.deepEqual(artistsOf("Charli xcx"), ["charli xcx"]);
+
+// The three wrong options are by the same main artist when there are enough of theirs (the catalog has many of
+// Bad Bunny's, his duets included): a Bad Bunny song with three more Bad Bunny songs. With too few, other songs fill
+// the rest.
+const a = mgr.create({ host: { id: "a-1", name: "A", socketId: "s7" }, mode: "multi", game: "musica" });
+mgr.updateConfig(a, "a-1", { formats: ["opciones"] });
+const songs = mgr.catalog.songs;
+const bunny = songs.find((s) => s.artistName === "Bad Bunny");
+for (let i = 0; i < 5; i += 1) {
+  const t = mgr.withFormat(a, bunny, [bunny]);
+  assert.equal(t.type, "choice");
+  assert.equal(new Set(t.options).size, 4);
+  assert.ok(t.options.every((o) => /Bad Bunny/i.test(o)), `all of Bad Bunny's: ${t.options.join(" | ")}`);
+}
+// Then the song's other artists: a duet of someone with no other songs and Tainy brings Tainy's songs.
+const duet = { id: "x-duo", title: "Dueto inventado", artistName: "Artista Inventado, Tainy" };
+const d = mgr.withFormat(a, duet, [duet]);
+assert.ok(d.options.filter((o) => o !== d.options[d.answer]).every((o) => /Tainy/i.test(o)), `Tainy's: ${d.options.join(" | ")}`);
+const alone = { id: "x-solo", title: "Canción única", artistName: "Artista Que No Existe" };
+const t = mgr.withFormat(a, alone, [alone]);
+assert.equal(t.type, "choice", "other artists fill in");
+assert.equal(new Set(t.options).size, 4);
+
+// Every artist, the last after "&"; a name with a comma in it stays one artist.
+assert.equal(joinArtists(["Peso Pluma", "Gabito Ballesteros", "Junior H"]), "Peso Pluma, Gabito Ballesteros & Junior H");
+assert.equal(joinArtists(["Tyler, The Creator", "Kali Uchis"]), "Tyler, The Creator & Kali Uchis");
+assert.equal(joinArtists(["Adele"]), "Adele");
+const tyler = mgr.catalog.songs.find((s) => s.title === "See You Again" && /^Tyler/.test(s.artistName));
+assert.deepEqual(tyler.artists.slice(0, 1), ["Tyler, The Creator"]);
 
 console.log("musicFormats.test ok");

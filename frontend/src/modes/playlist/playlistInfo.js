@@ -2,7 +2,6 @@ import { FORMATS, LEVELS, TOPICS, quizConfig } from "../quiz/quizInfo.js";
 import { DIFFICULTIES as GEO_LEVELS, geoConfig } from "../mundo/geoInfo.js";
 import { historyConfig } from "../historia/historyInfo.js";
 import { STYLES as MINES_STYLES, minesConfig } from "../minas/minesInfo.js";
-import { playlistLabel } from "../music/playlistLabel.js";
 import { GAME_MODES, findMode } from "../index.js";
 
 // Playlists of games (backend/src/game/playlist.js): the games a playlist can have, each item's settings, a line
@@ -18,7 +17,7 @@ export function playlistGames() {
 
 // Where each game keeps its settings in the room's config (Adivina la canción's are at its top level), as on the server.
 const CONFIG_KEY = { opciones: "quiz", mundo: "geo", historia: "history", minas: "mines", musica: null };
-const MUSIC_KEYS = ["rounds", "roundMs", "playlistIds", "formats"];
+const MUSIC_KEYS = ["rounds", "roundMs", "formats", "useCatalog", "languages", "genres", "difficulties", "playlistIds"];
 
 /** The room's settings with an item's in place of its game's, so the game's own settings panel can show them. */
 export function configWithItem(config, item) {
@@ -41,7 +40,8 @@ export function defaultItemConfig(game, catalog) {
   if (game === "mundo") return geoConfig({});
   if (game === "historia") return historyConfig({});
   if (game === "minas") return minesConfig({});
-  return { rounds: 5, roundMs: 15000, playlistIds: (catalog?.playlists || []).map((p) => p.id), formats: FORMATS.map((f) => f.id) };
+  // Adivina la canción: the whole catalog, every language, genre and difficulty (the server fills them in the same).
+  return { rounds: 5, roundMs: 15000, formats: FORMATS.map((f) => f.id), useCatalog: true, playlistIds: [] };
 }
 
 export function newItemId() {
@@ -73,10 +73,11 @@ export function itemSummary(item, catalog) {
   if (item.game === "opciones") {
     parts = [`${c.rounds} preguntas`, topicsText(c.categories), levelsText(c.difficulties), formatsText(c.formats), secondsText(c.roundMs)];
   } else if (item.game === "musica") {
-    const lists = catalog?.playlists || [];
-    const ids = c.playlistIds || [];
-    const names = ids.map((id) => lists.find((p) => p.id === id)).filter(Boolean).map(playlistLabel);
-    const songs = !ids.length ? "Sin canciones" : names.length === ids.length && names.length <= 2 ? names.join(" y ") : `${ids.length} playlists`;
+    // The catalog (with its filters) and the room's Spotify playlists.
+    const lists = (c.playlistIds || []).length;
+    const catalogOn = c.useCatalog !== false;
+    const listsText = lists ? `${lists} ${lists === 1 ? "playlist" : "playlists"}` : "";
+    const songs = catalogOn ? (lists ? `Catálogo y ${listsText}` : "Catálogo") : listsText || "Sin canciones";
     parts = [`${c.rounds} canciones`, songs, formatsText(c.formats), secondsText(c.roundMs)];
   } else if (item.game === "mundo") {
     parts = [`${c.rounds} países`, levelsText(c.difficulties, GEO_LEVELS)];

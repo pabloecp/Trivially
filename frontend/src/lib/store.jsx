@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { api, setAuthToken } from "./api.js";
-import { emitAck, getSocket, reconnectSocket, setSocketTokenProvider } from "./socket.js";
+import { emitAck, emitAckWithin, getSocket, reconnectSocket, setSocketTokenProvider } from "./socket.js";
 import { BACKEND_URL } from "./config.js";
 
 const AppContext = createContext(null);
@@ -12,6 +12,7 @@ export const AVATAR_COLORS = [
   "#2BD94F", // Verde
   "#0A9BFF", // Azul
   "#A63DFF", // Violeta
+  "#FF5FB8", // Rosado
 ];
 
 // Per-tab, so a reload puts you back in the same room, and as what: a player, or the room's central device
@@ -24,6 +25,10 @@ const ROLE_KEY = "trivially_room_role";
 const USER_KEY = "trivially_user";
 export const GUEST_NAME_KEY = "trivially_guest_name";
 const GUEST_ID_KEY = "trivially_guest_id";
+const GUEST_AVATAR_KEY = "trivially_guest_avatar";
+// A guest is only signed in for the tab where they wrote their name (sessionStorage, so a reload keeps it). A new
+// visit starts without a user: the name and colour stay on the device only to fill in the name box again.
+const GUEST_ACTIVE_KEY = "trivially_guest_active";
 const OLD_KEYS = { "yoavlly-user": USER_KEY, yoavlly_guest_name: GUEST_NAME_KEY, yoavlly_guest_id: GUEST_ID_KEY };
 
 try {
@@ -37,17 +42,43 @@ try {
   // No storage (private mode): nothing to move.
 }
 
+function guestActive() {
+  try {
+    return sessionStorage.getItem(GUEST_ACTIVE_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+function setGuestActive(on) {
+  try {
+    if (on) sessionStorage.setItem(GUEST_ACTIVE_KEY, "1");
+    else sessionStorage.removeItem(GUEST_ACTIVE_KEY);
+  } catch {}
+}
+
+/** The name and colour a guest used last time on this device, to fill in the name box ({ name: "" } if none). */
+export function savedGuest() {
+  try {
+    const name = localStorage.getItem(GUEST_NAME_KEY) || "";
+    const avatar = localStorage.getItem(GUEST_AVATAR_KEY);
+    return { name, avatar: AVATAR_COLORS.includes(avatar) ? avatar : AVATAR_COLORS[0] };
+  } catch {
+    return { name: "", avatar: AVATAR_COLORS[0] };
+  }
+}
+
 function loadSavedUser() {
   try {
     const raw = localStorage.getItem(USER_KEY);
-    if (raw) return JSON.parse(raw);
-
+    const saved = raw ? JSON.parse(raw) : null;
+    // An account stays signed in; a guest only in the tab where they wrote their name.
+    if (saved && !saved.isGuest) return saved;
+    if (!guestActive()) return null;
+    if (saved) return saved;
     const guestName = localStorage.getItem(GUEST_NAME_KEY);
     const guestId = localStorage.getItem(GUEST_ID_KEY) || `gst_${Math.random().toString(36).slice(2, 10)}`;
-    if (guestName) {
-      return { id: guestId, name: guestName, isGuest: true, avatar: AVATAR_COLORS[0] };
-    }
-    return null;
+    return guestName ? { id: guestId, name: guestName, isGuest: true, avatar: savedGuest().avatar } : null;
   } catch {
     return null;
   }
@@ -177,8 +208,10 @@ export function AppProvider({ children }) {
     clearRoom();
     setAuthToken(null);
     applyUser(null);
+    setGuestActive(false);
     localStorage.removeItem(GUEST_NAME_KEY);
     localStorage.removeItem(GUEST_ID_KEY);
+    localStorage.removeItem(GUEST_AVATAR_KEY);
     setLinkingStatus(null);
     reconnectSocket();
   }
@@ -273,7 +306,8 @@ export function AppProvider({ children }) {
       api("/api/me")
         .then((d) => {
           setLinkingStatus(d.linkingStatus || null);
-          if (d.user) applyUser(d.user);
+          // A guest from an earlier visit isn't signed in again: they write (or confirm) their name first.
+          if (d.user && !(d.user.isGuest && !guestActive())) applyUser(d.user);
           // The server session expired: a saved registered account can't be used anymore without signing in.
           else if (userRef.current && !userRef.current.isGuest) applyUser(null);
         })
@@ -364,6 +398,8 @@ export function AppProvider({ children }) {
         }
         localStorage.setItem(GUEST_ID_KEY, guestId);
         localStorage.setItem(GUEST_NAME_KEY, cleanName);
+        localStorage.setItem(GUEST_AVATAR_KEY, avatar || AVATAR_COLORS[0]);
+        setGuestActive(true);
         const guestObj = { id: guestId, name: cleanName, avatar: avatar || AVATAR_COLORS[0], isGuest: true };
         applyUser(guestObj);
         let saved = guestObj;
@@ -510,6 +546,13 @@ export function AppProvider({ children }) {
         return enterRoom(res.state);
       },
 
+      // Whether a code opens a room, before asking for a name. An older server that doesn't know the check lets it
+      // through, and the join itself says what's wrong.
+      async checkRoom(code) {
+        const res = await emitAckWithin(6000, "room:check", code.toUpperCase());
+        if (!res.ok && res.error !== "El servidor no respondió. Inténtalo otra vez.") throw new Error(res.error);
+      },
+
       // Also coming back to the room after a reload, as what this tab was in it (a player or its central device).
       // An error with `offer` means this account already plays in that room from another device: CentralOffer asks
       // whether to make this one its central device, so the caller shouldn't show the error itself.
@@ -629,6 +672,35 @@ export function AppProvider({ children }) {
         if (res.state) setRoom(res.state);
       },
 
+      // Anyone who may change the settings: takes a Spotify playlist out of the room.
+      async removePlaylist(playlistId) {
+        const res = await emitAck("room:removePlaylist", playlistId);
+        if (!res.ok) throw new Error(res.error);
+        if (res.state) setRoom(res.state);
+      },
+
+      // Anyone who may change the settings: a public Spotify playlist pasted as a link.
+      async addSpotifyLink(link) {
+        // Reading Spotify takes a moment; past 25 s it is given up instead of waiting forever.
+        const res = await emitAckWithin(25000, "room:spotifyLink", link);
+        if (!res.ok) throw new Error(res.error);
+        if (res.state) setRoom(res.state);
+        return res.saved || null;
+      },
+
+      // The Spotify playlists and albums kept on this account ({ canSave, saved }), and deleting one for good.
+      async listSavedSpotify() {
+        const res = await emitAck("spotify:saved");
+        if (!res.ok) throw new Error(res.error);
+        return { canSave: Boolean(res.canSave), saved: res.saved || [] };
+      },
+
+      async forgetSavedSpotify(key) {
+        const res = await emitAck("spotify:forget", key);
+        if (!res.ok) throw new Error(res.error);
+        return res.saved || [];
+      },
+
       async toggleConfigPermission(targetUserId) {
         const res = await emitAck("room:toggleConfigPermission", targetUserId);
         if (!res.ok) throw new Error(res.error);
@@ -676,6 +748,9 @@ export function AppProvider({ children }) {
       async replayGame() { const res = await emitAck("room:replay"); if (!res.ok) throw new Error(res.error); },
       async endGame() { await emitAck("room:end"); },
       async pauseGame(paused) { const res = await emitAck("room:pause", paused); if (!res.ok) throw new Error(res.error); },
+
+      // Owners: reports the question being played, to check it later.
+      async reportQuestion() { const res = await emitAck("room:report"); if (!res.ok) throw new Error(res.error); },
 
       async answer(answerTextOrId) {
         const res = await emitAck("game:answer", answerTextOrId);

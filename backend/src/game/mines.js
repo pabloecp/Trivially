@@ -18,9 +18,9 @@ export const MINES_STYLES = ["turnos", "carrera"];
 // Same limits as the settings on screen (frontend/src/modes/minas/minesInfo.js). `turnMs` is the time of each turn
 // ("turnos") and `roundMs` the time of a whole round ("carrera").
 export const MINES_LIMITS = {
-  rounds: { min: 3, max: 10 },
-  turnMs: { min: 5000, max: 20000 },
-  roundMs: { min: 30000, max: 90000 },
+  rounds: { min: 5, max: 25 },
+  turnMs: { min: 5000, max: 25000 },
+  roundMs: { min: 30000, max: 50000 },
 };
 // The first turn of a round lasts this much longer: it's when the 25 cells are read for the first time.
 export const MINES_FIRST_TURN_EXTRA_MS = 5000;
@@ -37,9 +37,10 @@ export function hitPoints(nth) {
 export function defaultMinesConfig() {
   return {
     styles: [...MINES_STYLES],
+    // The shortest of each, like the settings on screen start.
     rounds: 5,
-    turnMs: 10000,
-    roundMs: 45000,
+    turnMs: 5000,
+    roundMs: 30000,
     categories: [...MINES_CATEGORIES],
     difficulties: [...MINES_LEVELS],
   };

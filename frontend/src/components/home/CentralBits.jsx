@@ -62,16 +62,17 @@ export function RoomVerdict({ room, right = (p) => Boolean(p.lastAnswer?.correct
 /**
  * A player's phone beside the central device, in place of the round's card: no round and no question (they're on the
  * big screen), only where to look, the time left (`seconds`, and `pct` of the phase for its bar; `urgent` turns them
- * red) and, for the host, the match's controls (`children`: Pausar, Terminar).
+ * red) and the match's tools (`children`: Reportar, and the host's Pausar and Terminar; each shows only to whom it
+ * may).
  */
-export function ControllerBar({ isHost, seconds, pct, urgent = false, children }) {
+export function ControllerBar({ seconds, pct, urgent = false, children }) {
   return (
     <div className="tv-ctrl-bar">
       <p className="tv-ctrl-look">
         <Icon name="tv" size={16} strokeWidth={2.4} />
         Mira la pantalla central
       </p>
-      {isHost && <div className="tv-ctrl-tools">{children}</div>}
+      <div className="tv-ctrl-tools">{children}</div>
       <div className={`tv-clock tv-ctrl-clock${urgent ? " is-urgent" : ""}`} role="timer" aria-label={`${seconds} segundos`}>
         <svg viewBox="0 0 44 44" aria-hidden="true">
           <circle className="tv-clock-track" cx="22" cy="22" r="19" />
