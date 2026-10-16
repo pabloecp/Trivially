@@ -229,6 +229,8 @@ const PATHS = {
     </>
   ),
   list: <path d="M10 6h11M10 12h11M10 18h11M4 6h1M4 12h1M4 18h1" />,
+  // Arrows up and down: the list put in another order.
+  reorder: <path d="m3 16 4 4 4-4M7 20V4M21 8l-4-4-4 4M17 4v16" />,
   shuffle: <path d="m18 14 4 4-4 4M18 2l4 4-4 4M2 18h1.97a4 4 0 0 0 3.3-1.7l5.46-8.6a4 4 0 0 1 3.3-1.7H22M2 6h1.97a4 4 0 0 1 3.3 1.7l.6.94M22 18h-6.04a4 4 0 0 1-3.3-1.8l-.57-.9" />,
   trash: <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6M10 11v6M14 11v6" />,
   copy: (

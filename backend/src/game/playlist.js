@@ -1,7 +1,7 @@
 // Playlists: several games of the room played one after another, each with its own settings ("Campo de minas" with
 // only easy boards about history, then "Adivina la canción" with the Spanish songs, then "Campo de minas" again...).
 // The room's playlist (`room.playlist`) is made in its own panel, like a game's settings: a name, the order to play it
-// in ("orden", as listed, or "aleatorio", shuffled when it starts) and its items, each a game id and that game's
+// in ("orden": each game whole, as listed; "aleatorio": one match with every game's rounds mixed at random) and its items, each a game id and that game's
 // settings. While it is played, `room.run` keeps the items in play order, which one is on and how many games each
 // player won: whoever wins the most games wins the playlist (points across all of them break a tie).
 
@@ -69,11 +69,27 @@ export function playOrder(items, order, random = Math.random) {
   return out;
 }
 
+/**
+ * A mixed playlist's rounds: each game's rounds (`perItem[i]`, in the order each was drawn) put together in a random
+ * order, every round of every game played once: [{ item: i, track }]. Two of one game can come in a row.
+ */
+export function mixRounds(perItem, random = Math.random) {
+  const slots = perItem.flatMap((tracks, i) => tracks.map(() => i));
+  for (let i = slots.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(random() * (i + 1));
+    [slots[i], slots[j]] = [slots[j], slots[i]];
+  }
+  const next = perItem.map(() => 0);
+  return slots.map((i) => ({ item: i, track: perItem[i][next[i]++] }));
+}
+
 /** A new playlist run, about to play its first item. `savedConfig` is the room's own settings, put back at the end. */
 export function newRun(playlist, savedConfig, random = Math.random) {
   return {
     name: playlist.name,
     order: playlist.order,
+    // "aleatorio": a single match, every game's rounds mixed (RoomManager.startMixed).
+    mixed: playlist.order === "aleatorio",
     items: playOrder(playlist.items, playlist.order, random),
     index: 0,
     // Per player (even one who left): name, avatar, games played and won, and points across them.
@@ -124,6 +140,7 @@ export function publicRun(run) {
   return {
     name: run.name,
     order: run.order,
+    mixed: Boolean(run.mixed),
     index: run.index,
     total: run.items.length,
     games: run.items.map((item) => item.game),

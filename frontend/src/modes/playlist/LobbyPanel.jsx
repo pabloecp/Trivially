@@ -24,10 +24,11 @@ import "../../styles/home.css";
 import "../../styles/playlist.css";
 
 const EMPTY = { name: "Mi playlist", order: "orden", items: [] };
-// Chosen in the playlist and used when it starts: as listed, or shuffled then.
+// Chosen in the playlist and used when it starts: each game whole, as listed; or one match with every game's rounds
+// mixed at random.
 const ORDERS = [
-  { id: "orden", label: "En orden", icon: "list", hint: "Se juegan en el orden de la lista" },
-  { id: "aleatorio", label: "Aleatorio", icon: "shuffle", hint: "Se barajan al empezar" },
+  { id: "orden", label: "En orden", icon: "list", hint: "Cada juego entero, en el orden de la lista" },
+  { id: "aleatorio", label: "Aleatorio", icon: "shuffle", hint: "Las rondas de todos los juegos, mezcladas al azar" },
 ];
 
 const gamesText = (n) => `${n} ${n === 1 ? "juego" : "juegos"}`;
@@ -97,6 +98,21 @@ export default function LobbyPanel({ room, onToast }) {
     commit({ ...draft, items: next });
   }
 
+  // The small button by the playlist's name: the games in another order, at random (for "En orden" without having to
+  // choose it). Never the same order it had.
+  function reshuffle() {
+    if (items.length < 2) return;
+    let next;
+    do {
+      next = [...items];
+      for (let i = next.length - 1; i > 0; i -= 1) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [next[i], next[j]] = [next[j], next[i]];
+      }
+    } while (next.every((item, i) => item.id === items[i].id));
+    commit({ ...draft, items: next });
+  }
+
   function remove(index) {
     const next = items.filter((_, i) => i !== index);
     if (items[index].id === selected?.id) setSelectedId(next[Math.min(index, next.length - 1)]?.id || null);
@@ -136,6 +152,17 @@ export default function LobbyPanel({ room, onToast }) {
             <span className="tv-pl-kicker">
               Playlist · {gamesText(items.length)}
             </span>
+            {canEdit && draft.order === "orden" && items.length > 1 && (
+              <button
+                type="button"
+                className="tv-pl-reorder"
+                aria-label="Reordenar los juegos al azar"
+                title="Reordenar al azar"
+                onClick={reshuffle}
+              >
+                <Icon name="reorder" size={18} strokeWidth={2.6} />
+              </button>
+            )}
           </div>
           {canEdit ? (
             <input
@@ -168,7 +195,7 @@ export default function LobbyPanel({ room, onToast }) {
                 return (
                   <li
                     key={item.id}
-                    className={`tv-pl-item${item.id === selected?.id ? " is-selected" : ""}${problem ? " has-problem" : ""}`}
+                    className={`tv-pl-item tv-c-${game?.color || "neutral"}${item.id === selected?.id ? " is-selected" : ""}${problem ? " has-problem" : ""}`}
                     style={{ "--i": i }}
                   >
                     <button

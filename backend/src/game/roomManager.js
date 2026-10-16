@@ -57,6 +57,7 @@ import {
 import {
   cleanPlaylist,
   configWithItem,
+  mixRounds,
   emptyPlaylist,
   GAME_NAMES,
   newRun,
@@ -1287,6 +1288,7 @@ export class RoomManager {
   }
 
   beginCountdown(room) {
+    if (room.run?.mixed && !room.run.finished) this.enterMixedRound(room);
     this.pickAhead(room);
     const track = room.tracks[room.currentRound];
     room.currentTrackId = track.id;
@@ -1498,6 +1500,8 @@ export class RoomManager {
    */
   beginTiebreak(room) {
     if (room.game !== GEO_GAME && room.game !== HISTORY_GAME) return false;
+    // A mixed playlist's last round may be of any game: its winner is whoever has the most points.
+    if (room.run?.mixed) return false;
     const previous = room.tiebreak;
     if (previous?.winnerId || (previous && previous.round >= MAX_TIEBREAKS)) return false;
     const connected = [...room.players.values()].filter((p) => p.connected && !p.spectator);
@@ -1544,8 +1548,12 @@ export class RoomManager {
       applyMatchStats(this.store, ranked);
       this.recordWin(room, ranked);
       // A game of a playlist: its winner adds a win to the playlist's tally.
-      if (room.run && !room.run.finished && ranked.length) recordGame(room.run, room.game, ranked, this.matchWinner(room, ranked));
+      if (room.run && !room.run.finished && ranked.length) {
+        recordGame(room.run, room.run.mixed ? PLAYLIST_GAME : room.game, ranked, this.matchWinner(room, ranked));
+      }
     }
+    // A mixed playlist is a single match: when it ends, so does the playlist.
+    if (room.run?.mixed && !room.run.finished) this.endRun(room);
   }
 
   /** Who won a finished match: first place with points; a tie for first is nobody's unless a tiebreak settled it. */
@@ -1610,7 +1618,111 @@ export class RoomManager {
       if (problem) throw new Error(`Revisa el juego ${i + 1}, ${GAME_NAMES[item.game]}. ${problem}`);
     });
     room.run = newRun(room.playlist, room.config);
-    this.playItem(room);
+    if (room.run.mixed) this.startMixed(room);
+    else this.playItem(room);
+  }
+
+  /**
+   * A playlist played "aleatorio": one match whose rounds are every game's rounds mixed at random (two of Encuentra el
+   * país, then one of Adivina la canción, then Encuentra el país again...). Each game's questions or songs are drawn
+   * now with its own settings; each round, beginCountdown moves the room into its game (enterMixedRound). The scores
+   * add up across the whole match, which ends on the playlist's results.
+   */
+  startMixed(room) {
+    const run = room.run;
+    this.resetMatch(room);
+    let perItem;
+    try {
+      const musicSoFar = [];
+      perItem = run.items.map((item, i) => {
+        const tracks = this.drawItemTracks(room, item, musicSoFar);
+        if (!tracks.length) throw new Error(`Revisa el juego ${i + 1}, ${GAME_NAMES[item.game]}. No hay preguntas con esos ajustes.`);
+        return tracks;
+      });
+    } catch (err) {
+      this.stopPlaylist(room);
+      this.resetMatch(room);
+      throw err;
+    }
+    room.tracks = mixRounds(perItem).map(({ item, track }) => ({ ...track, playlistItem: item }));
+    room.totalRounds = room.tracks.length;
+    const music = room.tracks.filter((t) => run.items[t.playlistItem].game === "musica");
+    if (music.length) this.onNewTracks?.(music);
+    const connected = [...room.players.values()].filter((p) => p.connected);
+    room.participants = new Set(connected.map((p) => p.id));
+    room.currentRound = 0;
+    connected.forEach((p) => {
+      p.score = 0;
+      p.correct = 0;
+      p.streak = 0;
+      p.bestStreak = 0;
+      p.answerTimes = [];
+      p.status = "jugando";
+    });
+    this.beginCountdown(room);
+  }
+
+  /**
+   * The rounds of one game of a mixed playlist, drawn as its own match would. A game repeated in the playlist doesn't
+   * repeat questions or songs the other copies already drew, while there are others.
+   */
+  drawItemTracks(room, item, musicSoFar) {
+    const config = configWithItem(room.run.savedConfig, item);
+    if (item.game === "musica") {
+      const rounds = config.rounds || 5;
+      const scratch = { ...room, game: "musica", config, tracks: [...musicSoFar], totalRounds: musicSoFar.length + rounds };
+      scratch.currentRound = scratch.totalRounds - 1;
+      const saved = this.onNewTracks;
+      this.onNewTracks = null;
+      try {
+        this.pickAhead(scratch);
+      } finally {
+        this.onNewTracks = saved;
+      }
+      const tracks = scratch.tracks.slice(musicSoFar.length);
+      musicSoFar.push(...tracks);
+      return tracks;
+    }
+    const draw = () => {
+      if (item.game === QUIZ_GAME) {
+        const tracks = pickQuizQuestions(this.quizQuestions, mergeQuizConfig(config.quiz));
+        for (const t of tracks) if (t.flag) t.flagToken = flagToken(t.flag);
+        return tracks;
+      }
+      if (item.game === GEO_GAME) return pickGeoQuestions(this.geoQuestions, mergeGeoConfig(config.geo));
+      if (item.game === HISTORY_GAME) return pickHistoryQuestions(this.historyQuestions, mergeHistoryConfig(config.history));
+      return pickMinesQuestions(this.minesQuestions, mergeMinesConfig(config.mines));
+    };
+    const first = draw();
+    const rounds = first.length;
+    this.mixedUsed ||= new WeakMap();
+    const used = this.mixedUsed.get(room.run) || new Set();
+    this.mixedUsed.set(room.run, used);
+    const key = (t) => `${item.game}|${t.baseId || t.country || t.id}`;
+    const out = [];
+    for (let attempt = 0, tracks = first; attempt < 4 && out.length < rounds; attempt += 1, tracks = draw()) {
+      for (const t of tracks) {
+        if (out.length >= rounds || used.has(key(t)) || out.some((o) => key(o) === key(t))) continue;
+        out.push(t);
+      }
+    }
+    // Not enough new ones: the rest may repeat another copy's.
+    for (const t of first) if (out.length < rounds && !out.includes(t)) out.push(t);
+    out.forEach((t) => used.add(key(t)));
+    return out;
+  }
+
+  /** Each round of a mixed playlist is played in its own game, with that game's settings from the playlist. */
+  enterMixedRound(room) {
+    const track = room.tracks[room.currentRound];
+    const item = room.run.items[track.playlistItem];
+    const changed = room.game !== item.game || room.run.current !== track.playlistItem;
+    room.game = item.game;
+    room.run.current = track.playlistItem;
+    if (changed) {
+      room.config = configWithItem(room.run.savedConfig, item);
+      this.syncPlaylists(room);
+    }
   }
 
   /**
@@ -1650,9 +1762,14 @@ export class RoomManager {
       this.playItem(room);
       return;
     }
-    run.finished = true;
+    this.endRun(room);
+  }
+
+  /** After the playlist's last game, the room shows the playlist's results (still `finished`, back in the playlist). */
+  endRun(room) {
+    room.run.finished = true;
     room.game = PLAYLIST_GAME;
-    room.config = run.savedConfig;
+    room.config = room.run.savedConfig;
     this.syncPlaylists(room);
     // The last game's rounds are done with; its scores stay until the room goes back to a lobby.
     room.tracks = [];

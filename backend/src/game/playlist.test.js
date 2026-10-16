@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { readLocalCatalog } from "../catalog/catalogProvider.js";
-import { playlistWinner, playOrder, rankedStandings } from "./playlist.js";
+import { mixRounds, playlistWinner, playOrder, rankedStandings } from "./playlist.js";
 import { RoomManager } from "./roomManager.js";
 
 // Playlists: several games played one after another, each with its own settings. Whoever wins the most games wins the
@@ -209,10 +209,46 @@ assert.deepEqual(playOrder([1, 2, 3], "orden", () => 0), [1, 2, 3]);
 mgr.setGame(room, "host-1", "playlist");
 mgr.updatePlaylist(room, "host-1", { ...room.playlist, order: "aleatorio" });
 assert.equal(room.playlist.order, "aleatorio");
+// Random: one match with every game's rounds mixed, each round played in its own game with its own settings.
+const mixed = mixRounds([["a1", "a2", "a3"], ["b1"], ["c1", "c2"]], () => 0.3);
+assert.equal(mixed.length, 6, "every round of every game, once");
+assert.deepEqual(mixed.filter((r) => r.item === 0).map((r) => r.track), ["a1", "a2", "a3"], "a game's rounds keep their order");
+assert.deepEqual(mixed.map((r) => r.track).sort(), ["a1", "a2", "a3", "b1", "c1", "c2"]);
 mgr.start(room, "host-1");
 stop(room);
+assert.equal(room.run.mixed, true);
+assert.equal(mgr.publicState(room).run.mixed, true);
 assert.deepEqual([...room.run.items.map((i) => i.game)].sort(), ["historia", "minas", "musica"]);
-assert.equal(room.game, room.run.items[0].game);
+assert.equal(room.totalRounds, 15, "5 boards, 5 songs and 5 events, in one match");
+assert.equal(room.tracks.length, 15);
+assert.equal(room.tracks.filter((t) => room.run.items[t.playlistItem].game === "musica").length, 5);
+assert.equal(new Set(room.tracks.map((t) => t.id)).size, 15, "nothing twice");
+const gamesPlayed = [];
+host.score = 0;
+for (let round = 0; round < 15; round += 1) {
+  assert.equal(room.currentRound, round);
+  assert.equal(room.phase, "countdown");
+  const item = room.run.items[room.tracks[round].playlistItem];
+  assert.equal(room.game, item.game, "the room is in the round's game");
+  if (item.game === "minas") assert.deepEqual(room.config.mines, item.config, "with that game's settings");
+  if (item.game === "historia") assert.deepEqual(room.config.history, item.config);
+  if (item.game === "musica") assert.equal(room.config.rounds, item.config.rounds);
+  gamesPlayed.push(room.game);
+  stop(room);
+  mgr.beginReveal(room);
+  host.score += 100;
+  stop(room);
+  mgr.advance(room);
+  stop(room);
+}
+assert.equal(new Set(gamesPlayed).size, 3);
+assert.equal(room.phase, "finished", "no tiebreak: the last round ends the match");
+assert.equal(room.game, "playlist", "and the playlist: everyone goes to its results");
+assert.equal(room.run.finished, true);
+assert.equal(room.config.mines.rounds, ownMines.rounds, "the room's own settings are back");
+assert.equal(room.run.games.length, 1, "one match");
+assert.equal(mgr.publicState(room).run.winnerId, "host-1", "the most points win");
+assert.equal(mgr.publicState(room).run.standings[0].points, 1500, "the points of every round add up");
 mgr.restart(room, "host-1");
 
 // ---- Who wins ----
