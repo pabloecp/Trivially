@@ -125,3 +125,18 @@ create table if not exists public.question_reports (
 );
 create index if not exists question_reports_created_idx on public.question_reports (created_at desc);
 alter table public.question_reports enable row level security;
+
+-- ---------------------------------------------------------------------------
+-- Playlists compartidas por código ("Copiar código" en el panel de la playlist): el código (10 letras y números,
+-- "K7P2M-XH4QN") apunta a la playlist (nombre, orden y juegos con sus ajustes). La misma playlist siempre tiene el mismo
+-- código (hash único), y un código que nadie abre en un año se borra (last_used_at). Solo el backend lee y escribe.
+-- ---------------------------------------------------------------------------
+create table if not exists public.shared_playlists (
+  code          text primary key,
+  hash          text not null unique,                   -- sha256 de la playlist: la misma playlist, el mismo código
+  data          jsonb not null,                         -- { name, order, items: [{ game, config }] }
+  created_at    timestamptz not null default now(),
+  last_used_at  timestamptz not null default now()      -- al compartirla o abrirla otra vez
+);
+create index if not exists shared_playlists_last_used_idx on public.shared_playlists (last_used_at);
+alter table public.shared_playlists enable row level security;

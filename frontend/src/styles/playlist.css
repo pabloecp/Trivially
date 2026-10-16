@@ -1107,3 +1107,8 @@ input.tv-pl-name:focus { outline: none; }
 }
 .tv-pl-account-note svg { flex-shrink: 0; }
 .tv-pl-account-note a { color: #ffffff; font-weight: 800; text-decoration: none; }
+
+/* "Código de playlist": the box to paste one (the Spotify link's box, in the playlist's orange). */
+.tv-pl-codebox > svg { flex-shrink: 0; color: var(--p-culture-1, #ff8a00); }
+.tv-pl-codebox:focus-within { outline-color: var(--p-culture-1, #ff8a00); }
+

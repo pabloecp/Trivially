@@ -71,6 +71,8 @@ import { locate } from "../geo/worldMap.js";
 import { COUNTDOWN_MS, REVEAL_MS, ROUND_MS, scoreAnswer } from "./scoring.js";
 
 const CODE_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+// A room's code: this many characters of CODE_CHARS (no I, O, 0 or 1, easy to confuse), ~33 million codes.
+export const ROOM_CODE_LENGTH = 5;
 // Games the host can move a room into (ids match frontend/src/modes/index.js). `null` is the Home screen.
 // "opciones" (Trivia, QUIZ_GAME) is the main mode: questions of every topic, each answered its own way (four
 // options, a written answer or a year on a timeline). The extras: "musica" (Adivina la canción), "mundo" (Encuentra el país,
@@ -109,8 +111,8 @@ export function assertGame(game) {
 export function createRoomCode(existing) {
   let code = "";
   do {
-    code = "XO";
-    for (let i = 0; i < 4; i += 1) {
+    code = "";
+    for (let i = 0; i < ROOM_CODE_LENGTH; i += 1) {
       code += CODE_CHARS[Math.floor(Math.random() * CODE_CHARS.length)];
     }
   } while (existing.has(code));
@@ -801,6 +803,11 @@ export class RoomManager {
    * the client sends all of it and it's kept cleaned (cleanPlaylist). Like the settings, the host and whoever has the
    * permission can change it, while the room waits.
    */
+  /** A playlist sent to be shared by code (one saved in "Mis playlists"), cleaned like the room's own. */
+  cleanSharedPlaylist(room, playlist) {
+    return cleanPlaylist(playlist, (game, config) => this.cleanItemConfig(room, game, config));
+  }
+
   updatePlaylist(room, userId, playlist) {
     if (!this.canEditConfig(room, userId)) throw new Error("No tienes permisos para cambiar la playlist");
     if (room.phase !== "lobby") throw new Error("La partida ya comenzó");

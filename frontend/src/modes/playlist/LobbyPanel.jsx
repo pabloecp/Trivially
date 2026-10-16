@@ -4,24 +4,21 @@ import Icon from "../../components/home/Icon.jsx";
 import SettingsPanel from "../../components/home/SettingsPanel.jsx";
 import { useStartGame } from "../../components/home/ModeStart.jsx";
 import { useApp } from "../../lib/store.jsx";
-import { play } from "../../lib/sounds.js";
+import { play, withSound } from "../../lib/sounds.js";
 import { findMode } from "../index.js";
 import ItemSettings from "./ItemSettings.jsx";
 import {
   MAX_ITEMS,
   NAME_MAX,
   defaultItemConfig,
-  downloadPlaylist,
   itemSummary,
   fromLibrary,
   loadLibrary,
   newItemId,
-  parsePlaylistJson,
   playlistGames,
   removeFromLibrary,
   renameInLibrary,
   saveToLibrary,
-  toShareJson,
 } from "./playlistInfo.js";
 import "../../styles/home.css";
 import "../../styles/playlist.css";
@@ -39,7 +36,7 @@ const gamesText = (n) => `${n} ${n === 1 ? "juego" : "juegos"}`;
 // The "Playlist" panel of the room screen, shown once the host picks it on the menu: on the card, the playlist's name
 // and its games in order (add, move, copy or take out each one; tap one to see its settings), the order it's played in
 // and the start button; beside it, the chosen game's settings (each game's own panel, fed with that game's settings),
-// and how to share it (its JSON, copied, downloaded or imported) and keep it ("Mis playlists", in this browser).
+// and how to share it (a code: copied from the playlist or a saved one, pasted to load one) and keep it ("Mis playlists", in this browser).
 // The host and whoever has the permission change it, and every change reaches the whole room; the rest see it locked.
 // How a playlist is made, shown in the settings panel while it has no games.
 const PLAYLIST_STEPS = [
@@ -73,6 +70,8 @@ export default function LobbyPanel({ room, onToast }) {
   // the list is as tall as the rows that fit in the space between the card's head and foot, and scrolling snaps to rows.
   const wrapRef = useRef(null);
   const bodyRef = useRef(null);
+  // The tray's two lines show only while the whole list is in sight; once it scrolls (its bar shows), only the tiles.
+  const [trayText, setTrayText] = useState(true);
   function fitRows() {
     const wrap = wrapRef.current;
     const body = bodyRef.current;
@@ -87,11 +86,23 @@ export default function LobbyPanel({ room, onToast }) {
     const rows = body.querySelectorAll(".tv-pl-item");
     // Phones: the page scrolls, so the list just shows its first PHONE_ROWS games and scrolls for the rest.
     const phone = window.matchMedia("(max-width: 640px)").matches;
-    const room = phone
-      ? rows.length > PHONE_ROWS
-        ? bottomOf(rows[PHONE_ROWS - 1]) + pad
-        : Infinity
-      : wrap.clientHeight - (add ? add.offsetHeight + 6 : 0);
+    const roomBeside = (tray) =>
+      phone
+        ? rows.length > PHONE_ROWS
+          ? bottomOf(rows[PHONE_ROWS - 1]) + pad
+          : Infinity
+        : wrap.clientHeight - (tray ? tray.offsetHeight + 6 : 0);
+    // Would the whole list fit with the tray's text showing? Measured with the text on for a moment, so hiding it
+    // (which frees room) never makes the list fit again and the text flicker back.
+    let fitsWithText = rows.length <= MAX_ROWS;
+    if (fitsWithText) {
+      const had = add?.classList.contains("has-text");
+      add?.classList.add("has-text");
+      fitsWithText = body.scrollHeight <= roomBeside(add);
+      if (!had) add?.classList.remove("has-text");
+    }
+    setTrayText(fitsWithText);
+    const room = roomBeside(add);
     if (body.scrollHeight <= room && rows.length <= MAX_ROWS) {
       return;
     }
@@ -207,8 +218,8 @@ export default function LobbyPanel({ room, onToast }) {
     nameRef.current?.select();
   }
 
-  // The disk beside the name: keeps the playlist in "Mis playlists" straight away, under its name (in place of a saved
-  // one with the same name). It shows a check for a moment.
+  // The disk beside the name: keeps the playlist in "Mis playlists" straight away, as a new one (never replacing a
+  // saved one with other games or settings: a name already taken gets "(2)"). It shows a check for a moment.
   const [justSaved, setJustSaved] = useState(false);
   useEffect(() => {
     if (!justSaved) return undefined;
@@ -219,11 +230,14 @@ export default function LobbyPanel({ room, onToast }) {
     const clean = name.replace(/\s+/g, " ").trim();
     const named = clean && clean !== draft.name ? renameTo(clean) : draft;
     try {
-      saveToLibrary(named);
+      const res = saveToLibrary(named);
+      // Saved as "Nombre (2)": the room's playlist takes that name too, so both are exactly the same (same code) and
+      // saving it again doesn't make another copy.
+      if (res.name !== named.name) renameTo(res.name);
       window.dispatchEvent(new Event("trivially:playlists"));
       setJustSaved(true);
       play("correct");
-      onToast?.(`«${named.name}» guardada en Mis playlists`, "check");
+      onToast?.(`«${res.name}» guardada en Mis playlists`, "check");
     } catch (err) {
       play("wrong");
       onToast?.(err.message);
@@ -240,6 +254,7 @@ export default function LobbyPanel({ room, onToast }) {
     return renamed;
   }
 
+  // Another playlist in the room.
   function replaceWith(playlist) {
     setSelectedId(playlist.items[0]?.id || null);
     return save(playlist);
@@ -334,6 +349,7 @@ export default function LobbyPanel({ room, onToast }) {
               >
                 <Icon name={justSaved ? "check" : "save"} size={18} strokeWidth={2.4} />
               </button>
+              <CopyCodeButton className="tv-pl-rename" disabled={!items.length} onToast={onToast} />
             </div>
           ) : (
             <h2 className="tv-pl-name">{draft.name}</h2>
@@ -408,8 +424,8 @@ export default function LobbyPanel({ room, onToast }) {
               colour and a "+", and a line saying a tap adds it. It's the only way to add one. It grows into the
               card's spare height; when the list is full it keeps just the tiles. */}
           {canEdit && (
-            <div className={`tv-pl-fill${items.length <= 4 ? " has-text" : ""}`}>
-              {/* Its two lines show until the playlist has more than four games; then only the tiles. */}
+            <div className={`tv-pl-fill${trayText ? " has-text" : ""}`}>
+              {/* Its two lines show while the whole list is in sight; once the list scrolls, only the tiles. */}
               <div className="tv-pl-tray">
                 <span className="tv-pl-fill-icons" role="group" aria-label="Añadir un juego">
                   {playlistGames().map((g) => (
@@ -604,147 +620,133 @@ function PlaylistStart({ room, blocked }) {
   );
 }
 
-// Sharing the playlist as JSON: copied (or shown, when the browser won't copy), downloaded as a file, or imported by
-// pasting one or choosing its file. Importing replaces the room's playlist for whoever may change it; anyone else keeps
-// it in "Mis playlists".
-function PlaylistShare({ playlist, canEdit, onImport, onToast }) {
-  const [importing, setImporting] = useState(false);
-  const [text, setText] = useState("");
-  const [error, setError] = useState("");
+// "Copiar código": keeps a playlist on the server (the room's, or `playlist`, a saved one) and copies its code
+// ("K7P2M-XH4QN") to the clipboard; for a moment it shows a check. If the browser won't copy, the code shows in the
+// message instead, to copy by hand.
+function CopyCodeButton({ playlist = null, disabled = false, className, size = 18, label = null, onToast }) {
+  const { sharePlaylist } = useApp();
   const [busy, setBusy] = useState(false);
-  // The JSON on screen, to copy by hand when the clipboard isn't allowed.
-  const [shown, setShown] = useState(false);
-  const fileRef = useRef(null);
-  const empty = !playlist.items.length;
-
+  const [done, setDone] = useState(false);
+  useEffect(() => {
+    if (!done) return undefined;
+    const t = setTimeout(() => setDone(false), 2000);
+    return () => clearTimeout(t);
+  }, [done]);
   async function copy() {
-    try {
-      await navigator.clipboard.writeText(toShareJson(playlist));
-      onToast?.("JSON de la playlist copiado", "check");
-    } catch {
-      setShown(true);
-    }
-  }
-
-  async function doImport(source) {
-    setError("");
-    let parsed;
-    try {
-      parsed = parsePlaylistJson(source);
-    } catch (err) {
-      setError(err.message);
-      return;
-    }
-    const { playlist: imported, skipped } = parsed;
-    const left = skipped ? ` (${skipped === 1 ? "1 juego que no conocemos se quedó fuera" : `${skipped} juegos que no conocemos se quedaron fuera`})` : "";
+    if (busy || disabled) return;
     setBusy(true);
     try {
-      if (canEdit) {
-        await onImport(imported);
-        onToast?.(`Playlist «${imported.name}» importada: ${gamesText(imported.items.length)}${left}`, "check");
-      } else {
-        saveToLibrary(imported);
-        window.dispatchEvent(new Event("trivially:playlists"));
-        onToast?.(`«${imported.name}» guardada en Mis playlists${left}`, "check");
+      const code = await withSound(() => sharePlaylist(playlist));
+      try {
+        await navigator.clipboard.writeText(code);
+        setDone(true);
+        onToast?.(`Código copiado: ${code}`, "check");
+      } catch {
+        onToast?.(`Tu código es ${code} (cópialo a mano)`, "check");
       }
-      setImporting(false);
-      setText("");
     } catch (err) {
-      setError(err.message || "No se pudo importar la playlist");
+      onToast?.(err.message || "No se pudo crear el código");
     } finally {
       setBusy(false);
     }
   }
+  return (
+    <button
+      type="button"
+      className={`${className}${done ? " is-on" : ""}`}
+      onMouseDown={(e) => e.preventDefault()}
+      onClick={copy}
+      disabled={disabled || busy}
+      aria-label={done ? "Código copiado" : `Copiar el código de ${playlist?.name ? `«${playlist.name}»` : "esta playlist"}`}
+      data-sound="none"
+    >
+      {busy ? <span className="tv-spinner" aria-hidden="true" /> : <Icon name={done ? "check" : "share"} size={size} strokeWidth={2.4} />}
+      {label && <span>{done ? "Copiado" : label}</span>}
+    </button>
+  );
+}
 
-  function readFile(e) {
-    const file = e.target.files?.[0];
-    e.target.value = "";
-    if (!file) return;
-    if (file.size > 200000) {
-      setError("Ese archivo es demasiado grande para ser una playlist.");
-      return;
+// "Código de playlist": the box where a friend's code is pasted (copying one is on each playlist, CopyCodeButton).
+// The playlist is always kept in "Mis playlists"; whoever may change the room also loads it.
+function PlaylistShare({ canEdit, onImport, onToast }) {
+  const { playlistByCode } = useApp();
+  const [code, setCode] = useState("");
+  const [loadBusy, setLoadBusy] = useState(false);
+  const [error, setError] = useState("");
+
+  async function loadCode(e) {
+    e.preventDefault();
+    if (!code.trim() || loadBusy) return;
+    setLoadBusy(true);
+    setError("");
+    try {
+      const found = await withSound(() => playlistByCode(code.trim()));
+      const imported = fromLibrary(found);
+      // Always kept in "Mis playlists" too, to play it again later; whoever may change the room also loads it.
+      let kept = null;
+      try {
+        kept = saveToLibrary(imported);
+        window.dispatchEvent(new Event("trivially:playlists"));
+      } catch {
+        // The browser keeps nothing (a private window): it's only loaded.
+      }
+      const shownName = kept?.name || imported.name;
+      if (canEdit) {
+        await onImport({ ...imported, name: shownName });
+        onToast?.(`«${shownName}» cargada y guardada en Mis playlists`, "check");
+      } else {
+        onToast?.(`«${shownName}» guardada en Mis playlists`, "check");
+      }
+      setCode("");
+    } catch (err) {
+      setError(err.message || "No se pudo cargar esa playlist");
+    } finally {
+      setLoadBusy(false);
     }
-    file
-      .text()
-      .then((content) => {
-        setText(content);
-        doImport(content);
-      })
-      .catch(() => setError("No se pudo leer ese archivo."));
   }
 
   return (
     <section className="tv-pl-side" aria-labelledby="tv-pl-share-title">
       <div className="tv-pl-side-head">
         <h3 id="tv-pl-share-title" className="tv-pl-side-title">
-          Compartir
+          Código de playlist
         </h3>
-        <span className="tv-pl-side-sub">En formato JSON</span>
       </div>
-      <div className="tv-pl-side-actions">
-        <button type="button" className="tv-btn tv-btn--sm tv-c-neutral" onClick={copy} disabled={empty} data-sound="copy">
-          <Icon name="copy" size={16} strokeWidth={2.6} />
-          Copiar
-        </button>
-        <button type="button" className="tv-btn tv-btn--sm tv-c-neutral" onClick={() => downloadPlaylist(playlist)} disabled={empty}>
-          <Icon name="download" size={16} strokeWidth={2.6} />
-          Descargar
-        </button>
-        <button
-          type="button"
-          className="tv-btn tv-btn--sm tv-c-neutral"
-          aria-expanded={importing}
-          onClick={() => {
-            setImporting((v) => !v);
-            setError("");
-          }}
-        >
-          <Icon name={importing ? "close" : "upload"} size={16} strokeWidth={2.6} />
-          {importing ? "Cerrar" : "Importar"}
-        </button>
-      </div>
-      {shown && (
-        <div className="tv-pl-json">
-          <p className="tv-pl-side-note">Tu navegador no nos deja copiar. Selecciona el texto y cópialo tú:</p>
-          <textarea className="tv-pl-textarea" readOnly value={toShareJson(playlist)} onFocus={(e) => e.currentTarget.select()} rows={6} />
-          <button type="button" className="tv-pl-link" onClick={() => setShown(false)}>
-            Ocultar
+      {/* Copying is on each playlist (its copy icon); here, a friend's code is pasted and loaded. */}
+      <form className="tv-spotify-link" onSubmit={loadCode}>
+        <div className="tv-spotify-link-box tv-pl-codebox">
+          <Icon name="playlist" size={20} strokeWidth={2.4} />
+          <input
+            className="tv-spotify-link-input"
+            value={code}
+            onChange={(e) => {
+              setCode(e.target.value);
+              setError("");
+            }}
+            placeholder="Pega el código de una playlist"
+            aria-label="Código de una playlist"
+            aria-invalid={Boolean(error) || undefined}
+            autoCapitalize="characters"
+            autoComplete="off"
+            spellCheck={false}
+            disabled={loadBusy}
+          />
+          <button
+            type="submit"
+            className="tv-btn tv-btn--sm tv-c-playlist tv-spotify-link-send"
+            disabled={loadBusy || !code.trim()}
+            aria-label={loadBusy ? "Cargando la playlist" : "Cargar la playlist"}
+            aria-busy={loadBusy}
+            data-sound="none"
+          >
+            {loadBusy ? <span className="tv-spinner" aria-hidden="true" /> : <Icon name="upload" size={20} strokeWidth={3} />}
           </button>
         </div>
-      )}
-      {importing && (
-        <div className="tv-pl-json">
-          <p className="tv-pl-side-note">
-            {canEdit
-              ? "Pega el JSON de una playlist o elige su archivo. Sustituirá a la playlist de la sala."
-              : "Pega el JSON de una playlist o elige su archivo. Se guardará en Mis playlists."}
-          </p>
-          <textarea
-            className="tv-pl-textarea"
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            placeholder='{ "name": "Mi playlist", "items": [ … ] }'
-            rows={6}
-            spellCheck={false}
-            aria-label="JSON de la playlist"
-          />
-          {error && (
-            <p className="tv-lobby-error" role="alert">
-              {error}
-            </p>
-          )}
-          <div className="tv-pl-side-actions">
-            <button type="button" className="tv-btn tv-btn--sm tv-c-playlist" onClick={() => doImport(text)} disabled={!text.trim() || busy}>
-              <Icon name="check" size={16} strokeWidth={3} />
-              {busy ? "Importando…" : "Importar"}
-            </button>
-            <button type="button" className="tv-btn tv-btn--sm tv-c-neutral" onClick={() => fileRef.current?.click()} disabled={busy}>
-              <Icon name="upload" size={16} strokeWidth={2.6} />
-              Elegir archivo
-            </button>
-            <input ref={fileRef} type="file" accept=".json,application/json,text/plain" hidden onChange={readFile} />
-          </div>
-        </div>
+      </form>
+      {error && (
+        <p className="tv-lobby-error" role="alert">
+          {error}
+        </p>
       )}
     </section>
   );
@@ -875,6 +877,12 @@ function PlaylistLibrary({ canEdit, onLoad, onToast }) {
               >
                 <Icon name={renaming === entry.id ? "check" : "pencil"} size={17} strokeWidth={2.6} />
               </button>
+              <CopyCodeButton
+                className="tv-pl-tool tv-pl-saved-edit"
+                size={17}
+                playlist={{ name: entry.name, order: entry.order, items: entry.items }}
+                onToast={onToast}
+              />
               {canEdit && (
                 <button type="button" className="tv-btn tv-btn--sm tv-c-playlist" onClick={() => load(entry)} disabled={Boolean(loading)}>
                   {loading === entry.id ? "Cargando…" : "Cargar"}

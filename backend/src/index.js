@@ -8,6 +8,7 @@ import cookieSession from "cookie-session";
 import { Server } from "socket.io";
 import { loadCatalog } from "./catalog/catalogProvider.js";
 import { startDefaultPlaylists } from "./catalog/defaultPlaylists.js";
+import { forgetOldShareCodes } from "./db/sharedPlaylists.js";
 import { TrackResolver } from "./catalog/trackResolver.js";
 import { flushStore, initStore } from "./db/store.js";
 import { RoomManager } from "./game/roomManager.js";
@@ -38,6 +39,9 @@ const resolver = new TrackResolver({ catalog });
 const rooms = new RoomManager({ catalog, store, questions, resolver });
 // The default Spotify playlists (catalog/defaultPlaylists.js): read now and once a day, and put in every room.
 startDefaultPlaylists(() => rooms.applyDefaultPlaylists());
+// Playlist codes nobody shared or opened in a year are deleted: now and once a day.
+forgetOldShareCodes().catch(() => {});
+setInterval(() => forgetOldShareCodes().catch(() => {}), 24 * 60 * 60 * 1000).unref?.();
 // Spotify songs found in earlier games join the search box too.
 resolver.preloadSaved().catch((err) => console.warn(`[Spotify] No se pudieron precargar las canciones (${err.message})`));
 
