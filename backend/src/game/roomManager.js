@@ -1,4 +1,4 @@
-import { isDefaultSpotify } from "../catalog/defaultPlaylists.js";
+import { cachedDefaultPlaylists, isDefaultSpotify } from "../catalog/defaultPlaylists.js";
 import { SONG_DIFFICULTIES, SONG_GENRES, SONG_LANGUAGES, filterSongs, songCounts } from "../catalog/songFilters.js";
 import { hasRole } from "../auth/roles.js";
 import { hydrateSong } from "../catalog/catalogProvider.js";
@@ -314,6 +314,7 @@ export class RoomManager {
       centralRequests: [],
     };
     this.rooms.set(code, room);
+    this.ensureDefaultPlaylists(room);
     this.addPlayer(room, host, true);
     return room;
   }
@@ -909,55 +910,81 @@ export class RoomManager {
    * Adds (and selects) one of the host's Spotify playlists, read by catalog/spotifyLibrary.js. Its songs are looked
    * up on iTunes in the background; the match can start as soon as any song of the selection is playable.
    */
+  // A song of a playlist read from Spotify's public page, with its own preview (15–22 s): playable at once. iTunes is
+  // still asked in the background, and what it finds (a 30 s preview, the album's cover and year) replaces it.
+  linkSong(t, playlist) {
+    return {
+      id: `sp-${t.spotifyId}`,
+      spotifyId: t.spotifyId,
+      title: displayTitle(t.title),
+      artistName: t.artists.join(" & ") || "Artista",
+      artists: t.artists,
+      albumName: t.albumName || "",
+      year: t.year || null,
+      image: playlist.image || null,
+      previewUrl: t.previewUrl,
+    };
+  }
+
+  // A room's entry for a playlist read from Spotify's public page (not ticked: whoever adds it decides).
+  newLinkEntry(room, playlist) {
+    const id = `${SPOTIFY_PREFIX}${playlist.id}`;
+    const entry = { id, name: playlist.name, image: playlist.image, tracks: playlist.tracks, songs: new Map(), done: new Set(), active: false };
+    for (const t of playlist.tracks) if (t.previewUrl) entry.songs.set(t.spotifyId, this.linkSong(t, playlist));
+    entry.instant = entry.songs.size > 0;
+    room.customPlaylists[id] = entry;
+    return entry;
+  }
+
+  // The same playlist read again: its songs become Spotify's current ones. Songs no longer in it go; new ones come
+  // with their own preview and are looked up on iTunes like the rest.
+  refreshLinkEntry(entry, playlist) {
+    const now = new Set(playlist.tracks.map((t) => t.spotifyId));
+    for (const key of [...entry.songs.keys()]) if (!now.has(key)) entry.songs.delete(key);
+    for (const key of [...entry.done]) if (!now.has(key)) entry.done.delete(key);
+    entry.retried?.forEach((key) => !now.has(key) && entry.retried.delete(key));
+    entry.tracks = playlist.tracks;
+    entry.name = playlist.name || entry.name;
+    entry.image = playlist.image || entry.image;
+    for (const t of playlist.tracks) {
+      if (t.previewUrl && !entry.songs.has(t.spotifyId)) entry.songs.set(t.spotifyId, this.linkSong(t, playlist));
+    }
+  }
+
+  /**
+   * Puts the default playlists (read once a day, catalog/defaultPlaylists.js) in a room, unticked, so they are always
+   * loaded there and ticking one is instant. A room that has one from an earlier day gets today's songs, while it
+   * waits in the lobby (never in the middle of a match).
+   */
+  ensureDefaultPlaylists(room) {
+    if (!room?.customPlaylists) return;
+    for (const { playlist, day } of cachedDefaultPlaylists()) {
+      const id = `${SPOTIFY_PREFIX}${playlist.id}`;
+      const entry = room.customPlaylists[id];
+      if (!entry) this.newLinkEntry(room, playlist).day = day;
+      else if (entry.day !== day && room.phase === "lobby") {
+        this.refreshLinkEntry(entry, playlist);
+        entry.day = day;
+        if (entry.active) this.loadPlaylist(room, entry);
+      }
+    }
+  }
+
+  /** Every room gets the default playlists just read (catalog/defaultPlaylists.js calls it). */
+  applyDefaultPlaylists() {
+    for (const room of this.rooms.values()) this.ensureDefaultPlaylists(room);
+  }
+
   addSpotifyPlaylist(room, userId, playlist, { fromLink = false } = {}) {
     if (fromLink) this.assertPlaylistEditor(room, userId);
     else this.assertSpotifyEditor(room, userId);
     const id = `${SPOTIFY_PREFIX}${playlist.id}`;
     let entry = room.customPlaylists[id];
-    // Read again (a pasted or default playlist ticked once more): its songs become Spotify's current ones. Songs no
-    // longer in it go; new ones come with their own preview and are looked up on iTunes like the rest.
-    if (entry && fromLink) {
-      const now = new Set(playlist.tracks.map((t) => t.spotifyId));
-      for (const key of [...entry.songs.keys()]) if (!now.has(key)) entry.songs.delete(key);
-      for (const key of [...entry.done]) if (!now.has(key)) entry.done.delete(key);
-      entry.retried?.forEach((key) => !now.has(key) && entry.retried.delete(key));
-      entry.tracks = playlist.tracks;
-      entry.name = playlist.name || entry.name;
-      entry.image = playlist.image || entry.image;
-      for (const t of playlist.tracks) {
-        if (!t.previewUrl || entry.songs.has(t.spotifyId)) continue;
-        entry.songs.set(t.spotifyId, {
-          id: `sp-${t.spotifyId}`,
-          spotifyId: t.spotifyId,
-          title: displayTitle(t.title),
-          artistName: t.artists.join(" & ") || "Artista",
-          artists: t.artists,
-          albumName: t.albumName || "",
-          year: t.year || null,
-          image: playlist.image || null,
-          previewUrl: t.previewUrl,
-        });
-      }
-    }
+    // Read again (a pasted playlist added once more): its songs become Spotify's current ones.
+    if (entry && fromLink) this.refreshLinkEntry(entry, playlist);
+    if (!entry && fromLink) entry = this.newLinkEntry(room, playlist);
     if (!entry) {
       entry = { id, name: playlist.name, image: playlist.image, tracks: playlist.tracks, songs: new Map(), done: new Set(), active: true };
-      // A pasted public playlist brings each song's own preview (15–22 s): they can be played at once. iTunes is still
-      // asked in the background, and what it finds (a 30 s preview, the album's cover and year) replaces it.
-      for (const t of playlist.tracks) {
-        if (!t.previewUrl) continue;
-        entry.songs.set(t.spotifyId, {
-          id: `sp-${t.spotifyId}`,
-          spotifyId: t.spotifyId,
-          title: displayTitle(t.title),
-          artistName: t.artists.join(" & ") || "Artista",
-          artists: t.artists,
-          albumName: t.albumName || "",
-          year: t.year || null,
-          image: playlist.image || null,
-          previewUrl: t.previewUrl,
-        });
-      }
-      entry.instant = entry.songs.size > 0;
       room.customPlaylists[id] = entry;
     }
     // Adding one ticks it.
@@ -1826,6 +1853,7 @@ export class RoomManager {
     room.game = next;
     room.preview = null;
     room.suggestions = [];
+    this.ensureDefaultPlaylists(room);
   }
 
   // A player (not the host) suggests a game while the room is on the menu: the host sees it and can accept. Each

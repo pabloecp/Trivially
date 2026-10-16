@@ -187,4 +187,32 @@ mgr.destroy(removable);
   assert.throws(() => mgr.removeSpotifyPlaylist(fresh, "owner", "sp:37i9dQZEVXbMDoHDwVN2tF"), /no se puede borrar/);
 }
 
+// The default playlists are read once a day and put in every room already loaded, unticked: ticking one is instant.
+{
+  const { refreshDefaultPlaylists, DEFAULT_SPOTIFY } = await import("../catalog/defaultPlaylists.js");
+  const top = DEFAULT_SPOTIFY[0];
+  let reads = 0;
+  const fake = async () => {
+    reads += 1;
+    return { id: top.id, name: top.name, image: null, tracks: [{ spotifyId: "d1", title: "Uno", artists: ["A"], previewUrl: "https://p.scdn.co/mp3-preview/d1" }] };
+  };
+  let told = 0;
+  await refreshDefaultPlaylists(() => (told += 1), fake);
+  await refreshDefaultPlaylists(() => (told += 1), fake);
+  assert.equal(reads, 1, "read once a day, not on every tick");
+  assert.equal(told, 1);
+  const withDefaults = mgr.create({ host: { id: "owner", name: "Owner", socketId: "s10" }, game: "musica" });
+  const id = `sp:${top.id}`;
+  assert.ok(withDefaults.customPlaylists[id], "already in a new room");
+  assert.ok(!(withDefaults.config.playlistIds || []).includes(id), "but not ticked");
+  assert.equal(withDefaults.customPlaylists[id].songs.size, 1, "its songs ready");
+  mgr.updateConfig(withDefaults, "owner", { playlistIds: [id] });
+  assert.deepEqual(withDefaults.config.playlistIds, [id], "ticking it needs nothing else");
+  // A room made before they were read gets them too.
+  const older = mgr.create({ host: { id: "owner2", name: "Owner 2", socketId: "s11" }, game: "musica" });
+  delete older.customPlaylists[id];
+  mgr.applyDefaultPlaylists();
+  assert.ok(older.customPlaylists[id]);
+}
+
 console.log("spotifyRoom.test ok");

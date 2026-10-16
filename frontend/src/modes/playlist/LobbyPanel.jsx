@@ -1,4 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { Link } from "react-router-dom";
 import Icon from "../../components/home/Icon.jsx";
 import SettingsPanel from "../../components/home/SettingsPanel.jsx";
 import { useStartGame } from "../../components/home/ModeStart.jsx";
@@ -47,8 +48,10 @@ const PLAYLIST_STEPS = [
   { title: "Comienza la partida", text: "Se juegan uno tras otro y gana quien gane más juegos." },
 ];
 
-// On a phone the list shows this many games at most, and scrolls for the rest.
+// On a phone the list shows this many games at most, and scrolls for the rest; on a big screen, as many as fit up to
+// MAX_ROWS.
 const PHONE_ROWS = 4;
+const MAX_ROWS = 5;
 
 export default function LobbyPanel({ room, onToast }) {
   const { user, catalog, updatePlaylist } = useApp();
@@ -80,7 +83,7 @@ export default function LobbyPanel({ room, onToast }) {
     // Measured from the layout (offsetTop), not from where a row is drawn: a game just added still slides in with an
     // animation, and its drawn position would make it look like it doesn't fit.
     const bottomOf = (el) => el.offsetTop + el.offsetHeight + 4;
-    const pad = 4; // under the last row: less than the gap between rows, so the next one never peeks in
+    const pad = 2; // under the last row: less than the gap between rows, so the next one never peeks in
     const rows = body.querySelectorAll(".tv-pl-item");
     // Phones: the page scrolls, so the list just shows its first PHONE_ROWS games and scrolls for the rest.
     const phone = window.matchMedia("(max-width: 640px)").matches;
@@ -88,15 +91,16 @@ export default function LobbyPanel({ room, onToast }) {
       ? rows.length > PHONE_ROWS
         ? bottomOf(rows[PHONE_ROWS - 1]) + pad
         : Infinity
-      : wrap.clientHeight - (add ? add.offsetHeight + 8 : 0);
-    if (body.scrollHeight <= room) {
+      : wrap.clientHeight - (add ? add.offsetHeight + 6 : 0);
+    if (body.scrollHeight <= room && rows.length <= MAX_ROWS) {
       return;
     }
     let fit = 0;
-    for (const el of rows) {
+    // Never more than MAX_ROWS games in sight at once (on a big screen); the rest scroll.
+    [...rows].slice(0, MAX_ROWS).forEach((el) => {
       const bottom = bottomOf(el);
       if (bottom + pad <= room) fit = bottom;
-    }
+    });
     if (fit) body.style.height = `${fit + pad}px`;
   }
   useLayoutEffect(() => {
@@ -404,8 +408,8 @@ export default function LobbyPanel({ room, onToast }) {
               colour and a "+", and a line saying a tap adds it. It's the only way to add one. It grows into the
               card's spare height; when the list is full it keeps just the tiles. */}
           {canEdit && (
-            <div className={`tv-pl-fill${items.length <= 3 ? " has-text" : ""}`}>
-              {/* Its two lines show until the playlist has more than three games; then only the tiles. */}
+            <div className={`tv-pl-fill${items.length <= 4 ? " has-text" : ""}`}>
+              {/* Its two lines show until the playlist has more than four games; then only the tiles. */}
               <div className="tv-pl-tray">
                 <span className="tv-pl-fill-icons" role="group" aria-label="Añadir un juego">
                   {playlistGames().map((g) => (
@@ -493,6 +497,7 @@ export default function LobbyPanel({ room, onToast }) {
                 role="tab"
                 aria-selected={side === v.id}
                 className="tv-pl-view"
+                aria-label={v.label}
                 onClick={() => setSide(v.id)}
               >
                 <Icon name={v.icon} size={15} strokeWidth={2.6} />
@@ -515,15 +520,15 @@ export default function LobbyPanel({ room, onToast }) {
                 </p>
                 <h3 className="tv-pl-edit-title">{findMode(selected.game)?.name}</h3>
               </div>
-              {/* Back and forth between the playlist's games without going to the list (always there, so the panel looks the same with one game; its arrows grey out at the ends). */}
+              {/* Back and forth between the playlist's games without going to the list (always there, so the panel looks the same with one game). The arrows go round: after the last game comes the first, and before the first the last. */}
               {items.length > 0 && (
                 <div className="tv-pl-edit-nav" role="group" aria-label="Cambiar de juego">
                   <button
                     type="button"
                     className="tv-pl-edit-step"
                     aria-label="Juego anterior"
-                    disabled={selectedIndex <= 0}
-                    onClick={() => setSelectedId(items[selectedIndex - 1].id)}
+                    disabled={items.length < 2}
+                    onClick={() => setSelectedId(items[(selectedIndex - 1 + items.length) % items.length].id)}
                   >
                     <Icon name="chevron" size={18} strokeWidth={3} className="is-prev" />
                   </button>
@@ -542,8 +547,8 @@ export default function LobbyPanel({ room, onToast }) {
                     type="button"
                     className="tv-pl-edit-step"
                     aria-label="Juego siguiente"
-                    disabled={selectedIndex >= items.length - 1}
-                    onClick={() => setSelectedId(items[selectedIndex + 1].id)}
+                    disabled={items.length < 2}
+                    onClick={() => setSelectedId(items[(selectedIndex + 1) % items.length].id)}
                   >
                     <Icon name="chevron" size={18} strokeWidth={3} />
                   </button>
@@ -748,6 +753,8 @@ function PlaylistShare({ playlist, canEdit, onImport, onToast }) {
 // "Mis playlists": the ones kept in this browser, to play again. Anyone can keep the room's playlist; whoever may change
 // it can load a kept one into the room. Taking one out asks for a second tap.
 function PlaylistLibrary({ canEdit, onLoad, onToast }) {
+  const { user } = useApp();
+  const signedIn = Boolean(user && !user.isGuest);
   const [list, setList] = useState(loadLibrary);
   // A saved one's name, changed in its own row: the pencil turns it into a box, the check (or Enter) keeps it.
   const [renaming, setRenaming] = useState(null);
@@ -815,8 +822,20 @@ function PlaylistLibrary({ canEdit, onLoad, onToast }) {
           Mis playlists
         </h3>
       </div>
+      {/* Without an account: a note in the playlist's colour, like Adivina la canción's Spotify note. */}
+      {!signedIn && (
+        <div className="tv-note tv-pl-account-note">
+          <Icon name="info" size={16} strokeWidth={2.6} />
+          <p className="tv-note-text">
+            <span>
+              <Link to="/login">Crear cuenta</Link> o <Link to="/login?mode=login">Iniciar sesión</Link>
+            </span>{" "}
+            <span>para no perder tus playlists.</span>
+          </p>
+        </div>
+      )}
       {list.length === 0 ? (
-        <p className="tv-pl-side-note">Guárdala con el disquete junto a su nombre para volver a jugarla. Se quedan en este navegador.</p>
+        <p className="tv-pl-side-note">Guárdala con el ícono junto a su nombre para volver a jugarla.</p>
       ) : (
         <ul className="tv-pl-saved">
           {list.map((entry) => (

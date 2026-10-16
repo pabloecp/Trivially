@@ -7,6 +7,7 @@ import express from "express";
 import cookieSession from "cookie-session";
 import { Server } from "socket.io";
 import { loadCatalog } from "./catalog/catalogProvider.js";
+import { startDefaultPlaylists } from "./catalog/defaultPlaylists.js";
 import { TrackResolver } from "./catalog/trackResolver.js";
 import { flushStore, initStore } from "./db/store.js";
 import { RoomManager } from "./game/roomManager.js";
@@ -35,6 +36,8 @@ const store = await initStore();
 const questions = await loadQuestions();
 const resolver = new TrackResolver({ catalog });
 const rooms = new RoomManager({ catalog, store, questions, resolver });
+// The default Spotify playlists (catalog/defaultPlaylists.js): read now and once a day, and put in every room.
+startDefaultPlaylists(() => rooms.applyDefaultPlaylists());
 // Spotify songs found in earlier games join the search box too.
 resolver.preloadSaved().catch((err) => console.warn(`[Spotify] No se pudieron precargar las canciones (${err.message})`));
 

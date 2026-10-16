@@ -685,8 +685,10 @@ export function AppProvider({ children }) {
         const res = await emitAckWithin(25000, "room:spotifyLink", link);
         if (!res.ok) throw new Error(res.error);
         if (res.state) setRoom(res.state);
-        // `saved`: the account's list ("Mis playlists"); `added`: the room's id of the playlist just read.
-        return { saved: res.saved || null, added: res.added || null };
+        // `saved`: the account's list ("Mis playlists"); `added`: the room's id of the playlist just read, and
+        // `playlist` its name, cover and songs (a guest keeps it in this browser).
+        const playlist = res.added ? res.state?.customPlaylists?.find((p) => p.id === res.added) || null : null;
+        return { saved: res.saved || null, added: res.added || null, playlist };
       },
 
       // The Spotify playlists and albums kept on this account ({ canSave, saved }), and deleting one for good.

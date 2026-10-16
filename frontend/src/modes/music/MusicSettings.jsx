@@ -7,6 +7,7 @@ import SettingsTabs from "../../components/home/SettingsTabs.jsx";
 import SpotifyIcon from "../../components/home/SpotifyIcon.jsx";
 import { FORMATS, LEVELS } from "../quiz/quizInfo.js";
 import { useApp } from "../../lib/store.jsx";
+import { forgetLocalSpotify, loadLocalSpotify, saveLocalSpotify } from "../../lib/localSpotify.js";
 import { withSound } from "../../lib/sounds.js";
 
 const FORMAT_IDS = FORMATS.map((f) => f.id);
@@ -25,7 +26,7 @@ const GENRES = [
 ];
 const FILTERS = { languages: LANGUAGES, genres: GENRES, difficulties: LEVELS };
 // The Spotify playlists every room offers in "Tus playlists" (DEFAULT_SPOTIFY on the server): always listed first,
-// they can't be deleted, and each tick reads them again from Spotify, so their songs are always the current ones.
+// they can't be deleted, and the server keeps them loaded in every room (read once a day), so ticking one is instant.
 const DEFAULT_PLAYLISTS = [{ kind: "playlist", id: "37i9dQZEVXbMDoHDwVN2tF", name: "Top 50: Global" }];
 const defaultRoomId = (p) => `sp:${p.kind === "album" ? `album:${p.id}` : p.id}`;
 const DEFAULT_IDS = new Set(DEFAULT_PLAYLISTS.map(defaultRoomId));
@@ -85,7 +86,12 @@ export default function MusicSettings({ room, updateConfig, onToast, children, r
 
   // The list is always open, so it loads straight away (and the owner's own Spotify playlists with it).
   useEffect(() => {
-    if (readOnly || !hasAccount) return;
+    if (readOnly) return;
+    // A guest's are kept in this browser only (the server keeps nothing for guests).
+    if (!hasAccount) {
+      setSaved(loadLocalSpotify());
+      return;
+    }
     let gone = false;
     listSavedSpotify()
       .then((res) => !gone && setSaved(res.saved))
@@ -118,9 +124,10 @@ export default function MusicSettings({ room, updateConfig, onToast, children, r
     if (!link.trim() || linkBusy) return;
     setLinkBusy(true);
     try {
-      const { saved: list, added } = await withSound(() => addSpotifyLink(link.trim()));
+      const { saved: list, added, playlist } = await withSound(() => addSpotifyLink(link.trim()));
       if (added) await tickInItem(added);
-      if (list) setSaved(list);
+      if (!hasAccount) setSaved(saveLocalSpotify(playlist));
+      else if (list) setSaved(list);
       setLink("");
       setLinkOpen(false);
     } catch (err) {
@@ -135,6 +142,8 @@ export default function MusicSettings({ room, updateConfig, onToast, children, r
   async function toggleDefault(p) {
     const roomId = defaultRoomId(p);
     if (selected.includes(roomId)) return togglePlaylist(roomId);
+    // The server keeps it loaded in every room (read once a day): ticking it is instant.
+    if (custom.some((c) => c.id === roomId)) return togglePlaylist(roomId);
     if (savedBusy) return;
     setSavedBusy(`default:${p.id}`);
     try {
@@ -180,7 +189,7 @@ export default function MusicSettings({ room, updateConfig, onToast, children, r
     setConfirmForget("");
     try {
       if (row.inRoom) await removePlaylist(row.key);
-      if (row.savedItem) setSaved(await forgetSavedSpotify(row.savedItem.key));
+      if (row.savedItem) setSaved(hasAccount ? await forgetSavedSpotify(row.savedItem.key) : forgetLocalSpotify(row.savedItem.key));
     } catch (err) {
       onToast?.(err.message || "No se pudo borrar");
     }
@@ -399,7 +408,7 @@ export default function MusicSettings({ room, updateConfig, onToast, children, r
               inputMode="url"
               value={link}
               onChange={(e) => setLink(e.target.value)}
-              placeholder="Pega el link de una playlist o álbum"
+              placeholder="Link de playlist o álbum"
               aria-label="Link de una playlist o un álbum de Spotify"
               disabled={linkBusy}
               autoFocus
@@ -432,18 +441,19 @@ export default function MusicSettings({ room, updateConfig, onToast, children, r
         </form>
       )}
       {!readOnly && linkOpen && (
-        <p className="tv-spotify-note">
+        <div className="tv-note tv-spotify-note">
+          {/* One text beside the icon (centred against all of it); without an account, its last line says how to keep
+              the playlists. */}
           <Icon name="info" size={16} strokeWidth={2.6} />
-          <span>
-          La playlist tiene que ser pública. Se usan hasta 100 canciones.
-          {!hasAccount && (
-            <>
-              {" "}
-              <Link to="/login">Inicia sesión</Link> para guardarla.
-            </>
-          )}
-          </span>
-        </p>
+          <p className="tv-note-text">
+            <span>La playlist tiene que ser pública.</span> <span>Se usan hasta 100 canciones.</span>
+            {!hasAccount && (
+              <span className="tv-note-account">
+                <Link to="/login">Crear cuenta</Link> o <Link to="/login?mode=login">Iniciar sesión</Link> para guardarla.
+              </span>
+            )}
+          </p>
+        </div>
       )}
       {(rows.length > 0 || (!readOnly && hasAccount)) && (
         <section className="tv-saved" aria-label="Tus playlists">

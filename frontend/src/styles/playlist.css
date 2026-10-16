@@ -1035,3 +1035,75 @@ input.tv-pl-name:focus { outline: none; }
 .tv-app .tv-pl-saved::-webkit-scrollbar-track { border-radius: 3px; background: rgba(255, 255, 255, 0.05); }
 .tv-app .tv-saved-list::-webkit-scrollbar-thumb,
 .tv-app .tv-pl-saved::-webkit-scrollbar-thumb { border-radius: 3px; background: rgba(255, 255, 255, 0.28); }
+
+/* ---------- Phones ---------- */
+@media (max-width: 640px) {
+  /* The chosen game's head: its badge and name on one line ("Juego 1 de 4" never splits), and the game switcher on
+     its own row under them, as wide as the panel, with its squares. */
+  .tv-pl-edit-head { flex-wrap: wrap; row-gap: 10px; }
+  .tv-pl-edit-kicker { white-space: nowrap; }
+  .tv-pl-edit-text { flex: 1 1 0; }
+  .tv-pl-edit-nav { order: 3; flex: 1 1 100%; width: 100%; min-width: 0; margin-left: 0; }
+  .tv-pl-edit-dots { display: flex; flex: 1 1 0; }
+  /* The card's head: the kicker gives way ("…") before "Nueva" is pushed out. */
+  .tv-pl-head .tv-mstage-badges { min-width: 0; }
+  .tv-pl-kicker { overflow: hidden; min-width: 0; text-overflow: ellipsis; }
+  .tv-pl-new { height: 34px; padding: 0 12px 0 10px; font-size: 13px; }
+  /* The settings' title row: "Ajustes" and the small switch share the line; the switch's words get smaller. */
+  .tv-settings-head:has(.tv-pl-views) { flex-wrap: nowrap; }
+  .tv-pl-views { flex: 0 1 auto; min-width: 0; }
+  .tv-pl-view { padding: 0 8px; font-size: 12px; }
+  .tv-pl-view span { overflow: hidden; text-overflow: ellipsis; }
+}
+@media (max-width: 380px) {
+  /* Very narrow: the switch keeps only its icons. */
+  .tv-pl-view span { display: none; }
+}
+@media (max-width: 640px) {
+  /* Each game's row leaves its name more room: smaller tools, number and icon. */
+  .tv-pl-item { gap: 2px; padding: 3px 4px 3px 3px; }
+  .tv-pl-item-main { gap: 6px; padding: 3px; }
+  .tv-pl-item .tv-pl-num,
+  .tv-pl-item.is-selected .tv-pl-num { width: 14px; font-size: 15px; }
+  .tv-pl-item .tv-pl-badge { width: 32px; height: 32px; border-radius: 10px; }
+  .tv-pl-item .tv-pl-badge svg { width: 16px; height: 16px; }
+  .tv-pl-game { font-size: 15px; }
+  .tv-pl-sum { font-size: 11.5px; }
+  .tv-pl-tools { gap: 2px; }
+  .tv-pl-tool { width: 30px; height: 30px; border-radius: 9px; }
+  .tv-pl-tool svg { width: 14px; height: 14px; }
+}
+@media (max-width: 640px) {
+  /* The order and "Mezclar" fit a narrow phone: smaller words, the order's icons only when there's room. */
+  .tv-pl-order-btn { gap: 6px; padding: 0 6px; font-size: 15px; }
+  .tv-pl-shuffle { padding: 0 14px; font-size: 14px; }
+}
+@media (max-width: 400px) {
+  .tv-pl-order-btn svg { display: none; }
+  .tv-pl-shuffle { gap: 0; padding: 0 14px; }
+  .tv-pl-shuffle { font-size: 0; }
+  .tv-pl-shuffle svg { width: 20px; height: 20px; }
+}
+
+/* A lower tray, so a fifth game fits above it on a usual window. */
+.tv-pl-tray { padding: 6px 14px; }
+.tv-pl-bodywrap { gap: 6px; }
+
+/* "Mis playlists" without an account: the Spotify note's look (styles/home.css .tv-spotify-note) in the playlist's
+   orange. */
+.tv-pl-account-note {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  padding: 10px 14px;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--p-culture-1, #ff8a00) 12%, transparent);
+  box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--p-culture-1, #ff8a00) 45%, transparent);
+  color: color-mix(in srgb, var(--p-culture-1, #ff8a00) 70%, #ffffff);
+  font-weight: 700;
+  font-size: 13px;
+  line-height: 1.4;
+}
+.tv-pl-account-note svg { flex-shrink: 0; }
+.tv-pl-account-note a { color: #ffffff; font-weight: 800; text-decoration: none; }
