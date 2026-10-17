@@ -51,7 +51,7 @@ function safePath(path) {
   return typeof path === "string" && path.startsWith("/") && !path.startsWith("//") && !path.includes("\\") ? path : "/";
 }
 
-export function createApiRouter({ catalog, store, songList = () => [] }) {
+export function createApiRouter({ catalog, store, friends = null, hub = null, songList = () => [] }) {
   const router = Router();
 
   // Starts (or refreshes) the session of a guest, or of a registered user who is already signed in.
@@ -208,6 +208,9 @@ export function createApiRouter({ catalog, store, songList = () => [] }) {
       if (!userId) return res.status(401).json({ error: "No autenticado" });
       const { confirmName } = req.body || {};
       deleteUser(store, userId, confirmName);
+      // Their friendships go too, and their friends' lists update.
+      const others = friends?.removeAllOf(userId) || [];
+      hub?.refresh(...others);
       req.session = null;
       res.json({ ok: true });
     } catch (err) {

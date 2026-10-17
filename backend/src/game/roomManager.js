@@ -102,6 +102,12 @@ const CHAT_GAP_MS = 700;
 // A player can ask to use another device as the central one this often, and a room keeps this many requests at once.
 export const CENTRAL_ASK_GAP_MS = 5000;
 const CENTRAL_REQUESTS_KEEP = 5;
+// What the host's friends can do from their friends list: join straight away, ask to join, or nothing (only the code).
+export const JOIN_MODES = ["abierta", "solicitud", "invitacion"];
+// A friend's request to join stays this long, and the same friend can ask again after this wait.
+const JOIN_REQUEST_TTL_MS = 60000;
+export const JOIN_ASK_GAP_MS = 10000;
+const JOIN_REQUESTS_KEEP = 8;
 
 export function assertGame(game) {
   if (game === null || GAME_IDS.includes(game)) return game;
@@ -290,6 +296,8 @@ export class RoomManager {
       game: assertGame(game),
       hostId: host.id,
       coHosts: [],
+      joinMode: "solicitud",
+      joinRequests: [],
       createdAt: Date.now(),
       phase: "lobby",
       phaseStartedAt: Date.now(),
@@ -323,6 +331,8 @@ export class RoomManager {
 
   addPlayer(room, user, isHost = false) {
     if (room.blocked?.has(user.id)) throw new Error("El anfitrión te bloqueó de esta sala");
+    // Whoever was asking to join is in now.
+    if (room.joinRequests?.length) room.joinRequests = room.joinRequests.filter((r) => r.userId !== user.id);
     const existing = room.players.get(user.id);
     const isGuest = Boolean(user.isGuest ?? (user.id?.startsWith("gst_") || !user.email));
     const player = existing || {
@@ -1899,6 +1909,57 @@ export class RoomManager {
     );
   }
 
+  /** The room a player is in right now (not just reconnecting), or null. Used to show friends where someone plays. */
+  roomOfUser(userId) {
+    for (const room of this.rooms.values()) {
+      if (room.players.get(userId)?.connected) return room;
+    }
+    return null;
+  }
+
+  /** The host decides what their friends can do from the friends list: join, ask to join, or nothing. */
+  setJoinMode(room, userId, mode) {
+    if (room.hostId !== userId) throw new Error("Solo el Host puede cambiar quién se une");
+    if (!JOIN_MODES.includes(mode)) throw new Error("Esa opción no existe");
+    room.joinMode = mode;
+    if (mode !== "solicitud") room.joinRequests = [];
+  }
+
+  /** The requests to join that are still valid. */
+  openJoinRequests(room) {
+    const now = Date.now();
+    room.joinRequests = (room.joinRequests || []).filter((r) => now - r.at < JOIN_REQUEST_TTL_MS && !room.players.get(r.userId)?.connected);
+    return room.joinRequests;
+  }
+
+  /** A friend asks the host to let them in (only when the room is "solicitud"). */
+  addJoinRequest(room, user, now = Date.now()) {
+    if (room.joinMode !== "solicitud") throw new Error("Esa sala no recibe solicitudes");
+    if (room.blocked?.has(user.id)) throw new Error("No puedes unirte a esa sala");
+    if (room.players.get(user.id)?.connected) throw new Error("Ya estás en esa sala");
+    room.joinAsked = room.joinAsked || new Map();
+    const wait = (room.joinAsked.get(user.id) || 0) + JOIN_ASK_GAP_MS - now;
+    if (wait > 0) throw new Error(`Espera ${Math.ceil(wait / 1000)} s para pedirlo otra vez`);
+    const open = this.openJoinRequests(room).filter((r) => r.userId !== user.id);
+    if (open.length >= JOIN_REQUESTS_KEEP) throw new Error("Esa sala ya tiene muchas solicitudes. Inténtalo en un momento.");
+    room.joinAsked.set(user.id, now);
+    room.joinRequests = [...open, { userId: user.id, name: user.name, avatar: user.avatar, at: now }];
+  }
+
+  /** The requester takes their request back. */
+  cancelJoinRequest(room, userId) {
+    room.joinRequests = (room.joinRequests || []).filter((r) => r.userId !== userId);
+  }
+
+  /** The host lets a friend in (the friend then joins) or turns them down. Returns the request's user. */
+  answerJoinRequest(room, hostId, userId) {
+    if (room.hostId !== hostId) throw new Error("Solo el Host responde a las solicitudes");
+    const found = this.openJoinRequests(room).find((r) => r.userId === userId);
+    if (!found) throw new Error("Esa solicitud ya no está");
+    room.joinRequests = room.joinRequests.filter((r) => r.userId !== userId);
+    return found;
+  }
+
   // The game the host is pointing at on the menu, so every player sees it live before it is picked. Only while the
   // room has no game; it is cleared as soon as one is picked (or the host changes).
   previewGame(room, userId, game) {
@@ -2449,6 +2510,9 @@ export class RoomManager {
           .sort((a, b) => b.wins - a.wins || b.played - a.played),
       },
       coHosts: [...(room.coHosts || [])],
+      // What the host's friends can do from their friends list, and the friends asking to join (the host answers).
+      joinMode: room.joinMode || "solicitud",
+      joinRequests: this.openJoinRequests(room).map((r) => ({ userId: r.userId, name: r.name, avatar: r.avatar, at: r.at })),
       // The room's central device (whose account opened it, and whether it's connected: while it is, the players'
       // screens show only the ways to answer), and the players asking to use another device of theirs as it.
       central: room.central
