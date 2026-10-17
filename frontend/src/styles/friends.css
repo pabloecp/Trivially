@@ -142,3 +142,4 @@
 .tv-fr-overlay { position: fixed; inset: 0; z-index: 60; min-height: 0; background: none; pointer-events: none; overflow: visible; }
 .tv-fr-overlay > * { pointer-events: auto; }
 .tv-fr-retry { padding: 0; border: 0; background: none; color: var(--tv-text); font-weight: 800; text-decoration: underline; cursor: pointer; }
+.tv-fr-help { margin: 0; font-size: 13px; font-weight: 700; color: var(--tv-text-3); }

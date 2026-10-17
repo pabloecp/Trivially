@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { findMode } from "../../modes/index.js";
+import { formatFriendCodeInput, isFriendCodeComplete } from "../../lib/friendCode.js";
 import { useFriends } from "../../lib/friends.jsx";
 import Avatar from "./Avatar.jsx";
 import Icon from "./Icon.jsx";
@@ -141,7 +142,7 @@ export default function FriendsSheet() {
 
   async function submitCode(e) {
     e.preventDefault();
-    if (!code.trim() || busy) return;
+    if (!isFriendCodeComplete(code) || busy) return;
     const res = await run(
       () => f.requestByCode(code),
       (r) => (r.status === "accepted" ? "¡Ya son amigos!" : "Solicitud enviada. Se hacen amigos cuando la acepte.")
@@ -292,17 +293,21 @@ export default function FriendsSheet() {
                       id="tv-fr-code-input"
                       className="tv-field"
                       value={code}
-                      onChange={(e) => setCode(e.target.value.toUpperCase())}
+                      onChange={(e) => setCode(formatFriendCodeInput(e.target.value, { deleting: e.nativeEvent.inputType?.startsWith("delete") }))}
                       placeholder="K7P2-M9XQ"
                       autoComplete="off"
                       autoCapitalize="characters"
+                      autoCorrect="off"
                       spellCheck="false"
-                      maxLength={12}
+                      inputMode="text"
+                      maxLength={200}
+                      aria-describedby="tv-fr-code-help"
                     />
-                    <button type="submit" className="tv-btn tv-c-green" disabled={!code.trim() || busy}>
+                    <button type="submit" className="tv-btn tv-c-green" disabled={!isFriendCodeComplete(code) || busy}>
                       Enviar
                     </button>
                   </div>
+                  <p id="tv-fr-code-help" className="tv-fr-help">8 letras y números, sin I, O, 0 ni 1.</p>
                 </form>
               </div>
             )}
