@@ -301,13 +301,11 @@ export default function FriendsSheet() {
                       spellCheck="false"
                       inputMode="text"
                       maxLength={200}
-                      aria-describedby="tv-fr-code-help"
                     />
                     <button type="submit" className="tv-btn tv-c-green" disabled={!isFriendCodeComplete(code) || busy}>
                       Enviar
                     </button>
                   </div>
-                  <p id="tv-fr-code-help" className="tv-fr-help">8 letras y números, sin I, O, 0 ni 1.</p>
                 </form>
               </div>
             )}
