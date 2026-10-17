@@ -140,3 +140,19 @@ create table if not exists public.shared_playlists (
 );
 create index if not exists shared_playlists_last_used_idx on public.shared_playlists (last_used_at);
 alter table public.shared_playlists enable row level security;
+
+-- ---------------------------------------------------------------------------
+-- Amigos. Una fila por pareja de cuentas (user_a < user_b): `pending` (alguien envió la solicitud, requested_by) o
+-- `accepted`. Como el resto, solo el backend (service_role) la lee: RLS activado y sin políticas.
+create table if not exists public.friendships (
+  user_a       text not null,
+  user_b       text not null,
+  status       text not null check (status in ('pending', 'accepted')),
+  requested_by text not null,
+  created_at   timestamptz not null default now(),
+  accepted_at  timestamptz,
+  primary key (user_a, user_b),
+  check (user_a < user_b)
+);
+create index if not exists friendships_b_idx on public.friendships (user_b);
+alter table public.friendships enable row level security;

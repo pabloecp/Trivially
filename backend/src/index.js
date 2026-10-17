@@ -22,6 +22,9 @@ import {
 } from "./auth/routes.js";
 import { verifyAuthToken } from "./auth/socketToken.js";
 import { attachSockets } from "./realtime/sockets.js";
+import { Friendships } from "./friends/friendships.js";
+import { FriendsHub } from "./friends/friendsHub.js";
+import { createFriendsRouter } from "./friends/routes.js";
 import { getMedia, isCoverUrl, isPreviewUrl, isSpotifyPreviewUrl } from "./audio/mediaCache.js";
 import { flagForToken, getFlag } from "./geo/flags.js";
 
@@ -37,6 +40,9 @@ const store = await initStore();
 const questions = await loadQuestions();
 const resolver = new TrackResolver({ catalog });
 const rooms = new RoomManager({ catalog, store, questions, resolver });
+const friends = new Friendships({ store });
+await friends.init();
+const friendsHub = new FriendsHub({ store, friends, rooms });
 // The default Spotify playlists (catalog/defaultPlaylists.js): read now and once a day, and put in every room.
 startDefaultPlaylists(() => rooms.applyDefaultPlaylists());
 // Playlist codes nobody shared or opened in a year are deleted: now and once a day.
@@ -154,7 +160,8 @@ app.get("/api/geo/flag/:token", async (req, res) => {
   }
 });
 
-app.use("/api", createApiRouter({ catalog, store, songList: () => rooms.globalSongList() }));
+app.use("/api/friends", createFriendsRouter({ store, friends, hub: friendsHub, rooms }));
+app.use("/api", createApiRouter({ catalog, store, friends, hub: friendsHub, songList: () => rooms.globalSongList() }));
 app.get("/auth/google", handleGoogleRedirect);
 app.get("/auth/google/callback", (req, res) => handleGoogleCallback(req, res, store));
 app.get("/auth/google/finish", handleGoogleFinish);
@@ -178,7 +185,7 @@ const io = new Server(server, {
     credentials: true,
   },
 });
-attachSockets(io, rooms);
+attachSockets(io, rooms, { friends, hub: friendsHub });
 
 // Make sure the last stats reach the database when the host stops the server (Railway sends SIGTERM on deploy).
 for (const signal of ["SIGTERM", "SIGINT"]) {

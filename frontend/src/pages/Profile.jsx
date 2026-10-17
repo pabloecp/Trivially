@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, Navigate, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { api } from "../lib/api.js";
+import { useFriends } from "../lib/friends.jsx";
 import { AVATAR_COLORS, useApp } from "../lib/store.jsx";
 import TvShell from "../components/home/TvShell.jsx";
 import Avatar from "../components/home/Avatar.jsx";
@@ -51,6 +52,15 @@ function ProfileScreen() {
 
   // If userId is present in URL and differs from currentUser.id, we view a public profile
   const isOtherUser = Boolean(userId && userId !== currentUser?.id);
+  const friends = useFriends();
+  const [codeCopied, setCodeCopied] = useState(false);
+  async function copyFriendCode() {
+    try {
+      await navigator.clipboard.writeText(friends.code);
+      setCodeCopied(true);
+      setTimeout(() => setCodeCopied(false), 2000);
+    } catch {}
+  }
 
   const [profileData, setProfileData] = useState(null);
   const [loadingUser, setLoadingUser] = useState(isOtherUser);
@@ -297,6 +307,24 @@ function ProfileScreen() {
           </div>
         </div>
       </section>
+
+      {!isOtherUser && !isGuest && friends.code && (
+        <section className="tv-card tv-friendcode">
+          <div>
+            <p className="tv-party-kicker">Tu código de amigo</p>
+            <p className="tv-fr-code">{friends.code}</p>
+          </div>
+          <div className="tv-fr-actions">
+            <button type="button" className="tv-btn tv-btn--sm tv-c-violet" onClick={copyFriendCode}>
+              <Icon name={codeCopied ? "check" : "link"} size={16} strokeWidth={2.6} />
+              {codeCopied ? "¡Copiado!" : "Copiar"}
+            </button>
+            <button type="button" className="tv-btn tv-btn--sm tv-c-neutral" onClick={() => friends.setOpen(true)}>
+              Amigos{friends.pending ? ` (${friends.pending})` : ""}
+            </button>
+          </div>
+        </section>
+      )}
 
       <div className={`tv-profile-grid${isOtherUser ? " is-single" : ""}`}>
         <section className="tv-card" aria-labelledby="tv-stats-title">
