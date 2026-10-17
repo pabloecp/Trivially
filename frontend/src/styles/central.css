@@ -341,6 +341,9 @@
 .tv-game.is-central .tv-mines-cell-text { font-weight: 800; }
 .tv-game.is-central .tv-play-q { font-size: clamp(28px, min(3.4vw, 5.4vh), 50px); }
 .tv-game.is-central .tv-geo-country { font-size: clamp(28px, min(3.4vw, 5.4vh), 48px); }
+.tv-game.is-central .tv-geo-clue { width: clamp(120px, min(28cqw, 44cqh), 400px); padding: 10px; }
+.tv-game.is-central .tv-geo-clue img,
+.tv-game.is-central .tv-geo-clue svg { max-height: clamp(80px, 38cqh, 320px); }
 .tv-game.is-central .tv-quiz-opt:disabled { cursor: default; }
 .tv-game.is-central .tv-mines-cell:disabled { cursor: default; }
 

@@ -30,7 +30,9 @@ export default function LobbyPanel({ room, onToast }) {
           {!mode.ready(room) && (
             <p className="tv-playlist-total is-short" role="status">
               <Icon name="lock" size={16} strokeWidth={2.6} />
-              {config.difficulties.length === 0 ? (
+              {config.styles.length === 0 ? (
+                <span>Elige al menos un modo de juego para empezar.</span>
+              ) : config.difficulties.length === 0 ? (
                 <span>Elige al menos una dificultad para empezar.</span>
               ) : (
                 <span>

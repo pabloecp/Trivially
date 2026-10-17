@@ -1,5 +1,5 @@
 import { FORMATS, LEVELS, TOPICS, quizConfig } from "../quiz/quizInfo.js";
-import { DIFFICULTIES as GEO_LEVELS, geoConfig } from "../mundo/geoInfo.js";
+import { DIFFICULTIES as GEO_LEVELS, STYLES as GEO_STYLES, geoConfig } from "../mundo/geoInfo.js";
 import { historyConfig } from "../historia/historyInfo.js";
 import { STYLES as MINES_STYLES, minesConfig } from "../minas/minesInfo.js";
 import { GAME_MODES, findMode } from "../index.js";
@@ -80,7 +80,11 @@ export function itemSummary(item, catalog) {
     const songs = catalogOn ? (lists ? `Catálogo y ${listsText}` : "Catálogo") : listsText || "Sin canciones";
     parts = [`${c.rounds} canciones`, songs, formatsText(c.formats), secondsText(c.roundMs)];
   } else if (item.game === "mundo") {
-    parts = [`${c.rounds} países`, levelsText(c.difficulties, GEO_LEVELS)];
+    // How the country is given: nothing when it's every way ("Sombra y Bandera", "Solo bandera").
+    const styles = c.styles || GEO_STYLES.map((s) => s.id);
+    const style =
+      styles.length === GEO_STYLES.length ? null : styles.length === 1 ? `Solo ${GEO_STYLES.find((s) => s.id === styles[0])?.label.toLowerCase()}` : styles.length ? listText(styles, GEO_STYLES, {}) : "Sin modo de juego";
+    parts = [`${c.rounds} países`, style, levelsText(c.difficulties, GEO_LEVELS)];
   } else if (item.game === "historia") {
     parts = [`${c.rounds} acontecimientos`, topicsText(c.categories), levelsText(c.difficulties), secondsText(c.roundMs)];
   } else if (item.game === "minas") {

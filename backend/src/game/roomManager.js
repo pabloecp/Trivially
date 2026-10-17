@@ -66,6 +66,7 @@ import {
 } from "./playlist.js";
 import { categoryName } from "../questions/questionSchema.js";
 import { flagToken, flagUrl } from "../geo/flags.js";
+import { shapeToken, shapeUrl } from "../geo/shapes.js";
 import { locate } from "../geo/worldMap.js";
 import { COUNTDOWN_MS, REVEAL_MS, ROUND_MS, scoreAnswer } from "./scoring.js";
 
@@ -189,6 +190,14 @@ export const MUSIC_FORMATS = ["opciones", "escribir"];
 // Same limits as its settings on screen: 5–25 rounds, 15–35 seconds to guess.
 const MUSIC_LIMITS = { rounds: { min: 5, max: 25 }, roundMs: { min: 15000, max: 35000 } };
 const clampTo = (n, { min, max }, fallback) => Math.min(max, Math.max(min, Math.round(Number(n)) || fallback));
+
+// Encuentra el país shows a round's flag or silhouette through a token, so the image's address doesn't name the
+// country (geo/flags.js, geo/shapes.js).
+function withGeoTokens(track) {
+  if (track.style === "bandera" && track.flag) track.flagToken = flagToken(track.flag);
+  if (track.style === "sombra" && track.map) track.shapeToken = shapeToken(track.map);
+  return track;
+}
 
 // A new room plays the whole catalog (`useCatalog`, every language, genre and difficulty ticked) and no Spotify
 // playlists; `playlistIds` are the ticked Spotify ones ("sp:<id>"). With `useCatalog` false only those play.
@@ -826,6 +835,7 @@ export class RoomManager {
     }
     if (item.game === GEO_GAME) {
       const geo = mergeGeoConfig(config);
+      if (!geo.styles.length) return "Elige al menos un modo de juego.";
       if (!geo.difficulties.length) return "Elige al menos una dificultad.";
       const n = exact ? pickGeoQuestions(this.geoQuestions, geo).length : this.cachedCount(item, () => countGeoQuestions(this.geoQuestions, geo));
       return n < geo.rounds ? short(n, "países", geo.rounds, "dificultades") : null;
@@ -1146,12 +1156,13 @@ export class RoomManager {
     } else if (room.game === GEO_GAME) {
       // Encuentra el país: the match's countries are drawn now (they are the "tracks" of the room).
       const geo = mergeGeoConfig(room.config.geo);
+      if (!geo.styles.length) throw new Error("Elige al menos un modo de juego");
       if (!geo.difficulties.length) throw new Error("Elige al menos una dificultad");
       const tracks = pickGeoQuestions(this.geoQuestions, geo);
       if (tracks.length < geo.rounds) {
         throw new Error(`Solo hay ${tracks.length} preguntas con esos ajustes para ${geo.rounds} rondas. Baja las rondas o elige más dificultades.`);
       }
-      room.tracks = tracks;
+      room.tracks = tracks.map(withGeoTokens);
       room.totalRounds = tracks.length;
       room.tiebreak = null;
     } else if (room.game === HISTORY_GAME) {
@@ -1518,6 +1529,7 @@ export class RoomManager {
         ? pickTiebreakQuestion(this.geoQuestions, room.config.geo, room.tracks.map((t) => t.country))
         : pickHistoryTiebreak(this.historyQuestions, room.config.history, room.tracks.map((t) => t.id));
     if (!question) return false;
+    if (room.game === GEO_GAME) withGeoTokens(question);
     room.tiebreak = { playerIds: tied.map((p) => p.id), round: (previous?.round || 0) + 1, winnerId: null, reason: null };
     room.tracks.push(question);
     room.currentRound = room.tracks.length - 1;
@@ -2433,18 +2445,24 @@ export class RoomManager {
   }
 
   /**
-   * The current question of Encuentra el país. Nothing of it shows during the countdown but its kind, so every player
-   * gets the same seconds with it; the country to find goes out once the round is playing. The answer (where it is)
-   * only goes out in `reveal`.
+   * The current question of Encuentra el país. Nothing of it shows during the countdown but its kind and how the
+   * country is given (`style`), so every player gets the same seconds with it; the country to find goes out once the
+   * round is playing: its name, or only its silhouette or its flag (their addresses never name it), and then its name
+   * only at the reveal. Where it is only goes out in `reveal`.
    */
   publicGeoQuestion(room, track) {
     const shown = ["playing", "reveal", "finished"].includes(room.phase);
+    const answered = room.phase === "reveal" || room.phase === "finished";
+    const style = track.style || "nombre";
     return {
       round: room.currentRound + 1,
       kind: track.kind,
+      style,
       difficulty: track.difficulty,
       prompt: shown ? track.prompt : null,
-      name: shown ? track.name : null,
+      name: (shown && style === "nombre") || answered ? track.name : null,
+      shape: shown && track.shapeToken ? shapeUrl(track.shapeToken) : null,
+      flag: shown && track.flagToken ? flagUrl(track.flagToken) : null,
     };
   }
 

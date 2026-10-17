@@ -117,6 +117,12 @@ const PATHS = {
       <circle cx="12" cy="10" r="3" />
     </>
   ),
+  // A country's silhouette (Encuentra el país's "Sombra").
+  shape: (
+    <>
+      <path d="M6 4.5 9.5 3l2 2 3.5-.5 1.5 2.5 3 1-1 3.5 2 2.5-2.5 2-.5 3.5-3.5-.5-2 2.5-2.5-2-3.5.5L5 15.5l-2-2.5 2-2.5L4 7Z" />
+    </>
+  ),
   link: (
     <>
       <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />

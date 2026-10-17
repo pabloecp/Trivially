@@ -28,6 +28,11 @@ export function hasCountry(name) {
   return loadCountries().has(name);
 }
 
+/** The country's features in the map file (more than one when it counts other zones too: Somalia and Somaliland). */
+export function countryFeatures(names) {
+  return target(names).features;
+}
+
 const toRad = Math.PI / 180;
 
 function toVec([lng, lat]) {
