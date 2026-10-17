@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { userByFriendCode, isAccount } from "./friendCode.js";
+import { findByUsername, isAccount, searchUsernames } from "../auth/username.js";
 
 // The friends API. Who is asking always comes from the session, never from the request.
 export function createFriendsRouter({ store, friends, hub, rooms }) {
@@ -20,29 +20,37 @@ export function createFriendsRouter({ store, friends, hub, rooms }) {
     }
   };
 
+  // What the friends tab shows about someone found by username (never their email or id history).
+  const card = (me, user) => ({ id: user.id, name: user.name, username: user.username, avatar: user.avatar, relation: friends.relation(me, user.id) });
+
   router.get("/", guard((req) => hub.view(req.userId)));
 
-  // Who a code belongs to, before sending the request ("Añadir a Dani").
-  router.get("/code/:code", guard((req) => {
-    const target = userByFriendCode(store, req.params.code);
-    if (!target) throw new Error("No encontramos ese código de amigo");
-    const relation =
-      target.id === req.userId ? "self" : friends.areFriends(req.userId, target.id) ? "friends" : friends.get(req.userId, target.id) ? (friends.get(req.userId, target.id).by === req.userId ? "asked" : "asking") : "none";
-    return { name: target.name, avatar: target.avatar, relation };
+  // People by username, as they type (from 3 letters, at most 8 results).
+  router.get("/search", guard((req) => {
+    friends.assertCanSearch(req.userId);
+    return { results: searchUsernames(store, req.query.q, { exceptId: req.userId }).map((u) => card(req.userId, u)) };
   }));
 
-  // By code, or (for someone in the same room) by id: "Añadir amigo" in a player's menu.
+  // One person by exact username, for the /amigo/usuario link.
+  router.get("/user/:username", guard((req) => {
+    friends.assertCanSearch(req.userId);
+    const user = findByUsername(store, req.params.username);
+    if (!user) throw new Error("No encontramos a nadie con ese usuario");
+    return card(req.userId, user);
+  }));
+
+  // By username, or (for someone in the same room) by id: "Añadir amigo" in a player's menu.
   router.post("/request", guard((req) => {
-    const { code, userId } = req.body || {};
+    const { username, userId } = req.body || {};
     let result;
-    if (code) {
-      result = friends.requestByCode(req.userId, code);
+    if (username) {
+      result = friends.requestByUsername(req.userId, username);
     } else if (userId) {
       const room = rooms.roomOfUser(req.userId);
       if (!room || rooms.roomOfUser(String(userId)) !== room) throw new Error("Solo puedes añadir a quien está en tu sala");
       result = { status: friends.request(req.userId, String(userId)), other: String(userId) };
     } else {
-      throw new Error("Falta el código de amigo");
+      throw new Error("Falta el usuario");
     }
     hub.refresh(req.userId, result.other);
     return { status: result.status };

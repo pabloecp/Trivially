@@ -7,7 +7,7 @@ import { saveQuestionReport } from "../db/reports.js";
 import { assertCanShare, playlistByCode, shareCodeFor } from "../db/sharedPlaylists.js";
 import { forgetSpotifyLink, saveSpotifyLink, savedSpotifyLinks } from "../db/store.js";
 import { prefetchFlags } from "../geo/flags.js";
-import { isAccount } from "../friends/friendCode.js";
+import { isAccount } from "../auth/username.js";
 
 export function attachSockets(io, rooms, { friends = null, hub = null } = {}) {
   hub?.attach(io);

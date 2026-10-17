@@ -10,7 +10,7 @@ import { loadCatalog } from "./catalog/catalogProvider.js";
 import { startDefaultPlaylists } from "./catalog/defaultPlaylists.js";
 import { forgetOldShareCodes } from "./db/sharedPlaylists.js";
 import { TrackResolver } from "./catalog/trackResolver.js";
-import { flushStore, initStore } from "./db/store.js";
+import { ensureUsernames, flushStore, initStore } from "./db/store.js";
 import { RoomManager } from "./game/roomManager.js";
 import { loadQuestions } from "./questions/questionBank.js";
 import {
@@ -37,6 +37,9 @@ const PORT = Number(process.env.PORT || 8080);
 
 const catalog = await loadCatalog();
 const store = await initStore();
+// Accounts from before usernames got one made from their name (they can change it once for free).
+const assigned = ensureUsernames(store);
+if (assigned) console.log(`[Usuarios] ${assigned} cuentas recibieron un nombre de usuario`);
 const questions = await loadQuestions();
 const resolver = new TrackResolver({ catalog });
 const rooms = new RoomManager({ catalog, store, questions, resolver });

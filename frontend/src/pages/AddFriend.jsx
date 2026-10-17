@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import Avatar from "../components/home/Avatar.jsx";
 import TvShell from "../components/home/TvShell.jsx";
-import { api } from "../lib/api.js";
 import { useFriends } from "../lib/friends.jsx";
 import "../styles/friends.css";
 
@@ -13,7 +12,7 @@ const RELATION_TEXT = {
 };
 
 function AddFriendScreen() {
-  const { code } = useParams();
+  const { username } = useParams();
   const friends = useFriends();
   const [who, setWho] = useState(null);
   const [state, setState] = useState("loading"); // loading | ready | sent | error
@@ -24,20 +23,21 @@ function AddFriendScreen() {
       setState("guest");
       return;
     }
-    api(`/api/friends/code/${encodeURIComponent(code)}`)
+    friends
+      .lookup(username)
       .then((data) => {
         setWho(data);
         setState("ready");
       })
       .catch((err) => {
-        setMsg(err.message || "No encontramos ese código de amigo");
+        setMsg(err.message || "No encontramos a nadie con ese usuario");
         setState("error");
       });
-  }, [code, friends.isAccount]);
+  }, [username, friends.isAccount]);
 
   async function send() {
     try {
-      const res = await friends.requestByCode(code);
+      const res = await friends.requestByUsername(who?.username || username);
       setMsg(res.status === "accepted" ? "¡Ya son amigos!" : "Solicitud enviada. Se hacen amigos cuando la acepte.");
       setState("sent");
     } catch (err) {
@@ -67,6 +67,7 @@ function AddFriendScreen() {
         <>
           <Avatar name={who.name} avatar={who.avatar} />
           <h1>{who.name}</h1>
+          <p className="tv-handle">@{who.username}</p>
           {RELATION_TEXT[who.relation] ? (
             <p>{RELATION_TEXT[who.relation]}</p>
           ) : (

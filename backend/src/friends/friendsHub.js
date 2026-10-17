@@ -1,4 +1,4 @@
-import { isAccount } from "./friendCode.js";
+import { isAccount } from "../auth/username.js";
 
 // What each account sees in its friends tab, and how it stays up to date: who is online, who is in a room (and what
 // they could do about it), and the requests. The view is pushed to the friends' connections (`friends:state`) a
@@ -51,7 +51,7 @@ export class FriendsHub {
   view(userId) {
     const entry = (id) => {
       const u = this.store.users[id];
-      return { id, name: u?.name || "Jugador", avatar: u?.avatar };
+      return { id, name: u?.name || "Jugador", username: u?.username || null, avatar: u?.avatar };
     };
     const friends = this.friends.friendsOf(userId).map((id) => {
       const room = this.rooms.roomOfUser(id);
@@ -73,7 +73,7 @@ export class FriendsHub {
     });
     friends.sort((x, y) => Number(y.online) - Number(x.online) || Number(Boolean(y.room)) - Number(Boolean(x.room)) || x.name.localeCompare(y.name));
     return {
-      code: this.friends.codeOf(userId),
+      username: this.store.users[userId]?.username || null,
       friends,
       incoming: this.friends.incoming(userId).map(entry),
       outgoing: this.friends.outgoing(userId).map(entry),

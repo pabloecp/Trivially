@@ -121,7 +121,7 @@ export default function App() {
         <Route path="/minas/:code" element={<MinesGame />} />
         {/* The end of a playlist: who won the most games. Its games are played on their own screens. */}
         <Route path="/playlist/:code" element={<PlaylistResults />} />
-        <Route path="/amigo/:code" element={<AddFriend />} />
+        <Route path="/amigo/:username" element={<AddFriend />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/profile/:userId" element={<Profile />} />
         {/* The old /play screens are gone: everything starts from Home. */}

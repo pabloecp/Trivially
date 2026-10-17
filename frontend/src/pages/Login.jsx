@@ -6,6 +6,8 @@ import AppIcon from "../components/home/AppIcon.jsx";
 import GoogleIcon from "../components/home/GoogleIcon.jsx";
 import Icon from "../components/home/Icon.jsx";
 import Segmented from "../components/home/Segmented.jsx";
+import UsernameField, { useUsernameCheck } from "../components/home/UsernameField.jsx";
+import { USERNAME_MIN } from "../lib/username.js";
 
 // In-app browsers (Instagram, WhatsApp, Facebook, TikTok...) are blocked by Google for sign-in.
 const IN_APP_BROWSER = typeof navigator !== "undefined" && /Instagram|FBAN|FBAV|FB_IAB|WhatsApp|Line\/|TikTok|musical_ly|Snapchat|; wv\)/i.test(navigator.userAgent);
@@ -30,6 +32,9 @@ function LoginScreen() {
   // "/login?mode=login" opens on the sign-in tab (the profile's "Iniciar sesión" button).
   const [accountMode, setAccountMode] = useState(params.get("mode") === "login" ? "login" : "register");
   const [accName, setAccName] = useState("");
+  const [handle, setHandle] = useState("");
+  const handleCheck = useUsernameCheck(handle);
+  const handleOk = handle.length >= USERNAME_MIN && handleCheck.state !== "bad";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loginIdentifier, setLoginIdentifier] = useState("");
@@ -47,7 +52,7 @@ function LoginScreen() {
 
   async function onAccountRegister(e) {
     e.preventDefault();
-    if (!accName.trim() || !email.trim() || !password) return;
+    if (!accName.trim() || !handleOk || !email.trim() || !password) return;
     if (password.length < 2) {
       setMsg("La contraseña debe tener al menos 2 caracteres");
       return;
@@ -55,7 +60,7 @@ function LoginScreen() {
     setLoading(true);
     setMsg("");
     try {
-      await withSound(() => registerAccount({ name: accName.trim(), email: email.trim(), password }));
+      await withSound(() => registerAccount({ name: accName.trim(), username: handle, email: email.trim(), password }));
       nav(returnTo);
     } catch (err) {
       setMsg(err.message);
@@ -118,7 +123,7 @@ function LoginScreen() {
         {accountMode === "login" ? (
           <form key="login" onSubmit={onAccountLogin} className="tv-form">
             <Field
-              label="Correo o nombre de usuario"
+              label="Correo o @usuario"
               value={loginIdentifier}
               onChange={(e) => setLoginIdentifier(e.target.value)}
               placeholder="tu@correo.com"
@@ -143,14 +148,15 @@ function LoginScreen() {
         ) : (
           <form key="register" onSubmit={onAccountRegister} className="tv-form">
             <Field
-              label="Nombre de usuario"
+              label="Tu nombre"
               value={accName}
               onChange={(e) => setAccName(e.target.value)}
-              placeholder="Cómo te verán los demás"
+              placeholder="Cómo te verán en las partidas"
               maxLength={24}
               autoComplete="nickname"
               required
             />
+            <UsernameField value={handle} onChange={setHandle} check={handleCheck} required />
             <Field
               label="Correo electrónico"
               type="email"
@@ -170,7 +176,7 @@ function LoginScreen() {
               required
             />
             {msg && <p className="tv-lobby-error" role="alert">{msg}</p>}
-            <button className="tv-btn tv-btn--block tv-c-pink" type="submit" data-sound="none" disabled={loading || !accName.trim() || !email.trim() || !password}>
+            <button className="tv-btn tv-btn--block tv-c-pink" type="submit" data-sound="none" disabled={loading || !accName.trim() || !handleOk || !email.trim() || !password}>
               {loading ? "Creando cuenta…" : "Crear cuenta"}
             </button>
           </form>

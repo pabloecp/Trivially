@@ -76,7 +76,10 @@ export function FriendsProvider({ children }) {
     };
     return {
       reload,
-      requestByCode: (code) => call("/api/friends/request", { method: "POST", body: { code } }),
+      requestByUsername: (username) => call("/api/friends/request", { method: "POST", body: { username } }),
+      // People by username (from 3 letters), with where each one stands with this account.
+      search: (q) => api(`/api/friends/search?q=${encodeURIComponent(q)}`).then((r) => r.results),
+      lookup: (username) => api(`/api/friends/user/${encodeURIComponent(username)}`),
       requestUser: (userId) => call("/api/friends/request", { method: "POST", body: { userId } }),
       accept: (id) => call(`/api/friends/${id}/accept`, { method: "POST" }),
       decline: (id) => call(`/api/friends/${id}/decline`, { method: "POST" }),
@@ -109,7 +112,7 @@ export function FriendsProvider({ children }) {
       isAccount,
       view,
       failed,
-      code: view?.code || null,
+      username: view?.username || null,
       // The friends tab's badge: requests waiting for an answer.
       pending: view?.incoming?.length || 0,
       open,
@@ -140,7 +143,7 @@ export function FriendsProvider({ children }) {
 const NONE = {
   isAccount: false,
   view: null,
-  code: null,
+  username: null,
   pending: 0,
   open: false,
   notice: null,

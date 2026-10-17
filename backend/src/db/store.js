@@ -1,3 +1,4 @@
+import { assignUsername, changeUsername, normalizeUsername, usernameError, usernameStatus } from "../auth/username.js";
 import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
@@ -25,8 +26,14 @@ function publicSpotify(spotify) {
 /** Remove password fields — for the owner or internal use */
 export function sanitizeUser(user) {
   if (!user) return null;
-  const { passwordHash, passwordSalt, spotify, ...safe } = user;
-  return { ...safe, spotify: publicSpotify(spotify), role: effectiveRole(user) };
+  // The username's history (which reserves old ones) and change dates stay on the server; the account sees the count.
+  const { passwordHash, passwordSalt, spotify, usernameHistory, usernameChanges, usernameAuto, friendCode, ...safe } = user;
+  return {
+    ...safe,
+    spotify: publicSpotify(spotify),
+    role: effectiveRole(user),
+    ...(user.isGuest ? {} : { usernameInfo: usernameStatus(user) }),
+  };
 }
 
 /** Public profile — only safe fields for other users to see */
@@ -35,6 +42,7 @@ export function sanitizeUserPublic(user) {
   return {
     id: user.id,
     name: user.name,
+    username: user.isGuest ? null : user.username || null,
     avatar: user.avatar,
     isGuest: Boolean(user.isGuest),
     stats: user.stats || {},
@@ -244,9 +252,12 @@ export function upsertUser(store, user) {
   return current;
 }
 
-export function registerWithPassword(store, { name, email, password, avatar, guestId }) {
+export function registerWithPassword(store, { name, username, email, password, avatar, guestId }) {
   const cleanEmail = (email || "").trim().toLowerCase();
   const cleanName = validateName(name);
+  const cleanUsername = normalizeUsername(username);
+  const usernameProblem = usernameError(store, cleanUsername);
+  if (usernameProblem) throw new Error(usernameProblem);
   if (!cleanEmail) throw new Error("Correo electrónico requerido");
   if (!password || password.length < 2) throw new Error("La contraseña debe tener al menos 2 caracteres");
 
@@ -269,6 +280,8 @@ export function registerWithPassword(store, { name, email, password, avatar, gue
     passwordHash: hash,
     passwordSalt: salt,
   });
+  store.users[user.id].username = cleanUsername;
+  saveStore(store);
 
   if (guestId) {
     claimGuestStats(store, user.id, guestId);
@@ -278,15 +291,14 @@ export function registerWithPassword(store, { name, email, password, avatar, gue
 }
 
 export function loginWithPassword(store, { identifier, password, guestId }) {
-  if (!identifier || !identifier.trim()) throw new Error("Introduce tu correo o nombre");
+  if (!identifier || !identifier.trim()) throw new Error("Introduce tu correo o usuario");
   if (!password) throw new Error("Introduce tu contraseña");
   const clean = identifier.trim().toLowerCase();
+  const asUsername = normalizeUsername(clean);
 
+  // By email or by @username (names for the games aren't unique, so they can't identify anyone).
   const user = Object.values(store.users).find(
-    (u) =>
-      !u.isGuest &&
-      ((u.email && u.email.toLowerCase() === clean) ||
-        (u.name && u.name.toLowerCase() === clean))
+    (u) => !u.isGuest && ((u.email && u.email.toLowerCase() === clean) || (u.username && u.username === asUsername))
   );
 
   if (!user) {
@@ -327,6 +339,7 @@ export function upsertGoogleUser(store, { id, email, name, avatar, googleId }, g
     }
     if (!existing.name) existing.name = name;
     existing.isGuest = false;
+    assignUsername(store, existing);
     store.users[existing.id] = existing;
     saveStore(store);
     if (guestId && guestId !== existing.id) {
@@ -345,6 +358,9 @@ export function upsertGoogleUser(store, { id, email, name, avatar, googleId }, g
     googleId,
   });
   if (avatar) store.users[newUser.id].googlePhoto = avatar;
+  // A first sign-in with Google gets a username made from its name (free to change once).
+  assignUsername(store, store.users[newUser.id]);
+  saveStore(store);
 
   if (guestId) {
     claimGuestStats(store, newUser.id, guestId);
@@ -536,6 +552,7 @@ export function listUsers(store, { search = "", role = "" } = {}) {
     .map((u) => ({
       id: u.id,
       name: u.name,
+      username: u.username || null,
       email: u.email || null,
       avatar: u.avatar,
       role: effectiveRole(u),
@@ -543,7 +560,7 @@ export function listUsers(store, { search = "", role = "" } = {}) {
       gamesPlayed: u.stats?.gamesPlayed || 0,
     }))
     .filter((u) => !role || u.role === role)
-    .filter((u) => !q || u.name?.toLowerCase().includes(q) || u.email?.toLowerCase().includes(q))
+    .filter((u) => !q || u.name?.toLowerCase().includes(q) || u.username?.includes(q) || u.email?.toLowerCase().includes(q))
     .sort((a, b) => b.gamesPlayed - a.gamesPlayed || (a.name || "").localeCompare(b.name || ""));
 }
 
@@ -563,6 +580,7 @@ export function leaderboard(store, sort = "totalScore") {
       position: i + 1,
       id: u.id,
       name: u.name,
+      username: u.username || null,
       avatar: u.avatar,
       isGuest: false,
       ...u.stats,
@@ -603,4 +621,23 @@ export function forgetSpotifyLink(store, userId, key) {
   user.savedSpotify = (user.savedSpotify || []).filter((s) => s.key !== key);
   saveStore(store);
   return user.savedSpotify;
+}
+
+/** Gives every account without a username one made from its name (at boot). Returns how many it assigned. */
+export function ensureUsernames(store) {
+  let assigned = 0;
+  for (const user of Object.values(store.users)) {
+    if (!user.isGuest && assignUsername(store, user)) assigned += 1;
+  }
+  if (assigned) saveStore(store);
+  return assigned;
+}
+
+/** An account changes its username (see auth/username.js for the rules). */
+export function updateUsername(store, userId, username) {
+  const user = store.users[userId];
+  if (!user) throw new Error("Usuario no encontrado");
+  changeUsername(store, user, username);
+  saveStore(store);
+  return sanitizeUser(user);
 }

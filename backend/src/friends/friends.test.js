@@ -8,48 +8,40 @@ const dir = fs.mkdtempSync(path.join(os.tmpdir(), "friends-"));
 process.env.FRIENDS_FILE = path.join(dir, "friends.json");
 
 const { Friendships, FRIEND_LIMITS } = await import("./friendships.js");
-const { friendCodeOf, normalizeFriendCode, userByFriendCode } = await import("./friendCode.js");
+
 const { FriendsHub } = await import("./friendsHub.js");
 const { RoomManager, JOIN_ASK_GAP_MS } = await import("../game/roomManager.js");
 const { readLocalCatalog } = await import("../catalog/catalogProvider.js");
 
 const store = {
   users: {
-    ana: { id: "ana", name: "Ana", isGuest: false },
-    beto: { id: "beto", name: "Beto", isGuest: false },
-    cami: { id: "cami", name: "Cami", isGuest: false },
+    ana: { id: "ana", name: "Ana", username: "ana_gamer", isGuest: false },
+    beto: { id: "beto", name: "Beto", username: "beto", isGuest: false },
+    cami: { id: "cami", name: "Cami", username: "cami", isGuest: false },
     gst_x: { id: "gst_x", name: "Invitado", isGuest: true },
   },
 };
 const friends = new Friendships({ store, local: true });
 
-// Friend codes: accounts have one, stable, findable in any spelling; guests have none.
-const code = friendCodeOf(store, "ana");
-assert.match(code, /^[A-Z2-9]{4}-[A-Z2-9]{4}$/);
-assert.equal(friendCodeOf(store, "ana"), code);
-assert.equal(friendCodeOf(store, "gst_x"), null);
-assert.equal(userByFriendCode(store, code.toLowerCase().replace("-", " ")).id, "ana");
-assert.equal(normalizeFriendCode("abc"), null);
-assert.equal(userByFriendCode(store, "AAAA-AAAA"), null);
-
-// A request by code: pending until the other accepts; the one who asked can't accept their own.
-assert.equal(friends.requestByCode("beto", code).status, "pending");
+// A request by username (any case, with or without @): pending until the other accepts; the one who asked can't
+// accept their own.
+assert.equal(friends.requestByUsername("beto", "@Ana_Gamer").status, "pending");
 assert.deepEqual(friends.incoming("ana"), ["beto"]);
 assert.deepEqual(friends.outgoing("beto"), ["ana"]);
-assert.throws(() => friends.requestByCode("beto", code), /Ya le enviaste/);
+assert.throws(() => friends.requestByUsername("beto", "ana_gamer"), /Ya le enviaste/);
 assert.throws(() => friends.accept("beto", "ana"), /No hay una solicitud/);
 friends.accept("ana", "beto");
 assert.ok(friends.areFriends("ana", "beto") && friends.areFriends("beto", "ana"));
-assert.throws(() => friends.requestByCode("beto", code), /Ya son amigos/);
+assert.throws(() => friends.requestByUsername("beto", "ana_gamer"), /Ya son amigos/);
 
 // Not yourself, not guests, not made-up codes.
-assert.throws(() => friends.requestByCode("ana", code), /propio código/);
+assert.throws(() => friends.requestByUsername("ana", "ana_gamer"), /propio/);
 assert.throws(() => friends.request("gst_x", "ana"), /cuenta/);
 assert.throws(() => friends.request("ana", "gst_x"), /No encontramos/);
-assert.throws(() => friends.requestByCode("ana", "ZZZZ-ZZZZ"), /No encontramos ese código/);
+assert.throws(() => friends.requestByUsername("ana", "nadie_asi"), /No encontramos a nadie/);
+assert.equal(friends.relation("ana", "ana"), "self");
 
 // Both asking each other at once makes them friends.
-const camiCode = friendCodeOf(store, "cami");
 friends.request("ana", "cami");
 assert.equal(friends.request("cami", "ana"), "accepted");
 assert.deepEqual(friends.friendsOf("ana").sort(), ["beto", "cami"]);
@@ -70,10 +62,16 @@ assert.equal(friends.areFriends("ana", "beto"), false);
 assert.throws(() => friends.remove("beto", "ana"), /No son amigos/);
 
 // Limits: too many requests in a minute.
-for (let i = 0; i < FRIEND_LIMITS.asksPerMinute - 1; i += 1) {
-  assert.throws(() => friends.requestByCode("dani", "ZZZZ-ZZZZ"), /No encontramos/);
+store.users.cami2 = { id: "cami2", name: "Cami2", username: "cami2", isGuest: false };
+for (let i = 0; i < FRIEND_LIMITS.asksPerMinute; i += 1) {
+  store.users[`u${i}`] = { id: `u${i}`, name: `U${i}`, username: `usuario_${i}`, isGuest: false };
 }
-assert.throws(() => friends.requestByCode("dani", camiCode), /muchas solicitudes/);
+// (Dani already asked once above.)
+for (let i = 0; i < FRIEND_LIMITS.asksPerMinute - 1; i += 1) friends.requestByUsername("dani", `usuario_${i}`);
+assert.throws(() => friends.requestByUsername("dani", "cami2"), /muchas solicitudes/);
+for (let i = 0; i < FRIEND_LIMITS.asksPerMinute - 1; i += 1) friends.remove("dani", `u${i}`);
+for (let i = 0; i < FRIEND_LIMITS.searchesPerMinute; i += 1) friends.assertCanSearch("dani");
+assert.throws(() => friends.assertCanSearch("dani"), /buscando muy rápido/);
 
 // A deleted account takes its friendships with it.
 assert.deepEqual(friends.removeAllOf("cami"), ["ana"]);
@@ -88,7 +86,8 @@ let view = hub.view("beto");
 assert.equal(view.friends[0].id, "ana");
 assert.equal(view.friends[0].online, false);
 assert.equal(view.friends[0].room, null);
-assert.equal(view.code, friendCodeOf(store, "beto"));
+assert.equal(view.username, "beto");
+assert.equal(view.friends[0].username, "ana_gamer");
 
 const room = mgr.create({ host: { id: "ana", name: "Ana", socketId: "s1" }, mode: "multi", game: null });
 view = hub.view("beto");
