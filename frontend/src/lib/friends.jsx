@@ -23,7 +23,18 @@ export function FriendsProvider({ children }) {
   const joinRef = useRef(joinRoom);
   joinRef.current = joinRoom;
 
-  const reload = useCallback(() => api("/api/friends").then(setView).catch(() => {}), []);
+  // The view could not be loaded (the server is older than this page, or the connection failed): the panel says so.
+  const [failed, setFailed] = useState(false);
+  const reload = useCallback(
+    () =>
+      api("/api/friends")
+        .then((v) => {
+          setView(v);
+          setFailed(false);
+        })
+        .catch(() => setFailed(true)),
+    []
+  );
 
   useEffect(() => {
     if (!isAccount) {
@@ -33,7 +44,10 @@ export function FriendsProvider({ children }) {
     }
     reload();
     const s = getSocket();
-    const onState = (next) => setView(next);
+    const onState = (next) => {
+      setView(next);
+      setFailed(false);
+    };
     // The host let this account in: it enters the room with the code the server sends only now.
     const onApproved = async ({ code, hostName } = {}) => {
       try {
@@ -94,6 +108,7 @@ export function FriendsProvider({ children }) {
     () => ({
       isAccount,
       view,
+      failed,
       code: view?.code || null,
       // The friends tab's badge: requests waiting for an answer.
       pending: view?.incoming?.length || 0,
@@ -111,7 +126,7 @@ export function FriendsProvider({ children }) {
       },
       ...actions,
     }),
-    [isAccount, view, open, notice, say, actions]
+    [isAccount, view, failed, open, notice, say, actions]
   );
 
   return (

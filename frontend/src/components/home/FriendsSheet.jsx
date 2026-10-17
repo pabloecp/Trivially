@@ -152,6 +152,8 @@ export default function FriendsSheet() {
   const link = view.code ? `${window.location.origin}/amigo/${view.code.replace("-", "")}` : "";
 
   return (
+    // Inside .tv-app so the panel gets the page's text colour, fonts and button styles (the provider sits above it).
+    <div className="tv-app tv-fr-overlay">
     <div className={`tv-sheet-root ${closing ? "is-closing" : "is-open"}`}>
       <div className="tv-sheet-backdrop" onClick={() => f.setOpen(false)} />
       <div className="tv-sheet-pos">
@@ -183,6 +185,16 @@ export default function FriendsSheet() {
                 { value: "anadir", label: "Añadir" },
               ]}
             />
+
+            {f.failed && !f.view && (
+              <p className="tv-fr-msg is-bad" role="alert">
+                <Icon name="lock" size={16} strokeWidth={2.8} />
+                <span>
+                  No pudimos cargar tus amigos. Revisa tu conexión o inténtalo en un momento.{" "}
+                  <button type="button" className="tv-fr-retry" onClick={f.reload}>Reintentar</button>
+                </span>
+              </p>
+            )}
 
             {msg && (
               <p className={`tv-fr-msg is-${msg.tone}`} role="status">
@@ -262,7 +274,7 @@ export default function FriendsSheet() {
               <div className="tv-fr-add">
                 <div className="tv-fr-mycode">
                   <p className="tv-sheet-kicker">Tu código de amigo</p>
-                  <p className="tv-fr-code">{view.code || "…"}</p>
+                  <p className="tv-fr-code">{view.code || (f.failed ? "No disponible" : "…")}</p>
                   <div className="tv-fr-actions">
                     <button type="button" className="tv-btn tv-btn--sm tv-c-violet" disabled={!view.code} onClick={() => copy(view.code, "code")}>
                       <Icon name={copied === "code" ? "check" : "link"} size={16} strokeWidth={2.6} />
@@ -297,6 +309,7 @@ export default function FriendsSheet() {
           </div>
         </div>
       </div>
+    </div>
     </div>
   );
 }

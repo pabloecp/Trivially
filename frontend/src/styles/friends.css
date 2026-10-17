@@ -136,3 +136,9 @@
   .tv-fr-row > .tv-btn, .tv-fr-row > .tv-fr-note { margin-left: auto; }
 }
 .tv-fr-ask .tv-btn:last-child { padding: 0 12px; min-width: 0; }
+
+/* The panel lives above the page (outside the room's own .tv-app): the overlay only gives it .tv-app's text and
+   buttons, it never covers the page itself. */
+.tv-fr-overlay { position: fixed; inset: 0; z-index: 60; min-height: 0; background: none; pointer-events: none; overflow: visible; }
+.tv-fr-overlay > * { pointer-events: auto; }
+.tv-fr-retry { padding: 0; border: 0; background: none; color: var(--tv-text); font-weight: 800; text-decoration: underline; cursor: pointer; }
