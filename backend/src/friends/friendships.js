@@ -2,7 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { getSupabase, supabaseEnabled } from "../db/store.js";
-import { friendCodeOf, isAccount, userByFriendCode } from "./friendCode.js";
+import { findByUsername, isAccount } from "../auth/username.js";
 
 // Friendships between accounts: a pair is `pending` (someone asked) or `accepted`. They live in the Supabase table
 // `friendships` (backend/supabase/schema.sql); without Supabase, in backend/private/friends.json (never committed).
@@ -11,7 +11,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const LOCAL_PATH = process.env.FRIENDS_FILE || path.join(__dirname, "../../private/friends.json");
 const TABLE = "friendships";
 
-export const FRIEND_LIMITS = { friends: 100, pending: 30, asksPerMinute: 10 };
+export const FRIEND_LIMITS = { friends: 100, pending: 30, asksPerMinute: 10, searchesPerMinute: 40 };
 
 const keyOf = (a, b) => (a < b ? `${a}|${b}` : `${b}|${a}`);
 
@@ -21,6 +21,7 @@ export class Friendships {
     this.local = local;
     this.pairs = new Map(); // "a|b" -> { a, b, status, by, at, acceptedAt }
     this.recent = new Map(); // userId -> times of their latest requests
+    this.searches = new Map(); // userId -> times of their latest searches
   }
 
   /** Loads every pair at boot. */
@@ -156,13 +157,27 @@ export class Friendships {
     return "pending";
   }
 
-  requestByCode(userId, code, now = Date.now()) {
-    const target = userByFriendCode(this.store, code);
-    if (!target) {
-      this.assertCanAsk(userId, now); // guessing codes counts as asking
-      throw new Error("No encontramos ese código de amigo");
-    }
+  /** Asks the account with this username (typed, or from a link). */
+  requestByUsername(userId, username, now = Date.now()) {
+    const target = findByUsername(this.store, username);
+    if (!target) throw new Error("No encontramos a nadie con ese usuario");
     return { status: this.request(userId, target.id, now), other: target.id };
+  }
+
+  /** Searching people is limited per account, so the usernames can't be listed. */
+  assertCanSearch(userId, now = Date.now()) {
+    const times = (this.searches.get(userId) || []).filter((t) => now - t < 60_000);
+    if (times.length >= FRIEND_LIMITS.searchesPerMinute) throw new Error("Estás buscando muy rápido. Espera un momento.");
+    times.push(now);
+    this.searches.set(userId, times);
+  }
+
+  /** Where this account stands with another: "friends", "asked" (we asked), "asking" (they asked us) or "none". */
+  relation(userId, otherId) {
+    if (userId === otherId) return "self";
+    const rec = this.get(userId, otherId);
+    if (!rec) return "none";
+    return rec.status === "accepted" ? "friends" : rec.by === userId ? "asked" : "asking";
   }
 
   accept(userId, otherId, now = Date.now()) {
@@ -185,9 +200,5 @@ export class Friendships {
     const others = [...this.pairs.values()].filter((r) => r.a === userId || r.b === userId).map((r) => this.other(r, userId));
     for (const other of others) this.drop(userId, other);
     return others;
-  }
-
-  codeOf(userId) {
-    return friendCodeOf(this.store, userId);
   }
 }

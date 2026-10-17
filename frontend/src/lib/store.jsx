@@ -427,13 +427,20 @@ export function AppProvider({ children }) {
         return res.user;
       },
 
-      async registerAccount({ name, email, password }) {
+      // The account's @username (unique; a few changes a month). The name for the games is updateUsername above.
+      async changeHandle(username) {
+        const res = await api("/api/me/username", { method: "PATCH", body: { username } });
+        if (res.user) applyUser(res.user);
+        return res.user;
+      },
+
+      async registerAccount({ name, username, email, password }) {
         const current = userRef.current;
         const guestId = current?.isGuest ? current.id : localStorage.getItem(GUEST_ID_KEY);
         const nextId = `usr_${Math.random().toString(36).slice(2, 10)}`;
         const res = await api("/api/auth/register", {
           method: "POST",
-          body: { id: nextId, name, email, password, guestId, avatar: current?.avatar || AVATAR_COLORS[0] },
+          body: { id: nextId, name, username, email, password, guestId, avatar: current?.avatar || AVATAR_COLORS[0] },
         });
         if (res.user) {
           localStorage.setItem(GUEST_NAME_KEY, res.user.name);

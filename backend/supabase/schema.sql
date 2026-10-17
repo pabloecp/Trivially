@@ -156,3 +156,11 @@ create table if not exists public.friendships (
 );
 create index if not exists friendships_b_idx on public.friendships (user_b);
 alter table public.friendships enable row level security;
+
+-- ---------------------------------------------------------------------------
+-- Nombre de usuario (@usuario): único en toda la tabla sin importar mayúsculas. Vive dentro de `data` (el servidor
+-- lo valida); esta columna generada solo lo muestra en el Table Editor y hace de red de seguridad: si dos cuentas
+-- llegaran a tener el mismo, Supabase rechaza la segunda.
+alter table public.users
+  add column if not exists username text generated always as (lower(data->>'username')) stored;
+create unique index if not exists users_username_key on public.users (username) where username is not null;
