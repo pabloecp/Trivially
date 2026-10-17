@@ -3,8 +3,10 @@ import QuizLobbyPanel from "./quiz/LobbyPanel.jsx";
 import GeoLobbyPanel from "./mundo/LobbyPanel.jsx";
 import HistoryLobbyPanel from "./historia/LobbyPanel.jsx";
 import MinesLobbyPanel from "./minas/LobbyPanel.jsx";
+import RainLobbyPanel from "./lluvia/LobbyPanel.jsx";
 import PlaylistLobbyPanel from "./playlist/LobbyPanel.jsx";
 import { STYLES as MINES_STYLES } from "./minas/minesInfo.js";
+import { MIN_QUESTIONS as RAIN_MIN_QUESTIONS } from "./lluvia/rainInfo.js";
 
 // The games shown on the room screen ("Elige el juego"; a game may have its own "Modos de Juego" in its settings).
 // "Trivia" is the main one (`kind: "main"`, its tile as wide as two): questions of every topic, each answered its own
@@ -105,6 +107,28 @@ export const GAME_MODES = [
     Lobby: MinesLobbyPanel,
     // A prompt and a 5 × 5 board (modes/minas/Game.jsx).
     path: (room) => `/minas/${room.code}`,
+  },
+  {
+    // Lluvia: questions fall down the screen for a whole round; each one is for whoever writes its answer first.
+    id: "lluvia",
+    name: "Lluvia",
+    kind: "extra",
+    // Rain blue (styles/rain.css); the questions fall in green, yellow or red by difficulty.
+    color: "rain",
+    icon: "rain",
+    available: true,
+    steps: [
+      { icon: "rain", text: "Las preguntas caen" },
+      { icon: "bolt", text: "Respóndelas antes que nadie" },
+      { icon: "star", text: "Verde 1, amarilla 3, roja 5" },
+    ],
+    ready: (room) =>
+      room.config?.rain?.categories?.length !== 0 &&
+      room.config?.rain?.difficulties?.length !== 0 &&
+      (room.questionsReady == null || room.questionsReady >= RAIN_MIN_QUESTIONS),
+    Lobby: RainLobbyPanel,
+    // The sky the questions fall down, and the box to write in (modes/lluvia/Game.jsx).
+    path: (room) => `/lluvia/${room.code}`,
   },
   {
     // Not a game of its own: the room plays the playlist's games one after another (backend/src/game/playlist.js).

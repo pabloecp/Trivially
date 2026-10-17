@@ -190,6 +190,16 @@ const PATHS = {
       <circle cx="12" cy="12" r="2" />
     </>
   ),
+  // Lluvia: the mode (a cloud raining) and a drop.
+  rain: (
+    <>
+      <path d="M4 14.9A7 7 0 1 1 15.7 8h1.8a4.5 4.5 0 0 1 2.5 8.24" />
+      <path d="M16 14v6" />
+      <path d="M8 14v6" />
+      <path d="M12 16v6" />
+    </>
+  ),
+  drop: <path d="M12 22a7 7 0 0 0 7-7c0-2-1-3.9-3-5.5s-3.5-4-4-6.5c-.5 2.5-2 4.9-4 6.5C6 11.1 5 13 5 15a7 7 0 0 0 7 7z" />,
   // Campo de minas: the mode (a bomb) and a mine on the board.
   bomb: (
     <>

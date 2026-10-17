@@ -779,6 +779,16 @@ export function AppProvider({ children }) {
         if (res.state) setRoom(res.state);
       },
 
+      // Lluvia: an answer written in the box. Returns { hit } with the question this player took ({ drop, points,
+      // answer }), { takenBy, answer } when it was right but someone else took that question first, or {} when it
+      // was right for none of the ones on screen.
+      async rainAnswer(text) {
+        const res = await emitAck("game:rain", text);
+        if (!res.ok) throw new Error(res.error);
+        if (res.hit) return { hit: res.hit };
+        return res.takenBy ? { takenBy: res.takenBy, answer: res.answer } : {};
+      },
+
       // "Saltar": give up on the current round.
       async skipSong() {
         const res = await emitAck("game:skip");

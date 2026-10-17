@@ -55,6 +55,21 @@ import {
   pickMinesQuestions,
 } from "./mines.js";
 import {
+  countRainQuestions,
+  defaultRainConfig,
+  mergeRainConfig,
+  pickRainRounds,
+  RAIN_ANSWER_GAP_MS,
+  RAIN_GAME,
+  RAIN_GRACE_MS,
+  RAIN_LEAD_MS,
+  RAIN_MIN_QUESTIONS,
+  RAIN_REVEAL_MS,
+  rainCounts,
+  rainPool,
+  rainRoundText,
+} from "./rain.js";
+import {
   cleanPlaylist,
   configWithItem,
   emptyPlaylist,
@@ -76,14 +91,15 @@ const CODE_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 // options, a written answer or a year on a timeline). The extras: "musica" (Adivina la canción), "mundo" (Encuentra el país,
 // GEO_GAME: countries pinned on the world map), "historia" (Rango, HISTORY_GAME:
 // getting as close as you can on a range; for now only "Línea del tiempo", an event's year) and "minas" (Campo de minas, MINES_GAME: a prompt and a 5 × 5 board of
-// answers, some right and some mines, picked one per turn). The question games keep their questions in room.tracks,
-// in place of songs. "playlist" isn't a game of its own: it's where the room makes a playlist of them (game/playlist.js),
-// and while one is played the room is in each of its games in turn.
-export const GAME_IDS = ["musica", "opciones", "mundo", "historia", "minas", PLAYLIST_GAME];
+// answers, some right and some mines, picked one per turn) and "lluvia" (Lluvia, RAIN_GAME: questions falling down the
+// screen for a while, answered by writing). The question games keep their questions in room.tracks, in place of songs
+// (Lluvia, one track per round with all its questions). "playlist" isn't a game of its own: it's where the room makes a
+// playlist of them (game/playlist.js), and while one is played the room is in each of its games in turn.
+export const GAME_IDS = ["musica", "opciones", "mundo", "historia", "minas", RAIN_GAME, PLAYLIST_GAME];
 // "Trivia": its settings live in config.quiz and its questions take the place of songs in room.tracks.
 export const QUIZ_GAME = "opciones";
 // The games that ask questions instead of playing songs.
-const QUESTION_GAMES = [QUIZ_GAME, GEO_GAME, HISTORY_GAME, MINES_GAME];
+const QUESTION_GAMES = [QUIZ_GAME, GEO_GAME, HISTORY_GAME, MINES_GAME, RAIN_GAME];
 // Custom playlists from an owner's Spotify go in config.playlistIds with this prefix ("sp:<spotify playlist id>").
 export const SPOTIFY_PREFIX = "sp:";
 // Rounds are chosen this many rounds ahead, so their audio and cover are downloaded before they start.
@@ -215,6 +231,7 @@ function defaultConfig() {
     geo: defaultGeoConfig(),
     history: defaultHistoryConfig(),
     mines: defaultMinesConfig(),
+    rain: defaultRainConfig(),
   };
 }
 
@@ -229,10 +246,14 @@ function publicPlayer(player, phase, room) {
   const race = mines && room.tracks?.[room.currentRound]?.style === "carrera";
   const answered =
     mines && phase === "playing" ? Boolean(field && !field.out && !race && field.pickedTurn === room.turn) : Boolean(player.lastAnswer);
+  // Lluvia: how many questions this player took in this round (who took each one is on the question, publicRainQuestion).
+  const rain = room?.game === RAIN_GAME && (phase === "playing" || phase === "reveal") ? player.rain : null;
   return {
     // Campo de minas: why the player is out of the round ("mina" or "tiempo"), or null while still in, and how many
     // right answers they found in it.
     ...(mines ? { out: field?.out || null, hits: field?.hits || 0 } : {}),
+    // Lluvia: the round's right answers so far.
+    ...(room?.game === RAIN_GAME ? { hits: rain?.hits || 0 } : {}),
     id: player.id,
     name: player.name,
     avatar: player.avatar,
@@ -266,6 +287,8 @@ export class RoomManager {
     this.quizQuestions = quizPool(questions, this.geoQuestions);
     // Campo de minas' (from mines/boards/ when the bank has none).
     this.minesQuestions = minesBank(questions);
+    // Lluvia's: Trivia's written questions, without the flags.
+    this.rainQuestions = rainPool(this.quizQuestions);
     this.resolver = resolver;
     this.store = store;
     this.reconnectGraceMs = reconnectGraceMs;
@@ -741,6 +764,7 @@ export class RoomManager {
     if (config?.geo) next.geo = mergeGeoConfig(room.config.geo, config.geo);
     if (config?.history) next.history = mergeHistoryConfig(room.config.history, config.history);
     if (config?.mines) next.mines = mergeMinesConfig(room.config.mines, config.mines);
+    if (config?.rain) next.rain = mergeRainConfig(room.config.rain, config.rain);
     // Same limits as the settings on screen: 5–25 rounds, 15–35 seconds to guess.
     if (config?.rounds != null) next.rounds = clampTo(config.rounds, MUSIC_LIMITS.rounds, 5);
     if (config?.roundMs != null) next.roundMs = clampTo(config.roundMs, MUSIC_LIMITS.roundMs, ROUND_MS);
@@ -788,6 +812,7 @@ export class RoomManager {
     if (game === GEO_GAME) return mergeGeoConfig(undefined, change);
     if (game === HISTORY_GAME) return mergeHistoryConfig(undefined, change);
     if (game === MINES_GAME) return mergeMinesConfig(undefined, change);
+    if (game === RAIN_GAME) return mergeRainConfig(undefined, change);
     const base = defaultConfig();
     const known = new Set(Object.keys(room.customPlaylists || {}));
     const pick = (list, all, fallback) => (Array.isArray(list) ? all.filter((v) => list.includes(v)) : fallback);
@@ -857,12 +882,28 @@ export class RoomManager {
       const n = exact ? pickMinesQuestions(this.minesQuestions, mines).length : this.cachedCount(item, () => countMinesQuestions(this.minesQuestions, mines));
       return n < mines.rounds ? short(n, "tableros", mines.rounds, "categorías o dificultades") : null;
     }
+    if (item.game === RAIN_GAME) return this.rainProblem(mergeRainConfig(config), item);
     // Adivina la canción: a different song for every round, from the catalog with its filters and its Spotify
     // playlists (whose songs may still be loading).
     if (!config.formats?.length) return "Elige al menos un tipo de respuesta.";
     if (config.useCatalog === false && !config.playlistIds?.length) return "Activa el catálogo o elige una playlist.";
     const n = this.songPool({ ...room, config: configWithItem(base, item) }).length;
     return n < config.rounds ? short(n, "canciones", config.rounds, "idiomas, géneros o dificultades") : null;
+  }
+
+  /**
+   * Why Lluvia can't be played with these settings (a Spanish sentence), or null when it can: a list left empty, or
+   * fewer than RAIN_MIN_QUESTIONS different questions (with more, a round asks one again once it left the screen).
+   * `item` caches the count for a playlist's game.
+   */
+  rainProblem(rain, item = null) {
+    if (!rain.categories.length) return "Elige al menos una categoría.";
+    if (!rain.difficulties.length) return "Elige al menos una dificultad.";
+    const count = () => countRainQuestions(this.rainQuestions, rain);
+    const n = item ? this.cachedCount(item, count) : count();
+    return n < RAIN_MIN_QUESTIONS
+      ? `Solo hay ${n} preguntas con esos ajustes y hacen falta al menos ${RAIN_MIN_QUESTIONS}. Elige más categorías o dificultades.`
+      : null;
   }
 
   /** The question banks don't change while the server runs: what some settings can draw is counted once. */
@@ -888,6 +929,7 @@ export class RoomManager {
       if (item.game === QUIZ_GAME) counts = this.cachedCount(item, () => questionCounts(this.quizQuestions, item.config), "chips");
       else if (item.game === HISTORY_GAME) counts = this.cachedCount(item, () => historyCounts(this.historyQuestions, item.config), "chips");
       else if (item.game === MINES_GAME) counts = this.cachedCount(item, () => minesCounts(this.minesQuestions, item.config), "chips");
+      else if (item.game === RAIN_GAME) counts = this.cachedCount(item, () => rainCounts(this.rainQuestions, item.config), "chips");
       else if (item.game === "musica") {
         counts = this.cachedCount(item, () => songCounts(this.catalog, item.config), "chips");
         songsReady = this.songPool({ ...room, config: configWithItem(room.config, item) }).length;
@@ -1188,6 +1230,14 @@ export class RoomManager {
       room.tracks = tracks;
       room.totalRounds = tracks.length;
       room.tiebreak = null;
+    } else if (room.game === RAIN_GAME) {
+      // Lluvia: every round's questions, and when and where each one falls, are drawn now.
+      const rain = mergeRainConfig(room.config.rain);
+      const problem = this.rainProblem(rain);
+      if (problem) throw new Error(problem.replace(/\.$/, ""));
+      room.tracks = pickRainRounds(this.rainQuestions, rain);
+      room.totalRounds = room.tracks.length;
+      room.tiebreak = null;
     } else if (room.config?.customTracks && room.config.customTracks.length > 0) {
       const shuffled = [...room.config.customTracks].sort(() => Math.random() - 0.5);
       room.tracks = shuffled.slice(0, Math.min(room.config.rounds || 5, shuffled.length));
@@ -1311,6 +1361,9 @@ export class RoomManager {
       // Campo de minas: this round's hits and points, why the player is out (null while in) and the last turn they
       // picked in. Spectators have none: they don't play.
       p.minefield = room.game === MINES_GAME && !p.spectator ? { hits: 0, points: 0, out: null, pickedTurn: 0 } : null;
+      // Lluvia: how many questions this player took in this round, its points and when they last sent an answer
+      // (answers are taken one every RAIN_ANSWER_GAP_MS).
+      p.rain = room.game === RAIN_GAME && !p.spectator ? { hits: 0, points: 0, sentAt: 0 } : null;
       p.status = this.isPlaying(room, p.id) ? "jugando" : "mirando";
     });
     this.setPhase(room, "countdown", COUNTDOWN_MS, () => this.beginPlaying(room));
@@ -1326,7 +1379,19 @@ export class RoomManager {
       const mines = mergeMinesConfig(room.config.mines);
       return this.isMinesRace(room) ? mines.roundMs : mines.turnMs;
     }
+    // Lluvia: the whole shower, as long as the round was drawn.
+    if (room.game === RAIN_GAME) return room.tracks[room.currentRound]?.roundMs || mergeRainConfig(room.config.rain).roundMs;
     return room.config.roundMs || ROUND_MS;
+  }
+
+  /** Lluvia's rounds: questions falling down the screen, answered by writing while they're on it. */
+  isRainRound(room) {
+    return room.game === RAIN_GAME && room.tracks[room.currentRound]?.kind === "rain";
+  }
+
+  /** How far into a Lluvia round it is (ms): where the rain is. A pause stops it where it was. */
+  rainElapsed(room) {
+    return (room.paused ? room.paused.at : Date.now()) - room.phaseStartedAt;
   }
 
   /** Encuentra el país's rounds (and every tiebreak): a pin on the world map instead of a written answer. */
@@ -1391,6 +1456,7 @@ export class RoomManager {
       [GEO_GAME]: room.config.geo,
       [HISTORY_GAME]: room.config.history,
       [MINES_GAME]: room.config.mines,
+      [RAIN_GAME]: room.config.rain,
     }[room.game] ?? {
       rounds: room.config.rounds,
       roundMs: room.config.roundMs,
@@ -1476,6 +1542,7 @@ export class RoomManager {
     if (this.isMapRound(room)) this.gradeMap(room, track);
     if (this.isYearRound(room)) this.gradeYears(room, track);
     if (this.isMinesRound(room)) this.gradeMines(room);
+    if (this.isRainRound(room)) this.gradeRain(room, track);
     room.players.forEach((player) => {
       if (!player.lastAnswer && this.isPlaying(room, player.id)) {
         player.streak = 0;
@@ -1488,6 +1555,7 @@ export class RoomManager {
     else if (this.isYearRound(room)) revealMs = HISTORY_REVEAL_MS;
     else if (room.game === QUIZ_GAME) revealMs = QUIZ_REVEAL_MS;
     else if (this.isMinesRound(room)) revealMs = MINES_REVEAL_MS;
+    else if (this.isRainRound(room)) revealMs = RAIN_REVEAL_MS;
     this.setPhase(room, "reveal", revealMs, () => this.advance(room));
     return { track, duration };
   }
@@ -1775,6 +1843,7 @@ export class RoomManager {
       p.pin = null;
       p.guess = null;
       p.minefield = null;
+      p.rain = null;
       p.status = p.connected ? "conectado" : "desconectado";
     }
   }
@@ -1793,6 +1862,7 @@ export class RoomManager {
     if (this.isMapRound(room)) throw new Error("Toca el mapa para poner tu pin");
     if (this.isYearRound(room)) throw new Error("Elige el año en la línea del tiempo");
     if (this.isMinesRound(room)) throw new Error("Toca una casilla del tablero");
+    if (this.isRainRound(room)) return this.rainAnswer(room, userId, answerText);
 
     // Grace period for network latency if reveal just started
     const isPlaying = room.phase === "playing";
@@ -2171,6 +2241,69 @@ export class RoomManager {
     }
   }
 
+  /**
+   * Lluvia: an answer written by a player. It counts for the questions on screen right now (or that left it a moment
+   * ago, RAIN_GRACE_MS, for the network's delay) that nobody has answered yet: when it's right for one of them (the
+   * lowest one, if it's right for several), this player takes it (`by`, and `takenAt`, how far into the round): it
+   * scores its points at once and leaves everyone's screen, so nobody else can answer it. Returns the question taken
+   * (`drop`, its id in the round), its points and its answer; `{ takenBy, answer }` when the answer was right but
+   * someone else took that question first (the streak stays); or null when it was right for none (a wrong answer costs
+   * nothing but the streak).
+   */
+  rainAnswer(room, userId, text) {
+    const player = room.players.get(userId);
+    if (!player) throw new Error("Jugador no encontrado");
+    this.assertNotSpectator(room, userId);
+    if (!this.isRainRound(room)) throw new Error("Esta ronda no es de Lluvia");
+    if (room.phase !== "playing") throw new Error("No se aceptan respuestas ahora");
+    const rain = player.rain;
+    if (!rain) throw new Error("Llegaste con la ronda empezada: juegas desde la siguiente");
+    const guess = String(text ?? "").slice(0, 80).trim();
+    if (!guess) throw new Error("Escribe una respuesta");
+    const now = Date.now();
+    if (now - rain.sentAt < RAIN_ANSWER_GAP_MS) throw new Error("Más despacio");
+    rain.sentAt = now;
+
+    const round = room.tracks[room.currentRound];
+    const elapsed = this.rainElapsed(room);
+    const onScreen = round.drops.filter((d) => d.at <= elapsed && elapsed <= d.at + round.fallMs + RAIN_GRACE_MS);
+    const drop = onScreen.find((d) => !d.by && isCorrectOpenAnswer(guess, d.question));
+    if (!drop) {
+      const late = onScreen.find((d) => d.by && d.by !== userId && isCorrectOpenAnswer(guess, d.question));
+      if (late) return { takenBy: room.players.get(late.by)?.name || "Otro jugador", answer: late.question.answer };
+      player.streak = 0;
+      return null;
+    }
+    drop.by = userId;
+    drop.takenAt = Math.round(elapsed);
+    rain.hits += 1;
+    rain.points += drop.points;
+    player.lastPoints = rain.points;
+    player.score += drop.points;
+    player.correct += 1;
+    player.streak += 1;
+    player.bestStreak = Math.max(player.bestStreak, player.streak);
+    player.answerTimes.push(Math.max(0, elapsed - drop.at));
+    return { drop: drop.id, points: drop.points, answer: drop.question.answer };
+  }
+
+  /**
+   * Lluvia, when the round's time runs out: each player's round in a few words ("4 aciertos · 12 puntos"), and who won
+   * it, whoever got the most points in it (several on a tie; nobody when nobody scored).
+   */
+  gradeRain(room, round) {
+    let best = 0;
+    for (const player of room.players.values()) {
+      const rain = player.rain;
+      if (!rain) continue;
+      player.lastPoints = rain.points;
+      player.lastAnswer = { text: rainRoundText(rain.hits, rain.points), correct: rain.hits > 0, hits: rain.hits, at: Date.now() };
+      best = Math.max(best, rain.points);
+    }
+    round.best = best;
+    round.winners = best ? [...room.players.values()].filter((p) => p.rain?.points === best).map((p) => p.id) : [];
+  }
+
   /** What the player answered, as people read it: "As It Was - Harry Styles" for a picked suggestion (whose raw
    *  value is a song id such as "harry-styles-as-it-was") or for the right song; the typed text otherwise. */
   answerLabel(room, track, answerText, correct) {
@@ -2187,6 +2320,7 @@ export class RoomManager {
     if (!player) throw new Error("Jugador no encontrado");
     this.assertNotSpectator(room, userId);
     if (this.isMinesRound(room)) throw new Error("En Campo de minas no se puede saltar");
+    if (this.isRainRound(room)) throw new Error("En Lluvia no se puede saltar");
     if (player.lastAnswer) return player.lastAnswer;
     if (room.phase !== "playing") throw new Error("No se aceptan respuestas ahora");
     if (!this.isPlaying(room, userId)) throw new Error("Solo juegan el desempate los jugadores empatados");
@@ -2340,6 +2474,11 @@ export class RoomManager {
       if (track) payload.question = this.publicMinesQuestion(room, track);
       // In the lobby: how many boards each category and difficulty has, for the settings' chips.
       if (room.phase === "lobby") payload.questionCounts = minesCounts(this.minesQuestions, room.config.mines);
+    } else if (room.game === RAIN_GAME) {
+      // The questions falling now; their answers only at the reveal.
+      if (track) payload.question = this.publicRainQuestion(room, track);
+      // In the lobby: how many questions each category and difficulty has, for the settings' chips.
+      if (room.phase === "lobby") payload.questionCounts = rainCounts(this.rainQuestions, room.config.rain);
     } else if (track && (room.phase === "countdown" || room.phase === "playing")) {
       payload.audio = {
         previewUrl: track.previewUrl,
@@ -2416,7 +2555,49 @@ export class RoomManager {
     if (room.game === GEO_GAME) return countGeoQuestions(this.geoQuestions, room.config.geo);
     if (room.game === HISTORY_GAME) return countHistoryQuestions(this.historyQuestions, room.config.history);
     if (room.game === MINES_GAME) return countMinesQuestions(this.minesQuestions, room.config.mines);
+    if (room.game === RAIN_GAME) return countRainQuestions(this.rainQuestions, room.config.rain);
     return undefined;
+  }
+
+  /**
+   * The current round of Lluvia. While it's played, only the questions on screen go out (and each one RAIN_LEAD_MS
+   * before it shows, so it's there in time; the screen shows it at its `at`), never their answers: `at` is when it
+   * starts falling (ms from the round's start, as `phaseStartedAt` counts it) and `lane` its column (0 the left one, 0.5
+   * the middle, 1 the right one); a question takes `fallMs` to cross the screen; `by` is who took it (and `takenAt`
+   * when), once someone did. At the reveal, every question that fell, with its answer,
+   * and who won the round (`winners`, with `best` points). No question ids: the drops are numbered in the round.
+   */
+  publicRainQuestion(room, round) {
+    const playing = room.phase === "playing";
+    const showAll = room.phase === "reveal" || room.phase === "finished";
+    const elapsed = playing ? this.rainElapsed(room) : showAll ? round.roundMs : -1;
+    const drops = playing
+      ? round.drops.filter((d) => d.at <= elapsed + RAIN_LEAD_MS && d.at + round.fallMs + 1000 >= elapsed)
+      : showAll
+      ? round.drops.filter((d) => d.at < round.roundMs)
+      : [];
+    return {
+      round: room.currentRound + 1,
+      roundMs: round.roundMs,
+      fallMs: round.fallMs,
+      // How many questions have fallen so far in the round.
+      fallen: round.drops.filter((d) => d.at <= elapsed).length,
+      drops: drops.map((d) => ({
+        id: d.id,
+        at: d.at,
+        lane: d.lane,
+        points: d.points,
+        text: d.question.text,
+        category: d.question.category,
+        difficulty: d.question.difficulty,
+        // Who took it, and when (how far into the round): it leaves every screen with their name and its points.
+        by: d.by || null,
+        takenAt: d.by ? d.takenAt : null,
+        answer: showAll ? d.question.answer : null,
+      })),
+      winners: showAll ? round.winners || [] : null,
+      best: showAll ? round.best || 0 : null,
+    };
   }
 
   /**

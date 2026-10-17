@@ -330,7 +330,7 @@ input.tv-pl-name:focus { outline: none; border-bottom-color: var(--on); }
 /* ---------- Beside it: the chosen game's settings, sharing and "Mis playlists" ---------- */
 .tv-pl-edit { display: grid; gap: 16px; min-width: 0; }
 /* The chosen game's settings take that game's colour, as in its own lobby (the same variables its
-   :root[data-mode] block sets: quiz.css, palettes.css, history.css, mines.css). */
+   :root[data-mode] block sets: quiz.css, palettes.css, history.css, mines.css, rain.css). */
 .tv-pl-edit.is-opciones {
   --brand: var(--tv-qm); --brand-rgb: var(--tv-qm-rgb); --brand-text: var(--tv-qm); --on-brand: #ffffff;
   --brand-hover: var(--tv-qm-1); --brand-active: var(--tv-qm-edge); --border-focus: var(--tv-qm);
@@ -350,6 +350,10 @@ input.tv-pl-name:focus { outline: none; border-bottom-color: var(--on); }
 .tv-pl-edit.is-minas {
   --brand: var(--tv-mn); --brand-rgb: var(--tv-mn-rgb); --brand-text: var(--tv-mn-text); --on-brand: var(--tv-mn-on);
   --brand-hover: var(--tv-mn-1); --brand-active: var(--tv-mn-edge); --border-focus: var(--tv-mn);
+}
+.tv-pl-edit.is-lluvia {
+  --brand: var(--tv-rn); --brand-rgb: var(--tv-rn-rgb); --brand-text: var(--tv-rn-text); --on-brand: var(--tv-rn-on);
+  --brand-hover: var(--tv-rn-1); --brand-active: var(--tv-rn-edge); --border-focus: var(--tv-rn);
 }
 .tv-pl-edit .tv-pl-edit-kicker { color: var(--brand-text); }
 .tv-pl-edit-head { display: flex; align-items: center; gap: 12px; }

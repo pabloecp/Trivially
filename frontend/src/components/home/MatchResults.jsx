@@ -6,6 +6,7 @@ import Icon from "./Icon.jsx";
 import PartyPanel from "./PartyPanel.jsx";
 import PlayerName from "./PlayerName.jsx";
 import { useApp } from "../../lib/store.jsx";
+import { withSound } from "../../lib/sounds.js";
 import { findMode } from "../../modes/index.js";
 import { PlaylistProgress, PlaylistStandings } from "../../modes/playlist/Standings.jsx";
 

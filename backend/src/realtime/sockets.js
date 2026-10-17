@@ -536,6 +536,21 @@ export function attachSockets(io, rooms) {
       }
     });
 
+    // Lluvia: an answer written in the box. It counts for any question on screen that nobody has answered yet; the ack
+    // says which one this player took (`hit`, null when none), or who took it first (`takenBy`). A question taken is
+    // news for the whole room: it leaves every screen.
+    socket.on("game:rain", (text, ack) => {
+      try {
+        const { room, userId } = requireRoom(rooms, socket);
+        const result = rooms.rainAnswer(room, userId, text);
+        const hit = result && !result.takenBy ? result : null;
+        ack?.({ ok: true, hit, takenBy: result?.takenBy || null, answer: result?.answer || null });
+        if (hit) io.to(room.code).emit("room:state", rooms.publicState(room));
+      } catch (err) {
+        ack?.({ ok: false, error: err.message });
+      }
+    });
+
     socket.on("disconnect", () => {
       for (const room of rooms.dropCentralRequests(socket.id)) io.to(room.code).emit("room:state", rooms.publicState(room));
       const result = rooms.disconnect(socket.id);

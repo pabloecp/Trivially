@@ -8,6 +8,7 @@ import QuizGame from "./modes/quiz/Game.jsx";
 import GeoGame from "./modes/mundo/Game.jsx";
 import HistoryGame from "./modes/historia/Game.jsx";
 import MinesGame from "./modes/minas/Game.jsx";
+import RainGame from "./modes/lluvia/Game.jsx";
 import PlaylistResults from "./modes/playlist/Results.jsx";
 import { useApp } from "./lib/store.jsx";
 import RoomSounds from "./lib/RoomSounds.jsx";
@@ -18,7 +19,7 @@ import { useRoomExit } from "./components/home/TvTopbar.jsx";
 import { roomPath } from "./modes/index.js";
 
 // Screens tied to one room, e.g. /game/XOTRIV.
-const ROOM_SCREEN = /^\/(?:lobby|game|quiz|mundo|historia|minas|playlist|sala)\/([^/]+)/;
+const ROOM_SCREEN = /^\/(?:lobby|game|quiz|mundo|historia|minas|lluvia|playlist|sala)\/([^/]+)/;
 
 // Old /lobby/CODE links: the waiting room now lives on the room screen, which /sala/CODE opens and joins.
 function LobbyRedirect() {
@@ -118,6 +119,7 @@ export default function App() {
         <Route path="/mundo/:code" element={<GeoGame />} />
         <Route path="/historia/:code" element={<HistoryGame />} />
         <Route path="/minas/:code" element={<MinesGame />} />
+        <Route path="/lluvia/:code" element={<RainGame />} />
         {/* The end of a playlist: who won the most games. Its games are played on their own screens. */}
         <Route path="/playlist/:code" element={<PlaylistResults />} />
         <Route path="/profile" element={<Profile />} />

@@ -7,19 +7,20 @@
 
 export const PLAYLIST_GAME = "playlist";
 // The games a playlist can have, and their names for the messages.
-export const PLAYLIST_GAMES = ["opciones", "musica", "mundo", "historia", "minas"];
+export const PLAYLIST_GAMES = ["opciones", "musica", "mundo", "historia", "minas", "lluvia"];
 export const GAME_NAMES = {
   opciones: "Trivia",
   musica: "Adivina la canción",
   mundo: "Encuentra el país",
   historia: "Rango",
   minas: "Campo de minas",
+  lluvia: "Lluvia",
 };
 export const PLAYLIST_ORDERS = ["orden", "aleatorio"];
 export const PLAYLIST_LIMITS = { items: 20, name: 40 };
 const DEFAULT_NAME = "Mi playlist";
 // Where each game keeps its settings in room.config (Adivina la canción's are at the top of it).
-const CONFIG_KEY = { opciones: "quiz", mundo: "geo", historia: "history", minas: "mines", musica: null };
+const CONFIG_KEY = { opciones: "quiz", mundo: "geo", historia: "history", minas: "mines", lluvia: "rain", musica: null };
 
 export function emptyPlaylist() {
   return { name: DEFAULT_NAME, order: "orden", items: [] };

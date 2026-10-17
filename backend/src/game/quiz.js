@@ -87,7 +87,7 @@ export function quizPool(bank = [], geoQuestions = []) {
 }
 
 /** What makes two pool entries the same question: a country, or the id of the question they come from. */
-const sameQuestion = (q) => (q.data?.country ? `country:${q.data.country}` : q.baseId || q.id);
+export const sameQuestion = (q) => (q.data?.country ? `country:${q.data.country}` : q.baseId || q.id);
 
 export const formatOf = (q) => FORMAT_OF_TYPE[q.type];
 
