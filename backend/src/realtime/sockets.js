@@ -9,8 +9,13 @@ import { forgetSpotifyLink, saveSpotifyLink, savedSpotifyLinks } from "../db/sto
 import { prefetchFlags } from "../geo/flags.js";
 import { isAccount } from "../auth/username.js";
 
+// The same friend can be invited to a room again after this long (friend:invite).
+export const INVITE_GAP_MS = 15000;
+
 export function attachSockets(io, rooms, { friends = null, hub = null } = {}) {
   hub?.attach(io);
+  // When each account last invited each friend ("<from>><to>" -> time).
+  const invitedAt = new Map();
   // Who this connection is comes only from the signed token, never from ids the client puts in payloads.
   io.use((socket, next) => {
     socket.data.userId = verifySocketToken(socket.handshake.auth?.token);
@@ -67,6 +72,31 @@ export function attachSockets(io, rooms, { friends = null, hub = null } = {}) {
         io.to(room.code).emit("room:state", rooms.publicState(room));
         hub?.refresh(userId);
         ack?.({ ok: true, action: "requested" });
+      } catch (err) {
+        ack?.({ ok: false, error: err.message });
+      }
+    });
+
+    // Someone in a room invites a friend who is online: the friend gets the room's code in a card ("Ana te invita a su
+    // sala", lib/friends.jsx), whatever the room's join mode (an invitation is how "Solo invitación" rooms are joined).
+    // The same friend at most once every INVITE_GAP_MS.
+    socket.on("friend:invite", (payload, ack) => {
+      try {
+        const userId = socket.data.userId;
+        const me = rooms.store.users[userId];
+        if (!isAccount(me)) throw new Error("Inicia sesión con una cuenta para invitar a tus amigos");
+        const friendId = String(payload?.friendId || "");
+        if (!friends?.areFriends(userId, friendId)) throw new Error("Esa persona no es tu amiga");
+        const room = rooms.roomOfUser(userId);
+        if (!room) throw new Error("Entra a una sala para invitar a tus amigos");
+        if (room.players.get(friendId)?.connected) throw new Error("Ya está en tu sala");
+        if (!hub?.isOnline(friendId)) throw new Error("Tu amigo no está conectado ahora");
+        const key = `${userId}>${friendId}`;
+        const wait = (invitedAt.get(key) || 0) + INVITE_GAP_MS - Date.now();
+        if (wait > 0) throw new Error(`Ya lo invitaste: espera ${Math.ceil(wait / 1000)} s`);
+        invitedAt.set(key, Date.now());
+        io.to(`user:${friendId}`).emit("friend:invited", { code: room.code, fromName: me.name, fromAvatar: me.avatar, game: room.game });
+        ack?.({ ok: true });
       } catch (err) {
         ack?.({ ok: false, error: err.message });
       }

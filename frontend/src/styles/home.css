@@ -449,7 +449,10 @@
 /* ---------- Room screen ---------- */
 /* The room is wider than the other screens: the game's panel and settings side by side, and the room's column. */
 .tv-main:has(> .tv-room),
-.tv-app:has(.tv-room) .tv-topbar { max-width: 1400px; }
+.tv-app:has(.tv-room) .tv-topbar,
+/* Pages as wide as the room's screens (the profile), so they don't leave empty bands at the sides. */
+.tv-main:has(> .tv-page--wide),
+.tv-app:has(.tv-page--wide) .tv-topbar { max-width: 1400px; }
 .tv-main.is-room { padding-top: 14px; }
 .tv-room {
   display: flex;
@@ -765,8 +768,36 @@
 .tv-player-tag { font-size: 12px; font-weight: 600; color: var(--tv-text-3); }
 .tv-player-tag.is-host { color: var(--p-accent-text); }
 .tv-player-crown { flex-shrink: 0; color: #ffd23f; }
-.tv-player-waiting { display: flex; align-items: center; gap: 12px; padding: 7px 8px; font-weight: 600; font-size: 14px; color: var(--tv-text-3); }
-.tv-player-waiting-ring { flex-shrink: 0; width: 38px; height: 38px; border: 2.5px dashed var(--tv-dash); border-radius: 50%; }
+/* "Invitar amigos" under the players while the room waits (InviteFriends.jsx). */
+/* Set apart from the players like a section of its own, with the same gap under its title as "En la sala". */
+.tv-invite-friends { display: grid; gap: 10px; margin-top: 14px; }
+.tv-invite-friends-list { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.tv-invite-friend { display: flex; align-items: center; gap: 10px; min-width: 0; padding: 6px 6px 6px 8px; border-radius: 14px; background: var(--tv-option-bg); }
+.tv-invite-friend .tv-avatar { flex-shrink: 0; width: 32px; height: 32px; font-size: 14px; }
+.tv-invite-friend-text { display: grid; flex: 1; min-width: 0; }
+.tv-invite-friend-text strong { overflow: hidden; font-weight: 800; font-size: 14px; color: var(--tv-text); text-overflow: ellipsis; white-space: nowrap; }
+.tv-invite-friend-text small { font-weight: 700; font-size: 12px; color: var(--p-ok-text); }
+/* Small, so the row keeps its height: the button never grows past the avatar. */
+.tv-app .tv-invite-friend-btn { flex-shrink: 0; gap: 5px; height: 32px; padding: 0 12px; border-radius: 10px; box-shadow: 0 3px 0 var(--edge); font-size: 14px; }
+.tv-app .tv-invite-friend-btn:hover { box-shadow: 0 4px 0 var(--edge); }
+.tv-app .tv-invite-friend-btn:active { box-shadow: 0 0 0 var(--edge); }
+.tv-invite-friends-none { margin: 0; padding: 4px 2px; font-weight: 700; font-size: 13px; color: var(--tv-text-3); }
+.tv-invite-friends-empty {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 42px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 14px;
+  background: var(--tv-option-bg);
+  font-family: inherit;
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--tv-text-2);
+  cursor: pointer;
+}
+.tv-invite-friends-empty:hover { background: var(--tv-neutral); color: var(--tv-text); }
 /* "Salir de la sala": a solid red button as wide as the code card above it. */
 .tv-leave-btn {
   display: flex;
@@ -1296,17 +1327,21 @@
 
 /* ---------- Confirm dialog (ConfirmDialog.jsx): the sheet's look, smaller, with two buttons ---------- */
 .tv-sheet-pos--sm { max-width: 440px; }
-.tv-sheet--confirm { padding-top: 24px; }
-/* The title beside the icon, centred on it (one or two lines). */
-.tv-sheet--confirm .tv-sheet-head { align-items: center; }
-.tv-sheet--confirm .tv-sheet-title { line-height: 1.15; }
+/* The same room on every side (the sheet's own sides are thinner). */
+.tv-sheet--confirm { padding: 24px 24px calc(24px + env(safe-area-inset-bottom)); }
+/* The title and the text beside the icon. */
+.tv-sheet--confirm .tv-sheet-title { font-size: 21px; line-height: 1.2; }
 .tv-badge--bad { --c2: var(--p-bad); --edge: var(--p-bad-edge); --on: #fff; }
 .tv-btn--bad { --c2: var(--p-bad); --edge: var(--p-bad-edge); --on: #fff; }
+.tv-confirm-copy { display: grid; gap: 6px; min-width: 0; }
+/* The icon in the middle of the title and text block, a little smaller, so neither looks taller than the other. */
+.tv-sheet--confirm .tv-sheet-head { align-items: center; gap: 16px; padding: 0 0 24px; }
+.tv-sheet--confirm .tv-badge { width: 48px; height: 48px; border-radius: 15px; }
 .tv-confirm-text {
-  margin: 0 0 22px;
-  padding: 0 4px;
+  margin: 0;
+  padding: 0;
   font-weight: 700;
-  font-size: 16px;
+  font-size: 14px;
   line-height: 1.4;
   color: var(--tv-text-2);
 }
@@ -1322,7 +1357,7 @@
   border: 0;
   border-radius: 20px;
   background: var(--tv-option-bg);
-  box-shadow: inset 0 3px 0 var(--tv-option-edge);
+  /* Flat: no inset shadow at the top (it read as a white inverted edge). */
   color: var(--tv-text);
   font-family: var(--tv-display);
   font-weight: 600;
@@ -1663,26 +1698,28 @@
 .tv-divider::before, .tv-divider::after { content: ""; flex: 1; height: 2px; border-radius: 2px; background: var(--tv-option-bg); }
 
 /* Segmented switch with a sliding thumb */
+/* A segmented switch (Segmented.jsx: "Crear cuenta / Iniciar sesión", the friends panel's tabs, who of your friends
+   can join): a flat strip, and the chosen option a lighter pill that slides to it. No shadows: it isn't a button to
+   press, it's a choice that's already made. */
 .tv-seg {
   position: relative;
   display: grid;
   grid-template-columns: repeat(var(--count), minmax(0, 1fr));
-  padding: 5px;
-  border-radius: 18px;
+  padding: 4px;
+  overflow: hidden;
+  border-radius: 14px;
   background: var(--tv-option-bg);
-  box-shadow: inset 0 3px 0 var(--tv-option-edge);
 }
 .tv-seg-thumb {
   position: absolute;
-  top: 5px;
-  bottom: 5px;
-  left: 5px;
-  width: calc((100% - 10px) / var(--count));
-  border-radius: 14px;
-  background: var(--tv-surface);
-  box-shadow: 0 3px 0 var(--tv-edge);
+  top: 4px;
+  bottom: 4px;
+  left: 4px;
+  width: calc((100% - 8px) / var(--count));
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.08);
   transform: translateX(calc(var(--pos) * 100%));
-  transition: transform 0.35s var(--tv-spring);
+  transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.3, 1);
 }
 .tv-seg-btn {
   position: relative;
@@ -1825,10 +1862,9 @@
   padding: 0 7px 0 14px;
   border-radius: 16px;
   background: var(--tv-option-bg);
-  box-shadow: inset 0 3px 0 var(--tv-option-edge);
   transition: box-shadow 0.2s ease;
 }
-.tv-spotify-link-box:focus-within { box-shadow: inset 0 3px 0 var(--tv-option-edge), 0 0 0 3px var(--brand); }
+.tv-spotify-link-box:focus-within { box-shadow: 0 0 0 3px var(--brand); }
 .tv-spotify-link-box > svg { flex: none; }
 .tv-spotify-link-input {
   flex: 1;
@@ -1861,10 +1897,13 @@
 .tv-auth-card { gap: 18px; animation-delay: 0.35s; }
 
 /* ---------- Profile ---------- */
+/* Room around the avatar (its blue ring reaches 7 px out) and between it and the name; the name, @username and tags
+   one even step apart. */
 .tv-profile-hero {
   grid-template-columns: auto minmax(0, 1fr);
   align-items: center;
-  gap: 18px;
+  gap: 26px;
+  padding: 26px 28px;
   overflow: hidden;
   overflow: clip;
   position: relative;
@@ -1890,7 +1929,8 @@
   box-shadow: 0 5px 0 var(--tv-edge), 0 0 0 4px var(--tv-surface), 0 0 0 7px var(--brand);
 }
 .tv-avatar--lg { width: 64px; height: 64px; font-size: 28px; }
-.tv-profile-who { display: grid; gap: 6px; min-width: 0; }
+.tv-profile-who { display: grid; gap: 4px; min-width: 0; }
+.tv-profile-who .tv-tags { margin-top: 8px; }
 .tv-profile-who .tv-page-title { overflow-wrap: anywhere; }
 .tv-profile-grid { display: grid; gap: 20px; align-items: start; }
 @media (min-width: 900px) { .tv-profile-grid:not(.is-single) { grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); } }
@@ -2069,10 +2109,9 @@
   padding: 0 8px 0 18px;
   border-radius: 20px;
   background: var(--tv-option-bg);
-  box-shadow: inset 0 3px 0 var(--tv-option-edge);
   transition: box-shadow 0.2s ease;
 }
-.tv-search-box:focus-within { box-shadow: inset 0 3px 0 var(--tv-option-edge), 0 0 0 3px var(--brand); }
+.tv-search-box:focus-within { box-shadow: 0 0 0 3px var(--brand); }
 .tv-search-icon { flex-shrink: 0; color: var(--brand-text); }
 .tv-search-input {
   flex: 1;
@@ -2607,15 +2646,17 @@
 .tv-player-menu {
   position: absolute;
   top: calc(100% + 8px);
+  /* As wide as the player's row it opens from. */
   left: 0;
+  right: 0;
   z-index: 20;
   display: grid;
   gap: 2px;
-  min-width: 220px;
   padding: 6px;
   border-radius: 16px;
   background: var(--tv-surface);
-  box-shadow: 0 0 0 1px var(--tv-edge), 0 18px 36px -12px rgba(0, 0, 0, 0.6);
+  /* The same edge as every card and menu: a thin line inside (not a lighter ring around it), and a soft drop shadow. */
+  box-shadow: inset 0 0 0 1px var(--tv-line), 0 12px 30px rgba(0, 0, 0, 0.45);
   animation: tvDropIn 0.2s var(--tv-spring);
 }
 .tv-player-menu-item {
@@ -2642,8 +2683,9 @@
 .tv-player-menu-note { margin: 0; padding: 10px 12px; font-weight: 700; font-size: 13px; color: var(--tv-text-3); }
 
 .tv-chip--icon { padding-right: 5px; }
-button.tv-chip--leave,
-button.tv-chip--sound { border: 0; font-family: inherit; color: inherit; cursor: pointer; }
+/* Every bar button that is a <button> (leave, sound, friends...): without the browser's own raised border, which
+   flipped to sunken while held. */
+button.tv-chip { border: 0; font-family: inherit; color: inherit; cursor: pointer; }
 .tv-chip--sound { flex-shrink: 0; }
 /* The top bar's volume panel (VolumeMenu.jsx): music and sounds, an on/off icon and a slider each. */
 .tv-volume { position: relative; flex-shrink: 0; font-family: var(--tv-body); color: var(--tv-text); }
@@ -2919,7 +2961,7 @@ body::-webkit-scrollbar,
   .tv-main--page { padding-top: 12px; }
   .tv-page { gap: 14px; }
   .tv-card { padding: 18px; }
-  .tv-profile-hero { gap: 14px; }
+  .tv-profile-hero { gap: 18px; padding: 20px; }
   .tv-avatar--xl { width: 72px; height: 72px; font-size: 32px; }
   .tv-auth { gap: 12px; }
   .tv-auth-head .tv-appicon { scale: 0.5; margin: -40px 0 -36px; }
@@ -3178,11 +3220,23 @@ fieldset.tv-setsec-body { display: grid; gap: 18px; min-width: 0; margin: 0; pad
 /* Something on that tab keeps the match from starting. */
 .tv-settab-alert { width: 8px; height: 8px; border-radius: 50%; background: var(--tv-danger); }
 
-.tv-settabs.is-sub { gap: 4px; padding: 4px; border-radius: 14px; background: var(--tv-option-bg); box-shadow: none; }
-.tv-settabs.is-sub::after { display: none; }
-.tv-settabs.is-sub .tv-settab { grid-auto-flow: column; justify-content: center; align-items: baseline; gap: 7px; padding: 8px 10px; border-radius: 10px; transition: background-color 0.2s ease; }
+.tv-settabs.is-sub { gap: 4px; padding: 4px; overflow: hidden; border-radius: 14px; background: var(--tv-option-bg); box-shadow: none; }
+/* The open tab's pill slides from one tab to the other, like the friends panel's tabs: no bounce, so it never runs
+   past the strip's ends. */
+.tv-settabs.is-sub::after {
+  top: 4px;
+  bottom: 4px;
+  left: 4px;
+  width: calc((100% - 8px - (var(--n) - 1) * 4px) / var(--n));
+  height: auto;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.08);
+  transform: translateX(calc(var(--i) * (100% + 4px)));
+  transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.3, 1);
+}
+.tv-settabs.is-sub .tv-settab { position: relative; z-index: 1; grid-auto-flow: column; justify-content: center; align-items: baseline; gap: 7px; padding: 8px 10px; border-radius: 10px; }
+.tv-settabs.is-sub .tv-settab-wrap { z-index: 1; }
 .tv-settabs.is-sub .tv-settab-label { font-size: 14px; }
-.tv-settabs.is-sub .tv-settab[aria-selected="true"] { background: rgba(255, 255, 255, 0.08); }
 
 .tv-settab-panel { display: grid; gap: 16px; min-width: 0; animation: tvSettab 0.28s var(--tv-ease-out); }
 @keyframes tvSettab { from { opacity: 0; transform: translateY(6px); } }
@@ -3625,7 +3679,7 @@ fieldset.tv-setsec-body { display: grid; gap: 18px; min-width: 0; margin: 0; pad
 /* "Agregar de Spotify" and the link box are one control, the same size: the button (54px, like the box) turns into
    the box, which has an X at its end to close it. */
 .tv-optrow-opts:has(> .tv-spotify-open) { padding: 0; background: none; }
-.tv-optrow-btn.tv-spotify-open { flex: 1 1 auto; height: 54px; border-radius: 16px; background: var(--tv-option-bg); box-shadow: inset 0 3px 0 var(--tv-option-edge); }
+.tv-optrow-btn.tv-spotify-open { flex: 1 1 auto; height: 54px; border-radius: 16px; background: var(--tv-option-bg); box-shadow: none; }
 .tv-spotify-link-close {
   display: grid;
   place-items: center;

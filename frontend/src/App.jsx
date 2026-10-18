@@ -3,7 +3,6 @@ import { Navigate, Route, Routes, useLocation, useNavigate, useNavigationType, u
 import Home from "./pages/Home.jsx";
 import Login from "./pages/Login.jsx";
 import Profile from "./pages/Profile.jsx";
-import AddFriend from "./pages/AddFriend.jsx";
 import Game from "./modes/music/Game.jsx";
 import QuizGame from "./modes/quiz/Game.jsx";
 import GeoGame from "./modes/mundo/Game.jsx";
@@ -124,7 +123,6 @@ export default function App() {
         <Route path="/minas/:code" element={<MinesGame />} />
         {/* The end of a playlist: who won the most games. Its games are played on their own screens. */}
         <Route path="/playlist/:code" element={<PlaylistResults />} />
-        <Route path="/amigo/:username" element={<AddFriend />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/profile/:userId" element={<Profile />} />
         {/* The old /play screens are gone: everything starts from Home. */}

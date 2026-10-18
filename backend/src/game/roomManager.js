@@ -637,23 +637,26 @@ export class RoomManager {
   }
 
   /**
-   * The host drags a player onto the "Dispositivo central" spot: that player's device becomes the room's central device
-   * and their seat goes (they play again if it stops being the central, see releaseCentral). Only while the room waits:
-   * mid-match it would take a player out of it. The host can't be it, or nobody would control the match.
+   * Makes a player's screen the room's central device: from the player's menu or dragging them onto the spot, by the
+   * host or a player with the settings permission, while the room waits; any player, the one doing it too. That
+   * player's seat goes (the device only shows the match). If it's the host's, the host role passes to the next
+   * connected player first (the central device controls nothing), so there must be one.
    */
-  makeCentral(room, hostUserId, targetUserId) {
-    if (room.hostId !== hostUserId) throw new Error("Solo el anfitrión elige el dispositivo central");
+  makeCentral(room, actorId, targetUserId) {
+    if (!this.canEditConfig(room, actorId)) throw new Error("Solo el anfitrión o quien tenga permiso elige el dispositivo central");
     if (room.phase !== "lobby") throw new Error("Cambia el dispositivo central antes de empezar la partida");
-    if (targetUserId === room.hostId) {
-      throw new Error("El anfitrión no puede ser el dispositivo central: pásale el anfitrión a otro jugador primero");
-    }
     const player = room.players.get(targetUserId);
     if (!player) throw new Error("El jugador no está en la sala");
     if (!player.connected || !player.socketId) throw new Error("Ese jugador no está conectado ahora");
+    if (targetUserId === room.hostId) {
+      const next = [...room.players.values()].find((p) => p.connected && p.id !== targetUserId);
+      if (!next) throw new Error("Hace falta otro jugador en la sala para que lleve la partida");
+    }
     clearTimeout(player.dropTimer);
     room.players.delete(targetUserId);
     room.coHosts = (room.coHosts || []).filter((id) => id !== targetUserId);
     room.suggestions = (room.suggestions || []).filter((s) => s.userId !== targetUserId);
+    if (targetUserId === room.hostId) this.transferHost(room);
     this.setCentral(room, { ...player, socketId: player.socketId });
     return { name: player.name };
   }
@@ -730,8 +733,8 @@ export class RoomManager {
   }
 
   /** The host's "Quitar" on the spot. */
-  removeCentral(room, hostUserId) {
-    if (room.hostId !== hostUserId) throw new Error("Solo el anfitrión elige el dispositivo central");
+  removeCentral(room, actorId) {
+    if (!this.canEditConfig(room, actorId)) throw new Error("Solo el anfitrión o quien tenga permiso elige el dispositivo central");
     if (!room.central) throw new Error("La sala no tiene dispositivo central");
     return this.releaseCentral(room);
   }

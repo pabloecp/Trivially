@@ -169,7 +169,12 @@ export default function TvTopbar() {
               className="tv-chip tv-chip--icon tv-chip--friends"
               aria-label={friends.pending ? `Amigos (${friends.pending} solicitudes)` : "Amigos"}
               aria-haspopup="dialog"
-              onClick={() => friends.setOpen(true)}
+              onClick={(e) => {
+                // The sheet doesn't take the focus: left on this button, closing it with Escape drew the keyboard's
+                // focus ring around it.
+                e.currentTarget.blur();
+                friends.setOpen(true);
+              }}
             >
               <span className="tv-avatar tv-avatar--empty">
                 <Icon name="users" size={20} strokeWidth={2.4} />

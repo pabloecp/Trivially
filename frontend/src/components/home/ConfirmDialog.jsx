@@ -71,9 +71,12 @@ export default function ConfirmDialog({ open, title, text, icon = "logout", canc
             <span className="tv-badge tv-badge--bad">
               <Icon name={icon} size={26} />
             </span>
-            <h2 id="tv-confirm-title" className="tv-sheet-title">{title}</h2>
+            {/* The title and, under it, what happens, together beside the icon. */}
+            <div className="tv-confirm-copy">
+              <h2 id="tv-confirm-title" className="tv-sheet-title">{title}</h2>
+              <p id="tv-confirm-text" className="tv-confirm-text">{text}</p>
+            </div>
           </div>
-          <p id="tv-confirm-text" className="tv-confirm-text">{text}</p>
           <div className="tv-confirm-actions">
             <button ref={cancelRef} type="button" className="tv-btn tv-c-neutral" data-sound="back" onClick={onCancel}>
               {cancelLabel}

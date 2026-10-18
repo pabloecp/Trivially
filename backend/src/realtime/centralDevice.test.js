@@ -55,11 +55,8 @@ assert.equal(room.players.size, 3);
 assert.equal(rooms.publicState(room).central, null);
 
 // --- The host drags a player onto the spot ---
-// Nobody but the host can, and the host can't be it.
+// A player without the settings permission can't (who may, and the host's own screen: centralPermissions.test.js).
 assert.equal((await luisPhone.call("room:makeCentral", "usr_eva")).ok, false);
-const self = await anaPhone.call("room:makeCentral", "usr_ana");
-assert.equal(self.ok, false);
-assert.match(self.error, /anfitrión no puede ser/);
 
 // Eva's laptop becomes the central device: her seat goes, and the laptop hears it with the room.
 const made = await anaPhone.call("room:makeCentral", "usr_eva");

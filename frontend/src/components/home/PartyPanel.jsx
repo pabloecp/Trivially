@@ -1,9 +1,9 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
 import { useApp } from "../../lib/store.jsx";
 import Avatar from "./Avatar.jsx";
-import CentralSpot, { DragGhost, useCentralDrag } from "./CentralSpot.jsx";
+import CentralSpot from "./CentralSpot.jsx";
 import ConfirmDialog from "./ConfirmDialog.jsx";
 import Icon from "./Icon.jsx";
 import FriendsRoomControls from "./FriendsRoomControls.jsx";
@@ -11,6 +11,7 @@ import PlayerMenu from "./PlayerMenu.jsx";
 import { ChatForm, ChatMessages, ChatSheet, useChatUnread, usePhone, useRoomChat } from "./RoomChat.jsx";
 import { useInvite } from "./useInvite.js";
 import { shownCode, useHiddenCode } from "../../lib/hiddenCode.js";
+import InviteFriends from "./InviteFriends.jsx";
 
 function playerTag(player, { isHost }) {
   if (!player.connected) return "Reconectando…";
@@ -81,11 +82,11 @@ const inertUnless = (shown) => (el) => {
 // The room's side column, on the room screen and during a match: the invite code, who's in and the way out.
 // With `scores` (a match) the players are ranked by points, each with their score and how their round is going.
 // `className` lets a game add its own (Geografía hides the column on phones, where it shows a strip instead).
-// At the top of the players, the "Dispositivo central" spot (CentralSpot): the host drags a player onto it (or picks
-// it in the player's menu) to make that player's device the screen that shows the match. On the central device itself
+// At the top of the players, while the room has one, the "Dispositivo central" (CentralSpot): the screen that shows the
+// match, picked from a player's menu (the host or a player with the settings permission). On the central device itself
 // the column only shows (`display`): no menus, chat or way out, and the code to join instead of "Invitar".
 export default function PartyPanel({ room, onToast, scores = false, display = false, className = "" }) {
-  const { user, isCentral, leaveRoom, makeCentral } = useApp();
+  const { user, isCentral, leaveRoom } = useApp();
   const nav = useNavigate();
   const [menuFor, setMenuFor] = useState(null);
   const { copied, copy: copyInvite } = useInvite(room.code, onToast);
@@ -93,15 +94,8 @@ export default function PartyPanel({ room, onToast, scores = false, display = fa
   // Who "you" are in the list: nobody on the central device, even when its account is one of the players'.
   const viewerId = isCentral ? null : user?.id;
   const isHost = Boolean(viewerId) && room.hostId === viewerId;
-  const spotRef = useRef(null);
-  const { drag, bind } = useCentralDrag({
-    enabled: isHost && !display && room.phase === "lobby",
-    spotRef,
-    onDrop: (player) =>
-      makeCentral(player.id)
-        .then(() => onToast?.(`La pantalla de ${player.name} es ahora el dispositivo central`, "check"))
-        .catch((err) => onToast?.(err.message || "No se pudo cambiar el dispositivo central")),
-  });
+  // The host or a player with the settings permission: they pick the central device (any player, themselves too).
+  const canCentral = Boolean(viewerId) && (isHost || Boolean(room.coHosts?.includes(viewerId)));
   // The chat opens in the column (while the room waits and in a match): the players' list (or the scoreboard) folds
   // into a row of faces (tap it, or Escape, to close the chat and unfold it again).
   // On phones the same button opens the chat in a sheet from the bottom, as in the room's bottom bar, so it looks the
@@ -128,7 +122,6 @@ export default function PartyPanel({ room, onToast, scores = false, display = fa
     nav("/", { replace: true });
   }
 
-  const alone = room.players.length === 1;
   // Between matches, the room's scoreboard (the server's room.board): each player's wins, most first, once a match
   // has been played. The one with most wins (if any) is highlighted.
   const board = room.board || { matches: 0, players: [] };
@@ -145,11 +138,12 @@ export default function PartyPanel({ room, onToast, scores = false, display = fa
 
   const inMatch = room.phase !== "lobby";
   // The spot: always while the room waits (that's where it's set); in a match only while there is a central device.
-  const showSpot = !display && (!inMatch || Boolean(room.central));
+  // "Dispositivo central": only while the room has one (it's picked from a player's menu).
+  const showSpot = !display && Boolean(room.central);
 
   return (
     <aside
-      className={`tv-party${scores ? " is-scores" : ""}${chatting ? " is-chat" : ""}${display ? " is-display" : ""}${drag ? " is-dragging" : ""} ${className}`.trim()}
+      className={`tv-party${scores ? " is-scores" : ""}${chatting ? " is-chat" : ""}${display ? " is-display" : ""} ${className}`.trim()}
       aria-label="Tu sala"
     >
       <div className="tv-party-codebox">
@@ -191,7 +185,7 @@ export default function PartyPanel({ room, onToast, scores = false, display = fa
       {/* Folds away (and the row of faces unfolds) while the chat is open. */}
       <div className="tv-fold tv-party-people" ref={inertUnless(!chatting)}>
         <div>
-          {showSpot && <CentralSpot room={room} spotRef={spotRef} drag={drag} isHost={isHost} onToast={onToast} />}
+          {showSpot && <CentralSpot room={room} canEdit={canCentral} onToast={onToast} />}
           <ul className="tv-party-players" aria-label={scores ? "Marcador" : "Jugadores en la sala"}>
             {players.map((p, i) => {
               const isMe = p.id === viewerId;
@@ -202,7 +196,7 @@ export default function PartyPanel({ room, onToast, scores = false, display = fa
                   key={p.id}
                   className={`tv-player${isMe ? " is-me" : ""}${p.spectator ? " is-spectator" : ""}${p.connected ? "" : " is-away"}${menuFor === p.id ? " is-open" : ""}${
                     scores && !p.spectator && i < 3 ? ` is-top-${i + 1}` : ""
-                  }${showBoard && topWins > 0 && wins === topWins ? " is-leader" : ""}${drag?.player.id === p.id ? " is-dragged" : ""}`}
+                  }${showBoard && topWins > 0 && wins === topWins ? " is-leader" : ""}`}
                   style={{ "--i": i }}
                 >
                   <button
@@ -212,7 +206,6 @@ export default function PartyPanel({ room, onToast, scores = false, display = fa
                     aria-expanded={display ? undefined : menuFor === p.id}
                     disabled={display}
                     onClick={() => setMenuFor((cur) => (cur === p.id ? null : p.id))}
-                    {...bind(p, !isHostPlayer && p.connected)}
                   >
                     {scores && !p.spectator && <span className="tv-player-pos">{i + 1}</span>}
                     <Avatar name={p.name} avatar={p.avatar} />
@@ -243,7 +236,7 @@ export default function PartyPanel({ room, onToast, scores = false, display = fa
                       player={p}
                       isMe={isMe}
                       canManage={isHost && !isMe}
-                      canCentral={isHost && !isMe && !inMatch}
+                      canCentral={canCentral && !inMatch}
                       onClose={() => setMenuFor(null)}
                       onToast={onToast}
                     />
@@ -251,13 +244,9 @@ export default function PartyPanel({ room, onToast, scores = false, display = fa
                 </li>
               );
             })}
-            {alone && !scores && (
-              <li className="tv-player-waiting">
-                <span className="tv-player-waiting-ring" aria-hidden="true" />
-                Esperando amigos
-              </li>
-            )}
           </ul>
+          {/* While the room waits: your friends who are online, to invite (instead of "Esperando amigos"). */}
+          {!scores && !display && <InviteFriends room={room} onToast={onToast} />}
           {spectators.length > 0 && (
             <>
               <div className="tv-party-title">
@@ -296,7 +285,6 @@ export default function PartyPanel({ room, onToast, scores = false, display = fa
         </div>
       </div>
 
-      <DragGhost drag={drag} />
 
       {/* The chat, while the room waits and in a match. Its messages grow in place of the players' list; its box takes the
           "Chat" button's place, swapping with it where it stands. The central device only shows the room. */}

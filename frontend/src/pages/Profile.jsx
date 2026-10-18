@@ -265,7 +265,7 @@ function ProfileScreen() {
 
 
   return (
-    <div className="tv-page">
+    <div className="tv-page tv-page--wide">
       {searchParams.get("new") === "1" && (
         <Notice tone="brand" icon="star">¡Tu cuenta está lista! Puedes cambiar tu nombre cuando quieras.</Notice>
       )}
