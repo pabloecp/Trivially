@@ -14,6 +14,7 @@ import { useSongList } from "../../lib/songList.js";
 import { useMasterVolume } from "../../lib/volume.js";
 import "../../styles/quiz.css";
 import { PauseButton, ReportButton, SkipButton, PauseVeil } from "../../components/home/PauseControls.jsx";
+import { resolveCode, shownCode, useHiddenCode } from "../../lib/hiddenCode.js";
 
 // A closed round's four songs keep the same letters and colours as Trivia's options.
 const OPTION_LETTERS = ["A", "B", "C", "D"];
@@ -50,8 +51,11 @@ const CHEERS = [
 ];
 
 function GameScreen() {
-  const { code } = useParams();
+  const [codeHidden] = useHiddenCode();
+  const { code: codeParam } = useParams();
   const { user, room, joinRoom, answer, skipSong, setGame } = useApp();
+  // The address's code ("oculta" while it's hidden: this tab's room, lib/hiddenCode.js).
+  const code = resolveCode(codeParam, room);
   const nav = useNavigate();
   // With a central device in the room, the song plays there and shows the round; the players' phones only have the
   // options or the search box (and say how their round went).
@@ -439,7 +443,7 @@ function GameScreen() {
           <section className="tv-game-top">
             <div className="tv-game-round">
               <p className="tv-mono-label">
-                Sala {room.code} · {room.mode === "solo" ? "Práctica" : "Multijugador"}
+                Sala {shownCode(room.code, codeHidden)} · {room.mode === "solo" ? "Práctica" : "Multijugador"}
               </p>
               <h1 className="tv-card-title">
                 Ronda {room.currentRound + 1} <span className="tv-muted">de {room.totalRounds}</span>

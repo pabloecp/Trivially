@@ -124,6 +124,9 @@ function assertNameWithoutLink(user) {
 }
 
 /** A player's rounds as they go out to the players: without the questions' ids. */
+// After this many rounds in a row without answering, a match stops waiting for the player (markIdle).
+export const IDLE_ROUNDS = 3;
+
 export function publicRounds(rounds = []) {
   return rounds.map(({ questionId, ...round }) => round);
 }
@@ -257,6 +260,8 @@ function publicPlayer(player, phase, room) {
     streak: player.streak,
     bestStreak: player.bestStreak,
     answered,
+    // Hasn't answered in IDLE_ROUNDS rounds in a row: rounds no longer wait for them (it ends when they answer).
+    idle: Boolean(player.idle),
     lastPoints: player.lastPoints || 0,
     lastAnswer: showAnswer ? player.lastAnswer : null,
     connected: player.connected,
@@ -1302,6 +1307,8 @@ export class RoomManager {
       p.bestStreak = 0;
       p.answerTimes = [];
       p.rounds = [];
+      p.idleRounds = 0;
+      p.idle = false;
       p.status = "jugando";
     });
     this.beginCountdown(room);
@@ -1582,6 +1589,7 @@ export class RoomManager {
     if (this.isMapRound(room)) this.gradeMap(room, track);
     if (this.isYearRound(room)) this.gradeYears(room, track);
     if (this.isMinesRound(room)) this.gradeMines(room);
+    this.markIdle(room);
     room.players.forEach((player) => {
       if (!player.lastAnswer && this.isPlaying(room, player.id)) {
         player.streak = 0;
@@ -1630,6 +1638,28 @@ export class RoomManager {
     if (room.game === QUIZ_GAME) return track.type === "choice" ? track.options[track.answer] : track.answer || null;
     if (room.game === "musica") return artistLine(track) ? `${track.title} - ${artistLine(track)}` : track.title || null;
     return null;
+  }
+
+  /**
+   * At each reveal (before the players without an answer get an empty one): whoever played this round and didn't
+   * answer (no answer, no pin or year placed; in Campo de minas, no cell picked) adds a round to `idleRounds`; after
+   * IDLE_ROUNDS in a row they're `idle`, and rounds (and turns) stop waiting for them to end early. Answering again
+   * (answered, pickCell) or answering this round sets them back to zero. Not counted in a tiebreak.
+   */
+  markIdle(room) {
+    if (room.tiebreak) return;
+    const mines = this.isMinesRound(room);
+    for (const player of room.players.values()) {
+      if (!this.isPlaying(room, player.id)) continue;
+      const responded = mines ? Boolean(player.minefield?.pickedTurn) : Boolean(player.lastAnswer);
+      if (responded) {
+        player.idleRounds = 0;
+        player.idle = false;
+      } else {
+        player.idleRounds = (player.idleRounds || 0) + 1;
+        if (player.idleRounds >= IDLE_ROUNDS) player.idle = true;
+      }
+    }
   }
 
   advance(room) {
@@ -1807,6 +1837,8 @@ export class RoomManager {
       p.bestStreak = 0;
       p.answerTimes = [];
       p.rounds = [];
+      p.idleRounds = 0;
+      p.idle = false;
       p.status = "jugando";
     });
     this.beginCountdown(room);
@@ -2039,6 +2071,8 @@ export class RoomManager {
       p.bestStreak = 0;
       p.answerTimes = [];
       p.rounds = [];
+      p.idleRounds = 0;
+      p.idle = false;
       p.lastAnswer = null;
       p.lastPoints = 0;
       p.pin = null;
@@ -2380,6 +2414,8 @@ export class RoomManager {
     cell.at = now;
     cell.turn = room.turn;
     field.pickedTurn = room.turn;
+    player.idleRounds = 0;
+    player.idle = false;
     if (!race) player.status = "respondió";
     if (cell.correct) {
       field.hits += 1;
@@ -2413,7 +2449,7 @@ export class RoomManager {
     }
     if (this.isMinesRace(room)) return false;
     const waiting = [...room.players.values()].some(
-      (p) => p.connected && p.minefield && !p.minefield.out && p.minefield.pickedTurn !== room.turn
+      (p) => p.connected && !p.idle && p.minefield && !p.minefield.out && p.minefield.pickedTurn !== room.turn
     );
     if (waiting) return false;
     this.endTurn(room, false);
@@ -2493,8 +2529,11 @@ export class RoomManager {
   // Once every connected player has answered (or skipped), the song is revealed without waiting for the clock.
   answered(room, player) {
     player.status = "respondió";
+    player.idleRounds = 0;
+    player.idle = false;
     this.onPhaseChange?.(room);
-    const active = [...room.players.values()].filter((p) => p.connected && this.isPlaying(room, p.id));
+    // The round ends early once everyone it waits for answered: connected players, not the inactive ones (markIdle).
+    const active = [...room.players.values()].filter((p) => p.connected && !p.idle && this.isPlaying(room, p.id));
     if (active.length && active.every((p) => p.lastAnswer)) {
       if (room.timer) clearTimeout(room.timer);
       this.beginReveal(room);

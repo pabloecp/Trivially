@@ -13,6 +13,7 @@ import PlaySheet from "../components/home/PlaySheet.jsx";
 import { RoomDock, RoomHeader } from "../components/home/RoomBars.jsx";
 import Wordmark from "../components/home/Wordmark.jsx";
 import "../styles/home.css";
+import { resolveCode } from "../lib/hiddenCode.js";
 
 // A game tile of "Elige el juego", filled with the game's colour. The main game's is as wide as two. The grey
 // "Más juegos pronto" tile (SOON_TILE) looks like one, with a lock, and has no "Pronto" tag of its own.
@@ -125,7 +126,8 @@ function reducedMotion() {
 export default function Home() {
   const { user, room, isCentral, joinRoom, setGame, previewGame, suggestGame, kickedNotice, setKickedNotice } = useApp();
   const { code: inviteParam } = useParams();
-  const inviteCode = inviteParam?.toUpperCase();
+  // An address with "oculta" (the code hidden, lib/hiddenCode.js) is this tab's room.
+  const inviteCode = resolveCode(inviteParam, room)?.toUpperCase();
   const nav = useNavigate();
   const [sheetOpen, setSheetOpen] = useState(false);
   const [sheetMode, setSheetMode] = useState(null);

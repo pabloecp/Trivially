@@ -10,14 +10,17 @@ import { useApp } from "../../lib/store.jsx";
 import { PlaylistProgress, winsText } from "./Standings.jsx";
 import "../../styles/home.css";
 import "../../styles/playlist.css";
+import { resolveCode } from "../../lib/hiddenCode.js";
 
 // The end of a playlist (route /playlist/:code), in the same frame as a match's end (MatchResults): the title, the
 // podium (games won, or points when it was played mixed) and the ranking side by side (everyone's games won and points,
 // a dot per round of every game; this player's answers a tap away), and the host's two buttons, the same size, in the
 // middle: go back to its panel or play the playlist again (shuffled again if it's random).
 function ResultsScreen() {
-  const { code } = useParams();
+  const { code: codeParam } = useParams();
   const { user, room, isCentral, joinRoom, replayGame, restartGame } = useApp();
+  // The address's code ("oculta" while it's hidden: this tab's room, lib/hiddenCode.js).
+  const code = resolveCode(codeParam, room);
   const nav = useNavigate();
   const [err, setErr] = useState("");
   const [showSummary, setShowSummary] = useState(false);

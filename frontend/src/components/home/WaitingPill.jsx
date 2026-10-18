@@ -14,7 +14,7 @@ export function joinNames(names) {
 export function waitingNames(room, userId) {
   if (!room || room.phase !== "playing") return [];
   return room.players
-    .filter((p) => p.id !== userId && p.connected && !p.spectator && p.status !== "mirando" && !p.out && !p.answered)
+    .filter((p) => p.id !== userId && p.connected && !p.spectator && !p.idle && p.status !== "mirando" && !p.out && !p.answered)
     .map((p) => p.name);
 }
 

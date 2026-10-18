@@ -696,6 +696,25 @@
   animation: tvFromRight 0.6s cubic-bezier(0.2, 0.9, 0.3, 1.08) 0.16s backwards;
 }
 .tv-party-codebox { display: flex; flex-direction: column; gap: 10px; padding: 16px; border-radius: 22px; background: var(--tv-bg); }
+.tv-party-codehead { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+/* "Ocultar" the code (lib/hiddenCode.js): a small pill; lit while the code is hidden. */
+.tv-code-eye {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 28px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--tv-option-bg);
+  font-weight: 800;
+  font-size: 12px;
+  color: var(--tv-text-2);
+  cursor: pointer;
+}
+.tv-code-eye:hover { color: var(--tv-text); }
+.tv-code-eye.is-on { background: var(--tv-violet); color: var(--p-ink); }
+.tv-party-code.is-hidden { letter-spacing: 0.18em; -webkit-user-select: none; user-select: none; }
 .tv-party-code {
   margin: 0;
   font-family: var(--tv-display);

@@ -10,6 +10,7 @@ import FriendsRoomControls from "./FriendsRoomControls.jsx";
 import PlayerMenu from "./PlayerMenu.jsx";
 import { ChatForm, ChatMessages, ChatSheet, useChatUnread, usePhone, useRoomChat } from "./RoomChat.jsx";
 import { useInvite } from "./useInvite.js";
+import { shownCode, useHiddenCode } from "../../lib/hiddenCode.js";
 
 function playerTag(player, { isHost }) {
   if (!player.connected) return "Reconectando…";
@@ -65,6 +66,8 @@ function MatchTag({ player, room }) {
   if (room.phase === "playing" && player.hits > 0) {
     return <span className="tv-player-tag is-streak">{player.hits === 1 ? "1 acierto" : `${player.hits} aciertos`}</span>;
   }
+  // Hasn't answered in a few rounds in a row: the rounds don't wait for them until they answer again.
+  if (room.phase === "playing" && player.idle) return <span className="tv-player-tag">Inactivo</span>;
   if (player.streak > 1) return <span className="tv-player-tag is-streak">Racha de {player.streak}</span>;
   return <span className="tv-player-tag">{room.phase === "playing" ? "Pensando…" : "Conectado"}</span>;
 }
@@ -86,6 +89,7 @@ export default function PartyPanel({ room, onToast, scores = false, display = fa
   const nav = useNavigate();
   const [menuFor, setMenuFor] = useState(null);
   const { copied, copy: copyInvite } = useInvite(room.code, onToast);
+  const [codeHidden, toggleCode] = useHiddenCode();
   // Who "you" are in the list: nobody on the central device, even when its account is one of the players'.
   const viewerId = isCentral ? null : user?.id;
   const isHost = Boolean(viewerId) && room.hostId === viewerId;
@@ -149,8 +153,21 @@ export default function PartyPanel({ room, onToast, scores = false, display = fa
       aria-label="Tu sala"
     >
       <div className="tv-party-codebox">
-        <p className="tv-mono-label">Código de sala</p>
-        <p className="tv-party-code">{room.code}</p>
+        <div className="tv-party-codehead">
+          <p className="tv-mono-label">Código de sala</p>
+          {/* Hides the code on this device's screens, for streaming. */}
+          <button
+            type="button"
+            className={`tv-code-eye${codeHidden ? " is-on" : ""}`}
+            onClick={toggleCode}
+            aria-pressed={codeHidden}
+            aria-label={codeHidden ? "Mostrar el código" : "Ocultar el código"}
+          >
+            <Icon name={codeHidden ? "eye-off" : "eye"} size={16} strokeWidth={2.4} />
+            <span>{codeHidden ? "Oculto" : "Ocultar"}</span>
+          </button>
+        </div>
+        <p className={`tv-party-code${codeHidden ? " is-hidden" : ""}`}>{shownCode(room.code, codeHidden)}</p>
         {display ? (
           <p className="tv-party-joinhint">Entra a trivially, toca Jugar y escribe este código</p>
         ) : (
