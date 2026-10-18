@@ -160,8 +160,9 @@ export default function TvTopbar() {
             <span className="tv-brand-name">trivially</span>
           </div>
         </div>
-        {/* The site's address, faint, in the middle of the bar (computers; never in a match). */}
-        {!inGame && <span className="tv-topbar-url">playtrivially.com</span>}
+        {/* The site's address, faint, in the middle of the bar (computers): everywhere, matches too, but on Home without
+            a room, where the big logo already says it. */}
+        {!onHome && <span className="tv-topbar-url">playtrivially.com</span>}
         <div className="tv-topbar-end">
           {friends.isAccount && !isCentral && (
             <button

@@ -562,7 +562,7 @@ input.tv-pl-name:focus { outline: none; }
   color: var(--c2);
   font-size: 15px;
   opacity: 1;
-  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.18);
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.22);
   animation: tvPick 0.3s var(--tv-spring);
 }
 .tv-pl-shuffle:disabled { opacity: 0.45; cursor: default; }
@@ -790,11 +790,11 @@ input.tv-pl-name:focus { outline: none; }
   height: 52px;
   border-radius: 15px;
   background: #ffffff;
-  box-shadow: 0 4px 0 rgba(0, 0, 0, 0.2);
+  /* White tiles: flat (the rule below). */
+  box-shadow: none;
 }
 .tv-app .tv-pl-fill-icons > button { color: var(--c2); }
-.tv-pl-fill-icons > button:hover:not(:disabled) { box-shadow: 0 7px 0 rgba(0, 0, 0, 0.2); }
-.tv-pl-fill-icons > button:active:not(:disabled) { box-shadow: 0 0 0 rgba(0, 0, 0, 0.2); }
+
 .tv-pl-fill-plus {
   position: absolute;
   top: -6px;
@@ -821,7 +821,7 @@ input.tv-pl-name:focus { outline: none; }
 .tv-pl-item.has-problem { background: rgba(0, 0, 0, 0.17); box-shadow: none; color: inherit; }
 .tv-pl-item .tv-pl-badge { background: var(--c2); box-shadow: 0 3px 0 var(--edge); color: var(--on); }
 .tv-pl-item.is-selected,
-.tv-pl-item.is-selected.has-problem { background: var(--on, #ffffff); color: var(--p-ink); box-shadow: 0 4px 0 rgba(0, 0, 0, 0.25); }
+.tv-pl-item.is-selected.has-problem { background: var(--on, #ffffff); color: var(--p-ink); box-shadow: none; }
 .tv-pl-stage .tv-pl-item.is-selected { background: #ffffff; }
 .tv-pl-item.is-selected .tv-pl-num { width: 26px; background: none; color: inherit; font-size: inherit; box-shadow: none; animation: none; }
 .tv-pl-item.is-selected .tv-pl-sum { opacity: 0.7; }
@@ -1053,3 +1053,72 @@ input.tv-pl-name:focus { outline: none; }
 .tv-pl-codebox > svg { flex-shrink: 0; color: var(--p-culture-1, #ff8a00); }
 .tv-pl-codebox:focus-within { outline-color: var(--p-culture-1, #ff8a00); }
 
+
+/* The rows' tools (↑ ↓ duplicar, quitar, borrar): buttons with a background, so with their edge (the design rule in
+   CLAUDE.md), a darker shade of the row they sit on; red with the red's own edge while deleting. */
+.tv-pl-tool { box-shadow: 0 3px 0 rgba(0, 0, 0, 0.28); transition: background-color 0.15s ease, color 0.15s ease, transform 0.12s ease, box-shadow 0.12s ease; }
+.tv-pl-tool:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 4px 0 rgba(0, 0, 0, 0.28); }
+.tv-pl-tool:active:not(:disabled) { transform: translateY(3px); box-shadow: 0 0 0 transparent; }
+.tv-pl-tool:disabled { box-shadow: none; }
+.tv-pl-tool.is-danger:hover:not(:disabled),
+.tv-pl-tool.is-confirm,
+.tv-pl-item .tv-pl-tool.is-danger:hover:not(:disabled),
+.tv-pl-item .tv-pl-tool.is-confirm,
+.tv-pl-saved-row .tv-pl-tool.is-danger:hover:not(:disabled),
+.tv-pl-saved-row .tv-pl-tool.is-confirm { box-shadow: 0 3px 0 var(--p-bad-edge); }
+/* On white (the chosen game's row, and the tray's white tiles) they're flat: no edge under them. */
+.tv-pl-item.is-selected .tv-pl-tool,
+.tv-pl-item.is-selected .tv-pl-tool:hover:not(:disabled),
+.tv-pl-item.is-selected .tv-pl-tool:active:not(:disabled),
+.tv-pl-item.is-selected .tv-pl-tool.is-confirm,
+.tv-pl-fill-icons > button,
+.tv-pl-fill-icons > button:hover:not(:disabled),
+.tv-pl-fill-icons > button:active:not(:disabled) { box-shadow: none; }
+/* The chosen game's white row: flat too. */
+.tv-pl-item.is-selected,
+.tv-pl-item.is-selected.has-problem { box-shadow: none; }
+
+/* The playlist's head buttons (pencil, save, share, "Nueva"): rounded squares like every button, never a circle or a
+   pill, with a darker shade of the card under them (white ones too, while lit). */
+.tv-pl-rename { border-radius: 12px; }
+.tv-pl-new { border-radius: 12px; }
+.tv-pl-rename,
+.tv-pl-new { box-shadow: 0 3px 0 rgba(0, 0, 0, 0.28); transition: background-color 0.15s ease, color 0.15s ease, transform 0.12s ease, box-shadow 0.12s ease; }
+.tv-pl-rename:hover:not(:disabled),
+.tv-pl-new:hover { transform: translateY(-1px); box-shadow: 0 4px 0 rgba(0, 0, 0, 0.28); }
+.tv-pl-rename:active:not(:disabled),
+.tv-pl-new:active { transform: translateY(3px); box-shadow: 0 0 0 transparent; }
+.tv-pl-rename:disabled { box-shadow: none; }
+.tv-pl-rename.is-on,
+.tv-pl-new.is-confirm { box-shadow: 0 3px 0 rgba(0, 0, 0, 0.22); }
+
+/* Final say for the list: the rows' tools (↑ ↓ duplicar, quitar) are flat, in every row; the white boxes (the chosen
+   game's row and the tray's tiles) carry the edge of a white button on the card, a darker shade of it. */
+.tv-pl-tool,
+.tv-pl-tool:hover:not(:disabled),
+.tv-pl-tool:active:not(:disabled),
+.tv-pl-tool.is-confirm,
+.tv-pl-item .tv-pl-tool.is-danger:hover:not(:disabled),
+.tv-pl-item .tv-pl-tool.is-confirm,
+.tv-pl-saved-row .tv-pl-tool.is-danger:hover:not(:disabled),
+.tv-pl-saved-row .tv-pl-tool.is-confirm { box-shadow: none; transform: none; }
+.tv-pl-item.is-selected,
+.tv-pl-item.is-selected.has-problem { box-shadow: 0 4px 0 rgba(0, 0, 0, 0.22); }
+.tv-pl-fill-icons > button { box-shadow: 0 4px 0 rgba(0, 0, 0, 0.22); }
+.tv-pl-fill-icons > button:hover:not(:disabled) { box-shadow: 0 6px 0 rgba(0, 0, 0, 0.22); }
+.tv-pl-fill-icons > button:active:not(:disabled) { box-shadow: 0 0 0 transparent; }
+
+/* "Nueva" / "¿Empezar de cero?" exactly as wide as the three round buttons under it (pencil, save, share: 40 px each
+   and their gaps), so both rows line up at the right. */
+.tv-pl-new { justify-content: center; width: calc(3 * 40px + 2 * 8px); padding: 0 8px; }
+.tv-pl-new.is-confirm { font-size: 13px; }
+.tv-pl-new.is-confirm svg { display: none; }
+
+/* "Mis playlists": its rows' tools (pencil, share, delete) are buttons with a background on a dark row, so they keep
+   their edge, a darker shade of their grey (red with the red's edge while deleting). Only the game rows' are flat. */
+.tv-pl-saved-row .tv-pl-tool { box-shadow: 0 3px 0 var(--tv-neutral-edge); transition: background-color 0.15s ease, color 0.15s ease, transform 0.12s ease, box-shadow 0.12s ease; }
+.tv-pl-saved-row .tv-pl-tool:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 4px 0 var(--tv-neutral-edge); }
+.tv-pl-saved-row .tv-pl-tool:active:not(:disabled) { transform: translateY(3px); box-shadow: 0 0 0 transparent; }
+.tv-pl-saved-row .tv-pl-tool:disabled { box-shadow: none; }
+.tv-pl-saved-row .tv-pl-tool.is-danger:hover:not(:disabled),
+.tv-pl-saved-row .tv-pl-tool.is-confirm { box-shadow: 0 3px 0 var(--p-bad-edge); }

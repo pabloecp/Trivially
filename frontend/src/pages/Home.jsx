@@ -340,8 +340,9 @@ export default function Home() {
       {shownRoom && !isCentral && <RoomHeader room={shownRoom} onToast={showToast} />}
 
       <main className={`tv-main${screen === "room" ? " is-room" : ""}${centralScreen ? " is-central" : ""}`}>
-        {/* The site's address, at the top in plain letters but faint: only on Home and the room screen. */}
-        {!centralScreen && <p className="tv-site-url">playtrivially.com</p>}
+        {/* The site's address, at the top in plain letters but faint (phones): on the room screen, not on Home without a
+            room. */}
+        {!centralScreen && screen === "room" && <p className="tv-site-url">playtrivially.com</p>}
         {centralScreen ? (
           <CentralLobby room={shownRoom} />
         ) : screen === "home" ? (

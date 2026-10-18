@@ -263,7 +263,7 @@ export default function FriendsSheet() {
                   <div className="tv-fr-empty">
                     <p>Aún no tienes amigos.</p>
                     <button type="button" className="tv-btn tv-c-violet" onClick={() => setTab("anadir")}>
-                      Buscar amigos
+                      Agregar amigos
                     </button>
                   </div>
                 ))}

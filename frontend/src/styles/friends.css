@@ -7,14 +7,16 @@
   margin-left: auto;
   display: grid;
   place-items: center;
-  width: 38px;
-  height: 38px;
+  /* The same close button as the other windows ("Tu partida", "Historial"): a rounded square, not a circle. */
+  width: 40px;
+  height: 40px;
   border: 0;
-  border-radius: 50%;
+  border-radius: 12px;
   background: var(--tv-option-bg, rgba(255, 255, 255, 0.08));
-  color: var(--tv-text);
+  color: var(--tv-text-2);
   cursor: pointer;
 }
+.tv-fr-close:hover { color: var(--tv-text); }
 .tv-fr-sheet .tv-sheet-body { display: grid; gap: 14px; max-height: min(70vh, 560px); overflow-y: auto; }
 .tv-fr-list { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
 .tv-fr-row {
@@ -75,12 +77,15 @@
 .tv-fr-msg.is-ok svg { color: #22c55e; }
 .tv-fr-msg.is-bad svg { color: #f87171; }
 .tv-fr-add { display: grid; gap: 18px; }
-.tv-fr-mycode { display: grid; gap: 8px; padding: 16px; border-radius: 20px; background: var(--tv-option-bg, rgba(255, 255, 255, 0.06)); text-align: center; }
+.tv-fr-mycode { display: grid; gap: 6px; padding: 14px; border-radius: 16px; background: var(--tv-option-bg, rgba(255, 255, 255, 0.06)); text-align: center; }
 .tv-fr-mycode .tv-sheet-kicker { margin: 0; }
 .tv-fr-code { margin: 0; font-family: var(--tv-display); font-weight: 700; font-size: 34px; letter-spacing: 0.12em; user-select: all; }
-.tv-fr-coderow { display: flex; align-items: center; justify-content: center; gap: 12px; min-width: 0; }
+.tv-fr-coderow { display: flex; align-items: center; justify-content: center; gap: 10px; min-width: 0; }
 .tv-fr-coderow .tv-fr-code { min-width: 0; }
-.tv-fr-copy { flex-shrink: 0; width: 42px; height: 42px; padding: 0; border-radius: 13px; }
+/* The same size as the sheet's other small buttons. */
+.tv-app .tv-fr-copy, .tv-fr-copy { flex-shrink: 0; width: 34px; height: 34px; padding: 0; border-radius: 11px; box-shadow: 0 3px 0 var(--edge); }
+.tv-fr-copy:hover { box-shadow: 0 4px 0 var(--edge); }
+.tv-fr-copy:active { box-shadow: 0 0 0 var(--edge); }
 .tv-fr-form { display: grid; gap: 8px; }
 .tv-fr-form .tv-sheet-kicker { margin: 0; }
 .tv-fr-formrow { display: flex; gap: 10px; }
@@ -213,6 +218,9 @@
 .tv-handle-box .tv-field { padding-left: 34px; }
 /* In the friends sheet the boxes sit in a scrolling body that would cut a ring drawn outside them: it goes inside. */
 .tv-fr-sheet .tv-field:focus-visible { outline-offset: -3px; }
+/* The boxes to write in the sheet: as tall as its rows, with the sheet's text size. */
+.tv-fr-sheet .tv-field { height: 48px; border-radius: 14px; font-size: 17px; }
+.tv-fr-sheet .tv-handle-box .tv-field { padding-left: 32px; }
 .tv-handle-at { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); font-weight: 800; color: var(--tv-text-3); pointer-events: none; }
 .tv-handle-status { display: inline-flex; align-items: center; gap: 6px; margin-top: 6px; font-size: 13px; font-weight: 700; color: var(--tv-text-3); }
 .tv-handle-status.is-ok { color: #22c55e; }
@@ -225,7 +233,8 @@
 .tv-fr-sheet .tv-sheet-body { grid-template-columns: minmax(0, 1fr); }
 .tv-fr-add, .tv-fr-form, .tv-fr-mycode { min-width: 0; }
 .tv-fr-add { grid-template-columns: minmax(0, 1fr); }
-.tv-fr-code { max-width: 100%; font-size: clamp(20px, 7vw, 30px); letter-spacing: 0.04em; overflow-wrap: anywhere; }
+/* Your username, a little bigger than a row's name, not a poster. */
+.tv-fr-code { max-width: 100%; font-size: 22px; letter-spacing: 0.02em; overflow-wrap: anywhere; }
 /* The friends panel's tabs: a little lower than the usual switch (Segmented's own style is flat everywhere). */
 .tv-fr-sheet .tv-seg-btn { height: 40px; white-space: nowrap; font-size: 14px; padding-inline: 4px; }
 .tv-fr-count { display: inline-block; min-width: 18px; margin-left: 6px; padding: 0 5px; border-radius: 999px; background: #ef4444; color: #fff; font-size: 12px; line-height: 18px; text-align: center; }
