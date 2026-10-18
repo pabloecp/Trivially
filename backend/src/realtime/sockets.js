@@ -1,12 +1,16 @@
+import { isDefaultSpotify } from "../catalog/defaultPlaylists.js";
 import { verifySocketToken } from "../auth/socketToken.js";
 import { prefetchMedia } from "../audio/mediaCache.js";
 import { readPublicSpotify, spotifyLinkFrom } from "../catalog/spotifyEmbed.js";
 import { readSpotifyPlaylist } from "../catalog/spotifyLibrary.js";
 import { saveQuestionReport } from "../db/reports.js";
+import { assertCanShare, playlistByCode, shareCodeFor } from "../db/sharedPlaylists.js";
 import { forgetSpotifyLink, saveSpotifyLink, savedSpotifyLinks } from "../db/store.js";
 import { prefetchFlags } from "../geo/flags.js";
+import { isAccount } from "../auth/username.js";
 
-export function attachSockets(io, rooms) {
+export function attachSockets(io, rooms, { friends = null, hub = null } = {}) {
+  hub?.attach(io);
   // Who this connection is comes only from the signed token, never from ids the client puts in payloads.
   io.use((socket, next) => {
     socket.data.userId = verifySocketToken(socket.handshake.auth?.token);
@@ -19,6 +23,7 @@ export function attachSockets(io, rooms) {
   rooms.onPhaseChange = (room) => {
     if (room && room.code) {
       io.to(room.code).emit("room:state", rooms.publicState(room));
+      hub?.touchRoom(room);
     }
   };
 
@@ -40,6 +45,79 @@ export function attachSockets(io, rooms) {
   };
 
   io.on("connection", (socket) => {
+    // Accounts get their friends tab: who is online, where, and the requests. Any event of theirs may change what their
+    // friends see (they made, joined or left a room...), so the friends' views are refreshed after it.
+    hub?.connect(socket);
+    socket.onAny?.(() => hub?.touch(socket.data.userId, ...(rooms.roomOfUser(socket.data.userId)?.players.keys() || [])));
+
+    // A friend joins the room of a friend, as the host allows: straight in, or asking the host first.
+    socket.on("friend:join", (payload, ack) => {
+      try {
+        const userId = socket.data.userId;
+        const me = rooms.store.users[userId];
+        if (!isAccount(me)) throw new Error("Inicia sesión con una cuenta para unirte a un amigo");
+        const friendId = String(payload?.friendId || "");
+        if (!friends?.areFriends(userId, friendId)) throw new Error("Esa persona no es tu amiga");
+        const room = rooms.roomOfUser(friendId);
+        if (!room) throw new Error("Tu amigo ya no está en una sala");
+        if (room.players.get(userId)?.connected) throw new Error("Ya estás en esa sala");
+        if (room.joinMode === "abierta") return ack?.({ ok: true, action: "join", code: room.code });
+        if (room.joinMode !== "solicitud") throw new Error("Esa sala es solo por invitación del anfitrión");
+        rooms.addJoinRequest(room, { id: userId, name: me.name, avatar: me.avatar });
+        io.to(room.code).emit("room:state", rooms.publicState(room));
+        hub?.refresh(userId);
+        ack?.({ ok: true, action: "requested" });
+      } catch (err) {
+        ack?.({ ok: false, error: err.message });
+      }
+    });
+
+    socket.on("friend:cancelJoin", (payload, ack) => {
+      try {
+        const userId = socket.data.userId;
+        const room = rooms.roomOfUser(String(payload?.friendId || ""));
+        if (room) {
+          rooms.cancelJoinRequest(room, userId);
+          io.to(room.code).emit("room:state", rooms.publicState(room));
+        }
+        hub?.refresh(userId);
+        ack?.({ ok: true });
+      } catch (err) {
+        ack?.({ ok: false, error: err.message });
+      }
+    });
+
+    // The host's answer to a friend who asks to join: if accepted, that friend's device joins with the room's code.
+    socket.on("room:answerJoin", (payload, ack) => {
+      try {
+        const { room, userId } = requireRoom(rooms, socket);
+        const asked = rooms.answerJoinRequest(room, userId, String(payload?.userId || ""));
+        const hostName = room.players.get(room.hostId)?.name || "El anfitrión";
+        io.to(`user:${asked.userId}`).emit(payload?.accept ? "friend:approved" : "friend:declined", {
+          code: payload?.accept ? room.code : null,
+          hostName,
+        });
+        io.to(room.code).emit("room:state", rooms.publicState(room));
+        hub?.refresh(asked.userId);
+        ack?.({ ok: true });
+      } catch (err) {
+        ack?.({ ok: false, error: err.message });
+      }
+    });
+
+    // What the host's friends can do from their friends list.
+    socket.on("room:joinMode", (mode, ack) => {
+      try {
+        const { room, userId } = requireRoom(rooms, socket);
+        rooms.setJoinMode(room, userId, mode);
+        io.to(room.code).emit("room:state", rooms.publicState(room));
+        hub?.touchRoom(room);
+        ack?.({ ok: true });
+      } catch (err) {
+        ack?.({ ok: false, error: err.message });
+      }
+    });
+
     socket.on("identify", (profile) => {
       try {
         bindUser(socket, profile, rooms);
@@ -252,6 +330,30 @@ export function attachSockets(io, rooms) {
       }
     });
 
+    // "Copiar código": the room's playlist (already cleaned), or a saved one sent along (cleaned the same way), is
+    // kept on the server and its code comes back. The same playlist always gets the same code; each person (or
+    // connection) can make only a few codes a minute.
+    socket.on("playlist:share", async (playlist, ack) => {
+      if (typeof playlist === "function") [ack, playlist] = [playlist, null];
+      try {
+        const { room, userId } = requireRoom(rooms, socket);
+        assertCanShare(socket.data.userId || userId || socket.id);
+        const chosen = playlist && typeof playlist === "object" ? rooms.cleanSharedPlaylist(room, playlist) : room.playlist;
+        ack?.({ ok: true, code: await shareCodeFor(chosen) });
+      } catch (err) {
+        ack?.({ ok: false, error: err.message });
+      }
+    });
+
+    // A pasted code: the playlist it points to ({ name, order, items }); loading it is the panel's own update.
+    socket.on("playlist:byCode", async (code, ack) => {
+      try {
+        ack?.({ ok: true, playlist: await playlistByCode(code) });
+      } catch (err) {
+        ack?.({ ok: false, error: err.message });
+      }
+    });
+
     // "Siguiente juego" on a playlist game's results: the next game starts (or, after the last one, the playlist's
     // results show). If the next game can't start after all, the playlist is over and everyone is back in its panel.
     socket.on("room:playlistNext", (ack) => {
@@ -306,9 +408,13 @@ export function attachSockets(io, rooms) {
         const playlist = await readPublicSpotify(target);
         if (!playlist.tracks.length) throw new Error("No tiene canciones que se puedan usar");
         rooms.addSpotifyPlaylist(room, userId, playlist, { fromLink: true });
-        // Someone with an account keeps it on their profile, to add it again from "Mis playlists" in any room.
-        const saved = saveSpotifyLink(rooms.store, userId, { ...target, name: playlist.name, image: playlist.image, total: playlist.tracks.length });
-        ack?.({ ok: true, state: rooms.publicState(room, userId), saved });
+        // Someone with an account keeps it on their profile, to add it again from "Mis playlists" in any room (not the
+        // default playlists: every room has them already).
+        const saved = isDefaultSpotify(target)
+          ? savedSpotifyLinks(rooms.store, userId)
+          : saveSpotifyLink(rooms.store, userId, { ...target, name: playlist.name, image: playlist.image, total: playlist.tracks.length });
+        // `added`: the room's id of what was read, so a game of a playlist of games can tick it in its own settings.
+        ack?.({ ok: true, state: rooms.publicState(room, userId), saved, added: `sp:${playlist.id}` });
         io.to(room.code).emit("room:state", rooms.publicState(room));
       } catch (err) {
         ack?.({ ok: false, error: err.message });
@@ -552,6 +658,7 @@ export function attachSockets(io, rooms) {
     });
 
     socket.on("disconnect", () => {
+      hub?.disconnect(socket);
       for (const room of rooms.dropCentralRequests(socket.id)) io.to(room.code).emit("room:state", rooms.publicState(room));
       const result = rooms.disconnect(socket.id);
       if (result?.room) io.to(result.room.code).emit("room:state", rooms.publicState(result.room));

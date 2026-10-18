@@ -125,3 +125,42 @@ create table if not exists public.question_reports (
 );
 create index if not exists question_reports_created_idx on public.question_reports (created_at desc);
 alter table public.question_reports enable row level security;
+
+-- ---------------------------------------------------------------------------
+-- Playlists compartidas por código ("Copiar código" en el panel de la playlist): el código (10 letras y números,
+-- "K7P2M-XH4QN") apunta a la playlist (nombre, orden y juegos con sus ajustes). La misma playlist siempre tiene el mismo
+-- código (hash único), y un código que nadie abre en un año se borra (last_used_at). Solo el backend lee y escribe.
+-- ---------------------------------------------------------------------------
+create table if not exists public.shared_playlists (
+  code          text primary key,
+  hash          text not null unique,                   -- sha256 de la playlist: la misma playlist, el mismo código
+  data          jsonb not null,                         -- { name, order, items: [{ game, config }] }
+  created_at    timestamptz not null default now(),
+  last_used_at  timestamptz not null default now()      -- al compartirla o abrirla otra vez
+);
+create index if not exists shared_playlists_last_used_idx on public.shared_playlists (last_used_at);
+alter table public.shared_playlists enable row level security;
+
+-- ---------------------------------------------------------------------------
+-- Amigos. Una fila por pareja de cuentas (user_a < user_b): `pending` (alguien envió la solicitud, requested_by) o
+-- `accepted`. Como el resto, solo el backend (service_role) la lee: RLS activado y sin políticas.
+create table if not exists public.friendships (
+  user_a       text not null,
+  user_b       text not null,
+  status       text not null check (status in ('pending', 'accepted')),
+  requested_by text not null,
+  created_at   timestamptz not null default now(),
+  accepted_at  timestamptz,
+  primary key (user_a, user_b),
+  check (user_a < user_b)
+);
+create index if not exists friendships_b_idx on public.friendships (user_b);
+alter table public.friendships enable row level security;
+
+-- ---------------------------------------------------------------------------
+-- Nombre de usuario (@usuario): único en toda la tabla sin importar mayúsculas. Vive dentro de `data` (el servidor
+-- lo valida); esta columna generada solo lo muestra en el Table Editor y hace de red de seguridad: si dos cuentas
+-- llegaran a tener el mismo, Supabase rechaza la segunda.
+alter table public.users
+  add column if not exists username text generated always as (lower(data->>'username')) stored;
+create unique index if not exists users_username_key on public.users (username) where username is not null;

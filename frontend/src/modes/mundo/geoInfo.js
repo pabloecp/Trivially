@@ -18,8 +18,9 @@ export const DIFFICULTIES = [
 ];
 
 export const ROUNDS_LIMITS = { min: 5, max: 25, step: 5 };
-// A map round always lasts 10 s.
-export const LOCATION_SECONDS = 10;
+// Seconds to put the pin, like Adivina la canción's (GEO_LIMITS.roundMs on the server); 15 in a new room.
+export const SECONDS_LIMITS = { min: 15, max: 35, step: 5 };
+export const LOCATION_SECONDS = 15;
 
 /** The way a round gives its country (a round from before the ways existed is by name). */
 export const styleOf = (id) => STYLES.find((st) => st.id === id) || STYLES[0];
@@ -28,6 +29,7 @@ export function geoConfig(room) {
   const geo = room?.config?.geo || {};
   return {
     rounds: geo.rounds || 5,
+    roundMs: geo.roundMs || LOCATION_SECONDS * 1000,
     // Empty lists are kept: they show unticked, and the match can't start until one is ticked.
     styles: geo.styles ?? STYLES.map((st) => st.id),
     // An older room had only one difficulty, `difficulty` ("mixta" being the three).

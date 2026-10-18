@@ -226,4 +226,30 @@ stop(room);
 assert.equal(room.game, "lluvia", "the playlist plays Lluvia");
 assert.equal(room.tracks.length, 1);
 
+// ---- In a random playlist: its rounds mixed with another game's, each one a whole shower ----
+mgr.restart(room, "host-1");
+mgr.updatePlaylist(room, "host-1", {
+  order: "aleatorio",
+  items: [
+    { game: "lluvia", config: { rounds: 2, categories: ["geografia"] } },
+    { game: "mundo", config: { rounds: 5 } },
+  ],
+});
+mgr.start(room, "host-1");
+stop(room);
+assert.equal(room.run.mixed, true);
+const gameOf = (t) => room.run.items[t.playlistItem].game;
+const showers = room.tracks.filter((t) => gameOf(t) === "lluvia");
+assert.equal(showers.length, 2);
+assert.ok(showers.every((t) => t.kind === "rain" && t.drops.length > 5), "Lluvia's rounds are showers, never another game's");
+const maps = room.tracks.filter((t) => gameOf(t) === "mundo");
+assert.ok(maps.every((t) => (t.style !== "bandera" || t.flagToken) && (t.style !== "sombra" || t.shapeToken)), "flags and silhouettes get their token");
+while (gameOf(room.tracks[room.currentRound]) !== "lluvia") {
+  mgr.advance(room);
+  stop(room);
+}
+assert.equal(room.game, "lluvia");
+assert.ok(mgr.isRainRound(room));
+assert.deepEqual(room.players.get("p-2").rain, { hits: 0, points: 0, sentAt: 0 });
+
 console.log("rainRoom ok");

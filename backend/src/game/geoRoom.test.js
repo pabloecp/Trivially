@@ -13,16 +13,17 @@ const room = mgr.create({ host, mode: "multi", game: "mundo" });
 mgr.addPlayer(room, { id: "p-2", name: "Ana", socketId: "s2" });
 mgr.addPlayer(room, { id: "p-3", name: "Luis", socketId: "s3" });
 
-// Lobby: the settings (the three ways of giving the country, no kinds of question and no seconds to write: it is
-// always a pin on the map), and how many countries they can draw.
+// Lobby: the settings (the three ways of giving the country, no kinds of question: it is always a pin on the map;
+// 15 s to put it, like Adivina la canción), and how many countries they can draw.
 const DIFFICULTIES = ["facil", "media", "dificil"];
-assert.deepEqual(room.config.geo, { rounds: 5, styles: GEO_STYLES, difficulties: DIFFICULTIES });
+assert.deepEqual(room.config.geo, { rounds: 5, roundMs: 15000, styles: GEO_STYLES, difficulties: DIFFICULTIES });
 const all = mgr.publicState(room).questionsReady;
 assert.ok(all > 150 && all < 250, `one question per country (${all})`);
 assert.equal(mgr.publicState(room).songsReady, undefined);
-// An older client's kinds and seconds are ignored.
+// An older client's kinds are ignored; the seconds are a setting now.
 mgr.updateConfig(room, "host-1", { geo: { kinds: ["capital"], roundMs: 30000 } });
-assert.deepEqual(room.config.geo, { rounds: 5, styles: GEO_STYLES, difficulties: DIFFICULTIES });
+assert.deepEqual(room.config.geo, { rounds: 5, roundMs: 30000, styles: GEO_STYLES, difficulties: DIFFICULTIES });
+mgr.updateConfig(room, "host-1", { geo: { roundMs: 15000 } });
 assert.equal(mgr.publicState(room).questionsReady, all);
 // Every difficulty can be unticked: there is then nothing to play.
 mgr.updateConfig(room, "host-1", { geo: { difficulties: [] } });
@@ -49,6 +50,7 @@ assert.deepEqual(pub.question, { round: 1, kind: "location", style: "nombre", di
 mgr.beginPlaying(room);
 stop(room);
 assert.equal(room.phaseEndsAt - room.phaseStartedAt, LOCATION_ROUND_MS);
+assert.equal(LOCATION_ROUND_MS, 15000, "a new room gives 15 s, like Adivina la canción");
 pub = mgr.publicState(room, "p-2");
 assert.equal(pub.question.name, "España");
 assert.ok(!JSON.stringify(pub).includes('"Spain"'), "the map shape of the answer isn't sent");
@@ -252,3 +254,13 @@ assert.throws(() => mgr.setGame(room, "host-1", "inexistente"), /no está dispon
 mgr.setGame(room, "host-1", "musica");
 assert.equal(room.game, "musica");
 console.log("geoRoom.test ok");
+
+// The seconds per round are a setting, 15–35 s in steps of 5, like Adivina la canción's.
+{
+  const { mergeGeoConfig } = await import("./geo.js");
+  assert.equal(mergeGeoConfig({}, { roundMs: 25000 }).roundMs, 25000);
+  assert.equal(mergeGeoConfig({}, { roundMs: 99000 }).roundMs, 35000);
+  assert.equal(mergeGeoConfig({}, { roundMs: 1000 }).roundMs, 15000);
+  assert.equal(mergeGeoConfig({}, { roundMs: 22000 }).roundMs, 20000);
+  assert.equal(mergeGeoConfig({ roundMs: 30000 }, { rounds: 10 }).roundMs, 30000);
+}

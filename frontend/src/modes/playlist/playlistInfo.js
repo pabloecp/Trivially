@@ -1,14 +1,14 @@
-import { FORMATS, LEVELS, TOPICS, quizConfig } from "../quiz/quizInfo.js";
-import { DIFFICULTIES as GEO_LEVELS, STYLES as GEO_STYLES, geoConfig } from "../mundo/geoInfo.js";
+import { FORMATS, quizConfig } from "../quiz/quizInfo.js";
+import { geoConfig } from "../mundo/geoInfo.js";
 import { historyConfig } from "../historia/historyInfo.js";
-import { STYLES as MINES_STYLES, minesConfig } from "../minas/minesInfo.js";
+import { minesConfig } from "../minas/minesInfo.js";
 import { rainConfig } from "../lluvia/rainInfo.js";
 import { GAME_MODES, findMode } from "../index.js";
 
 // Playlists of games (backend/src/game/playlist.js): the games a playlist can have, each item's settings, a line
 // that sums them up, and the JSON they're shared in.
 
-export const MAX_ITEMS = 20;
+export const MAX_ITEMS = 10;
 export const NAME_MAX = 40;
 
 // The games a playlist can have: every game of the menu but the playlist itself.
@@ -50,55 +50,22 @@ export function newItemId() {
   return Math.random().toString(36).slice(2, 10);
 }
 
-// "Historia", "Historia y Arte", "4 categorías"; "Todas" when every one is ticked.
-function listText(ids = [], all, { allText, none, many }) {
-  if (!ids.length) return none;
-  if (ids.length === all.length) return allText;
-  if (ids.length > 2) return `${ids.length} ${many}`;
-  return ids.map((id) => all.find((x) => x.id === id)?.label || id).join(" y ");
-}
-
-const topicsText = (ids) => listText(ids, TOPICS, { allText: "Todas las categorías", none: "Sin categorías", many: "categorías" });
-const levelsText = (ids, all = LEVELS) => listText(ids, all, { allText: "Todas las dificultades", none: "Sin dificultad", many: "dificultades" });
 const secondsText = (ms) => `${Math.round(ms / 1000)} s`;
 
-function formatsText(ids = []) {
-  if (ids.length === FORMATS.length) return null;
-  if (!ids.length) return "Sin modo de juego";
-  return ids[0] === "opciones" ? "Solo cerradas" : "Solo abiertas";
-}
-
-/** One line with an item's settings: "5 tableros · Por turnos · Historia · Fácil". */
-export function itemSummary(item, catalog) {
+/**
+ * One line with an item's rounds and seconds per round, the same words in every game: "5 rondas · 15 s por ronda".
+ * Campo de minas by turns counts the seconds of a turn ("5 s por turno"); played only as a race, of the whole round.
+ */
+export function itemSummary(item) {
   const c = item.config || {};
-  let parts;
-  if (item.game === "opciones") {
-    parts = [`${c.rounds} preguntas`, topicsText(c.categories), levelsText(c.difficulties), formatsText(c.formats), secondsText(c.roundMs)];
-  } else if (item.game === "musica") {
-    // The catalog (with its filters) and the room's Spotify playlists.
-    const lists = (c.playlistIds || []).length;
-    const catalogOn = c.useCatalog !== false;
-    const listsText = lists ? `${lists} ${lists === 1 ? "playlist" : "playlists"}` : "";
-    const songs = catalogOn ? (lists ? `Catálogo y ${listsText}` : "Catálogo") : listsText || "Sin canciones";
-    parts = [`${c.rounds} canciones`, songs, formatsText(c.formats), secondsText(c.roundMs)];
-  } else if (item.game === "mundo") {
-    // How the country is given: nothing when it's every way ("Sombra y Bandera", "Solo bandera").
-    const styles = c.styles || GEO_STYLES.map((s) => s.id);
-    const style =
-      styles.length === GEO_STYLES.length ? null : styles.length === 1 ? `Solo ${GEO_STYLES.find((s) => s.id === styles[0])?.label.toLowerCase()}` : styles.length ? listText(styles, GEO_STYLES, {}) : "Sin modo de juego";
-    parts = [`${c.rounds} países`, style, levelsText(c.difficulties, GEO_LEVELS)];
-  } else if (item.game === "historia") {
-    parts = [`${c.rounds} acontecimientos`, topicsText(c.categories), levelsText(c.difficulties), secondsText(c.roundMs)];
-  } else if (item.game === "minas") {
-    const styles = c.styles || [];
-    const style = styles.length === 2 ? "Turnos y carrera" : styles.length ? MINES_STYLES.find((s) => s.id === styles[0])?.label : "Sin modo de juego";
-    parts = [`${c.rounds} tableros`, style, topicsText(c.categories), levelsText(c.difficulties)];
-  } else if (item.game === "lluvia") {
-    parts = [`${c.rounds} ${c.rounds === 1 ? "ronda" : "rondas"}`, topicsText(c.categories), levelsText(c.difficulties), secondsText(c.roundMs)];
-  } else {
-    parts = [];
-  }
-  return parts.filter(Boolean).join(" · ");
+  const byTurns = item.game === "minas" && !(c.styles?.length === 1 && c.styles[0] === "carrera");
+  const ms = item.game === "minas" ? (byTurns ? c.turnMs : c.roundMs) : c.roundMs;
+  return [
+    c.rounds ? `${c.rounds} ${c.rounds === 1 ? "ronda" : "rondas"}` : null,
+    ms ? `${secondsText(ms)} por ${byTurns ? "turno" : "ronda"}` : null,
+  ]
+    .filter(Boolean)
+    .join(" · ");
 }
 
 /* ---------- Sharing: the JSON a playlist is copied, downloaded and imported in ---------- */
@@ -201,21 +168,54 @@ function storeLibrary(list) {
   }
 }
 
+// Two playlists with the same order and games with the same settings.
+const sameGames = (a, b) =>
+  a.order === b.order &&
+  JSON.stringify((a.items || []).map(({ game, config }) => ({ game, config }))) ===
+    JSON.stringify((b.items || []).map(({ game, config }) => ({ game, config })));
+
+// A name no other saved playlist has: "Viernes", else "Viernes (2)", "Viernes (3)"…
+function freeName(others, name) {
+  const taken = new Set(others.map((p) => fold(p.name)));
+  if (!taken.has(fold(name))) return name;
+  for (let n = 2; ; n += 1) {
+    const suffix = ` (${n})`;
+    const next = `${name.slice(0, NAME_MAX - suffix.length)}${suffix}`;
+    if (!taken.has(fold(next))) return next;
+  }
+}
+
 /**
- * Saves a playlist in this browser, in place of a saved one with the same name. Returns the new list, or throws when
- * the browser doesn't let us keep it.
+ * Saves a playlist in this browser, always as a new one: a saved playlist is never replaced, whatever its name. Only the
+ * very same playlist (same name, order, games and settings) isn't saved twice: that one just moves to the top. A name
+ * already taken gets "Nombre (2)". Returns { list, id, name } (the name it got), or throws when the browser doesn't let
+ * us keep it.
  */
 export function saveToLibrary(playlist) {
-  const entry = {
-    id: newItemId(),
-    name: playlist.name,
-    order: playlist.order,
-    items: playlist.items.map(({ game, config }) => ({ game, config })),
-    savedAt: Date.now(),
-  };
-  const list = [entry, ...loadLibrary().filter((p) => fold(p.name) !== fold(playlist.name))].slice(0, LIBRARY_MAX);
-  if (!storeLibrary(list)) throw new Error("Tu navegador no deja guardar playlists aquí. Descárgala como archivo.");
-  return list;
+  const list = loadLibrary();
+  const items = playlist.items.map(({ game, config }) => ({ game, config }));
+  // Exactly the same name, order, games and settings (what its share code is made of, so it's the same code too).
+  const twin = list.find((p) => p.name === playlist.name && sameGames(p, { order: playlist.order, items }));
+  if (twin) {
+    const moved = [{ ...twin, savedAt: Date.now() }, ...list.filter((p) => p.id !== twin.id)];
+    if (!storeLibrary(moved)) throw new Error("Tu navegador no deja guardar playlists aquí.");
+    return { list: moved, id: twin.id, name: twin.name };
+  }
+  const entry = { id: newItemId(), name: freeName(list, playlist.name), order: playlist.order, items, savedAt: Date.now() };
+  const next = [entry, ...list].slice(0, LIBRARY_MAX);
+  if (!storeLibrary(next)) throw new Error("Tu navegador no deja guardar playlists aquí.");
+  return { list: next, id: entry.id, name: entry.name };
+}
+
+/** Renames a saved playlist; a name another one has gets "(2)" instead of replacing it. Returns the new list. */
+export function renameInLibrary(id, name) {
+  const clean = String(name || "").replace(/\s+/g, " ").trim().slice(0, NAME_MAX);
+  if (!clean) throw new Error("Escribe un nombre");
+  const list = loadLibrary();
+  const others = list.filter((p) => p.id !== id);
+  const next = list.map((p) => (p.id === id ? { ...p, name: freeName(others, clean) } : p));
+  if (!storeLibrary(next)) throw new Error("Tu navegador no deja guardar playlists aquí.");
+  return next;
 }
 
 export function removeFromLibrary(id) {

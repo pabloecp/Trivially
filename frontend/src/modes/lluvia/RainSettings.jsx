@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react";
 import OptionRow, { rangeOptions } from "../../components/home/OptionRow.jsx";
 import SettingsTabs, { countNote } from "../../components/home/SettingsTabs.jsx";
-import { CATEGORIES, DIFFICULTIES, ROUND_OPTIONS, SECONDS_LIMITS, rainConfig } from "./rainInfo.js";
+import { CATEGORIES, DIFFICULTIES, MIN_QUESTIONS, ROUND_OPTIONS, SECONDS_LIMITS, rainConfig } from "./rainInfo.js";
 
 // Settings of a Lluvia match, in the settings panel, in two tabs: "Partida" (how many rounds and how long it rains in
 // each) and "Preguntas" (which categories and difficulties the questions come from, tick as many as you like, like
 // Trivia's; each difficulty with its colour on screen and its points). A choice without questions with the other
-// settings (room.questionCounts) can't be ticked. With a list left empty the match can't start. Every tap is saved
+// settings (room.questionCounts) can't be ticked. With a list left empty, or fewer than MIN_QUESTIONS questions, the
+// match can't start and the tab has a red dot. Every tap is saved
 // straight away for the whole room. With `readOnly` (players without permission) everything shows but nothing can be
 // tapped.
 export default function RainSettings({ room, updateConfig, onToast, children, readOnly = false }) {
@@ -75,7 +76,7 @@ export default function RainSettings({ room, updateConfig, onToast, children, re
           label: "Preguntas",
           icon: "bulb",
           note: countNote(draft.categories, CATEGORIES.length),
-          alert: !draft.categories.length || !draft.difficulties.length,
+          alert: !draft.categories.length || !draft.difficulties.length || (room.questionsReady != null && room.questionsReady < MIN_QUESTIONS),
           content: (
             <>
               <OptionRow

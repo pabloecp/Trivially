@@ -42,7 +42,7 @@ export default function Join() {
           <div className="kicker">Partida Multijugador</div>
           <h1 style={{ fontSize: 26, margin: "4px 0" }}>Unirse a una Sala</h1>
           <p className="muted" style={{ margin: 0, fontSize: 14 }}>
-            Introduce el código de sala compartido por tu amigo (inicia con XO)
+            Introduce el código de sala compartido por tu amigo (5 letras y números)
           </p>
         </div>
 
@@ -52,10 +52,10 @@ export default function Join() {
           </label>
           <input
             className="field"
-            placeholder="XO...."
+            placeholder="K7P2M"
             value={code}
             onChange={(e) => {
-              setCode(e.target.value.toUpperCase().slice(0, 6));
+              setCode(e.target.value.toUpperCase().slice(0, 5));
               setErr("");
             }}
             style={{
@@ -95,7 +95,7 @@ export default function Join() {
 
         <button
           className="btn primary lg"
-          disabled={loading || code.trim().length < 4}
+          disabled={loading || code.trim().length < 5}
           type="submit"
         >
           {loading ? "Entrando..." : "Unirse a la Sala"}

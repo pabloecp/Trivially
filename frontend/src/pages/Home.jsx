@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useApp } from "../lib/store.jsx";
+import { useFriends } from "../lib/friends.jsx";
 import { GAME_MODES, SOON_TILE, findMode } from "../modes/index.js";
 import Icon from "../components/home/Icon.jsx";
 import TvTopbar from "../components/home/TvTopbar.jsx";
@@ -225,6 +226,24 @@ export default function Home() {
     toastTimer.current = setTimeout(() => setToast(null), 2600);
   }, []);
 
+  // The host hears about each friend who asks to join (the room card has the Aceptar button).
+  const askedBefore = useRef(new Set());
+  useEffect(() => {
+    if (!isHost) return;
+    for (const r of room?.joinRequests || []) {
+      const key = `${r.userId}:${r.at}`;
+      if (askedBefore.current.has(key)) continue;
+      askedBefore.current.add(key);
+      showToast(`${r.name} quiere unirse a tu sala`, "users");
+    }
+  }, [room?.joinRequests, isHost]);
+
+  // A friend let you in, or turned you down.
+  const friendsNotice = useFriends().notice;
+  useEffect(() => {
+    if (friendsNotice) showToast(friendsNotice.text, friendsNotice.icon);
+  }, [friendsNotice]);
+
   useEffect(() => {
     if (!kickedNotice) return;
     showToast(kickedNotice, "logout");
@@ -319,6 +338,8 @@ export default function Home() {
       {shownRoom && !isCentral && <RoomHeader room={shownRoom} onToast={showToast} />}
 
       <main className={`tv-main${screen === "room" ? " is-room" : ""}${centralScreen ? " is-central" : ""}`}>
+        {/* The site's address, at the top in plain letters but faint: only on Home and the room screen. */}
+        {!centralScreen && <p className="tv-site-url">playtrivially.com</p>}
         {centralScreen ? (
           <CentralLobby room={shownRoom} />
         ) : screen === "home" ? (

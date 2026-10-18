@@ -7,8 +7,10 @@ import express from "express";
 import cookieSession from "cookie-session";
 import { Server } from "socket.io";
 import { loadCatalog } from "./catalog/catalogProvider.js";
+import { startDefaultPlaylists } from "./catalog/defaultPlaylists.js";
+import { forgetOldShareCodes } from "./db/sharedPlaylists.js";
 import { TrackResolver } from "./catalog/trackResolver.js";
-import { flushStore, initStore } from "./db/store.js";
+import { ensureUsernames, flushStore, initStore } from "./db/store.js";
 import { RoomManager } from "./game/roomManager.js";
 import { loadQuestions } from "./questions/questionBank.js";
 import {
@@ -20,6 +22,9 @@ import {
 } from "./auth/routes.js";
 import { verifyAuthToken } from "./auth/socketToken.js";
 import { attachSockets } from "./realtime/sockets.js";
+import { Friendships } from "./friends/friendships.js";
+import { FriendsHub } from "./friends/friendsHub.js";
+import { createFriendsRouter } from "./friends/routes.js";
 import { getMedia, isCoverUrl, isPreviewUrl, isSpotifyPreviewUrl } from "./audio/mediaCache.js";
 import { flagForToken, getFlag } from "./geo/flags.js";
 import { countryShape, shapeForToken } from "./geo/shapes.js";
@@ -33,9 +38,20 @@ const PORT = Number(process.env.PORT || 8080);
 
 const catalog = await loadCatalog();
 const store = await initStore();
+// Accounts from before usernames got one made from their name (they can change it once for free).
+const assigned = ensureUsernames(store);
+if (assigned) console.log(`[Usuarios] ${assigned} cuentas recibieron un nombre de usuario`);
 const questions = await loadQuestions();
 const resolver = new TrackResolver({ catalog });
 const rooms = new RoomManager({ catalog, store, questions, resolver });
+const friends = new Friendships({ store });
+await friends.init();
+const friendsHub = new FriendsHub({ store, friends, rooms });
+// The default Spotify playlists (catalog/defaultPlaylists.js): read now and once a day, and put in every room.
+startDefaultPlaylists(() => rooms.applyDefaultPlaylists());
+// Playlist codes nobody shared or opened in a year are deleted: now and once a day.
+forgetOldShareCodes().catch(() => {});
+setInterval(() => forgetOldShareCodes().catch(() => {}), 24 * 60 * 60 * 1000).unref?.();
 // Spotify songs found in earlier games join the search box too.
 resolver.preloadSaved().catch((err) => console.warn(`[Spotify] No se pudieron precargar las canciones (${err.message})`));
 
@@ -161,7 +177,8 @@ app.get("/api/geo/shape/:token", (req, res) => {
   }
 });
 
-app.use("/api", createApiRouter({ catalog, store, songList: () => rooms.globalSongList() }));
+app.use("/api/friends", createFriendsRouter({ store, friends, hub: friendsHub, rooms }));
+app.use("/api", createApiRouter({ catalog, store, friends, hub: friendsHub, songList: () => rooms.globalSongList() }));
 app.get("/auth/google", handleGoogleRedirect);
 app.get("/auth/google/callback", (req, res) => handleGoogleCallback(req, res, store));
 app.get("/auth/google/finish", handleGoogleFinish);
@@ -185,7 +202,7 @@ const io = new Server(server, {
     credentials: true,
   },
 });
-attachSockets(io, rooms);
+attachSockets(io, rooms, { friends, hub: friendsHub });
 
 // Make sure the last stats reach the database when the host stops the server (Railway sends SIGTERM on deploy).
 for (const signal of ["SIGTERM", "SIGINT"]) {

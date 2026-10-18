@@ -1,6 +1,8 @@
 // Linking a Trivially account to Spotify (Authorization Code flow). For now only owners can do it.
 // Needs SPOTIFY_CLIENT_ID and SPOTIFY_CLIENT_SECRET, plus the callback registered in the Spotify app:
-// <site>/auth/spotify/callback (SPOTIFY_REDIRECT_URI to override it). The site's /auth is rewritten to this server.
+// <site>/auth/spotify/callback in production (the site's /auth is rewritten to this server), and in local development
+// http://127.0.0.1:<PORT>/auth/spotify/callback, straight to this server: Spotify refuses "localhost" (only the
+// loopback IP may use http), and Vite answers 404 to /auth. SPOTIFY_REDIRECT_URI overrides either.
 
 const AUTH_URL = "https://accounts.spotify.com/authorize";
 const TOKEN_URL = "https://accounts.spotify.com/api/token";
@@ -12,8 +14,13 @@ export function spotifyConfigured() {
 }
 
 export function spotifyRedirectUri() {
+  if (process.env.SPOTIFY_REDIRECT_URI) return process.env.SPOTIFY_REDIRECT_URI;
   const site = (process.env.CLIENT_ORIGIN || "https://triviallyonline.vercel.app").replace(/\/$/, "");
-  return process.env.SPOTIFY_REDIRECT_URI || `${site}/auth/spotify/callback`;
+  // Local development (the site on localhost or 127.0.0.1): back to this server itself, on the loopback IP.
+  if (/^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(site)) {
+    return `http://127.0.0.1:${process.env.PORT || 8080}/auth/spotify/callback`;
+  }
+  return `${site}/auth/spotify/callback`;
 }
 
 /** Where to send the player to approve the link. `state` is the signed ticket that says who they are. */

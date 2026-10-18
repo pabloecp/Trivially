@@ -19,7 +19,7 @@ export function PlaylistProgress({ run }) {
           <li
             key={i}
             className={`tv-pl-step${played ? " is-played" : ""}${now ? " is-now" : ""}`}
-            title={`${i + 1}. ${mode?.name || game}${played ? ` · ${played.winnerName ? `ganó ${played.winnerName}` : "sin ganador"}` : ""}`}
+            aria-label={`${i + 1}. ${mode?.name || game}${played ? ` · ${played.winnerName ? `ganó ${played.winnerName}` : "sin ganador"}` : ""}`}
           >
             <span className={`tv-pl-step-badge tv-c-${mode?.color || "neutral"}`}>
               <Icon name={mode?.icon || "play"} size={18} strokeWidth={2.4} />
@@ -33,6 +33,7 @@ export function PlaylistProgress({ run }) {
 }
 
 // The playlist's tally: each player's games won and points across them, most wins first (the points break a tie).
+// Played mixed (one match), only the points.
 // Whoever leads is crowned; at the end that's the playlist's winner (none when the first two have the same).
 export function PlaylistStandings({ run }) {
   const { user } = useApp();
@@ -47,7 +48,7 @@ export function PlaylistStandings({ run }) {
         <h3 id="tv-pl-table-title" className="tv-pl-table-title">
           {run.finished ? "Clasificación final" : "Clasificación de la playlist"}
         </h3>
-        <span className="tv-pl-table-sub">Gana quien gane más juegos</span>
+        <span className="tv-pl-table-sub">{run.mixed ? "Gana quien sume más puntos" : "Gana quien gane más juegos"}</span>
       </div>
       <ol className="tv-pl-table-list">
         {run.standings.map((p, i) => (
@@ -56,10 +57,12 @@ export function PlaylistStandings({ run }) {
             <Avatar name={p.name} avatar={p.avatar} />
             <span className="tv-pl-row-name">{p.name}</span>
             {p.id === crowned && <Icon name="crown" size={18} strokeWidth={1.5} filled className="tv-pl-row-crown" />}
-            <span className="tv-pl-row-wins">
-              {p.wins}
-              <small>{p.wins === 1 ? "juego" : "juegos"}</small>
-            </span>
+            {!run.mixed && (
+              <span className="tv-pl-row-wins">
+                {p.wins}
+                <small>{p.wins === 1 ? "juego" : "juegos"}</small>
+              </span>
+            )}
             <span className="tv-pl-row-points">{p.points.toLocaleString("es-ES")} pts</span>
           </li>
         ))}

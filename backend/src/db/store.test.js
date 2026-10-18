@@ -2,11 +2,14 @@ import assert from "node:assert/strict";
 import {
   deleteGuest,
   deleteUser,
+  ensureUsernames,
   linkGoogle,
+  loginWithPassword,
   registerWithPassword,
   sanitizeUserPublic,
   unlinkGoogle,
   updateUserAvatar,
+  updateUsername,
   upsertGoogleUser,
   upsertUser,
 } from "./store.js";
@@ -15,10 +18,10 @@ const testStore = { users: {} };
 
 // Test 1: Minimum password length (2 chars is allowed, 1 char fails)
 assert.throws(() => {
-  registerWithPassword(testStore, { name: "A", email: "a@b.com", password: "1" });
+  registerWithPassword(testStore, { name: "A", username: "usuario_a", email: "a@b.com", password: "1" });
 }, /al menos 2 caracteres/);
 
-const user1 = registerWithPassword(testStore, { name: "User 2Chars", email: "2c@trivially.test", password: "ab" });
+const user1 = registerWithPassword(testStore, { name: "User 2Chars", username: "user_2chars", email: "2c@trivially.test", password: "ab" });
 assert.equal(user1.name, "User 2Chars");
 assert.equal(user1.email, "2c@trivially.test");
 assert.equal(typeof user1.id, "string");
@@ -55,7 +58,7 @@ assert.equal(testStore.users[user1.id], undefined);
 upsertUser(testStore, { id: "gst_test01", name: "Invitado", isGuest: true });
 assert.equal(deleteGuest(testStore, "gst_test01"), true);
 assert.equal(testStore.users.gst_test01, undefined);
-const user2 = registerWithPassword(testStore, { name: "Registrado", email: "r@trivially.test", password: "ab" });
+const user2 = registerWithPassword(testStore, { name: "Registrado", username: "registrado", email: "r@trivially.test", password: "ab" });
 assert.equal(deleteGuest(testStore, user2.id), false);
 assert.ok(testStore.users[user2.id]);
 
@@ -69,5 +72,27 @@ updateUserAvatar(testStore, gUser.id, "#FF8A00");
 upsertGoogleUser(testStore, { email: "g@trivially.test", avatar: "https://photo.test/g2.jpg", googleId: "g_1" });
 assert.equal(testStore.users[gUser.id].avatar, "#FF8A00");
 assert.equal(updateUserAvatar(testStore, gUser.id, "google").avatar, "https://photo.test/g2.jpg");
+
+// Usernames ("@pepe"): needed to register, unique, and the way to sign in (names for the games aren't unique).
+assert.throws(() => registerWithPassword(testStore, { name: "Otro", username: "ab", email: "o@trivially.test", password: "ab" }), /al menos 3/);
+assert.throws(() => registerWithPassword(testStore, { name: "Otro", username: "@Registrado", email: "o@trivially.test", password: "ab" }), /en uso/);
+const pepe = registerWithPassword(testStore, { name: "Pepe", username: "@Pepe_23", email: "pepe@trivially.test", password: "ab" });
+assert.equal(pepe.username, "pepe_23");
+assert.equal(sanitizeUserPublic(testStore.users[pepe.id]).username, "pepe_23");
+assert.equal(pepe.usernameInfo.changesLeft, 3);
+assert.equal("usernameHistory" in pepe, false);
+assert.equal(loginWithPassword(testStore, { identifier: "@PEPE_23", password: "ab" }).id, pepe.id);
+assert.equal(loginWithPassword(testStore, { identifier: "pepe@trivially.test", password: "ab" }).id, pepe.id);
+assert.throws(() => loginWithPassword(testStore, { identifier: "Pepe", password: "ab" }), /no encontrado/, "the game name doesn't identify anyone");
+// Another Pepe for the games is fine: only usernames are unique.
+const otherPepe = registerWithPassword(testStore, { name: "Pepe", username: "pepe_24", email: "pepe2@trivially.test", password: "ab" });
+assert.notEqual(otherPepe.id, pepe.id);
+assert.equal(updateUsername(testStore, pepe.id, "pepe_cool").username, "pepe_cool");
+assert.throws(() => updateUsername(testStore, pepe.id, "pepe_24"), /en uso/);
+// Accounts from before usernames get one made from their name.
+testStore.users.old = { id: "old", name: "María José", isGuest: false, email: "mj@trivially.test", stats: {} };
+assert.equal(ensureUsernames(testStore), 1);
+assert.equal(testStore.users.old.username, "maria_jose");
+assert.equal(ensureUsernames(testStore), 0);
 
 console.log("All store tests passed!");

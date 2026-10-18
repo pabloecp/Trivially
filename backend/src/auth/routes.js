@@ -19,6 +19,7 @@ import {
   unlinkSpotify,
   updateUserAvatar,
   updateUserName,
+  updateUsername,
   upsertGoogleUser,
   upsertUser,
 } from "../db/store.js";
@@ -28,6 +29,7 @@ import { authRateLimit } from "./rateLimit.js";
 import { hasRole, ROLES } from "./roles.js";
 import { consumeTicket, createAuthToken, createSocketToken, createTicket } from "./socketToken.js";
 import crypto from "node:crypto";
+import { normalizeUsername, usernameError } from "./username.js";
 
 /** Express middleware: only lets through signed-in users with at least `minRole`. */
 export function requireRole(store, minRole) {
@@ -51,7 +53,19 @@ function safePath(path) {
   return typeof path === "string" && path.startsWith("/") && !path.startsWith("//") && !path.includes("\\") ? path : "/";
 }
 
-export function createApiRouter({ catalog, store, songList = () => [] }) {
+// Checking usernames as you type is cheap but could be used to list them: a per-address limit.
+const checks = new Map();
+function usernameCheckLimit(req, res, next) {
+  const ip = req.ip || "unknown";
+  const now = Date.now();
+  const recent = (checks.get(ip) || []).filter((t) => now - t < 60_000);
+  if (recent.length >= 60) return res.status(429).json({ error: "Demasiadas comprobaciones. Espera un momento." });
+  recent.push(now);
+  checks.set(ip, recent);
+  next();
+}
+
+export function createApiRouter({ catalog, store, friends = null, hub = null, songList = () => [] }) {
   const router = Router();
 
   // Starts (or refreshes) the session of a guest, or of a registered user who is already signed in.
@@ -98,12 +112,13 @@ export function createApiRouter({ catalog, store, songList = () => [] }) {
 
   router.post("/auth/register", authRateLimit, (req, res) => {
     try {
-      const { name, email, password, guestId, avatar } = req.body || {};
+      const { name, username, email, password, guestId, avatar } = req.body || {};
       if (!name || !name.trim()) return res.status(400).json({ error: "Nombre requerido" });
+      if (!username || !String(username).trim()) return res.status(400).json({ error: "Elige un nombre de usuario" });
       if (!email || !email.trim()) return res.status(400).json({ error: "Correo electrónico requerido" });
 
       if (!password) return res.status(400).json({ error: "Contraseña requerida" });
-      const safeUser = registerWithPassword(store, { name, email, password, avatar, guestId });
+      const safeUser = registerWithPassword(store, { name, username, email, password, avatar, guestId });
 
       req.session.userId = safeUser.id;
       res.json({ ok: true, user: safeUser, authToken: createAuthToken(safeUser.id) });
@@ -116,7 +131,7 @@ export function createApiRouter({ catalog, store, songList = () => [] }) {
     try {
       const { identifier, email, password, guestId } = req.body || {};
       const loginId = (identifier || email || "").trim();
-      if (!loginId) return res.status(400).json({ error: "Introduce tu correo o nombre" });
+      if (!loginId) return res.status(400).json({ error: "Introduce tu correo o usuario" });
 
       if (!password) return res.status(400).json({ error: "Introduce tu contraseña" });
       const safeUser = loginWithPassword(store, { identifier: loginId, password, guestId });
@@ -208,6 +223,9 @@ export function createApiRouter({ catalog, store, songList = () => [] }) {
       if (!userId) return res.status(401).json({ error: "No autenticado" });
       const { confirmName } = req.body || {};
       deleteUser(store, userId, confirmName);
+      // Their friendships go too, and their friends' lists update.
+      const others = friends?.removeAllOf(userId) || [];
+      hub?.refresh(...others);
       req.session = null;
       res.json({ ok: true });
     } catch (err) {
@@ -254,6 +272,25 @@ export function createApiRouter({ catalog, store, songList = () => [] }) {
     } catch (err) {
       res.status(400).json({ error: err.message });
     }
+  });
+
+  // The username ("@pepe"): unique, and it can only change a few times a month (auth/username.js).
+  router.patch("/me/username", (req, res) => {
+    try {
+      const userId = req.session?.userId;
+      if (!userId || !store.users[userId] || store.users[userId].isGuest) return res.status(401).json({ error: "Inicia sesión para cambiar tu usuario" });
+      const updated = updateUsername(store, userId, req.body?.username);
+      res.json({ ok: true, user: updated });
+    } catch (err) {
+      res.status(400).json({ error: err.message });
+    }
+  });
+
+  // Is this username free? (while choosing one, also when registering, so it needs no session)
+  router.get("/username/check", usernameCheckLimit, (req, res) => {
+    const username = normalizeUsername(req.query.u);
+    const error = usernameError(store, username, req.session?.userId || null);
+    res.json({ available: !error, username, reason: error });
   });
 
   router.patch("/users/:id/avatar", (req, res) => {

@@ -44,8 +44,13 @@ function ResultsScreen() {
   let title = "¡Fin de la playlist!";
   if (winner && !solo) title = `¡${winner.name} gana la playlist!`;
   else if (!winner && standings[0]?.wins > 0) title = "¡Empate!";
+  // Played "aleatorio", the playlist was one match with every game's rounds mixed: the most points win.
+  const mixed = Boolean(run?.mixed);
+  const pointsText = (p) => `${p.points.toLocaleString("es-ES")} pts`;
   let hint = null;
-  if (winner && solo) hint = `Ganaste ${run.played.filter((g) => g.winnerId === winner.id).length} de ${run.total} juegos`;
+  if (mixed && winner) hint = `${pointsText(winner)} en ${run.total === 1 ? "1 juego" : `${run.total} juegos`} mezclados`;
+  else if (mixed && standings[0]?.wins > 0) hint = "Mismos puntos";
+  else if (winner && solo) hint = `Ganaste ${run.played.filter((g) => g.winnerId === winner.id).length} de ${run.total} juegos`;
   else if (winner) hint = `${winsText(winner.wins)} de ${run.total}`;
   else if (standings[0]?.wins > 0) hint = "Mismos juegos ganados y mismos puntos";
 
@@ -62,8 +67,8 @@ function ResultsScreen() {
 
           {run && (
             <>
-              <Podium players={standings} score={(p) => winsText(p.wins)} />
-              <PlaylistProgress run={run} />
+              <Podium players={standings} score={mixed ? pointsText : (p) => winsText(p.wins)} />
+              {!mixed && <PlaylistProgress run={run} />}
               <PlaylistStandings run={run} />
             </>
           )}

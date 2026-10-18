@@ -5,6 +5,9 @@ import { withSound } from "../../lib/sounds.js";
 import Avatar from "./Avatar.jsx";
 import Icon from "./Icon.jsx";
 
+// A room's code is five letters and numbers (ROOM_CODE_LENGTH on the server).
+const ROOM_CODE_LENGTH = 5;
+
 const DISMISS_DISTANCE = 90;
 const FOCUSABLE = "a[href], button:not([disabled]), input:not([disabled])";
 const TITLES = {
@@ -183,7 +186,7 @@ export default function PlaySheet({ mode, joinCode, open, onClose }) {
   // it's checked again (so nothing jumps), and a wrong code shakes the box each time.
   async function submitCode(e) {
     e.preventDefault();
-    if (code.length < 4 || busy) return;
+    if (code.length < ROOM_CODE_LENGTH || busy) return;
     const asksName = !user?.name || user.isGuest;
     setBusy(true);
     try {
@@ -302,15 +305,15 @@ export default function PlaySheet({ mode, joinCode, open, onClose }) {
                   aria-describedby={error ? "tv-sheet-error" : undefined}
                   value={code}
                   onChange={(e) => {
-                    setCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 6));
+                    setCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, ROOM_CODE_LENGTH));
                     setError("");
                   }}
-                  placeholder="XOYOAV"
+                  placeholder="K7P2M"
                   autoComplete="off"
                   autoCapitalize="characters"
                   spellCheck="false"
                 />
-                <button type="submit" className="tv-btn tv-btn--block tv-c-yellow" data-sound="none" disabled={busy || code.length < 4}>
+                <button type="submit" className="tv-btn tv-btn--block tv-c-yellow" data-sound="none" disabled={busy || code.length < ROOM_CODE_LENGTH}>
                   Entrar a la sala
                 </button>
               </form>

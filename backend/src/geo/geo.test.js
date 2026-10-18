@@ -86,12 +86,15 @@ assert.ok(near < 1000 && far < near && far > 0);
 assert.deepEqual(GEO_STYLES, ["nombre", "sombra", "bandera"]);
 assert.deepEqual(mergeGeoConfig({}, { rounds: 99, difficulty: "x" }), {
   rounds: 25,
+  roundMs: 15000,
   styles: GEO_STYLES,
   difficulties: ["facil", "media", "dificil"],
 });
-// Every round is a pin on the map: the kinds and the seconds to write of an older client or room are dropped.
+// Every round is a pin on the map: the kinds of an older client or room are dropped. The seconds to put the pin are a
+// setting (15–35 s, like Adivina la canción's).
 assert.deepEqual(mergeGeoConfig({ rounds: 7, roundMs: 20000, kinds: ["capital"] }, { kinds: ["flag"], roundMs: 30000 }), {
   rounds: 7,
+  roundMs: 30000,
   styles: GEO_STYLES,
   difficulties: ["facil", "media", "dificil"],
 });

@@ -427,13 +427,20 @@ export function AppProvider({ children }) {
         return res.user;
       },
 
-      async registerAccount({ name, email, password }) {
+      // The account's @username (unique; a few changes a month). The name for the games is updateUsername above.
+      async changeHandle(username) {
+        const res = await api("/api/me/username", { method: "PATCH", body: { username } });
+        if (res.user) applyUser(res.user);
+        return res.user;
+      },
+
+      async registerAccount({ name, username, email, password }) {
         const current = userRef.current;
         const guestId = current?.isGuest ? current.id : localStorage.getItem(GUEST_ID_KEY);
         const nextId = `usr_${Math.random().toString(36).slice(2, 10)}`;
         const res = await api("/api/auth/register", {
           method: "POST",
-          body: { id: nextId, name, email, password, guestId, avatar: current?.avatar || AVATAR_COLORS[0] },
+          body: { id: nextId, name, username, email, password, guestId, avatar: current?.avatar || AVATAR_COLORS[0] },
         });
         if (res.user) {
           localStorage.setItem(GUEST_NAME_KEY, res.user.name);
@@ -685,7 +692,10 @@ export function AppProvider({ children }) {
         const res = await emitAckWithin(25000, "room:spotifyLink", link);
         if (!res.ok) throw new Error(res.error);
         if (res.state) setRoom(res.state);
-        return res.saved || null;
+        // `saved`: the account's list ("Mis playlists"); `added`: the room's id of the playlist just read, and
+        // `playlist` its name, cover and songs (a guest keeps it in this browser).
+        const playlist = res.added ? res.state?.customPlaylists?.find((p) => p.id === res.added) || null : null;
+        return { saved: res.saved || null, added: res.added || null, playlist };
       },
 
       // The Spotify playlists and albums kept on this account ({ canSave, saved }), and deleting one for good.
@@ -730,6 +740,21 @@ export function AppProvider({ children }) {
       },
 
       // The room's playlist, all of it (name, order and games with their settings); the server keeps it valid.
+      // A playlist kept on the server, the room's (or `playlist`, a saved one): its code ("K7P2M-XH4QN"), the same for
+      // the same playlist.
+      async sharePlaylist(playlist = null) {
+        const res = await emitAckWithin(10000, "playlist:share", playlist);
+        if (!res.ok) throw new Error(res.error);
+        return res.code;
+      },
+
+      // The playlist a pasted code points to ({ name, order, items }).
+      async playlistByCode(code) {
+        const res = await emitAckWithin(10000, "playlist:byCode", code);
+        if (!res.ok) throw new Error(res.error);
+        return res.playlist;
+      },
+
       async updatePlaylist(playlist) {
         const res = await emitAck("room:playlist", playlist);
         if (!res.ok) throw new Error(res.error);

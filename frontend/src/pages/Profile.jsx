@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { Link, Navigate, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { api } from "../lib/api.js";
+import UsernameField, { useUsernameCheck } from "../components/home/UsernameField.jsx";
+import { USERNAME_MIN } from "../lib/username.js";
 import { AVATAR_COLORS, useApp } from "../lib/store.jsx";
 import TvShell from "../components/home/TvShell.jsx";
 import Avatar from "../components/home/Avatar.jsx";
@@ -34,8 +36,16 @@ function Notice({ tone, icon, children }) {
   );
 }
 
+// What the profile says about the @username's changes.
+function handleInfo(info) {
+  if (info.free) return "Te asignamos este usuario: puedes cambiarlo una vez sin gastar cambios.";
+  if (info.changesLeft > 0) return `Te quedan ${info.changesLeft} ${info.changesLeft === 1 ? "cambio" : "cambios"} este mes.`;
+  const when = new Date(info.nextChangeAt).toLocaleDateString("es", { day: "numeric", month: "long" });
+  return `Ya no te quedan cambios este mes. Podrás cambiarlo el ${when}.`;
+}
+
 function ProfileScreen() {
-  const { user: currentUser, updateUsername, updateAvatar, linkGoogle, connectSpotify, unlinkSpotify, linkingStatus, logout } =
+  const { user: currentUser, updateUsername, changeHandle, updateAvatar, linkGoogle, connectSpotify, unlinkSpotify, linkingStatus, logout } =
     useApp();
   const [spotifyBusy, setSpotifyBusy] = useState(false);
   // "Activo" on Spotify: the first tap turns it into "Desconectar", the second one disconnects.
@@ -59,6 +69,8 @@ function ProfileScreen() {
   const [statsLoading, setStatsLoading] = useState(!isOtherUser);
 
   const [newUserName, setNewUserName] = useState("");
+  // The @username: changes are limited, so it is saved apart from the name for the games and shows how many are left.
+  const [newHandle, setNewHandle] = useState("");
   // The color picked but not saved yet (a color from AVATAR_COLORS or "google"); null while nothing is pending.
   // Picking only previews it here: nothing goes to the server (or to the other players) until "Guardar".
   const [draftAvatar, setDraftAvatar] = useState(null);
@@ -133,6 +145,7 @@ function ProfileScreen() {
     e?.preventDefault();
     if (!canSave || saving) return;
     const withName = nameChanged;
+    const withHandle = handleChanged;
     const withColor = colorChanged;
     setSaving(true);
     setErr("");
@@ -141,16 +154,22 @@ function ProfileScreen() {
         await updateUsername(newUserName.trim());
         setNewUserName("");
       }
+      if (withHandle) {
+        await changeHandle(newHandle);
+        setNewHandle("");
+      }
       if (withColor) {
         await updateAvatar(draftAvatar);
         setDraftAvatar(null);
       }
       setMsg(
-        withName && withColor
+        [withName, withHandle, withColor].filter(Boolean).length > 1
           ? "Perfil actualizado."
           : withName
-            ? "Nombre de usuario actualizado."
-            : "Color actualizado."
+            ? "Nombre actualizado."
+            : withHandle
+              ? "Nombre de usuario actualizado."
+              : "Color actualizado."
       );
     } catch (e) {
       // What was already saved is cleared above; the rest stays so it can be saved again.
@@ -200,7 +219,9 @@ function ProfileScreen() {
   const shownAvatar = pickedAvatar || activeUser?.avatar;
   const colorChanged = Boolean(pickedAvatar) && pickedAvatar !== activeUser?.avatar;
   const nameChanged = Boolean(newUserName.trim()) && newUserName.trim() !== activeUser?.name;
-  const canSave = nameChanged || colorChanged;
+  const handleCheck = useUsernameCheck(newHandle, activeUser?.username);
+  const handleChanged = newHandle.length >= USERNAME_MIN && newHandle !== activeUser?.username && handleCheck.state !== "bad";
+  const canSave = nameChanged || handleChanged || colorChanged;
   const roleTag = ROLE_TAGS[activeUser?.role];
   const googleNotice = searchParams.get("google");
   const hasSpotify = Boolean(activeUser?.spotify || activeUser?.spotifyLinked);
@@ -267,6 +288,7 @@ function ProfileScreen() {
         <div className="tv-profile-who">
           <p className="tv-party-kicker">{isOtherUser ? "Perfil de jugador" : "Tu perfil"}</p>
           <h1 className="tv-page-title">{activeUser?.name || "Jugador"}</h1>
+          {activeUser?.username && <p className="tv-handle tv-profile-handle">@{activeUser.username}</p>}
           <div className="tv-tags">
             {roleTag && (
               <span className={`tv-tag tv-tag--${activeUser.role}`}>
@@ -348,7 +370,7 @@ function ProfileScreen() {
 
             <form onSubmit={onSaveProfile} className="tv-form">
               <label className="tv-form-row">
-                <span className="tv-label">Nombre de usuario</span>
+                <span className="tv-label">Tu nombre</span>
                 <input
                   className="tv-field tv-field--sm"
                   value={newUserName}
@@ -357,7 +379,22 @@ function ProfileScreen() {
                   maxLength={24}
                   disabled={saving}
                 />
+                <span className="tv-handle-status">Es como te ven en las partidas. Cámbialo cuando quieras.</span>
               </label>
+              {!isGuest && (
+                <>
+                  <UsernameField
+                    value={newHandle}
+                    onChange={setNewHandle}
+                    check={handleCheck}
+                    placeholder={activeUser?.username || "tu_usuario"}
+                    disabled={saving}
+                  />
+                  {activeUser?.usernameInfo && !handleCheck.message && (
+                    <span className="tv-handle-status">{handleInfo(activeUser.usernameInfo)}</span>
+                  )}
+                </>
+              )}
             </form>
 
             <div className="tv-form-row">

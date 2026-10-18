@@ -109,7 +109,7 @@ export function PhoneHint({ room, children }) {
       {players.length > 0 && (
         <ul className="tv-answer-faces" aria-hidden="true">
           {players.map((p, i) => (
-            <li key={p.id} className={p.answered ? "is-done" : ""} style={{ "--i": i }} title={p.name}>
+            <li key={p.id} className={p.answered ? "is-done" : ""} style={{ "--i": i }}>
               <Avatar name={p.name} avatar={p.avatar} />
               {p.answered && (
                 <span className="tv-answer-faces-check">

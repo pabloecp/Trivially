@@ -23,9 +23,11 @@ export const GEO_DIFFICULTIES = [...GEO_LEVELS, "mixta"];
 // Same limits as the sliders on screen (frontend/src/modes/mundo/geoInfo.js).
 export const GEO_LIMITS = {
   rounds: { min: 5, max: 25 },
+  // Seconds to put the pin, like Adivina la canción's: 15–35 s in steps of 5.
+  roundMs: { min: 15000, max: 35000 },
 };
-// A map round always lasts 10 s; its reveal waits the same as every mode's (game/scoring.js).
-export const LOCATION_ROUND_MS = 10000;
+// A map round lasts config.geo.roundMs (15 s in a new room); its reveal waits the same as every mode's (game/scoring.js).
+export const LOCATION_ROUND_MS = 15000;
 export { REVEAL_MS as LOCATION_REVEAL_MS } from "./scoring.js";
 // Ties for first place are settled with map rounds; after this many without a winner, the tie stands.
 export const MAX_TIEBREAKS = 3;
@@ -35,7 +37,7 @@ const LOCATION_NEAR_POINTS = 800;
 const LOCATION_FALLOFF_KM = 900;
 
 export function defaultGeoConfig() {
-  return { rounds: 5, styles: [...GEO_STYLES], difficulties: [...GEO_LEVELS] };
+  return { rounds: 5, roundMs: LOCATION_ROUND_MS, styles: [...GEO_STYLES], difficulties: [...GEO_LEVELS] };
 }
 
 // A single difficulty of an older client (or room) as the list of levels it means.
@@ -47,8 +49,8 @@ const pickList = (change, allowed, fallback) => (Array.isArray(change) ? allowed
 /**
  * Merges a settings change into the current Encuentra el país settings, keeping every value valid. The ways of giving
  * the country and the difficulties can be left all unticked: the match then has no questions and can't start. A room
- * from before the ways existed gets all three, like a new one. The `kinds` and `roundMs` an older client may send are
- * dropped: every round is a map round of 10 s.
+ * from before the ways existed gets all three, like a new one. The `kinds` an older client may send are dropped: every
+ * round is a map round. `roundMs` goes in steps of 5 s.
  */
 export function mergeGeoConfig(current, change = {}) {
   const base = { ...defaultGeoConfig(), ...current };
@@ -59,6 +61,10 @@ export function mergeGeoConfig(current, change = {}) {
   const baseStyles = Array.isArray(base.styles) ? GEO_STYLES.filter((st) => base.styles.includes(st)) : [...GEO_STYLES];
   return {
     rounds: change.rounds != null ? clamp(change.rounds, GEO_LIMITS.rounds, base.rounds) : base.rounds,
+    roundMs:
+      change.roundMs != null
+        ? Math.round(clamp(change.roundMs, GEO_LIMITS.roundMs, base.roundMs) / 5000) * 5000
+        : clamp(base.roundMs, GEO_LIMITS.roundMs, LOCATION_ROUND_MS),
     styles: pickList(change.styles, GEO_STYLES, baseStyles),
     difficulties,
   };

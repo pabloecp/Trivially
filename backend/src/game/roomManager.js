@@ -1,3 +1,4 @@
+import { cachedDefaultPlaylists, isDefaultSpotify } from "../catalog/defaultPlaylists.js";
 import { SONG_DIFFICULTIES, SONG_GENRES, SONG_LANGUAGES, filterSongs, songCounts } from "../catalog/songFilters.js";
 import { hasRole } from "../auth/roles.js";
 import { hydrateSong } from "../catalog/catalogProvider.js";
@@ -20,7 +21,6 @@ import {
   GEO_GAME,
   geoBank,
   LOCATION_REVEAL_MS,
-  LOCATION_ROUND_MS,
   locationPoints,
   MAX_TIEBREAKS,
   mergeGeoConfig,
@@ -72,6 +72,7 @@ import {
 import {
   cleanPlaylist,
   configWithItem,
+  mixRounds,
   emptyPlaylist,
   GAME_NAMES,
   newRun,
@@ -86,6 +87,8 @@ import { locate } from "../geo/worldMap.js";
 import { COUNTDOWN_MS, REVEAL_MS, ROUND_MS, scoreAnswer } from "./scoring.js";
 
 const CODE_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+// A room's code: this many characters of CODE_CHARS (no I, O, 0 or 1, easy to confuse), ~33 million codes.
+export const ROOM_CODE_LENGTH = 5;
 // Games the host can move a room into (ids match frontend/src/modes/index.js). `null` is the Home screen.
 // "opciones" (Trivia, QUIZ_GAME) is the main mode: questions of every topic, each answered its own way (four
 // options, a written answer or a year on a timeline). The extras: "musica" (Adivina la canción), "mundo" (Encuentra el país,
@@ -116,6 +119,12 @@ const CHAT_GAP_MS = 700;
 // A player can ask to use another device as the central one this often, and a room keeps this many requests at once.
 export const CENTRAL_ASK_GAP_MS = 5000;
 const CENTRAL_REQUESTS_KEEP = 5;
+// What the host's friends can do from their friends list: join straight away, ask to join, or nothing (only the code).
+export const JOIN_MODES = ["abierta", "solicitud", "invitacion"];
+// A friend's request to join stays this long, and the same friend can ask again after this wait.
+const JOIN_REQUEST_TTL_MS = 60000;
+export const JOIN_ASK_GAP_MS = 10000;
+const JOIN_REQUESTS_KEEP = 8;
 
 export function assertGame(game) {
   if (game === null || GAME_IDS.includes(game)) return game;
@@ -125,8 +134,8 @@ export function assertGame(game) {
 export function createRoomCode(existing) {
   let code = "";
   do {
-    code = "XO";
-    for (let i = 0; i < 4; i += 1) {
+    code = "";
+    for (let i = 0; i < ROOM_CODE_LENGTH; i += 1) {
       code += CODE_CHARS[Math.floor(Math.random() * CODE_CHARS.length)];
     }
   } while (existing.has(code));
@@ -319,6 +328,8 @@ export class RoomManager {
       game: assertGame(game),
       hostId: host.id,
       coHosts: [],
+      joinMode: "solicitud",
+      joinRequests: [],
       createdAt: Date.now(),
       phase: "lobby",
       phaseStartedAt: Date.now(),
@@ -345,12 +356,15 @@ export class RoomManager {
       centralRequests: [],
     };
     this.rooms.set(code, room);
+    this.ensureDefaultPlaylists(room);
     this.addPlayer(room, host, true);
     return room;
   }
 
   addPlayer(room, user, isHost = false) {
     if (room.blocked?.has(user.id)) throw new Error("El anfitrión te bloqueó de esta sala");
+    // Whoever was asking to join is in now.
+    if (room.joinRequests?.length) room.joinRequests = room.joinRequests.filter((r) => r.userId !== user.id);
     const existing = room.players.get(user.id);
     const isGuest = Boolean(user.isGuest ?? (user.id?.startsWith("gst_") || !user.email));
     const player = existing || {
@@ -833,6 +847,11 @@ export class RoomManager {
    * the client sends all of it and it's kept cleaned (cleanPlaylist). Like the settings, the host and whoever has the
    * permission can change it, while the room waits.
    */
+  /** A playlist sent to be shared by code (one saved in "Mis playlists"), cleaned like the room's own. */
+  cleanSharedPlaylist(room, playlist) {
+    return cleanPlaylist(playlist, (game, config) => this.cleanItemConfig(room, game, config));
+  }
+
   updatePlaylist(room, userId, playlist) {
     if (!this.canEditConfig(room, userId)) throw new Error("No tienes permisos para cambiar la playlist");
     if (room.phase !== "lobby") throw new Error("La partida ya comenzó");
@@ -960,30 +979,81 @@ export class RoomManager {
    * Adds (and selects) one of the host's Spotify playlists, read by catalog/spotifyLibrary.js. Its songs are looked
    * up on iTunes in the background; the match can start as soon as any song of the selection is playable.
    */
+  // A song of a playlist read from Spotify's public page, with its own preview (15–22 s): playable at once. iTunes is
+  // still asked in the background, and what it finds (a 30 s preview, the album's cover and year) replaces it.
+  linkSong(t, playlist) {
+    return {
+      id: `sp-${t.spotifyId}`,
+      spotifyId: t.spotifyId,
+      title: displayTitle(t.title),
+      artistName: t.artists.join(" & ") || "Artista",
+      artists: t.artists,
+      albumName: t.albumName || "",
+      year: t.year || null,
+      image: playlist.image || null,
+      previewUrl: t.previewUrl,
+    };
+  }
+
+  // A room's entry for a playlist read from Spotify's public page (not ticked: whoever adds it decides).
+  newLinkEntry(room, playlist) {
+    const id = `${SPOTIFY_PREFIX}${playlist.id}`;
+    const entry = { id, name: playlist.name, image: playlist.image, tracks: playlist.tracks, songs: new Map(), done: new Set(), active: false };
+    for (const t of playlist.tracks) if (t.previewUrl) entry.songs.set(t.spotifyId, this.linkSong(t, playlist));
+    entry.instant = entry.songs.size > 0;
+    room.customPlaylists[id] = entry;
+    return entry;
+  }
+
+  // The same playlist read again: its songs become Spotify's current ones. Songs no longer in it go; new ones come
+  // with their own preview and are looked up on iTunes like the rest.
+  refreshLinkEntry(entry, playlist) {
+    const now = new Set(playlist.tracks.map((t) => t.spotifyId));
+    for (const key of [...entry.songs.keys()]) if (!now.has(key)) entry.songs.delete(key);
+    for (const key of [...entry.done]) if (!now.has(key)) entry.done.delete(key);
+    entry.retried?.forEach((key) => !now.has(key) && entry.retried.delete(key));
+    entry.tracks = playlist.tracks;
+    entry.name = playlist.name || entry.name;
+    entry.image = playlist.image || entry.image;
+    for (const t of playlist.tracks) {
+      if (t.previewUrl && !entry.songs.has(t.spotifyId)) entry.songs.set(t.spotifyId, this.linkSong(t, playlist));
+    }
+  }
+
+  /**
+   * Puts the default playlists (read once a day, catalog/defaultPlaylists.js) in a room, unticked, so they are always
+   * loaded there and ticking one is instant. A room that has one from an earlier day gets today's songs, while it
+   * waits in the lobby (never in the middle of a match).
+   */
+  ensureDefaultPlaylists(room) {
+    if (!room?.customPlaylists) return;
+    for (const { playlist, day } of cachedDefaultPlaylists()) {
+      const id = `${SPOTIFY_PREFIX}${playlist.id}`;
+      const entry = room.customPlaylists[id];
+      if (!entry) this.newLinkEntry(room, playlist).day = day;
+      else if (entry.day !== day && room.phase === "lobby") {
+        this.refreshLinkEntry(entry, playlist);
+        entry.day = day;
+        if (entry.active) this.loadPlaylist(room, entry);
+      }
+    }
+  }
+
+  /** Every room gets the default playlists just read (catalog/defaultPlaylists.js calls it). */
+  applyDefaultPlaylists() {
+    for (const room of this.rooms.values()) this.ensureDefaultPlaylists(room);
+  }
+
   addSpotifyPlaylist(room, userId, playlist, { fromLink = false } = {}) {
     if (fromLink) this.assertPlaylistEditor(room, userId);
     else this.assertSpotifyEditor(room, userId);
     const id = `${SPOTIFY_PREFIX}${playlist.id}`;
     let entry = room.customPlaylists[id];
+    // Read again (a pasted playlist added once more): its songs become Spotify's current ones.
+    if (entry && fromLink) this.refreshLinkEntry(entry, playlist);
+    if (!entry && fromLink) entry = this.newLinkEntry(room, playlist);
     if (!entry) {
       entry = { id, name: playlist.name, image: playlist.image, tracks: playlist.tracks, songs: new Map(), done: new Set(), active: true };
-      // A pasted public playlist brings each song's own preview (15–22 s): they can be played at once. iTunes is still
-      // asked in the background, and what it finds (a 30 s preview, the album's cover and year) replaces it.
-      for (const t of playlist.tracks) {
-        if (!t.previewUrl) continue;
-        entry.songs.set(t.spotifyId, {
-          id: `sp-${t.spotifyId}`,
-          spotifyId: t.spotifyId,
-          title: displayTitle(t.title),
-          artistName: t.artists.join(" & ") || "Artista",
-          artists: t.artists,
-          albumName: t.albumName || "",
-          year: t.year || null,
-          image: playlist.image || null,
-          previewUrl: t.previewUrl,
-        });
-      }
-      entry.instant = entry.songs.size > 0;
       room.customPlaylists[id] = entry;
     }
     // Adding one ticks it.
@@ -997,6 +1067,7 @@ export class RoomManager {
   /** Takes a Spotify playlist out of the room for good (its waiting searches stop); anyone who may change the settings. */
   removeSpotifyPlaylist(room, userId, playlistId) {
     this.assertPlaylistEditor(room, userId);
+    if (isDefaultSpotify(playlistId)) throw new Error("Esta playlist viene con el juego: no se puede borrar");
     const entry = room.customPlaylists?.[playlistId];
     if (!entry) throw new Error("Esa playlist no está en la sala");
     entry.active = false;
@@ -1348,6 +1419,7 @@ export class RoomManager {
   }
 
   beginCountdown(room) {
+    if (room.run?.mixed && !room.run.finished) this.enterMixedRound(room);
     this.pickAhead(room);
     const track = room.tracks[room.currentRound];
     room.currentTrackId = track.id;
@@ -1372,7 +1444,7 @@ export class RoomManager {
   /** How long players have to answer each round in the room's game. */
   roundMs(room) {
     if (room.game === QUIZ_GAME) return mergeQuizConfig(room.config.quiz).roundMs;
-    if (room.game === GEO_GAME) return LOCATION_ROUND_MS;
+    if (room.game === GEO_GAME) return mergeGeoConfig(room.config.geo).roundMs;
     if (room.game === HISTORY_GAME) return mergeHistoryConfig(room.config.history).roundMs;
     // Campo de minas: the time of each turn (a round has as many as it takes), or of the whole round in a race.
     if (room.game === MINES_GAME) {
@@ -1577,6 +1649,8 @@ export class RoomManager {
    */
   beginTiebreak(room) {
     if (room.game !== GEO_GAME && room.game !== HISTORY_GAME) return false;
+    // A mixed playlist's last round may be of any game: its winner is whoever has the most points.
+    if (room.run?.mixed) return false;
     const previous = room.tiebreak;
     if (previous?.winnerId || (previous && previous.round >= MAX_TIEBREAKS)) return false;
     const connected = [...room.players.values()].filter((p) => p.connected && !p.spectator);
@@ -1624,8 +1698,12 @@ export class RoomManager {
       applyMatchStats(this.store, ranked);
       this.recordWin(room, ranked);
       // A game of a playlist: its winner adds a win to the playlist's tally.
-      if (room.run && !room.run.finished && ranked.length) recordGame(room.run, room.game, ranked, this.matchWinner(room, ranked));
+      if (room.run && !room.run.finished && ranked.length) {
+        recordGame(room.run, room.run.mixed ? PLAYLIST_GAME : room.game, ranked, this.matchWinner(room, ranked));
+      }
     }
+    // A mixed playlist is a single match: when it ends, so does the playlist.
+    if (room.run?.mixed && !room.run.finished) this.endRun(room);
   }
 
   /** Who won a finished match: first place with points; a tie for first is nobody's unless a tiebreak settled it. */
@@ -1690,7 +1768,113 @@ export class RoomManager {
       if (problem) throw new Error(`Revisa el juego ${i + 1}, ${GAME_NAMES[item.game]}. ${problem}`);
     });
     room.run = newRun(room.playlist, room.config);
-    this.playItem(room);
+    if (room.run.mixed) this.startMixed(room);
+    else this.playItem(room);
+  }
+
+  /**
+   * A playlist played "aleatorio": one match whose rounds are every game's rounds mixed at random (two of Encuentra el
+   * país, then one of Adivina la canción, then Encuentra el país again...). Each game's questions or songs are drawn
+   * now with its own settings; each round, beginCountdown moves the room into its game (enterMixedRound). The scores
+   * add up across the whole match, which ends on the playlist's results.
+   */
+  startMixed(room) {
+    const run = room.run;
+    this.resetMatch(room);
+    let perItem;
+    try {
+      const musicSoFar = [];
+      perItem = run.items.map((item, i) => {
+        const tracks = this.drawItemTracks(room, item, musicSoFar);
+        if (!tracks.length) throw new Error(`Revisa el juego ${i + 1}, ${GAME_NAMES[item.game]}. No hay preguntas con esos ajustes.`);
+        return tracks;
+      });
+    } catch (err) {
+      this.stopPlaylist(room);
+      this.resetMatch(room);
+      throw err;
+    }
+    room.tracks = mixRounds(perItem).map(({ item, track }) => ({ ...track, playlistItem: item }));
+    room.totalRounds = room.tracks.length;
+    const music = room.tracks.filter((t) => run.items[t.playlistItem].game === "musica");
+    if (music.length) this.onNewTracks?.(music);
+    const connected = [...room.players.values()].filter((p) => p.connected);
+    room.participants = new Set(connected.map((p) => p.id));
+    room.currentRound = 0;
+    connected.forEach((p) => {
+      p.score = 0;
+      p.correct = 0;
+      p.streak = 0;
+      p.bestStreak = 0;
+      p.answerTimes = [];
+      p.status = "jugando";
+    });
+    this.beginCountdown(room);
+  }
+
+  /**
+   * The rounds of one game of a mixed playlist, drawn as its own match would. A game repeated in the playlist doesn't
+   * repeat questions or songs the other copies already drew, while there are others.
+   */
+  drawItemTracks(room, item, musicSoFar) {
+    const config = configWithItem(room.run.savedConfig, item);
+    if (item.game === "musica") {
+      const rounds = config.rounds || 5;
+      const scratch = { ...room, game: "musica", config, tracks: [...musicSoFar], totalRounds: musicSoFar.length + rounds };
+      scratch.currentRound = scratch.totalRounds - 1;
+      const saved = this.onNewTracks;
+      this.onNewTracks = null;
+      try {
+        this.pickAhead(scratch);
+      } finally {
+        this.onNewTracks = saved;
+      }
+      const tracks = scratch.tracks.slice(musicSoFar.length);
+      musicSoFar.push(...tracks);
+      return tracks;
+    }
+    const draw = () => {
+      if (item.game === QUIZ_GAME) {
+        const tracks = pickQuizQuestions(this.quizQuestions, mergeQuizConfig(config.quiz));
+        for (const t of tracks) if (t.flag) t.flagToken = flagToken(t.flag);
+        return tracks;
+      }
+      if (item.game === GEO_GAME) return pickGeoQuestions(this.geoQuestions, mergeGeoConfig(config.geo)).map(withGeoTokens);
+      if (item.game === HISTORY_GAME) return pickHistoryQuestions(this.historyQuestions, mergeHistoryConfig(config.history));
+      // Lluvia: each of its rounds is a whole shower of questions.
+      if (item.game === RAIN_GAME) return pickRainRounds(this.rainQuestions, mergeRainConfig(config.rain));
+      return pickMinesQuestions(this.minesQuestions, mergeMinesConfig(config.mines));
+    };
+    const first = draw();
+    const rounds = first.length;
+    this.mixedUsed ||= new WeakMap();
+    const used = this.mixedUsed.get(room.run) || new Set();
+    this.mixedUsed.set(room.run, used);
+    const key = (t) => `${item.game}|${t.baseId || t.country || t.id}`;
+    const out = [];
+    for (let attempt = 0, tracks = first; attempt < 4 && out.length < rounds; attempt += 1, tracks = draw()) {
+      for (const t of tracks) {
+        if (out.length >= rounds || used.has(key(t)) || out.some((o) => key(o) === key(t))) continue;
+        out.push(t);
+      }
+    }
+    // Not enough new ones: the rest may repeat another copy's.
+    for (const t of first) if (out.length < rounds && !out.includes(t)) out.push(t);
+    out.forEach((t) => used.add(key(t)));
+    return out;
+  }
+
+  /** Each round of a mixed playlist is played in its own game, with that game's settings from the playlist. */
+  enterMixedRound(room) {
+    const track = room.tracks[room.currentRound];
+    const item = room.run.items[track.playlistItem];
+    const changed = room.game !== item.game || room.run.current !== track.playlistItem;
+    room.game = item.game;
+    room.run.current = track.playlistItem;
+    if (changed) {
+      room.config = configWithItem(room.run.savedConfig, item);
+      this.syncPlaylists(room);
+    }
   }
 
   /**
@@ -1730,9 +1914,14 @@ export class RoomManager {
       this.playItem(room);
       return;
     }
-    run.finished = true;
+    this.endRun(room);
+  }
+
+  /** After the playlist's last game, the room shows the playlist's results (still `finished`, back in the playlist). */
+  endRun(room) {
+    room.run.finished = true;
     room.game = PLAYLIST_GAME;
-    room.config = run.savedConfig;
+    room.config = room.run.savedConfig;
     this.syncPlaylists(room);
     // The last game's rounds are done with; its scores stay until the room goes back to a lobby.
     room.tracks = [];
@@ -1763,6 +1952,7 @@ export class RoomManager {
     room.game = next;
     room.preview = null;
     room.suggestions = [];
+    this.ensureDefaultPlaylists(room);
   }
 
   // A player (not the host) suggests a game while the room is on the menu: the host sees it and can accept. Each
@@ -1799,6 +1989,57 @@ export class RoomManager {
     room.chat = [...(room.chat || []), { id: room.chatSeq, userId, name: player.name, avatar: player.avatar, text: clean, at: now }].slice(
       -CHAT_KEEP
     );
+  }
+
+  /** The room a player is in right now (not just reconnecting), or null. Used to show friends where someone plays. */
+  roomOfUser(userId) {
+    for (const room of this.rooms.values()) {
+      if (room.players.get(userId)?.connected) return room;
+    }
+    return null;
+  }
+
+  /** The host decides what their friends can do from the friends list: join, ask to join, or nothing. */
+  setJoinMode(room, userId, mode) {
+    if (room.hostId !== userId) throw new Error("Solo el Host puede cambiar quién se une");
+    if (!JOIN_MODES.includes(mode)) throw new Error("Esa opción no existe");
+    room.joinMode = mode;
+    if (mode !== "solicitud") room.joinRequests = [];
+  }
+
+  /** The requests to join that are still valid. */
+  openJoinRequests(room) {
+    const now = Date.now();
+    room.joinRequests = (room.joinRequests || []).filter((r) => now - r.at < JOIN_REQUEST_TTL_MS && !room.players.get(r.userId)?.connected);
+    return room.joinRequests;
+  }
+
+  /** A friend asks the host to let them in (only when the room is "solicitud"). */
+  addJoinRequest(room, user, now = Date.now()) {
+    if (room.joinMode !== "solicitud") throw new Error("Esa sala no recibe solicitudes");
+    if (room.blocked?.has(user.id)) throw new Error("No puedes unirte a esa sala");
+    if (room.players.get(user.id)?.connected) throw new Error("Ya estás en esa sala");
+    room.joinAsked = room.joinAsked || new Map();
+    const wait = (room.joinAsked.get(user.id) || 0) + JOIN_ASK_GAP_MS - now;
+    if (wait > 0) throw new Error(`Espera ${Math.ceil(wait / 1000)} s para pedirlo otra vez`);
+    const open = this.openJoinRequests(room).filter((r) => r.userId !== user.id);
+    if (open.length >= JOIN_REQUESTS_KEEP) throw new Error("Esa sala ya tiene muchas solicitudes. Inténtalo en un momento.");
+    room.joinAsked.set(user.id, now);
+    room.joinRequests = [...open, { userId: user.id, name: user.name, avatar: user.avatar, at: now }];
+  }
+
+  /** The requester takes their request back. */
+  cancelJoinRequest(room, userId) {
+    room.joinRequests = (room.joinRequests || []).filter((r) => r.userId !== userId);
+  }
+
+  /** The host lets a friend in (the friend then joins) or turns them down. Returns the request's user. */
+  answerJoinRequest(room, hostId, userId) {
+    if (room.hostId !== hostId) throw new Error("Solo el Host responde a las solicitudes");
+    const found = this.openJoinRequests(room).find((r) => r.userId === userId);
+    if (!found) throw new Error("Esa solicitud ya no está");
+    room.joinRequests = room.joinRequests.filter((r) => r.userId !== userId);
+    return found;
   }
 
   // The game the host is pointing at on the menu, so every player sees it live before it is picked. Only while the
@@ -2417,6 +2658,9 @@ export class RoomManager {
           .sort((a, b) => b.wins - a.wins || b.played - a.played),
       },
       coHosts: [...(room.coHosts || [])],
+      // What the host's friends can do from their friends list, and the friends asking to join (the host answers).
+      joinMode: room.joinMode || "solicitud",
+      joinRequests: this.openJoinRequests(room).map((r) => ({ userId: r.userId, name: r.name, avatar: r.avatar, at: r.at })),
       // The room's central device (whose account opened it, and whether it's connected: while it is, the players'
       // screens show only the ways to answer), and the players asking to use another device of theirs as it.
       central: room.central

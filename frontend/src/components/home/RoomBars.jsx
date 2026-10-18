@@ -76,6 +76,10 @@ export function RoomHeader({ room, onToast }) {
           {more > 0 && <span className="tv-avatar tv-avatar--empty">+{more}</span>}
         </span>
         <Icon name="chevron" size={18} strokeWidth={3} className="tv-roomhead-chevron" />
+        {/* The host: friends asking to join are in the dropdown. */}
+        {room.hostId === user?.id && (room.joinRequests?.length || 0) > 0 && (
+          <span className="tv-fr-badge" aria-hidden="true">{room.joinRequests.length}</span>
+        )}
       </button>
       <VolumeMenu />
       {user && (

@@ -1,13 +1,13 @@
 import { useEffect, useState } from "react";
 import OptionRow, { rangeOptions } from "../../components/home/OptionRow.jsx";
 import SettingsTabs from "../../components/home/SettingsTabs.jsx";
-import { DIFFICULTIES, ROUNDS_LIMITS, STYLES, geoConfig } from "./geoInfo.js";
+import { DIFFICULTIES, ROUNDS_LIMITS, SECONDS_LIMITS, STYLES, geoConfig } from "./geoInfo.js";
 
 // Settings of an Encuentra el país match, in the settings panel, in two tabs like every game's: "Partida" (how many
-// rounds; every round lasts 10 s) and "Preguntas" (how the country is given, "Modos de juego": by its name, its
-// silhouette or its flag; and the difficulties; tick as many as you like of each, all by default). Every tap is saved
-// straight away for the whole room. With `readOnly` (players without permission) everything shows but nothing can be
-// tapped.
+// rounds and the seconds to put the pin, like Adivina la canción's) and "Preguntas" (how the country is given, "Modos
+// de juego": by its name, its silhouette or its flag; and the difficulties; tick as many as you like of each, all by
+// default). Every tap is saved straight away for the whole room. With `readOnly` (players without permission)
+// everything shows but nothing can be tapped.
 export default function GeoSettings({ room, updateConfig, onToast, children, readOnly = false }) {
   const saved = geoConfig(room);
   const [draft, setDraft] = useState(saved);
@@ -15,7 +15,7 @@ export default function GeoSettings({ room, updateConfig, onToast, children, rea
   // Another player with permission may change them too.
   useEffect(() => {
     setDraft(saved);
-  }, [saved.rounds, saved.styles.join(), saved.difficulties.join()]);
+  }, [saved.rounds, saved.roundMs, saved.styles.join(), saved.difficulties.join()]);
 
   async function save(change) {
     if (readOnly) return;
@@ -52,8 +52,18 @@ export default function GeoSettings({ room, updateConfig, onToast, children, rea
           id: "partida",
           label: "Partida",
           icon: "hourglass",
-          note: `${draft.rounds} rondas`,
-          content: <OptionRow label="Rondas" options={rangeOptions(ROUNDS_LIMITS)} value={draft.rounds} onChange={(n) => save({ rounds: n })} />,
+          note: `${draft.rounds} rondas · ${Math.round(draft.roundMs / 1000)} s`,
+          content: (
+            <>
+              <OptionRow label="Rondas" options={rangeOptions(ROUNDS_LIMITS)} value={draft.rounds} onChange={(n) => save({ rounds: n })} />
+              <OptionRow
+                label="Segundos por ronda"
+                options={rangeOptions(SECONDS_LIMITS)}
+                value={Math.round(draft.roundMs / 1000)}
+                onChange={(n) => save({ roundMs: n * 1000 })}
+              />
+            </>
+          ),
         },
         {
           id: "preguntas",

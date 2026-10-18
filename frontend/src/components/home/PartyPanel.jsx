@@ -6,6 +6,7 @@ import Avatar from "./Avatar.jsx";
 import CentralSpot, { DragGhost, useCentralDrag } from "./CentralSpot.jsx";
 import ConfirmDialog from "./ConfirmDialog.jsx";
 import Icon from "./Icon.jsx";
+import FriendsRoomControls from "./FriendsRoomControls.jsx";
 import PlayerMenu from "./PlayerMenu.jsx";
 import { ChatForm, ChatMessages, ChatSheet, useChatUnread, usePhone, useRoomChat } from "./RoomChat.jsx";
 import { useInvite } from "./useInvite.js";
@@ -159,6 +160,8 @@ export default function PartyPanel({ room, onToast, scores = false, display = fa
           </button>
         )}
       </div>
+
+      {isHost && !display && <FriendsRoomControls room={room} onToast={onToast} />}
 
       <div className="tv-party-title">
         <h2>{scores ? "Marcador" : "En la sala"}</h2>

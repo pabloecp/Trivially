@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { roomPath } from "../../modes/index.js";
 import { useApp } from "../../lib/store.jsx";
+import { useFriends } from "../../lib/friends.jsx";
 import AppIcon from "./AppIcon.jsx";
 import ConfirmDialog from "./ConfirmDialog.jsx";
 import Icon from "./Icon.jsx";
@@ -68,6 +69,7 @@ export function useRoomExit({ onRoomScreen = true, onError } = {}) {
 //  - nothing on the home screen itself.
 export default function TvTopbar() {
   const { user, room, isCentral } = useApp();
+  const friends = useFriends();
   const { pathname } = useLocation();
   const roomTarget = room ? roomPath(room) : null;
   const awayFromRoom = Boolean(roomTarget) && pathname !== roomTarget;
@@ -155,10 +157,26 @@ export default function TvTopbar() {
           {leaveButton}
           <div className="tv-brand">
             <AppIcon small />
-            <span className="tv-brand-name">trivially.online</span>
+            <span className="tv-brand-name">trivially</span>
           </div>
         </div>
+        {/* The site's address, faint, in the middle of the bar (computers; never in a match). */}
+        {!inGame && <span className="tv-topbar-url">playtrivially.com</span>}
         <div className="tv-topbar-end">
+          {friends.isAccount && !isCentral && (
+            <button
+              type="button"
+              className="tv-chip tv-chip--icon tv-chip--friends"
+              aria-label={friends.pending ? `Amigos (${friends.pending} solicitudes)` : "Amigos"}
+              aria-haspopup="dialog"
+              onClick={() => friends.setOpen(true)}
+            >
+              <span className="tv-avatar tv-avatar--empty">
+                <Icon name="users" size={20} strokeWidth={2.4} />
+              </span>
+              {friends.pending > 0 && <span className="tv-fr-badge">{friends.pending}</span>}
+            </button>
+          )}
           <VolumeMenu />
           <ProfileChip user={user} />
         </div>

@@ -4,10 +4,10 @@ import { claimGuestStats, listUsers, registerWithPassword, sanitizeUser, setUser
 
 const store = { users: {} };
 
-const owner = registerWithPassword(store, { name: "Boss", email: "boss@trivially.test", password: "pw" });
-const admin = registerWithPassword(store, { name: "Admin", email: "admin@trivially.test", password: "pw" });
-const alice = registerWithPassword(store, { name: "Alice", email: "alice@trivially.test", password: "pw" });
-const bob = registerWithPassword(store, { name: "Bob", email: "bob@trivially.test", password: "pw" });
+const owner = registerWithPassword(store, { name: "Boss", username: "boss_user", email: "boss@trivially.test", password: "pw" });
+const admin = registerWithPassword(store, { name: "Admin", username: "admin_user", email: "admin@trivially.test", password: "pw" });
+const alice = registerWithPassword(store, { name: "Alice", username: "alice_user", email: "alice@trivially.test", password: "pw" });
+const bob = registerWithPassword(store, { name: "Bob", username: "bob_user", email: "bob@trivially.test", password: "pw" });
 
 // New accounts are plain users; OWNER_IDS makes the owner (by id, not by name or email).
 assert.equal(owner.role, "user");

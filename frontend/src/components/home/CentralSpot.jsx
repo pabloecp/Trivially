@@ -185,7 +185,6 @@ export default function CentralSpot({ room, spotRef, drag, isHost, onToast }) {
           data-sound="back"
           onClick={takeOff}
           aria-label={confirmOff ? "Toca otra vez para quitar el dispositivo central" : "Quitar el dispositivo central"}
-          title="Quitar el dispositivo central"
         >
           {confirmOff ? "¿Quitar?" : <Icon name="close" size={16} strokeWidth={3} />}
         </button>

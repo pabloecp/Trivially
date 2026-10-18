@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { useApp } from "../../lib/store.jsx";
+import { useFriends } from "../../lib/friends.jsx";
 import Icon from "./Icon.jsx";
 import { profilePath } from "./PlayerName.jsx";
 
@@ -11,6 +12,7 @@ import { profilePath } from "./PlayerName.jsx";
 // central device, the same as dragging them onto the spot.
 export default function PlayerMenu({ player, isMe, canManage, canCentral = false, onClose, onToast }) {
   const { toggleConfigPermission, kickPlayer, blockPlayer, giveHost, makeCentral } = useApp();
+  const friends = useFriends();
   const ref = useRef(null);
   const [confirmHost, setConfirmHost] = useState(false);
   const [confirmBlock, setConfirmBlock] = useState(false);
@@ -35,6 +37,18 @@ export default function PlayerMenu({ player, isMe, canManage, canCentral = false
       onToast?.(res?.granted ? `${player.name} ya puede cambiar los ajustes` : `${player.name} ya no puede cambiar los ajustes`, "check");
     } catch (err) {
       onToast?.(err.message || "No se pudieron cambiar los permisos");
+    }
+  }
+
+  // "Añadir amigo": only between two accounts.
+  const relation = friends.relationTo(player.id);
+  async function addFriend() {
+    onClose();
+    try {
+      const res = await friends.requestUser(player.id);
+      onToast?.(res.status === "accepted" ? `¡Ahora ${player.name} y tú son amigos!` : `Le enviaste una solicitud a ${player.name}`, "check");
+    } catch (err) {
+      onToast?.(err.message || "No se pudo enviar la solicitud");
     }
   }
 
@@ -96,6 +110,18 @@ export default function PlayerMenu({ player, isMe, canManage, canCentral = false
           <Icon name="user" size={16} strokeWidth={2.6} />
           {isMe ? "Ver mi perfil" : "Ver perfil"}
         </Link>
+      )}
+      {friends.isAccount && !isMe && !player.isGuest && (
+        <button
+          type="button"
+          role="menuitem"
+          className="tv-player-menu-item"
+          onClick={addFriend}
+          disabled={relation === "friends" || relation === "asked"}
+        >
+          <Icon name={relation === "friends" ? "check" : "plus"} size={16} strokeWidth={2.8} />
+          {relation === "friends" ? "Ya son amigos" : relation === "asked" ? "Solicitud enviada" : relation === "asking" ? "Aceptar como amigo" : "Añadir amigo"}
+        </button>
       )}
       {canManage && (
         <button type="button" role="menuitem" className="tv-player-menu-item" onClick={togglePermission}>
