@@ -41,7 +41,6 @@
 .tv-fr-name { font-weight: 800; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .tv-fr-status { font-size: 13px; font-weight: 700; color: var(--tv-text-3); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .tv-fr-row.is-online .tv-fr-status { color: #22c55e; }
-.tv-fr-row .tv-fr-status.is-confirm { color: #ef4444; white-space: normal; }
 .tv-fr-note { font-size: 13px; font-weight: 700; color: var(--tv-text-3); text-align: right; }
 .tv-fr-row .tv-btn { flex-shrink: 0; }
 .tv-fr-x {
