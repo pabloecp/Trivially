@@ -27,8 +27,19 @@ export function useUsernameCheck(value, current = null) {
   return result;
 }
 
-// The box for a username, with its "@" and the free / taken message under it.
-export default function UsernameField({ label = "Nombre de usuario", value, onChange, check, disabled, autoFocus, placeholder = "tu_usuario", required }) {
+// The box for a username, with its "@" and the free / taken message under it (or, while there's none, `note`: a line
+// about the username, inside the row so it sits as close as any other row's note).
+export default function UsernameField({
+  label = "Nombre de usuario",
+  value,
+  onChange,
+  check,
+  disabled,
+  autoFocus,
+  placeholder = "tu_usuario",
+  required,
+  note = null,
+}) {
   return (
     <label className="tv-form-row">
       <span className="tv-label">{label}</span>
@@ -49,11 +60,13 @@ export default function UsernameField({ label = "Nombre de usuario", value, onCh
           required={required}
         />
       </span>
-      {check?.message && (
+      {check?.message ? (
         <span className={`tv-handle-status is-${check.state}`} role="status">
           {check.state === "ok" && <Icon name="check" size={14} strokeWidth={3} />}
           {check.message}
         </span>
+      ) : (
+        note && <span className="tv-handle-status">{note}</span>
       )}
     </label>
   );

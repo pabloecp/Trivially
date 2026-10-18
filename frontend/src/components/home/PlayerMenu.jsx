@@ -8,8 +8,9 @@ import { profilePath } from "./PlayerName.jsx";
 // What tapping a player offers, in the room card and on the live scoreboard: their profile (registered players),
 // and for the host, letting them change the match settings or not, making them the host (a second tap confirms it)
 // taking them out of the room (they can come back with the code) and blocking them (a second tap confirms it: they
-// can't join the room again). `canCentral` (the host, while the room waits): making that player's device the room's
-// central device, the same as dragging them onto the spot.
+// can't join the room again). `canCentral` (the host or a player with the settings permission, while the room
+// waits): making that player's device the room's central device, the same as dragging them onto the spot; your own
+// too ("Usar mi pantalla como central"; if you're the host, the host role passes to the next player).
 export default function PlayerMenu({ player, isMe, canManage, canCentral = false, onClose, onToast }) {
   const { toggleConfigPermission, kickPlayer, blockPlayer, giveHost, makeCentral } = useApp();
   const friends = useFriends();
@@ -70,7 +71,7 @@ export default function PlayerMenu({ player, isMe, canManage, canCentral = false
     onClose();
     try {
       await makeCentral(player.id);
-      onToast?.(`La pantalla de ${player.name} es ahora el dispositivo central`, "check");
+      onToast?.(isMe ? "Tu pantalla es ahora el dispositivo central" : `La pantalla de ${player.name} es ahora el dispositivo central`, "check");
     } catch (err) {
       onToast?.(err.message || "No se pudo cambiar el dispositivo central");
     }
@@ -144,7 +145,7 @@ export default function PlayerMenu({ player, isMe, canManage, canCentral = false
       {canCentral && player.connected && (
         <button type="button" role="menuitem" className="tv-player-menu-item" onClick={toCentral}>
           <Icon name="tv" size={16} strokeWidth={2.4} />
-          Usar su pantalla como central
+          {isMe ? "Usar mi pantalla como central" : "Usar su pantalla como central"}
         </button>
       )}
       {canManage && (

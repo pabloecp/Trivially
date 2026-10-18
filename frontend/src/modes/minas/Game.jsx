@@ -13,7 +13,8 @@ import { findDifficulty, hitsText, minesConfig } from "./minesInfo.js";
 import "../../styles/home.css";
 import "../../styles/quiz.css";
 import "../../styles/mines.css";
-import { PauseButton, ReportButton, PauseVeil } from "../../components/home/PauseControls.jsx";
+import { PauseButton, ReportButton, SkipButton, PauseVeil } from "../../components/home/PauseControls.jsx";
+import { resolveCode } from "../../lib/hiddenCode.js";
 
 const COUNTDOWN_MS = 3000;
 const CELLS = 25;
@@ -66,8 +67,10 @@ function sizeClass(text) {
 }
 
 function GameScreen() {
-  const { code } = useParams();
+  const { code: codeParam } = useParams();
   const { user, room, joinRoom, pickCell, setGame } = useApp();
+  // The address's code ("oculta" while it's hidden: this tab's room, lib/hiddenCode.js).
+  const code = resolveCode(codeParam, room);
   const nav = useNavigate();
   // With a central device in the room, the prompt, everyone's picks and the scoreboard show there; the players'
   // phones only have the board to pick from (and what to do now).
@@ -244,7 +247,7 @@ function GameScreen() {
   const nameOf = (id) => room.players.find((p) => p.id === id)?.name || "Jugador";
   const toFind = question ? question.total - question.found : 0;
   const standing = room.players.filter((p) => p.connected && !p.spectator && !p.out);
-  const waitingFor = standing.filter((p) => !p.answered && p.id !== viewerId).map((p) => p.name);
+  const waitingFor = standing.filter((p) => !p.answered && !p.idle && p.id !== viewerId).map((p) => p.name);
   const myHits = cells && viewerId ? cells.filter((c) => c.correct && c.by === viewerId).length : 0;
   const last = round + 1 >= room.totalRounds;
 
@@ -299,6 +302,7 @@ function GameScreen() {
   const tools = (
     <>
       <ReportButton room={room} onError={setErr} />
+      <SkipButton room={room} onError={setErr} />
       <PauseButton room={room} isHost={isHost} onError={setErr} />
       {isHost && (
         <button

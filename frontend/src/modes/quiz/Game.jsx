@@ -12,9 +12,10 @@ import { BACKEND_URL } from "../../lib/config.js";
 import { useApp, useRemainingMs, useView } from "../../lib/store.jsx";
 import { OPTION_LETTERS, findDifficulty, quizConfig } from "./quizInfo.js";
 import "../../styles/home.css";
-import { PauseButton, ReportButton, PauseVeil } from "../../components/home/PauseControls.jsx";
+import { PauseButton, ReportButton, SkipButton, PauseVeil } from "../../components/home/PauseControls.jsx";
 import "../../styles/quiz.css";
 import "../../styles/geo.css";
+import { resolveCode, shownCode, useHiddenCode } from "../../lib/hiddenCode.js";
 
 const COUNTDOWN_MS = 3000;
 // Keys that pick an option while a question is open: 1–4 or A–D.
@@ -377,8 +378,11 @@ function WriteRound({ room, question, me, answer, skipSong, seconds, central, co
 }
 
 function GameScreen() {
-  const { code } = useParams();
+  const [codeHidden] = useHiddenCode();
+  const { code: codeParam } = useParams();
   const { user, room, joinRoom, answer, skipSong, setGame } = useApp();
+  // The address's code ("oculta" while it's hidden: this tab's room, lib/hiddenCode.js).
+  const code = resolveCode(codeParam, room);
   const nav = useNavigate();
   // The room's central device shows the question to everyone; beside it, the players' phones only the ways to answer.
   const { central, controller, viewerId } = useView(room);
@@ -451,6 +455,7 @@ function GameScreen() {
   const tools = (
     <>
       <ReportButton room={room} onError={setErr} />
+      <SkipButton room={room} onError={setErr} />
       <PauseButton room={room} isHost={isHost} onError={setErr} />
       {isHost && (
         <button
@@ -476,7 +481,7 @@ function GameScreen() {
         ) : (
           <section className="tv-game-top">
             <div className="tv-game-round">
-              <p className="tv-mono-label">Sala {room.code} · Trivia</p>
+              <p className="tv-mono-label">Sala {shownCode(room.code, codeHidden)} · Trivia</p>
               <h1 className="tv-card-title">
                 Pregunta {round + 1} <span className="tv-muted">de {room.totalRounds}</span>
               </h1>

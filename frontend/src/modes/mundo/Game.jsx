@@ -14,7 +14,8 @@ import { useWorld } from "./worldData.js";
 import { geoConfig, styleOf } from "./geoInfo.js";
 import "../../styles/home.css";
 import "../../styles/geo.css";
-import { PauseButton, ReportButton, PauseVeil } from "../../components/home/PauseControls.jsx";
+import { PauseButton, ReportButton, SkipButton, PauseVeil } from "../../components/home/PauseControls.jsx";
+import { resolveCode } from "../../lib/hiddenCode.js";
 
 const COUNTDOWN_MS = 3000;
 // One colour per player for the pins on the reveal map (never the green and red of right and wrong).
@@ -29,8 +30,10 @@ function joinNames(names) {
 }
 
 function GameScreen() {
-  const { code } = useParams();
+  const { code: codeParam } = useParams();
   const { user, room, joinRoom, placePin, setGame } = useApp();
+  // The address's code ("oculta" while it's hidden: this tab's room, lib/hiddenCode.js).
+  const code = resolveCode(codeParam, room);
   const nav = useNavigate();
   const { world, error: mapError } = useWorld();
   // The players keep their map to put the pin (beside a central device they only lose the clock and the scoreboard,
@@ -306,6 +309,7 @@ function GameScreen() {
 
           <div className="tv-game-tools">
             <ReportButton room={room} onError={setErr} />
+            <SkipButton room={room} onError={setErr} />
             <PauseButton room={room} isHost={isHost} onError={setErr} />
             {isHost && (
               <button

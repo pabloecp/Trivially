@@ -1,6 +1,7 @@
 import { cachedDefaultPlaylists, isDefaultSpotify } from "../catalog/defaultPlaylists.js";
 import { SONG_DIFFICULTIES, SONG_GENRES, SONG_LANGUAGES, filterSongs, songCounts } from "../catalog/songFilters.js";
 import { hasRole } from "../auth/roles.js";
+import { CHAT_LINK_ERROR, hasLink, NAME_LINK_ERROR } from "../moderation/links.js";
 import { hydrateSong } from "../catalog/catalogProvider.js";
 import { cleanTitle, displayTitle } from "../catalog/trackResolver.js";
 import { applyMatchStats } from "../db/store.js";
@@ -32,6 +33,9 @@ import {
   currentYear,
   historyCounts,
   defaultHistoryConfig,
+  figureLabel,
+  figurePoints,
+  figureTolerance,
   HISTORY_GAME,
   HISTORY_REVEAL_MS,
   historyBank,
@@ -129,6 +133,19 @@ const JOIN_REQUESTS_KEEP = 8;
 export function assertGame(game) {
   if (game === null || GAME_IDS.includes(game)) return game;
   throw new Error("Ese juego no está disponible");
+}
+
+/** A player's name can't carry a link (moderation/links.js): the Jugar sheet says so and they write another. */
+function assertNameWithoutLink(user) {
+  if (hasLink(user?.name)) throw new Error(NAME_LINK_ERROR);
+}
+
+/** A player's rounds as they go out to the players: without the questions' ids. */
+// After this many rounds in a row without answering, a match stops waiting for the player (markIdle).
+export const IDLE_ROUNDS = 3;
+
+export function publicRounds(rounds = []) {
+  return rounds.map(({ questionId, ...round }) => round);
 }
 
 export function createRoomCode(existing) {
@@ -273,6 +290,8 @@ function publicPlayer(player, phase, room) {
     streak: player.streak,
     bestStreak: player.bestStreak,
     answered,
+    // Hasn't answered in IDLE_ROUNDS rounds in a row: rounds no longer wait for them (it ends when they answer).
+    idle: Boolean(player.idle),
     lastPoints: player.lastPoints || 0,
     lastAnswer: showAnswer ? player.lastAnswer : null,
     connected: player.connected,
@@ -321,6 +340,7 @@ export class RoomManager {
   }
 
   create({ host, mode, config, game = null }) {
+    assertNameWithoutLink(host);
     const code = createRoomCode(this.rooms);
     const room = {
       code,
@@ -363,6 +383,7 @@ export class RoomManager {
 
   addPlayer(room, user, isHost = false) {
     if (room.blocked?.has(user.id)) throw new Error("El anfitrión te bloqueó de esta sala");
+    assertNameWithoutLink(user);
     // Whoever was asking to join is in now.
     if (room.joinRequests?.length) room.joinRequests = room.joinRequests.filter((r) => r.userId !== user.id);
     const existing = room.players.get(user.id);
@@ -648,23 +669,26 @@ export class RoomManager {
   }
 
   /**
-   * The host drags a player onto the "Dispositivo central" spot: that player's device becomes the room's central device
-   * and their seat goes (they play again if it stops being the central, see releaseCentral). Only while the room waits:
-   * mid-match it would take a player out of it. The host can't be it, or nobody would control the match.
+   * Makes a player's screen the room's central device: from the player's menu or dragging them onto the spot, by the
+   * host or a player with the settings permission, while the room waits; any player, the one doing it too. That
+   * player's seat goes (the device only shows the match). If it's the host's, the host role passes to the next
+   * connected player first (the central device controls nothing), so there must be one.
    */
-  makeCentral(room, hostUserId, targetUserId) {
-    if (room.hostId !== hostUserId) throw new Error("Solo el anfitrión elige el dispositivo central");
+  makeCentral(room, actorId, targetUserId) {
+    if (!this.canEditConfig(room, actorId)) throw new Error("Solo el anfitrión o quien tenga permiso elige el dispositivo central");
     if (room.phase !== "lobby") throw new Error("Cambia el dispositivo central antes de empezar la partida");
-    if (targetUserId === room.hostId) {
-      throw new Error("El anfitrión no puede ser el dispositivo central: pásale el anfitrión a otro jugador primero");
-    }
     const player = room.players.get(targetUserId);
     if (!player) throw new Error("El jugador no está en la sala");
     if (!player.connected || !player.socketId) throw new Error("Ese jugador no está conectado ahora");
+    if (targetUserId === room.hostId) {
+      const next = [...room.players.values()].find((p) => p.connected && p.id !== targetUserId);
+      if (!next) throw new Error("Hace falta otro jugador en la sala para que lleve la partida");
+    }
     clearTimeout(player.dropTimer);
     room.players.delete(targetUserId);
     room.coHosts = (room.coHosts || []).filter((id) => id !== targetUserId);
     room.suggestions = (room.suggestions || []).filter((s) => s.userId !== targetUserId);
+    if (targetUserId === room.hostId) this.transferHost(room);
     this.setCentral(room, { ...player, socketId: player.socketId });
     return { name: player.name };
   }
@@ -741,8 +765,8 @@ export class RoomManager {
   }
 
   /** The host's "Quitar" on the spot. */
-  removeCentral(room, hostUserId) {
-    if (room.hostId !== hostUserId) throw new Error("Solo el anfitrión elige el dispositivo central");
+  removeCentral(room, actorId) {
+    if (!this.canEditConfig(room, actorId)) throw new Error("Solo el anfitrión o quien tenga permiso elige el dispositivo central");
     if (!room.central) throw new Error("La sala no tiene dispositivo central");
     return this.releaseCentral(room);
   }
@@ -886,12 +910,13 @@ export class RoomManager {
     }
     if (item.game === HISTORY_GAME) {
       const history = mergeHistoryConfig(config);
+      if (!history.styles.length) return "Elige al menos un modo de juego.";
       if (!history.categories.length) return "Elige al menos una categoría.";
       if (!history.difficulties.length) return "Elige al menos una dificultad.";
       const n = exact
         ? pickHistoryQuestions(this.historyQuestions, history).length
         : this.cachedCount(item, () => countHistoryQuestions(this.historyQuestions, history));
-      return n < history.rounds ? short(n, "acontecimientos", history.rounds, "categorías") : null;
+      return n < history.rounds ? short(n, "preguntas", history.rounds, "categorías") : null;
     }
     if (item.game === MINES_GAME) {
       const mines = mergeMinesConfig(config);
@@ -1224,7 +1249,10 @@ export class RoomManager {
   updatePlayer(room, userId, { name, avatar }) {
     const player = room.players.get(userId);
     if (!player) throw new Error("Jugador no encontrado");
-    if (name && name.trim()) player.name = name.trim();
+    if (name && name.trim()) {
+      if (hasLink(name)) throw new Error(NAME_LINK_ERROR);
+      player.name = name.trim();
+    }
     if (avatar) player.avatar = avatar;
     return player;
   }
@@ -1279,8 +1307,9 @@ export class RoomManager {
       room.totalRounds = tracks.length;
       room.tiebreak = null;
     } else if (room.game === HISTORY_GAME) {
-      // Rango: the match's events are drawn now, each with its own range of years.
+      // Rango: the match's questions are drawn now, each with its own range (of years, or of the figure's bar).
       const history = mergeHistoryConfig(room.config.history);
+      if (!history.styles.length) throw new Error("Elige al menos un modo de juego");
       const tracks = pickHistoryQuestions(this.historyQuestions, history);
       if (tracks.length < history.rounds) {
         throw new Error(`Solo hay ${tracks.length} preguntas con esos ajustes para ${history.rounds} rondas. Baja las rondas o elige más categorías.`);
@@ -1341,6 +1370,9 @@ export class RoomManager {
       p.streak = 0;
       p.bestStreak = 0;
       p.answerTimes = [];
+      p.rounds = [];
+      p.idleRounds = 0;
+      p.idle = false;
       p.status = "jugando";
     });
     this.beginCountdown(room);
@@ -1433,9 +1465,9 @@ export class RoomManager {
       // Campo de minas: this round's hits and points, why the player is out (null while in) and the last turn they
       // picked in. Spectators have none: they don't play.
       p.minefield = room.game === MINES_GAME && !p.spectator ? { hits: 0, points: 0, out: null, pickedTurn: 0 } : null;
-      // Lluvia: how many questions this player took in this round, its points and when they last sent an answer
-      // (answers are taken one every RAIN_ANSWER_GAP_MS).
-      p.rain = room.game === RAIN_GAME && !p.spectator ? { hits: 0, points: 0, sentAt: 0 } : null;
+      // Lluvia: how many questions this player took in this round, its points, how many answers they sent and when
+      // the last one (answers are taken one every RAIN_ANSWER_GAP_MS).
+      p.rain = room.game === RAIN_GAME && !p.spectator ? { hits: 0, points: 0, sent: 0, sentAt: 0 } : null;
       p.status = this.isPlaying(room, p.id) ? "jugando" : "mirando";
     });
     this.setPhase(room, "countdown", COUNTDOWN_MS, () => this.beginPlaying(room));
@@ -1506,13 +1538,15 @@ export class RoomManager {
   }
 
   /**
-   * An owner reports the question being played (db/reports.js keeps it): the question as the server has it (with its
-   * answer), the game's settings and who was in the room, so it can be checked later. `reporterId` must be the
-   * socket's verified account; each owner reports a round once.
+   * Any player in the room (spectators too) reports the question being played (db/reports.js keeps it): the question
+   * as the server has it (with its answer), the game's settings and who was in the room, so it can be checked later.
+   * `reporterId` is the player's seat; `verified` says whether the socket's signed account is that same one. Each
+   * player reports a round once.
    */
-  questionReport(room, reporterId) {
-    const reporter = this.store?.users?.[reporterId];
-    if (!reporter || !hasRole(reporter, "owner")) throw new Error("Solo los owners pueden reportar preguntas");
+  questionReport(room, reporterId, { verified = false } = {}) {
+    const seat = room.players.get(reporterId);
+    if (!seat) throw new Error("Solo los jugadores de la sala pueden reportar preguntas");
+    const reporter = this.store?.users?.[reporterId] || seat;
     if (!["countdown", "playing", "reveal"].includes(room.phase)) throw new Error("No hay ninguna pregunta en juego");
     const track = room.tracks[room.currentRound];
     if (!track) throw new Error("No hay ninguna pregunta en juego");
@@ -1563,7 +1597,7 @@ export class RoomManager {
         score: p.score,
         answer: p.lastAnswer ?? null,
       })),
-      reporter: { id: reporterId, name: reporter.name },
+      reporter: { id: reporterId, name: reporter.name, verified: Boolean(verified) },
       createdAt: new Date().toISOString(),
     };
   }
@@ -1598,6 +1632,27 @@ export class RoomManager {
     this.checkMinesTurn(room);
   }
 
+  /**
+   * An owner's "Saltar": straight to the next question, with no waiting. The round being played closes at once (what
+   * was already answered is graded and counts, like at the end of its time), its reveal and the next countdown are
+   * skipped, and the next round starts playing; after the last one, the match ends (or goes to a tiebreak) as usual.
+   * A paused match goes on. `userId` must be the socket's verified account, with the owner role.
+   */
+  skipRound(room, userId) {
+    const owner = this.store?.users?.[userId];
+    if (!owner || !hasRole(owner, "owner")) throw new Error("Solo los owners pueden saltar preguntas");
+    if (!["countdown", "playing", "reveal"].includes(room.phase)) throw new Error("No hay ninguna pregunta en juego");
+    room.paused = null;
+    if (room.phase !== "reveal") this.beginReveal(room);
+    if (room.timer) clearTimeout(room.timer);
+    this.advance(room);
+    if (room.phase === "countdown") {
+      if (room.timer) clearTimeout(room.timer);
+      this.beginPlaying(room);
+    }
+    this.onPhaseChange?.(room);
+  }
+
   beginPlaying(room) {
     if (this.isMinesRound(room)) {
       this.beginTurn(room);
@@ -1615,6 +1670,7 @@ export class RoomManager {
     if (this.isYearRound(room)) this.gradeYears(room, track);
     if (this.isMinesRound(room)) this.gradeMines(room);
     if (this.isRainRound(room)) this.gradeRain(room, track);
+    this.markIdle(room);
     room.players.forEach((player) => {
       if (!player.lastAnswer && this.isPlaying(room, player.id)) {
         player.streak = 0;
@@ -1622,6 +1678,7 @@ export class RoomManager {
         player.lastAnswer = { text: "", correct: false, at: now };
       }
     });
+    this.recordRound(room, track);
     let revealMs = REVEAL_MS;
     if (this.isMapRound(room)) revealMs = LOCATION_REVEAL_MS;
     else if (this.isYearRound(room)) revealMs = HISTORY_REVEAL_MS;
@@ -1630,6 +1687,68 @@ export class RoomManager {
     else if (this.isRainRound(room)) revealMs = RAIN_REVEAL_MS;
     this.setPhase(room, "reveal", revealMs, () => this.advance(room));
     return { track, duration };
+  }
+
+  /**
+   * At each reveal: the round in every player's summary of the match (`results[].rounds`, shown at the end): the
+   * question, the right answer (null in Campo de minas, whose board has no single one, and in Lluvia, a shower of
+   * them), what they answered (null with no answer; in Lluvia their round, "4 aciertos · 12 puntos", if they sent
+   * anything), the points and how it went (`status`): "ok" right (Rango's exact answer, a pin inside the country, a
+   * board survived, a question taken in the rain), "near" not right but with points (a close year or pin), "bad" wrong
+   * or a mine, "none" no answer. Not in a tiebreak, which gives no points.
+   */
+  recordRound(room, track) {
+    if (room.tiebreak || !track) return;
+    const mines = this.isMinesRound(room);
+    const rain = this.isRainRound(room);
+    const right = mines || rain ? null : this.rightAnswerText(room, track);
+    const fell = rain ? track.drops.filter((d) => d.at < track.roundMs).length : 0;
+    const prompt = rain ? `Lluvia de ${fell} preguntas` : track.prompt || track.text || (room.game === "musica" ? "¿Qué canción es?" : null);
+    for (const player of room.players.values()) {
+      if (!this.isPlaying(room, player.id) || (mines && !player.minefield) || (rain && !player.rain)) continue;
+      const answer = player.lastAnswer;
+      const sent = rain ? player.rain.sent > 0 : true;
+      const yours = sent && answer && !answer.skipped && answer.text ? answer.text : null;
+      const points = player.lastPoints || 0;
+      const correct = mines ? !answer?.out : Boolean(answer?.correct);
+      const status = correct ? "ok" : !yours ? "none" : points > 0 && !answer?.out ? "near" : "bad";
+      // `questionId` stays on the server (a report names the question; players never see ids).
+      (player.rounds ||= []).push({ round: room.currentRound + 1, game: room.game, questionId: track.id ?? null, prompt, answer: right, yours, points, status });
+    }
+  }
+
+  /** The right answer of a round, as people read it. */
+  rightAnswerText(room, track) {
+    if (room.game === HISTORY_GAME) return track.kind === "cifras" ? figureLabel(track.value, track.unit) : yearLabel(track.year);
+    if (room.game === GEO_GAME) return track.name || track.answer || null;
+    if (room.game === QUIZ_GAME) return track.type === "choice" ? track.options[track.answer] : track.answer || null;
+    if (room.game === "musica") return artistLine(track) ? `${track.title} - ${artistLine(track)}` : track.title || null;
+    return null;
+  }
+
+  /**
+   * At each reveal (before the players without an answer get an empty one): whoever played this round and didn't
+   * answer (no answer, no pin or year placed; in Campo de minas, no cell picked; in Lluvia, nothing sent) adds a round
+   * to `idleRounds`; after IDLE_ROUNDS in a row they're `idle`, and rounds (and turns) stop waiting for them to end
+   * early. Answering again (answered, pickCell, rainAnswer) or answering this round sets them back to zero. Not
+   * counted in a tiebreak.
+   */
+  markIdle(room) {
+    if (room.tiebreak) return;
+    const mines = this.isMinesRound(room);
+    // Lluvia gives everyone their round's summary (gradeRain) before this: what counts is having sent any answer.
+    const rain = this.isRainRound(room);
+    for (const player of room.players.values()) {
+      if (!this.isPlaying(room, player.id)) continue;
+      const responded = mines ? Boolean(player.minefield?.pickedTurn) : rain ? Boolean(player.rain?.sent) : Boolean(player.lastAnswer);
+      if (responded) {
+        player.idleRounds = 0;
+        player.idle = false;
+      } else {
+        player.idleRounds = (player.idleRounds || 0) + 1;
+        if (player.idleRounds >= IDLE_ROUNDS) player.idle = true;
+      }
+    }
   }
 
   advance(room) {
@@ -1695,7 +1814,7 @@ export class RoomManager {
     if (!room.statsApplied) {
       room.statsApplied = true;
       const ranked = this.rankedPlayers(room);
-      applyMatchStats(this.store, ranked);
+      applyMatchStats(this.store, ranked, { game: room.run?.mixed ? PLAYLIST_GAME : room.game, room: room.code });
       this.recordWin(room, ranked);
       // A game of a playlist: its winner adds a win to the playlist's tally.
       if (room.run && !room.run.finished && ranked.length) {
@@ -1749,7 +1868,6 @@ export class RoomManager {
   replay(room, userId) {
     if (room.hostId !== userId) throw new Error("Solo el Host puede empezar otra partida");
     if (room.phase !== "finished") throw new Error("La partida aún no ha terminado");
-    if (room.run && !room.run.finished) throw new Error("Sigue con la playlist o termínala primero");
     this.stopPlaylist(room);
     this.resetMatch(room);
     this.start(room, userId);
@@ -1768,15 +1886,15 @@ export class RoomManager {
       if (problem) throw new Error(`Revisa el juego ${i + 1}, ${GAME_NAMES[item.game]}. ${problem}`);
     });
     room.run = newRun(room.playlist, room.config);
-    if (room.run.mixed) this.startMixed(room);
-    else this.playItem(room);
+    this.startMixed(room);
   }
 
   /**
-   * A playlist played "aleatorio": one match whose rounds are every game's rounds mixed at random (two of Encuentra el
-   * país, then one of Adivina la canción, then Encuentra el país again...). Each game's questions or songs are drawn
-   * now with its own settings; each round, beginCountdown moves the room into its game (enterMixedRound). The scores
-   * add up across the whole match, which ends on the playlist's results.
+   * A playlist is played as one match: "orden" plays every round of its first game, then of the second, and so on;
+   * "aleatorio" mixes every game's rounds at random (two of Encuentra el país, then one of Adivina la canción, then
+   * Encuentra el país again...). Each game's questions or songs are drawn now with its own settings; each round,
+   * beginCountdown moves the room into its game (enterMixedRound). The scores add up across the whole match, which
+   * ends straight on the playlist's results.
    */
   startMixed(room) {
     const run = room.run;
@@ -1794,7 +1912,8 @@ export class RoomManager {
       this.resetMatch(room);
       throw err;
     }
-    room.tracks = mixRounds(perItem).map(({ item, track }) => ({ ...track, playlistItem: item }));
+    const rounds = run.order === "aleatorio" ? mixRounds(perItem) : perItem.flatMap((tracks, item) => tracks.map((track) => ({ item, track })));
+    room.tracks = rounds.map(({ item, track }) => ({ ...track, playlistItem: item }));
     room.totalRounds = room.tracks.length;
     const music = room.tracks.filter((t) => run.items[t.playlistItem].game === "musica");
     if (music.length) this.onNewTracks?.(music);
@@ -1807,6 +1926,9 @@ export class RoomManager {
       p.streak = 0;
       p.bestStreak = 0;
       p.answerTimes = [];
+      p.rounds = [];
+      p.idleRounds = 0;
+      p.idle = false;
       p.status = "jugando";
     });
     this.beginCountdown(room);
@@ -1877,46 +1999,6 @@ export class RoomManager {
     }
   }
 
-  /**
-   * Plays the run's current game: the room moves into it with its settings and its match starts at once. If it can't
-   * start after all, the playlist is over (the room goes back to its panel) and the reason is thrown.
-   */
-  playItem(room) {
-    const run = room.run;
-    const item = run.items[run.index];
-    this.resetMatch(room);
-    room.game = item.game;
-    room.config = configWithItem(run.savedConfig, item);
-    this.syncPlaylists(room);
-    try {
-      this.start(room, room.hostId);
-    } catch (err) {
-      this.stopPlaylist(room);
-      this.resetMatch(room);
-      throw err;
-    }
-  }
-
-  /**
-   * The host's "Siguiente juego", on a playlist game's results: the next game starts. After the last one, the room
-   * shows the playlist's results instead (still `finished`, back in the playlist), with who won the most games.
-   */
-  nextInPlaylist(room, userId) {
-    if (room.hostId !== userId) throw new Error("Solo el anfitrión puede seguir con la playlist");
-    const run = room.run;
-    if (!run || run.finished) throw new Error("No hay ninguna playlist en curso");
-    if (room.phase !== "finished") throw new Error("Espera a que termine este juego");
-    if (run.index + 1 < run.items.length) {
-      const item = run.items[run.index + 1];
-      const problem = this.itemProblem(room, item, run.savedConfig, { exact: true });
-      if (problem) throw new Error(`No se puede jugar ${GAME_NAMES[item.game]}. ${problem}`);
-      run.index += 1;
-      this.playItem(room);
-      return;
-    }
-    this.endRun(room);
-  }
-
   /** After the playlist's last game, the room shows the playlist's results (still `finished`, back in the playlist). */
   endRun(room) {
     room.run.finished = true;
@@ -1982,6 +2064,7 @@ export class RoomManager {
     if (room.phase === "countdown" || room.phase === "playing") throw new Error("El chat se pausa mientras se juega la ronda");
     const clean = String(text ?? "").replace(/\s+/g, " ").trim().slice(0, CHAT_MAX_LENGTH);
     if (!clean) throw new Error("Escribe un mensaje");
+    if (hasLink(clean)) throw new Error(CHAT_LINK_ERROR);
     const now = Date.now();
     if (now - (player.chattedAt || 0) < CHAT_GAP_MS) throw new Error("Espera un momento antes de mandar otro mensaje");
     player.chattedAt = now;
@@ -2079,6 +2162,9 @@ export class RoomManager {
       p.streak = 0;
       p.bestStreak = 0;
       p.answerTimes = [];
+      p.rounds = [];
+      p.idleRounds = 0;
+      p.idle = false;
       p.lastAnswer = null;
       p.lastPoints = 0;
       p.pin = null;
@@ -2271,15 +2357,25 @@ export class RoomManager {
     if (!this.isPlaying(room, userId)) throw new Error("Solo juegan el desempate los jugadores empatados");
     if (player.lastAnswer) return false;
     const track = room.tracks[room.currentRound];
-    const year = Number(value?.year);
-    if (!Number.isInteger(year) || year < track.min || year > track.max) throw new Error("Elige un año de la línea del tiempo");
-    if (year === 0) throw new Error("El año 0 no existe");
-    if (year > currentYear()) throw new Error("Ese año aún no ha llegado");
-    player.guess = { year, at: Date.now() };
+    let exact;
+    if (track.kind === "cifras") {
+      // Cifras: a number on the figure's bar.
+      const number = Number(value?.value);
+      if (!Number.isInteger(number) || number < track.min || number > track.max) throw new Error("Elige un número de la barra");
+      player.guess = { value: number, at: Date.now() };
+      exact = Math.abs(number - track.value) <= figureTolerance(track.span);
+    } else {
+      const year = Number(value?.year);
+      if (!Number.isInteger(year) || year < track.min || year > track.max) throw new Error("Elige un año de la línea del tiempo");
+      if (year === 0) throw new Error("El año 0 no existe");
+      if (year > currentYear()) throw new Error("Ese año aún no ha llegado");
+      player.guess = { year, at: Date.now() };
+      exact = year === track.year;
+    }
     if (!value.lock) return false;
 
-    player.lastAnswer = { year, at: player.guess.at, locked: true };
-    if (room.tiebreak && year === track.year) {
+    player.lastAnswer = { ...player.guess, locked: true };
+    if (room.tiebreak && exact) {
       player.status = "respondió";
       if (room.timer) clearTimeout(room.timer);
       this.beginReveal(room);
@@ -2295,19 +2391,33 @@ export class RoomManager {
    * exact year gets every point; otherwise fewer the further it is. In a tiebreak nobody scores: it decides who wins.
    */
   gradeYears(room, track) {
+    const figure = track.kind === "cifras";
     for (const player of room.players.values()) {
       if (!this.isPlaying(room, player.id)) continue;
       if (!player.lastAnswer && player.guess) {
-        player.lastAnswer = { year: player.guess.year, at: player.guess.at, locked: false };
+        player.lastAnswer = { ...player.guess, locked: false };
       }
       const answer = player.lastAnswer;
-      if (!Number.isInteger(answer?.year)) continue;
-      const diff = yearsApart(answer.year, track.year);
-      answer.diff = diff;
-      answer.correct = diff === 0;
-      answer.text = diff === 0 ? `${yearLabel(answer.year)}, año exacto` : `${yearLabel(answer.year)}, a ${diff} ${diff === 1 ? "año" : "años"}`;
+      let points;
+      if (figure) {
+        // Cifras: how far the number is, and whether it went over (`over`) or fell short.
+        if (!Number.isInteger(answer?.value)) continue;
+        const diff = Math.abs(answer.value - track.value);
+        answer.diff = diff;
+        answer.over = answer.value > track.value;
+        answer.correct = diff <= figureTolerance(track.span);
+        const label = figureLabel(answer.value, track.unit);
+        answer.text = answer.correct ? `${label}, exacto` : `${label}, ${answer.over ? "se pasó por" : "le faltaron"} ${figureLabel(diff, track.unit)}`;
+        points = figurePoints(diff, track.span);
+      } else {
+        if (!Number.isInteger(answer?.year)) continue;
+        const diff = yearsApart(answer.year, track.year);
+        answer.diff = diff;
+        answer.correct = diff === 0;
+        answer.text = diff === 0 ? `${yearLabel(answer.year)}, año exacto` : `${yearLabel(answer.year)}, a ${diff} ${diff === 1 ? "año" : "años"}`;
+        points = yearPoints(diff, track.era);
+      }
       if (room.tiebreak) continue;
-      const points = yearPoints(diff, track.era);
       player.lastPoints = points;
       player.score += points;
       player.streak = answer.correct ? player.streak + 1 : 0;
@@ -2398,6 +2508,8 @@ export class RoomManager {
     cell.at = now;
     cell.turn = room.turn;
     field.pickedTurn = room.turn;
+    player.idleRounds = 0;
+    player.idle = false;
     if (!race) player.status = "respondió";
     if (cell.correct) {
       field.hits += 1;
@@ -2431,7 +2543,7 @@ export class RoomManager {
     }
     if (this.isMinesRace(room)) return false;
     const waiting = [...room.players.values()].some(
-      (p) => p.connected && p.minefield && !p.minefield.out && p.minefield.pickedTurn !== room.turn
+      (p) => p.connected && !p.idle && p.minefield && !p.minefield.out && p.minefield.pickedTurn !== room.turn
     );
     if (waiting) return false;
     this.endTurn(room, false);
@@ -2504,6 +2616,9 @@ export class RoomManager {
     const now = Date.now();
     if (now - rain.sentAt < RAIN_ANSWER_GAP_MS) throw new Error("Más despacio");
     rain.sentAt = now;
+    rain.sent += 1;
+    player.idleRounds = 0;
+    player.idle = false;
 
     const round = room.tracks[room.currentRound];
     const elapsed = this.rainElapsed(room);
@@ -2575,8 +2690,11 @@ export class RoomManager {
   // Once every connected player has answered (or skipped), the song is revealed without waiting for the clock.
   answered(room, player) {
     player.status = "respondió";
+    player.idleRounds = 0;
+    player.idle = false;
     this.onPhaseChange?.(room);
-    const active = [...room.players.values()].filter((p) => p.connected && this.isPlaying(room, p.id));
+    // The round ends early once everyone it waits for answered: connected players, not the inactive ones (markIdle).
+    const active = [...room.players.values()].filter((p) => p.connected && !p.idle && this.isPlaying(room, p.id));
     if (active.length && active.every((p) => p.lastAnswer)) {
       if (room.timer) clearTimeout(room.timer);
       this.beginReveal(room);
@@ -2712,7 +2830,12 @@ export class RoomManager {
       if (track) payload.question = this.publicHistoryQuestion(room, track);
       // In the lobby: how many events each topic, age and difficulty has, for the settings' chips.
       if (room.phase === "lobby") payload.questionCounts = historyCounts(this.historyQuestions, room.config.history);
-      if (track && showTrack) payload.reveal = { prompt: track.prompt, year: track.year, min: track.min, max: track.max };
+      if (track && showTrack) {
+        payload.reveal =
+          track.kind === "cifras"
+            ? { kind: "cifras", prompt: track.prompt, value: track.value, unit: track.unit, min: track.min, max: track.max }
+            : { kind: "linea", prompt: track.prompt, year: track.year, min: track.min, max: track.max };
+      }
     } else if (room.game === MINES_GAME) {
       // The whole board (which cells were right) only goes out with the question at the reveal.
       if (track) payload.question = this.publicMinesQuestion(room, track);
@@ -2771,6 +2894,8 @@ export class RoomManager {
           ? Math.round(p.answerTimes.reduce((s, n) => s + n, 0) / p.answerTimes.length)
           : null,
         tiebreakWinner: p.id === room.tiebreak?.winnerId,
+        // Every round of the match for this player, with the right answer and their points (recordRound).
+        rounds: publicRounds(p.rounds),
       }));
     }
     if (forUserId) {
@@ -2783,8 +2908,8 @@ export class RoomManager {
             lastAnswer: me.lastAnswer,
             // Geografía's map rounds: this player's pin, not locked yet (so a reload doesn't lose it).
             pin: me.pin ? [me.pin.lng, me.pin.lat] : null,
-            // Historia: the year this player has on the timeline, not locked yet.
-            guess: me.guess ? me.guess.year : null,
+            // Rango: the year (or Cifras' number) this player has on the line, not locked yet.
+            guess: me.guess ? me.guess.year ?? me.guess.value : null,
             isHost: room.hostId === forUserId,
             canEditConfig: this.canEditConfig(room, forUserId),
           }
@@ -2900,9 +3025,13 @@ export class RoomManager {
     const open = ["playing", "reveal", "finished"].includes(room.phase);
     return {
       round: room.currentRound + 1,
+      // "linea" (an event's year) or "cifras" (a number, with its unit and the step a guess moves in).
+      kind: track.kind || "linea",
       prompt: track.prompt,
       category: track.category ? categoryName(track.category) : null,
       difficulty: track.difficulty,
+      unit: track.kind === "cifras" ? track.unit : null,
+      snap: track.kind === "cifras" && open ? track.snap : null,
       min: open ? track.min : null,
       max: open ? track.max : null,
     };

@@ -449,7 +449,10 @@
 /* ---------- Room screen ---------- */
 /* The room is wider than the other screens: the game's panel and settings side by side, and the room's column. */
 .tv-main:has(> .tv-room),
-.tv-app:has(.tv-room) .tv-topbar { max-width: 1400px; }
+.tv-app:has(.tv-room) .tv-topbar,
+/* Pages as wide as the room's screens (the profile), so they don't leave empty bands at the sides. */
+.tv-main:has(> .tv-page--wide),
+.tv-app:has(.tv-page--wide) .tv-topbar { max-width: 1400px; }
 .tv-main.is-room { padding-top: 14px; }
 .tv-room {
   display: flex;
@@ -585,9 +588,6 @@
   padding: 26px;
   border-radius: 34px;
   background: var(--c2);
-  box-shadow: 0 8px 0 var(--edge);
-  /* Room for its 8px edge, so its bottom lines up with the panels beside it. */
-  margin-bottom: 8px;
   color: var(--on);
   transform-origin: 50% 100%;
   transition: background-color 0.6s ease, color 0.6s ease, box-shadow 0.6s ease;
@@ -636,7 +636,8 @@
   border: 0;
   border-radius: 22px;
   background: var(--on);
-  box-shadow: 0 7px 0 rgba(0, 0, 0, 0.4);
+  /* A white button on a coloured card: its edge is a darker shade of that card (so orange on orange). */
+  box-shadow: 0 7px 0 rgba(0, 0, 0, 0.22);
   color: var(--c2);
   font-family: var(--tv-display);
   font-weight: 800;
@@ -696,6 +697,25 @@
   animation: tvFromRight 0.6s cubic-bezier(0.2, 0.9, 0.3, 1.08) 0.16s backwards;
 }
 .tv-party-codebox { display: flex; flex-direction: column; gap: 10px; padding: 16px; border-radius: 22px; background: var(--tv-bg); }
+.tv-party-codehead { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+/* "Ocultar" the code (lib/hiddenCode.js): a small pill; lit while the code is hidden. */
+.tv-code-eye {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 28px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--tv-option-bg);
+  font-weight: 800;
+  font-size: 12px;
+  color: var(--tv-text-2);
+  cursor: pointer;
+}
+.tv-code-eye:hover { color: var(--tv-text); }
+.tv-code-eye.is-on { background: var(--tv-violet); color: var(--p-ink); }
+.tv-party-code.is-hidden { letter-spacing: 0.18em; -webkit-user-select: none; user-select: none; }
 .tv-party-code {
   margin: 0;
   font-family: var(--tv-display);
@@ -746,8 +766,36 @@
 .tv-player-tag { font-size: 12px; font-weight: 600; color: var(--tv-text-3); }
 .tv-player-tag.is-host { color: var(--p-accent-text); }
 .tv-player-crown { flex-shrink: 0; color: #ffd23f; }
-.tv-player-waiting { display: flex; align-items: center; gap: 12px; padding: 7px 8px; font-weight: 600; font-size: 14px; color: var(--tv-text-3); }
-.tv-player-waiting-ring { flex-shrink: 0; width: 38px; height: 38px; border: 2.5px dashed var(--tv-dash); border-radius: 50%; }
+/* "Invitar amigos" under the players while the room waits (InviteFriends.jsx). */
+/* Set apart from the players like a section of its own, with the same gap under its title as "En la sala". */
+.tv-invite-friends { display: grid; gap: 10px; margin-top: 14px; }
+.tv-invite-friends-list { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.tv-invite-friend { display: flex; align-items: center; gap: 10px; min-width: 0; padding: 6px 6px 6px 8px; border-radius: 14px; background: var(--tv-option-bg); }
+.tv-invite-friend .tv-avatar { flex-shrink: 0; width: 32px; height: 32px; font-size: 14px; }
+.tv-invite-friend-text { display: grid; flex: 1; min-width: 0; }
+.tv-invite-friend-text strong { overflow: hidden; font-weight: 800; font-size: 14px; color: var(--tv-text); text-overflow: ellipsis; white-space: nowrap; }
+.tv-invite-friend-text small { font-weight: 700; font-size: 12px; color: var(--p-ok-text); }
+/* Small, so the row keeps its height: the button never grows past the avatar. */
+.tv-app .tv-invite-friend-btn { flex-shrink: 0; gap: 5px; height: 32px; padding: 0 12px; border-radius: 10px; box-shadow: 0 3px 0 var(--edge); font-size: 14px; }
+.tv-app .tv-invite-friend-btn:hover { box-shadow: 0 4px 0 var(--edge); }
+.tv-app .tv-invite-friend-btn:active { box-shadow: 0 0 0 var(--edge); }
+.tv-invite-friends-none { margin: 0; padding: 4px 2px; font-weight: 700; font-size: 13px; color: var(--tv-text-3); }
+.tv-invite-friends-empty {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 42px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 14px;
+  background: var(--tv-option-bg);
+  font-family: inherit;
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--tv-text-2);
+  cursor: pointer;
+}
+.tv-invite-friends-empty:hover { background: var(--tv-neutral); color: var(--tv-text); }
 /* "Salir de la sala": a solid red button as wide as the code card above it. */
 .tv-leave-btn {
   display: flex;
@@ -1277,17 +1325,21 @@
 
 /* ---------- Confirm dialog (ConfirmDialog.jsx): the sheet's look, smaller, with two buttons ---------- */
 .tv-sheet-pos--sm { max-width: 440px; }
-.tv-sheet--confirm { padding-top: 24px; }
-/* The title beside the icon, centred on it (one or two lines). */
-.tv-sheet--confirm .tv-sheet-head { align-items: center; }
-.tv-sheet--confirm .tv-sheet-title { line-height: 1.15; }
+/* The same room on every side (the sheet's own sides are thinner). */
+.tv-sheet--confirm { padding: 24px 24px calc(24px + env(safe-area-inset-bottom)); }
+/* The title and the text beside the icon. */
+.tv-sheet--confirm .tv-sheet-title { font-size: 21px; line-height: 1.2; }
 .tv-badge--bad { --c2: var(--p-bad); --edge: var(--p-bad-edge); --on: #fff; }
 .tv-btn--bad { --c2: var(--p-bad); --edge: var(--p-bad-edge); --on: #fff; }
+.tv-confirm-copy { display: grid; gap: 6px; min-width: 0; }
+/* The icon in the middle of the title and text block, a little smaller, so neither looks taller than the other. */
+.tv-sheet--confirm .tv-sheet-head { align-items: center; gap: 16px; padding: 0 0 24px; }
+.tv-sheet--confirm .tv-badge { width: 48px; height: 48px; border-radius: 15px; }
 .tv-confirm-text {
-  margin: 0 0 22px;
-  padding: 0 4px;
+  margin: 0;
+  padding: 0;
   font-weight: 700;
-  font-size: 16px;
+  font-size: 14px;
   line-height: 1.4;
   color: var(--tv-text-2);
 }
@@ -1303,7 +1355,7 @@
   border: 0;
   border-radius: 20px;
   background: var(--tv-option-bg);
-  box-shadow: inset 0 3px 0 var(--tv-option-edge);
+  /* Flat: no inset shadow at the top (it read as a white inverted edge). */
   color: var(--tv-text);
   font-family: var(--tv-display);
   font-weight: 600;
@@ -1347,7 +1399,6 @@
   border: 0;
   border-radius: 50%;
   background: var(--sw);
-  box-shadow: inset 0 -2px 0 rgba(0, 0, 0, 0.18);
   cursor: pointer;
   transition: transform 0.2s var(--tv-spring), box-shadow 0.2s ease;
 }
@@ -1563,7 +1614,7 @@
 .tv-mini-btn.is-on:active { box-shadow: 0 0 0 var(--p-bad-edge); }
 .tv-btn--sm { height: 38px; padding: 0 14px; font-size: 15px; border-radius: 13px; }
 .tv-stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
-.tv-stat { display: grid; gap: 4px; padding: 12px 14px; border-radius: 20px; background: var(--tv-option-bg); box-shadow: 0 3px 0 var(--tv-option-edge); }
+.tv-stat { display: grid; gap: 4px; padding: 12px 14px; border-radius: 20px; background: var(--tv-option-bg); }
 .tv-stat--wide { grid-column: 1 / -1; }
 .tv-stat-label { font-size: 12px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: var(--tv-text-3); }
 .tv-stat-value { font-family: var(--tv-display); font-weight: 600; font-size: 28px; line-height: 1.1; color: var(--tv-text); }
@@ -1644,26 +1695,28 @@
 .tv-divider::before, .tv-divider::after { content: ""; flex: 1; height: 2px; border-radius: 2px; background: var(--tv-option-bg); }
 
 /* Segmented switch with a sliding thumb */
+/* A segmented switch (Segmented.jsx: "Crear cuenta / Iniciar sesión", the friends panel's tabs, who of your friends
+   can join): a flat strip, and the chosen option a lighter pill that slides to it. No shadows: it isn't a button to
+   press, it's a choice that's already made. */
 .tv-seg {
   position: relative;
   display: grid;
   grid-template-columns: repeat(var(--count), minmax(0, 1fr));
-  padding: 5px;
-  border-radius: 18px;
+  padding: 4px;
+  overflow: hidden;
+  border-radius: 14px;
   background: var(--tv-option-bg);
-  box-shadow: inset 0 3px 0 var(--tv-option-edge);
 }
 .tv-seg-thumb {
   position: absolute;
-  top: 5px;
-  bottom: 5px;
-  left: 5px;
-  width: calc((100% - 10px) / var(--count));
-  border-radius: 14px;
-  background: var(--tv-surface);
-  box-shadow: 0 3px 0 var(--tv-edge);
+  top: 4px;
+  bottom: 4px;
+  left: 4px;
+  width: calc((100% - 8px) / var(--count));
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.08);
   transform: translateX(calc(var(--pos) * 100%));
-  transition: transform 0.35s var(--tv-spring);
+  transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.3, 1);
 }
 .tv-seg-btn {
   position: relative;
@@ -1791,7 +1844,7 @@
   cursor: pointer;
 }
 .tv-saved-forget:hover { background: rgba(255, 255, 255, 0.06); color: var(--tv-text); }
-.tv-saved-forget.is-asking { background: var(--p-bad); color: #fff; }
+.tv-saved-forget.is-asking { background: var(--p-bad); box-shadow: 0 3px 0 var(--p-bad-edge); color: #fff; }
 .tv-saved-add { flex: none; width: 38px; padding: 0; }
 .tv-saved-add .tv-spinner { width: 16px; height: 16px; }
 
@@ -1806,10 +1859,9 @@
   padding: 0 7px 0 14px;
   border-radius: 16px;
   background: var(--tv-option-bg);
-  box-shadow: inset 0 3px 0 var(--tv-option-edge);
   transition: box-shadow 0.2s ease;
 }
-.tv-spotify-link-box:focus-within { box-shadow: inset 0 3px 0 var(--tv-option-edge), 0 0 0 3px var(--brand); }
+.tv-spotify-link-box:focus-within { box-shadow: 0 0 0 3px var(--brand); }
 .tv-spotify-link-box > svg { flex: none; }
 .tv-spotify-link-input {
   flex: 1;
@@ -1842,10 +1894,13 @@
 .tv-auth-card { gap: 18px; animation-delay: 0.35s; }
 
 /* ---------- Profile ---------- */
+/* Room around the avatar (its blue ring reaches 7 px out) and between it and the name; the name, @username and tags
+   one even step apart. */
 .tv-profile-hero {
   grid-template-columns: auto minmax(0, 1fr);
   align-items: center;
-  gap: 18px;
+  gap: 26px;
+  padding: 26px 28px;
   overflow: hidden;
   overflow: clip;
   position: relative;
@@ -1868,10 +1923,11 @@
   width: 88px;
   height: 88px;
   font-size: 40px;
-  box-shadow: 0 5px 0 var(--tv-edge), 0 0 0 4px var(--tv-surface), 0 0 0 7px var(--brand);
+  box-shadow: 0 0 0 4px var(--tv-surface), 0 0 0 7px var(--brand);
 }
 .tv-avatar--lg { width: 64px; height: 64px; font-size: 28px; }
-.tv-profile-who { display: grid; gap: 6px; min-width: 0; }
+.tv-profile-who { display: grid; gap: 4px; min-width: 0; }
+.tv-profile-who .tv-tags { margin-top: 8px; }
 .tv-profile-who .tv-page-title { overflow-wrap: anywhere; }
 .tv-profile-grid { display: grid; gap: 20px; align-items: start; }
 @media (min-width: 900px) { .tv-profile-grid:not(.is-single) { grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); } }
@@ -1883,9 +1939,9 @@
   position: relative;
   animation: tvPop 0.55s var(--tv-spring) backwards;
   animation-delay: calc(0.15s + var(--i) * 60ms);
-  transition: transform 0.2s var(--tv-spring);
+  transition: transform 0.16s var(--tv-spring), box-shadow 0.16s ease;
 }
-.tv-stat--pop:hover { transform: translateY(-3px) rotate(-1deg); }
+
 .tv-stat-dot {
   position: absolute;
   top: 12px;
@@ -1926,7 +1982,6 @@
   padding: 12px 14px;
   border-radius: 20px;
   background: var(--tv-option-bg);
-  box-shadow: 0 3px 0 var(--tv-option-edge);
 }
 .tv-row-card-text { display: grid; flex: 1; min-width: 0; }
 .tv-row-card-text strong { font-weight: 800; font-size: 15px; }
@@ -1988,7 +2043,6 @@
   overflow: hidden;
   border-radius: 999px;
   background: var(--tv-option-bg);
-  box-shadow: inset 0 3px 0 var(--tv-option-edge);
 }
 .tv-timer-fill {
   display: block;
@@ -2049,10 +2103,9 @@
   padding: 0 8px 0 18px;
   border-radius: 20px;
   background: var(--tv-option-bg);
-  box-shadow: inset 0 3px 0 var(--tv-option-edge);
   transition: box-shadow 0.2s ease;
 }
-.tv-search-box:focus-within { box-shadow: inset 0 3px 0 var(--tv-option-edge), 0 0 0 3px var(--brand); }
+.tv-search-box:focus-within { box-shadow: 0 0 0 3px var(--brand); }
 .tv-search-icon { flex-shrink: 0; color: var(--brand-text); }
 .tv-search-input {
   flex: 1;
@@ -2075,7 +2128,7 @@
   padding: 8px;
   border-radius: 22px;
   background: var(--tv-surface);
-  box-shadow: 0 6px 0 var(--tv-edge), 0 20px 40px -16px rgba(0, 0, 0, 0.5);
+  box-shadow: inset 0 0 0 1px var(--tv-line), 0 12px 30px rgba(0, 0, 0, 0.45);
   animation: tvDropIn 0.3s var(--tv-spring);
 }
 /* Scrolls without showing bars (they looked out of place on the dark card); the wheel, touch and arrow keys still work. */
@@ -2198,9 +2251,9 @@
 }
 .tv-result-cheer { margin: 0; font-family: var(--tv-display); font-weight: 600; font-size: 19px; color: var(--tv-text-2); }
 .tv-result-title { margin: 0; font-family: var(--tv-display); font-weight: 700; font-size: clamp(28px, 6vw, 36px); letter-spacing: 0; color: var(--tv-text); }
-.tv-result--ok { box-shadow: 0 6px 0 var(--tv-edge), inset 0 0 0 3px var(--p-ok); }
+.tv-result--ok { box-shadow: inset 0 0 0 3px var(--p-ok); }
 .tv-result--ok .tv-result-icon { background: var(--p-ok); box-shadow: 0 5px 0 var(--p-ok-edge); }
-.tv-result--bad { box-shadow: 0 6px 0 var(--tv-edge), inset 0 0 0 3px var(--p-bad); animation: tvRise 0.4s var(--tv-spring) backwards, tvShake 0.5s ease 0.35s; }
+.tv-result--bad { box-shadow: inset 0 0 0 3px var(--p-bad); animation: tvRise 0.4s var(--tv-spring) backwards, tvShake 0.5s ease 0.35s; }
 .tv-result--bad .tv-result-icon { background: var(--p-bad); box-shadow: 0 5px 0 var(--p-bad-edge); color: #fff; }
 .tv-result--timeout .tv-result-icon { background: var(--p-accent-2); box-shadow: 0 5px 0 var(--p-accent-edge); color: var(--p-ink); }
 
@@ -2221,7 +2274,6 @@
   height: 96px;
   border-radius: 20px;
   object-fit: cover;
-  box-shadow: 0 5px 0 var(--tv-edge);
   opacity: 0;
 }
 .tv-song-cover.is-loaded { opacity: 1; animation: tvFlipIn 0.7s var(--tv-spring) backwards; }
@@ -2233,7 +2285,7 @@
 .tv-next { justify-content: center; }
 
 /* Results */
-.tv-results { justify-content: center; gap: 22px; }
+.tv-results { justify-content: center; gap: 18px; }
 .tv-results-head { display: grid; justify-items: center; gap: 6px; text-align: center; }
 .tv-results-title { animation: tvPop 0.7s var(--tv-spring) 0.1s backwards; }
 .tv-podium { margin-top: 30px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: end; gap: 10px; }
@@ -2242,7 +2294,11 @@
 .tv-podium-avatar { position: relative; animation: tvPop 0.6s var(--tv-spring) backwards; }
 .tv-podium-crown { position: absolute; top: -26px; left: 50%; translate: -50% 0; color: var(--p-accent-2); stroke: var(--p-accent-edge); animation: tvBob 2.4s ease-in-out infinite; }
 .tv-player-link { color: inherit; text-decoration: none; border-radius: 6px; transition: color 0.15s ease; }
-.tv-player-link:hover { color: var(--brand-text); text-decoration: underline; text-underline-offset: 3px; }
+/* A link to a player's profile is never underlined: it only takes the brand's colour on hover. */
+.tv-player-link,
+.tv-player-link:hover,
+.tv-player-link:focus-visible { text-decoration: none; }
+.tv-player-link:hover { color: var(--brand-text); }
 .tv-podium-name { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 800; font-size: 15px; }
 .tv-podium-score { font-family: var(--tv-display); font-weight: 700; font-size: 18px; color: var(--brand-text); }
 .tv-podium-block {
@@ -2270,6 +2326,161 @@
 .tv-results-actions { display: grid; gap: 12px; width: min(420px, 100%); animation: tvUp 0.55s var(--tv-ease-out) 1s backwards; }
 .tv-results-wait { width: 100%; background: var(--tv-option-bg); color: var(--tv-text-2); }
 .tv-podium { width: min(560px, 100%); }
+/* ---------- Results (MatchResults, the playlist's intermission and final screen; ResultsParts.jsx) ---------- */
+/* From the top, so nothing is cut when it doesn't fit (the head's and the bar's auto margins centre it when it does). */
+.tv-results { container-type: inline-size; justify-content: flex-start; overflow-y: auto; }
+.tv-res-head,
+.tv-res-cards,
+.tv-res-foot { width: min(1000px, 100%); flex-shrink: 0; }
+/* The head centred: the kicker and the title, and a playlist's games under them. */
+.tv-res-head { display: flex; flex-direction: column; align-items: center; gap: 12px; margin-top: auto; }
+.tv-res-heading { display: grid; justify-items: center; gap: 4px; min-width: 0; text-align: center; }
+.tv-res-heading .tv-page-title { color: var(--tv-page-text, var(--tv-text)); }
+.tv-res-heading .tv-mono-label { color: var(--tv-page-text-2, var(--tv-text-2)); }
+/* The kicker's line: the kicker and, in a playlist, its games as small icons beside it. */
+.tv-res-kicker { display: inline-flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 6px 12px; }
+.tv-pl-mini { display: inline-flex; align-items: center; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.tv-pl-mini-game {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 7px;
+  background: var(--c2);
+  box-shadow: 0 2px 0 var(--edge);
+  color: var(--on);
+  opacity: 0.4;
+}
+.tv-pl-mini-game.is-played,
+.tv-pl-mini-game.is-now { opacity: 1; }
+.tv-pl-mini-game.is-now { outline: 2px solid var(--tv-text); outline-offset: 2px; }
+.tv-pl-mini-tick {
+  position: absolute;
+  right: -4px;
+  bottom: -4px;
+  display: grid;
+  place-items: center;
+  width: 12px;
+  height: 12px;
+  border-radius: 999px;
+  background: var(--p-ok);
+  box-shadow: 0 0 0 2px var(--tv-bg);
+  color: #fff;
+}
+
+.tv-res-cards { display: grid; gap: 14px; }
+.tv-res-cards--pair { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: stretch; }
+.tv-res-card {
+  display: grid;
+  align-content: start;
+  gap: 14px;
+  min-width: 0;
+  padding: 18px 20px;
+  border-radius: 26px;
+  background: var(--tv-surface);
+  box-shadow: inset 0 0 0 1px var(--tv-line);
+  animation: tvUp 0.55s var(--tv-ease-out) 0.2s backwards;
+}
+.tv-res-card-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.tv-res-card-title { display: inline-flex; align-items: center; gap: 10px; margin: 0; font-family: var(--tv-display); font-weight: 700; font-size: 20px; color: var(--tv-text); }
+.tv-res-meta { font-weight: 700; font-size: 13px; color: var(--tv-text-3); }
+.tv-res-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 4px 0;
+  border: 0;
+  background: none;
+  font-weight: 800;
+  font-size: 14px;
+  color: var(--brand-text, var(--tv-text-2));
+  cursor: pointer;
+}
+.tv-res-link:hover { color: var(--tv-text); }
+
+/* The podium in its card: the blocks reach the card's bottom edge. */
+/* The head at the top and the podium at the bottom, whatever the card's height (it matches the ranking's). */
+.tv-res-podium { grid-template-rows: auto 1fr; justify-items: center; padding-bottom: 0; overflow: hidden; }
+.tv-res-podium .tv-podium { align-self: end; }
+.tv-res-podium .tv-res-card-head { justify-self: stretch; }
+.tv-res-podium .tv-podium { width: min(560px, 100%); margin-top: 22px; }
+/* Lower blocks than the bare podium, so the card stays short; room inside for a line under the place. */
+.tv-res-podium .tv-podium-spot.is-1 .tv-podium-block { height: 112px; }
+.tv-res-podium .tv-podium-spot.is-2 .tv-podium-block { height: 86px; }
+.tv-res-podium .tv-podium-spot.is-3 .tv-podium-block { height: 68px; }
+.tv-res-podium .tv-podium-place { font-size: 30px; line-height: 1.1; }
+.tv-res-podium .tv-avatar--lg { width: 64px; height: 64px; font-size: 26px; }
+.tv-res-podium .tv-podium-block { border-radius: 20px 20px 0 0; box-shadow: inset 0 -6px 0 var(--edge, var(--tv-neutral-edge)); }
+.tv-podium-who { display: inline-flex; align-items: center; justify-content: center; gap: 6px; max-width: 100%; min-width: 0; }
+.tv-podium-me {
+  flex-shrink: 0;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: var(--brand, var(--p-extra-2));
+  font-weight: 800;
+  font-size: 11px;
+  color: var(--on-brand, #fff);
+}
+.tv-podium-block { gap: 2px; }
+.tv-podium-below { display: inline-flex; align-items: center; gap: 6px; font-weight: 800; font-size: 12px; color: rgba(0, 0, 0, 0.55); }
+.tv-podium-below small { font-size: 12px; }
+.tv-podium-below .tv-res-dots { gap: 3px; }
+.tv-podium-below .tv-res-dot { width: 7px; height: 7px; background: rgba(0, 0, 0, 0.25); }
+.tv-podium-below .tv-res-dot.is-ok { background: var(--p-ok-edge); }
+.tv-podium-below .tv-res-dot.is-near { background: rgba(0, 0, 0, 0.5); }
+.tv-podium-below .tv-res-dot.is-bad { background: var(--p-bad); }
+
+/* A player's rounds as dots. */
+.tv-res-dots { display: inline-flex; flex-wrap: wrap; gap: 4px; }
+.tv-res-dot { width: 9px; height: 9px; border-radius: 999px; background: var(--tv-neutral); }
+.tv-res-dot.is-ok { background: var(--p-ok); }
+.tv-res-dot.is-near { background: var(--p-accent-2); }
+.tv-res-dot.is-bad { background: var(--p-bad); }
+
+/* The ranking beside the podium (RankingCard): the game's icon and name, then every player with their dots and points. */
+.tv-res-game-icon { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 10px; background: var(--c2); box-shadow: 0 3px 0 var(--edge); color: var(--on); }
+.tv-res-table { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.tv-res-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  padding: 8px 14px 8px 10px;
+  border-radius: 16px;
+  background: var(--tv-option-bg);
+  animation: tvUp 0.45s var(--tv-ease-out) calc(0.4s + var(--i, 0) * 0.06s) backwards;
+}
+.tv-res-row.is-me { box-shadow: inset 0 0 0 2px var(--brand, var(--tv-line)); }
+.tv-res-row-pos { flex-shrink: 0; width: 18px; font-family: var(--tv-display); font-weight: 800; font-size: 16px; text-align: center; color: var(--tv-text-3); }
+.tv-res-row .tv-avatar { flex-shrink: 0; width: 34px; height: 34px; font-size: 15px; }
+.tv-res-row-main { display: grid; justify-items: start; gap: 5px; flex: 1; min-width: 0; text-align: left; }
+.tv-res-row-name { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 800; font-size: 15px; color: var(--tv-text); }
+.tv-res-row-points { flex-shrink: 0; text-align: right; font-family: var(--tv-display); font-weight: 700; font-size: 16px; color: var(--brand-text, var(--tv-text)); }
+.tv-res-game { animation-delay: 0.35s; }
+
+/* What comes next: the host's two buttons, the same size, side by side in the middle. */
+.tv-res-foot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  margin-bottom: auto;
+  padding-top: 16px;
+  border-top: 1px solid var(--tv-line);
+  animation: tvUp 0.55s var(--tv-ease-out) 0.7s backwards;
+}
+.tv-res-btn { flex: 0 1 320px; min-width: 0; height: 60px; padding: 0 20px; border-radius: 20px; font-size: 19px; }
+.tv-res-wait { display: inline-flex; align-items: center; gap: 10px; margin: 0 auto; font-weight: 700; font-size: 15px; color: var(--tv-text-2); }
+
+/* Narrow (a phone, or the room's column beside it): one column, the strip wraps and the buttons go full width. */
+@container (max-width: 720px) {
+  .tv-res-cards--pair { grid-template-columns: minmax(0, 1fr); }
+  .tv-res-foot { flex-direction: column-reverse; align-items: stretch; }
+  .tv-res-btn { flex: none; width: 100%; }
+}
+
+
 
 /* Confetti */
 .tv-confetti { position: absolute; inset: 0; overflow: hidden; pointer-events: none; z-index: 0; }
@@ -2428,15 +2639,17 @@
 .tv-player-menu {
   position: absolute;
   top: calc(100% + 8px);
+  /* As wide as the player's row it opens from. */
   left: 0;
+  right: 0;
   z-index: 20;
   display: grid;
   gap: 2px;
-  min-width: 220px;
   padding: 6px;
   border-radius: 16px;
   background: var(--tv-surface);
-  box-shadow: 0 0 0 1px var(--tv-edge), 0 18px 36px -12px rgba(0, 0, 0, 0.6);
+  /* The same edge as every card and menu: a thin line inside (not a lighter ring around it), and a soft drop shadow. */
+  box-shadow: inset 0 0 0 1px var(--tv-line), 0 12px 30px rgba(0, 0, 0, 0.45);
   animation: tvDropIn 0.2s var(--tv-spring);
 }
 .tv-player-menu-item {
@@ -2463,8 +2676,9 @@
 .tv-player-menu-note { margin: 0; padding: 10px 12px; font-weight: 700; font-size: 13px; color: var(--tv-text-3); }
 
 .tv-chip--icon { padding-right: 5px; }
-button.tv-chip--leave,
-button.tv-chip--sound { border: 0; font-family: inherit; color: inherit; cursor: pointer; }
+/* Every bar button that is a <button> (leave, sound, friends...): without the browser's own raised border, which
+   flipped to sunken while held. */
+button.tv-chip { border: 0; font-family: inherit; color: inherit; cursor: pointer; }
 .tv-chip--sound { flex-shrink: 0; }
 /* The top bar's volume panel (VolumeMenu.jsx): music and sounds, an on/off icon and a slider each. */
 .tv-volume { position: relative; flex-shrink: 0; font-family: var(--tv-body); color: var(--tv-text); }
@@ -2740,7 +2954,7 @@ body::-webkit-scrollbar,
   .tv-main--page { padding-top: 12px; }
   .tv-page { gap: 14px; }
   .tv-card { padding: 18px; }
-  .tv-profile-hero { gap: 14px; }
+  .tv-profile-hero { gap: 18px; padding: 20px; }
   .tv-avatar--xl { width: 72px; height: 72px; font-size: 32px; }
   .tv-auth { gap: 12px; }
   .tv-auth-head .tv-appicon { scale: 0.5; margin: -40px 0 -36px; }
@@ -2907,7 +3121,8 @@ fieldset.tv-settings { display: grid; gap: 18px; min-width: 0; margin: 0; paddin
 .tv-optrow-actions { display: flex; align-items: baseline; gap: 14px; }
 .tv-optrow-action { padding: 0; border: 0; background: none; font: inherit; font-weight: 800; font-size: 13px; cursor: pointer; }
 .tv-app .tv-optrow-action { color: var(--brand-text); }
-.tv-optrow-action:hover { text-decoration: underline; }
+/* A text button: it brightens on hover, never underlined. */
+.tv-app .tv-optrow-action:hover { color: var(--tv-text); }
 /* Settings where any number can be ticked: each choice has a little box, empty or ticked. */
 .tv-optrow-box {
   display: grid;
@@ -2999,11 +3214,23 @@ fieldset.tv-setsec-body { display: grid; gap: 18px; min-width: 0; margin: 0; pad
 /* Something on that tab keeps the match from starting. */
 .tv-settab-alert { width: 8px; height: 8px; border-radius: 50%; background: var(--tv-danger); }
 
-.tv-settabs.is-sub { gap: 4px; padding: 4px; border-radius: 14px; background: var(--tv-option-bg); box-shadow: none; }
-.tv-settabs.is-sub::after { display: none; }
-.tv-settabs.is-sub .tv-settab { grid-auto-flow: column; justify-content: center; align-items: baseline; gap: 7px; padding: 8px 10px; border-radius: 10px; transition: background-color 0.2s ease; }
+.tv-settabs.is-sub { gap: 4px; padding: 4px; overflow: hidden; border-radius: 14px; background: var(--tv-option-bg); box-shadow: none; }
+/* The open tab's pill slides from one tab to the other, like the friends panel's tabs: no bounce, so it never runs
+   past the strip's ends. */
+.tv-settabs.is-sub::after {
+  top: 4px;
+  bottom: 4px;
+  left: 4px;
+  width: calc((100% - 8px - (var(--n) - 1) * 4px) / var(--n));
+  height: auto;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.08);
+  transform: translateX(calc(var(--i) * (100% + 4px)));
+  transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.3, 1);
+}
+.tv-settabs.is-sub .tv-settab { position: relative; z-index: 1; grid-auto-flow: column; justify-content: center; align-items: baseline; gap: 7px; padding: 8px 10px; border-radius: 10px; }
+.tv-settabs.is-sub .tv-settab-wrap { z-index: 1; }
 .tv-settabs.is-sub .tv-settab-label { font-size: 14px; }
-.tv-settabs.is-sub .tv-settab[aria-selected="true"] { background: rgba(255, 255, 255, 0.08); }
 
 .tv-settab-panel { display: grid; gap: 16px; min-width: 0; animation: tvSettab 0.28s var(--tv-ease-out); }
 @keyframes tvSettab { from { opacity: 0; transform: translateY(6px); } }
@@ -3272,7 +3499,6 @@ fieldset.tv-setsec-body { display: grid; gap: 18px; min-width: 0; margin: 0; pad
   padding: 10px 10px 10px 12px;
   border-radius: 20px;
   background: var(--tv-option-bg, rgba(255, 255, 255, 0.06));
-  box-shadow: 0 3px 0 var(--tv-option-edge, rgba(0, 0, 0, 0.3));
   animation: tvPop 0.3s var(--tv-spring, ease-out) backwards;
 }
 .tv-idea .tv-badge { width: 36px; height: 36px; border-radius: 12px; }
@@ -3334,13 +3560,17 @@ fieldset.tv-setsec-body { display: grid; gap: 18px; min-width: 0; margin: 0; pad
   animation: tvFade 0.25s ease-out;
 }
 .tv-pause-btn,
+.tv-skip-btn,
 .tv-report-btn { display: inline-flex; align-items: center; gap: 6px; }
+.tv-skip-btn:disabled { opacity: 0.6; cursor: default; transform: none; }
 /* Sent: it stays as it is, without the press, until the next round. */
 .tv-report-btn:disabled { opacity: 0.6; cursor: default; transform: none; }
 @media (max-width: 640px) {
   .tv-pause-btn,
+  .tv-skip-btn,
   .tv-report-btn { padding-inline: 10px; }
   .tv-pause-btn .tv-pause-label,
+  .tv-skip-btn .tv-pause-label,
   .tv-report-btn:not(.is-on) .tv-pause-label { display: none; }
 }
 .tv-pause-veil strong { font-family: var(--tv-display); font-size: 26px; color: var(--tv-text); }
@@ -3400,8 +3630,8 @@ fieldset.tv-setsec-body { display: grid; gap: 18px; min-width: 0; margin: 0; pad
 @media (max-width: 640px) { .tv-wait-pill { gap: 8px; padding: 9px 14px; font-size: 13px; } }
 
 /* ---------- The site's address ---------- */
-/* "playtrivially.com", text of the usual size at low opacity, never in a match. On a computer it's in the middle of
-   the top bar; on a phone (no room in the bar) it's the first line of Home, right under it. */
+/* "playtrivially.com", text of the usual size at low opacity, everywhere but Home without a room (matches too). On a
+   computer it's in the middle of the top bar; on a phone (no room in the bar) it's the first line of the room screen. */
 .tv-topbar { position: relative; }
 .tv-topbar-url,
 .tv-site-url { font-weight: 700; font-size: 15px; color: var(--tv-text); opacity: 0.35; user-select: all; }
@@ -3442,7 +3672,7 @@ fieldset.tv-setsec-body { display: grid; gap: 18px; min-width: 0; margin: 0; pad
 /* "Agregar de Spotify" and the link box are one control, the same size: the button (54px, like the box) turns into
    the box, which has an X at its end to close it. */
 .tv-optrow-opts:has(> .tv-spotify-open) { padding: 0; background: none; }
-.tv-optrow-btn.tv-spotify-open { flex: 1 1 auto; height: 54px; border-radius: 16px; background: var(--tv-option-bg); box-shadow: inset 0 3px 0 var(--tv-option-edge); }
+.tv-optrow-btn.tv-spotify-open { flex: 1 1 auto; height: 54px; border-radius: 16px; background: var(--tv-option-bg); box-shadow: none; }
 .tv-spotify-link-close {
   display: grid;
   place-items: center;
@@ -3460,16 +3690,14 @@ fieldset.tv-setsec-body { display: grid; gap: 18px; min-width: 0; margin: 0; pad
 .tv-app .tv-spotify-link-close:hover:not(:disabled) { background: rgba(255, 255, 255, 0.12); color: var(--tv-text); }
 .tv-spotify-link-close:disabled { opacity: 0.4; cursor: default; }
 .tv-spotify-link { animation: none; }
-/* Its edge underneath, like every button (not sunk in at the top): closed and open alike. */
-.tv-optrow-btn.tv-spotify-open,
-.tv-spotify-link-box { box-shadow: 0 4px 0 var(--tv-option-edge); }
-.tv-spotify-link-box:focus-within { box-shadow: 0 4px 0 var(--tv-option-edge), 0 0 0 3px var(--brand); }
+/* A box to write in: flat, like every one. */
+.tv-spotify-link-box { box-shadow: none; }
 /* "Tus playlists" shows five whole rows at a time; while the box to paste a Spotify link is open, four (the box takes
    the fifth's room). */
 .tv-app .tv-saved-list { max-height: calc(5 * var(--row) + 4 * var(--gap)); }
 .tv-settab-panel:has(.tv-spotify-link) .tv-saved-list { max-height: calc(4 * var(--row) + 3 * var(--gap)); }
 /* While writing, the pink ring goes all the way round (an outline, apart from the edge underneath). */
-.tv-spotify-link-box:focus-within { box-shadow: 0 4px 0 var(--tv-option-edge); outline: 3px solid var(--brand); outline-offset: 2px; }
+.tv-spotify-link-box:focus-within { box-shadow: none; outline: 3px solid var(--brand); outline-offset: 2px; }
 /* Closed, "Agregar de Spotify" is flat (no edge underneath) with bigger letters; only the open box has the edge. */
 .tv-optrow-btn.tv-spotify-open { box-shadow: none; gap: 10px; font-size: 16px; }
 .tv-optrow-btn.tv-spotify-open svg { width: 22px; height: 22px; }
@@ -3543,4 +3771,205 @@ fieldset.tv-setsec-body { display: grid; gap: 18px; min-width: 0; margin: 0; pad
 .tv-note a { color: #ffffff; font-weight: 800; text-decoration: none; }
 @media (max-width: 640px) {
   .tv-note-text > span { display: block; }
+}
+
+/* ---------- The match round by round, at the end (MatchSummarySheet.jsx, the button in MatchResults) ---------- */
+/* The head stays put; only the rounds scroll (MatchSummarySheet sets the list's height to its first three). */
+.tv-sheet--summary { display: flex; flex-direction: column; overflow: hidden; padding-top: 22px; max-height: 88vh; }
+.tv-sheet--summary .tv-sheet-head { flex: none; }
+.tv-sheet--summary .tv-sheet-head { padding-bottom: 14px; }
+.tv-summary-head { display: grid; gap: 2px; flex: 1; min-width: 0; }
+.tv-summary-head .tv-sheet-title { line-height: 1.15; }
+.tv-summary-head small { font-weight: 700; font-size: 14px; color: var(--tv-text-3); }
+.tv-summary-close {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--tv-option-bg);
+  color: var(--tv-text-2);
+  cursor: pointer;
+}
+.tv-summary-close:hover { color: var(--tv-text); }
+.tv-summary {
+  display: grid;
+  gap: 10px;
+  min-height: 0;
+  margin: 0;
+  padding: 0 6px 0 0;
+  list-style: none;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scroll-snap-type: y mandatory;
+}
+.tv-summary-round { scroll-snap-align: start; }
+/* The same thin bar, without arrows, as a playlist's games (playlist.css .tv-pl-body). */
+.tv-app .tv-summary,
+.tv-summary { scrollbar-width: auto; scrollbar-color: auto; }
+@supports not selector(::-webkit-scrollbar) {
+  .tv-app .tv-summary,
+  .tv-summary { scrollbar-width: thin; scrollbar-color: rgba(255, 255, 255, 0.55) rgba(0, 0, 0, 0.12); }
+}
+.tv-summary::-webkit-scrollbar { display: block; width: 6px; }
+.tv-summary::-webkit-scrollbar-button { display: none; width: 0; height: 0; }
+.tv-summary::-webkit-scrollbar-track { border-radius: 3px; background: rgba(0, 0, 0, 0.12); }
+.tv-summary::-webkit-scrollbar-thumb { border-radius: 3px; background: rgba(255, 255, 255, 0.55); }
+.tv-summary-round {
+  --mark: var(--tv-text-3);
+  display: grid;
+  gap: 6px;
+  padding: 12px 16px 14px;
+  border-radius: 18px;
+  background: var(--tv-option-bg);
+  box-shadow: inset 4px 0 0 var(--mark);
+}
+.tv-summary-round.is-ok { --mark: var(--p-ok-text); }
+.tv-summary-round.is-near { --mark: var(--p-accent-2); }
+.tv-summary-round.is-bad { --mark: var(--p-bad-text); }
+.tv-summary-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.tv-summary-num { font-family: var(--tv-mono, monospace); font-size: 12px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--tv-text-3); }
+.tv-summary-points { font-family: var(--tv-display); font-weight: 700; font-size: 15px; color: var(--tv-text-2); }
+.tv-summary-round.is-ok .tv-summary-points { color: var(--p-ok-text); }
+.tv-summary-prompt { margin: 0; font-weight: 800; font-size: 16px; line-height: 1.3; color: var(--tv-text); }
+.tv-summary-line { display: flex; align-items: flex-start; gap: 8px; margin: 0; font-weight: 700; font-size: 15px; line-height: 1.3; }
+.tv-summary-line svg { flex-shrink: 0; margin-top: 2px; }
+.tv-summary-line.is-right { color: var(--p-ok-text); }
+.tv-summary-line.is-yours { color: var(--mark); }
+
+/* ---------- The profile's match history (MatchHistory.jsx), under the stats ---------- */
+.tv-history-wrap { display: grid; gap: 16px; margin-top: 8px; }
+.tv-history-empty { margin: 0; }
+.tv-history { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.tv-history-row { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 16px; background: var(--tv-option-bg); }
+.tv-history-icon {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  background: var(--c2);
+  box-shadow: 0 3px 0 var(--edge);
+  color: var(--on);
+}
+.tv-history-main { display: grid; gap: 2px; flex: 1; min-width: 0; }
+.tv-history-main strong { font-weight: 800; font-size: 15px; color: var(--tv-text); }
+.tv-history-main small,
+.tv-history-place small { overflow: hidden; font-weight: 700; font-size: 13px; color: var(--tv-text-3); text-overflow: ellipsis; white-space: nowrap; }
+.tv-history-place { display: grid; justify-items: end; gap: 2px; flex-shrink: 0; text-align: right; }
+.tv-history-place strong { display: inline-flex; align-items: center; gap: 4px; font-family: var(--tv-display); font-weight: 700; font-size: 16px; color: var(--tv-text); }
+.tv-history-place.is-first strong { color: var(--p-accent-2); }
+.tv-history-place.is-first svg { color: var(--p-accent-2); }
+/* "Reportar" on one of your matches: a small pill; red while it asks for the second tap. */
+.tv-history-report {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  flex-shrink: 0;
+  height: 30px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--tv-surface);
+  font-weight: 800;
+  font-size: 12px;
+  color: var(--tv-text-2);
+  cursor: pointer;
+}
+.tv-history-report:hover:not(:disabled) { color: var(--tv-text); }
+.tv-history-report.is-on { background: var(--p-bad); color: #fff; }
+.tv-history-report:disabled { opacity: 0.6; cursor: default; }
+@media (max-width: 480px) {
+  .tv-history-report span { display: none; }
+}
+/* "Ver todas": the same rows in the scrolling window, each snapping to the top. */
+.tv-history-sheet { gap: 8px; }
+.tv-history-sheet > .tv-history-row { scroll-snap-align: start; }
+.tv-history-more {
+  justify-self: start;
+  padding: 4px 2px;
+  border: 0;
+  background: none;
+  font-weight: 800;
+  font-size: 14px;
+  color: var(--brand-text, var(--tv-text-2));
+  cursor: pointer;
+}
+.tv-history-more:hover { color: var(--tv-text); }
+
+/* ---------- Every button has its edge (the design rule in CLAUDE.md) ---------- */
+/* Small buttons with a background of their own that were flat: closes, "Ocultar" the code, "Reportar" a match,
+   "Atrás", "Añade amigos para invitarlos" and the top bar's buttons. A solid edge under them that grows on hover and
+   goes when pressed, like every button. (Quiet icon buttons with no background, like a row's X, stay flat.) */
+.tv-spotify-link-close { background: var(--tv-neutral); }
+.tv-chatsheet-close,
+.tv-central-spot-x,
+.tv-spotify-link-close { box-shadow: 0 3px 0 var(--tv-neutral-edge); }
+.tv-fr-close,
+.tv-summary-close,
+.tv-code-eye,
+.tv-sheet-back,
+.tv-invite-friends-empty { box-shadow: 0 3px 0 var(--tv-option-edge); }
+.tv-history-report { box-shadow: 0 3px 0 var(--tv-edge); }
+.tv-chatsheet-close,
+.tv-central-spot-x,
+.tv-spotify-link-close,
+.tv-fr-close,
+.tv-summary-close,
+.tv-code-eye,
+.tv-sheet-back,
+.tv-invite-friends-empty,
+.tv-history-report { transition: transform 0.12s ease, box-shadow 0.12s ease, background-color 0.15s ease, color 0.15s ease; }
+.tv-chatsheet-close:hover,
+.tv-central-spot-x:hover,
+.tv-spotify-link-close:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 4px 0 var(--tv-neutral-edge); }
+.tv-fr-close:hover,
+.tv-summary-close:hover,
+.tv-code-eye:hover,
+.tv-sheet-back:hover:not(:disabled),
+.tv-invite-friends-empty:hover { transform: translateY(-1px); box-shadow: 0 4px 0 var(--tv-option-edge); }
+.tv-history-report:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 4px 0 var(--tv-edge); }
+.tv-chatsheet-close:active,
+.tv-central-spot-x:active,
+.tv-spotify-link-close:active,
+.tv-fr-close:active,
+.tv-summary-close:active,
+.tv-code-eye:active,
+.tv-sheet-back:active:not(:disabled),
+.tv-invite-friends-empty:active,
+.tv-history-report:active:not(:disabled) { transform: translateY(3px); box-shadow: 0 0 0 transparent; }
+/* "Oculto" and the red "¿Enviar?" keep the edge in their own colour. */
+.tv-code-eye.is-on { box-shadow: 0 3px 0 var(--tv-violet-edge, rgba(0, 0, 0, 0.35)); }
+.tv-history-report.is-on { box-shadow: 0 3px 0 var(--p-bad-edge); }
+.tv-central-spot-x.is-confirm { box-shadow: 0 3px 0 var(--p-bad-edge); }
+/* The top bar's buttons: their thin line and, under it, the edge. */
+.tv-chip { box-shadow: inset 0 0 0 1px var(--tv-line), 0 3px 0 var(--tv-edge); transition: transform 0.12s ease, box-shadow 0.12s ease, filter 0.2s ease; }
+.tv-chip:hover { transform: translateY(-1px); box-shadow: inset 0 0 0 1px var(--tv-line), 0 4px 0 var(--tv-edge); }
+.tv-chip:active { transform: translateY(3px); box-shadow: inset 0 0 0 1px var(--tv-line), 0 0 0 transparent; }
+@media (max-width: 640px) {
+  /* On phones your own face is the button: no box, no edge. */
+  .tv-chip--profile,
+  .tv-chip--profile:hover,
+  .tv-chip--profile:active { box-shadow: none; }
+}
+
+/* ---------- Every button is a rounded rectangle (the design rule in CLAUDE.md) ---------- */
+/* Like "Salir de la sala": never a circle or a full pill. Small square buttons 12 px corners, small text buttons
+   10 px; their edge underneath (above) stays. Avatars, dots, switches and labels keep their round shape. */
+.tv-chatsheet-close { width: 40px; height: 40px; border-radius: 12px; }
+/* Its edge in its own colour: the violet's darker one, grey while off. */
+.tv-volume-toggle { --tg-edge: var(--p-cinema-edge, #6418a8); border-radius: 12px; box-shadow: 0 3px 0 var(--tg-edge); transition: transform 0.12s ease, box-shadow 0.12s ease; }
+.tv-volume-row.is-off .tv-volume-toggle { --tg-edge: var(--tv-neutral-edge); }
+.tv-volume-toggle:hover { transform: translateY(-1px); box-shadow: 0 4px 0 var(--tg-edge); }
+.tv-volume-toggle:active { transform: translateY(3px); box-shadow: 0 0 0 transparent; }
+.tv-code-eye,
+.tv-history-report { border-radius: 10px; }
+.tv-geo-regions button { border-radius: 12px; }
+.tv-fr-x,
+.tv-idea-x { border-radius: 10px; }
+@media (max-width: 640px) {
+  .tv-roomhead-players { border-radius: var(--tv-barbtn-r, 14px); box-shadow: inset 0 0 0 1px var(--tv-line), 0 3px 0 var(--tv-edge); }
 }

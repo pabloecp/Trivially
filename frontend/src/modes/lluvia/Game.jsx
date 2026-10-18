@@ -7,7 +7,8 @@ import MatchResults from "../../components/home/MatchResults.jsx";
 import PartyPanel from "../../components/home/PartyPanel.jsx";
 import SpectatorBanner from "../../components/home/SpectatorBanner.jsx";
 import { ControllerBar, GetReady, PhoneHint, joinNames } from "../../components/home/CentralBits.jsx";
-import { PauseButton, PauseVeil } from "../../components/home/PauseControls.jsx";
+import { PauseButton, PauseVeil, SkipButton } from "../../components/home/PauseControls.jsx";
+import { resolveCode } from "../../lib/hiddenCode.js";
 import { useApp, useRemainingMs, useView } from "../../lib/store.jsx";
 import { play } from "../../lib/sounds.js";
 import { DIFFICULTIES, findDifficulty, hitsText, pointsText, rainConfig } from "./rainInfo.js";
@@ -223,8 +224,10 @@ function roundBurst(room, question, viewerId) {
 }
 
 function GameScreen() {
-  const { code } = useParams();
+  const { code: codeParam } = useParams();
   const { user, room, joinRoom, setGame } = useApp();
+  // The address's code ("oculta" while it's hidden: this tab's room, lib/hiddenCode.js).
+  const code = resolveCode(codeParam, room);
   const nav = useNavigate();
   // With a central device in the room, the rain and the scoreboard show there; the players' phones only have the box
   // to write in, and how their round is going.
@@ -391,6 +394,7 @@ function GameScreen() {
   // The host's controls of the match: in the top card, or in the thin bar of a phone beside a central device.
   const tools = (
     <>
+      <SkipButton room={room} onError={setErr} />
       <PauseButton room={room} isHost={isHost} onError={setErr} />
       {isHost && (
         <button type="button" className={`tv-mini-btn${confirmHub ? " is-on" : ""}`} onClick={backToHub}>

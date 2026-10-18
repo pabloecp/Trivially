@@ -3,21 +3,21 @@ import OptionRow, { rangeOptions } from "../../components/home/OptionRow.jsx";
 import SettingsTabs, { countNote } from "../../components/home/SettingsTabs.jsx";
 import { LEVELS, ROUNDS_LIMITS, SECONDS_LIMITS, STYLES, TOPICS, historyConfig } from "./historyInfo.js";
 
-// Settings of a Rango match, in the settings panel, in two tabs: "Partida" (the way of playing, "Modos de Juego": only
-// "Línea del tiempo" for now, ticked and locked; how many rounds and the seconds to choose a year) and "Eventos" (the
-// categories the events come from and the difficulties, tick as many as you like). A choice with no events with the other settings (room.questionCounts) is
+// Settings of a Rango match, in the settings panel, in two tabs: "Partida" (the ways of playing, "Modos de Juego":
+// "Línea del tiempo" and "Cifras", tick one or both; how many rounds and the seconds to answer) and "Preguntas" (the
+// categories the questions come from and the difficulties, tick as many as you like). A choice with no questions with the other settings (room.questionCounts) is
 // greyed out and can't be ticked. Each list has "Seleccionar todos" / "Deseleccionar todos"; with one left empty the
 // match can't start. Every tap is saved straight away for the whole room. With `readOnly` (players without permission)
 // everything shows but nothing can be tapped.
 export default function HistorySettings({ room, updateConfig, onToast, children, readOnly = false }) {
   const saved = historyConfig(room);
   const [draft, setDraft] = useState(saved);
-  const counts = room.questionCounts || { categories: {}, difficulties: {} };
+  const counts = room.questionCounts || { styles: {}, categories: {}, difficulties: {} };
 
   // Another player with permission may change them too.
   useEffect(() => {
     setDraft(saved);
-  }, [saved.rounds, saved.roundMs, saved.difficulties.join(), saved.categories.join()]);
+  }, [saved.rounds, saved.roundMs, saved.styles.join(), saved.difficulties.join(), saved.categories.join()]);
 
   async function save(change) {
     if (readOnly) return;
@@ -44,6 +44,7 @@ export default function HistorySettings({ room, updateConfig, onToast, children,
     return { value: item.id, label: item.label, title: item.hint, disabled: !count && !draft[key].includes(item.id) };
   };
 
+  const styleIds = STYLES.map((s) => s.id);
   const topicIds = TOPICS.map((t) => t.id);
   const levelIds = LEVELS.map((d) => d.id);
 
@@ -59,19 +60,19 @@ export default function HistorySettings({ room, updateConfig, onToast, children,
           label: "Partida",
           icon: "hourglass",
           note: `${draft.rounds} rondas · ${seconds} s`,
+          alert: !draft.styles.length,
           content: (
             <>
-              {/* The only way of playing for now: always ticked, nothing to change. */}
               <OptionRow
                 label="Modos de Juego"
                 multi
-                options={STYLES.map((s) => ({ value: s.id, label: s.label, title: `${s.hint}. Por ahora es el único modo.`, disabled: true }))}
-                value={STYLES.map((s) => s.id)}
-                onChange={() => {}}
+                options={STYLES.map(choice("styles", "styles"))}
+                value={draft.styles}
+                onChange={(id) => toggle("styles", styleIds, id)}
               />
               <OptionRow label="Rondas" options={rangeOptions(ROUNDS_LIMITS)} value={draft.rounds} onChange={(n) => save({ rounds: n })} />
               <OptionRow
-                label="Segundos para elegir"
+                label="Segundos por ronda"
                 options={rangeOptions(SECONDS_LIMITS)}
                 value={seconds}
                 onChange={(n) => save({ roundMs: n * 1000 })}
@@ -81,7 +82,7 @@ export default function HistorySettings({ room, updateConfig, onToast, children,
         },
         {
           id: "eventos",
-          label: "Eventos",
+          label: "Preguntas",
           icon: "calendar",
           note: countNote(draft.categories, topicIds.length),
           alert: !draft.categories.length || !draft.difficulties.length,

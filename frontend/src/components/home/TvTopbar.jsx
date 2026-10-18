@@ -160,8 +160,9 @@ export default function TvTopbar() {
             <span className="tv-brand-name">trivially</span>
           </div>
         </div>
-        {/* The site's address, faint, in the middle of the bar (computers; never in a match). */}
-        {!inGame && <span className="tv-topbar-url">playtrivially.com</span>}
+        {/* The site's address, faint, in the middle of the bar (computers): everywhere, matches too, but on Home without
+            a room, where the big logo already says it. */}
+        {!onHome && <span className="tv-topbar-url">playtrivially.com</span>}
         <div className="tv-topbar-end">
           {friends.isAccount && !isCentral && (
             <button
@@ -169,7 +170,12 @@ export default function TvTopbar() {
               className="tv-chip tv-chip--icon tv-chip--friends"
               aria-label={friends.pending ? `Amigos (${friends.pending} solicitudes)` : "Amigos"}
               aria-haspopup="dialog"
-              onClick={() => friends.setOpen(true)}
+              onClick={(e) => {
+                // The sheet doesn't take the focus: left on this button, closing it with Escape drew the keyboard's
+                // focus ring around it.
+                e.currentTarget.blur();
+                friends.setOpen(true);
+              }}
             >
               <span className="tv-avatar tv-avatar--empty">
                 <Icon name="users" size={20} strokeWidth={2.4} />

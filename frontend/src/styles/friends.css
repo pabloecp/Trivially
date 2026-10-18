@@ -1,19 +1,22 @@
 /* Friends: the panel opened from the top bar, the friend's code, the host's controls in the room card. */
-.tv-fr-head { position: relative; align-items: center; }
+/* Room above the head (the sheet's own top padding is thin), and the close button in the head's row, centred on it. */
+.tv-fr-sheet { padding-top: 22px; }
+.tv-fr-head { position: relative; align-items: center; padding-bottom: 16px; }
 .tv-fr-close {
-  position: absolute;
-  top: 0;
-  right: 0;
+  flex-shrink: 0;
+  margin-left: auto;
   display: grid;
   place-items: center;
-  width: 38px;
-  height: 38px;
+  /* The same close button as the other windows ("Tu partida", "Historial"): a rounded square, not a circle. */
+  width: 40px;
+  height: 40px;
   border: 0;
-  border-radius: 50%;
+  border-radius: 12px;
   background: var(--tv-option-bg, rgba(255, 255, 255, 0.08));
-  color: var(--tv-text);
+  color: var(--tv-text-2);
   cursor: pointer;
 }
+.tv-fr-close:hover { color: var(--tv-text); }
 .tv-fr-sheet .tv-sheet-body { display: grid; gap: 14px; max-height: min(70vh, 560px); overflow-y: auto; }
 .tv-fr-list { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
 .tv-fr-row {
@@ -74,10 +77,15 @@
 .tv-fr-msg.is-ok svg { color: #22c55e; }
 .tv-fr-msg.is-bad svg { color: #f87171; }
 .tv-fr-add { display: grid; gap: 18px; }
-.tv-fr-mycode { display: grid; gap: 8px; padding: 16px; border-radius: 20px; background: var(--tv-option-bg, rgba(255, 255, 255, 0.06)); text-align: center; }
+.tv-fr-mycode { display: grid; gap: 6px; padding: 14px; border-radius: 16px; background: var(--tv-option-bg, rgba(255, 255, 255, 0.06)); text-align: center; }
 .tv-fr-mycode .tv-sheet-kicker { margin: 0; }
 .tv-fr-code { margin: 0; font-family: var(--tv-display); font-weight: 700; font-size: 34px; letter-spacing: 0.12em; user-select: all; }
-.tv-fr-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
+.tv-fr-coderow { display: flex; align-items: center; justify-content: center; gap: 10px; min-width: 0; }
+.tv-fr-coderow .tv-fr-code { min-width: 0; }
+/* The same size as the sheet's other small buttons. */
+.tv-app .tv-fr-copy, .tv-fr-copy { flex-shrink: 0; width: 34px; height: 34px; padding: 0; border-radius: 11px; box-shadow: 0 3px 0 var(--edge); }
+.tv-fr-copy:hover { box-shadow: 0 4px 0 var(--edge); }
+.tv-fr-copy:active { box-shadow: 0 0 0 var(--edge); }
 .tv-fr-form { display: grid; gap: 8px; }
 .tv-fr-form .tv-sheet-kicker { margin: 0; }
 .tv-fr-formrow { display: flex; gap: 10px; }
@@ -102,9 +110,71 @@
 }
 
 /* Room card (the host): what friends can do, and the friends asking to join. */
-.tv-fr-room { display: grid; gap: 10px; margin-top: 12px; }
-.tv-fr-room-label { margin: 0; font-size: 12px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: var(--tv-text-3); }
-.tv-fr-room .tv-seg-btn { font-size: 13px; padding-inline: 6px; }
+/* Right under the room code, at the column's usual gap (no extra space on top). */
+.tv-fr-room { display: grid; gap: 10px; }
+/* "Tus amigos pueden · Pedir entrar ⌄" in the room card: one row (the same height and corners as the central device's
+   spot under it), and a small menu with the three choices under it. */
+.tv-fr-mode { position: relative; }
+.tv-fr-mode-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  height: 42px;
+  padding: 0 12px 0 14px;
+  border: 0;
+  border-radius: 14px;
+  background: var(--tv-option-bg);
+  font-family: inherit;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+.tv-fr-mode-btn:hover,
+.tv-fr-mode-btn.is-open { background: var(--tv-neutral); }
+.tv-fr-mode-label { overflow: hidden; font-weight: 700; color: var(--tv-text-2); text-overflow: ellipsis; white-space: nowrap; }
+.tv-fr-mode-value { display: inline-flex; align-items: center; gap: 4px; flex-shrink: 0; font-weight: 800; color: var(--tv-text); }
+.tv-fr-mode-caret { rotate: 90deg; color: var(--tv-text-3); transition: rotate 0.2s ease; }
+.tv-fr-mode-btn.is-open .tv-fr-mode-caret { rotate: -90deg; }
+.tv-fr-mode-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  /* As wide as the row it opens from. */
+  right: 0;
+  left: 0;
+  z-index: 20;
+  display: grid;
+  gap: 2px;
+  margin: 0;
+  padding: 6px;
+  border-radius: 16px;
+  background: var(--tv-surface);
+  box-shadow: inset 0 0 0 1px var(--tv-line), 0 12px 30px rgba(0, 0, 0, 0.45);
+  list-style: none;
+  animation: tvFade 0.15s ease-out;
+}
+.tv-fr-mode-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 11px;
+  background: none;
+  font-family: inherit;
+  text-align: left;
+  color: var(--tv-text);
+  cursor: pointer;
+}
+.tv-fr-mode-option:hover,
+.tv-fr-mode-option.is-on { background: var(--tv-option-bg); }
+.tv-fr-mode-option span { display: grid; gap: 1px; }
+.tv-fr-mode-option strong { font-weight: 800; font-size: 14px; }
+.tv-fr-mode-option small { font-weight: 700; font-size: 12px; color: var(--tv-text-3); }
+.tv-fr-mode-option svg { color: var(--p-ok-text); flex-shrink: 0; }
 .tv-fr-ask {
   display: flex;
   flex-wrap: wrap;
@@ -146,18 +216,25 @@
 /* Username fields: the "@" in front, and the free / taken line under it. */
 .tv-handle-box { position: relative; display: block; }
 .tv-handle-box .tv-field { padding-left: 34px; }
+/* In the friends sheet the boxes sit in a scrolling body that would cut a ring drawn outside them: it goes inside. */
+.tv-fr-sheet .tv-field:focus-visible { outline-offset: -3px; }
+/* The boxes to write in the sheet: as tall as its rows, with the sheet's text size. */
+.tv-fr-sheet .tv-field { height: 48px; border-radius: 14px; font-size: 17px; }
+.tv-fr-sheet .tv-handle-box .tv-field { padding-left: 32px; }
 .tv-handle-at { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); font-weight: 800; color: var(--tv-text-3); pointer-events: none; }
 .tv-handle-status { display: inline-flex; align-items: center; gap: 6px; margin-top: 6px; font-size: 13px; font-weight: 700; color: var(--tv-text-3); }
 .tv-handle-status.is-ok { color: #22c55e; }
 .tv-handle-status.is-bad { color: #f87171; }
 .tv-handle { color: var(--tv-text-3); font-weight: 700; }
-.tv-profile-handle { margin: 2px 0 8px; font-size: 18px; }
+.tv-profile-handle { margin: 0; font-size: 18px; }
 .tv-fr-handle { font-size: 13px; }
 
 /* The panel's content never wider than the sheet (long usernames, the search box). */
 .tv-fr-sheet .tv-sheet-body { grid-template-columns: minmax(0, 1fr); }
 .tv-fr-add, .tv-fr-form, .tv-fr-mycode { min-width: 0; }
 .tv-fr-add { grid-template-columns: minmax(0, 1fr); }
-.tv-fr-code { max-width: 100%; font-size: clamp(20px, 7vw, 30px); letter-spacing: 0.04em; overflow-wrap: anywhere; }
-.tv-fr-sheet .tv-seg-btn { white-space: nowrap; font-size: 14px; padding-inline: 4px; }
+/* Your username, a little bigger than a row's name, not a poster. */
+.tv-fr-code { max-width: 100%; font-size: 22px; letter-spacing: 0.02em; overflow-wrap: anywhere; }
+/* The friends panel's tabs: a little lower than the usual switch (Segmented's own style is flat everywhere). */
+.tv-fr-sheet .tv-seg-btn { height: 40px; white-space: nowrap; font-size: 14px; padding-inline: 4px; }
 .tv-fr-count { display: inline-block; min-width: 18px; margin-left: 6px; padding: 0 5px; border-radius: 999px; background: #ef4444; color: #fff; font-size: 12px; line-height: 18px; text-align: center; }

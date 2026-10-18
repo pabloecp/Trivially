@@ -396,20 +396,25 @@ export function AppProvider({ children }) {
         if (!guestId) {
           guestId = `gst_${Math.random().toString(36).slice(2, 10)}`;
         }
+        const guestObj = { id: guestId, name: cleanName, avatar: avatar || AVATAR_COLORS[0], isGuest: true };
+        // The server refuses a name with a link (the Jugar sheet shows why); any other failure (offline) is ignored,
+        // and the guest plays with what they wrote.
+        let res = null;
+        try {
+          res = await api("/api/session", { method: "POST", body: guestObj });
+        } catch (err) {
+          if (/enlaces/.test(err.message)) throw err;
+        }
         localStorage.setItem(GUEST_ID_KEY, guestId);
         localStorage.setItem(GUEST_NAME_KEY, cleanName);
         localStorage.setItem(GUEST_AVATAR_KEY, avatar || AVATAR_COLORS[0]);
         setGuestActive(true);
-        const guestObj = { id: guestId, name: cleanName, avatar: avatar || AVATAR_COLORS[0], isGuest: true };
         applyUser(guestObj);
         let saved = guestObj;
-        try {
-          const res = await api("/api/session", { method: "POST", body: guestObj });
-          if (res.user && res.user.id !== guestId) {
-            saved = { ...guestObj, id: res.user.id };
-            adoptUser(saved);
-          }
-        } catch {}
+        if (res?.user && res.user.id !== guestId) {
+          saved = { ...guestObj, id: res.user.id };
+          adoptUser(saved);
+        }
         reconnectSocket();
         return saved;
       },
@@ -761,12 +766,6 @@ export function AppProvider({ children }) {
         if (res.state) setRoom(res.state);
       },
 
-      // Host only, on a playlist game's results: the next game (or, after the last one, the playlist's results).
-      async nextInPlaylist() {
-        const res = await emitAck("room:playlistNext");
-        if (!res.ok) throw new Error(res.error);
-      },
-
       async setReady(ready) { await emitAck("room:ready", ready); },
       async startGame() { const res = await emitAck("room:start"); if (!res.ok) throw new Error(res.error); },
       async restartGame() { const res = await emitAck("room:restart"); if (!res.ok) throw new Error(res.error); },
@@ -776,6 +775,7 @@ export function AppProvider({ children }) {
 
       // Owners: reports the question being played, to check it later.
       async reportQuestion() { const res = await emitAck("room:report"); if (!res.ok) throw new Error(res.error); },
+      async skipRound() { const res = await emitAck("room:skipRound"); if (!res.ok) throw new Error(res.error); },
 
       async answer(answerTextOrId) {
         const res = await emitAck("game:answer", answerTextOrId);

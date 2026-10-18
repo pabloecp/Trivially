@@ -11,6 +11,7 @@ import { ChatButton } from "./RoomChat.jsx";
 import { useRoomExit } from "./TvTopbar.jsx";
 import { useInvite } from "./useInvite.js";
 import VolumeMenu from "./VolumeMenu.jsx";
+import { shownCode, useHiddenCode } from "../../lib/hiddenCode.js";
 
 const STACK = 5;
 
@@ -20,6 +21,7 @@ const STACK = 5;
 // Then the room's code and your role, the players' faces (tap: the room's column drops down, with everyone and the
 // way out), the volume and your own avatar, to your profile.
 export function RoomHeader({ room, onToast }) {
+  const [codeHidden] = useHiddenCode();
   const { user } = useApp();
   const { toModes, confirmLeave, press } = useRoomExit({ onError: onToast });
   const [open, setOpen] = useState(false);
@@ -60,7 +62,7 @@ export function RoomHeader({ room, onToast }) {
       </div>
       <div className="tv-roomhead-text">
         <span className="tv-roomhead-kicker">{confirmLeave ? "¿Salir? Otra vez" : `Sala · ${role}`}</span>
-        <span className="tv-roomhead-code">{room.code}</span>
+        <span className="tv-roomhead-code">{shownCode(room.code, codeHidden)}</span>
       </div>
       <button
         type="button"

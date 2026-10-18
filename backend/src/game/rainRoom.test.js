@@ -174,6 +174,13 @@ assert.deepEqual(
   "and who took it"
 );
 assert.throws(() => mgr.rainAnswer(room, "p-2", "Lima"), /No se aceptan/);
+// The match's summary: the round in each player's list.
+const anaRound = ana.rounds.at(-1);
+assert.deepEqual(
+  { prompt: anaRound.prompt, answer: anaRound.answer, yours: anaRound.yours, points: anaRound.points, status: anaRound.status, game: anaRound.game },
+  { prompt: "Lluvia de 6 preguntas", answer: null, yours: "4 aciertos · 10 puntos", points: 10, status: "ok", game: "lluvia" }
+);
+assert.equal(room.players.get("host-1").rounds.at(-1).status, "none", "the host sent nothing");
 // A tie: both won the round.
 luis.rain.points = 10;
 mgr.gradeRain(room, room.tracks[0]);
@@ -185,7 +192,7 @@ mgr.advance(room);
 stop(room);
 assert.equal(room.phase, "countdown");
 assert.equal(room.currentRound, 1);
-assert.deepEqual(ana.rain, { hits: 0, points: 0, sentAt: 0 });
+assert.deepEqual(ana.rain, { hits: 0, points: 0, sent: 0, sentAt: 0 });
 assert.equal(ana.score, 10, "the match adds up every round");
 assert.equal(room.players.get("p-4").rain, null, "the spectator still only watches");
 
@@ -250,6 +257,6 @@ while (gameOf(room.tracks[room.currentRound]) !== "lluvia") {
 }
 assert.equal(room.game, "lluvia");
 assert.ok(mgr.isRainRound(room));
-assert.deepEqual(room.players.get("p-2").rain, { hits: 0, points: 0, sentAt: 0 });
+assert.deepEqual(room.players.get("p-2").rain, { hits: 0, points: 0, sent: 0, sentAt: 0 });
 
 console.log("rainRoom ok");

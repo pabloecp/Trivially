@@ -1,72 +1,31 @@
-import Avatar from "../../components/home/Avatar.jsx";
 import Icon from "../../components/home/Icon.jsx";
-import { useApp } from "../../lib/store.jsx";
 import { findMode } from "../index.js";
 import "../../styles/playlist.css";
 
 export const winsText = (n) => `${n} ${n === 1 ? "juego" : "juegos"}`;
 
-// The playlist's games in play order, each in its game's colour: the ones played with who won them, the one just
-// played or on now ringed.
+// The playlist's games, small, in the kicker's line of its results: each game's icon in its colour, with a tick once
+// the playlist is over (it's one match, so every game was played). Their names are only read out to screen readers.
 export function PlaylistProgress({ run }) {
   return (
-    <ol className="tv-pl-progress" aria-label="Juegos de la playlist">
+    <ol className="tv-pl-mini" aria-label="Juegos de la playlist">
       {run.games.map((game, i) => {
         const mode = findMode(game);
-        const played = run.played[i];
-        const now = !run.finished && i === run.index;
         return (
           <li
             key={i}
-            className={`tv-pl-step${played ? " is-played" : ""}${now ? " is-now" : ""}`}
-            aria-label={`${i + 1}. ${mode?.name || game}${played ? ` · ${played.winnerName ? `ganó ${played.winnerName}` : "sin ganador"}` : ""}`}
+            className={`tv-pl-mini-game tv-c-${mode?.color || "neutral"}${run.finished ? " is-played" : ""}`}
+            aria-label={`${i + 1}. ${mode?.name || game}`}
           >
-            <span className={`tv-pl-step-badge tv-c-${mode?.color || "neutral"}`}>
-              <Icon name={mode?.icon || "play"} size={18} strokeWidth={2.4} />
-            </span>
-            <span className="tv-pl-step-who">{played ? played.winnerName || "Empate" : now ? "Ahora" : i + 1}</span>
+            <Icon name={mode?.icon || "play"} size={12} strokeWidth={2.6} />
+            {run.finished && (
+              <span className="tv-pl-mini-tick" aria-hidden="true">
+                <Icon name="check" size={8} strokeWidth={4} />
+              </span>
+            )}
           </li>
         );
       })}
     </ol>
-  );
-}
-
-// The playlist's tally: each player's games won and points across them, most wins first (the points break a tie).
-// Played mixed (one match), only the points.
-// Whoever leads is crowned; at the end that's the playlist's winner (none when the first two have the same).
-export function PlaylistStandings({ run }) {
-  const { user } = useApp();
-  const leader = run.standings[0];
-  const second = run.standings[1];
-  const crowned =
-    leader && leader.wins > 0 && !(second && second.wins === leader.wins && second.points === leader.points) ? leader.id : null;
-
-  return (
-    <section className="tv-pl-table" aria-labelledby="tv-pl-table-title">
-      <div className="tv-pl-table-head">
-        <h3 id="tv-pl-table-title" className="tv-pl-table-title">
-          {run.finished ? "Clasificación final" : "Clasificación de la playlist"}
-        </h3>
-        <span className="tv-pl-table-sub">{run.mixed ? "Gana quien sume más puntos" : "Gana quien gane más juegos"}</span>
-      </div>
-      <ol className="tv-pl-table-list">
-        {run.standings.map((p, i) => (
-          <li key={p.id} className={`tv-pl-row${p.id === crowned ? " is-leader" : ""}${p.id === user?.id ? " is-me" : ""}`} style={{ "--i": i }}>
-            <span className="tv-pl-row-pos">{i + 1}</span>
-            <Avatar name={p.name} avatar={p.avatar} />
-            <span className="tv-pl-row-name">{p.name}</span>
-            {p.id === crowned && <Icon name="crown" size={18} strokeWidth={1.5} filled className="tv-pl-row-crown" />}
-            {!run.mixed && (
-              <span className="tv-pl-row-wins">
-                {p.wins}
-                <small>{p.wins === 1 ? "juego" : "juegos"}</small>
-              </span>
-            )}
-            <span className="tv-pl-row-points">{p.points.toLocaleString("es-ES")} pts</span>
-          </li>
-        ))}
-      </ol>
-    </section>
   );
 }

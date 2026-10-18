@@ -7,6 +7,7 @@ import { AVATAR_COLORS, useApp } from "../lib/store.jsx";
 import TvShell from "../components/home/TvShell.jsx";
 import Avatar from "../components/home/Avatar.jsx";
 import CountUp from "../components/home/CountUp.jsx";
+import MatchHistory from "../components/home/MatchHistory.jsx";
 import GoogleIcon from "../components/home/GoogleIcon.jsx";
 import SpotifyIcon from "../components/home/SpotifyIcon.jsx";
 import Icon from "../components/home/Icon.jsx";
@@ -38,10 +39,14 @@ function Notice({ tone, icon, children }) {
 
 // What the profile says about the @username's changes.
 function handleInfo(info) {
-  if (info.free) return "Te asignamos este usuario: puedes cambiarlo una vez sin gastar cambios.";
-  if (info.changesLeft > 0) return `Te quedan ${info.changesLeft} ${info.changesLeft === 1 ? "cambio" : "cambios"} este mes.`;
-  const when = new Date(info.nextChangeAt).toLocaleDateString("es", { day: "numeric", month: "long" });
-  return `Ya no te quedan cambios este mes. Podrás cambiarlo el ${when}.`;
+  let left;
+  if (info.changesLeft > 0) left = `Te quedan ${info.changesLeft} ${info.changesLeft === 1 ? "cambio" : "cambios"} este mes.`;
+  else {
+    const when = new Date(info.nextChangeAt).toLocaleDateString("es", { day: "numeric", month: "long" });
+    left = `Ya no te quedan cambios este mes. Podrás cambiarlo el ${when}.`;
+  }
+  // An assigned username (made from the name) says so; changing it counts like any change.
+  return info.assigned ? `Te asignamos este usuario. ${left}` : left;
 }
 
 function ProfileScreen() {
@@ -260,7 +265,7 @@ function ProfileScreen() {
 
 
   return (
-    <div className="tv-page">
+    <div className="tv-page tv-page--wide">
       {searchParams.get("new") === "1" && (
         <Notice tone="brand" icon="star">¡Tu cuenta está lista! Puedes cambiar tu nombre cuando quieras.</Notice>
       )}
@@ -350,6 +355,14 @@ function ProfileScreen() {
               ))}
             </div>
           )}
+          {!isGuest && (
+            <div className="tv-history-wrap">
+              <div className="tv-card-head">
+                <h2 className="tv-card-title">Historial</h2>
+              </div>
+              {statsLoading ? <span className="tv-skeleton" aria-hidden="true" /> : <MatchHistory matches={profileData?.history || []} canReport={!isOtherUser} onError={setErr} />}
+            </div>
+          )}
         </section>
 
         {!isOtherUser && (
@@ -389,10 +402,8 @@ function ProfileScreen() {
                     check={handleCheck}
                     placeholder={activeUser?.username || "tu_usuario"}
                     disabled={saving}
+                    note={activeUser?.usernameInfo ? handleInfo(activeUser.usernameInfo) : null}
                   />
-                  {activeUser?.usernameInfo && !handleCheck.message && (
-                    <span className="tv-handle-status">{handleInfo(activeUser.usernameInfo)}</span>
-                  )}
                 </>
               )}
             </form>
