@@ -33,7 +33,7 @@ mgr.updateConfig(room, "host-1", { history: { categories: [], difficulties: ["fa
 assert.equal(mgr.publicState(room).questionsReady, 0, "no category ticked: nothing to play");
 assert.throws(() => mgr.start(room, "host-1"), /Solo hay 0 preguntas/);
 mgr.updateConfig(room, "host-1", { history: { categories: [...new Set(mgr.historyQuestions.map((q) => q.category))] } });
-mgr.updateConfig(room, "host-1", { history: { rounds: 5, roundMs: 20000 } });
+mgr.updateConfig(room, "host-1", { history: { rounds: 5, roundMs: 20000, styles: ["linea"] } });
 
 mgr.start(room, "host-1");
 stop(room);
@@ -42,7 +42,7 @@ assert.equal(room.totalRounds, 5);
 assert.equal(new Set(room.tracks.map((t) => t.year)).size, 5);
 
 // The rounds below use known events.
-const known = (r, year, min, max) => Object.assign(r.tracks[r.currentRound], { year, min, max, era: eraOf(year), prompt: "Evento de prueba" });
+const known = (r, year, min, max) => Object.assign(r.tracks[r.currentRound], { kind: "linea", year, min, max, era: eraOf(year), prompt: "Evento de prueba" });
 const next = () => {
   mgr.advance(room);
   stop(room);
@@ -112,7 +112,7 @@ assert.equal(host.correct, 0);
 assert.equal(luis.lastAnswer.text, "", "no year, no points");
 assert.equal(luis.lastPoints, 0);
 pub = mgr.publicState(room);
-assert.deepEqual(pub.reveal, { prompt: "Evento de prueba", year: 1989, min: 1930, max: 2030 });
+assert.deepEqual(pub.reveal, { kind: "linea", prompt: "Evento de prueba", year: 1989, min: 1930, max: 2030 });
 assert.equal(pub.players.find((p) => p.id === "host-1").lastAnswer.year, 1980);
 
 // ---- The closer, the more points; years before Christ, and no year 0 ----
@@ -253,4 +253,45 @@ assert.equal(room.game, "mundo");
 mgr.setGame(room, "host-1", "historia");
 assert.equal(room.game, "historia");
 assert.equal(room.phase, "lobby");
+
+// ---- Cifras: a number on a bar; exact within half a hundredth of it, then fewer points the further ----
+const fig = mgr.create({ host: { id: "f1", name: "Uno", socketId: "f1" }, mode: "multi", game: "historia" });
+mgr.addPlayer(fig, { id: "f2", name: "Dos", socketId: "f2" });
+mgr.addPlayer(fig, { id: "f3", name: "Tres", socketId: "f3" });
+mgr.updateConfig(fig, "f1", { history: { styles: ["cifras"], rounds: 5 } });
+assert.equal(mgr.publicState(fig).questionCounts.styles.linea > 0, true, "each way of playing is counted, ticked or not");
+mgr.start(fig, "f1");
+stop(fig);
+assert.ok(fig.tracks.every((t) => t.kind === "cifras"));
+Object.assign(fig.tracks[0], { value: 8849, unit: "m", min: 6000, max: 26000, span: 20000, snap: 20, prompt: "¿Cuánto mide?" });
+let fs = mgr.publicState(fig, "f2");
+assert.equal(fs.question.kind, "cifras");
+assert.equal(fs.question.unit, "m");
+assert.equal(fs.question.min, null, "the bar only comes with the round");
+assert.ok(!JSON.stringify(fs.question).includes("8849"));
+mgr.beginPlaying(fig);
+stop(fig);
+fs = mgr.publicState(fig, "f2");
+assert.deepEqual([fs.question.min, fs.question.max, fs.question.snap], [6000, 26000, 20]);
+assert.ok(!JSON.stringify(fs).includes("8849"), "the answer stays on the server");
+assert.throws(() => mgr.placeYear(fig, "f2", { value: 5000 }), /barra/, "outside the bar");
+assert.throws(() => mgr.placeYear(fig, "f2", { value: 9000.5 }), /barra/);
+mgr.placeYear(fig, "f2", { value: 8900 });
+assert.equal(mgr.publicState(fig, "f2").me.guess, 8900);
+mgr.placeYear(fig, "f2", { value: 8920, lock: true });
+mgr.placeYear(fig, "f1", { value: 10000 });
+mgr.placeYear(fig, "f3", { value: 7000, lock: true });
+mgr.beginReveal(fig);
+stop(fig);
+const [f1, f2, f3] = ["f1", "f2", "f3"].map((id) => fig.players.get(id));
+assert.equal(f2.lastAnswer.correct, true, "71 m off on a bar of 20 000 is exact");
+assert.equal(f2.lastPoints, 1000);
+assert.equal(f2.lastAnswer.text, "8920 m, exacto");
+assert.equal(f1.lastAnswer.locked, false, "the last number counts even if it wasn't locked");
+assert.equal(f1.lastAnswer.text, "10.000 m, se pasó por 1151 m");
+assert.equal(f3.lastAnswer.text, "7000 m, le faltaron 1849 m");
+assert.ok(f1.lastPoints > f3.lastPoints && f3.lastPoints > 0);
+assert.deepEqual(mgr.publicState(fig).reveal, { kind: "cifras", prompt: "¿Cuánto mide?", value: 8849, unit: "m", min: 6000, max: 26000 });
+mgr.destroy(fig);
+
 console.log("historyRoom.test ok");

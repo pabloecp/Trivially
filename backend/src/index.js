@@ -27,6 +27,7 @@ import { FriendsHub } from "./friends/friendsHub.js";
 import { createFriendsRouter } from "./friends/routes.js";
 import { getMedia, isCoverUrl, isPreviewUrl, isSpotifyPreviewUrl } from "./audio/mediaCache.js";
 import { flagForToken, getFlag } from "./geo/flags.js";
+import { countryShape, shapeForToken } from "./geo/shapes.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 dotenv.config();
@@ -160,6 +161,19 @@ app.get("/api/geo/flag/:token", async (req, res) => {
     res.send(image);
   } catch (e) {
     res.status(502).json({ error: e.message });
+  }
+});
+
+// Encuentra el país's silhouettes ("Sombra" rounds), by the token of the match's round: only the shape to draw, never
+// the country's name.
+app.get("/api/geo/shape/:token", (req, res) => {
+  const map = shapeForToken(req.params.token);
+  if (!map) return res.status(404).json({ error: "Silueta no encontrada" });
+  try {
+    res.setHeader("Cache-Control", "private, max-age=21600");
+    res.json(countryShape(map));
+  } catch (e) {
+    res.status(500).json({ error: e.message });
   }
 });
 

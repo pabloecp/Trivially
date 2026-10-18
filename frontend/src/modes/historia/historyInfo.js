@@ -2,9 +2,12 @@
 import { TOPICS } from "../quiz/quizInfo.js";
 export { TOPICS };
 
-// Its ways of playing, "Modos de Juego". "Línea del tiempo" (an event's year) is the only one for now, so it shows
-// ticked and can't be changed.
-export const STYLES = [{ id: "linea", label: "Línea del tiempo", hint: "Elige en qué año pasó cada acontecimiento" }];
+// Its ways of playing, "Modos de Juego" (HISTORY_STYLES on the server), both ticked in a new room: "Línea del tiempo"
+// (an event's year on a timeline) and "Cifras" (a question whose answer is a number, on a bar).
+export const STYLES = [
+  { id: "linea", label: "Línea del tiempo", hint: "Elige en qué año pasó cada acontecimiento" },
+  { id: "cifras", label: "Cifras", hint: "Elige el número en una barra" },
+];
 
 // The harder, the deeper the mode's colour; mixed takes the site's accent (colours in styles/history.css).
 export const DIFFICULTIES = [
@@ -29,6 +32,7 @@ export function historyConfig(room) {
   return {
     rounds: history.rounds || 5,
     roundMs: history.roundMs || 10000,
+    styles: history.styles ?? STYLES.map((s) => s.id),
     categories: history.categories ?? TOPICS.map((t) => t.id),
     difficulties: history.difficulties ?? LEVELS.map((d) => d.id),
   };
@@ -44,6 +48,19 @@ export function yearLabel(year, { crossesZero = false } = {}) {
 export function yearsApart(a, b) {
   const gap = Math.abs(a - b);
   return a < 0 !== b < 0 ? gap - 1 : gap;
+}
+
+/** How a figure of Cifras reads: "8849 m", "42.195 m", "3.333.360 puntos" (like figureLabel on the server). */
+export function figureLabel(value, unit = "") {
+  const text = Number(value).toLocaleString("es-ES", { useGrouping: Math.abs(value) >= 10000 });
+  return unit ? `${text} ${unit}` : text;
+}
+
+/** A figure on the bar's scale, short: "20 mil", "1,5 M". */
+export function figureScale(value) {
+  if (value >= 1e6) return `${(value / 1e6).toLocaleString("es-ES", { maximumFractionDigits: 1 })} M`;
+  if (value >= 10000) return `${(value / 1000).toLocaleString("es-ES", { maximumFractionDigits: 1 })} mil`;
+  return String(value);
 }
 
 /** "1 año", "12 años". */

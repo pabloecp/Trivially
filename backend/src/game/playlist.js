@@ -7,19 +7,20 @@
 
 export const PLAYLIST_GAME = "playlist";
 // The games a playlist can have, and their names for the messages.
-export const PLAYLIST_GAMES = ["opciones", "musica", "mundo", "historia", "minas"];
+export const PLAYLIST_GAMES = ["opciones", "musica", "mundo", "historia", "minas", "lluvia"];
 export const GAME_NAMES = {
   opciones: "Trivia",
   musica: "Adivina la canción",
   mundo: "Encuentra el país",
   historia: "Rango",
   minas: "Campo de minas",
+  lluvia: "Lluvia",
 };
 export const PLAYLIST_ORDERS = ["orden", "aleatorio"];
 export const PLAYLIST_LIMITS = { items: 10, name: 40 };
 const DEFAULT_NAME = "Mi playlist";
 // Where each game keeps its settings in room.config (Adivina la canción's are at the top of it).
-const CONFIG_KEY = { opciones: "quiz", mundo: "geo", historia: "history", minas: "mines", musica: null };
+const CONFIG_KEY = { opciones: "quiz", mundo: "geo", historia: "history", minas: "mines", lluvia: "rain", musica: null };
 
 export function emptyPlaylist() {
   return { name: DEFAULT_NAME, order: "orden", items: [] };
@@ -88,8 +89,9 @@ export function newRun(playlist, savedConfig, random = Math.random) {
   return {
     name: playlist.name,
     order: playlist.order,
-    // "aleatorio": a single match, every game's rounds mixed (RoomManager.startMixed).
-    mixed: playlist.order === "aleatorio",
+    // Every playlist is a single match (RoomManager.startMixed): "orden" plays each game's rounds one game after the
+    // other, "aleatorio" mixes them. There is no screen between games; the match ends on the playlist's results.
+    mixed: true,
     items: playOrder(playlist.items, playlist.order, random),
     index: 0,
     // Per player (even one who left): name, avatar, games played and won, and points across them.
@@ -101,7 +103,11 @@ export function newRun(playlist, savedConfig, random = Math.random) {
   };
 }
 
-/** A finished game of the run: everyone who played it adds it to their tally, its winner a win. */
+/**
+ * A finished game of the run: everyone who played it adds it to their tally, its winner a win. Their rounds of it
+ * (RoomManager.recordRound) are kept too, one after another, for "Tu playlist" on the final screen, with their best
+ * streak.
+ */
 export function recordGame(run, game, ranked, winnerId) {
   for (const p of ranked) {
     const entry = run.standings[p.id] || (run.standings[p.id] = { wins: 0, points: 0, played: 0 });
@@ -111,6 +117,8 @@ export function recordGame(run, game, ranked, winnerId) {
     entry.played += 1;
     entry.points += p.score || 0;
     if (p.id === winnerId) entry.wins += 1;
+    entry.rounds = [...(entry.rounds || []), ...(p.rounds || []).map((r) => ({ ...r }))];
+    entry.bestStreak = Math.max(entry.bestStreak || 0, p.bestStreak || 0);
   }
   const winner = ranked.find((p) => p.id === winnerId);
   run.games.push({ game, winnerId: winnerId || null, winnerName: winner?.name || null });
@@ -119,7 +127,17 @@ export function recordGame(run, game, ranked, winnerId) {
 /** The run's tally by position: the most games won first, then the most points. */
 export function rankedStandings(run) {
   return Object.entries(run.standings)
-    .map(([id, e]) => ({ id, name: e.name, avatar: e.avatar, isGuest: Boolean(e.isGuest), wins: e.wins, points: e.points, played: e.played }))
+    .map(([id, e]) => ({
+      id,
+      name: e.name,
+      avatar: e.avatar,
+      isGuest: Boolean(e.isGuest),
+      wins: e.wins,
+      points: e.points,
+      played: e.played,
+      rounds: (e.rounds || []).map(({ questionId, ...round }) => round),
+      bestStreak: e.bestStreak || 0,
+    }))
     .sort((a, b) => b.wins - a.wins || b.points - a.points);
 }
 

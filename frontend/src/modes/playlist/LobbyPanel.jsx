@@ -42,7 +42,7 @@ const gamesText = (n) => `${n} ${n === 1 ? "juego" : "juegos"}`;
 const PLAYLIST_STEPS = [
   { title: "Añade juegos", text: "Toca los que están debajo de la lista." },
   { title: "Ajusta cada uno", text: "Toca un juego de la lista y elige aquí cómo se juega." },
-  { title: "Comienza la partida", text: "Se juegan uno tras otro y gana quien gane más juegos." },
+  { title: "Comienza la partida", text: "Todas las rondas seguidas en una partida, y gana quien sume más puntos." },
 ];
 
 // On a phone the list shows this many games at most, and scrolls for the rest; on a big screen, as many as fit up to

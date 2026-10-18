@@ -1,13 +1,18 @@
+import { buildFigureQuestions } from "../history/figureQuestions.js";
 import { buildHistoryQuestions, HISTORY_MODE } from "../history/historyQuestions.js";
 import { QUESTION_CATEGORIES, toQuestion } from "../questions/questionSchema.js";
 
 // Rango (game id "historia", the old one on purpose): its settings (config.history), how a match draws its events, the
-// range of years each one is shown with and how a year is scored. Its only way of playing for now is "Línea del
-// tiempo": players choose a year on a timeline, the exact year gets every point, and the closer a guess lands, the
-// more it gets.
+// range each one is shown with and how an answer is scored. It has two ways of playing ("Modos de Juego",
+// `config.history.styles`): "linea" (Línea del tiempo: players choose an event's year on a timeline) and "cifras"
+// (a question whose answer is a number, chosen on a bar). Either way the exact answer gets every point, and the closer
+// a guess lands, the more it gets.
 
 export const HISTORY_GAME = HISTORY_MODE;
 export const HISTORY_LEVELS = ["facil", "media", "dificil"];
+// Its ways of playing, and the type of question each one plays.
+export const HISTORY_STYLES = ["linea", "cifras"];
+const styleOf = (q) => (q.type === "number" ? "cifras" : "linea");
 // Older clients send one `difficulty`, "mixta" being all three.
 export const HISTORY_DIFFICULTIES = [...HISTORY_LEVELS, "mixta"];
 // The topics of the events (the ids of QUESTION_CATEGORIES, the same "Categorías" as Trivia).
@@ -44,7 +49,7 @@ export function eraOf(year) {
 }
 
 export function defaultHistoryConfig() {
-  return { rounds: 5, roundMs: 10000, categories: [...TOPICS], difficulties: [...HISTORY_LEVELS] };
+  return { rounds: 5, roundMs: 10000, styles: [...HISTORY_STYLES], categories: [...TOPICS], difficulties: [...HISTORY_LEVELS] };
 }
 
 const clamp = (n, { min, max }, fallback) => Math.min(max, Math.max(min, Math.round(Number(n)) || fallback));
@@ -54,8 +59,9 @@ const pickList = (change, allowed, fallback) => (Array.isArray(change) ? allowed
 const levelsOf = (difficulty) => (difficulty === "mixta" ? [...HISTORY_LEVELS] : HISTORY_LEVELS.includes(difficulty) ? [difficulty] : null);
 
 /**
- * Merges a settings change into the current Rango settings, keeping every value valid. Either list may be left empty
- * (the match then has no events and can't start). The ages an older client may still send are ignored.
+ * Merges a settings change into the current Rango settings, keeping every value valid. Any list may be left empty
+ * (the match then has no questions and can't start). The ages an older client may still send are ignored, and
+ * settings from before "Cifras" (no `styles`) get both ways ticked.
  */
 export function mergeHistoryConfig(current, change = {}) {
   const base = { ...defaultHistoryConfig(), ...current };
@@ -63,28 +69,31 @@ export function mergeHistoryConfig(current, change = {}) {
   return {
     rounds: change.rounds != null ? clamp(change.rounds, HISTORY_LIMITS.rounds, base.rounds) : base.rounds,
     roundMs: change.roundMs != null ? clamp(change.roundMs, HISTORY_LIMITS.roundMs, base.roundMs) : base.roundMs,
+    styles: pickList(change.styles, HISTORY_STYLES, pickList(base.styles, HISTORY_STYLES, [...HISTORY_STYLES])),
     categories: pickList(change.categories, TOPICS, base.categories),
     difficulties: pickList(change.difficulties, HISTORY_LEVELS, levelsOf(change.difficulty) || baseLevels),
   };
 }
 
 /**
- * The Rango questions: the events of history/events.js (the source of truth, with their topics) plus any other
- * row of mode "historia" in the loaded bank (questions/questionBank.js: Supabase...), so an event added to the list is played
- * before it is uploaded, and a row only in the database is still played. Where both have the same id, the list wins.
+ * The Rango questions: the events of history/events.js and the figures of history/figures.js (the source of truth,
+ * with their topics) plus any other row of mode "historia" in the loaded bank (questions/questionBank.js: Supabase...),
+ * so an event added to the list is played before it is uploaded, and a row only in the database is still played.
+ * Where both have the same id, the list wins.
  */
 export function historyBank(questions = []) {
-  const built = buildHistoryQuestions().map(toQuestion);
+  const built = [...buildHistoryQuestions(), ...buildFigureQuestions()].map(toQuestion);
   const known = new Set(built.map((q) => q.id));
-  const extra = questions.filter((q) => q.mode === HISTORY_MODE && q.type === "year" && !known.has(q.id));
+  const extra = questions.filter((q) => q.mode === HISTORY_MODE && (q.type === "year" || q.type === "number") && !known.has(q.id));
   return [...built, ...extra];
 }
 
-/** The events that match the settings. `ignore` leaves one filter out (to count what each chip would add). */
+/** The questions that match the settings. `ignore` leaves one filter out (to count what each chip would add). */
 function questionsFor(bank, config, ignore = null) {
-  const { categories, difficulties } = mergeHistoryConfig(config);
+  const { styles, categories, difficulties } = mergeHistoryConfig(config);
   return bank.filter(
     (q) =>
+      (ignore === "styles" || styles.includes(styleOf(q))) &&
       (ignore === "categories" || categories.includes(q.category)) &&
       (ignore === "difficulties" || difficulties.includes(q.difficulty))
   );
@@ -95,7 +104,7 @@ export function countHistoryQuestions(bank, config) {
   return questionsFor(bank, config).length;
 }
 
-/** For the settings' chips: how many events each topic and difficulty has with the other settings. */
+/** For the settings' chips: how many questions each way of playing, topic and difficulty has with the other settings. */
 export function historyCounts(bank, config) {
   const tally = (ignore, key) => {
     const out = {};
@@ -103,6 +112,7 @@ export function historyCounts(bank, config) {
     return out;
   };
   return {
+    styles: tally("styles", styleOf),
     categories: tally("categories", (q) => q.category),
     difficulties: tally("difficulties", (q) => q.difficulty),
   };
@@ -156,41 +166,106 @@ export function yearPoints(diff, era) {
   return Math.round(YEAR_NEAR_POINTS * Math.exp(-diff / YEAR_FALLOFF[era]));
 }
 
-/** An event as a round of the room (these objects stay on the server; see RoomManager.publicState). */
+// ---- Cifras ----
+// The bar of a figure is a round span (1, 2 or 5 followed by zeros, at least 10) between 1.25 and 6 times the answer,
+// starting on one of its tenths, with the answer inside and never near either end. A guess moves in steps of a
+// thousandth of the bar (`snap`, at least 1) and is exact within half a hundredth of it (on a bar of 10, only the
+// number itself); past that the points fall like a year's, a tenth of the bar being what 15 years are on a
+// contemporary timeline.
+const NICE = [1, 2, 5, 10, 20, 50, 100];
+
+export function figureRange(value, random = Math.random) {
+  const magnitude = 10 ** Math.floor(Math.log10(Math.max(1, value)));
+  const span =
+    NICE.map((k) => k * magnitude).find((s) => s >= 10 && s >= value * 1.25 && s <= Math.max(10, value * 6)) ||
+    Math.max(10, 100 * magnitude);
+  const tick = span / 10;
+  const options = [];
+  for (let min = 0; min < value - span * 0.05; min += tick) {
+    if (min + span > value + span * 0.05) options.push(min);
+  }
+  const min = options.length ? options[Math.floor(random() * options.length)] : 0;
+  return { min, max: min + span, span, snap: Math.max(1, Math.round(span / 1000)) };
+}
+
+/** How far a guess may be from a figure whose bar is `span` long and still be exact. */
+export function figureTolerance(span) {
+  return Math.floor(span / 200);
+}
+
+/** Points of a guess `diff` away from a figure whose bar is `span` long. */
+export function figurePoints(diff, span) {
+  if (diff <= figureTolerance(span)) return YEAR_MAX_POINTS;
+  return Math.round(YEAR_NEAR_POINTS * Math.exp(-diff / (span / 10)));
+}
+
+/** How a figure reads: "8849 m", "42.195 m", "3.333.360 puntos" (like the frontend's figureLabel). */
+export function figureLabel(value, unit = "") {
+  const text = Number(value).toLocaleString("es-ES", { useGrouping: Math.abs(value) >= 10000 });
+  return unit ? `${text} ${unit}` : text;
+}
+
+/** A question as a round of the room (these objects stay on the server; see RoomManager.publicState). */
 export function toHistoryTrack(q) {
+  if (q.type === "number") {
+    const { value, unit = "" } = q.data;
+    const { min, max, span, snap } = figureRange(value);
+    return { id: q.id, kind: "cifras", prompt: q.prompt, value, unit, category: q.category, difficulty: q.difficulty, min, max, span, snap };
+  }
   const year = q.data.year;
   const { min, max } = yearRange(year);
-  return { id: q.id, prompt: q.prompt, year, era: eraOf(year), category: q.category, difficulty: q.difficulty, min, max };
+  return { id: q.id, kind: "linea", prompt: q.prompt, year, era: eraOf(year), category: q.category, difficulty: q.difficulty, min, max };
 }
 
 /**
- * The events of a match: the chosen categories share the rounds as evenly as they can (10 rounds of four categories =
- * 3 + 3 + 2 + 2; a category that runs out leaves its rounds to the others), never two events of the same year, in
- * random order.
+ * The questions of one way of playing, at most `count`: the chosen categories share them as evenly as they can (10
+ * rounds of four categories = 3 + 3 + 2 + 2; a category that runs out leaves its rounds to the others), never two
+ * events of the same year nor two figures with the same answer.
  */
-export function pickHistoryQuestions(bank, config) {
-  const settings = mergeHistoryConfig(config);
-  const pools = shuffle(settings.categories).map((topic) => shuffle(questionsFor(bank, { ...settings, categories: [topic] })));
-  const years = new Set();
+function pickStyle(bank, settings, style, count) {
+  const pools = shuffle(settings.categories).map((topic) =>
+    shuffle(questionsFor(bank, { ...settings, styles: [style], categories: [topic] }))
+  );
+  const seen = new Set();
   const picked = [];
-  while (picked.length < settings.rounds && pools.some((p) => p.length)) {
+  while (picked.length < count && pools.some((p) => p.length)) {
     for (const pool of pools) {
-      if (picked.length >= settings.rounds) break;
+      if (picked.length >= count) break;
       while (pool.length) {
         const q = pool.pop();
-        if (years.has(q.data.year)) continue;
-        years.add(q.data.year);
+        const key = q.type === "number" ? `n${q.data.value}` : `y${q.data.year}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
         picked.push(q);
         break;
       }
     }
   }
-  return shuffle(picked).map(toHistoryTrack);
+  return picked;
 }
 
 /**
- * The event of a tiebreak: one not asked in this match, from the chosen categories, of a middling difficulty when the
- * match had it, else of the one it had.
+ * The questions of a match: the ticked ways of playing share the rounds evenly (one that runs out leaves its rounds to
+ * the other), and inside each the categories share them (pickStyle). In random order.
+ */
+export function pickHistoryQuestions(bank, config) {
+  const settings = mergeHistoryConfig(config);
+  const styles = shuffle(settings.styles);
+  const lists = styles.map((style) => pickStyle(bank, settings, style, settings.rounds));
+  const share = (i) => Math.floor(settings.rounds / styles.length) + (i < settings.rounds % styles.length ? 1 : 0);
+  const take = lists.map((list, i) => Math.min(list.length, share(i)));
+  let missing = settings.rounds - take.reduce((a, b) => a + b, 0);
+  for (let i = 0; i < lists.length && missing > 0; i += 1) {
+    const more = Math.min(missing, lists[i].length - take[i]);
+    take[i] += more;
+    missing -= more;
+  }
+  return shuffle(lists.flatMap((list, i) => list.slice(0, take[i]))).map(toHistoryTrack);
+}
+
+/**
+ * The question of a tiebreak: one not asked in this match, of the ticked ways of playing and categories, of a middling
+ * difficulty when the match had it, else of the one it had.
  */
 export function pickHistoryTiebreak(bank, config, usedIds = []) {
   const settings = mergeHistoryConfig(config);

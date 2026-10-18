@@ -3,6 +3,7 @@ import MusicSettings from "../music/MusicSettings.jsx";
 import GeoSettings from "../mundo/GeoSettings.jsx";
 import HistorySettings from "../historia/HistorySettings.jsx";
 import MinesSettings from "../minas/MinesSettings.jsx";
+import RainSettings from "../lluvia/RainSettings.jsx";
 import { configWithItem, itemConfigFrom } from "./playlistInfo.js";
 
 const SETTINGS = {
@@ -10,6 +11,7 @@ const SETTINGS = {
   mundo: GeoSettings,
   historia: HistorySettings,
   minas: MinesSettings,
+  lluvia: RainSettings,
 };
 
 // The settings of one game of the playlist: the game's own settings panel, the same as in its lobby, fed with the

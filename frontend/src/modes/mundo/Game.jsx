@@ -8,12 +8,14 @@ import MatchResults from "../../components/home/MatchResults.jsx";
 import PartyPanel from "../../components/home/PartyPanel.jsx";
 import { PhoneHint, RoomVerdict, roundPlayers } from "../../components/home/CentralBits.jsx";
 import { useApp, useRemainingMs, useView } from "../../lib/store.jsx";
+import { BACKEND_URL } from "../../lib/config.js";
 import WorldMap from "./WorldMap.jsx";
 import { useWorld } from "./worldData.js";
-import { STYLES, geoConfig } from "./geoInfo.js";
+import { geoConfig, styleOf } from "./geoInfo.js";
 import "../../styles/home.css";
 import "../../styles/geo.css";
-import { PauseButton, ReportButton, PauseVeil } from "../../components/home/PauseControls.jsx";
+import { PauseButton, ReportButton, SkipButton, PauseVeil } from "../../components/home/PauseControls.jsx";
+import { resolveCode } from "../../lib/hiddenCode.js";
 
 const COUNTDOWN_MS = 3000;
 // One colour per player for the pins on the reveal map (never the green and red of right and wrong).
@@ -28,8 +30,10 @@ function joinNames(names) {
 }
 
 function GameScreen() {
-  const { code } = useParams();
+  const { code: codeParam } = useParams();
   const { user, room, joinRoom, placePin, setGame } = useApp();
+  // The address's code ("oculta" while it's hidden: this tab's room, lib/hiddenCode.js).
+  const code = resolveCode(codeParam, room);
   const nav = useNavigate();
   const { world, error: mapError } = useWorld();
   // The players keep their map to put the pin (beside a central device they only lose the clock and the scoreboard,
@@ -168,7 +172,9 @@ function GameScreen() {
 
   const phase = room.phase;
   const isHost = !central && room.hostId === user?.id;
-  const style = STYLES[0];
+  // How this round gives the country: its name, or only its silhouette or its flag (shown over the map, Clue).
+  const style = styleOf(question?.style);
+  const byName = style.id === "nombre";
   const seconds = Math.max(0, Math.ceil(left / 1000));
   // The round's length, from the phase itself (the setting's, or a playlist game's).
   const roundSeconds = Math.round(geoConfig(room).roundMs / 1000);
@@ -224,10 +230,11 @@ function GameScreen() {
       hint = iPlay
         ? "Pon tu pin y confírmalo: gana el primero que confirme dentro del país. Si nadie lo encuentra, el más cercano."
         : "Solo juegan los empatados. Tú miras cómo lo resuelven.";
-    } else hint = `Tendrás ${roundSeconds} segundos para poner tu pin en el mapa.`;
+    } else if (byName) hint = `Tendrás ${roundSeconds} segundos para poner tu pin en el mapa.`;
+    else hint = `Verás ${style.id === "sombra" ? "la forma" : "la bandera"} de un país: tendrás ${roundSeconds} segundos para poner tu pin en él.`;
   } else {
-    kicker = `${roundLabel} · ¿Dónde está…?`;
-    title = question?.name || room.reveal?.name || "";
+    kicker = byName ? `${roundLabel} · ¿Dónde está…?` : `${roundLabel} · ${style.label}`;
+    title = question?.name || room.reveal?.name || "¿Qué país es?";
     if (phase === "reveal") hint = nextText;
     else if (!iPlay) hint = `Solo juegan ${joinNames(tiedNames)}: gana el primero que confirme su pin dentro del país.`;
     else if (pinLocked) hint = tiebreak ? "Pin confirmado. Si cayó dentro y fuiste el primero, ganas." : waitLine("Pin confirmado");
@@ -238,7 +245,11 @@ function GameScreen() {
   // Someone who joined mid-match only watches: the same lines, without the instructions to answer.
   if (spectator && phase !== "reveal") hint = "Estás viendo la partida. Entrarás a la sala cuando termine.";
   // The central device talks to the whole room: they put their pins from their phones.
-  if (central && phase === "countdown" && !tiebreak) hint = `Tendrán ${roundSeconds} segundos para poner su pin desde su teléfono.`;
+  if (central && phase === "countdown" && !tiebreak) {
+    hint = byName
+      ? `Tendrán ${roundSeconds} segundos para poner su pin desde su teléfono.`
+      : `Verán ${style.id === "sombra" ? "la forma" : "la bandera"} de un país: tendrán ${roundSeconds} segundos para ponerle su pin desde su teléfono.`;
+  }
   else if (central && phase === "countdown") hint = `Desempate entre ${joinNames(tiedNames)}: gana el primero que confirme su pin dentro del país.`;
   else if (central && phase === "playing") hint = tiebreak ? `Solo juegan ${joinNames(tiedNames)}.` : "Pongan su pin en el mapa desde su teléfono.";
 
@@ -298,6 +309,7 @@ function GameScreen() {
 
           <div className="tv-game-tools">
             <ReportButton room={room} onError={setErr} />
+            <SkipButton room={room} onError={setErr} />
             <PauseButton room={room} isHost={isHost} onError={setErr} />
             {isHost && (
               <button
@@ -331,7 +343,7 @@ function GameScreen() {
               regions={phase === "playing" && !central}
               label={
                 phase === "playing"
-                  ? `Mapamundi. Pon tu pin en ${question?.name}. Flechas para moverte, más y menos para acercar, Enter para poner el pin en el centro.`
+                  ? `Mapamundi. Pon tu pin en ${question?.name || (style.id === "sombra" ? "el país de la silueta" : "el país de la bandera")}. Flechas para moverte, más y menos para acercar, Enter para poner el pin en el centro.`
                   : phase === "reveal"
                   ? `Mapamundi con ${room.reveal?.name || "el país"} marcado`
                   : "Mapamundi"
@@ -346,6 +358,9 @@ function GameScreen() {
                   <span key={Math.max(1, seconds)} className="tv-countdown-num">{Math.max(1, seconds)}</span>
                 </div>
               )}
+
+              {/* The silhouette or the flag of the country to find, while it's searched and at the reveal. */}
+              {!byName && (phase === "playing" || phase === "reveal") && <Clue question={question} />}
 
               {/* How the round went, in a card over the map: this player's, or on the central device who won a
                   tiebreak (how the whole room did is in the row under the map). */}
@@ -371,6 +386,57 @@ function GameScreen() {
 
       {/* The scoreboard is the central device's, when there is one. */}
       {!controller && <PartyPanel room={room} scores display={central} className="tv-geo-side" />}
+    </div>
+  );
+}
+
+// The country to find in a "Sombra" or "Bandera" round: its silhouette or its flag, in a card at the bottom left of the
+// map (over the Pacific in the world view, where there is nothing to look for). Both come from an address that never
+// names the country; the silhouette is a path the server drew from the same map (geo/shapes.js).
+function Clue({ question }) {
+  const isFlag = question?.style === "bandera";
+  const src = isFlag ? question?.flag : question?.shape;
+  const [shape, setShape] = useState(null);
+  const [failed, setFailed] = useState(false);
+
+  useEffect(() => {
+    setFailed(false);
+    setShape(null);
+    if (isFlag || !src) return undefined;
+    let live = true;
+    fetch(`${BACKEND_URL}${src}`)
+      .then((res) => (res.ok ? res.json() : Promise.reject(new Error("Sin silueta"))))
+      .then((data) => live && setShape(data))
+      .catch(() => live && setFailed(true));
+    return () => {
+      live = false;
+    };
+  }, [src]);
+
+  if (!src) return null;
+  let content;
+  if (failed) {
+    content = (
+      <span className="tv-geo-clue-missing">
+        <Icon name={isFlag ? "flag" : "shape"} size={26} />
+        {isFlag ? "No se pudo cargar la bandera" : "No se pudo cargar la silueta"}
+      </span>
+    );
+  } else if (isFlag) {
+    content = <img key={src} src={`${BACKEND_URL}${src}`} alt="Bandera del país que buscas" onError={() => setFailed(true)} />;
+  } else if (shape) {
+    const [, , w, h] = shape.viewBox.split(" ").map(Number);
+    content = (
+      <svg viewBox={shape.viewBox} style={{ aspectRatio: `${w} / ${h}` }} role="img" aria-label="Silueta del país que buscas">
+        <path d={shape.d} fillRule="evenodd" />
+      </svg>
+    );
+  } else {
+    content = <span className="tv-geo-clue-wait" aria-label="Cargando la silueta" />;
+  }
+  return (
+    <div className="tv-geo-clue-area">
+      <figure className={`tv-geo-clue is-${question.style}`}>{content}</figure>
     </div>
   );
 }

@@ -1,6 +1,7 @@
 import { cachedDefaultPlaylists, isDefaultSpotify } from "../catalog/defaultPlaylists.js";
 import { SONG_DIFFICULTIES, SONG_GENRES, SONG_LANGUAGES, filterSongs, songCounts } from "../catalog/songFilters.js";
 import { hasRole } from "../auth/roles.js";
+import { CHAT_LINK_ERROR, hasLink, NAME_LINK_ERROR } from "../moderation/links.js";
 import { hydrateSong } from "../catalog/catalogProvider.js";
 import { cleanTitle, displayTitle } from "../catalog/trackResolver.js";
 import { applyMatchStats } from "../db/store.js";
@@ -32,6 +33,9 @@ import {
   currentYear,
   historyCounts,
   defaultHistoryConfig,
+  figureLabel,
+  figurePoints,
+  figureTolerance,
   HISTORY_GAME,
   HISTORY_REVEAL_MS,
   historyBank,
@@ -55,6 +59,21 @@ import {
   pickMinesQuestions,
 } from "./mines.js";
 import {
+  countRainQuestions,
+  defaultRainConfig,
+  mergeRainConfig,
+  pickRainRounds,
+  RAIN_ANSWER_GAP_MS,
+  RAIN_GAME,
+  RAIN_GRACE_MS,
+  RAIN_LEAD_MS,
+  RAIN_MIN_QUESTIONS,
+  RAIN_REVEAL_MS,
+  rainCounts,
+  rainPool,
+  rainRoundText,
+} from "./rain.js";
+import {
   cleanPlaylist,
   configWithItem,
   mixRounds,
@@ -67,6 +86,7 @@ import {
 } from "./playlist.js";
 import { categoryName } from "../questions/questionSchema.js";
 import { flagToken, flagUrl } from "../geo/flags.js";
+import { shapeToken, shapeUrl } from "../geo/shapes.js";
 import { locate } from "../geo/worldMap.js";
 import { COUNTDOWN_MS, REVEAL_MS, ROUND_MS, scoreAnswer } from "./scoring.js";
 
@@ -78,14 +98,15 @@ export const ROOM_CODE_LENGTH = 5;
 // options, a written answer or a year on a timeline). The extras: "musica" (Adivina la canción), "mundo" (Encuentra el país,
 // GEO_GAME: countries pinned on the world map), "historia" (Rango, HISTORY_GAME:
 // getting as close as you can on a range; for now only "Línea del tiempo", an event's year) and "minas" (Campo de minas, MINES_GAME: a prompt and a 5 × 5 board of
-// answers, some right and some mines, picked one per turn). The question games keep their questions in room.tracks,
-// in place of songs. "playlist" isn't a game of its own: it's where the room makes a playlist of them (game/playlist.js),
-// and while one is played the room is in each of its games in turn.
-export const GAME_IDS = ["musica", "opciones", "mundo", "historia", "minas", PLAYLIST_GAME];
+// answers, some right and some mines, picked one per turn) and "lluvia" (Lluvia, RAIN_GAME: questions falling down the
+// screen for a while, answered by writing). The question games keep their questions in room.tracks, in place of songs
+// (Lluvia, one track per round with all its questions). "playlist" isn't a game of its own: it's where the room makes a
+// playlist of them (game/playlist.js), and while one is played the room is in each of its games in turn.
+export const GAME_IDS = ["musica", "opciones", "mundo", "historia", "minas", RAIN_GAME, PLAYLIST_GAME];
 // "Trivia": its settings live in config.quiz and its questions take the place of songs in room.tracks.
 export const QUIZ_GAME = "opciones";
 // The games that ask questions instead of playing songs.
-const QUESTION_GAMES = [QUIZ_GAME, GEO_GAME, HISTORY_GAME, MINES_GAME];
+const QUESTION_GAMES = [QUIZ_GAME, GEO_GAME, HISTORY_GAME, MINES_GAME, RAIN_GAME];
 // Custom playlists from an owner's Spotify go in config.playlistIds with this prefix ("sp:<spotify playlist id>").
 export const SPOTIFY_PREFIX = "sp:";
 // Rounds are chosen this many rounds ahead, so their audio and cover are downloaded before they start.
@@ -112,6 +133,19 @@ const JOIN_REQUESTS_KEEP = 8;
 export function assertGame(game) {
   if (game === null || GAME_IDS.includes(game)) return game;
   throw new Error("Ese juego no está disponible");
+}
+
+/** A player's name can't carry a link (moderation/links.js): the Jugar sheet says so and they write another. */
+function assertNameWithoutLink(user) {
+  if (hasLink(user?.name)) throw new Error(NAME_LINK_ERROR);
+}
+
+/** A player's rounds as they go out to the players: without the questions' ids. */
+// After this many rounds in a row without answering, a match stops waiting for the player (markIdle).
+export const IDLE_ROUNDS = 3;
+
+export function publicRounds(rounds = []) {
+  return rounds.map(({ questionId, ...round }) => round);
 }
 
 export function createRoomCode(existing) {
@@ -199,6 +233,14 @@ export const MUSIC_FORMATS = ["opciones", "escribir"];
 const MUSIC_LIMITS = { rounds: { min: 5, max: 25 }, roundMs: { min: 15000, max: 35000 } };
 const clampTo = (n, { min, max }, fallback) => Math.min(max, Math.max(min, Math.round(Number(n)) || fallback));
 
+// Encuentra el país shows a round's flag or silhouette through a token, so the image's address doesn't name the
+// country (geo/flags.js, geo/shapes.js).
+function withGeoTokens(track) {
+  if (track.style === "bandera" && track.flag) track.flagToken = flagToken(track.flag);
+  if (track.style === "sombra" && track.map) track.shapeToken = shapeToken(track.map);
+  return track;
+}
+
 // A new room plays the whole catalog (`useCatalog`, every language, genre and difficulty ticked) and no Spotify
 // playlists; `playlistIds` are the ticked Spotify ones ("sp:<id>"). With `useCatalog` false only those play.
 function defaultConfig() {
@@ -215,6 +257,7 @@ function defaultConfig() {
     geo: defaultGeoConfig(),
     history: defaultHistoryConfig(),
     mines: defaultMinesConfig(),
+    rain: defaultRainConfig(),
   };
 }
 
@@ -229,10 +272,14 @@ function publicPlayer(player, phase, room) {
   const race = mines && room.tracks?.[room.currentRound]?.style === "carrera";
   const answered =
     mines && phase === "playing" ? Boolean(field && !field.out && !race && field.pickedTurn === room.turn) : Boolean(player.lastAnswer);
+  // Lluvia: how many questions this player took in this round (who took each one is on the question, publicRainQuestion).
+  const rain = room?.game === RAIN_GAME && (phase === "playing" || phase === "reveal") ? player.rain : null;
   return {
     // Campo de minas: why the player is out of the round ("mina" or "tiempo"), or null while still in, and how many
     // right answers they found in it.
     ...(mines ? { out: field?.out || null, hits: field?.hits || 0 } : {}),
+    // Lluvia: the round's right answers so far.
+    ...(room?.game === RAIN_GAME ? { hits: rain?.hits || 0 } : {}),
     id: player.id,
     name: player.name,
     avatar: player.avatar,
@@ -243,6 +290,8 @@ function publicPlayer(player, phase, room) {
     streak: player.streak,
     bestStreak: player.bestStreak,
     answered,
+    // Hasn't answered in IDLE_ROUNDS rounds in a row: rounds no longer wait for them (it ends when they answer).
+    idle: Boolean(player.idle),
     lastPoints: player.lastPoints || 0,
     lastAnswer: showAnswer ? player.lastAnswer : null,
     connected: player.connected,
@@ -266,6 +315,8 @@ export class RoomManager {
     this.quizQuestions = quizPool(questions, this.geoQuestions);
     // Campo de minas' (from mines/boards/ when the bank has none).
     this.minesQuestions = minesBank(questions);
+    // Lluvia's: Trivia's written questions, without the flags.
+    this.rainQuestions = rainPool(this.quizQuestions);
     this.resolver = resolver;
     this.store = store;
     this.reconnectGraceMs = reconnectGraceMs;
@@ -289,6 +340,7 @@ export class RoomManager {
   }
 
   create({ host, mode, config, game = null }) {
+    assertNameWithoutLink(host);
     const code = createRoomCode(this.rooms);
     const room = {
       code,
@@ -331,6 +383,7 @@ export class RoomManager {
 
   addPlayer(room, user, isHost = false) {
     if (room.blocked?.has(user.id)) throw new Error("El anfitrión te bloqueó de esta sala");
+    assertNameWithoutLink(user);
     // Whoever was asking to join is in now.
     if (room.joinRequests?.length) room.joinRequests = room.joinRequests.filter((r) => r.userId !== user.id);
     const existing = room.players.get(user.id);
@@ -616,23 +669,26 @@ export class RoomManager {
   }
 
   /**
-   * The host drags a player onto the "Dispositivo central" spot: that player's device becomes the room's central device
-   * and their seat goes (they play again if it stops being the central, see releaseCentral). Only while the room waits:
-   * mid-match it would take a player out of it. The host can't be it, or nobody would control the match.
+   * Makes a player's screen the room's central device: from the player's menu or dragging them onto the spot, by the
+   * host or a player with the settings permission, while the room waits; any player, the one doing it too. That
+   * player's seat goes (the device only shows the match). If it's the host's, the host role passes to the next
+   * connected player first (the central device controls nothing), so there must be one.
    */
-  makeCentral(room, hostUserId, targetUserId) {
-    if (room.hostId !== hostUserId) throw new Error("Solo el anfitrión elige el dispositivo central");
+  makeCentral(room, actorId, targetUserId) {
+    if (!this.canEditConfig(room, actorId)) throw new Error("Solo el anfitrión o quien tenga permiso elige el dispositivo central");
     if (room.phase !== "lobby") throw new Error("Cambia el dispositivo central antes de empezar la partida");
-    if (targetUserId === room.hostId) {
-      throw new Error("El anfitrión no puede ser el dispositivo central: pásale el anfitrión a otro jugador primero");
-    }
     const player = room.players.get(targetUserId);
     if (!player) throw new Error("El jugador no está en la sala");
     if (!player.connected || !player.socketId) throw new Error("Ese jugador no está conectado ahora");
+    if (targetUserId === room.hostId) {
+      const next = [...room.players.values()].find((p) => p.connected && p.id !== targetUserId);
+      if (!next) throw new Error("Hace falta otro jugador en la sala para que lleve la partida");
+    }
     clearTimeout(player.dropTimer);
     room.players.delete(targetUserId);
     room.coHosts = (room.coHosts || []).filter((id) => id !== targetUserId);
     room.suggestions = (room.suggestions || []).filter((s) => s.userId !== targetUserId);
+    if (targetUserId === room.hostId) this.transferHost(room);
     this.setCentral(room, { ...player, socketId: player.socketId });
     return { name: player.name };
   }
@@ -709,8 +765,8 @@ export class RoomManager {
   }
 
   /** The host's "Quitar" on the spot. */
-  removeCentral(room, hostUserId) {
-    if (room.hostId !== hostUserId) throw new Error("Solo el anfitrión elige el dispositivo central");
+  removeCentral(room, actorId) {
+    if (!this.canEditConfig(room, actorId)) throw new Error("Solo el anfitrión o quien tenga permiso elige el dispositivo central");
     if (!room.central) throw new Error("La sala no tiene dispositivo central");
     return this.releaseCentral(room);
   }
@@ -746,6 +802,7 @@ export class RoomManager {
     if (config?.geo) next.geo = mergeGeoConfig(room.config.geo, config.geo);
     if (config?.history) next.history = mergeHistoryConfig(room.config.history, config.history);
     if (config?.mines) next.mines = mergeMinesConfig(room.config.mines, config.mines);
+    if (config?.rain) next.rain = mergeRainConfig(room.config.rain, config.rain);
     // Same limits as the settings on screen: 5–25 rounds, 15–35 seconds to guess.
     if (config?.rounds != null) next.rounds = clampTo(config.rounds, MUSIC_LIMITS.rounds, 5);
     if (config?.roundMs != null) next.roundMs = clampTo(config.roundMs, MUSIC_LIMITS.roundMs, ROUND_MS);
@@ -793,6 +850,7 @@ export class RoomManager {
     if (game === GEO_GAME) return mergeGeoConfig(undefined, change);
     if (game === HISTORY_GAME) return mergeHistoryConfig(undefined, change);
     if (game === MINES_GAME) return mergeMinesConfig(undefined, change);
+    if (game === RAIN_GAME) return mergeRainConfig(undefined, change);
     const base = defaultConfig();
     const known = new Set(Object.keys(room.customPlaylists || {}));
     const pick = (list, all, fallback) => (Array.isArray(list) ? all.filter((v) => list.includes(v)) : fallback);
@@ -845,18 +903,20 @@ export class RoomManager {
     }
     if (item.game === GEO_GAME) {
       const geo = mergeGeoConfig(config);
+      if (!geo.styles.length) return "Elige al menos un modo de juego.";
       if (!geo.difficulties.length) return "Elige al menos una dificultad.";
       const n = exact ? pickGeoQuestions(this.geoQuestions, geo).length : this.cachedCount(item, () => countGeoQuestions(this.geoQuestions, geo));
       return n < geo.rounds ? short(n, "países", geo.rounds, "dificultades") : null;
     }
     if (item.game === HISTORY_GAME) {
       const history = mergeHistoryConfig(config);
+      if (!history.styles.length) return "Elige al menos un modo de juego.";
       if (!history.categories.length) return "Elige al menos una categoría.";
       if (!history.difficulties.length) return "Elige al menos una dificultad.";
       const n = exact
         ? pickHistoryQuestions(this.historyQuestions, history).length
         : this.cachedCount(item, () => countHistoryQuestions(this.historyQuestions, history));
-      return n < history.rounds ? short(n, "acontecimientos", history.rounds, "categorías") : null;
+      return n < history.rounds ? short(n, "preguntas", history.rounds, "categorías") : null;
     }
     if (item.game === MINES_GAME) {
       const mines = mergeMinesConfig(config);
@@ -866,12 +926,28 @@ export class RoomManager {
       const n = exact ? pickMinesQuestions(this.minesQuestions, mines).length : this.cachedCount(item, () => countMinesQuestions(this.minesQuestions, mines));
       return n < mines.rounds ? short(n, "tableros", mines.rounds, "categorías o dificultades") : null;
     }
+    if (item.game === RAIN_GAME) return this.rainProblem(mergeRainConfig(config), item);
     // Adivina la canción: a different song for every round, from the catalog with its filters and its Spotify
     // playlists (whose songs may still be loading).
     if (!config.formats?.length) return "Elige al menos un tipo de respuesta.";
     if (config.useCatalog === false && !config.playlistIds?.length) return "Activa el catálogo o elige una playlist.";
     const n = this.songPool({ ...room, config: configWithItem(base, item) }).length;
     return n < config.rounds ? short(n, "canciones", config.rounds, "idiomas, géneros o dificultades") : null;
+  }
+
+  /**
+   * Why Lluvia can't be played with these settings (a Spanish sentence), or null when it can: a list left empty, or
+   * fewer than RAIN_MIN_QUESTIONS different questions (with more, a round asks one again once it left the screen).
+   * `item` caches the count for a playlist's game.
+   */
+  rainProblem(rain, item = null) {
+    if (!rain.categories.length) return "Elige al menos una categoría.";
+    if (!rain.difficulties.length) return "Elige al menos una dificultad.";
+    const count = () => countRainQuestions(this.rainQuestions, rain);
+    const n = item ? this.cachedCount(item, count) : count();
+    return n < RAIN_MIN_QUESTIONS
+      ? `Solo hay ${n} preguntas con esos ajustes y hacen falta al menos ${RAIN_MIN_QUESTIONS}. Elige más categorías o dificultades.`
+      : null;
   }
 
   /** The question banks don't change while the server runs: what some settings can draw is counted once. */
@@ -897,6 +973,7 @@ export class RoomManager {
       if (item.game === QUIZ_GAME) counts = this.cachedCount(item, () => questionCounts(this.quizQuestions, item.config), "chips");
       else if (item.game === HISTORY_GAME) counts = this.cachedCount(item, () => historyCounts(this.historyQuestions, item.config), "chips");
       else if (item.game === MINES_GAME) counts = this.cachedCount(item, () => minesCounts(this.minesQuestions, item.config), "chips");
+      else if (item.game === RAIN_GAME) counts = this.cachedCount(item, () => rainCounts(this.rainQuestions, item.config), "chips");
       else if (item.game === "musica") {
         counts = this.cachedCount(item, () => songCounts(this.catalog, item.config), "chips");
         songsReady = this.songPool({ ...room, config: configWithItem(room.config, item) }).length;
@@ -1172,7 +1249,10 @@ export class RoomManager {
   updatePlayer(room, userId, { name, avatar }) {
     const player = room.players.get(userId);
     if (!player) throw new Error("Jugador no encontrado");
-    if (name && name.trim()) player.name = name.trim();
+    if (name && name.trim()) {
+      if (hasLink(name)) throw new Error(NAME_LINK_ERROR);
+      player.name = name.trim();
+    }
     if (avatar) player.avatar = avatar;
     return player;
   }
@@ -1217,17 +1297,19 @@ export class RoomManager {
     } else if (room.game === GEO_GAME) {
       // Encuentra el país: the match's countries are drawn now (they are the "tracks" of the room).
       const geo = mergeGeoConfig(room.config.geo);
+      if (!geo.styles.length) throw new Error("Elige al menos un modo de juego");
       if (!geo.difficulties.length) throw new Error("Elige al menos una dificultad");
       const tracks = pickGeoQuestions(this.geoQuestions, geo);
       if (tracks.length < geo.rounds) {
         throw new Error(`Solo hay ${tracks.length} preguntas con esos ajustes para ${geo.rounds} rondas. Baja las rondas o elige más dificultades.`);
       }
-      room.tracks = tracks;
+      room.tracks = tracks.map(withGeoTokens);
       room.totalRounds = tracks.length;
       room.tiebreak = null;
     } else if (room.game === HISTORY_GAME) {
-      // Rango: the match's events are drawn now, each with its own range of years.
+      // Rango: the match's questions are drawn now, each with its own range (of years, or of the figure's bar).
       const history = mergeHistoryConfig(room.config.history);
+      if (!history.styles.length) throw new Error("Elige al menos un modo de juego");
       const tracks = pickHistoryQuestions(this.historyQuestions, history);
       if (tracks.length < history.rounds) {
         throw new Error(`Solo hay ${tracks.length} preguntas con esos ajustes para ${history.rounds} rondas. Baja las rondas o elige más categorías.`);
@@ -1247,6 +1329,14 @@ export class RoomManager {
       }
       room.tracks = tracks;
       room.totalRounds = tracks.length;
+      room.tiebreak = null;
+    } else if (room.game === RAIN_GAME) {
+      // Lluvia: every round's questions, and when and where each one falls, are drawn now.
+      const rain = mergeRainConfig(room.config.rain);
+      const problem = this.rainProblem(rain);
+      if (problem) throw new Error(problem.replace(/\.$/, ""));
+      room.tracks = pickRainRounds(this.rainQuestions, rain);
+      room.totalRounds = room.tracks.length;
       room.tiebreak = null;
     } else if (room.config?.customTracks && room.config.customTracks.length > 0) {
       const shuffled = [...room.config.customTracks].sort(() => Math.random() - 0.5);
@@ -1280,6 +1370,9 @@ export class RoomManager {
       p.streak = 0;
       p.bestStreak = 0;
       p.answerTimes = [];
+      p.rounds = [];
+      p.idleRounds = 0;
+      p.idle = false;
       p.status = "jugando";
     });
     this.beginCountdown(room);
@@ -1372,6 +1465,9 @@ export class RoomManager {
       // Campo de minas: this round's hits and points, why the player is out (null while in) and the last turn they
       // picked in. Spectators have none: they don't play.
       p.minefield = room.game === MINES_GAME && !p.spectator ? { hits: 0, points: 0, out: null, pickedTurn: 0 } : null;
+      // Lluvia: how many questions this player took in this round, its points, how many answers they sent and when
+      // the last one (answers are taken one every RAIN_ANSWER_GAP_MS).
+      p.rain = room.game === RAIN_GAME && !p.spectator ? { hits: 0, points: 0, sent: 0, sentAt: 0 } : null;
       p.status = this.isPlaying(room, p.id) ? "jugando" : "mirando";
     });
     this.setPhase(room, "countdown", COUNTDOWN_MS, () => this.beginPlaying(room));
@@ -1387,7 +1483,19 @@ export class RoomManager {
       const mines = mergeMinesConfig(room.config.mines);
       return this.isMinesRace(room) ? mines.roundMs : mines.turnMs;
     }
+    // Lluvia: the whole shower, as long as the round was drawn.
+    if (room.game === RAIN_GAME) return room.tracks[room.currentRound]?.roundMs || mergeRainConfig(room.config.rain).roundMs;
     return room.config.roundMs || ROUND_MS;
+  }
+
+  /** Lluvia's rounds: questions falling down the screen, answered by writing while they're on it. */
+  isRainRound(room) {
+    return room.game === RAIN_GAME && room.tracks[room.currentRound]?.kind === "rain";
+  }
+
+  /** How far into a Lluvia round it is (ms): where the rain is. A pause stops it where it was. */
+  rainElapsed(room) {
+    return (room.paused ? room.paused.at : Date.now()) - room.phaseStartedAt;
   }
 
   /** Encuentra el país's rounds (and every tiebreak): a pin on the world map instead of a written answer. */
@@ -1430,13 +1538,15 @@ export class RoomManager {
   }
 
   /**
-   * An owner reports the question being played (db/reports.js keeps it): the question as the server has it (with its
-   * answer), the game's settings and who was in the room, so it can be checked later. `reporterId` must be the
-   * socket's verified account; each owner reports a round once.
+   * Any player in the room (spectators too) reports the question being played (db/reports.js keeps it): the question
+   * as the server has it (with its answer), the game's settings and who was in the room, so it can be checked later.
+   * `reporterId` is the player's seat; `verified` says whether the socket's signed account is that same one. Each
+   * player reports a round once.
    */
-  questionReport(room, reporterId) {
-    const reporter = this.store?.users?.[reporterId];
-    if (!reporter || !hasRole(reporter, "owner")) throw new Error("Solo los owners pueden reportar preguntas");
+  questionReport(room, reporterId, { verified = false } = {}) {
+    const seat = room.players.get(reporterId);
+    if (!seat) throw new Error("Solo los jugadores de la sala pueden reportar preguntas");
+    const reporter = this.store?.users?.[reporterId] || seat;
     if (!["countdown", "playing", "reveal"].includes(room.phase)) throw new Error("No hay ninguna pregunta en juego");
     const track = room.tracks[room.currentRound];
     if (!track) throw new Error("No hay ninguna pregunta en juego");
@@ -1452,6 +1562,7 @@ export class RoomManager {
       [GEO_GAME]: room.config.geo,
       [HISTORY_GAME]: room.config.history,
       [MINES_GAME]: room.config.mines,
+      [RAIN_GAME]: room.config.rain,
     }[room.game] ?? {
       rounds: room.config.rounds,
       roundMs: room.config.roundMs,
@@ -1486,7 +1597,7 @@ export class RoomManager {
         score: p.score,
         answer: p.lastAnswer ?? null,
       })),
-      reporter: { id: reporterId, name: reporter.name },
+      reporter: { id: reporterId, name: reporter.name, verified: Boolean(verified) },
       createdAt: new Date().toISOString(),
     };
   }
@@ -1521,6 +1632,27 @@ export class RoomManager {
     this.checkMinesTurn(room);
   }
 
+  /**
+   * An owner's "Saltar": straight to the next question, with no waiting. The round being played closes at once (what
+   * was already answered is graded and counts, like at the end of its time), its reveal and the next countdown are
+   * skipped, and the next round starts playing; after the last one, the match ends (or goes to a tiebreak) as usual.
+   * A paused match goes on. `userId` must be the socket's verified account, with the owner role.
+   */
+  skipRound(room, userId) {
+    const owner = this.store?.users?.[userId];
+    if (!owner || !hasRole(owner, "owner")) throw new Error("Solo los owners pueden saltar preguntas");
+    if (!["countdown", "playing", "reveal"].includes(room.phase)) throw new Error("No hay ninguna pregunta en juego");
+    room.paused = null;
+    if (room.phase !== "reveal") this.beginReveal(room);
+    if (room.timer) clearTimeout(room.timer);
+    this.advance(room);
+    if (room.phase === "countdown") {
+      if (room.timer) clearTimeout(room.timer);
+      this.beginPlaying(room);
+    }
+    this.onPhaseChange?.(room);
+  }
+
   beginPlaying(room) {
     if (this.isMinesRound(room)) {
       this.beginTurn(room);
@@ -1537,6 +1669,8 @@ export class RoomManager {
     if (this.isMapRound(room)) this.gradeMap(room, track);
     if (this.isYearRound(room)) this.gradeYears(room, track);
     if (this.isMinesRound(room)) this.gradeMines(room);
+    if (this.isRainRound(room)) this.gradeRain(room, track);
+    this.markIdle(room);
     room.players.forEach((player) => {
       if (!player.lastAnswer && this.isPlaying(room, player.id)) {
         player.streak = 0;
@@ -1544,13 +1678,77 @@ export class RoomManager {
         player.lastAnswer = { text: "", correct: false, at: now };
       }
     });
+    this.recordRound(room, track);
     let revealMs = REVEAL_MS;
     if (this.isMapRound(room)) revealMs = LOCATION_REVEAL_MS;
     else if (this.isYearRound(room)) revealMs = HISTORY_REVEAL_MS;
     else if (room.game === QUIZ_GAME) revealMs = QUIZ_REVEAL_MS;
     else if (this.isMinesRound(room)) revealMs = MINES_REVEAL_MS;
+    else if (this.isRainRound(room)) revealMs = RAIN_REVEAL_MS;
     this.setPhase(room, "reveal", revealMs, () => this.advance(room));
     return { track, duration };
+  }
+
+  /**
+   * At each reveal: the round in every player's summary of the match (`results[].rounds`, shown at the end): the
+   * question, the right answer (null in Campo de minas, whose board has no single one, and in Lluvia, a shower of
+   * them), what they answered (null with no answer; in Lluvia their round, "4 aciertos · 12 puntos", if they sent
+   * anything), the points and how it went (`status`): "ok" right (Rango's exact answer, a pin inside the country, a
+   * board survived, a question taken in the rain), "near" not right but with points (a close year or pin), "bad" wrong
+   * or a mine, "none" no answer. Not in a tiebreak, which gives no points.
+   */
+  recordRound(room, track) {
+    if (room.tiebreak || !track) return;
+    const mines = this.isMinesRound(room);
+    const rain = this.isRainRound(room);
+    const right = mines || rain ? null : this.rightAnswerText(room, track);
+    const fell = rain ? track.drops.filter((d) => d.at < track.roundMs).length : 0;
+    const prompt = rain ? `Lluvia de ${fell} preguntas` : track.prompt || track.text || (room.game === "musica" ? "¿Qué canción es?" : null);
+    for (const player of room.players.values()) {
+      if (!this.isPlaying(room, player.id) || (mines && !player.minefield) || (rain && !player.rain)) continue;
+      const answer = player.lastAnswer;
+      const sent = rain ? player.rain.sent > 0 : true;
+      const yours = sent && answer && !answer.skipped && answer.text ? answer.text : null;
+      const points = player.lastPoints || 0;
+      const correct = mines ? !answer?.out : Boolean(answer?.correct);
+      const status = correct ? "ok" : !yours ? "none" : points > 0 && !answer?.out ? "near" : "bad";
+      // `questionId` stays on the server (a report names the question; players never see ids).
+      (player.rounds ||= []).push({ round: room.currentRound + 1, game: room.game, questionId: track.id ?? null, prompt, answer: right, yours, points, status });
+    }
+  }
+
+  /** The right answer of a round, as people read it. */
+  rightAnswerText(room, track) {
+    if (room.game === HISTORY_GAME) return track.kind === "cifras" ? figureLabel(track.value, track.unit) : yearLabel(track.year);
+    if (room.game === GEO_GAME) return track.name || track.answer || null;
+    if (room.game === QUIZ_GAME) return track.type === "choice" ? track.options[track.answer] : track.answer || null;
+    if (room.game === "musica") return artistLine(track) ? `${track.title} - ${artistLine(track)}` : track.title || null;
+    return null;
+  }
+
+  /**
+   * At each reveal (before the players without an answer get an empty one): whoever played this round and didn't
+   * answer (no answer, no pin or year placed; in Campo de minas, no cell picked; in Lluvia, nothing sent) adds a round
+   * to `idleRounds`; after IDLE_ROUNDS in a row they're `idle`, and rounds (and turns) stop waiting for them to end
+   * early. Answering again (answered, pickCell, rainAnswer) or answering this round sets them back to zero. Not
+   * counted in a tiebreak.
+   */
+  markIdle(room) {
+    if (room.tiebreak) return;
+    const mines = this.isMinesRound(room);
+    // Lluvia gives everyone their round's summary (gradeRain) before this: what counts is having sent any answer.
+    const rain = this.isRainRound(room);
+    for (const player of room.players.values()) {
+      if (!this.isPlaying(room, player.id)) continue;
+      const responded = mines ? Boolean(player.minefield?.pickedTurn) : rain ? Boolean(player.rain?.sent) : Boolean(player.lastAnswer);
+      if (responded) {
+        player.idleRounds = 0;
+        player.idle = false;
+      } else {
+        player.idleRounds = (player.idleRounds || 0) + 1;
+        if (player.idleRounds >= IDLE_ROUNDS) player.idle = true;
+      }
+    }
   }
 
   advance(room) {
@@ -1592,6 +1790,7 @@ export class RoomManager {
         ? pickTiebreakQuestion(this.geoQuestions, room.config.geo, room.tracks.map((t) => t.country))
         : pickHistoryTiebreak(this.historyQuestions, room.config.history, room.tracks.map((t) => t.id));
     if (!question) return false;
+    if (room.game === GEO_GAME) withGeoTokens(question);
     room.tiebreak = { playerIds: tied.map((p) => p.id), round: (previous?.round || 0) + 1, winnerId: null, reason: null };
     room.tracks.push(question);
     room.currentRound = room.tracks.length - 1;
@@ -1615,7 +1814,7 @@ export class RoomManager {
     if (!room.statsApplied) {
       room.statsApplied = true;
       const ranked = this.rankedPlayers(room);
-      applyMatchStats(this.store, ranked);
+      applyMatchStats(this.store, ranked, { game: room.run?.mixed ? PLAYLIST_GAME : room.game, room: room.code });
       this.recordWin(room, ranked);
       // A game of a playlist: its winner adds a win to the playlist's tally.
       if (room.run && !room.run.finished && ranked.length) {
@@ -1669,7 +1868,6 @@ export class RoomManager {
   replay(room, userId) {
     if (room.hostId !== userId) throw new Error("Solo el Host puede empezar otra partida");
     if (room.phase !== "finished") throw new Error("La partida aún no ha terminado");
-    if (room.run && !room.run.finished) throw new Error("Sigue con la playlist o termínala primero");
     this.stopPlaylist(room);
     this.resetMatch(room);
     this.start(room, userId);
@@ -1688,15 +1886,15 @@ export class RoomManager {
       if (problem) throw new Error(`Revisa el juego ${i + 1}, ${GAME_NAMES[item.game]}. ${problem}`);
     });
     room.run = newRun(room.playlist, room.config);
-    if (room.run.mixed) this.startMixed(room);
-    else this.playItem(room);
+    this.startMixed(room);
   }
 
   /**
-   * A playlist played "aleatorio": one match whose rounds are every game's rounds mixed at random (two of Encuentra el
-   * país, then one of Adivina la canción, then Encuentra el país again...). Each game's questions or songs are drawn
-   * now with its own settings; each round, beginCountdown moves the room into its game (enterMixedRound). The scores
-   * add up across the whole match, which ends on the playlist's results.
+   * A playlist is played as one match: "orden" plays every round of its first game, then of the second, and so on;
+   * "aleatorio" mixes every game's rounds at random (two of Encuentra el país, then one of Adivina la canción, then
+   * Encuentra el país again...). Each game's questions or songs are drawn now with its own settings; each round,
+   * beginCountdown moves the room into its game (enterMixedRound). The scores add up across the whole match, which
+   * ends straight on the playlist's results.
    */
   startMixed(room) {
     const run = room.run;
@@ -1714,7 +1912,8 @@ export class RoomManager {
       this.resetMatch(room);
       throw err;
     }
-    room.tracks = mixRounds(perItem).map(({ item, track }) => ({ ...track, playlistItem: item }));
+    const rounds = run.order === "aleatorio" ? mixRounds(perItem) : perItem.flatMap((tracks, item) => tracks.map((track) => ({ item, track })));
+    room.tracks = rounds.map(({ item, track }) => ({ ...track, playlistItem: item }));
     room.totalRounds = room.tracks.length;
     const music = room.tracks.filter((t) => run.items[t.playlistItem].game === "musica");
     if (music.length) this.onNewTracks?.(music);
@@ -1727,6 +1926,9 @@ export class RoomManager {
       p.streak = 0;
       p.bestStreak = 0;
       p.answerTimes = [];
+      p.rounds = [];
+      p.idleRounds = 0;
+      p.idle = false;
       p.status = "jugando";
     });
     this.beginCountdown(room);
@@ -1759,8 +1961,10 @@ export class RoomManager {
         for (const t of tracks) if (t.flag) t.flagToken = flagToken(t.flag);
         return tracks;
       }
-      if (item.game === GEO_GAME) return pickGeoQuestions(this.geoQuestions, mergeGeoConfig(config.geo));
+      if (item.game === GEO_GAME) return pickGeoQuestions(this.geoQuestions, mergeGeoConfig(config.geo)).map(withGeoTokens);
       if (item.game === HISTORY_GAME) return pickHistoryQuestions(this.historyQuestions, mergeHistoryConfig(config.history));
+      // Lluvia: each of its rounds is a whole shower of questions.
+      if (item.game === RAIN_GAME) return pickRainRounds(this.rainQuestions, mergeRainConfig(config.rain));
       return pickMinesQuestions(this.minesQuestions, mergeMinesConfig(config.mines));
     };
     const first = draw();
@@ -1793,46 +1997,6 @@ export class RoomManager {
       room.config = configWithItem(room.run.savedConfig, item);
       this.syncPlaylists(room);
     }
-  }
-
-  /**
-   * Plays the run's current game: the room moves into it with its settings and its match starts at once. If it can't
-   * start after all, the playlist is over (the room goes back to its panel) and the reason is thrown.
-   */
-  playItem(room) {
-    const run = room.run;
-    const item = run.items[run.index];
-    this.resetMatch(room);
-    room.game = item.game;
-    room.config = configWithItem(run.savedConfig, item);
-    this.syncPlaylists(room);
-    try {
-      this.start(room, room.hostId);
-    } catch (err) {
-      this.stopPlaylist(room);
-      this.resetMatch(room);
-      throw err;
-    }
-  }
-
-  /**
-   * The host's "Siguiente juego", on a playlist game's results: the next game starts. After the last one, the room
-   * shows the playlist's results instead (still `finished`, back in the playlist), with who won the most games.
-   */
-  nextInPlaylist(room, userId) {
-    if (room.hostId !== userId) throw new Error("Solo el anfitrión puede seguir con la playlist");
-    const run = room.run;
-    if (!run || run.finished) throw new Error("No hay ninguna playlist en curso");
-    if (room.phase !== "finished") throw new Error("Espera a que termine este juego");
-    if (run.index + 1 < run.items.length) {
-      const item = run.items[run.index + 1];
-      const problem = this.itemProblem(room, item, run.savedConfig, { exact: true });
-      if (problem) throw new Error(`No se puede jugar ${GAME_NAMES[item.game]}. ${problem}`);
-      run.index += 1;
-      this.playItem(room);
-      return;
-    }
-    this.endRun(room);
   }
 
   /** After the playlist's last game, the room shows the playlist's results (still `finished`, back in the playlist). */
@@ -1900,6 +2064,7 @@ export class RoomManager {
     if (room.phase === "countdown" || room.phase === "playing") throw new Error("El chat se pausa mientras se juega la ronda");
     const clean = String(text ?? "").replace(/\s+/g, " ").trim().slice(0, CHAT_MAX_LENGTH);
     if (!clean) throw new Error("Escribe un mensaje");
+    if (hasLink(clean)) throw new Error(CHAT_LINK_ERROR);
     const now = Date.now();
     if (now - (player.chattedAt || 0) < CHAT_GAP_MS) throw new Error("Espera un momento antes de mandar otro mensaje");
     player.chattedAt = now;
@@ -1997,11 +2162,15 @@ export class RoomManager {
       p.streak = 0;
       p.bestStreak = 0;
       p.answerTimes = [];
+      p.rounds = [];
+      p.idleRounds = 0;
+      p.idle = false;
       p.lastAnswer = null;
       p.lastPoints = 0;
       p.pin = null;
       p.guess = null;
       p.minefield = null;
+      p.rain = null;
       p.status = p.connected ? "conectado" : "desconectado";
     }
   }
@@ -2020,6 +2189,7 @@ export class RoomManager {
     if (this.isMapRound(room)) throw new Error("Toca el mapa para poner tu pin");
     if (this.isYearRound(room)) throw new Error("Elige el año en la línea del tiempo");
     if (this.isMinesRound(room)) throw new Error("Toca una casilla del tablero");
+    if (this.isRainRound(room)) return this.rainAnswer(room, userId, answerText);
 
     // Grace period for network latency if reveal just started
     const isPlaying = room.phase === "playing";
@@ -2187,15 +2357,25 @@ export class RoomManager {
     if (!this.isPlaying(room, userId)) throw new Error("Solo juegan el desempate los jugadores empatados");
     if (player.lastAnswer) return false;
     const track = room.tracks[room.currentRound];
-    const year = Number(value?.year);
-    if (!Number.isInteger(year) || year < track.min || year > track.max) throw new Error("Elige un año de la línea del tiempo");
-    if (year === 0) throw new Error("El año 0 no existe");
-    if (year > currentYear()) throw new Error("Ese año aún no ha llegado");
-    player.guess = { year, at: Date.now() };
+    let exact;
+    if (track.kind === "cifras") {
+      // Cifras: a number on the figure's bar.
+      const number = Number(value?.value);
+      if (!Number.isInteger(number) || number < track.min || number > track.max) throw new Error("Elige un número de la barra");
+      player.guess = { value: number, at: Date.now() };
+      exact = Math.abs(number - track.value) <= figureTolerance(track.span);
+    } else {
+      const year = Number(value?.year);
+      if (!Number.isInteger(year) || year < track.min || year > track.max) throw new Error("Elige un año de la línea del tiempo");
+      if (year === 0) throw new Error("El año 0 no existe");
+      if (year > currentYear()) throw new Error("Ese año aún no ha llegado");
+      player.guess = { year, at: Date.now() };
+      exact = year === track.year;
+    }
     if (!value.lock) return false;
 
-    player.lastAnswer = { year, at: player.guess.at, locked: true };
-    if (room.tiebreak && year === track.year) {
+    player.lastAnswer = { ...player.guess, locked: true };
+    if (room.tiebreak && exact) {
       player.status = "respondió";
       if (room.timer) clearTimeout(room.timer);
       this.beginReveal(room);
@@ -2211,19 +2391,33 @@ export class RoomManager {
    * exact year gets every point; otherwise fewer the further it is. In a tiebreak nobody scores: it decides who wins.
    */
   gradeYears(room, track) {
+    const figure = track.kind === "cifras";
     for (const player of room.players.values()) {
       if (!this.isPlaying(room, player.id)) continue;
       if (!player.lastAnswer && player.guess) {
-        player.lastAnswer = { year: player.guess.year, at: player.guess.at, locked: false };
+        player.lastAnswer = { ...player.guess, locked: false };
       }
       const answer = player.lastAnswer;
-      if (!Number.isInteger(answer?.year)) continue;
-      const diff = yearsApart(answer.year, track.year);
-      answer.diff = diff;
-      answer.correct = diff === 0;
-      answer.text = diff === 0 ? `${yearLabel(answer.year)}, año exacto` : `${yearLabel(answer.year)}, a ${diff} ${diff === 1 ? "año" : "años"}`;
+      let points;
+      if (figure) {
+        // Cifras: how far the number is, and whether it went over (`over`) or fell short.
+        if (!Number.isInteger(answer?.value)) continue;
+        const diff = Math.abs(answer.value - track.value);
+        answer.diff = diff;
+        answer.over = answer.value > track.value;
+        answer.correct = diff <= figureTolerance(track.span);
+        const label = figureLabel(answer.value, track.unit);
+        answer.text = answer.correct ? `${label}, exacto` : `${label}, ${answer.over ? "se pasó por" : "le faltaron"} ${figureLabel(diff, track.unit)}`;
+        points = figurePoints(diff, track.span);
+      } else {
+        if (!Number.isInteger(answer?.year)) continue;
+        const diff = yearsApart(answer.year, track.year);
+        answer.diff = diff;
+        answer.correct = diff === 0;
+        answer.text = diff === 0 ? `${yearLabel(answer.year)}, año exacto` : `${yearLabel(answer.year)}, a ${diff} ${diff === 1 ? "año" : "años"}`;
+        points = yearPoints(diff, track.era);
+      }
       if (room.tiebreak) continue;
-      const points = yearPoints(diff, track.era);
       player.lastPoints = points;
       player.score += points;
       player.streak = answer.correct ? player.streak + 1 : 0;
@@ -2314,6 +2508,8 @@ export class RoomManager {
     cell.at = now;
     cell.turn = room.turn;
     field.pickedTurn = room.turn;
+    player.idleRounds = 0;
+    player.idle = false;
     if (!race) player.status = "respondió";
     if (cell.correct) {
       field.hits += 1;
@@ -2347,7 +2543,7 @@ export class RoomManager {
     }
     if (this.isMinesRace(room)) return false;
     const waiting = [...room.players.values()].some(
-      (p) => p.connected && p.minefield && !p.minefield.out && p.minefield.pickedTurn !== room.turn
+      (p) => p.connected && !p.idle && p.minefield && !p.minefield.out && p.minefield.pickedTurn !== room.turn
     );
     if (waiting) return false;
     this.endTurn(room, false);
@@ -2398,6 +2594,72 @@ export class RoomManager {
     }
   }
 
+  /**
+   * Lluvia: an answer written by a player. It counts for the questions on screen right now (or that left it a moment
+   * ago, RAIN_GRACE_MS, for the network's delay) that nobody has answered yet: when it's right for one of them (the
+   * lowest one, if it's right for several), this player takes it (`by`, and `takenAt`, how far into the round): it
+   * scores its points at once and leaves everyone's screen, so nobody else can answer it. Returns the question taken
+   * (`drop`, its id in the round), its points and its answer; `{ takenBy, answer }` when the answer was right but
+   * someone else took that question first (the streak stays); or null when it was right for none (a wrong answer costs
+   * nothing but the streak).
+   */
+  rainAnswer(room, userId, text) {
+    const player = room.players.get(userId);
+    if (!player) throw new Error("Jugador no encontrado");
+    this.assertNotSpectator(room, userId);
+    if (!this.isRainRound(room)) throw new Error("Esta ronda no es de Lluvia");
+    if (room.phase !== "playing") throw new Error("No se aceptan respuestas ahora");
+    const rain = player.rain;
+    if (!rain) throw new Error("Llegaste con la ronda empezada: juegas desde la siguiente");
+    const guess = String(text ?? "").slice(0, 80).trim();
+    if (!guess) throw new Error("Escribe una respuesta");
+    const now = Date.now();
+    if (now - rain.sentAt < RAIN_ANSWER_GAP_MS) throw new Error("Más despacio");
+    rain.sentAt = now;
+    rain.sent += 1;
+    player.idleRounds = 0;
+    player.idle = false;
+
+    const round = room.tracks[room.currentRound];
+    const elapsed = this.rainElapsed(room);
+    const onScreen = round.drops.filter((d) => d.at <= elapsed && elapsed <= d.at + round.fallMs + RAIN_GRACE_MS);
+    const drop = onScreen.find((d) => !d.by && isCorrectOpenAnswer(guess, d.question));
+    if (!drop) {
+      const late = onScreen.find((d) => d.by && d.by !== userId && isCorrectOpenAnswer(guess, d.question));
+      if (late) return { takenBy: room.players.get(late.by)?.name || "Otro jugador", answer: late.question.answer };
+      player.streak = 0;
+      return null;
+    }
+    drop.by = userId;
+    drop.takenAt = Math.round(elapsed);
+    rain.hits += 1;
+    rain.points += drop.points;
+    player.lastPoints = rain.points;
+    player.score += drop.points;
+    player.correct += 1;
+    player.streak += 1;
+    player.bestStreak = Math.max(player.bestStreak, player.streak);
+    player.answerTimes.push(Math.max(0, elapsed - drop.at));
+    return { drop: drop.id, points: drop.points, answer: drop.question.answer };
+  }
+
+  /**
+   * Lluvia, when the round's time runs out: each player's round in a few words ("4 aciertos · 12 puntos"), and who won
+   * it, whoever got the most points in it (several on a tie; nobody when nobody scored).
+   */
+  gradeRain(room, round) {
+    let best = 0;
+    for (const player of room.players.values()) {
+      const rain = player.rain;
+      if (!rain) continue;
+      player.lastPoints = rain.points;
+      player.lastAnswer = { text: rainRoundText(rain.hits, rain.points), correct: rain.hits > 0, hits: rain.hits, at: Date.now() };
+      best = Math.max(best, rain.points);
+    }
+    round.best = best;
+    round.winners = best ? [...room.players.values()].filter((p) => p.rain?.points === best).map((p) => p.id) : [];
+  }
+
   /** What the player answered, as people read it: "As It Was - Harry Styles" for a picked suggestion (whose raw
    *  value is a song id such as "harry-styles-as-it-was") or for the right song; the typed text otherwise. */
   answerLabel(room, track, answerText, correct) {
@@ -2414,6 +2676,7 @@ export class RoomManager {
     if (!player) throw new Error("Jugador no encontrado");
     this.assertNotSpectator(room, userId);
     if (this.isMinesRound(room)) throw new Error("En Campo de minas no se puede saltar");
+    if (this.isRainRound(room)) throw new Error("En Lluvia no se puede saltar");
     if (player.lastAnswer) return player.lastAnswer;
     if (room.phase !== "playing") throw new Error("No se aceptan respuestas ahora");
     if (!this.isPlaying(room, userId)) throw new Error("Solo juegan el desempate los jugadores empatados");
@@ -2427,8 +2690,11 @@ export class RoomManager {
   // Once every connected player has answered (or skipped), the song is revealed without waiting for the clock.
   answered(room, player) {
     player.status = "respondió";
+    player.idleRounds = 0;
+    player.idle = false;
     this.onPhaseChange?.(room);
-    const active = [...room.players.values()].filter((p) => p.connected && this.isPlaying(room, p.id));
+    // The round ends early once everyone it waits for answered: connected players, not the inactive ones (markIdle).
+    const active = [...room.players.values()].filter((p) => p.connected && !p.idle && this.isPlaying(room, p.id));
     if (active.length && active.every((p) => p.lastAnswer)) {
       if (room.timer) clearTimeout(room.timer);
       this.beginReveal(room);
@@ -2564,12 +2830,22 @@ export class RoomManager {
       if (track) payload.question = this.publicHistoryQuestion(room, track);
       // In the lobby: how many events each topic, age and difficulty has, for the settings' chips.
       if (room.phase === "lobby") payload.questionCounts = historyCounts(this.historyQuestions, room.config.history);
-      if (track && showTrack) payload.reveal = { prompt: track.prompt, year: track.year, min: track.min, max: track.max };
+      if (track && showTrack) {
+        payload.reveal =
+          track.kind === "cifras"
+            ? { kind: "cifras", prompt: track.prompt, value: track.value, unit: track.unit, min: track.min, max: track.max }
+            : { kind: "linea", prompt: track.prompt, year: track.year, min: track.min, max: track.max };
+      }
     } else if (room.game === MINES_GAME) {
       // The whole board (which cells were right) only goes out with the question at the reveal.
       if (track) payload.question = this.publicMinesQuestion(room, track);
       // In the lobby: how many boards each category and difficulty has, for the settings' chips.
       if (room.phase === "lobby") payload.questionCounts = minesCounts(this.minesQuestions, room.config.mines);
+    } else if (room.game === RAIN_GAME) {
+      // The questions falling now; their answers only at the reveal.
+      if (track) payload.question = this.publicRainQuestion(room, track);
+      // In the lobby: how many questions each category and difficulty has, for the settings' chips.
+      if (room.phase === "lobby") payload.questionCounts = rainCounts(this.rainQuestions, room.config.rain);
     } else if (track && (room.phase === "countdown" || room.phase === "playing")) {
       payload.audio = {
         previewUrl: track.previewUrl,
@@ -2618,6 +2894,8 @@ export class RoomManager {
           ? Math.round(p.answerTimes.reduce((s, n) => s + n, 0) / p.answerTimes.length)
           : null,
         tiebreakWinner: p.id === room.tiebreak?.winnerId,
+        // Every round of the match for this player, with the right answer and their points (recordRound).
+        rounds: publicRounds(p.rounds),
       }));
     }
     if (forUserId) {
@@ -2630,8 +2908,8 @@ export class RoomManager {
             lastAnswer: me.lastAnswer,
             // Geografía's map rounds: this player's pin, not locked yet (so a reload doesn't lose it).
             pin: me.pin ? [me.pin.lng, me.pin.lat] : null,
-            // Historia: the year this player has on the timeline, not locked yet.
-            guess: me.guess ? me.guess.year : null,
+            // Rango: the year (or Cifras' number) this player has on the line, not locked yet.
+            guess: me.guess ? me.guess.year ?? me.guess.value : null,
             isHost: room.hostId === forUserId,
             canEditConfig: this.canEditConfig(room, forUserId),
           }
@@ -2646,7 +2924,49 @@ export class RoomManager {
     if (room.game === GEO_GAME) return countGeoQuestions(this.geoQuestions, room.config.geo);
     if (room.game === HISTORY_GAME) return countHistoryQuestions(this.historyQuestions, room.config.history);
     if (room.game === MINES_GAME) return countMinesQuestions(this.minesQuestions, room.config.mines);
+    if (room.game === RAIN_GAME) return countRainQuestions(this.rainQuestions, room.config.rain);
     return undefined;
+  }
+
+  /**
+   * The current round of Lluvia. While it's played, only the questions on screen go out (and each one RAIN_LEAD_MS
+   * before it shows, so it's there in time; the screen shows it at its `at`), never their answers: `at` is when it
+   * starts falling (ms from the round's start, as `phaseStartedAt` counts it) and `lane` its column (0 the left one, 0.5
+   * the middle, 1 the right one); a question takes `fallMs` to cross the screen; `by` is who took it (and `takenAt`
+   * when), once someone did. At the reveal, every question that fell, with its answer,
+   * and who won the round (`winners`, with `best` points). No question ids: the drops are numbered in the round.
+   */
+  publicRainQuestion(room, round) {
+    const playing = room.phase === "playing";
+    const showAll = room.phase === "reveal" || room.phase === "finished";
+    const elapsed = playing ? this.rainElapsed(room) : showAll ? round.roundMs : -1;
+    const drops = playing
+      ? round.drops.filter((d) => d.at <= elapsed + RAIN_LEAD_MS && d.at + round.fallMs + 1000 >= elapsed)
+      : showAll
+      ? round.drops.filter((d) => d.at < round.roundMs)
+      : [];
+    return {
+      round: room.currentRound + 1,
+      roundMs: round.roundMs,
+      fallMs: round.fallMs,
+      // How many questions have fallen so far in the round.
+      fallen: round.drops.filter((d) => d.at <= elapsed).length,
+      drops: drops.map((d) => ({
+        id: d.id,
+        at: d.at,
+        lane: d.lane,
+        points: d.points,
+        text: d.question.text,
+        category: d.question.category,
+        difficulty: d.question.difficulty,
+        // Who took it, and when (how far into the round): it leaves every screen with their name and its points.
+        by: d.by || null,
+        takenAt: d.by ? d.takenAt : null,
+        answer: showAll ? d.question.answer : null,
+      })),
+      winners: showAll ? round.winners || [] : null,
+      best: showAll ? round.best || 0 : null,
+    };
   }
 
   /**
@@ -2675,18 +2995,24 @@ export class RoomManager {
   }
 
   /**
-   * The current question of Encuentra el país. Nothing of it shows during the countdown but its kind, so every player
-   * gets the same seconds with it; the country to find goes out once the round is playing. The answer (where it is)
-   * only goes out in `reveal`.
+   * The current question of Encuentra el país. Nothing of it shows during the countdown but its kind and how the
+   * country is given (`style`), so every player gets the same seconds with it; the country to find goes out once the
+   * round is playing: its name, or only its silhouette or its flag (their addresses never name it), and then its name
+   * only at the reveal. Where it is only goes out in `reveal`.
    */
   publicGeoQuestion(room, track) {
     const shown = ["playing", "reveal", "finished"].includes(room.phase);
+    const answered = room.phase === "reveal" || room.phase === "finished";
+    const style = track.style || "nombre";
     return {
       round: room.currentRound + 1,
       kind: track.kind,
+      style,
       difficulty: track.difficulty,
       prompt: shown ? track.prompt : null,
-      name: shown ? track.name : null,
+      name: (shown && style === "nombre") || answered ? track.name : null,
+      shape: shown && track.shapeToken ? shapeUrl(track.shapeToken) : null,
+      flag: shown && track.flagToken ? flagUrl(track.flagToken) : null,
     };
   }
 
@@ -2699,9 +3025,13 @@ export class RoomManager {
     const open = ["playing", "reveal", "finished"].includes(room.phase);
     return {
       round: room.currentRound + 1,
+      // "linea" (an event's year) or "cifras" (a number, with its unit and the step a guess moves in).
+      kind: track.kind || "linea",
       prompt: track.prompt,
       category: track.category ? categoryName(track.category) : null,
       difficulty: track.difficulty,
+      unit: track.kind === "cifras" ? track.unit : null,
+      snap: track.kind === "cifras" && open ? track.snap : null,
       min: open ? track.min : null,
       max: open ? track.max : null,
     };

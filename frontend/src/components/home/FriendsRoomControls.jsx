@@ -1,15 +1,43 @@
+import { useEffect, useRef, useState } from "react";
 import { useFriends } from "../../lib/friends.jsx";
 import Avatar from "./Avatar.jsx";
-import Segmented from "./Segmented.jsx";
+import Icon from "./Icon.jsx";
 
-// In the room card, for the host (when their account has friends): what their friends can do from the friends tab
-// (join straight away, ask to join, or only by invitation), and the friends who are asking, to let in or turn down.
+// What the host's friends can do from the friends tab, and what each choice means.
+const MODES = [
+  { value: "abierta", label: "Unirse", hint: "Entran directo" },
+  { value: "solicitud", label: "Pedir entrar", hint: "Te piden permiso" },
+  { value: "invitacion", label: "Solo invitación", hint: "Solo con el código" },
+];
+
+// In the room card, for the host (when their account has friends): one line, "Amigos: Pedir entrar ▾", whose menu
+// changes what their friends can do from the friends tab (join straight away, ask to join, or only by invitation), and
+// the friends who are asking, to let in or turn down. It's set once and rarely touched, so it takes little room.
 export default function FriendsRoomControls({ room, onToast }) {
   const friends = useFriends();
+  const [open, setOpen] = useState(false);
+  const rootRef = useRef(null);
+
+  // The menu closes with a tap outside it or Escape.
+  useEffect(() => {
+    if (!open) return undefined;
+    const onDown = (e) => !rootRef.current?.contains(e.target) && setOpen(false);
+    const onKey = (e) => e.key === "Escape" && setOpen(false);
+    document.addEventListener("pointerdown", onDown);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("pointerdown", onDown);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
+
   if (!friends.isAccount) return null;
   const requests = room.joinRequests || [];
+  const current = MODES.find((m) => m.value === (room.joinMode || "solicitud")) || MODES[1];
 
   async function setMode(mode) {
+    setOpen(false);
+    if (mode === current.value) return;
     try {
       await friends.setJoinMode(mode);
     } catch (err) {
@@ -42,17 +70,43 @@ export default function FriendsRoomControls({ room, onToast }) {
           </button>
         </div>
       ))}
-      <p className="tv-fr-room-label">Tus amigos pueden</p>
-      <Segmented
-        label="Qué pueden hacer tus amigos"
-        value={room.joinMode || "solicitud"}
-        onChange={setMode}
-        options={[
-          { value: "abierta", label: "Unirse" },
-          { value: "solicitud", label: "Pedir entrar" },
-          { value: "invitacion", label: "Solo invitación" },
-        ]}
-      />
+      <div className="tv-fr-mode" ref={rootRef}>
+        {/* The whole row is the button: what it is on the left, the choice on the right. */}
+        <button
+          type="button"
+          className={`tv-fr-mode-btn${open ? " is-open" : ""}`}
+          aria-haspopup="listbox"
+          aria-expanded={open}
+          onClick={() => setOpen((v) => !v)}
+        >
+          <span className="tv-fr-mode-label">Tus amigos pueden</span>
+          <span className="tv-fr-mode-value">
+            {current.label}
+            <Icon name="chevron" size={14} strokeWidth={2.8} className="tv-fr-mode-caret" />
+          </span>
+        </button>
+        {open && (
+          <ul className="tv-fr-mode-menu" role="listbox" aria-label="Qué pueden hacer tus amigos">
+            {MODES.map((m) => (
+              <li key={m.value}>
+                <button
+                  type="button"
+                  role="option"
+                  aria-selected={m.value === current.value}
+                  className={`tv-fr-mode-option${m.value === current.value ? " is-on" : ""}`}
+                  onClick={() => setMode(m.value)}
+                >
+                  <span>
+                    <strong>{m.label}</strong>
+                    <small>{m.hint}</small>
+                  </span>
+                  {m.value === current.value && <Icon name="check" size={16} strokeWidth={3} />}
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
     </div>
   );
 }

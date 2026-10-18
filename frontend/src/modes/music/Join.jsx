@@ -52,7 +52,7 @@ export default function Join() {
           </label>
           <input
             className="field"
-            placeholder="K7P2M"
+            placeholder="YOAVH"
             value={code}
             onChange={(e) => {
               setCode(e.target.value.toUpperCase().slice(0, 5));

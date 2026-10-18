@@ -1,4 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import FriendInvite from "../components/home/FriendInvite.jsx";
 import FriendsSheet from "../components/home/FriendsSheet.jsx";
 import { api } from "./api.js";
 import { emitAck, getSocket } from "./socket.js";
@@ -22,6 +23,8 @@ export function FriendsProvider({ children }) {
   }, []);
   const joinRef = useRef(joinRoom);
   joinRef.current = joinRoom;
+  // A friend's invitation to their room, shown as a card until it's answered (FriendInvite).
+  const [invite, setInvite] = useState(null);
 
   // The view could not be loaded (the server is older than this page, or the connection failed): the panel says so.
   const [failed, setFailed] = useState(false);
@@ -58,13 +61,17 @@ export function FriendsProvider({ children }) {
       }
     };
     const onDeclined = ({ hostName } = {}) => say(`${hostName || "El anfitrión"} no te dejó entrar esta vez`, "lock");
+    // A friend invites this account to their room: a card with "Unirme".
+    const onInvited = (data = {}) => data.code && setInvite({ ...data, id: Date.now() });
     s.on("friends:state", onState);
     s.on("friend:approved", onApproved);
     s.on("friend:declined", onDeclined);
+    s.on("friend:invited", onInvited);
     return () => {
       s.off("friends:state", onState);
       s.off("friend:approved", onApproved);
       s.off("friend:declined", onDeclined);
+      s.off("friend:invited", onInvited);
     };
   }, [isAccount, user?.id]);
 
@@ -79,7 +86,6 @@ export function FriendsProvider({ children }) {
       requestByUsername: (username) => call("/api/friends/request", { method: "POST", body: { username } }),
       // People by username (from 3 letters), with where each one stands with this account.
       search: (q) => api(`/api/friends/search?q=${encodeURIComponent(q)}`).then((r) => r.results),
-      lookup: (username) => api(`/api/friends/user/${encodeURIComponent(username)}`),
       requestUser: (userId) => call("/api/friends/request", { method: "POST", body: { userId } }),
       accept: (id) => call(`/api/friends/${id}/accept`, { method: "POST" }),
       decline: (id) => call(`/api/friends/${id}/decline`, { method: "POST" }),
@@ -90,6 +96,11 @@ export function FriendsProvider({ children }) {
         if (!res.ok) throw new Error(res.error);
         if (res.action === "join") await joinRef.current(res.code);
         return res.action;
+      },
+      // Sends this room's code to a friend who is online (they see "Ana te invita a su sala").
+      async inviteFriend(friendId) {
+        const res = await emitAck("friend:invite", { friendId });
+        if (!res.ok) throw new Error(res.error);
       },
       async cancelJoin(friendId) {
         const res = await emitAck("friend:cancelJoin", { friendId });
@@ -136,6 +147,20 @@ export function FriendsProvider({ children }) {
     <FriendsContext.Provider value={value}>
       {children}
       {isAccount && <FriendsSheet />}
+      <FriendInvite
+        invite={invite}
+        onClose={() => setInvite(null)}
+        onJoin={async (inv) => {
+          try {
+            await joinRef.current(inv.code);
+            setInvite(null);
+            say(`Entraste a la sala de ${inv.fromName}`);
+          } catch (err) {
+            setInvite(null);
+            if (!err.offer) say(err.message || "No pudimos entrar a la sala", "lock");
+          }
+        }}
+      />
     </FriendsContext.Provider>
   );
 }

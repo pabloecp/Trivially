@@ -7,12 +7,13 @@ const isRight = (p) => Boolean(p?.lastAnswer && !p.lastAnswer.skipped && (p.last
 
 // The sounds that come from the room rather than from a click of this player's:
 //  - a round's reveal: right or wrong (a near answer, a pin or a year, counts as right from half the points on);
-//  - Campo de minas, while it is played: each right answer found, and the mine stepped on, at once;
+//  - Campo de minas, while it is played: each right answer found, and the mine stepped on, at once (Lluvia's own
+//    answers sound on the screen that sent them, lluvia/Game.jsx);
 //  - a chat message from someone else: a soft tap;
 //  - what the host does, for everyone else: a game picked or a match started (next), back to the menu or the lobby
 //    (back). The host already heard their own click.
 // With a central device in the room the match's sounds are its own: it plays every round's start, the reveal (right
-// when anyone got it) and everyone's hits and mines, while the players' phones keep quiet about them (their screen
+// when anyone got it) and everyone's hits and mines (Lluvia's hits too), while the players' phones keep quiet about them (their screen
 // still says how they did).
 // It also installs the clicks' sounds (lib/sounds.js).
 export default function RoomSounds() {
@@ -52,12 +53,13 @@ export default function RoomSounds() {
     if (!room || !before || before.code !== room.code) return;
 
     const mines = room.game === "minas";
+    const rain = room.game === "lluvia";
     const countdown = room.phase === "countdown" && (before.phase !== "countdown" || before.round !== room.currentRound);
 
     if (isCentral) {
       if (room.phase === "reveal" && before.phase !== "reveal") {
         if (!mines) play(players.some(isRight) ? "correct" : "wrong");
-      } else if (mines && room.phase === "playing" && before.phase === "playing") {
+      } else if ((mines || rain) && room.phase === "playing" && before.phase === "playing") {
         if (players.filter((p) => p.out === "mina").length > before.allOut) play("wrong");
         else if (players.reduce((n, p) => n + (p.hits || 0), 0) > before.allHits) play("correct");
       } else if (countdown) play("next");

@@ -1,7 +1,9 @@
 import assert from "node:assert/strict";
 import { readLocalCatalog } from "../catalog/catalogProvider.js";
-import { LOCATION_ROUND_MS } from "./geo.js";
+import { GEO_STYLES, LOCATION_ROUND_MS, SHAPE_PROMPT } from "./geo.js";
 import { RoomManager } from "./roomManager.js";
+import { flagForToken } from "../geo/flags.js";
+import { shapeForToken } from "../geo/shapes.js";
 
 // Encuentra el país: map rounds (pins) and the tiebreak for first place.
 const mgr = new RoomManager({ catalog: readLocalCatalog(), store: { users: {} } });
@@ -11,23 +13,26 @@ const room = mgr.create({ host, mode: "multi", game: "mundo" });
 mgr.addPlayer(room, { id: "p-2", name: "Ana", socketId: "s2" });
 mgr.addPlayer(room, { id: "p-3", name: "Luis", socketId: "s3" });
 
-// Lobby: the settings (no kinds of question: it is only a pin on the map; 15 s to put it, like Adivina la canción),
-// and how many countries they can draw.
+// Lobby: the settings (the three ways of giving the country, no kinds of question: it is always a pin on the map;
+// 15 s to put it, like Adivina la canción), and how many countries they can draw.
 const DIFFICULTIES = ["facil", "media", "dificil"];
-assert.deepEqual(room.config.geo, { rounds: 5, roundMs: 15000, difficulties: DIFFICULTIES });
+assert.deepEqual(room.config.geo, { rounds: 5, roundMs: 15000, styles: GEO_STYLES, difficulties: DIFFICULTIES });
 const all = mgr.publicState(room).questionsReady;
 assert.ok(all > 150 && all < 250, `one question per country (${all})`);
 assert.equal(mgr.publicState(room).songsReady, undefined);
 // An older client's kinds are ignored; the seconds are a setting now.
 mgr.updateConfig(room, "host-1", { geo: { kinds: ["capital"], roundMs: 30000 } });
-assert.deepEqual(room.config.geo, { rounds: 5, roundMs: 30000, difficulties: DIFFICULTIES });
+assert.deepEqual(room.config.geo, { rounds: 5, roundMs: 30000, styles: GEO_STYLES, difficulties: DIFFICULTIES });
 mgr.updateConfig(room, "host-1", { geo: { roundMs: 15000 } });
 assert.equal(mgr.publicState(room).questionsReady, all);
 // Every difficulty can be unticked: there is then nothing to play.
 mgr.updateConfig(room, "host-1", { geo: { difficulties: [] } });
 assert.equal(mgr.publicState(room).questionsReady, 0);
 assert.throws(() => mgr.start(room, "host-1"), /dificultad/);
-mgr.updateConfig(room, "host-1", { geo: { rounds: 6, difficulties: ["facil"] } });
+mgr.updateConfig(room, "host-1", { geo: { difficulties: DIFFICULTIES, styles: [] } });
+assert.equal(mgr.publicState(room).questionsReady, 0);
+assert.throws(() => mgr.start(room, "host-1"), /modo de juego/);
+mgr.updateConfig(room, "host-1", { geo: { rounds: 6, styles: ["nombre"], difficulties: ["facil"] } });
 assert.ok(mgr.publicState(room).questionsReady < all, "fewer difficulties, fewer questions");
 
 mgr.start(room, "host-1");
@@ -41,7 +46,7 @@ Object.assign(room.tracks[0], { name: "España", answer: "España", country: "ES
 // A map round: 10 s; pins can move until locked, the last one counts, and nothing says where the country is.
 let pub = mgr.publicState(room, "p-2");
 assert.equal(pub.phase, "countdown");
-assert.deepEqual(pub.question, { round: 1, kind: "location", difficulty: "facil", prompt: null, name: null });
+assert.deepEqual(pub.question, { round: 1, kind: "location", style: "nombre", difficulty: "facil", prompt: null, name: null, shape: null, flag: null });
 mgr.beginPlaying(room);
 stop(room);
 assert.equal(room.phaseEndsAt - room.phaseStartedAt, LOCATION_ROUND_MS);
@@ -77,6 +82,45 @@ pub = mgr.publicState(room);
 assert.deepEqual(pub.reveal.map, ["Spain"]);
 assert.equal(pub.players.find((p) => p.id === "host-1").lastAnswer.nearest.length, 2);
 assert.equal(room.phaseEndsAt - room.phaseStartedAt, 3000, "the same wait between rounds as every mode");
+
+// ---- Sombra and Bandera ----
+// The country is given by its silhouette or its flag: its name (and its map shape, its ISO code) only goes out at the
+// reveal; the picture comes from an address that never names it.
+for (const style of ["sombra", "bandera"]) {
+  const r = mgr.create({ host: { id: "h", name: "H", socketId: `t-${style}` }, mode: "multi", game: "mundo" });
+  mgr.updateConfig(r, "h", { geo: { rounds: 5, styles: [style] } });
+  mgr.start(r, "h");
+  stop(r);
+  assert.ok(r.tracks.every((t) => t.style === style && t.kind === "location"));
+  const track = r.tracks[0];
+  pub = mgr.publicState(r, "h");
+  assert.equal(pub.question.style, style, "the countdown already says how it's given");
+  assert.equal(pub.question.shape, null);
+  assert.equal(pub.question.flag, null);
+  mgr.beginPlaying(r);
+  stop(r);
+  pub = mgr.publicState(r, "h");
+  assert.equal(pub.question.name, null);
+  const text = JSON.stringify(pub);
+  for (const secret of [track.name, ...track.map, `"${track.country}"`]) assert.ok(!text.includes(secret), `${style}: no manda ${secret}`);
+  if (style === "sombra") {
+    assert.equal(pub.question.prompt, SHAPE_PROMPT);
+    assert.equal(pub.question.flag, null);
+    assert.deepEqual(shapeForToken(pub.question.shape.split("/").pop()), track.map);
+  } else {
+    assert.equal(pub.question.shape, null);
+    assert.equal(flagForToken(pub.question.flag.split("/").pop()), track.flag);
+  }
+  // A pin inside the country scores like any map round.
+  Object.assign(track, { name: "España", answer: "España", country: "ES", map: ["Spain"] });
+  mgr.placePin(r, "h", { lng: -3.7, lat: 40.4, lock: true });
+  stop(r);
+  assert.equal(r.phase, "reveal");
+  assert.equal(r.players.get("h").lastPoints, 1000);
+  pub = mgr.publicState(r, "h");
+  assert.equal(pub.question.name, "España", "the reveal names it");
+  assert.deepEqual(pub.reveal.map, ["Spain"]);
+}
 
 // ---- Tiebreak ----
 // Ana and the host finish level; Luis is behind and only watches.

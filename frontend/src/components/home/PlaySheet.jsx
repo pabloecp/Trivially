@@ -308,7 +308,7 @@ export default function PlaySheet({ mode, joinCode, open, onClose }) {
                     setCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, ROOM_CODE_LENGTH));
                     setError("");
                   }}
-                  placeholder="K7P2M"
+                  placeholder="YOAVH"
                   autoComplete="off"
                   autoCapitalize="characters"
                   spellCheck="false"

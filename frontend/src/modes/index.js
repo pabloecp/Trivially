@@ -3,8 +3,11 @@ import QuizLobbyPanel from "./quiz/LobbyPanel.jsx";
 import GeoLobbyPanel from "./mundo/LobbyPanel.jsx";
 import HistoryLobbyPanel from "./historia/LobbyPanel.jsx";
 import MinesLobbyPanel from "./minas/LobbyPanel.jsx";
+import RainLobbyPanel from "./lluvia/LobbyPanel.jsx";
 import PlaylistLobbyPanel from "./playlist/LobbyPanel.jsx";
 import { STYLES as MINES_STYLES } from "./minas/minesInfo.js";
+import { MIN_QUESTIONS as RAIN_MIN_QUESTIONS } from "./lluvia/rainInfo.js";
+import { urlCode } from "../lib/hiddenCode.js";
 
 // The games shown on the room screen ("Elige el juego"; a game may have its own "Modos de Juego" in its settings).
 // "Trivia" is the main one (`kind: "main"`, its tile as wide as two): questions of every topic, each answered its own
@@ -32,7 +35,7 @@ export const GAME_MODES = [
     ],
     ready: (room) => room.questionsReady == null || room.questionsReady >= (room.config?.quiz?.rounds || 5),
     Lobby: QuizLobbyPanel,
-    path: (room) => `/quiz/${room.code}`,
+    path: (room) => `/quiz/${urlCode(room.code)}`,
   },
   {
     id: "musica",
@@ -50,7 +53,7 @@ export const GAME_MODES = [
     ready: (room) =>
       room.config?.formats?.length !== 0 && (room.songsReady == null || room.songsReady >= (room.config?.rounds || 5)),
     Lobby: MusicLobbyPanel,
-    path: (room) => `/game/${room.code}`,
+    path: (room) => `/game/${urlCode(room.code)}`,
   },
   {
     id: "mundo",
@@ -67,7 +70,7 @@ export const GAME_MODES = [
     ready: (room) => room.questionsReady == null || room.questionsReady >= (room.config?.geo?.rounds || 5),
     Lobby: GeoLobbyPanel,
     // The world map (modes/mundo/Game.jsx).
-    path: (room) => `/mundo/${room.code}`,
+    path: (room) => `/mundo/${urlCode(room.code)}`,
   },
   {
     // Rango: get as close as you can on a range. Its steps are general, since "Línea del tiempo" (an event's year) is
@@ -87,7 +90,7 @@ export const GAME_MODES = [
     ready: (room) => room.questionsReady == null || room.questionsReady >= (room.config?.history?.rounds || 5),
     Lobby: HistoryLobbyPanel,
     // An event and a timeline (modes/historia/Game.jsx).
-    path: (room) => `/historia/${room.code}`,
+    path: (room) => `/historia/${urlCode(room.code)}`,
   },
   {
     id: "minas",
@@ -104,7 +107,29 @@ export const GAME_MODES = [
       (room.questionsReady == null || room.questionsReady >= (room.config?.mines?.rounds || 5)),
     Lobby: MinesLobbyPanel,
     // A prompt and a 5 × 5 board (modes/minas/Game.jsx).
-    path: (room) => `/minas/${room.code}`,
+    path: (room) => `/minas/${urlCode(room.code)}`,
+  },
+  {
+    // Lluvia: questions fall down the screen for a whole round; each one is for whoever writes its answer first.
+    id: "lluvia",
+    name: "Lluvia",
+    kind: "extra",
+    // Rain blue (styles/rain.css); the questions fall in green, yellow or red by difficulty.
+    color: "rain",
+    icon: "rain",
+    available: true,
+    steps: [
+      { icon: "rain", text: "Las preguntas caen" },
+      { icon: "bolt", text: "Respóndelas antes que nadie" },
+      { icon: "star", text: "Verde 1, amarilla 3, roja 5" },
+    ],
+    ready: (room) =>
+      room.config?.rain?.categories?.length !== 0 &&
+      room.config?.rain?.difficulties?.length !== 0 &&
+      (room.questionsReady == null || room.questionsReady >= RAIN_MIN_QUESTIONS),
+    Lobby: RainLobbyPanel,
+    // The sky the questions fall down, and the box to write in (modes/lluvia/Game.jsx).
+    path: (room) => `/lluvia/${urlCode(room.code)}`,
   },
   {
     // Not a game of its own: the room plays the playlist's games one after another (backend/src/game/playlist.js).
@@ -120,7 +145,7 @@ export const GAME_MODES = [
     steps: [
       { icon: "list", text: "Elige los juegos y su orden" },
       { icon: "grid", text: "Cada uno con sus ajustes" },
-      { icon: "crown", text: "Gana quien gane más juegos" },
+      { icon: "crown", text: "Gana quien sume más puntos" },
     ],
     // At least one game, and every game playable with its settings (the server says why one isn't: playlistStatus).
     ready: (room) => {
@@ -128,7 +153,7 @@ export const GAME_MODES = [
       return items.length > 0 && items.every((i) => !room.playlistStatus?.[i.id]?.problem);
     },
     Lobby: PlaylistLobbyPanel,
-    path: (room) => `/playlist/${room.code}`,
+    path: (room) => `/playlist/${urlCode(room.code)}`,
   },
 ];
 
@@ -142,7 +167,8 @@ export function findMode(id) {
 
 // The screen a room's players belong on: the room screen (/sala/CODE, Home with the room) while nobody is playing,
 // whatever game is picked, otherwise that game's own screens.
-export function roomPath(room) {
+// `_hidden` only makes callers re-run it when the code is hidden or shown (the addresses read it themselves).
+export function roomPath(room, _hidden) {
   const mode = findMode(room.game);
-  return room.phase !== "lobby" && mode?.path ? mode.path(room) : `/sala/${room.code}`;
+  return room.phase !== "lobby" && mode?.path ? mode.path(room) : `/sala/${urlCode(room.code)}`;
 }

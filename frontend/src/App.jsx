@@ -3,12 +3,12 @@ import { Navigate, Route, Routes, useLocation, useNavigate, useNavigationType, u
 import Home from "./pages/Home.jsx";
 import Login from "./pages/Login.jsx";
 import Profile from "./pages/Profile.jsx";
-import AddFriend from "./pages/AddFriend.jsx";
 import Game from "./modes/music/Game.jsx";
 import QuizGame from "./modes/quiz/Game.jsx";
 import GeoGame from "./modes/mundo/Game.jsx";
 import HistoryGame from "./modes/historia/Game.jsx";
 import MinesGame from "./modes/minas/Game.jsx";
+import RainGame from "./modes/lluvia/Game.jsx";
 import PlaylistResults from "./modes/playlist/Results.jsx";
 import { useApp } from "./lib/store.jsx";
 import RoomSounds from "./lib/RoomSounds.jsx";
@@ -17,9 +17,10 @@ import CentralOffer from "./components/home/CentralOffer.jsx";
 import CentralRequests from "./components/home/CentralRequests.jsx";
 import { useRoomExit } from "./components/home/TvTopbar.jsx";
 import { roomPath } from "./modes/index.js";
+import { HIDDEN_SLUG, useHiddenCode } from "./lib/hiddenCode.js";
 
 // Screens tied to one room, e.g. /game/XOTRIV.
-const ROOM_SCREEN = /^\/(?:lobby|game|quiz|mundo|historia|minas|playlist|sala)\/([^/]+)/;
+const ROOM_SCREEN = /^\/(?:lobby|game|quiz|mundo|historia|minas|lluvia|playlist|sala)\/([^/]+)/;
 
 // Old /lobby/CODE links: the waiting room now lives on the room screen, which /sala/CODE opens and joins.
 function LobbyRedirect() {
@@ -45,6 +46,8 @@ function RoomNavigator() {
   const navType = useNavigationType();
   const { pathname } = useLocation();
   const { step } = useRoomExit();
+  // Hiding or showing the code changes the room's addresses (lib/hiddenCode.js): the screen moves to the new one.
+  const [codeHidden] = useHiddenCode();
 
   // Every game: as a match starts and each round counts down, the page goes back to the top, so on a phone (where the
   // scoreboard is under the game, and the settings left the page scrolled down) the question and the clock show.
@@ -57,7 +60,7 @@ function RoomNavigator() {
   useEffect(() => {
     if (kickedNotice && !room) nav("/", { replace: true });
   }, [kickedNotice]);
-  const target = room ? roomPath(room) : null;
+  const target = room ? roomPath(room, codeHidden) : null;
   const lastTarget = useRef(null);
   const lastPath = useRef(pathname);
 
@@ -87,7 +90,7 @@ function RoomNavigator() {
     if (screenCode) {
       // An out-of-date screen of our own room gets swapped for the right one. Another room's link is left to
       // its page, which is busy joining it.
-      if (screenCode === room.code) nav(target, { replace: true });
+      if (screenCode === room.code || screenCode === HIDDEN_SLUG.toUpperCase()) nav(target, { replace: true });
       return;
     }
     // On Home the address becomes the room's own (/sala/CODE) as soon as you create or join one, pushed on top of
@@ -119,9 +122,9 @@ export default function App() {
         <Route path="/mundo/:code" element={<GeoGame />} />
         <Route path="/historia/:code" element={<HistoryGame />} />
         <Route path="/minas/:code" element={<MinesGame />} />
+        <Route path="/lluvia/:code" element={<RainGame />} />
         {/* The end of a playlist: who won the most games. Its games are played on their own screens. */}
         <Route path="/playlist/:code" element={<PlaylistResults />} />
-        <Route path="/amigo/:username" element={<AddFriend />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/profile/:userId" element={<Profile />} />
         {/* The old /play screens are gone: everything starts from Home. */}

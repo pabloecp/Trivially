@@ -2,6 +2,7 @@ import { FORMATS, quizConfig } from "../quiz/quizInfo.js";
 import { geoConfig } from "../mundo/geoInfo.js";
 import { historyConfig } from "../historia/historyInfo.js";
 import { minesConfig } from "../minas/minesInfo.js";
+import { rainConfig } from "../lluvia/rainInfo.js";
 import { GAME_MODES, findMode } from "../index.js";
 
 // Playlists of games (backend/src/game/playlist.js): the games a playlist can have, each item's settings, a line
@@ -16,7 +17,7 @@ export function playlistGames() {
 }
 
 // Where each game keeps its settings in the room's config (Adivina la canción's are at its top level), as on the server.
-const CONFIG_KEY = { opciones: "quiz", mundo: "geo", historia: "history", minas: "mines", musica: null };
+const CONFIG_KEY = { opciones: "quiz", mundo: "geo", historia: "history", minas: "mines", lluvia: "rain", musica: null };
 const MUSIC_KEYS = ["rounds", "roundMs", "formats", "useCatalog", "languages", "genres", "difficulties", "playlistIds"];
 
 /** The room's settings with an item's in place of its game's, so the game's own settings panel can show them. */
@@ -40,6 +41,7 @@ export function defaultItemConfig(game, catalog) {
   if (game === "mundo") return geoConfig({});
   if (game === "historia") return historyConfig({});
   if (game === "minas") return minesConfig({});
+  if (game === "lluvia") return rainConfig({});
   // Adivina la canción: the whole catalog, every language, genre and difficulty (the server fills them in the same).
   return { rounds: 5, roundMs: 15000, formats: FORMATS.map((f) => f.id), useCatalog: true, playlistIds: [] };
 }

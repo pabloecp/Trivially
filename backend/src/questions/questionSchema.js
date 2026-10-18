@@ -7,6 +7,8 @@
 //                    game/openAnswers.js, `flag` only on flag questions)
 //   location         { "name": "Francia", "map": ["France"] }   (Geografía: a pin on the map, see geo/worldMap.js)
 //   year             { "year": 1492 }   (Historia: the year of the event, negative before Christ; there is no year 0)
+//   number           { "value": 8849, "unit": "m" }   (Rango's Cifras: a whole number not below 0, and what is written
+//                    after it; built from history/figures.js, uploaded by `npm run history:upload`)
 //   minefield        { "correct": ["España", …], "wrong": ["Marruecos", …] }   (Campo de minas: the 25 cells of the
 //                    board, the right answers and the mines)
 //   true_false       { "correct": true }
@@ -15,9 +17,9 @@
 // they are built from geo/countries.js (geo/geoQuestions.js). Historia's (mode "historia") from history/events.js, and
 // Campo de minas' (mode "minas") from mines/boards/ (mines/minesQuestions.js).
 
-export const QUESTION_TYPES = ["multiple_choice", "open", "true_false", "audio", "location", "year", "minefield"];
+export const QUESTION_TYPES = ["multiple_choice", "open", "true_false", "audio", "location", "year", "number", "minefield"];
 // Types the game can play so far; the others are accepted in the bank but not used yet.
-export const PLAYABLE_TYPES = ["multiple_choice", "open", "location", "year", "minefield"];
+export const PLAYABLE_TYPES = ["multiple_choice", "open", "location", "year", "number", "minefield"];
 export const QUESTION_DIFFICULTIES = ["facil", "media", "dificil"];
 // Category ids as stored in the database, and the name players see.
 export const QUESTION_CATEGORIES = {
@@ -90,6 +92,9 @@ export function questionErrors(q) {
     if (!Number.isInteger(year) || year === 0 || year < -5000 || year > new Date().getFullYear()) {
       errors.push("data.year debe ser un año entero, distinto de 0 y no futuro");
     }
+  } else if (q.type === "number") {
+    if (!Number.isSafeInteger(q.data.value) || q.data.value < 1) errors.push("data.value debe ser un número entero mayor que 0");
+    if (typeof q.data.unit !== "string") errors.push("data.unit debe ser texto (vacío si no lleva)");
   } else if (q.type === "minefield") {
     const { correct, wrong } = q.data;
     if (!Array.isArray(correct) || !correct.every(isText) || !Array.isArray(wrong) || !wrong.every(isText)) {

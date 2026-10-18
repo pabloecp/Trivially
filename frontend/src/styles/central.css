@@ -21,10 +21,6 @@
 }
 .tv-central-spot.is-away { border-color: var(--tv-dash); background: none; }
 .tv-central-spot.is-away .tv-central-spot-icon { opacity: 0.5; }
-/* A player is being dragged: the spot calls for it, and grows a little under it. */
-.tv-central-spot.is-armed { border-color: var(--p-accent-1); background: rgba(255, 255, 255, 0.04); animation: tvSpotCall 1s ease-in-out infinite; }
-.tv-central-spot.is-over { border-style: solid; border-color: var(--p-accent-1); background: rgba(255, 255, 255, 0.1); transform: scale(1.03); animation: none; }
-@keyframes tvSpotCall { 50% { border-color: var(--tv-dash); } }
 .tv-central-spot-icon {
   position: relative;
   display: grid;
@@ -74,36 +70,6 @@
 .tv-central-spot-x:hover { filter: brightness(1.2); }
 .tv-central-spot-x.is-confirm { background: var(--p-bad); color: #fff; }
 
-/* The host's players can be dragged onto it: a finger held on one doesn't open the phone's own menu. */
-.tv-player-btn[data-draggable] { -webkit-touch-callout: none; touch-action: manipulation; }
-@media (hover: hover) { .tv-player-btn[data-draggable]:active { cursor: grabbing; } }
-.tv-player.is-dragged { opacity: 0.4; }
-.tv-party.is-dragging .tv-player:hover { background: none; }
-
-/* What's being dragged, under the pointer. */
-.tv-central-ghost {
-  position: fixed;
-  z-index: 1200;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 8px 14px 8px 8px;
-  border-radius: 999px;
-  background: var(--tv-surface);
-  box-shadow: inset 0 0 0 2px var(--p-accent-1), 0 16px 40px rgba(0, 0, 0, 0.55);
-  color: var(--tv-text);
-  font-family: var(--tv-body);
-  font-weight: 800;
-  font-size: 15px;
-  pointer-events: none;
-  transform: translate(-24px, -50%) rotate(-3deg);
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
-}
-.tv-central-ghost .tv-avatar { width: 32px; height: 32px; font-size: 14px; }
-.tv-central-ghost svg { color: var(--tv-text-3); }
-.tv-central-ghost.is-over { transform: translate(-24px, -50%) rotate(0) scale(1.06); box-shadow: inset 0 0 0 2px var(--p-ok), 0 16px 40px rgba(0, 0, 0, 0.55); }
-.tv-central-ghost.is-over svg { color: var(--p-ok-text); }
-
 /* Players asking to use another device of theirs as the central one (CentralRequests.jsx): cards pinned under the top
    bar, on every screen, where the host accepts or turns them down. They sit outside .tv-app, so they set the site's
    letter and colour themselves. */
@@ -137,7 +103,10 @@
 .tv-central-request strong { color: var(--tv-text); }
 .tv-central-request-actions { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
 .tv-central-request .tv-btn { color: var(--on); }
-.tv-central-request .tv-btn--sm { height: 36px; padding: 0 12px; font-size: 15px; }
+/* The card's two buttons: small and the same height ("Aceptar" / "Unirme" and the X). */
+.tv-central-request .tv-btn--sm { height: 34px; padding: 0 12px; border-radius: 11px; box-shadow: 0 3px 0 var(--edge); font-family: var(--tv-body, inherit); font-size: 14px; font-weight: 800; }
+.tv-central-request .tv-btn--sm:hover { box-shadow: 0 4px 0 var(--edge); }
+.tv-central-request .tv-btn--sm:active { box-shadow: 0 0 0 var(--edge); }
 .tv-central-request-no {
   display: grid;
   place-items: center;
@@ -146,9 +115,14 @@
   border: 0;
   border-radius: 11px;
   background: var(--tv-neutral);
+  /* A button like "Aceptar" beside it: the same edge below, that grows on hover and goes when pressed. */
+  box-shadow: 0 3px 0 var(--tv-neutral-edge);
   color: var(--tv-neutral-on);
   cursor: pointer;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
 }
+.tv-central-request-no:hover { transform: translateY(-1px); box-shadow: 0 4px 0 var(--tv-neutral-edge); }
+.tv-central-request-no:active { transform: translateY(3px); box-shadow: 0 0 0 var(--tv-neutral-edge); }
 
 /* The room's column on the central device: nothing in it can be tapped. */
 .tv-party.is-display .tv-player-btn { cursor: default; }
@@ -207,7 +181,6 @@
   padding: 20px 24px;
   border-radius: 28px;
   background: var(--c2);
-  box-shadow: 0 6px 0 var(--edge);
   color: var(--on);
   text-align: left;
   animation: tvSwap 0.5s var(--tv-ease-out) backwards;
@@ -341,6 +314,9 @@
 .tv-game.is-central .tv-mines-cell-text { font-weight: 800; }
 .tv-game.is-central .tv-play-q { font-size: clamp(28px, min(3.4vw, 5.4vh), 50px); }
 .tv-game.is-central .tv-geo-country { font-size: clamp(28px, min(3.4vw, 5.4vh), 48px); }
+.tv-game.is-central .tv-geo-clue { width: clamp(120px, min(28cqw, 44cqh), 400px); padding: 10px; }
+.tv-game.is-central .tv-geo-clue img,
+.tv-game.is-central .tv-geo-clue svg { max-height: clamp(80px, 38cqh, 320px); }
 .tv-game.is-central .tv-quiz-opt:disabled { cursor: default; }
 .tv-game.is-central .tv-mines-cell:disabled { cursor: default; }
 

@@ -358,7 +358,7 @@ input.tv-pl-name:focus { outline: none; }
 /* ---------- Beside it: the chosen game's settings, sharing and "Mis playlists" ---------- */
 .tv-pl-edit { display: grid; gap: 16px; min-width: 0; }
 /* The chosen game's settings take that game's colour, as in its own lobby (the same variables its
-   :root[data-mode] block sets: quiz.css, palettes.css, history.css, mines.css). */
+   :root[data-mode] block sets: quiz.css, palettes.css, history.css, mines.css, rain.css). */
 .tv-pl-edit.is-opciones {
   --brand: var(--tv-qm); --brand-rgb: var(--tv-qm-rgb); --brand-text: var(--tv-qm); --on-brand: #ffffff;
   --brand-hover: var(--tv-qm-1); --brand-active: var(--tv-qm-edge); --border-focus: var(--tv-qm);
@@ -378,6 +378,10 @@ input.tv-pl-name:focus { outline: none; }
 .tv-pl-edit.is-minas {
   --brand: var(--tv-mn); --brand-rgb: var(--tv-mn-rgb); --brand-text: var(--tv-mn-text); --on-brand: var(--tv-mn-on);
   --brand-hover: var(--tv-mn-1); --brand-active: var(--tv-mn-edge); --border-focus: var(--tv-mn);
+}
+.tv-pl-edit.is-lluvia {
+  --brand: var(--tv-rn); --brand-rgb: var(--tv-rn-rgb); --brand-text: var(--tv-rn-text); --on-brand: var(--tv-rn-on);
+  --brand-hover: var(--tv-rn-1); --brand-active: var(--tv-rn-edge); --border-focus: var(--tv-rn);
 }
 .tv-pl-edit .tv-pl-edit-kicker { color: var(--brand-text); }
 .tv-pl-edit-head { display: flex; align-items: center; gap: 12px; }
@@ -445,65 +449,8 @@ input.tv-pl-name:focus { outline: none; }
 .tv-results.is-playlist { justify-content: flex-start; gap: 18px; }
 .tv-results.is-playlist .tv-results-head { margin-top: auto; }
 .tv-results.is-playlist .tv-results-actions { margin-bottom: auto; }
-.tv-results.is-playlist .tv-podium { margin-top: 24px; }
-.tv-pl-progress {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 10px;
-  width: min(560px, 100%);
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-.tv-pl-step { display: grid; justify-items: center; gap: 5px; width: 66px; text-align: center; opacity: 0.45; }
-.tv-pl-step.is-played,
-.tv-pl-step.is-now { opacity: 1; }
-.tv-pl-step-badge {
-  display: grid;
-  place-items: center;
-  width: 40px;
-  height: 40px;
-  border-radius: 12px;
-  background: var(--c2);
-  box-shadow: 0 3px 0 var(--edge);
-  color: var(--on);
-}
-.tv-pl-step.is-now .tv-pl-step-badge { outline: 3px solid var(--tv-text); outline-offset: 3px; }
-.tv-pl-step-who { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 800; font-size: 12px; color: var(--tv-text-2); }
-.tv-pl-table {
-  display: grid;
-  gap: 10px;
-  width: min(560px, 100%);
-  padding: 16px;
-  border-radius: 22px;
-  background: var(--tv-option-bg);
-  box-shadow: inset 0 0 0 1px var(--tv-option-edge);
-  text-align: left;
-  animation: tvUp 0.55s var(--tv-ease-out) 0.8s backwards;
-}
-.tv-pl-table-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 10px; }
-.tv-pl-table-title { margin: 0; font-family: var(--tv-display); font-weight: 800; font-size: 18px; color: var(--tv-text); }
-.tv-pl-table-sub { font-weight: 700; font-size: 12px; color: var(--tv-text-3); }
-.tv-pl-table-list { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; }
-.tv-pl-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  min-width: 0;
-  padding: 6px 12px 6px 8px;
-  border-radius: 14px;
-  background: var(--tv-surface);
-}
-.tv-pl-row.is-leader { box-shadow: inset 0 0 0 2px var(--p-accent-2); }
-.tv-pl-row-pos { flex-shrink: 0; width: 18px; font-family: var(--tv-display); font-weight: 800; font-size: 16px; text-align: center; color: var(--tv-text-3); }
-.tv-pl-row .tv-avatar { flex-shrink: 0; width: 32px; height: 32px; font-size: 15px; }
-.tv-pl-row-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 800; font-size: 15px; color: var(--tv-text-2); }
-.tv-pl-row.is-me .tv-pl-row-name { color: var(--tv-text); }
-.tv-pl-row-crown { flex-shrink: 0; color: var(--p-accent-2); }
-.tv-pl-row-wins { flex-shrink: 0; display: flex; align-items: baseline; gap: 4px; font-family: var(--tv-display); font-weight: 800; font-size: 20px; color: var(--brand-text); }
-.tv-pl-row-wins small { font-family: var(--tv-body); font-weight: 700; font-size: 12px; color: var(--tv-text-3); }
-.tv-pl-row-points { flex-shrink: 0; min-width: 72px; text-align: right; font-weight: 800; font-size: 13px; color: var(--tv-text-3); }
+.tv-results.is-playlist .tv-podium { margin-top: 18px; }
+
 
 @media (max-width: 640px) {
   .tv-pl-name { font-size: 32px; }
@@ -512,7 +459,6 @@ input.tv-pl-name:focus { outline: none; }
   .tv-pl-head .tv-mstage-badges { gap: 12px; }
   .tv-pl-kicker { font-size: 13px; white-space: nowrap; }
   .tv-pl-game { font-size: 17px; }
-  .tv-pl-row-points { min-width: 0; }
   .tv-pl-entry { gap: 12px; min-height: 70px; padding: 10px 14px 10px 18px; border-radius: 22px; }
   .tv-pl-entry-stack span { width: 26px; height: 26px; margin-left: -9px; border-radius: 8px; }
   .tv-pl-entry-stack svg { width: 13px; height: 13px; }
@@ -538,7 +484,6 @@ input.tv-pl-name:focus { outline: none; }
   .tv-pl-item,
   .tv-pl-add-menu,
   .tv-pl-json,
-  .tv-pl-table,
   .tv-pl-entry,
   .tv-pl-entry-tag { animation: none; }
   .tv-pl-entry-stack span { transition: none; }
@@ -621,7 +566,7 @@ input.tv-pl-name:focus { outline: none; }
   color: var(--c2);
   font-size: 15px;
   opacity: 1;
-  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.18);
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.22);
   animation: tvPick 0.3s var(--tv-spring);
 }
 .tv-pl-shuffle:disabled { opacity: 0.45; cursor: default; }
@@ -849,11 +794,11 @@ input.tv-pl-name:focus { outline: none; }
   height: 52px;
   border-radius: 15px;
   background: #ffffff;
-  box-shadow: 0 4px 0 rgba(0, 0, 0, 0.2);
+  /* White tiles: flat (the rule below). */
+  box-shadow: none;
 }
 .tv-app .tv-pl-fill-icons > button { color: var(--c2); }
-.tv-pl-fill-icons > button:hover:not(:disabled) { box-shadow: 0 7px 0 rgba(0, 0, 0, 0.2); }
-.tv-pl-fill-icons > button:active:not(:disabled) { box-shadow: 0 0 0 rgba(0, 0, 0, 0.2); }
+
 .tv-pl-fill-plus {
   position: absolute;
   top: -6px;
@@ -880,7 +825,7 @@ input.tv-pl-name:focus { outline: none; }
 .tv-pl-item.has-problem { background: rgba(0, 0, 0, 0.17); box-shadow: none; color: inherit; }
 .tv-pl-item .tv-pl-badge { background: var(--c2); box-shadow: 0 3px 0 var(--edge); color: var(--on); }
 .tv-pl-item.is-selected,
-.tv-pl-item.is-selected.has-problem { background: var(--on, #ffffff); color: var(--p-ink); box-shadow: 0 4px 0 rgba(0, 0, 0, 0.25); }
+.tv-pl-item.is-selected.has-problem { background: var(--on, #ffffff); color: var(--p-ink); box-shadow: none; }
 .tv-pl-stage .tv-pl-item.is-selected { background: #ffffff; }
 .tv-pl-item.is-selected .tv-pl-num { width: 26px; background: none; color: inherit; font-size: inherit; box-shadow: none; animation: none; }
 .tv-pl-item.is-selected .tv-pl-sum { opacity: 0.7; }
@@ -1112,3 +1057,72 @@ input.tv-pl-name:focus { outline: none; }
 .tv-pl-codebox > svg { flex-shrink: 0; color: var(--p-culture-1, #ff8a00); }
 .tv-pl-codebox:focus-within { outline-color: var(--p-culture-1, #ff8a00); }
 
+
+/* The rows' tools (↑ ↓ duplicar, quitar, borrar): buttons with a background, so with their edge (the design rule in
+   CLAUDE.md), a darker shade of the row they sit on; red with the red's own edge while deleting. */
+.tv-pl-tool { box-shadow: 0 3px 0 rgba(0, 0, 0, 0.28); transition: background-color 0.15s ease, color 0.15s ease, transform 0.12s ease, box-shadow 0.12s ease; }
+.tv-pl-tool:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 4px 0 rgba(0, 0, 0, 0.28); }
+.tv-pl-tool:active:not(:disabled) { transform: translateY(3px); box-shadow: 0 0 0 transparent; }
+.tv-pl-tool:disabled { box-shadow: none; }
+.tv-pl-tool.is-danger:hover:not(:disabled),
+.tv-pl-tool.is-confirm,
+.tv-pl-item .tv-pl-tool.is-danger:hover:not(:disabled),
+.tv-pl-item .tv-pl-tool.is-confirm,
+.tv-pl-saved-row .tv-pl-tool.is-danger:hover:not(:disabled),
+.tv-pl-saved-row .tv-pl-tool.is-confirm { box-shadow: 0 3px 0 var(--p-bad-edge); }
+/* On white (the chosen game's row, and the tray's white tiles) they're flat: no edge under them. */
+.tv-pl-item.is-selected .tv-pl-tool,
+.tv-pl-item.is-selected .tv-pl-tool:hover:not(:disabled),
+.tv-pl-item.is-selected .tv-pl-tool:active:not(:disabled),
+.tv-pl-item.is-selected .tv-pl-tool.is-confirm,
+.tv-pl-fill-icons > button,
+.tv-pl-fill-icons > button:hover:not(:disabled),
+.tv-pl-fill-icons > button:active:not(:disabled) { box-shadow: none; }
+/* The chosen game's white row: flat too. */
+.tv-pl-item.is-selected,
+.tv-pl-item.is-selected.has-problem { box-shadow: none; }
+
+/* The playlist's head buttons (pencil, save, share, "Nueva"): rounded squares like every button, never a circle or a
+   pill, with a darker shade of the card under them (white ones too, while lit). */
+.tv-pl-rename { border-radius: 12px; }
+.tv-pl-new { border-radius: 12px; }
+.tv-pl-rename,
+.tv-pl-new { box-shadow: 0 3px 0 rgba(0, 0, 0, 0.28); transition: background-color 0.15s ease, color 0.15s ease, transform 0.12s ease, box-shadow 0.12s ease; }
+.tv-pl-rename:hover:not(:disabled),
+.tv-pl-new:hover { transform: translateY(-1px); box-shadow: 0 4px 0 rgba(0, 0, 0, 0.28); }
+.tv-pl-rename:active:not(:disabled),
+.tv-pl-new:active { transform: translateY(3px); box-shadow: 0 0 0 transparent; }
+.tv-pl-rename:disabled { box-shadow: none; }
+.tv-pl-rename.is-on,
+.tv-pl-new.is-confirm { box-shadow: 0 3px 0 rgba(0, 0, 0, 0.22); }
+
+/* Final say for the list: the rows' tools (↑ ↓ duplicar, quitar) are flat, in every row; the white boxes (the chosen
+   game's row and the tray's tiles) carry the edge of a white button on the card, a darker shade of it. */
+.tv-pl-tool,
+.tv-pl-tool:hover:not(:disabled),
+.tv-pl-tool:active:not(:disabled),
+.tv-pl-tool.is-confirm,
+.tv-pl-item .tv-pl-tool.is-danger:hover:not(:disabled),
+.tv-pl-item .tv-pl-tool.is-confirm,
+.tv-pl-saved-row .tv-pl-tool.is-danger:hover:not(:disabled),
+.tv-pl-saved-row .tv-pl-tool.is-confirm { box-shadow: none; transform: none; }
+.tv-pl-item.is-selected,
+.tv-pl-item.is-selected.has-problem { box-shadow: 0 4px 0 rgba(0, 0, 0, 0.22); }
+.tv-pl-fill-icons > button { box-shadow: 0 4px 0 rgba(0, 0, 0, 0.22); }
+.tv-pl-fill-icons > button:hover:not(:disabled) { box-shadow: 0 6px 0 rgba(0, 0, 0, 0.22); }
+.tv-pl-fill-icons > button:active:not(:disabled) { box-shadow: 0 0 0 transparent; }
+
+/* "Nueva" / "¿Empezar de cero?" exactly as wide as the three round buttons under it (pencil, save, share: 40 px each
+   and their gaps), so both rows line up at the right. */
+.tv-pl-new { justify-content: center; width: calc(3 * 40px + 2 * 8px); padding: 0 8px; }
+.tv-pl-new.is-confirm { font-size: 13px; }
+.tv-pl-new.is-confirm svg { display: none; }
+
+/* "Mis playlists": its rows' tools (pencil, share, delete) are buttons with a background on a dark row, so they keep
+   their edge, a darker shade of their grey (red with the red's edge while deleting). Only the game rows' are flat. */
+.tv-pl-saved-row .tv-pl-tool { box-shadow: 0 3px 0 var(--tv-neutral-edge); transition: background-color 0.15s ease, color 0.15s ease, transform 0.12s ease, box-shadow 0.12s ease; }
+.tv-pl-saved-row .tv-pl-tool:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 4px 0 var(--tv-neutral-edge); }
+.tv-pl-saved-row .tv-pl-tool:active:not(:disabled) { transform: translateY(3px); box-shadow: 0 0 0 transparent; }
+.tv-pl-saved-row .tv-pl-tool:disabled { box-shadow: none; }
+.tv-pl-saved-row .tv-pl-tool.is-danger:hover:not(:disabled),
+.tv-pl-saved-row .tv-pl-tool.is-confirm { box-shadow: 0 3px 0 var(--p-bad-edge); }

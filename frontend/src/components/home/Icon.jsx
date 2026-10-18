@@ -80,6 +80,25 @@ const PATHS = {
     </>
   ),
   check: <path d="M20 6 9 17l-5-5" />,
+  eye: (
+    <>
+      <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z" />
+      <circle cx="12" cy="12" r="3" />
+    </>
+  ),
+  "eye-off": (
+    <>
+      <path d="M10.6 5.1A10.9 10.9 0 0 1 12 5c6.5 0 10 7 10 7a17.6 17.6 0 0 1-2.7 3.6M6.6 6.6C3.8 8.4 2 12 2 12s3.5 7 10 7c1.9 0 3.6-.6 5-1.5" />
+      <path d="M9.9 9.9a3 3 0 0 0 4.2 4.2" />
+      <path d="m3 3 18 18" />
+    </>
+  ),
+  skip: (
+    <>
+      <path d="m5 4 10 8-10 8z" />
+      <path d="M19 5v14" />
+    </>
+  ),
   close: <path d="M18 6 6 18M6 6l12 12" />,
   swap: (
     <>
@@ -115,6 +134,12 @@ const PATHS = {
     <>
       <path d="M20 10c0 5-5.54 10.19-7.4 11.8a1 1 0 0 1-1.2 0C9.54 20.19 4 15 4 10a8 8 0 0 1 16 0" />
       <circle cx="12" cy="10" r="3" />
+    </>
+  ),
+  // A country's silhouette (Encuentra el país's "Sombra").
+  shape: (
+    <>
+      <path d="M6 4.5 9.5 3l2 2 3.5-.5 1.5 2.5 3 1-1 3.5 2 2.5-2.5 2-.5 3.5-3.5-.5-2 2.5-2.5-2-3.5.5L5 15.5l-2-2.5 2-2.5L4 7Z" />
     </>
   ),
   link: (
@@ -184,6 +209,16 @@ const PATHS = {
       <circle cx="12" cy="12" r="2" />
     </>
   ),
+  // Lluvia: the mode (a cloud raining) and a drop.
+  rain: (
+    <>
+      <path d="M4 14.9A7 7 0 1 1 15.7 8h1.8a4.5 4.5 0 0 1 2.5 8.24" />
+      <path d="M16 14v6" />
+      <path d="M8 14v6" />
+      <path d="M12 16v6" />
+    </>
+  ),
+  drop: <path d="M12 22a7 7 0 0 0 7-7c0-2-1-3.9-3-5.5s-3.5-4-4-6.5c-.5 2.5-2 4.9-4 6.5C6 11.1 5 13 5 15a7 7 0 0 0 7 7z" />,
   // Campo de minas: the mode (a bomb) and a mine on the board.
   bomb: (
     <>

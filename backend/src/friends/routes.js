@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { findByUsername, isAccount, searchUsernames } from "../auth/username.js";
+import { isAccount, searchUsernames } from "../auth/username.js";
 
 // The friends API. Who is asking always comes from the session, never from the request.
 export function createFriendsRouter({ store, friends, hub, rooms }) {
@@ -29,14 +29,6 @@ export function createFriendsRouter({ store, friends, hub, rooms }) {
   router.get("/search", guard((req) => {
     friends.assertCanSearch(req.userId);
     return { results: searchUsernames(store, req.query.q, { exceptId: req.userId }).map((u) => card(req.userId, u)) };
-  }));
-
-  // One person by exact username, for the /amigo/usuario link.
-  router.get("/user/:username", guard((req) => {
-    friends.assertCanSearch(req.userId);
-    const user = findByUsername(store, req.params.username);
-    if (!user) throw new Error("No encontramos a nadie con ese usuario");
-    return card(req.userId, user);
   }));
 
   // By username, or (for someone in the same room) by id: "Añadir amigo" in a player's menu.
