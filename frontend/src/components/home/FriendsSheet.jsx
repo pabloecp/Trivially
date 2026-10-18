@@ -3,6 +3,7 @@ import { findMode } from "../../modes/index.js";
 import { USERNAME_MIN, cleanUsername } from "../../lib/username.js";
 import { useFriends } from "../../lib/friends.jsx";
 import Avatar from "./Avatar.jsx";
+import ConfirmDialog from "./ConfirmDialog.jsx";
 import Icon from "./Icon.jsx";
 import Segmented from "./Segmented.jsx";
 import "../../styles/friends.css";
@@ -32,12 +33,7 @@ function JoinButton({ friend, onJoin, onCancel, busy }) {
   }
   if (room.joinMode === "solicitud") {
     return room.requested ? (
-      <button
-        type="button"
-        className="tv-btn tv-btn--sm tv-c-neutral"
-        onClick={() => onCancel(friend)}
-        title="Cancelar la solicitud"
-      >
+      <button type="button" className="tv-btn tv-btn--sm tv-c-neutral" onClick={() => onCancel(friend)}>
         Esperando… <Icon name="close" size={14} strokeWidth={3} />
       </button>
     ) : (
@@ -50,12 +46,6 @@ function JoinButton({ friend, onJoin, onCancel, busy }) {
 }
 
 function FriendRow({ friend, onJoin, onCancel, onRemove, busy }) {
-  const [confirm, setConfirm] = useState(false);
-  useEffect(() => {
-    if (!confirm) return undefined;
-    const t = setTimeout(() => setConfirm(false), 3000);
-    return () => clearTimeout(t);
-  }, [confirm]);
   return (
     <li className={`tv-fr-row${friend.online ? " is-online" : ""}`}>
       <span className="tv-fr-face">
@@ -72,14 +62,11 @@ function FriendRow({ friend, onJoin, onCancel, onRemove, busy }) {
       <JoinButton friend={friend} onJoin={onJoin} onCancel={onCancel} busy={busy} />
       <button
         type="button"
-        className={`tv-fr-x${confirm ? " is-confirm" : ""}`}
-        aria-label={
-          confirm ? `Toca otra vez para eliminar a ${friend.name}` : `Eliminar a ${friend.name} de tus amigos`
-        }
-        title={confirm ? "Toca otra vez para eliminarlo" : "Eliminar amigo"}
-        onClick={() => (confirm ? onRemove(friend) : setConfirm(true))}
+        className="tv-fr-x"
+        aria-label={`Eliminar a ${friend.name} de tus amigos`}
+        onClick={() => onRemove(friend)}
       >
-        <Icon name={confirm ? "check" : "close"} size={15} strokeWidth={3} />
+        <Icon name="close" size={15} strokeWidth={3} />
       </button>
     </li>
   );
@@ -94,6 +81,7 @@ export default function FriendsSheet() {
   const [searching, setSearching] = useState(false);
   const [msg, setMsg] = useState(null); // { tone, text }
   const [busy, setBusy] = useState(false);
+  const [removing, setRemoving] = useState(null); // the friend the dialog asks about
   const [copied, setCopied] = useState("");
   const sheetRef = useRef(null);
   const [mounted, setMounted] = useState(false);
@@ -255,7 +243,7 @@ export default function FriendsSheet() {
                         busy={busy}
                         onJoin={join}
                         onCancel={(x) => run(() => f.cancelJoin(x.id))}
-                        onRemove={(x) => run(() => f.remove(x.id), `${x.name} ya no está en tus amigos`)}
+                        onRemove={setRemoving}
                       />
                     ))}
                   </ul>
@@ -450,6 +438,20 @@ export default function FriendsSheet() {
           </div>
         </div>
       </div>
+      <ConfirmDialog
+        open={Boolean(removing)}
+        icon="close"
+        title={`¿Eliminar a ${removing?.name || "este amigo"} de tus amigos?`}
+        text="Dejarán de verse en línea y tendrán que volver a agregarse para ser amigos."
+        cancelLabel="Cancelar"
+        confirmLabel="Eliminar"
+        onCancel={() => setRemoving(null)}
+        onConfirm={() => {
+          const x = removing;
+          setRemoving(null);
+          run(() => f.remove(x.id), `${x.name} ya no está en tus amigos`);
+        }}
+      />
     </div>
   );
 }
