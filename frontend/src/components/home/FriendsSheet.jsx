@@ -28,7 +28,7 @@ function JoinButton({ friend, onJoin, onCancel, busy }) {
   }
   if (room.joinMode === "solicitud") {
     return room.requested ? (
-      <button type="button" className="tv-btn tv-btn--sm tv-c-neutral" onClick={() => onCancel(friend)} title="Cancelar la solicitud">
+      <button type="button" className="tv-btn tv-btn--sm tv-c-neutral" onClick={() => onCancel(friend)}>
         Esperando… <Icon name="close" size={14} strokeWidth={3} />
       </button>
     ) : (
@@ -65,7 +65,6 @@ function FriendRow({ friend, onJoin, onCancel, onRemove, busy }) {
         type="button"
         className={`tv-fr-x${confirm ? " is-confirm" : ""}`}
         aria-label={confirm ? `Toca otra vez para eliminar a ${friend.name}` : `Eliminar a ${friend.name} de tus amigos`}
-        title={confirm ? "Toca otra vez para eliminarlo" : "Eliminar amigo"}
         onClick={() => (confirm ? onRemove(friend) : setConfirm(true))}
       >
         <Icon name={confirm ? "check" : "close"} size={15} strokeWidth={3} />

@@ -132,8 +132,10 @@
 .tv-roomhead-players { position: relative; }
 @media (max-width: 520px) {
   .tv-fr-row { flex-wrap: wrap; }
-  .tv-fr-text { flex: 1 1 calc(100% - 70px); }
-  .tv-fr-row > .tv-btn, .tv-fr-row > .tv-fr-note { margin-left: auto; }
+  /* Face, text and the remove button share the first line; the join button goes under, at the right. */
+  .tv-fr-text { flex: 1 1 calc(100% - 104px); }
+  .tv-fr-x { order: 1; }
+  .tv-fr-row > .tv-btn, .tv-fr-row > .tv-fr-note { order: 2; margin-left: auto; }
 }
 .tv-fr-ask .tv-btn:last-child { padding: 0 12px; min-width: 0; }
 
