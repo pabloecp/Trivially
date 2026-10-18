@@ -1,3 +1,4 @@
+import { hasLink, NAME_LINK_ERROR } from "../moderation/links.js";
 import { assignUsername, changeUsername, normalizeUsername, usernameError, usernameStatus } from "../auth/username.js";
 import crypto from "node:crypto";
 import fs from "node:fs";
@@ -30,10 +31,19 @@ export function sanitizeUser(user) {
   const { passwordHash, passwordSalt, spotify, usernameHistory, usernameChanges, usernameAuto, friendCode, ...safe } = user;
   return {
     ...safe,
+    history: publicHistory(user.history),
     spotify: publicSpotify(spotify),
     role: effectiveRole(user),
     ...(user.isGuest ? {} : { usernameInfo: usernameStatus(user) }),
   };
+}
+
+/**
+ * A match history as it goes out: each match without its rounds (they stay on the server, with the questions' ids),
+ * only how many questions it had and whether it was already reported.
+ */
+function publicHistory(history = []) {
+  return history.map(({ rounds, room, ...match }) => ({ ...match, questions: (rounds || []).length, reported: Boolean(match.reported) }));
 }
 
 /** Public profile — only safe fields for other users to see */
@@ -46,6 +56,8 @@ export function sanitizeUserPublic(user) {
     avatar: user.avatar,
     isGuest: Boolean(user.isGuest),
     stats: user.stats || {},
+    // The last matches, like the stats: shown on the profile.
+    history: publicHistory(user.history),
     googleLinked: Boolean(user.googleId),
     spotifyLinked: Boolean(user.spotify),
     role: effectiveRole(user),
@@ -219,6 +231,7 @@ function validateName(name) {
   const clean = (name || "").trim();
   if (!clean) throw new Error("El nombre no puede estar vacío");
   if (clean.length > MAX_NAME_LENGTH) throw new Error(`El nombre no puede superar ${MAX_NAME_LENGTH} caracteres`);
+  if (hasLink(clean)) throw new Error(NAME_LINK_ERROR);
   return clean;
 }
 
@@ -358,7 +371,7 @@ export function upsertGoogleUser(store, { id, email, name, avatar, googleId }, g
     googleId,
   });
   if (avatar) store.users[newUser.id].googlePhoto = avatar;
-  // A first sign-in with Google gets a username made from its name (free to change once).
+  // A first sign-in with Google gets a username made from its name.
   assignUsername(store, store.users[newUser.id]);
   saveStore(store);
 
@@ -504,8 +517,34 @@ export function claimGuestStats(store, targetUserId, guestId) {
   return user;
 }
 
-export function applyMatchStats(store, players) {
+// How many matches each account keeps in its history (the profile's "Historial"), newest first.
+export const MATCH_HISTORY_LIMIT = 10;
+
+/**
+ * A finished match: adds it to every registered player's stats and at the front of their match history
+ * (`user.history`): which game, when, the place they finished in, how many played, their points, who they played
+ * against, the room and their rounds (each question with its answer, for "Reportar partida": reportHistoryMatch).
+ * `players` come in final position (a tiebreak's winner first); `game` is the game's id ("playlist" for a playlist).
+ */
+export function applyMatchStats(store, players, { game = null, at = new Date().toISOString(), room = null } = {}) {
   const ranked = [...players].sort((a, b) => b.score - a.score);
+  const order = players.map((p) => p.id);
+  players.forEach((player, index) => {
+    if (player.isGuest || player.id?.startsWith("gst_")) return;
+    const user = store.users[player.id];
+    if (!user || user.isGuest) return;
+    const entry = {
+      at,
+      game,
+      position: index + 1,
+      players: order.length,
+      score: player.score,
+      opponents: players.filter((p) => p.id !== player.id).slice(0, 7).map((p) => p.name),
+      room,
+      rounds: (player.rounds || []).map((r) => ({ ...r })),
+    };
+    user.history = [entry, ...(user.history || [])].slice(0, MATCH_HISTORY_LIMIT);
+  });
   ranked.forEach((player, index) => {
     // Only registered users get stats saved (never guests)
     if (player.isGuest || player.id?.startsWith("gst_")) return;
@@ -531,6 +570,32 @@ export function applyMatchStats(store, players) {
     }
   });
   saveStore(store);
+}
+
+/**
+ * "Reportar partida" on the profile: one of this account's own matches (`at`, its time) as a question report
+ * (db/reports.js keeps it like the ones sent during a match): every round with its question, the right answer and what
+ * they answered. Each match is reported once. Returns the report to save.
+ */
+export function reportHistoryMatch(store, userId, at) {
+  const user = store.users[userId];
+  if (!user || user.isGuest) throw new Error("Inicia sesión para reportar una partida");
+  const match = (user.history || []).find((m) => m.at === at);
+  if (!match) throw new Error("Esa partida ya no está en tu historial");
+  if (match.reported) throw new Error("Ya reportaste esta partida");
+  match.reported = true;
+  saveStore(store);
+  return {
+    kind: "partida",
+    game: match.game || "partida",
+    prompt: `Partida de ${match.game || "?"} con ${(match.rounds || []).length} preguntas`,
+    question: null,
+    rounds: match.rounds || [],
+    match: { at: match.at, position: match.position, players: match.players, score: match.score, opponents: match.opponents },
+    room: { code: match.room || null },
+    reporter: { id: user.id, name: user.name, verified: true },
+    createdAt: new Date().toISOString(),
+  };
 }
 
 /** Changes a user's role. `actorId` must outrank both the target's current role and the new one. */

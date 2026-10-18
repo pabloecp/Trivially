@@ -105,7 +105,7 @@ alter table public.questions enable row level security;
 -- añade 'location', 'year' y 'minefield' a los tipos permitidos.
 alter table public.questions drop constraint if exists questions_type_check;
 alter table public.questions add constraint questions_type_check
-  check (type in ('multiple_choice', 'open', 'true_false', 'audio', 'location', 'year', 'minefield'));
+  check (type in ('multiple_choice', 'open', 'true_false', 'audio', 'location', 'year', 'number', 'minefield'));
 
 -- ---------------------------------------------------------------------------
 -- Reportes de preguntas: un owner toca "Reportar" durante una partida y aquí queda la pregunta tal como se jugó

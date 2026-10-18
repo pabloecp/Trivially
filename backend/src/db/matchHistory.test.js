@@ -1,0 +1,63 @@
+import assert from "node:assert/strict";
+import { applyMatchStats, MATCH_HISTORY_LIMIT, reportHistoryMatch, sanitizeUser, sanitizeUserPublic } from "./store.js";
+
+// Each finished match goes to the history of every registered player (the profile's "Historial"): newest first, at
+// most MATCH_HISTORY_LIMIT (10), with the game, the place, how many played, the points, the others' names, the room and
+// the rounds (which stay on the server: they're for "Reportar partida").
+const stats = () => ({ gamesPlayed: 0, totalScore: 0, bestScore: 0, bestStreak: 0, correctAnswers: 0, wins: 0 });
+const store = {
+  users: {
+    ana: { id: "ana", name: "Ana", stats: stats() },
+    luis: { id: "luis", name: "Luis", stats: stats() },
+  },
+};
+const rounds = [
+  { round: 1, game: "mundo", questionId: "q-1", prompt: "Francia", answer: "Francia", yours: "Dentro del país", points: 1000, status: "ok" },
+  { round: 2, game: "mundo", questionId: "q-2", prompt: "Chile", answer: "Chile", yours: null, points: 0, status: "none" },
+];
+// In final position: a tiebreak put Luis first with the same points.
+const players = [
+  { id: "luis", name: "Luis", score: 3000, rounds },
+  { id: "ana", name: "Ana", score: 3000, rounds: [] },
+  { id: "gst_1", name: "Invitado", score: 500, isGuest: true },
+];
+applyMatchStats(store, players, { game: "mundo", at: "2026-10-17T20:00:00.000Z", room: "ABCDE" });
+assert.deepEqual(store.users.luis.history, [
+  {
+    at: "2026-10-17T20:00:00.000Z",
+    game: "mundo",
+    position: 1,
+    players: 3,
+    score: 3000,
+    opponents: ["Ana", "Invitado"],
+    room: "ABCDE",
+    rounds,
+  },
+]);
+assert.equal(store.users.ana.history[0].position, 2, "the place is the final one, tiebreak included");
+assert.equal(store.users.ana.stats.gamesPlayed, 1, "the stats still add up");
+
+// Out to the profile (own or public), without the rounds or the room: how many questions, and whether it was reported.
+const shown = { at: "2026-10-17T20:00:00.000Z", game: "mundo", position: 1, players: 3, score: 3000, opponents: ["Ana", "Invitado"], questions: 2, reported: false };
+assert.deepEqual(sanitizeUser(store.users.luis).history, [shown]);
+assert.deepEqual(sanitizeUserPublic(store.users.luis).history, [shown]);
+
+// "Reportar partida": the match as a question report, with every round; only once, only your own.
+const report = reportHistoryMatch(store, "luis", "2026-10-17T20:00:00.000Z");
+assert.equal(report.kind, "partida");
+assert.equal(report.game, "mundo");
+assert.deepEqual(report.rounds.map((r) => r.questionId), ["q-1", "q-2"], "each question by its id");
+assert.equal(report.room.code, "ABCDE");
+assert.equal(report.reporter.id, "luis");
+assert.equal(sanitizeUser(store.users.luis).history[0].reported, true);
+assert.throws(() => reportHistoryMatch(store, "luis", "2026-10-17T20:00:00.000Z"), /Ya reportaste/);
+assert.throws(() => reportHistoryMatch(store, "luis", "otra"), /ya no está/);
+assert.throws(() => reportHistoryMatch(store, undefined, "2026-10-17T20:00:00.000Z"), /Inicia sesión/);
+
+// Newest first, a match with no points too, and only the last ones are kept.
+for (let i = 0; i < MATCH_HISTORY_LIMIT + 5; i += 1) applyMatchStats(store, [{ id: "ana", name: "Ana", score: i }], { game: "opciones" });
+assert.equal(MATCH_HISTORY_LIMIT, 10);
+assert.equal(store.users.ana.history.length, 10);
+assert.equal(store.users.ana.history[0].score, MATCH_HISTORY_LIMIT + 4);
+
+console.log("matchHistory.test ok");

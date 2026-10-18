@@ -80,6 +80,12 @@ const PATHS = {
     </>
   ),
   check: <path d="M20 6 9 17l-5-5" />,
+  skip: (
+    <>
+      <path d="m5 4 10 8-10 8z" />
+      <path d="M19 5v14" />
+    </>
+  ),
   close: <path d="M18 6 6 18M6 6l12 12" />,
   swap: (
     <>

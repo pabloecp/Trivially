@@ -82,95 +82,76 @@ mgr.updatePlaylist(room, "host-1", {
 });
 list = room.playlist;
 
-// ---- Playing it, in order ----
+// ---- Playing it, in order: one match, every round of the first game, then of the second... ----
+const matchesBefore = mgr.publicState(room).board?.matches || 0;
 mgr.start(room, "host-1");
 stop(room);
 assert.equal(room.game, "minas", "the first game of the list");
 assert.equal(room.phase, "countdown");
-assert.equal(room.tracks.length, 5);
-assert.ok(room.tracks.every((t) => t.category === "historia" && t.difficulty === "facil" && t.style === "turnos"), "with its own settings");
+assert.equal(room.run.mixed, true, "a single match");
+assert.equal(room.totalRounds, 15, "5 boards, 5 songs and 5 events");
+const itemOf = (t) => room.run.items[t.playlistItem];
+assert.deepEqual(
+  room.tracks.map((t) => itemOf(t).game),
+  [...Array(5).fill("minas"), ...Array(5).fill("musica"), ...Array(5).fill("historia")],
+  "each game's rounds together, in the list's order"
+);
+assert.ok(
+  room.tracks.slice(0, 5).every((t) => t.category === "historia" && t.difficulty === "facil" && t.style === "turnos"),
+  "with its own settings"
+);
+assert.ok(room.tracks.slice(10).every((t) => t.category === "deportes"));
 pub = mgr.publicState(room);
 assert.deepEqual(pub.run.games, ["minas", "musica", "historia"]);
-assert.equal(pub.run.index, 0);
 assert.equal(pub.run.total, 3);
 assert.equal(pub.playlistStatus, undefined);
 assert.equal(pub.run.savedConfig, undefined, "the room's own settings stay on the server");
 assert.throws(() => mgr.updatePlaylist(room, "host-1", list), /ya comenzó/);
-assert.throws(() => mgr.nextInPlaylist(room, "host-1"), /termine este juego/);
 
-// Ana wins the first game.
-host.score = 300;
-ana.score = 700;
-mgr.finish(room);
-assert.equal(room.phase, "finished");
-pub = mgr.publicState(room);
-assert.deepEqual(pub.run.played, [{ game: "minas", winnerId: "p-2", winnerName: "Ana" }]);
-assert.deepEqual(
-  pub.run.standings.map((s) => [s.id, s.wins, s.points, s.played]),
-  [
-    ["p-2", 1, 700, 1],
-    ["host-1", 0, 300, 1],
-  ]
-);
-assert.throws(() => mgr.replay(room, "host-1"), /Sigue con la playlist/);
-assert.throws(() => mgr.nextInPlaylist(room, "p-2"), /Solo el anfitrión/);
-
-// Someone joining between games plays from the next one.
+// Someone joining mid-playlist watches it, like any match.
 mgr.addPlayer(room, { id: "p-3", name: "Luis", socketId: "s3" });
-assert.equal(room.players.get("p-3").spectator, undefined);
+assert.equal(room.players.get("p-3").spectator, true);
 
-mgr.nextInPlaylist(room, "host-1");
-stop(room);
-assert.equal(room.game, "musica");
-assert.equal(room.phase, "countdown");
-assert.equal(room.totalRounds, 5);
-assert.deepEqual(room.config.formats, ["opciones"]);
-assert.equal(room.players.get("p-3").spectator, false);
-assert.equal(host.score, 0, "every game starts from zero");
-assert.equal(mgr.publicState(room).run.index, 1);
-
-// The host wins the second one; a tie for first would be nobody's.
-host.score = 900;
-ana.score = 200;
-mgr.finish(room);
-mgr.nextInPlaylist(room, "host-1");
-stop(room);
-assert.equal(room.game, "historia");
-assert.ok(room.tracks.every((t) => t.category === "deportes"));
-ana.score = 400;
-host.score = 400;
-mgr.finish(room);
-pub = mgr.publicState(room);
-assert.equal(pub.run.played[2].winnerId, null, "a tie wins nothing");
-
-// After the last game: the playlist's results, back in the playlist.
-mgr.nextInPlaylist(room, "host-1");
-assert.equal(room.phase, "finished");
-assert.equal(room.game, "playlist");
+// The rounds go on from one game to the next with no screen between them; the scores add up.
+const order = [];
+for (let round = 0; round < 15; round += 1) {
+  assert.equal(room.currentRound, round);
+  assert.equal(room.game, itemOf(room.tracks[round]).game, "the room is in the round's game");
+  if (room.game === "historia") assert.deepEqual(room.config.history, itemOf(room.tracks[round]).config, "with its settings");
+  order.push(room.game);
+  stop(room);
+  mgr.beginReveal(room);
+  host.score += round < 10 ? 100 : 0;
+  ana.score += round >= 10 ? 150 : 0;
+  stop(room);
+  mgr.advance(room);
+  stop(room);
+}
+assert.deepEqual([...new Set(order)], ["minas", "musica", "historia"]);
+assert.equal(room.phase, "finished", "no tiebreak: the last round ends the match");
+assert.equal(room.game, "playlist", "straight to the playlist's results");
 assert.equal(room.tracks.length, 0);
 assert.deepEqual(room.config.mines, ownMines, "the room's own settings are back");
 assert.equal(room.config.rounds, ownRounds);
 pub = mgr.publicState(room);
 assert.equal(pub.run.finished, true);
-// One win each: the points across the playlist decide (host 300 + 900 + 400, Ana 700 + 200 + 400).
+assert.equal(pub.run.played.length, 1, "one match");
 assert.deepEqual(
-  pub.run.standings.map((s) => [s.id, s.wins, s.points]),
+  pub.run.standings.filter((s) => s.id !== "p-3").map((s) => [s.id, s.points]),
   [
-    ["host-1", 1, 1600],
-    ["p-2", 1, 1300],
-    ["p-3", 0, 0],
+    ["host-1", 1000],
+    ["p-2", 750],
   ]
 );
-assert.equal(pub.run.winnerId, "host-1");
-assert.equal(pub.reveal, null, "nothing of the last game's round is left on show");
-assert.throws(() => mgr.nextInPlaylist(room, "host-1"), /ninguna playlist/);
-assert.equal(mgr.publicState(room).board.matches, 3, "each game counts on the room's scoreboard");
+assert.equal(pub.run.winnerId, "host-1", "the most points win");
+assert.equal(pub.reveal, null, "nothing of the last round is left on show");
+assert.equal(mgr.publicState(room).board.matches, matchesBefore + 1, "the room's scoreboard counts it once");
 
 // "Volver a jugar": the whole playlist again, from its first game.
 mgr.replay(room, "host-1");
 stop(room);
 assert.equal(room.game, "minas");
-assert.equal(room.run.index, 0);
+assert.equal(room.currentRound, 0);
 assert.deepEqual(room.run.standings, {}, "a new tally");
 
 // "Volver al lobby" in the middle: the playlist is over and the room is back in its panel, with its own settings.
@@ -261,17 +242,6 @@ assert.deepEqual(
 assert.equal(playlistWinner(rankedStandings(run)), "c");
 assert.equal(playlistWinner(rankedStandings({ standings: { a: { wins: 1, points: 9 }, b: { wins: 1, points: 9 } } })), null, "a full tie");
 assert.equal(playlistWinner(rankedStandings({ standings: { a: { wins: 0, points: 900 } } })), null, "nobody won a game");
-
-// A game that can't start halfway (songs gone...) ends the playlist and says why.
-mgr.updatePlaylist(room, "host-1", { ...room.playlist, order: "orden" });
-mgr.start(room, "host-1");
-stop(room);
-mgr.finish(room);
-room.run.items[1] = { ...room.run.items[1], config: { ...room.run.items[1].config, useCatalog: false, playlistIds: [] } };
-assert.throws(() => mgr.nextInPlaylist(room, "host-1"), /No se puede jugar Adivina la canción\. Activa el catálogo o elige una playlist/);
-assert.equal(room.run.index, 0, "still on the last results: the host can end it");
-mgr.restart(room, "host-1");
-assert.equal(room.run, null);
 
 for (const r of mgr.rooms.values()) mgr.destroy(r);
 console.log("playlist ok");

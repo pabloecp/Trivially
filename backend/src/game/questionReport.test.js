@@ -19,11 +19,12 @@ assert.throws(() => mgr.questionReport(room, "owner"), /ninguna pregunta/);
 mgr.start(room, "user");
 clearTimeout(room.timer);
 
-// Only owners can report, whatever room they're in.
-assert.throws(() => mgr.questionReport(room, "user"), /Solo los owners/);
+// Any player of the room can report, owner or not; someone outside the room can't.
+assert.equal(mgr.questionReport(room, "user").reporter.name, "User");
+assert.throws(() => mgr.questionReport(room, "stranger"), /Solo los jugadores/);
 
 // The report has the question with its answer, the settings and who was in the room.
-const report = mgr.questionReport(room, "owner");
+const report = mgr.questionReport(room, "owner", { verified: true });
 const track = room.tracks[room.currentRound];
 assert.equal(report.game, "musica");
 assert.equal(report.question.id, track.id);
@@ -34,6 +35,7 @@ assert.deepEqual(report.settings.languages, room.config.languages);
 assert.equal(report.room.players, 2);
 assert.equal(report.players.length, 2);
 assert.equal(report.reporter.name, "Owner");
+assert.equal(report.reporter.verified, true);
 
 // Once per round; the next round can be reported again.
 assert.throws(() => mgr.questionReport(room, "owner"), /Ya reportaste/);

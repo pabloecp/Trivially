@@ -2,11 +2,11 @@ import { useEffect, useState } from "react";
 import Icon from "./Icon.jsx";
 import { useApp } from "../../lib/store.jsx";
 
-// Owners only: "Reportar", left of "Pausar", sends the question being played to be checked later (with its settings
+// Every player: "Reportar", left of "Pausar", sends the question being played to be checked later (with its settings
 // and who was in the room; RoomManager.questionReport). The first tap turns it red to confirm, the second sends it, and
 // it stays "Reportada" until the next round.
 export function ReportButton({ room, onError }) {
-  const { user, isCentral, reportQuestion } = useApp();
+  const { isCentral, reportQuestion } = useApp();
   const [state, setState] = useState("idle");
   const round = `${room?.currentRound}|${room?.tiebreak?.round ?? ""}`;
 
@@ -20,7 +20,7 @@ export function ReportButton({ room, onError }) {
   }, [state]);
 
   // Not on the room's central device: it only shows the match.
-  if (isCentral || user?.role !== "owner" || !["countdown", "playing", "reveal"].includes(room?.phase)) return null;
+  if (isCentral || !["countdown", "playing", "reveal"].includes(room?.phase)) return null;
 
   async function onClick() {
     if (state === "idle") return setState("confirm");
@@ -47,6 +47,33 @@ export function ReportButton({ room, onError }) {
     >
       <Icon name={state === "sent" ? "check" : "flag"} size={13} strokeWidth={2.6} />
       <span className="tv-pause-label">{label}</span>
+    </button>
+  );
+}
+
+// Owners only: "Saltar", beside "Reportar", goes straight to the next question for everyone, with no reveal and no
+// countdown (RoomManager.skipRound; what was already answered still counts). Not on the room's central device.
+export function SkipButton({ room, onError }) {
+  const { user, isCentral, skipRound } = useApp();
+  const [busy, setBusy] = useState(false);
+  if (isCentral || user?.role !== "owner" || !["countdown", "playing", "reveal"].includes(room?.phase)) return null;
+
+  async function onClick() {
+    if (busy) return;
+    setBusy(true);
+    try {
+      await skipRound();
+    } catch (e) {
+      onError?.(e.message || "No se pudo saltar la pregunta");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <button type="button" className="tv-mini-btn tv-skip-btn" onClick={onClick} disabled={busy} aria-label="Saltar a la siguiente pregunta">
+      <Icon name="skip" size={13} filled strokeWidth={2.2} />
+      <span className="tv-pause-label">Saltar</span>
     </button>
   );
 }

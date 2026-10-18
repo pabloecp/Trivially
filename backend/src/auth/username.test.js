@@ -49,23 +49,24 @@ assert.equal(c.username, "ana2");
 assert.equal(c.usernameAuto, true);
 assert.equal(assignUsername(store, c), false, "already has one");
 
-// The first change of an assigned username is free and doesn't count; the next ones do: 3 in 30 days.
+// An assigned username says so until it's changed; every change counts, the first one too: 3 in 30 days.
 const t0 = Date.UTC(2026, 0, 1);
-assert.equal(usernameStatus(c, t0).free, true);
+assert.equal(usernameStatus(c, t0).assigned, true);
+assert.equal(usernameStatus(c, t0).changesLeft, USERNAME_CHANGES);
 changeUsername(store, c, "carla", t0);
 assert.equal(c.username, "carla");
 assert.equal(c.usernameAuto, false);
-assert.equal(usernameStatus(c, t0).changesLeft, USERNAME_CHANGES);
+assert.equal(usernameStatus(c, t0).assigned, false);
+assert.equal(usernameStatus(c, t0).changesLeft, USERNAME_CHANGES - 1, "the first change counts");
 changeUsername(store, c, "carla_1", t0 + DAY);
+assert.equal(usernameStatus(c, t0 + DAY).changesLeft, 1);
 changeUsername(store, c, "carla_2", t0 + 2 * DAY);
-assert.equal(usernameStatus(c, t0 + 2 * DAY).changesLeft, 1);
-changeUsername(store, c, "carla_3", t0 + 3 * DAY);
-assert.equal(usernameStatus(c, t0 + 3 * DAY).changesLeft, 0);
-assert.throws(() => changeUsername(store, c, "carla_4", t0 + 4 * DAY), /3 veces este mes/);
-assert.equal(c.username, "carla_3");
+assert.equal(usernameStatus(c, t0 + 2 * DAY).changesLeft, 0);
+assert.throws(() => changeUsername(store, c, "carla_3", t0 + 3 * DAY), /3 veces este mes/);
+assert.equal(c.username, "carla_2");
 // The window slides: the first of the three expires 30 days after it was made.
-assert.equal(usernameStatus(c, t0 + 4 * DAY).nextChangeAt, t0 + DAY + USERNAME_WINDOW_MS);
-changeUsername(store, c, "carla_4", t0 + DAY + USERNAME_WINDOW_MS + 1);
+assert.equal(usernameStatus(c, t0 + 3 * DAY).nextChangeAt, t0 + USERNAME_WINDOW_MS);
+changeUsername(store, c, "carla_4", t0 + USERNAME_WINDOW_MS + 1);
 assert.equal(c.username, "carla_4");
 
 // The same, taken, invalid or a guest: refused.

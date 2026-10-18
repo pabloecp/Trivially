@@ -75,13 +75,13 @@ export function suggestUsername(store, name, exceptId = null) {
 /** The changes the account still has in the window, and when the next one opens up if none are left. */
 export function usernameStatus(user, now = Date.now()) {
   const recent = (user?.usernameChanges || []).filter((t) => now - t < USERNAME_WINDOW_MS).sort((a, b) => a - b);
-  const free = Boolean(user?.usernameAuto); // an assigned username can be changed once, for free
   const left = Math.max(0, USERNAME_CHANGES - recent.length);
   return {
     username: user?.username || null,
-    free,
-    changesLeft: free ? Math.max(1, left) : left,
-    nextChangeAt: !free && left === 0 ? recent[0] + USERNAME_WINDOW_MS : null,
+    // An assigned username (made from the name) not changed yet: the profile says so. Its changes count like any.
+    assigned: Boolean(user?.usernameAuto),
+    changesLeft: left,
+    nextChangeAt: left === 0 ? recent[0] + USERNAME_WINDOW_MS : null,
   };
 }
 
@@ -109,9 +109,9 @@ export function changeUsername(store, user, input, now = Date.now()) {
     throw new Error(`Ya cambiaste tu usuario ${USERNAME_CHANGES} veces este mes. Podrás cambiarlo otra vez el ${when}.`);
   }
   if (user.username) user.usernameHistory = [...(user.usernameHistory || []).filter((h) => now - h.at < USERNAME_RESERVE_MS), { username: user.username, at: now }];
-  // The first change of an assigned username is free; the others count.
-  if (user.usernameAuto) user.usernameAuto = false;
-  else user.usernameChanges = [...(user.usernameChanges || []).filter((t) => now - t < USERNAME_WINDOW_MS), now];
+  // Every change counts, the first of an assigned username too.
+  user.usernameAuto = false;
+  user.usernameChanges = [...(user.usernameChanges || []).filter((t) => now - t < USERNAME_WINDOW_MS), now];
   user.username = name;
   return user;
 }

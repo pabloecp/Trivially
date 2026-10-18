@@ -354,24 +354,6 @@ export function attachSockets(io, rooms, { friends = null, hub = null } = {}) {
       }
     });
 
-    // "Siguiente juego" on a playlist game's results: the next game starts (or, after the last one, the playlist's
-    // results show). If the next game can't start after all, the playlist is over and everyone is back in its panel.
-    socket.on("room:playlistNext", (ack) => {
-      let room = null;
-      try {
-        const ref = requireRoom(rooms, socket);
-        room = ref.room;
-        rooms.nextInPlaylist(room, ref.userId);
-        prefetchMedia(room.tracks);
-        prefetchFlags(room.tracks);
-        watchRoom(io, rooms, room);
-        ack?.({ ok: true });
-      } catch (err) {
-        ack?.({ ok: false, error: err.message });
-      }
-      if (room) io.to(room.code).emit("room:state", rooms.publicState(room));
-    });
-
     // An owner who may change the settings adds one of their Spotify playlists; its songs load in the background.
     socket.on("room:spotifyPlaylist", async (playlistId, ack) => {
       try {
@@ -529,11 +511,23 @@ export function attachSockets(io, rooms, { friends = null, hub = null } = {}) {
       }
     });
 
-    // An owner reports the question being played. Only the socket's verified account counts as the reporter.
-    socket.on("room:report", async (ack) => {
+    // An owner skips straight to the next question. Only the socket's verified account counts.
+    socket.on("room:skipRound", (ack) => {
       try {
         const { room } = requireRoom(rooms, socket);
-        const report = rooms.questionReport(room, socket.data.userId);
+        rooms.skipRound(room, socket.data.userId);
+        ack?.({ ok: true });
+        io.to(room.code).emit("room:state", rooms.publicState(room));
+      } catch (err) {
+        ack?.({ ok: false, error: err.message });
+      }
+    });
+
+    // Any player reports the question being played; the report says whether their seat is the socket's verified account.
+    socket.on("room:report", async (ack) => {
+      try {
+        const { room, userId } = requireRoom(rooms, socket);
+        const report = rooms.questionReport(room, userId, { verified: socket.data.userId === userId });
         await saveQuestionReport(report);
         ack?.({ ok: true });
       } catch (err) {

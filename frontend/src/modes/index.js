@@ -120,7 +120,7 @@ export const GAME_MODES = [
     steps: [
       { icon: "list", text: "Elige los juegos y su orden" },
       { icon: "grid", text: "Cada uno con sus ajustes" },
-      { icon: "crown", text: "Gana quien gane más juegos" },
+      { icon: "crown", text: "Gana quien sume más puntos" },
     ],
     // At least one game, and every game playable with its settings (the server says why one isn't: playlistStatus).
     ready: (room) => {

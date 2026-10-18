@@ -3,7 +3,8 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { getSupabase, supabaseEnabled } from "./store.js";
 
-// Owners' reports of a question that looked wrong during a match (RoomManager.questionReport builds them). They go to
+// Reports of a question that looked wrong during a match (RoomManager.questionReport builds them), or of a whole
+// match from the profile's history (store.js reportHistoryMatch, `kind: "partida"`, every round). They go to
 // the Supabase table `question_reports` (see backend/supabase/schema.sql); without Supabase, or if the table isn't
 // there yet, to backend/private/question-reports.jsonl, one report per line (that folder is never committed).
 const __dirname = path.dirname(fileURLToPath(import.meta.url));

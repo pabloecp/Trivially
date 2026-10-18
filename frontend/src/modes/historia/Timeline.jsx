@@ -28,21 +28,38 @@ function stackMarks(marks, pct) {
  * every move and `onRelease()` when the finger or the mouse lets go. The years after today show greyed out and can't be
  * chosen; year 0 doesn't exist. The keys are handled by the game screen. At the reveal, `answer` (the event's year) is
  * marked in green and `marks` are everyone's years ({ id, year, color, label, isMe }).
+ * With `numeric` (Cifras) it is a bar of numbers instead: no future and no year 0, a pick moves in steps of `snap`,
+ * and the scale reads with `scaleFormat` (short: "20 mil").
  */
-export default function Timeline({ min, max, value, onChoose, onRelease, disabled, answer = null, marks = [], format, label }) {
+export default function Timeline({
+  min,
+  max,
+  value,
+  onChoose,
+  onRelease,
+  disabled,
+  answer = null,
+  marks = [],
+  format,
+  label,
+  numeric = false,
+  snap = 1,
+  scaleFormat = format,
+}) {
   const railRef = useRef(null);
   const dragging = useRef(false);
   const ready = min != null && max != null;
   const span = ready ? max - min : 1;
   const step = span / 10;
   const today = new Date().getFullYear();
-  const limit = ready ? Math.min(max, today) : 0;
+  const limit = ready ? (numeric ? max : Math.min(max, today)) : 0;
   const pct = (year) => ((year - min) / span) * 100;
   const revealing = answer != null;
 
   function yearAt(clientX) {
     const rect = railRef.current.getBoundingClientRect();
     const raw = min + Math.min(1, Math.max(0, (clientX - rect.left) / rect.width)) * span;
+    if (numeric) return Math.min(max, Math.max(min, min + Math.round((raw - min) / snap) * snap));
     let year = Math.round(raw);
     if (year === 0) year = raw < 0 ? -1 : 1;
     return Math.min(limit, Math.max(min, year));
@@ -80,7 +97,7 @@ export default function Timeline({ min, max, value, onChoose, onRelease, disable
       aria-valuemin={ready ? min : undefined}
       aria-valuemax={ready ? limit : undefined}
       aria-valuenow={shown ? value : undefined}
-      aria-valuetext={shown ? format(value) : "Ningún año elegido"}
+      aria-valuetext={shown ? format(value) : numeric ? "Ningún número elegido" : "Ningún año elegido"}
       aria-disabled={disabled || undefined}
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
@@ -88,7 +105,7 @@ export default function Timeline({ min, max, value, onChoose, onRelease, disable
       onPointerCancel={onPointerUp}
     >
       <div className="tv-hist-rail" ref={railRef}>
-        {ready && max > today && (
+        {ready && !numeric && max > today && (
           <span className="tv-hist-future" style={{ left: `${pct(today)}%` }}>
             <span className="tv-hist-today">Hoy</span>
           </span>
@@ -140,7 +157,7 @@ export default function Timeline({ min, max, value, onChoose, onRelease, disable
           return (
             <span key={year} className={`tv-hist-label${kind}${covered ? " is-hidden" : ""}`} style={{ left: `${(i / 10) * 100}%` }}>
               {/* There is no year 0: the tick where the eras meet reads as the first year after Christ. */}
-              {format(year === 0 ? 1 : year)}
+              {numeric ? scaleFormat(year) : format(year === 0 ? 1 : year)}
             </span>
           );
         })}

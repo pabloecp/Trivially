@@ -9,11 +9,11 @@ import PartyPanel from "../../components/home/PartyPanel.jsx";
 import { ControllerBar, GetReady, PhoneHint } from "../../components/home/CentralBits.jsx";
 import { useApp, useRemainingMs, useView } from "../../lib/store.jsx";
 import Timeline from "./Timeline.jsx";
-import { findDifficulty, historyConfig, yearLabel, yearsText } from "./historyInfo.js";
+import { figureLabel, figureScale, findDifficulty, historyConfig, yearLabel, yearsText } from "./historyInfo.js";
 import "../../styles/home.css";
 import "../../styles/quiz.css";
 import "../../styles/history.css";
-import { PauseButton, ReportButton, PauseVeil } from "../../components/home/PauseControls.jsx";
+import { PauseButton, ReportButton, SkipButton, PauseVeil } from "../../components/home/PauseControls.jsx";
 
 const COUNTDOWN_MS = 3000;
 // One colour per player for their year on the reveal's timeline (never the green and red of right and wrong).
@@ -43,7 +43,7 @@ function GameScreen() {
 
   const left = useRemainingMs(room);
   const [err, setErr] = useState("");
-  // This player's year on the round being played: { round, year, locked }.
+  // This player's year (or Cifras' number) on the round being played: { round, year, locked }.
   const [guess, setGuess] = useState(null);
   // Host's "Terminar" mid-match needs a second tap, since it ends the match for everyone.
   const [confirmHub, setConfirmHub] = useState(false);
@@ -84,10 +84,18 @@ function GameScreen() {
   const open = phase === "playing" && iPlay && !confirmed && question?.min != null;
   const min = question?.min ?? null;
   const max = question?.max ?? null;
-  const limit = max != null ? Math.min(max, new Date().getFullYear()) : null;
+  // Cifras: a number on a bar (no future, no year 0), moving in steps of `snap`; the small buttons move a hundredth.
+  const isNum = question?.kind === "cifras";
+  const unit = question?.unit || "";
+  const snap = question?.snap || 1;
+  const limit = max != null ? (isNum ? max : Math.min(max, new Date().getFullYear())) : null;
   const step = min != null ? (max - min) / 10 : 10;
-  const crossesZero = min != null && min < 0 && max > 0;
-  const fmt = (year) => yearLabel(year, { crossesZero });
+  const fine = isNum && min != null ? Math.max(snap, Math.round((max - min) / 100 / snap) * snap) : 1;
+  const crossesZero = !isNum && min != null && min < 0 && max > 0;
+  const fmt = (n) => (isNum ? figureLabel(n, unit) : yearLabel(n, { crossesZero }));
+  // What a player answered, either way.
+  const answerOf = (a) => (isNum ? a?.value : a?.year);
+  const send = (n, lock) => placeYear(isNum ? { value: n, lock } : { year: n, lock });
 
   // A new round: clean slate (and nothing left to send from the last one).
   useEffect(() => {
@@ -108,8 +116,8 @@ function GameScreen() {
     const year = pending.current;
     if (year == null) return;
     pending.current = null;
-    placeYear({ year }).catch((e) => {
-      if (phaseRef.current === "playing") setErr(e.message || "No se pudo guardar tu año");
+    send(year, false).catch((e) => {
+      if (phaseRef.current === "playing") setErr(e.message || (isNum ? "No se pudo guardar tu número" : "No se pudo guardar tu año"));
     });
   }
 
@@ -126,6 +134,7 @@ function GameScreen() {
   function nudge(delta) {
     if (!open) return;
     const from = myGuess?.year ?? Math.round((min + max) / 2);
+    if (isNum) return choose(Math.min(limit, Math.max(min, from + delta)));
     let year = from + delta;
     if (year === 0 || (from < 0 !== year < 0 && from !== 0)) year += delta > 0 ? 1 : -1;
     choose(Math.min(limit, Math.max(min, year === 0 ? 1 : year)));
@@ -138,16 +147,16 @@ function GameScreen() {
     pending.current = null;
     setGuess({ ...myGuess, locked: true });
     try {
-      await placeYear({ year: myGuess.year, lock: true });
+      await send(myGuess.year, true);
     } catch (e) {
       sending.current = false;
       if (phaseRef.current !== "playing") return;
       setGuess({ ...myGuess, locked: false });
-      setErr(e.message || "No se pudo confirmar tu año");
+      setErr(e.message || (isNum ? "No se pudo confirmar tu número" : "No se pudo confirmar tu año"));
     }
   }
 
-  // Keys while the round is open: ← → move a year (with Shift, or ↑ ↓ and Re Pág / Av Pág, a tenth of the line),
+  // Keys while the round is open: ← → move a year (in Cifras a hundredth of the bar; with Shift, or ↑ ↓ and Re Pág / Av Pág, a tenth of the line),
   // Inicio / Fin go to the ends, Enter confirms.
   useEffect(() => {
     if (!open) return undefined;
@@ -155,8 +164,8 @@ function GameScreen() {
       if (e.ctrlKey || e.metaKey || e.altKey) return;
       const big = step;
       const moves = {
-        ArrowLeft: e.shiftKey ? -big : -1,
-        ArrowRight: e.shiftKey ? big : 1,
+        ArrowLeft: e.shiftKey ? -big : -fine,
+        ArrowRight: e.shiftKey ? big : fine,
         ArrowDown: -big,
         ArrowUp: big,
         PageDown: -big,
@@ -218,16 +227,17 @@ function GameScreen() {
   const urgent = phase === "playing" && left <= 4000;
   const level = findDifficulty(question?.difficulty);
   const reveal = phase === "reveal" ? room.reveal : null;
+  const answerValue = reveal ? (isNum ? reveal.value : reveal.year) : null;
   const tiedNames = tiebreak ? tiebreak.playerIds.map((id) => room.players.find((p) => p.id === id)?.name || "Jugador") : [];
   const colorOf = (id) => MARK_COLORS[Math.max(0, room.players.findIndex((p) => p.id === id)) % MARK_COLORS.length];
 
   // Everyone's year at the reveal (only the tied players' in a tiebreak).
   const marks = reveal
     ? room.players
-        .filter((p) => Number.isInteger(p.lastAnswer?.year) && (!tiebreak || tiebreak.playerIds.includes(p.id)))
+        .filter((p) => Number.isInteger(answerOf(p.lastAnswer)) && (!tiebreak || tiebreak.playerIds.includes(p.id)))
         .map((p) => ({
           id: p.id,
-          year: p.lastAnswer.year,
+          year: answerOf(p.lastAnswer),
           color: colorOf(p.id),
           label: p.name.slice(0, 12),
           isMe: p.id === viewerId,
@@ -244,33 +254,44 @@ function GameScreen() {
     ? "Calculando resultados…"
     : "Siguiente pregunta en breve…";
 
-  // Under the event: what to do now.
+  // The words of each way of playing.
+  const words = isNum
+    ? { exact: "el número exacto", done: "Número confirmado", line: "la barra", pick: "un número" }
+    : { exact: "el año exacto", done: "Año confirmado", line: "la línea del tiempo", pick: "un año" };
+
+  // Under the question: what to do now.
   let hint;
   if (phase === "countdown") {
     if (tiebreak) {
       hint = iPlay
-        ? "Desempate: gana el primero que confirme el año exacto. Si nadie lo clava, el más cercano."
+        ? `Desempate: gana el primero que confirme ${words.exact}. Si nadie lo clava, el más cercano.`
         : "Solo juegan los empatados. Tú miras cómo lo resuelven.";
-    } else hint = "¿En qué año ocurrió? Prepárate para elegirlo en la línea del tiempo.";
-  } else if (phase === "reveal") hint = tiebreak ? "" : closestText(room, user, fmt);
-  else if (!iPlay) hint = `Solo juegan ${joinNames(tiedNames)}: gana el primero que confirme el año exacto.`;
+    } else hint = isNum ? "¿Cuánto será? Prepárate para elegirlo en la barra." : "¿En qué año ocurrió? Prepárate para elegirlo en la línea del tiempo.";
+  } else if (phase === "reveal") hint = tiebreak ? "" : closestText(room, fmt, isNum);
+  else if (!iPlay) hint = `Solo juegan ${joinNames(tiedNames)}: gana el primero que confirme ${words.exact}.`;
   else if (confirmed)
     hint = tiebreak
-      ? "Año confirmado. Si es el exacto y fuiste el primero, ganas."
+      ? `${words.done}. Si es ${words.exact} y fuiste el primero, ganas.`
       : waiting.length
-      ? `Año confirmado. Esperando a ${joinWaiting(waiting)}…`
-      : "Año confirmado.";
+      ? `${words.done}. Esperando a ${joinWaiting(waiting)}…`
+      : `${words.done}.`;
   else if (myGuess) hint = `Ajusta con los botones${touch ? "" : " o las flechas"} y confirma.`;
-  else hint = touch ? "Toca la línea del tiempo para elegir un año." : "Haz clic en la línea del tiempo o usa las flechas del teclado.";
+  else hint = touch ? `Toca ${words.line} para elegir ${words.pick}.` : `Haz clic en ${words.line} o usa las flechas del teclado.`;
 
   if (spectator && phase !== "reveal") hint = "Estás viendo la partida. Entrarás a la sala cuando termine.";
   // The central device talks to the whole room: they pick the year on their phones.
   if (central && phase === "countdown") {
     hint = tiebreak
-      ? `Desempate entre ${joinNames(tiedNames)}: gana el primero que confirme el año exacto.`
+      ? `Desempate entre ${joinNames(tiedNames)}: gana el primero que confirme ${words.exact}.`
+      : isNum
+      ? "¿Cuánto será? Elíjanlo en su teléfono."
       : "¿En qué año ocurrió? Elíjanlo en su teléfono.";
   } else if (central && phase === "playing") {
-    hint = tiebreak ? `Solo juegan ${joinNames(tiedNames)}.` : "Elijan el año en la línea del tiempo de su teléfono.";
+    hint = tiebreak
+      ? `Solo juegan ${joinNames(tiedNames)}.`
+      : isNum
+      ? "Elijan el número en la barra de su teléfono."
+      : "Elijan el año en la línea del tiempo de su teléfono.";
   }
 
   // The row under the timeline, always the same height: confirm, or what's going on.
@@ -296,8 +317,8 @@ function GameScreen() {
           <WaitingPill names={waiting} inline />
         ) : (
           <>
-            <Icon name={confirmed ? "check" : "calendar"} size={20} strokeWidth={2.6} />
-            {confirmed ? "Año confirmado" : myGuess ? `Confirmar ${fmt(myGuess.year)}` : "Elige un año en la línea"}
+            <Icon name={confirmed ? "check" : isNum ? "hash" : "calendar"} size={20} strokeWidth={2.6} />
+            {confirmed ? words.done : myGuess ? `Confirmar ${fmt(myGuess.year)}` : isNum ? "Elige un número en la barra" : "Elige un año en la línea"}
           </>
         )}
       </button>
@@ -308,6 +329,7 @@ function GameScreen() {
   const tools = (
     <>
       <ReportButton room={room} onError={setErr} />
+      <SkipButton room={room} onError={setErr} />
       <PauseButton room={room} isHost={isHost} onError={setErr} />
       {isHost && (
         <button
@@ -390,22 +412,39 @@ function GameScreen() {
               {phase === "playing" && central && <PhoneHint room={room}>Respondan desde su teléfono</PhoneHint>}
               {reveal && central && !tiebreak && (
                 <p className="tv-central-answer">
-                  <small>Fue en</small> {fmt(reveal.year)}
+                  <small>{isNum ? "Era" : "Fue en"}</small> {fmt(answerValue)}
                 </p>
               )}
               {reveal && central && tiebreak && (
-                <Verdict room={room} me={null} user={null} tiebreak={tiebreak} tiedNames={tiedNames} iPlay={false} fmt={fmt} />
+                <Verdict room={room} me={null} user={null} tiebreak={tiebreak} tiedNames={tiedNames} iPlay={false} fmt={fmt} isNum={isNum} />
               )}
               {phase === "playing" && !central && (
                 <div className={`tv-hist-picker${confirmed ? " is-locked" : ""}`}>
-                  <button type="button" className="tv-hist-step" onClick={() => nudge(-step)} disabled={!open} aria-label={`${step} años antes`}>
-                    −{step}
+                  <button
+                    type="button"
+                    className="tv-hist-step"
+                    onClick={() => nudge(-step)}
+                    disabled={!open}
+                    aria-label={isNum ? `Restar ${figureLabel(step)}` : `${step} años antes`}
+                  >
+                    −{isNum ? figureScale(step) : step}
                   </button>
-                  <button type="button" className="tv-hist-step" onClick={() => nudge(-1)} disabled={!open} aria-label="Un año antes">
-                    −1
+                  <button
+                    type="button"
+                    className="tv-hist-step"
+                    onClick={() => nudge(-fine)}
+                    disabled={!open}
+                    aria-label={isNum ? `Restar ${figureLabel(fine)}` : "Un año antes"}
+                  >
+                    −{isNum ? figureScale(fine) : 1}
                   </button>
-                  <output className={`tv-hist-year${myGuess ? "" : " is-empty"}`} aria-live="polite">
-                    {myGuess ? (
+                  <output className={`tv-hist-year${myGuess ? "" : " is-empty"}${isNum ? " is-number" : ""}`} aria-live="polite">
+                    {myGuess && isNum ? (
+                      <>
+                        {figureLabel(myGuess.year)}
+                        {unit && <small>{unit}</small>}
+                      </>
+                    ) : myGuess ? (
                       <>
                         {Math.abs(myGuess.year)}
                         {(myGuess.year < 0 || crossesZero) && <small>{myGuess.year < 0 ? "a. C." : "d. C."}</small>}
@@ -414,15 +453,29 @@ function GameScreen() {
                       "¿?"
                     )}
                   </output>
-                  <button type="button" className="tv-hist-step" onClick={() => nudge(1)} disabled={!open} aria-label="Un año después">
-                    +1
+                  <button
+                    type="button"
+                    className="tv-hist-step"
+                    onClick={() => nudge(fine)}
+                    disabled={!open}
+                    aria-label={isNum ? `Sumar ${figureLabel(fine)}` : "Un año después"}
+                  >
+                    +{isNum ? figureScale(fine) : 1}
                   </button>
-                  <button type="button" className="tv-hist-step" onClick={() => nudge(step)} disabled={!open} aria-label={`${step} años después`}>
-                    +{step}
+                  <button
+                    type="button"
+                    className="tv-hist-step"
+                    onClick={() => nudge(step)}
+                    disabled={!open}
+                    aria-label={isNum ? `Sumar ${figureLabel(step)}` : `${step} años después`}
+                  >
+                    +{isNum ? figureScale(step) : step}
                   </button>
                 </div>
               )}
-              {reveal && !spectator && !central && <Verdict room={room} me={me} user={user} tiebreak={tiebreak} tiedNames={tiedNames} iPlay={iPlay} fmt={fmt} />}
+              {reveal && !spectator && !central && (
+                <Verdict room={room} me={me} user={user} tiebreak={tiebreak} tiedNames={tiedNames} iPlay={iPlay} fmt={fmt} isNum={isNum} />
+              )}
             </div>
 
             <Timeline
@@ -432,10 +485,15 @@ function GameScreen() {
               onChoose={choose}
               onRelease={flush}
               disabled={!open}
-              answer={reveal ? reveal.year : null}
+              answer={answerValue}
               marks={marks}
               format={fmt}
-              label={min != null ? `Línea del tiempo de ${fmt(min)} a ${fmt(max)}` : "Línea del tiempo"}
+              numeric={isNum}
+              snap={snap}
+              scaleFormat={figureScale}
+              label={
+                min == null ? (isNum ? "Barra" : "Línea del tiempo") : `${isNum ? "Barra" : "Línea del tiempo"} de ${fmt(min)} a ${fmt(max)}`
+              }
             />
 
             <div className="tv-hist-action">{action}</div>
@@ -463,23 +521,26 @@ function GameScreen() {
   );
 }
 
-// At the reveal, with more than one player: who came closest this round (or got the exact year).
-function closestText(room, user, fmt) {
+// At the reveal, with more than one player: who came closest this round (or got the exact year or number).
+function closestText(room, fmt, isNum) {
   const answers = room.players.filter((p) => Number.isInteger(p.lastAnswer?.diff));
   if (room.players.length < 2) return "";
-  if (!answers.length) return "Nadie eligió un año a tiempo.";
+  if (!answers.length) return isNum ? "Nadie eligió un número a tiempo." : "Nadie eligió un año a tiempo.";
   const best = Math.min(...answers.map((p) => p.lastAnswer.diff));
-  const names = answers.filter((p) => p.lastAnswer.diff === best).map((p) => p.name);
+  const closest = answers.filter((p) => p.lastAnswer.diff === best);
+  const names = closest.map((p) => p.name);
   const who = joinNames(names);
   const label = who[0].toUpperCase() + who.slice(1);
-  if (best === 0) return names.length > 1 ? `¡${label} clavaron el año!` : `¡${label} clavó el año!`;
+  const exact = isNum ? closest.every((p) => p.lastAnswer.correct) : best === 0;
+  if (exact) return `¡${label} ${names.length > 1 ? "clavaron" : "clavó"} ${isNum ? "el número" : "el año"}!`;
+  if (isNum) return sentence(`Más cerca: ${label}, a ${fmt(best)} de ${fmt(room.reveal.value)}`);
   return sentence(`Más cerca: ${label}, a ${yearsText(best)} de ${fmt(room.reveal.year)}`);
 }
 
 // The end of a round: how far this player's year was (and the right one), or who won the tiebreak.
-function Verdict({ room, me, user, tiebreak, tiedNames, iPlay, fmt }) {
+function Verdict({ room, me, user, tiebreak, tiedNames, iPlay, fmt, isNum = false }) {
   const answer = me?.lastAnswer;
-  const year = room.reveal.year;
+  const year = isNum ? room.reveal.value : room.reveal.year;
   let tone;
   let icon;
   let title;
@@ -495,8 +556,21 @@ function Verdict({ room, me, user, tiebreak, tiedNames, iPlay, fmt }) {
     detail = winner
       ? tiebreak.reason === "exacto"
         ? `${won ? "Confirmaste" : "Confirmó"} ${fmt(year)} primero.`
-        : sentence(`Nadie lo clavó: ${won ? "tu" : "su"} año quedó más cerca de ${fmt(year)}`)
+        : sentence(`Nadie lo clavó: ${won ? "tu" : "su"} ${isNum ? "número" : "año"} quedó más cerca de ${fmt(year)}`)
       : `${joinNames(tiedNames)} siguen empatados.`;
+  } else if (isNum) {
+    const chose = Number.isInteger(answer?.value);
+    const exact = Boolean(answer?.correct);
+    won = exact;
+    points = chose;
+    tone = exact ? "ok" : chose ? "near" : "timeout";
+    icon = exact ? "check" : chose ? "target" : "hash";
+    title = exact ? "¡Lo clavaste!" : chose ? `${answer.over ? "Te pasaste por" : "Te faltaron"} ${fmt(answer.diff)}` : "¡Se acabó el tiempo!";
+    detail = exact
+      ? sentence(`Era ${fmt(year)}`)
+      : chose
+      ? `Era ${fmt(year)} · elegiste ${fmt(answer.value)}`
+      : sentence(`No elegiste un número. Era ${fmt(year)}`);
   } else {
     const chose = Number.isInteger(answer?.year);
     const exact = Boolean(answer?.correct);

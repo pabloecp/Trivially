@@ -12,6 +12,7 @@ import {
   listUsers,
   loginWithPassword,
   registerWithPassword,
+  reportHistoryMatch,
   sanitizeUser,
   sanitizeUserPublic,
   setUserRole,
@@ -30,6 +31,8 @@ import { hasRole, ROLES } from "./roles.js";
 import { consumeTicket, createAuthToken, createSocketToken, createTicket } from "./socketToken.js";
 import crypto from "node:crypto";
 import { normalizeUsername, usernameError } from "./username.js";
+import { hasLink, NAME_LINK_ERROR } from "../moderation/links.js";
+import { saveQuestionReport } from "../db/reports.js";
 
 /** Express middleware: only lets through signed-in users with at least `minRole`. */
 export function requireRole(store, minRole) {
@@ -74,6 +77,7 @@ export function createApiRouter({ catalog, store, friends = null, hub = null, so
   router.post("/session", (req, res) => {
     const { id, name, avatar } = req.body || {};
     if (!id || !name) return res.status(400).json({ error: "Nombre requerido" });
+    if (hasLink(name)) return res.status(400).json({ error: NAME_LINK_ERROR });
 
     const existing = store.users[id];
     if (existing && !existing.isGuest) {
@@ -364,6 +368,17 @@ export function createApiRouter({ catalog, store, friends = null, hub = null, so
 
   router.get("/leaderboard", (req, res) => {
     res.json({ entries: leaderboard(store, req.query.sort) });
+  });
+
+  // "Reportar partida" on the profile: one of the signed-in account's own matches, sent as a question report.
+  router.post("/history/report", async (req, res) => {
+    try {
+      const report = reportHistoryMatch(store, req.session?.userId, String(req.body?.at || ""));
+      await saveQuestionReport(report);
+      res.json({ ok: true });
+    } catch (err) {
+      res.status(400).json({ error: err.message });
+    }
   });
 
   // --- Public User Profile (sanitized) ---

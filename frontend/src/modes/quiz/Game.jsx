@@ -12,7 +12,7 @@ import { BACKEND_URL } from "../../lib/config.js";
 import { useApp, useRemainingMs, useView } from "../../lib/store.jsx";
 import { OPTION_LETTERS, findDifficulty, quizConfig } from "./quizInfo.js";
 import "../../styles/home.css";
-import { PauseButton, ReportButton, PauseVeil } from "../../components/home/PauseControls.jsx";
+import { PauseButton, ReportButton, SkipButton, PauseVeil } from "../../components/home/PauseControls.jsx";
 import "../../styles/quiz.css";
 import "../../styles/geo.css";
 
@@ -451,6 +451,7 @@ function GameScreen() {
   const tools = (
     <>
       <ReportButton room={room} onError={setErr} />
+      <SkipButton room={room} onError={setErr} />
       <PauseButton room={room} isHost={isHost} onError={setErr} />
       {isHost && (
         <button

@@ -14,6 +14,8 @@ import {
   yearsApart,
 } from "../game/history.js";
 import { buildHistoryQuestions } from "./historyQuestions.js";
+import { buildFigureQuestions } from "./figureQuestions.js";
+import { figureLabel, figurePoints, figureRange, figureTolerance } from "../game/history.js";
 
 // Rango's events, the timeline each one gets and how a year is scored.
 const rows = buildHistoryQuestions();
@@ -92,29 +94,38 @@ const everyTopic = Object.keys(QUESTION_CATEGORIES);
 assert.deepEqual(mergeHistoryConfig(undefined), {
   rounds: 5,
   roundMs: 10000,
+  styles: ["linea", "cifras"],
   categories: everyTopic,
   difficulties: ["facil", "media", "dificil"],
 });
 assert.deepEqual(
   mergeHistoryConfig({}, { rounds: 99, roundMs: 1000, eras: ["moderna"], categories: ["arte", "cocina"], difficulties: ["media", "imposible"] }),
-  { rounds: 25, roundMs: 10000, categories: ["arte"], difficulties: ["media"] }
+  { rounds: 25, roundMs: 10000, styles: ["linea", "cifras"], categories: ["arte"], difficulties: ["media"] }
 );
+// The ways of playing: unknown ones are dropped, and settings from before Cifras get both.
+assert.deepEqual(mergeHistoryConfig({}, { styles: ["cifras", "otro"] }).styles, ["cifras"]);
+assert.deepEqual(mergeHistoryConfig({ styles: ["linea"] }).styles, ["linea"]);
+assert.deepEqual(mergeHistoryConfig({ rounds: 10 }).styles, ["linea", "cifras"]);
 assert.equal("eras" in mergeHistoryConfig({ eras: ["antigua"] }), false, "an older room's ages are dropped");
 // An older client's single difficulty still works ("mixta" is all three).
 assert.deepEqual(mergeHistoryConfig({}, { difficulty: "facil" }).difficulties, ["facil"]);
 assert.deepEqual(mergeHistoryConfig({}, { difficulty: "mixta" }).difficulties, ["facil", "media", "dificil"]);
 // Every list can be unticked: there is then nothing to play.
-const blank = mergeHistoryConfig({}, { categories: [], difficulties: [] });
-assert.deepEqual([blank.categories, blank.difficulties], [[], []]);
+const blank = mergeHistoryConfig({}, { styles: [], categories: [], difficulties: [] });
+assert.deepEqual([blank.styles, blank.categories, blank.difficulties], [[], [], []]);
 
-// The bank: the list's events (with their topics) plus any other Historia row of the loaded bank; where both have the
-// same id the list wins, so a topic added to an event is used before it is uploaded.
-const bank = historyBank([]);
-assert.equal(bank.length, rows.length);
+// The bank: the list's events and figures (with their topics) plus any other Historia row of the loaded bank; where
+// both have the same id the list wins, so a topic added to an event is used before it is uploaded. The tests of
+// Línea del tiempo below only look at the events.
+const figures = buildFigureQuestions();
+const fullBank = historyBank([]);
+assert.equal(fullBank.length, rows.length + figures.length);
+const bank = fullBank.filter((q) => q.type === "year");
 const own = toQuestion({ ...rows[0], id: "propia", prompt: "Un evento propio" });
 const stale = toQuestion({ ...rows[1], category: "historia" });
-assert.deepEqual(historyBank([own, stale, { id: "x", type: "multiple_choice", mode: "opciones", data: {} }]), [...bank, own]);
+assert.deepEqual(historyBank([own, stale, { id: "x", type: "multiple_choice", mode: "opciones", data: {} }]), [...fullBank, own]);
 assert.equal(countHistoryQuestions(bank, {}), rows.length);
+assert.equal(countHistoryQuestions(fullBank, { styles: ["cifras"] }), figures.length);
 assert.equal(countHistoryQuestions(bank, { eras: ["antigua"] }), rows.length, "ages don't filter any more");
 for (const difficulty of ["facil", "media", "dificil"]) {
   assert.ok(countHistoryQuestions(bank, { difficulties: [difficulty] }) >= 25, `${difficulty}: menos de 25 eventos`);
@@ -123,7 +134,8 @@ for (const difficulty of ["facil", "media", "dificil"]) {
 // Categories: every event has one of the ten, and each one alone has enough events (of different years) for the
 // longest match.
 const counts = historyCounts(bank, {});
-assert.deepEqual(Object.keys(counts).sort(), ["categories", "difficulties"]);
+assert.deepEqual(Object.keys(counts).sort(), ["categories", "difficulties", "styles"]);
+assert.deepEqual(historyCounts(fullBank, { styles: [] }).styles, { linea: rows.length, cifras: figures.length });
 for (const topic of everyTopic) {
   assert.ok(counts.categories[topic] >= 30, `${topic}: solo ${counts.categories[topic]} eventos`);
   const match = pickHistoryQuestions(bank, { rounds: 25, categories: [topic] });
@@ -159,5 +171,54 @@ const used = art.map((q) => q.id).slice(1);
 const tiebreak = pickHistoryTiebreak(bank, { categories: ["arte"] }, used);
 assert.equal(tiebreak.category, "arte");
 assert.equal(tiebreak.id, art[0].id);
+
+// ---- Cifras ----
+// Every figure is a valid row, once, whose text doesn't give its number away; every category has some.
+assert.ok(figures.length >= 120);
+for (const q of figures) {
+  assert.deepEqual(questionErrors(q), [], q.prompt);
+  assert.ok(!q.prompt.includes(String(q.data.value)), `${q.prompt} dice su número`);
+}
+assert.equal(new Set(figures.map((q) => q.id)).size, figures.length, "ids repetidos");
+for (const topic of everyTopic) assert.ok(figures.filter((q) => q.category === topic).length >= 12, `${topic}: pocas cifras`);
+assert.equal(questionErrors({ ...figures[0], data: { value: 0, unit: "" } }).length, 1, "a figure is above 0");
+assert.equal(questionErrors({ ...figures[0], data: { value: 2.5, unit: "" } }).length, 1, "whole numbers only");
+
+// The bar: a round span (at least 10) starting on one of its tenths, with the answer inside and away from the ends.
+for (const q of figures) {
+  const value = q.data.value;
+  for (let i = 0; i < 20; i += 1) {
+    const r = figureRange(value);
+    assert.equal(r.max - r.min, r.span);
+    assert.ok(r.span >= 10 && r.min >= 0 && r.min % (r.span / 10) === 0, `${q.prompt}: barra ${r.min}–${r.max}`);
+    assert.ok(r.min + r.span * 0.05 <= value && value <= r.max - r.span * 0.05, `${q.prompt}: ${value} en el borde de ${r.min}–${r.max}`);
+    assert.ok(Number.isInteger(r.snap) && r.snap >= 1);
+  }
+}
+assert.deepEqual(figureRange(8849, () => 0), { min: 0, max: 20000, span: 20000, snap: 20 });
+assert.deepEqual(figureRange(3, () => 0.99), { min: 2, max: 12, span: 10, snap: 1 });
+// Exact within half a hundredth of the bar (only the number itself on a short one); then fewer points the further.
+assert.equal(figureTolerance(10), 0);
+assert.equal(figureTolerance(20000), 100);
+assert.equal(figurePoints(0, 10), 1000);
+assert.equal(figurePoints(1, 10), Math.round(800 * Math.exp(-1)));
+assert.equal(figurePoints(100, 20000), 1000);
+assert.ok(figurePoints(101, 20000) <= 800 && figurePoints(500, 20000) > figurePoints(2000, 20000));
+assert.equal(figureLabel(8849, "m"), "8849 m");
+assert.equal(figureLabel(42195, "m"), "42.195 m");
+assert.equal(figureLabel(151, ""), "151");
+
+// A match with both ways ticked shares the rounds; with one, only that one; one that runs out leaves its rounds.
+const mixed = pickHistoryQuestions(fullBank, { rounds: 10 });
+assert.equal(mixed.filter((t) => t.kind === "cifras").length, 5);
+assert.equal(mixed.filter((t) => t.kind === "linea").length, 5);
+const onlyFigures = pickHistoryQuestions(fullBank, { rounds: 10, styles: ["cifras"] });
+assert.ok(onlyFigures.length === 10 && onlyFigures.every((t) => t.kind === "cifras" && t.min < t.value && t.value < t.max && t.unit != null));
+// Art has fewer than 12 figures with different answers (two are 46): Línea del tiempo plays the rounds they lack.
+const artAnswers = new Set(figures.filter((q) => q.category === "arte").map((q) => q.data.value)).size;
+const lent = pickHistoryQuestions(fullBank, { rounds: 25, categories: ["arte"] });
+assert.equal(lent.length, 25);
+assert.equal(lent.filter((t) => t.kind === "cifras").length, Math.min(12, artAnswers), "never two figures with the same answer");
+assert.equal(new Set(lent.filter((t) => t.kind === "cifras").map((t) => t.value)).size, lent.filter((t) => t.kind === "cifras").length);
 
 console.log("history.test ok");

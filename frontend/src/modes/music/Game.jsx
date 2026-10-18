@@ -13,7 +13,7 @@ import { BACKEND_URL } from "../../lib/config.js";
 import { useSongList } from "../../lib/songList.js";
 import { useMasterVolume } from "../../lib/volume.js";
 import "../../styles/quiz.css";
-import { PauseButton, ReportButton, PauseVeil } from "../../components/home/PauseControls.jsx";
+import { PauseButton, ReportButton, SkipButton, PauseVeil } from "../../components/home/PauseControls.jsx";
 
 // A closed round's four songs keep the same letters and colours as Trivia's options.
 const OPTION_LETTERS = ["A", "B", "C", "D"];
@@ -410,6 +410,7 @@ function GameScreen() {
   const tools = (
     <>
       <ReportButton room={room} onError={setErr} />
+      <SkipButton room={room} onError={setErr} />
       <PauseButton room={room} isHost={isHost} onError={setErr} />
       {isHost && (
         <button
