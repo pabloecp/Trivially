@@ -58,7 +58,7 @@ function FriendRow({ friend, onJoin, onCancel, onRemove, busy }) {
           {friend.name}
           {friend.username && <span className="tv-handle tv-fr-handle"> @{friend.username}</span>}
         </span>
-        <span className="tv-fr-status">{statusOf(friend)}</span>
+        <span className={`tv-fr-status${confirm ? " is-confirm" : ""}`}>{confirm ? "¿Eliminar amigo? Toca ✓ para confirmar" : statusOf(friend)}</span>
       </span>
       <JoinButton friend={friend} onJoin={onJoin} onCancel={onCancel} busy={busy} />
       <button
