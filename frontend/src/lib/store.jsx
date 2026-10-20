@@ -824,6 +824,12 @@ export function AppProvider({ children }) {
         return res.takenBy ? { takenBy: res.takenBy, answer: res.answer } : {};
       },
 
+      // Rey de la colina: the king picks one of the three questions (its position).
+      async kingPick(index) {
+        const res = await emitAck("game:kingPick", index);
+        if (!res.ok) throw new Error(res.error);
+      },
+
       // "Saltar": give up on the current round.
       async skipSong() {
         const res = await emitAck("game:skip");

@@ -9,12 +9,12 @@ export function joinNames(names) {
 
 /**
  * The names of the players the round still waits for: connected, playing (not spectators, nor watching a tiebreak:
- * status "mirando"; in Campo de minas, not out) and without an answer yet. This player is never in it.
+ * status "mirando"; in Campo de minas, not out; in Rey de la colina, not the king) and without an answer yet. This player is never in it.
  */
 export function waitingNames(room, userId) {
   if (!room || room.phase !== "playing") return [];
   return room.players
-    .filter((p) => p.id !== userId && p.connected && !p.spectator && !p.idle && p.status !== "mirando" && !p.out && !p.answered)
+    .filter((p) => p.id !== userId && p.id !== room.rey?.kingId && p.connected && !p.spectator && !p.idle && p.status !== "mirando" && !p.out && !p.answered)
     .map((p) => p.name);
 }
 

@@ -4,9 +4,11 @@ import GeoLobbyPanel from "./mundo/LobbyPanel.jsx";
 import HistoryLobbyPanel from "./historia/LobbyPanel.jsx";
 import MinesLobbyPanel from "./minas/LobbyPanel.jsx";
 import RainLobbyPanel from "./lluvia/LobbyPanel.jsx";
+import ReyLobbyPanel from "./rey/LobbyPanel.jsx";
 import PlaylistLobbyPanel from "./playlist/LobbyPanel.jsx";
 import { STYLES as MINES_STYLES } from "./minas/minesInfo.js";
 import { MIN_QUESTIONS as RAIN_MIN_QUESTIONS } from "./lluvia/rainInfo.js";
+import { MIN_QUESTIONS as REY_MIN_QUESTIONS } from "./rey/reyInfo.js";
 import { urlCode } from "../lib/hiddenCode.js";
 
 // The games shown on the room screen ("Elige el juego"; a game may have its own "Modos de Juego" in its settings).
@@ -130,6 +132,29 @@ export const GAME_MODES = [
     Lobby: RainLobbyPanel,
     // The sky the questions fall down, and the box to write in (modes/lluvia/Game.jsx).
     path: (room) => `/lluvia/${urlCode(room.code)}`,
+  },
+  {
+    // Rey de la colina: the king picks the question, the first to answer it takes the crown.
+    id: "rey",
+    name: "Rey de la colina",
+    kind: "extra",
+    // Crown gold (styles/rey.css).
+    color: "rey",
+    icon: "crown",
+    available: true,
+    steps: [
+      { icon: "crown", text: "El rey elige la pregunta" },
+      { icon: "bolt", text: "El primero en acertar lo destrona" },
+      { icon: "star", text: "Si nadie acierta, el rey suma" },
+    ],
+    ready: (room) =>
+      room.config?.rey?.categories?.length !== 0 &&
+      room.config?.rey?.difficulties?.length !== 0 &&
+      (room.players?.filter((p) => !p.spectator).length ?? 2) >= 2 &&
+      (room.questionsReady == null || room.questionsReady >= REY_MIN_QUESTIONS),
+    Lobby: ReyLobbyPanel,
+    // The three questions, the question and the box to write in (modes/rey/Game.jsx).
+    path: (room) => `/rey/${urlCode(room.code)}`,
   },
   {
     // Not a game of its own: the room plays the playlist's games one after another (backend/src/game/playlist.js).

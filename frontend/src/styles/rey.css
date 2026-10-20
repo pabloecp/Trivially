@@ -1,0 +1,84 @@
+/* Rey de la colina. Loaded after home.css and quiz.css (the game imports both) and builds on their tv- classes.
+   The mode's colour is a crown gold, --tv-ry-*. The three questions the king picks from carry their difficulty's
+   meaning colour (green fácil, yellow media, red difícil). */
+
+:root {
+  --tv-ry-1: #f2b632;
+  --tv-ry: #dd9a0a;
+  --tv-ry-edge: #8f5f00;
+  --tv-ry-on: #ffffff;
+  --tv-ry-rgb: 221, 154, 10;
+  --tv-ry-text: #ffc933;
+}
+
+/* ---------- Colours ---------- */
+.tv-c-rey { --c1: var(--tv-ry-1); --c2: var(--tv-ry); --edge: var(--tv-ry-edge); --on: var(--tv-ry-on); }
+
+/* The site's main colour becomes the gold while the room is in this game. */
+:root:root[data-mode="rey"] {
+  --brand: var(--tv-ry);
+  --brand-rgb: var(--tv-ry-rgb);
+  --brand-text: var(--tv-ry-text);
+  --brand-hover: var(--tv-ry-1);
+  --brand-active: var(--tv-ry-edge);
+  --border-focus: var(--tv-ry);
+  --on-brand: var(--tv-ry-on);
+  --tv-mode-bg: var(--tv-ry);
+  --tv-on-mode: var(--tv-ry-on);
+}
+
+/* A difficulty's colour: the fill, the solid edge under it and the letter on it. */
+.tv-rey-offer.is-facil, .tv-rey-level.is-facil { --rc: var(--p-ok); --rc-edge: var(--p-ok-edge); --rc-on: var(--p-ink); }
+.tv-rey-offer.is-media, .tv-rey-level.is-media { --rc: var(--p-accent-2); --rc-edge: var(--p-accent-edge); --rc-on: var(--p-ink); }
+.tv-rey-offer.is-dificil, .tv-rey-level.is-dificil { --rc: var(--p-bad); --rc-edge: var(--p-bad-edge); --rc-on: #ffffff; }
+.tv-rey-level[class*="is-"] { background: var(--rc); color: var(--rc-on); }
+
+/* ---------- The match ---------- */
+.tv-rey-stage { display: grid; align-content: start; gap: 14px; }
+
+/* Who holds the crown. */
+.tv-rey-king {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: 18px;
+  background: rgba(var(--tv-ry-rgb), 0.14);
+  box-shadow: inset 0 0 0 1px rgba(var(--tv-ry-rgb), 0.4);
+}
+.tv-rey-king .tv-avatar { width: 38px; height: 38px; }
+.tv-rey-crown { display: grid; place-items: center; color: var(--tv-ry-1); }
+.tv-rey-king-text { display: grid; flex: 1; min-width: 0; line-height: 1.15; }
+.tv-rey-king-text small { font-size: 12px; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase; color: var(--tv-ry-text); }
+.tv-rey-king-text strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 800; }
+.tv-rey-king-points { font-weight: 800; color: var(--tv-ry-text); white-space: nowrap; }
+
+/* The three questions to pick from. */
+.tv-rey-offers { display: grid; gap: 10px; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.tv-rey-offer {
+  display: grid;
+  align-content: start;
+  gap: 10px;
+  min-width: 0;
+  padding: 14px;
+  border: 0;
+  border-radius: 18px;
+  font: inherit;
+  text-align: left;
+  color: var(--tv-text);
+  background: var(--tv-option-bg, rgba(255, 255, 255, 0.06));
+  box-shadow: inset 0 0 0 2px var(--rc, transparent);
+}
+button.tv-rey-offer { cursor: pointer; box-shadow: inset 0 0 0 2px var(--rc, transparent), 0 3px 0 var(--rc-edge, rgba(0, 0, 0, 0.3)); transition: transform 0.12s, box-shadow 0.12s; }
+button.tv-rey-offer:hover:not(:disabled) { transform: translateY(-2px); box-shadow: inset 0 0 0 2px var(--rc, transparent), 0 5px 0 var(--rc-edge, rgba(0, 0, 0, 0.3)); }
+button.tv-rey-offer:active:not(:disabled) { transform: translateY(2px); box-shadow: inset 0 0 0 2px var(--rc, transparent); }
+.tv-rey-offer.is-picked { background: rgba(var(--tv-ry-rgb), 0.2); }
+.tv-rey-offer-meta { display: flex; flex-wrap: wrap; gap: 6px; }
+.tv-rey-offer-text { font-size: clamp(15px, 2vw, 19px); font-weight: 800; line-height: 1.25; overflow-wrap: anywhere; }
+@media (max-width: 720px) { .tv-rey-offers { grid-template-columns: minmax(0, 1fr); } }
+
+.tv-rey-answer { margin: 0; font-size: clamp(16px, 2.2vw, 22px); font-weight: 700; text-align: center; }
+.tv-rey-answer strong { color: var(--tv-ry-text); }
+.tv-rey-note { margin: 6px 0 0; text-align: center; font-weight: 800; }
+.tv-rey-note.is-win { color: var(--p-ok); }
+.tv-rey-note.is-lose { color: var(--p-bad); }
