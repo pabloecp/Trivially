@@ -5,6 +5,7 @@ import HistoryLobbyPanel from "./historia/LobbyPanel.jsx";
 import MinesLobbyPanel from "./minas/LobbyPanel.jsx";
 import RainLobbyPanel from "./lluvia/LobbyPanel.jsx";
 import ReyLobbyPanel from "./rey/LobbyPanel.jsx";
+import FarsanteLobbyPanel from "./farsante/LobbyPanel.jsx";
 import PlaylistLobbyPanel from "./playlist/LobbyPanel.jsx";
 import { STYLES as MINES_STYLES } from "./minas/minesInfo.js";
 import { MIN_QUESTIONS as RAIN_MIN_QUESTIONS } from "./lluvia/rainInfo.js";
@@ -155,6 +156,26 @@ export const GAME_MODES = [
     Lobby: ReyLobbyPanel,
     // The three questions, the question and the box to write in (modes/rey/Game.jsx).
     path: (room) => `/rey/${urlCode(room.code)}`,
+  },
+  {
+    // Farsante: everyone invents an answer, then votes for the real one (or the best one); a game for a call with friends.
+    id: "farsante",
+    name: "Farsante",
+    kind: "extra",
+    // Leafy green (styles/farsante.css).
+    color: "farsante",
+    icon: "mask",
+    available: true,
+    steps: [
+      { icon: "keyboard", text: "Inventa una respuesta" },
+      { icon: "mask", text: "Mézclala con las de los demás" },
+      { icon: "star", text: "Puntos por engañar o por acertar" },
+    ],
+    ready: (room) =>
+      room.config?.farsante?.kinds?.length !== 0 && (room.players?.filter((p) => !p.spectator).length ?? 3) >= 3,
+    Lobby: FarsanteLobbyPanel,
+    // The prompt, the box to write in, the options to vote on (modes/farsante/Game.jsx).
+    path: (room) => `/farsante/${urlCode(room.code)}`,
   },
   {
     // Not a game of its own: the room plays the playlist's games one after another (backend/src/game/playlist.js).

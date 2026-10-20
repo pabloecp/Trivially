@@ -824,6 +824,17 @@ export function AppProvider({ children }) {
         return res.takenBy ? { takenBy: res.takenBy, answer: res.answer } : {};
       },
 
+      // Farsante: an answer written for the round's prompt (it can be rewritten until the writing ends), and a vote
+      // (the position of one of the options).
+      async farsanteWrite(text) {
+        const res = await emitAck("game:farsante", text);
+        if (!res.ok) throw new Error(res.error);
+      },
+      async farsanteVote(index) {
+        const res = await emitAck("game:farsanteVote", index);
+        if (!res.ok) throw new Error(res.error);
+      },
+
       // Rey de la colina: the king picks one of the three questions (its position).
       async kingPick(index) {
         const res = await emitAck("game:kingPick", index);

@@ -1,0 +1,76 @@
+/* Farsante. Loaded after home.css and quiz.css (the game imports both) and builds on their tv- classes.
+   The mode's colour is a leafy green, --tv-fs-*. */
+
+:root {
+  --tv-fs-1: #62cf5a;
+  --tv-fs: #3fae49;
+  --tv-fs-edge: #25752e;
+  --tv-fs-on: #ffffff;
+  --tv-fs-rgb: 63, 174, 73;
+  --tv-fs-text: #7fe077;
+}
+
+/* ---------- Colours ---------- */
+.tv-c-farsante { --c1: var(--tv-fs-1); --c2: var(--tv-fs); --edge: var(--tv-fs-edge); --on: var(--tv-fs-on); }
+
+/* The site's main colour becomes the green while the room is in this game. */
+:root:root[data-mode="farsante"] {
+  --brand: var(--tv-fs);
+  --brand-rgb: var(--tv-fs-rgb);
+  --brand-text: var(--tv-fs-text);
+  --brand-hover: var(--tv-fs-1);
+  --brand-active: var(--tv-fs-edge);
+  --border-focus: var(--tv-fs);
+  --on-brand: var(--tv-fs-on);
+  --tv-mode-bg: var(--tv-fs);
+  --tv-on-mode: var(--tv-fs-on);
+}
+
+/* ---------- The match ---------- */
+.tv-fs-stage { display: grid; align-content: start; gap: 14px; }
+
+/* The round's prompt. */
+.tv-fs-prompt { display: grid; gap: 10px; justify-items: center; text-align: center; }
+.tv-fs-prompt-text { margin: 0; font-size: clamp(20px, 3vw, 32px); font-weight: 800; line-height: 1.2; overflow-wrap: anywhere; text-wrap: balance; }
+
+/* The box to write the answer in, with its counter. */
+.tv-fs-write { display: grid; gap: 8px; }
+.tv-fs-count { justify-self: end; font-size: 13px; font-weight: 800; color: var(--tv-text-3); }
+.tv-fs-count.is-full { color: var(--p-accent-2); }
+.tv-fs-sent { margin: 0; display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: 800; color: var(--tv-fs-text); overflow-wrap: anywhere; }
+
+/* The options to vote on, and at the reveal who wrote each one and who voted for it. */
+.tv-fs-options { display: grid; gap: 10px; }
+.tv-fs-option {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  padding: 14px 16px;
+  border: 0;
+  border-radius: 18px;
+  font: inherit;
+  font-weight: 800;
+  text-align: left;
+  color: var(--tv-text);
+  background: var(--tv-option-bg, rgba(255, 255, 255, 0.06));
+  overflow-wrap: anywhere;
+}
+button.tv-fs-option { cursor: pointer; box-shadow: 0 3px 0 rgba(0, 0, 0, 0.3); transition: transform 0.12s, box-shadow 0.12s; }
+button.tv-fs-option:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 5px 0 rgba(0, 0, 0, 0.3); }
+button.tv-fs-option:active:not(:disabled) { transform: translateY(2px); box-shadow: none; }
+button.tv-fs-option:disabled { cursor: default; box-shadow: none; }
+.tv-fs-option.is-mine { opacity: 0.45; }
+.tv-fs-option.is-voted { background: rgba(var(--tv-fs-rgb), 0.22); box-shadow: inset 0 0 0 2px var(--tv-fs); }
+.tv-fs-option.is-real { background: rgba(var(--tv-fs-rgb), 0.22); box-shadow: inset 0 0 0 2px var(--tv-fs); }
+.tv-fs-option-text { font-size: clamp(16px, 2.1vw, 21px); line-height: 1.25; }
+.tv-fs-option-note { font-size: 12px; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase; color: var(--tv-text-3); }
+
+/* The reveal's line under an option: who wrote it, who voted for it, its points. */
+.tv-fs-who { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; font-size: 14px; }
+.tv-fs-author { display: inline-flex; align-items: center; gap: 6px; font-weight: 800; color: var(--tv-text-2, inherit); }
+.tv-fs-author .tv-avatar { width: 24px; height: 24px; }
+.tv-fs-real-tag { padding: 2px 10px; border-radius: 10px; font-size: 12px; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase; background: var(--tv-fs); color: var(--tv-fs-on); }
+.tv-fs-voters { display: inline-flex; align-items: center; gap: 4px; }
+.tv-fs-voters .tv-avatar { width: 22px; height: 22px; }
+.tv-fs-pts { margin-left: auto; font-weight: 800; color: var(--tv-fs-text); }
+@media (min-width: 900px) { .tv-fs-options { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
