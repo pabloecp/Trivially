@@ -705,6 +705,29 @@ export function attachSockets(io, rooms, { friends = null, hub = null } = {}) {
       }
     });
 
+    // Farsante: an answer written for the round's prompt (it can be rewritten until the stage ends), and a vote (the
+    // position of one of the options).
+    socket.on("game:farsante", (text, ack) => {
+      try {
+        const { room, userId } = requireRoom(rooms, socket);
+        rooms.farsanteWrite(room, userId, text);
+        ack?.({ ok: true });
+        io.to(room.code).emit("room:state", rooms.publicState(room));
+      } catch (err) {
+        ack?.({ ok: false, error: err.message });
+      }
+    });
+    socket.on("game:farsanteVote", (index, ack) => {
+      try {
+        const { room, userId } = requireRoom(rooms, socket);
+        rooms.farsanteVote(room, userId, index);
+        ack?.({ ok: true });
+        io.to(room.code).emit("room:state", rooms.publicState(room));
+      } catch (err) {
+        ack?.({ ok: false, error: err.message });
+      }
+    });
+
     // Rey de la colina: the king picks one of the three questions (its position) for the round.
     socket.on("game:kingPick", (index, ack) => {
       try {

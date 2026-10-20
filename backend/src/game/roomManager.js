@@ -87,6 +87,19 @@ import {
   reyPool,
 } from "./rey.js";
 import {
+  FARSANTE_GAME,
+  FARSANTE_MAX_CHARS,
+  FARSANTE_MIN_PLAYERS,
+  FARSANTE_POINTS,
+  FARSANTE_REVEAL_MS,
+  datoPool,
+  defaultFarsanteConfig,
+  farsanteProblem,
+  mergeFarsanteConfig,
+  pickFarsanteRounds,
+  sameText,
+} from "./farsante.js";
+import {
   cleanPlaylist,
   configWithItem,
   mixRounds,
@@ -131,11 +144,11 @@ export const ROOM_CODE_LENGTH = 5;
 // screen for a while, answered by writing). The question games keep their questions in room.tracks, in place of songs
 // (Lluvia, one track per round with all its questions). "playlist" isn't a game of its own: it's where the room makes a
 // playlist of them (game/playlist.js), and while one is played the room is in each of its games in turn.
-export const GAME_IDS = ["musica", "opciones", "mundo", "historia", "minas", RAIN_GAME, REY_GAME, PLAYLIST_GAME];
+export const GAME_IDS = ["musica", "opciones", "mundo", "historia", "minas", RAIN_GAME, REY_GAME, FARSANTE_GAME, PLAYLIST_GAME];
 // "Trivia": its settings live in config.quiz and its questions take the place of songs in room.tracks.
 export const QUIZ_GAME = "opciones";
 // The games that ask questions instead of playing songs.
-const QUESTION_GAMES = [QUIZ_GAME, GEO_GAME, HISTORY_GAME, MINES_GAME, RAIN_GAME, REY_GAME];
+const QUESTION_GAMES = [QUIZ_GAME, GEO_GAME, HISTORY_GAME, MINES_GAME, RAIN_GAME, REY_GAME, FARSANTE_GAME];
 // Custom playlists from an owner's Spotify go in config.playlistIds with this prefix ("sp:<spotify playlist id>").
 export const SPOTIFY_PREFIX = "sp:";
 // Rounds are chosen this many rounds ahead, so their audio and cover are downloaded before they start.
@@ -288,6 +301,7 @@ function defaultConfig() {
     mines: defaultMinesConfig(),
     rain: defaultRainConfig(),
     rey: defaultReyConfig(),
+    farsante: defaultFarsanteConfig(),
   };
 }
 
@@ -350,6 +364,8 @@ export class RoomManager {
     this.rainQuestions = rainPool(this.quizQuestions);
     // Rey de la colina's: the same ones.
     this.reyQuestions = reyPool(this.quizQuestions);
+    // Farsante's "dato raro" rounds: the written questions that are not easy.
+    this.datoQuestions = datoPool(this.quizQuestions);
     this.resolver = resolver;
     this.store = store;
     this.reconnectGraceMs = reconnectGraceMs;
@@ -1074,6 +1090,7 @@ export class RoomManager {
     if (config?.mines) next.mines = mergeMinesConfig(room.config.mines, config.mines);
     if (config?.rain) next.rain = mergeRainConfig(room.config.rain, config.rain);
     if (config?.rey) next.rey = mergeReyConfig(room.config.rey, config.rey);
+    if (config?.farsante) next.farsante = mergeFarsanteConfig(room.config.farsante, config.farsante);
     // Same limits as the settings on screen: 5–25 rounds, 15–35 seconds to guess.
     if (config?.rounds != null) next.rounds = clampTo(config.rounds, MUSIC_LIMITS.rounds, 5);
     if (config?.roundMs != null) next.roundMs = clampTo(config.roundMs, MUSIC_LIMITS.roundMs, ROUND_MS);
@@ -1619,6 +1636,17 @@ export class RoomManager {
       room.tracks = pickRainRounds(this.rainQuestions, rain);
       room.totalRounds = room.tracks.length;
       room.tiebreak = null;
+    } else if (room.game === FARSANTE_GAME) {
+      // Farsante: every round's prompt (and the real answer of a "dato raro") is drawn now.
+      const farsante = mergeFarsanteConfig(room.config.farsante);
+      const problem = farsanteProblem(farsante, this.datoQuestions);
+      if (problem) throw new Error(problem.replace(/\.$/, ""));
+      if (connected.filter((p) => !p.spectator).length < FARSANTE_MIN_PLAYERS) {
+        throw new Error(`Farsante necesita al menos ${FARSANTE_MIN_PLAYERS} jugadores`);
+      }
+      room.tracks = pickFarsanteRounds(this.datoQuestions, farsante);
+      room.totalRounds = room.tracks.length;
+      room.tiebreak = null;
     } else if (room.game === REY_GAME) {
       // Rey de la colina: every round's three questions to pick from are drawn now; the first king is drawn too.
       const rey = mergeReyConfig(room.config.rey);
@@ -1926,6 +1954,7 @@ export class RoomManager {
       [MINES_GAME]: room.config.mines,
       [RAIN_GAME]: room.config.rain,
       [REY_GAME]: room.config.rey,
+      [FARSANTE_GAME]: room.config.farsante,
     }[room.game] ?? {
       rounds: room.config.rounds,
       roundMs: room.config.roundMs,
@@ -2009,6 +2038,12 @@ export class RoomManager {
     room.paused = null;
     // Rey de la colina: skipping the king's turn picks a question for them.
     if (room.game === REY_GAME && room.phase === "countdown") this.reyPick(room, null, null);
+    // Farsante: skipping the writing goes to the voting.
+    if (room.game === FARSANTE_GAME && room.phase === "playing" && room.tracks[room.currentRound]?.stage === "writing") {
+      this.beginVoting(room);
+      this.onPhaseChange?.(room);
+      return;
+    }
     if (room.phase !== "reveal") this.beginReveal(room);
     if (room.timer) clearTimeout(room.timer);
     this.advance(room);
@@ -2020,6 +2055,16 @@ export class RoomManager {
   }
 
   beginPlaying(room) {
+    // Farsante: the first stage of a round is everyone writing an answer; when it ends the voting starts.
+    if (room.game === FARSANTE_GAME) {
+      const round = room.tracks[room.currentRound];
+      round.stage = "writing";
+      round.entries = {};
+      round.votes = {};
+      round.options = null;
+      this.setPhase(room, "playing", round.writeMs, () => this.beginVoting(room));
+      return;
+    }
     if (this.isMinesRound(room)) {
       this.beginTurn(room);
       return;
@@ -2037,6 +2082,7 @@ export class RoomManager {
     if (this.isMinesRound(room)) this.gradeMines(room);
     if (this.isRainRound(room)) this.gradeRain(room, track);
     if (room.game === REY_GAME) this.gradeRey(room, track);
+    if (room.game === FARSANTE_GAME) this.gradeFarsante(room, track);
     this.markIdle(room);
     room.players.forEach((player) => {
       if (!player.lastAnswer && this.isPlaying(room, player.id)) {
@@ -2053,6 +2099,7 @@ export class RoomManager {
     else if (this.isMinesRound(room)) revealMs = MINES_REVEAL_MS;
     else if (this.isRainRound(room)) revealMs = RAIN_REVEAL_MS;
     else if (room.game === REY_GAME) revealMs = REY_REVEAL_MS;
+    else if (room.game === FARSANTE_GAME) revealMs = FARSANTE_REVEAL_MS;
     this.setPhase(room, "reveal", revealMs, () => this.advance(room));
     return { track, duration };
   }
@@ -2089,6 +2136,7 @@ export class RoomManager {
   rightAnswerText(room, track) {
     if (room.game === HISTORY_GAME) return track.kind === "cifras" ? figureLabel(track.value, track.unit) : yearLabel(track.year);
     if (room.game === GEO_GAME) return track.name || track.answer || null;
+    if (room.game === FARSANTE_GAME) return track.truth || null;
     if (room.game === QUIZ_GAME || room.game === REY_GAME) return track.type === "choice" ? track.options[track.answer] : track.answer || null;
     if (room.game === "musica") return artistLine(track) ? `${track.title} - ${artistLine(track)}` : track.title || null;
     return null;
@@ -2605,6 +2653,142 @@ export class RoomManager {
       }
     }
     this.answered(room, player);
+  }
+
+  /**
+   * Farsante, stage 1: a player writes (or rewrites, until the stage ends) their answer for the round's prompt. At
+   * most FARSANTE_MAX_CHARS, no links, never the real answer of a "dato raro" and never the same as another player's
+   * (nor the real one: the votes would give it away). When everyone who plays has written, the voting starts.
+   */
+  farsanteWrite(room, userId, text) {
+    const player = room.players.get(userId);
+    if (!player) throw new Error("Jugador no encontrado");
+    this.assertNotSpectator(room, userId);
+    const round = room.tracks[room.currentRound];
+    if (room.game !== FARSANTE_GAME || room.phase !== "playing" || round?.stage !== "writing") throw new Error("Ahora no se escribe");
+    const clean = String(text ?? "").replace(/\s+/g, " ").trim();
+    if (!clean) throw new Error("Escribe algo");
+    if (clean.length > FARSANTE_MAX_CHARS) throw new Error(`Máximo ${FARSANTE_MAX_CHARS} caracteres`);
+    if (hasLink(clean)) throw new Error("Las respuestas no pueden llevar enlaces");
+    if (round.question && (isCorrectOpenAnswer(clean, round.question) || sameText(clean, round.truth))) {
+      throw new Error("¡Esa es la respuesta real! Inventa otra");
+    }
+    for (const [id, other] of Object.entries(round.entries)) {
+      if (id !== userId && sameText(other, clean)) throw new Error("Otro jugador escribió algo igual. Cambia un poco la tuya");
+    }
+    round.entries[userId] = clean;
+    player.lastAnswer = { text: clean, correct: false, at: Date.now() };
+    player.status = "respondió";
+    player.idleRounds = 0;
+    player.idle = false;
+    this.onPhaseChange?.(room);
+    if (this.farsanteActive(room).every((p) => round.entries[p.id])) {
+      if (room.timer) clearTimeout(room.timer);
+      this.beginVoting(room);
+      this.onPhaseChange?.(room);
+    }
+  }
+
+  /** The players a Farsante stage waits for: connected, not spectators, not inactive. */
+  farsanteActive(room) {
+    return [...room.players.values()].filter((p) => p.connected && !p.spectator && !p.idle);
+  }
+
+  /**
+   * Farsante, stage 2: the answers (and, in a "dato raro", the real one) are mixed in random order and everyone votes.
+   * With fewer than two options there is nothing to vote on and the round goes straight to the reveal.
+   */
+  beginVoting(room) {
+    const round = room.tracks[room.currentRound];
+    const options = Object.entries(round.entries || {}).map(([author, text]) => ({ author, text }));
+    if (round.question) options.push({ author: null, text: round.truth });
+    if (options.length < 2) {
+      this.beginReveal(room);
+      return;
+    }
+    // Shuffled once, so every screen shows them in the same order.
+    for (let i = options.length - 1; i > 0; i -= 1) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [options[i], options[j]] = [options[j], options[i]];
+    }
+    round.options = options;
+    round.stage = "voting";
+    round.votes = {};
+    room.players.forEach((p) => {
+      p.lastAnswer = null;
+      p.lastPoints = 0;
+      p.status = p.spectator ? "mirando" : "jugando";
+    });
+    this.setPhase(room, "playing", round.voteMs, () => this.beginReveal(room));
+  }
+
+  /**
+   * Farsante, stage 3 of the player's round: a vote for one of the options (its position). One vote each, never for
+   * their own answer. When every player who can vote has, the reveal comes.
+   */
+  farsanteVote(room, userId, index) {
+    const player = room.players.get(userId);
+    if (!player) throw new Error("Jugador no encontrado");
+    this.assertNotSpectator(room, userId);
+    const round = room.tracks[room.currentRound];
+    if (room.game !== FARSANTE_GAME || room.phase !== "playing" || round?.stage !== "voting") throw new Error("Ahora no se vota");
+    const choice = Number(index);
+    const option = round.options?.[choice];
+    if (!Number.isInteger(choice) || !option) throw new Error("Elige una de las respuestas");
+    if (option.author === userId) throw new Error("No puedes votar tu propia respuesta");
+    if (round.votes[userId] != null) return;
+    round.votes[userId] = choice;
+    player.lastAnswer = { text: "", correct: false, at: Date.now() };
+    player.status = "respondió";
+    player.idleRounds = 0;
+    player.idle = false;
+    this.onPhaseChange?.(room);
+    if (this.farsanteActive(room).every((p) => round.votes[p.id] != null)) {
+      if (room.timer) clearTimeout(room.timer);
+      this.beginReveal(room);
+      this.onPhaseChange?.(room);
+    }
+  }
+
+  /**
+   * Farsante, at the reveal: who voted for what. Voting the real answer of a "dato raro" scores FARSANTE_POINTS.real;
+   * each vote an invented answer gets scores its author FARSANTE_POINTS.vote.
+   */
+  gradeFarsante(room, round) {
+    if (!round?.options) {
+      // Nothing was voted on: every player's round just shows what they wrote.
+      for (const p of room.players.values()) {
+        if (this.isPlaying(room, p.id)) p.lastAnswer = { text: round?.entries?.[p.id] || "", correct: false, at: Date.now() };
+      }
+      return;
+    }
+    const gained = {};
+    round.optionPoints = round.options.map(() => 0);
+    for (const [voterId, index] of Object.entries(round.votes)) {
+      const option = round.options[index];
+      if (!option) continue;
+      if (option.author === null) {
+        gained[voterId] = (gained[voterId] || 0) + FARSANTE_POINTS.real;
+        round.optionPoints[index] += FARSANTE_POINTS.real;
+      } else {
+        gained[option.author] = (gained[option.author] || 0) + FARSANTE_POINTS.vote;
+        round.optionPoints[index] += FARSANTE_POINTS.vote;
+      }
+    }
+    for (const player of room.players.values()) {
+      if (!this.isPlaying(room, player.id)) continue;
+      const points = gained[player.id] || 0;
+      player.score += points;
+      player.lastPoints = points;
+      player.lastAnswer = { text: round.entries?.[player.id] || "", correct: points > 0, at: Date.now() };
+      if (points > 0) {
+        player.correct += 1;
+        player.streak += 1;
+        player.bestStreak = Math.max(player.bestStreak, player.streak);
+      } else {
+        player.streak = 0;
+      }
+    }
   }
 
   /**
@@ -3288,6 +3472,8 @@ export class RoomManager {
       if (track) payload.question = this.publicMinesQuestion(room, track);
       // In the lobby: how many boards each category and difficulty has, for the settings' chips.
       if (room.phase === "lobby") payload.questionCounts = minesCounts(this.minesQuestions, room.config.mines);
+    } else if (room.game === FARSANTE_GAME) {
+      payload.farsante = this.publicFarsante(room, track);
     } else if (room.game === REY_GAME) {
       payload.rey = this.publicRey(room, track);
       // The question only exists once the king picked it (before, the three offers are in `rey.offers`).
@@ -3386,6 +3572,7 @@ export class RoomManager {
     if (room.game === MINES_GAME) return countMinesQuestions(this.minesQuestions, room.config.mines);
     if (room.game === RAIN_GAME) return countRainQuestions(this.rainQuestions, room.config.rain);
     if (room.game === REY_GAME) return countReyQuestions(this.reyQuestions, room.config.rey);
+    if (room.game === FARSANTE_GAME) return new Set(this.datoQuestions.map((q) => q.id)).size;
     return undefined;
   }
 
@@ -3495,6 +3682,34 @@ export class RoomManager {
       snap: track.kind === "cifras" && open ? track.snap : null,
       min: open ? track.min : null,
       max: open ? track.max : null,
+    };
+  }
+
+  /**
+   * Farsante's state: the round's kind and prompt, its stage ("writing", "voting" or, from the reveal on, "reveal"),
+   * how many answers are in and, from the voting on, the options in order and without their authors; the authors
+   * (null: the real answer), who voted for each one and its points come only at the reveal. The real answer of a
+   * "dato raro" is just one more option until then.
+   */
+  publicFarsante(room, round) {
+    if (!round?.kind) return null;
+    const reveal = room.phase === "reveal" || room.phase === "finished";
+    const stage = reveal ? "reveal" : room.phase === "playing" ? round.stage || "writing" : "writing";
+    const voted = (i) => Object.entries(round.votes || {}).filter(([, v]) => v === i).map(([id]) => id);
+    return {
+      kind: round.kind,
+      prompt: round.text,
+      stage,
+      writeMs: round.writeMs,
+      voteMs: round.voteMs,
+      written: Object.keys(round.entries || {}).length,
+      options: round.options
+        ? round.options.map((o, id) => ({
+            id,
+            text: o.text,
+            ...(reveal ? { authorId: o.author, real: o.author === null, voters: voted(id), points: round.optionPoints?.[id] || 0 } : {}),
+          }))
+        : null,
     };
   }
 

@@ -10,6 +10,7 @@ import HistoryGame from "./modes/historia/Game.jsx";
 import MinesGame from "./modes/minas/Game.jsx";
 import RainGame from "./modes/lluvia/Game.jsx";
 import ReyGame from "./modes/rey/Game.jsx";
+import FarsanteGame from "./modes/farsante/Game.jsx";
 import PlaylistResults from "./modes/playlist/Results.jsx";
 import { useApp } from "./lib/store.jsx";
 import RoomSounds from "./lib/RoomSounds.jsx";
@@ -21,7 +22,7 @@ import { roomPath } from "./modes/index.js";
 import { HIDDEN_SLUG, useHiddenCode } from "./lib/hiddenCode.js";
 
 // Screens tied to one room, e.g. /game/XOTRIV.
-const ROOM_SCREEN = /^\/(?:lobby|game|quiz|mundo|historia|minas|lluvia|rey|playlist|sala)\/([^/]+)/;
+const ROOM_SCREEN = /^\/(?:lobby|game|quiz|mundo|historia|minas|lluvia|rey|farsante|playlist|sala)\/([^/]+)/;
 
 // Old /lobby/CODE links: the waiting room now lives on the room screen, which /sala/CODE opens and joins.
 function LobbyRedirect() {
@@ -138,6 +139,7 @@ export default function App() {
         <Route path="/minas/:code" element={<MinesGame />} />
         <Route path="/lluvia/:code" element={<RainGame />} />
         <Route path="/rey/:code" element={<ReyGame />} />
+        <Route path="/farsante/:code" element={<FarsanteGame />} />
         {/* The end of a playlist: who won the most games. Its games are played on their own screens. */}
         <Route path="/playlist/:code" element={<PlaylistResults />} />
         <Route path="/profile" element={<Profile />} />
