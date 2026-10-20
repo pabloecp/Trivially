@@ -8,6 +8,7 @@ import { withSound } from "../../lib/sounds.js";
 import Avatar from "./Avatar.jsx";
 import { JoinButton, statusOf } from "./FriendsSheet.jsx";
 import Icon from "./Icon.jsx";
+import Logo, { logoIncoming } from "./Logo.jsx";
 import ModeStage from "./ModeStage.jsx";
 import OptionRow from "./OptionRow.jsx";
 import PlaySide from "./PlaySide.jsx";
@@ -20,6 +21,9 @@ const ROOM_CODE_LENGTH = 5;
 // The tiles sink away for this long before the chosen option's card comes in (and the card goes before the tiles come
 // back), like "Elige el juego" in a room (TILES_OUT_MS in Home.jsx).
 const OUT_MS = 320;
+// Longer than the tiles' late way in when the logo jumps here (match.css, .is-landing), so taking the delay away
+// afterwards changes nothing on screen.
+const LANDING_MS = 1200;
 // How many online friends "Invitar al crear la sala" offers.
 const INVITES_SHOWN = 6;
 
@@ -67,8 +71,10 @@ function codeFrom(text) {
 // it and the player's column (PlaySide) at the end, laid out like a room's screen; the top bar's "Volver" (the only way
 // back) and the browser's Back do it the other way round. Leaving a room comes back to the option it came from (exitPath
 // in TvTopbar.jsx). Without an account, the settings card asks for the name first (filled in with the one used last
-// time), then does what was asked. Once in a room, RoomNavigator takes the player there.
-export default function PlayPage({ leaving = false }) {
+// time), then does what was asked. Once in a room, RoomNavigator takes the player there. On wider screens Inicio's logo
+// is over the tiles, smaller, instead of the title, and jumps between the two screens (Logo.jsx): `toHome` is the way
+// back to Inicio, when it stays (crouching) while the tiles sink, for Inicio's to jump out of it.
+export default function PlayPage({ leaving = false, toHome = false }) {
   const { user, saveGuest, createRoom, joinRoom, checkRoom, findMatch } = useApp();
   const friends = useFriends();
   const nav = useNavigate();
@@ -94,6 +100,13 @@ export default function PlayPage({ leaving = false }) {
   const codeRef = useRef(null);
   const timer = useRef(0);
   useEffect(() => () => clearTimeout(timer.current), []);
+  // Coming from Inicio, its logo jumps here (Logo.jsx) and the tiles come up as it lands.
+  const [landing, setLanding] = useState(logoIncoming);
+  useEffect(() => {
+    if (!landing) return undefined;
+    const t = setTimeout(() => setLanding(false), LANDING_MS);
+    return () => clearTimeout(t);
+  }, []);
 
   const kind = KINDS.find((k) => k.id === chosen) || null;
   const needsName = !user?.name || user.isGuest;
@@ -339,33 +352,36 @@ export default function PlayPage({ leaving = false }) {
     <div className={`tv-room tv-playpage${leaving ? " is-leaving" : ""}`}>
       <div className="tv-room-main">
         {!kind ? (
-          <section className={`tv-picker tv-play-picker${out ? " is-leaving" : ""}`} aria-labelledby="tv-play-title">
-            <div className="tv-picker-head">
-              <h1 id="tv-play-title" className="tv-picker-title">
-                ¿Cómo quieres jugar?
-              </h1>
-            </div>
-            <div className="tv-play-grid">
-              {KINDS.map((k, i) => (
-                <button
-                  key={k.id}
-                  type="button"
-                  className={`tv-mode tv-play-tile tv-c-${k.color}`}
-                  style={{ "--i": i }}
-                  onClick={() => nav(`/jugar/${k.id}`, { state: { from: "/jugar" } })}
-                >
-                  <Icon name={k.icon} size={170} strokeWidth={1.5} className="tv-mode-watermark" />
-                  <span className="tv-mode-badge">
-                    <Icon name={k.icon} size={28} strokeWidth={2.2} />
-                  </span>
-                  <span className="tv-play-tile-text">
-                    <span className="tv-mode-name">{k.name}</span>
-                    <span className="tv-play-tile-blurb">{k.blurb}</span>
-                  </span>
-                </button>
-              ))}
-            </div>
-          </section>
+          <div className={`tv-play-menu${landing ? " is-landing" : ""}`}>
+            <Logo className={`tv-play-logo${out || (leaving && !toHome) ? " is-leaving" : ""}`} quiet decorative />
+            <section className={`tv-picker tv-play-picker${out ? " is-leaving" : ""}`} aria-labelledby="tv-play-title">
+              <div className="tv-picker-head">
+                <h1 id="tv-play-title" className="tv-picker-title">
+                  ¿Cómo quieres jugar?
+                </h1>
+              </div>
+              <div className="tv-play-grid">
+                {KINDS.map((k, i) => (
+                  <button
+                    key={k.id}
+                    type="button"
+                    className={`tv-mode tv-play-tile tv-c-${k.color}`}
+                    style={{ "--i": i }}
+                    onClick={() => nav(`/jugar/${k.id}`, { state: { from: "/jugar" } })}
+                  >
+                    <Icon name={k.icon} size={170} strokeWidth={1.5} className="tv-mode-watermark" />
+                    <span className="tv-mode-badge">
+                      <Icon name={k.icon} size={28} strokeWidth={2.2} />
+                    </span>
+                    <span className="tv-play-tile-text">
+                      <span className="tv-mode-name">{k.name}</span>
+                      <span className="tv-play-tile-blurb">{k.blurb}</span>
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </section>
+          </div>
         ) : (
           <div key={kind.id} className={`tv-room-row is-pick${out ? " is-out" : ""}`}>
             <ModeStage mode={kind}>

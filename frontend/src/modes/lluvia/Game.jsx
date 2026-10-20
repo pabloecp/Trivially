@@ -38,6 +38,35 @@ function rainElapsed(room) {
 // How long a question someone took stays on screen, popping with who took it and its points.
 const TAKEN_SHOW_MS = 1500;
 
+// A phone's keyboard: how long the frame waits for it to come up or go (see GameScreen), and how much of the screen's
+// height it took the last time on this device, per orientation (a guess before the first time).
+const KEYBOARD_WAIT_MS = 1000;
+const KEYBOARD_KEY = "trivially_rain_keyboard";
+const orientation = () => (window.innerWidth > window.innerHeight ? "landscape" : "portrait");
+let keyboardShares = null;
+function keyboardShare() {
+  if (!keyboardShares) {
+    try {
+      keyboardShares = JSON.parse(localStorage.getItem(KEYBOARD_KEY)) || {};
+    } catch {
+      keyboardShares = {};
+    }
+  }
+  const share = Number(keyboardShares[orientation()]);
+  return share > 0.2 && share < 0.8 ? share : orientation() === "landscape" ? 0.6 : 0.45;
+}
+function rememberKeyboard(share) {
+  keyboardShare();
+  const key = orientation();
+  if (Math.abs((keyboardShares[key] || 0) - share) < 0.01) return;
+  keyboardShares[key] = Math.round(share * 1000) / 1000;
+  try {
+    localStorage.setItem(KEYBOARD_KEY, JSON.stringify(keyboardShares));
+  } catch {
+    // Private mode: guessed again next time.
+  }
+}
+
 /**
  * The sky the questions fall down, in three columns. Each one is placed on every frame from the server's clock
  * (rainElapsed), so every screen shows the same question at the same height, whatever arrived when: it starts just
@@ -73,7 +102,13 @@ function Sky({ room, question, viewerId, nameOf, colorOf, onTap, children }) {
   const reveal = room.phase === "reveal";
   const now = rainElapsed(room);
   return (
-    <div ref={skyRef} className={`tv-rain-sky${reveal ? " is-reveal" : ""}`} onPointerDown={onTap}>
+    <div
+      ref={skyRef}
+      className={`tv-rain-sky${reveal ? " is-reveal" : ""}`}
+      // A tap on the sky gives the box the keyboard back, without taking it away first (no blur on the press).
+      onMouseDown={onTap ? (e) => e.preventDefault() : undefined}
+      onClick={onTap}
+    >
       {(question.drops || []).map((d) => {
         // Taken a while ago (or before this screen came): it's gone already.
         if (d.by && now - d.takenAt > TAKEN_SHOW_MS) return null;
@@ -197,7 +232,8 @@ function AnswerBox({ room, open, inputRef, onResult }) {
           aria-label="Tu respuesta"
         />
         {text.trim() && open && (
-          <button type="submit" className="tv-btn tv-btn--sm tv-c-rain" data-sound="none" aria-label="Enviar">
+          // Pressing it doesn't take the keyboard away from the box.
+          <button type="submit" className="tv-btn tv-btn--sm tv-c-rain" data-sound="none" aria-label="Enviar" onMouseDown={(e) => e.preventDefault()}>
             <Icon name="send" size={18} strokeWidth={2.6} />
           </button>
         )}
@@ -300,6 +336,142 @@ function GameScreen() {
     return () => window.removeEventListener("resize", measure);
   }, [hasGame]);
 
+  // On a phone (or a tablet), the keyboard doesn't make the page shorter: it covers its bottom, where the box is, and the
+  // browser scrolls the page to show the box, pushing the rain up and away. So during the match the page doesn't
+  // scroll and the frame is fixed to exactly the part of the screen the keyboard leaves visible (--rain-vv-top,
+  // --rain-vv-h, from visualViewport): the box sits right above the keyboard and the sky takes what's left, keyboard
+  // open or not (styles/rain.css, html.tv-rain-playing). Not on the central device: nobody writes there.
+  // Safari scrolls the page to centre a box a tap focuses, even one in sight in a fixed frame, and the frame only
+  // follows once the keyboard is up: everything goes up and jumps back down. It doesn't for a box the page focuses with
+  // preventScroll (Safari 15.5 on), so a tap on the box or the sky while the keyboard is down doesn't focus the box
+  // itself: the page does (onTouchEnd), and with the keyboard up the page can't be dragged either (onTouchMove).
+  // The frame doesn't wait for the keyboard to say how tall it is: the moment the box is tapped it already makes room
+  // for it (as much as it took last time, keyboardShare), so the box is above it before it comes up; when the box loses
+  // the keyboard, the frame gets its height back at once. Meanwhile what the browser measures is ignored until it
+  // agrees (or for KEYBOARD_WAIT_MS at most).
+  useLayoutEffect(() => {
+    if (!hasGame || central) return undefined;
+    const root = document.documentElement;
+    const vv = window.visualViewport;
+    root.classList.add("tv-rain-playing");
+    let gone = false;
+    let shown = "";
+    // Whether the frame has made room for the keyboard.
+    let up = false;
+    // The box is being focused by a tap (onTouchEnd), and where that touch started.
+    let tapping = false;
+    let touchStart = null;
+    // { keyboard, until, seen }: what the frame is ready for, while the keyboard comes up or goes.
+    let expect = null;
+    let frame = 0;
+    const set = (top, height, keyboard) => {
+      const key = `${top}/${height}/${keyboard}`;
+      if (key === shown) return;
+      shown = key;
+      up = keyboard;
+      root.style.setProperty("--rain-vv-h", `${height}px`);
+      root.style.setProperty("--rain-vv-top", `${top}px`);
+      // The keyboard is up: the frame doesn't keep room for the phone's bottom edge (it's under the keyboard).
+      root.classList.toggle("tv-rain-keyboard", keyboard);
+    };
+    const fit = () => {
+      const height = Math.round(vv ? vv.height : window.innerHeight);
+      const top = Math.round(vv ? vv.offsetTop : 0);
+      const keyboard = height < window.innerHeight * 0.8;
+      if (expect && performance.now() < expect.until) {
+        // Not there yet, or still moving (the same twice in a row): the frame stays as it was made ready.
+        const seen = `${top}/${height}/${keyboard}`;
+        if (keyboard !== expect.keyboard || seen !== expect.seen) {
+          expect.seen = seen;
+          return;
+        }
+      }
+      expect = null;
+      if (keyboard) rememberKeyboard(1 - height / window.innerHeight);
+      set(top, height, keyboard);
+    };
+    // Until the keyboard is up (or gone), the frame follows what the browser measures on every frame, not only on its
+    // events, which can come late.
+    const watch = () => {
+      cancelAnimationFrame(frame);
+      const until = performance.now() + KEYBOARD_WAIT_MS + 300;
+      const tick = () => {
+        fit();
+        if (performance.now() < until) frame = requestAnimationFrame(tick);
+      };
+      frame = requestAnimationFrame(tick);
+    };
+    const ready = (keyboard) => {
+      expect = { keyboard, until: performance.now() + KEYBOARD_WAIT_MS };
+      const full = window.innerHeight;
+      set(0, keyboard ? Math.round(full * (1 - keyboardShare())) : full, keyboard);
+      watch();
+    };
+    const isBox = (el) => Boolean(el) && el === inputRef.current;
+    const onTouchStart = (e) => {
+      const t = e.touches[0];
+      touchStart = e.touches.length === 1 ? { x: t.clientX, y: t.clientY } : null;
+    };
+    const onTouchEnd = (e) => {
+      const input = inputRef.current;
+      const target = e.target instanceof Element ? e.target : null;
+      const place = target?.closest(".tv-rain-box, .tv-rain-sky");
+      if (up || !input || !place || !frameRef.current?.contains(place) || target.closest("button")) return;
+      const t = e.changedTouches[0];
+      // A drag isn't a tap.
+      if (!touchStart || !t || Math.hypot(t.clientX - touchStart.x, t.clientY - touchStart.y) > 12) return;
+      e.preventDefault();
+      // Focused but with no keyboard (the box takes the focus back after each round): focused anew, so it comes up.
+      if (isBox(document.activeElement)) input.blur();
+      tapping = true;
+      input.focus({ preventScroll: true });
+      tapping = false;
+    };
+    // Only a tap brings the keyboard up: the box takes the focus back by itself after each round (on a phone, without
+    // the keyboard), and a computer has none.
+    const onFocus = (e) => {
+      if (isBox(e.target) && tapping && !up) ready(true);
+    };
+    const onTouchMove = (e) => {
+      const target = e.target instanceof Element ? e.target : null;
+      if (e.touches.length > 1 || !target || !frameRef.current?.contains(target)) return;
+      // The box moves its caret and the standings strip scrolls sideways; nothing else moves the page.
+      if (isBox(target) || target.closest(".tv-rain-standings")) return;
+      e.preventDefault();
+    };
+    const onBlur = (e) => {
+      if (!isBox(e.target) || !up) return;
+      // Given back to the box straight away (a new round's box), the keyboard stays.
+      requestAnimationFrame(() => {
+        if (!gone && !isBox(document.activeElement)) ready(false);
+      });
+    };
+    fit();
+    vv?.addEventListener("resize", fit);
+    vv?.addEventListener("scroll", fit);
+    window.addEventListener("resize", fit);
+    document.addEventListener("touchstart", onTouchStart, { capture: true, passive: true });
+    document.addEventListener("touchend", onTouchEnd, { capture: true, passive: false });
+    document.addEventListener("touchmove", onTouchMove, { capture: true, passive: false });
+    document.addEventListener("focusin", onFocus);
+    document.addEventListener("focusout", onBlur);
+    return () => {
+      gone = true;
+      cancelAnimationFrame(frame);
+      root.classList.remove("tv-rain-playing", "tv-rain-keyboard");
+      root.style.removeProperty("--rain-vv-h");
+      root.style.removeProperty("--rain-vv-top");
+      vv?.removeEventListener("resize", fit);
+      vv?.removeEventListener("scroll", fit);
+      window.removeEventListener("resize", fit);
+      document.removeEventListener("touchstart", onTouchStart, { capture: true });
+      document.removeEventListener("touchend", onTouchEnd, { capture: true });
+      document.removeEventListener("touchmove", onTouchMove, { capture: true });
+      document.removeEventListener("focusin", onFocus);
+      document.removeEventListener("focusout", onBlur);
+    };
+  }, [hasGame, central]);
+
   function backToHub() {
     if (!confirmHub) {
       setConfirmHub(true);
@@ -339,6 +511,9 @@ function GameScreen() {
   const myPoints = me?.lastPoints || 0;
   const myHits = me?.hits || 0;
   const lastRound = round + 1 >= room.totalRounds;
+  // On a phone the room's scoreboard is out of reach (the page doesn't scroll during the match): the top card has a
+  // strip with everyone's points instead of its title.
+  const standings = room.players.filter((p) => !p.spectator).sort((a, b) => b.score - a.score);
 
   const totalMs = phase === "playing" ? question?.roundMs || rainConfig(room).roundMs : COUNTDOWN_MS;
   const seconds = Math.max(0, Math.ceil(left / 1000));
@@ -461,6 +636,15 @@ function GameScreen() {
               <h1 key={`${round}-${title}`} className="tv-card-title tv-mines-prompt tv-rain-title">
                 {title}
               </h1>
+              <ol className="tv-rain-standings" aria-label="Marcador">
+                {standings.map((p, i) => (
+                  <li key={p.id} className={p.id === viewerId ? "is-me" : ""}>
+                    <span className="tv-rain-standings-pos">{i + 1}</span>
+                    <span className="tv-rain-standings-name">{p.id === viewerId ? "Tú" : p.name}</span>
+                    <strong key={p.score}>{p.score}</strong>
+                  </li>
+                ))}
+              </ol>
               {hintLine}
             </div>
 
@@ -514,7 +698,7 @@ function GameScreen() {
                 viewerId={viewerId}
                 nameOf={nameOf}
                 colorOf={colorOf}
-                onTap={canWrite ? () => setTimeout(() => inputRef.current?.focus({ preventScroll: true }), 0) : undefined}
+                onTap={canWrite ? () => inputRef.current?.focus({ preventScroll: true }) : undefined}
               >
                 {countdown}
                 {burstCard}

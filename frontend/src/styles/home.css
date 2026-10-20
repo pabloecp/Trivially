@@ -344,6 +344,17 @@
   align-items: center;
   text-align: center;
 }
+/* The logo and its name under it (Logo.jsx): Inicio's, and /jugar's smaller one (match.css). It crouches and lands on its
+   base. */
+.tv-logo { display: flex; flex-direction: column; align-items: center; transform-origin: 50% 100%; }
+/* "Jugar": everything but the logo sinks away while the logo crouches to jump to /jugar (CROUCH_MS in Logo.jsx). */
+.tv-home.is-to-play { pointer-events: none; }
+.tv-home.is-to-play .tv-tagline,
+.tv-home.is-to-play .tv-play,
+.tv-home.is-to-play .tv-howto { animation: tvSinkOut 0.2s cubic-bezier(0.4, 0, 0.7, 0.4) forwards; }
+.tv-home.is-to-play .tv-play { animation-delay: 0.015s; }
+.tv-home.is-to-play .tv-howto { animation-delay: 0.03s; }
+@keyframes tvSinkOut { to { opacity: 0; transform: translateY(26px); } }
 
 .tv-appicon {
   /* --s is the tile's size: every part of the logo is measured from it. */
@@ -2832,9 +2843,9 @@ body:has(.tv-app) {
   pointer-events: none;
 }
 @keyframes tvShineSweep { 60%, 100% { transform: translateX(100%); } }
-/* The logo tile bobs with a little tilt. */
+/* The logo tile bobs with a little tilt (--bob: how high, smaller with a smaller logo). */
 .tv-appicon-tile { animation-name: tvBobTilt; }
-@keyframes tvBobTilt { 50% { transform: translateY(-9px) rotate(-4deg); } }
+@keyframes tvBobTilt { 50% { transform: translateY(var(--bob, -9px)) rotate(-4deg); } }
 
 /* The toast drops in at the top of the screen. */
 .tv-toast-region { top: calc(16px + env(safe-area-inset-top)); bottom: auto; z-index: 45; }

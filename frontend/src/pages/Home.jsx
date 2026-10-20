@@ -6,7 +6,6 @@ import { GAME_MODES, SOON_TILE, findMode } from "../modes/index.js";
 import Icon from "../components/home/Icon.jsx";
 import TvTopbar from "../components/home/TvTopbar.jsx";
 import HowToPlay from "../components/home/HowToPlay.jsx";
-import AppIcon from "../components/home/AppIcon.jsx";
 import CentralLobby from "../components/home/CentralLobby.jsx";
 import MatchIntro from "../components/home/MatchIntro.jsx";
 import MatchLobby from "../components/home/MatchLobby.jsx";
@@ -14,7 +13,7 @@ import PartyPanel from "../components/home/PartyPanel.jsx";
 import PlayPage from "../components/home/PlayPage.jsx";
 import PlaySheet from "../components/home/PlaySheet.jsx";
 import { RoomDock, RoomHeader } from "../components/home/RoomBars.jsx";
-import Wordmark from "../components/home/Wordmark.jsx";
+import Logo, { CROUCH_MS, crouchLogo, leaveLogo } from "../components/home/Logo.jsx";
 import "../styles/home.css";
 import { resolveCode } from "../lib/hiddenCode.js";
 
@@ -177,7 +176,8 @@ export default function Home() {
   const { pathname } = useLocation();
   const onPlayPath = pathname === "/jugar" || pathname.startsWith("/jugar/");
   const playShown = useRef(onPlayPath);
-  // Back from /jugar to Inicio, its panels sink first (`playOut`, SCREEN_OUT_MS), the way they came up; then Inicio.
+  // Back from /jugar to Inicio, its panels sink first (`playOut`, SCREEN_OUT_MS), the way they came up, while its logo
+  // crouches; then Inicio, whose big logo jumps out of /jugar's (Logo.jsx), without the zoom of coming back from a room.
   // Coming back from a room, the page shown is just the address's (no exit to play).
   const [playOut, setPlayOut] = useState(false);
   const lastScreen = useRef(screen);
@@ -188,12 +188,38 @@ export default function Home() {
   useEffect(() => {
     if (screen !== "home" || leaving || onPlayPath || !playShown.current) return undefined;
     setPlayOut(true);
+    const crouch = crouchLogo(SCREEN_OUT_MS - CROUCH_MS);
     const t = setTimeout(() => {
+      leaveLogo();
       playShown.current = false;
       setPlayOut(false);
+      setEntry("play");
     }, reducedMotion() ? 0 : SCREEN_OUT_MS);
-    return () => clearTimeout(t);
+    return () => {
+      clearTimeout(t);
+      crouch?.cancel();
+    };
   }, [onPlayPath, screen, leaving]);
+
+  // "Jugar": the tagline, the button and how to play go while the logo crouches, then /jugar, where it lands.
+  const [toPlay, setToPlay] = useState(false);
+  const toPlayTimer = useRef(0);
+  useEffect(() => () => clearTimeout(toPlayTimer.current), []);
+  // Only once /jugar is on screen, so Inicio's tagline and button never show again for a frame on the way.
+  useEffect(() => {
+    if (onPlayPath) setToPlay(false);
+  }, [onPlayPath]);
+  function goPlay() {
+    if (toPlay) return;
+    const go = () => {
+      leaveLogo();
+      nav("/jugar", { state: { from: "/" } });
+    };
+    if (reducedMotion()) return go();
+    setToPlay(true);
+    crouchLogo();
+    toPlayTimer.current = setTimeout(go, CROUCH_MS);
+  }
 
   // Picking a game from the tiles happens in two beats, for every player at once: first the tiles (or the guests'
   // "está eligiendo" panel) go, for TILES_OUT_MS; then the game's big card grows in and "Cómo se juega" slides in
@@ -372,14 +398,14 @@ export default function Home() {
         {centralScreen ? (
           <CentralLobby room={shownRoom} />
         ) : screen === "home" && playShown.current ? (
-          <PlayPage leaving={leaving || playOut} />
+          <PlayPage leaving={leaving || playOut} toHome={playOut && !leaving} />
         ) : screen === "home" ? (
-          <div className={`tv-home is-in-${entry}${leaving ? " is-leaving" : ""}${sheetOpen ? " is-behind" : ""}`}>
+          <div className={`tv-home is-in-${entry}${leaving ? " is-leaving" : ""}${toPlay ? " is-to-play" : ""}${sheetOpen ? " is-behind" : ""}`}>
             <section className="tv-hero">
-              <AppIcon edge />
-              <Wordmark />
+              <Logo tilt={6} />
               <p className="tv-tagline">Trivia rápida para jugar solo o con amigos.</p>
-              <button ref={playRef} type="button" className="tv-play tv-shine" onClick={() => nav("/jugar", { state: { from: "/" } })}>
+              {/* The logo jumps to /jugar's, smaller (Logo.jsx). */}
+              <button ref={playRef} type="button" className="tv-play tv-shine" onClick={goPlay}>
                 <span className="tv-play-icon">
                   <Icon name="play" size={20} filled strokeWidth={1.5} />
                 </span>

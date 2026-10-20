@@ -260,6 +260,99 @@
 .tv-game.is-central .tv-rain-card-pts { font-size: 18px; line-height: 28px; padding: 0 10px; }
 .tv-game.is-central .tv-rain-card-answer { font-size: clamp(15px, 1.4vw, 22px); }
 
+/* ---------- Phones and tablets: the match fits what the keyboard leaves visible ---------- */
+/* The keyboard doesn't make the page shorter, it covers its bottom, and the browser scrolls the page to show the box.
+   So during the match (html.tv-rain-playing, Game.jsx) the page doesn't scroll and the frame is fixed to exactly the
+   visible part of the screen (--rain-vv-top, --rain-vv-h, from visualViewport): with the keyboard up the box sits right
+   above it and the sky takes what's left, nothing to scroll back to. The top bar goes, like in Encuentra el país, and
+   so does the room's column, out of reach: the top card shows everyone's points (.tv-rain-standings) for its title. */
+.tv-rain-standings { display: none; }
+@media (max-width: 899px) {
+  html.tv-rain-playing,
+  html.tv-rain-playing body { overflow: hidden; overscroll-behavior: none; }
+  html.tv-rain-playing .tv-topbar { display: none; }
+  html.tv-rain-playing .tv-rain > .tv-party { display: none; }
+  html.tv-rain-playing .tv-app .tv-rain-frame {
+    position: fixed;
+    z-index: 30;
+    top: var(--rain-vv-top, 0px);
+    left: 0;
+    right: 0;
+    width: auto;
+    max-width: none;
+    height: var(--rain-vv-h, 100dvh);
+    margin: 0;
+    padding: max(8px, env(safe-area-inset-top)) max(8px, env(safe-area-inset-right)) max(8px, env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left));
+    gap: 8px;
+    background-color: var(--tv-bg);
+    background-image: var(--tv-page-bg);
+  }
+  html.tv-rain-keyboard .tv-app .tv-rain-frame { padding-bottom: 6px; }
+  html.tv-rain-playing .tv-app .tv-rain-frame > .tv-rain-stage { gap: 8px; padding: 8px; border-radius: 20px; }
+  html.tv-rain-playing .tv-rain-sky { min-height: 0; }
+  /* A thin top card, so the sky keeps the height: the clock and the host's buttons side by side on the right. */
+  html.tv-rain-playing .tv-rain .tv-game-top {
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    grid-template-areas: "round tools clock" "bar bar bar";
+    align-items: center;
+    gap: 6px 8px;
+    padding: 8px 10px 9px;
+    border-radius: 18px;
+  }
+  html.tv-rain-playing .tv-rain .tv-clock { width: 46px; height: 46px; }
+  html.tv-rain-playing .tv-rain .tv-game-tools { gap: 6px; }
+  /* The cards' letter follows the sky's height too: with the keyboard up the sky is short, and so are they. */
+  html.tv-rain-playing .tv-rain-card-text { font-size: clamp(10px, min(4.6cqh, 3.4cqw), 13px); }
+  /* The title goes: the round's standings take its place, and what to do (or what the last answer did) is one line. */
+  html.tv-rain-playing .tv-app .tv-game-round .tv-rain-title { display: none; }
+  html.tv-rain-playing .tv-rain-hint { min-width: 0; min-height: 0; overflow: hidden; }
+  html.tv-rain-playing .tv-rain-hint span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .tv-rain-standings {
+    display: flex;
+    gap: 5px;
+    min-width: 0;
+    margin: 3px 0 2px;
+    padding: 0;
+    overflow-x: auto;
+    list-style: none;
+    scrollbar-width: none;
+  }
+  .tv-rain-standings::-webkit-scrollbar { display: none; }
+  .tv-rain-standings li {
+    display: inline-flex;
+    align-items: center;
+    flex-shrink: 0;
+    gap: 5px;
+    height: 26px;
+    padding: 0 9px 0 4px;
+    border-radius: 999px;
+    background: var(--tv-option-bg);
+    font-weight: 800;
+    font-size: 12.5px;
+    color: var(--tv-text-2);
+  }
+  .tv-rain-standings li.is-me { background: rgba(var(--tv-rn-rgb), 0.2); color: var(--tv-text); }
+  .tv-rain-standings-pos {
+    display: grid;
+    place-items: center;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--tv-neutral);
+    font-size: 11px;
+    color: var(--tv-text);
+  }
+  .tv-rain-standings li:first-child .tv-rain-standings-pos { background: var(--p-accent-2); color: var(--p-ink); }
+  .tv-rain-standings-name { max-width: 7.5em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .tv-rain-standings strong {
+    font-family: var(--tv-display);
+    font-weight: 800;
+    color: var(--brand-text);
+    font-variant-numeric: tabular-nums;
+    animation: tvScore 0.5s var(--tv-spring);
+  }
+}
+
 @media (max-width: 640px) {
   /* Everything a little tighter, so the sky keeps most of the screen. "Terminar" goes under the clock. */
   .tv-rain .tv-game-top { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "round clock" "round tools" "bar bar"; gap: 6px 12px; padding: 12px 14px; border-radius: 24px; }
@@ -290,5 +383,6 @@
   .tv-rain-legend,
   .tv-rain-pad-points,
   .tv-rain-pad-log li,
-  .tv-rain-score strong { animation: none; }
+  .tv-rain-score strong,
+  .tv-rain-standings strong { animation: none; }
 }
