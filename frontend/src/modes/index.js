@@ -170,5 +170,6 @@ export function findMode(id) {
 // `_hidden` only makes callers re-run it when the code is hidden or shown (the addresses read it themselves).
 export function roomPath(room, _hidden) {
   const mode = findMode(room.game);
-  return room.phase !== "lobby" && mode?.path ? mode.path(room) : `/sala/${urlCode(room.code)}`;
+  // A public match's roulette and tutorial ("intro") are on the room screen too, beside the room's column.
+  return room.phase !== "lobby" && room.phase !== "intro" && mode?.path ? mode.path(room) : `/sala/${urlCode(room.code)}`;
 }

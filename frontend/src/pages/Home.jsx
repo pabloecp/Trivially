@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { useApp } from "../lib/store.jsx";
 import { useFriends } from "../lib/friends.jsx";
 import { GAME_MODES, SOON_TILE, findMode } from "../modes/index.js";
@@ -8,7 +8,10 @@ import TvTopbar from "../components/home/TvTopbar.jsx";
 import HowToPlay from "../components/home/HowToPlay.jsx";
 import AppIcon from "../components/home/AppIcon.jsx";
 import CentralLobby from "../components/home/CentralLobby.jsx";
+import MatchIntro from "../components/home/MatchIntro.jsx";
+import MatchLobby from "../components/home/MatchLobby.jsx";
 import PartyPanel from "../components/home/PartyPanel.jsx";
+import PlayPage from "../components/home/PlayPage.jsx";
 import PlaySheet from "../components/home/PlaySheet.jsx";
 import { RoomDock, RoomHeader } from "../components/home/RoomBars.jsx";
 import Wordmark from "../components/home/Wordmark.jsx";
@@ -169,6 +172,12 @@ export default function Home() {
     return () => clearTimeout(t);
   }, [hasRoom]);
   const shownRoom = screen === "room" ? room || lastRoom.current : null;
+  // "¿Cómo quieres jugar?" is a page of its own (/jugar, PlayPage). While Home gives way to the room it keeps showing
+  // it (the address is already the room's).
+  const { pathname } = useLocation();
+  const onPlayPath = pathname === "/jugar" || pathname.startsWith("/jugar/");
+  const playShown = useRef(onPlayPath);
+  if (screen === "home" && !leaving) playShown.current = onPlayPath;
 
   // Picking a game from the tiles happens in two beats, for every player at once: first the tiles (or the guests'
   // "está eligiendo" panel) go, for TILES_OUT_MS; then the game's big card grows in and "Cómo se juega" slides in
@@ -214,7 +223,8 @@ export default function Home() {
     lastGame.current = { code: room?.code, game };
     if (before.code !== room?.code || before.game === game) return;
     const picked = findMode(game);
-    if (picked && !isHost) {
+    // A public match has no host: its games come from the roulette, which says so itself.
+    if (picked && !isHost && !room.matchmaking) {
       const host = room.hostName || "El anfitrión";
       showToast(picked.kind === "playlist" ? `${host} está preparando una playlist` : `${host} ha elegido ${picked.name}`, "play");
     }
@@ -339,19 +349,21 @@ export default function Home() {
       {/* Phones: the room's own bars, pinned to the top and the bottom (home.css hides them on wider screens). */}
       {shownRoom && !isCentral && <RoomHeader room={shownRoom} onToast={showToast} />}
 
-      <main className={`tv-main${screen === "room" ? " is-room" : ""}${centralScreen ? " is-central" : ""}`}>
+      <main className={`tv-main${screen === "room" ? " is-room" : screen === "home" && playShown.current ? " is-room is-playpage" : ""}${centralScreen ? " is-central" : ""}`}>
         {/* The site's address, at the top in plain letters but faint (phones): on the room screen, not on Home without a
             room. */}
         {!centralScreen && screen === "room" && <p className="tv-site-url">playtrivially.com</p>}
         {centralScreen ? (
           <CentralLobby room={shownRoom} />
+        ) : screen === "home" && playShown.current ? (
+          <PlayPage leaving={leaving} />
         ) : screen === "home" ? (
           <div className={`tv-home is-in-${entry}${leaving ? " is-leaving" : ""}${sheetOpen ? " is-behind" : ""}`}>
             <section className="tv-hero">
               <AppIcon edge />
               <Wordmark />
               <p className="tv-tagline">Trivia rápida para jugar solo o con amigos.</p>
-              <button ref={playRef} type="button" className="tv-play tv-shine" aria-haspopup="dialog" onClick={() => openSheet()}>
+              <button ref={playRef} type="button" className="tv-play tv-shine" onClick={() => nav("/jugar", { state: { from: "/" } })}>
                 <span className="tv-play-icon">
                   <Icon name="play" size={20} filled strokeWidth={1.5} />
                 </span>
@@ -363,7 +375,15 @@ export default function Home() {
         ) : (
           <div className={`tv-room${leaving ? " is-leaving" : ""}`}>
             <div className="tv-room-main">
-              {roomMode && ModeLobby ? (
+              {shownRoom.matchmaking ? (
+                // A public match waiting for players (nobody picks a game, it starts by itself once full), and before each
+                // of its games, the roulette and how it's played.
+                shownRoom.phase === "intro" ? (
+                  <MatchIntro room={shownRoom} />
+                ) : (
+                  <MatchLobby room={shownRoom} />
+                )
+              ) : roomMode && ModeLobby ? (
                 <div key={roomMode.id} className={`tv-room-row is-${enterKind}${lobbyOut ? " is-out" : ""}`}>
                   <ModeLobby room={lobbyRoom} onToast={showToast} />
                 </div>
@@ -455,12 +475,12 @@ export default function Home() {
                 </section>
               )}
             </div>
-            <PartyPanel room={shownRoom} onToast={showToast} />
+            <PartyPanel room={shownRoom} onToast={showToast} scores={Boolean(shownRoom.matchmaking) && shownRoom.phase !== "lobby"} />
           </div>
         )}
       </main>
 
-      {shownRoom && !leaving && !isCentral && <RoomDock room={shownRoom} onToast={showToast} />}
+      {shownRoom && !leaving && !isCentral && !shownRoom.matchmaking && <RoomDock room={shownRoom} onToast={showToast} />}
 
       <PlaySheet mode={sheetMode} joinCode={sheetJoinCode} open={sheetOpen} onClose={closeSheet} />
 

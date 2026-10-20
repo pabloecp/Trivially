@@ -558,6 +558,16 @@ export function AppProvider({ children }) {
         return enterRoom(res.state);
       },
 
+      // "Casual" or "Competitivo": into a public room of that kind and length (5, 10 or 15 rounds), which starts by
+      // itself once it's full; `size` is how many players it needs (2: "Duelo", or 5). Also "Buscar otra partida" at the end of one (the server leaves the old room first).
+      async findMatch(kind, rounds, size = 5, explicitUser) {
+        const current = explicitUser || userRef.current;
+        if (!current?.name) throw new Error("Debes identificarte antes de buscar partida");
+        const res = await emitAck("match:find", { user: current, kind, rounds, size });
+        if (!res.ok) throw new Error(res.error);
+        return enterRoom(res.state);
+      },
+
       // Whether a code opens a room, before asking for a name. An older server that doesn't know the check lets it
       // through, and the join itself says what's wrong.
       async checkRoom(code) {

@@ -25,7 +25,8 @@ export function useRoomChat(room, { focus = false } = {}) {
   const stuck = useRef(true); // the list is scrolled to the bottom
   const lastSent = useRef(0);
   const messages = room.chat || [];
-  const closed = room.phase === "countdown" || room.phase === "playing";
+  // The chat never pauses, not even while a round is played.
+  const closed = false;
 
   // New messages: stay at the bottom (unless reading older ones).
   useLayoutEffect(() => {

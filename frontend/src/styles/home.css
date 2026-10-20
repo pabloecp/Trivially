@@ -124,12 +124,11 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  max-width: 1120px;
+  /* As wide as the room's screens on every page, Home included, so the bar never moves. */
+  max-width: 1400px;
   margin: 0 auto;
   padding: calc(14px + env(safe-area-inset-top)) 16px 0;
   animation: tvFade 0.5s ease-out backwards;
-  /* It's wider on the room screen (below): glides between the two when Home swaps screens. */
-  transition: max-width 0.4s cubic-bezier(0.2, 0.8, 0.3, 1);
 }
 .tv-chip {
   display: inline-flex;
@@ -310,6 +309,26 @@
    on the left. The button never shrinks; a long player name gets cut with "…" instead. */
 .tv-topbar-start { display: flex; align-items: center; flex-shrink: 0; gap: 12px; }
 .tv-chip--leave { flex-shrink: 0; }
+/* "Volver" appearing (Inicio → "¿Cómo quieres jugar?"): it grows from nothing at the left, pushing the logo along; going
+   back to Inicio it shrinks away the same way, and the logo slides back. */
+.tv-topbar.is-back-in .tv-chip--leave,
+.tv-topbar.is-back-out .tv-chip--leave { overflow: hidden; }
+.tv-topbar.is-back-in .tv-chip--leave { animation: tvBackIn 0.9s cubic-bezier(0.4, 0, 0.2, 1) backwards; }
+.tv-topbar.is-back-out .tv-chip--leave { pointer-events: none; animation: tvBackOut 0.6s cubic-bezier(0.5, 0, 0.75, 0.3) forwards; }
+@keyframes tvBackIn {
+  from { max-width: 0; margin-right: -12px; padding-left: 0; padding-right: 0; opacity: 0; transform: scale(0.6); }
+  60% { opacity: 1; }
+  to { max-width: 160px; }
+}
+@keyframes tvBackOut {
+  from { max-width: 160px; }
+  40% { opacity: 1; }
+  to { max-width: 0; margin-right: -12px; padding-left: 0; padding-right: 0; opacity: 0; transform: scale(0.6); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tv-topbar.is-back-in .tv-chip--leave { animation: none; }
+  .tv-topbar.is-back-out .tv-chip--leave { display: none; }
+}
 .tv-topbar-end .tv-chip { max-width: min(62vw, 100%); }
 .tv-main--page { align-items: stretch; padding-top: 20px; }
 
@@ -449,10 +468,8 @@
 /* ---------- Room screen ---------- */
 /* The room is wider than the other screens: the game's panel and settings side by side, and the room's column. */
 .tv-main:has(> .tv-room),
-.tv-app:has(.tv-room) .tv-topbar,
 /* Pages as wide as the room's screens (the profile), so they don't leave empty bands at the sides. */
-.tv-main:has(> .tv-page--wide),
-.tv-app:has(.tv-page--wide) .tv-topbar { max-width: 1400px; }
+.tv-main:has(> .tv-page--wide) { max-width: 1400px; }
 .tv-main.is-room { padding-top: 14px; }
 .tv-room {
   display: flex;
@@ -3646,7 +3663,7 @@ fieldset.tv-setsec-body { display: grid; gap: 18px; min-width: 0; margin: 0; pad
    and the tab's name moves left to leave it room. */
 .tv-settab-wrap { position: relative; display: grid; min-width: 0; }
 .tv-settab.has-toggle { padding-right: 52px; }
-.tv-settab-switch { position: absolute; top: 50%; right: 10px; width: 36px; height: 22px; transform: translateY(-50%); }
+.tv-settab-switch { position: absolute; top: 50%; right: 10px; width: 36px; height: 22px; transform: translateY(-50%); z-index: 2; }
 .tv-settab-switch .tv-switch-knob { top: 3px; left: 3px; width: 16px; height: 16px; }
 .tv-settab-switch[aria-checked="true"] .tv-switch-knob { transform: translateX(14px); }
 

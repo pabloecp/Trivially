@@ -28,10 +28,11 @@ room.players.get("host-1").chattedAt = 0;
 mgr.sendChat(room, "host-1", "x".repeat(500));
 assert.equal(room.chat.at(-1).text.length, CHAT_MAX_LENGTH);
 
-// While a round is played the chat is closed, so nobody passes on the answer.
+// The chat never pauses, rounds being played included.
 room.phase = "playing";
 room.players.get("guest-2").chattedAt = 0;
-assert.throws(() => mgr.sendChat(room, "guest-2", "es Francia"), /se pausa/);
+mgr.sendChat(room, "guest-2", "¡vamos!");
+assert.equal(room.chat.at(-1).text, "¡vamos!");
 room.phase = "lobby";
 
 // The room keeps only the newest messages.
