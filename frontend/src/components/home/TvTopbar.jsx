@@ -40,12 +40,12 @@ export function useGoUp() {
 // → "¿Cómo quieres jugar?"), not each time a page that already had it opens.
 let hadBack = false;
 // How long "Volver" takes to slide in or out (home.css, tvBackIn / tvBackOut).
-const BACK_ANIM_MS = 950;
+const BACK_ANIM_MS = 450;
 
 // The button on the left of the logo goes back one step, which depends on where you are in the room:
 //  - the host, in a game's panel (`toModes`): back to the game menu, for everyone in the room;
-//  - anyone else in the room, the game menu included: out of the room. It asks first: the first tap turns it into
-//    "¿Salir de la sala?" (`confirmLeave`, for 3 s, shared through the store), the second one leaves;
+//  - anyone else in the room, the game menu included: out of the room. It asks first, in the modal "¿Seguro que
+//    quieres salir?" (`asking`, shared through the store; the top bar draws it), whose "Salir" calls `leaveNow`;
 //  - on a match's own screen (`inGame`): the top bar turns it into an "X" that opens a modal instead (see TvTopbar),
 //    which calls `leaveNow` when it is confirmed.
 // `press` is the button's onClick; outside a room it lets the Inicio link go home. The browser's Back button does the
@@ -59,7 +59,7 @@ export function useRoomExit({ onRoomScreen = true, onError } = {}) {
   const toModes =
     onRoomScreen && Boolean(room) && room.phase === "lobby" && Boolean(room.game) && room.hostId === user?.id && !isCentral;
   const inGame = onRoomScreen && Boolean(room) && room.phase !== "lobby";
-  const confirmLeave = leaveAsk && onRoomScreen && !toModes && !inGame;
+  const asking = leaveAsk && Boolean(room) && !inGame;
 
   // Out of the room right away, one step back: to the option of "¿Cómo quieres jugar?" the room came from (exitPath).
   // Replacing, not pushing: Back must not return to the room's address (/sala/CODE), which joins it again.
@@ -76,12 +76,8 @@ export function useRoomExit({ onRoomScreen = true, onError } = {}) {
       setGame(null).catch((err) => onError?.(err.message || "No se pudo volver a elegir juego"));
       return false;
     }
-    if (!confirmLeave) {
-      setLeaveAsk(true);
-      return false;
-    }
-    leaveNow();
-    return true;
+    setLeaveAsk(true);
+    return false;
   }
 
   function press(e) {
@@ -90,7 +86,7 @@ export function useRoomExit({ onRoomScreen = true, onError } = {}) {
     step();
   }
 
-  return { toModes, inGame, confirmLeave, press, step, leaveNow };
+  return { toModes, inGame, asking, press, step, leaveNow, cancelAsk: () => setLeaveAsk(false) };
 }
 
 // Same top bar on every screen: on the left the way back and the small logo with "trivially", which is just the
@@ -110,7 +106,7 @@ export default function TvTopbar() {
   const onHome = !room && pathname === "/";
   const goUp = useGoUp();
   const [modesErr, setModesErr] = useState("");
-  const { toModes, inGame, confirmLeave, press, leaveNow } = useRoomExit({
+  const { toModes, inGame, asking, press, leaveNow, cancelAsk } = useRoomExit({
     onRoomScreen: pathname === roomTarget,
     onError: setModesErr,
   });
@@ -153,21 +149,19 @@ export default function TvTopbar() {
     leaveButton = (
       <button
         type="button"
-        className={`tv-chip tv-chip--leave${confirmLeave ? " is-confirm" : ""}`}
-        aria-label={toModes ? "Volver a los juegos" : confirmLeave ? "Toca otra vez para salir de la sala" : "Volver: salir de la sala"}
+        className="tv-chip tv-chip--leave"
+        aria-label={toModes ? "Volver a los juegos" : "Volver: salir de la sala"}
+        aria-haspopup={toModes ? undefined : "dialog"}
         onClick={press}
       >
         <span className="tv-avatar tv-avatar--empty">
-          <Icon name={confirmLeave ? "logout" : "back"} size={20} strokeWidth={2.6} />
+          <Icon name="back" size={20} strokeWidth={2.6} />
         </span>
         {toModes && modesErr ? (
           <span className="tv-chip-name">{modesErr}</span>
         ) : (
-          <>
-            {/* Phones only have room for the icon (home.css), and "¿Salir?" while asking. */}
-            <span className="tv-chip-name tv-chip-long">{confirmLeave ? "¿Salir de la sala?" : "Volver"}</span>
-            {confirmLeave && <span className="tv-chip-name tv-chip-short">¿Salir?</span>}
-          </>
+          // Phones only have room for the icon (home.css).
+          <span className="tv-chip-name tv-chip-long">Volver</span>
         )}
       </button>
     );
@@ -199,7 +193,7 @@ export default function TvTopbar() {
 
   return (
     <>
-      <header className={`tv-topbar${confirmLeave ? " is-confirm" : ""}${backAnim ? ` is-back-${backAnim}` : ""}`}>
+      <header className={`tv-topbar${backAnim ? ` is-back-${backAnim}` : ""}`}>
         <div className="tv-topbar-start">
           {shownButton}
           <div className="tv-brand">
@@ -233,6 +227,22 @@ export default function TvTopbar() {
           <ProfileChip user={user} />
         </div>
       </header>
+      {/* "Volver" out of the room, outside a match (this bar, the phones' room bar or the browser's Back): the same modal
+          as the room's "Salir de la sala". */}
+      <ConfirmDialog
+        open={asking}
+        icon={isCentral ? "tv" : "logout"}
+        title={isCentral ? "¿Dejar de ser el dispositivo central?" : "¿Seguro que quieres salir?"}
+        text={
+          isCentral
+            ? "Esta pantalla saldrá de la sala."
+            : "Saldrás de la sala. Para volver a entrar necesitarás el código o el enlace de invitación."
+        }
+        cancelLabel="Quedarme"
+        confirmLabel="Salir"
+        onCancel={cancelAsk}
+        onConfirm={leaveNow}
+      />
       <ConfirmDialog
         open={leaving && inGame}
         icon={isCentral ? "tv" : "logout"}

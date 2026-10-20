@@ -1,12 +1,12 @@
 import Icon from "./Icon.jsx";
 
 const STEPS = [
-  { icon: "hash", color: "music", title: "Crea una sala", text: "Comparte el código con tus amigos o juega solo." },
-  { icon: "users", color: "culture", title: "Elige un juego", text: "Trivia, canciones, países, rango o campo de minas." },
-  { icon: "bolt", color: "site", title: "Responde antes que nadie", text: "Cuanto más rápido aciertes, más puntos sumas." },
+  { icon: "play", color: "music", title: "Elige cómo jugar", text: "Solo, con amigos o contra cualquiera." },
+  { icon: "bolt", color: "culture", title: "Responde rápido", text: "Cada ronda es una pregunta distinta." },
+  { icon: "star", color: "site", title: "Suma puntos", text: "Gana quien más acierte y más rápido." },
 ];
 
-// Home: how a game works, in three steps that fit every game.
+// Home: how it works, in three steps: Jugar's three options (PlayPage), the games, and the scoring every game shares.
 export default function HowToPlay() {
   return (
     <section className="tv-card tv-howto" aria-labelledby="tv-howto-title">

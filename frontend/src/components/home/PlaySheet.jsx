@@ -6,7 +6,7 @@ import { findMode } from "../../modes/index.js";
 import Avatar from "./Avatar.jsx";
 import Icon from "./Icon.jsx";
 import Segmented from "./Segmented.jsx";
-import { MATCH_GAMES, MATCH_KINDS, MATCH_ROUNDS, MATCH_SIZES, gamesText } from "./matchInfo.js";
+import { MATCH_KINDS, MATCH_ROUNDS, MATCH_SIZES, gamesFor, gamesText } from "./matchInfo.js";
 import "../../styles/match.css";
 
 // A room's code is five letters and numbers (ROOM_CODE_LENGTH on the server).
@@ -315,8 +315,8 @@ export default function PlaySheet({ mode, joinCode, open, onClose }) {
                           {match ? (
                             <div className="tv-pm-body">
                               <div className="tv-pm-facts">
-                                <span className="tv-pm-games" aria-label="Trivia, Rango y Campo de minas">
-                                  {MATCH_GAMES.map((id) => {
+                                <span className="tv-pm-games" aria-label="Juegos que pueden tocar">
+                                  {gamesFor(k.id).map((id) => {
                                     const m = findMode(id);
                                     return (
                                       <span key={id} className={`tv-pm-game tv-c-${m.color}`}>

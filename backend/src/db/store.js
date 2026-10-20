@@ -1,3 +1,4 @@
+import { applyRank, rankDeltas } from "../game/rank.js";
 import { hasLink, NAME_LINK_ERROR } from "../moderation/links.js";
 import { assignUsername, changeUsername, normalizeUsername, usernameError, usernameStatus } from "../auth/username.js";
 import crypto from "node:crypto";
@@ -31,7 +32,8 @@ export function sanitizeUser(user) {
   const { passwordHash, passwordSalt, spotify, usernameHistory, usernameChanges, usernameAuto, friendCode, ...safe } = user;
   return {
     ...safe,
-    history: publicHistory(user.history),
+    // The account's own: each match with what it answered (its "Ver respuestas").
+    history: publicHistory(user.history, { answers: true }),
     spotify: publicSpotify(spotify),
     role: effectiveRole(user),
     ...(user.isGuest ? {} : { usernameInfo: usernameStatus(user) }),
@@ -39,11 +41,17 @@ export function sanitizeUser(user) {
 }
 
 /**
- * A match history as it goes out: each match without its rounds (they stay on the server, with the questions' ids),
- * only how many questions it had and whether it was already reported.
+ * A match history as it goes out: how many questions each match had and whether it was already reported, never the
+ * room. Only to the account itself (`answers`), its rounds too, as its match summary shows them (prompt, right answer,
+ * what it answered, points), without the questions' ids, which stay on the server.
  */
-function publicHistory(history = []) {
-  return history.map(({ rounds, room, ...match }) => ({ ...match, questions: (rounds || []).length, reported: Boolean(match.reported) }));
+function publicHistory(history = [], { answers = false } = {}) {
+  return history.map(({ rounds, room, ...match }) => ({
+    ...match,
+    questions: (rounds || []).length,
+    reported: Boolean(match.reported),
+    ...(answers ? { rounds: (rounds || []).map(({ questionId, ...round }) => round) } : {}),
+  }));
 }
 
 /** Public profile — only safe fields for other users to see */
@@ -56,6 +64,8 @@ export function sanitizeUserPublic(user) {
     avatar: user.avatar,
     isGuest: Boolean(user.isGuest),
     stats: user.stats || {},
+    // Competitivo's rank (game/rank.js), null before the first competitive match.
+    rank: user.rank || null,
     // The last matches, like the stats: shown on the profile.
     history: publicHistory(user.history),
     googleLinked: Boolean(user.googleId),
@@ -525,14 +535,20 @@ export const MATCH_HISTORY_LIMIT = 10;
  * (`user.history`): which game, when, the place they finished in, how many played, their points, who they played
  * against, the room and their rounds (each question with its answer, for "Reportar partida": reportHistoryMatch).
  * `players` come in final position (a tiebreak's winner first); `game` is the game's id ("playlist" for a playlist).
+ * `rank` ({ rounds, winnerId }) only for a Competitivo match: each account's rank points move by its place
+ * (game/rank.js), and the history entry keeps how many (`rank`).
  */
-export function applyMatchStats(store, players, { game = null, at = new Date().toISOString(), room = null } = {}) {
+export function applyMatchStats(store, players, { game = null, at = new Date().toISOString(), room = null, rank = null } = {}) {
   const ranked = [...players].sort((a, b) => b.score - a.score);
   const order = players.map((p) => p.id);
+  const deltas = rank ? rankDeltas(players, rank) : null;
+  const [first, second] = players;
+  const soleWinner = first && second && (first.score > second.score || first.id === rank?.winnerId) ? first.id : null;
   players.forEach((player, index) => {
     if (player.isGuest || player.id?.startsWith("gst_")) return;
     const user = store.users[player.id];
     if (!user || user.isGuest) return;
+    if (deltas) applyRank(user, deltas.get(player.id) || 0, player.id === soleWinner);
     const entry = {
       at,
       game,
@@ -542,6 +558,7 @@ export function applyMatchStats(store, players, { game = null, at = new Date().t
       opponents: players.filter((p) => p.id !== player.id).slice(0, 7).map((p) => p.name),
       room,
       rounds: (player.rounds || []).map((r) => ({ ...r })),
+      ...(deltas ? { rank: deltas.get(player.id) || 0 } : {}),
     };
     user.history = [entry, ...(user.history || [])].slice(0, MATCH_HISTORY_LIMIT);
   });

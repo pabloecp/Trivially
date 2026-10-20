@@ -9,7 +9,8 @@ import { STYLES as MINES_STYLES } from "./minas/minesInfo.js";
 import { MIN_QUESTIONS as RAIN_MIN_QUESTIONS } from "./lluvia/rainInfo.js";
 import { urlCode } from "../lib/hiddenCode.js";
 
-// The games shown on the room screen ("Elige el juego"; a game may have its own "Modos de Juego" in its settings).
+// The games shown on the room screen ("Elige el juego"; a game may have its own "Modos de juego" in its settings,
+// variants that change its questions or rules, apart from its "Tipo de respuestas").
 // "Trivia" is the main one (`kind: "main"`, its tile as wide as two): questions of every topic, each answered its own
 // way. The others (`kind: "extra"`) have their own way of playing; their tiles go two by two under it. The "Playlist"
 // (`kind: "playlist"`) isn't a game but several of them one after another, each with its settings: it has no tile, but

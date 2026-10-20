@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import Icon from "./Icon.jsx";
-import { api } from "../../lib/api.js";
+import MatchSummarySheet from "./MatchSummarySheet.jsx";
 import { findMode } from "../../modes/index.js";
 // Each game's colour lives in its own styles.
 import "../../styles/quiz.css";
@@ -9,7 +9,7 @@ import "../../styles/mines.css";
 import "../../styles/playlist.css";
 
 // "Hoy, 18:30", "Ayer, 21:05", "12 oct".
-function whenText(iso) {
+export function whenText(iso) {
   const date = new Date(iso);
   if (Number.isNaN(date.getTime())) return "";
   const time = date.toLocaleTimeString("es", { hour: "2-digit", minute: "2-digit" });
@@ -26,55 +26,9 @@ const FIRST = 3;
 // "1 jugador", "4 jugadores".
 const playersText = (n) => `${n} ${n === 1 ? "jugador" : "jugadores"}`;
 
-// "Reportar" on one of this account's matches: the first tap turns it red to confirm, the second sends the whole match
-// as a question report (POST /api/history/report: every question with its answer), and it stays "Reportada".
-function ReportMatch({ match, onError, onReported }) {
-  const [state, setState] = useState(match.reported ? "sent" : "idle");
-  // Reported from the other list (the profile's or "Ver todas"): this one shows it too.
-  useEffect(() => {
-    if (match.reported) setState("sent");
-  }, [match.reported]);
-
-  // Not confirmed in a few seconds: back to the start.
-  useEffect(() => {
-    if (state !== "confirm") return undefined;
-    const t = setTimeout(() => setState("idle"), 4000);
-    return () => clearTimeout(t);
-  }, [state]);
-
-  async function onClick() {
-    if (state === "idle") return setState("confirm");
-    if (state !== "confirm") return;
-    setState("sending");
-    try {
-      await api("/api/history/report", { method: "POST", body: { at: match.at } });
-      setState("sent");
-      onReported?.(match.at);
-    } catch (e) {
-      setState("idle");
-      onError?.(e.message || "No se pudo enviar el reporte");
-    }
-  }
-
-  const label = { idle: "Reportar", confirm: "¿Enviar?", sending: "Enviando…", sent: "Reportada" }[state];
-  return (
-    <button
-      type="button"
-      className={`tv-history-report${state === "confirm" ? " is-on" : ""}`}
-      onClick={onClick}
-      onBlur={() => state === "confirm" && setState("idle")}
-      disabled={state === "sending" || state === "sent"}
-      aria-label={state === "idle" ? "Reportar esta partida" : label}
-    >
-      <Icon name={state === "sent" ? "check" : "flag"} size={13} strokeWidth={2.6} />
-      <span>{label}</span>
-    </button>
-  );
-}
-
 // One match of the history: the game with its icon and colour, when, how many played, the place and the points, and
-// on this account's own profile its "Reportar" (a match saved before the questions were kept sends only the match).
-function MatchRow({ match: m, canReport, onError, onReported }) {
+// when the account's own answers came with it (sanitizeUser), "Respuestas", which opens them (MatchSummarySheet).
+export function MatchRow({ match: m, onAnswers }) {
   const mode = findMode(m.game);
   const first = m.position === 1 && m.players > 1;
   return (
@@ -88,7 +42,12 @@ function MatchRow({ match: m, canReport, onError, onReported }) {
           {whenText(m.at)} · {playersText(m.players || 1)}
         </small>
       </span>
-      {canReport && <ReportMatch match={m} onError={onError} onReported={onReported} />}
+      {onAnswers && m.rounds?.length > 0 && (
+        <button type="button" className="tv-history-report tv-history-answers" onClick={() => onAnswers(m)} aria-label="Ver tus respuestas de esta partida">
+          <Icon name="list" size={13} strokeWidth={2.6} />
+          <span>Respuestas</span>
+        </button>
+      )}
       <span className={`tv-history-place${first ? " is-first" : ""}`}>
         {first && <Icon name="crown" size={14} filled strokeWidth={1.6} />}
         <strong>{m.position}.º</strong>
@@ -104,7 +63,7 @@ const SHEET_VISIBLE = 5;
 // "Ver todas": every match kept, in the same window as a match's answers (MatchSummarySheet: the Jugar sheet's look,
 // the head fixed, the list scrolling under it SHEET_VISIBLE at a time with the same thin bar). Escape, the close
 // button and a tap outside close it.
-function HistorySheet({ open, matches, canReport, onError, onReported, onClose }) {
+function HistorySheet({ open, matches, onAnswers, onClose }) {
   const [mounted, setMounted] = useState(open);
   const closeRef = useRef(null);
   const listRef = useRef(null);
@@ -191,7 +150,7 @@ function HistorySheet({ open, matches, canReport, onError, onReported, onClose }
             style={listHeight ? { maxHeight: listHeight } : undefined}
           >
             {matches.map((m) => (
-              <MatchRow key={m.at} match={m} canReport={canReport} onError={onError} onReported={onReported} />
+              <MatchRow key={m.at} match={m} onAnswers={onAnswers} />
             ))}
           </ol>
         </div>
@@ -201,36 +160,53 @@ function HistorySheet({ open, matches, canReport, onError, onReported, onClose }
 }
 
 /**
- * The profile's match history (user.history, newest first; the server keeps the last ten, db/store.js
- * applyMatchStats). The first FIRST show; "Ver todas" opens every match in a window (HistorySheet). On this account's
- * own profile (`canReport`), each match can be reported, all its questions at once.
+ * A match history (user.history, newest first; the server keeps the last ten, db/store.js applyMatchStats). The first
+ * FIRST show; "Ver todas" opens every match in a window (HistorySheet), and each match with its rounds (the account's
+ * own) has "Respuestas", what it answered round by round (MatchSummarySheet). With a `title` (the /jugar column), the
+ * title's row has "Ver todas (n)" on the right; otherwise (the profile) it goes under the list.
  */
-export default function MatchHistory({ matches: saved = [], canReport = false, onError }) {
+export default function MatchHistory({ matches = [], title = null }) {
   const [open, setOpen] = useState(false);
-  // Matches reported on this visit, so both lists show "Reportada" without reloading the profile.
-  const [reported, setReported] = useState(() => new Set());
-  const onReported = (at) => setReported((set) => new Set(set).add(at));
-  const matches = saved.map((m) => (reported.has(m.at) ? { ...m, reported: true } : m));
-  if (!matches.length) return <p className="tv-hint tv-history-empty">Aún no hay partidas terminadas.</p>;
+  const [answers, setAnswers] = useState(null); // the match whose answers are open
+  const more = matches.length > FIRST;
+  const head = title && (
+    <div className="tv-party-title">
+      <h2>{title}</h2>
+      {more && (
+        <button type="button" className="tv-history-more tv-history-more--head" onClick={() => setOpen(true)}>
+          Ver todas ({matches.length})
+        </button>
+      )}
+    </div>
+  );
+  if (!matches.length) {
+    return (
+      <>
+        {head}
+        <p className="tv-hint tv-history-empty">Aún no hay partidas terminadas.</p>
+      </>
+    );
+  }
   return (
     <>
+      {head}
       <ol className="tv-history">
         {matches.slice(0, FIRST).map((m) => (
-          <MatchRow key={m.at} match={m} canReport={canReport} onError={onError} onReported={onReported} />
+          <MatchRow key={m.at} match={m} onAnswers={setAnswers} />
         ))}
       </ol>
-      {matches.length > FIRST && (
+      {more && !title && (
         <button type="button" className="tv-history-more" onClick={() => setOpen(true)}>
           Ver todas ({matches.length})
         </button>
       )}
-      <HistorySheet
-        onReported={onReported}
-        open={open}
-        matches={matches}
-        canReport={canReport}
-        onError={onError}
-        onClose={() => setOpen(false)}
+      <HistorySheet open={open} matches={matches} onAnswers={setAnswers} onClose={() => setOpen(false)} />
+      <MatchSummarySheet
+        open={Boolean(answers)}
+        rounds={answers?.rounds || []}
+        title={findMode(answers?.game)?.name || "Tu partida"}
+        showGame={answers?.game === "playlist"}
+        onClose={() => setAnswers(null)}
       />
     </>
   );

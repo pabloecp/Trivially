@@ -38,7 +38,7 @@ function Guard({ children }) {
 //
 // It also makes the browser's Back button work as the "Volver" button while the room waits. The room's screen
 // (/sala/CODE) is always pushed on top of Home (/), so Back lands on Home with the room still open: that is read as
-// a press of "Volver" (back to the game menu, or "¿Salir de la sala?" and then out), and the room's screen is
+// a press of "Volver" (back to the game menu, or the modal "¿Seguro que quieres salir?"), and the room's screen is
 // pushed again, so the next Back asks again. Arriving by an invite link has no Home below it, so one is put there.
 function RoomNavigator() {
   const { room, kickedNotice } = useApp();

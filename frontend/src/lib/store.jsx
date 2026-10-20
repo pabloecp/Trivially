@@ -146,14 +146,9 @@ export function AppProvider({ children }) {
     offerRef.current = next;
     setCentralOfferState(next);
   }
-  // "Volver" out of the room asks first (useRoomExit): true for 3 s after the first tap. It lives here because the
-  // top bar, the phones' room bar and the browser's Back button all share it.
+  // "Volver" out of the room asks first (useRoomExit): true while the modal "¿Seguro que quieres salir?" is open. It
+  // lives here because the top bar, the phones' room bar and the browser's Back button all open it.
   const [leaveAsk, setLeaveAsk] = useState(false);
-  useEffect(() => {
-    if (!leaveAsk) return undefined;
-    const timer = setTimeout(() => setLeaveAsk(false), 3000);
-    return () => clearTimeout(timer);
-  }, [leaveAsk]);
   useEffect(() => {
     if (!room) setLeaveAsk(false);
   }, [room]);
@@ -430,6 +425,15 @@ export function AppProvider({ children }) {
           applyUser(res.user);
         }
         return res.user;
+      },
+
+      // The signed-in account as the server has it now: its stats, history and rank change with every match, and this
+      // page only loads them once (the /jugar page asks again when it opens).
+      async refreshUser() {
+        const current = userRef.current;
+        if (!current || current.isGuest) return;
+        const d = await api("/api/me");
+        if (d.user && !d.user.isGuest && d.user.id === userRef.current?.id) applyUser(d.user);
       },
 
       // The account's @username (unique; a few changes a month). The name for the games is updateUsername above.

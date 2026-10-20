@@ -108,9 +108,16 @@
   box-shadow: inset 0 0 0 1px var(--tv-line);
   text-align: center;
   overflow: hidden;
-  animation: tvRise 0.45s var(--tv-spring) backwards;
+  animation: var(--tv-box-in);
 }
-.tv-ml { gap: 10px; }
+.tv-ml { gap: 22px; }
+.tv-ml-main { display: flex; flex-direction: column; align-items: center; gap: 10px; min-width: 0; }
+/* Wide screens: the search on the left and the games on the right, side by side and centred. */
+@media (min-width: 1100px) {
+  .tv-ml { flex-direction: row; align-items: center; justify-content: center; gap: clamp(32px, 5vw, 72px); }
+  .tv-ml-main { flex: 0 1 420px; }
+  .tv-ml .tv-ml-games { flex: 0 0 auto; width: auto; max-width: none; margin-top: 0; }
+}
 
 /* The kind's icon floats up and down while it searches; once full it pops into a tick and stays still. */
 .tv-ml-core {
@@ -210,7 +217,7 @@
 }
 .tv-ml-name.is-waiting { font-weight: 700; color: var(--tv-text-3); }
 
-.tv-ml-games { display: grid; gap: 10px; justify-items: center; width: 100%; max-width: 560px; margin-top: 8px; }
+.tv-ml-games { display: grid; gap: 10px; justify-items: center; width: 100%; max-width: 760px; }
 .tv-ml-games p { color: var(--tv-text-3); }
 .tv-ml-reel { width: 100%; }
 /* The same size whether it says "Cancelar búsqueda" or "Salir", so nothing moves when the room fills. */
@@ -308,6 +315,8 @@
   border-radius: 26px;
   background: rgba(255, 255, 255, 0.18);
 }
+/* The game's way, smaller still, under its name ("Cerradas"). */
+.tv-mi-card-way { margin-top: -8px; padding: 0 8px; font-weight: 700; font-size: 11px; line-height: 1.1; text-align: center; white-space: nowrap; opacity: 0.8; }
 /* The game's name, small, under the icon. */
 .tv-mi-card-name {
   padding: 0 10px;
@@ -408,28 +417,14 @@
   background: var(--c2);
   color: var(--on);
 }
-.tv-mi-progress { display: grid; gap: 10px; justify-items: center; }
-.tv-mi-bar {
-  width: 100%;
-  height: 8px;
-  overflow: hidden;
-  border-radius: 99px;
-  background: var(--tv-option-bg);
-}
-.tv-mi-bar span {
-  display: block;
-  height: 100%;
-  border-radius: inherit;
-  background: var(--c2);
-  transform: scaleX(0);
-  transform-origin: left;
-}
-.tv-mi-count {
-  font-weight: 800;
-  font-size: 15px;
-  color: var(--tv-text-2);
-  animation: tvFade 0.3s ease-out;
-}
+/* Under the steps, on one row: a line emptying (it starts full) and, at its end, a game's round clock (.tv-clock) counting down to
+   the first round, its ring in the game's colour. */
+.tv-mi-progress { display: flex; align-items: center; gap: 16px; }
+.tv-mi-bar { flex: 1; min-width: 0; height: 8px; overflow: hidden; border-radius: 99px; background: var(--tv-option-bg); }
+.tv-mi-progress .tv-mi-clock { flex-shrink: 0; order: 1; }
+.tv-mi-bar span { display: block; height: 100%; border-radius: inherit; background: var(--c2); transform: scaleX(0); transform-origin: left; }
+.tv-mi-clock { grid-area: auto; }
+.tv-mi-clock .tv-clock-fill { stroke: var(--c2); }
 
 @media (max-width: 520px) {
   .tv-mi-step { font-size: 15px; }
@@ -462,16 +457,49 @@
 .tv-play-tile-blurb { font-weight: 800; font-size: 15px; line-height: 1.3; opacity: 0.85; }
 .tv-play-tile .tv-mode-watermark { width: 170px; height: 170px; right: -28px; bottom: -30px; }
 
-/* The settings beside the chosen option's card. */
-.tv-play-opts { gap: 18px; }
-.tv-play-form { display: grid; gap: 18px; align-content: start; animation: tvSwap 0.45s var(--tv-ease-out) backwards; }
-.tv-play-field { display: grid; gap: 10px; }
-.tv-play-field .tv-mono-label { color: var(--tv-text-3); }
-.tv-play-opts .tv-seg-btn { height: 62px; }
-.tv-play-games { display: flex; flex-wrap: wrap; gap: 8px 16px; margin: 0; padding: 0; list-style: none; }
-.tv-play-games li { display: inline-flex; align-items: center; gap: 8px; font-weight: 800; font-size: 15px; color: var(--tv-text-2); }
-.tv-play-games .tv-badge { width: 34px; height: 34px; border-radius: 11px; box-shadow: 0 3px 0 var(--edge); }
+/* The settings beside the chosen option's card, in tabs like a room's ("Partida" | "Juegos", "Crear sala" | "Unirme"),
+   in the option's colour: its tv-c-* class gives the colour, these make it the settings' brand (the chosen tab's
+   line, the chosen choices, a box's focus ring). */
+.tv-play-opts {
+  gap: 18px;
+  --brand: var(--c2);
+  --on-brand: var(--on);
+  --brand-text: var(--c1);
+  --border-focus: var(--c2);
+}
+.tv-play-form { display: grid; gap: 18px; align-content: start; }
 .tv-play-note { margin: 0; font-weight: 700; font-size: 14px; color: var(--tv-text-3); }
+
+
+.tv-play-rooms .tv-invite-friend { padding: 8px 8px 8px 10px; }
+.tv-play-rooms .tv-avatar { width: 36px; height: 36px; }
+.tv-play-rooms .tv-invite-friend-text small { color: var(--tv-text-3); }
+.tv-play-rooms-game { width: 30px; height: 30px; border-radius: 10px; box-shadow: 0 3px 0 var(--edge); }
+.tv-play-empty { margin: 0; padding: 12px 14px; border-radius: 16px; background: var(--tv-option-bg); font-weight: 700; font-size: 14px; color: var(--tv-text-3); }
+.tv-play-empty a { color: var(--tv-text); font-weight: 800; text-decoration: none; }
+.tv-play-empty a:hover { color: var(--brand-text); }
+
+/* The player's column (PlaySide.jsx), where a room's own column goes: who plays, friends online, the friends sheet. */
+.tv-play-me { gap: 14px; }
+.tv-play-me-row { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.tv-play-me-text { display: grid; gap: 2px; min-width: 0; }
+.tv-play-me-text strong { overflow: hidden; font-family: var(--tv-display); font-weight: 800; font-size: 20px; color: var(--tv-text); text-overflow: ellipsis; white-space: nowrap; }
+.tv-play-me-text small { font-weight: 700; font-size: 13px; color: var(--tv-text-3); }
+.tv-play-me-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; margin: 0; }
+.tv-play-me-stats > div { display: grid; gap: 2px; min-width: 0; padding: 8px 10px; border-radius: 12px; background: rgba(255, 255, 255, 0.05); }
+.tv-play-me-stats dt { overflow: hidden; font-weight: 700; font-size: 11px; color: var(--tv-text-3); text-overflow: ellipsis; white-space: nowrap; }
+.tv-play-me-stats dd { margin: 0; font-family: var(--tv-display); font-weight: 800; font-size: 20px; color: var(--tv-text); }
+.tv-play-me-guest { display: grid; gap: 10px; }
+.tv-play-me-guest p { margin: 0; font-weight: 700; font-size: 13px; line-height: 1.35; color: var(--tv-text-2); }
+.tv-play-me-links { display: flex; align-items: center; gap: 12px; }
+.tv-play-me-links .tv-btn { text-decoration: none; }
+.tv-play-me-login { font-weight: 800; font-size: 14px; color: var(--tv-text-2); text-decoration: none; }
+.tv-play-me-login:hover { color: var(--tv-text); }
+.tv-play-friends { display: grid; gap: 10px; margin-top: 6px; }
+.tv-play-perks { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.tv-play-perks li { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 14px; background: var(--tv-option-bg); font-weight: 700; font-size: 13px; line-height: 1.3; color: var(--tv-text-2); }
+.tv-play-perks svg { flex-shrink: 0; color: var(--tv-text-3); }
+.tv-play-side-badge { display: grid; place-items: center; min-width: 20px; height: 20px; padding: 0 6px; border-radius: 999px; background: var(--p-bad, #ff4d5e); color: #fff; font-size: 12px; }
 
 @media (max-width: 760px) {
   .tv-play-grid { grid-template-columns: 1fr; }
@@ -484,97 +512,121 @@
   .tv-main.is-room.is-playpage { padding-top: 14px; padding-bottom: calc(24px + env(safe-area-inset-bottom)); }
 }
 
-/* The two modes ("Duelo", "Todos contra todos"): big buttons in the option's colour. The chosen one is full, lifted on
-   its edge and ticked; the other one faded, until the pointer is on it. */
-.tv-play-modes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
-.tv-play-mode {
-  position: relative;
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  min-height: 96px;
-  padding: 16px;
-  border: 0;
-  border-radius: 22px;
-  background: var(--c2);
-  box-shadow: 0 5px 0 var(--edge);
-  color: var(--on);
-  text-align: left;
-  cursor: pointer;
-  opacity: 0.42;
-  transition: opacity 0.2s ease, transform 0.18s var(--tv-spring), box-shadow 0.18s ease;
-}
-.tv-play-mode:hover { opacity: 0.75; transform: translateY(-2px); box-shadow: 0 7px 0 var(--edge); }
-.tv-play-mode:active { transform: translateY(4px); box-shadow: 0 1px 0 var(--edge); }
-.tv-play-mode.is-on { opacity: 1; }
-.tv-play-mode-icon {
+
+
+/* PlaySide's last matches (the profile's rows, a little tighter for the column) and its "Ver todas". */
+.tv-play-history { gap: 6px; }
+.tv-play-history .tv-history-row { gap: 10px; padding: 8px 10px; border-radius: 14px; }
+.tv-play-history .tv-history-icon { width: 34px; height: 34px; border-radius: 11px; }
+.tv-play-history .tv-history-main strong { font-size: 14px; }
+.tv-play-history .tv-history-main small,
+.tv-play-history .tv-history-place small { font-size: 12px; }
+.tv-play-side-more { font-weight: 800; font-size: 13px; color: var(--tv-text-3); text-decoration: none; }
+.tv-play-side-more:hover { color: var(--tv-text); }
+
+/* /jugar's big card: the option's name never breaks ("Competitivo" on a narrow card), it shrinks with the card. */
+.tv-playpage .tv-mstage { container-type: inline-size; }
+.tv-playpage .tv-mstage-name { font-size: min(clamp(44px, 5vw, 76px), 15cqi); }
+
+/* Competitivo: the player's rank in their column (PlaySide's RankCard), in its tier's colour (--rank). */
+.tv-play-rank { display: grid; gap: 10px; }
+.tv-play-rank-row { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.tv-play-rank-badge {
   display: grid;
   place-items: center;
   flex-shrink: 0;
-  width: 48px;
-  height: 48px;
-  border-radius: 15px;
-  background: rgba(255, 255, 255, 0.22);
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  background: var(--rank);
+  box-shadow: 0 3px 0 color-mix(in srgb, var(--rank) 60%, #000);
+  color: #1b1b1f;
 }
-.tv-play-mode-text { display: grid; gap: 2px; min-width: 0; }
-.tv-play-mode-text strong { font-family: var(--tv-display); font-weight: 600; font-size: 21px; line-height: 1.1; }
-.tv-play-mode-text span { font-weight: 800; font-size: 14px; opacity: 0.85; }
-.tv-play-mode-tick {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  display: grid;
-  place-items: center;
-  width: 26px;
-  height: 26px;
-  border-radius: 50%;
-  background: var(--on);
-  color: var(--c2);
-  transform: scale(0);
-  transition: transform 0.3s var(--tv-spring);
-}
-.tv-play-mode.is-on .tv-play-mode-tick { transform: scale(1); }
+.tv-play-rank-text { display: grid; flex: 1; gap: 1px; min-width: 0; }
+.tv-play-rank-text small { font-weight: 700; font-size: 12px; color: var(--tv-text-3); }
+.tv-play-rank-text strong { overflow: hidden; font-family: var(--tv-display); font-weight: 800; font-size: 22px; line-height: 1.1; color: var(--rank); text-overflow: ellipsis; white-space: nowrap; }
+.tv-play-rank-pts { display: grid; justify-items: end; flex-shrink: 0; }
+.tv-play-rank-pts strong { font-family: var(--tv-display); font-weight: 800; font-size: 20px; line-height: 1.1; color: var(--tv-text); }
+.tv-play-rank-pts small { font-weight: 700; font-size: 12px; color: var(--tv-text-3); }
+.tv-play-rank-bar { overflow: hidden; height: 8px; border-radius: 999px; background: rgba(255, 255, 255, 0.08); }
+.tv-play-rank-bar span { display: block; height: 100%; border-radius: inherit; background: var(--rank); transition: width 0.6s var(--tv-ease-out); }
+.tv-play-rank-next { margin: 0; font-weight: 700; font-size: 12px; color: var(--tv-text-3); }
 
-/* The length, secondary: a plain, short switch. */
-.tv-play-opts .tv-play-rounds .tv-seg-btn { height: 42px; font-size: 14px; }
 
-/* The games going slowly past the marker, round and round, like a roulette that hasn't stopped yet. */
-.tv-play-reel {
-  position: relative;
-  height: 124px;
-  overflow: hidden;
-  border-radius: 18px;
-  background: var(--tv-bg);
-  -webkit-mask-image: linear-gradient(90deg, transparent, #000 18%, #000 82%, transparent);
-  mask-image: linear-gradient(90deg, transparent, #000 18%, #000 82%, transparent);
+/* Privada's "Unirme a una sala": the code on one dark strip, like a setting's choices, and "Entrar a la sala" under it. A box to write in:
+   flat, with a ring in the option's colour while focused (red when the code was wrong). */
+.tv-optrow-opts.tv-play-codestrip { grid-auto-flow: row; grid-template-columns: minmax(0, 1fr); align-items: center; }
+.tv-play-codestrip:focus-within { box-shadow: 0 0 0 2px var(--brand); }
+.tv-play-codestrip:has([aria-invalid="true"]) { box-shadow: 0 0 0 2px var(--p-bad); }
+.tv-play-codeinput {
+  min-width: 0;
+  height: 42px;
+  padding: 0 12px;
+  border: 0;
+  background: none;
+  color: var(--tv-text);
+  font-family: inherit;
+  font-weight: 800;
+  font-size: 18px;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  outline: none;
 }
-.tv-play-reel { --card-top: 20px; }
-.tv-play-reel .tv-mi-pin { left: -11px; width: 22px; height: 14px; }
-.tv-play-reel-track {
-  position: absolute;
-  top: var(--card-top);
-  left: 0;
+.tv-play-codeinput::placeholder { font-size: 14px; letter-spacing: 0; text-transform: none; color: var(--tv-text-3); }
+
+/* The games of a public match (MatchGames.jsx), only to read: the roulette's cards (.tv-mi-card), three a row, each a
+   game with one way of playing it, in its game's colour: its icon on a see-through square, the name and the way as a
+   see-through label under it. Flat: nothing here is pressed. */
+/* Always squares: in the settings four a row, filling the row's width like the settings above them; in a public
+   match's lobby (.is-compact) three a row of a fixed size (--card). */
+.tv-mgames { --card: 126px; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin: 0; padding: 0; list-style: none; }
+.tv-mgames.is-compact { grid-template-columns: repeat(3, var(--card)); }
+.tv-mgame {
   display: flex;
-  gap: 12px;
-  /* The gap after the last card too, so half the track is exactly half the laps (the loop meets itself). */
-  padding-right: 12px;
-  width: max-content;
-  animation: tvPlayReel 40s linear infinite;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-width: 0;
+  aspect-ratio: 1;
+  padding: 8px;
+  border-radius: 22px;
+  background: var(--c2);
+  color: var(--on);
+  text-align: center;
 }
-/* The track has the three games ten times: moving it by half shows the same thing again, so it loops seamlessly. */
-@keyframes tvPlayReel { to { transform: translateX(-50%); } }
-/* The roulette's own cards (.tv-mi-card), smaller: every one the same square, only the icon. */
-.tv-mi-card.tv-play-reel-card {
-  flex: 0 0 80px;
-  width: 80px;
-  height: 80px;
-  gap: 0;
-  border-radius: 20px;
-  box-shadow: 0 4px 0 var(--edge);
-}
-.tv-play-reel-card .tv-mi-card-icon { width: 50px; height: 50px; border-radius: 15px; }
-@media (prefers-reduced-motion: reduce) { .tv-play-reel-track { animation: none; } }
+.tv-mgame-icon { display: grid; place-items: center; flex-shrink: 0; width: 44px; height: 44px; margin-bottom: 2px; border-radius: 14px; background: rgba(255, 255, 255, 0.18); }
+.tv-mgame-name { max-width: 100%; font-weight: 800; font-size: 13px; line-height: 1.1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tv-mgame-way { max-width: 100%; padding: 3px 8px; border-radius: 7px; background: rgba(255, 255, 255, 0.18); font-weight: 800; font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* In a public match's lobby: the same squares, in the middle. */
+.tv-mgames.is-compact { justify-content: center; }
+.tv-mgames.is-compact .tv-mgame { width: var(--card); }
 @media (max-width: 520px) {
-  .tv-play-modes { grid-template-columns: 1fr; }
-  .tv-play-mode { min-height: 78px; }
+  .tv-mgames { --card: 104px; gap: 8px; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .tv-mgame-icon { width: 38px; height: 38px; border-radius: 12px; }
+  .tv-mgame-name { font-size: 12px; }
+  .tv-mgame-way { font-size: 10px; }
 }
+
+/* /jugar going back from an option to the three options: its column sinks with the card and the settings
+   (.tv-room-row.is-out), the way it came up. */
+.tv-playpage > .tv-party.is-out { pointer-events: none; animation: var(--tv-box-out); }
+
+/* "Unirme a una sala" stands out from the settings under it (its title is like theirs): a taller strip ringed in the
+   option's colour with the code in big letters in the middle, and "Entrar a la sala" as wide under it. */
+.tv-play-join .tv-play-codestrip { padding: 7px; border-radius: 18px; box-shadow: 0 0 0 2px color-mix(in srgb, var(--brand) 45%, transparent); }
+.tv-play-join .tv-play-codestrip:focus-within { box-shadow: 0 0 0 2px var(--brand); }
+.tv-play-join .tv-play-codestrip:has([aria-invalid="true"]) { box-shadow: 0 0 0 2px var(--p-bad); }
+.tv-play-join .tv-play-codeinput { height: 54px; padding: 0; font-size: 26px; letter-spacing: 0.3em; text-indent: 0.3em; text-align: center; }
+.tv-play-join .tv-play-codeinput::placeholder { font-size: 26px; letter-spacing: 0.3em; text-transform: uppercase; color: var(--tv-text-3); opacity: 0.6; }
+.tv-play-join .tv-play-codego { margin-top: 4px; }
+/* The strip shows the focus (its ring); the box inside draws none of its own. */
+.tv-app .tv-play-codeinput:focus-visible { outline: none; }
+
+/* The history in /jugar's column: "Ver todas (n)" at the end of its title's row. */
+.tv-history-more--head { justify-self: auto; padding: 0; font-size: 13px; color: var(--tv-text-3); }
+.tv-play-history .tv-history-empty { margin: 0; font-size: 13px; }
+/* In the narrow column, "Respuestas" is only its icon and the game's name stays on one line. */
+.tv-play-history .tv-history-answers span { display: none; }
+.tv-play-history .tv-history-answers { padding: 0 8px; }
+.tv-play-history .tv-history-main strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

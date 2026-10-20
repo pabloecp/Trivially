@@ -8,6 +8,7 @@ import ConfirmDialog from "./ConfirmDialog.jsx";
 import Icon from "./Icon.jsx";
 import FriendsRoomControls from "./FriendsRoomControls.jsx";
 import PlayerMenu from "./PlayerMenu.jsx";
+import { PlayerCard } from "./PlaySide.jsx";
 import { ChatForm, ChatMessages, ChatSheet, useChatUnread, usePhone, useRoomChat } from "./RoomChat.jsx";
 import { useInvite } from "./useInvite.js";
 import { shownCode, useHiddenCode } from "../../lib/hiddenCode.js";
@@ -148,6 +149,9 @@ export default function PartyPanel({ room, onToast, scores = false, display = fa
       className={`tv-party${scores ? " is-scores" : ""}${chatting ? " is-chat" : ""}${display ? " is-display" : ""} ${className}`.trim()}
       aria-label="Tu sala"
     >
+      {/* A public match: the player's card (with the rank) stays at the top, as on /jugar where the search started; the
+          account is asked for again when it ends (the rank and history move). */}
+      {room.matchmaking && !display && <PlayerCard match refreshOn={room.phase === "finished"} />}
       {/* A public match has no code to share: nobody joins it but by searching. */}
       {!room.matchmaking && (
       <div className="tv-party-codebox">

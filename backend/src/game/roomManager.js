@@ -94,6 +94,9 @@ import {
   MATCH_FULL_MS,
   roomSize,
   matchItemConfig,
+  findVariant,
+  matchGameCount,
+  variantsFor,
   matchRoundMs,
   matchTimes,
   newBot,
@@ -103,7 +106,7 @@ import {
 import { categoryName } from "../questions/questionSchema.js";
 import { flagToken, flagUrl } from "../geo/flags.js";
 import { shapeToken, shapeUrl } from "../geo/shapes.js";
-import { locate } from "../geo/worldMap.js";
+import { countryPoint, locate } from "../geo/worldMap.js";
 import { COUNTDOWN_MS, REVEAL_MS, ROUND_MS, scoreAnswer } from "./scoring.js";
 
 const CODE_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -477,8 +480,8 @@ export class RoomManager {
         this.onPhaseChange?.(room);
         if (again) later(move, 2000 + Math.random() * 3500);
       };
-      // Not too quick: people usually answer first.
-      later(move, left * (0.35 + Math.random() * 0.5));
+      // Not too quick: people usually answer first. In Lluvia they start early and keep going (botMove says again).
+      later(move, this.isRainRound(room) ? 1500 + Math.random() * 3000 : left * (0.35 + Math.random() * 0.5));
     }
   }
 
@@ -525,8 +528,33 @@ export class RoomManager {
       const hit = this.pickCell(room, bot.id, { cell: i, turn: room.turn });
       return hit && this.isMinesRace(room);
     }
+    if (this.isMapRound(room)) {
+      // Aimed at the country's middle and off by more the worse it is (up to ~20° for the worst), now and then close.
+      const [lng, lat] = countryPoint(track.map);
+      const reach = 20 * (1 - bot.skill) * (Math.random() < bot.skill ? 0.1 : 1);
+      const angle = Math.random() * Math.PI * 2;
+      const off = Math.random() * reach;
+      this.placePin(room, bot.id, {
+        lng: Math.max(-180, Math.min(180, lng + Math.cos(angle) * off)),
+        lat: Math.max(-85, Math.min(85, lat + Math.sin(angle) * off)),
+        lock: true,
+      });
+      return false;
+    }
+    if (this.isRainRound(room)) {
+      // One question still falling now and then, answered right as often as its skill; then again a bit later.
+      const elapsed = this.rainElapsed(room);
+      const falling = track.drops.filter((d) => !d.by && d.at <= elapsed && elapsed <= d.at + track.fallMs);
+      if (falling.length && Math.random() < bot.skill + 0.2) {
+        const drop = falling[Math.floor(Math.random() * falling.length)];
+        this.rainAnswer(room, bot.id, right ? drop.question.answer : "No lo sé");
+      }
+      return true;
+    }
     if (track.type === "open") {
-      this.submitAnswer(room, bot.id, right ? track.answer : "No lo sé");
+      // A song is answered by its id, like picking it in the search box; a question by its answer.
+      const answer = room.game === QUIZ_GAME ? track.answer : track.id;
+      this.submitAnswer(room, bot.id, right ? answer : "No lo sé");
     }
     return false;
   }
@@ -567,20 +595,33 @@ export class RoomManager {
   }
 
   /**
-   * Starts a full public room: its games are drawn (one per 5 rounds, all different) and played as a playlist in that
-   * order, 5 rounds each. Competitivo plays only medium and hard questions while there are enough of them.
+   * Starts a full public room: its games are drawn (one per 5 rounds, all different, among MATCH_VARIANTS: each game
+   * with one way of playing it, "Trivia Cerradas") and played as a playlist in that order. Competitivo plays only
+   * medium and hard questions while there are enough of them; a game that can't be played at all gives its place to the
+   * next one drawn.
    */
   startMatch(room) {
     const { kind, rounds } = room.matchmaking;
-    const games = pickMatchGames(rounds);
     // The times go in after cleaning, as they are: a public match is quicker than a game's own settings allow.
-    const configFor = (game, easy) => ({ ...this.cleanItemConfig(room, game, matchItemConfig(game, kind, { easy })), ...matchTimes(game) });
-    const items = games.map((game, i) => {
-      const item = { id: `m${i}`, game, config: configFor(game, false) };
-      if (!this.itemProblem(room, item, room.config, { exact: true })) return item;
-      return { ...item, config: configFor(game, true) };
+    const configFor = (game, variant, easy) => ({
+      ...this.cleanItemConfig(room, game, matchItemConfig(game, kind, { easy, variant })),
+      ...matchTimes(game),
     });
-    room.matchmaking.games = games;
+    const items = [];
+    for (const variant of pickMatchGames(null, Math.random, variantsFor(kind))) {
+      if (items.length >= matchGameCount(rounds)) break;
+      const { game } = findVariant(variant);
+      const item = { id: `m${items.length}`, game, variant, config: configFor(game, variant, false) };
+      if (!this.itemProblem(room, item, room.config, { exact: true })) {
+        items.push(item);
+        continue;
+      }
+      const easier = { ...item, config: configFor(game, variant, true) };
+      if (!this.itemProblem(room, easier, room.config, { exact: true })) items.push(easier);
+    }
+    if (!items.length) throw new Error("No hay juegos disponibles para esta partida");
+    // What everyone sees of it: the variants, in play order.
+    room.matchmaking.games = items.map((item) => item.variant);
     room.matchmaking.startsAt = null;
     room.playlist = { name: kind === "competitivo" ? "Partida competitiva" : "Partida casual", order: "orden", items };
     room.run = newRun(room.playlist, room.config);
@@ -2084,7 +2125,12 @@ export class RoomManager {
     if (!room.statsApplied) {
       room.statsApplied = true;
       const ranked = this.rankedPlayers(room);
-      applyMatchStats(this.store, ranked, { game: room.run?.mixed ? PLAYLIST_GAME : room.game, room: room.code });
+      applyMatchStats(this.store, ranked, {
+        game: room.run?.mixed ? PLAYLIST_GAME : room.game,
+        room: room.code,
+        // Competitivo moves each account's rank by its place (game/rank.js).
+        rank: room.matchmaking?.kind === "competitivo" ? { rounds: room.matchmaking.rounds, winnerId: room.tiebreak?.winnerId || null } : null,
+      });
       this.recordWin(room, ranked);
       // A game of a playlist: its winner adds a win to the playlist's tally.
       if (room.run && !room.run.finished && ranked.length) {
@@ -3075,13 +3121,15 @@ export class RoomManager {
       players: [...room.players.values()].map((p) => publicPlayer(p, room.phase, room)),
       // A public match ("Casual" or "Competitivo"): its kind and length, how full it is, its games once drawn.
       matchmaking: room.matchmaking ? publicMatchmaking(room.matchmaking, this.connectedCount(room)) : null,
-      // Before each game of a public match: the roulette lands on `game` (`index` in `games`, the match's games in
-      // play order), then its tutorial.
+      // Before each game of a public match: the roulette lands on `variant` (the game with its one way, "Trivia
+      // Cerradas"; `index` in `variants`, the match's in play order), then its tutorial. `game`/`games` are their games.
       intro:
         room.phase === "intro" && room.run
           ? {
               game: room.game,
               games: room.run.items.map((item) => item.game),
+              variant: room.run.items[room.run.current ?? 0]?.variant || null,
+              variants: room.run.items.map((item) => item.variant || item.game),
               index: room.run.current ?? 0,
               spinMs: INTRO_SPIN_MS,
               tutorialMs: INTRO_TUTORIAL_MS,

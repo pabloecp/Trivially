@@ -37,9 +37,12 @@ assert.deepEqual(store.users.luis.history, [
 assert.equal(store.users.ana.history[0].position, 2, "the place is the final one, tiebreak included");
 assert.equal(store.users.ana.stats.gamesPlayed, 1, "the stats still add up");
 
-// Out to the profile (own or public), without the rounds or the room: how many questions, and whether it was reported.
+// Out to the profile, never the room: how many questions, and whether it was reported. The account itself also gets
+// its rounds ("Ver respuestas"), without the questions' ids; anyone else's view of it doesn't.
 const shown = { at: "2026-10-17T20:00:00.000Z", game: "mundo", position: 1, players: 3, score: 3000, opponents: ["Ana", "Invitado"], questions: 2, reported: false };
-assert.deepEqual(sanitizeUser(store.users.luis).history, [shown]);
+const answered = rounds.map(({ questionId, ...round }) => round);
+assert.deepEqual(sanitizeUser(store.users.luis).history, [{ ...shown, rounds: answered }]);
+assert.ok(sanitizeUser(store.users.luis).history[0].rounds.every((r) => !("questionId" in r)), "no question ids");
 assert.deepEqual(sanitizeUserPublic(store.users.luis).history, [shown]);
 
 // "Reportar partida": the match as a question report, with every round; only once, only your own.

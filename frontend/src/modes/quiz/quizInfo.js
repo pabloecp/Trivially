@@ -25,7 +25,7 @@ export const TOPICS = [
   { id: "deportes", label: "Deportes" },
 ];
 
-// The ways of answering, "Modos" (QUIZ_FORMATS on the server): closed questions, one of four to choose, or open ones,
+// The ways of answering, "Tipo de respuestas" (QUIZ_FORMATS on the server; not a modo de juego): closed questions, one of four to choose, or open ones,
 // the answer written. Adivina la canción uses the same two.
 export const FORMATS = [
   { id: "opciones", label: "Cerradas", hint: "Elige una de cuatro opciones" },

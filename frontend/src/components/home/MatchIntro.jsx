@@ -3,7 +3,7 @@ import { play } from "../../lib/sounds.js";
 import { findMode } from "../../modes/index.js";
 import Icon from "./Icon.jsx";
 import { ReelMarker } from "./SlowReel.jsx";
-import { MATCH_GAMES, MATCH_KINDS, TUTORIALS } from "./matchInfo.js";
+import { MATCH_KINDS, TUTORIALS, VARIANT_TUTORIALS, findVariant, variantsFor } from "./matchInfo.js";
 import "../../styles/match.css";
 
 // The reel's cards: how wide each one is plus the gap after it (match.css: --mi-card and --mi-gap).
@@ -26,14 +26,28 @@ function useServerNow(room, every = 100) {
   return now;
 }
 
-// The roulette: the games not played yet go past under the marker, slowing down until the server's pick is in the
-// middle. It's drawn in JS (not a CSS transition) so each card that crosses the marker can tick.
-function Roulette({ intro, startedAt, clockOffset, color }) {
-  const played = intro.games.slice(0, intro.index);
-  const left = MATCH_GAMES.filter((g) => !played.includes(g));
-  const pool = left.length ? left : [intro.game];
+// "Trivia Cerradas": a variant's game and way.
+function variantName(id) {
+  const v = findVariant(id);
+  const name = findMode(v.game)?.name || "";
+  return v.way ? `${name} ${v.way}` : name;
+}
+
+// The match's games in play order and the one now: each game with its one way ("trivia-cerradas"); an older server only
+// sends the games.
+const variantsOf = (intro) => intro.variants || intro.games;
+const variantNow = (intro) => intro.variant || intro.game;
+
+// The roulette: the games not played yet (each with its way) go past under the marker, slowing down until the server's
+// pick is in the middle. It's drawn in JS (not a CSS transition) so each card that crosses the marker can tick.
+function Roulette({ intro, startedAt, clockOffset, color, kind }) {
+  const played = variantsOf(intro).slice(0, intro.index);
+  const now = variantNow(intro);
+  const all = intro.variants ? variantsFor(kind).map((v) => v.id) : intro.games;
+  const left = all.filter((v) => !played.includes(v));
+  const pool = left.includes(now) ? left : [now];
   const reel = Array.from({ length: LAPS * pool.length }, (_, i) => pool[i % pool.length]);
-  const target = (LAPS - 1) * pool.length + Math.max(0, pool.indexOf(intro.game));
+  const target = (LAPS - 1) * pool.length + Math.max(0, pool.indexOf(now));
   const trackRef = useRef(null);
   const [landed, setLanded] = useState(false);
 
@@ -73,42 +87,55 @@ function Roulette({ intro, startedAt, clockOffset, color }) {
         <ReelMarker />
         <div ref={trackRef} className="tv-mi-track">
           {reel.map((id, i) => {
-            const m = findMode(id);
+            const v = findVariant(id);
+            const m = findMode(v.game);
             return (
               <div key={i} className={`tv-mi-card tv-c-${m.color}${landed && i === target ? " is-picked" : ""}`} aria-hidden={i !== target}>
-                {/* The game's icon, and its name small under it. */}
+                {/* The game's icon, and its name and way small under it. */}
                 <span className="tv-mi-card-icon">
                   <Icon name={m.icon} size={50} strokeWidth={2.2} />
                 </span>
                 <span className="tv-mi-card-name">{m.name}</span>
+                {v.way && <span className="tv-mi-card-way">{v.way}</span>}
               </div>
             );
           })}
         </div>
       </div>
       <p className="tv-mi-caption" aria-live="polite">
-        {landed ? `¡${findMode(intro.game).name}!` : "Eligiendo el juego…"}
+        {landed ? `¡${variantName(variantNow(intro))}!` : "Eligiendo el juego…"}
       </p>
     </div>
   );
 }
 
-// The game the roulette picked, with what to do in it, for exactly `tutorialMs` (5 s): the bar fills meanwhile.
+// Length of the clock's ring (2πr, r = 19 in a 44 × 44 box): the same round clock as a game's (.tv-clock).
+const RING = 119.4;
+
+// The game the roulette picked, with what to do in it, for exactly `tutorialMs` (5 s): a game's round clock counts the
+// seconds down meanwhile, its ring emptying smoothly, and a line beside it empties in the same time, like the ring.
 function Tutorial({ intro, leftMs }) {
   const m = findMode(intro.game);
-  const steps = TUTORIALS[intro.game] || m.steps || [];
+  const steps = VARIANT_TUTORIALS[intro.variant] || TUTORIALS[intro.game] || m.steps || [];
+  const ringRef = useRef(null);
   const barRef = useRef(null);
   useLayoutEffect(() => {
+    const ring = ringRef.current;
     const bar = barRef.current;
-    if (!bar) return;
+    if (!ring || !bar) return;
     const done = 1 - Math.min(1, leftMs / intro.tutorialMs);
+    const run = `${Math.max(0, leftMs)}ms linear`;
+    ring.style.transition = "none";
+    ring.style.strokeDashoffset = `${RING * done}`;
     bar.style.transition = "none";
-    bar.style.transform = `scaleX(${done})`;
-    // Next frame: run to the end in the time left.
-    requestAnimationFrame(() => {
-      bar.style.transition = `transform ${Math.max(0, leftMs)}ms linear`;
-      bar.style.transform = "scaleX(1)";
-    });
+    bar.style.transform = `scaleX(${1 - done})`;
+    // The browser takes that as where they start (reading a size makes it apply it now); then they run to the end in the
+    // time left. Without the read they would jump straight to the end.
+    ring.getBoundingClientRect();
+    ring.style.transition = `stroke-dashoffset ${run}`;
+    ring.style.strokeDashoffset = `${RING}`;
+    bar.style.transition = `transform ${run}`;
+    bar.style.transform = "scaleX(0)";
   }, []);
   const seconds = Math.max(1, Math.ceil(leftMs / 1000));
   return (
@@ -119,7 +146,7 @@ function Tutorial({ intro, leftMs }) {
         </span>
         <div>
           <p className="tv-mono-label">Cómo se juega</p>
-          <h2 className="tv-mi-tut-name">{m.name}</h2>
+          <h2 className="tv-mi-tut-name">{variantName(variantNow(intro))}</h2>
         </div>
       </div>
       <ol className="tv-mi-steps">
@@ -133,12 +160,18 @@ function Tutorial({ intro, leftMs }) {
         ))}
       </ol>
       <div className="tv-mi-progress">
-        <div className="tv-mi-bar">
+        <div className="tv-clock tv-mi-clock" role="timer" aria-label={`Empieza en ${seconds} segundos`}>
+          <svg viewBox="0 0 44 44" aria-hidden="true">
+            <circle className="tv-clock-track" cx="22" cy="22" r="19" />
+            <circle ref={ringRef} className="tv-clock-fill" cx="22" cy="22" r="19" />
+          </svg>
+          <span key={seconds} className="tv-clock-num">
+            {seconds}
+          </span>
+        </div>
+        <div className="tv-mi-bar" aria-hidden="true">
           <span ref={barRef} />
         </div>
-        <span className="tv-mi-count" key={seconds}>
-          Empieza en {seconds}
-        </span>
       </div>
     </div>
   );
@@ -158,7 +191,7 @@ export default function MatchIntro({ room }) {
   const spinning = elapsed < intro.spinMs;
   const leftMs = intro.spinMs + intro.tutorialMs - elapsed;
   const kind = MATCH_KINDS[room.matchmaking?.kind];
-  const total = intro.games.length;
+  const total = variantsOf(intro).length;
 
   return (
     <section className="tv-mcard tv-mi" aria-label="Siguiente juego">
@@ -169,8 +202,8 @@ export default function MatchIntro({ room }) {
           </p>
           {total > 1 && (
             <ol className="tv-mi-dots" aria-hidden="true">
-              {intro.games.map((g, i) => {
-                const m = findMode(g);
+              {variantsOf(intro).map((g, i) => {
+                const m = findMode(findVariant(g).game);
                 const state = i < intro.index ? "done" : i === intro.index ? "now" : "next";
                 // The game on now only shows its colour once the roulette stopped: it would give the pick away.
                 const shown = state === "done" || (state === "now" && !spinning);
@@ -188,7 +221,7 @@ export default function MatchIntro({ room }) {
           )}
         </header>
         {spinning ? (
-          <Roulette key={`r${intro.index}`} intro={intro} startedAt={room.phaseStartedAt} clockOffset={room.clockOffset || 0} color={kind?.color} />
+          <Roulette key={`r${intro.index}`} intro={intro} startedAt={room.phaseStartedAt} clockOffset={room.clockOffset || 0} color={kind?.color} kind={room.matchmaking?.kind} />
         ) : (
           <Tutorial key={`t${intro.index}`} intro={intro} leftMs={leftMs} />
         )}

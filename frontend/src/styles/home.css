@@ -7,6 +7,11 @@
    Per slot: --x-1 / --x-2 are the fill (the same for a flat colour, two shades for a gradient) and --x-edge is the
    solid shadow under a tile. */
 :root {
+  /* Every big panel (the game menu, a game's card, its settings, the room's column, /jugar's three boxes, a public
+     match's card) comes in and goes out the same way, all together: up from below, and back down when going back.
+     The way out fits in the screens' exit time (TILES_OUT_MS, SCREEN_OUT_MS, PlayPage's OUT_MS: 320–360 ms). */
+  --tv-box-in: tvBoxIn 0.55s cubic-bezier(0.2, 0.9, 0.3, 1.06) backwards;
+  --tv-box-out: tvBoxOut 0.3s cubic-bezier(0.5, 0, 0.8, 0.4) forwards;
   /* Meaning, not decoration: these two stay the same in every colour option. */
   --p-ok: #2bd94f;  --p-ok-edge: #178a30;  --p-ok-rgb: 43, 217, 79;  --p-ok-text: #4be26c;
   --p-bad: #ff2d55; --p-bad-edge: #a3112f; --p-bad-rgb: 255, 45, 85; --p-bad-text: #ff5c7a;
@@ -313,8 +318,8 @@
    back to Inicio it shrinks away the same way, and the logo slides back. */
 .tv-topbar.is-back-in .tv-chip--leave,
 .tv-topbar.is-back-out .tv-chip--leave { overflow: hidden; }
-.tv-topbar.is-back-in .tv-chip--leave { animation: tvBackIn 0.9s cubic-bezier(0.4, 0, 0.2, 1) backwards; }
-.tv-topbar.is-back-out .tv-chip--leave { pointer-events: none; animation: tvBackOut 0.6s cubic-bezier(0.5, 0, 0.75, 0.3) forwards; }
+.tv-topbar.is-back-in .tv-chip--leave { animation: tvBackIn 0.4s cubic-bezier(0.4, 0, 0.2, 1) backwards; }
+.tv-topbar.is-back-out .tv-chip--leave { pointer-events: none; animation: tvBackOut 0.3s cubic-bezier(0.5, 0, 0.75, 0.3) forwards; }
 @keyframes tvBackIn {
   from { max-width: 0; margin-right: -12px; padding-left: 0; padding-right: 0; opacity: 0; transform: scale(0.6); }
   60% { opacity: 1; }
@@ -503,9 +508,9 @@
   padding: 28px;
   border-radius: 34px;
   transform-origin: 50% 100%;
-  animation: tvExpand 0.75s cubic-bezier(0.2, 0.9, 0.25, 1.04) backwards;
+  animation: var(--tv-box-in);
 }
-.tv-picker.is-leaving { animation: tvShrink 0.32s cubic-bezier(0.5, 0, 0.8, 0.4) forwards; pointer-events: none; }
+.tv-picker.is-leaving { animation: var(--tv-box-out); pointer-events: none; }
 .tv-picker-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 8px; }
 .tv-picker-title {
   margin: 0;
@@ -547,8 +552,6 @@
   text-align: left;
   cursor: pointer;
   transition: transform 0.28s cubic-bezier(0.3, 1.5, 0.5, 1), box-shadow 0.12s ease, background-color 0.5s, color 0.4s;
-  animation: tvUp 0.55s var(--tv-ease-out) backwards;
-  animation-delay: calc(0.1s + var(--i) * 80ms);
 }
 /* Hover lifts the whole tile straight up, its edge showing a little more under it. */
 .tv-mode:hover { transform: translateY(-5px); box-shadow: 0 11px 0 var(--edge); }
@@ -608,7 +611,7 @@
   color: var(--on);
   transform-origin: 50% 100%;
   transition: background-color 0.6s ease, color 0.6s ease, box-shadow 0.6s ease;
-  animation: tvExpand 0.75s cubic-bezier(0.2, 0.9, 0.25, 1.04) backwards;
+  animation: var(--tv-box-in);
 }
 .tv-mstage-watermark {
   position: absolute;
@@ -618,9 +621,9 @@
   pointer-events: none;
 }
 .tv-mstage-head,
-.tv-mstage-foot { position: relative; display: flex; flex-direction: column; animation: tvSwap 0.5s var(--tv-ease-out) backwards; }
+.tv-mstage-foot { position: relative; display: flex; flex-direction: column; }
 .tv-mstage-head { gap: 16px; }
-.tv-mstage-foot { gap: 14px; animation-delay: 80ms; }
+.tv-mstage-foot { gap: 14px; }
 .tv-mstage-badges { display: flex; align-items: center; gap: 14px; }
 .tv-mstage-badge {
   display: grid;
@@ -630,7 +633,6 @@
   border-radius: 20px;
   background: var(--on);
   color: var(--c2);
-  animation: tvPopIn 0.5s cubic-bezier(0.3, 1.7, 0.5, 1) 0.15s backwards;
 }
 .tv-eq--stage { gap: 3px; height: 34px; }
 .tv-eq--stage span { width: 5px; border-radius: 3px; background: currentColor; }
@@ -687,7 +689,7 @@
   min-width: 0;
   padding: 24px;
   border-radius: 34px;
-  animation: tvFromRight 0.6s cubic-bezier(0.2, 0.9, 0.3, 1.08) 80ms backwards;
+  animation: var(--tv-box-in);
 }
 /* Small capital labels ("CÓDIGO DE SALA"…), in the option's label font. */
 .tv-mono-label {
@@ -711,7 +713,7 @@
   min-width: 0;
   padding: 18px;
   border-radius: 34px;
-  animation: tvFromRight 0.6s cubic-bezier(0.2, 0.9, 0.3, 1.08) 0.16s backwards;
+  animation: var(--tv-box-in);
 }
 .tv-party-codebox { display: flex; flex-direction: column; gap: 10px; padding: 16px; border-radius: 22px; background: var(--tv-bg); }
 .tv-party-codehead { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
@@ -1097,30 +1099,28 @@
   .tv-party { border-radius: 28px; }
 }
 
-/* Leaving the room: the panels sink and slide away before the home screen comes back (Home.jsx). */
+/* Leaving the room (or /jugar): every panel sinks back down at once, the way they came up (Home.jsx). */
 .tv-room.is-leaving { pointer-events: none; }
 .tv-room.is-leaving .tv-picker,
-.tv-room.is-leaving .tv-mstage { animation: tvShrink 0.36s cubic-bezier(0.5, 0, 0.8, 0.4) forwards; }
+.tv-room.is-leaving .tv-mstage,
 .tv-room.is-leaving .tv-settings-card,
-.tv-room.is-leaving .tv-party { animation: tvOutRight 0.3s ease-in forwards; }
+.tv-room.is-leaving .tv-party { animation: var(--tv-box-out); }
 /* Switching straight from one game to another: the panels stay and only their contents swap. */
 .tv-room-row.is-switch .tv-mstage,
 .tv-room-row.is-switch .tv-settings-card { animation: none; }
 .tv-room-row.is-switch .tv-settings-card > * { animation: tvSwap 0.5s var(--tv-ease-out) backwards; }
-/* Back to the game menu: the game's card sinks and its settings slide off before the menu grows in (Home.jsx,
-   TILES_OUT_MS), the way the menu's tiles go when a game is picked. After .is-switch, whose animation: none it overrides. */
+/* Back to the game menu (or to /jugar's options): the game's card and its settings sink down together before the menu
+   comes up (Home.jsx, TILES_OUT_MS), the way the menu went when a game was picked. After .is-switch, whose
+   animation: none it overrides. */
 .tv-room-row.is-out { pointer-events: none; }
-.tv-room-row.is-out .tv-mstage { animation: tvShrink 0.32s cubic-bezier(0.5, 0, 0.8, 0.4) forwards; }
-.tv-room-row.is-out .tv-settings-card { animation: tvOutRight 0.3s ease-in forwards; }
+.tv-room-row.is-out .tv-mstage,
+.tv-room-row.is-out .tv-settings-card { animation: var(--tv-box-out); }
 
 @keyframes tvUp { from { opacity: 0; transform: translateY(30px); } }
-@keyframes tvExpand {
-  0% { opacity: 0; transform: translateY(140px) scale(0.55); border-radius: 120px; }
-  55% { opacity: 1; }
-}
-@keyframes tvShrink { to { opacity: 0; transform: translateY(80px) scale(0.7); } }
-@keyframes tvFromRight { from { opacity: 0; transform: translateX(70px); } }
-@keyframes tvOutRight { to { opacity: 0; transform: translateX(80px); } }
+/* The big panels' one way in and its exact reverse out (--tv-box-in / --tv-box-out): up from below, all at once. With
+   reduced motion they just appear and go. */
+@keyframes tvBoxIn { from { opacity: 0; transform: translateY(90px); } }
+@keyframes tvBoxOut { to { opacity: 0; transform: translateY(90px); } }
 @keyframes tvOut { to { opacity: 0; transform: scale(0.95) translateY(12px); } }
 @keyframes tvSwap { from { opacity: 0; transform: translateY(22px) scale(0.97); } }
 @keyframes tvPopIn { from { opacity: 0; transform: scale(0.3); } }
@@ -2641,18 +2641,6 @@
 }
 
 /* ---------- Room card: players you can tap, leave button ---------- */
-/* "Volver" in the top bar, when it means leaving the room (in the game menu): the first tap turns it into the
-   "leave?" question. */
-/* "¿Salir de la sala?": solid vivid red with white letters, like the rest of the vivid colours. */
-.tv-app .tv-chip--leave.is-confirm {
-  background: var(--p-bad);
-  box-shadow: 0 3px 0 var(--p-bad-edge);
-  color: #fff;
-}
-.tv-app .tv-chip--leave.is-confirm:hover { box-shadow: 0 5px 0 var(--p-bad-edge); }
-.tv-app .tv-chip--leave.is-confirm:active { box-shadow: 0 0 0 var(--p-bad-edge); }
-.tv-chip--leave.is-confirm .tv-avatar { background: rgba(0, 0, 0, 0.2); color: #fff; }
-
 .tv-player-menu {
   position: absolute;
   top: calc(100% + 8px);
@@ -2803,15 +2791,11 @@ button.tv-chip { border: 0; font-family: inherit; color: inherit; cursor: pointe
   .tv-roomhead-players { min-width: 0; }
 }
 
-.tv-chip-short { display: none; }
 @media (max-width: 520px) {
-  /* The button left of the logo ("Volver") is only its icon, and "¿Salir?" while it asks. */
+  /* The button left of the logo ("Volver") is only its icon. */
   .tv-chip--leave .tv-chip-long { display: none; }
-  .tv-chip--leave .tv-chip-short { display: inline; }
-  .tv-chip--leave:not(.is-confirm) { padding-right: 5px; }
+  .tv-chip--leave { padding-right: 5px; }
   .tv-topbar-end { gap: 6px; }
-  /* Not enough room for the name next to the question. */
-  .tv-topbar.is-confirm .tv-brand-name { display: none; }
 }
 /* ---------- The page: a clean, flat black (no dots, blobs or gradient); colour lives only in the content ---------- */
 /* Colour options can swap the black for a pattern (--tv-page-bg in palettes.css), fixed to the screen so
@@ -2902,10 +2886,9 @@ body:has(.tv-app) {
 .tv-player-tag.is-streak { color: var(--p-accent-text); }
 .tv-next { display: flex; align-items: center; margin: 0; font-weight: 700; font-size: 15px; color: var(--tv-text-3); }
 
-/* ---------- Other screens come in like the room: the profile's top card grows up, the rest slide in ---------- */
-.tv-profile-hero { transform-origin: 50% 100%; animation: tvExpand 0.75s cubic-bezier(0.2, 0.9, 0.25, 1.04) backwards; }
-.tv-profile-grid > .tv-card { animation: tvFromRight 0.6s cubic-bezier(0.2, 0.9, 0.3, 1.08) 0.1s backwards; }
-.tv-profile-grid > .tv-card:nth-child(2) { animation-delay: 0.2s; }
+/* ---------- Other screens come in like the room: their panels come up from below, all at once ---------- */
+.tv-profile-hero,
+.tv-profile-grid > .tv-card { animation: var(--tv-box-in); }
 .tv-auth-card { animation: tvGrowIn 0.6s cubic-bezier(0.2, 0.9, 0.3, 1.12) 0.3s backwards; }
 .tv-page > .tv-notice { animation: tvPopIn 0.5s cubic-bezier(0.3, 1.7, 0.5, 1) backwards; }
 
@@ -3068,8 +3051,6 @@ body::-webkit-scrollbar,
   font-weight: 700;
   font-size: 17px;
   line-height: 1.2;
-  animation: tvRise 0.45s var(--tv-spring) backwards;
-  animation-delay: calc(0.25s + var(--i) * 80ms);
 }
 .tv-mstage-step-icon {
   display: grid;
@@ -3335,7 +3316,6 @@ fieldset.tv-setsec-body { display: grid; gap: 18px; min-width: 0; margin: 0; pad
   }
   .tv-app .tv-roomhead-leave { color: var(--tv-text-2); }
   .tv-roomhead-leave:active { transform: translateY(3px); }
-  .tv-app .tv-roomhead-leave.is-confirm { background: var(--p-bad); box-shadow: 0 3px 0 var(--p-bad-edge); color: #fff; }
   .tv-roomhead-text { display: grid; min-width: 0; }
   .tv-roomhead-kicker {
     overflow: hidden;
@@ -3610,7 +3590,6 @@ fieldset.tv-setsec-body { display: grid; gap: 18px; min-width: 0; margin: 0; pad
   .tv-chip--profile { padding: 0; background: none; box-shadow: none; }
   .tv-chip--profile > .tv-avatar { width: var(--tv-barbtn); height: var(--tv-barbtn); font-size: 19px; }
   .tv-roomhead-leave { width: var(--tv-barbtn); height: var(--tv-barbtn); border-radius: var(--tv-barbtn-r); box-shadow: inset 0 0 0 1px var(--tv-line); }
-  .tv-app .tv-roomhead-leave.is-confirm { box-shadow: none; }
   .tv-roomhead-players { height: var(--tv-barbtn); padding: 0 8px 0 6px; border-radius: var(--tv-barbtn-r); }
   .tv-roomhead-me .tv-avatar { width: var(--tv-barbtn); height: var(--tv-barbtn); }
 }
@@ -3989,4 +3968,8 @@ fieldset.tv-setsec-body { display: grid; gap: 18px; min-width: 0; margin: 0; pad
 .tv-idea-x { border-radius: 10px; }
 @media (max-width: 640px) {
   .tv-roomhead-players { border-radius: var(--tv-barbtn-r, 14px); box-shadow: inset 0 0 0 1px var(--tv-line), 0 3px 0 var(--tv-edge); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root { --tv-box-in: none; --tv-box-out: none; }
 }

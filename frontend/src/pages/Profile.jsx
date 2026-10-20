@@ -360,7 +360,7 @@ function ProfileScreen() {
               <div className="tv-card-head">
                 <h2 className="tv-card-title">Historial</h2>
               </div>
-              {statsLoading ? <span className="tv-skeleton" aria-hidden="true" /> : <MatchHistory matches={profileData?.history || []} canReport={!isOtherUser} onError={setErr} />}
+              {statsLoading ? <span className="tv-skeleton" aria-hidden="true" /> : <MatchHistory matches={profileData?.history || []} />}
             </div>
           )}
         </section>
