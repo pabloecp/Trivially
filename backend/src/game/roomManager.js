@@ -92,6 +92,7 @@ import {
   FARSANTE_MIN_PLAYERS,
   FARSANTE_POINTS,
   FARSANTE_REVEAL_MS,
+  FARSANTE_TEST_BOTS,
   datoPool,
   defaultFarsanteConfig,
   farsanteProblem,
@@ -148,6 +149,17 @@ export const GAME_IDS = ["musica", "opciones", "mundo", "historia", "minas", RAI
 // "Trivia": its settings live in config.quiz and its questions take the place of songs in room.tracks.
 export const QUIZ_GAME = "opciones";
 // The games that ask questions instead of playing songs.
+// What a test bot writes in Farsante (with a number after it).
+const BOT_ANSWERS = [
+  "Un señor llamado Paco",
+  "Tres elefantes en un abrigo",
+  "La opción que nadie esperaba",
+  "Algo con patatas",
+  "El mismo de siempre",
+  "Una sopa muy seria",
+  "Mi primo el de Valencia",
+  "Un pingüino jubilado",
+];
 const QUESTION_GAMES = [QUIZ_GAME, GEO_GAME, HISTORY_GAME, MINES_GAME, RAIN_GAME, REY_GAME, FARSANTE_GAME];
 // Custom playlists from an owner's Spotify go in config.playlistIds with this prefix ("sp:<spotify playlist id>").
 export const SPOTIFY_PREFIX = "sp:";
@@ -470,6 +482,23 @@ export class RoomManager {
     return bot;
   }
 
+  /**
+   * An owner's test bots, for trying Farsante alone: up to FARSANTE_TEST_BOTS, added in its lobby. They are plain bots
+   * (they write and vote by themselves, quickly, see botMove) with an obvious name, not the guest-like ones of the
+   * public matches; the host can take them out like any player. `userId` must be the socket's verified account.
+   */
+  addTestBot(room, userId) {
+    const owner = this.store?.users?.[userId];
+    if (!owner || !hasRole(owner, "owner")) throw new Error("Solo los owners pueden añadir bots de prueba");
+    if (room.game !== FARSANTE_GAME) throw new Error("Los bots de prueba son solo para Farsante");
+    if (room.phase !== "lobby") throw new Error("Solo se pueden añadir bots antes de empezar");
+    const bots = [...room.players.values()].filter((p) => p.bot).length;
+    if (bots >= FARSANTE_TEST_BOTS) throw new Error(`Máximo ${FARSANTE_TEST_BOTS} bots de prueba`);
+    const bot = this.addBot(room);
+    room.players.get(bot.id).name = `Bot de prueba ${bots + 1}`;
+    return bot;
+  }
+
   /** Whether someone (not a bot) is still connected: a room with only bots left is closed. */
   hasPeople(room) {
     for (const p of room.players.values()) if (p.connected && !p.bot) return true;
@@ -509,8 +538,9 @@ export class RoomManager {
         this.onPhaseChange?.(room);
         if (again) later(move, 2000 + Math.random() * 3500);
       };
-      // Not too quick: people usually answer first.
-      later(move, left * (0.35 + Math.random() * 0.5));
+      // Not too quick: people usually answer first. In Farsante (a test bot's game) they take a few seconds, so a
+      // lone player doesn't wait for the whole stage.
+      later(move, room.game === FARSANTE_GAME ? 1500 + Math.random() * 3500 : left * (0.35 + Math.random() * 0.5));
     }
   }
 
@@ -556,6 +586,17 @@ export class RoomManager {
       const { i } = pool[Math.floor(Math.random() * pool.length)];
       const hit = this.pickCell(room, bot.id, { cell: i, turn: room.turn });
       return hit && this.isMinesRace(room);
+    }
+    if (room.game === FARSANTE_GAME) {
+      if (track.stage === "writing") {
+        // Something silly, with a number so two bots never write the same (farsanteWrite refuses repeats).
+        const text = `${BOT_ANSWERS[Math.floor(Math.random() * BOT_ANSWERS.length)]} ${Math.floor(Math.random() * 90) + 10}`;
+        this.farsanteWrite(room, bot.id, text);
+      } else if (track.stage === "voting") {
+        const options = track.options.map((o, i) => ({ o, i })).filter(({ o }) => o.author !== bot.id);
+        this.farsanteVote(room, bot.id, options[Math.floor(Math.random() * options.length)].i);
+      }
+      return false;
     }
     if (track.type === "open") {
       this.submitAnswer(room, bot.id, right ? track.answer : "No lo sé");

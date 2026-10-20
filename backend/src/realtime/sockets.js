@@ -705,6 +705,18 @@ export function attachSockets(io, rooms, { friends = null, hub = null } = {}) {
       }
     });
 
+    // An owner adds a test bot to Farsante's lobby (to try it alone).
+    socket.on("room:addTestBot", (payload, ack) => {
+      try {
+        const { room } = requireRoom(rooms, socket);
+        rooms.addTestBot(room, socket.data.userId);
+        ack?.({ ok: true });
+        io.to(room.code).emit("room:state", rooms.publicState(room));
+      } catch (err) {
+        ack?.({ ok: false, error: err.message });
+      }
+    });
+
     // Farsante: an answer written for the round's prompt (it can be rewritten until the stage ends), and a vote (the
     // position of one of the options).
     socket.on("game:farsante", (text, ack) => {

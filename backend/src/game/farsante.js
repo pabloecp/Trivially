@@ -23,6 +23,7 @@ export const FARSANTE_VOTE_MS = 25000;
 export const FARSANTE_REVEAL_MS = 8000;
 export const FARSANTE_MAX_CHARS = 60;
 export const FARSANTE_MIN_PLAYERS = 3;
+export const FARSANTE_TEST_BOTS = 5;
 export const FARSANTE_POINTS = { real: 1000, vote: 500 };
 
 export function defaultFarsanteConfig() {
