@@ -3,11 +3,11 @@
    meaning colour (green fácil, yellow media, red difícil). */
 
 :root {
-  --tv-ry-1: #ffd860;
-  --tv-ry: #f5b301;
-  --tv-ry-edge: #9a6b00;
-  --tv-ry-on: #2a1c00;
-  --tv-ry-rgb: 245, 179, 1;
+  --tv-ry-1: #f2b632;
+  --tv-ry: #dd9a0a;
+  --tv-ry-edge: #8f5f00;
+  --tv-ry-on: #ffffff;
+  --tv-ry-rgb: 221, 154, 10;
   --tv-ry-text: #ffc933;
 }
 
