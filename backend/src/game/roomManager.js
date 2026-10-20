@@ -74,6 +74,19 @@ import {
   rainRoundText,
 } from "./rain.js";
 import {
+  REY_GAME,
+  REY_MIN_QUESTIONS,
+  REY_PICK_MS,
+  REY_POINTS,
+  REY_REVEAL_MS,
+  countReyQuestions,
+  defaultReyConfig,
+  mergeReyConfig,
+  pickReyRounds,
+  reyCounts,
+  reyPool,
+} from "./rey.js";
+import {
   cleanPlaylist,
   configWithItem,
   mixRounds,
@@ -118,11 +131,11 @@ export const ROOM_CODE_LENGTH = 5;
 // screen for a while, answered by writing). The question games keep their questions in room.tracks, in place of songs
 // (Lluvia, one track per round with all its questions). "playlist" isn't a game of its own: it's where the room makes a
 // playlist of them (game/playlist.js), and while one is played the room is in each of its games in turn.
-export const GAME_IDS = ["musica", "opciones", "mundo", "historia", "minas", RAIN_GAME, PLAYLIST_GAME];
+export const GAME_IDS = ["musica", "opciones", "mundo", "historia", "minas", RAIN_GAME, REY_GAME, PLAYLIST_GAME];
 // "Trivia": its settings live in config.quiz and its questions take the place of songs in room.tracks.
 export const QUIZ_GAME = "opciones";
 // The games that ask questions instead of playing songs.
-const QUESTION_GAMES = [QUIZ_GAME, GEO_GAME, HISTORY_GAME, MINES_GAME, RAIN_GAME];
+const QUESTION_GAMES = [QUIZ_GAME, GEO_GAME, HISTORY_GAME, MINES_GAME, RAIN_GAME, REY_GAME];
 // Custom playlists from an owner's Spotify go in config.playlistIds with this prefix ("sp:<spotify playlist id>").
 export const SPOTIFY_PREFIX = "sp:";
 // Rounds are chosen this many rounds ahead, so their audio and cover are downloaded before they start.
@@ -274,6 +287,7 @@ function defaultConfig() {
     history: defaultHistoryConfig(),
     mines: defaultMinesConfig(),
     rain: defaultRainConfig(),
+    rey: defaultReyConfig(),
   };
 }
 
@@ -334,6 +348,8 @@ export class RoomManager {
     this.minesQuestions = minesBank(questions);
     // Lluvia's: Trivia's written questions, without the flags.
     this.rainQuestions = rainPool(this.quizQuestions);
+    // Rey de la colina's: the same ones.
+    this.reyQuestions = reyPool(this.quizQuestions);
     this.resolver = resolver;
     this.store = store;
     this.reconnectGraceMs = reconnectGraceMs;
@@ -1057,6 +1073,7 @@ export class RoomManager {
     if (config?.history) next.history = mergeHistoryConfig(room.config.history, config.history);
     if (config?.mines) next.mines = mergeMinesConfig(room.config.mines, config.mines);
     if (config?.rain) next.rain = mergeRainConfig(room.config.rain, config.rain);
+    if (config?.rey) next.rey = mergeReyConfig(room.config.rey, config.rey);
     // Same limits as the settings on screen: 5–25 rounds, 15–35 seconds to guess.
     if (config?.rounds != null) next.rounds = clampTo(config.rounds, MUSIC_LIMITS.rounds, 5);
     if (config?.roundMs != null) next.roundMs = clampTo(config.roundMs, MUSIC_LIMITS.roundMs, ROUND_MS);
@@ -1187,6 +1204,16 @@ export class RoomManager {
     if (config.useCatalog === false && !config.playlistIds?.length) return "Activa el catálogo o elige una playlist.";
     const n = this.songPool({ ...room, config: configWithItem(base, item) }).length;
     return n < config.rounds ? short(n, "canciones", config.rounds, "idiomas, géneros o dificultades") : null;
+  }
+
+  /** Why Rey de la colina can't be played with these settings (a Spanish sentence), or null when it can. */
+  reyProblem(rey) {
+    if (!rey.categories.length) return "Elige al menos una categoría.";
+    if (!rey.difficulties.length) return "Elige al menos una dificultad.";
+    const n = countReyQuestions(this.reyQuestions, rey);
+    return n < REY_MIN_QUESTIONS
+      ? `Solo hay ${n} preguntas con esos ajustes y hacen falta al menos ${REY_MIN_QUESTIONS}. Elige más categorías o dificultades.`
+      : null;
   }
 
   /**
@@ -1592,6 +1619,16 @@ export class RoomManager {
       room.tracks = pickRainRounds(this.rainQuestions, rain);
       room.totalRounds = room.tracks.length;
       room.tiebreak = null;
+    } else if (room.game === REY_GAME) {
+      // Rey de la colina: every round's three questions to pick from are drawn now; the first king is drawn too.
+      const rey = mergeReyConfig(room.config.rey);
+      const problem = this.reyProblem(rey);
+      if (problem) throw new Error(problem.replace(/\.$/, ""));
+      if (connected.filter((p) => !p.spectator).length < 2) throw new Error("Rey de la colina necesita al menos 2 jugadores");
+      room.tracks = pickReyRounds(this.reyQuestions, rey);
+      room.totalRounds = room.tracks.length;
+      room.tiebreak = null;
+      room.king = null;
     } else if (room.config?.customTracks && room.config.customTracks.length > 0) {
       const shuffled = [...room.config.customTracks].sort(() => Math.random() - 0.5);
       room.tracks = shuffled.slice(0, Math.min(room.config.rounds || 5, shuffled.length));
@@ -1737,7 +1774,60 @@ export class RoomManager {
       p.rain = room.game === RAIN_GAME && !p.spectator ? { hits: 0, points: 0, sent: 0, sentAt: 0 } : null;
       p.status = this.isPlaying(room, p.id) ? "jugando" : "mirando";
     });
+    if (room.game === REY_GAME) {
+      this.beginKingPick(room);
+      return;
+    }
     this.setPhase(room, "countdown", COUNTDOWN_MS, () => this.beginPlaying(room));
+  }
+
+  /**
+   * Rey de la colina's countdown is the king's turn to pick: they have REY_PICK_MS to choose one of the three
+   * questions (reyPick ends it at once); if the time runs out, one is picked for them. Without a king (the one who
+   * was left, or the first round), a connected player is drawn.
+   */
+  beginKingPick(room) {
+    const king = room.players.get(room.king);
+    if (!king || !king.connected || king.spectator) {
+      const candidates = [...room.players.values()].filter((p) => p.connected && !p.spectator);
+      room.king = candidates.length ? candidates[Math.floor(Math.random() * candidates.length)].id : null;
+    }
+    room.players.forEach((p) => {
+      p.status = p.spectator ? "mirando" : "jugando";
+    });
+    // A king who left: nobody to wait for.
+    const kingHere = room.players.get(room.king)?.connected;
+    this.setPhase(room, "countdown", kingHere ? REY_PICK_MS : COUNTDOWN_MS, () => this.reyPick(room, null, null));
+  }
+
+  /**
+   * The king picks the question for the round (an offer's position among the three), or, with no `userId`, the
+   * time ran out (or the king left) and a random one is picked for them. The picked offer becomes the round, and the
+   * players start answering.
+   */
+  reyPick(room, userId, index) {
+    if (room.game !== REY_GAME || room.phase !== "countdown") throw new Error("Ahora no se elige pregunta");
+    const round = room.tracks[room.currentRound];
+    if (!round?.offers) {
+      if (!userId) return;
+      throw new Error("La pregunta ya está elegida");
+    }
+    if (userId) {
+      this.assertNotSpectator(room, userId);
+      if (room.king !== userId) throw new Error("Solo el rey elige la pregunta");
+    }
+    let choice = Number(index);
+    if (!Number.isInteger(choice) || choice < 0 || choice >= round.offers.length) {
+      if (userId) throw new Error("Elige una de las preguntas");
+      choice = Math.floor(Math.random() * round.offers.length);
+    }
+    const offer = round.offers[choice];
+    // The picked offer is the round from here on (the other two are never shown again).
+    room.tracks[room.currentRound] = { ...offer, rey: true, roundMs: round.roundMs, kingId: room.king, picked: choice };
+    room.currentTrackId = offer.id;
+    if (room.timer) clearTimeout(room.timer);
+    this.beginPlaying(room);
+    this.onPhaseChange?.(room);
   }
 
   /** How long players have to answer each round in the room's game. */
@@ -1754,6 +1844,7 @@ export class RoomManager {
     }
     // Lluvia: the whole shower, as long as the round was drawn.
     if (room.game === RAIN_GAME) return room.tracks[room.currentRound]?.roundMs || mergeRainConfig(room.config.rain).roundMs;
+    if (room.game === REY_GAME) return room.tracks[room.currentRound]?.roundMs || mergeReyConfig(room.config.rey).roundMs;
     return room.config.roundMs || ROUND_MS;
   }
 
@@ -1796,6 +1887,8 @@ export class RoomManager {
   /** During a tiebreak only the tied players answer; the rest of the room watches. */
   isPlaying(room, userId) {
     if (room.players.get(userId)?.spectator) return false;
+    // Rey de la colina: the king doesn't answer, the rest do (so a round never waits for the king).
+    if (room.game === REY_GAME && room.king === userId) return false;
     return !room.tiebreak || room.tiebreak.playerIds.includes(userId);
   }
 
@@ -1832,6 +1925,7 @@ export class RoomManager {
       [HISTORY_GAME]: room.config.history,
       [MINES_GAME]: room.config.mines,
       [RAIN_GAME]: room.config.rain,
+      [REY_GAME]: room.config.rey,
     }[room.game] ?? {
       rounds: room.config.rounds,
       roundMs: room.config.roundMs,
@@ -1913,6 +2007,8 @@ export class RoomManager {
     if (!owner || !hasRole(owner, "owner")) throw new Error("Solo los owners pueden saltar preguntas");
     if (!["countdown", "playing", "reveal"].includes(room.phase)) throw new Error("No hay ninguna pregunta en juego");
     room.paused = null;
+    // Rey de la colina: skipping the king's turn picks a question for them.
+    if (room.game === REY_GAME && room.phase === "countdown") this.reyPick(room, null, null);
     if (room.phase !== "reveal") this.beginReveal(room);
     if (room.timer) clearTimeout(room.timer);
     this.advance(room);
@@ -1940,6 +2036,7 @@ export class RoomManager {
     if (this.isYearRound(room)) this.gradeYears(room, track);
     if (this.isMinesRound(room)) this.gradeMines(room);
     if (this.isRainRound(room)) this.gradeRain(room, track);
+    if (room.game === REY_GAME) this.gradeRey(room, track);
     this.markIdle(room);
     room.players.forEach((player) => {
       if (!player.lastAnswer && this.isPlaying(room, player.id)) {
@@ -1955,6 +2052,7 @@ export class RoomManager {
     else if (room.game === QUIZ_GAME) revealMs = QUIZ_REVEAL_MS;
     else if (this.isMinesRound(room)) revealMs = MINES_REVEAL_MS;
     else if (this.isRainRound(room)) revealMs = RAIN_REVEAL_MS;
+    else if (room.game === REY_GAME) revealMs = REY_REVEAL_MS;
     this.setPhase(room, "reveal", revealMs, () => this.advance(room));
     return { track, duration };
   }
@@ -1991,7 +2089,7 @@ export class RoomManager {
   rightAnswerText(room, track) {
     if (room.game === HISTORY_GAME) return track.kind === "cifras" ? figureLabel(track.value, track.unit) : yearLabel(track.year);
     if (room.game === GEO_GAME) return track.name || track.answer || null;
-    if (room.game === QUIZ_GAME) return track.type === "choice" ? track.options[track.answer] : track.answer || null;
+    if (room.game === QUIZ_GAME || room.game === REY_GAME) return track.type === "choice" ? track.options[track.answer] : track.answer || null;
     if (room.game === "musica") return artistLine(track) ? `${track.title} - ${artistLine(track)}` : track.title || null;
     return null;
   }
@@ -2419,6 +2517,7 @@ export class RoomManager {
     room.participants = null;
     room.turn = 0;
     room.introFor = null;
+    room.king = null;
     for (const [id, p] of room.players) {
       // Players who left mid-match (and aren't reconnecting) have no seat in a fresh lobby.
       if (!p.connected && !p.dropTimer) {
@@ -2460,6 +2559,7 @@ export class RoomManager {
     if (this.isYearRound(room)) throw new Error("Elige el año en la línea del tiempo");
     if (this.isMinesRound(room)) throw new Error("Toca una casilla del tablero");
     if (this.isRainRound(room)) return this.rainAnswer(room, userId, answerText);
+    if (room.game === REY_GAME) return this.reyAnswer(room, player, answerText);
 
     // Grace period for network latency if reveal just started
     const isPlaying = room.phase === "playing";
@@ -2505,6 +2605,68 @@ export class RoomManager {
       }
     }
     this.answered(room, player);
+  }
+
+  /**
+   * Rey de la colina: a challenger writes their answer (one per round, like Trivia's written ones). The first right
+   * one takes the crown and the round ends at once; a wrong one only counts as that challenger failing, and when
+   * every challenger failed (answered) the round ends early too (answered). The king can't answer.
+   */
+  reyAnswer(room, player, text) {
+    if (room.king === player.id) throw new Error("Eres el rey: espera a que los demás respondan");
+    if (room.phase !== "playing") throw new Error("No se aceptan respuestas ahora");
+    const track = room.tracks[room.currentRound];
+    if (!track?.rey) throw new Error("El rey aún no ha elegido la pregunta");
+    const answerText = String(text ?? "").slice(0, 100);
+    const correct = isCorrectOpenAnswer(answerText, track);
+    const remainingMs = Math.max(0, (room.phaseEndsAt || Date.now()) - Date.now());
+    player.lastAnswer = { text: answerText.slice(0, 80), correct, at: Date.now() };
+    player.lastPoints = 0;
+    if (!correct) {
+      player.streak = 0;
+      this.answered(room, player);
+      return;
+    }
+    player.streak += 1;
+    player.bestStreak = Math.max(player.bestStreak, player.streak);
+    player.correct += 1;
+    player.answerTimes.push(this.roundMs(room) - remainingMs);
+    track.dethronedBy = player.id;
+    player.status = "respondió";
+    player.idleRounds = 0;
+    player.idle = false;
+    if (room.timer) clearTimeout(room.timer);
+    this.beginReveal(room);
+    this.onPhaseChange?.(room);
+  }
+
+  /**
+   * Rey de la colina, at the reveal: whoever answered right takes the crown (the king is the one who answered first,
+   * the round ended with it); otherwise the king keeps it and scores the question's points.
+   */
+  gradeRey(room, track) {
+    if (!track?.rey) return;
+    const king = room.players.get(track.kingId);
+    const winner = track.dethronedBy ? room.players.get(track.dethronedBy) : null;
+    if (winner) {
+      room.king = winner.id;
+      if (king) {
+        king.streak = 0;
+        king.lastPoints = 0;
+        king.lastAnswer = { text: "Perdió la corona", correct: false, at: Date.now() };
+      }
+      return;
+    }
+    if (!king) return;
+    const points = REY_POINTS[track.difficulty] || 1;
+    track.survived = true;
+    track.points = points;
+    king.score += points;
+    king.lastPoints = points;
+    king.streak += 1;
+    king.bestStreak = Math.max(king.bestStreak, king.streak);
+    king.correct += 1;
+    king.lastAnswer = { text: "Sigue en el trono", correct: true, at: Date.now() };
   }
 
   /**
@@ -3126,6 +3288,12 @@ export class RoomManager {
       if (track) payload.question = this.publicMinesQuestion(room, track);
       // In the lobby: how many boards each category and difficulty has, for the settings' chips.
       if (room.phase === "lobby") payload.questionCounts = minesCounts(this.minesQuestions, room.config.mines);
+    } else if (room.game === REY_GAME) {
+      payload.rey = this.publicRey(room, track);
+      // The question only exists once the king picked it (before, the three offers are in `rey.offers`).
+      if (track?.rey) payload.question = this.publicQuestion(room, track);
+      // In the lobby: how many questions each category and difficulty has, for the settings' chips.
+      if (room.phase === "lobby") payload.questionCounts = reyCounts(this.reyQuestions, room.config.rey);
     } else if (room.game === RAIN_GAME) {
       // The questions falling now; their answers only at the reveal.
       if (track) payload.question = this.publicRainQuestion(room, track);
@@ -3217,6 +3385,7 @@ export class RoomManager {
     if (room.game === HISTORY_GAME) return countHistoryQuestions(this.historyQuestions, room.config.history);
     if (room.game === MINES_GAME) return countMinesQuestions(this.minesQuestions, room.config.mines);
     if (room.game === RAIN_GAME) return countRainQuestions(this.rainQuestions, room.config.rain);
+    if (room.game === REY_GAME) return countReyQuestions(this.reyQuestions, room.config.rey);
     return undefined;
   }
 
@@ -3326,6 +3495,27 @@ export class RoomManager {
       snap: track.kind === "cifras" && open ? track.snap : null,
       min: open ? track.min : null,
       max: open ? track.max : null,
+    };
+  }
+
+  /**
+   * Rey de la colina's state: who the king is (and who it was in this round, since the crown can change at the
+   * reveal), the three questions to pick from during the king's turn (without their answers) and, at the reveal, who
+   * took the crown or what the king scored.
+   */
+  publicRey(room, round) {
+    const reveal = room.phase === "reveal" || room.phase === "finished";
+    const picked = Boolean(round?.rey);
+    return {
+      kingId: room.king || null,
+      roundKingId: (picked ? round.kingId : room.king) || null,
+      offers:
+        room.phase === "countdown" && round?.offers
+          ? round.offers.map((o, index) => ({ index, text: o.text, category: o.category, difficulty: o.difficulty, points: o.points }))
+          : null,
+      dethronedBy: reveal && picked ? round.dethronedBy || null : null,
+      survived: reveal && picked ? Boolean(round.survived) : false,
+      points: reveal && picked ? round.points || 0 : 0,
     };
   }
 

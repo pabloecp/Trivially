@@ -705,6 +705,18 @@ export function attachSockets(io, rooms, { friends = null, hub = null } = {}) {
       }
     });
 
+    // Rey de la colina: the king picks one of the three questions (its position) for the round.
+    socket.on("game:kingPick", (index, ack) => {
+      try {
+        const { room, userId } = requireRoom(rooms, socket);
+        rooms.reyPick(room, userId, index);
+        ack?.({ ok: true });
+        io.to(room.code).emit("room:state", rooms.publicState(room));
+      } catch (err) {
+        ack?.({ ok: false, error: err.message });
+      }
+    });
+
     socket.on("disconnect", () => {
       hub?.disconnect(socket);
       for (const room of rooms.dropCentralRequests(socket.id)) io.to(room.code).emit("room:state", rooms.publicState(room));
