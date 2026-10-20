@@ -3051,6 +3051,9 @@ body::-webkit-scrollbar,
   /* The round's bar: "Terminar" beside the clock instead of a row of its own. */
   .tv-game-top { grid-template-columns: minmax(0, 1fr) auto auto; grid-template-areas: "round tools clock" "bar bar bar"; }
   .tv-game-tools .tv-mini-btn { max-width: 116px; white-space: normal; text-align: center; line-height: 1.2; }
+  /* An owner has more tools (Reportar, Saltar, Pausar, Terminar): beside the clock they'd squeeze the round's text to
+     a thin column, so with three or more they take a row of their own under it. */
+  .tv-game-top:has(.tv-game-tools > :nth-child(3)) { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "round clock" "tools tools" "bar bar"; }
   .tv-game-round .tv-card-title { white-space: normal; line-height: 1.15; }
   .tv-game-round .tv-card-title .tv-muted { white-space: nowrap; }
 }

@@ -31,7 +31,7 @@
 .tv-rey-offer.is-facil, .tv-rey-level.is-facil { --rc: var(--p-ok); --rc-edge: var(--p-ok-edge); --rc-on: var(--p-ink); }
 .tv-rey-offer.is-media, .tv-rey-level.is-media { --rc: var(--p-accent-2); --rc-edge: var(--p-accent-edge); --rc-on: var(--p-ink); }
 .tv-rey-offer.is-dificil, .tv-rey-level.is-dificil { --rc: var(--p-bad); --rc-edge: var(--p-bad-edge); --rc-on: #ffffff; }
-.tv-rey-level[class*="is-"] { background: var(--rc); color: var(--rc-on); }
+.tv-app .tv-rey-level.is-facil, .tv-app .tv-rey-level.is-media, .tv-app .tv-rey-level.is-dificil { background: var(--rc); color: var(--rc-on); }
 
 /* ---------- The match ---------- */
 .tv-rey-stage { display: grid; align-content: start; gap: 14px; }
