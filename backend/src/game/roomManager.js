@@ -69,6 +69,22 @@ import {
   publicRun,
   recordGame,
 } from "./playlist.js";
+import {
+  BOT_GAP_MS,
+  BOT_WAIT_MS,
+  cleanMatchRequest,
+  INTRO_MS,
+  INTRO_SPIN_MS,
+  INTRO_TUTORIAL_MS,
+  MATCH_FULL_MS,
+  roomSize,
+  matchItemConfig,
+  matchRoundMs,
+  matchTimes,
+  newBot,
+  pickMatchGames,
+  publicMatchmaking,
+} from "./matchmaking.js";
 import { categoryName } from "../questions/questionSchema.js";
 import { flagToken, flagUrl } from "../geo/flags.js";
 import { locate } from "../geo/worldMap.js";
@@ -254,6 +270,7 @@ function publicPlayer(player, phase, room) {
     name: player.name,
     avatar: player.avatar,
     isGuest: Boolean(player.isGuest),
+    // Never whether it's a bot (RoomManager.addBot): to the players, bots are like any other guest.
     status: player.status,
     score: player.score,
     correct: player.correct,
@@ -304,7 +321,238 @@ export class RoomManager {
     const room = this.get(String(code || ""));
     if (!room) throw new Error("No hay ninguna sala con ese código");
     if (userId && room.blocked?.has(userId)) throw new Error("El anfitrión te bloqueó de esta sala");
+    // A public match (findMatch) is only entered by searching for one; its players can come back to it (a reload).
+    if (room.matchmaking && !room.players.has(userId)) throw new Error("Esa sala es de una partida pública: búscala desde Jugar");
     return room;
+  }
+
+  /** Connected players of a room (the ones a public match counts to be full). */
+  connectedCount(room) {
+    let n = 0;
+    for (const p of room.players.values()) if (p.connected) n += 1;
+    return n;
+  }
+
+  /**
+   * "Casual" or "Competitivo" (`{ kind, rounds }`): the player goes into a public room of that kind and length that is
+   * still waiting for players, or a new one. Nobody is its host: nobody picks the game, changes the settings, pauses or
+   * ends it. When it has its size of players (2 or 5) it starts by itself (checkMatchFull).
+   */
+  findMatch(user, input) {
+    const { kind, rounds, size } = cleanMatchRequest(input);
+    assertNameWithoutLink(user);
+    let room = [...this.rooms.values()].find(
+      (r) =>
+        r.matchmaking &&
+        r.phase === "lobby" &&
+        !r.matchmaking.startsAt &&
+        r.matchmaking.kind === kind &&
+        r.matchmaking.rounds === rounds &&
+        r.matchmaking.versus === size &&
+        !r.blocked?.has(user.id) &&
+        this.connectedCount(r) < r.matchmaking.size
+    );
+    if (room) {
+      this.addPlayer(room, user);
+    } else {
+      room = this.create({ host: user, game: null });
+      room.hostId = null;
+      room.joinMode = "invitacion";
+      room.matchmaking = { kind, rounds, versus: size, size: roomSize(size), games: null, startsAt: null, timer: null, botTimer: null };
+      if (kind === "casual") this.scheduleBotArrival(room, BOT_WAIT_MS);
+    }
+    this.checkMatchFull(room);
+    return room;
+  }
+
+  /**
+   * Casual: after `delay`, a bot takes an empty seat, and then another one every second or so until the room is full
+   * (which starts it, checkMatchFull). Players who arrive meanwhile take seats as usual.
+   */
+  scheduleBotArrival(room, delay) {
+    const info = room.matchmaking;
+    clearTimeout(info.botTimer);
+    info.botTimer = setTimeout(() => {
+      info.botTimer = null;
+      if (this.rooms.get(room.code) !== room || room.phase !== "lobby" || info.startsAt) return;
+      if (this.connectedCount(room) >= room.matchmaking.size) return;
+      this.addBot(room);
+      this.checkMatchFull(room);
+      this.onPhaseChange?.(room);
+      if (this.connectedCount(room) < room.matchmaking.size) {
+        const [min, max] = BOT_GAP_MS;
+        this.scheduleBotArrival(room, min + Math.random() * (max - min));
+      }
+    }, delay);
+    info.botTimer.unref?.();
+  }
+
+  /** A bot in the room: a player with no connection who answers by itself while a round is played (scheduleBots). */
+  addBot(room) {
+    const bot = newBot(new Set([...room.players.values()].map((p) => p.name)));
+    room.players.set(bot.id, {
+      ...bot,
+      score: 0,
+      correct: 0,
+      streak: 0,
+      bestStreak: 0,
+      answerTimes: [],
+      lastAnswer: null,
+      lastPoints: 0,
+      connected: true,
+      socketId: null,
+      status: "conectado",
+    });
+    return bot;
+  }
+
+  /** Whether someone (not a bot) is still connected: a room with only bots left is closed. */
+  hasPeople(room) {
+    for (const p of room.players.values()) if (p.connected && !p.bot) return true;
+    return false;
+  }
+
+  /**
+   * The bots' moves for the round (or turn) being played: each one answers after a while, sometimes right and sometimes
+   * not, as good as its `skill`. In a race of Campo de minas they keep picking until they step on a mine. Called each
+   * time a round or turn starts playing, and when a paused match goes on.
+   */
+  scheduleBots(room) {
+    this.clearBotMoves(room);
+    if (room.phase !== "playing" || room.paused) return;
+    const bots = [...room.players.values()].filter((p) => p.bot && this.isPlaying(room, p.id));
+    if (!bots.length) return;
+    const round = room.currentRound;
+    const turn = room.turn;
+    const still = () => this.rooms.get(room.code) === room && room.phase === "playing" && !room.paused && room.currentRound === round && room.turn === turn;
+    const later = (fn, ms) => {
+      const t = setTimeout(() => {
+        if (!still()) return;
+        fn();
+      }, ms);
+      t.unref?.();
+      room.botTimers.push(t);
+    };
+    const left = Math.max(1000, (room.phaseEndsAt || Date.now()) - Date.now());
+    for (const bot of bots) {
+      const move = () => {
+        let again = false;
+        try {
+          again = this.botMove(room, bot);
+        } catch {
+          // A move that isn't allowed any more (someone took the cell first...) is just skipped.
+        }
+        this.onPhaseChange?.(room);
+        if (again) later(move, 2000 + Math.random() * 3500);
+      };
+      // Not too quick: people usually answer first.
+      later(move, left * (0.35 + Math.random() * 0.5));
+    }
+  }
+
+  clearBotMoves(room) {
+    for (const t of room.botTimers || []) clearTimeout(t);
+    room.botTimers = [];
+  }
+
+  /** One move of a bot in the round being played. Returns true when it may move again (a race of Campo de minas). */
+  botMove(room, bot) {
+    const track = room.tracks[room.currentRound];
+    if (!track) return false;
+    const right = Math.random() < bot.skill;
+    if (this.isChoiceRound(room)) {
+      const others = track.options.map((_, i) => i).filter((i) => i !== track.answer);
+      this.submitAnswer(room, bot.id, right ? track.answer : others[Math.floor(Math.random() * others.length)]);
+      return false;
+    }
+    if (this.isYearRound(room)) {
+      // Closer the better it is: off by up to a share of the line, the exact answer now and then.
+      const exact = Math.random() < bot.skill * 0.12;
+      const reach = (track.max - track.min) * (1 - bot.skill) * 0.6;
+      const off = exact ? 0 : Math.round((Math.random() * 2 - 1) * reach);
+      if (track.kind === "cifras") {
+        const snap = track.snap || 1;
+        const value = Math.min(track.max, Math.max(track.min, Math.round((track.value + off) / snap) * snap));
+        this.placeYear(room, bot.id, { value, lock: true });
+      } else {
+        let year = Math.min(track.max, currentYear(), Math.max(track.min, track.year + off));
+        if (year === 0) year = 1;
+        this.placeYear(room, bot.id, { year, lock: true });
+      }
+      return false;
+    }
+    if (this.isMinesRound(room)) {
+      const field = bot.minefield;
+      if (!field || field.out) return false;
+      const free = track.cells.map((c, i) => ({ c, i })).filter(({ c }) => !c.by);
+      const good = free.filter(({ c }) => c.correct);
+      if (!free.length) return false;
+      // Bots know some of the answers: a right cell about half the time, otherwise any free one.
+      const pool = good.length && Math.random() < 0.3 + bot.skill * 0.5 ? good : free;
+      const { i } = pool[Math.floor(Math.random() * pool.length)];
+      const hit = this.pickCell(room, bot.id, { cell: i, turn: room.turn });
+      return hit && this.isMinesRace(room);
+    }
+    if (track.type === "open") {
+      this.submitAnswer(room, bot.id, right ? track.answer : "No lo sé");
+    }
+    return false;
+  }
+
+  /**
+   * A public room waiting for players: once full, it starts after MATCH_FULL_MS (everyone sees it full first); if
+   * someone leaves before that, it goes back to waiting.
+   */
+  checkMatchFull(room) {
+    const info = room.matchmaking;
+    if (!info || room.phase !== "lobby") return;
+    const full = this.connectedCount(room) >= room.matchmaking.size;
+    if (full && !info.startsAt) {
+      info.startsAt = Date.now() + MATCH_FULL_MS;
+      info.timer = setTimeout(() => {
+        info.timer = null;
+        if (this.rooms.get(room.code) !== room || room.phase !== "lobby") return;
+        if (this.connectedCount(room) < room.matchmaking.size) {
+          info.startsAt = null;
+        } else {
+          try {
+            clearTimeout(info.botTimer);
+            this.startMatch(room);
+            this.onMatchStart?.(room);
+          } catch (err) {
+            console.error("No se pudo empezar la partida pública", err);
+            info.startsAt = null;
+          }
+        }
+        this.onPhaseChange?.(room);
+      }, MATCH_FULL_MS);
+      info.timer.unref?.();
+    } else if (!full && info.startsAt) {
+      clearTimeout(info.timer);
+      info.timer = null;
+      info.startsAt = null;
+    }
+  }
+
+  /**
+   * Starts a full public room: its games are drawn (one per 5 rounds, all different) and played as a playlist in that
+   * order, 5 rounds each. Competitivo plays only medium and hard questions while there are enough of them.
+   */
+  startMatch(room) {
+    const { kind, rounds } = room.matchmaking;
+    const games = pickMatchGames(rounds);
+    // The times go in after cleaning, as they are: a public match is quicker than a game's own settings allow.
+    const configFor = (game, easy) => ({ ...this.cleanItemConfig(room, game, matchItemConfig(game, kind, { easy })), ...matchTimes(game) });
+    const items = games.map((game, i) => {
+      const item = { id: `m${i}`, game, config: configFor(game, false) };
+      if (!this.itemProblem(room, item, room.config, { exact: true })) return item;
+      return { ...item, config: configFor(game, true) };
+    });
+    room.matchmaking.games = games;
+    room.matchmaking.startsAt = null;
+    room.playlist = { name: kind === "competitivo" ? "Partida competitiva" : "Partida casual", order: "orden", items };
+    room.run = newRun(room.playlist, room.config);
+    this.startMixed(room);
   }
 
   create({ host, mode, config, game = null }) {
@@ -457,6 +705,8 @@ export class RoomManager {
     player.dropTimer.unref?.();
     // Campo de minas: the turn doesn't wait for a player who isn't there.
     this.checkMinesTurn(room);
+    // A public room about to start isn't full any more.
+    this.checkMatchFull(room);
     return { room };
   }
 
@@ -477,11 +727,12 @@ export class RoomManager {
       player.socketId = null;
     }
     if (room.hostId === userId) this.transferHost(room);
-    if (![...room.players.values()].some((p) => p.connected)) {
+    if (!this.hasPeople(room)) {
       this.destroy(room);
       return { room: null, left: true };
     }
     this.checkMinesTurn(room);
+    this.checkMatchFull(room);
     return { room, left: true };
   }
 
@@ -497,6 +748,9 @@ export class RoomManager {
 
   destroy(room) {
     if (room.timer) clearTimeout(room.timer);
+    clearTimeout(room.matchmaking?.timer);
+    clearTimeout(room.matchmaking?.botTimer);
+    this.clearBotMoves(room);
     clearTimeout(room.progressTimer);
     room.players.forEach((p) => {
       clearTimeout(p.dropTimer);
@@ -1390,7 +1644,20 @@ export class RoomManager {
   }
 
   beginCountdown(room) {
-    if (room.run?.mixed && !room.run.finished) this.enterMixedRound(room);
+    if (room.run?.mixed && !room.run.finished) {
+      this.enterMixedRound(room);
+      // A public match: before each of its games, the roulette that picks it and the game's tutorial ("intro").
+      if (room.matchmaking && room.introFor !== room.run.current) {
+        room.introFor = room.run.current;
+        room.players.forEach((p) => {
+          p.lastAnswer = null;
+          p.lastPoints = 0;
+          p.minefield = null;
+        });
+        this.setPhase(room, "intro", INTRO_MS, () => this.beginCountdown(room));
+        return;
+      }
+    }
     this.pickAhead(room);
     const track = room.tracks[room.currentRound];
     room.currentTrackId = track.id;
@@ -1411,6 +1678,8 @@ export class RoomManager {
 
   /** How long players have to answer each round in the room's game. */
   roundMs(room) {
+    // A public match has its own clock (10 s a question or a turn, 30 s a race), whatever the settings allow.
+    if (room.matchmaking) return matchRoundMs(room.game, this.isMinesRace(room));
     if (room.game === QUIZ_GAME) return mergeQuizConfig(room.config.quiz).roundMs;
     if (room.game === GEO_GAME) return mergeGeoConfig(room.config.geo).roundMs;
     if (room.game === HISTORY_GAME) return mergeHistoryConfig(room.config.history).roundMs;
@@ -1553,6 +1822,7 @@ export class RoomManager {
     }, remainingMs);
     // Campo de minas: someone may have left during the pause, and the turn was only waiting for them.
     this.checkMinesTurn(room);
+    this.scheduleBots(room);
   }
 
   /**
@@ -1972,7 +2242,6 @@ export class RoomManager {
   sendChat(room, userId, text) {
     const player = room.players.get(userId);
     if (!player) throw new Error("Jugador no encontrado");
-    if (room.phase === "countdown" || room.phase === "playing") throw new Error("El chat se pausa mientras se juega la ronda");
     const clean = String(text ?? "").replace(/\s+/g, " ").trim().slice(0, CHAT_MAX_LENGTH);
     if (!clean) throw new Error("Escribe un mensaje");
     if (hasLink(clean)) throw new Error(CHAT_LINK_ERROR);
@@ -2060,6 +2329,7 @@ export class RoomManager {
     room.tiebreak = null;
     room.participants = null;
     room.turn = 0;
+    room.introFor = null;
     for (const [id, p] of room.players) {
       // Players who left mid-match (and aren't reconnecting) have no seat in a fresh lobby.
       if (!p.connected && !p.dropTimer) {
@@ -2557,6 +2827,7 @@ export class RoomManager {
       onEnd();
       this.onPhaseChange?.(room);
     }, duration);
+    if (room.botTimers?.length || phase === "playing") this.scheduleBots(room);
   }
 
   publicState(room, forUserId) {
@@ -2644,6 +2915,20 @@ export class RoomManager {
             .filter((s) => room.players.has(s.userId) && Date.now() - s.at < SUGGESTION_TTL_MS)
             .map((s) => ({ userId: s.userId, name: room.players.get(s.userId).name, game: s.game, at: s.at })),
       players: [...room.players.values()].map((p) => publicPlayer(p, room.phase, room)),
+      // A public match ("Casual" or "Competitivo"): its kind and length, how full it is, its games once drawn.
+      matchmaking: room.matchmaking ? publicMatchmaking(room.matchmaking, this.connectedCount(room)) : null,
+      // Before each game of a public match: the roulette lands on `game` (`index` in `games`, the match's games in
+      // play order), then its tutorial.
+      intro:
+        room.phase === "intro" && room.run
+          ? {
+              game: room.game,
+              games: room.run.items.map((item) => item.game),
+              index: room.run.current ?? 0,
+              spinMs: INTRO_SPIN_MS,
+              tutorialMs: INTRO_TUTORIAL_MS,
+            }
+          : null,
       audio: null,
       reveal: null,
       question: null,
@@ -2734,6 +3019,13 @@ export class RoomManager {
         // Every round of the match for this player, with the right answer and their points (recordRound).
         rounds: publicRounds(p.rounds),
       }));
+    }
+    // Nothing of the next game's first round shows while its roulette and tutorial are on.
+    if (room.phase === "intro") {
+      payload.question = null;
+      payload.reveal = null;
+      payload.audio = null;
+      delete payload.choice;
     }
     if (forUserId) {
       const me = room.players.get(forUserId);

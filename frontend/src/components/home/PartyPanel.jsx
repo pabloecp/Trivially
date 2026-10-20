@@ -12,6 +12,7 @@ import { ChatForm, ChatMessages, ChatSheet, useChatUnread, usePhone, useRoomChat
 import { useInvite } from "./useInvite.js";
 import { shownCode, useHiddenCode } from "../../lib/hiddenCode.js";
 import InviteFriends from "./InviteFriends.jsx";
+import { exitPath } from "./TvTopbar.jsx";
 
 function playerTag(player, { isHost }) {
   if (!player.connected) return "Reconectando…";
@@ -118,8 +119,9 @@ export default function PartyPanel({ room, onToast, scores = false, display = fa
   function leave() {
     setLeaving(false);
     leaveRoom();
-    // Replacing, not pushing: Back from Home must not return to /sala/CODE, which joins the room again.
-    nav("/", { replace: true });
+    // One step back, to the option of "¿Cómo quieres jugar?" the room came from. Replacing, not pushing: Back must not
+    // return to /sala/CODE, which joins the room again.
+    nav(exitPath(room), { replace: true });
   }
 
   // Between matches, the room's scoreboard (the server's room.board): each player's wins, most first, once a match
@@ -146,6 +148,8 @@ export default function PartyPanel({ room, onToast, scores = false, display = fa
       className={`tv-party${scores ? " is-scores" : ""}${chatting ? " is-chat" : ""}${display ? " is-display" : ""} ${className}`.trim()}
       aria-label="Tu sala"
     >
+      {/* A public match has no code to share: nobody joins it but by searching. */}
+      {!room.matchmaking && (
       <div className="tv-party-codebox">
         <div className="tv-party-codehead">
           <p className="tv-mono-label">Código de sala</p>
@@ -171,6 +175,7 @@ export default function PartyPanel({ room, onToast, scores = false, display = fa
           </button>
         )}
       </div>
+      )}
 
       {isHost && !display && <FriendsRoomControls room={room} onToast={onToast} />}
 
@@ -246,7 +251,7 @@ export default function PartyPanel({ room, onToast, scores = false, display = fa
             })}
           </ul>
           {/* While the room waits: your friends who are online, to invite (instead of "Esperando amigos"). */}
-          {!scores && !display && <InviteFriends room={room} onToast={onToast} />}
+          {!scores && !display && !room.matchmaking && <InviteFriends room={room} onToast={onToast} />}
           {spectators.length > 0 && (
             <>
               <div className="tv-party-title">

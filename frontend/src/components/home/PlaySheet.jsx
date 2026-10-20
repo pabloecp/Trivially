@@ -2,14 +2,31 @@ import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { AVATAR_COLORS, savedGuest, useApp } from "../../lib/store.jsx";
 import { withSound } from "../../lib/sounds.js";
+import { findMode } from "../../modes/index.js";
 import Avatar from "./Avatar.jsx";
 import Icon from "./Icon.jsx";
+import Segmented from "./Segmented.jsx";
+import { MATCH_GAMES, MATCH_KINDS, MATCH_ROUNDS, MATCH_SIZES, gamesText } from "./matchInfo.js";
+import "../../styles/match.css";
 
 // A room's code is five letters and numbers (ROOM_CODE_LENGTH on the server).
 const ROOM_CODE_LENGTH = 5;
 
 const DISMISS_DISTANCE = 90;
 const FOCUSABLE = "a[href], button:not([disabled]), input:not([disabled])";
+// The three ways to play, each opening in place under its row: the public matches (pick the length, then search) and
+// "Privada" (create a room or join one with a code).
+const PLAY_KINDS = [
+  MATCH_KINDS.casual,
+  MATCH_KINDS.competitivo,
+  { id: "privada", name: "Privada", color: "blue", icon: "lock", blurb: "Crea una sala o entra con un código" },
+];
+
+// A row's panel is only reachable (tab, screen reader) while it's open.
+const inertUnless = (shown) => (el) => {
+  if (el) el.inert = !shown;
+};
+
 const TITLES = {
   menu: "¿Cómo quieres jugar?",
   code: "Escribe el código",
@@ -21,7 +38,11 @@ const TITLES = {
 // it asks for a name and then joins that room. Without an account, creating or joining always asks for the name
 // first, already filled in with the one used last time (and its colour), so a guest can keep it with one tap.
 export default function PlaySheet({ mode, joinCode, open, onClose }) {
-  const { user, saveGuest, createRoom, joinRoom, checkRoom } = useApp();
+  const { user, saveGuest, createRoom, joinRoom, checkRoom, findMatch } = useApp();
+  // Which of the three rows is open (null: none), and the length picked for a public match.
+  const [kind, setKind] = useState(null);
+  const [rounds, setRounds] = useState(MATCH_ROUNDS[0]);
+  const [size, setSize] = useState(MATCH_SIZES[1].value);
   const sheetRef = useRef(null);
   const dragStart = useRef(null);
   const [mounted, setMounted] = useState(open);
@@ -45,6 +66,7 @@ export default function PlaySheet({ mode, joinCode, open, onClose }) {
       setCode(joinCode || "");
       setPending(joinCode ? { type: "join", code: joinCode } : null);
       setStep(joinCode ? "name" : "menu");
+      setKind(null);
       const last = user?.isGuest ? { name: user.name, avatar: user.avatar } : savedGuest();
       setName(last.name || "");
       setColor(AVATAR_COLORS.includes(last.avatar) ? last.avatar : AVATAR_COLORS[0]);
@@ -149,7 +171,13 @@ export default function PlaySheet({ mode, joinCode, open, onClose }) {
     setBusy(true);
     setError("");
     try {
-      await withSound(() => (action.type === "create" ? createRoom("multi", {}, mode?.id ?? null) : joinRoom(action.code)));
+      await withSound(() =>
+        action.type === "create"
+          ? createRoom("multi", {}, mode?.id ?? null)
+          : action.type === "match"
+          ? findMatch(action.kind, action.rounds, action.size)
+          : joinRoom(action.code)
+      );
       onClose(); // the room navigator takes the player wherever the room is
     } catch (err) {
       // This account already plays in that room from another device: CentralOffer asks about this one instead.
@@ -244,10 +272,10 @@ export default function PlaySheet({ mode, joinCode, open, onClose }) {
                 </button>
               )}
               <span className={`tv-badge tv-c-${mode?.color || "yellow"}`}>
-                <Icon name={mode?.icon || "users"} size={26} />
+                <Icon name={mode?.icon || "play"} size={26} />
               </span>
               <div>
-                <p className="tv-sheet-kicker">{mode?.name || "Multijugador"}</p>
+                <p className="tv-sheet-kicker">{mode?.name || "Jugar"}</p>
                 <h2 id="tv-sheet-title" className="tv-sheet-title">{TITLES[step]}</h2>
               </div>
             </div>
@@ -255,40 +283,124 @@ export default function PlaySheet({ mode, joinCode, open, onClose }) {
 
           <div className="tv-sheet-body">
             {step === "menu" && (
-              <nav className="tv-sheet-options" aria-label="Formas de jugar">
-                <button
-                  type="button"
-                  className="tv-option"
-                  style={{ "--i": 0 }}
-                  data-sound={!user?.name || user.isGuest ? undefined : "none"}
-                  onClick={() => run({ type: "create" })}
-                  disabled={busy}
-                >
-                  <span className="tv-badge tv-c-music">
-                    <Icon name="users" size={24} />
-                  </span>
-                  <span className="tv-option-text">
-                    <strong>{busy ? "Creando sala…" : "Crear sala"}</strong>
-                    <span>{mode ? "Juega solo o invita a tus amigos" : "Invita a tus amigos y elijan el juego"}</span>
-                  </span>
-                  <Icon name="chevron" size={22} className="tv-option-chevron" />
-                </button>
-                <button
-                  type="button"
-                  className="tv-option"
-                  style={{ "--i": 1 }}
-                  onClick={() => goTo("code")}
-                  disabled={busy}
-                >
-                  <span className="tv-badge tv-c-blue">
-                    <Icon name="hash" size={24} />
-                  </span>
-                  <span className="tv-option-text">
-                    <strong>Tengo un código</strong>
-                    <span>Entra a la sala de un amigo</span>
-                  </span>
-                  <Icon name="chevron" size={22} className="tv-option-chevron" />
-                </button>
+              <nav className="tv-sheet-options tv-pm-list" aria-label="Formas de jugar">
+                {PLAY_KINDS.map((k, i) => {
+                  const expanded = kind === k.id;
+                  const match = k.id !== "privada";
+                  return (
+                    <div
+                      key={k.id}
+                      className={`tv-pm${expanded ? " is-open" : ""}${kind && !expanded ? " is-dim" : ""}`}
+                      style={{ "--i": i }}
+                    >
+                      <button
+                        type="button"
+                        className={`tv-option tv-pm-head tv-c-${k.color}`}
+                        aria-expanded={expanded}
+                        aria-controls={`tv-pm-${k.id}`}
+                        onClick={() => setKind((cur) => (cur === k.id ? null : k.id))}
+                        disabled={busy}
+                      >
+                        <span className={`tv-badge tv-c-${k.color}`}>
+                          <Icon name={k.icon} size={24} filled={k.icon !== "lock"} strokeWidth={k.icon === "lock" ? 2.4 : 1.6} />
+                        </span>
+                        <span className="tv-option-text">
+                          <strong>{k.name}</strong>
+                          <span>{k.blurb}</span>
+                        </span>
+                        <Icon name="chevron" size={22} className="tv-option-chevron" />
+                      </button>
+                      <div id={`tv-pm-${k.id}`} className="tv-pm-panel" ref={inertUnless(expanded)}>
+                        <div className="tv-pm-inner">
+                          {match ? (
+                            <div className="tv-pm-body">
+                              <div className="tv-pm-facts">
+                                <span className="tv-pm-games" aria-label="Trivia, Rango y Campo de minas">
+                                  {MATCH_GAMES.map((id) => {
+                                    const m = findMode(id);
+                                    return (
+                                      <span key={id} className={`tv-pm-game tv-c-${m.color}`}>
+                                        <Icon name={m.icon} size={15} strokeWidth={2.4} />
+                                      </span>
+                                    );
+                                  })}
+                                </span>
+                                <span className="tv-pm-detail">{k.detail}</span>
+                              </div>
+                              <Segmented
+                                label="Rondas"
+                                value={rounds}
+                                onChange={setRounds}
+                                options={MATCH_ROUNDS.map((n) => ({
+                                  value: n,
+                                  label: (
+                                    <span className="tv-pm-round">
+                                      <b>{n} rondas</b>
+                                      <small>{gamesText(n)}</small>
+                                    </span>
+                                  ),
+                                }))}
+                              />
+                              <Segmented
+                                label="Jugadores"
+                                value={size}
+                                onChange={setSize}
+                                options={MATCH_SIZES.map((o) => ({
+                                  value: o.value,
+                                  label: (
+                                    <span className="tv-pm-round">
+                                      <b>{o.label}</b>
+                                      <small>{o.hint}</small>
+                                    </span>
+                                  ),
+                                }))}
+                              />
+                              <button
+                                type="button"
+                                className={`tv-btn tv-btn--block tv-c-${k.color} tv-shine tv-pm-go`}
+                                data-sound={!user?.name || user.isGuest ? undefined : "none"}
+                                onClick={() => run({ type: "match", kind: k.id, rounds, size })}
+                                disabled={busy}
+                              >
+                                <Icon name="play" size={18} filled strokeWidth={1.5} />
+                                {busy ? "Buscando…" : "Buscar partida"}
+                              </button>
+                            </div>
+                          ) : (
+                            <div className="tv-pm-body tv-pm-private">
+                              <button
+                                type="button"
+                                className="tv-option tv-pm-sub"
+                                data-sound={!user?.name || user.isGuest ? undefined : "none"}
+                                onClick={() => run({ type: "create" })}
+                                disabled={busy}
+                              >
+                                <span className="tv-badge tv-c-violet">
+                                  <Icon name="users" size={20} />
+                                </span>
+                                <span className="tv-option-text">
+                                  <strong>{busy ? "Creando sala…" : "Crear sala"}</strong>
+                                  <span>{mode ? "Juega solo o invita a tus amigos" : "Invita a tus amigos y elijan el juego"}</span>
+                                </span>
+                                <Icon name="chevron" size={20} className="tv-option-chevron" />
+                              </button>
+                              <button type="button" className="tv-option tv-pm-sub" onClick={() => goTo("code")} disabled={busy}>
+                                <span className="tv-badge tv-c-coral">
+                                  <Icon name="hash" size={20} />
+                                </span>
+                                <span className="tv-option-text">
+                                  <strong>Tengo un código</strong>
+                                  <span>Entra a la sala de un amigo</span>
+                                </span>
+                                <Icon name="chevron" size={20} className="tv-option-chevron" />
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
               </nav>
             )}
 

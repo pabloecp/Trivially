@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { roomPath } from "../../modes/index.js";
 import { useApp } from "../../lib/store.jsx";
@@ -8,6 +8,39 @@ import ConfirmDialog from "./ConfirmDialog.jsx";
 import Icon from "./Icon.jsx";
 import ProfileChip from "./ProfileChip.jsx";
 import VolumeMenu from "./VolumeMenu.jsx";
+
+/**
+ * Where leaving a room goes: one step back, to the option of "¿Cómo quieres jugar?" it came from (PlayPage): a public
+ * match's Casual or Competitivo, otherwise Privada (create a room or join one with a code).
+ */
+export function exitPath(room) {
+  return room?.matchmaking ? `/jugar/${room.matchmaking.kind}` : "/jugar/privada";
+}
+
+/**
+ * Outside a room, "Volver" goes back to where you were (the browser's own Back: from the profile to "¿Cómo quieres
+ * jugar?" if that's where you came from). Opened straight on a page (nothing behind it in this tab), it goes up one step
+ * instead: from an option of "¿Cómo quieres jugar?" to its three tiles, and from anywhere else to Inicio.
+ */
+export function upPath(pathname) {
+  if (/^\/jugar\/[^/]+/.test(pathname)) return "/jugar";
+  return "/";
+}
+
+export function useGoUp() {
+  const nav = useNavigate();
+  const location = useLocation();
+  return () => {
+    if ((window.history.state?.idx ?? 0) > 0) nav(-1);
+    else nav(upPath(location.pathname), { replace: true });
+  };
+}
+
+// Whether the last top bar drawn had a "Volver": kept across pages, so the button only slides in when it appears (Inicio
+// → "¿Cómo quieres jugar?"), not each time a page that already had it opens.
+let hadBack = false;
+// How long "Volver" takes to slide in or out (home.css, tvBackIn / tvBackOut).
+const BACK_ANIM_MS = 950;
 
 // The button on the left of the logo goes back one step, which depends on where you are in the room:
 //  - the host, in a game's panel (`toModes`): back to the game menu, for everyone in the room;
@@ -28,13 +61,13 @@ export function useRoomExit({ onRoomScreen = true, onError } = {}) {
   const inGame = onRoomScreen && Boolean(room) && room.phase !== "lobby";
   const confirmLeave = leaveAsk && onRoomScreen && !toModes && !inGame;
 
-  // Out of the room right away. `fromBack`: the browser's Back button is what asked, and it has already moved to
-  // Home, so there is nowhere to navigate.
-  function leaveNow({ fromBack = false } = {}) {
+  // Out of the room right away, one step back: to the option of "¿Cómo quieres jugar?" the room came from (exitPath).
+  // Replacing, not pushing: Back must not return to the room's address (/sala/CODE), which joins it again.
+  function leaveNow() {
+    const target = exitPath(room);
     setLeaveAsk(false);
     leaveRoom();
-    // Replacing, not pushing: Back from Home must not return to the room's address (/sala/CODE), which joins it again.
-    if (!fromBack) nav("/", { replace: true });
+    nav(target, { replace: true });
   }
 
   // One step back. Returns true when it left the room.
@@ -47,7 +80,7 @@ export function useRoomExit({ onRoomScreen = true, onError } = {}) {
       setLeaveAsk(true);
       return false;
     }
-    leaveNow({ fromBack });
+    leaveNow();
     return true;
   }
 
@@ -75,6 +108,7 @@ export default function TvTopbar() {
   const awayFromRoom = Boolean(roomTarget) && pathname !== roomTarget;
   const inMatch = Boolean(room) && room.phase !== "lobby";
   const onHome = !room && pathname === "/";
+  const goUp = useGoUp();
   const [modesErr, setModesErr] = useState("");
   const { toModes, inGame, confirmLeave, press, leaveNow } = useRoomExit({
     onRoomScreen: pathname === roomTarget,
@@ -93,21 +127,19 @@ export default function TvTopbar() {
     if (!inGame) setLeaving(false);
   }, [inGame]);
 
+  // The same "Volver" chip on every screen but Inicio; only what a tap does changes.
+  const backChip = (props) => (
+    <button type="button" className="tv-chip tv-chip--leave" {...props}>
+      <span className="tv-avatar tv-avatar--empty">
+        <Icon name="back" size={20} strokeWidth={2.6} />
+      </span>
+      <span className="tv-chip-name tv-chip-long">Volver</span>
+    </button>
+  );
   let leaveButton = null;
   if (inGame) {
-    leaveButton = (
-      <button
-        type="button"
-        className="tv-chip tv-chip--leave tv-chip--icon"
-        aria-label="Salir del juego"
-        aria-haspopup="dialog"
-        onClick={() => setLeaving(true)}
-      >
-        <span className="tv-avatar tv-avatar--empty">
-          <Icon name="close" size={20} strokeWidth={2.6} />
-        </span>
-      </button>
-    );
+    // In a match, going back is leaving it: a modal asks first.
+    leaveButton = backChip({ "aria-label": "Volver: salir de la partida", "aria-haspopup": "dialog", onClick: () => setLeaving(true) });
   } else if (awayFromRoom) {
     leaveButton = (
       <Link to={roomTarget} className="tv-chip tv-chip--leave" aria-label={inMatch ? "Volver a la partida" : "Volver a la sala"}>
@@ -140,29 +172,43 @@ export default function TvTopbar() {
       </button>
     );
   } else if (!onHome) {
-    leaveButton = (
-      <Link to="/" className="tv-chip tv-chip--leave" aria-label="Volver al inicio">
-        <span className="tv-avatar tv-avatar--empty">
-          <Icon name="back" size={20} strokeWidth={2.6} />
-        </span>
-        <span className="tv-chip-name tv-chip-long">Volver</span>
-      </Link>
-    );
+    leaveButton = backChip({ "aria-label": upPath(pathname) === "/" ? "Volver al inicio" : "Volver", onClick: goUp });
   }
+
+  // "Volver" slides in when it appears (from Inicio, which has none) and slides out when it goes (back to Inicio): while
+  // it goes, the last one drawn stays on screen, untouchable, for the length of its animation.
+  const hasBack = Boolean(leaveButton);
+  const [backAnim, setBackAnim] = useState(() => (hasBack && !hadBack ? "in" : null));
+  const lastButton = useRef(leaveButton);
+  if (leaveButton) lastButton.current = leaveButton;
+  // Read while rendering, not in an effect, so the button never shows (or vanishes) for a frame before it moves.
+  const [prevHasBack, setPrevHasBack] = useState(hasBack);
+  if (hasBack !== prevHasBack) {
+    setPrevHasBack(hasBack);
+    setBackAnim(hasBack ? "in" : "out");
+  }
+  useEffect(() => {
+    hadBack = hasBack;
+  }, [hasBack]);
+  useEffect(() => {
+    if (!backAnim) return undefined;
+    const t = setTimeout(() => setBackAnim(null), BACK_ANIM_MS);
+    return () => clearTimeout(t);
+  }, [backAnim]);
+  const shownButton = leaveButton || (backAnim === "out" ? lastButton.current : null);
 
   return (
     <>
-      <header className={`tv-topbar${confirmLeave ? " is-confirm" : ""}`}>
+      <header className={`tv-topbar${confirmLeave ? " is-confirm" : ""}${backAnim ? ` is-back-${backAnim}` : ""}`}>
         <div className="tv-topbar-start">
-          {leaveButton}
+          {shownButton}
           <div className="tv-brand">
             <AppIcon small />
             <span className="tv-brand-name">trivially</span>
           </div>
         </div>
-        {/* The site's address, faint, in the middle of the bar (computers): everywhere, matches too, but on Home without
-            a room, where the big logo already says it. */}
-        {!onHome && <span className="tv-topbar-url">playtrivially.com</span>}
+        {/* The site's address, faint, in the middle of the bar (computers): on every screen, so the bar never changes. */}
+        <span className="tv-topbar-url">playtrivially.com</span>
         <div className="tv-topbar-end">
           {friends.isAccount && !isCentral && (
             <button

@@ -92,6 +92,16 @@ function RoomNavigator() {
       if (screenCode === room.code || screenCode === HIDDEN_SLUG.toUpperCase()) nav(target, { replace: true });
       return;
     }
+    // From "¿Cómo quieres jugar?" (/jugar...) the room's address takes its place. The browser's Back landing there from
+    // the waiting room does what "Volver" does (out of the room, after asking, back to that option).
+    if (pathname.startsWith("/jugar")) {
+      if (waiting && pathChanged && navType === "POP") {
+        if (!step({ fromBack: true })) nav(target);
+        return;
+      }
+      nav(target, { replace: true });
+      return;
+    }
     // On Home the address becomes the room's own (/sala/CODE) as soon as you create or join one, pushed on top of
     // Home so that Back has somewhere to go. Other pages (profile...) are only left when a match starts.
     if (pathname === "/") nav(target, { replace: pathChanged && navType === "POP" });
@@ -115,6 +125,9 @@ export default function App() {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/sala/:code" element={<Home />} />
+        {/* "¿Cómo quieres jugar?": Casual, Competitivo or Privada (components/home/PlayPage.jsx). */}
+        <Route path="/jugar" element={<Home />} />
+        <Route path="/jugar/:option" element={<Home />} />
         <Route path="/lobby/:code" element={<LobbyRedirect />} />
         <Route path="/game/:code" element={<Game />} />
         <Route path="/quiz/:code" element={<QuizGame />} />

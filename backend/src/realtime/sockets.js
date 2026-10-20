@@ -25,6 +25,12 @@ export function attachSockets(io, rooms, { friends = null, hub = null } = {}) {
   // Rounds are chosen a little ahead during the match; their audio and covers start downloading right then.
   rooms.onNewTracks = (tracks) => prefetchMedia(tracks);
 
+  // A full public room started by itself (RoomManager.checkMatchFull): like room:start, without anyone pressing it.
+  rooms.onMatchStart = (room) => {
+    prefetchFlags(room.tracks);
+    watchRoom(io, rooms, room);
+  };
+
   rooms.onPhaseChange = (room) => {
     if (room && room.code) {
       io.to(room.code).emit("room:state", rooms.publicState(room));
@@ -65,6 +71,7 @@ export function attachSockets(io, rooms, { friends = null, hub = null } = {}) {
         if (!friends?.areFriends(userId, friendId)) throw new Error("Esa persona no es tu amiga");
         const room = rooms.roomOfUser(friendId);
         if (!room) throw new Error("Tu amigo ya no está en una sala");
+        if (room.matchmaking) throw new Error("Tu amigo está en una partida pública");
         if (room.players.get(userId)?.connected) throw new Error("Ya estás en esa sala");
         if (room.joinMode === "abierta") return ack?.({ ok: true, action: "join", code: room.code });
         if (room.joinMode !== "solicitud") throw new Error("Esa sala es solo por invitación del anfitrión");
@@ -89,6 +96,7 @@ export function attachSockets(io, rooms, { friends = null, hub = null } = {}) {
         if (!friends?.areFriends(userId, friendId)) throw new Error("Esa persona no es tu amiga");
         const room = rooms.roomOfUser(userId);
         if (!room) throw new Error("Entra a una sala para invitar a tus amigos");
+        if (room.matchmaking) throw new Error("No se puede invitar a una partida pública");
         if (room.players.get(friendId)?.connected) throw new Error("Ya está en tu sala");
         if (!hub?.isOnline(friendId)) throw new Error("Tu amigo no está conectado ahora");
         const key = `${userId}>${friendId}`;
@@ -166,6 +174,22 @@ export function attachSockets(io, rooms, { friends = null, hub = null } = {}) {
           // Older clients don't send `game` and expect to land in the song lobby.
           game: payload.game === undefined ? "musica" : payload.game,
         });
+        socket.join(room.code);
+        ack?.({ ok: true, state: rooms.publicState(room, user.id) });
+        io.to(room.code).emit("room:state", rooms.publicState(room));
+      } catch (err) {
+        ack?.({ ok: false, error: err.message, busy: err.busy });
+      }
+    });
+
+    // "Casual" or "Competitivo" from the Jugar sheet: into a public room of that kind and length (RoomManager.findMatch),
+    // leaving the room this connection was in.
+    socket.on("match:find", async (payload, ack) => {
+      try {
+        const user = bindUser(socket, payload?.user, rooms);
+        await assertAccountFree(io, rooms, socket, user.id);
+        leaveCurrentRoom(io, rooms, socket);
+        const room = rooms.findMatch(user, payload);
         socket.join(room.code);
         ack?.({ ok: true, state: rooms.publicState(room, user.id) });
         io.to(room.code).emit("room:state", rooms.publicState(room));
@@ -753,7 +777,7 @@ function watchRoom(io, rooms, room) {
     if (rooms.rooms.get(room.code) !== room) return;
     io.to(room.code).emit("room:state", rooms.publicState(room));
     // Stop once the match is over or the host sent everyone back to a lobby.
-    if (["countdown", "playing", "reveal"].includes(room.phase)) {
+    if (["intro", "countdown", "playing", "reveal"].includes(room.phase)) {
       const wait = Math.max(250, (room.phaseEndsAt || Date.now()) - Date.now() + 30);
       setTimeout(tick, Math.min(wait, 1000));
     } else {

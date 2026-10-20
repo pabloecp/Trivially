@@ -28,6 +28,8 @@ export function RoomHeader({ room, onToast }) {
   const rootRef = useRef(null);
   const me = room.players.find((p) => p.id === user?.id);
   const role = room.hostId === user?.id ? "Anfitrión" : me?.canEditConfig ? "Puede editar" : "Jugador";
+  // A public match shows its kind instead of a code nobody can use.
+  const publicKind = room.matchmaking ? (room.matchmaking.kind === "competitivo" ? "Competitiva" : "Casual") : null;
   const shown = room.players.slice(0, STACK);
   const more = room.players.length - shown.length;
 
@@ -61,8 +63,8 @@ export function RoomHeader({ room, onToast }) {
         <AppIcon small />
       </div>
       <div className="tv-roomhead-text">
-        <span className="tv-roomhead-kicker">{confirmLeave ? "¿Salir? Otra vez" : `Sala · ${role}`}</span>
-        <span className="tv-roomhead-code">{shownCode(room.code, codeHidden)}</span>
+        <span className="tv-roomhead-kicker">{confirmLeave ? "¿Salir? Otra vez" : publicKind ? "Partida pública" : `Sala · ${role}`}</span>
+        <span className="tv-roomhead-code">{publicKind || shownCode(room.code, codeHidden)}</span>
       </div>
       <button
         type="button"

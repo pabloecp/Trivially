@@ -1,0 +1,580 @@
+/* ---------- Partidas públicas: the Jugar sheet's three rows, the lobby that fills up, and the roulette ---------- */
+
+/* The Jugar sheet: Casual, Competitivo and Privada, each opening its panel in place under its row. The others
+   fade back a little while one is open. */
+.tv-pm-list { gap: 10px; }
+.tv-pm { transition: opacity 0.25s ease; }
+.tv-pm.is-dim { opacity: 0.55; }
+.tv-pm.is-dim:hover,
+.tv-pm.is-dim:focus-within { opacity: 1; }
+/* Each row is filled with its own colour (its edge the same colour, darker), the icon on a lighter square. */
+.tv-option.tv-pm-head {
+  background: var(--c2);
+  box-shadow: 0 4px 0 var(--edge);
+}
+.tv-app .tv-option.tv-pm-head { color: var(--on); }
+.tv-option.tv-pm-head:hover { box-shadow: 0 6px 0 var(--edge); }
+.tv-option.tv-pm-head:active { box-shadow: 0 0 0 var(--edge); }
+.tv-pm-head .tv-badge {
+  background: rgba(255, 255, 255, 0.22);
+  box-shadow: none;
+  color: inherit;
+}
+.tv-pm-head .tv-option-text span { color: inherit; opacity: 0.85; }
+.tv-pm-head .tv-option-chevron { color: inherit; opacity: 0.85; transform: rotate(90deg); transition: transform 0.3s var(--tv-spring); }
+.tv-pm-head:hover .tv-option-chevron { transform: rotate(90deg) translateY(-2px); }
+.tv-pm.is-open .tv-pm-head .tv-option-chevron { transform: rotate(-90deg); }
+.tv-pm.is-open .tv-pm-head:hover .tv-option-chevron { transform: rotate(-90deg); }
+
+/* The panel grows from nothing to its height (grid rows 0fr → 1fr), its contents rising in after it. */
+.tv-pm-panel {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.38s cubic-bezier(0.25, 0.8, 0.3, 1);
+}
+.tv-pm.is-open .tv-pm-panel { grid-template-rows: 1fr; }
+.tv-pm-inner { min-height: 0; overflow: hidden; }
+.tv-pm-body {
+  display: grid;
+  gap: 12px;
+  padding: 14px 4px 6px;
+  opacity: 0;
+  transform: translateY(-8px);
+  transition: opacity 0.2s ease, transform 0.3s ease;
+}
+.tv-pm.is-open .tv-pm-body {
+  opacity: 1;
+  transform: none;
+  transition: opacity 0.3s ease 0.1s, transform 0.4s var(--tv-spring) 0.08s;
+}
+
+.tv-pm-facts {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--tv-text-2);
+}
+.tv-pm-games { display: inline-flex; gap: 5px; }
+.tv-pm-game {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 9px;
+  background: var(--c2);
+  color: var(--on);
+}
+.tv-pm-detail { flex: 1; min-width: 0; }
+.tv-pm-size {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 99px;
+  background: var(--tv-option-bg);
+  color: var(--tv-text);
+  font-weight: 800;
+}
+.tv-pm .tv-seg-btn { height: 58px; }
+.tv-pm-round { display: grid; gap: 1px; line-height: 1.1; }
+.tv-pm-round b { font-family: var(--tv-display); font-weight: 600; font-size: 17px; }
+.tv-pm-round small { font-size: 12px; font-weight: 700; opacity: 0.75; }
+.tv-pm-go { height: 52px; font-size: 18px; margin-top: 2px; }
+
+/* Privada: the two old ways, a little smaller, inside the row. */
+.tv-pm-private { gap: 10px; padding-top: 12px; }
+.tv-option.tv-pm-sub { padding: 10px 12px 10px 10px; border-radius: 20px; animation: none; }
+.tv-pm-sub .tv-badge { width: 42px; height: 42px; border-radius: 14px; }
+.tv-pm-sub .tv-option-text strong { font-size: 17px; }
+.tv-pm-sub .tv-option-text span { font-size: 13px; }
+
+/* ---------- The room screen of a public match: its main card, as tall as the room's column beside it ---------- */
+/* The same dark panel as the room's column (no page pattern behind it), filling the column's height, its contents in
+   the middle. The lobby (waiting for players) and the roulette with the tutorial take turns in it. */
+.tv-mcard {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 0;
+  padding: 28px 20px 24px;
+  border-radius: 34px;
+  background: var(--tv-surface);
+  box-shadow: inset 0 0 0 1px var(--tv-line);
+  text-align: center;
+  overflow: hidden;
+  animation: tvRise 0.45s var(--tv-spring) backwards;
+}
+.tv-ml { gap: 10px; }
+
+/* The kind's icon floats up and down while it searches; once full it pops into a tick and stays still. */
+.tv-ml-core {
+  width: 76px;
+  height: 76px;
+  margin-bottom: 8px;
+  border-radius: 24px;
+  animation: tvMlFloat 2.4s ease-in-out infinite;
+}
+.tv-ml.is-full .tv-ml-core { animation: tvMlPop 0.5s var(--tv-spring); }
+@keyframes tvMlFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+@keyframes tvMlPop {
+  0% { transform: scale(0.6); }
+  100% { transform: scale(1); }
+}
+
+.tv-ml-kicker { color: var(--tv-text-3); }
+.tv-ml-title {
+  margin: 0;
+  font-family: var(--tv-display);
+  font-weight: 600;
+  font-size: clamp(26px, 4vw, 34px);
+  line-height: 1.1;
+  color: var(--tv-text);
+}
+
+.tv-ml-headline { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 12px; }
+/* How full it is (or the seconds left once full), in a pill of the kind's colour beside the title. */
+.tv-ml-pill {
+  display: inline-grid;
+  place-items: center;
+  min-width: 52px;
+  height: 36px;
+  padding: 0 12px;
+  border-radius: 12px;
+  background: var(--c2);
+  color: var(--on);
+  font-family: var(--tv-display);
+  font-weight: 600;
+  font-size: 19px;
+  font-variant-numeric: tabular-nums;
+}
+.tv-ml-pill.is-count { animation: tvMlPop 0.4s var(--tv-spring); }
+
+/* A seat per player: an empty dashed circle until someone sits, who pops in. */
+.tv-ml-seats {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  max-width: 560px;
+  margin: 14px 0 6px;
+  padding: 0;
+  list-style: none;
+}
+.tv-ml-seat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  flex: 0 1 100px;
+  min-width: 0;
+}
+.tv-ml-seat .tv-avatar { width: 58px; height: 58px; font-size: 22px; }
+.tv-ml-seat.is-taken { animation: tvMlSeat 0.5s var(--tv-spring) backwards; animation-delay: calc(var(--i) * 40ms); }
+.tv-ml-seat.is-me .tv-avatar { box-shadow: 0 0 0 3px var(--c2); }
+@keyframes tvMlSeat {
+  0% { transform: scale(0.4); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+.tv-ml-empty {
+  display: grid;
+  place-items: center;
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  border: 2px dashed var(--tv-line-strong, rgba(255, 255, 255, 0.18));
+  color: var(--tv-text-3);
+  animation: tvMlBreathe 1.8s ease-in-out infinite;
+  animation-delay: calc(var(--i) * 0.2s);
+}
+@keyframes tvMlBreathe {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+.tv-ml-name {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 800;
+  font-size: 14px;
+  color: var(--tv-text);
+}
+.tv-ml-name.is-waiting { font-weight: 700; color: var(--tv-text-3); }
+
+.tv-ml-games { display: grid; gap: 10px; justify-items: center; width: 100%; max-width: 560px; margin-top: 8px; }
+.tv-ml-games p { color: var(--tv-text-3); }
+.tv-ml-reel { width: 100%; }
+/* The same size whether it says "Cancelar búsqueda" or "Salir", so nothing moves when the room fills. */
+.tv-ml-leave { width: 240px; max-width: 100%; margin-top: 14px; }
+
+@media (max-width: 520px) {
+  .tv-mcard { padding: 22px 14px 20px; }
+  .tv-ml-seats { gap: 6px; }
+  .tv-ml-seat .tv-avatar,
+  .tv-ml-empty { width: 48px; height: 48px; }
+  .tv-ml-name { font-size: 12px; }
+}
+
+/* ---------- Before each game: the roulette, then how it's played (MatchIntro.jsx) ---------- */
+.tv-mi-frame {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: 26px;
+  width: 100%;
+  max-width: 720px;
+}
+.tv-mi-head { display: grid; justify-items: center; gap: 12px; }
+.tv-mi-head .tv-mono-label { color: var(--tv-text-3); }
+.tv-mi-dots { display: flex; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.tv-mi-dot {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 10px;
+  font-weight: 800;
+  font-size: 14px;
+  background: var(--tv-option-bg);
+  color: var(--tv-text-3);
+  transition: transform 0.3s var(--tv-spring);
+}
+.tv-mi-dot.is-done,
+.tv-mi-dot.is-now { background: var(--c2, rgba(255, 255, 255, 0.14)); color: var(--on, var(--tv-text)); }
+.tv-mi-dot.is-done { opacity: 0.6; }
+.tv-mi-dot.is-now { transform: scale(1.15); }
+
+/* The reel: wide cards going past a fixed marker in the middle, faded at both ends. */
+.tv-mi-roulette {
+  display: grid;
+  justify-items: center;
+  gap: 22px;
+  width: 100%;
+  /* Coming from the lobby's small roulette (MatchLobby): it grows from there into this one. */
+  animation: tvMiGrow 0.9s cubic-bezier(0.2, 0.9, 0.3, 1.05) backwards;
+}
+@keyframes tvMiGrow {
+  from { opacity: 0.3; transform: translateY(90px) scale(0.48); }
+}
+.tv-mi-head { animation: tvFade 0.5s ease-out 0.25s backwards; }
+.tv-mi-window {
+  position: relative;
+  width: 100%;
+  /* Room above and below the cards for the arrows, even once the picked card grows (scale 1.1). */
+  height: 260px;
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 22%, #000 78%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 22%, #000 78%, transparent);
+}
+.tv-mi-track {
+  position: absolute;
+  top: 46px;
+  left: 50%;
+  display: flex;
+  gap: 14px;
+  will-change: transform;
+}
+.tv-mi-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  flex: 0 0 168px;
+  width: 168px;
+  height: 168px;
+  border-radius: 28px;
+  background: var(--c2);
+  box-shadow: 0 5px 0 var(--edge);
+  color: var(--on);
+  transition: transform 0.45s var(--tv-spring), opacity 0.3s ease;
+}
+.tv-mi-roulette.is-landed .tv-mi-card:not(.is-picked) { opacity: 0.25; transform: scale(0.88); }
+.tv-mi-card.is-picked { transform: scale(1.1); }
+.tv-mi-card-icon {
+  display: grid;
+  place-items: center;
+  width: 86px;
+  height: 86px;
+  border-radius: 26px;
+  background: rgba(255, 255, 255, 0.18);
+}
+/* The game's name, small, under the icon. */
+.tv-mi-card-name {
+  padding: 0 10px;
+  font-weight: 800;
+  font-size: 13px;
+  line-height: 1.1;
+  text-align: center;
+  white-space: nowrap;
+  opacity: 0.9;
+}
+/* The marker: a soft arrow above and below the middle card (ReelMarker), drawn with round joins so its corners are
+   rounded, in the colour of the match's kind. */
+.tv-mi-marker {
+  position: absolute;
+  inset: 0 auto 0 50%;
+  z-index: 1;
+  width: 0;
+  pointer-events: none;
+}
+.tv-mi-pin {
+  position: absolute;
+  left: -14px;
+  width: 28px;
+  height: 18px;
+  overflow: visible;
+  fill: var(--marker, var(--tv-text));
+  stroke: var(--marker, var(--tv-text));
+  stroke-width: 4;
+  stroke-linejoin: round;
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.35));
+}
+.tv-mi-pin.is-top { top: 0; }
+.tv-mi-pin.is-bottom { bottom: 0; transform: rotate(180deg); }
+/* The marker in the colour of the match's kind (its cards keep their games' colours). */
+.tv-reel-music { --marker: var(--p-music-2); }
+.tv-reel-amber { --marker: var(--p-culture-2); }
+.tv-mi-caption {
+  margin: 0;
+  font-family: var(--tv-display);
+  font-weight: 600;
+  font-size: clamp(26px, 5vw, 38px);
+  color: var(--tv-text);
+}
+.tv-mi-roulette.is-landed .tv-mi-caption { animation: tvMlPop 0.45s var(--tv-spring); }
+
+/* The tutorial: the game's badge and name, its three steps coming in one by one, and a bar that fills in 5 s. */
+.tv-mi-tutorial {
+  display: grid;
+  gap: 22px;
+  width: 100%;
+  max-width: 560px;
+  padding: 26px 24px 22px;
+  border-radius: 30px;
+  background: var(--tv-bg);
+  text-align: left;
+  animation: tvMiIn 0.5s var(--tv-spring);
+}
+@keyframes tvMiIn {
+  0% { transform: scale(0.85) translateY(20px); opacity: 0; }
+  100% { transform: none; opacity: 1; }
+}
+.tv-mi-tut-head { display: flex; align-items: center; gap: 16px; }
+.tv-mi-tut-head .tv-mono-label { color: var(--tv-text-3); }
+.tv-mi-tut-badge { width: 68px; height: 68px; border-radius: 22px; }
+.tv-mi-tut-name {
+  margin: 2px 0 0;
+  font-family: var(--tv-display);
+  font-weight: 600;
+  font-size: clamp(28px, 5vw, 36px);
+  line-height: 1.05;
+}
+.tv-mi-steps { display: grid; gap: 12px; margin: 0; padding: 0; list-style: none; }
+.tv-mi-step {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 14px;
+  border-radius: 18px;
+  background: var(--tv-option-bg);
+  font-weight: 800;
+  font-size: 17px;
+  line-height: 1.3;
+  text-align: left;
+  animation: tvMiStep 0.45s var(--tv-spring) backwards;
+  animation-delay: calc(0.25s + var(--i) * 0.35s);
+}
+@keyframes tvMiStep {
+  0% { transform: translateX(-24px); opacity: 0; }
+  100% { transform: none; opacity: 1; }
+}
+.tv-mi-step-icon {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  background: var(--c2);
+  color: var(--on);
+}
+.tv-mi-progress { display: grid; gap: 10px; justify-items: center; }
+.tv-mi-bar {
+  width: 100%;
+  height: 8px;
+  overflow: hidden;
+  border-radius: 99px;
+  background: var(--tv-option-bg);
+}
+.tv-mi-bar span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--c2);
+  transform: scaleX(0);
+  transform-origin: left;
+}
+.tv-mi-count {
+  font-weight: 800;
+  font-size: 15px;
+  color: var(--tv-text-2);
+  animation: tvFade 0.3s ease-out;
+}
+
+@media (max-width: 520px) {
+  .tv-mi-step { font-size: 15px; }
+  .tv-mi-tutorial { padding: 22px 16px 18px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tv-pm-panel,
+  .tv-pm-body,
+  .tv-mi-card { transition: none; }
+  .tv-ml-core,
+  .tv-ml-empty { animation: none; }
+  .tv-mi-step,
+  .tv-mi-roulette,
+  .tv-mi-tutorial { animation: none; }
+}
+
+/* ---------- "¿Cómo quieres jugar?" as a page (PlayPage.jsx, /jugar) ---------- */
+/* Three big tiles side by side, like the games in "Elige el juego"; one per row on phones. */
+.tv-play-grid {
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  align-content: stretch;
+}
+.tv-mode.tv-play-tile { height: auto; min-height: 260px; padding: 22px; }
+.tv-play-tile-text { display: grid; gap: 6px; }
+.tv-play-tile .tv-mode-name { font-size: clamp(26px, 2.6vw, 34px); }
+.tv-play-tile-blurb { font-weight: 800; font-size: 15px; line-height: 1.3; opacity: 0.85; }
+.tv-play-tile .tv-mode-watermark { width: 170px; height: 170px; right: -28px; bottom: -30px; }
+
+/* The settings beside the chosen option's card. */
+.tv-play-opts { gap: 18px; }
+.tv-play-form { display: grid; gap: 18px; align-content: start; animation: tvSwap 0.45s var(--tv-ease-out) backwards; }
+.tv-play-field { display: grid; gap: 10px; }
+.tv-play-field .tv-mono-label { color: var(--tv-text-3); }
+.tv-play-opts .tv-seg-btn { height: 62px; }
+.tv-play-games { display: flex; flex-wrap: wrap; gap: 8px 16px; margin: 0; padding: 0; list-style: none; }
+.tv-play-games li { display: inline-flex; align-items: center; gap: 8px; font-weight: 800; font-size: 15px; color: var(--tv-text-2); }
+.tv-play-games .tv-badge { width: 34px; height: 34px; border-radius: 11px; box-shadow: 0 3px 0 var(--edge); }
+.tv-play-note { margin: 0; font-weight: 700; font-size: 14px; color: var(--tv-text-3); }
+
+@media (max-width: 760px) {
+  .tv-play-grid { grid-template-columns: 1fr; }
+  .tv-mode.tv-play-tile { min-height: 120px; flex-direction: row; align-items: center; justify-content: flex-start; gap: 16px; }
+}
+
+/* Phones: this page has no room bars, so its card keeps its button and the page its usual top bar's room. */
+@media (max-width: 640px) {
+  .tv-playpage .tv-mstage .tv-mstage-start { display: flex; }
+  .tv-main.is-room.is-playpage { padding-top: 14px; padding-bottom: calc(24px + env(safe-area-inset-bottom)); }
+}
+
+/* The two modes ("Duelo", "Todos contra todos"): big buttons in the option's colour. The chosen one is full, lifted on
+   its edge and ticked; the other one faded, until the pointer is on it. */
+.tv-play-modes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.tv-play-mode {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 96px;
+  padding: 16px;
+  border: 0;
+  border-radius: 22px;
+  background: var(--c2);
+  box-shadow: 0 5px 0 var(--edge);
+  color: var(--on);
+  text-align: left;
+  cursor: pointer;
+  opacity: 0.42;
+  transition: opacity 0.2s ease, transform 0.18s var(--tv-spring), box-shadow 0.18s ease;
+}
+.tv-play-mode:hover { opacity: 0.75; transform: translateY(-2px); box-shadow: 0 7px 0 var(--edge); }
+.tv-play-mode:active { transform: translateY(4px); box-shadow: 0 1px 0 var(--edge); }
+.tv-play-mode.is-on { opacity: 1; }
+.tv-play-mode-icon {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  border-radius: 15px;
+  background: rgba(255, 255, 255, 0.22);
+}
+.tv-play-mode-text { display: grid; gap: 2px; min-width: 0; }
+.tv-play-mode-text strong { font-family: var(--tv-display); font-weight: 600; font-size: 21px; line-height: 1.1; }
+.tv-play-mode-text span { font-weight: 800; font-size: 14px; opacity: 0.85; }
+.tv-play-mode-tick {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--on);
+  color: var(--c2);
+  transform: scale(0);
+  transition: transform 0.3s var(--tv-spring);
+}
+.tv-play-mode.is-on .tv-play-mode-tick { transform: scale(1); }
+
+/* The length, secondary: a plain, short switch. */
+.tv-play-opts .tv-play-rounds .tv-seg-btn { height: 42px; font-size: 14px; }
+
+/* The games going slowly past the marker, round and round, like a roulette that hasn't stopped yet. */
+.tv-play-reel {
+  position: relative;
+  height: 124px;
+  overflow: hidden;
+  border-radius: 18px;
+  background: var(--tv-bg);
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 18%, #000 82%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 18%, #000 82%, transparent);
+}
+.tv-play-reel { --card-top: 20px; }
+.tv-play-reel .tv-mi-pin { left: -11px; width: 22px; height: 14px; }
+.tv-play-reel-track {
+  position: absolute;
+  top: var(--card-top);
+  left: 0;
+  display: flex;
+  gap: 12px;
+  /* The gap after the last card too, so half the track is exactly half the laps (the loop meets itself). */
+  padding-right: 12px;
+  width: max-content;
+  animation: tvPlayReel 40s linear infinite;
+}
+/* The track has the three games ten times: moving it by half shows the same thing again, so it loops seamlessly. */
+@keyframes tvPlayReel { to { transform: translateX(-50%); } }
+/* The roulette's own cards (.tv-mi-card), smaller: every one the same square, only the icon. */
+.tv-mi-card.tv-play-reel-card {
+  flex: 0 0 80px;
+  width: 80px;
+  height: 80px;
+  gap: 0;
+  border-radius: 20px;
+  box-shadow: 0 4px 0 var(--edge);
+}
+.tv-play-reel-card .tv-mi-card-icon { width: 50px; height: 50px; border-radius: 15px; }
+@media (prefers-reduced-motion: reduce) { .tv-play-reel-track { animation: none; } }
+@media (max-width: 520px) {
+  .tv-play-modes { grid-template-columns: 1fr; }
+  .tv-play-mode { min-height: 78px; }
+}

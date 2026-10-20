@@ -8,9 +8,12 @@ import PartyPanel from "../../components/home/PartyPanel.jsx";
 import TvShell from "../../components/home/TvShell.jsx";
 import { useApp } from "../../lib/store.jsx";
 import { PlaylistProgress, winsText } from "./Standings.jsx";
+import { MATCH_KINDS } from "../../components/home/matchInfo.js";
+import { exitPath } from "../../components/home/TvTopbar.jsx";
+import { withSound } from "../../lib/sounds.js";
 import "../../styles/home.css";
 import "../../styles/playlist.css";
-import { resolveCode } from "../../lib/hiddenCode.js";
+import { resolveCode, urlCode } from "../../lib/hiddenCode.js";
 
 // The end of a playlist (route /playlist/:code), in the same frame as a match's end (MatchResults): the title, the
 // podium (games won, or points when it was played mixed) and the ranking side by side (everyone's games won and points,
@@ -18,7 +21,8 @@ import { resolveCode } from "../../lib/hiddenCode.js";
 // middle: go back to its panel or play the playlist again (shuffled again if it's random).
 function ResultsScreen() {
   const { code: codeParam } = useParams();
-  const { user, room, isCentral, joinRoom, replayGame, restartGame } = useApp();
+  const { user, room, isCentral, joinRoom, replayGame, restartGame, leaveRoom, findMatch } = useApp();
+  const [searching, setSearching] = useState(false);
   // The address's code ("oculta" while it's hidden: this tab's room, lib/hiddenCode.js).
   const code = resolveCode(codeParam, room);
   const nav = useNavigate();
@@ -47,8 +51,11 @@ function ResultsScreen() {
   const standings = run?.standings || [];
   const winner = standings.find((p) => p.id === run?.winnerId) || null;
   const solo = standings.length < 2;
-  let title = "¡Fin de la playlist!";
-  if (winner && !solo) title = `¡${winner.name} gana la playlist!`;
+  // A public match ("Casual" or "Competitivo") is played as a playlist of its games, but it's called a match.
+  const publicMatch = room.matchmaking || null;
+  const what = publicMatch ? "partida" : "playlist";
+  let title = `¡Fin de la ${what}!`;
+  if (winner && !solo) title = `¡${winner.name} gana la ${what}!`;
   else if (!winner && standings[0]?.wins > 0) title = "¡Empate!";
   // Every playlist is one match now (`mixed`; "aleatorio" also shuffles its rounds): the most points win.
   const mixed = Boolean(run?.mixed);
@@ -71,7 +78,7 @@ function ResultsScreen() {
           <header className="tv-res-head">
             <div className="tv-res-heading">
               <div className="tv-res-kicker">
-                <p className="tv-mono-label">Playlist terminada{run ? ` · ${run.name}` : ""}</p>
+                <p className="tv-mono-label">{publicMatch ? "Partida terminada" : "Playlist terminada"}{run ? ` · ${run.name}` : ""}</p>
                 {run && <PlaylistProgress run={run} />}
               </div>
               <h1 className="tv-page-title tv-results-title">{title}</h1>
@@ -101,7 +108,42 @@ function ResultsScreen() {
           {err && <p className="tv-lobby-error" role="alert">{err}</p>}
 
           <footer className="tv-res-foot">
-            {isHost ? (
+            {publicMatch && !isCentral ? (
+              // Nobody is the host of a public match: everyone chooses for themselves.
+              <>
+                <button
+                  className="tv-btn tv-c-neutral tv-res-btn"
+                  data-sound="back"
+                  onClick={() => {
+                    leaveRoom();
+                    nav(exitPath(room), { replace: true });
+                  }}
+                  type="button"
+                >
+                  <Icon name="logout" size={18} />
+                  Salir
+                </button>
+                <button
+                  className={`tv-btn tv-c-${MATCH_KINDS[publicMatch.kind]?.color || "music"} tv-shine tv-res-btn`}
+                  data-sound="none"
+                  disabled={searching}
+                  onClick={() => {
+                    setSearching(true);
+                    withSound(() => findMatch(publicMatch.kind, publicMatch.rounds, publicMatch.versus || 5), null)
+                      // This address is the old room's, which RoomNavigator leaves alone: go to the new one's screen.
+                      .then((next) => nav(`/sala/${urlCode(next.code)}`, { replace: true }))
+                      .catch((e) => {
+                        setErr(e.message || "No se pudo buscar otra partida");
+                        setSearching(false);
+                      });
+                  }}
+                  type="button"
+                >
+                  <Icon name="play" size={18} filled strokeWidth={1.5} />
+                  {searching ? "Buscando…" : "Buscar otra partida"}
+                </button>
+              </>
+            ) : isHost ? (
               <>
                 <button
                   className="tv-btn tv-c-neutral tv-res-btn"

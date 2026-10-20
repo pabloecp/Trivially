@@ -104,7 +104,7 @@ export default function PlayerMenu({ player, isMe, canManage, canCentral = false
   return (
     <div ref={ref} className="tv-player-menu" role="menu">
       {player.isGuest ? (
-        <p className="tv-player-menu-note">{isMe ? "Juegas como invitado" : "Juega como invitado"}: sin perfil</p>
+        <p className="tv-player-menu-note">{isMe ? "Juegas como invitado" : "Juega como invitado"}</p>
       ) : (
         // Same tab: the socket stays connected, so the seat is kept, and the profile has a way back to the room.
         <Link role="menuitem" className="tv-player-menu-item" to={profilePath(player.id)} onClick={onClose}>
