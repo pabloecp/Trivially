@@ -785,6 +785,8 @@ export function AppProvider({ children }) {
 
       // Owners: reports the question being played, to check it later.
       async reportQuestion() { const res = await emitAck("room:report"); if (!res.ok) throw new Error(res.error); },
+      // An owner's test bot for Farsante's lobby (to try it alone).
+      async addTestBot() { const res = await emitAck("room:addTestBot"); if (!res.ok) throw new Error(res.error); },
       async skipRound() { const res = await emitAck("room:skipRound"); if (!res.ok) throw new Error(res.error); },
 
       async answer(answerTextOrId) {

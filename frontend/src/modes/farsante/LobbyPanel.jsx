@@ -9,7 +9,7 @@ import "../../styles/farsante.css";
 // Farsante's waiting room, inside the room screen on Home: the mode's big card (how it's played and the start button,
 // just locked while the match can't start) and the match settings beside it (the tab with the problem has a red dot).
 export default function LobbyPanel({ room, onToast }) {
-  const { user, updateConfig } = useApp();
+  const { user, updateConfig, addTestBot } = useApp();
   const me = room.players.find((p) => p.id === user?.id);
   const canEdit = room.hostId === user?.id || Boolean(me?.canEditConfig) || Boolean(room.coHosts?.includes(user?.id));
   const mode = findMode("farsante");
@@ -18,6 +18,16 @@ export default function LobbyPanel({ room, onToast }) {
     <>
       <ModeStage room={room} mode={mode}>
         <ModeStart room={room} />
+        {/* Owners can try the game alone with bots that write and vote by themselves. */}
+        {user?.role === "owner" && (
+          <button
+            type="button"
+            className="tv-mini-btn"
+            onClick={() => addTestBot().catch((e) => onToast?.(e.message || "No se pudo añadir el bot"))}
+          >
+            Añadir bot de prueba
+          </button>
+        )}
       </ModeStage>
 
       <SettingsPanel room={room} readOnly={!canEdit}>
