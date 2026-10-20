@@ -4,7 +4,7 @@ import { useApp } from "../../lib/store.jsx";
 import { exitPath } from "./TvTopbar.jsx";
 import Avatar from "./Avatar.jsx";
 import Icon from "./Icon.jsx";
-import SlowReel from "./SlowReel.jsx";
+import MatchGames from "./MatchGames.jsx";
 import { MATCH_KINDS, sizeName } from "./matchInfo.js";
 import "../../styles/match.css";
 
@@ -35,6 +35,8 @@ export default function MatchLobby({ room }) {
 
   return (
     <section className={`tv-mcard tv-ml tv-c-${kind.color}${full ? " is-full" : ""}`} aria-labelledby="tv-ml-title">
+      {/* On wide screens two columns: the search (icon, title, seats and the way out) and, beside it, the games. */}
+      <div className="tv-ml-main">
       {/* The kind's icon floating gently while it searches; once full it turns into a tick. */}
       <span key={full ? "full" : "wait"} className={`tv-badge tv-c-${kind.color} tv-ml-core`} aria-hidden="true">
         <Icon name={full ? "check" : kind.icon} size={30} filled={!full} strokeWidth={full ? 3 : 1.6} />
@@ -77,15 +79,17 @@ export default function MatchLobby({ room }) {
         ))}
       </ul>
 
-      {/* The roulette that will pick the games, going slowly; when the match starts it grows into the real one. */}
-      <div className="tv-ml-games">
-        <SlowReel className="tv-ml-reel" color={kind.color} />
-      </div>
-
       <button type="button" className="tv-btn tv-c-neutral tv-ml-leave" data-sound="back" onClick={leave}>
         <Icon name="close" size={18} strokeWidth={3} />
         {full ? "Salir" : "Cancelar búsqueda"}
       </button>
+      </div>
+
+      {/* The games the roulette will pick from, with how each one is played (the roulette itself spins at the start). */}
+      <div className="tv-ml-games">
+        <p className="tv-mono-label">Juegos</p>
+        <MatchGames kind={info.kind} compact />
+      </div>
     </section>
   );
 }

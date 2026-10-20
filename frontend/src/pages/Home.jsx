@@ -177,7 +177,23 @@ export default function Home() {
   const { pathname } = useLocation();
   const onPlayPath = pathname === "/jugar" || pathname.startsWith("/jugar/");
   const playShown = useRef(onPlayPath);
-  if (screen === "home" && !leaving) playShown.current = onPlayPath;
+  // Back from /jugar to Inicio, its panels sink first (`playOut`, SCREEN_OUT_MS), the way they came up; then Inicio.
+  // Coming back from a room, the page shown is just the address's (no exit to play).
+  const [playOut, setPlayOut] = useState(false);
+  const lastScreen = useRef(screen);
+  if (screen === "home" && !leaving) {
+    if (lastScreen.current !== "home" || onPlayPath) playShown.current = onPlayPath;
+  }
+  lastScreen.current = screen;
+  useEffect(() => {
+    if (screen !== "home" || leaving || onPlayPath || !playShown.current) return undefined;
+    setPlayOut(true);
+    const t = setTimeout(() => {
+      playShown.current = false;
+      setPlayOut(false);
+    }, reducedMotion() ? 0 : SCREEN_OUT_MS);
+    return () => clearTimeout(t);
+  }, [onPlayPath, screen, leaving]);
 
   // Picking a game from the tiles happens in two beats, for every player at once: first the tiles (or the guests'
   // "está eligiendo" panel) go, for TILES_OUT_MS; then the game's big card grows in and "Cómo se juega" slides in
@@ -356,7 +372,7 @@ export default function Home() {
         {centralScreen ? (
           <CentralLobby room={shownRoom} />
         ) : screen === "home" && playShown.current ? (
-          <PlayPage leaving={leaving} />
+          <PlayPage leaving={leaving || playOut} />
         ) : screen === "home" ? (
           <div className={`tv-home is-in-${entry}${leaving ? " is-leaving" : ""}${sheetOpen ? " is-behind" : ""}`}>
             <section className="tv-hero">

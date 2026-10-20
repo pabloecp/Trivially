@@ -1,12 +1,18 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
+import { findMode } from "../../modes/index.js";
+import { useHiddenCode } from "../../lib/hiddenCode.js";
+import { useFriends } from "../../lib/friends.jsx";
 import { AVATAR_COLORS, savedGuest, useApp } from "../../lib/store.jsx";
 import { withSound } from "../../lib/sounds.js";
 import Avatar from "./Avatar.jsx";
+import { JoinButton, statusOf } from "./FriendsSheet.jsx";
 import Icon from "./Icon.jsx";
 import ModeStage from "./ModeStage.jsx";
-import Segmented from "./Segmented.jsx";
-import SlowReel from "./SlowReel.jsx";
+import OptionRow from "./OptionRow.jsx";
+import PlaySide from "./PlaySide.jsx";
+
+import MatchGames from "./MatchGames.jsx";
 import { MATCH_KINDS, MATCH_ROUNDS, MATCH_SIZES, gamesText } from "./matchInfo.js";
 import "../../styles/match.css";
 
@@ -14,24 +20,24 @@ const ROOM_CODE_LENGTH = 5;
 // The tiles sink away for this long before the chosen option's card comes in (and the card goes before the tiles come
 // back), like "Elige el juego" in a room (TILES_OUT_MS in Home.jsx).
 const OUT_MS = 320;
+// How many online friends "Invitar al crear la sala" offers.
+const INVITES_SHOWN = 6;
+
+// Casual and Competitivo say the same, but for their first line.
+const MATCH_STEPS = [
+  { icon: "users", text: "Duelo o todos contra todos" },
+  { icon: "play", text: "Entra y juega en segundos" },
+];
 
 // The three ways to play, each with its big card (ModeStage: icon, name, how it goes).
 const KINDS = [
   {
     ...MATCH_KINDS.casual,
-    steps: [
-      { icon: "bolt", text: "Partidas de 5 o 15 rondas" },
-      { icon: "users", text: "Duelo o todos contra todos" },
-      { icon: "play", text: "Entra y juega en segundos" },
-    ],
+    steps: [{ icon: "sun", text: "Juega por diversión, sin presión" }, ...MATCH_STEPS],
   },
   {
     ...MATCH_KINDS.competitivo,
-    steps: [
-      { icon: "crown", text: "Solo preguntas medias y difíciles" },
-      { icon: "users", text: "Duelo o todos contra todos" },
-      { icon: "star", text: "Gana quien sume más puntos" },
-    ],
+    steps: [{ icon: "crown", text: "Cada victoria te sube de rango" }, ...MATCH_STEPS],
   },
   {
     id: "privada",
@@ -47,15 +53,24 @@ const KINDS = [
   },
 ];
 
+
 const reducedMotion = () => window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+
+// A room's code out of what was typed or pasted: the code itself, or the invite link (/sala/CODE).
+function codeFrom(text) {
+  const link = String(text).match(/\/sala\/([A-Za-z0-9]{5})/);
+  return (link ? link[1] : text).toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, ROOM_CODE_LENGTH);
+}
 
 // "¿Cómo quieres jugar?" as a page of its own (/jugar), not a sheet: Casual, Competitivo and Privada as big tiles. Picking
 // one (/jugar/casual, /jugar/privada...) makes the tiles sink away and that option's card grow in with its settings beside
-// it, on the same page; the top bar's "Volver" (the only way back) and the browser's Back do it the other way round. Leaving a room
-// comes back to the option it came from (exitPath in TvTopbar.jsx). Without an account, the settings card asks for the name first (filled in with the one
-// used last time), then does what was asked. Once in a room, RoomNavigator takes the player there.
+// it and the player's column (PlaySide) at the end, laid out like a room's screen; the top bar's "Volver" (the only way
+// back) and the browser's Back do it the other way round. Leaving a room comes back to the option it came from (exitPath
+// in TvTopbar.jsx). Without an account, the settings card asks for the name first (filled in with the one used last
+// time), then does what was asked. Once in a room, RoomNavigator takes the player there.
 export default function PlayPage({ leaving = false }) {
   const { user, saveGuest, createRoom, joinRoom, checkRoom, findMatch } = useApp();
+  const friends = useFriends();
   const nav = useNavigate();
   // The option comes from the address; `chosen` is the one on screen, which follows it once the old one has gone.
   const { option } = useParams();
@@ -63,13 +78,19 @@ export default function PlayPage({ leaving = false }) {
   const [chosen, setChosen] = useState(wanted);
   const [out, setOut] = useState(false);
   const [rounds, setRounds] = useState(MATCH_ROUNDS[0]);
-  const [size, setSize] = useState(MATCH_SIZES[1].value);
+  // Duelo and 5 rounds unless the player picks otherwise.
+  const [size, setSize] = useState(MATCH_SIZES[0].value);
   const [code, setCode] = useState("");
+  // Privada: the online friends to invite as soon as the room exists (the game is chosen inside, as always). Hiding the
+  // code is this device's own setting (lib/hiddenCode.js), the room's column's "Ocultar".
+  const [invites, setInvites] = useState([]);
+  const [codeHidden, toggleCodeHidden] = useHiddenCode();
   const [pending, setPending] = useState(null); // what to do once there's a name
   const [name, setName] = useState("");
   const [color, setColor] = useState(AVATAR_COLORS[0]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [note, setNote] = useState("");
   const codeRef = useRef(null);
   const timer = useRef(0);
   useEffect(() => () => clearTimeout(timer.current), []);
@@ -80,6 +101,7 @@ export default function PlayPage({ leaving = false }) {
   useEffect(() => {
     if (wanted === chosen) return;
     setError("");
+    setNote("");
     setPending(null);
     if (reducedMotion()) {
       setChosen(wanted);
@@ -111,7 +133,7 @@ export default function PlayPage({ leaving = false }) {
     try {
       await withSound(() =>
         action.type === "create"
-          ? createRoom("multi", {}, null)
+          ? createPrivate(action)
           : action.type === "match"
           ? findMatch(action.kind, action.rounds, action.size)
           : joinRoom(action.code)
@@ -123,6 +145,14 @@ export default function PlayPage({ leaving = false }) {
       setError(err.message || "Algo salió mal, inténtalo otra vez");
       setBusy(false);
     }
+  }
+
+  // The room, then the invitations. The room exists once createRoom is done: an invitation that fails can still be
+  // sent from there ("Invitar amigos").
+  async function createPrivate(action) {
+    await createRoom("multi", {}, null);
+    if (!friends.isAccount) return;
+    await Promise.all(action.invites.map((id) => friends.inviteFriend(id).catch(() => {})));
   }
 
   async function submitName(e) {
@@ -162,9 +192,148 @@ export default function PlayPage({ leaving = false }) {
     run({ type: "join", code });
   }
 
+  // A friend's room: straight in, or asking its host (then the answer comes as a toast, lib/friends.jsx).
+  async function joinFriend(friend) {
+    setBusy(true);
+    setError("");
+    setNote("");
+    try {
+      const action = await withSound(() => friends.joinFriend(friend.id));
+      if (action === "requested") {
+        setNote(`Le pediste a ${friend.room?.hostName || "el anfitrión"} unirte. Esperando su respuesta…`);
+        setBusy(false);
+      }
+    } catch (err) {
+      if (err.offer) return;
+      setError(err.message || "No pudimos entrar a la sala");
+      setBusy(false);
+    }
+  }
+
+  async function cancelJoin(friend) {
+    try {
+      await friends.cancelJoin(friend.id);
+      setNote("");
+    } catch (err) {
+      setError(err.message || "No se pudo cancelar");
+    }
+  }
+
   const match = kind && kind.id !== "privada";
+  const friendRooms = (friends.view?.friends || []).filter((f) => f.room);
+  const online = (friends.view?.friends || []).filter((f) => f.online);
+  // The ticked friends still online.
+  const invited = invites.filter((id) => online.slice(0, INVITES_SHOWN).some((f) => f.id === id));
   const mainLabel = match ? (busy ? "Buscando…" : "Buscar partida") : busy ? "Creando sala…" : "Crear sala";
-  const mainAction = match ? { type: "match", kind: kind.id, rounds, size } : { type: "create" };
+  const mainAction = match
+    ? { type: "match", kind: kind.id, rounds, size }
+    : { type: "create", invites: invited };
+
+  // Casual and Competitivo: everything in one view, looking like a game's settings: how many play, how long, and the
+  // games a match can draw with their ways of playing (only to read).
+  const matchContent = (
+    <>
+      <OptionRow
+        label="Jugadores"
+        options={MATCH_SIZES.map((o) => ({ value: o.value, label: `${o.label} · ${o.value}` }))}
+        value={size}
+        onChange={setSize}
+      />
+      <OptionRow
+        label="Rondas"
+        options={MATCH_ROUNDS.map((n) => ({ value: n, label: `${n} rondas · ${gamesText(n)}` }))}
+        value={rounds}
+        onChange={setRounds}
+      />
+      <MatchGames kind={kind?.id} />
+    </>
+  );
+
+  // Privada: joining first (a code, or a friend's room when there is one), then the room "Crear sala" makes (its code
+  // shown or hidden, the online friends to invite), all in one view, looking like a game's settings. Nothing about
+  // friends when there's nothing to show: the column beside it has them.
+  const privateContent = (
+    <>
+      {/* The first thing on the card and the most used: a bigger title, the code on a wide strip ringed in the option's
+          colour, and "Entrar a la sala" under it, as wide. */}
+      <form className="tv-optrow tv-play-join" onSubmit={submitCode}>
+        <span className="tv-optrow-name">
+          <label className="tv-optrow-label" htmlFor="tv-play-code">
+            Unirme a una sala
+          </label>
+        </span>
+        <div className="tv-optrow-opts tv-play-codestrip">
+          {/* "Código de sala: Ocultar" covers the code being written too (dots), and its example, like the room's own code
+              on screen. */}
+          <input
+            ref={codeRef}
+            id="tv-play-code"
+            type={codeHidden ? "password" : "text"}
+            className="tv-play-codeinput"
+            aria-invalid={Boolean(error) || undefined}
+            value={code}
+            onChange={(e) => {
+              setCode(codeFrom(e.target.value));
+              setError("");
+            }}
+            placeholder={codeHidden ? "•".repeat(ROOM_CODE_LENGTH) : "YOAVH"}
+            autoComplete={codeHidden ? "one-time-code" : "off"}
+            autoCapitalize="characters"
+            spellCheck="false"
+          />
+        </div>
+        <button type="submit" className={`tv-btn tv-btn--block tv-c-${kind?.color} tv-play-codego`} data-sound="none" disabled={busy || code.length < ROOM_CODE_LENGTH}>
+          Entrar a la sala
+        </button>
+      </form>
+      {friendRooms.length > 0 && (
+        <div className="tv-optrow">
+          <span className="tv-optrow-label">Salas de tus amigos</span>
+          <ul className="tv-invite-friends-list tv-play-rooms">
+            {friendRooms.map((f) => {
+              const m = findMode(f.room.game);
+              return (
+                <li key={f.id} className="tv-invite-friend">
+                  <Avatar name={f.name} avatar={f.avatar} />
+                  <span className="tv-invite-friend-text">
+                    <strong>{f.name}</strong>
+                    <small>{statusOf(f)}</small>
+                  </span>
+                  {m && (
+                    <span className={`tv-badge tv-c-${m.color} tv-play-rooms-game`} aria-hidden="true">
+                      <Icon name={m.icon} size={16} />
+                    </span>
+                  )}
+                  <JoinButton friend={f} onJoin={joinFriend} onCancel={cancelJoin} busy={busy} />
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      )}
+      <OptionRow
+        label="Código de sala"
+        options={[
+          { value: false, label: "Mostrar" },
+          { value: true, label: "Ocultar" },
+        ]}
+        value={codeHidden}
+        onChange={(v) => v !== codeHidden && toggleCodeHidden()}
+      />
+      {online.length > 0 && (
+        <OptionRow
+          label="Invitar al crear la sala"
+          hint="Les llega la invitación en cuanto la crees"
+          multi
+          wrap
+          options={online.slice(0, INVITES_SHOWN).map((f) => ({ value: f.id, label: f.name }))}
+          value={invited}
+          onChange={(id) => setInvites((list) => (list.includes(id) ? list.filter((x) => x !== id) : [...list, id]))}
+          onSetAll={(list) => setInvites(list)}
+        />
+      )}
+    </>
+  );
 
   return (
     <div className={`tv-room tv-playpage${leaving ? " is-leaving" : ""}`}>
@@ -212,10 +381,11 @@ export default function PlayPage({ leaving = false }) {
               </button>
             </ModeStage>
 
-            <section className="tv-settings-card tv-settings-panel tv-play-opts" aria-labelledby="tv-play-opts-title">
+            {/* The settings take the option's colour (the chosen tab's line, the chosen choices). */}
+            <section className={`tv-settings-card tv-settings-panel tv-play-opts tv-c-${kind.color}`} aria-labelledby="tv-play-opts-title">
               <div className="tv-settings-head">
                 <h2 id="tv-play-opts-title" className="tv-settings-title">
-                  {pending ? "¿Cómo te llamas?" : match ? "Ajustes" : "Tengo un código"}
+                  {pending ? "¿Cómo te llamas?" : "Ajustes"}
                 </h2>
               </div>
 
@@ -272,77 +442,16 @@ export default function PlayPage({ leaving = false }) {
                   </div>
                 </form>
               ) : match ? (
-                <div key="match" className="tv-play-form">
-                  {/* First how many play: two big modes in the option's colour, the chosen one full and ticked. */}
-                  <div className="tv-play-field">
-                    <p className="tv-mono-label">Modo</p>
-                    <div className="tv-play-modes" role="radiogroup" aria-label="Modo">
-                      {MATCH_SIZES.map((o) => (
-                        <button
-                          key={o.value}
-                          type="button"
-                          role="radio"
-                          aria-checked={size === o.value}
-                          className={`tv-play-mode tv-c-${kind.color}${size === o.value ? " is-on" : ""}`}
-                          onClick={() => setSize(o.value)}
-                        >
-                          <span className="tv-play-mode-icon">
-                            <Icon name={o.icon} size={26} strokeWidth={2.4} />
-                          </span>
-                          <span className="tv-play-mode-text">
-                            <strong>{o.label}</strong>
-                            <span>{o.hint}</span>
-                          </span>
-                          <span className="tv-play-mode-tick" aria-hidden="true">
-                            <Icon name="check" size={16} strokeWidth={3.4} />
-                          </span>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                  {/* Then the length, smaller: it matters less. */}
-                  <div className="tv-play-field tv-play-rounds">
-                    <p className="tv-mono-label">Rondas</p>
-                    <Segmented
-                      label="Rondas"
-                      value={rounds}
-                      onChange={setRounds}
-                      options={MATCH_ROUNDS.map((n) => ({ value: n, label: `${n} rondas · ${gamesText(n)}` }))}
-                    />
-                  </div>
-                  {/* The games, going slowly past a marker: the same cards as the roulette that will pick them (MatchIntro). */}
-                  <div className="tv-play-field">
-                    <p className="tv-mono-label">La ruleta elige</p>
-                    <SlowReel color={kind.color} />
-                  </div>
-                </div>
+                <fieldset key={kind.id} className="tv-settings tv-play-form">
+                  {matchContent}
+                </fieldset>
               ) : (
-                <form key="code" className="tv-play-form" onSubmit={submitCode}>
-                  <p className="tv-play-note">¿Un amigo ya creó la sala? Escribe su código de 5 letras.</p>
-                  <label className="tv-sr-only" htmlFor="tv-play-code">
-                    Código de sala
-                  </label>
-                  <input
-                    ref={codeRef}
-                    id="tv-play-code"
-                    className="tv-field tv-field--code"
-                    aria-invalid={Boolean(error) || undefined}
-                    value={code}
-                    onChange={(e) => {
-                      setCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, ROOM_CODE_LENGTH));
-                      setError("");
-                    }}
-                    placeholder="YOAVH"
-                    autoComplete="off"
-                    autoCapitalize="characters"
-                    spellCheck="false"
-                  />
-                  <button type="submit" className="tv-btn tv-btn--block tv-c-yellow" data-sound="none" disabled={busy || code.length < ROOM_CODE_LENGTH}>
-                    Entrar a la sala
-                  </button>
-                </form>
+                <fieldset key={kind.id} className="tv-settings tv-play-form">
+                  {privateContent}
+                </fieldset>
               )}
 
+              {note && !error && <p className="tv-play-note">{note}</p>}
               {error && (
                 <p className="tv-sheet-error" role="alert">
                   {error}
@@ -352,6 +461,7 @@ export default function PlayPage({ leaving = false }) {
           </div>
         )}
       </div>
+      {kind && <PlaySide kind={kind.id} out={out} />}
     </div>
   );
 }

@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
-import { geoContains } from "d3-geo";
+import { geoCentroid, geoContains } from "d3-geo";
 import { feature } from "topojson-client";
 
 // The world map of the "Ubicación" questions: the same file the frontend draws (world-atlas countries-50m), so a pin
@@ -87,6 +87,12 @@ function target(names) {
     targets.set(key, { features, rings });
   }
   return targets.get(key);
+}
+
+/** A point in the middle of the country (its biggest part's centroid, [lng, lat]): where a public match's bots aim. */
+export function countryPoint(names) {
+  const { features } = target(names);
+  return geoCentroid(features[0]);
 }
 
 /**

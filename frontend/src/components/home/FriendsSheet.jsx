@@ -9,7 +9,7 @@ import Segmented from "./Segmented.jsx";
 import "../../styles/friends.css";
 
 // How a friend's line reads: where they are and what you can do about it.
-function statusOf(friend) {
+export function statusOf(friend) {
   if (!friend.online) return "Desconectado";
   if (!friend.room) return "En línea";
   const mode = findMode(friend.room.game)?.name;
@@ -21,7 +21,7 @@ function statusOf(friend) {
   return `${where} · ${friend.room.players === 1 ? "1 jugador" : `${friend.room.players} jugadores`}`;
 }
 
-function JoinButton({ friend, onJoin, onCancel, busy }) {
+export function JoinButton({ friend, onJoin, onCancel, busy }) {
   const room = friend.room;
   if (!room) return null;
   if (room.joinMode === "abierta") {

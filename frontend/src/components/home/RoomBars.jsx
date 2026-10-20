@@ -17,13 +17,13 @@ const STACK = 5;
 
 // Phones only (home.css): the room screen's own top bar, pinned to the top in place of the usual one. The button on
 // the left of the logo, which is not a button, is the top bar's "Volver" (see `useRoomExit`), only its arrow here:
-// back to the game modes for the host once a game is picked, otherwise out of the room after asking (two taps).
+// back to the game modes for the host once a game is picked, otherwise out of the room after asking (the top bar's modal).
 // Then the room's code and your role, the players' faces (tap: the room's column drops down, with everyone and the
 // way out), the volume and your own avatar, to your profile.
 export function RoomHeader({ room, onToast }) {
   const [codeHidden] = useHiddenCode();
   const { user } = useApp();
-  const { toModes, confirmLeave, press } = useRoomExit({ onError: onToast });
+  const { toModes, press } = useRoomExit({ onError: onToast });
   const [open, setOpen] = useState(false);
   const rootRef = useRef(null);
   const me = room.players.find((p) => p.id === user?.id);
@@ -54,16 +54,17 @@ export function RoomHeader({ room, onToast }) {
       <div className="tv-roomhead-start">
         <button
           type="button"
-          className={`tv-roomhead-leave${confirmLeave ? " is-confirm" : ""}`}
-          aria-label={toModes ? "Volver a los juegos" : confirmLeave ? "Toca otra vez para salir de la sala" : "Volver: salir de la sala"}
+          className="tv-roomhead-leave"
+          aria-label={toModes ? "Volver a los juegos" : "Volver: salir de la sala"}
+          aria-haspopup={toModes ? undefined : "dialog"}
           onClick={press}
         >
-          <Icon name={confirmLeave ? "logout" : "back"} size={20} strokeWidth={2.6} />
+          <Icon name="back" size={20} strokeWidth={2.6} />
         </button>
         <AppIcon small />
       </div>
       <div className="tv-roomhead-text">
-        <span className="tv-roomhead-kicker">{confirmLeave ? "¿Salir? Otra vez" : publicKind ? "Partida pública" : `Sala · ${role}`}</span>
+        <span className="tv-roomhead-kicker">{publicKind ? "Partida pública" : `Sala · ${role}`}</span>
         <span className="tv-roomhead-code">{publicKind || shownCode(room.code, codeHidden)}</span>
       </div>
       <button
