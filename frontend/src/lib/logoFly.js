@@ -3,8 +3,10 @@ import { useSyncExternalStore } from "react";
 // The big logo of Inicio flies to the top bar's small one when an option is picked (and back when it is left): a copy of
 // the big logo travels over the page, its tile landing on the small tile, while the top bar's own logo stays out of
 // sight (`mode`):
-//  - "in": the way into an option; the bar's logo is hidden until the flight is over, though Inicio is already left;
-//  - "out": the way back to Inicio; the bar's logo stays until the copy is on its way, though Inicio hides it;
+//  - "in": the way into an option; the bar's logo is hidden, though Inicio is already left; then "in-text": its letters
+//    show (the big ones are melting away) but not its tile (the copy's is still on its way); then null: all of it;
+//  - "out": the way back to Inicio; the bar's logo stays until the copy is on its way, though Inicio hides it; then
+//    "out-text": only its letters stay (under the copy's tile) until the big letters come in; then null: gone;
 //  - null: the bar's logo is where the page says (hidden on Inicio, shown anywhere else).
 let mode = null;
 let safety = 0;
@@ -128,12 +130,17 @@ export function flyLogo(dir) {
     easing: "ease-in-out",
     fill: "both",
   });
-  // The bar's logo goes out of sight as the copy takes over (out), or fades in under the copy before it lands, so when
-  // the copy fades away over it there is no dip in between (in).
-  const swap = setTimeout(() => holdBrand(null), dir === "in" ? moveMs * 0.72 : fadeMs);
+  // The bar's logo and the big one trade places part by part, so the letters never go missing in between: in, the
+  // bar's letters show as the big ones melt away, and its tile fades in under the copy before it lands (so when the copy
+  // fades away over it there is no dip); out, the tile goes under the copy at once and the letters stay until the big
+  // ones are coming in.
+  const swaps =
+    dir === "in"
+      ? [setTimeout(() => holdBrand("in-text"), moveMs * 0.08), setTimeout(() => holdBrand(null), moveMs * 0.6)]
+      : [setTimeout(() => holdBrand("out-text"), fadeMs), setTimeout(() => holdBrand(null), delay + moveMs * 0.8)];
   const anim = { finished: Promise.all([move.finished, arc.finished, fade.finished]) };
   const finish = () => {
-    clearTimeout(swap);
+    swaps.forEach(clearTimeout);
     ghost.remove();
     big.style.visibility = "";
     holdBrand(null);
