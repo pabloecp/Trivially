@@ -28,7 +28,7 @@ export function useBrandHold() {
   );
 }
 
-const FLY_MS = 760;
+const FLY_MS = 950;
 const reducedMotion = () => window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
 
 /**
@@ -75,33 +75,51 @@ export function flyLogo(dir) {
     transformOrigin: "0 0",
     zIndex: "80",
     pointerEvents: "none",
+    // Its own layer, drawn once: moving and scaling it is then the graphics card's work, not the page's, so it stays
+    // smooth while the new screen is being built under it.
+    willChange: "transform, opacity",
+    backfaceVisibility: "hidden",
   });
   host.appendChild(ghost);
   big.style.visibility = "hidden";
-  const there = `translate(${tx}px, ${ty}px) scale(${s})`;
-  const frames =
+  const start = "translate3d(0, 0, 0) scale(1)";
+  const there = `translate3d(${tx}px, ${ty}px, 0) scale(${s})`;
+  // The flight itself takes most of the time; the copy fades in before it takes off (out) or away after it lands (in).
+  const moveMs = FLY_MS * 0.8;
+  const fadeMs = FLY_MS * 0.2;
+  const delay = dir === "in" ? 0 : fadeMs * 0.5;
+  const total = dir === "in" ? FLY_MS : delay + moveMs;
+  // The way: one smooth curve, slow at both ends, with no keyframe in the middle to make it stop and start again.
+  const move = ghost.animate(dir === "in" ? [{ transform: start }, { transform: there }] : [{ transform: there }, { transform: start }], {
+    fill: "both",
+    delay,
+    duration: moveMs,
+    easing: "cubic-bezier(0.45, 0, 0.2, 1)",
+  });
+  // A little above the straight line half way: an arc, not a slide (its own property, so it adds to the way's).
+  const lift = Math.min(44, Math.abs(ty) * 0.2);
+  const arc = ghost.animate([{ translate: "0 0" }, { translate: `0 ${-lift}px`, offset: 0.5 }, { translate: "0 0" }], {
+    fill: "both",
+    delay,
+    duration: moveMs,
+    easing: "cubic-bezier(0.37, 0, 0.63, 1)",
+  });
+  const fade = ghost.animate(
     dir === "in"
-      ? [
-          { transform: "translate(0, 0) scale(1)", opacity: 1 },
-          { transform: there, opacity: 1, offset: 0.86 },
-          { transform: there, opacity: 0 },
-        ]
-      : [
-          { transform: there, opacity: 0 },
-          { transform: there, opacity: 1, offset: 0.14 },
-          { transform: "translate(0, 0) scale(1)", opacity: 1 },
-        ];
+      ? [{ opacity: 1 }, { opacity: 1, offset: moveMs / total }, { opacity: 0 }]
+      : [{ opacity: 0 }, { opacity: 1, offset: fadeMs / total }, { opacity: 1 }],
+    { fill: "both", duration: total, easing: "ease-out" }
+  );
   // The letters melt away on the way (they have no place in the small logo's corner): only the tile arrives.
-  const letters = ghost.querySelector(".tv-wordmark");
-  letters?.animate(dir === "in" ? [{ opacity: 1 }, { opacity: 0 }] : [{ opacity: 0 }, { opacity: 1 }], {
-    duration: FLY_MS * 0.45,
-    delay: dir === "in" ? 0 : FLY_MS * 0.55,
+  ghost.querySelector(".tv-wordmark")?.animate(dir === "in" ? [{ opacity: 1 }, { opacity: 0 }] : [{ opacity: 0 }, { opacity: 1 }], {
+    duration: moveMs * 0.5,
+    delay: dir === "in" ? 0 : delay + moveMs * 0.5,
     easing: "ease-in-out",
     fill: "both",
   });
-  const anim = ghost.animate(frames, { duration: FLY_MS, easing: "cubic-bezier(0.5, 0, 0.15, 1)", fill: "both" });
   // The bar's logo goes out of sight as the copy takes over (out), or shows as the copy lands (in).
-  const swap = setTimeout(() => holdBrand(null), FLY_MS * (dir === "in" ? 0.8 : 0.16));
+  const swap = setTimeout(() => holdBrand(null), dir === "in" ? moveMs * 0.92 : fadeMs);
+  const anim = { finished: Promise.all([move.finished, arc.finished, fade.finished]) };
   const finish = () => {
     clearTimeout(swap);
     ghost.remove();
