@@ -31,15 +31,19 @@ const TIMELINES = {
   moderna: { span: 300, round: 20 },
   contemporanea: { span: 150, round: 10 },
 };
-// The exact year gets all the points; otherwise they fall with the distance, faster in the ages whose dates are better
-// known (10 years off is a good guess for Roman times, a poor one for the 20th century). The pace doesn't depend on
-// how long the timeline is: a longer one only leaves more room to miss.
+// The exact answer gets all the points; anything else starts at YEAR_NEAR_POINTS and falls in a straight line with the
+// distance, reaching 0 at YEAR_ZERO_SHARE of the line's length (on any timeline or bar), so being 5-10% off costs little.
 export const YEAR_MAX_POINTS = 1000;
-const YEAR_NEAR_POINTS = 800;
-const YEAR_FALLOFF = { antigua: 150, media: 75, moderna: 30, contemporanea: 15 };
+const YEAR_NEAR_POINTS = 900;
+const YEAR_ZERO_SHARE = 0.6;
+
+/** Points of a guess `diff` away (not exact) on a line `span` long: 900 down to 0, in a straight line. */
+function nearPoints(diff, span) {
+  return Math.max(0, Math.round(YEAR_NEAR_POINTS * (1 - diff / (span * YEAR_ZERO_SHARE))));
+}
 
 // The age of an event, by its year: "antigua", "media", "moderna" or "contemporanea". It is not a setting, only how
-// long the event's timeline is and how fast its points fall (TIMELINES, YEAR_FALLOFF). The event that opens an age
+// long the event's timeline is (TIMELINES), which also sets how fast its points fall. The event that opens an age
 // belongs to it (476, 1492, 1789).
 export function eraOf(year) {
   if (year <= 476) return "antigua";
@@ -163,15 +167,14 @@ export function currentYear() {
 /** Points of a guess `diff` years away from an event of that age. */
 export function yearPoints(diff, era) {
   if (diff === 0) return YEAR_MAX_POINTS;
-  return Math.round(YEAR_NEAR_POINTS * Math.exp(-diff / YEAR_FALLOFF[era]));
+  return nearPoints(diff, TIMELINES[era].span);
 }
 
 // ---- Cifras ----
 // The bar of a figure is a round span (1, 2 or 5 followed by zeros, at least 10) between 1.25 and 6 times the answer,
 // starting on one of its tenths, with the answer inside and never near either end. A guess moves in steps of a
 // thousandth of the bar (`snap`, at least 1) and is exact within half a hundredth of it (on a bar of 10, only the
-// number itself); past that the points fall like a year's, a tenth of the bar being what 15 years are on a
-// contemporary timeline.
+// number itself); past that the points fall like a year's (nearPoints), by the bar's length.
 const NICE = [1, 2, 5, 10, 20, 50, 100];
 
 export function figureRange(value, random = Math.random) {
@@ -196,7 +199,7 @@ export function figureTolerance(span) {
 /** Points of a guess `diff` away from a figure whose bar is `span` long. */
 export function figurePoints(diff, span) {
   if (diff <= figureTolerance(span)) return YEAR_MAX_POINTS;
-  return Math.round(YEAR_NEAR_POINTS * Math.exp(-diff / (span / 10)));
+  return nearPoints(diff, span);
 }
 
 /** How a figure reads: "8849 m", "42.195 m", "3.333.360 puntos" (like the frontend's figureLabel). */

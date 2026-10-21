@@ -5,7 +5,8 @@ export const REVEAL_MS = 3000;
 
 // Every mode scores on the same scale: at most 1000 points a round. A right answer gets half of it, and the faster it
 // came the more of the other half (500 to 1000). Rounds judged by closeness (a pin on the map, a year on the timeline)
-// give 1000 for the exact answer and up to 800 for a near one (game/geo.js locationPoints, game/history.js yearPoints).
+// give 1000 for the exact answer and up to 800 for a near one (game/geo.js locationPoints), or up to 900 in Rango
+// (game/history.js yearPoints).
 // A streak is counted for the stats but adds no points.
 export const MAX_POINTS = 1000;
 const BASE_POINTS = 500;

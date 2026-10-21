@@ -80,13 +80,20 @@ assert.equal(yearLabel(1492), "1492");
 
 // Points: the exact year gets all of them, then fewer the further; the same miss counts less in older ages.
 assert.equal(yearPoints(0, "contemporanea"), 1000);
-assert.ok(yearPoints(1, "contemporanea") > 700 && yearPoints(1, "contemporanea") <= 800);
+// not exact: 900 at most, then a straight line down to 0 at 60% of the timeline
+assert.ok(yearPoints(1, "contemporanea") > 800 && yearPoints(1, "contemporanea") <= 900);
+assert.equal(yearPoints(9, "contemporanea"), 810, "6% of the line");
+assert.equal(yearPoints(15, "contemporanea"), 750, "10% of the line");
+assert.equal(yearPoints(45, "contemporanea"), 450, "30% of the line");
+assert.equal(yearPoints(90, "contemporanea"), 0, "60% of the line");
+assert.equal(yearPoints(140, "contemporanea"), 0, "never negative");
+assert.equal(yearPoints(15, "contemporanea") - yearPoints(30, "contemporanea"), yearPoints(30, "contemporanea") - yearPoints(45, "contemporanea"), "even steps");
 assert.ok(yearPoints(5, "contemporanea") > yearPoints(10, "contemporanea"));
 assert.ok(yearPoints(10, "contemporanea") > yearPoints(30, "contemporanea"));
-assert.ok(yearPoints(50, "contemporanea") < 50);
 assert.ok(yearPoints(10, "antigua") > yearPoints(10, "media"));
 assert.ok(yearPoints(10, "media") > yearPoints(10, "moderna"));
 assert.ok(yearPoints(10, "moderna") > yearPoints(10, "contemporanea"));
+assert.equal(yearPoints(150, "antigua"), 750, "10% of any timeline is the same");
 
 // Settings: limits, the categories and difficulties ticked. There are no ages to choose any more: an older client's
 // are ignored.
@@ -201,9 +208,11 @@ assert.deepEqual(figureRange(3, () => 0.99), { min: 2, max: 12, span: 10, snap: 
 assert.equal(figureTolerance(10), 0);
 assert.equal(figureTolerance(20000), 100);
 assert.equal(figurePoints(0, 10), 1000);
-assert.equal(figurePoints(1, 10), Math.round(800 * Math.exp(-1)));
+assert.equal(figurePoints(1, 10), 750, "10% of a bar of 10");
 assert.equal(figurePoints(100, 20000), 1000);
-assert.ok(figurePoints(101, 20000) <= 800 && figurePoints(500, 20000) > figurePoints(2000, 20000));
+assert.ok(figurePoints(101, 20000) <= 900 && figurePoints(500, 20000) > figurePoints(2000, 20000));
+assert.equal(figurePoints(2000, 20000), 750, "10% of the bar");
+assert.equal(figurePoints(12000, 20000), 0, "60% of the bar");
 assert.equal(figureLabel(8849, "m"), "8849 m");
 assert.equal(figureLabel(42195, "m"), "42.195 m");
 assert.equal(figureLabel(151, ""), "151");

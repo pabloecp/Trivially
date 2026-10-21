@@ -37,7 +37,7 @@ export function MatchRow({ match: m, onAnswers }) {
         <Icon name={mode?.icon || "play"} size={20} />
       </span>
       <span className="tv-history-main">
-        <strong>{mode?.name || "Partida"}</strong>
+        <strong>{mode?.fullName || mode?.name || "Partida"}</strong>
         <small>
           {whenText(m.at)} · {playersText(m.players || 1)}
         </small>
@@ -204,7 +204,7 @@ export default function MatchHistory({ matches = [], title = null }) {
       <MatchSummarySheet
         open={Boolean(answers)}
         rounds={answers?.rounds || []}
-        title={findMode(answers?.game)?.name || "Tu partida"}
+        title={findMode(answers?.game)?.fullName || findMode(answers?.game)?.name || "Tu partida"}
         showGame={answers?.game === "playlist"}
         onClose={() => setAnswers(null)}
       />

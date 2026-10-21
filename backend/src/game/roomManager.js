@@ -57,6 +57,7 @@ import {
   minesBank,
   minesCounts,
   pickMinesQuestions,
+  pickMinesTiebreak,
 } from "./mines.js";
 import {
   countRainQuestions,
@@ -115,6 +116,9 @@ import {
   BOT_GAP_MS,
   BOT_WAIT_MS,
   cleanMatchRequest,
+  CLASSIC_GAMES,
+  CLASSIC_NAMES,
+  isClassic,
   INTRO_MS,
   INTRO_SPIN_MS,
   INTRO_TUTORIAL_MS,
@@ -147,8 +151,12 @@ export const ROOM_CODE_LENGTH = 5;
 // answers, some right and some mines, picked one per turn) and "lluvia" (Lluvia, RAIN_GAME: questions falling down the
 // screen for a while, answered by writing). The question games keep their questions in room.tracks, in place of songs
 // (Lluvia, one track per round with all its questions). "playlist" isn't a game of its own: it's where the room makes a
-// playlist of them (game/playlist.js), and while one is played the room is in each of its games in turn.
-export const GAME_IDS = ["musica", "opciones", "mundo", "historia", "minas", RAIN_GAME, REY_GAME, FARSANTE_GAME, PLAYLIST_GAME];
+// playlist of them (game/playlist.js), and while one is played the room is in each of its games in turn. "clasico" and
+// "extendido" ("Clásico": Normal and Extendido) aren't games either: like a playlist, they play several games one after
+// another, drawn by a public match's roulette (startClassic).
+export const GAME_IDS = [
+  "musica", "opciones", "mundo", "historia", "minas", RAIN_GAME, REY_GAME, FARSANTE_GAME, PLAYLIST_GAME, ...Object.keys(CLASSIC_GAMES),
+];
 // "Trivia": its settings live in config.quiz and its questions take the place of songs in room.tracks.
 export const QUIZ_GAME = "opciones";
 // The games that ask questions instead of playing songs.
@@ -676,6 +684,30 @@ export class RoomManager {
    */
   startMatch(room) {
     const { kind, rounds } = room.matchmaking;
+    const items = this.drawMatchItems(room, kind, matchGameCount(rounds));
+    // What everyone sees of it: the variants, in play order.
+    room.matchmaking.games = items.map((item) => item.variant);
+    room.matchmaking.startsAt = null;
+    room.playlist = { name: kind === "competitivo" ? "Partida competitiva" : "Partida casual", order: "orden", items };
+    room.run = newRun(room.playlist, room.config);
+    this.startMixed(room);
+  }
+
+  /**
+   * "Clásico" (Normal or Extendido, the room's game): the host starts a match like a Casual one for the room's players,
+   * its games drawn the same way (CLASSIC_GAMES of them) and each one introduced by the roulette and its tutorial. The
+   * room's own playlist is left alone; when it ends or is stopped the room is back in the Clásico it came from.
+   */
+  startClassic(room) {
+    const home = room.game;
+    const items = this.drawMatchItems(room, "casual", CLASSIC_GAMES[home]);
+    room.run = newRun({ name: CLASSIC_NAMES[home], order: "orden", items }, room.config);
+    room.run.classic = home;
+    this.startMixed(room);
+  }
+
+  /** The `count` games of a public match of `kind` (or of a Clásico), each a variant with its settings, all different. */
+  drawMatchItems(room, kind, count) {
     // The times go in after cleaning, as they are: a public match is quicker than a game's own settings allow.
     const configFor = (game, variant, easy) => ({
       ...this.cleanItemConfig(room, game, matchItemConfig(game, kind, { easy, variant })),
@@ -683,7 +715,7 @@ export class RoomManager {
     });
     const items = [];
     for (const variant of pickMatchGames(null, Math.random, variantsFor(kind))) {
-      if (items.length >= matchGameCount(rounds)) break;
+      if (items.length >= count) break;
       const { game } = findVariant(variant);
       const item = { id: `m${items.length}`, game, variant, config: configFor(game, variant, false) };
       if (!this.itemProblem(room, item, room.config, { exact: true })) {
@@ -694,12 +726,7 @@ export class RoomManager {
       if (!this.itemProblem(room, easier, room.config, { exact: true })) items.push(easier);
     }
     if (!items.length) throw new Error("No hay juegos disponibles para esta partida");
-    // What everyone sees of it: the variants, in play order.
-    room.matchmaking.games = items.map((item) => item.variant);
-    room.matchmaking.startsAt = null;
-    room.playlist = { name: kind === "competitivo" ? "Partida competitiva" : "Partida casual", order: "orden", items };
-    room.run = newRun(room.playlist, room.config);
-    this.startMixed(room);
+    return items;
   }
 
   create({ host, mode, config, game = null }) {
@@ -1658,6 +1685,10 @@ export class RoomManager {
       this.startPlaylist(room);
       return;
     }
+    if (isClassic(room.game)) {
+      this.startClassic(room);
+      return;
+    }
     // Who is in this match: anyone else who shows up while it runs only watches it.
     room.participants = new Set(connected.map((p) => p.id));
     room.currentRound = 0;
@@ -1855,8 +1886,8 @@ export class RoomManager {
   beginCountdown(room) {
     if (room.run?.mixed && !room.run.finished) {
       this.enterMixedRound(room);
-      // A public match: before each of its games, the roulette that picks it and the game's tutorial ("intro").
-      if (room.matchmaking && room.introFor !== room.run.current) {
+      // A public match or a Clásico: before each of its games, the roulette that picks it and the game's tutorial ("intro").
+      if ((room.matchmaking || room.run.classic) && room.introFor !== room.run.current) {
         room.introFor = room.run.current;
         room.players.forEach((p) => {
           p.lastAnswer = null;
@@ -1878,8 +1909,8 @@ export class RoomManager {
       p.pin = null;
       p.guess = null;
       // Campo de minas: this round's hits and points, why the player is out (null while in) and the last turn they
-      // picked in. Spectators have none: they don't play.
-      p.minefield = room.game === MINES_GAME && !p.spectator ? { hits: 0, points: 0, out: null, pickedTurn: 0 } : null;
+      // picked in. Spectators have none: they don't play; nor do the players watching a tiebreak.
+      p.minefield = room.game === MINES_GAME && this.isPlaying(room, p.id) ? { hits: 0, points: 0, out: null, pickedTurn: 0 } : null;
       // Lluvia: how many questions this player took in this round, its points, how many answers they sent and when
       // the last one (answers are taken one every RAIN_ANSWER_GAP_MS).
       p.rain = room.game === RAIN_GAME && !p.spectator ? { hits: 0, points: 0, sent: 0, sentAt: 0 } : null;
@@ -1943,8 +1974,8 @@ export class RoomManager {
 
   /** How long players have to answer each round in the room's game. */
   roundMs(room) {
-    // A public match has its own clock (10 s a question or a turn, 30 s a race), whatever the settings allow.
-    if (room.matchmaking) return matchRoundMs(room.game, this.isMinesRace(room));
+    // A public match (and a Clásico) has its own clock (10 s a question or a turn, 30 s a race), whatever the settings allow.
+    if (room.matchmaking || room.run?.classic) return matchRoundMs(room.game, this.isMinesRace(room));
     if (room.game === QUIZ_GAME) return mergeQuizConfig(room.config.quiz).roundMs;
     if (room.game === GEO_GAME) return mergeGeoConfig(room.config.geo).roundMs;
     if (room.game === HISTORY_GAME) return mergeHistoryConfig(room.config.history).roundMs;
@@ -2163,6 +2194,7 @@ export class RoomManager {
     if (this.isMapRound(room)) this.gradeMap(room, track);
     if (this.isYearRound(room)) this.gradeYears(room, track);
     if (this.isMinesRound(room)) this.gradeMines(room);
+    if (this.isMinesRound(room) && room.tiebreak) this.settleMinesTiebreak(room);
     if (this.isRainRound(room)) this.gradeRain(room, track);
     if (room.game === REY_GAME) this.gradeRey(room, track);
     if (room.game === FARSANTE_GAME) this.gradeFarsante(room, track);
@@ -2261,20 +2293,23 @@ export class RoomManager {
   }
 
   /**
-   * Geografía and Historia, after the last round (or a tiebreak without a winner): if two or more players share the
-   * top score, they play one more round to settle it (a map round, or an event's year). Returns false when the match
-   * can end.
+   * Geografía, Historia and Campo de minas, after the last round (or a tiebreak without a winner): if two or more
+   * players share the top score, they play one more round to settle it (a map round, an event's year, or a small
+   * board: see pickMinesTiebreak). Returns false when the match can end. Campo de minas has no limit of tiebreaks:
+   * each one leaves fewer players (`survivors`), or ends with no winner when nobody picked (`over`).
    */
   beginTiebreak(room) {
-    if (room.game !== GEO_GAME && room.game !== HISTORY_GAME) return false;
+    const mines = room.game === MINES_GAME;
+    if (room.game !== GEO_GAME && room.game !== HISTORY_GAME && !mines) return false;
     // A mixed playlist's last round may be of any game: its winner is whoever has the most points.
     if (room.run?.mixed) return false;
     const previous = room.tiebreak;
-    if (previous?.winnerId || (previous && previous.round >= MAX_TIEBREAKS)) return false;
+    if (previous?.winnerId || previous?.over || (previous && !mines && previous.round >= MAX_TIEBREAKS)) return false;
     const connected = [...room.players.values()].filter((p) => p.connected && !p.spectator);
     let tied;
     if (previous) {
-      tied = connected.filter((p) => previous.playerIds.includes(p.id));
+      const ids = mines ? previous.survivors || [] : previous.playerIds;
+      tied = connected.filter((p) => ids.includes(p.id));
     } else {
       const top = Math.max(...connected.map((p) => p.score));
       tied = connected.filter((p) => p.score === top);
@@ -2284,13 +2319,17 @@ export class RoomManager {
       if (previous && tied.length === 1) previous.winnerId = tied[0].id;
       return false;
     }
-    const question =
-      room.game === GEO_GAME
-        ? pickTiebreakQuestion(this.geoQuestions, room.config.geo, room.tracks.map((t) => t.country))
-        : pickHistoryTiebreak(this.historyQuestions, room.config.history, room.tracks.map((t) => t.id));
+    const question = mines
+      ? pickMinesTiebreak(this.minesQuestions, room.config.mines, room.tracks.map((t) => t.id), tied.length)
+      : room.game === GEO_GAME
+      ? pickTiebreakQuestion(this.geoQuestions, room.config.geo, room.tracks.map((t) => t.country))
+      : pickHistoryTiebreak(this.historyQuestions, room.config.history, room.tracks.map((t) => t.id));
     if (!question) return false;
     if (room.game === GEO_GAME) withGeoTokens(question);
     room.tiebreak = { playerIds: tied.map((p) => p.id), round: (previous?.round || 0) + 1, winnerId: null, reason: null };
+    // Campo de minas: who got through to the next tiebreak, whether it ended with nobody (nobody picked), and the
+    // turn that started after nobody found a right answer (those who stepped on a mine play it again).
+    if (mines) Object.assign(room.tiebreak, { survivors: null, over: false, revivedTurn: null });
     room.tracks.push(question);
     room.currentRound = room.tracks.length - 1;
     this.beginCountdown(room);
@@ -2314,7 +2353,7 @@ export class RoomManager {
       room.statsApplied = true;
       const ranked = this.rankedPlayers(room);
       applyMatchStats(this.store, ranked, {
-        game: room.run?.mixed ? PLAYLIST_GAME : room.game,
+        game: room.run?.mixed ? room.run.classic || PLAYLIST_GAME : room.game,
         room: room.code,
         // Competitivo moves each account's rank by its place (game/rank.js).
         rank: room.matchmaking?.kind === "competitivo" ? { rounds: room.matchmaking.rounds, winnerId: room.tiebreak?.winnerId || null } : null,
@@ -2322,7 +2361,7 @@ export class RoomManager {
       this.recordWin(room, ranked);
       // A game of a playlist: its winner adds a win to the playlist's tally.
       if (room.run && !room.run.finished && ranked.length) {
-        recordGame(room.run, room.run.mixed ? PLAYLIST_GAME : room.game, ranked, this.matchWinner(room, ranked));
+        recordGame(room.run, room.run.mixed ? room.run.classic || PLAYLIST_GAME : room.game, ranked, this.matchWinner(room, ranked));
       }
     }
     // A mixed playlist is a single match: when it ends, so does the playlist.
@@ -2506,7 +2545,7 @@ export class RoomManager {
   /** After the playlist's last game, the room shows the playlist's results (still `finished`, back in the playlist). */
   endRun(room) {
     room.run.finished = true;
-    room.game = PLAYLIST_GAME;
+    room.game = room.run.classic || PLAYLIST_GAME;
     room.config = room.run.savedConfig;
     this.syncPlaylists(room);
     // The last game's rounds are done with; its scores stay until the room goes back to a lobby.
@@ -2517,12 +2556,12 @@ export class RoomManager {
     room.tiebreak = null;
   }
 
-  /** The playlist is over or abandoned: the room is back in the playlist's panel with its own settings. */
+  /** The playlist (or Clásico) is over or abandoned: the room is back in its panel with its own settings. */
   stopPlaylist(room) {
     if (!room.run) return;
     room.config = room.run.savedConfig;
+    room.game = room.run.classic || PLAYLIST_GAME;
     room.run = null;
-    room.game = PLAYLIST_GAME;
     this.syncPlaylists(room);
   }
 
@@ -2532,7 +2571,7 @@ export class RoomManager {
   setGame(room, userId, game) {
     if (room.hostId !== userId) throw new Error("Solo el Host puede cambiar de juego");
     const inPlaylist = Boolean(room.run);
-    const next = assertGame(game ?? null) ?? (inPlaylist ? PLAYLIST_GAME : null);
+    const next = assertGame(game ?? null) ?? (inPlaylist ? room.run.classic || PLAYLIST_GAME : null);
     this.stopPlaylist(room);
     this.resetMatch(room);
     room.game = next;
@@ -3184,10 +3223,10 @@ export class RoomManager {
 
   /**
    * Campo de minas: the player picks a cell (`{ cell, turn }`; `turn` is the one they saw, so a tap that arrives after
-   * it closed doesn't count for the next one). The first to pick a cell keeps it. A right answer scores at once, 100
-   * points more than the player's previous hit of the round; a mine leaves them out until the next round, with the
-   * points they had. By turns it's one cell per turn; in a race, as many as the player likes. Returns whether the
-   * cell was right.
+   * it closed doesn't count for the next one). The first to pick a cell keeps it. A right answer scores at once (100
+   * points, the same for every hit); a mine leaves them out until the next round, with the points they had. By turns
+   * it's one cell per turn; in a race, as many as the player likes. In a tiebreak only the tied players pick, and it
+   * scores nothing (see endMinesTiebreakTurn). Returns whether the cell was right.
    */
   pickCell(room, userId, value) {
     const player = room.players.get(userId);
@@ -3195,9 +3234,11 @@ export class RoomManager {
     this.assertNotSpectator(room, userId);
     if (!this.isMinesRound(room)) throw new Error("Esta ronda no es de Campo de minas");
     if (room.phase !== "playing") throw new Error("No se aceptan respuestas ahora");
+    if (!this.isPlaying(room, userId)) throw new Error("El desempate solo lo juegan los empatados");
     const field = player.minefield;
     if (!field) throw new Error("Llegaste con la ronda empezada: juegas desde la siguiente");
-    if (field.out) throw new Error("Estás fuera hasta la próxima ronda");
+    if (field.out) throw new Error(room.tiebreak ? "Estás fuera del desempate" : "Estás fuera hasta la próxima ronda");
+    if (field.safe) throw new Error("Ya acertaste: espera a los demás");
     if (value?.turn != null && Number(value.turn) !== room.turn) throw new Error("Ese turno ya terminó");
     const race = this.isMinesRace(room);
     if (!race && field.pickedTurn === room.turn) throw new Error("Ya elegiste en este turno");
@@ -3215,9 +3256,16 @@ export class RoomManager {
     player.idleRounds = 0;
     player.idle = false;
     if (!race) player.status = "respondió";
-    if (cell.correct) {
+    if (room.tiebreak) {
+      // A tiebreak gives no points and leaves the stats alone: a right answer gets the player through (`safe`), a
+      // mine leaves them out, unless nobody finds a right answer this turn (endMinesTiebreakTurn).
+      if (cell.correct) {
+        field.hits = 1;
+        field.safe = true;
+      } else field.out = "mina";
+    } else if (cell.correct) {
       field.hits += 1;
-      const points = hitPoints(field.hits);
+      const points = hitPoints();
       field.points += points;
       player.lastPoints = field.points;
       player.score += points;
@@ -3241,6 +3289,17 @@ export class RoomManager {
   checkMinesTurn(room) {
     // While paused nothing moves on (someone leaving included): it's checked again on "Reanudar".
     if (!this.isMinesRound(room) || room.phase !== "playing" || room.paused) return false;
+    if (room.tiebreak) {
+      // A tiebreak's turn waits for every tied player still in (connected), and ends early only when no right answer
+      // is left to find: whoever hasn't picked can only step on a mine.
+      const hitsLeft = room.tracks[room.currentRound].cells.some((c) => c.correct && !c.by);
+      const waiting = [...room.players.values()].some(
+        (p) => p.connected && p.minefield && !p.minefield.out && !p.minefield.safe && p.minefield.pickedTurn !== room.turn
+      );
+      if (hitsLeft && waiting) return false;
+      this.endMinesTiebreakTurn(room, false);
+      return true;
+    }
     if (this.minesRoundOver(room)) {
       this.beginReveal(room);
       return true;
@@ -3260,6 +3319,10 @@ export class RoomManager {
    */
   endTurn(room, timeUp) {
     if (!this.isMinesRound(room) || room.phase !== "playing") return;
+    if (room.tiebreak) {
+      this.endMinesTiebreakTurn(room, timeUp);
+      return;
+    }
     if (this.isMinesRace(room)) {
       this.beginReveal(room);
       return;
@@ -3277,6 +3340,54 @@ export class RoomManager {
     else this.beginTurn(room);
   }
 
+  /**
+   * Campo de minas, the end of a tiebreak's turn (everyone picked, no right answer left, or the time ran out). Whoever
+   * is still in and didn't pick is out: "tiempo" when the time ran out, "tarde" when the others had already taken
+   * every right answer. If someone found a right answer, the tiebreak round ends: they get
+   * through. If nobody did, those who stepped on a mine in this turn come back and play another turn, with those
+   * mines in sight (so each turn has fewer cells to fail on); unless only one of them is left (they win: the others
+   * didn't even pick) or none (nobody picked: the tie stands). See settleMinesTiebreak.
+   */
+  endMinesTiebreakTurn(room, timeUp) {
+    const tb = room.tiebreak;
+    const tied = tb.playerIds.map((id) => room.players.get(id)).filter((p) => p?.minefield);
+    for (const p of tied) {
+      const field = p.minefield;
+      if (!field.out && !field.safe && field.pickedTurn !== room.turn) field.out = timeUp ? "tiempo" : "tarde";
+    }
+    const tried = tied.filter((p) => p.minefield.out === "mina" && p.minefield.pickedTurn === room.turn);
+    const nobodySafe = !tied.some((p) => p.minefield.safe);
+    const hitsLeft = room.tracks[room.currentRound].cells.some((c) => c.correct && !c.by);
+    if (nobodySafe && tried.filter((p) => p.connected).length >= 2 && hitsLeft) {
+      for (const p of tried) p.minefield.out = null;
+      tb.revivedTurn = room.turn + 1;
+      this.beginTurn(room);
+      return;
+    }
+    this.beginReveal(room);
+  }
+
+  /**
+   * Campo de minas, at a tiebreak's reveal: who won it. One player through (a right answer, or the only one who
+   * picked when nobody found one) wins ("acierto" / "solo"). Several through play another tiebreak among them
+   * (`survivors`). Nobody who picked anything ends the tiebreaks: the tie stands (`over`).
+   */
+  settleMinesTiebreak(room) {
+    const tb = room.tiebreak;
+    const tied = tb.playerIds.map((id) => room.players.get(id)).filter((p) => p?.minefield);
+    const safe = tied.filter((p) => p.minefield.safe);
+    const tried = tied.filter((p) => p.minefield.out === "mina" && p.minefield.pickedTurn === room.turn);
+    const through = safe.length ? safe : tried;
+    if (through.length === 1) {
+      tb.winnerId = through[0].id;
+      tb.reason = safe.length ? "acierto" : "solo";
+    } else if (through.length > 1) {
+      tb.survivors = through.map((p) => p.id);
+    } else {
+      tb.over = true;
+    }
+  }
+
   /** Campo de minas: every right answer of the board was found, or every connected player is out. */
   minesRoundOver(room) {
     const board = room.tracks[room.currentRound];
@@ -3292,7 +3403,9 @@ export class RoomManager {
       if (!field) continue;
       let text = field.hits === 1 ? "1 acierto" : field.hits ? `${field.hits} aciertos` : "Sin aciertos";
       if (field.out === "mina") text = "Pisó una mina";
-      else if (field.out === "tiempo") text = "Sin tiempo";
+      else if (field.out === "tiempo") text = room.tiebreak ? "No eligió" : "Sin tiempo";
+      else if (field.out === "tarde") text = "Sin casilla correcta";
+      else if (field.safe) text = "Acertó";
       player.lastPoints = field.points;
       player.lastAnswer = { text, correct: field.hits > 0, hits: field.hits, out: field.out, at: Date.now() };
     }
@@ -3444,14 +3557,27 @@ export class RoomManager {
       // In the lobby: how many different songs the chosen playlists have ready (a match needs one per round), and
       // whether iTunes is making the Spotify songs wait.
       songsReady:
-        room.phase === "lobby" && room.game !== PLAYLIST_GAME && !QUESTION_GAMES.includes(room.game) ? this.songPool(room).length : undefined,
+        room.phase === "lobby" && room.game !== PLAYLIST_GAME && !isClassic(room.game) && !QUESTION_GAMES.includes(room.game)
+          ? this.songPool(room).length
+          : undefined,
       // Opción múltiple, Geografía and Historia, in the lobby: how many different questions the chosen settings have
       // (one per round).
       questionsReady: room.phase === "lobby" ? this.questionsReady(room) : undefined,
-      // Geografía and Historia: the players of a tiebreak and, from its reveal on, who won it and how ("dentro": found
-      // the country first; "exacto": confirmed the exact year first; "cerca": nobody got it and theirs was closest).
+      // Geografía, Historia and Campo de minas: the players of a tiebreak and, from its reveal on, who won it and how
+      // ("dentro": found the country first; "exacto": confirmed the exact year first; "cerca": nobody got it and theirs
+      // was closest; "acierto": the only one to find a right cell; "solo": the only one who picked). Campo de minas
+      // also sends who got through to another tiebreak (`survivors`), whether the tie stands because nobody picked
+      // (`over`), and the turn that started after nobody found a right answer (`revivedTurn`).
       tiebreak: room.tiebreak
-        ? { playerIds: [...room.tiebreak.playerIds], round: room.tiebreak.round, winnerId: room.tiebreak.winnerId, reason: room.tiebreak.reason }
+        ? {
+            playerIds: [...room.tiebreak.playerIds],
+            round: room.tiebreak.round,
+            winnerId: room.tiebreak.winnerId,
+            reason: room.tiebreak.reason,
+            ...(room.game === MINES_GAME
+              ? { survivors: room.tiebreak.survivors ? [...room.tiebreak.survivors] : null, over: Boolean(room.tiebreak.over), revivedTurn: room.tiebreak.revivedTurn }
+              : {}),
+          }
         : null,
       itunesSlow: Boolean(this.resolver?.slow),
       // Spotify playlists the host added, with how many of their songs are ready to play.
@@ -3723,6 +3849,8 @@ export class RoomManager {
       difficulty: board.difficulty,
       // How this round is played: "turnos" or "carrera".
       style: board.style,
+      // How many cells the board has: 25, or a tiebreak's few (one more than the tied players).
+      size: board.cells.length,
       turn: room.phase === "playing" ? room.turn : null,
       total: board.cells.filter((c) => c.correct).length,
       found: board.cells.filter((c) => c.correct && c.by).length,

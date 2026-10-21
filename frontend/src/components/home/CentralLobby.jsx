@@ -48,7 +48,7 @@ export default function CentralLobby({ room }) {
               </span>
               <div className="tv-central-game-text">
                 <p className="tv-central-game-kicker">{playlist ? "Playlist" : "Juego elegido"}</p>
-                <h1 className="tv-central-game-name">{playlist ? playlist.name || "Playlist" : mode.name}</h1>
+                <h1 className="tv-central-game-name">{playlist ? playlist.name || "Playlist" : mode.fullName || mode.name}</h1>
               </div>
               {playlist ? (
                 <ol className="tv-central-steps">

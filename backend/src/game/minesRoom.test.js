@@ -120,7 +120,7 @@ assert.equal(mgr.publicState(room).players.find((p) => p.id === "p-2").answered,
 // ---- Turn 2 ----
 assert.throws(() => mgr.pickCell(room, "p-2", { cell: 2, turn: 1 }), /terminó/, "a tap meant for the last turn");
 mgr.pickCell(room, "p-2", { cell: 2, turn: 2 });
-assert.equal(ana.score, 300, "the second hit of the round is worth 200");
+assert.equal(ana.score, 200, "the second hit of the round is worth the same as the first");
 assert.equal(room.turn, 2, "Luis still has time");
 // Luis doesn't pick in time: he's out.
 mgr.endTurn(room, true);
@@ -134,9 +134,9 @@ mgr.pickCell(room, "p-2", { cell: 3, turn: 3 });
 stop(room);
 assert.equal(room.phase, "reveal");
 assert.equal(room.phaseEndsAt - room.phaseStartedAt, 6000, "the whole board stays on screen");
-assert.equal(ana.score, 600);
+assert.equal(ana.score, 300);
 assert.equal(ana.streak, 3);
-assert.equal(ana.lastPoints, 600);
+assert.equal(ana.lastPoints, 300);
 assert.equal(ana.lastAnswer.text, "3 aciertos");
 assert.equal(ana.lastAnswer.correct, true);
 assert.equal(host.lastAnswer.text, "Pisó una mina");
@@ -191,10 +191,10 @@ stop(room);
 assert.equal(room.phase, "reveal", "both right answers found");
 assert.equal(room.players.get("p-4").lastAnswer, null, "Eva only watched");
 next();
-assert.equal(room.phase, "finished", "no tiebreak in Campo de minas");
+assert.equal(room.phase, "finished", "no tie for first: no tiebreak");
 const results = mgr.publicState(room).results;
 assert.deepEqual(results.map((r) => r.id).slice(0, 3), ["p-2", "host-1", "p-3"]);
-assert.equal(results[0].score, 700);
+assert.equal(results[0].score, 400);
 assert.equal(results[0].correct, 4);
 
 // Going back to the lobby clears the round.
@@ -268,7 +268,7 @@ assert.equal(race.phaseEndsAt - race.phaseStartedAt, 45000, "the round's seconds
 assert.equal(mgr.pickCell(race, "c1", { cell: 0, turn: 1 }), true);
 assert.equal(mgr.pickCell(race, "c1", { cell: 1, turn: 1 }), true);
 assert.equal(mgr.pickCell(race, "c1", { cell: 2, turn: 1 }), true);
-assert.equal(carla.score, 600, "100, 200 and 300");
+assert.equal(carla.score, 300, "100 for each of the three hits");
 pub = mgr.publicState(race);
 assert.equal(pub.players.find((p) => p.id === "c1").answered, false, "nobody waits in a race");
 assert.equal(pub.players.find((p) => p.id === "c1").hits, 3);
@@ -286,7 +286,7 @@ mgr.pickCell(race, "c1", { cell: 4, turn: 1 });
 stop(race);
 assert.equal(race.phase, "reveal");
 assert.equal(carla.lastAnswer.text, "4 aciertos");
-assert.equal(carla.lastPoints, 1000);
+assert.equal(carla.lastPoints, 400);
 assert.equal(dani.lastAnswer.text, "1 acierto");
 assert.equal(eva.lastAnswer.text, "Pisó una mina");
 

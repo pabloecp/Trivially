@@ -8,6 +8,7 @@ import PartyPanel from "../../components/home/PartyPanel.jsx";
 import TvShell from "../../components/home/TvShell.jsx";
 import { useApp } from "../../lib/store.jsx";
 import { PlaylistProgress, winsText } from "./Standings.jsx";
+import { findMode } from "../index.js";
 import { MATCH_KINDS } from "../../components/home/matchInfo.js";
 import { exitPath } from "../../components/home/TvTopbar.jsx";
 import { withSound } from "../../lib/sounds.js";
@@ -53,7 +54,9 @@ function ResultsScreen() {
   const solo = standings.length < 2;
   // A public match ("Casual" or "Competitivo") is played as a playlist of its games, but it's called a match.
   const publicMatch = room.matchmaking || null;
-  const what = publicMatch ? "partida" : "playlist";
+  // So is a Clásico of a private room (Normal or Extendido): its host still decides what comes next.
+  const classic = findMode(run?.classic);
+  const what = publicMatch || classic ? "partida" : "playlist";
   let title = `¡Fin de la ${what}!`;
   if (winner && !solo) title = `¡${winner.name} gana la ${what}!`;
   else if (!winner && standings[0]?.wins > 0) title = "¡Empate!";
@@ -78,7 +81,7 @@ function ResultsScreen() {
           <header className="tv-res-head">
             <div className="tv-res-heading">
               <div className="tv-res-kicker">
-                <p className="tv-mono-label">{publicMatch ? "Partida terminada" : "Playlist terminada"}{run ? ` · ${run.name}` : ""}</p>
+                <p className="tv-mono-label">{publicMatch || classic ? "Partida terminada" : "Playlist terminada"}{run ? ` · ${run.name}` : ""}</p>
                 {run && <PlaylistProgress run={run} />}
               </div>
               <h1 className="tv-page-title tv-results-title">{title}</h1>
@@ -94,8 +97,8 @@ function ResultsScreen() {
                 <Podium players={standings} meId={me?.id} score={mixed ? pointsText : (p) => winsText(p.wins)} />
               </PodiumCard>
               <RankingCard
-                icon="playlist"
-                color="playlist"
+                icon={classic?.icon || "playlist"}
+                color={classic?.color || "playlist"}
                 title={run.name}
                 players={standings}
                 meId={me?.id}
@@ -152,11 +155,11 @@ function ResultsScreen() {
                   type="button"
                 >
                   <Icon name="back" size={18} />
-                  Volver a la playlist
+                  {classic ? "Volver al lobby" : "Volver a la playlist"}
                 </button>
                 {run && (
                   <button
-                    className="tv-btn tv-c-playlist tv-shine tv-res-btn"
+                    className={`tv-btn tv-c-${classic?.color || "playlist"} tv-shine tv-res-btn`}
                     onClick={() => replayGame().catch((e) => setErr(e.message || "No se pudo empezar otra vez la playlist"))}
                     type="button"
                   >
@@ -175,7 +178,7 @@ function ResultsScreen() {
         </section>
       </div>
       <PartyPanel room={room} display={isCentral} onToast={setErr} />
-      <MatchSummarySheet open={showSummary} rounds={myRounds} title="Tu playlist" showGame onClose={() => setShowSummary(false)} />
+      <MatchSummarySheet open={showSummary} rounds={myRounds} title={classic ? "Tu partida" : "Tu playlist"} showGame onClose={() => setShowSummary(false)} />
     </div>
   );
 }

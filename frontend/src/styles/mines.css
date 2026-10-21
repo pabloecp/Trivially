@@ -129,6 +129,8 @@
 .tv-mines-burst { position: absolute; inset: 0; z-index: 5; display: grid; place-items: center; pointer-events: none; animation: tvMinesBurstOut 1.8s ease forwards; }
 /* At the reveal it stays a little longer (the board shows whole after it). */
 .tv-mines-burst:is(.is-ok, .is-win, .is-mina, .is-tiempo) { animation-duration: 2.6s; }
+/* How a tiebreak ended (who won it, who goes on): the longest, read by the whole room. */
+.tv-mines-burst.is-final { animation-duration: 3.2s; }
 .tv-mines-burst-card {
   position: relative;
   display: grid;
@@ -186,6 +188,16 @@
   grid-template-rows: repeat(5, minmax(var(--row-min), 1fr));
   padding-bottom: var(--press);
 }
+/* A tiebreak's board: a few cells (one more than the tied players) in up to three columns (--cols, --rows from
+   Game.jsx), bigger than a normal board's and centred in the same space, so the cards over the board still fit. */
+.tv-app .tv-mines-stage > .tv-mines-board.is-small {
+  width: min(calc(var(--cols) * 240px), 100%);
+  min-height: calc(var(--rows) * var(--row-min) + (var(--rows) - 1) * var(--row-gap) + var(--press));
+  grid-template-columns: repeat(var(--cols), minmax(0, 1fr));
+  grid-template-rows: repeat(var(--rows), minmax(var(--row-min), 130px));
+  align-content: center;
+}
+.tv-mines-board.is-small .tv-mines-cell { --cell-font: clamp(15px, calc(8cqw / var(--cols)), 24px); }
 .tv-mines-cell {
   --cell-font: clamp(14px, min(calc(8px + 1.9cqh), calc(4px + 1.6cqw)), 20px);
   position: relative;

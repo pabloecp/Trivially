@@ -191,6 +191,9 @@ export default function MatchIntro({ room }) {
   const spinning = elapsed < intro.spinMs;
   const leftMs = intro.spinMs + intro.tutorialMs - elapsed;
   const kind = MATCH_KINDS[room.matchmaking?.kind];
+  // A Clásico of a private room (Normal or Extendido): its name and colour instead of the public match's.
+  const classic = findMode(room.run?.classic);
+  const label = kind ? `Partida ${kind.name.toLowerCase()}` : classic?.fullName;
   const total = variantsOf(intro).length;
 
   return (
@@ -198,7 +201,7 @@ export default function MatchIntro({ room }) {
       <div className="tv-mi-frame">
         <header className="tv-mi-head">
           <p className="tv-mono-label">
-            {kind ? `Partida ${kind.name.toLowerCase()} · ` : ""}Juego {intro.index + 1} de {total}
+            {label ? `${label} · ` : ""}Juego {intro.index + 1} de {total}
           </p>
           {total > 1 && (
             <ol className="tv-mi-dots" aria-hidden="true">
@@ -221,7 +224,7 @@ export default function MatchIntro({ room }) {
           )}
         </header>
         {spinning ? (
-          <Roulette key={`r${intro.index}`} intro={intro} startedAt={room.phaseStartedAt} clockOffset={room.clockOffset || 0} color={kind?.color} kind={room.matchmaking?.kind} />
+          <Roulette key={`r${intro.index}`} intro={intro} startedAt={room.phaseStartedAt} clockOffset={room.clockOffset || 0} color={kind?.color || classic?.color} kind={room.matchmaking?.kind || "casual"} />
         ) : (
           <Tutorial key={`t${intro.index}`} intro={intro} leftMs={leftMs} />
         )}

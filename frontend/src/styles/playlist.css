@@ -19,26 +19,25 @@
   --tv-on-mode: var(--p-on-culture, #ffffff);
 }
 
-/* ---------- On the menu: "Crear una playlist", under the games ---------- */
-/* Not a game tile (those are filled with their colour): a dark bar with a dashed outline, the games' colours only on
-   a small fanned stack of them. Hover lifts it a little and fans the stack out. */
+/* ---------- On the menu: "Crear una playlist", in the top right corner of "Elige el juego" ---------- */
+/* Not a game tile (those are filled with their colour): a small dark button with a dashed outline, the games' colours
+   only on a small fanned stack of them. Hover lifts it a little and fans the stack out. */
 .tv-pl-entry {
   position: relative;
   flex-shrink: 0;
   display: flex;
   align-items: center;
-  gap: 16px;
-  width: 100%;
-  min-height: 78px;
-  padding: 12px 18px 12px 22px;
+  gap: 12px;
+  margin-left: auto;
+  min-height: 54px;
+  padding: 8px 16px 8px 18px;
   border: 2px dashed rgba(255, 255, 255, 0.18);
-  border-radius: 24px;
+  border-radius: 18px;
   background: var(--tv-option-bg);
   font: inherit;
   text-align: left;
   cursor: pointer;
   transition: transform 0.28s cubic-bezier(0.3, 1.5, 0.5, 1), border-color 0.2s ease, box-shadow 0.2s ease;
-  animation: tvUp 0.55s var(--tv-ease-out) 0.55s backwards;
 }
 .tv-app .tv-pl-entry { color: var(--tv-text); }
 .tv-pl-entry:hover { transform: translateY(-3px); border-color: rgba(255, 255, 255, 0.45); }
@@ -50,10 +49,10 @@
 .tv-pl-entry-stack span {
   display: grid;
   place-items: center;
-  width: 32px;
-  height: 32px;
+  width: 26px;
+  height: 26px;
   margin-left: -10px;
-  border-radius: 10px;
+  border-radius: 8px;
   background: var(--c2);
   box-shadow: 0 0 0 3px var(--tv-option-bg);
   color: var(--on);
@@ -64,8 +63,7 @@
   transform: translate(calc((var(--i) - 2) * 4px), -3px) rotate(calc((var(--i) - 2) * 12deg));
 }
 .tv-pl-entry-text { flex: 1; min-width: 0; display: grid; gap: 2px; }
-.tv-pl-entry-title { font-family: var(--tv-display); font-weight: 800; font-size: 21px; line-height: 1.1; }
-.tv-pl-entry-sub { font-weight: 700; font-size: 14px; line-height: 1.3; color: var(--tv-text-3); }
+.tv-pl-entry-title { font-family: var(--tv-display); font-weight: 800; font-size: 18px; line-height: 1.1; white-space: nowrap; }
 .tv-pl-entry-arrow { flex-shrink: 0; color: var(--tv-text-3); transition: transform 0.2s ease, color 0.2s ease; }
 .tv-pl-entry:hover .tv-pl-entry-arrow { transform: translateX(3px); color: var(--tv-text); }
 .tv-pl-entry-tag {
@@ -459,11 +457,10 @@ input.tv-pl-name:focus { outline: none; }
   .tv-pl-head .tv-mstage-badges { gap: 12px; }
   .tv-pl-kicker { font-size: 13px; white-space: nowrap; }
   .tv-pl-game { font-size: 17px; }
-  .tv-pl-entry { gap: 12px; min-height: 70px; padding: 10px 14px 10px 18px; border-radius: 22px; }
-  .tv-pl-entry-stack span { width: 26px; height: 26px; margin-left: -9px; border-radius: 8px; }
-  .tv-pl-entry-stack svg { width: 13px; height: 13px; }
-  .tv-pl-entry-title { font-size: 18px; }
-  .tv-pl-entry-sub { font-size: 13px; }
+  .tv-pl-entry { gap: 10px; min-height: 48px; padding: 6px 12px 6px 14px; border-radius: 16px; }
+  .tv-pl-entry-stack span { width: 24px; height: 24px; margin-left: -9px; border-radius: 8px; }
+  .tv-pl-entry-stack svg { width: 12px; height: 12px; }
+  .tv-pl-entry-title { font-size: 16px; }
 }
 /* Phones: the tags shrink to their icon, like the tiles'. */
 @media (max-width: 720px) {
@@ -472,19 +469,20 @@ input.tv-pl-name:focus { outline: none; }
 }
 /* Narrow phones: one line, the title and the stack (which already says "several games"). */
 @media (max-width: 480px) {
-  .tv-pl-entry { gap: 10px; min-height: 64px; padding: 8px 12px 8px 14px; }
+  .tv-pl-entry { gap: 8px; min-height: 44px; padding: 6px 10px 6px 12px; }
   .tv-pl-entry-stack { padding-left: 8px; }
-  .tv-pl-entry-stack span { width: 24px; height: 24px; margin-left: -11px; border-radius: 8px; }
-  .tv-pl-entry-title { font-size: 17px; white-space: nowrap; }
-  .tv-pl-entry-stack svg { width: 12px; height: 12px; }
-  .tv-pl-entry-sub { display: none; }
+  .tv-pl-entry-stack span { width: 20px; height: 20px; margin-left: -9px; border-radius: 6px; }
+  .tv-pl-entry-stack svg { width: 10px; height: 10px; }
+  .tv-pl-entry-title { font-size: 15px; }
+  /* A few of the games' icons are enough to say "several games", and the arrow goes: it has to fit beside the title. */
+  .tv-pl-entry-stack span:nth-child(n + 4) { display: none; }
+  .tv-pl-entry-arrow { display: none; }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .tv-pl-item,
   .tv-pl-add-menu,
   .tv-pl-json,
-  .tv-pl-entry,
   .tv-pl-entry-tag { animation: none; }
   .tv-pl-entry-stack span { transition: none; }
 }

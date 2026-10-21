@@ -26,12 +26,11 @@ export const MINES_LIMITS = {
 export const MINES_FIRST_TURN_EXTRA_MS = 5000;
 // The reveal stays on screen long enough to see the whole board: the answers nobody found and where the mines were.
 export const MINES_REVEAL_MS = 6000;
-// The first hit of a round is worth 100 points, and each next one 100 more, up to 500.
-const HIT_STEP = 100;
-const HIT_MAX = 500;
+// Every right answer is worth the same: 100 points.
+export const HIT_POINTS = 100;
 
-export function hitPoints(nth) {
-  return Math.min(HIT_MAX, HIT_STEP * nth);
+export function hitPoints() {
+  return HIT_POINTS;
 }
 
 export function defaultMinesConfig() {
@@ -150,4 +149,26 @@ export function pickMinesQuestions(bank, config) {
   const styles = settings.styles.length ? settings.styles : [MINES_STYLES[0]];
   const roundStyles = shuffle(picked.map((_, i) => styles[i % styles.length]));
   return shuffle(picked).map((q, i) => ({ ...toMinesBoard(q), style: roundStyles[i] }));
+}
+
+// A tiebreak board always has this many mines, whatever the number of tied players.
+export const TIEBREAK_MINES = 2;
+
+/**
+ * The board of a tiebreak between `players` tied players: a board not played in the match (with the match's settings
+ * when there is one left), cut down to one cell more than players: one right answer fewer than players and
+ * TIEBREAK_MINES mines (2 players: 1 right and 2 mines; 3 players: 2 right and 2 mines). So not every tied player can
+ * find a right answer, and at least one falls. Always played by turns.
+ */
+export function pickMinesTiebreak(bank, config, playedIds = [], players = 2) {
+  const settings = mergeMinesConfig(config);
+  const fresh = (list) => list.filter((q) => !playedIds.includes(q.id));
+  const pool = [fresh(questionsFor(bank, settings)), fresh(bank), bank].find((list) => list.length);
+  if (!pool) return null;
+  const q = pool[Math.floor(Math.random() * pool.length)];
+  const data = {
+    correct: shuffle(q.data.correct).slice(0, Math.max(1, players - 1)),
+    wrong: shuffle(q.data.wrong).slice(0, TIEBREAK_MINES),
+  };
+  return { ...toMinesBoard({ ...q, data }), style: "turnos", tiebreak: true };
 }

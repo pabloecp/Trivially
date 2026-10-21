@@ -553,8 +553,17 @@
 .tv-play-side-badge { display: grid; place-items: center; min-width: 20px; height: 20px; padding: 0 6px; border-radius: 999px; background: var(--p-bad, #ff4d5e); color: #fff; font-size: 12px; }
 
 @media (max-width: 760px) {
-  .tv-play-grid { grid-template-columns: 1fr; }
+  /* The panel with its three tiles sits in the middle of the screen, not stuck to the top (from the top when it's too tall). */
+  .tv-play-menu { justify-content: center; }
+  .tv-picker.tv-play-picker { flex: none; }
+  .tv-play-grid { grid-template-columns: 1fr; flex: none; }
   .tv-mode.tv-play-tile { min-height: 120px; flex-direction: row; align-items: center; justify-content: flex-start; gap: 16px; }
+}
+
+/* Where the page scrolls instead of fitting the window (phones, small tablets), the options' menu is as tall as the
+   screen under the top bar, so what it holds can sit in the middle of it. */
+@media (max-width: 979px) {
+  .tv-main.is-playpage .tv-room { min-height: calc(100vh - 58px - 14px - 24px); min-height: calc(100dvh - 58px - 14px - 24px - env(safe-area-inset-bottom)); }
 }
 
 /* Phones: this page has no room bars, so its card keeps its button and the page its usual top bar's room. */

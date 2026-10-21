@@ -30,7 +30,7 @@ function MatchEnd({ room, color }) {
 
   const top = room.results;
   const winner = top[0];
-  // Geografía and Rango settle a tie for first place with tiebreak rounds; if none of them had a winner, the tie stands.
+  // Geografía, Rango and Campo de minas settle a tie for first place with tiebreak rounds; if none of them had a winner, the tie stands.
   const tied = Boolean(room.tiebreak) && !winner?.tiebreakWinner && top.length > 1 && top[1].score === winner.score;
   // This player's result and match round by round (none on the central device, which isn't a player).
   const mine = isCentral ? null : top.find((p) => p.id === user?.id) || null;

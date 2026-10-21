@@ -16,6 +16,13 @@ export const MATCH_GAMES = ["opciones", "historia", "minas"];
 // RoomManager.botMove, in case they're added here.)
 export const CASUAL_GAMES = [...MATCH_GAMES];
 
+// "Clásico", at the top of a private room's "Elige el juego": a match like Casual's (the roulette, the tutorials, the
+// same clocks and games) for the room's own players, started by its host, with no search, bots or rank. Its two game
+// ids are how many games each draws: "clasico" (Normal) 3, like a public match of 15 rounds, and "extendido" 5.
+export const CLASSIC_GAMES = { clasico: 3, extendido: 5 };
+export const CLASSIC_NAMES = { clasico: "Clásico normal", extendido: "Clásico extendido" };
+export const isClassic = (game) => Object.hasOwn(CLASSIC_GAMES, game ?? "");
+
 /** The games a public match of `kind` draws from. */
 export const gamesFor = (kind) => (kind === "casual" ? CASUAL_GAMES : MATCH_GAMES);
 

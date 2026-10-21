@@ -45,7 +45,8 @@ const BACK_ANIM_MS = 450;
 //  - anyone else in the room, the game menu included: out of the room. It asks first, in the modal "¿Seguro que
 //    quieres salir?" (`asking`, shared through the store; the top bar draws it), whose "Salir" calls `leaveNow`;
 //  - on a match's own screen (`inGame`): the top bar turns it into an "X" that opens a modal instead (see TvTopbar),
-//    which calls `leaveNow` when it is confirmed.
+//    which calls `leaveNow` when it is confirmed. The host of a private room (`toMenu`) doesn't leave: the match ends
+//    for everyone and the room goes back to the game menu, like the games' "Terminar" (`endToMenu`).
 // `press` is the button's onClick; outside a room it lets the Inicio link go home. The browser's Back button does the
 // same through `step` (RoomNavigator, App.jsx). `onRoomScreen` is false away from the room's own screen (profile,
 // another page), where going back to the modes makes no sense. `onError` gets the message when going back to the
@@ -57,6 +58,8 @@ export function useRoomExit({ onRoomScreen = true, onError } = {}) {
   const toModes =
     onRoomScreen && Boolean(room) && room.phase === "lobby" && Boolean(room.game) && room.hostId === user?.id && !isCentral;
   const inGame = onRoomScreen && Boolean(room) && room.phase !== "lobby";
+  // A public match has no host and no menu to go back to, and only the host can change the room's game.
+  const toMenu = inGame && !isCentral && !room.matchmaking && room.hostId === user?.id;
   const asking = leaveAsk && Boolean(room) && !inGame;
 
   // Out of the room right away, one step back: to the option of "¿Cómo quieres jugar?" the room came from (exitPath).
@@ -66,6 +69,12 @@ export function useRoomExit({ onRoomScreen = true, onError } = {}) {
     setLeaveAsk(false);
     leaveRoom();
     nav(target, { replace: true });
+  }
+
+  // The match ends for everyone and the room goes back to the game menu (or to the playlist's panel, from a playlist).
+  // Resolves when the room has moved; the match's screens follow it (RoomNavigator, App.jsx).
+  function endToMenu() {
+    return setGame(null).catch((err) => onError?.(err.message || "No se pudo volver a elegir juego"));
   }
 
   // One step back. Returns true when it left the room.
@@ -84,13 +93,14 @@ export function useRoomExit({ onRoomScreen = true, onError } = {}) {
     step();
   }
 
-  return { toModes, inGame, asking, press, step, leaveNow, cancelAsk: () => setLeaveAsk(false) };
+  return { toModes, toMenu, inGame, asking, press, step, leaveNow, endToMenu, cancelAsk: () => setLeaveAsk(false) };
 }
 
 // Same top bar on every screen: on the left the way back and the small logo with "trivially", which is just the
 // brand and goes nowhere; the volume (music and sounds) and the profile on the right. The way back is "Volver" everywhere:
 //  - on the room's own screen (see `useRoomExit`): back to the game menu, or out of the room after asking;
-//  - on a match's screen it is an "X" that asks in a modal before leaving;
+//  - on a match's screen it is an "X" that asks in a modal before leaving (the host of a private room goes back to the
+//    game menu instead of leaving);
 //  - on any other page (profile...): back to the room, or to the match if one is running, and to Inicio when there is
 //    no room;
 //  - nothing on the home screen itself.
@@ -106,7 +116,7 @@ export default function TvTopbar() {
   const brandHidden = onHome;
   const goUp = useGoUp();
   const [modesErr, setModesErr] = useState("");
-  const { toModes, inGame, asking, press, leaveNow, cancelAsk } = useRoomExit({
+  const { toModes, toMenu, inGame, asking, press, leaveNow, endToMenu, cancelAsk } = useRoomExit({
     onRoomScreen: pathname === roomTarget,
     onError: setModesErr,
   });
@@ -134,8 +144,20 @@ export default function TvTopbar() {
   );
   let leaveButton = null;
   if (inGame) {
-    // In a match, going back is leaving it: a modal asks first.
-    leaveButton = backChip({ "aria-label": "Volver: salir de la partida", "aria-haspopup": "dialog", onClick: () => setLeaving(true) });
+    // In a match, going back is leaving it, so the arrow is an "X" and a modal asks first.
+    leaveButton = (
+      <button
+        type="button"
+        className="tv-chip tv-chip--leave tv-chip--icon"
+        aria-label={toMenu ? "Terminar la partida y volver a los juegos" : "Salir de la partida"}
+        aria-haspopup="dialog"
+        onClick={() => setLeaving(true)}
+      >
+        <span className="tv-avatar tv-avatar--empty">
+          <Icon name="close" size={20} strokeWidth={2.6} />
+        </span>
+      </button>
+    );
   } else if (awayFromRoom) {
     leaveButton = (
       <Link to={roomTarget} className="tv-chip tv-chip--leave" aria-label={inMatch ? "Volver a la partida" : "Volver a la sala"}>
@@ -245,17 +267,27 @@ export default function TvTopbar() {
       />
       <ConfirmDialog
         open={leaving && inGame}
-        icon={isCentral ? "tv" : "logout"}
-        title={isCentral ? "¿Dejar de ser el dispositivo central?" : "¿Seguro que quieres salir?"}
+        icon={isCentral ? "tv" : toMenu ? "grid" : "logout"}
+        title={isCentral ? "¿Dejar de ser el dispositivo central?" : toMenu ? "¿Volver a los juegos?" : "¿Seguro que quieres salir?"}
         text={
           isCentral
             ? "Esta pantalla saldrá de la sala y cada jugador volverá a ver la partida en su teléfono."
+            : toMenu
+            ? modesErr ||
+              (room.phase === "finished"
+                ? "Toda la sala volverá al menú de juegos."
+                : "La partida se acabará para todos y la sala volverá al menú de juegos.")
             : "Saldrás de la sala y dejarás la partida en curso."
         }
         cancelLabel={isCentral ? "Seguir mostrándola" : "Seguir jugando"}
-        confirmLabel="Salir"
+        confirmLabel={toMenu ? "Volver" : "Salir"}
         onCancel={() => setLeaving(false)}
         onConfirm={() => {
+          // Back to the menu the dialog stays up until the room has moved (or says why it couldn't).
+          if (toMenu) {
+            endToMenu();
+            return;
+          }
           setLeaving(false);
           leaveNow();
         }}

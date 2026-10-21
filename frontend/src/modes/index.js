@@ -7,6 +7,7 @@ import RainLobbyPanel from "./lluvia/LobbyPanel.jsx";
 import ReyLobbyPanel from "./rey/LobbyPanel.jsx";
 import FarsanteLobbyPanel from "./farsante/LobbyPanel.jsx";
 import PlaylistLobbyPanel from "./playlist/LobbyPanel.jsx";
+import ClassicLobbyPanel from "./clasico/LobbyPanel.jsx";
 import { STYLES as MINES_STYLES } from "./minas/minesInfo.js";
 import { MIN_QUESTIONS as RAIN_MIN_QUESTIONS } from "./lluvia/rainInfo.js";
 import { MIN_QUESTIONS as REY_MIN_QUESTIONS } from "./rey/reyInfo.js";
@@ -202,7 +203,53 @@ export const GAME_MODES = [
     Lobby: PlaylistLobbyPanel,
     path: (room) => `/playlist/${urlCode(room.code)}`,
   },
+  // "Clásico" (`kind: "classic"`), above "Elige el juego": a match like Casual's for the room's own players, its games
+  // drawn by the roulette (`games` of them, 5 rounds each; CLASSIC_GAMES in backend/src/game/matchmaking.js). Like a
+  // playlist it isn't one game: while it's played the room is in each of its games, and it ends on the playlist's
+  // results screen. `fullName` is how it reads out of the menu (the match history).
+  {
+    id: "clasico",
+    name: "Normal",
+    fullName: "Clásico normal",
+    // Under its name, on its tile and its card.
+    subtitle: "3 juegos",
+    kind: "classic",
+    // Casual's colour and icon (components/home/matchInfo.js).
+    color: "music",
+    icon: "bolt",
+    available: true,
+    games: 3,
+    steps: [
+      { icon: "shuffle", text: "La ruleta elige 3 juegos" },
+      { icon: "info", text: "Cada uno con su tutorial" },
+      { icon: "star", text: "Gana quien sume más puntos" },
+    ],
+    Lobby: ClassicLobbyPanel,
+    path: (room) => `/playlist/${urlCode(room.code)}`,
+  },
+  {
+    id: "extendido",
+    name: "Extendido",
+    fullName: "Clásico extendido",
+    subtitle: "5 juegos",
+    kind: "classic",
+    // Competitivo's colour.
+    color: "amber",
+    icon: "star",
+    available: true,
+    games: 5,
+    steps: [
+      { icon: "shuffle", text: "La ruleta elige 5 juegos" },
+      { icon: "info", text: "Cada uno con su tutorial" },
+      { icon: "star", text: "Gana quien sume más puntos" },
+    ],
+    Lobby: ClassicLobbyPanel,
+    path: (room) => `/playlist/${urlCode(room.code)}`,
+  },
 ];
+
+// The menu's games, without the playlist and the Clásicos (which have places of their own above and beside them).
+export const isGameTile = (mode) => mode.kind === "main" || mode.kind === "extra";
 
 
 // The grey, locked tile that closes the grid when a row would be left half empty: more are on the way.

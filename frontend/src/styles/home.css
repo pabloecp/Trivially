@@ -500,8 +500,8 @@
 .tv-room-main { flex: 999 1 640px; display: flex; flex-direction: column; gap: 14px; min-width: 0; }
 .tv-room-row { flex: 1; display: flex; flex-wrap: wrap; align-items: stretch; gap: 14px; }
 
-/* The panels: dark, very round, with a thin outline. */
-.tv-picker,
+/* The panels: dark, very round, with a thin outline. (The game menu, .tv-picker, has none: its tiles are straight on
+   the page.) */
 .tv-settings-card,
 .tv-party {
   background: var(--tv-surface);
@@ -512,19 +512,19 @@
    like one more game. */
 .tv-c-soon { --c1: #8b9099; --c2: #8b9099; --edge: #5e636c; --on: #ffffff; }
 
-/* The host's "Elige el juego", and what the others see meanwhile. */
+/* The host's "Elige el juego", and what the others see meanwhile: no panel behind it, only a little room above and
+   below so a tile rising on hover (and its edge) isn't cut where the menu scrolls. */
 .tv-picker {
   flex: 1;
   display: flex;
   flex-direction: column;
   gap: 18px;
-  padding: 28px;
-  border-radius: 34px;
+  padding: 8px 2px 14px;
   transform-origin: 50% 100%;
   animation: var(--tv-box-in);
 }
 .tv-picker.is-leaving { animation: var(--tv-box-out); pointer-events: none; }
-.tv-picker-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 8px; }
+.tv-picker-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px 12px; }
 .tv-picker-title {
   margin: 0;
   font-family: var(--tv-display);
@@ -534,6 +534,38 @@
   color: var(--tv-text);
 }
 .tv-picker-sub { margin: 0; font-size: 15px; font-weight: 700; color: var(--tv-text-3); }
+/* "Clásico" (Normal and Extendido), above "Elige el juego": its title and two tiles side by side, well apart from the
+   games under it. */
+.tv-picker-classic { display: grid; gap: 14px; margin-bottom: 26px; }
+/* Its tiles look like the site's logo (AppIcon): the logo's dark tile, framed by its five coloured slices (--logo-1…5,
+   in the same places around the middle), its dark edge under it, and the logo itself, tilted and cut by the corner,
+   instead of a game's icon. The name and its length ("3 juegos") are at the top, where a game's icon goes. */
+.tv-mode.is-classic,
+.tv-mstage.is-classic {
+  /* The logo's frame: its five slices around the middle. */
+  --logo-frame: conic-gradient(
+    var(--logo-1) 0 72deg,
+    var(--logo-2) 72deg 144deg,
+    var(--logo-3) 144deg 216deg,
+    var(--logo-4) 216deg 288deg,
+    var(--logo-5) 288deg 360deg
+  );
+  border: 6px solid transparent;
+  background: linear-gradient(var(--tv-surface), var(--tv-surface)) padding-box, var(--logo-frame) border-box;
+  color: var(--tv-text);
+}
+.tv-mode.is-classic {
+  justify-content: flex-start;
+  box-shadow: 0 6px 0 var(--tv-logo-shadow);
+}
+.tv-mode.is-classic:hover { box-shadow: 0 11px 0 var(--tv-logo-shadow); }
+.tv-mode.is-classic:active { box-shadow: 0 2px 0 var(--tv-logo-shadow); }
+.tv-mode-classic-text { position: relative; display: grid; gap: 6px; }
+.tv-mode.is-classic .tv-mode-name { font-size: clamp(24px, 2.4vw, 32px); }
+.tv-mode-sub { font-weight: 800; font-size: 15px; color: var(--tv-text-3); }
+.tv-mode-logo { position: absolute; right: -14px; bottom: -22px; rotate: -14deg; pointer-events: none; }
+.tv-mode-logo .tv-appicon { --s: 118px; }
+.tv-mode.is-classic:hover .tv-mode-logo { animation: tvWiggle 0.5s ease; }
 .tv-wait-blocks { display: flex; gap: 10px; animation: tvGrowIn 0.6s cubic-bezier(0.2, 0.9, 0.3, 1.12) backwards; }
 .tv-wait-blocks span {
   width: 60px;
@@ -1104,7 +1136,6 @@
 @media (min-width: 1200px) { .tv-party { flex-basis: 320px; max-width: 340px; } }
 @media (max-width: 979px) { .tv-leave-btn, .tv-party-chatbar { margin-top: 0; } }
 @media (max-width: 640px) {
-  .tv-picker { padding: 20px; border-radius: 28px; }
   .tv-mode { padding: 16px; border-radius: 24px; }
   .tv-mstage { min-height: 0; padding: 22px; border-radius: 28px; }
   .tv-mstage-watermark { width: 240px; height: 240px; right: -70px; }
@@ -3028,6 +3059,11 @@ body::-webkit-scrollbar,
   .tv-mode-watermark { width: 104px; height: 104px; right: -14px; bottom: -18px; }
   .tv-mode-soon { top: 12px; right: 12px; padding: 4px 8px; font-size: 11px; }
   .tv-picker { gap: 14px; }
+  .tv-mode.is-classic .tv-mode-name { font-size: 22px; }
+  .tv-mode-sub { font-size: 13px; }
+  .tv-mode-logo .tv-appicon { --s: 88px; }
+  /* A little smaller, so "Playlist" fits in the corner beside it. */
+  .tv-picker-title { font-size: 27px; }
 
   /* The room's column, compact: the code on the left and "Invitar" beside it. */
   .tv-party { gap: 10px; padding: 14px; }
@@ -3052,6 +3088,22 @@ body::-webkit-scrollbar,
   .tv-game-top:has(.tv-game-tools > :nth-child(3)) { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "round clock" "tools tools" "bar bar"; }
   .tv-game-round .tv-card-title { white-space: normal; line-height: 1.15; }
   .tv-game-round .tv-card-title .tv-muted { white-space: nowrap; }
+}
+
+/* A Clásico's card (Normal, Extendido), like its tile and the site's logo: dark, the logo's rainbow frame (above, with
+   the tile), the logo tilted on the right instead of a game's icon, and its length under its name. Its pieces take the
+   page's colours where a game's take the game's: white step icons and start button with dark letters. */
+.tv-mstage.is-classic { --c2: var(--tv-surface); --on: var(--tv-text); border-width: 8px; }
+.tv-mstage.is-classic .tv-mstage-step { background: rgba(255, 255, 255, 0.06); }
+.tv-mstage.is-classic .tv-mstage-start { box-shadow: 0 7px 0 rgba(0, 0, 0, 0.45); }
+.tv-mstage.is-classic .tv-mstage-wait { background: rgba(255, 255, 255, 0.06); }
+.tv-mstage-sub { margin: 0; font-family: var(--tv-display); font-weight: 800; font-size: clamp(18px, 1.8vw, 24px); color: var(--tv-text-3); }
+.tv-mstage-logo { position: absolute; right: -50px; top: 50%; translate: 0 -62%; rotate: -14deg; pointer-events: none; }
+.tv-mstage-logo .tv-appicon { --s: 260px; }
+/* Phones: the card is only as tall as what it holds, so the logo goes small into the top right corner, by the name. */
+@media (max-width: 640px) {
+  .tv-mstage-logo { right: -22px; top: -18px; translate: none; }
+  .tv-mstage-logo .tv-appicon { --s: 112px; }
 }
 
 /* ---------- Room screen, simpler: how it's played inside the game's card, plain settings beside it ---------- */
@@ -3438,6 +3490,11 @@ fieldset.tv-setsec-body { display: grid; gap: 18px; min-width: 0; margin: 0; pad
 .tv-picker.is-watching .tv-mode:not(.is-watched) .tv-mode-watermark { color: var(--c2); opacity: 0.18; }
 .tv-picker.is-watching .tv-mode.is-soon:not(.is-watched) { box-shadow: inset 0 0 0 3px rgba(128, 128, 128, 0.35), 0 6px 0 var(--tv-option-edge, rgba(0, 0, 0, 0.4)); }
 .tv-picker.is-watching .tv-mode.is-soon:not(.is-watched) .tv-mode-badge { background: rgba(128, 128, 128, 0.45); }
+/* The Clásico tiles keep the logo's look for the guests too (its rainbow frame is already its outline). */
+.tv-picker.is-watching .tv-mode.is-classic:not(.is-watched) {
+  background: linear-gradient(var(--tv-surface), var(--tv-surface)) padding-box, var(--logo-frame) border-box;
+  box-shadow: 0 6px 0 var(--tv-logo-shadow);
+}
 .tv-picker-lock {
   display: flex;
   align-items: center;

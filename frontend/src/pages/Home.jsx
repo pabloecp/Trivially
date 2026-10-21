@@ -2,7 +2,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useApp } from "../lib/store.jsx";
 import { useFriends } from "../lib/friends.jsx";
-import { GAME_MODES, SOON_TILE, findMode } from "../modes/index.js";
+import { GAME_MODES, SOON_TILE, findMode, isGameTile } from "../modes/index.js";
+import AppIcon from "../components/home/AppIcon.jsx";
 import Icon from "../components/home/Icon.jsx";
 import TvTopbar from "../components/home/TvTopbar.jsx";
 import CentralLobby from "../components/home/CentralLobby.jsx";
@@ -19,12 +20,15 @@ import { resolveCode } from "../lib/hiddenCode.js";
 // "Más juegos pronto" tile (SOON_TILE) looks like one, with a lock, and has no "Pronto" tag of its own.
 // `watched`: the host is pointing at it right now (guests see it live). `onPoint` tells the room which tile the host
 // is on (hover, focus or touch).
+// The Clásico tiles (Normal and Extendido) look like the site's logo instead: dark, with its rainbow frame as their
+// border, the logo itself as the watermark, and their name and length ("3 juegos") where the others have their icon.
 function ModeTile({ mode, index, selected, watched, suggestable, onPick, onPoint }) {
   const main = mode.kind === "main";
+  const classic = mode.kind === "classic";
   return (
     <button
       type="button"
-      className={`tv-mode tv-c-${mode.color}${main ? " is-main" : ""}${mode.available ? "" : " is-soon"}${selected ? " is-selected" : ""}${watched ? " is-watched" : ""}`}
+      className={`tv-mode ${classic ? "is-classic" : `tv-c-${mode.color}`}${main ? " is-main" : ""}${mode.available ? "" : " is-soon"}${selected ? " is-selected" : ""}${watched ? " is-watched" : ""}`}
       onPointerEnter={onPoint && mode.available ? () => onPoint(mode.id) : undefined}
       onPointerDown={onPoint && mode.available ? () => onPoint(mode.id) : undefined}
       onFocus={onPoint && mode.available ? () => onPoint(mode.id) : undefined}
@@ -33,10 +37,24 @@ function ModeTile({ mode, index, selected, watched, suggestable, onPick, onPoint
       aria-disabled={mode.available ? undefined : "true"}
       onClick={(e) => onPick(mode, e.currentTarget)}
     >
-      <Icon name={mode.icon} size={150} strokeWidth={1.5} className="tv-mode-watermark" />
-      <span className="tv-mode-badge">
-        <Icon name={mode.icon} size={28} strokeWidth={2.2} />
-      </span>
+      {classic ? (
+        <>
+          <span className="tv-mode-logo">
+            <AppIcon small />
+          </span>
+          <span className="tv-mode-classic-text">
+            <span className="tv-mode-name">{mode.name}</span>
+            <span className="tv-mode-sub">{mode.subtitle}</span>
+          </span>
+        </>
+      ) : (
+        <>
+          <Icon name={mode.icon} size={150} strokeWidth={1.5} className="tv-mode-watermark" />
+          <span className="tv-mode-badge">
+            <Icon name={mode.icon} size={28} strokeWidth={2.2} />
+          </span>
+        </>
+      )}
       {!mode.available && !mode.placeholder && (
         <span className="tv-mode-soon">
           <Icon name="lock" size={12} strokeWidth={3} />
@@ -55,13 +73,13 @@ function ModeTile({ mode, index, selected, watched, suggestable, onPick, onPoint
           <span className="tv-mode-eye-text">Lo está viendo</span>
         </span>
       )}
-      <span className="tv-mode-name">{mode.name}</span>
+      {!classic && <span className="tv-mode-name">{mode.name}</span>}
     </button>
   );
 }
 
-// "Crear una playlist", under the games. A playlist isn't one more game but several of them in a row, so it isn't a
-// tile: a dark bar with a dashed outline and a small stack of the games' colours (styles/playlist.css). It points and
+// "Crear una playlist", in the top right corner of "Elige el juego". A playlist isn't one more game but several of them
+// in a row, so it isn't a tile: a small dark button with a dashed outline and a stack of the games' colours (styles/playlist.css). It points and
 // picks like a tile (`mode` is its entry of GAME_MODES): guests see when the host is on it, and can suggest it.
 function PlaylistEntry({ mode, selected, watched, suggestable, onPick, onPoint }) {
   const point = onPoint ? () => onPoint(mode.id) : undefined;
@@ -76,15 +94,14 @@ function PlaylistEntry({ mode, selected, watched, suggestable, onPick, onPoint }
       onClick={(e) => onPick(mode, e.currentTarget)}
     >
       <span className="tv-pl-entry-stack" aria-hidden="true">
-        {GAME_MODES.filter((m) => m.kind !== "playlist").map((m, i) => (
+        {GAME_MODES.filter(isGameTile).map((m, i) => (
           <span key={m.id} className={`tv-c-${m.color}`} style={{ "--i": i }}>
             <Icon name={m.icon} size={15} strokeWidth={2.6} />
           </span>
         ))}
       </span>
       <span className="tv-pl-entry-text">
-        <span className="tv-pl-entry-title">Crear una playlist</span>
-        <span className="tv-pl-entry-sub">Varios juegos seguidos, cada uno con sus ajustes</span>
+        <span className="tv-pl-entry-title">Playlist</span>
       </span>
       {watched ? (
         <span className="tv-pl-entry-tag is-watched" aria-label="El anfitrión lo está viendo">
@@ -103,8 +120,8 @@ function PlaylistEntry({ mode, selected, watched, suggestable, onPick, onPoint }
   );
 }
 
-// How a choice of the menu reads in a sentence: "Trivia", or "una playlist" (it isn't a game).
-const choiceName = (mode) => (mode?.kind === "playlist" ? "una playlist" : mode?.name || "un juego");
+// How a choice of the menu reads in a sentence: "Trivia", "Clásico normal", or "una playlist" (it isn't a game).
+const choiceName = (mode) => (mode?.kind === "playlist" ? "una playlist" : mode?.fullName || mode?.name || "un juego");
 
 function shake(tile) {
   tile.classList.remove("is-shaking");
@@ -212,7 +229,7 @@ export default function Home() {
     // A public match has no host: its games come from the roulette, which says so itself.
     if (picked && !isHost && !room.matchmaking) {
       const host = room.hostName || "El anfitrión";
-      showToast(picked.kind === "playlist" ? `${host} está preparando una playlist` : `${host} ha elegido ${picked.name}`, "play");
+      showToast(picked.kind === "playlist" ? `${host} está preparando una playlist` : `${host} ha elegido ${choiceName(picked)}`, "play");
     }
   }, [game, room?.code]);
 
@@ -339,21 +356,20 @@ export default function Home() {
             room. */}
         {!centralScreen && screen === "room" && <p className="tv-site-url">playtrivially.com</p>}
         {centralScreen ? (
-          <CentralLobby room={shownRoom} />
+          // A Clásico's roulette and tutorial show on the central device too.
+          shownRoom.phase === "intro" ? <MatchIntro room={shownRoom} /> : <CentralLobby room={shownRoom} />
         ) : screen === "home" ? (
           // Inicio is "¿Cómo quieres jugar?": the big logo and Casual, Competitivo and Privada right on it.
           <PlayPage leaving={leaving} />
         ) : (
           <div className={`tv-room${leaving ? " is-leaving" : ""}`}>
             <div className="tv-room-main">
-              {shownRoom.matchmaking ? (
-                // A public match waiting for players (nobody picks a game, it starts by itself once full), and before each
-                // of its games, the roulette and how it's played.
-                shownRoom.phase === "intro" ? (
-                  <MatchIntro room={shownRoom} />
-                ) : (
-                  <MatchLobby room={shownRoom} />
-                )
+              {shownRoom.phase === "intro" ? (
+                // Before each game of a public match or a Clásico: the roulette and how it's played.
+                <MatchIntro room={shownRoom} />
+              ) : shownRoom.matchmaking ? (
+                // A public match waiting for players (nobody picks a game, it starts by itself once full).
+                <MatchLobby room={shownRoom} />
               ) : roomMode && ModeLobby ? (
                 <div key={roomMode.id} className={`tv-room-row is-${enterKind}${lobbyOut ? " is-out" : ""}`}>
                   <ModeLobby room={lobbyRoom} onToast={showToast} />
@@ -369,10 +385,40 @@ export default function Home() {
                   onPointerLeave={shownIsHost ? () => previewGame(null) : undefined}
                   onBlur={shownIsHost ? (e) => !e.currentTarget.contains(e.relatedTarget) && previewGame(null) : undefined}
                 >
+                  {/* "Clásico": a match like Casual's for the room's players, Normal (3 games) or Extendido (5). */}
+                  <div className="tv-picker-classic">
+                    <h2 className="tv-picker-title">Clásico</h2>
+                    <div className="tv-mode-grid">
+                      {GAME_MODES.filter((m) => m.kind === "classic").map((mode, i) => (
+                        <ModeTile
+                          key={mode.id}
+                          mode={mode}
+                          index={i}
+                          selected={tilesOut === mode.id}
+                          watched={!shownIsHost && shownRoom.preview === mode.id}
+                          suggestable={!shownIsHost}
+                          onPick={pickMode}
+                          onPoint={shownIsHost ? previewGame : undefined}
+                        />
+                      ))}
+                    </div>
+                  </div>
                   <div className="tv-picker-head">
                     <h2 id="tv-picker-title" className="tv-picker-title">
                       {shownIsHost ? "Elige el juego" : `${hostName} está eligiendo el juego`}
                     </h2>
+                    {/* Not one more game: several of them in a row, so it goes apart, in the corner of the head. */}
+                    {GAME_MODES.filter((m) => m.kind === "playlist").map((mode) => (
+                      <PlaylistEntry
+                        key={mode.id}
+                        mode={mode}
+                        selected={tilesOut === mode.id}
+                        watched={!shownIsHost && shownRoom.preview === mode.id}
+                        suggestable={!shownIsHost}
+                        onPick={pickMode}
+                        onPoint={shownIsHost ? previewGame : undefined}
+                      />
+                    ))}
                     {!shownIsHost && (
                       <p className="tv-picker-lock">
                         <Icon name="crown" size={15} strokeWidth={2.4} filled />
@@ -415,7 +461,7 @@ export default function Home() {
                     </ul>
                   )}
                   <div className="tv-mode-grid">
-                    {GAME_MODES.filter((m) => m.kind !== "playlist").map((mode, i) => (
+                    {GAME_MODES.filter(isGameTile).map((mode, i) => (
                       <ModeTile
                         key={mode.id}
                         mode={mode}
@@ -431,22 +477,14 @@ export default function Home() {
                       <ModeTile mode={SOON_TILE} index={GAME_MODES.length} onPick={pickMode} />
                     )}
                   </div>
-                  {/* Not one more game: several of them in a row, so it goes apart, under the games. */}
-                  {GAME_MODES.filter((m) => m.kind === "playlist").map((mode) => (
-                    <PlaylistEntry
-                      key={mode.id}
-                      mode={mode}
-                      selected={tilesOut === mode.id}
-                      watched={!shownIsHost && shownRoom.preview === mode.id}
-                      suggestable={!shownIsHost}
-                      onPick={pickMode}
-                      onPoint={shownIsHost ? previewGame : undefined}
-                    />
-                  ))}
                 </section>
               )}
             </div>
-            <PartyPanel room={shownRoom} onToast={showToast} scores={Boolean(shownRoom.matchmaking) && shownRoom.phase !== "lobby"} />
+            <PartyPanel
+              room={shownRoom}
+              onToast={showToast}
+              scores={(Boolean(shownRoom.matchmaking) && shownRoom.phase !== "lobby") || shownRoom.phase === "intro"}
+            />
           </div>
         )}
       </main>

@@ -3,7 +3,7 @@ import { geoConfig } from "../mundo/geoInfo.js";
 import { historyConfig } from "../historia/historyInfo.js";
 import { minesConfig } from "../minas/minesInfo.js";
 import { rainConfig } from "../lluvia/rainInfo.js";
-import { GAME_MODES, findMode } from "../index.js";
+import { GAME_MODES, findMode, isGameTile } from "../index.js";
 
 // Playlists of games (backend/src/game/playlist.js): the games a playlist can have, each item's settings, a line
 // that sums them up, and the JSON they're shared in.
@@ -11,9 +11,9 @@ import { GAME_MODES, findMode } from "../index.js";
 export const MAX_ITEMS = 10;
 export const NAME_MAX = 40;
 
-// The games a playlist can have: every game of the menu but the playlist itself.
+// The games a playlist can have: every game of the menu (not the playlist itself nor a Clásico).
 export function playlistGames() {
-  return GAME_MODES.filter((m) => m.available && m.kind !== "playlist");
+  return GAME_MODES.filter((m) => m.available && isGameTile(m));
 }
 
 // Where each game keeps its settings in the room's config (Adivina la canción's are at its top level), as on the server.

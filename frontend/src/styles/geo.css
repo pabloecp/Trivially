@@ -331,6 +331,11 @@ html.tv-geo-playing { touch-action: pan-x pan-y; }
 /* Under the map: the confirm button while the round is open, the result at its reveal. Always the same height. */
 .tv-geo-action { display: grid; flex: none; min-height: 52px; align-items: center; }
 .tv-geo-action .tv-btn { height: 52px; }
+/* A thumb or a cursor aiming at the bottom of the map easily lands on the button: leave some room between them. */
+.tv-geo-action { margin-top: 18px; margin-bottom: 6px; }
+@media (max-width: 900px) {
+  .tv-geo-action { margin-top: 22px; margin-bottom: 8px; }
+}
 .tv-geo-watch { text-align: center; }
 
 .tv-geo-verdict {

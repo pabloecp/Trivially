@@ -159,6 +159,8 @@ export function publicRun(run) {
     name: run.name,
     order: run.order,
     mixed: Boolean(run.mixed),
+    // A Clásico's game id ("clasico" or "extendido"): it's played like a playlist, but it's a match.
+    classic: run.classic || null,
     index: run.index,
     total: run.items.length,
     games: run.items.map((item) => item.game),
