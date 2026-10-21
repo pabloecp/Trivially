@@ -682,5 +682,3 @@
 /* "Amigos conectados" in Privada's settings: how many are online, beside the title. */
 .tv-play-online-count { margin-left: 8px; padding: 1px 8px; border-radius: 10px; font-size: 12px; background: rgba(255, 255, 255, 0.08); }
 
-/* The logo copy that flies to the top bar (lib/logoFly.js): the logo's own animations stay still on it. */
-.tv-logo.is-ghost, .tv-logo.is-ghost * { animation: none !important; }

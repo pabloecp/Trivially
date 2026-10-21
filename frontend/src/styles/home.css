@@ -194,8 +194,6 @@
 
 /* The small logo and "trivially" in the top bar. Only the brand: it is not a button, the way out is the chip beside it. */
 .tv-brand { transition: opacity 0.22s ease, visibility 0s linear 0s; }
-.tv-brand .tv-appicon, .tv-brand-name { transition: opacity 0.2s ease; }
-.tv-brand.is-text-hidden .tv-brand-name { opacity: 0; }
 .tv-brand.is-hidden { opacity: 0; visibility: hidden; transition: opacity 0.12s ease, visibility 0s linear 0.12s; }
 .tv-brand { display: flex; align-items: center; flex-shrink: 0; gap: 10px; padding: 4px; border-radius: 14px; }
 .tv-brand-name {
@@ -334,12 +332,6 @@
   40% { opacity: 1; }
   to { max-width: 0; margin-right: -12px; padding-left: 0; padding-right: 0; opacity: 0; transform: scale(0.6); }
 }
-/* While the big logo flies to the bar's (or back), "Volver" only fades: if it grew or shrank it would push the small logo
-   along and the flight would land where the logo is no longer (lib/logoFly.js). */
-.tv-topbar.is-back-fly.is-back-in .tv-chip--leave { animation: tvBackFadeIn 0.45s ease backwards; }
-.tv-topbar.is-back-fly.is-back-out .tv-chip--leave { animation: tvBackFadeOut 0.2s ease forwards; }
-@keyframes tvBackFadeIn { from { opacity: 0; } }
-@keyframes tvBackFadeOut { to { opacity: 0; } }
 @media (prefers-reduced-motion: reduce) {
   .tv-topbar.is-back-in .tv-chip--leave { animation: none; }
   .tv-topbar.is-back-out .tv-chip--leave { display: none; }
