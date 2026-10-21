@@ -115,8 +115,8 @@ export default function TvTopbar() {
   // The logo on the left is not here on Inicio (the big one in the middle is): it flies between the two (lib/logoFly.js).
   const brandHold = useBrandHold();
   const brandHidden = brandHold === "in" ? true : brandHold ? false : onHome;
-  // Only its tile (no letters yet): as the copy lands on the way in, and from the start on the way back.
-  const textHidden = brandHold === "in-tile" || brandHold === "out";
+  // Only its tile, on the way back: the letters fade at once.
+  const textHidden = brandHold === "out";
   const goUp = useGoUp();
   const [modesErr, setModesErr] = useState("");
   const { toModes, inGame, asking, press, leaveNow, cancelAsk } = useRoomExit({
