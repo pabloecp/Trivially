@@ -18,12 +18,11 @@ export function exitPath(room) {
 }
 
 /**
- * Outside a room, "Volver" goes back to where you were (the browser's own Back: from the profile to "¿Cómo quieres
- * jugar?" if that's where you came from). Opened straight on a page (nothing behind it in this tab), it goes up one step
- * instead: from an option of "¿Cómo quieres jugar?" to its three tiles, and from anywhere else to Inicio.
+ * Outside a room, "Volver" goes back to where you were (the browser's own Back: from the profile to Inicio, or from an
+ * option (Casual, Competitivo, Privada) to Inicio's three tiles). Opened straight on a page (nothing behind it in this
+ * tab), it goes to Inicio.
  */
-export function upPath(pathname) {
-  if (/^\/jugar\/[^/]+/.test(pathname)) return "/jugar";
+export function upPath() {
   return "/";
 }
 
@@ -32,7 +31,7 @@ export function useGoUp() {
   const location = useLocation();
   return () => {
     if ((window.history.state?.idx ?? 0) > 0) nav(-1);
-    else nav(upPath(location.pathname), { replace: true });
+    else nav(upPath(), { replace: true });
   };
 }
 
