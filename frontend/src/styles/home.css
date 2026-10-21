@@ -193,6 +193,7 @@
 .tv-chip:active { transform: translateY(3px); }
 
 /* The small logo and "trivially" in the top bar. Only the brand: it is not a button, the way out is the chip beside it. */
+.tv-brand.is-hidden { visibility: hidden; }
 .tv-brand { display: flex; align-items: center; flex-shrink: 0; gap: 10px; padding: 4px; border-radius: 14px; }
 .tv-brand-name {
   font-family: var(--tv-logo-font);

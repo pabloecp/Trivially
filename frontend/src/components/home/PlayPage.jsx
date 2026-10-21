@@ -4,6 +4,7 @@ import { findMode } from "../../modes/index.js";
 import { useHiddenCode } from "../../lib/hiddenCode.js";
 import { useFriends } from "../../lib/friends.jsx";
 import { AVATAR_COLORS, savedGuest, useApp } from "../../lib/store.jsx";
+import { flyLogo, holdBrand } from "../../lib/logoFly.js";
 import { withSound } from "../../lib/sounds.js";
 import Avatar from "./Avatar.jsx";
 import { JoinButton, statusOf } from "./FriendsSheet.jsx";
@@ -109,8 +110,16 @@ export default function PlayPage({ leaving = false, toHome = false }) {
   const kind = KINDS.find((k) => k.id === chosen) || null;
   const needsName = !user?.name || user.isGuest;
 
+  // The logo flies to the top bar when an option is picked, and back when the options come back.
+  const prevChosen = useRef(chosen);
+  useEffect(() => {
+    if (prevChosen.current && !chosen) flyLogo("out");
+    prevChosen.current = chosen;
+  }, [chosen]);
+
   useEffect(() => {
     if (wanted === chosen) return;
+    if (wanted && !chosen) flyLogo("in");
     setError("");
     setNote("");
     setPending(null);
@@ -360,7 +369,7 @@ export default function PlayPage({ leaving = false, toHome = false }) {
       <div className="tv-room-main">
         {!kind ? (
           <div className={`tv-play-menu${landing ? " is-landing" : ""}`}>
-            <Logo className={`tv-play-logo${out || (leaving && !toHome) ? " is-leaving" : ""}`} quiet decorative tilt={6} />
+            <Logo className={`tv-play-logo${leaving && !toHome ? " is-leaving" : ""}`} quiet decorative tilt={6} />
             <section className={`tv-picker tv-play-picker${out ? " is-leaving" : ""}`} aria-labelledby="tv-play-title">
               <div className="tv-picker-head">
                 <h1 id="tv-play-title" className="tv-picker-title">
@@ -374,7 +383,11 @@ export default function PlayPage({ leaving = false, toHome = false }) {
                     type="button"
                     className={`tv-mode tv-play-tile tv-c-${k.color}`}
                     style={{ "--i": i }}
-                    onClick={() => nav(`/jugar/${k.id}`, { state: { from: "/" } })}
+                    onClick={() => {
+                      // The big logo flies to the top bar's (lib/logoFly.js): the bar's one waits out of sight.
+                      holdBrand("in");
+                      nav(`/jugar/${k.id}`, { state: { from: "/" } });
+                    }}
                   >
                     <Icon name={k.icon} size={170} strokeWidth={1.5} className="tv-mode-watermark" />
                     <span className="tv-mode-badge">

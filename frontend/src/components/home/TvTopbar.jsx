@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { roomPath } from "../../modes/index.js";
+import { useBrandHold, holdBrand } from "../../lib/logoFly.js";
 import { useApp } from "../../lib/store.jsx";
 import { useFriends } from "../../lib/friends.jsx";
 import AppIcon from "./AppIcon.jsx";
@@ -29,7 +30,10 @@ export function upPath() {
 export function useGoUp() {
   const nav = useNavigate();
   const location = useLocation();
+  const { room } = useApp();
   return () => {
+    // From an option back to Inicio: the top bar's logo flies back to the middle (lib/logoFly.js).
+    if (!room && /^\/jugar\/[^/]+/.test(location.pathname)) holdBrand("out");
     if ((window.history.state?.idx ?? 0) > 0) nav(-1);
     else nav(upPath(), { replace: true });
   };
@@ -103,6 +107,9 @@ export default function TvTopbar() {
   const awayFromRoom = Boolean(roomTarget) && pathname !== roomTarget;
   const inMatch = Boolean(room) && room.phase !== "lobby";
   const onHome = !room && pathname === "/";
+  // The logo on the left is not here on Inicio (the big one in the middle is): it flies between the two (lib/logoFly.js).
+  const brandHold = useBrandHold();
+  const brandHidden = brandHold === "in" ? true : brandHold === "out" ? false : onHome;
   const goUp = useGoUp();
   const [modesErr, setModesErr] = useState("");
   const { toModes, inGame, asking, press, leaveNow, cancelAsk } = useRoomExit({
@@ -195,7 +202,7 @@ export default function TvTopbar() {
       <header className={`tv-topbar${backAnim ? ` is-back-${backAnim}` : ""}`}>
         <div className="tv-topbar-start">
           {shownButton}
-          <div className="tv-brand">
+          <div className={`tv-brand${brandHidden ? " is-hidden" : ""}`}>
             <AppIcon small />
             <span className="tv-brand-name">trivially</span>
           </div>
