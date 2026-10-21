@@ -459,7 +459,7 @@
 
 /* Inicio is this page: the big logo over the tiles (--k scales every measure of it), the tiles straight on the page on
    wider screens, with no panel behind them and no title (only for screen readers), all in the middle of the screen.
-   Phones keep the tiles in their panel, with their title, under a smaller logo. */
+   Phones: the same, one tile per row under a smaller logo. */
 .tv-play-menu { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 14px; }
 .tv-play-menu > .tv-play-picker { align-self: stretch; }
 .tv-logo.tv-play-logo { --k: 0.5; display: flex; flex-shrink: 0; animation: var(--tv-box-in); }
@@ -473,25 +473,26 @@
   text-shadow: 0 calc(5px * var(--k)) 0 var(--tv-page-shadow, var(--tv-logo-shadow));
 }
 .tv-play-logo .tv-dot { box-shadow: 0 calc(5px * var(--k)) 0 var(--tv-page-shadow, var(--tv-logo-shadow)); }
+/* The tiles straight on the page, with no panel behind them and no title (only for screen readers): they say it
+   themselves. */
+.tv-picker.tv-play-picker {
+  flex: none;
+  width: 100%;
+  max-width: 1240px;
+  padding: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  /* The tiles rise on hover: nothing cuts them. */
+  overflow: visible;
+}
+.tv-play-picker .tv-picker-head { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 @media (min-width: 761px) {
   .tv-play-menu { gap: 34px; }
   /* In the middle, but from the top when the window is too short for all of it. */
   .tv-play-menu > :first-child { margin-top: auto; }
   .tv-play-menu > :last-child { margin-bottom: auto; }
   .tv-logo.tv-play-logo { --k: 0.8; }
-
-  .tv-picker.tv-play-picker {
-    flex: none;
-    width: 100%;
-    max-width: 1240px;
-    padding: 0;
-    border-radius: 0;
-    background: none;
-    box-shadow: none;
-    /* The tiles rise on hover: nothing cuts them. */
-    overflow: visible;
-  }
-  .tv-play-picker .tv-picker-head { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
   .tv-play-grid { flex: none; gap: 18px; }
   .tv-mode.tv-play-tile { min-height: 0; height: 280px; padding: 26px; border-radius: 30px; }
   .tv-play-tile .tv-mode-badge { width: 56px; height: 56px; border-radius: 18px; }
