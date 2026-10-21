@@ -58,6 +58,13 @@ export function flyLogo(dir) {
   const ty = target.top + target.height / 2 - box.top - s * (tile.top + tile.height / 2 - box.top);
   const ghost = big.cloneNode(true);
   ghost.classList.add("is-ghost");
+  // The tile's clip is found by an id, which the copy would share with the original: once that one is hidden or gone (the
+  // page it is on has left) the copy's coloured frame is clipped away and the tile turns black. It gets its own.
+  ghost.querySelectorAll("clipPath[id]").forEach((clip) => {
+    const old = clip.id;
+    clip.id = `${old}-fly`;
+    ghost.querySelectorAll(`[clip-path="url(#${old})"]`).forEach((el) => el.setAttribute("clip-path", `url(#${old}-fly)`));
+  });
   Object.assign(ghost.style, {
     position: "fixed",
     left: `${box.left}px`,
