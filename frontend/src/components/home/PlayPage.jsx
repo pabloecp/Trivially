@@ -11,7 +11,6 @@ import Icon from "./Icon.jsx";
 import Logo, { logoIncoming } from "./Logo.jsx";
 import ModeStage from "./ModeStage.jsx";
 import OptionRow from "./OptionRow.jsx";
-import PlaySide from "./PlaySide.jsx";
 
 import MatchGames from "./MatchGames.jsx";
 import { MATCH_KINDS, MATCH_ROUNDS, MATCH_SIZES, gamesText } from "./matchInfo.js";
@@ -66,14 +65,13 @@ function codeFrom(text) {
   return (link ? link[1] : text).toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, ROOM_CODE_LENGTH);
 }
 
-// "¿Cómo quieres jugar?" as a page of its own (/jugar), not a sheet: Casual, Competitivo and Privada as big tiles. Picking
-// one (/jugar/casual, /jugar/privada...) makes the tiles sink away and that option's card grow in with its settings beside
-// it and the player's column (PlaySide) at the end, laid out like a room's screen; the top bar's "Volver" (the only way
-// back) and the browser's Back do it the other way round. Leaving a room comes back to the option it came from (exitPath
-// in TvTopbar.jsx). Without an account, the settings card asks for the name first (filled in with the one used last
-// time), then does what was asked. Once in a room, RoomNavigator takes the player there. On wider screens Inicio's logo
-// is over the tiles, smaller, instead of the title, and jumps between the two screens (Logo.jsx): `toHome` is the way
-// back to Inicio, when it stays (crouching) while the tiles sink, for Inicio's to jump out of it.
+// Inicio, "¿Cómo quieres jugar?": the big logo and Casual, Competitivo and Privada as big tiles, all on one page (/).
+// Picking one (/jugar/casual, /jugar/privada...) makes the tiles sink away and that option's card grow in with its
+// settings beside it, laid out like a room's screen; the top bar's "Volver" (the only way back) and the browser's Back
+// do it the other way round. Leaving a room comes back to the option it came from (exitPath in TvTopbar.jsx). Without
+// an account, the settings card asks for the name first (filled in with the one used last time), then does what was
+// asked. Once in a room, RoomNavigator takes the player there. Privada's settings have "Amigos conectados" with the
+// ones in a room to join with a tap. `toHome` is kept for the logo's old jump back to Inicio (Logo.jsx).
 export default function PlayPage({ leaving = false, toHome = false }) {
   const { user, saveGuest, createRoom, joinRoom, checkRoom, findMatch } = useApp();
   const friends = useFriends();
@@ -233,7 +231,7 @@ export default function PlayPage({ leaving = false, toHome = false }) {
   }
 
   const match = kind && kind.id !== "privada";
-  const friendRooms = (friends.view?.friends || []).filter((f) => f.room);
+  const isAccount = friends.isAccount;
   const online = (friends.view?.friends || []).filter((f) => f.online);
   // The ticked friends still online.
   const invited = invites.filter((id) => online.slice(0, INVITES_SHOWN).some((f) => f.id === id));
@@ -299,29 +297,38 @@ export default function PlayPage({ leaving = false, toHome = false }) {
           Entrar a la sala
         </button>
       </form>
-      {friendRooms.length > 0 && (
+      {/* Friends who are online, right here: the ones in a room can be joined with a tap (or asked, as the host
+          allows), the rest are just there to invite once the room is made (below). */}
+      {isAccount && (
         <div className="tv-optrow">
-          <span className="tv-optrow-label">Salas de tus amigos</span>
-          <ul className="tv-invite-friends-list tv-play-rooms">
-            {friendRooms.map((f) => {
-              const m = findMode(f.room.game);
-              return (
-                <li key={f.id} className="tv-invite-friend">
-                  <Avatar name={f.name} avatar={f.avatar} />
-                  <span className="tv-invite-friend-text">
-                    <strong>{f.name}</strong>
-                    <small>{statusOf(f)}</small>
-                  </span>
-                  {m && (
-                    <span className={`tv-badge tv-c-${m.color} tv-play-rooms-game`} aria-hidden="true">
-                      <Icon name={m.icon} size={16} />
+          <span className="tv-optrow-label">
+            Amigos conectados
+            {online.length > 0 && <span className="tv-play-online-count">{online.length}</span>}
+          </span>
+          {online.length ? (
+            <ul className="tv-invite-friends-list tv-play-rooms">
+              {online.map((f) => {
+                const m = f.room ? findMode(f.room.game) : null;
+                return (
+                  <li key={f.id} className="tv-invite-friend">
+                    <Avatar name={f.name} avatar={f.avatar} />
+                    <span className="tv-invite-friend-text">
+                      <strong>{f.name}</strong>
+                      <small>{statusOf(f)}</small>
                     </span>
-                  )}
-                  <JoinButton friend={f} onJoin={joinFriend} onCancel={cancelJoin} busy={busy} />
-                </li>
-              );
-            })}
-          </ul>
+                    {m && (
+                      <span className={`tv-badge tv-c-${m.color} tv-play-rooms-game`} aria-hidden="true">
+                        <Icon name={m.icon} size={16} />
+                      </span>
+                    )}
+                    {f.room && <JoinButton friend={f} onJoin={joinFriend} onCancel={cancelJoin} busy={busy} />}
+                  </li>
+                );
+              })}
+            </ul>
+          ) : (
+            <p className="tv-invite-friends-none">Ninguno de tus amigos está conectado ahora</p>
+          )}
         </div>
       )}
       <OptionRow
@@ -353,7 +360,7 @@ export default function PlayPage({ leaving = false, toHome = false }) {
       <div className="tv-room-main">
         {!kind ? (
           <div className={`tv-play-menu${landing ? " is-landing" : ""}`}>
-            <Logo className={`tv-play-logo${out || (leaving && !toHome) ? " is-leaving" : ""}`} quiet decorative />
+            <Logo className={`tv-play-logo${out || (leaving && !toHome) ? " is-leaving" : ""}`} quiet decorative tilt={6} />
             <section className={`tv-picker tv-play-picker${out ? " is-leaving" : ""}`} aria-labelledby="tv-play-title">
               <div className="tv-picker-head">
                 <h1 id="tv-play-title" className="tv-picker-title">
@@ -367,7 +374,7 @@ export default function PlayPage({ leaving = false, toHome = false }) {
                     type="button"
                     className={`tv-mode tv-play-tile tv-c-${k.color}`}
                     style={{ "--i": i }}
-                    onClick={() => nav(`/jugar/${k.id}`, { state: { from: "/jugar" } })}
+                    onClick={() => nav(`/jugar/${k.id}`, { state: { from: "/" } })}
                   >
                     <Icon name={k.icon} size={170} strokeWidth={1.5} className="tv-mode-watermark" />
                     <span className="tv-mode-badge">
@@ -477,7 +484,6 @@ export default function PlayPage({ leaving = false, toHome = false }) {
           </div>
         )}
       </div>
-      {kind && <PlaySide kind={kind.id} out={out} />}
     </div>
   );
 }

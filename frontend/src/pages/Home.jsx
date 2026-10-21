@@ -1,11 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useLocation, useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { useApp } from "../lib/store.jsx";
 import { useFriends } from "../lib/friends.jsx";
 import { GAME_MODES, SOON_TILE, findMode } from "../modes/index.js";
 import Icon from "../components/home/Icon.jsx";
 import TvTopbar from "../components/home/TvTopbar.jsx";
-import HowToPlay from "../components/home/HowToPlay.jsx";
 import CentralLobby from "../components/home/CentralLobby.jsx";
 import MatchIntro from "../components/home/MatchIntro.jsx";
 import MatchLobby from "../components/home/MatchLobby.jsx";
@@ -13,7 +12,6 @@ import PartyPanel from "../components/home/PartyPanel.jsx";
 import PlayPage from "../components/home/PlayPage.jsx";
 import PlaySheet from "../components/home/PlaySheet.jsx";
 import { RoomDock, RoomHeader } from "../components/home/RoomBars.jsx";
-import Logo, { CROUCH_MS, crouchLogo, leaveLogo } from "../components/home/Logo.jsx";
 import "../styles/home.css";
 import { resolveCode } from "../lib/hiddenCode.js";
 
@@ -135,7 +133,6 @@ export default function Home() {
   const [sheetMode, setSheetMode] = useState(null);
   const [sheetJoinCode, setSheetJoinCode] = useState(null);
   const [toast, setToast] = useState(null);
-  const playRef = useRef(null);
   const toastTimer = useRef(0);
 
   // The room's central device is never the host, even with the host's account: it only shows the room.
@@ -149,8 +146,6 @@ export default function Home() {
   if (room) lastRoom.current = room;
   const [screen, setScreen] = useState(hasRoom ? "room" : "home");
   const [leaving, setLeaving] = useState(false);
-  // How the screen on show came in: "intro" (first load), "fwd" (into the room) or "back" (back home).
-  const [entry, setEntry] = useState("intro");
   useEffect(() => {
     const want = hasRoom ? "room" : "home";
     if (want === screen) {
@@ -159,7 +154,6 @@ export default function Home() {
     }
     const swap = () => {
       setScreen(want);
-      setEntry(want === "room" ? "fwd" : "back");
       setLeaving(false);
     };
     if (reducedMotion()) {
@@ -171,61 +165,6 @@ export default function Home() {
     return () => clearTimeout(t);
   }, [hasRoom]);
   const shownRoom = screen === "room" ? room || lastRoom.current : null;
-  // "¿Cómo quieres jugar?" is a page of its own (/jugar, PlayPage). While Home gives way to the room it keeps showing
-  // it (the address is already the room's).
-  const { pathname } = useLocation();
-  const onPlayPath = pathname === "/jugar" || pathname.startsWith("/jugar/");
-  const playShown = useRef(onPlayPath);
-  // Back from /jugar to Inicio, its panels sink first (`playOut`, SCREEN_OUT_MS), the way they came up, while its logo
-  // crouches; then Inicio, whose big logo jumps out of /jugar's (Logo.jsx), without the zoom of coming back from a room.
-  // Coming back from a room, the page shown is just the address's (no exit to play).
-  const [playOut, setPlayOut] = useState(false);
-  const lastScreen = useRef(screen);
-  if (screen === "home" && !leaving) {
-    if (lastScreen.current !== "home" || onPlayPath) playShown.current = onPlayPath;
-  }
-  lastScreen.current = screen;
-  useEffect(() => {
-    // Anything but /jugar → Inicio (going into a room, whose address can change a moment before the room arrives, or
-    // coming back to /jugar) clears it, so the page never stays sunk.
-    if (screen !== "home" || leaving || onPlayPath || !playShown.current) {
-      setPlayOut(false);
-      return undefined;
-    }
-    setPlayOut(true);
-    const crouch = crouchLogo(SCREEN_OUT_MS - CROUCH_MS);
-    const t = setTimeout(() => {
-      leaveLogo();
-      playShown.current = false;
-      setPlayOut(false);
-      setEntry("play");
-    }, reducedMotion() ? 0 : SCREEN_OUT_MS);
-    return () => {
-      clearTimeout(t);
-      crouch?.cancel();
-    };
-  }, [onPlayPath, screen, leaving]);
-
-  // "Jugar": the tagline, the button and how to play go while the logo crouches, then /jugar, where it lands.
-  const [toPlay, setToPlay] = useState(false);
-  const toPlayTimer = useRef(0);
-  useEffect(() => () => clearTimeout(toPlayTimer.current), []);
-  // Only once /jugar is on screen, so Inicio's tagline and button never show again for a frame on the way.
-  useEffect(() => {
-    if (onPlayPath) setToPlay(false);
-  }, [onPlayPath]);
-  function goPlay() {
-    if (toPlay) return;
-    const go = () => {
-      leaveLogo();
-      nav("/jugar", { state: { from: "/" } });
-    };
-    if (reducedMotion()) return go();
-    setToPlay(true);
-    crouchLogo();
-    toPlayTimer.current = setTimeout(go, CROUCH_MS);
-  }
-
   // Picking a game from the tiles happens in two beats, for every player at once: first the tiles (or the guests'
   // "está eligiendo" panel) go, for TILES_OUT_MS; then the game's big card grows in and "Cómo se juega" slides in
   // from the right. Switching straight from one game to another skips the first beat and only swaps the contents.
@@ -318,7 +257,6 @@ export default function Home() {
   const closeSheet = useCallback(() => {
     setSheetOpen(false);
     if (inviteCode) nav("/", { replace: true });
-    playRef.current?.focus({ preventScroll: true });
   }, [inviteCode, nav]);
 
   // Invite links (/sala/XOTRIV) join straight away, asking for a name first if we don't have one.
@@ -396,29 +334,15 @@ export default function Home() {
       {/* Phones: the room's own bars, pinned to the top and the bottom (home.css hides them on wider screens). */}
       {shownRoom && !isCentral && <RoomHeader room={shownRoom} onToast={showToast} />}
 
-      <main className={`tv-main${screen === "room" ? " is-room" : screen === "home" && playShown.current ? " is-room is-playpage" : ""}${centralScreen ? " is-central" : ""}`}>
+      <main className={`tv-main${screen === "room" ? " is-room" : " is-room is-playpage"}${centralScreen ? " is-central" : ""}`}>
         {/* The site's address, at the top in plain letters but faint (phones): on the room screen, not on Home without a
             room. */}
         {!centralScreen && screen === "room" && <p className="tv-site-url">playtrivially.com</p>}
         {centralScreen ? (
           <CentralLobby room={shownRoom} />
-        ) : screen === "home" && playShown.current ? (
-          <PlayPage leaving={leaving || playOut} toHome={playOut && !leaving} />
         ) : screen === "home" ? (
-          <div className={`tv-home is-in-${entry}${leaving ? " is-leaving" : ""}${toPlay ? " is-to-play" : ""}${sheetOpen ? " is-behind" : ""}`}>
-            <section className="tv-hero">
-              <Logo tilt={6} />
-              <p className="tv-tagline">Trivia rápida para jugar solo o con amigos.</p>
-              {/* The logo jumps to /jugar's, smaller (Logo.jsx). */}
-              <button ref={playRef} type="button" className="tv-play tv-shine" onClick={goPlay}>
-                <span className="tv-play-icon">
-                  <Icon name="play" size={20} filled strokeWidth={1.5} />
-                </span>
-                Jugar
-              </button>
-            </section>
-            <HowToPlay />
-          </div>
+          // Inicio is "¿Cómo quieres jugar?": the big logo and Casual, Competitivo and Privada right on it.
+          <PlayPage leaving={leaving} />
         ) : (
           <div className={`tv-room${leaving ? " is-leaving" : ""}`}>
             <div className="tv-room-main">

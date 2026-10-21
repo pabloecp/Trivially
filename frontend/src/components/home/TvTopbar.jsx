@@ -18,21 +18,19 @@ export function exitPath(room) {
 }
 
 /**
- * Outside a room, "Volver" goes back to where you were (the browser's own Back: from the profile to "¿Cómo quieres
- * jugar?" if that's where you came from). Opened straight on a page (nothing behind it in this tab), it goes up one step
- * instead: from an option of "¿Cómo quieres jugar?" to its three tiles, and from anywhere else to Inicio.
+ * Outside a room, "Volver" goes back to where you were (the browser's own Back: from the profile to Inicio, or from an
+ * option (Casual, Competitivo, Privada) to Inicio's three tiles). Opened straight on a page (nothing behind it in this
+ * tab), it goes to Inicio.
  */
-export function upPath(pathname) {
-  if (/^\/jugar\/[^/]+/.test(pathname)) return "/jugar";
+export function upPath() {
   return "/";
 }
 
 export function useGoUp() {
   const nav = useNavigate();
-  const location = useLocation();
   return () => {
     if ((window.history.state?.idx ?? 0) > 0) nav(-1);
-    else nav(upPath(location.pathname), { replace: true });
+    else nav(upPath(), { replace: true });
   };
 }
 
@@ -104,6 +102,8 @@ export default function TvTopbar() {
   const awayFromRoom = Boolean(roomTarget) && pathname !== roomTarget;
   const inMatch = Boolean(room) && room.phase !== "lobby";
   const onHome = !room && pathname === "/";
+  // The logo on the left is not here on Inicio (the big one in the middle is the only one).
+  const brandHidden = onHome;
   const goUp = useGoUp();
   const [modesErr, setModesErr] = useState("");
   const { toModes, inGame, asking, press, leaveNow, cancelAsk } = useRoomExit({
@@ -196,7 +196,7 @@ export default function TvTopbar() {
       <header className={`tv-topbar${backAnim ? ` is-back-${backAnim}` : ""}`}>
         <div className="tv-topbar-start">
           {shownButton}
-          <div className="tv-brand">
+          <div className={`tv-brand${brandHidden ? " is-hidden" : ""}`}>
             <AppIcon small />
             <span className="tv-brand-name">trivially</span>
           </div>
