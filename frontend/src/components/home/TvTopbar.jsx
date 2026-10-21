@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { roomPath } from "../../modes/index.js";
-import { useBrandHold, holdBrand, rememberBrand } from "../../lib/logoFly.js";
+import { useBrandHold, holdBrand, rememberBrand, flyLogo } from "../../lib/logoFly.js";
 import { useApp } from "../../lib/store.jsx";
 import { useFriends } from "../../lib/friends.jsx";
 import AppIcon from "./AppIcon.jsx";
@@ -36,6 +36,8 @@ export function useGoUp() {
     if (!room && /^\/jugar\/[^/]+/.test(location.pathname)) {
       rememberBrand();
       holdBrand("out");
+      // The logo takes off now, not once Inicio is on screen (it gets there while the option's card sinks).
+      flyLogo("out", { early: true });
     }
     if ((window.history.state?.idx ?? 0) > 0) nav(-1);
     else nav(upPath(), { replace: true });
@@ -113,10 +115,8 @@ export default function TvTopbar() {
   // The logo on the left is not here on Inicio (the big one in the middle is): it flies between the two (lib/logoFly.js).
   const brandHold = useBrandHold();
   const brandHidden = brandHold === "in" ? true : brandHold ? false : onHome;
-  // Only its letters, while the tile is the flying copy's (on the way in).
-  const tileHidden = brandHold === "in-text";
-  // Only its tile, on the way back: the letters melt away at once.
-  const textHidden = brandHold === "out";
+  // Only its tile (no letters yet): as the copy lands on the way in, and from the start on the way back.
+  const textHidden = brandHold === "in-tile" || brandHold === "out";
   const goUp = useGoUp();
   const [modesErr, setModesErr] = useState("");
   const { toModes, inGame, asking, press, leaveNow, cancelAsk } = useRoomExit({
@@ -216,7 +216,7 @@ export default function TvTopbar() {
       <header className={`tv-topbar${backAnim ? ` is-back-${backAnim}` : ""}${brandHold || flew ? " is-back-fly" : ""}`}>
         <div className="tv-topbar-start">
           {shownButton}
-          <div className={`tv-brand${brandHidden ? " is-hidden" : ""}${tileHidden ? " is-tile-hidden" : ""}${textHidden ? " is-text-hidden" : ""}`}>
+          <div className={`tv-brand${brandHidden ? " is-hidden" : ""}${textHidden ? " is-text-hidden" : ""}`}>
             <AppIcon small />
             <span className="tv-brand-name">trivially</span>
           </div>
