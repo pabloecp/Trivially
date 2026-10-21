@@ -5,8 +5,8 @@ import { useSyncExternalStore } from "react";
 // sight (`mode`):
 //  - "in": the way into an option; the bar's logo is hidden, though Inicio is already left; then "in-text": its letters
 //    show (the big ones are melting away) but not its tile (the copy's is still on its way); then null: all of it;
-//  - "out": the way back to Inicio; the bar's logo stays until the copy is on its way, though Inicio hides it; then
-//    "out-text": only its letters stay (under the copy's tile) until the big letters come in; then null: gone;
+//  - "out": the way back to Inicio; the bar's tile stays until the copy is on its way, though Inicio hides it, but its
+//    letters melt away at once (the big ones come in later: letters that stay on their own look stuck); then null: gone;
 //  - null: the bar's logo is where the page says (hidden on Inicio, shown anywhere else).
 let mode = null;
 let safety = 0;
@@ -125,19 +125,18 @@ export function flyLogo(dir) {
   );
   // The letters melt away on the way (they have no place in the small logo's corner): only the tile arrives.
   ghost.querySelector(".tv-wordmark")?.animate(dir === "in" ? [{ opacity: 1 }, { opacity: 0 }] : [{ opacity: 0 }, { opacity: 1 }], {
-    duration: moveMs * 0.5,
-    delay: dir === "in" ? 0 : delay + moveMs * 0.5,
+    duration: moveMs * (dir === "in" ? 0.5 : 0.55),
+    delay: dir === "in" ? 0 : delay + moveMs * 0.3,
     easing: "ease-in-out",
     fill: "both",
   });
-  // The bar's logo and the big one trade places part by part, so the letters never go missing in between: in, the
-  // bar's letters show as the big ones melt away, and its tile fades in under the copy before it lands (so when the copy
-  // fades away over it there is no dip); out, the tile goes under the copy at once and the letters stay until the big
-  // ones are coming in.
+  // The bar's logo and the big one trade places part by part: in, the bar's letters show as the big ones melt away, and
+  // its tile fades in under the copy before it lands (so when the copy fades away over it there is no dip); out, the
+  // letters are gone from the start and the tile goes under the copy as it takes off.
   const swaps =
     dir === "in"
       ? [setTimeout(() => holdBrand("in-text"), moveMs * 0.08), setTimeout(() => holdBrand(null), moveMs * 0.6)]
-      : [setTimeout(() => holdBrand("out-text"), fadeMs), setTimeout(() => holdBrand(null), delay + moveMs * 0.8)];
+      : [setTimeout(() => holdBrand(null), fadeMs)];
   const anim = { finished: Promise.all([move.finished, arc.finished, fade.finished]) };
   const finish = () => {
     swaps.forEach(clearTimeout);

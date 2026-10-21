@@ -113,8 +113,10 @@ export default function TvTopbar() {
   // The logo on the left is not here on Inicio (the big one in the middle is): it flies between the two (lib/logoFly.js).
   const brandHold = useBrandHold();
   const brandHidden = brandHold === "in" ? true : brandHold ? false : onHome;
-  // Only its letters, while the tile is the flying copy's.
-  const tileHidden = brandHold === "in-text" || brandHold === "out-text";
+  // Only its letters, while the tile is the flying copy's (on the way in).
+  const tileHidden = brandHold === "in-text";
+  // Only its tile, on the way back: the letters melt away at once.
+  const textHidden = brandHold === "out";
   const goUp = useGoUp();
   const [modesErr, setModesErr] = useState("");
   const { toModes, inGame, asking, press, leaveNow, cancelAsk } = useRoomExit({
@@ -214,7 +216,7 @@ export default function TvTopbar() {
       <header className={`tv-topbar${backAnim ? ` is-back-${backAnim}` : ""}${brandHold || flew ? " is-back-fly" : ""}`}>
         <div className="tv-topbar-start">
           {shownButton}
-          <div className={`tv-brand${brandHidden ? " is-hidden" : ""}${tileHidden ? " is-tile-hidden" : ""}`}>
+          <div className={`tv-brand${brandHidden ? " is-hidden" : ""}${tileHidden ? " is-tile-hidden" : ""}${textHidden ? " is-text-hidden" : ""}`}>
             <AppIcon small />
             <span className="tv-brand-name">trivially</span>
           </div>
