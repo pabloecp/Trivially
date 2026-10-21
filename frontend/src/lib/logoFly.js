@@ -128,8 +128,9 @@ export function flyLogo(dir) {
     easing: "ease-in-out",
     fill: "both",
   });
-  // The bar's logo goes out of sight as the copy takes over (out), or shows as the copy lands (in).
-  const swap = setTimeout(() => holdBrand(null), dir === "in" ? moveMs * 0.92 : fadeMs);
+  // The bar's logo goes out of sight as the copy takes over (out), or fades in under the copy before it lands, so when
+  // the copy fades away over it there is no dip in between (in).
+  const swap = setTimeout(() => holdBrand(null), dir === "in" ? moveMs * 0.72 : fadeMs);
   const anim = { finished: Promise.all([move.finished, arc.finished, fade.finished]) };
   const finish = () => {
     clearTimeout(swap);
