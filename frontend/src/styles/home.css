@@ -332,6 +332,12 @@
   40% { opacity: 1; }
   to { max-width: 0; margin-right: -12px; padding-left: 0; padding-right: 0; opacity: 0; transform: scale(0.6); }
 }
+/* While the big logo flies to the bar's (or back), "Volver" only fades: if it grew or shrank it would push the small logo
+   along and the flight would land where the logo is no longer (lib/logoFly.js). */
+.tv-topbar.is-back-fly.is-back-in .tv-chip--leave { animation: tvBackFadeIn 0.45s ease backwards; }
+.tv-topbar.is-back-fly.is-back-out .tv-chip--leave { animation: tvBackFadeOut 0.2s ease forwards; }
+@keyframes tvBackFadeIn { from { opacity: 0; } }
+@keyframes tvBackFadeOut { to { opacity: 0; } }
 @media (prefers-reduced-motion: reduce) {
   .tv-topbar.is-back-in .tv-chip--leave { animation: none; }
   .tv-topbar.is-back-out .tv-chip--leave { display: none; }

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { roomPath } from "../../modes/index.js";
-import { useBrandHold, holdBrand } from "../../lib/logoFly.js";
+import { useBrandHold, holdBrand, rememberBrand } from "../../lib/logoFly.js";
 import { useApp } from "../../lib/store.jsx";
 import { useFriends } from "../../lib/friends.jsx";
 import AppIcon from "./AppIcon.jsx";
@@ -33,7 +33,10 @@ export function useGoUp() {
   const { room } = useApp();
   return () => {
     // From an option back to Inicio: the top bar's logo flies back to the middle (lib/logoFly.js).
-    if (!room && /^\/jugar\/[^/]+/.test(location.pathname)) holdBrand("out");
+    if (!room && /^\/jugar\/[^/]+/.test(location.pathname)) {
+      rememberBrand();
+      holdBrand("out");
+    }
     if ((window.history.state?.idx ?? 0) > 0) nav(-1);
     else nav(upPath(), { replace: true });
   };
@@ -190,16 +193,23 @@ export default function TvTopbar() {
   useEffect(() => {
     hadBack = hasBack;
   }, [hasBack]);
+  // While the logo flies, the button (faded out) keeps its place: gone, it would shift the logo it stands beside.
   useEffect(() => {
-    if (!backAnim) return undefined;
+    if (!backAnim || brandHold) return undefined;
     const t = setTimeout(() => setBackAnim(null), BACK_ANIM_MS);
     return () => clearTimeout(t);
-  }, [backAnim]);
+  }, [backAnim, brandHold]);
+  // "Volver" only fades while the logo flies (home.css .is-back-fly), and until its own animation is over.
+  const [flew, setFlew] = useState(false);
+  useEffect(() => {
+    if (brandHold) setFlew(true);
+    else if (!backAnim) setFlew(false);
+  }, [brandHold, backAnim]);
   const shownButton = leaveButton || (backAnim === "out" ? lastButton.current : null);
 
   return (
     <>
-      <header className={`tv-topbar${backAnim ? ` is-back-${backAnim}` : ""}`}>
+      <header className={`tv-topbar${backAnim ? ` is-back-${backAnim}` : ""}${brandHold || flew ? " is-back-fly" : ""}`}>
         <div className="tv-topbar-start">
           {shownButton}
           <div className={`tv-brand${brandHidden ? " is-hidden" : ""}`}>

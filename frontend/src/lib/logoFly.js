@@ -18,6 +18,14 @@ export function holdBrand(next) {
   listeners.forEach((fn) => fn());
 }
 
+// Where the bar's small logo is (its tile) right now: kept by the screen that is about to change the bar ("Volver" is
+// about to shrink away and the logo with it slides left), so the flight back starts from where the logo was seen.
+let remembered = null;
+export function rememberBrand() {
+  const tile = document.querySelector(".tv-brand .tv-appicon")?.getBoundingClientRect();
+  remembered = tile?.width ? { left: tile.left, top: tile.top, width: tile.width, height: tile.height } : null;
+}
+
 export function useBrandHold() {
   return useSyncExternalStore(
     (fn) => {
@@ -47,7 +55,10 @@ export function flyLogo(dir) {
   big.style.animation = "none";
   const box = big.getBoundingClientRect();
   const tile = big.querySelector(".tv-appicon").getBoundingClientRect();
-  const target = brand.querySelector(".tv-appicon").getBoundingClientRect();
+  // Out: from where the bar's logo was when "Volver" was pressed; in: to where it is now ("Volver" has already taken
+  // its place beside it, see .is-back-fly).
+  const target = (dir === "out" && remembered) || brand.querySelector(".tv-appicon").getBoundingClientRect();
+  remembered = null;
   if (!box.width || !target.width) {
     holdBrand(null);
     return;
