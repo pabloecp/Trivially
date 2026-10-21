@@ -186,7 +186,12 @@ export default function Home() {
   }
   lastScreen.current = screen;
   useEffect(() => {
-    if (screen !== "home" || leaving || onPlayPath || !playShown.current) return undefined;
+    // Anything but /jugar → Inicio (going into a room, whose address can change a moment before the room arrives, or
+    // coming back to /jugar) clears it, so the page never stays sunk.
+    if (screen !== "home" || leaving || onPlayPath || !playShown.current) {
+      setPlayOut(false);
+      return undefined;
+    }
     setPlayOut(true);
     const t = setTimeout(() => {
       playShown.current = false;
