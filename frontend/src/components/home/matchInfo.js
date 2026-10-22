@@ -35,14 +35,15 @@ export const CASUAL_GAMES = MATCH_GAMES;
 export const gamesFor = (kind) => (kind === "casual" ? CASUAL_GAMES : MATCH_GAMES);
 
 // What the roulette really draws (MATCH_VARIANTS on the server): each game with one way of playing it, a game of its
-// own in a public match ("Trivia Cerradas" is only four-option questions).
+// own in a public match ("Trivia Cerradas" is only four-option questions). `hint` says how it's played in a few words
+// ("Vota los juegos", VoteBoard.jsx).
 export const MATCH_VARIANTS = [
-  { id: "trivia-cerradas", game: "opciones", way: "Cerradas" },
-  { id: "trivia-abiertas", game: "opciones", way: "Abiertas" },
-  { id: "rango-linea", game: "historia", way: "Línea del tiempo" },
-  { id: "rango-cifras", game: "historia", way: "Cifras" },
-  { id: "minas-turnos", game: "minas", way: "Por turnos" },
-  { id: "minas-carrera", game: "minas", way: "Carrera" },
+  { id: "trivia-cerradas", game: "opciones", way: "Cerradas", hint: "Elige entre 4 opciones" },
+  { id: "trivia-abiertas", game: "opciones", way: "Abiertas", hint: "Escribe la respuesta" },
+  { id: "rango-linea", game: "historia", way: "Línea del tiempo", hint: "El año de un suceso" },
+  { id: "rango-cifras", game: "historia", way: "Cifras", hint: "Un número en una barra" },
+  { id: "minas-turnos", game: "minas", way: "Por turnos", hint: "Una casilla por turno" },
+  { id: "minas-carrera", game: "minas", way: "Carrera", hint: "Todas las que puedas" },
 ];
 /** A variant by its id; an older server's plain game id is that game with no way. */
 export const findVariant = (id) => MATCH_VARIANTS.find((v) => v.id === id) || { id, game: id, way: null };

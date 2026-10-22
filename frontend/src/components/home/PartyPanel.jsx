@@ -88,7 +88,7 @@ const inertUnless = (shown) => (el) => {
 // match, picked from a player's menu (the host or a player with the settings permission). On the central device itself
 // the column only shows (`display`): no menus, chat or way out, and the code to join instead of "Invitar".
 export default function PartyPanel({ room, onToast, scores = false, display = false, className = "" }) {
-  const { user, isCentral, leaveRoom } = useApp();
+  const { user, isCentral, leaveRoom, addTestBot } = useApp();
   const nav = useNavigate();
   const [menuFor, setMenuFor] = useState(null);
   const { copied, copy: copyInvite } = useInvite(room.code, onToast);
@@ -254,6 +254,16 @@ export default function PartyPanel({ room, onToast, scores = false, display = fa
               );
             })}
           </ul>
+          {/* While the room waits, owners can try any game alone with bots that answer by themselves. */}
+          {room.phase === "lobby" && !room.matchmaking && !display && !isCentral && user?.role === "owner" && (
+            <button
+              type="button"
+              className="tv-mini-btn tv-party-testbot"
+              onClick={() => addTestBot().catch((e) => onToast?.(e.message || "No se pudo añadir el bot"))}
+            >
+              Añadir bot de prueba
+            </button>
+          )}
           {/* While the room waits: your friends who are online, to invite (instead of "Esperando amigos"). */}
           {!scores && !display && !room.matchmaking && <InviteFriends room={room} onToast={onToast} />}
           {spectators.length > 0 && (

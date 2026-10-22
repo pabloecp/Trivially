@@ -1670,6 +1670,7 @@
 }
 .tv-mini-btn:hover { transform: translateY(-2px); box-shadow: 0 5px 0 var(--tv-neutral-edge); }
 .tv-mini-btn:active { transform: translateY(3px); box-shadow: 0 0 0 var(--tv-neutral-edge); }
+.tv-party-testbot { display: block; margin: 10px auto 4px; }
 .tv-mini-btn.is-on { background: var(--p-bad); color: #fff; box-shadow: 0 3px 0 var(--p-bad-edge); }
 .tv-mini-btn.is-on:hover { box-shadow: 0 5px 0 var(--p-bad-edge); }
 .tv-mini-btn.is-on:active { box-shadow: 0 0 0 var(--p-bad-edge); }

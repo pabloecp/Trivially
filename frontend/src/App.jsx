@@ -128,7 +128,8 @@ export default function App() {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/sala/:code" element={<Home />} />
-        {/* Inicio is "¿Cómo quieres jugar?" (Casual, Competitivo, Privada: components/home/PlayPage.jsx); each option has its address. */}
+        {/* Inicio is "¿Cómo quieres jugar?" (Pública and Privada: components/home/PlayPage.jsx); each option has its address
+            (Pública's two tabs, /jugar/casual and /jugar/competitivo, and /jugar/privada). */}
         <Route path="/jugar" element={<Navigate to="/" replace />} />
         <Route path="/jugar/:option" element={<Home />} />
         <Route path="/lobby/:code" element={<LobbyRedirect />} />

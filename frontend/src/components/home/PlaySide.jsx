@@ -61,8 +61,9 @@ export function PlayerCard({ match = false, refreshOn = null }) {
   );
 }
 
-// The rank (lib/rank.js): the tier's crown in its colour, "Oro II" and the points, and a bar to the next step.
-function RankCard({ rank }) {
+// The rank (lib/rank.js): the tier's crown in its colour, "Oro II" and the points, and a bar to the next step. Also on
+// Competitivo's ticket (PlayPage).
+export function RankCard({ rank }) {
   const info = rankInfo(rank);
   return (
     <div className="tv-play-rank" style={{ "--rank": info.tier.color }}>

@@ -359,7 +359,7 @@ export default function Home() {
           // A Clásico's roulette and tutorial show on the central device too.
           shownRoom.phase === "intro" ? <MatchIntro room={shownRoom} /> : <CentralLobby room={shownRoom} />
         ) : screen === "home" ? (
-          // Inicio is "¿Cómo quieres jugar?": the big logo and Casual, Competitivo and Privada right on it.
+          // Inicio is "¿Cómo quieres jugar?": the big logo and Pública and Privada right on it.
           <PlayPage leaving={leaving} />
         ) : (
           <div className={`tv-room${leaving ? " is-leaving" : ""}`}>

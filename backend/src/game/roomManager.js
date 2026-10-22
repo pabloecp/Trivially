@@ -494,14 +494,14 @@ export class RoomManager {
   }
 
   /**
-   * An owner's test bots, for trying Farsante alone: up to FARSANTE_TEST_BOTS, added in its lobby. They are plain bots
-   * (they write and vote by themselves, quickly, see botMove) with an obvious name, not the guest-like ones of the
-   * public matches; the host can take them out like any player. `userId` must be the socket's verified account.
+   * An owner's test bots, for trying any game alone: up to FARSANTE_TEST_BOTS, added while the room waits. They are plain
+   * bots (they answer by themselves, see botMove; in Farsante quickly) with an obvious name, not the guest-like ones of
+   * the public matches; the host can take them out like any player. `userId` must be the socket's verified account.
    */
   addTestBot(room, userId) {
     const owner = this.store?.users?.[userId];
     if (!owner || !hasRole(owner, "owner")) throw new Error("Solo los owners pueden añadir bots de prueba");
-    if (room.game !== FARSANTE_GAME) throw new Error("Los bots de prueba son solo para Farsante");
+    if (room.matchmaking) throw new Error("Las partidas públicas no admiten bots de prueba");
     if (room.phase !== "lobby") throw new Error("Solo se pueden añadir bots antes de empezar");
     const bots = [...room.players.values()].filter((p) => p.bot).length;
     if (bots >= FARSANTE_TEST_BOTS) throw new Error(`Máximo ${FARSANTE_TEST_BOTS} bots de prueba`);
@@ -635,7 +635,7 @@ export class RoomManager {
     }
     if (track.type === "open") {
       // A song is answered by its id, like picking it in the search box; a question by its answer.
-      const answer = room.game === QUIZ_GAME ? track.answer : track.id;
+      const answer = room.game === QUIZ_GAME || room.game === REY_GAME ? track.answer : track.id;
       this.submitAnswer(room, bot.id, right ? answer : "No lo sé");
     }
     return false;

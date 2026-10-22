@@ -11,7 +11,7 @@ import VolumeMenu from "./VolumeMenu.jsx";
 
 /**
  * Where leaving a room goes: one step back, to the option of "¿Cómo quieres jugar?" it came from (PlayPage): a public
- * match's Casual or Competitivo, otherwise Privada (create a room or join one with a code).
+ * match's tab of Pública (Casual or Competitivo), otherwise Privada (create a room or join one with a code).
  */
 export function exitPath(room) {
   return room?.matchmaking ? `/jugar/${room.matchmaking.kind}` : "/jugar/privada";
