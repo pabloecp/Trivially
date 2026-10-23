@@ -300,7 +300,7 @@ export default function PlayPage({ leaving = false, toHome = false }) {
   const soon = Boolean(kind?.soon) && !pending;
 
   // Beside the option's card, what makes the match, as big cards with their logo rather than plain settings: the kind
-  // (switching it swaps the card on the left, ModeStage's `swapKey`) and how many play (a picture of the seats), then
+  // (switching it swaps the card on the left, ModeStage's `swapKey`) and how many play, then
   // what the match will be.
   const matchSettings = (
     <>
@@ -327,7 +327,6 @@ export default function PlayPage({ leaving = false, toHome = false }) {
           icon: o.icon,
           label: o.label,
           hint: o.hint,
-          art: <Seats count={o.value} />,
         }))}
       />
       <div className="tv-optrow">
@@ -624,8 +623,8 @@ export default function PlayPage({ leaving = false, toHome = false }) {
 }
 
 // A choice that matters, not a plain setting: big cards side by side, each a real button (its edge under it) with its
-// logo on a square, its name and a line under it, and `art` (a picture of it) on the right. The chosen one fills with
-// its colour, its logo's square turning white; its logo and picture pop in each time it's chosen.
+// logo on a square, its name and a line under it. The chosen one fills with
+// its colour, its logo's square turning white; its logo pops in each time it's chosen.
 function BigChoice({ label, options, value, onChange }) {
   return (
     <div className="tv-bigpick" role="radiogroup" aria-label={label}>
@@ -650,35 +649,10 @@ function BigChoice({ label, options, value, onChange }) {
                 <small>{o.hint}</small>
               </span>
               {o.tag && <span className="tv-bigpick-tag">{o.tag}</span>}
-              {o.art && (
-                <span key={on ? "art-on" : "art-off"} className="tv-bigpick-art" aria-hidden="true">
-                  {o.art}
-                </span>
-              )}
             </button>
           );
         })}
       </div>
     </div>
-  );
-}
-
-// How many play, drawn: two seats facing each other with "VS" between them, or five side by side.
-function Seats({ count }) {
-  if (count === 2) {
-    return (
-      <span className="tv-seats is-duel">
-        <i style={{ "--i": 0 }} />
-        <b style={{ "--i": 1 }}>VS</b>
-        <i style={{ "--i": 2 }} />
-      </span>
-    );
-  }
-  return (
-    <span className="tv-seats">
-      {Array.from({ length: count }, (_, i) => (
-        <i key={i} style={{ "--i": i }} />
-      ))}
-    </span>
   );
 }

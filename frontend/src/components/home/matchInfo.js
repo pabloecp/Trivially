@@ -32,6 +32,18 @@ export const MATCH_KINDS = {
   },
 };
 
+// What a public match's search shows while it waits, one at a time (MatchLobby): short tips about its games.
+export const MATCH_TIPS = [
+  "En Trivia, cuanto antes respondas, más puntos ganas",
+  "En las preguntas abiertas no hace falta escribirlo perfecto",
+  "En Rango, el año o el número exacto vale 1000 puntos",
+  "En Rango, aunque no aciertes, cuanto más cerca, más puntos",
+  "En Campo de minas, pisar una mina te deja fuera de la ronda",
+  "En la carrera de Campo de minas, el más rápido se lleva las respuestas",
+  "Cada juego lo gana quien más puntos saca en él",
+  "Si quedáis uno a uno, un tercer juego desempata",
+];
+
 export const ROUNDS_PER_GAME = 5;
 // Games of every public match, and its rounds (MATCH_GAME_COUNT and MATCH_ROUNDS on the server).
 export const MATCH_GAME_COUNT = 2;

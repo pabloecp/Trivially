@@ -5,7 +5,7 @@ import { exitPath } from "./TvTopbar.jsx";
 import Avatar from "./Avatar.jsx";
 import Icon from "./Icon.jsx";
 import ModeStage from "./ModeStage.jsx";
-import { MATCH_KINDS, gamesText, sizeName } from "./matchInfo.js";
+import { MATCH_KINDS, MATCH_TIPS, ROUNDS_PER_GAME, sizeName } from "./matchInfo.js";
 import "../../styles/match.css";
 import "../../styles/lobby.css";
 
@@ -73,36 +73,58 @@ export default function MatchLobby({ room }) {
         </div>
 
         <div className="tv-play-settings tv-ml-body">
-          {/* The clock, framed like the logo (its five coloured slices): how long it has been searching, then, once full,
-              the seconds until it starts (the frame turning). Each new number slides in. */}
-          <div className="tv-ml-clock" role="timer" aria-live="off">
-            <span className="tv-ml-clock-label">{full ? "La partida empieza en" : "Buscando desde hace"}</span>
-            <span key={full ? `s${startsIn}` : clock} className="tv-ml-clock-time">
-              {full ? startsIn : clock}
-            </span>
-            <span className="tv-ml-clock-sub">
-              {full ? "¡Preparados!" : `${players.length} de ${info.size} jugadores · ${gamesText(info.rounds)}`}
-            </span>
+          <div className="tv-ml-center">
+            {/* The clock, framed like the logo (its five coloured slices): how long it has been searching, then, once
+                full, the seconds until it starts (the frame turning). Each new number slides in. */}
+            <div className="tv-ml-clock" role="timer" aria-live="off">
+              <span className="tv-ml-clock-label">{full ? "La partida empieza en" : "Buscando desde hace"}</span>
+              <span key={full ? `s${startsIn}` : clock} className="tv-ml-clock-time">
+                {full ? startsIn : clock}
+              </span>
+              <span className="tv-ml-clock-sub">{full ? "¡Preparados!" : "Te avisamos en cuanto esté completa"}</span>
+            </div>
+            <ul className="tv-ml-seats" aria-label="Jugadores">
+              {seats.map((p, i) => (
+                <li key={p ? p.id : `empty${i}`} className={`tv-ml-seat${p ? " is-taken" : ""}${p?.id === user?.id ? " is-me" : ""}`} style={{ "--i": i }}>
+                  {p ? (
+                    <>
+                      <Avatar name={p.name} avatar={p.avatar} />
+                      <span className="tv-ml-name">{p.id === user?.id ? "Tú" : p.name}</span>
+                    </>
+                  ) : (
+                    <>
+                      <span className="tv-ml-empty" role="img" aria-label="Lugar libre">
+                        <Icon name="user" size={24} strokeWidth={2.2} />
+                      </span>
+                      <span className="tv-ml-name is-waiting">Libre</span>
+                    </>
+                  )}
+                </li>
+              ))}
+            </ul>
           </div>
-          <ul className="tv-ml-seats" aria-label="Jugadores">
-            {seats.map((p, i) => (
-              <li key={p ? p.id : `empty${i}`} className={`tv-ml-seat${p ? " is-taken" : ""}${p?.id === user?.id ? " is-me" : ""}`} style={{ "--i": i }}>
-                {p ? (
-                  <>
-                    <Avatar name={p.name} avatar={p.avatar} />
-                    <span className="tv-ml-name">{p.id === user?.id ? "Tú" : p.name}</span>
-                  </>
-                ) : (
-                  <>
-                    <span className="tv-ml-empty" role="img" aria-label="Lugar libre">
-                      <Icon name="user" size={22} strokeWidth={2.2} />
-                    </span>
-                    <span className="tv-ml-name is-waiting">Libre</span>
-                  </>
-                )}
-              </li>
-            ))}
-          </ul>
+
+          {/* At the bottom, while it waits: a tip about the games, a new one every few seconds, and what the match will
+              be (like "Partida" on /jugar/casual). */}
+          <div className="tv-ml-foot">
+            <Tip />
+            <dl className="tv-play-fields">
+              <div>
+                <dt>Jugadores</dt>
+                <dd key={players.length}>
+                  {players.length}/{info.size}
+                </dd>
+              </div>
+              <div>
+                <dt>Juegos</dt>
+                <dd>{Math.round(info.rounds / ROUNDS_PER_GAME)}</dd>
+              </div>
+              <div>
+                <dt>Rondas</dt>
+                <dd>{info.rounds}</dd>
+              </div>
+            </dl>
+          </div>
         </div>
       </section>
 
@@ -126,4 +148,26 @@ function useSearchStart(code) {
     }
   });
   return since;
+}
+
+const TIP_MS = 6000;
+
+// "Consejo": one of MATCH_TIPS, from a random one, the next fading in every TIP_MS.
+function Tip() {
+  const [index, setIndex] = useState(() => Math.floor(Math.random() * MATCH_TIPS.length));
+  useEffect(() => {
+    const id = setInterval(() => setIndex((i) => (i + 1) % MATCH_TIPS.length), TIP_MS);
+    return () => clearInterval(id);
+  }, []);
+  return (
+    <p className="tv-ml-tip">
+      <span className="tv-ml-tip-icon" aria-hidden="true">
+        <Icon name="bulb" size={20} strokeWidth={2.4} />
+      </span>
+      <span className="tv-ml-tip-text">
+        <small>Consejo</small>
+        <span key={index}>{MATCH_TIPS[index]}</span>
+      </span>
+    </p>
+  );
 }
