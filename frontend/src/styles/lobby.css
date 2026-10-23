@@ -21,15 +21,16 @@
 .tv-play-row .tv-mstage { flex: 0 1 440px; }
 .tv-play-row .tv-settings-card { flex: 1 1 440px; gap: 18px; container-type: inline-size; }
 .tv-play-settings { display: flex; flex-direction: column; gap: 18px; min-width: 0; animation: tvSwap 0.4s var(--tv-ease-out) backwards; }
-/* The panel fills the card's height, so Privada's games (.tv-lobby-games) can sit at its bottom. */
+/* The panel fills the card's height, so the games (.tv-lobby-games) can sit at its bottom. */
 .tv-play-settings { flex: 1; }
 .tv-lobby-title { margin: 0; font-family: var(--tv-display); font-weight: 800; font-size: clamp(22px, 1.9vw, 28px); line-height: 1.05; color: var(--tv-text); }
 .tv-lobby-sub { margin: 0; font-weight: 700; font-size: 15px; line-height: 1.35; color: var(--tv-text-3); }
 
-/* "Juegos de las salas privadas" (Privada): each game's icon in its colour and its name, only to read (flat), at the
-   bottom of the panel. */
+/* "Juegos disponibles" (Pública) and "Juegos de las salas privadas": each game's icon in its colour and its name (its
+   ways under it in a public match), only to read (flat), at the bottom of the panel. */
 .tv-lobby-games { display: grid; gap: 10px; margin-top: auto; }
 .tv-lobby-gamechips { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin: 0; padding: 0; list-style: none; }
+.tv-play-row:not(.is-private) .tv-lobby-gamechips { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .tv-lobby-gamechip {
   display: flex;
   align-items: center;
@@ -58,6 +59,9 @@
 .tv-lobby-gamechip-text small { overflow: hidden; font-weight: 700; font-size: 12px; color: var(--tv-text-3); text-overflow: ellipsis; white-space: nowrap; }
 @container (max-width: 720px) {
   .tv-lobby-gamechips { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@container (max-width: 520px) {
+  .tv-play-row:not(.is-private) .tv-lobby-gamechips { grid-template-columns: minmax(0, 1fr); }
 }
 .tv-room.is-leaving .tv-play-row .tv-mstage,
 .tv-room.is-leaving .tv-play-row .tv-settings-card { animation: var(--tv-box-out); }
@@ -271,12 +275,6 @@
   animation: tvPopIn 0.4s var(--tv-spring);
 }
 
-/* "Partida": what the match will be, like a ticket's fields: a small capital label and a big number. */
-.tv-play-fields { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin: 6px 0 0; overflow: hidden; border-radius: 20px; background: var(--tv-option-bg); }
-.tv-play-fields > div { display: grid; justify-items: center; gap: 6px; min-width: 0; padding: 14px 8px; text-align: center; }
-.tv-play-fields > div + div { box-shadow: inset 1px 0 0 var(--tv-line); }
-.tv-play-fields dt { max-width: 100%; overflow: hidden; font-family: var(--tv-mono); font-weight: 800; font-size: 11px; letter-spacing: 0.1em; text-overflow: ellipsis; text-transform: uppercase; color: var(--tv-text-3); }
-.tv-play-fields dd { margin: 0; font-family: var(--tv-display); font-weight: 800; font-size: 30px; line-height: 1; color: var(--tv-text); animation: tvPopIn 0.3s var(--tv-spring); }
 
 /* "Tu rango" (Competitivo): the rank (RankCard) in a flat box, coming in when Competitivo is picked. */
 .tv-play-rankrow { animation: tvSwap 0.45s var(--tv-ease-out) backwards; }
@@ -402,6 +400,5 @@
   .tv-ml-clock,
   .tv-ml-clock-time,
   .tv-play-settings,
-  .tv-play-fields dd,
   .tv-codecell.is-filled { animation: none; }
 }

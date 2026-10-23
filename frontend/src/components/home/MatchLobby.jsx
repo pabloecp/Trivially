@@ -82,7 +82,7 @@ export default function MatchLobby({ room }) {
               <span key={full ? `s${startsIn}` : clock} className="tv-ml-clock-time">
                 {full ? startsIn : clock}
               </span>
-              <span className="tv-ml-clock-sub">{full ? "¡Preparados!" : "Te avisamos en cuanto esté completa"}</span>
+              <span className="tv-ml-clock-sub">{full ? "¡Prepárate!" : "Te avisamos en cuanto esté completa"}</span>
             </div>
             <ul className="tv-ml-seats" aria-label="Jugadores">
               {seats.map((p, i) => (

@@ -13,7 +13,7 @@ import ModeStage from "./ModeStage.jsx";
 import { RankCard } from "./PlaySide.jsx";
 import OptionRow from "./OptionRow.jsx";
 
-import { MATCH_GAME_COUNT, MATCH_KINDS, MATCH_ROUNDS, MATCH_SIZES, sizeName } from "./matchInfo.js";
+import { MATCH_KINDS, MATCH_SIZES, gamesFor, sizeName, variantsFor } from "./matchInfo.js";
 import "../../styles/match.css";
 import "../../styles/lobby.css";
 
@@ -102,7 +102,7 @@ function codeFrom(text) {
 // card ("Elige tu partida"; switching swaps the card with a sweep of light), with how many play; every match is two
 // games, and a third when they end one each. Competitivo can be looked at but not searched for yet ("Próximamente"). Privada (/jugar/privada):
 // joining with a code, the friends online, the room "Crear sala" makes (its code shown or hidden, friends to invite)
-// and the games a room can play, at the bottom. The top bar's "Volver" (the only way back) and the
+// and the games a room can play, at the bottom (Pública's panel ends the same way, "Juegos disponibles"). The top bar's "Volver" (the only way back) and the
 // browser's Back go to Inicio. Leaving a room comes back to the option it came from (exitPath in TvTopbar.jsx). Without
 // an account, the settings ask for the name first (filled in with the one used last time) and the card's button then
 // does what was asked. Once in a room, RoomNavigator takes the player there.
@@ -339,24 +339,6 @@ export default function PlayPage({ leaving = false, toHome = false }) {
           hint: o.hint,
         }))}
       />
-      <div className="tv-optrow">
-        <span className="tv-optrow-label">Partida</span>
-        <dl className="tv-play-fields">
-          {/* Keyed by their value, so a number pops when it changes. */}
-          <div>
-            <dt>Jugadores</dt>
-            <dd key={size}>{size}</dd>
-          </div>
-          <div>
-            <dt>Juegos</dt>
-            <dd>{MATCH_GAME_COUNT}</dd>
-          </div>
-          <div>
-            <dt>Rondas</dt>
-            <dd>{MATCH_ROUNDS}</dd>
-          </div>
-        </dl>
-      </div>
       {/* Competitivo: the account's rank under the match (it moves with each competitive match). Without an account,
           a quiet note on how to get one instead, like Adivina la canción's (Casual's says what it keeps). */}
       {kind?.id === "competitivo" && isAccount && (
@@ -368,6 +350,14 @@ export default function PlayPage({ leaving = false, toHome = false }) {
         </div>
       )}
       {!isAccount && <AccountNote>{kind?.id === "competitivo" ? "para tener rango y subirlo con cada victoria." : "para guardar tus puntos y estadísticas."}</AccountNote>}
+      {/* What a public match can draw, only to read: each game with its ways (the roulette picks them). */}
+      <GameChips
+        label="Juegos disponibles"
+        games={gamesFor(kind?.id).map((id) => {
+          const m = findMode(id);
+          return { id, color: m.color, icon: m.icon, name: m.name, sub: variantsFor(kind?.id).filter((v) => v.game === id).map((v) => v.way).join(" · ") };
+        })}
+      />
     </>
   );
 
@@ -697,8 +687,8 @@ function AccountNote({ children }) {
   );
 }
 
-// The games a private room can play, only to read, at the bottom of its panel: each one's icon in its colour and its
-// name. Flat: nothing to press.
+// The games there are, only to read, at the bottom of the panel: each one's icon in its colour and its name (and, for a
+// public match, its ways under it). Flat: nothing to press.
 function GameChips({ label, games }) {
   return (
     <div className="tv-lobby-games">

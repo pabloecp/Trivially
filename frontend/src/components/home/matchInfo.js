@@ -14,7 +14,7 @@ export const MATCH_KINDS = {
     steps: [
       { icon: "grid", text: "2 juegos al azar, de 5 rondas cada uno" },
       { icon: "crown", text: "Gana cada juego quien más puntos saque" },
-      { icon: "bolt", text: "Si quedáis uno a uno, un tercer juego desempata" },
+      { icon: "bolt", text: "Si quedan uno a uno, un tercer juego desempata" },
     ],
   },
   competitivo: {
