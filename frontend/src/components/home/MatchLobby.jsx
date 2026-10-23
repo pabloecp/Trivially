@@ -74,8 +74,8 @@ export default function MatchLobby({ room }) {
 
         <div className="tv-play-settings tv-ml-body">
           <div className="tv-ml-center" style={{ "--seats": seats.length }}>
-            {/* The clock, framed like the logo (its five coloured slices): how long it has been searching, then, once
-                full, the seconds until it starts (the frame turning). Each new number slides in. */}
+            {/* The clock: how long it has been searching, then, once full, the seconds until it starts. Each new number
+                slides in. The seats under it are framed like the logo (its five coloured slices), turning once full. */}
             <div className="tv-ml-clock" role="timer" aria-live="off">
               <span className="tv-ml-clock-label">{full ? "La partida empieza en" : "Buscando desde hace"}</span>
               <span key={full ? `s${startsIn}` : clock} className="tv-ml-clock-time">
