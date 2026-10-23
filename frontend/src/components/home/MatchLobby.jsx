@@ -5,7 +5,7 @@ import { exitPath } from "./TvTopbar.jsx";
 import Avatar from "./Avatar.jsx";
 import Icon from "./Icon.jsx";
 import ModeStage from "./ModeStage.jsx";
-import { MATCH_KINDS, MATCH_TIPS, ROUNDS_PER_GAME, sizeName } from "./matchInfo.js";
+import { MATCH_KINDS, sizeName } from "./matchInfo.js";
 import "../../styles/match.css";
 import "../../styles/lobby.css";
 
@@ -73,7 +73,7 @@ export default function MatchLobby({ room }) {
         </div>
 
         <div className="tv-play-settings tv-ml-body">
-          <div className="tv-ml-center">
+          <div className="tv-ml-center" style={{ "--seats": seats.length }}>
             {/* The clock, framed like the logo (its five coloured slices): how long it has been searching, then, once
                 full, the seconds until it starts (the frame turning). Each new number slides in. */}
             <div className="tv-ml-clock" role="timer" aria-live="off">
@@ -103,28 +103,6 @@ export default function MatchLobby({ room }) {
               ))}
             </ul>
           </div>
-
-          {/* At the bottom, while it waits: a tip about the games, a new one every few seconds, and what the match will
-              be (like "Partida" on /jugar/casual). */}
-          <div className="tv-ml-foot">
-            <Tip />
-            <dl className="tv-play-fields">
-              <div>
-                <dt>Jugadores</dt>
-                <dd key={players.length}>
-                  {players.length}/{info.size}
-                </dd>
-              </div>
-              <div>
-                <dt>Juegos</dt>
-                <dd>{Math.round(info.rounds / ROUNDS_PER_GAME)}</dd>
-              </div>
-              <div>
-                <dt>Rondas</dt>
-                <dd>{info.rounds}</dd>
-              </div>
-            </dl>
-          </div>
         </div>
       </section>
 
@@ -148,26 +126,4 @@ function useSearchStart(code) {
     }
   });
   return since;
-}
-
-const TIP_MS = 6000;
-
-// "Consejo": one of MATCH_TIPS, from a random one, the next fading in every TIP_MS.
-function Tip() {
-  const [index, setIndex] = useState(() => Math.floor(Math.random() * MATCH_TIPS.length));
-  useEffect(() => {
-    const id = setInterval(() => setIndex((i) => (i + 1) % MATCH_TIPS.length), TIP_MS);
-    return () => clearInterval(id);
-  }, []);
-  return (
-    <p className="tv-ml-tip">
-      <span className="tv-ml-tip-icon" aria-hidden="true">
-        <Icon name="bulb" size={20} strokeWidth={2.4} />
-      </span>
-      <span className="tv-ml-tip-text">
-        <small>Consejo</small>
-        <span key={index}>{MATCH_TIPS[index]}</span>
-      </span>
-    </p>
-  );
 }

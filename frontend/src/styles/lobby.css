@@ -20,17 +20,18 @@
    title and how full it is on the head's line; in the middle of the panel the clock, then the seats. No decoration
    behind it: only the clock's frame has colour. */
 .tv-ml-panel .tv-ml-headline { justify-content: space-between; align-items: center; }
-/* The clock and the seats in the middle of what's left; the tip and the match's numbers at the bottom. */
-.tv-ml-body { display: flex; flex: 1; flex-direction: column; gap: 18px; }
-.tv-ml-center { flex: 1; display: grid; grid-template-columns: minmax(0, 1fr); align-content: center; justify-items: center; gap: clamp(22px, 4vh, 40px); text-align: center; }
-.tv-ml-foot { display: grid; gap: 12px; }
-/* "Consejo": a flat row, its bulb in the option's colour; each new tip fades in. */
-.tv-ml-tip { display: flex; align-items: center; gap: 14px; margin: 0; padding: 12px 16px 12px 12px; border-radius: 20px; background: var(--tv-option-bg); }
-.tv-ml-tip-icon { display: grid; place-items: center; flex-shrink: 0; width: 40px; height: 40px; border-radius: 13px; background: var(--c2); color: var(--on); }
-.tv-ml-tip-text { display: grid; gap: 2px; min-width: 0; }
-.tv-ml-tip-text small { font-family: var(--tv-mono); font-weight: 800; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--tv-text-3); }
-.tv-ml-tip-text span { font-weight: 800; font-size: 15px; line-height: 1.3; color: var(--tv-text); animation: tvTipIn 0.5s ease; }
-@keyframes tvTipIn { from { opacity: 0; transform: translateY(6px); } }
+/* The clock and the seats, one over the other in the middle of the panel and exactly as wide as each other: the
+   seats share the clock's width in one row, two wide ones in Uno contra Uno or five in Todos contra Todos. */
+.tv-ml-body { display: flex; flex: 1; flex-direction: column; }
+.tv-ml-center {
+  flex: 1;
+  display: grid;
+  grid-template-columns: minmax(0, min(100%, 620px));
+  align-content: center;
+  justify-content: center;
+  gap: 16px;
+  text-align: center;
+}
 
 /* The clock: a dark tile framed by the logo's five coloured slices (like the Clásico tiles); flat, nothing to press. While
    it searches it counts up; once full it counts down to the start, the frame's colours turning round it. */
@@ -47,7 +48,7 @@
   display: grid;
   justify-items: center;
   gap: 4px;
-  width: min(100%, 440px);
+  width: 100%;
   padding: 22px 24px 24px;
   border: 6px solid transparent;
   border-radius: 30px;
@@ -75,9 +76,10 @@
 
 /* The seats: a tile each. Taken, the player's face and name (yours ringed in the option's colour), popping in when
    they arrive; free, a dashed outline that breathes. */
-.tv-ml-body .tv-ml-seats { gap: 12px; max-width: 100%; margin: 0; flex-wrap: nowrap; }
+.tv-ml-body .tv-ml-seats { display: grid; grid-template-columns: repeat(var(--seats, 5), minmax(0, 1fr)); gap: 12px; width: 100%; max-width: none; margin: 0; }
 .tv-ml-body .tv-ml-seat {
-  flex: 0 1 124px;
+  justify-content: center;
+  min-height: 132px;
   gap: 10px;
   padding: 16px 10px 14px;
   border-radius: 22px;
@@ -91,8 +93,10 @@
 .tv-ml-body .tv-ml-empty { width: 72px; height: 72px; font-size: 28px; }
 .tv-ml-body .tv-ml-name { max-width: 100%; font-size: 14px; }
 @media (max-width: 640px) {
-  .tv-ml-body .tv-ml-seats { flex-wrap: nowrap; gap: 6px; width: 100%; }
-  .tv-ml-body .tv-ml-seat { flex: 1 1 0; padding: 10px 4px; border-radius: 16px; }
+  .tv-ml-clock { padding: 14px 16px 16px; border-width: 5px; }
+  .tv-ml-clock-time { font-size: 60px; }
+  .tv-ml-body .tv-ml-seats { gap: 6px; }
+  .tv-ml-body .tv-ml-seat { min-height: 92px; padding: 10px 4px; border-radius: 16px; }
   .tv-ml-body .tv-ml-seat .tv-avatar,
   .tv-ml-body .tv-ml-empty { width: 44px; height: 44px; font-size: 18px; }
   .tv-ml-body .tv-ml-name { font-size: 12px; }
@@ -316,7 +320,6 @@
   .tv-ml-clock,
   .tv-ml-clock-time,
   .tv-play-settings,
-  .tv-ml-tip-text span,
   .tv-play-fields dd,
   .tv-codecell.is-filled { animation: none; }
 }
