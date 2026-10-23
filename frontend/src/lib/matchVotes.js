@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { MATCH_VARIANTS, ROUNDS_PER_GAME } from "../components/home/matchInfo.js";
 
-// Partidas públicas: the games each player votes for before searching (Casual and Competitivo, "Vota los juegos" in
+// Partidas públicas: the games each player votes for before searching (Casual and Competitivo, "Elegir juegos" in
 // PlayPage). One vote per game the match has (1 juego: one, 3 juegos: three); a vote is a variant's id
 // (MATCH_VARIANTS) or RANDOM_VOTE ("Al azar": any of them). Each format (Duelo or todos contra todos, 1 or 3 juegos)
 // keeps its own votes, so changing one never changes another. Kept on this device (localStorage key
