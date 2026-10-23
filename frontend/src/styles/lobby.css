@@ -9,6 +9,14 @@
   --brand-text: var(--c1);
   --border-focus: var(--c2);
 }
+/* Casual ↔ its search (Home's seam "match"): the card and the panel stay; only the panel's contents go, rising a
+   little as they fade, and the button's label fades (the button stays), before the new ones come in (screenMotion.js). */
+.tv-main.is-seam-match .tv-room.is-leaving .tv-play-row > :is(.tv-mstage, .tv-settings-card, .tv-play-cta) { animation: none; }
+.tv-main.is-seam-match .tv-room.is-leaving .tv-play-row .tv-settings-card > * { animation: tvSeamOut 0.24s ease-in forwards; }
+.tv-main.is-seam-match .tv-room.is-leaving .tv-play-row :is(.tv-mstage-start, .tv-lobby-go) { animation: tvLabelOut 0.2s ease-in forwards; }
+@keyframes tvSeamOut { to { opacity: 0; transform: translateY(-14px); } }
+@keyframes tvLabelOut { to { color: transparent; } }
+
 /* The card keeps to a game card's width; the settings take the rest. */
 .tv-play-row .tv-mstage { flex: 0 1 440px; }
 .tv-play-row .tv-settings-card { flex: 1 1 440px; gap: 18px; container-type: inline-size; }

@@ -1,6 +1,6 @@
 // Screens that should feel like one: Casual and its search for players (the same frame, MatchLobby), and the options of
 // /jugar and the room they open. Instead of the big panels' usual way out and in (--tv-box-in / --tv-box-out), what is
-// the same stays put and only what changes moves, softly (Home's "seam").
+// the same stays put and only what changes moves, softly (Home's "seam"; the ways out are in CSS, .is-seam-*).
 
 const reduced = () => window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
 
@@ -24,4 +24,13 @@ export function softIn(els, { delay = 0, step = 60, lift = 16, scale = 0.985, du
       { duration, delay: delay + i * step, easing: "cubic-bezier(0.2, 0.9, 0.3, 1)", fill: "backwards" }
     )
   );
+}
+
+/** A button's label (its text and icon, in currentColor) fading in, the button itself staying where it is. */
+export function labelIn(els, { delay = 60, duration = 360 } = {}) {
+  if (reduced()) return;
+  for (const el of els) {
+    const color = getComputedStyle(el).color;
+    el.animate?.([{ color: "transparent" }, { color }], { duration, delay, easing: "ease-out", fill: "backwards" });
+  }
 }

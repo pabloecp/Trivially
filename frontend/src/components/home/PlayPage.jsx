@@ -61,6 +61,9 @@ const JOIN_FACTS = [
   { icon: "play", text: "Entra y juega con ellos" },
 ];
 
+// How many play, as last picked in this tab (PlayPage remounts when the search is cancelled).
+let lastSize = MATCH_SIZES[0].value;
+
 // Pública's two kinds; its tile opens the first one that can be played unless another was used last.
 const PUBLIC_KINDS = KINDS.filter((k) => k.id !== "privada");
 const OPEN_KINDS = PUBLIC_KINDS.filter((k) => !k.soon);
@@ -121,8 +124,13 @@ export default function PlayPage({ leaving = false, toHome = false }) {
   const wanted = KINDS.some((k) => k.id === option) ? option : null;
   const [chosen, setChosen] = useState(wanted);
   const [out, setOut] = useState(false);
-  // Uno contra Uno unless the player picks otherwise; Privada starts on creating a room.
-  const [size, setSize] = useState(MATCH_SIZES[0].value);
+  // Uno contra Uno unless the player picks otherwise (kept while the tab is open, so coming back from the search finds
+  // it as it was); Privada starts on creating a room.
+  const [size, setSizeState] = useState(() => lastSize);
+  const setSize = (value) => {
+    lastSize = value;
+    setSizeState(value);
+  };
   const [privMode, setPrivMode] = useState("crear");
   const [code, setCode] = useState("");
   // Privada: the online friends to invite as soon as the room exists (the game is chosen inside, as always). Hiding the

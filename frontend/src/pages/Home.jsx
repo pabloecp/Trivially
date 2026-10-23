@@ -15,7 +15,7 @@ import PlaySheet from "../components/home/PlaySheet.jsx";
 import { RoomDock, RoomHeader } from "../components/home/RoomBars.jsx";
 import "../styles/home.css";
 import { resolveCode } from "../lib/hiddenCode.js";
-import { settle, softIn } from "../lib/screenMotion.js";
+import { labelIn, settle, softIn } from "../lib/screenMotion.js";
 
 // A game tile of "Elige el juego", filled with the game's colour. The main game's is as wide as two. The grey
 // "Más juegos pronto" tile (SOON_TILE) looks like one, with a lock, and has no "Pronto" tag of its own.
@@ -134,6 +134,8 @@ function shake(tile) {
 // how long the game tiles take to go after a pick, before the game's panel comes in. Both match the exit animations in
 // home.css.
 const SOFT_OUT_MS = 200;
+// Casual ↔ its search: only the panel's contents and the button's label go, this long, before the new ones come in.
+const MATCH_OUT_MS = 240;
 const TILES_OUT_MS = 320;
 
 function reducedMotion() {
@@ -184,8 +186,9 @@ export default function Home() {
     const other = want === "room" ? room : lastRoom.current;
     if (other?.matchmaking && other.phase === "lobby") {
       setSeam("match");
-      swap();
-      return undefined;
+      setLeaving(true);
+      const t = setTimeout(swap, MATCH_OUT_MS);
+      return () => clearTimeout(t);
     }
     setSeam("soft");
     setLeaving(true);
@@ -203,8 +206,10 @@ export default function Home() {
     if (seam === "match") {
       // Nothing inside the card plays its way in either (its sweep, its name and steps coming in).
       settle(root.querySelectorAll(".tv-play-row .tv-mstage *"));
-      // The card is where it was: only its button and the panel's contents change, fading in where they are.
-      softIn(root.querySelectorAll(".tv-play-row .tv-settings-head, .tv-play-row .tv-mstage-start, .tv-play-cta > *"), { lift: 8, scale: 1, step: 0, duration: 380 });
+      // The card is where it was: only the panel's contents (rising in, the title first) and the button's label (fading
+      // in, the button itself staying put) change.
+      softIn(root.querySelectorAll(".tv-play-row .tv-settings-card > *"), { lift: 14, scale: 1, step: 90, duration: 520 });
+      labelIn(root.querySelectorAll(".tv-play-row .tv-mstage-start, .tv-play-cta .tv-lobby-go"));
     } else {
       softIn(panels, { step: 70 });
     }
