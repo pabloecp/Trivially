@@ -12,6 +12,9 @@ const GAP = 14;
 const STEP = CARD + GAP;
 // How many times the games still to play go round the reel before it stops.
 const LAPS = 7;
+// Cards drawn before where the reel starts and after where it stops, so the window is always full on both sides,
+// however wide: the reel looks endless (6 cards cover 1092 px on each side of the marker).
+const PAD = 6;
 // The reel stops this long before the roulette's time is over, so the picked game is seen still for a moment.
 const SETTLE_MS = 900;
 
@@ -46,14 +49,18 @@ function Roulette({ intro, startedAt, clockOffset, color, kind }) {
   const all = intro.variants ? variantsFor(kind).map((v) => v.id) : intro.games;
   const left = all.filter((v) => !played.includes(v));
   const pool = left.includes(now) ? left : [now];
-  const reel = Array.from({ length: LAPS * pool.length }, (_, i) => pool[i % pool.length]);
-  const target = (LAPS - 1) * pool.length + Math.max(0, pool.indexOf(now));
+  // It starts PAD cards in (a whole number of laps, so the order around the reel never breaks) and stops in its last
+  // lap, with PAD more cards after it.
+  const start = Math.ceil(PAD / pool.length) * pool.length;
+  const target = start + (LAPS - 1) * pool.length + Math.max(0, pool.indexOf(now));
+  const reel = Array.from({ length: target + PAD + 1 }, (_, i) => pool[i % pool.length]);
   const trackRef = useRef(null);
   const [landed, setLanded] = useState(false);
 
   useLayoutEffect(() => {
     const track = trackRef.current;
     if (!track) return undefined;
+    const from = start * STEP;
     const end = target * STEP;
     const duration = Math.max(1, intro.spinMs - SETTLE_MS);
     const place = (x) => {
@@ -63,7 +70,7 @@ function Roulette({ intro, startedAt, clockOffset, color, kind }) {
     let lastCell = -1;
     const tick = () => {
       const t = Math.min(1, (Date.now() + clockOffset - startedAt) / duration);
-      const x = end * easeOut(t);
+      const x = from + (end - from) * easeOut(t);
       place(x);
       const cell = Math.round(x / STEP);
       if (cell !== lastCell) {
