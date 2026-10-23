@@ -13,7 +13,7 @@ import ModeStage from "./ModeStage.jsx";
 import OptionRow from "./OptionRow.jsx";
 import SettingsSection from "./SettingsSection.jsx";
 
-import { MATCH_GAME_COUNT, MATCH_KINDS, MATCH_ROUNDS, MATCH_SIZES } from "./matchInfo.js";
+import { MATCH_GAME_COUNT, MATCH_KINDS, MATCH_ROUNDS, MATCH_SIZES, sizeName } from "./matchInfo.js";
 import "../../styles/match.css";
 import "../../styles/lobby.css";
 
@@ -34,12 +34,11 @@ const KINDS = [
     ...MATCH_KINDS.casual,
     facts: MATCH_KINDS.casual.steps,
   },
-  // Disabled for now: its tab shows, but can't be opened (and its address goes to Casual).
+  // Not playable yet (`soon`): it can be picked to see it, but its button says "Próximamente" (the server refuses it too).
   {
     ...MATCH_KINDS.competitivo,
-    disabled: true,
-    blurb: "No disponible por ahora",
-    facts: [],
+    soon: true,
+    facts: MATCH_KINDS.competitivo.steps,
   },
   {
     id: "privada",
@@ -54,9 +53,9 @@ const KINDS = [
   },
 ];
 
-// Pública's tabs, and the ones that can be opened.
+// Pública's two kinds; its tile opens the first one that can be played unless another was used last.
 const PUBLIC_KINDS = KINDS.filter((k) => k.id !== "privada");
-const OPEN_KINDS = PUBLIC_KINDS.filter((k) => !k.disabled);
+const OPEN_KINDS = PUBLIC_KINDS.filter((k) => !k.soon);
 const pageOf = (kindId) => (kindId === "privada" ? "privada" : "publica");
 
 // Pública opens on the tab it was left on last time (this device only).
@@ -94,9 +93,9 @@ function codeFrom(text) {
 // Inicio, "¿Cómo quieres jugar?": the big logo and Pública and Privada as big tiles, all on one page (/). Picking one
 // makes the tiles sink away and that option come in, laid out like a game's lobby in a room: its big card in its colour
 // (ModeStage: its name, how it goes and the main button, "Buscar partida" or "Crear sala") beside its "Ajustes".
-// Pública is Casual and Competitivo (/jugar/casual; Competitivo is disabled for now: it can't be picked in "Tipo de
-// partida" and /jugar/competitivo goes to Casual), with how many play; every match is two games, and a third when they
-// end one each. Privada (/jugar/privada): the room "Crear sala" makes (its code shown or hidden, friends to invite), and
+// Pública is Casual and Competitivo (/jugar/casual, /jugar/competitivo), picked as big cards with their logo beside the
+// card ("Elige tu partida"; switching swaps the card with a sweep of light), with how many play; every match is two
+// games, and a third when they end one each. Competitivo can be looked at but not searched for yet ("Próximamente"). Privada (/jugar/privada): the room "Crear sala" makes (its code shown or hidden, friends to invite), and
 // joining another with a code or through the friends online. The top bar's "Volver" (the only way back) and the
 // browser's Back go to Inicio. Leaving a room comes back to the option it came from (exitPath in TvTopbar.jsx). Without
 // an account, the settings ask for the name first (filled in with the one used last time) and the card's button then
@@ -110,14 +109,10 @@ export default function PlayPage({ leaving = false, toHome = false }) {
   // The option comes from the address; `chosen` is the one on screen, which follows it once the old one has gone
   // (straight away between Pública's tabs).
   const { option } = useParams();
-  const wanted = KINDS.some((k) => k.id === option && !k.disabled) ? option : null;
-  // A disabled tab's address (an old link, the last tab used): Casual instead.
-  useEffect(() => {
-    if (KINDS.some((k) => k.id === option && k.disabled)) nav(`/jugar/${OPEN_KINDS[0].id}`, { replace: true, state: location.state });
-  }, [option]);
+  const wanted = KINDS.some((k) => k.id === option) ? option : null;
   const [chosen, setChosen] = useState(wanted);
   const [out, setOut] = useState(false);
-  // Duelo unless the player picks otherwise.
+  // Uno contra Uno unless the player picks otherwise.
   const [size, setSize] = useState(MATCH_SIZES[0].value);
   const [code, setCode] = useState("");
   // Privada: the online friends to invite as soon as the room exists (the game is chosen inside, as always). Hiding the
@@ -301,24 +296,39 @@ export default function PlayPage({ leaving = false, toHome = false }) {
     ? "Creando sala…"
     : "Crear sala";
   const mainAction = match ? { type: "match", kind: kind.id, size } : { type: "create", invites: invited };
+  // Competitivo can be looked at, not searched for yet.
+  const soon = Boolean(kind?.soon) && !pending;
 
-  // The settings beside the option's card, like a game's "Ajustes". Casual: the kind of match (Competitivo can't be picked
-  // for now) and how many play, then what the match will be.
+  // Beside the option's card, what makes the match, as big cards with their logo rather than plain settings: the kind
+  // (switching it swaps the card on the left, ModeStage's `swapKey`) and how many play (a picture of the seats), then
+  // what the match will be.
   const matchSettings = (
     <>
-      <OptionRow
+      <BigChoice
         label="Tipo de partida"
-        hint="Competitivo llegará pronto"
-        options={PUBLIC_KINDS.map((k) => ({ value: k.id, label: k.name, disabled: k.disabled }))}
         value={kind?.id}
         onChange={(id) => id !== wanted && nav(`/jugar/${id}`, { replace: true, state: location.state })}
+        options={PUBLIC_KINDS.map((k) => ({
+          value: k.id,
+          color: k.color,
+          icon: k.icon,
+          label: k.name,
+          hint: k.blurb,
+          tag: k.soon ? "Pronto" : null,
+        }))}
       />
-      <OptionRow
+      <BigChoice
         label="Jugadores"
-        hint="Duelo es 1 contra 1; Todos contra todos, 5 jugadores"
-        options={MATCH_SIZES.map((o) => ({ value: o.value, label: o.label }))}
         value={size}
         onChange={setSize}
+        options={MATCH_SIZES.map((o) => ({
+          value: o.value,
+          color: kind?.color,
+          icon: o.icon,
+          label: o.label,
+          hint: o.hint,
+          art: <Seats count={o.value} />,
+        }))}
       />
       <div className="tv-optrow">
         <span className="tv-optrow-label">Partida</span>
@@ -519,13 +529,13 @@ export default function PlayPage({ leaving = false, toHome = false }) {
     <button
       type={pending ? "submit" : "button"}
       form={pending ? "tv-play-name-form" : undefined}
-      className={className}
+      className={`${className}${soon ? " is-soon" : ""}`}
       data-sound={needsName && !pending ? undefined : "none"}
       onClick={pending ? undefined : () => run(mainAction)}
-      disabled={busy || (pending ? !name.trim() : false)}
+      disabled={busy || soon || (pending ? !name.trim() : false)}
     >
-      {!pending && <Icon name={match ? "play" : "plus"} size={22} filled={Boolean(match)} strokeWidth={match ? 1.5 : 3} />}
-      {mainLabel}
+      {!pending && <Icon name={soon ? "lock" : match ? "play" : "plus"} size={22} filled={Boolean(match) && !soon} strokeWidth={soon ? 2.6 : match ? 1.5 : 3} />}
+      {soon ? "Próximamente" : mainLabel}
     </button>
   );
 
@@ -567,7 +577,18 @@ export default function PlayPage({ leaving = false, toHome = false }) {
           // The option's page, laid out like a game's in a room: its big card in its colour (what it is, how it goes and
           // the main button) beside its settings.
           <div key={pageOf(kind.id)} className={`tv-room-row tv-play-row tv-c-${kind.color}${out ? " is-out" : ""}`}>
-            <ModeStage mode={{ name: kind.name, icon: kind.icon, color: kind.color, steps: kind.facts }}>
+            <ModeStage
+              mode={{ name: kind.name, icon: kind.icon, color: kind.color, steps: kind.facts }}
+              swapKey={match ? kind.id : null}
+              extra={
+                match ? (
+                  <span key={size} className="tv-mstage-chip">
+                    <Icon name={size === 2 ? "user" : "users"} size={18} strokeWidth={2.6} />
+                    {sizeName(size)}
+                  </span>
+                ) : null
+              }
+            >
               {error && (
                 <p className="tv-lobby-error" role="alert">
                   {error}
@@ -579,7 +600,7 @@ export default function PlayPage({ leaving = false, toHome = false }) {
             <section ref={settingsRef} className="tv-settings-card tv-settings-panel" aria-labelledby="tv-settings-title">
               <div className="tv-settings-head">
                 <h2 id="tv-settings-title" className="tv-settings-title">
-                  {pending ? "¿Cómo te llamas?" : "Ajustes"}
+                  {pending ? "¿Cómo te llamas?" : match ? "Elige tu partida" : "Ajustes"}
                 </h2>
               </div>
               <div key={pending ? "name" : "settings"} className="tv-play-settings">
@@ -599,5 +620,65 @@ export default function PlayPage({ leaving = false, toHome = false }) {
         )}
       </div>
     </div>
+  );
+}
+
+// A choice that matters, not a plain setting: big cards side by side, each a real button (its edge under it) with its
+// logo on a square, its name and a line under it, and `art` (a picture of it) on the right. The chosen one fills with
+// its colour, its logo's square turning white; its logo and picture pop in each time it's chosen.
+function BigChoice({ label, options, value, onChange }) {
+  return (
+    <div className="tv-bigpick" role="radiogroup" aria-label={label}>
+      <span className="tv-optrow-label">{label}</span>
+      <div className="tv-bigpick-row">
+        {options.map((o) => {
+          const on = o.value === value;
+          return (
+            <button
+              key={o.value}
+              type="button"
+              role="radio"
+              aria-checked={on}
+              className={`tv-bigpick-card tv-c-${o.color}`}
+              onClick={() => !on && onChange(o.value)}
+            >
+              <span key={on ? "on" : "off"} className="tv-bigpick-logo" aria-hidden="true">
+                <Icon name={o.icon} size={30} strokeWidth={2.4} />
+              </span>
+              <span className="tv-bigpick-text">
+                <strong>{o.label}</strong>
+                <small>{o.hint}</small>
+              </span>
+              {o.tag && <span className="tv-bigpick-tag">{o.tag}</span>}
+              {o.art && (
+                <span key={on ? "art-on" : "art-off"} className="tv-bigpick-art" aria-hidden="true">
+                  {o.art}
+                </span>
+              )}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// How many play, drawn: two seats facing each other with "VS" between them, or five side by side.
+function Seats({ count }) {
+  if (count === 2) {
+    return (
+      <span className="tv-seats is-duel">
+        <i style={{ "--i": 0 }} />
+        <b style={{ "--i": 1 }}>VS</b>
+        <i style={{ "--i": 2 }} />
+      </span>
+    );
+  }
+  return (
+    <span className="tv-seats">
+      {Array.from({ length: count }, (_, i) => (
+        <i key={i} style={{ "--i": i }} />
+      ))}
+    </span>
   );
 }

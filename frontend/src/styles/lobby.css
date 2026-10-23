@@ -11,7 +11,7 @@
 }
 /* The card keeps to a game card's width; the settings take the rest. */
 .tv-play-row .tv-mstage { flex: 0 1 440px; }
-.tv-play-row .tv-settings-card { flex: 1 1 440px; gap: 18px; }
+.tv-play-row .tv-settings-card { flex: 1 1 440px; gap: 18px; container-type: inline-size; }
 .tv-play-settings { display: grid; align-content: start; gap: 18px; min-width: 0; animation: tvSwap 0.4s var(--tv-ease-out) backwards; }
 .tv-room.is-leaving .tv-play-row .tv-mstage,
 .tv-room.is-leaving .tv-play-row .tv-settings-card { animation: var(--tv-box-out); }
@@ -29,6 +29,131 @@
   .tv-ml-body .tv-ml-empty { width: 78px; height: 78px; font-size: 30px; }
   .tv-ml-body .tv-ml-name { max-width: 110px; font-size: 14px; }
   .tv-ml-body .tv-ml-kicker { font-size: 13px; }
+}
+
+/* ---------- The choices that make a public match (BigChoice): big cards, not plain settings ---------- */
+.tv-bigpick { display: grid; gap: 8px; min-width: 0; }
+.tv-bigpick-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; padding-bottom: 6px; }
+/* Each card is a real button: grey with its edge, rising on hover and going down when pressed; the chosen one in its
+   colour with its own edge, its logo's square white. */
+.tv-bigpick-card {
+  --face: var(--tv-neutral);
+  --rim: var(--tv-neutral-edge);
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-width: 0;
+  min-height: clamp(84px, 11vh, 118px);
+  padding: 14px 18px 14px 14px;
+  overflow: hidden;
+  border: 0;
+  border-radius: 24px;
+  background: var(--face);
+  box-shadow: 0 5px 0 var(--rim);
+  color: var(--tv-text);
+  text-align: left;
+  cursor: pointer;
+  transition: transform 0.18s var(--tv-spring), box-shadow 0.18s ease, background-color 0.35s ease, color 0.35s ease;
+}
+.tv-bigpick-card:hover { transform: translateY(-3px); box-shadow: 0 8px 0 var(--rim); }
+.tv-bigpick-card:active { transform: translateY(5px); box-shadow: 0 0 0 var(--rim); }
+.tv-bigpick-card[aria-checked="true"] { --face: var(--c2); --rim: var(--edge); color: var(--on); cursor: default; }
+.tv-bigpick-card[aria-checked="true"]:hover { transform: none; box-shadow: 0 5px 0 var(--rim); }
+.tv-bigpick-logo {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 58px;
+  height: 58px;
+  border-radius: 18px;
+  background: var(--c2);
+  box-shadow: 0 3px 0 var(--edge);
+  color: var(--on);
+}
+.tv-bigpick-card[aria-checked="true"] .tv-bigpick-logo { background: var(--on); box-shadow: none; color: var(--c2); animation: tvLogoPop 0.55s var(--tv-spring); }
+.tv-bigpick-card:not([aria-checked="true"]):hover .tv-bigpick-logo { animation: tvWiggle 0.5s ease; }
+@keyframes tvLogoPop {
+  0% { transform: scale(0.5) rotate(-18deg); }
+  60% { transform: scale(1.12) rotate(6deg); }
+  100% { transform: none; }
+}
+.tv-bigpick-text { display: grid; flex: 1; gap: 2px; min-width: 0; }
+.tv-bigpick-text strong { font-family: var(--tv-display); font-weight: 800; font-size: clamp(19px, 1.7vw, 25px); line-height: 1.1; }
+.tv-bigpick-text small { overflow: hidden; font-weight: 700; font-size: 14px; line-height: 1.25; opacity: 0.8; text-overflow: ellipsis; }
+/* "Pronto" on Competitivo: a flat label in the corner. */
+.tv-bigpick-tag {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  padding: 3px 9px;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.25);
+  font-family: var(--tv-mono);
+  font-weight: 800;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+/* The seats, on the right of how-many-play's cards: they pop in one after another when it's chosen. */
+.tv-bigpick-art { flex-shrink: 0; }
+.tv-seats { display: flex; align-items: center; gap: 5px; }
+.tv-seats i { width: 14px; height: 14px; border-radius: 50%; background: currentColor; opacity: 0.45; }
+.tv-seats.is-duel { gap: 8px; }
+.tv-seats.is-duel i { width: 20px; height: 20px; }
+.tv-seats b { font-family: var(--tv-display); font-weight: 800; font-size: 13px; opacity: 0.7; }
+.tv-bigpick-card[aria-checked="true"] .tv-seats i { opacity: 1; animation: tvSeatPop 0.45s var(--tv-spring) calc(var(--i) * 70ms) backwards; }
+.tv-bigpick-card[aria-checked="true"] .tv-seats b { opacity: 1; animation: tvSeatPop 0.45s var(--tv-spring) calc(var(--i) * 70ms) backwards; }
+@keyframes tvSeatPop { from { opacity: 0; transform: scale(0.2) translateY(8px); } }
+@container (max-width: 560px) {
+  .tv-bigpick-row { gap: 10px; }
+  .tv-bigpick-card { flex-direction: column; align-items: flex-start; gap: 10px; padding: 14px; }
+  .tv-bigpick-logo { width: 46px; height: 46px; border-radius: 15px; }
+  .tv-bigpick-art { position: absolute; right: 14px; top: 26px; }
+  .tv-seats { gap: 3px; }
+  .tv-seats i { width: 9px; height: 9px; }
+  .tv-seats.is-duel i { width: 12px; height: 12px; }
+  .tv-bigpick-tag { top: 8px; right: 8px; }
+  .tv-bigpick-text strong { font-size: 18px; }
+  .tv-bigpick-text small { font-size: 13px; }
+}
+
+/* ---------- The option's card when its kind changes (ModeStage's swapKey) ---------- */
+/* Its colour fades into the new one (its own transition); a light sweeps across it, its big icon spins in and its
+   name, chip and steps come in anew, one after another. */
+.tv-mstage-flash {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: linear-gradient(110deg, transparent 30%, rgba(255, 255, 255, 0.32) 50%, transparent 70%);
+  transform: translateX(-110%);
+  pointer-events: none;
+  animation: tvCardSweep 0.9s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+@keyframes tvCardSweep { to { transform: translateX(110%); } }
+.tv-mstage.has-swap .tv-mstage-watermark { animation: tvMarkIn 0.8s var(--tv-spring); }
+@keyframes tvMarkIn { from { opacity: 0; transform: rotate(-35deg) scale(0.4); } }
+.tv-mstage.has-swap .tv-mstage-head { animation: tvHeadIn 0.5s cubic-bezier(0.2, 0.9, 0.3, 1.1); }
+@keyframes tvHeadIn { from { opacity: 0; transform: translateX(-28px); } }
+.tv-mstage.has-swap .tv-mstage-step { animation: tvSwap 0.45s var(--tv-ease-out) calc(0.12s + var(--i) * 70ms) backwards; }
+/* The option's name never breaks inside a word ("Competitivo"): a little smaller than a game's. */
+.tv-play-row .tv-mstage-name { font-size: clamp(40px, 3.7vw, 62px); overflow-wrap: normal; }
+/* "Próximamente" (Competitivo): a flat dark label in place of the white button, nothing to press. */
+.tv-play-row .tv-mstage-start.is-soon,
+.tv-play-cta .tv-lobby-go.is-soon { opacity: 1; background: rgba(0, 0, 0, 0.2); box-shadow: none; color: var(--on); }
+.tv-play-cta .tv-lobby-go.is-soon { background: var(--tv-neutral); color: var(--tv-text-3); }
+/* How many play, on the card beside its icon: a flat label that pops when it changes. */
+.tv-mstage-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-radius: 14px;
+  background: rgba(0, 0, 0, 0.16);
+  font-family: var(--tv-display);
+  font-weight: 800;
+  font-size: 16px;
+  animation: tvPopIn 0.4s var(--tv-spring);
 }
 
 /* "Partida": what the match will be, like a ticket's fields: a small capital label and a big number. */
@@ -127,6 +252,14 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .tv-mstage-flash { display: none; }
+  .tv-mstage.has-swap .tv-mstage-watermark,
+  .tv-mstage.has-swap .tv-mstage-head,
+  .tv-mstage.has-swap .tv-mstage-step,
+  .tv-mstage-chip,
+  .tv-bigpick-logo,
+  .tv-seats i,
+  .tv-seats b,
   .tv-play-settings,
   .tv-play-fields dd,
   .tv-codecell.is-filled { animation: none; }

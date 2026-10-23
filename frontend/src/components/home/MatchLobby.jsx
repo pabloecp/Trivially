@@ -45,7 +45,15 @@ export default function MatchLobby({ room }) {
 
   return (
     <div className={`tv-room-row tv-play-row tv-ml tv-c-${kind.color}${full ? " is-full" : ""}`}>
-      <ModeStage mode={{ name: kind.name, icon: kind.icon, color: kind.color, steps: kind.steps || [] }}>
+      <ModeStage
+        mode={{ name: kind.name, icon: kind.icon, color: kind.color, steps: kind.steps || [] }}
+        extra={
+          <span className="tv-mstage-chip">
+            <Icon name={(info.versus || info.size) === 2 ? "user" : "users"} size={18} strokeWidth={2.6} />
+            {sizeName(info.versus || info.size)}
+          </span>
+        }
+      >
         {leaveButton("tv-mstage-start tv-play-start")}
       </ModeStage>
 

@@ -6,18 +6,21 @@ import Icon from "./Icon.jsx";
 // next to the icon. The host's way back to "Elige el juego" is in the top bar (TvTopbar).
 // A Clásico (Normal or Extendido) looks like its tile on the menu, like the site's logo: dark with the logo's rainbow
 // frame, the logo itself in place of the game's icon, and its name with its length ("3 juegos") at the top.
-export default function ModeStage({ mode, extra = null, children }) {
+// `swapKey` (/jugar's Casual and Competitivo, one card for both): each time it changes the card plays its swap, a
+// light sweeping across it while its icon, name and steps come in anew (and its colour fades into the new one).
+export default function ModeStage({ mode, extra = null, swapKey = null, children }) {
   const classic = mode.kind === "classic";
   return (
-    <section className={`tv-mstage ${classic ? "is-classic" : `tv-c-${mode.color}`}`} aria-label={mode.name}>
+    <section className={`tv-mstage ${classic ? "is-classic" : `tv-c-${mode.color}`}${swapKey != null ? " has-swap" : ""}`} aria-label={mode.name}>
+      {swapKey != null && <span key={`flash-${swapKey}`} className="tv-mstage-flash" aria-hidden="true" />}
       {classic ? (
         <span className="tv-mstage-logo" aria-hidden="true">
           <AppIcon small />
         </span>
       ) : (
-        <Icon name={mode.icon} size={360} strokeWidth={1.2} className="tv-mstage-watermark" />
+        <Icon key={`mark-${swapKey}`} name={mode.icon} size={360} strokeWidth={1.2} className="tv-mstage-watermark" />
       )}
-      <div className="tv-mstage-head">
+      <div key={`head-${swapKey}`} className="tv-mstage-head">
         {!classic && (
           <div className="tv-mstage-badges">
             <span className="tv-mstage-badge">
@@ -30,7 +33,7 @@ export default function ModeStage({ mode, extra = null, children }) {
         {classic && <p className="tv-mstage-sub">{mode.subtitle}</p>}
       </div>
       <div className="tv-mstage-foot">
-        <ol className="tv-mstage-steps" aria-label="Cómo se juega">
+        <ol key={`steps-${swapKey}`} className="tv-mstage-steps" aria-label="Cómo se juega">
           {(mode.steps || []).map((step, i) => (
             <li key={step.text} className="tv-mstage-step" style={{ "--i": i }}>
               <span className="tv-mstage-step-icon">

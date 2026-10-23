@@ -201,6 +201,8 @@ export default function Home() {
     );
     settle(panels);
     if (seam === "match") {
+      // Nothing inside the card plays its way in either (its sweep, its name and steps coming in).
+      settle(root.querySelectorAll(".tv-play-row .tv-mstage *"));
       // The card is where it was: only its button and the panel's contents change, fading in where they are.
       softIn(root.querySelectorAll(".tv-play-row .tv-settings-head, .tv-play-row .tv-mstage-start, .tv-play-cta > *"), { lift: 8, scale: 1, step: 0, duration: 380 });
     } else {

@@ -20,10 +20,15 @@ export const MATCH_KINDS = {
   competitivo: {
     id: "competitivo",
     name: "Competitivo",
-    color: "site",
+    color: "accent",
     icon: "crown",
     blurb: "Para los que juegan en serio",
     detail: "Cada victoria cuenta para tu rango",
+    steps: [
+      { icon: "crown", text: "Cada victoria te sube de rango" },
+      { icon: "target", text: "Solo preguntas medias y difíciles" },
+      { icon: "lock", text: "Muy pronto disponible" },
+    ],
   },
 };
 
@@ -33,10 +38,10 @@ export const MATCH_GAME_COUNT = 2;
 export const MATCH_ROUNDS = MATCH_GAME_COUNT * ROUNDS_PER_GAME;
 // How many players a room needs (MATCH_SIZES on the server): you against one, or five in all.
 export const MATCH_SIZES = [
-  { value: 2, label: "Duelo", hint: "2 jugadores", icon: "user" },
-  { value: 5, label: "Todos contra todos", hint: "5 jugadores", icon: "users" },
+  { value: 2, label: "Uno contra Uno", hint: "1 Jugador", icon: "user" },
+  { value: 5, label: "Todos contra Todos", hint: "5 Jugadores", icon: "users" },
 ];
-export const sizeName = (size) => (size === 2 ? "Duelo" : `${size} jugadores`);
+export const sizeName = (size) => (size === 2 ? "Uno contra Uno" : "Todos contra Todos");
 // The games a public match draws from, in the roulette's order (gamesFor on the server): Trivia, Rango and Campo de
 // minas, in Casual and Competitivo alike.
 export const MATCH_GAMES = ["opciones", "historia", "minas"];
