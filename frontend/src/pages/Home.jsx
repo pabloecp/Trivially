@@ -369,9 +369,9 @@ export default function Home() {
   const shownIsHost = shownRoom ? shownRoom.hostId === user?.id && !isCentral : false;
   // On the room's central device the room screen is the big waiting screen (CentralLobby): nothing to pick or change.
   const centralScreen = isCentral && screen === "room";
-  // A public match waiting for players is shown in /jugar/casual's own frame (MatchLobby): no room bars, no room's
-  // column, the page's spacing.
-  const matchWaiting = Boolean(shownRoom?.matchmaking) && shownRoom.phase === "lobby";
+  // A public match waiting for players, and the roulette before each of its games, are shown in /jugar/casual's own
+  // frame (MatchLobby, MatchIntro): no room bars, no room's column, the page's spacing.
+  const matchWaiting = Boolean(shownRoom?.matchmaking) && (shownRoom.phase === "lobby" || shownRoom.phase === "intro");
 
   // The site takes the picked game's colour while the room waits in it (see :root[data-mode] in global.css).
   useEffect(() => {

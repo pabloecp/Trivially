@@ -1,9 +1,15 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useApp } from "../../lib/store.jsx";
 import { play } from "../../lib/sounds.js";
 import { findMode } from "../../modes/index.js";
+import Avatar from "./Avatar.jsx";
 import Icon from "./Icon.jsx";
+import ModeStage from "./ModeStage.jsx";
 import { ReelMarker } from "./SlowReel.jsx";
-import { MATCH_KINDS, TUTORIALS, VARIANT_TUTORIALS, findVariant, variantsFor } from "./matchInfo.js";
+import { exitPath } from "./TvTopbar.jsx";
+import { MATCH_KINDS, TUTORIALS, VARIANT_TUTORIALS, findVariant, sizeName, variantsFor } from "./matchInfo.js";
+import "../../styles/lobby.css";
 import "../../styles/match.css";
 
 // The reel's cards: how wide each one is plus the gap after it (match.css: --mi-card and --mi-gap).
@@ -178,13 +184,20 @@ function Tutorial({ intro, leftMs }) {
 }
 
 /**
- * Before each game of a public match (the room's "intro" phase): a roulette picks the game among the ones still to
- * play, then a short tutorial of it for 5 s. It takes the room screen's main card (Home), beside the room's column,
- * so the top bar, the players and the chat stay in sight.
+ * Before each game of a public match or a Clásico (the room's "intro" phase): a roulette picks the game among the ones
+ * still to play, then a short tutorial of it for 5 s. A public match shows it in its own frame (the kind's card and a
+ * panel, like its search); a Clásico in the room screen's main card, beside the room's column.
  */
 export default function MatchIntro({ room }) {
   const intro = room?.phase === "intro" ? room.intro : null;
   const now = useServerNow(room, 200);
+  const { leaveRoom } = useApp();
+  const nav = useNavigate();
+
+  function leave() {
+    leaveRoom();
+    nav(exitPath(room), { replace: true });
+  }
 
   if (!intro) return null;
   const elapsed = now - room.phaseStartedAt;
@@ -196,40 +209,98 @@ export default function MatchIntro({ room }) {
   const label = kind ? `Partida ${kind.name.toLowerCase()}` : classic?.fullName;
   const total = variantsOf(intro).length;
 
+  const title = intro.decider ? "Juego de desempate" : `Juego ${intro.index + 1} de ${total}`;
+  // A dot per game of the match: played (a tick), on now (its icon once the roulette stopped), still to come ("?").
+  const dots =
+    total > 1 ? (
+      <ol className="tv-mi-dots" aria-hidden="true">
+        {variantsOf(intro).map((g, i) => {
+          const m = findMode(findVariant(g).game);
+          const state = i < intro.index ? "done" : i === intro.index ? "now" : "next";
+          // The game on now only shows its colour once the roulette stopped: it would give the pick away.
+          const shown = state === "done" || (state === "now" && !spinning);
+          return (
+            <li key={i} className={`tv-mi-dot is-${state}${shown ? ` tv-c-${m.color}` : ""}`}>
+              {shown ? <Icon name={state === "done" ? "check" : m.icon} size={14} strokeWidth={2.8} /> : "?"}
+            </li>
+          );
+        })}
+      </ol>
+    ) : null;
+  const stage = spinning ? (
+    <Roulette key={`r${intro.index}`} intro={intro} startedAt={room.phaseStartedAt} clockOffset={room.clockOffset || 0} color={kind?.color || classic?.color} kind={room.matchmaking?.kind || "casual"} />
+  ) : (
+    <Tutorial key={`t${intro.index}`} intro={intro} leftMs={leftMs} />
+  );
+
+  // A public match: in the very frame of /jugar/casual and its search (MatchLobby), so the roulette comes in where the
+  // seats were: the kind's card on the left (with the games won so far once a game was played), and the roulette, then
+  // the game's tutorial, in the panel beside it.
+  if (room.matchmaking) {
+    const size = room.matchmaking.versus || room.matchmaking.size;
+    return (
+      <div className={`tv-room-row tv-play-row tv-ml tv-mi-row tv-c-${kind.color}`}>
+        <ModeStage
+          mode={{ name: kind.name, icon: kind.icon, color: kind.color, steps: intro.index === 0 ? kind.steps || [] : [] }}
+          extra={
+            <span className="tv-mstage-chip">
+              <Icon name={size === 2 ? "user" : "users"} size={18} strokeWidth={2.6} />
+              {sizeName(size)}
+            </span>
+          }
+        >
+          {intro.index > 0 && <GamesWon room={room} />}
+          <button type="button" className="tv-mstage-start tv-play-start" data-sound="back" onClick={leave}>
+            <Icon name="close" size={20} strokeWidth={3} />
+            Salir
+          </button>
+        </ModeStage>
+        <section className="tv-settings-card tv-mi-panel" aria-labelledby="tv-mi-title">
+          <div className="tv-settings-head tv-mi-panel-head">
+            <h2 id="tv-mi-title" className="tv-settings-title">
+              {title}
+            </h2>
+            {dots}
+          </div>
+          <div className="tv-mi-panel-body">{stage}</div>
+        </section>
+      </div>
+    );
+  }
+
   return (
     <section className="tv-mcard tv-mi" aria-label="Siguiente juego">
       <div className="tv-mi-frame">
         <header className="tv-mi-head">
           <p className="tv-mono-label">
             {label ? `${label} · ` : ""}
-            {intro.decider ? "Juego de desempate" : `Juego ${intro.index + 1} de ${total}`}
+            {title}
           </p>
-          {total > 1 && (
-            <ol className="tv-mi-dots" aria-hidden="true">
-              {variantsOf(intro).map((g, i) => {
-                const m = findMode(findVariant(g).game);
-                const state = i < intro.index ? "done" : i === intro.index ? "now" : "next";
-                // The game on now only shows its colour once the roulette stopped: it would give the pick away.
-                const shown = state === "done" || (state === "now" && !spinning);
-                return (
-                  <li key={i} className={`tv-mi-dot is-${state}${shown ? ` tv-c-${m.color}` : ""}`}>
-                    {state === "done" || (state === "now" && !spinning) ? (
-                      <Icon name={state === "done" ? "check" : m.icon} size={14} strokeWidth={2.8} />
-                    ) : (
-                      "?"
-                    )}
-                  </li>
-                );
-              })}
-            </ol>
-          )}
+          {dots}
         </header>
-        {spinning ? (
-          <Roulette key={`r${intro.index}`} intro={intro} startedAt={room.phaseStartedAt} clockOffset={room.clockOffset || 0} color={kind?.color || classic?.color} kind={room.matchmaking?.kind || "casual"} />
-        ) : (
-          <Tutorial key={`t${intro.index}`} intro={intro} leftMs={leftMs} />
-        )}
+        {stage}
       </div>
     </section>
+  );
+}
+
+// Between the games of a public match, on its card: everyone by games won, then points (the match is won by games).
+function GamesWon({ room }) {
+  const wins = room.run?.gameWins || {};
+  const players = room.players
+    .filter((p) => !p.spectator)
+    .map((p) => ({ ...p, wins: wins[p.id] || 0 }))
+    .sort((a, b) => b.wins - a.wins || (b.score || 0) - (a.score || 0));
+  return (
+    <ol className="tv-mi-won" aria-label="Juegos ganados">
+      {players.map((p) => (
+        <li key={p.id} className="tv-mi-won-row">
+          <Avatar name={p.name} avatar={p.avatar} />
+          <span className="tv-mi-won-name">{p.name}</span>
+          <span className="tv-mi-won-games">{p.wins === 1 ? "1 juego" : `${p.wins} juegos`}</span>
+          <span className="tv-mi-won-pts">{(p.score || 0).toLocaleString("es-ES")} pts</span>
+        </li>
+      ))}
+    </ol>
   );
 }
