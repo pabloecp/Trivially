@@ -10,6 +10,12 @@ export const MATCH_KINDS = {
     icon: "bolt",
     blurb: "Partidas rápidas con gente de todas partes",
     detail: "Para jugar sin presión",
+    // The steps on its big card, the same on /jugar/casual and while it searches (PlayPage, MatchLobby).
+    steps: [
+      { icon: "grid", text: "2 juegos al azar, de 5 rondas cada uno" },
+      { icon: "crown", text: "Gana cada juego quien más puntos saque" },
+      { icon: "bolt", text: "Si quedáis uno a uno, un tercer juego desempata" },
+    ],
   },
   competitivo: {
     id: "competitivo",

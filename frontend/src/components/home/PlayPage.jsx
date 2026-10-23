@@ -32,11 +32,7 @@ const INVITES_SHOWN = 6;
 const KINDS = [
   {
     ...MATCH_KINDS.casual,
-    facts: [
-      { icon: "grid", text: "2 juegos al azar, de 5 rondas cada uno" },
-      { icon: "crown", text: "Gana cada juego quien más puntos saque" },
-      { icon: "bolt", text: "Si quedáis uno a uno, un tercer juego desempata" },
-    ],
+    facts: MATCH_KINDS.casual.steps,
   },
   // Disabled for now: its tab shows, but can't be opened (and its address goes to Casual).
   {

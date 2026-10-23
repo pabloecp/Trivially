@@ -110,8 +110,6 @@
   overflow: hidden;
   animation: var(--tv-box-in);
 }
-.tv-ml { gap: 22px; }
-.tv-ml-main { display: flex; flex-direction: column; align-items: center; gap: 10px; min-width: 0; }
 
 /* The kind's icon floats up and down while it searches; once full it pops into a tick and stays still. */
 .tv-ml-core {
@@ -132,14 +130,6 @@
 }
 
 .tv-ml-kicker { color: var(--tv-text-3); }
-.tv-ml-title {
-  margin: 0;
-  font-family: var(--tv-display);
-  font-weight: 600;
-  font-size: clamp(26px, 4vw, 34px);
-  line-height: 1.1;
-  color: var(--tv-text);
-}
 
 .tv-ml-headline { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 12px; }
 /* How full it is (or the seconds left once full), in a pill of the kind's colour beside the title. */
@@ -213,7 +203,6 @@
 
 .tv-ml-reel { width: 100%; }
 /* The same size whether it says "Cancelar búsqueda" or "Salir", so nothing moves when the room fills. */
-.tv-ml-leave { width: 240px; max-width: 100%; margin-top: 14px; }
 
 @media (max-width: 520px) {
   .tv-mcard { padding: 22px 14px 20px; }

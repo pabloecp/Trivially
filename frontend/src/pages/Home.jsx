@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useApp } from "../lib/store.jsx";
 import { useFriends } from "../lib/friends.jsx";
@@ -15,6 +15,7 @@ import PlaySheet from "../components/home/PlaySheet.jsx";
 import { RoomDock, RoomHeader } from "../components/home/RoomBars.jsx";
 import "../styles/home.css";
 import { resolveCode } from "../lib/hiddenCode.js";
+import { settle, softIn } from "../lib/screenMotion.js";
 
 // A game tile of "Elige el juego", filled with the game's colour. The main game's is as wide as two. The grey
 // "Más juegos pronto" tile (SOON_TILE) looks like one, with a lock, and has no "Pronto" tag of its own.
@@ -129,11 +130,10 @@ function shake(tile) {
   tile.classList.add("is-shaking");
 }
 
-// How long a screen takes to leave before the next one comes in: the room (its panels sink and slide off) before the
-// home screen, and the home screen (a quick fade, behind the sheet that is closing) before the room; and how long the
-// game tiles take to go after a pick, before the game's panel comes in. All match the exit animations in home.css.
-const SCREEN_OUT_MS = 360;
-const HOME_OUT_MS = 180;
+// How long a screen takes to leave before the next one comes in (/jugar's options ↔ a room, see `seam` in Home), and
+// how long the game tiles take to go after a pick, before the game's panel comes in. Both match the exit animations in
+// home.css.
+const SOFT_OUT_MS = 200;
 const TILES_OUT_MS = 320;
 
 function reducedMotion() {
@@ -157,12 +157,16 @@ export default function Home() {
   const hasRoom = Boolean(room);
   const game = room?.game ?? null;
 
-  // Home ↔ room: the screen on show leaves first (home fades away, the room's cards sink and slide off), then the
-  // other one comes in. While the room leaves, it keeps showing the room as it last was.
+  // Home ↔ room: the screen on show leaves first, then the other one comes in. While the room leaves, it keeps showing
+  // the room as it last was. `seam` is how (lib/screenMotion.js): "match" between Casual and its search for players,
+  // which are the same frame (no way out or in: the card stays, only the panel beside it changes); "soft" otherwise
+  // (Privada and the room it makes...): a short fade out, and the new screen's panels fade in rising a little.
   const lastRoom = useRef(room);
   if (room) lastRoom.current = room;
   const [screen, setScreen] = useState(hasRoom ? "room" : "home");
   const [leaving, setLeaving] = useState(false);
+  const [seam, setSeam] = useState(null);
+  const mainRef = useRef(null);
   useEffect(() => {
     const want = hasRoom ? "room" : "home";
     if (want === screen) {
@@ -177,10 +181,32 @@ export default function Home() {
       swap();
       return undefined;
     }
+    const other = want === "room" ? room : lastRoom.current;
+    if (other?.matchmaking && other.phase === "lobby") {
+      setSeam("match");
+      swap();
+      return undefined;
+    }
+    setSeam("soft");
     setLeaving(true);
-    const t = setTimeout(swap, want === "room" ? HOME_OUT_MS : SCREEN_OUT_MS);
+    const t = setTimeout(swap, SOFT_OUT_MS);
     return () => clearTimeout(t);
   }, [hasRoom]);
+  // The new screen, before it's painted: its panels' own way in gives way to the seam's.
+  useLayoutEffect(() => {
+    const root = mainRef.current;
+    if (!root || !seam) return;
+    const panels = root.querySelectorAll(
+      ":scope > .tv-room > .tv-room-main > .tv-room-row > :is(.tv-mstage, .tv-settings-card, .tv-play-cta), :scope > .tv-room > .tv-room-main > :is(.tv-picker, .tv-mcard), :scope > .tv-room > .tv-party"
+    );
+    settle(panels);
+    if (seam === "match") {
+      // The card is where it was: only its button and the panel's contents change, fading in where they are.
+      softIn(root.querySelectorAll(".tv-play-row .tv-settings-head, .tv-play-row .tv-mstage-start, .tv-play-cta > *"), { lift: 8, scale: 1, step: 0, duration: 380 });
+    } else {
+      softIn(panels, { step: 70 });
+    }
+  }, [screen]);
   const shownRoom = screen === "room" ? room || lastRoom.current : null;
   // Picking a game from the tiles happens in two beats, for every player at once: first the tiles (or the guests'
   // "está eligiendo" panel) go, for TILES_OUT_MS; then the game's big card grows in and "Cómo se juega" slides in
@@ -336,6 +362,9 @@ export default function Home() {
   const shownIsHost = shownRoom ? shownRoom.hostId === user?.id && !isCentral : false;
   // On the room's central device the room screen is the big waiting screen (CentralLobby): nothing to pick or change.
   const centralScreen = isCentral && screen === "room";
+  // A public match waiting for players is shown in /jugar/casual's own frame (MatchLobby): no room bars, no room's
+  // column, the page's spacing.
+  const matchWaiting = Boolean(shownRoom?.matchmaking) && shownRoom.phase === "lobby";
 
   // The site takes the picked game's colour while the room waits in it (see :root[data-mode] in global.css).
   useEffect(() => {
@@ -349,12 +378,15 @@ export default function Home() {
 
       <TvTopbar />
       {/* Phones: the room's own bars, pinned to the top and the bottom (home.css hides them on wider screens). */}
-      {shownRoom && !isCentral && <RoomHeader room={shownRoom} onToast={showToast} />}
+      {shownRoom && !isCentral && !matchWaiting && <RoomHeader room={shownRoom} onToast={showToast} />}
 
-      <main className={`tv-main${screen === "room" ? " is-room" : " is-room is-playpage"}${centralScreen ? " is-central" : ""}`}>
+      <main
+        ref={mainRef}
+        className={`tv-main${screen === "room" && !matchWaiting ? " is-room" : " is-room is-playpage"}${centralScreen ? " is-central" : ""}${seam ? ` is-seam-${seam}` : ""}`}
+      >
         {/* The site's address, at the top in plain letters but faint (phones): on the room screen, not on Home without a
             room. */}
-        {!centralScreen && screen === "room" && <p className="tv-site-url">playtrivially.com</p>}
+        {!centralScreen && screen === "room" && !matchWaiting && <p className="tv-site-url">playtrivially.com</p>}
         {centralScreen ? (
           // A Clásico's roulette and tutorial show on the central device too.
           shownRoom.phase === "intro" ? <MatchIntro room={shownRoom} /> : <CentralLobby room={shownRoom} />
@@ -480,11 +512,13 @@ export default function Home() {
                 </section>
               )}
             </div>
-            <PartyPanel
-              room={shownRoom}
-              onToast={showToast}
-              scores={(Boolean(shownRoom.matchmaking) && shownRoom.phase !== "lobby") || shownRoom.phase === "intro"}
-            />
+            {!matchWaiting && (
+              <PartyPanel
+                room={shownRoom}
+                onToast={showToast}
+                scores={(Boolean(shownRoom.matchmaking) && shownRoom.phase !== "lobby") || shownRoom.phase === "intro"}
+              />
+            )}
           </div>
         )}
       </main>

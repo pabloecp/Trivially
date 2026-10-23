@@ -16,6 +16,21 @@
 .tv-room.is-leaving .tv-play-row .tv-mstage,
 .tv-room.is-leaving .tv-play-row .tv-settings-card { animation: var(--tv-box-out); }
 
+/* A public match waiting for players (MatchLobby), in this same frame: the search in place of the settings, its
+   title and how full it is on the head's line, the floating icon and the seats in the middle of the panel. */
+.tv-ml-panel .tv-ml-headline { justify-content: space-between; align-items: center; }
+.tv-ml-body { flex: 1; align-content: center; justify-items: center; gap: 12px; text-align: center; }
+.tv-ml-body .tv-ml-seats { margin-top: 10px; }
+/* Bigger here than in a narrow card: the icon and the seats fill the panel's middle. */
+@media (min-width: 641px) {
+  .tv-ml-body .tv-ml-core { width: 104px; height: 104px; border-radius: 32px; }
+  .tv-ml-body .tv-ml-seats { gap: 18px; }
+  .tv-ml-body .tv-ml-seat .tv-avatar,
+  .tv-ml-body .tv-ml-empty { width: 78px; height: 78px; font-size: 30px; }
+  .tv-ml-body .tv-ml-name { max-width: 110px; font-size: 14px; }
+  .tv-ml-body .tv-ml-kicker { font-size: 13px; }
+}
+
 /* "Partida": what the match will be, like a ticket's fields: a small capital label and a big number. */
 .tv-play-fields { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin: 6px 0 0; overflow: hidden; border-radius: 20px; background: var(--tv-option-bg); }
 .tv-play-fields > div { display: grid; justify-items: center; gap: 6px; min-width: 0; padding: 14px 8px; text-align: center; }
