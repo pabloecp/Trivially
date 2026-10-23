@@ -13,6 +13,11 @@
 .tv-play-row .tv-mstage { flex: 0 1 440px; }
 .tv-play-row .tv-settings-card { flex: 1 1 440px; gap: 18px; container-type: inline-size; }
 .tv-play-settings { display: grid; align-content: start; gap: 18px; min-width: 0; animation: tvSwap 0.4s var(--tv-ease-out) backwards; }
+/* Privada: what to do, then only what it needs (.tv-play-mode, swapping in when the choice changes), all in the middle
+   of the panel's height. */
+.tv-play-row.is-private .tv-play-settings { flex: 1; align-content: center; }
+.tv-play-mode { display: grid; gap: 18px; min-width: 0; animation: tvSwap 0.4s var(--tv-ease-out) backwards; }
+.tv-play-mode .tv-codecells { max-width: none; }
 .tv-room.is-leaving .tv-play-row .tv-mstage,
 .tv-room.is-leaving .tv-play-row .tv-settings-card { animation: var(--tv-box-out); }
 
@@ -355,6 +360,7 @@
   .tv-ml-clock,
   .tv-ml-clock-time,
   .tv-play-settings,
+  .tv-play-mode,
   .tv-play-fields dd,
   .tv-codecell.is-filled { animation: none; }
 }
