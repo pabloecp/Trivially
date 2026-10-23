@@ -1,5 +1,5 @@
 // Partidas públicas ("Casual"; "Competitivo" is disabled for now, MATCH_KINDS_OPEN): players who don't know each other
-// are put in the same room until it's full (2 players for "Duelo", 5 for "Todos contra todos"), and then the match starts
+// are put in the same room until it's full (2 players for "Uno contra Uno", 5 for "Todos contra Todos"), and then the match starts
 // on its own. Its games aren't chosen by anyone: every match is MATCH_GAME_COUNT (2) games, drawn at random among
 // MATCH_VARIANTS (each game with one of its ways only: "Trivia Cerradas", "Rango Cifras"...) and played one after another
 // (a playlist in order, 5 rounds each). Each game is won by whoever scores the most in it, and the match by whoever wins
@@ -14,7 +14,7 @@ export const ROUNDS_PER_GAME = 5;
 // Games of every public match, before a possible decider.
 export const MATCH_GAME_COUNT = 2;
 export const MATCH_ROUNDS = MATCH_GAME_COUNT * ROUNDS_PER_GAME;
-// How many players a room needs: 2 ("Duelo") or 5 ("Todos contra todos").
+// How many players a room needs: 2 ("Uno contra Uno") or 5 ("Todos contra Todos").
 export const MATCH_SIZES = [2, 5];
 // Competitivo's games: Trivia, Rango and Campo de minas, the ones judged only by what you know.
 export const MATCH_GAMES = ["opciones", "historia", "minas"];
@@ -95,7 +95,7 @@ export function cleanMatchRequest(input) {
   const size = input?.size == null ? 5 : Number(input.size);
   if (!kind) throw new Error("Elige el tipo de partida");
   if (!MATCH_KINDS_OPEN.includes(kind)) throw new Error("El modo Competitivo no está disponible por ahora");
-  if (!MATCH_SIZES.includes(size)) throw new Error("Elige Duelo o Todos contra todos");
+  if (!MATCH_SIZES.includes(size)) throw new Error("Elige Uno contra Uno o Todos contra Todos");
   return { kind, rounds: MATCH_ROUNDS, size };
 }
 

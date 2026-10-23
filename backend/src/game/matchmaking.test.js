@@ -12,7 +12,7 @@ import { RoomManager } from "./roomManager.js";
 // roulette and tutorial ("intro"). Competitivo is disabled for now; the rounds a client sends are ignored.
 assert.throws(() => cleanMatchRequest({ kind: "privada", rounds: 5 }), /tipo de partida/);
 assert.throws(() => cleanMatchRequest({ kind: "competitivo" }), /Competitivo no está disponible/);
-assert.throws(() => cleanMatchRequest({ kind: "casual", rounds: 5, size: 3 }), /Duelo o Todos contra todos/);
+assert.throws(() => cleanMatchRequest({ kind: "casual", rounds: 5, size: 3 }), /Uno contra Uno o Todos contra Todos/);
 assert.deepEqual(cleanMatchRequest({ kind: "casual", rounds: "15" }), { kind: "casual", rounds: 10, size: 5 });
 assert.deepEqual(cleanMatchRequest({ kind: "casual", rounds: 5, size: 2 }).size, 2);
 for (const [rounds, count] of [[5, 1], [10, 2], [15, 3]]) {
