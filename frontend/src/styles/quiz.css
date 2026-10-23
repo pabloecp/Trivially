@@ -25,9 +25,9 @@
   --tv-q4-on: var(--p-on-cinema);
 
   /* Interface: sky blue, its light and deep shades, and butter. */
-  --tv-qm-1: #82a8ff;
-  --tv-qm: #5b8cff;
-  --tv-qm-edge: #3a62d6;
+  --tv-qm-1: #6b9cff;
+  --tv-qm: #2f6bff;
+  --tv-qm-edge: #1a3c99;
   --tv-qm-on: #ffffff;
   --tv-qm-rgb: 91, 140, 255;
   --tv-ql-1: #cbdaff;

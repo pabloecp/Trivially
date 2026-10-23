@@ -1,19 +1,14 @@
 import { useEffect, useState } from "react";
-import { createPortal } from "react-dom";
-import { useNavigate } from "react-router-dom";
 import { useApp } from "../../lib/store.jsx";
 import Avatar from "./Avatar.jsx";
 import CentralSpot from "./CentralSpot.jsx";
-import ConfirmDialog from "./ConfirmDialog.jsx";
 import Icon from "./Icon.jsx";
 import FriendsRoomControls from "./FriendsRoomControls.jsx";
 import PlayerMenu from "./PlayerMenu.jsx";
-import { PlayerCard } from "./PlaySide.jsx";
 import { ChatForm, ChatMessages, ChatSheet, useChatUnread, usePhone, useRoomChat } from "./RoomChat.jsx";
 import { useInvite } from "./useInvite.js";
 import { shownCode, useHiddenCode } from "../../lib/hiddenCode.js";
 import InviteFriends from "./InviteFriends.jsx";
-import { exitPath } from "./TvTopbar.jsx";
 
 function playerTag(player, { isHost }) {
   if (!player.connected) return "Reconectando…";
@@ -88,8 +83,7 @@ const inertUnless = (shown) => (el) => {
 // match, picked from a player's menu (the host or a player with the settings permission). On the central device itself
 // the column only shows (`display`): no menus, chat or way out, and the code to join instead of "Invitar".
 export default function PartyPanel({ room, onToast, scores = false, display = false, className = "" }) {
-  const { user, isCentral, leaveRoom, addTestBot } = useApp();
-  const nav = useNavigate();
+  const { user, isCentral } = useApp();
   const [menuFor, setMenuFor] = useState(null);
   const { copied, copy: copyInvite } = useInvite(room.code, onToast);
   const [codeHidden, toggleCode] = useHiddenCode();
@@ -104,8 +98,6 @@ export default function PartyPanel({ room, onToast, scores = false, display = fa
   // same in the room and in a match.
   const [chatOpen, setChatOpen] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
-  // "Salir de la sala" asks first, in the same modal as the top bar's "X" during a match.
-  const [leaving, setLeaving] = useState(false);
   const phone = usePhone();
   const chatting = chatOpen && !phone;
   const unread = useChatUnread(room, chatting || sheetOpen);
@@ -117,19 +109,13 @@ export default function PartyPanel({ room, onToast, scores = false, display = fa
     return () => document.removeEventListener("keydown", onKey);
   }, [chatting]);
 
-  function leave() {
-    setLeaving(false);
-    leaveRoom();
-    // One step back, to the option of "¿Cómo quieres jugar?" the room came from. Replacing, not pushing: Back must not
-    // return to /sala/CODE, which joins the room again.
-    nav(exitPath(room), { replace: true });
-  }
-
   // Between matches, the room's scoreboard (the server's room.board): each player's wins, most first, once a match
   // has been played. The one with most wins (if any) is highlighted.
   const board = room.board || { matches: 0, players: [] };
-  const winsOf = (id) => board.players.find((b) => b.id === id)?.wins || 0;
-  const showBoard = !scores && board.matches > 0;
+  // A public match shows the games each player won in it (the same numbers as its summary); a private room, the
+  // matches won so far.
+  const winsOf = (id) => (room.matchmaking ? room.players.find((p) => p.id === id)?.wins || 0 : board.players.find((b) => b.id === id)?.wins || 0);
+  const showBoard = !scores && (room.matchmaking ? room.phase === "finished" : board.matches > 0);
   const topWins = showBoard ? Math.max(0, ...room.players.map((p) => winsOf(p.id))) : 0;
   // In a match, the ranking is of the players; those who joined mid-match (spectators) have their own list below it.
   const players = scores
@@ -149,9 +135,6 @@ export default function PartyPanel({ room, onToast, scores = false, display = fa
       className={`tv-party${scores ? " is-scores" : ""}${chatting ? " is-chat" : ""}${display ? " is-display" : ""} ${className}`.trim()}
       aria-label="Tu sala"
     >
-      {/* A public match: the player's card (with the rank) stays at the top, as on /jugar where the search started; the
-          account is asked for again when it ends (the rank and history move). */}
-      {room.matchmaking && !display && <PlayerCard match refreshOn={room.phase === "finished"} />}
       {/* A public match has no code to share: nobody joins it but by searching. */}
       {!room.matchmaking && (
       <div className="tv-party-codebox">
@@ -187,7 +170,7 @@ export default function PartyPanel({ room, onToast, scores = false, display = fa
         <h2>{scores ? "Marcador" : "En la sala"}</h2>
         <span>
           {players.length === 1 ? "1 jugador" : `${players.length} jugadores`}
-          {showBoard && ` · ${board.matches === 1 ? "1 partida" : `${board.matches} partidas`}`}
+          {showBoard && !room.matchmaking && ` · ${board.matches === 1 ? "1 partida" : `${board.matches} partidas`}`}
         </span>
       </div>
 
@@ -231,10 +214,11 @@ export default function PartyPanel({ room, onToast, scores = false, display = fa
                         {p.score}
                       </span>
                     )}
-                    {showBoard && (
-                      <span className="tv-player-wins" aria-label={`${wins} ${wins === 1 ? "victoria" : "victorias"}`}>
+                    {/* Between matches: the matches won here, like the match summary ("2 Victorias"); nothing with none. */}
+                    {showBoard && wins > 0 && (
+                      <span className="tv-player-wins">
                         {wins}
-                        <small>{wins === 1 ? "victoria" : "victorias"}</small>
+                        <small>{wins === 1 ? "Victoria" : "Victorias"}</small>
                       </span>
                     )}
                     {/* The host's crown, always last on the right. */}
@@ -254,16 +238,6 @@ export default function PartyPanel({ room, onToast, scores = false, display = fa
               );
             })}
           </ul>
-          {/* While the room waits, owners can try any game alone with bots that answer by themselves. */}
-          {room.phase === "lobby" && !room.matchmaking && !display && !isCentral && user?.role === "owner" && (
-            <button
-              type="button"
-              className="tv-mini-btn tv-party-testbot"
-              onClick={() => addTestBot().catch((e) => onToast?.(e.message || "No se pudo añadir el bot"))}
-            >
-              Añadir bot de prueba
-            </button>
-          )}
           {/* While the room waits: your friends who are online, to invite (instead of "Esperando amigos"). */}
           {!scores && !display && !room.matchmaking && <InviteFriends room={room} onToast={onToast} />}
           {spectators.length > 0 && (
@@ -336,24 +310,7 @@ export default function PartyPanel({ room, onToast, scores = false, display = fa
           </div>
 
           {sheetOpen && <ChatSheet room={room} onClose={() => setSheetOpen(false)} />}
-
-          <button type="button" className="tv-leave-btn" aria-haspopup="dialog" onClick={() => setLeaving(true)}>
-            <Icon name="logout" size={18} strokeWidth={2.4} />
-            Salir de la sala
-          </button>
         </>
-      )}
-      {createPortal(
-        <ConfirmDialog
-          open={leaving}
-          title="¿Seguro que quieres salir?"
-          text={inMatch ? "Saldrás de la sala y dejarás la partida en curso." : "Saldrás de la sala. Para volver a entrar necesitarás el código o el enlace de invitación."}
-          cancelLabel={inMatch ? "Seguir jugando" : "Quedarme"}
-          confirmLabel="Salir"
-          onCancel={() => setLeaving(false)}
-          onConfirm={leave}
-        />,
-        document.querySelector(".tv-app") || document.body
       )}
     </aside>
   );

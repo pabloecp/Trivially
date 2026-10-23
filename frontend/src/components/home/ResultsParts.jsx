@@ -26,17 +26,21 @@ export function RoundDots({ rounds = [] }) {
  * is what shows under each name (the points, by default) and `below(p)` what shows inside each block under its place
  * (a match's right answers and dots). `meId` gets a "tú" badge beside the name.
  */
-export function Podium({ players, score = (p) => <><CountUp value={p.score} /> pts</>, below = null, meId = null }) {
+// `tied`: how many players share first place (a tie: nobody won). They all stand on the top step, with no crown.
+export function Podium({ players, score = (p) => <><CountUp value={p.score} /> pts</>, below = null, meId = null, tied = 0 }) {
   const podium = [players[1], players[0], players[2]]; // 2nd, 1st, 3rd
+  const rank = (p) => (tied > 1 && players.indexOf(p) < tied ? 1 : players.indexOf(p) + 1);
   return (
     <div className="tv-podium" role="list" aria-label="Podio">
       {podium.map((p, i) => {
-        const place = i === 1 ? 1 : i === 0 ? 2 : 3;
-        if (!p) return <div key={place} className="tv-podium-spot is-empty" aria-hidden="true" />;
+        const slot = i === 1 ? 1 : i === 0 ? 2 : 3;
+        if (!p) return <div key={slot} className="tv-podium-spot is-empty" aria-hidden="true" />;
+        const place = rank(p);
+        const crowned = place === 1 && tied < 2;
         return (
           <div key={p.id} role="listitem" className={`tv-podium-spot is-${place}`}>
             <span className="tv-podium-avatar">
-              {place === 1 && <Icon name="crown" size={30} filled strokeWidth={1.6} className="tv-podium-crown" />}
+              {crowned && <Icon name="crown" size={30} filled strokeWidth={1.6} className="tv-podium-crown" />}
               <Avatar name={p.name} avatar={p.avatar} className={place === 1 ? "tv-avatar--lg" : ""} />
             </span>
             <span className="tv-podium-who">

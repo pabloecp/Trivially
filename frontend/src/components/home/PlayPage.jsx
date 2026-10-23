@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { GAME_MODES, findMode, isGameTile } from "../../modes/index.js";
 import { useHiddenCode } from "../../lib/hiddenCode.js";
 import { useFriends } from "../../lib/friends.jsx";
-import { AVATAR_COLORS, savedGuest, useApp } from "../../lib/store.jsx";
+import { useApp } from "../../lib/store.jsx";
 import { withSound } from "../../lib/sounds.js";
 import Avatar from "./Avatar.jsx";
 import { JoinButton, statusOf } from "./FriendsSheet.jsx";
@@ -12,6 +13,7 @@ import Logo, { logoIncoming } from "./Logo.jsx";
 import ModeStage from "./ModeStage.jsx";
 import { RankCard } from "./PlaySide.jsx";
 import OptionRow from "./OptionRow.jsx";
+import PlaySheet from "./PlaySheet.jsx";
 
 import { MATCH_KINDS, MATCH_SIZES, gamesFor, sizeName, variantsFor } from "./matchInfo.js";
 import "../../styles/match.css";
@@ -108,7 +110,7 @@ function codeFrom(text) {
 // does what was asked. Once in a room, RoomNavigator takes the player there.
 // `toHome` is kept for the logo's old jump back to Inicio (Logo.jsx).
 export default function PlayPage({ leaving = false, toHome = false }) {
-  const { user, saveGuest, createRoom, joinRoom, checkRoom, findMatch } = useApp();
+  const { user, createRoom, joinRoom, checkRoom, findMatch } = useApp();
   const friends = useFriends();
   const nav = useNavigate();
   const location = useLocation();
@@ -132,15 +134,12 @@ export default function PlayPage({ leaving = false, toHome = false }) {
   const [codeHidden, toggleCodeHidden] = useHiddenCode();
   const [codeFocus, setCodeFocus] = useState(false);
   const [pending, setPending] = useState(null); // what to do once there's a name
-  const [name, setName] = useState("");
-  const [color, setColor] = useState(AVATAR_COLORS[0]);
   const [busy, setBusy] = useState(false);
   // What went wrong: on the ticket (searching, creating, the name), or by the code and the friends (joining).
   const [error, setError] = useState("");
   const [joinError, setJoinError] = useState("");
   const [note, setNote] = useState("");
   const codeRef = useRef(null);
-  const settingsRef = useRef(null);
   const timer = useRef(0);
   useEffect(() => () => clearTimeout(timer.current), []);
   // Coming from Inicio, its logo jumps here (Logo.jsx) and the tiles come up as it lands.
@@ -178,16 +177,8 @@ export default function PlayPage({ leaving = false, toHome = false }) {
     }, OUT_MS);
   }, [wanted]);
 
-  // The name step is in the settings, which phones show under the card: bring it into sight.
-  useEffect(() => {
-    if (pending) settingsRef.current?.scrollIntoView({ block: "nearest", behavior: reducedMotion() ? "auto" : "smooth" });
-  }, [pending]);
-
   function run(action) {
     if (needsName) {
-      const last = user?.isGuest ? { name: user.name, avatar: user.avatar } : savedGuest();
-      setName(last.name || "");
-      setColor(AVATAR_COLORS.includes(last.avatar) ? last.avatar : AVATAR_COLORS[0]);
       setError("");
       setPending(action);
       return;
@@ -224,23 +215,6 @@ export default function PlayPage({ leaving = false, toHome = false }) {
     await createRoom("multi", {}, null);
     if (!friends.isAccount) return;
     await Promise.all(action.invites.map((id) => friends.inviteFriend(id).catch(() => {})));
-  }
-
-  async function submitName(e) {
-    e.preventDefault();
-    if (!name.trim() || busy) return;
-    setBusy(true);
-    setError("");
-    try {
-      await withSound(() => saveGuest(name, color), null);
-    } catch (err) {
-      setError(err.message);
-      setBusy(false);
-      return;
-    }
-    const action = pending;
-    setPending(null);
-    perform(action);
   }
 
   // The code is checked first, so a wrong one is said here; a wrong code shakes the cells each time.
@@ -376,7 +350,6 @@ export default function PlayPage({ leaving = false, toHome = false }) {
       >
         <span className="tv-join-text">
           <h3 className="tv-lobby-title">Entra con un código</h3>
-          <p className="tv-lobby-sub">Escribe el código de la sala o pega el enlace que te mandaron</p>
         </span>
         <div className="tv-join-row">
           <label className="tv-sr-only" htmlFor="tv-play-code">
@@ -481,76 +454,27 @@ export default function PlayPage({ leaving = false, toHome = false }) {
       )}
 
       <GameChips
-        label="Juegos de las salas privadas"
+        label="Juegos disponibles"
         games={GAME_MODES.filter(isGameTile).map((m) => ({ id: m.id, color: m.color, icon: m.icon, name: m.name }))}
       />
     </>
   );
 
-  // Without an account, the settings give way to the name first (filled in with the one used last time); the card's
-  // button then says "Continuar" and does what was asked.
-  const nameForm = (
-    <form id="tv-play-name-form" className="tv-play-name" onSubmit={submitName}>
-      <div className="tv-name-row">
-        <Avatar name={name.trim() || "?"} avatar={color} className="tv-avatar--lg" />
-        <div className="tv-name-fields">
-          <label className="tv-sr-only" htmlFor="tv-play-name">
-            Tu nombre
-          </label>
-          <input
-            id="tv-play-name"
-            className="tv-field"
-            value={name}
-            onChange={(e) => {
-              setName(e.target.value);
-              setError("");
-            }}
-            placeholder="Tu nombre o apodo"
-            onFocus={(e) => e.target.select()}
-            maxLength={20}
-            autoComplete="nickname"
-            autoFocus
-          />
-        </div>
-      </div>
-      <div className="tv-swatches" role="group" aria-label="Color de tu avatar">
-        {AVATAR_COLORS.map((c, i) => (
-          <button
-            key={c}
-            type="button"
-            className="tv-swatch"
-            style={{ "--sw": c }}
-            aria-pressed={color === c}
-            aria-label={`Color ${i + 1}`}
-            onClick={() => setColor(c)}
-          />
-        ))}
-      </div>
-      <AccountNote>para guardar tus puntos.</AccountNote>
-      <button type="button" className="tv-optrow-action tv-play-name-back" onClick={() => setPending(null)}>
-        Volver a los ajustes
-      </button>
-    </form>
-  );
-
   // The main button: on the option's card, and on phones a bar of its own fixed at the bottom of the screen.
   const mainButton = (className) => (
     <button
-      type={pending ? "submit" : "button"}
-      form={pending ? "tv-play-name-form" : undefined}
+      type="button"
       className={`${className}${soon ? " is-soon" : ""}`}
-      data-sound={needsName && !pending ? undefined : "none"}
-      onClick={pending ? undefined : () => run(mainAction)}
-      disabled={busy || soon || (pending ? !name.trim() : false)}
+      data-sound={needsName ? undefined : "none"}
+      onClick={() => run(mainAction)}
+      disabled={busy || soon}
     >
-      {!pending && (
-        <Icon
-          name={soon ? "lock" : match ? "play" : "plus"}
-          size={22}
-          filled={Boolean(match) && !soon}
-          strokeWidth={soon ? 2.6 : match ? 1.5 : 3}
-        />
-      )}
+      <Icon
+        name={soon ? "lock" : match ? "play" : "plus"}
+        size={22}
+        filled={Boolean(match) && !soon}
+        strokeWidth={soon ? 2.6 : match ? 1.5 : 3}
+      />
       {soon ? "Próximamente" : mainLabel}
     </button>
   );
@@ -613,15 +537,13 @@ export default function PlayPage({ leaving = false, toHome = false }) {
               {mainButton("tv-mstage-start tv-shine tv-play-start")}
             </ModeStage>
 
-            <section ref={settingsRef} className="tv-settings-card tv-settings-panel" aria-labelledby="tv-settings-title">
+            <section className="tv-settings-card tv-settings-panel" aria-labelledby="tv-settings-title">
               <div className="tv-settings-head">
                 <h2 id="tv-settings-title" className="tv-settings-title">
-                  {pending ? "¿Cómo te llamas?" : match ? "Elige tu partida" : "Elige tu sala"}
+                  {match ? "Elige tu partida" : "Elige tu sala"}
                 </h2>
               </div>
-              <div key={pending ? "name" : "settings"} className="tv-play-settings">
-                {pending ? nameForm : match ? matchSettings : privateSettings}
-              </div>
+              <div className="tv-play-settings">{match ? matchSettings : privateSettings}</div>
             </section>
 
             <div className="tv-play-cta">
@@ -635,6 +557,20 @@ export default function PlayPage({ leaving = false, toHome = false }) {
           </div>
         )}
       </div>
+      {/* Without an account, the name is asked in the sheet (as it always was) and then it does what was asked. */}
+      {createPortal(
+        <PlaySheet
+          askName
+          open={Boolean(pending)}
+          onClose={() => setPending(null)}
+          onNamed={() => {
+            const action = pending;
+            setPending(null);
+            perform(action);
+          }}
+        />,
+        document.querySelector(".tv-app") || document.body
+      )}
     </div>
   );
 }

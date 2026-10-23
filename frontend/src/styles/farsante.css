@@ -2,9 +2,9 @@
    The mode's colour is a leafy green, --tv-fs-*. */
 
 :root {
-  --tv-fs-1: #62cf5a;
-  --tv-fs: #3fae49;
-  --tv-fs-edge: #25752e;
+  --tv-fs-1: #5cea7c;
+  --tv-fs: #1fd24a;
+  --tv-fs-edge: #12801f;
   --tv-fs-on: #ffffff;
   --tv-fs-rgb: 63, 174, 73;
   --tv-fs-text: #7fe077;

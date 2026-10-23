@@ -4050,6 +4050,22 @@ fieldset.tv-setsec-body { display: grid; gap: 18px; min-width: 0; margin: 0; pad
   .tv-roomhead-players { border-radius: var(--tv-barbtn-r, 14px); box-shadow: inset 0 0 0 1px var(--tv-line), 0 3px 0 var(--tv-edge); }
 }
 
+/* From a public match's intro to its first round (App.jsx's RoomNavigator): the game's screen is a new page, but its
+   panels don't fly in again, they are simply there. Zero length (not `none`) so that when the class goes, what already
+   finished doesn't start over. */
+html.tv-seamless .tv-room,
+html.tv-seamless .tv-room *:not(.tv-room-main),
+html.tv-seamless .tv-room *::before,
+html.tv-seamless .tv-room *::after,
+html.tv-seamless-side .tv-party,
+html.tv-seamless-side .tv-party * {
+  animation-duration: 0s !important;
+  animation-delay: 0s !important;
+}
+/* The left side is what changes: the new screen fades in and rises a little, as one piece. */
+html.tv-seamless .tv-room-main { animation: tvSeamIn 0.55s cubic-bezier(0.2, 0.9, 0.3, 1) backwards; }
+@keyframes tvSeamIn { from { opacity: 0; transform: translateY(18px) scale(0.985); } }
+
 @media (prefers-reduced-motion: reduce) {
   :root { --tv-box-in: none; --tv-box-out: none; }
 }

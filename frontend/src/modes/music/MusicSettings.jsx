@@ -160,7 +160,7 @@ export default function MusicSettings({ room, updateConfig, onToast, children, r
   // settings the server already ticked it).
   async function tickInItem(roomId) {
     if (!inItem || !roomId) return;
-    await save({ playlistIds: [...selected.filter((id) => id !== roomId), roomId] });
+    await save({ useCatalog: false, playlistIds: [...selected.filter((id) => id !== roomId), roomId] });
   }
 
   async function addSaved(item) {
@@ -279,7 +279,8 @@ export default function MusicSettings({ room, updateConfig, onToast, children, r
     if (selected.includes(id)) {
       save({ playlistIds: selected.filter((x) => x !== id) });
     } else {
-      save({ playlistIds: [...selected, id] });
+      // Ticking one (the +) switches Trivially's catalog off, as adding one does; it can be switched on again.
+      save({ useCatalog: false, playlistIds: [...selected, id] });
     }
   }
 

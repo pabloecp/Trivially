@@ -74,6 +74,12 @@ const skipRound = () => {
   clearTimeout(room.timer);
   mgr.beginPlaying(room);
   clearTimeout(room.timer);
+  // Everyone answers something (five rounds without any would take them out of the match: PUBLIC_KICK_ROUNDS).
+  for (const p of room.players.values()) {
+    p.lastAnswer ||= { text: "algo", correct: false, at: Date.now() };
+    if (p.minefield) p.minefield.pickedTurn = room.turn;
+    if (p.rain) p.rain.sent = 1;
+  }
   mgr.beginReveal(room);
   clearTimeout(room.timer);
   mgr.advance(room);
@@ -107,6 +113,10 @@ function playDuel(winners) {
       clearTimeout(duelRoom.timer);
       mgr.beginPlaying(duelRoom);
       clearTimeout(duelRoom.timer);
+      for (const p of duelRoom.players.values()) {
+        p.lastAnswer ||= { text: "algo", correct: false, at: Date.now() };
+        if (p.minefield) p.minefield.pickedTurn = duelRoom.turn;
+      }
       mgr.beginReveal(duelRoom);
       clearTimeout(duelRoom.timer);
       // The game's winner scores less overall than the other did in an earlier game: games won count, not points.

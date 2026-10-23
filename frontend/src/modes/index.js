@@ -259,11 +259,17 @@ export function findMode(id) {
   return GAME_MODES.find((m) => m.id === id) || null;
 }
 
+// A match with a roulette before each game (public, or a Clásico), played without changing the address.
+export const isInlineMatch = (room) => Boolean(room?.matchmaking || room?.run?.classic) && isGameTile(findMode(room.game) || {});
+
 // The screen a room's players belong on: the room screen (/sala/CODE, Home with the room) while nobody is playing,
 // whatever game is picked, otherwise that game's own screens.
 // `_hidden` only makes callers re-run it when the code is hidden or shown (the addresses read it themselves).
 export function roomPath(room, _hidden) {
   const mode = findMode(room.game);
+  // A public match or a Clásico never leaves the room's address, like creating a room: the intro and every game's
+  // screens take turns on /sala/CODE (RoomScreen, App.jsx). Its end is still the playlist's results screen.
+  if (isInlineMatch(room) && room.phase !== "finished") return `/sala/${urlCode(room.code)}`;
   // A public match's roulette and tutorial ("intro") are on the room screen too, beside the room's column.
   return room.phase !== "lobby" && room.phase !== "intro" && mode?.path ? mode.path(room) : `/sala/${urlCode(room.code)}`;
 }

@@ -26,7 +26,7 @@
 .tv-lobby-title { margin: 0; font-family: var(--tv-display); font-weight: 800; font-size: clamp(22px, 1.9vw, 28px); line-height: 1.05; color: var(--tv-text); }
 .tv-lobby-sub { margin: 0; font-weight: 700; font-size: 15px; line-height: 1.35; color: var(--tv-text-3); }
 
-/* "Juegos disponibles" (Pública) and "Juegos de las salas privadas": each game's icon in its colour and its name (its
+/* "Juegos disponibles" (Pública and Privada): each game's icon in its colour and its name (its
    ways under it in a public match), only to read (flat), at the bottom of the panel. */
 .tv-lobby-games { display: grid; gap: 10px; margin-top: auto; }
 .tv-lobby-gamechips { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin: 0; padding: 0; list-style: none; }
@@ -329,12 +329,12 @@
 }
 
 /* ---------- Privada: joining with a code, then the friends online ---------- */
-.tv-join { display: grid; gap: 20px; padding: 24px; border-radius: 26px; background: var(--tv-option-bg); }
+.tv-join { display: grid; gap: 14px; padding: 18px 20px; border-radius: 22px; background: var(--tv-option-bg); }
 .tv-join-text { display: grid; gap: 6px; }
 .tv-join-row { display: flex; align-items: stretch; gap: 14px; }
 /* Five cells over one box (the box can't be seen; a tap anywhere on them writes in it). Boxes to write in are flat: the
    next cell ringed in the option's colour while writing, all of them in red when the code opens no room. */
-.tv-codecells { position: relative; flex: 1; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; max-width: 480px; }
+.tv-codecells { position: relative; flex: 1; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; max-width: 380px; }
 .tv-codecells-input {
   position: absolute;
   inset: 0;
@@ -351,12 +351,12 @@
 .tv-codecell {
   display: grid;
   place-items: center;
-  height: 74px;
-  border-radius: 18px;
+  height: 56px;
+  border-radius: 14px;
   background: var(--tv-neutral);
   font-family: var(--tv-display);
   font-weight: 800;
-  font-size: 34px;
+  font-size: 26px;
   color: var(--tv-text);
   transition: box-shadow 0.15s ease;
 }
@@ -371,7 +371,7 @@
   animation: tvBlink 1s steps(1) infinite;
 }
 .tv-codecells[aria-invalid="true"] .tv-codecell { box-shadow: inset 0 0 0 2px var(--p-bad); }
-.tv-join-go { height: auto; min-width: 140px; border-radius: 20px; font-size: 21px; font-weight: 800; }
+.tv-join-go { height: auto; min-width: 120px; border-radius: 16px; font-size: 18px; font-weight: 800; }
 
 
 .tv-lobby-friends { display: grid; align-content: start; gap: 12px; }
@@ -383,8 +383,8 @@
 @media (max-width: 760px) {
   .tv-join-row { flex-direction: column; }
   .tv-codecells { max-width: none; }
-  .tv-codecell { height: 58px; font-size: 26px; }
-  .tv-join-go { height: 52px; }
+  .tv-codecell { height: 48px; font-size: 22px; }
+  .tv-join-go { height: 46px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

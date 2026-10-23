@@ -36,7 +36,7 @@ const TITLES = {
 // room starts on Home so the host can pick. With `joinCode` (an invite link opened by someone with no name yet)
 // it asks for a name and then joins that room. Without an account, creating or joining always asks for the name
 // first, already filled in with the one used last time (and its colour), so a guest can keep it with one tap.
-export default function PlaySheet({ mode, joinCode, open, onClose }) {
+export default function PlaySheet({ mode, joinCode, open, onClose, askName = false, onNamed = null }) {
   const { user, saveGuest, createRoom, joinRoom, checkRoom, findMatch } = useApp();
   // Which row is open (null: none).
   const [kind, setKind] = useState(null);
@@ -63,7 +63,7 @@ export default function PlaySheet({ mode, joinCode, open, onClose }) {
       setError("");
       setCode(joinCode || "");
       setPending(joinCode ? { type: "join", code: joinCode } : null);
-      setStep(joinCode ? "name" : "menu");
+      setStep(joinCode || askName ? "name" : "menu");
       setKind(null);
       const last = user?.isGuest ? { name: user.name, avatar: user.avatar } : savedGuest();
       setName(last.name || "");
@@ -200,7 +200,11 @@ export default function PlaySheet({ mode, joinCode, open, onClose }) {
       setBusy(false);
       return;
     }
-    if (pending) {
+    if (onNamed) {
+      // The page that asked for the name does what it was doing (PlayPage).
+      setBusy(false);
+      onNamed();
+    } else if (pending) {
       perform(pending);
     } else {
       setBusy(false);
@@ -257,7 +261,7 @@ export default function PlaySheet({ mode, joinCode, open, onClose }) {
             <span className="tv-sheet-handle" />
             <div className="tv-sheet-head">
               {/* Back to the menu: a square arrow button at the start of the head (it stops the drag from starting). */}
-              {step !== "menu" && (
+              {step !== "menu" && !askName && (
                 <button
                   type="button"
                   className="tv-sheet-back"
