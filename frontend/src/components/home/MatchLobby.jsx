@@ -14,7 +14,7 @@ import "../../styles/lobby.css";
 // its "Ajustes" the search: a seat per player it needs, filled as they arrive, and once it's full a short count before
 // it starts by itself. Nobody picks anything here. Going from one to the other doesn't change screen (Home's "seam").
 export default function MatchLobby({ room }) {
-  const { user, leaveRoom } = useApp();
+  const { leaveRoom } = useApp();
   const nav = useNavigate();
   const info = room.matchmaking;
   const kind = MATCH_KINDS[info.kind] || MATCH_KINDS.casual;
@@ -75,7 +75,8 @@ export default function MatchLobby({ room }) {
         <div className="tv-play-settings tv-ml-body">
           <div className="tv-ml-center" style={{ "--seats": seats.length }}>
             {/* The clock: how long it has been searching, then, once full, the seconds until it starts. Each new number
-                slides in. The seats under it are framed like the logo (its five coloured slices), turning once full. */}
+                slides in. It and the seats under it are framed like the logo (its five coloured slices), turning once
+                full. Every seat looks the same, this player's too (their own name and face, nothing marking them). */}
             <div className="tv-ml-clock" role="timer" aria-live="off">
               <span className="tv-ml-clock-label">{full ? "La partida empieza en" : "Buscando desde hace"}</span>
               <span key={full ? `s${startsIn}` : clock} className="tv-ml-clock-time">
@@ -85,11 +86,11 @@ export default function MatchLobby({ room }) {
             </div>
             <ul className="tv-ml-seats" aria-label="Jugadores">
               {seats.map((p, i) => (
-                <li key={p ? p.id : `empty${i}`} className={`tv-ml-seat${p ? " is-taken" : ""}${p?.id === user?.id ? " is-me" : ""}`} style={{ "--i": i }}>
+                <li key={p ? p.id : `empty${i}`} className={`tv-ml-seat${p ? " is-taken" : ""}`} style={{ "--i": i }}>
                   {p ? (
                     <>
                       <Avatar name={p.name} avatar={p.avatar} />
-                      <span className="tv-ml-name">{p.id === user?.id ? "Tú" : p.name}</span>
+                      <span className="tv-ml-name">{p.name}</span>
                     </>
                   ) : (
                     <>

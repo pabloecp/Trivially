@@ -18,7 +18,7 @@
 
 /* A public match waiting for players (MatchLobby), in this same frame: the search in place of the settings, its
    title and how full it is on the head's line; in the middle of the panel the clock, then the seats. No decoration
-   behind it: only the seats' frame has colour. */
+   behind it: only the clock's and the seats' frames have colour. */
 .tv-ml-panel .tv-ml-headline { justify-content: space-between; align-items: center; }
 /* The clock and the seats, one over the other in the middle of the panel and exactly as wide as each other: the
    seats share the clock's width in one row, two wide ones in Uno contra Uno or five in Todos contra Todos. */
@@ -33,7 +33,26 @@
   text-align: center;
 }
 
-/* The clock: a flat tile, nothing to press. While it searches it counts up; once full it counts down to the start. */
+/* The clock and the seats: each framed by the logo's five coloured slices (like the Clásico tiles), flat, nothing to
+   press. Once the room is full the frames' colours turn round them. */
+@property --ml-turn { syntax: "<angle>"; initial-value: 0deg; inherits: false; }
+.tv-ml-clock,
+.tv-ml-body .tv-ml-seats {
+  --ml-frame: conic-gradient(
+    from var(--ml-turn),
+    var(--logo-1) 0 72deg,
+    var(--logo-2) 72deg 144deg,
+    var(--logo-3) 144deg 216deg,
+    var(--logo-4) 216deg 288deg,
+    var(--logo-5) 288deg 360deg
+  );
+  border: 6px solid transparent;
+  background: linear-gradient(var(--tv-surface), var(--tv-surface)) padding-box, var(--ml-frame) border-box;
+}
+.tv-ml.is-full .tv-ml-body .tv-ml-seats { animation: tvFrameTurn 1.6s linear infinite; }
+.tv-ml.is-full .tv-ml-clock { animation: tvClockIn 0.6s var(--tv-spring) backwards, tvFrameTurn 1.6s linear infinite; }
+@keyframes tvFrameTurn { to { --ml-turn: 360deg; } }
+/* The clock: while it searches it counts up; once full it counts down to the start. */
 .tv-ml-clock {
   display: grid;
   justify-items: center;
@@ -41,7 +60,6 @@
   width: 100%;
   padding: 22px 24px 24px;
   border-radius: 30px;
-  background: var(--tv-option-bg);
   animation: tvClockIn 0.6s var(--tv-spring) backwards;
 }
 @keyframes tvClockIn { from { opacity: 0; transform: scale(0.85); } }
@@ -61,19 +79,9 @@
 @keyframes tvCountPop { from { opacity: 0; transform: scale(1.6); } }
 .tv-ml-clock-sub { font-weight: 800; font-size: 14px; color: var(--tv-text-3); }
 
-/* The seats: framed together by the logo's five coloured slices (like the Clásico tiles), a tile each inside. Taken,
-   the player's face and name (yours ringed in the option's colour), popping in when they arrive; free, a dashed
-   outline that breathes. Once the room is full the frame's colours turn round it. */
-@property --ml-turn { syntax: "<angle>"; initial-value: 0deg; inherits: false; }
+/* The seats, together in their frame, a tile each inside: taken, the player's face and name, popping in when they
+   arrive (this player's like anyone's); free, a dashed outline that breathes. */
 .tv-ml-body .tv-ml-seats {
-  --ml-frame: conic-gradient(
-    from var(--ml-turn),
-    var(--logo-1) 0 72deg,
-    var(--logo-2) 72deg 144deg,
-    var(--logo-3) 144deg 216deg,
-    var(--logo-4) 216deg 288deg,
-    var(--logo-5) 288deg 360deg
-  );
   display: grid;
   grid-template-columns: repeat(var(--seats, 5), minmax(0, 1fr));
   gap: 10px;
@@ -81,12 +89,8 @@
   max-width: none;
   margin: 0;
   padding: 10px;
-  border: 6px solid transparent;
   border-radius: 32px;
-  background: linear-gradient(var(--tv-surface), var(--tv-surface)) padding-box, var(--ml-frame) border-box;
 }
-.tv-ml.is-full .tv-ml-body .tv-ml-seats { animation: tvFrameTurn 1.6s linear infinite; }
-@keyframes tvFrameTurn { to { --ml-turn: 360deg; } }
 .tv-ml-body .tv-ml-seat {
   justify-content: center;
   min-height: 132px;
@@ -96,14 +100,12 @@
   background: var(--tv-option-bg);
 }
 .tv-ml-body .tv-ml-seat:not(.is-taken) { background: none; box-shadow: inset 0 0 0 2px var(--tv-line); }
-.tv-ml-body .tv-ml-seat.is-me { box-shadow: inset 0 0 0 2px var(--c2); }
-.tv-ml-body .tv-ml-seat.is-me .tv-avatar { box-shadow: none; }
 .tv-ml-body .tv-ml-empty { border-style: dashed; }
 .tv-ml-body .tv-ml-seat .tv-avatar,
 .tv-ml-body .tv-ml-empty { width: 72px; height: 72px; font-size: 28px; }
 .tv-ml-body .tv-ml-name { max-width: 100%; font-size: 14px; }
 @media (max-width: 640px) {
-  .tv-ml-clock { padding: 14px 16px 16px; }
+  .tv-ml-clock { padding: 14px 16px 16px; border-width: 5px; }
   .tv-ml-clock-time { font-size: 60px; }
   .tv-ml-body .tv-ml-seats { gap: 6px; padding: 6px; border-width: 5px; border-radius: 24px; }
   .tv-ml-body .tv-ml-seat { min-height: 92px; padding: 10px 4px; border-radius: 16px; }
@@ -327,6 +329,7 @@
 @media (prefers-reduced-motion: reduce) {
   .tv-mstage-flash { display: none; }
   .tv-ml.is-full .tv-ml-body .tv-ml-seats,
+  .tv-ml.is-full .tv-ml-clock,
   .tv-ml.is-full .tv-ml-clock-time { animation: none; }
   .tv-mstage.has-swap .tv-mstage-watermark,
   .tv-mstage.has-swap .tv-mstage-head,

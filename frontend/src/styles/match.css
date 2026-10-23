@@ -170,7 +170,6 @@
 }
 .tv-ml-seat .tv-avatar { width: 58px; height: 58px; font-size: 22px; }
 .tv-ml-seat.is-taken { animation: tvMlSeat 0.5s var(--tv-spring) backwards; animation-delay: calc(var(--i) * 40ms); }
-.tv-ml-seat.is-me .tv-avatar { box-shadow: 0 0 0 3px var(--c2); }
 @keyframes tvMlSeat {
   0% { transform: scale(0.4); opacity: 0; }
   100% { transform: scale(1); opacity: 1; }
