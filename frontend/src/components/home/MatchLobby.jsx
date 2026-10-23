@@ -22,14 +22,17 @@ export default function MatchLobby({ room }) {
   const seats = Array.from({ length: Math.max(info.size, players.length) }, (_, i) => players[i] || null);
   const full = Boolean(info.startsAt);
 
-  // Once full: the seconds until it starts.
+  // How long it has been searching (from when this device started, kept through a reload), and once full the seconds
+  // until it starts.
+  const since = useSearchStart(room.code);
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
-    if (!full) return undefined;
-    const id = setInterval(() => setNow(Date.now()), 200);
+    const id = setInterval(() => setNow(Date.now()), full ? 200 : 500);
     return () => clearInterval(id);
   }, [full]);
   const startsIn = full ? Math.max(1, Math.ceil((info.startsAt - (now + (room.clockOffset || 0))) / 1000)) : null;
+  const waited = Math.max(0, Math.floor((now - since) / 1000));
+  const clock = `${Math.floor(waited / 60)}:${String(waited % 60).padStart(2, "0")}`;
 
   function leave() {
     leaveRoom();
@@ -58,30 +61,29 @@ export default function MatchLobby({ room }) {
       </ModeStage>
 
       <section className="tv-settings-card tv-ml-panel" aria-labelledby="tv-ml-title">
-        {/* What's going on and how full it is, on one line: "Buscando jugadores 1/5", then "¡Sala completa! 3". */}
+        {/* What's going on and how full it is, on one line: "Buscando jugadores 1/5", then "¡Sala completa! 5/5". */}
         <div className="tv-settings-head tv-ml-headline">
           <h2 id="tv-ml-title" className="tv-settings-title" aria-live="polite">
             {full ? "¡Sala completa!" : "Buscando jugadores"}
           </h2>
-          {full ? (
-            <span key={startsIn} className="tv-ml-pill is-count" aria-label={`Empieza en ${startsIn}`}>
-              {startsIn}
-            </span>
-          ) : (
-            <span className="tv-ml-pill" aria-label={`${players.length} de ${info.size} jugadores`}>
-              {players.length}/{info.size}
-            </span>
-          )}
+          {/* How full it is; the seconds left once full are on the clock. */}
+          <span key={players.length} className={`tv-ml-pill${full ? " is-count" : ""}`} aria-label={`${players.length} de ${info.size} jugadores`}>
+            {players.length}/{info.size}
+          </span>
         </div>
 
         <div className="tv-play-settings tv-ml-body">
-          {/* The kind's icon floating gently while it searches; once full it turns into a tick. */}
-          <span key={full ? "full" : "wait"} className={`tv-badge tv-c-${kind.color} tv-ml-core`} aria-hidden="true">
-            <Icon name={full ? "check" : kind.icon} size={44} filled={!full} strokeWidth={full ? 3 : 1.6} />
-          </span>
-          <p className="tv-mono-label tv-ml-kicker">
-            {sizeName(info.versus || info.size)} · {gamesText(info.rounds)} · {info.rounds} rondas
-          </p>
+          {/* The clock, framed like the logo (its five coloured slices): how long it has been searching, then, once full,
+              the seconds until it starts (the frame turning). Each new number slides in. */}
+          <div className="tv-ml-clock" role="timer" aria-live="off">
+            <span className="tv-ml-clock-label">{full ? "La partida empieza en" : "Buscando desde hace"}</span>
+            <span key={full ? `s${startsIn}` : clock} className="tv-ml-clock-time">
+              {full ? startsIn : clock}
+            </span>
+            <span className="tv-ml-clock-sub">
+              {full ? "¡Preparados!" : `${players.length} de ${info.size} jugadores · ${gamesText(info.rounds)}`}
+            </span>
+          </div>
           <ul className="tv-ml-seats" aria-label="Jugadores">
             {seats.map((p, i) => (
               <li key={p ? p.id : `empty${i}`} className={`tv-ml-seat${p ? " is-taken" : ""}${p?.id === user?.id ? " is-me" : ""}`} style={{ "--i": i }}>
@@ -91,9 +93,12 @@ export default function MatchLobby({ room }) {
                     <span className="tv-ml-name">{p.id === user?.id ? "Tú" : p.name}</span>
                   </>
                 ) : (
-                  <span className="tv-ml-empty" role="img" aria-label="Lugar libre">
-                    <Icon name="user" size={22} strokeWidth={2.2} />
-                  </span>
+                  <>
+                    <span className="tv-ml-empty" role="img" aria-label="Lugar libre">
+                      <Icon name="user" size={22} strokeWidth={2.2} />
+                    </span>
+                    <span className="tv-ml-name is-waiting">Libre</span>
+                  </>
                 )}
               </li>
             ))}
@@ -104,4 +109,21 @@ export default function MatchLobby({ room }) {
       <div className="tv-play-cta">{leaveButton("tv-btn tv-btn--block tv-lobby-go tv-c-neutral")}</div>
     </div>
   );
+}
+
+// When this device started searching in a room (sessionStorage, so a reload keeps counting from the same moment).
+function useSearchStart(code) {
+  const [since] = useState(() => {
+    const key = `trivially_search_since_${code}`;
+    try {
+      const saved = Number(sessionStorage.getItem(key));
+      if (saved > 0) return saved;
+      const t = Date.now();
+      sessionStorage.setItem(key, String(t));
+      return t;
+    } catch {
+      return Date.now();
+    }
+  });
+  return since;
 }
