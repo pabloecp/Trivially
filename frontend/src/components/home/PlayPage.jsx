@@ -348,25 +348,17 @@ export default function PlayPage({ leaving = false, toHome = false }) {
           </div>
         </dl>
       </div>
-      {/* Competitivo: the account's rank under the match (it moves with each competitive match); a guest has none. */}
-      {kind?.id === "competitivo" && (
+      {/* Competitivo: the account's rank under the match (it moves with each competitive match). Without an account,
+          a quiet note on how to get one instead, like Adivina la canción's (Casual's says what it keeps). */}
+      {kind?.id === "competitivo" && isAccount && (
         <div key="rank" className="tv-optrow tv-play-rankrow">
           <span className="tv-optrow-label">Tu rango</span>
-          {isAccount ? (
-            <div className="tv-play-rankbox">
-              <RankCard rank={user?.rank} />
-            </div>
-          ) : (
-            <div className="tv-lobby-empty">
-              <Icon name="crown" size={22} strokeWidth={2.4} />
-              <p>Con una cuenta tienes rango y sube con cada victoria.</p>
-              <Link to="/login" className="tv-btn tv-btn--sm tv-c-violet">
-                Crear cuenta
-              </Link>
-            </div>
-          )}
+          <div className="tv-play-rankbox">
+            <RankCard rank={user?.rank} />
+          </div>
         </div>
       )}
+      {!isAccount && <AccountNote>{kind?.id === "competitivo" ? "para tener rango y subirlo con cada victoria." : "para guardar tus puntos y estadísticas."}</AccountNote>}
     </>
   );
 
@@ -456,13 +448,7 @@ export default function PlayPage({ leaving = false, toHome = false }) {
             {online.length > 0 && <span className="tv-play-online-count">{online.length}</span>}
           </span>
           {!isAccount ? (
-            <div className="tv-lobby-empty">
-              <Icon name="users" size={22} strokeWidth={2.4} />
-              <p>Con una cuenta ves a tus amigos conectados y entras a sus salas con un toque.</p>
-              <Link to="/login" className="tv-btn tv-btn--sm tv-c-violet">
-                Crear cuenta
-              </Link>
-            </div>
+            <AccountNote>para ver a tus amigos conectados y entrar a sus salas con un toque.</AccountNote>
           ) : online.length ? (
             <ul className="tv-invite-friends-list tv-play-rooms">
               {online.map((f) => {
@@ -534,9 +520,7 @@ export default function PlayPage({ leaving = false, toHome = false }) {
           />
         ))}
       </div>
-      <p className="tv-play-account">
-        Guarda tus puntos con una cuenta: <Link to="/login">Crear cuenta</Link> · <Link to="/login?mode=login">Iniciar sesión</Link>
-      </p>
+      <AccountNote>para guardar tus puntos.</AccountNote>
       <button type="button" className="tv-optrow-action tv-play-name-back" onClick={() => setPending(null)}>
         Volver a los ajustes
       </button>
@@ -674,5 +658,18 @@ function BigChoice({ label, options, value, onChange }) {
         })}
       </div>
     </div>
+  );
+}
+
+// Without an account: how to get one, quietly, like Adivina la canción's note (an ⓘ and one text, "Crear cuenta o
+// Iniciar sesión" as its links, then what for), in the option's colour.
+function AccountNote({ children }) {
+  return (
+    <p className="tv-play-account-note">
+      <Icon name="info" size={16} strokeWidth={2.6} />
+      <span>
+        <Link to="/login">Crear cuenta</Link> o <Link to="/login?mode=login">Iniciar sesión</Link> {children}
+      </span>
+    </p>
   );
 }

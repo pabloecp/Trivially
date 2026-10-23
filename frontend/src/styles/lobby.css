@@ -240,9 +240,25 @@
 
 /* The name, when there's no account yet: in place of the settings. */
 .tv-play-name { display: grid; gap: 16px; }
-.tv-play-account { margin: 0; font-weight: 700; font-size: 13px; line-height: 1.4; color: var(--tv-text-3); }
-.tv-app .tv-play-account a { color: var(--tv-text); font-weight: 800; transition: color 0.15s ease; }
-.tv-app .tv-play-account a:hover { color: var(--brand-text); }
+/* Without an account, how to get one (AccountNote): a soft note in the option's colour with its own outline, an ⓘ and
+   one text whose links are white, like Adivina la canción's under its Spotify box. Nothing to press but the links. */
+.tv-play-account-note {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  padding: 10px 14px;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--c1) 12%, transparent);
+  box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--c1) 45%, transparent);
+  color: color-mix(in srgb, var(--c1) 70%, #ffffff);
+  font-weight: 700;
+  font-size: 13px;
+  line-height: 1.4;
+}
+.tv-play-account-note svg { flex-shrink: 0; }
+.tv-app .tv-play-account-note a { color: #ffffff; font-weight: 800; text-decoration: none; transition: opacity 0.15s ease; }
+.tv-app .tv-play-account-note a:hover { opacity: 0.8; }
 .tv-play-name-back { justify-self: start; }
 
 /* The main button as a bar of its own on phones (where the card's is hidden, like a game's), always in sight at the
