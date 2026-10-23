@@ -230,6 +230,12 @@
 .tv-play-fields dt { max-width: 100%; overflow: hidden; font-family: var(--tv-mono); font-weight: 800; font-size: 11px; letter-spacing: 0.1em; text-overflow: ellipsis; text-transform: uppercase; color: var(--tv-text-3); }
 .tv-play-fields dd { margin: 0; font-family: var(--tv-display); font-weight: 800; font-size: 30px; line-height: 1; color: var(--tv-text); animation: tvPopIn 0.3s var(--tv-spring); }
 
+/* "Tu rango" (Competitivo): the rank (RankCard) in a flat box, coming in when Competitivo is picked. */
+.tv-play-rankrow { animation: tvSwap 0.45s var(--tv-ease-out) backwards; }
+.tv-play-rankbox { padding: 16px 18px; border-radius: 20px; background: var(--tv-option-bg); }
+/* The row's label already says "Tu rango". */
+.tv-play-rankbox .tv-play-rank-text small { display: none; }
+
 /* The name, when there's no account yet: in place of the settings. */
 .tv-play-name { display: grid; gap: 16px; }
 .tv-play-account { margin: 0; font-weight: 700; font-size: 13px; line-height: 1.4; color: var(--tv-text-3); }

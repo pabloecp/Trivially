@@ -10,6 +10,7 @@ import { JoinButton, statusOf } from "./FriendsSheet.jsx";
 import Icon from "./Icon.jsx";
 import Logo, { logoIncoming } from "./Logo.jsx";
 import ModeStage from "./ModeStage.jsx";
+import { RankCard } from "./PlaySide.jsx";
 import OptionRow from "./OptionRow.jsx";
 import SettingsSection from "./SettingsSection.jsx";
 
@@ -347,6 +348,25 @@ export default function PlayPage({ leaving = false, toHome = false }) {
           </div>
         </dl>
       </div>
+      {/* Competitivo: the account's rank under the match (it moves with each competitive match); a guest has none. */}
+      {kind?.id === "competitivo" && (
+        <div key="rank" className="tv-optrow tv-play-rankrow">
+          <span className="tv-optrow-label">Tu rango</span>
+          {isAccount ? (
+            <div className="tv-play-rankbox">
+              <RankCard rank={user?.rank} />
+            </div>
+          ) : (
+            <div className="tv-lobby-empty">
+              <Icon name="crown" size={22} strokeWidth={2.4} />
+              <p>Con una cuenta tienes rango y sube con cada victoria.</p>
+              <Link to="/login" className="tv-btn tv-btn--sm tv-c-violet">
+                Crear cuenta
+              </Link>
+            </div>
+          )}
+        </div>
+      )}
     </>
   );
 
