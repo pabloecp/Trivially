@@ -8,7 +8,7 @@ export const MATCH_KINDS = {
     name: "Casual",
     color: "site",
     icon: "bolt",
-    blurb: "Partidas rápidas con gente de todas partes",
+    blurb: "Juega sin presión, cuando quieras",
     detail: "Para jugar sin presión",
     // The steps on its big card, the same on /jugar/casual and while it searches (PlayPage, MatchLobby).
     steps: [
@@ -22,7 +22,7 @@ export const MATCH_KINDS = {
     name: "Competitivo",
     color: "accent",
     icon: "crown",
-    blurb: "Para los que juegan en serio",
+    blurb: "Gana partidas y sube de rango",
     detail: "Cada victoria cuenta para tu rango",
     steps: [
       { icon: "crown", text: "Cada victoria te sube de rango" },
