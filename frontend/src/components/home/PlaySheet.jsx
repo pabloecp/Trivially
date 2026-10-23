@@ -6,7 +6,7 @@ import { findMode } from "../../modes/index.js";
 import Avatar from "./Avatar.jsx";
 import Icon from "./Icon.jsx";
 import Segmented from "./Segmented.jsx";
-import { MATCH_KINDS, MATCH_ROUNDS, MATCH_SIZES, gamesFor, gamesText } from "./matchInfo.js";
+import { MATCH_KINDS, MATCH_SIZES, gamesFor } from "./matchInfo.js";
 import "../../styles/match.css";
 
 // A room's code is five letters and numbers (ROOM_CODE_LENGTH on the server).
@@ -14,11 +14,10 @@ const ROOM_CODE_LENGTH = 5;
 
 const DISMISS_DISTANCE = 90;
 const FOCUSABLE = "a[href], button:not([disabled]), input:not([disabled])";
-// The three ways to play, each opening in place under its row: the public matches (pick the length, then search) and
-// "Privada" (create a room or join one with a code).
+// The ways to play, each opening in place under its row: the public match (how many play, then search; Competitivo is
+// disabled for now) and "Privada" (create a room or join one with a code).
 const PLAY_KINDS = [
   MATCH_KINDS.casual,
-  MATCH_KINDS.competitivo,
   { id: "privada", name: "Privada", color: "blue", icon: "lock", blurb: "Crea una sala o entra con un código" },
 ];
 
@@ -39,9 +38,8 @@ const TITLES = {
 // first, already filled in with the one used last time (and its colour), so a guest can keep it with one tap.
 export default function PlaySheet({ mode, joinCode, open, onClose }) {
   const { user, saveGuest, createRoom, joinRoom, checkRoom, findMatch } = useApp();
-  // Which of the three rows is open (null: none), and the length picked for a public match.
+  // Which row is open (null: none).
   const [kind, setKind] = useState(null);
-  const [rounds, setRounds] = useState(MATCH_ROUNDS[0]);
   const [size, setSize] = useState(MATCH_SIZES[1].value);
   const sheetRef = useRef(null);
   const dragStart = useRef(null);
@@ -175,7 +173,7 @@ export default function PlaySheet({ mode, joinCode, open, onClose }) {
         action.type === "create"
           ? createRoom("multi", {}, mode?.id ?? null)
           : action.type === "match"
-          ? findMatch(action.kind, action.rounds, action.size)
+          ? findMatch(action.kind, action.size)
           : joinRoom(action.code)
       );
       onClose(); // the room navigator takes the player wherever the room is
@@ -328,20 +326,6 @@ export default function PlaySheet({ mode, joinCode, open, onClose }) {
                                 <span className="tv-pm-detail">{k.detail}</span>
                               </div>
                               <Segmented
-                                label="Rondas"
-                                value={rounds}
-                                onChange={setRounds}
-                                options={MATCH_ROUNDS.map((n) => ({
-                                  value: n,
-                                  label: (
-                                    <span className="tv-pm-round">
-                                      <b>{n} rondas</b>
-                                      <small>{gamesText(n)}</small>
-                                    </span>
-                                  ),
-                                }))}
-                              />
-                              <Segmented
                                 label="Jugadores"
                                 value={size}
                                 onChange={setSize}
@@ -359,7 +343,7 @@ export default function PlaySheet({ mode, joinCode, open, onClose }) {
                                 type="button"
                                 className={`tv-btn tv-btn--block tv-c-${k.color} tv-shine tv-pm-go`}
                                 data-sound={!user?.name || user.isGuest ? undefined : "none"}
-                                onClick={() => run({ type: "match", kind: k.id, rounds, size })}
+                                onClick={() => run({ type: "match", kind: k.id, size })}
                                 disabled={busy}
                               >
                                 <Icon name="play" size={18} filled strokeWidth={1.5} />

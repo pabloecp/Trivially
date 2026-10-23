@@ -201,7 +201,8 @@ export default function MatchIntro({ room }) {
       <div className="tv-mi-frame">
         <header className="tv-mi-head">
           <p className="tv-mono-label">
-            {label ? `${label} · ` : ""}Juego {intro.index + 1} de {total}
+            {label ? `${label} · ` : ""}
+            {intro.decider ? "Juego de desempate" : `Juego ${intro.index + 1} de ${total}`}
           </p>
           {total > 1 && (
             <ol className="tv-mi-dots" aria-hidden="true">

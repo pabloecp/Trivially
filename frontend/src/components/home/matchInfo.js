@@ -1,5 +1,6 @@
-// Partidas públicas ("Casual" and "Competitivo", backend/src/game/matchmaking.js): their names and colours, the
-// lengths to choose from, and the short tutorial each game shows after the roulette picks it (MatchIntro.jsx).
+// Partidas públicas ("Casual" and "Competitivo", backend/src/game/matchmaking.js; Competitivo is disabled for now): their
+// names and colours, and the short tutorial each game shows after the roulette picks it (MatchIntro.jsx). Every match is
+// two games of 5 rounds, and a third when they end one each.
 
 export const MATCH_KINDS = {
   casual: {
@@ -20,8 +21,10 @@ export const MATCH_KINDS = {
   },
 };
 
-export const MATCH_ROUNDS = [5, 15];
 export const ROUNDS_PER_GAME = 5;
+// Games of every public match, and its rounds (MATCH_GAME_COUNT and MATCH_ROUNDS on the server).
+export const MATCH_GAME_COUNT = 2;
+export const MATCH_ROUNDS = MATCH_GAME_COUNT * ROUNDS_PER_GAME;
 // How many players a room needs (MATCH_SIZES on the server): you against one, or five in all.
 export const MATCH_SIZES = [
   { value: 2, label: "Duelo", hint: "2 jugadores", icon: "user" },
@@ -35,8 +38,7 @@ export const CASUAL_GAMES = MATCH_GAMES;
 export const gamesFor = (kind) => (kind === "casual" ? CASUAL_GAMES : MATCH_GAMES);
 
 // What the roulette really draws (MATCH_VARIANTS on the server): each game with one way of playing it, a game of its
-// own in a public match ("Trivia Cerradas" is only four-option questions). `hint` says how it's played in a few words
-// ("Elegir juegos", VoteBoard.jsx).
+// own in a public match ("Trivia Cerradas" is only four-option questions). `hint` says how it's played in a few words.
 export const MATCH_VARIANTS = [
   { id: "trivia-cerradas", game: "opciones", way: "Cerradas", hint: "Elige entre 4 opciones" },
   { id: "trivia-abiertas", game: "opciones", way: "Abiertas", hint: "Escribe la respuesta" },

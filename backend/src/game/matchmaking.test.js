@@ -7,12 +7,13 @@ const gameOf = (variant) => findVariant(variant).game;
 import { MINES_FIRST_TURN_EXTRA_MS } from "./mines.js";
 import { RoomManager } from "./roomManager.js";
 
-// Partidas públicas: players are put together in a room of their kind and length until it's full, the match starts by
-// itself with one game per 5 rounds (all different), and every game opens with its roulette and tutorial ("intro").
-assert.throws(() => cleanMatchRequest({ kind: "privada", rounds: 5 }), /Casual o Competitivo/);
-assert.throws(() => cleanMatchRequest({ kind: "casual", rounds: 10 }), /5 o 15/);
+// Partidas públicas: players are put together in a room of their kind and size until it's full, the match starts by
+// itself with two games of 5 rounds (all different, plus a third if they end one each), and every game opens with its
+// roulette and tutorial ("intro"). Competitivo is disabled for now; the rounds a client sends are ignored.
+assert.throws(() => cleanMatchRequest({ kind: "privada", rounds: 5 }), /tipo de partida/);
+assert.throws(() => cleanMatchRequest({ kind: "competitivo" }), /Competitivo no está disponible/);
 assert.throws(() => cleanMatchRequest({ kind: "casual", rounds: 5, size: 3 }), /Duelo o Todos contra todos/);
-assert.deepEqual(cleanMatchRequest({ kind: "competitivo", rounds: "15" }), { kind: "competitivo", rounds: 15, size: 5 });
+assert.deepEqual(cleanMatchRequest({ kind: "casual", rounds: "15" }), { kind: "casual", rounds: 10, size: 5 });
 assert.deepEqual(cleanMatchRequest({ kind: "casual", rounds: 5, size: 2 }).size, 2);
 for (const [rounds, count] of [[5, 1], [10, 2], [15, 3]]) {
   const games = pickMatchGames(rounds);
@@ -24,12 +25,12 @@ for (const [rounds, count] of [[5, 1], [10, 2], [15, 3]]) {
 const mgr = new RoomManager({ catalog: readLocalCatalog(), store: { users: {} } });
 const user = (i) => ({ id: `u${i}`, name: `Jugador ${i}`, socketId: `s${i}` });
 
-// The first one opens a public room with no host; the next ones of the same kind and length go into it.
+// The first one opens a public room with no host; the next ones of the same kind and size go into it, whatever rounds
+// an older client asks for.
 const room = mgr.findMatch(user(1), { kind: "casual", rounds: 15 });
 assert.equal(room.hostId, null, "nobody is the host");
-assert.equal(mgr.findMatch(user(2), { kind: "casual", rounds: 15 }), room, "same kind and length: same room");
-const other = mgr.findMatch(user(9), { kind: "competitivo", rounds: 15 });
-assert.notEqual(other, room, "another kind: another room");
+assert.equal(mgr.findMatch(user(2), { kind: "casual", rounds: 5 }), room, "same kind and size: same room");
+assert.throws(() => mgr.findMatch(user(9), { kind: "competitivo" }), /Competitivo/, "Competitivo is disabled");
 assert.throws(() => mgr.findToJoin(room.code, "intruso"), /partida pública/, "nobody joins by code");
 assert.equal(mgr.findToJoin(room.code, "u1"), room, "its players can come back to it");
 assert.throws(() => mgr.start(room, "u1"), /Solo el Host/, "nobody starts it by hand");
@@ -37,7 +38,7 @@ assert.throws(() => mgr.start(room, "u1"), /Solo el Host/, "nobody starts it by 
 let state = mgr.publicState(room);
 assert.deepEqual(
   { kind: state.matchmaking.kind, rounds: state.matchmaking.rounds, count: state.matchmaking.count, size: state.matchmaking.size },
-  { kind: "casual", rounds: 15, count: 2, size: 5 }
+  { kind: "casual", rounds: 10, count: 2, size: 5 }
 );
 
 // Full: it starts after a moment, unless someone leaves first.
@@ -50,11 +51,14 @@ mgr.findMatch(user(7), { kind: "casual", rounds: 15 });
 assert.ok(room.matchmaking.startsAt, "full again");
 clearTimeout(room.matchmaking.timer);
 
-// It starts: three different games of 5 rounds each (Lluvia: 2 showers), opening with the first game's roulette.
+// It starts: two different games of 5 rounds each (Lluvia: 2 showers), opening with the first game's roulette; a third,
+// different one is kept aside as the decider.
 mgr.startMatch(room);
 clearTimeout(room.timer);
-assert.equal(room.matchmaking.games.length, 3);
-assert.equal(room.totalRounds, 15);
+assert.equal(room.matchmaking.games.length, 2);
+assert.equal(room.totalRounds, 10);
+assert.ok(room.run.decider && !room.matchmaking.games.includes(room.run.decider.variant), "a decider of its own");
+assert.equal(room.run.deciderTracks.length, 5);
 assert.equal(room.phase, "intro");
 assert.equal(room.phaseEndsAt - room.phaseStartedAt, INTRO_MS);
 assert.equal(room.game, gameOf(room.matchmaking.games[0]), "the room is already in the first game");
@@ -86,17 +90,68 @@ clearTimeout(room.timer);
 
 for (const r of [...mgr.rooms.values()]) mgr.destroy(r);
 
+// A duel: each game goes to whoever scores the most in it. One each: a third game decides; both to one: it's over.
+function playDuel(winners) {
+  const a = user(60 + winners.join("").length * 2);
+  const b = { ...user(61 + winners.join("").length * 2) };
+  const duelRoom = mgr.findMatch(a, { kind: "casual", size: 2 });
+  clearTimeout(duelRoom.matchmaking.botTimer);
+  mgr.findMatch(b, { kind: "casual", size: 2 });
+  clearTimeout(duelRoom.matchmaking.timer);
+  mgr.startMatch(duelRoom);
+  const ids = { a: a.id, b: b.id };
+  for (const winner of winners) {
+    for (let i = 0; i < 5; i += 1) {
+      clearTimeout(duelRoom.timer);
+      if (duelRoom.phase === "intro") mgr.beginCountdown(duelRoom);
+      clearTimeout(duelRoom.timer);
+      mgr.beginPlaying(duelRoom);
+      clearTimeout(duelRoom.timer);
+      mgr.beginReveal(duelRoom);
+      clearTimeout(duelRoom.timer);
+      // The game's winner scores less overall than the other did in an earlier game: games won count, not points.
+      duelRoom.players.get(ids[winner]).score += 100;
+      mgr.advance(duelRoom);
+      clearTimeout(duelRoom.timer);
+    }
+  }
+  return { duelRoom, ids };
+}
+{
+  const { duelRoom, ids } = playDuel(["a", "a"]);
+  assert.equal(duelRoom.phase, "finished", "two games to one player: over");
+  assert.equal(duelRoom.run.items.length, 2, "no decider");
+  assert.equal(duelRoom.run.winnerId ?? mgr.publicState(duelRoom).run.winnerId, ids.a);
+  mgr.destroy(duelRoom);
+}
+{
+  const { duelRoom, ids } = playDuel(["a", "b"]);
+  assert.equal(duelRoom.phase, "intro", "one each: the decider's roulette");
+  assert.equal(duelRoom.run.items.length, 3);
+  assert.equal(duelRoom.matchmaking.games.length, 3);
+  assert.equal(duelRoom.totalRounds, 15);
+  assert.equal(mgr.publicState(duelRoom).intro.decider, true);
+  duelRoom.players.get(ids.a).score += 5000;
+  mgr.destroy(duelRoom);
+  const again = playDuel(["a", "b", "b"]);
+  assert.equal(again.duelRoom.phase, "finished", "the decider settles it");
+  const run = mgr.publicState(again.duelRoom).run;
+  assert.equal(run.winnerId, again.ids.b, "two games to one");
+  assert.deepEqual(run.standings.map((p) => p.wins), [2, 1]);
+  assert.equal(run.bestOf, true);
+  mgr.destroy(again.duelRoom);
+}
+
 // Casual: bots fill the empty seats (only Casual waits for them) and play every game by themselves.
 // Duelo: its own rooms, full with two.
 const duel = mgr.findMatch(user(30), { kind: "casual", rounds: 5, size: 2 });
 assert.notEqual(mgr.findMatch(user(31), { kind: "casual", rounds: 5 }), duel, "5 players: another room");
 assert.equal(mgr.findMatch(user(32), { kind: "casual", rounds: 5, size: 2 }), duel);
 assert.ok(duel.matchmaking.startsAt, "two players: full");
-mgr.destroy(duel);
+for (const r of [...mgr.rooms.values()]) mgr.destroy(r);
 
 const lone = mgr.findMatch(user(20), { kind: "casual", rounds: 15 });
 assert.ok(lone.matchmaking.botTimer, "Casual: bots are on their way");
-assert.equal(other.matchmaking.botTimer, null, "Competitivo: no bots");
 clearTimeout(lone.matchmaking.botTimer);
 while (mgr.connectedCount(lone) < lone.matchmaking.size) mgr.addBot(lone);
 const bots = [...lone.players.values()].filter((p) => p.bot);
@@ -110,7 +165,7 @@ assert.ok(lone.matchmaking.startsAt, "bots fill the room: it starts");
 clearTimeout(lone.matchmaking.timer);
 mgr.startMatch(lone);
 clearTimeout(lone.timer);
-assert.equal(lone.matchmaking.games.length, 3);
+assert.equal(lone.matchmaking.games.length, 2);
 
 // Every game of the match: each bot answers its rounds, whichever of the six games it is.
 const answeredBy = new Set();
@@ -168,7 +223,7 @@ assert.equal(matchRoundMs("musica"), 15000);
 assert.equal(matchRoundMs("lluvia"), 30000);
 assert.equal(matchItemConfig("lluvia", "casual").rounds, 2, "two showers");
 
-// A full Casual room of 15 rounds plays the three games, each once.
+// A full Casual room plays different games.
 const many = mgr.findMatch(user(40), { kind: "casual", rounds: 15 });
 mgr.startMatch(many);
 assert.equal(new Set(many.matchmaking.games).size, many.matchmaking.games.length);
@@ -179,7 +234,7 @@ assert.equal(MATCH_VARIANTS.length, 6);
 assert.deepEqual(variantsFor("competitivo"), MATCH_VARIANTS.map((v) => v.id));
 assert.deepEqual(matchItemConfig("opciones", "casual", { variant: "trivia-cerradas" }).formats, ["opciones"]);
 assert.deepEqual(matchItemConfig("minas", "casual", { variant: "minas-carrera" }).styles, ["carrera"]);
-const ways = mgr.findMatch(user(50), { kind: "competitivo", rounds: 15 });
+const ways = mgr.findMatch(user(50), { kind: "casual" });
 mgr.startMatch(ways);
 for (const [i, variant] of ways.matchmaking.games.entries()) {
   const config = ways.run.items[i].config;

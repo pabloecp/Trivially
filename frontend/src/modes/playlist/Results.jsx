@@ -60,8 +60,9 @@ function ResultsScreen() {
   let title = `¡Fin de la ${what}!`;
   if (winner && !solo) title = `¡${winner.name} gana la ${what}!`;
   else if (!winner && standings[0]?.wins > 0) title = "¡Empate!";
-  // Every playlist is one match now (`mixed`; "aleatorio" also shuffles its rounds): the most points win.
-  const mixed = Boolean(run?.mixed);
+  // Every playlist is one match now (`mixed`; "aleatorio" also shuffles its rounds): the most points win. A public
+  // match (`bestOf`) is won by games won instead, its points breaking a tie.
+  const mixed = Boolean(run?.mixed) && !run?.bestOf;
   const pointsText = (p) => `${p.points.toLocaleString("es-ES")} pts`;
   // This player's rounds of every game, numbered one after another (none on the central device).
   const me = isCentral ? null : standings.find((p) => p.id === user?.id) || null;
@@ -69,7 +70,7 @@ function ResultsScreen() {
   let hint = null;
   if (mixed && winner) hint = `${pointsText(winner)} en ${run.total === 1 ? "1 juego" : `${run.total} juegos`}${run.order === "aleatorio" ? " mezclados" : ""}`;
   else if (mixed && standings[0]?.wins > 0) hint = "Mismos puntos";
-  else if (winner && solo) hint = `Ganaste ${run.played.filter((g) => g.winnerId === winner.id).length} de ${run.total} juegos`;
+  else if (winner && solo && !run.bestOf) hint = `Ganaste ${run.played.filter((g) => g.winnerId === winner.id).length} de ${run.total} juegos`;
   else if (winner) hint = `${winsText(winner.wins)} de ${run.total}`;
   else if (standings[0]?.wins > 0) hint = "Mismos juegos ganados y mismos puntos";
 
@@ -132,7 +133,7 @@ function ResultsScreen() {
                   disabled={searching}
                   onClick={() => {
                     setSearching(true);
-                    withSound(() => findMatch(publicMatch.kind, publicMatch.rounds, publicMatch.versus || 5), null)
+                    withSound(() => findMatch(publicMatch.kind, publicMatch.versus || 5), null)
                       // This address is the old room's, which RoomNavigator leaves alone: go to the new one's screen.
                       .then((next) => nav(`/sala/${urlCode(next.code)}`, { replace: true }))
                       .catch((e) => {

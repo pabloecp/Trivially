@@ -3,7 +3,6 @@ import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { GAME_MODES, findMode, isGameTile } from "../../modes/index.js";
 import { useHiddenCode } from "../../lib/hiddenCode.js";
 import { useFriends } from "../../lib/friends.jsx";
-import { useMatchVotes, voteSlots } from "../../lib/matchVotes.js";
 import { AVATAR_COLORS, savedGuest, useApp } from "../../lib/store.jsx";
 import { withSound } from "../../lib/sounds.js";
 import Avatar from "./Avatar.jsx";
@@ -11,10 +10,9 @@ import { JoinButton, statusOf } from "./FriendsSheet.jsx";
 import Icon from "./Icon.jsx";
 import Logo, { logoIncoming } from "./Logo.jsx";
 import OptionRow from "./OptionRow.jsx";
-import { RankCard } from "./PlaySide.jsx";
-import VoteBoard, { VoteTokens } from "./VoteBoard.jsx";
+import MatchGames from "./MatchGames.jsx";
 
-import { MATCH_KINDS, MATCH_ROUNDS, MATCH_SIZES, gamesText } from "./matchInfo.js";
+import { MATCH_GAME_COUNT, MATCH_KINDS, MATCH_ROUNDS, MATCH_SIZES } from "./matchInfo.js";
 import "../../styles/match.css";
 import "../../styles/lobby.css";
 
@@ -35,14 +33,18 @@ const KINDS = [
     ...MATCH_KINDS.casual,
     kicker: "Partida pública",
     facts: [
-      { icon: "sun", text: "Sin presión: no cuenta para tu rango" },
-      { icon: "play", text: "Entra y juega en segundos" },
+      { icon: "grid", text: "2 juegos al azar, de 5 rondas cada uno" },
+      { icon: "crown", text: "Gana cada juego quien más puntos saque" },
+      { icon: "bolt", text: "Si quedáis uno a uno, un tercer juego desempata" },
     ],
   },
+  // Disabled for now: its tab shows, but can't be opened (and its address goes to Casual).
   {
     ...MATCH_KINDS.competitivo,
     kicker: "Partida pública",
-    facts: [{ icon: "crown", text: "Cada victoria te sube de rango" }],
+    disabled: true,
+    blurb: "No disponible por ahora",
+    facts: [],
   },
   {
     id: "privada",
@@ -58,8 +60,9 @@ const KINDS = [
   },
 ];
 
-// Pública's tabs.
+// Pública's tabs, and the ones that can be opened.
 const PUBLIC_KINDS = KINDS.filter((k) => k.id !== "privada");
+const OPEN_KINDS = PUBLIC_KINDS.filter((k) => !k.disabled);
 const pageOf = (kindId) => (kindId === "privada" ? "privada" : "publica");
 
 // Pública opens on the tab it was left on last time (this device only).
@@ -67,9 +70,9 @@ const PUBLIC_KEY = "trivially_public_kind";
 function lastPublicKind() {
   try {
     const saved = localStorage.getItem(PUBLIC_KEY);
-    return PUBLIC_KINDS.some((k) => k.id === saved) ? saved : PUBLIC_KINDS[0].id;
+    return OPEN_KINDS.some((k) => k.id === saved) ? saved : OPEN_KINDS[0].id;
   } catch {
-    return PUBLIC_KINDS[0].id;
+    return OPEN_KINDS[0].id;
   }
 }
 
@@ -80,7 +83,7 @@ const TILES = [
     name: "Pública",
     color: "site",
     icon: "globe",
-    blurb: "Casual o competitiva, con gente de todas partes",
+    blurb: "Partidas rápidas con gente de todas partes",
     path: () => `/jugar/${lastPublicKind()}`,
   },
   { ...KINDS[2], path: () => "/jugar/privada" },
@@ -98,10 +101,9 @@ function codeFrom(text) {
 // makes the tiles sink away and that option come in: its own panel beside its ticket, a narrower card in its colour
 // with what kind of match it is and the main button ("Buscar partida", "Crear sala").
 // The ticket is on the left, the tabs and the panel on the right.
-// Pública is Casual and Competitivo, as two tabs at the top (/jugar/casual, /jugar/competitivo: switching replaces the
-// address, so "Volver" still goes to Inicio, and the page stays: only its colour and its ticket change). Both have how
-// many play (two big buttons) and how long on the panel, then "Elegir juegos (opcional)" (VoteBoard, folded away; one set
-// of votes per format, lib/matchVotes.js); the ticket sums it up, votes included and, in Competitivo, has the rank. Privada (/jugar/privada): joining with a code
+// Pública is Casual and Competitivo, as two tabs at the top (/jugar/casual; Competitivo is disabled for now: its tab
+// can't be picked and /jugar/competitivo goes to Casual). The panel has how many play (two big buttons) and the games
+// that can come; every match is two of them, and a third when they end one each. The ticket sums it up. Privada (/jugar/privada): joining with a code
 // and the friends online on the panel, the room "Crear sala" makes (its code shown or hidden, friends to invite) on the
 // ticket. The top bar's "Volver" (the only way back) and the browser's Back go to Inicio. Leaving a room comes back to
 // the option it came from (exitPath in TvTopbar.jsx). Without an account, the ticket asks for the name first (filled in
@@ -115,13 +117,15 @@ export default function PlayPage({ leaving = false, toHome = false }) {
   // The option comes from the address; `chosen` is the one on screen, which follows it once the old one has gone
   // (straight away between Pública's tabs).
   const { option } = useParams();
-  const wanted = KINDS.some((k) => k.id === option) ? option : null;
+  const wanted = KINDS.some((k) => k.id === option && !k.disabled) ? option : null;
+  // A disabled tab's address (an old link, the last tab used): Casual instead.
+  useEffect(() => {
+    if (KINDS.some((k) => k.id === option && k.disabled)) nav(`/jugar/${OPEN_KINDS[0].id}`, { replace: true, state: location.state });
+  }, [option]);
   const [chosen, setChosen] = useState(wanted);
   const [out, setOut] = useState(false);
-  // Duelo and 1 juego unless the player picks otherwise.
-  const [rounds, setRounds] = useState(MATCH_ROUNDS[0]);
+  // Duelo unless the player picks otherwise.
   const [size, setSize] = useState(MATCH_SIZES[0].value);
-  const votes = useMatchVotes(size, rounds);
   const [code, setCode] = useState("");
   // Privada: the online friends to invite as soon as the room exists (the game is chosen inside, as always). Hiding the
   // code is this device's own setting (lib/hiddenCode.js), the room's column's "Ocultar".
@@ -201,7 +205,7 @@ export default function PlayPage({ leaving = false, toHome = false }) {
         action.type === "create"
           ? createPrivate(action)
           : action.type === "match"
-          ? findMatch(action.kind, action.rounds, action.size, action.votes)
+          ? findMatch(action.kind, action.size)
           : joinRoom(action.code)
       );
       // The room navigator takes the player wherever the room is.
@@ -292,7 +296,6 @@ export default function PlayPage({ leaving = false, toHome = false }) {
   const online = (friends.view?.friends || []).filter((f) => f.online);
   // The ticked friends still online.
   const invited = invites.filter((id) => online.slice(0, INVITES_SHOWN).some((f) => f.id === id));
-  const games = voteSlots(rounds);
   const mainLabel = pending
     ? busy
       ? "Entrando…"
@@ -304,22 +307,16 @@ export default function PlayPage({ leaving = false, toHome = false }) {
     : busy
     ? "Creando sala…"
     : "Crear sala";
-  const mainAction = match ? { type: "match", kind: kind.id, rounds, size, votes: votes.votes } : { type: "create", invites: invited };
+  const mainAction = match ? { type: "match", kind: kind.id, size } : { type: "create", invites: invited };
 
-  // Casual and Competitivo: how many play and how long, then the votes.
+  // A public match: how many play, then the games the roulette can draw (only to read).
   const matchPanel = (
     <>
-      <div className="tv-lobby-format">
-        <SizePick value={size} onChange={setSize} />
-        <FormatPick
-          label="Duración"
-          blocks
-          options={MATCH_ROUNDS.map((n) => ({ value: n, label: gamesText(n), hint: `${n} rondas`, pips: voteSlots(n) }))}
-          value={rounds}
-          onChange={setRounds}
-        />
+      <SizePick value={size} onChange={setSize} />
+      <div className="tv-lobby-pick">
+        <span className="tv-lobby-label">Juegos que pueden tocar</span>
+        <MatchGames kind={kind?.id} compact />
       </div>
-      <VoteBoard votes={votes} />
     </>
   );
 
@@ -493,34 +490,14 @@ export default function PlayPage({ leaving = false, toHome = false }) {
         </div>
         <div>
           <dt>Juegos</dt>
-          <dd key={games}>{games}</dd>
+          <dd>{MATCH_GAME_COUNT}</dd>
         </div>
         <div>
           <dt>Rondas</dt>
-          <dd key={rounds}>{rounds}</dd>
+          <dd>{MATCH_ROUNDS}</dd>
         </div>
       </dl>
-      {/* Both tabs' parts are always drawn, one over the other, and only the chosen one shows: the ticket is as tall as
-          the taller of them, so switching tab never makes it grow or shrink. */}
-      <div className="tv-ticket-layers">
-        {PUBLIC_KINDS.map((k) => {
-          const active = k.id === kind.id;
-          return (
-            <div key={`${k.id}-${active}`} className={`tv-ticket-layer${active ? "" : " is-off"}`} aria-hidden={!active || undefined} inert={active ? undefined : ""}>
-              {k.id === "competitivo" &&
-                (isAccount ? (
-                  <RankCard rank={user?.rank} card />
-                ) : (
-                  <p className="tv-ticket-guest">
-                    Juegas como invitado: tu rango no se guarda. <Link to="/login">Crear cuenta</Link>
-                  </p>
-                ))}
-              <TicketFacts facts={k.facts} />
-            </div>
-          );
-        })}
-      </div>
-      <VoteTokens votes={votes} />
+      <TicketFacts facts={kind.facts} />
     </>
   ) : (
     <>
@@ -596,6 +573,7 @@ export default function PlayPage({ leaving = false, toHome = false }) {
                       type="button"
                       className={`tv-lobby-tab tv-c-${k.color}`}
                       aria-current={k.id === kind.id ? "page" : undefined}
+                      disabled={k.disabled}
                       onClick={() => k.id !== wanted && nav(`/jugar/${k.id}`, { replace: true, state: location.state })}
                     >
                       <span className="tv-lobby-tab-badge" aria-hidden="true">
@@ -675,33 +653,6 @@ function SizePick({ value, onChange }) {
             <span className="tv-lobby-pick-text">
               <strong>{o.label}</strong>
               <small>{o.value === 2 ? "1 contra 1" : o.hint}</small>
-            </span>
-          </button>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-// "Duración": its two choices side by side, right under the players' two buttons and just like them (the same buttons,
-// the same size), each with how many games it means drawn as blocks on its square.
-function FormatPick({ label, options, value, onChange, blocks = false }) {
-  return (
-    <div className="tv-lobby-pick" role="radiogroup" aria-label={label}>
-      <span className="tv-lobby-label">{label}</span>
-      <div className="tv-lobby-size">
-        {options.map((o) => (
-          <button key={o.value} type="button" role="radio" aria-checked={o.value === value} className="tv-lobby-size-btn" onClick={() => onChange(o.value)}>
-            <span className="tv-lobby-size-badge" aria-hidden="true">
-              <span className={`tv-pips${blocks ? " is-blocks" : ""}`}>
-                {Array.from({ length: o.pips }, (_, i) => (
-                  <i key={i} />
-                ))}
-              </span>
-            </span>
-            <span className="tv-lobby-pick-text">
-              <strong>{o.label}</strong>
-              <small>{o.hint}</small>
             </span>
           </button>
         ))}

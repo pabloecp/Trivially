@@ -5,7 +5,7 @@ import { exitPath } from "./TvTopbar.jsx";
 import Avatar from "./Avatar.jsx";
 import Icon from "./Icon.jsx";
 import MatchGames from "./MatchGames.jsx";
-import { MATCH_KINDS, sizeName } from "./matchInfo.js";
+import { MATCH_KINDS, gamesText, sizeName } from "./matchInfo.js";
 import "../../styles/match.css";
 
 // The room screen of a public match while it waits for players (RoomManager.findMatch): a seat per player it needs,
@@ -42,7 +42,7 @@ export default function MatchLobby({ room }) {
         <Icon name={full ? "check" : kind.icon} size={30} filled={!full} strokeWidth={full ? 3 : 1.6} />
       </span>
       <p className="tv-mono-label tv-ml-kicker">
-        {kind.name} · {sizeName(info.versus || info.size)} · {info.rounds} rondas
+        {kind.name} · {sizeName(info.versus || info.size)} · {gamesText(info.rounds)}
       </p>
       {/* What's going on and how full it is, on one line: "Buscando jugadores 1/5", then "¡Sala completa! 3". */}
       <div className="tv-ml-headline">

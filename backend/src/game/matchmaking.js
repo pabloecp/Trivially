@@ -1,15 +1,21 @@
-// Partidas públicas ("Casual" and "Competitivo" in the Jugar sheet): players who don't know each other are put in the
-// same room until it's full (2 players for "Duelo", 5 for "Todos contra todos"), and then the match starts on its own. Its
-// games aren't chosen by anyone: a match of 5 rounds is one game and of 15 three, drawn at random among MATCH_VARIANTS (each
-// game with one of its ways only: "Trivia Cerradas", "Rango Cifras"...; the same in both kinds) and played one after
-// another (a playlist in order, 5 rounds each). Before each game a roulette shows which one comes next, followed by a
-// short tutorial of it (the room's "intro" phase: INTRO_SPIN_MS + INTRO_TUTORIAL_MS).
+// Partidas públicas ("Casual"; "Competitivo" is disabled for now, MATCH_KINDS_OPEN): players who don't know each other
+// are put in the same room until it's full (2 players for "Duelo", 5 for "Todos contra todos"), and then the match starts
+// on its own. Its games aren't chosen by anyone: every match is MATCH_GAME_COUNT (2) games, drawn at random among
+// MATCH_VARIANTS (each game with one of its ways only: "Trivia Cerradas", "Rango Cifras"...) and played one after another
+// (a playlist in order, 5 rounds each). Each game is won by whoever scores the most in it, and the match by whoever wins
+// more games: when the two games end tied (one won each), a third one decides it (RoomManager.beginDecider). Before each
+// game a roulette shows which one comes next, followed by a short tutorial of it (the room's "intro" phase:
+// INTRO_SPIN_MS + INTRO_TUTORIAL_MS).
 
 export const MATCH_KINDS = ["casual", "competitivo"];
-export const MATCH_ROUNDS = [5, 15];
+// The kinds that can be searched for now.
+export const MATCH_KINDS_OPEN = ["casual"];
+export const ROUNDS_PER_GAME = 5;
+// Games of every public match, before a possible decider.
+export const MATCH_GAME_COUNT = 2;
+export const MATCH_ROUNDS = MATCH_GAME_COUNT * ROUNDS_PER_GAME;
 // How many players a room needs: 2 ("Duelo") or 5 ("Todos contra todos").
 export const MATCH_SIZES = [2, 5];
-export const ROUNDS_PER_GAME = 5;
 // Competitivo's games: Trivia, Rango and Campo de minas, the ones judged only by what you know.
 export const MATCH_GAMES = ["opciones", "historia", "minas"];
 // Casual plays the same ones. (The other games still have their public-match clock and bots, matchRoundMs and
@@ -85,13 +91,12 @@ export function newBot(takenNames, random = Math.random) {
 /** A request to find a match, or an error in Spanish when it isn't one. */
 export function cleanMatchRequest(input) {
   const kind = MATCH_KINDS.includes(input?.kind) ? input.kind : null;
-  const rounds = Number(input?.rounds);
-  // Older clients don't send it: 5 players.
+  // Older clients don't send it: 5 players. The `rounds` they may send is ignored: every match is MATCH_ROUNDS.
   const size = input?.size == null ? 5 : Number(input.size);
-  if (!kind) throw new Error("Elige Casual o Competitivo");
-  if (!MATCH_ROUNDS.includes(rounds)) throw new Error("Elige 5 o 15 rondas");
+  if (!kind) throw new Error("Elige el tipo de partida");
+  if (!MATCH_KINDS_OPEN.includes(kind)) throw new Error("El modo Competitivo no está disponible por ahora");
   if (!MATCH_SIZES.includes(size)) throw new Error("Elige Duelo o Todos contra todos");
-  return { kind, rounds, size };
+  return { kind, rounds: MATCH_ROUNDS, size };
 }
 
 /** How many games a match of `rounds` rounds plays: one per ROUNDS_PER_GAME. */
