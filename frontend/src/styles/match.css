@@ -112,12 +112,6 @@
 }
 .tv-ml { gap: 22px; }
 .tv-ml-main { display: flex; flex-direction: column; align-items: center; gap: 10px; min-width: 0; }
-/* Wide screens: the search on the left and the games on the right, side by side and centred. */
-@media (min-width: 1100px) {
-  .tv-ml { flex-direction: row; align-items: center; justify-content: center; gap: clamp(32px, 5vw, 72px); }
-  .tv-ml-main { flex: 0 1 420px; }
-  .tv-ml .tv-ml-games { flex: 0 0 auto; width: auto; max-width: none; margin-top: 0; }
-}
 
 /* The kind's icon floats up and down while it searches; once full it pops into a tick and stays still. */
 .tv-ml-core {
@@ -217,8 +211,6 @@
 }
 .tv-ml-name.is-waiting { font-weight: 700; color: var(--tv-text-3); }
 
-.tv-ml-games { display: grid; gap: 10px; justify-items: center; width: 100%; max-width: 760px; }
-.tv-ml-games p { color: var(--tv-text-3); }
 .tv-ml-reel { width: 100%; }
 /* The same size whether it says "Cancelar búsqueda" or "Salir", so nothing moves when the room fills. */
 .tv-ml-leave { width: 240px; max-width: 100%; margin-top: 14px; }

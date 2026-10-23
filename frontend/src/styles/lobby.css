@@ -125,10 +125,12 @@
 .tv-lobby-sub { margin: 0; font-weight: 700; font-size: 15px; line-height: 1.35; color: var(--tv-text-3); }
 .tv-lobby-label { font-weight: 800; font-size: 15px; color: var(--tv-text-2); }
 
-/* "Jugadores" across the whole panel, then the games that can come. */
-/* The games that can come (MatchGames): three to a row across the panel, as tall as the window allows. */
-.tv-lobby-panel .tv-mgames.is-compact { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-.tv-lobby-panel .tv-mgames.is-compact .tv-mgame { width: auto; aspect-ratio: auto; min-height: clamp(96px, 13vh, 150px); }
+/* "Jugadores" across the whole panel, the only thing in it: its two buttons fill it, each with its icon over its name. */
+.tv-lobby-row.has-tabs .tv-lobby-panel > .tv-lobby-pick { flex: 1; grid-template-rows: auto 1fr; }
+.tv-lobby-row.has-tabs .tv-lobby-size-btn { flex-direction: column; justify-content: center; gap: 16px; text-align: center; }
+.tv-lobby-row.has-tabs .tv-lobby-size-btn .tv-lobby-size-badge { width: 76px; height: 76px; border-radius: 24px; }
+.tv-lobby-row.has-tabs .tv-lobby-size-btn .tv-lobby-pick-text { justify-items: center; }
+.tv-lobby-row.has-tabs .tv-lobby-size-btn .tv-lobby-pick-text strong { font-size: clamp(20px, 2.4vw, 34px); }
 .tv-lobby-pick { display: grid; gap: 6px; min-width: 0; }
 
 /* "Jugadores": Duelo and Todos contra todos are real buttons (grey with their edge, rising on hover and going down when

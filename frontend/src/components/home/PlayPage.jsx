@@ -10,7 +10,6 @@ import { JoinButton, statusOf } from "./FriendsSheet.jsx";
 import Icon from "./Icon.jsx";
 import Logo, { logoIncoming } from "./Logo.jsx";
 import OptionRow from "./OptionRow.jsx";
-import MatchGames from "./MatchGames.jsx";
 
 import { MATCH_GAME_COUNT, MATCH_KINDS, MATCH_ROUNDS, MATCH_SIZES } from "./matchInfo.js";
 import "../../styles/match.css";
@@ -102,8 +101,8 @@ function codeFrom(text) {
 // with what kind of match it is and the main button ("Buscar partida", "Crear sala").
 // The ticket is on the left, the tabs and the panel on the right.
 // Pública is Casual and Competitivo, as two tabs at the top (/jugar/casual; Competitivo is disabled for now: its tab
-// can't be picked and /jugar/competitivo goes to Casual). The panel has how many play (two big buttons) and the games
-// that can come; every match is two of them, and a third when they end one each. The ticket sums it up. Privada (/jugar/privada): joining with a code
+// can't be picked and /jugar/competitivo goes to Casual). The panel has how many play (two big buttons); every match is
+// two games, and a third when they end one each. The ticket sums it up. Privada (/jugar/privada): joining with a code
 // and the friends online on the panel, the room "Crear sala" makes (its code shown or hidden, friends to invite) on the
 // ticket. The top bar's "Volver" (the only way back) and the browser's Back go to Inicio. Leaving a room comes back to
 // the option it came from (exitPath in TvTopbar.jsx). Without an account, the ticket asks for the name first (filled in
@@ -309,16 +308,8 @@ export default function PlayPage({ leaving = false, toHome = false }) {
     : "Crear sala";
   const mainAction = match ? { type: "match", kind: kind.id, size } : { type: "create", invites: invited };
 
-  // A public match: how many play, then the games the roulette can draw (only to read).
-  const matchPanel = (
-    <>
-      <SizePick value={size} onChange={setSize} />
-      <div className="tv-lobby-pick">
-        <span className="tv-lobby-label">Juegos que pueden tocar</span>
-        <MatchGames kind={kind?.id} compact />
-      </div>
-    </>
-  );
+  // A public match: how many play.
+  const matchPanel = <SizePick value={size} onChange={setSize} />;
 
   // Privada: joining with a code (five cells, the code or the invite link pasted), then the friends online: the ones in
   // a room can be joined with a tap (or asked, as the host allows). Without an account, how to get them.
@@ -648,7 +639,7 @@ function SizePick({ value, onChange }) {
         {MATCH_SIZES.map((o) => (
           <button key={o.value} type="button" role="radio" aria-checked={o.value === value} className="tv-lobby-size-btn" onClick={() => onChange(o.value)}>
             <span className="tv-lobby-size-badge" aria-hidden="true">
-              <Icon name={o.icon} size={30} strokeWidth={2.4} />
+              <Icon name={o.icon} size={40} strokeWidth={2.4} />
             </span>
             <span className="tv-lobby-pick-text">
               <strong>{o.label}</strong>
