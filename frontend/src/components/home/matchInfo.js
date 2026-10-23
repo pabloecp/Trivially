@@ -20,8 +20,12 @@ export const MATCH_KINDS = {
   },
 };
 
-export const MATCH_ROUNDS = [5, 15];
-export const ROUNDS_PER_GAME = 5;
+// How long a match is (MATCH_LENGTHS on the server): one game or three, each with its own rounds (Campo de minas 3,
+// the others 5), so it's never a fixed number of rounds.
+export const MATCH_LENGTHS = [
+  { value: 1, hint: "Partida rápida" },
+  { value: 3, hint: "Partida larga" },
+];
 // How many players a room needs (MATCH_SIZES on the server): you against one, or five in all.
 export const MATCH_SIZES = [
   { value: 2, label: "Duelo", hint: "2 jugadores", icon: "user" },
@@ -49,10 +53,7 @@ export const MATCH_VARIANTS = [
 export const findVariant = (id) => MATCH_VARIANTS.find((v) => v.id === id) || { id, game: id, way: null };
 export const variantsFor = (kind) => MATCH_VARIANTS.filter((v) => gamesFor(kind).includes(v.game));
 
-export const gamesText = (rounds) => {
-  const n = Math.round(rounds / ROUNDS_PER_GAME);
-  return n === 1 ? "1 juego" : `${n} juegos`;
-};
+export const gamesText = (games) => (games === 1 ? "1 juego" : `${games} juegos`);
 
 // What to do in each variant, short enough to read in the 5 s the tutorial lasts.
 export const VARIANT_TUTORIALS = {

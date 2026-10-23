@@ -3,7 +3,7 @@ import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { GAME_MODES, findMode, isGameTile } from "../../modes/index.js";
 import { useHiddenCode } from "../../lib/hiddenCode.js";
 import { useFriends } from "../../lib/friends.jsx";
-import { useMatchVotes, voteSlots } from "../../lib/matchVotes.js";
+import { useMatchVotes } from "../../lib/matchVotes.js";
 import { AVATAR_COLORS, savedGuest, useApp } from "../../lib/store.jsx";
 import { withSound } from "../../lib/sounds.js";
 import Avatar from "./Avatar.jsx";
@@ -14,7 +14,7 @@ import OptionRow from "./OptionRow.jsx";
 import { RankCard } from "./PlaySide.jsx";
 import VoteBoard from "./VoteBoard.jsx";
 
-import { MATCH_KINDS, MATCH_ROUNDS, MATCH_SIZES, gamesText } from "./matchInfo.js";
+import { MATCH_KINDS, MATCH_LENGTHS, MATCH_SIZES, gamesText } from "./matchInfo.js";
 import "../../styles/match.css";
 import "../../styles/lobby.css";
 
@@ -118,9 +118,9 @@ export default function PlayPage({ leaving = false, toHome = false }) {
   const [chosen, setChosen] = useState(wanted);
   const [out, setOut] = useState(false);
   // Duelo and 1 juego unless the player picks otherwise.
-  const [rounds, setRounds] = useState(MATCH_ROUNDS[0]);
+  const [games, setGames] = useState(MATCH_LENGTHS[0].value);
   const [size, setSize] = useState(MATCH_SIZES[0].value);
-  const votes = useMatchVotes(size, rounds);
+  const votes = useMatchVotes(size, games);
   const [code, setCode] = useState("");
   // Privada: the online friends to invite as soon as the room exists (the game is chosen inside, as always). Hiding the
   // code is this device's own setting (lib/hiddenCode.js), the room's column's "Ocultar".
@@ -200,7 +200,7 @@ export default function PlayPage({ leaving = false, toHome = false }) {
         action.type === "create"
           ? createPrivate(action)
           : action.type === "match"
-          ? findMatch(action.kind, action.rounds, action.size, action.votes)
+          ? findMatch(action.kind, action.games, action.size, action.votes)
           : joinRoom(action.code)
       );
       // The room navigator takes the player wherever the room is.
@@ -291,7 +291,6 @@ export default function PlayPage({ leaving = false, toHome = false }) {
   const online = (friends.view?.friends || []).filter((f) => f.online);
   // The ticked friends still online.
   const invited = invites.filter((id) => online.slice(0, INVITES_SHOWN).some((f) => f.id === id));
-  const games = voteSlots(rounds);
   const mainLabel = pending
     ? busy
       ? "Entrando…"
@@ -303,7 +302,7 @@ export default function PlayPage({ leaving = false, toHome = false }) {
     : busy
     ? "Creando sala…"
     : "Crear sala";
-  const mainAction = match ? { type: "match", kind: kind.id, rounds, size, votes: votes.votes } : { type: "create", invites: invited };
+  const mainAction = match ? { type: "match", kind: kind.id, games, size, votes: votes.votes } : { type: "create", invites: invited };
 
   // Casual and Competitivo: how many play and how long, then the votes.
   const matchPanel = (
@@ -313,9 +312,9 @@ export default function PlayPage({ leaving = false, toHome = false }) {
         <FormatPick
           label="Duración"
           blocks
-          options={MATCH_ROUNDS.map((n) => ({ value: n, label: gamesText(n), hint: `${n} rondas`, pips: voteSlots(n) }))}
-          value={rounds}
-          onChange={setRounds}
+          options={MATCH_LENGTHS.map((o) => ({ value: o.value, label: gamesText(o.value), hint: o.hint, pips: o.value }))}
+          value={games}
+          onChange={setGames}
         />
       </div>
       <VoteBoard votes={votes} />
@@ -493,10 +492,6 @@ export default function PlayPage({ leaving = false, toHome = false }) {
         <div>
           <dt>Juegos</dt>
           <dd key={games}>{games}</dd>
-        </div>
-        <div>
-          <dt>Rondas</dt>
-          <dd key={rounds}>{rounds}</dd>
         </div>
       </dl>
       {kind.id === "competitivo" &&

@@ -132,7 +132,7 @@ function ResultsScreen() {
                   disabled={searching}
                   onClick={() => {
                     setSearching(true);
-                    withSound(() => findMatch(publicMatch.kind, publicMatch.rounds, publicMatch.versus || 5), null)
+                    withSound(() => findMatch(publicMatch.kind, publicMatch.gameCount, publicMatch.versus || 5), null)
                       // This address is the old room's, which RoomNavigator leaves alone: go to the new one's screen.
                       .then((next) => nav(`/sala/${urlCode(next.code)}`, { replace: true }))
                       .catch((e) => {

@@ -40,7 +40,7 @@ assert.ok(questionErrors({ ...board, data: { correct: "España" } }).length, "no
 // Settings stay within their limits.
 assert.deepEqual(mergeMinesConfig(), {
   styles: ["turnos", "carrera"],
-  rounds: 5,
+  rounds: 3,
   turnMs: 5000,
   roundMs: 30000,
   categories: MINES_CATEGORIES,
@@ -54,7 +54,7 @@ assert.deepEqual(mergeMinesConfig({ style: "carrera" }, { style: "a ciegas" }).s
 assert.equal(mergeMinesConfig({}, { roundMs: 999999 }).roundMs, 50000);
 assert.equal(mergeMinesConfig({}, { roundMs: 1000 }).roundMs, 30000);
 assert.equal(mergeMinesConfig({}, { rounds: 99 }).rounds, 25);
-assert.equal(mergeMinesConfig({}, { rounds: 1 }).rounds, 5);
+assert.equal(mergeMinesConfig({}, { rounds: 1 }).rounds, 3, "at least 3 boards");
 assert.equal(mergeMinesConfig({}, { turnMs: 999999 }).turnMs, 25000);
 assert.equal(mergeMinesConfig({}, { turnMs: 1000 }).turnMs, 5000);
 assert.deepEqual(mergeMinesConfig({}, { difficulties: ["dificil", "imposible", "facil"] }).difficulties, ["facil", "dificil"]);

@@ -10,8 +10,8 @@ export const PLACE_POINTS = {
   4: [30, 10, -5, -15],
   5: [30, 15, 5, -5, -15],
 };
-// A 15-round match is worth more than a 5-round one.
-export const LONG_MATCH_ROUNDS = 15;
+// A match of 3 games is worth more than one of a single game.
+export const LONG_MATCH_GAMES = 3;
 const LONG_MATCH_FACTOR = 1.5;
 
 // Each tier starts at `min` points and, but for the last, has three divisions (III, II, I) of DIVISION_POINTS each.
@@ -39,9 +39,9 @@ function placePoints(index, count) {
  * tiebreak's winner. Players with the same score share their places' points (the average), unless a tiebreak settled
  * who was first among them. Returns a Map from player id to points.
  */
-export function rankDeltas(ranked, { rounds = 5, winnerId = null } = {}) {
+export function rankDeltas(ranked, { games = 1, winnerId = null } = {}) {
   const count = ranked.length;
-  const factor = rounds >= LONG_MATCH_ROUNDS ? LONG_MATCH_FACTOR : 1;
+  const factor = games >= LONG_MATCH_GAMES ? LONG_MATCH_FACTOR : 1;
   const out = new Map();
   if (count < 2) {
     ranked.forEach((p) => out.set(p.id, 0));

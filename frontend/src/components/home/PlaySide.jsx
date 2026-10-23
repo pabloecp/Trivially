@@ -13,11 +13,11 @@ const STATS = [
 ];
 /**
  * Who plays: name and @username (or the guest's way to an account), and under it, in a public match (Casual or
- * Competitivo, `match`) the rank, or in Privada a few stats. The card at the top of a public match's room column
+ * Competitivo, `match`) the rank (`rank` false in Casual: nothing there), or in Privada a few stats. The card at the top of a public match's room column
  * (PartyPanel). `refreshOn` changing asks the server
  * for the account again (a finished match moves its rank and history).
  */
-export function PlayerCard({ match = false, refreshOn = null }) {
+export function PlayerCard({ match = false, rank = true, refreshOn = null }) {
   const { user, refreshUser } = useApp();
   const isAccount = useFriends().isAccount;
   useEffect(() => {
@@ -34,7 +34,7 @@ export function PlayerCard({ match = false, refreshOn = null }) {
           </span>
         </div>
         {isAccount && match ? (
-          <RankCard rank={user?.rank} />
+          rank && <RankCard rank={user?.rank} />
         ) : isAccount ? (
           <dl className="tv-play-me-stats">
             {STATS.map((s) => (

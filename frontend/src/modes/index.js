@@ -109,7 +109,7 @@ export const GAME_MODES = [
     steps: MINES_STYLES[0].steps,
     ready: (room) =>
       room.config?.mines?.styles?.length !== 0 &&
-      (room.questionsReady == null || room.questionsReady >= (room.config?.mines?.rounds || 5)),
+      (room.questionsReady == null || room.questionsReady >= (room.config?.mines?.rounds || 3)),
     Lobby: MinesLobbyPanel,
     // A prompt and a 5 × 5 board (modes/minas/Game.jsx).
     path: (room) => `/minas/${urlCode(room.code)}`,
@@ -204,9 +204,9 @@ export const GAME_MODES = [
     path: (room) => `/playlist/${urlCode(room.code)}`,
   },
   // "Clásico" (`kind: "classic"`), above "Elige el juego": a match like Casual's for the room's own players, its games
-  // drawn by the roulette (`games` of them, 5 rounds each; CLASSIC_GAMES in backend/src/game/matchmaking.js). Like a
-  // playlist it isn't one game: while it's played the room is in each of its games, and it ends on the playlist's
-  // results screen. `fullName` is how it reads out of the menu (the match history).
+  // drawn by the roulette (`games` of them, 5 rounds each but Campo de minas' 3; CLASSIC_GAMES and matchGameRounds in
+  // backend/src/game/matchmaking.js). Like a playlist it isn't one game: while it's played the room is in each of its
+  // games, and it ends on the playlist's results screen. `fullName` is how it reads out of the menu (the match history).
   {
     id: "clasico",
     name: "Normal",

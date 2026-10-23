@@ -6,7 +6,7 @@ import { findMode } from "../../modes/index.js";
 import Avatar from "./Avatar.jsx";
 import Icon from "./Icon.jsx";
 import Segmented from "./Segmented.jsx";
-import { MATCH_KINDS, MATCH_ROUNDS, MATCH_SIZES, gamesFor, gamesText } from "./matchInfo.js";
+import { MATCH_KINDS, MATCH_LENGTHS, MATCH_SIZES, gamesFor, gamesText } from "./matchInfo.js";
 import "../../styles/match.css";
 
 // A room's code is five letters and numbers (ROOM_CODE_LENGTH on the server).
@@ -41,7 +41,7 @@ export default function PlaySheet({ mode, joinCode, open, onClose }) {
   const { user, saveGuest, createRoom, joinRoom, checkRoom, findMatch } = useApp();
   // Which of the three rows is open (null: none), and the length picked for a public match.
   const [kind, setKind] = useState(null);
-  const [rounds, setRounds] = useState(MATCH_ROUNDS[0]);
+  const [games, setGames] = useState(MATCH_LENGTHS[0].value);
   const [size, setSize] = useState(MATCH_SIZES[1].value);
   const sheetRef = useRef(null);
   const dragStart = useRef(null);
@@ -175,7 +175,7 @@ export default function PlaySheet({ mode, joinCode, open, onClose }) {
         action.type === "create"
           ? createRoom("multi", {}, mode?.id ?? null)
           : action.type === "match"
-          ? findMatch(action.kind, action.rounds, action.size)
+          ? findMatch(action.kind, action.games, action.size)
           : joinRoom(action.code)
       );
       onClose(); // the room navigator takes the player wherever the room is
@@ -328,15 +328,15 @@ export default function PlaySheet({ mode, joinCode, open, onClose }) {
                                 <span className="tv-pm-detail">{k.detail}</span>
                               </div>
                               <Segmented
-                                label="Rondas"
-                                value={rounds}
-                                onChange={setRounds}
-                                options={MATCH_ROUNDS.map((n) => ({
-                                  value: n,
+                                label="Duración"
+                                value={games}
+                                onChange={setGames}
+                                options={MATCH_LENGTHS.map((o) => ({
+                                  value: o.value,
                                   label: (
                                     <span className="tv-pm-round">
-                                      <b>{n} rondas</b>
-                                      <small>{gamesText(n)}</small>
+                                      <b>{gamesText(o.value)}</b>
+                                      <small>{o.hint}</small>
                                     </span>
                                   ),
                                 }))}
@@ -359,7 +359,7 @@ export default function PlaySheet({ mode, joinCode, open, onClose }) {
                                 type="button"
                                 className={`tv-btn tv-btn--block tv-c-${k.color} tv-shine tv-pm-go`}
                                 data-sound={!user?.name || user.isGuest ? undefined : "none"}
-                                onClick={() => run({ type: "match", kind: k.id, rounds, size })}
+                                onClick={() => run({ type: "match", kind: k.id, games, size })}
                                 disabled={busy}
                               >
                                 <Icon name="play" size={18} filled strokeWidth={1.5} />

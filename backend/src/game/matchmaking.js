@@ -1,15 +1,17 @@
 // Partidas públicas ("Casual" and "Competitivo" in the Jugar sheet): players who don't know each other are put in the
-// same room until it's full (2 players for "Duelo", 5 for "Todos contra todos"), and then the match starts on its own. Its
-// games aren't chosen by anyone: a match of 5 rounds is one game and of 15 three, drawn at random among MATCH_VARIANTS (each
-// game with one of its ways only: "Trivia Cerradas", "Rango Cifras"...; the same in both kinds) and played one after
-// another (a playlist in order, 5 rounds each). Before each game a roulette shows which one comes next, followed by a
-// short tutorial of it (the room's "intro" phase: INTRO_SPIN_MS + INTRO_TUTORIAL_MS).
+// same room until it's full (2 players for "Duelo", 5 for "Todos contra todos"), and then the match starts on its own. A
+// match is one game or three (MATCH_LENGTHS), each one of MATCH_VARIANTS (a game with one of its ways only: "Trivia
+// Cerradas", "Rango Cifras"...; the same in both kinds), played one after another (a playlist in order, each game with
+// its own rounds: matchGameRounds, 5 but for Campo de minas' 3).
+// Nobody chooses them: every player votes before searching ("Vota los juegos", one vote per game, cleanVotes) and the
+// roulette spins among everyone's votes (matchBallot). Before each game it shows which vote comes up, followed by a short
+// tutorial of that game (the room's "intro" phase: INTRO_SPIN_MS + INTRO_TUTORIAL_MS).
 
 export const MATCH_KINDS = ["casual", "competitivo"];
-export const MATCH_ROUNDS = [5, 15];
+// How many games a match plays: "1 juego" or "3 juegos".
+export const MATCH_LENGTHS = [1, 3];
 // How many players a room needs: 2 ("Duelo") or 5 ("Todos contra todos").
 export const MATCH_SIZES = [2, 5];
-export const ROUNDS_PER_GAME = 5;
 // Competitivo's games: Trivia, Rango and Campo de minas, the ones judged only by what you know.
 export const MATCH_GAMES = ["opciones", "historia", "minas"];
 // Casual plays the same ones. (The other games still have their public-match clock and bots, matchRoundMs and
@@ -18,7 +20,7 @@ export const CASUAL_GAMES = [...MATCH_GAMES];
 
 // "Clásico", at the top of a private room's "Elige el juego": a match like Casual's (the roulette, the tutorials, the
 // same clocks and games) for the room's own players, started by its host, with no search, bots or rank. Its two game
-// ids are how many games each draws: "clasico" (Normal) 3, like a public match of 15 rounds, and "extendido" 5.
+// ids are how many games each draws: "clasico" (Normal) 3, like a public match of 3 juegos, and "extendido" 5.
 export const CLASSIC_GAMES = { clasico: 3, extendido: 5 };
 export const CLASSIC_NAMES = { clasico: "Clásico normal", extendido: "Clásico extendido" };
 export const isClassic = (game) => Object.hasOwn(CLASSIC_GAMES, game ?? "");
@@ -82,44 +84,85 @@ export function newBot(takenNames, random = Math.random) {
   };
 }
 
-/** A request to find a match, or an error in Spanish when it isn't one. */
+/** A request to find a match (`{ kind, gameCount, size }`), or an error in Spanish when it isn't one. */
 export function cleanMatchRequest(input) {
   const kind = MATCH_KINDS.includes(input?.kind) ? input.kind : null;
-  const rounds = Number(input?.rounds);
+  // Older clients send the length in rounds: 5 was one game and 15 three.
+  const gameCount = input?.gameCount == null && input?.rounds != null ? Number(input.rounds) / 5 : Number(input?.gameCount);
   // Older clients don't send it: 5 players.
   const size = input?.size == null ? 5 : Number(input.size);
   if (!kind) throw new Error("Elige Casual o Competitivo");
-  if (!MATCH_ROUNDS.includes(rounds)) throw new Error("Elige 5 o 15 rondas");
+  if (!MATCH_LENGTHS.includes(gameCount)) throw new Error("Elige 1 o 3 juegos");
   if (!MATCH_SIZES.includes(size)) throw new Error("Elige Duelo o Todos contra todos");
-  return { kind, rounds, size };
+  return { kind, gameCount, size };
 }
 
-/** How many games a match of `rounds` rounds plays: one per ROUNDS_PER_GAME. */
-export const matchGameCount = (rounds) => Math.max(1, Math.round(rounds / ROUNDS_PER_GAME));
+function shuffle(list, random = Math.random) {
+  const out = [...list];
+  for (let i = out.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(random() * (i + 1));
+    [out[i], out[j]] = [out[j], out[i]];
+  }
+  return out;
+}
 
 /**
  * The games of a match, in random order: all of `pool` shuffled (the kind's games, gamesFor), so the caller takes the
- * first matchGameCount(rounds) that can be played, all different. With `rounds`, only that many.
+ * first ones that can be played, all different. With `count`, only that many.
  */
-export function pickMatchGames(rounds, random = Math.random, pool = MATCH_GAMES) {
-  const games = [...pool];
-  for (let i = games.length - 1; i > 0; i -= 1) {
-    const j = Math.floor(random() * (i + 1));
-    [games[i], games[j]] = [games[j], games[i]];
-  }
-  return rounds == null ? games : games.slice(0, matchGameCount(rounds));
+export function pickMatchGames(count, random = Math.random, pool = MATCH_GAMES) {
+  const games = shuffle(pool, random);
+  return count == null ? games : games.slice(0, count);
+}
+
+// "Vota los juegos": a vote is a variant's id (MATCH_VARIANTS) or RANDOM_VOTE, "Al azar" (any of them, decided when the
+// roulette lands on it).
+export const RANDOM_VOTE = "azar";
+
+/** A player's votes for a match of `kind` and `gameCount` games: one per game, a missing or unknown one being "Al azar". */
+export function cleanVotes(input, kind, gameCount) {
+  const known = variantsFor(kind);
+  const list = Array.isArray(input) ? input : [];
+  return Array.from({ length: gameCount }, (_, i) => (known.includes(list[i]) ? list[i] : RANDOM_VOTE));
+}
+
+/** A bot's votes, like a person's: now and then "Al azar", otherwise games it picks, never the same one twice. */
+export function botVotes(kind, gameCount, random = Math.random) {
+  const picks = shuffle(variantsFor(kind), random);
+  return Array.from({ length: gameCount }, (_, i) => (random() < 0.3 ? RANDOM_VOTE : picks[i % picks.length]));
 }
 
 /**
- * A game's settings in a public match, as a playlist item's config (before the game's own merge*Config cleans it):
- * ROUNDS_PER_GAME rounds and every category. Competitivo leaves out the easy questions; `easy` puts them back (when the
- * medium and hard ones aren't enough).
+ * The roulette's cards for a match: every vote of every player (`[{ id, name, avatar, votes }]`), one card each (two
+ * players voting for the same game get a card each, so it comes up more often), in random order. The order stays for
+ * the whole match: each game's roulette spins among the cards still left (RoomManager.introBallot).
+ */
+export function matchBallot(players, random = Math.random) {
+  const cards = players.flatMap((p) => p.votes.map((variant) => ({ userId: p.id, name: p.name, avatar: p.avatar, variant })));
+  return shuffle(cards, random).map((card, i) => ({ id: `v${i}`, ...card }));
+}
+
+// How many rounds each game has in a public match or a Clásico: GAME_ROUNDS, but Campo de minas' boards are long (3 of
+// them) and Lluvia's rounds are whole showers (two are as long as the other games' five rounds).
+export const GAME_ROUNDS = 5;
+export const MINES_MATCH_ROUNDS = 3;
+export const RAIN_MATCH_ROUNDS = 2;
+
+/** A game's rounds in a public match or a Clásico. */
+export function matchGameRounds(game) {
+  if (game === "minas") return MINES_MATCH_ROUNDS;
+  if (game === "lluvia") return RAIN_MATCH_ROUNDS;
+  return GAME_ROUNDS;
+}
+
+/**
+ * A game's settings in a public match or a Clásico, as a playlist item's config (before the game's own merge*Config
+ * cleans it): its rounds (matchGameRounds) and every category. Competitivo leaves out the easy questions; `easy` puts
+ * them back (when the medium and hard ones aren't enough).
  */
 export function matchItemConfig(game, kind, { easy = false, variant = null } = {}) {
   const difficulties = kind === "competitivo" && !easy ? ["media", "dificil"] : ["facil", "media", "dificil"];
-  // Lluvia's rounds are whole showers: two of them are as long as the other games' five rounds.
-  const rounds = game === "lluvia" ? RAIN_MATCH_ROUNDS : ROUNDS_PER_GAME;
-  return { rounds, difficulties, ...matchTimes(game), ...(findVariant(variant)?.config || {}) };
+  return { rounds: matchGameRounds(game), difficulties, ...matchTimes(game), ...(findVariant(variant)?.config || {}) };
 }
 
 // A public match's clock, the same for everyone: 10 s a question (Trivia, Rango), 15 s a song or a country (the audio
@@ -130,7 +173,6 @@ export const MATCH_SLOW_MS = 15000;
 export const MATCH_TURN_MS = 10000;
 export const MATCH_RACE_MS = 30000;
 export const MATCH_RAIN_MS = 30000;
-export const RAIN_MATCH_ROUNDS = 2;
 
 /** A game's times in a public match, put in its settings as they are (Trivia's own settings start at 15 s). */
 export function matchTimes(game) {
@@ -146,11 +188,14 @@ export function matchRoundMs(game, race = false) {
   return MATCH_QUESTION_MS;
 }
 
-/** What a public match shows of itself: its kind, rounds, games, how full it is and when it starts once full. */
+/**
+ * What a public match shows of itself: its kind, how many games it plays (`gameCount`) and which ones once drawn
+ * (`games`), how full it is and when it starts once full.
+ */
 export function publicMatchmaking(info, connected) {
   return {
     kind: info.kind,
-    rounds: info.rounds,
+    gameCount: info.gameCount,
     size: info.size,
     // What was chosen (2 or 5), even when MATCH_SIZE lowers what fills it.
     versus: info.versus,

@@ -451,7 +451,7 @@
 .tv-ticket-body { display: flex; flex-direction: column; gap: 22px; min-height: 0; padding: 24px 26px 26px; }
 
 /* What the match will be, like the fields of a ticket: a small capital label and a big number. */
-.tv-ticket-fields { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin: 0; }
+.tv-ticket-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin: 0; }
 .tv-ticket-fields > div { display: grid; gap: 6px; min-width: 0; padding: 14px; border-radius: 16px; background: var(--tv-option-bg); }
 .tv-ticket-fields dt { overflow: hidden; font-family: var(--tv-mono); font-weight: 800; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--tv-text-3); text-overflow: ellipsis; white-space: nowrap; }
 .tv-ticket-fields dd { margin: 0; font-family: var(--tv-display); font-weight: 800; font-size: 38px; line-height: 1; color: var(--tv-text); animation: tvPick 0.3s var(--tv-spring); }

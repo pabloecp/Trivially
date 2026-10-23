@@ -53,7 +53,7 @@ export function findDifficulty(id) {
   return DIFFICULTIES.find((d) => d.id === id) || DIFFICULTIES[0];
 }
 
-export const ROUND_OPTIONS = [5, 10, 15, 20, 25];
+export const ROUND_OPTIONS = [3, 5, 10, 15, 20, 25];
 // Seconds of each turn ("turnos"), and of a whole round in a race ("carrera").
 export const SECONDS_LIMITS = { min: 5, max: 25, step: 5 };
 export const RACE_SECONDS_LIMITS = { min: 30, max: 50, step: 5 };
@@ -63,7 +63,7 @@ export function minesConfig(room) {
   return {
     // The ways to play that are ticked (both by default); an older room had only one, `style`.
     styles: mines.styles ?? (mines.style ? [findStyle(mines.style).id] : STYLES.map((s) => s.id)),
-    rounds: mines.rounds || 5,
+    rounds: mines.rounds || 3,
     // A new room starts at the shortest of each (as the server does).
     turnMs: mines.turnMs || 5000,
     roundMs: mines.roundMs || 30000,
