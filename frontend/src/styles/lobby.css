@@ -275,34 +275,6 @@
   animation: tvPopIn 0.4s var(--tv-spring);
 }
 
-/* The roulette of a public match (MatchIntro) in this same frame: coming from the search (or a game), the card and the
-   panel are simply there; only the panel's contents come in. The roulette, then the tutorial, in the middle of the
-   panel; the dots of the match's games on the head's line. */
-.tv-mi-row > :is(.tv-mstage, .tv-settings-card) { animation: none; }
-.tv-mi-panel { container-type: inline-size; }
-.tv-mi-panel-head { align-items: center; }
-.tv-mi-panel-body { flex: 1; display: grid; grid-template-columns: minmax(0, 1fr); align-content: center; justify-items: center; animation: tvSwap 0.45s var(--tv-ease-out) backwards; }
-.tv-mi-panel .tv-mi-roulette { animation: tvSwap 0.45s var(--tv-ease-out) backwards; }
-.tv-mi-panel .tv-mi-tutorial { max-width: 620px; background: var(--tv-option-bg); }
-/* Between games, on the card: everyone by games won, then points. */
-.tv-mi-won { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
-.tv-mi-won-row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  min-width: 0;
-  padding: 8px 14px 8px 8px;
-  border-radius: 18px;
-  background: rgba(0, 0, 0, 0.13);
-  font-family: var(--tv-display);
-  font-weight: 700;
-  font-size: 16px;
-}
-.tv-mi-won-row .tv-avatar { width: 38px; height: 38px; font-size: 16px; }
-.tv-mi-won-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.tv-mi-won-games { flex-shrink: 0; padding: 3px 9px; border-radius: 9px; background: var(--on); color: var(--c2); font-weight: 800; font-size: 13px; }
-.tv-mi-won-pts { flex-shrink: 0; font-size: 13px; opacity: 0.85; }
-
 /* "Partida": what the match will be, like a ticket's fields: a small capital label and a big number. */
 .tv-play-fields { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin: 6px 0 0; overflow: hidden; border-radius: 20px; background: var(--tv-option-bg); }
 .tv-play-fields > div { display: grid; justify-items: center; gap: 6px; min-width: 0; padding: 14px 8px; text-align: center; }

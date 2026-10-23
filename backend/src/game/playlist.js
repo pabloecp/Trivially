@@ -166,8 +166,6 @@ export function publicRun(run) {
     // A public match: ranked by games won (then points), and whether its decider is being (or was) played.
     bestOf: Boolean(run.gameWins),
     decider: run.deciderIndex ?? null,
-    // Games won so far by each player of a public match (its roulette shows them between games).
-    gameWins: run.gameWins ? { ...run.gameWins } : null,
     index: run.index,
     total: run.items.length,
     games: run.items.map((item) => item.game),
