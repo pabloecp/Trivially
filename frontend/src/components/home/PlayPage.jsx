@@ -12,7 +12,7 @@ import Icon from "./Icon.jsx";
 import Logo, { logoIncoming } from "./Logo.jsx";
 import OptionRow from "./OptionRow.jsx";
 import { RankCard } from "./PlaySide.jsx";
-import VoteBoard from "./VoteBoard.jsx";
+import VoteBoard, { VoteTokens } from "./VoteBoard.jsx";
 
 import { MATCH_KINDS, MATCH_ROUNDS, MATCH_SIZES, gamesText } from "./matchInfo.js";
 import "../../styles/match.css";
@@ -97,10 +97,11 @@ function codeFrom(text) {
 // Inicio, "¿Cómo quieres jugar?": the big logo and Pública and Privada as big tiles, all on one page (/). Picking one
 // makes the tiles sink away and that option come in: its own panel beside its ticket, a narrower card in its colour
 // with what kind of match it is and the main button ("Buscar partida", "Crear sala").
+// The ticket is on the left, the tabs and the panel on the right.
 // Pública is Casual and Competitivo, as two tabs at the top (/jugar/casual, /jugar/competitivo: switching replaces the
 // address, so "Volver" still goes to Inicio, and the page stays: only its colour and its ticket change). Both have how
-// many play (two big buttons) and how long on the panel, then "Vota los juegos" (VoteBoard, one set of votes per
-// format, lib/matchVotes.js); the ticket sums it up and, in Competitivo, has the rank. Privada (/jugar/privada): joining with a code
+// many play (two big buttons) and how long on the panel, then "Elegir juegos (opcional)" (VoteBoard, folded away; one set
+// of votes per format, lib/matchVotes.js); the ticket sums it up, votes included and, in Competitivo, has the rank. Privada (/jugar/privada): joining with a code
 // and the friends online on the panel, the room "Crear sala" makes (its code shown or hidden, friends to invite) on the
 // ticket. The top bar's "Volver" (the only way back) and the browser's Back go to Inicio. Leaving a room comes back to
 // the option it came from (exitPath in TvTopbar.jsx). Without an account, the ticket asks for the name first (filled in
@@ -499,15 +500,27 @@ export default function PlayPage({ leaving = false, toHome = false }) {
           <dd key={rounds}>{rounds}</dd>
         </div>
       </dl>
-      {kind.id === "competitivo" &&
-        (isAccount ? (
-          <RankCard rank={user?.rank} />
-        ) : (
-          <p className="tv-ticket-guest">
-            Juegas como invitado: tu rango no se guarda. <Link to="/login">Crear cuenta</Link>
-          </p>
-        ))}
-      <TicketFacts facts={kind.facts} />
+      {/* Both tabs' parts are always drawn, one over the other, and only the chosen one shows: the ticket is as tall as
+          the taller of them, so switching tab never makes it grow or shrink. */}
+      <div className="tv-ticket-layers">
+        {PUBLIC_KINDS.map((k) => {
+          const active = k.id === kind.id;
+          return (
+            <div key={`${k.id}-${active}`} className={`tv-ticket-layer${active ? "" : " is-off"}`} aria-hidden={!active || undefined} inert={active ? undefined : ""}>
+              {k.id === "competitivo" &&
+                (isAccount ? (
+                  <RankCard rank={user?.rank} card />
+                ) : (
+                  <p className="tv-ticket-guest">
+                    Juegas como invitado: tu rango no se guarda. <Link to="/login">Crear cuenta</Link>
+                  </p>
+                ))}
+              <TicketFacts facts={k.facts} />
+            </div>
+          );
+        })}
+      </div>
+      <VoteTokens votes={votes} />
     </>
   ) : (
     <>
@@ -576,8 +589,7 @@ export default function PlayPage({ leaving = false, toHome = false }) {
               {/* Pública's two tabs, Casual and Competitivo: a selector, the chosen one on a lighter pill that slides to
                   it; each with its icon in its colour, its name and what it is. */}
               {match && (
-                <nav className="tv-lobby-tabs" aria-label="Tipo de partida pública" style={{ "--at": PUBLIC_KINDS.findIndex((k) => k.id === kind.id) }}>
-                  <span className="tv-lobby-tabs-thumb" aria-hidden="true" />
+                <nav className="tv-lobby-tabs" aria-label="Tipo de partida pública">
                   {PUBLIC_KINDS.map((k) => (
                     <button
                       key={k.id}
@@ -593,6 +605,7 @@ export default function PlayPage({ leaving = false, toHome = false }) {
                         <strong>{k.name}</strong>
                         <small>{k.blurb}</small>
                       </span>
+                      <Icon name={k.icon} size={96} strokeWidth={1.6} className="tv-lobby-tab-mark" />
                     </button>
                   ))}
                 </nav>
@@ -607,11 +620,11 @@ export default function PlayPage({ leaving = false, toHome = false }) {
                 <div className="tv-ticket-stub">
                   <span className="tv-ticket-top">
                     <span className="tv-ticket-kicker">{kind.kicker}</span>
-                    <span className="tv-ticket-badge" aria-hidden="true">
+                    <span className="tv-ticket-badge tv-rise" key={kind.id} aria-hidden="true">
                       <Icon name={kind.icon} size={26} strokeWidth={2.4} />
                     </span>
                   </span>
-                  <h1 id="tv-ticket-name" className="tv-ticket-name">
+                  <h1 id="tv-ticket-name" key={kind.id} className="tv-ticket-name tv-rise">
                     {kind.name}
                   </h1>
                   <p className="tv-ticket-blurb">{kind.blurb}</p>
@@ -670,19 +683,21 @@ function SizePick({ value, onChange }) {
   );
 }
 
-// "Duración": its two choices side by side, right under the players' two buttons, each with how many games it means
-// drawn as blocks. Flat (a choice already made), the chosen one filled in the option's colour.
+// "Duración": its two choices side by side, right under the players' two buttons and just like them (the same buttons,
+// the same size), each with how many games it means drawn as blocks on its square.
 function FormatPick({ label, options, value, onChange, blocks = false }) {
   return (
     <div className="tv-lobby-pick" role="radiogroup" aria-label={label}>
       <span className="tv-lobby-label">{label}</span>
-      <div className="tv-lobby-pick-opts">
+      <div className="tv-lobby-size">
         {options.map((o) => (
-          <button key={o.value} type="button" role="radio" aria-checked={o.value === value} className="tv-lobby-pick-btn" onClick={() => onChange(o.value)}>
-            <span className={`tv-pips${blocks ? " is-blocks" : ""}`} aria-hidden="true">
-              {Array.from({ length: o.pips }, (_, i) => (
-                <i key={i} />
-              ))}
+          <button key={o.value} type="button" role="radio" aria-checked={o.value === value} className="tv-lobby-size-btn" onClick={() => onChange(o.value)}>
+            <span className="tv-lobby-size-badge" aria-hidden="true">
+              <span className={`tv-pips${blocks ? " is-blocks" : ""}`}>
+                {Array.from({ length: o.pips }, (_, i) => (
+                  <i key={i} />
+                ))}
+              </span>
             </span>
             <span className="tv-lobby-pick-text">
               <strong>{o.label}</strong>
@@ -698,8 +713,8 @@ function FormatPick({ label, options, value, onChange, blocks = false }) {
 function TicketFacts({ facts }) {
   return (
     <ul className="tv-ticket-facts">
-      {facts.map((f) => (
-        <li key={f.text}>
+      {facts.map((f, i) => (
+        <li key={f.text} className="tv-rise" style={{ "--i": i }}>
           <Icon name={f.icon} size={20} strokeWidth={2.4} />
           {f.text}
         </li>

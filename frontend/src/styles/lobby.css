@@ -26,13 +26,13 @@
 .tv-room.is-leaving .tv-lobby-row > * { animation: var(--tv-box-out); pointer-events: none; }
 
 /* ---------- The row ---------- */
-/* Two columns: on the left Pública's tabs (a card of their own) over the panel; on the right the ticket and, under it,
-   its button. The tabs and the ticket's stub share the first row, so the tabs' card is exactly as tall as the stub (the
+/* Two columns: on the left the ticket and, under it, its button; on the right Pública's tabs (a card of their own) over
+   the panel. The tabs and the ticket's stub share the first row, so the tabs' card is exactly as tall as the stub (the
    ticket is a subgrid over the first two rows: its stub in the first, the rest in the second). The panel starts a gap
    below the tabs and ends with the button. Privada has no tabs: its panel takes the whole column. */
 .tv-lobby-row {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(340px, 420px);
+  grid-template-columns: minmax(320px, 380px) minmax(0, 1fr);
   grid-template-rows: auto 1fr auto;
   column-gap: 16px;
 }
@@ -41,40 +41,34 @@
 /* A selector: a dark card with a flat, lighter pill that slides to the tab on screen (a choice, not a button). Each tab
    has its icon in its colour (with its edge, like every coloured icon), its name and what it is. */
 .tv-lobby-tabs {
-  grid-column: 1;
+  grid-column: 2;
   grid-row: 1;
   position: relative;
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  display: flex;
+  gap: 6px;
   padding: 8px;
   border-radius: 34px;
   background: var(--tv-surface);
   box-shadow: inset 0 0 0 1px var(--tv-line);
 }
-.tv-lobby-tabs-thumb {
-  position: absolute;
-  top: 8px;
-  bottom: 8px;
-  left: 8px;
-  width: calc((100% - 16px) / 2);
-  border-radius: 26px;
-  background: rgba(255, 255, 255, 0.08);
-  transform: translateX(calc(var(--at) * 100%));
-  transition: transform 0.35s cubic-bezier(0.25, 0.8, 0.3, 1);
-}
+/* The two tabs trade sizes: the chosen one widens to nearly twice the other and fills with its colour (with its edge),
+   the other shrinks and goes dark, its icon grey; the move ends with a soft overshoot. */
 .tv-lobby-tab {
   position: relative;
   display: flex;
+  flex: 1 1 0;
   align-items: center;
   gap: 16px;
   min-width: 0;
   padding: 10px 20px;
   border: 0;
   border-radius: 26px;
-  background: none;
+  background: rgba(255, 255, 255, 0.04);
   text-align: left;
   cursor: pointer;
+  transition: flex-grow 0.6s cubic-bezier(0.34, 1.35, 0.64, 1), background-color 0.4s ease, box-shadow 0.4s ease;
 }
+.tv-lobby-tab[aria-current] { flex-grow: 1.9; background: var(--c2); box-shadow: 0 4px 0 var(--edge); }
 .tv-lobby-tab-badge {
   display: grid;
   place-items: center;
@@ -85,24 +79,33 @@
   background: var(--c2);
   box-shadow: 0 4px 0 var(--edge);
   color: var(--on);
-  opacity: 0.5;
-  transition: opacity 0.25s ease;
+  transition: background-color 0.35s ease, color 0.35s ease, box-shadow 0.35s ease;
 }
-.tv-lobby-tab:hover .tv-lobby-tab-badge,
-.tv-lobby-tab[aria-current] .tv-lobby-tab-badge { opacity: 1; }
+.tv-lobby-tab:not([aria-current]) .tv-lobby-tab-badge { background: var(--tv-neutral); box-shadow: 0 4px 0 var(--tv-neutral-edge); color: var(--tv-text-3); }
+/* The chosen tab is filled with its colour: its badge turns white, its letters too, and its icon draws big and faint
+   in the corner. */
+.tv-lobby-tab { overflow: hidden; }
+.tv-lobby-tab[aria-current] .tv-lobby-tab-badge { background: var(--on); box-shadow: none; color: var(--c2); }
+.tv-lobby-tab-mark { position: absolute; right: -14px; top: 50%; color: var(--tv-text); opacity: 0.04; transform: translateY(-50%) rotate(8deg) scale(0.9); pointer-events: none; transition: opacity 0.4s ease, transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1); }
+.tv-lobby-tab[aria-current] .tv-lobby-tab-mark { color: var(--on); opacity: 0.16; transform: translateY(-50%) rotate(-8deg); }
+.tv-lobby-tab[aria-current] .tv-lobby-tab-text strong,
+.tv-lobby-tab[aria-current] .tv-lobby-tab-text small { color: var(--on); }
 .tv-lobby-tab:hover .tv-lobby-tab-badge { animation: tvWiggle 0.5s ease; }
 .tv-lobby-tab-text { display: grid; gap: 4px; min-width: 0; }
 .tv-lobby-tab-text strong { font-family: var(--tv-display); font-weight: 800; font-size: clamp(22px, 2vw, 28px); line-height: 1.05; color: var(--tv-text-3); transition: color 0.2s ease; }
 .tv-lobby-tab-text small { font-weight: 700; font-size: 14px; line-height: 1.3; color: var(--tv-text-3); }
 .tv-lobby-tab:hover .tv-lobby-tab-text strong,
 .tv-lobby-tab[aria-current] .tv-lobby-tab-text strong { color: var(--tv-text); }
+/* What changes on the ticket when the tab does (its name, its icon, its facts): each comes in rising, one after another. */
+.tv-rise { animation: tvTicketRise 0.45s cubic-bezier(0.2, 0.9, 0.3, 1.1) calc(var(--i, 0) * 90ms) backwards; }
+@keyframes tvTicketRise { from { opacity: 0; transform: translateY(14px); } }
 /* Switching tabs only changes the colour: the ticket's stub and its button fade into the other one (the chosen
    choices already do). */
 .tv-ticket-stub { transition: background-color 0.35s ease, color 0.35s ease; }
 .tv-lobby-go { transition: transform 0.18s var(--tv-spring), box-shadow 0.18s ease, background-color 0.35s ease; }
 
 .tv-lobby-panel {
-  grid-column: 1;
+  grid-column: 2;
   grid-row: 1 / 4;
   container-type: inline-size;
   display: flex;
@@ -167,104 +170,56 @@
 .tv-lobby-size-btn .tv-lobby-pick-text strong { font-family: var(--tv-display); font-size: clamp(20px, 1.9vw, 27px); line-height: 1.1; }
 .tv-lobby-size-btn .tv-lobby-pick-text small { font-size: 15px; }
 
-/* "Duración": its two choices as dark pills, as wide and as far apart as the players' buttons above them, the chosen one
-   filled in the option's colour (flat: a choice already made), with blocks for the games. */
-.tv-lobby-pick-opts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
-.tv-lobby-pick-btn {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  min-width: 0;
-  min-height: clamp(46px, 5.4vh, 60px);
-  padding: 6px 18px;
-  border: 0;
-  border-radius: 18px;
-  background: var(--tv-option-bg);
-  text-align: left;
-  cursor: pointer;
-  transition: background-color 0.2s ease, color 0.2s ease;
-}
-.tv-app .tv-lobby-pick-btn { color: var(--tv-text-3); }
-.tv-app .tv-lobby-pick-btn:hover { color: var(--tv-text); }
-.tv-lobby-pick-btn:active { transform: scale(0.97); }
-.tv-lobby-pick-btn[aria-checked="true"] { background: var(--brand); animation: tvPick 0.3s var(--tv-spring); }
-.tv-app .tv-lobby-pick-btn[aria-checked="true"] { color: var(--on-brand); }
 .tv-lobby-pick-text { display: grid; min-width: 0; }
 .tv-lobby-pick-text strong { font-weight: 800; font-size: 17px; line-height: 1.15; }
 .tv-lobby-pick-text small { overflow: hidden; font-weight: 700; font-size: 13px; text-overflow: ellipsis; white-space: nowrap; opacity: 0.8; }
 .tv-pips { display: flex; align-items: center; justify-content: center; flex-shrink: 0; gap: 4px; width: 48px; }
 .tv-pips i { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
 .tv-pips.is-blocks i { width: 10px; height: 22px; border-radius: 3px; }
+/* On a button's square (Duración): as small as the square asks. */
+.tv-lobby-size-badge .tv-pips { width: auto; gap: 3px; }
+.tv-lobby-size-badge .tv-pips.is-blocks i { width: 7px; height: 18px; border-radius: 2px; }
 
-/* ---------- "Vota los juegos" (VoteBoard.jsx) ---------- */
-.tv-vote { flex: 1; display: flex; flex-direction: column; gap: 12px; min-width: 0; padding-top: clamp(14px, 1.9vh, 26px); border-top: 1px solid var(--tv-line); }
-.tv-vote-head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px 24px; }
-.tv-vote-headtext { display: grid; gap: 6px; min-width: 0; flex: 1 1 280px; }
-.tv-vote-mine { display: grid; justify-items: end; gap: 8px; }
-/* "Tus votos": labels, flat; each pops in when it changes. A game's in its colour, "Al azar" only outlined. */
-.tv-vote-tokens { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; margin: 0; padding: 0; list-style: none; }
-.tv-vote-token {
+/* ---------- "Elegir juegos (opcional)" (VoteBoard.jsx) ---------- */
+/* Folded away: only a text button (never underlined, it brightens on hover) until the player asks for it; unfolded, it
+   grows open (the row of 0fr to 1fr) over a grid of one flat tile per way of playing a game. */
+.tv-vote { display: grid; gap: 0; min-width: 0; padding-top: 4px; }
+.tv-vote-toggle {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
-  height: 34px;
-  padding: 0 13px;
-  border-radius: 11px;
-  background: var(--c2);
-  color: var(--on);
+  gap: 8px;
+  width: fit-content;
+  padding: 6px 4px;
+  border: 0;
+  background: none;
   font-weight: 800;
-  font-size: 14px;
-  white-space: nowrap;
-  animation: tvPopIn 0.3s var(--tv-spring);
+  font-size: 15px;
+  color: var(--tv-text-3);
+  cursor: pointer;
+  transition: color 0.15s ease;
 }
-.tv-vote-token.is-random { background: none; outline: 2px dashed var(--tv-dash); outline-offset: -2px; color: var(--tv-text-3); }
-
-/* A row per card: "Al azar" first, then each game, with its icon and name on the left and its ways of playing beside
-   them ("Al azar"'s one button as wide as their two). Every vote is a button (it does something when tapped): grey with
-   its edge, rising on hover and going down when pressed. With a vote, a game's takes its colour (its little square
-   white with a tick), and "Al azar" turns black framed in the logo's colours, like Clásico's tiles in "Elige el juego"
-   (.tv-mode.is-classic), its square saying how many votes it has. */
-.tv-vote-games { display: grid; gap: clamp(6px, 0.9vh, 12px); }
-.tv-vote-game {
-  display: grid;
-  grid-template-columns: minmax(150px, 0.75fr) minmax(0, 1fr) minmax(0, 1fr);
-  align-items: center;
-  gap: 10px;
-  min-width: 0;
-  padding: 5px 5px 9px 14px;
-  border-radius: 20px;
-  background: var(--tv-option-bg);
-}
-.tv-vote-game.is-random .tv-vote-opt { grid-column: 2 / -1; }
-.tv-vote-game-head { display: flex; align-items: center; gap: 12px; min-width: 0; padding-top: 4px; font-family: var(--tv-display); font-weight: 800; font-size: 18px; line-height: 1.1; color: var(--tv-text); }
-.tv-vote-game-icon {
-  display: grid;
-  place-items: center;
-  flex-shrink: 0;
-  width: 36px;
-  height: 36px;
-  border-radius: 12px;
-  background: var(--c2);
-  box-shadow: 0 3px 0 var(--edge);
-  color: var(--on);
-}
-/* "Al azar"'s icon on the logo's colours. */
-.tv-vote-game-icon.tv-vote-dice {
-  background: conic-gradient(from 30deg, var(--logo-1), var(--logo-2), var(--logo-3), var(--logo-4), var(--logo-5), var(--logo-1));
-  box-shadow: 0 3px 0 rgba(0, 0, 0, 0.35);
-  color: #ffffff;
-}
-.tv-vote-dice svg { filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.45)); }
-
-.tv-vote-opt {
+.tv-vote-toggle:hover { color: var(--tv-text); }
+.tv-vote-chev { transform: rotate(90deg); transition: transform 0.35s var(--tv-spring); }
+.tv-vote.is-open .tv-vote-chev { transform: rotate(-90deg); }
+/* Folded away until the button is tapped; then it grows open in place (the row of 0fr to 1fr), making the panel, and
+   the ticket beside it, taller. */
+.tv-vote-fold { display: grid; grid-template-rows: 0fr; transition: grid-template-rows 0.4s cubic-bezier(0.2, 0.9, 0.3, 1); }
+.tv-vote.is-open .tv-vote-fold { grid-template-rows: 1fr; }
+.tv-vote-fold-inner { display: grid; gap: 12px; min-height: 0; overflow: hidden; }
+.tv-vote.is-open .tv-vote-fold-inner { padding-top: 8px; }
+.tv-vote-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; padding-bottom: 4px; }
+/* A tile is a button (it does something when tapped): grey with its edge, rising on hover and going down when pressed;
+   voted, it takes the game's colour and shows the order of the vote. */
+.tv-vote-tile {
   --face: var(--tv-neutral);
   --rim: var(--tv-neutral-edge);
+  position: relative;
   display: flex;
   align-items: center;
   gap: 10px;
   min-width: 0;
-  min-height: clamp(46px, 5.5vh, 64px);
-  padding: 4px 12px 4px 16px;
+  min-height: 56px;
+  padding: 6px 10px 6px 8px;
   border: 0;
   border-radius: 16px;
   background: var(--face);
@@ -273,60 +228,72 @@
   cursor: pointer;
   transition: transform 0.18s var(--tv-spring), box-shadow 0.18s ease, background-color 0.25s ease, color 0.25s ease;
 }
-.tv-vote-opt:hover { transform: translateY(-2px); box-shadow: 0 6px 0 var(--rim); }
-.tv-vote-opt:active { transform: translateY(4px); box-shadow: 0 0 0 var(--rim); }
-.tv-vote-opt[aria-pressed="true"] { --face: var(--c2); --rim: var(--edge); }
-.tv-app .tv-vote-opt[aria-pressed="true"] { color: var(--on); }
-/* "Al azar"'s frame is always there, see-through until it has a vote (so nothing moves when it gets one). */
-.tv-vote-opt.is-random { padding: 0 8px 0 12px; border: 4px solid transparent; }
-.tv-vote-opt.is-random[aria-pressed="true"] {
-  --rim: var(--tv-logo-shadow);
-  background:
-    linear-gradient(var(--tv-bg), var(--tv-bg)) padding-box,
-    conic-gradient(
-      var(--logo-1) 0 72deg,
-      var(--logo-2) 72deg 144deg,
-      var(--logo-3) 144deg 216deg,
-      var(--logo-4) 216deg 288deg,
-      var(--logo-5) 288deg 360deg
-    ) border-box;
-}
-.tv-app .tv-vote-opt.is-random[aria-pressed="true"] { color: var(--tv-text); }
-.tv-vote-text { display: grid; flex: 1; gap: 2px; min-width: 0; }
-.tv-vote-text strong { overflow: hidden; font-family: var(--tv-display); font-weight: 800; font-size: 17px; line-height: 1.15; text-overflow: ellipsis; white-space: nowrap; }
-.tv-vote-text small { overflow: hidden; font-weight: 700; font-size: 13px; text-overflow: ellipsis; white-space: nowrap; opacity: 0.7; }
-.tv-vote-check {
+.tv-vote-tile:hover { transform: translateY(-2px); box-shadow: 0 6px 0 var(--rim); }
+.tv-vote-tile:active { transform: translateY(4px); box-shadow: 0 0 0 var(--rim); }
+.tv-vote-tile[aria-pressed="true"] { --face: var(--c2); --rim: var(--edge); }
+.tv-app .tv-vote-tile[aria-pressed="true"] { color: var(--on); }
+.tv-vote-tile-icon {
   display: grid;
   place-items: center;
   flex-shrink: 0;
-  min-width: 28px;
-  height: 28px;
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  background: var(--c2);
+  box-shadow: 0 3px 0 var(--edge);
+  color: var(--on);
+  transition: background-color 0.25s ease, color 0.25s ease, box-shadow 0.25s ease;
+}
+.tv-vote-tile[aria-pressed="true"] .tv-vote-tile-icon { background: var(--on); box-shadow: none; color: var(--c2); }
+.tv-vote-tile-text { display: grid; min-width: 0; gap: 1px; }
+.tv-vote-tile-text strong { font-family: var(--tv-display); font-weight: 800; font-size: 15px; line-height: 1.1; overflow-wrap: anywhere; }
+.tv-vote-tile-text small { overflow: hidden; font-weight: 700; font-size: 12px; text-overflow: ellipsis; white-space: nowrap; opacity: 0.75; }
+.tv-vote-num {
+  position: absolute;
+  top: -7px;
+  right: -5px;
+  display: grid;
+  place-items: center;
+  min-width: 22px;
+  height: 22px;
   padding: 0 5px;
-  border-radius: 9px;
-  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.16);
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.25);
+  color: var(--p-ink);
   font-weight: 800;
   font-size: 13px;
+  animation: tvPopIn 0.3s var(--tv-spring);
 }
-.tv-vote-opt[aria-pressed="true"] .tv-vote-check { background: var(--on); color: var(--c2); box-shadow: none; animation: tvPopIn 0.3s var(--tv-spring); }
-.tv-vote-opt.is-random[aria-pressed="true"] .tv-vote-check { background: #ffffff; color: var(--p-ink); }
 
-/* A narrower panel: each card's name over its two ways ("Al azar"'s one button across both); on phones one under
-   another. */
-@container (max-width: 640px) {
-  .tv-vote-game { grid-template-columns: repeat(2, minmax(0, 1fr)); padding: 12px 12px 16px; }
-  .tv-vote-game-head,
-  .tv-vote-game.is-random .tv-vote-opt { grid-column: 1 / -1; }
-  .tv-vote-game-head { padding: 0 4px 2px; }
+/* The votes on the ticket: labels, flat; each pops in when it changes. A game's in its colour, "Al azar" only outlined. */
+.tv-vote-tokens { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.tv-vote-token {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 30px;
+  padding: 0 11px;
+  border-radius: 10px;
+  background: var(--c2);
+  color: var(--on);
+  font-weight: 800;
+  font-size: 13px;
+  white-space: nowrap;
+  animation: tvPopIn 0.3s var(--tv-spring);
 }
-/* Phones: each player button with its icon over its name, and "Duración" without its blocks. */
+.tv-vote-token.is-random { background: none; outline: 2px dashed var(--tv-dash); outline-offset: -2px; color: var(--tv-text-3); }
+
+/* A narrower panel: two tiles to a row. */
+@container (max-width: 560px) {
+  .tv-vote-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+/* Phones: each player button with its icon over its name, as does "Duración". */
 @container (max-width: 420px) {
-  .tv-pips { display: none; }
   .tv-lobby-size-btn { flex-direction: column; align-items: flex-start; gap: 10px; padding: 14px; }
   .tv-lobby-size-badge { width: 46px; height: 46px; border-radius: 15px; }
   .tv-lobby-size-btn .tv-lobby-pick-text strong { font-size: 17px; }
-  .tv-vote-game { grid-template-columns: minmax(0, 1fr); }
-  .tv-vote-mine { justify-items: start; }
-  .tv-vote-tokens { justify-content: flex-start; }
+  .tv-vote-grid { grid-template-columns: minmax(0, 1fr); }
 }
 
 /* ---------- Privada's panel: a code, then the friends online ---------- */
@@ -411,12 +378,10 @@
 }
 
 /* ---------- The ticket ---------- */
-/* Its stub in the option's colour, then what the match or room will be. Its bottom corners and the button's piece's
-   top corners are cut in half circles: together, the notches of a perforated line (drawn dashed on the button's piece). */
-.tv-ticket,
-.tv-ticket-cta { --notch: 15px; }
+/* One plain card: its stub in the option's colour, then what the match or room will be, and the main button at the
+   bottom (a piece of its own in the grid, so it can stay in sight on phones, but drawn as part of the same card). */
 .tv-ticket {
-  grid-column: 2;
+  grid-column: 1;
   grid-row: 1 / 3;
   display: grid;
   grid-template-rows: subgrid;
@@ -424,12 +389,6 @@
   border-radius: 34px 34px 0 0;
   background: var(--tv-surface);
   box-shadow: inset 1px 0 0 var(--tv-line), inset -1px 0 0 var(--tv-line);
-  -webkit-mask:
-    radial-gradient(circle var(--notch) at 0 100%, transparent 96%, #000) left / 51% 100% no-repeat,
-    radial-gradient(circle var(--notch) at 100% 100%, transparent 96%, #000) right / 51% 100% no-repeat;
-  mask:
-    radial-gradient(circle var(--notch) at 0 100%, transparent 96%, #000) left / 51% 100% no-repeat,
-    radial-gradient(circle var(--notch) at 100% 100%, transparent 96%, #000) right / 51% 100% no-repeat;
 }
 .tv-ticket-stub {
   display: flex;
@@ -451,14 +410,27 @@
 .tv-ticket-body { display: flex; flex-direction: column; gap: 22px; min-height: 0; padding: 24px 26px 26px; }
 
 /* What the match will be, like the fields of a ticket: a small capital label and a big number. */
-.tv-ticket-fields { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin: 0; }
-.tv-ticket-fields > div { display: grid; gap: 6px; min-width: 0; padding: 14px; border-radius: 16px; background: var(--tv-option-bg); }
-.tv-ticket-fields dt { overflow: hidden; font-family: var(--tv-mono); font-weight: 800; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--tv-text-3); text-overflow: ellipsis; white-space: nowrap; }
-.tv-ticket-fields dd { margin: 0; font-family: var(--tv-display); font-weight: 800; font-size: 38px; line-height: 1; color: var(--tv-text); animation: tvPick 0.3s var(--tv-spring); }
+.tv-ticket-fields { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin: 0; overflow: hidden; border-radius: 20px; background: var(--tv-option-bg); }
+.tv-ticket-fields > div { display: grid; justify-items: center; gap: 6px; min-width: 0; padding: 14px 8px; text-align: center; }
+.tv-ticket-fields > div + div { box-shadow: inset 1px 0 0 var(--tv-line); }
+.tv-ticket-fields dt { max-width: 100%; overflow: hidden; font-family: var(--tv-mono); font-weight: 800; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--tv-text-3); text-overflow: ellipsis; white-space: nowrap; }
+.tv-ticket-fields dd { margin: 0; font-family: var(--tv-display); font-weight: 800; font-size: 30px; line-height: 1; color: var(--tv-text); animation: tvPick 0.3s var(--tv-spring); }
+/* The rank on the ticket: a dark card, the badge beside the tier and its points, the bar under them. */
+.tv-play-rank.is-card { display: flex; align-items: center; gap: 14px; padding: 14px; border-radius: 20px; background: var(--tv-option-bg); }
+.tv-play-rank.is-card .tv-play-rank-badge { width: 52px; height: 52px; border-radius: 16px; }
+.tv-play-rank-main { display: grid; flex: 1; gap: 10px; min-width: 0; }
+.tv-play-rank-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; min-width: 0; }
+.tv-play-rank-head strong { overflow: hidden; font-family: var(--tv-display); font-weight: 800; font-size: 24px; line-height: 1; color: var(--rank); text-overflow: ellipsis; white-space: nowrap; }
+.tv-play-rank-head span { flex-shrink: 0; font-weight: 800; font-size: 14px; color: var(--tv-text-3); }
 /* At the bottom of the ticket, over the perforated line. */
-.tv-ticket-facts { display: grid; gap: 12px; margin: auto 0 0; padding: 0; list-style: none; }
+.tv-ticket-facts { display: grid; gap: 12px; margin: auto 0 0; padding: 16px 18px; border-radius: 20px; background: var(--tv-option-bg); list-style: none; }
 .tv-ticket-facts li { display: flex; align-items: center; gap: 12px; font-weight: 700; font-size: 15px; line-height: 1.3; color: var(--tv-text-2); }
 .tv-ticket-facts svg { flex-shrink: 0; color: var(--c2); }
+/* Each tab's part of the ticket, stacked in one cell: the tallest sets the height, the one not chosen is only hidden. */
+.tv-ticket-layers { display: grid; margin-top: auto; }
+.tv-ticket-layer { grid-area: 1 / 1; display: flex; flex-direction: column; gap: 22px; justify-content: flex-end; min-width: 0; }
+.tv-ticket-layer.is-off { visibility: hidden; }
+.tv-ticket-layer .tv-ticket-facts { margin-top: 0; }
 .tv-ticket-guest,
 .tv-ticket-account { margin: 0; font-weight: 700; font-size: 13px; line-height: 1.4; color: var(--tv-text-3); }
 .tv-app .tv-ticket-guest a,
@@ -469,37 +441,21 @@
 
 /* The button's piece: the ticket's last part, under the perforated line. */
 .tv-ticket-cta {
-  grid-column: 2;
+  grid-column: 1;
   grid-row: 3;
   position: relative;
   padding: 24px 26px 26px;
   border-radius: 0 0 34px 34px;
   background: var(--tv-surface);
   box-shadow: inset 1px 0 0 var(--tv-line), inset -1px 0 0 var(--tv-line), inset 0 -1px 0 var(--tv-line);
-  -webkit-mask:
-    radial-gradient(circle var(--notch) at 0 0, transparent 96%, #000) left / 51% 100% no-repeat,
-    radial-gradient(circle var(--notch) at 100% 0, transparent 96%, #000) right / 51% 100% no-repeat;
-  mask:
-    radial-gradient(circle var(--notch) at 0 0, transparent 96%, #000) left / 51% 100% no-repeat,
-    radial-gradient(circle var(--notch) at 100% 0, transparent 96%, #000) right / 51% 100% no-repeat;
-}
-.tv-ticket-cta::before {
-  content: "";
-  position: absolute;
-  top: -1px;
-  left: calc(var(--notch) + 10px);
-  right: calc(var(--notch) + 10px);
-  border-top: 2px dashed rgba(255, 255, 255, 0.16);
 }
 .tv-lobby-go { height: 76px; gap: 14px; border-radius: 24px; font-weight: 800; font-size: clamp(24px, 2.2vw, 30px); }
 
 /* ---------- Short windows (a laptop): a little tighter (the panel's heights already follow the window's) ---------- */
 @media (min-width: 861px) and (max-height: 800px) {
-  .tv-vote { gap: 12px; }
-  .tv-vote-game { padding: 6px 6px 10px 14px; }
   .tv-ticket-stub { padding: 22px 24px 24px; }
   .tv-ticket-body { gap: 18px; padding: 22px 24px 24px; }
-  .tv-ticket-fields dd { font-size: 32px; }
+  .tv-ticket-fields dd { font-size: 28px; }
   .tv-ticket-cta { padding: 22px 24px 24px; }
   .tv-lobby-go { height: 68px; }
   .tv-join { padding: 22px; }
@@ -513,7 +469,7 @@
 @media (max-width: 860px) {
   .tv-lobby-row { display: flex; flex-direction: column; gap: 14px; padding-bottom: 96px; }
   .tv-lobby-row.has-tabs .tv-lobby-panel { margin-top: 0; }
-  .tv-ticket { border-radius: 30px; box-shadow: inset 0 0 0 1px var(--tv-line); -webkit-mask: none; mask: none; }
+  .tv-ticket { border-radius: 30px; box-shadow: inset 0 0 0 1px var(--tv-line); }
   .tv-ticket-stub { border-radius: 30px 30px 0 0; }
   .tv-ticket-cta {
     position: fixed;
@@ -526,20 +482,18 @@
     padding: 10px;
     border-radius: 28px;
     box-shadow: inset 0 0 0 1px var(--tv-line), 0 14px 34px rgba(0, 0, 0, 0.6);
-    -webkit-mask: none;
-    mask: none;
   }
-  .tv-ticket-cta::before { display: none; }
 }
+
 @media (max-width: 760px) {
   .tv-lobby-tabs { padding: 4px; border-radius: 22px; }
-  .tv-lobby-tabs-thumb { top: 4px; bottom: 4px; left: 4px; width: calc((100% - 8px) / 2); border-radius: 18px; }
-  .tv-lobby-tab { gap: 10px; padding: 8px 10px; border-radius: 18px; }
+  .tv-lobby-tab { gap: 8px; padding: 8px; border-radius: 18px; }
+  .tv-lobby-tab[aria-current] { flex-grow: 1.15; }
+  .tv-lobby-tab-mark { display: none; }
   .tv-lobby-tab-badge { width: 36px; height: 36px; border-radius: 12px; }
   .tv-lobby-tab-text strong { font-size: 17px; }
   .tv-lobby-tab-text small { display: none; }
   .tv-lobby-panel { gap: 18px; padding: 18px; border-radius: 30px; }
-  .tv-vote { padding-top: 18px; }
   .tv-ticket-stub { padding: 18px 20px 20px; }
   .tv-ticket-body { padding: 20px; }
   .tv-join { padding: 18px; }
@@ -551,9 +505,9 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .tv-rise,
   .tv-vote-token,
-  .tv-vote-opt[aria-pressed="true"] .tv-vote-check,
-  .tv-lobby-pick-btn[aria-checked="true"],
+  .tv-vote-num,
   .tv-ticket-fields dd,
   .tv-codecell.is-filled { animation: none; }
 }

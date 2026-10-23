@@ -5,7 +5,7 @@ export const MATCH_KINDS = {
   casual: {
     id: "casual",
     name: "Casual",
-    color: "music",
+    color: "site",
     icon: "bolt",
     blurb: "Partidas rápidas con gente de todas partes",
     detail: "Para jugar sin presión",
@@ -13,7 +13,7 @@ export const MATCH_KINDS = {
   competitivo: {
     id: "competitivo",
     name: "Competitivo",
-    color: "amber",
+    color: "site",
     icon: "crown",
     blurb: "Para los que juegan en serio",
     detail: "Cada victoria cuenta para tu rango",
@@ -36,7 +36,7 @@ export const gamesFor = (kind) => (kind === "casual" ? CASUAL_GAMES : MATCH_GAME
 
 // What the roulette really draws (MATCH_VARIANTS on the server): each game with one way of playing it, a game of its
 // own in a public match ("Trivia Cerradas" is only four-option questions). `hint` says how it's played in a few words
-// ("Vota los juegos", VoteBoard.jsx).
+// ("Elegir juegos", VoteBoard.jsx).
 export const MATCH_VARIANTS = [
   { id: "trivia-cerradas", game: "opciones", way: "Cerradas", hint: "Elige entre 4 opciones" },
   { id: "trivia-abiertas", game: "opciones", way: "Abiertas", hint: "Escribe la respuesta" },
