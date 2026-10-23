@@ -535,7 +535,7 @@ export const MATCH_HISTORY_LIMIT = 10;
  * (`user.history`): which game, when, the place they finished in, how many played, their points, who they played
  * against, the room and their rounds (each question with its answer, for "Reportar partida": reportHistoryMatch).
  * `players` come in final position (a tiebreak's winner first); `game` is the game's id ("playlist" for a playlist).
- * `rank` ({ games, winnerId }) only for a Competitivo match: each account's rank points move by its place
+ * `rank` ({ rounds, winnerId }) only for a Competitivo match: each account's rank points move by its place
  * (game/rank.js), and the history entry keeps how many (`rank`).
  */
 export function applyMatchStats(store, players, { game = null, at = new Date().toISOString(), room = null, rank = null } = {}) {

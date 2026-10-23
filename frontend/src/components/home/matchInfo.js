@@ -1,37 +1,47 @@
-// Partidas públicas ("Casual" and "Competitivo", backend/src/game/matchmaking.js): their names and colours, the
-// lengths to choose from, and the short tutorial each game shows after the roulette picks it (MatchIntro.jsx).
+// Partidas públicas ("Casual" and "Competitivo", backend/src/game/matchmaking.js; Competitivo is disabled for now): their
+// names and colours, and the short tutorial each game shows after the roulette picks it (MatchIntro.jsx). Every match is
+// two games of 5 rounds, and a third when they end one each.
 
 export const MATCH_KINDS = {
   casual: {
     id: "casual",
     name: "Casual",
-    color: "music",
+    color: "site",
     icon: "bolt",
-    blurb: "Partidas rápidas con gente de todas partes",
+    blurb: "Juega sin presión, cuando quieras",
     detail: "Para jugar sin presión",
+    // The steps on its big card, the same on /jugar/casual and while it searches (PlayPage, MatchLobby).
+    steps: [
+      { icon: "grid", text: "2 juegos al azar, de 5 rondas cada uno" },
+      { icon: "crown", text: "Gana cada juego quien más puntos saque" },
+      { icon: "bolt", text: "Si quedan uno a uno, un tercer juego desempata" },
+    ],
   },
   competitivo: {
     id: "competitivo",
     name: "Competitivo",
-    color: "amber",
+    color: "accent",
     icon: "crown",
-    blurb: "Para los que juegan en serio",
+    blurb: "Gana partidas y sube de rango",
     detail: "Cada victoria cuenta para tu rango",
+    steps: [
+      { icon: "crown", text: "Cada victoria te sube de rango" },
+      { icon: "target", text: "Solo preguntas medias y difíciles" },
+      { icon: "lock", text: "Muy pronto disponible" },
+    ],
   },
 };
 
-// How long a match is (MATCH_LENGTHS on the server): one game or three, each with its own rounds (Campo de minas 3,
-// the others 5), so it's never a fixed number of rounds.
-export const MATCH_LENGTHS = [
-  { value: 1, hint: "Partida rápida" },
-  { value: 3, hint: "Partida larga" },
-];
+export const ROUNDS_PER_GAME = 5;
+// Games of every public match, and its rounds (MATCH_GAME_COUNT and MATCH_ROUNDS on the server).
+export const MATCH_GAME_COUNT = 2;
+export const MATCH_ROUNDS = MATCH_GAME_COUNT * ROUNDS_PER_GAME;
 // How many players a room needs (MATCH_SIZES on the server): you against one, or five in all.
 export const MATCH_SIZES = [
-  { value: 2, label: "Duelo", hint: "2 jugadores", icon: "user" },
-  { value: 5, label: "Todos contra todos", hint: "5 jugadores", icon: "users" },
+  { value: 2, label: "Uno contra Uno", hint: "1 Jugador", icon: "user" },
+  { value: 5, label: "Todos contra Todos", hint: "5 Jugadores", icon: "users" },
 ];
-export const sizeName = (size) => (size === 2 ? "Duelo" : `${size} jugadores`);
+export const sizeName = (size) => (size === 2 ? "Uno contra Uno" : "Todos contra Todos");
 // The games a public match draws from, in the roulette's order (gamesFor on the server): Trivia, Rango and Campo de
 // minas, in Casual and Competitivo alike.
 export const MATCH_GAMES = ["opciones", "historia", "minas"];
@@ -39,8 +49,7 @@ export const CASUAL_GAMES = MATCH_GAMES;
 export const gamesFor = (kind) => (kind === "casual" ? CASUAL_GAMES : MATCH_GAMES);
 
 // What the roulette really draws (MATCH_VARIANTS on the server): each game with one way of playing it, a game of its
-// own in a public match ("Trivia Cerradas" is only four-option questions). `hint` says how it's played in a few words
-// ("Vota los juegos", VoteBoard.jsx).
+// own in a public match ("Trivia Cerradas" is only four-option questions). `hint` says how it's played in a few words.
 export const MATCH_VARIANTS = [
   { id: "trivia-cerradas", game: "opciones", way: "Cerradas", hint: "Elige entre 4 opciones" },
   { id: "trivia-abiertas", game: "opciones", way: "Abiertas", hint: "Escribe la respuesta" },
@@ -53,7 +62,10 @@ export const MATCH_VARIANTS = [
 export const findVariant = (id) => MATCH_VARIANTS.find((v) => v.id === id) || { id, game: id, way: null };
 export const variantsFor = (kind) => MATCH_VARIANTS.filter((v) => gamesFor(kind).includes(v.game));
 
-export const gamesText = (games) => (games === 1 ? "1 juego" : `${games} juegos`);
+export const gamesText = (rounds) => {
+  const n = Math.round(rounds / ROUNDS_PER_GAME);
+  return n === 1 ? "1 juego" : `${n} juegos`;
+};
 
 // What to do in each variant, short enough to read in the 5 s the tutorial lasts.
 export const VARIANT_TUTORIALS = {

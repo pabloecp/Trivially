@@ -2,7 +2,6 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import { api, setAuthToken } from "./api.js";
 import { emitAck, emitAckWithin, getSocket, reconnectSocket, setSocketTokenProvider } from "./socket.js";
 import { BACKEND_URL } from "./config.js";
-import { savedVotes } from "./matchVotes.js";
 
 const AppContext = createContext(null);
 
@@ -563,14 +562,13 @@ export function AppProvider({ children }) {
         return enterRoom(res.state);
       },
 
-      // "Casual" or "Competitivo": into a public room of that kind and length (`gameCount`: 1 or 3 games), which starts
-      // by itself once it's full; `size` is how many players it needs (2: "Duelo", or 5). Also "Buscar otra partida" at the end of one (the server leaves the old room first).
-      // `votes`: the games this player voted for ("Vota los juegos", lib/matchVotes.js), the ones saved for this format
-      // when not given; the match's roulette spins among everyone's.
-      async findMatch(kind, gameCount, size = 5, votes = null, explicitUser) {
+      // "Casual" (Competitivo is disabled for now): into a public room of that kind, which starts by itself once it's
+      // full; every match is two games (and a third when they end one each). `size` is how many players it needs (2:
+      // "Duelo", or 5). Also "Buscar otra partida" at the end of one (the server leaves the old room first).
+      async findMatch(kind, size = 5, explicitUser) {
         const current = explicitUser || userRef.current;
         if (!current?.name) throw new Error("Debes identificarte antes de buscar partida");
-        const res = await emitAck("match:find", { user: current, kind, gameCount, size, votes: votes || savedVotes(size, gameCount) });
+        const res = await emitAck("match:find", { user: current, kind, size });
         if (!res.ok) throw new Error(res.error);
         return enterRoom(res.state);
       },

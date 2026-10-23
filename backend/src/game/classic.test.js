@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { readLocalCatalog } from "../catalog/catalogProvider.js";
-import { CLASSIC_GAMES, findVariant, INTRO_MS, MATCH_QUESTION_MS, matchGameRounds } from "./matchmaking.js";
+import { CLASSIC_GAMES, findVariant, INTRO_MS, MATCH_QUESTION_MS } from "./matchmaking.js";
 import { RoomManager } from "./roomManager.js";
 
 // Clásico (Normal and Extendido): a private room's host starts a match like a Casual one, with its roulette, tutorials
@@ -20,9 +20,7 @@ for (const [game, count] of Object.entries(CLASSIC_GAMES)) {
   assert.equal(room.run.classic, game);
   assert.equal(room.run.items.length, count, `${game}: ${count} juegos`);
   assert.equal(new Set(room.run.items.map((i) => i.variant)).size, count, "never the same variant twice");
-  // Each game its own rounds, like a public match's: Campo de minas 3, the others 5.
-  for (const item of room.run.items) assert.equal(item.config.rounds, matchGameRounds(item.game), `${item.game}: its rounds`);
-  assert.equal(room.totalRounds, room.run.items.reduce((sum, item) => sum + matchGameRounds(item.game), 0));
+  assert.equal(room.totalRounds, count * 5);
   assert.equal(room.phase, "intro", "every game opens with its roulette");
   assert.equal(room.phaseEndsAt - room.phaseStartedAt, INTRO_MS);
   assert.equal(room.game, findVariant(room.run.items[0].variant).game, "the room is in the first game");
@@ -32,7 +30,6 @@ for (const [game, count] of Object.entries(CLASSIC_GAMES)) {
   const state = mgr.publicState(room);
   assert.equal(state.run.classic, game);
   assert.equal(state.intro.index, 0);
-  assert.equal(state.intro.ballot, null, "no votes: the roulette spins among the games");
   assert.equal(state.question, null, "nothing of the round during the roulette");
 
   // The public match's clock, not the game's own settings.

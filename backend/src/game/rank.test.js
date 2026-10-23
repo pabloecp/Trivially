@@ -8,10 +8,10 @@ let d = rankDeltas(players(900, 400));
 assert.equal(d.get("u1"), 25);
 assert.equal(d.get("u2"), -15);
 
-// Five players, each place its points; 3 games are worth half as much again.
+// Five players, each place its points; 15 rounds are worth half as much again.
 d = rankDeltas(players(500, 400, 300, 200, 100));
 assert.deepEqual([...d.values()], [30, 15, 5, -5, -15]);
-d = rankDeltas(players(500, 400, 300, 200, 100), { games: 3 });
+d = rankDeltas(players(500, 400, 300, 200, 100), { rounds: 15 });
 assert.deepEqual([...d.values()], [45, 23, 8, -7, -22]);
 
 // A room that ended with fewer players uses that count's table.

@@ -114,9 +114,7 @@ import {
 import {
   BOT_GAP_MS,
   BOT_WAIT_MS,
-  botVotes,
   cleanMatchRequest,
-  cleanVotes,
   CLASSIC_GAMES,
   CLASSIC_NAMES,
   isClassic,
@@ -127,8 +125,7 @@ import {
   roomSize,
   matchItemConfig,
   findVariant,
-  matchBallot,
-  RANDOM_VOTE,
+  MATCH_GAME_COUNT,
   variantsFor,
   matchRoundMs,
   matchTimes,
@@ -423,14 +420,12 @@ export class RoomManager {
   }
 
   /**
-   * "Casual" or "Competitivo" (`{ kind, gameCount, size, votes }`): the player goes into a public room of that kind and
-   * length (1 or 3 games) that is still waiting for players, or a new one. Nobody is its host: nobody picks the game, changes the settings, pauses
-   * or ends it. When it has its size of players (2 or 5) it starts by itself (checkMatchFull). `votes` are the games this
-   * player wants ("Vota los juegos"), kept for the roulette (startMatch).
+   * "Casual" (`{ kind, size }`; Competitivo is disabled for now): the player goes into a public room of that kind and
+   * size that is still waiting for players, or a new one. Nobody is its host: nobody picks the game, changes the settings, pauses or
+   * ends it. When it has its size of players (2 or 5) it starts by itself (checkMatchFull).
    */
   findMatch(user, input) {
-    const { kind, gameCount, size } = cleanMatchRequest(input);
-    const votes = cleanVotes(input?.votes, kind, gameCount);
+    const { kind, rounds, size } = cleanMatchRequest(input);
     assertNameWithoutLink(user);
     let room = [...this.rooms.values()].find(
       (r) =>
@@ -438,7 +433,6 @@ export class RoomManager {
         r.phase === "lobby" &&
         !r.matchmaking.startsAt &&
         r.matchmaking.kind === kind &&
-        r.matchmaking.gameCount === gameCount &&
         r.matchmaking.versus === size &&
         !r.blocked?.has(user.id) &&
         this.connectedCount(r) < r.matchmaking.size
@@ -449,12 +443,9 @@ export class RoomManager {
       room = this.create({ host: user, game: null });
       room.hostId = null;
       room.joinMode = "invitacion";
-      room.matchmaking = {
-        kind, gameCount, versus: size, size: roomSize(size), games: null, startsAt: null, timer: null, botTimer: null, votes: {}, ballot: null,
-      };
+      room.matchmaking = { kind, rounds, versus: size, size: roomSize(size), games: null, startsAt: null, timer: null, botTimer: null };
       if (kind === "casual") this.scheduleBotArrival(room, BOT_WAIT_MS);
     }
-    room.matchmaking.votes[user.id] = votes;
     this.checkMatchFull(room);
     return room;
   }
@@ -684,30 +675,66 @@ export class RoomManager {
   }
 
   /**
-   * Starts a full public room: its games (1 or 3, each a variant of MATCH_VARIANTS: a game with one way of playing it,
-   * "Trivia Cerradas", with its own rounds: matchGameRounds) are drawn from its players' votes (drawVotedItems) and
-   * played as a playlist in that order. Bots vote like anyone (botVotes); a player who didn't vote (an older client) votes "Al azar" for every game.
-   * Competitivo plays only medium and hard questions while there are enough of them.
+   * Starts a full public room: its games are drawn (MATCH_GAME_COUNT, all different, among MATCH_VARIANTS: each game
+   * with one way of playing it, "Trivia Cerradas") and played as a playlist in that order, plus one more kept aside as
+   * the decider, played only when the others end tied on games won (beginDecider). Competitivo plays only medium and
+   * hard questions while there are enough of them; a game that can't be played at all gives its place to the next one
+   * drawn.
    */
   startMatch(room) {
-    const { kind, gameCount } = room.matchmaking;
-    const voters = [...room.players.values()]
-      .filter((p) => p.connected)
-      .map((p) => ({
-        id: p.id,
-        name: p.name,
-        avatar: p.avatar,
-        votes: room.matchmaking.votes?.[p.id] || (p.bot ? botVotes(kind, gameCount) : cleanVotes(null, kind, gameCount)),
-      }));
-    const ballot = matchBallot(voters);
-    const items = this.drawVotedItems(room, kind, gameCount, ballot);
-    room.matchmaking.ballot = ballot;
-    // What everyone sees of it: the variants, in play order.
+    const { kind } = room.matchmaking;
+    const drawn = this.drawMatchItems(room, kind, MATCH_GAME_COUNT + 1);
+    const items = drawn.slice(0, MATCH_GAME_COUNT);
+    // What everyone sees of it: the variants, in play order (the decider joins them only if it's played).
     room.matchmaking.games = items.map((item) => item.variant);
     room.matchmaking.startsAt = null;
     room.playlist = { name: kind === "competitivo" ? "Partida competitiva" : "Partida casual", order: "orden", items };
     room.run = newRun(room.playlist, room.config);
+    // Games won per player, and each player's score when the game being played started (gameWins, scoreMatchGame).
+    room.run.gameWins = {};
+    room.run.gameBase = {};
+    room.run.decider = drawn[MATCH_GAME_COUNT] || null;
     this.startMixed(room);
+  }
+
+  /**
+   * A public match, at the end of each of its games: whoever scored the most in that game (with points) wins it, all of
+   * them on a tie for the most.
+   */
+  scoreMatchGame(room) {
+    const run = room.run;
+    if (!run?.gameWins) return;
+    const track = room.tracks[room.currentRound];
+    const next = room.tracks[room.currentRound + 1];
+    if (!track || (next && next.playlistItem === track.playlistItem)) return;
+    const players = [...room.players.values()].filter((p) => !p.spectator && room.participants?.has(p.id));
+    const points = (p) => (p.score || 0) - (run.gameBase[p.id] || 0);
+    const top = Math.max(0, ...players.map(points));
+    if (top > 0) for (const p of players) if (points(p) === top) run.gameWins[p.id] = (run.gameWins[p.id] || 0) + 1;
+    run.gameBase = Object.fromEntries(players.map((p) => [p.id, p.score || 0]));
+  }
+
+  /**
+   * A public match after its games: when two or more connected players have won as many games as the best (one each),
+   * its decider is played as one more game, with its roulette and tutorial. Returns false when the match can end.
+   */
+  beginDecider(room) {
+    const run = room.run;
+    if (!run?.decider || run.deciderIndex != null) return false;
+    const players = [...room.players.values()].filter((p) => p.connected && !p.spectator && room.participants?.has(p.id));
+    const wins = (p) => run.gameWins[p.id] || 0;
+    const top = Math.max(0, ...players.map(wins));
+    if (players.filter((p) => wins(p) === top).length < 2) return false;
+    const tracks = run.deciderTracks || [];
+    if (!tracks.length) return false;
+    run.deciderIndex = run.items.length;
+    run.items.push(run.decider);
+    room.tracks.push(...tracks.map((track) => ({ ...track, playlistItem: run.deciderIndex })));
+    room.totalRounds = room.tracks.length;
+    if (room.matchmaking) room.matchmaking.games = [...(room.matchmaking.games || []), run.decider.variant];
+    room.currentRound += 1;
+    this.beginCountdown(room);
+    return true;
   }
 
   /**
@@ -723,77 +750,27 @@ export class RoomManager {
     this.startMixed(room);
   }
 
-  /** The `count` games of a Clásico, each a variant with its settings, all different and drawn at random. */
+  /** The `count` games of a public match of `kind` (or of a Clásico), each a variant with its settings, all different. */
   drawMatchItems(room, kind, count) {
+    // The times go in after cleaning, as they are: a public match is quicker than a game's own settings allow.
+    const configFor = (game, variant, easy) => ({
+      ...this.cleanItemConfig(room, game, matchItemConfig(game, kind, { easy, variant })),
+      ...matchTimes(game),
+    });
     const items = [];
     for (const variant of pickMatchGames(null, Math.random, variantsFor(kind))) {
       if (items.length >= count) break;
-      const item = this.matchItem(room, kind, variant, items.length);
-      if (item) items.push(item);
+      const { game } = findVariant(variant);
+      const item = { id: `m${items.length}`, game, variant, config: configFor(game, variant, false) };
+      if (!this.itemProblem(room, item, room.config, { exact: true })) {
+        items.push(item);
+        continue;
+      }
+      const easier = { ...item, config: configFor(game, variant, true) };
+      if (!this.itemProblem(room, easier, room.config, { exact: true })) items.push(easier);
     }
     if (!items.length) throw new Error("No hay juegos disponibles para esta partida");
     return items;
-  }
-
-  /**
-   * A public match's games from its players' votes (`ballot`, matchBallot, one card per vote): for each game the roulette
-   * lands on one of the cards still in it, at random (a game with more votes comes up more often), and that card leaves
-   * it; the others stay for the next games, so a game voted by several players can be played more than once. "Al azar"
-   * becomes any game, one not drawn yet when there is one, and so does a vote for a game that can't be played now (the
-   * card shows it as "Al azar"). Each item keeps the card it came from (`vote`).
-   */
-  drawVotedItems(room, kind, count, ballot) {
-    const ready = new Map();
-    for (const variant of variantsFor(kind)) {
-      const item = this.matchItem(room, kind, variant, 0);
-      if (item) ready.set(variant, item);
-    }
-    if (!ready.size) throw new Error("No hay juegos disponibles para esta partida");
-    for (const card of ballot) if (!ready.has(card.variant)) card.variant = RANDOM_VOTE;
-    const items = [];
-    const left = [...ballot];
-    while (items.length < count && left.length) {
-      const card = left.splice(Math.floor(Math.random() * left.length), 1)[0];
-      const drawn = items.map((item) => item.variant);
-      const variant =
-        card.variant === RANDOM_VOTE
-          ? pickMatchGames(null, Math.random, [...ready.keys()]).sort((a, b) => drawn.includes(a) - drawn.includes(b))[0]
-          : card.variant;
-      items.push({ ...structuredClone(ready.get(variant)), id: `m${items.length}`, vote: card.id });
-    }
-    return items;
-  }
-
-  /**
-   * One game of a public match or a Clásico: `variant` with its settings, or null when it can't be played. Competitivo
-   * leaves the easy questions out unless that's the only way to play it.
-   */
-  matchItem(room, kind, variant, index) {
-    const { game } = findVariant(variant);
-    for (const easy of [false, true]) {
-      // The times go in after cleaning, as they are: a public match is quicker than a game's own settings allow.
-      const config = { ...this.cleanItemConfig(room, game, matchItemConfig(game, kind, { easy, variant })), ...matchTimes(game) };
-      const item = { id: `m${index}`, game, variant, config };
-      if (!this.itemProblem(room, item, room.config, { exact: true })) return item;
-    }
-    return null;
-  }
-
-  /**
-   * The roulette before game `index` of a public match: the votes still in it (those that picked an earlier game are
-   * gone), in the order drawn at the start, each with who voted it, and `pick`, the one it lands on. No ballot for a
-   * Clásico, or a game no vote picked.
-   */
-  introBallot(room, index) {
-    const ballot = room.matchmaking?.ballot;
-    const item = room.run?.items[index];
-    if (!ballot || !item?.vote) return { ballot: null, pick: null };
-    const used = new Set(room.run.items.slice(0, index).map((i) => i.vote));
-    const cards = ballot.filter((card) => !used.has(card.id));
-    return {
-      ballot: cards.map(({ id, userId, name, avatar, variant }) => ({ id, userId, name, avatar, variant })),
-      pick: cards.findIndex((card) => card.id === item.vote),
-    };
   }
 
   create({ host, mode, config, game = null }) {
@@ -2350,7 +2327,9 @@ export class RoomManager {
   }
 
   advance(room) {
+    this.scoreMatchGame(room);
     if (room.currentRound + 1 >= (room.totalRounds || room.tracks.length)) {
+      if (this.beginDecider(room)) return;
       if (this.beginTiebreak(room)) return;
       this.finish(room);
       return;
@@ -2403,12 +2382,16 @@ export class RoomManager {
     return true;
   }
 
-  /** Players by final position: by score, and a tiebreak's winner ahead of the players they were tied with. */
+  /**
+   * Players by final position: by score, and a tiebreak's winner ahead of the players they were tied with. In a public
+   * match, by games won first (scoreMatchGame).
+   */
   rankedPlayers(room) {
     const winnerId = room.tiebreak?.winnerId;
+    const wins = (p) => room.run?.gameWins?.[p.id] || 0;
     return [...room.players.values()]
       .filter((p) => !p.spectator)
-      .sort((a, b) => b.score - a.score || (b.id === winnerId) - (a.id === winnerId));
+      .sort((a, b) => wins(b) - wins(a) || b.score - a.score || (b.id === winnerId) - (a.id === winnerId));
   }
 
   finish(room) {
@@ -2423,7 +2406,7 @@ export class RoomManager {
         game: room.run?.mixed ? room.run.classic || PLAYLIST_GAME : room.game,
         room: room.code,
         // Competitivo moves each account's rank by its place (game/rank.js).
-        rank: room.matchmaking?.kind === "competitivo" ? { games: room.matchmaking.gameCount, winnerId: room.tiebreak?.winnerId || null } : null,
+        rank: room.matchmaking?.kind === "competitivo" ? { rounds: room.matchmaking.rounds, winnerId: room.tiebreak?.winnerId || null } : null,
       });
       this.recordWin(room, ranked);
       // A game of a playlist: its winner adds a win to the playlist's tally.
@@ -2439,7 +2422,8 @@ export class RoomManager {
   matchWinner(room, ranked) {
     const [first, second] = ranked;
     if (!first) return null;
-    const tied = second && second.score === first.score && first.id !== room.tiebreak?.winnerId;
+    const wins = (p) => room.run?.gameWins?.[p.id] || 0;
+    const tied = second && wins(second) === wins(first) && second.score === first.score && first.id !== room.tiebreak?.winnerId;
     return first.score > 0 && !tied ? first.id : null;
   }
 
@@ -2517,6 +2501,9 @@ export class RoomManager {
         if (!tracks.length) throw new Error(`Revisa el juego ${i + 1}, ${GAME_NAMES[item.game]}. No hay preguntas con esos ajustes.`);
         return tracks;
       });
+      // A public match's decider is drawn now too, so it doesn't repeat the other games' questions; a decider that
+      // can't be drawn is simply not played.
+      if (run.decider) run.deciderTracks = this.drawItemTracks(room, run.decider, musicSoFar);
     } catch (err) {
       this.stopPlaylist(room);
       this.resetMatch(room);
@@ -3702,8 +3689,6 @@ export class RoomManager {
       matchmaking: room.matchmaking ? publicMatchmaking(room.matchmaking, this.connectedCount(room)) : null,
       // Before each game of a public match: the roulette lands on `variant` (the game with its one way, "Trivia
       // Cerradas"; `index` in `variants`, the match's in play order), then its tutorial. `game`/`games` are their games.
-      // A public match's roulette spins among the players' votes still left (`ballot`, landing on `ballot[pick]`, whose
-      // `variant` may be "azar": then `variant` says what it became); a Clásico's has no ballot.
       intro:
         room.phase === "intro" && room.run
           ? {
@@ -3712,7 +3697,8 @@ export class RoomManager {
               variant: room.run.items[room.run.current ?? 0]?.variant || null,
               variants: room.run.items.map((item) => item.variant || item.game),
               index: room.run.current ?? 0,
-              ...this.introBallot(room, room.run.current ?? 0),
+              // A public match's third game, played because the first two ended one each.
+              decider: room.run.deciderIndex != null && room.run.current === room.run.deciderIndex,
               spinMs: INTRO_SPIN_MS,
               tutorialMs: INTRO_TUTORIAL_MS,
             }

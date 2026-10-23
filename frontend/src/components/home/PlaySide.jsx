@@ -13,11 +13,11 @@ const STATS = [
 ];
 /**
  * Who plays: name and @username (or the guest's way to an account), and under it, in a public match (Casual or
- * Competitivo, `match`) the rank (`rank` false in Casual: nothing there), or in Privada a few stats. The card at the top of a public match's room column
+ * Competitivo, `match`) the rank, or in Privada a few stats. The card at the top of a public match's room column
  * (PartyPanel). `refreshOn` changing asks the server
  * for the account again (a finished match moves its rank and history).
  */
-export function PlayerCard({ match = false, rank = true, refreshOn = null }) {
+export function PlayerCard({ match = false, refreshOn = null }) {
   const { user, refreshUser } = useApp();
   const isAccount = useFriends().isAccount;
   useEffect(() => {
@@ -34,7 +34,7 @@ export function PlayerCard({ match = false, rank = true, refreshOn = null }) {
           </span>
         </div>
         {isAccount && match ? (
-          rank && <RankCard rank={user?.rank} />
+          <RankCard rank={user?.rank} />
         ) : isAccount ? (
           <dl className="tv-play-me-stats">
             {STATS.map((s) => (
@@ -63,8 +63,27 @@ export function PlayerCard({ match = false, rank = true, refreshOn = null }) {
 
 // The rank (lib/rank.js): the tier's crown in its colour, "Oro II" and the points, and a bar to the next step. Also on
 // Competitivo's ticket (PlayPage).
-export function RankCard({ rank }) {
+export function RankCard({ rank, card = false }) {
   const info = rankInfo(rank);
+  // On the public match's ticket: a card of its own, the badge beside the tier and its points, the progress bar under.
+  if (card) {
+    return (
+      <div className="tv-play-rank is-card" style={{ "--rank": info.tier.color }}>
+        <span className="tv-play-rank-badge" aria-hidden="true">
+          <Icon name="crown" size={26} strokeWidth={2.2} filled />
+        </span>
+        <div className="tv-play-rank-main">
+          <div className="tv-play-rank-head">
+            <strong>{info.label}</strong>
+            <span>{info.points.toLocaleString("es-ES")} pts</span>
+          </div>
+          <div className="tv-play-rank-bar" role="progressbar" aria-label={`Progreso hacia ${info.nextLabel || "el máximo"}`} aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(info.progress * 100)}>
+            <span style={{ width: `${Math.round(info.progress * 100)}%` }} />
+          </div>
+        </div>
+      </div>
+    );
+  }
   return (
     <div className="tv-play-rank" style={{ "--rank": info.tier.color }}>
       <div className="tv-play-rank-row">

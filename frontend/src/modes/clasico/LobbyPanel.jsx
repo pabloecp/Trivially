@@ -23,7 +23,7 @@ export default function LobbyPanel({ room }) {
           </h2>
         </div>
         <p className="tv-picker-sub">
-          La ruleta elige {mode.games} de estos juegos. Cada uno se juega a 5 rondas, menos Campo de minas, que tiene 3.
+          La ruleta elige {mode.games} de estos juegos, de 5 rondas cada uno: {mode.games * 5} rondas en total.
         </p>
         <MatchGames compact />
       </section>

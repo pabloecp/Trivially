@@ -116,7 +116,9 @@ export function recordGame(run, game, ranked, winnerId) {
     entry.isGuest = Boolean(p.isGuest);
     entry.played += 1;
     entry.points += p.score || 0;
-    if (p.id === winnerId) entry.wins += 1;
+    // A public match counts each of its games (run.gameWins); any other run is one game, won by its winner.
+    if (run.gameWins) entry.wins = run.gameWins[p.id] || 0;
+    else if (p.id === winnerId) entry.wins += 1;
     entry.rounds = [...(entry.rounds || []), ...(p.rounds || []).map((r) => ({ ...r }))];
     entry.bestStreak = Math.max(entry.bestStreak || 0, p.bestStreak || 0);
   }
@@ -161,6 +163,9 @@ export function publicRun(run) {
     mixed: Boolean(run.mixed),
     // A Clásico's game id ("clasico" or "extendido"): it's played like a playlist, but it's a match.
     classic: run.classic || null,
+    // A public match: ranked by games won (then points), and whether its decider is being (or was) played.
+    bestOf: Boolean(run.gameWins),
+    decider: run.deciderIndex ?? null,
     index: run.index,
     total: run.items.length,
     games: run.items.map((item) => item.game),

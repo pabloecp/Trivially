@@ -1149,6 +1149,12 @@
 .tv-room.is-leaving .tv-mstage,
 .tv-room.is-leaving .tv-settings-card,
 .tv-room.is-leaving .tv-party { animation: var(--tv-box-out); }
+/* The soft way between /jugar's options and a room (Home's seam "soft", lib/screenMotion.js): the panels fade out
+   together, sinking only a little; the next screen's fade in rising a little. */
+.tv-main.is-seam-soft .tv-room.is-leaving :is(.tv-picker, .tv-mstage, .tv-settings-card, .tv-party, .tv-mcard, .tv-play-cta) {
+  animation: tvSoftOut 0.2s ease-in forwards;
+}
+@keyframes tvSoftOut { to { opacity: 0; transform: translateY(8px) scale(0.985); } }
 /* Switching straight from one game to another: the panels stay and only their contents swap. */
 .tv-room-row.is-switch .tv-mstage,
 .tv-room-row.is-switch .tv-settings-card { animation: none; }

@@ -110,14 +110,6 @@
   overflow: hidden;
   animation: var(--tv-box-in);
 }
-.tv-ml { gap: 22px; }
-.tv-ml-main { display: flex; flex-direction: column; align-items: center; gap: 10px; min-width: 0; }
-/* Wide screens: the search on the left and the games on the right, side by side and centred. */
-@media (min-width: 1100px) {
-  .tv-ml { flex-direction: row; align-items: center; justify-content: center; gap: clamp(32px, 5vw, 72px); }
-  .tv-ml-main { flex: 0 1 420px; }
-  .tv-ml .tv-ml-games { flex: 0 0 auto; width: auto; max-width: none; margin-top: 0; }
-}
 
 /* The kind's icon floats up and down while it searches; once full it pops into a tick and stays still. */
 .tv-ml-core {
@@ -138,14 +130,6 @@
 }
 
 .tv-ml-kicker { color: var(--tv-text-3); }
-.tv-ml-title {
-  margin: 0;
-  font-family: var(--tv-display);
-  font-weight: 600;
-  font-size: clamp(26px, 4vw, 34px);
-  line-height: 1.1;
-  color: var(--tv-text);
-}
 
 .tv-ml-headline { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 12px; }
 /* How full it is (or the seconds left once full), in a pill of the kind's colour beside the title. */
@@ -186,7 +170,6 @@
 }
 .tv-ml-seat .tv-avatar { width: 58px; height: 58px; font-size: 22px; }
 .tv-ml-seat.is-taken { animation: tvMlSeat 0.5s var(--tv-spring) backwards; animation-delay: calc(var(--i) * 40ms); }
-.tv-ml-seat.is-me .tv-avatar { box-shadow: 0 0 0 3px var(--c2); }
 @keyframes tvMlSeat {
   0% { transform: scale(0.4); opacity: 0; }
   100% { transform: scale(1); opacity: 1; }
@@ -217,11 +200,8 @@
 }
 .tv-ml-name.is-waiting { font-weight: 700; color: var(--tv-text-3); }
 
-.tv-ml-games { display: grid; gap: 10px; justify-items: center; width: 100%; max-width: 760px; }
-.tv-ml-games p { color: var(--tv-text-3); }
 .tv-ml-reel { width: 100%; }
 /* The same size whether it says "Cancelar búsqueda" or "Salir", so nothing moves when the room fills. */
-.tv-ml-leave { width: 240px; max-width: 100%; margin-top: 14px; }
 
 @media (max-width: 520px) {
   .tv-mcard { padding: 22px 14px 20px; }
@@ -361,52 +341,6 @@
   color: var(--tv-text);
 }
 .tv-mi-roulette.is-landed .tv-mi-caption { animation: tvMlPop 0.45s var(--tv-spring); }
-.tv-mi-captions { display: grid; justify-items: center; gap: 6px; text-align: center; }
-/* Under the caption: how many votes spin, then whose vote it landed on ("Voto de Ana"). */
-.tv-mi-votedby { margin: 0; font-weight: 800; font-size: 15px; color: var(--tv-text-3); animation: tvFade 0.35s ease-out; }
-
-/* A public match's roulette spins among its players' votes: each card is one vote, a little taller to show who gave it
-   (their avatar and name on a label at the bottom). The window grows with it, so the arrows keep their distance. */
-.tv-mi-roulette.is-votes .tv-mi-window { height: 292px; }
-.tv-mi-roulette.is-votes .tv-mi-card { height: 200px; gap: 10px; padding-top: 6px; }
-.tv-mi-roulette.is-votes .tv-mi-card-icon { width: 74px; height: 74px; border-radius: 22px; }
-.tv-mi-voter {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  max-width: calc(100% - 20px);
-  margin-top: 2px;
-  padding: 3px 10px 3px 3px;
-  border-radius: 99px;
-  background: rgba(0, 0, 0, 0.24);
-  font-weight: 800;
-  font-size: 12px;
-  line-height: 1;
-}
-.tv-mi-voter .tv-avatar { width: 22px; height: 22px; font-size: 11px; }
-.tv-mi-voter-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-/* An "Al azar" vote: like its button in "Vota los juegos", black framed in the logo's colours, a die on them. Once the
-   roulette stops on it, the card turns into the game it became. */
-.tv-mi-card.is-random {
-  border: 4px solid transparent;
-  background:
-    linear-gradient(var(--tv-bg), var(--tv-bg)) padding-box,
-    conic-gradient(
-      var(--logo-1) 0 72deg,
-      var(--logo-2) 72deg 144deg,
-      var(--logo-3) 144deg 216deg,
-      var(--logo-4) 216deg 288deg,
-      var(--logo-5) 288deg 360deg
-    ) border-box;
-  box-shadow: 0 5px 0 var(--tv-logo-shadow);
-  color: var(--tv-text);
-}
-.tv-mi-card.is-random .tv-mi-card-icon {
-  background: conic-gradient(from 30deg, var(--logo-1), var(--logo-2), var(--logo-3), var(--logo-4), var(--logo-5), var(--logo-1));
-  color: #ffffff;
-}
-.tv-mi-card.is-random .tv-mi-card-icon svg { filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.45)); }
-.tv-mi-card.is-random .tv-mi-voter { background: var(--tv-option-bg); }
 
 /* The tutorial: the game's badge and name, its three steps coming in one by one, and a bar that fills in 5 s. */
 .tv-mi-tutorial {

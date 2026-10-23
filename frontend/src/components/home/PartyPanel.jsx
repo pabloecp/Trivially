@@ -151,7 +151,7 @@ export default function PartyPanel({ room, onToast, scores = false, display = fa
     >
       {/* A public match: the player's card (with the rank) stays at the top, as on /jugar where the search started; the
           account is asked for again when it ends (the rank and history move). */}
-      {room.matchmaking && !display && <PlayerCard match rank={room.matchmaking.kind === "competitivo"} refreshOn={room.phase === "finished"} />}
+      {room.matchmaking && !display && <PlayerCard match refreshOn={room.phase === "finished"} />}
       {/* A public match has no code to share: nobody joins it but by searching. */}
       {!room.matchmaking && (
       <div className="tv-party-codebox">

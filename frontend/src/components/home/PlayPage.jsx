@@ -3,18 +3,17 @@ import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { GAME_MODES, findMode, isGameTile } from "../../modes/index.js";
 import { useHiddenCode } from "../../lib/hiddenCode.js";
 import { useFriends } from "../../lib/friends.jsx";
-import { useMatchVotes } from "../../lib/matchVotes.js";
 import { AVATAR_COLORS, savedGuest, useApp } from "../../lib/store.jsx";
 import { withSound } from "../../lib/sounds.js";
 import Avatar from "./Avatar.jsx";
 import { JoinButton, statusOf } from "./FriendsSheet.jsx";
 import Icon from "./Icon.jsx";
 import Logo, { logoIncoming } from "./Logo.jsx";
-import OptionRow from "./OptionRow.jsx";
+import ModeStage from "./ModeStage.jsx";
 import { RankCard } from "./PlaySide.jsx";
-import VoteBoard from "./VoteBoard.jsx";
+import OptionRow from "./OptionRow.jsx";
 
-import { MATCH_KINDS, MATCH_LENGTHS, MATCH_SIZES, gamesText } from "./matchInfo.js";
+import { MATCH_KINDS, MATCH_SIZES, gamesFor, sizeName, variantsFor } from "./matchInfo.js";
 import "../../styles/match.css";
 import "../../styles/lobby.css";
 
@@ -28,21 +27,18 @@ const LANDING_MS = 1200;
 // How many online friends "Invitar al crear la sala" offers.
 const INVITES_SHOWN = 6;
 
-// What each option's page shows (Pública's two tabs and Privada), each with its address (/jugar/casual...). `kicker`
-// and `facts` are its ticket's (the card with the main button).
+// What each option's page shows (Pública's two kinds and Privada), each with its address (/jugar/casual...). `facts`
+// are the steps on its big card.
 const KINDS = [
   {
     ...MATCH_KINDS.casual,
-    kicker: "Partida pública",
-    facts: [
-      { icon: "sun", text: "Sin presión: no cuenta para tu rango" },
-      { icon: "play", text: "Entra y juega en segundos" },
-    ],
+    facts: MATCH_KINDS.casual.steps,
   },
+  // Not playable yet (`soon`): it can be picked to see it, but its button says "Próximamente" (the server refuses it too).
   {
     ...MATCH_KINDS.competitivo,
-    kicker: "Partida pública",
-    facts: [{ icon: "crown", text: "Cada victoria te sube de rango" }],
+    soon: true,
+    facts: MATCH_KINDS.competitivo.steps,
   },
   {
     id: "privada",
@@ -50,16 +46,21 @@ const KINDS = [
     color: "blue",
     icon: "lock",
     blurb: "Crea una sala o entra con un código",
-    kicker: "Sala privada",
     facts: [
       { icon: "grid", text: "Tú eliges el juego y sus ajustes" },
       { icon: "users", text: "Invita a tus amigos con el código" },
+      { icon: "crown", text: "Eres el anfitrión de la sala" },
     ],
   },
 ];
 
-// Pública's tabs.
+
+// How many play, as last picked in this tab (PlayPage remounts when the search is cancelled).
+let lastSize = MATCH_SIZES[0].value;
+
+// Pública's two kinds; its tile opens the first one that can be played unless another was used last.
 const PUBLIC_KINDS = KINDS.filter((k) => k.id !== "privada");
+const OPEN_KINDS = PUBLIC_KINDS.filter((k) => !k.soon);
 const pageOf = (kindId) => (kindId === "privada" ? "privada" : "publica");
 
 // Pública opens on the tab it was left on last time (this device only).
@@ -67,9 +68,9 @@ const PUBLIC_KEY = "trivially_public_kind";
 function lastPublicKind() {
   try {
     const saved = localStorage.getItem(PUBLIC_KEY);
-    return PUBLIC_KINDS.some((k) => k.id === saved) ? saved : PUBLIC_KINDS[0].id;
+    return OPEN_KINDS.some((k) => k.id === saved) ? saved : OPEN_KINDS[0].id;
   } catch {
-    return PUBLIC_KINDS[0].id;
+    return OPEN_KINDS[0].id;
   }
 }
 
@@ -80,7 +81,7 @@ const TILES = [
     name: "Pública",
     color: "site",
     icon: "globe",
-    blurb: "Casual o competitiva, con gente de todas partes",
+    blurb: "Partidas rápidas con gente de todas partes",
     path: () => `/jugar/${lastPublicKind()}`,
   },
   { ...KINDS[2], path: () => "/jugar/privada" },
@@ -95,16 +96,16 @@ function codeFrom(text) {
 }
 
 // Inicio, "¿Cómo quieres jugar?": the big logo and Pública and Privada as big tiles, all on one page (/). Picking one
-// makes the tiles sink away and that option come in: its own panel beside its ticket, a narrower card in its colour
-// with what kind of match it is and the main button ("Buscar partida", "Crear sala").
-// Pública is Casual and Competitivo, as two tabs at the top (/jugar/casual, /jugar/competitivo: switching replaces the
-// address, so "Volver" still goes to Inicio, and the page stays: only its colour and its ticket change). Both have how
-// many play (two big buttons) and how long on the panel, then "Vota los juegos" (VoteBoard, one set of votes per
-// format, lib/matchVotes.js); the ticket sums it up and, in Competitivo, has the rank. Privada (/jugar/privada): joining with a code
-// and the friends online on the panel, the room "Crear sala" makes (its code shown or hidden, friends to invite) on the
-// ticket. The top bar's "Volver" (the only way back) and the browser's Back go to Inicio. Leaving a room comes back to
-// the option it came from (exitPath in TvTopbar.jsx). Without an account, the ticket asks for the name first (filled in
-// with the one used last time), then does what was asked. Once in a room, RoomNavigator takes the player there.
+// makes the tiles sink away and that option come in, laid out like a game's lobby in a room: its big card in its colour
+// (ModeStage: its name, how it goes and the main button, "Buscar partida" or "Crear sala") beside its "Ajustes".
+// Pública is Casual and Competitivo (/jugar/casual, /jugar/competitivo), picked as big cards with their logo beside the
+// card ("Elige tu partida"; switching swaps the card with a sweep of light), with how many play; every match is two
+// games, and a third when they end one each. Competitivo can be looked at but not searched for yet ("Próximamente"). Privada (/jugar/privada):
+// joining with a code, the friends online, the room "Crear sala" makes (its code shown or hidden, friends to invite)
+// and the games a room can play, at the bottom (Pública's panel ends the same way, "Juegos disponibles"). The top bar's "Volver" (the only way back) and the
+// browser's Back go to Inicio. Leaving a room comes back to the option it came from (exitPath in TvTopbar.jsx). Without
+// an account, the settings ask for the name first (filled in with the one used last time) and the card's button then
+// does what was asked. Once in a room, RoomNavigator takes the player there.
 // `toHome` is kept for the logo's old jump back to Inicio (Logo.jsx).
 export default function PlayPage({ leaving = false, toHome = false }) {
   const { user, saveGuest, createRoom, joinRoom, checkRoom, findMatch } = useApp();
@@ -117,10 +118,13 @@ export default function PlayPage({ leaving = false, toHome = false }) {
   const wanted = KINDS.some((k) => k.id === option) ? option : null;
   const [chosen, setChosen] = useState(wanted);
   const [out, setOut] = useState(false);
-  // Duelo and 1 juego unless the player picks otherwise.
-  const [games, setGames] = useState(MATCH_LENGTHS[0].value);
-  const [size, setSize] = useState(MATCH_SIZES[0].value);
-  const votes = useMatchVotes(size, games);
+  // Uno contra Uno unless the player picks otherwise (kept while the tab is open, so coming back from the search finds
+  // it as it was).
+  const [size, setSizeState] = useState(() => lastSize);
+  const setSize = (value) => {
+    lastSize = value;
+    setSizeState(value);
+  };
   const [code, setCode] = useState("");
   // Privada: the online friends to invite as soon as the room exists (the game is chosen inside, as always). Hiding the
   // code is this device's own setting (lib/hiddenCode.js), the room's column's "Ocultar".
@@ -136,7 +140,7 @@ export default function PlayPage({ leaving = false, toHome = false }) {
   const [joinError, setJoinError] = useState("");
   const [note, setNote] = useState("");
   const codeRef = useRef(null);
-  const ticketRef = useRef(null);
+  const settingsRef = useRef(null);
   const timer = useRef(0);
   useEffect(() => () => clearTimeout(timer.current), []);
   // Coming from Inicio, its logo jumps here (Logo.jsx) and the tiles come up as it lands.
@@ -174,9 +178,9 @@ export default function PlayPage({ leaving = false, toHome = false }) {
     }, OUT_MS);
   }, [wanted]);
 
-  // The name step is on the ticket, which phones show last: bring it into sight.
+  // The name step is in the settings, which phones show under the card: bring it into sight.
   useEffect(() => {
-    if (pending) ticketRef.current?.scrollIntoView({ block: "nearest", behavior: reducedMotion() ? "auto" : "smooth" });
+    if (pending) settingsRef.current?.scrollIntoView({ block: "nearest", behavior: reducedMotion() ? "auto" : "smooth" });
   }, [pending]);
 
   function run(action) {
@@ -200,7 +204,7 @@ export default function PlayPage({ leaving = false, toHome = false }) {
         action.type === "create"
           ? createPrivate(action)
           : action.type === "match"
-          ? findMatch(action.kind, action.games, action.size, action.votes)
+          ? findMatch(action.kind, action.size)
           : joinRoom(action.code)
       );
       // The room navigator takes the player wherever the room is.
@@ -240,8 +244,7 @@ export default function PlayPage({ leaving = false, toHome = false }) {
   }
 
   // The code is checked first, so a wrong one is said here; a wrong code shakes the cells each time.
-  async function submitCode(e) {
-    e.preventDefault();
+  async function joinWithCode() {
     if (code.length < ROOM_CODE_LENGTH || busy) return;
     setBusy(true);
     try {
@@ -302,32 +305,77 @@ export default function PlayPage({ leaving = false, toHome = false }) {
     : busy
     ? "Creando sala…"
     : "Crear sala";
-  const mainAction = match ? { type: "match", kind: kind.id, games, size, votes: votes.votes } : { type: "create", invites: invited };
+  const mainAction = match ? { type: "match", kind: kind.id, size } : { type: "create", invites: invited };
+  // Competitivo can be looked at, not searched for yet.
+  const soon = Boolean(kind?.soon) && !pending;
 
-  // Casual and Competitivo: how many play and how long, then the votes.
-  const matchPanel = (
+  // Beside the option's card, what makes the match, as big cards with their logo rather than plain settings: the kind
+  // (switching it swaps the card on the left, ModeStage's `swapKey`) and how many play, then
+  // what the match will be.
+  const matchSettings = (
     <>
-      <div className="tv-lobby-format">
-        <SizePick value={size} onChange={setSize} />
-        <FormatPick
-          label="Duración"
-          blocks
-          options={MATCH_LENGTHS.map((o) => ({ value: o.value, label: gamesText(o.value), hint: o.hint, pips: o.value }))}
-          value={games}
-          onChange={setGames}
-        />
-      </div>
-      <VoteBoard votes={votes} />
+      <BigChoice
+        label="Tipo de partida"
+        value={kind?.id}
+        onChange={(id) => id !== wanted && nav(`/jugar/${id}`, { replace: true, state: location.state })}
+        options={PUBLIC_KINDS.map((k) => ({
+          value: k.id,
+          color: k.color,
+          icon: k.icon,
+          label: k.name,
+          hint: k.blurb,
+          tag: k.soon ? "Pronto" : null,
+        }))}
+      />
+      <BigChoice
+        label="Jugadores"
+        value={size}
+        onChange={setSize}
+        options={MATCH_SIZES.map((o) => ({
+          value: o.value,
+          color: kind?.color,
+          icon: o.icon,
+          label: o.label,
+          hint: o.hint,
+        }))}
+      />
+      {/* Competitivo: the account's rank under the match (it moves with each competitive match). Without an account,
+          a quiet note on how to get one instead, like Adivina la canción's (Casual's says what it keeps). */}
+      {kind?.id === "competitivo" && isAccount && (
+        <div key="rank" className="tv-optrow tv-play-rankrow">
+          <span className="tv-optrow-label">Tu rango</span>
+          <div className="tv-play-rankbox">
+            <RankCard rank={user?.rank} />
+          </div>
+        </div>
+      )}
+      {!isAccount && <AccountNote>{kind?.id === "competitivo" ? "para tener rango y subirlo con cada victoria." : "para guardar tus puntos y estadísticas."}</AccountNote>}
+      {/* What a public match can draw, only to read: each game with its ways (the roulette picks them). */}
+      <GameChips
+        label="Juegos disponibles"
+        games={gamesFor(kind?.id).map((id) => {
+          const m = findMode(id);
+          return { id, color: m.color, icon: m.icon, name: m.name, sub: variantsFor(kind?.id).filter((v) => v.game === id).map((v) => v.way).join(" · ") };
+        })}
+      />
     </>
   );
 
-  // Privada: joining with a code (five cells, the code or the invite link pasted), then the friends online: the ones in
-  // a room can be joined with a tap (or asked, as the host allows). Without an account, how to get them.
-  const privatePanel = (
+  // Privada, as it was: joining with a code (a box of its own: five cells, the code or the invite link pasted, and
+  // "Entrar"), the friends online (the ones in a room joined with a tap, or asked, as the host allows), the room the
+  // card's "Crear sala" makes (its code shown or hidden, friends online to invite), and the games a room can play (only
+  // to read). Without an account, a quiet note on how to get one.
+  const privateSettings = (
     <>
-      <form className="tv-join" onSubmit={submitCode}>
+      <form
+        className="tv-join"
+        onSubmit={(e) => {
+          e.preventDefault();
+          joinWithCode();
+        }}
+      >
         <span className="tv-join-text">
-          <h2 className="tv-lobby-title">Entra con un código</h2>
+          <h3 className="tv-lobby-title">Entra con un código</h3>
           <p className="tv-lobby-sub">Escribe el código de la sala o pega el enlace que te mandaron</p>
         </span>
         <div className="tv-join-row">
@@ -336,11 +384,7 @@ export default function PlayPage({ leaving = false, toHome = false }) {
           </label>
           {/* One box under five cells: the cells show what's written (dots while "Ocultar" is on) and where the next
               letter goes. */}
-          <div
-            ref={codeRef}
-            className={`tv-codecells${codeFocus ? " is-focus" : ""}`}
-            aria-invalid={Boolean(joinError) || undefined}
-          >
+          <div ref={codeRef} className={`tv-codecells${codeFocus ? " is-focus" : ""}`} aria-invalid={Boolean(joinError) || undefined}>
             <input
               id="tv-play-code"
               className="tv-codecells-input"
@@ -365,7 +409,7 @@ export default function PlayPage({ leaving = false, toHome = false }) {
               </span>
             ))}
           </div>
-          <button type="submit" className="tv-btn tv-c-blue tv-join-go" data-sound="none" disabled={busy || code.length < ROOM_CODE_LENGTH}>
+          <button type="submit" className={`tv-btn tv-c-${kind?.color} tv-join-go`} data-sound="none" disabled={busy || code.length < ROOM_CODE_LENGTH}>
             Entrar
             <Icon name="chevron" size={18} strokeWidth={3} />
           </button>
@@ -379,18 +423,12 @@ export default function PlayPage({ leaving = false, toHome = false }) {
       </form>
 
       <div className="tv-lobby-friends">
-        <span className="tv-lobby-label">
+        <span className="tv-optrow-label">
           Amigos conectados
           {online.length > 0 && <span className="tv-play-online-count">{online.length}</span>}
         </span>
         {!isAccount ? (
-          <div className="tv-lobby-empty">
-            <Icon name="users" size={22} strokeWidth={2.4} />
-            <p>Con una cuenta ves a tus amigos conectados y entras a sus salas con un toque.</p>
-            <Link to="/login" className="tv-btn tv-btn--sm tv-c-violet">
-              Crear cuenta
-            </Link>
-          </div>
+          <AccountNote>para ver a tus amigos conectados y entrar a sus salas con un toque.</AccountNote>
         ) : online.length ? (
           <ul className="tv-invite-friends-list tv-play-rooms">
             {online.map((f) => {
@@ -420,28 +458,39 @@ export default function PlayPage({ leaving = false, toHome = false }) {
         )}
       </div>
 
-      {/* What a room can play, only to read: the game is chosen inside. */}
-      <div className="tv-lobby-games">
-        <span className="tv-lobby-label">Juegos de las salas privadas</span>
-        <ul className="tv-lobby-gamechips">
-          {GAME_MODES.filter(isGameTile).map((m) => (
-            <li key={m.id} className={`tv-lobby-gamechip tv-c-${m.color}`}>
-              <span className="tv-lobby-gamechip-icon" aria-hidden="true">
-                <Icon name={m.icon} size={20} strokeWidth={2.4} />
-              </span>
-              {m.name}
-            </li>
-          ))}
-        </ul>
-      </div>
+      <OptionRow
+        label="Código de sala"
+        options={[
+          { value: false, label: "Mostrar" },
+          { value: true, label: "Ocultar" },
+        ]}
+        value={codeHidden}
+        onChange={(v) => v !== codeHidden && toggleCodeHidden()}
+      />
+      {online.length > 0 && (
+        <OptionRow
+          label="Invitar al crear la sala"
+          hint="Les llega la invitación en cuanto la crees"
+          multi
+          wrap
+          options={online.slice(0, INVITES_SHOWN).map((f) => ({ value: f.id, label: f.name }))}
+          value={invited}
+          onChange={(id) => setInvites((list) => (list.includes(id) ? list.filter((x) => x !== id) : [...list, id]))}
+          onSetAll={(list) => setInvites(list)}
+        />
+      )}
+
+      <GameChips
+        label="Juegos de las salas privadas"
+        games={GAME_MODES.filter(isGameTile).map((m) => ({ id: m.id, color: m.color, icon: m.icon, name: m.name }))}
+      />
     </>
   );
 
-  // The ticket under its stub: the name first when it's missing; otherwise what this match is (Casual, Competitivo) or
-  // the room "Crear sala" makes (Privada). Nothing on Inicio.
-  const ticketBody = !kind ? null : pending ? (
-    <form id="tv-play-name-form" className="tv-ticket-form" onSubmit={submitName}>
-      <span className="tv-lobby-label">¿Cómo te llamas?</span>
+  // Without an account, the settings give way to the name first (filled in with the one used last time); the card's
+  // button then says "Continuar" and does what was asked.
+  const nameForm = (
+    <form id="tv-play-name-form" className="tv-play-name" onSubmit={submitName}>
       <div className="tv-name-row">
         <Avatar name={name.trim() || "?"} avatar={color} className="tv-avatar--lg" />
         <div className="tv-name-fields">
@@ -477,58 +526,33 @@ export default function PlayPage({ leaving = false, toHome = false }) {
           />
         ))}
       </div>
-      <p className="tv-ticket-account">
-        Guarda tus puntos con una cuenta: <Link to="/login">Crear cuenta</Link> · <Link to="/login?mode=login">Iniciar sesión</Link>
-      </p>
+      <AccountNote>para guardar tus puntos.</AccountNote>
+      <button type="button" className="tv-optrow-action tv-play-name-back" onClick={() => setPending(null)}>
+        Volver a los ajustes
+      </button>
     </form>
-  ) : match ? (
-    <>
-      <dl className="tv-ticket-fields">
-        {/* Keyed by their value, so a number pops when it changes. */}
-        <div>
-          <dt>Jugadores</dt>
-          <dd key={size}>{size}</dd>
-        </div>
-        <div>
-          <dt>Juegos</dt>
-          <dd key={games}>{games}</dd>
-        </div>
-      </dl>
-      {kind.id === "competitivo" &&
-        (isAccount ? (
-          <RankCard rank={user?.rank} />
-        ) : (
-          <p className="tv-ticket-guest">
-            Juegas como invitado: tu rango no se guarda. <Link to="/login">Crear cuenta</Link>
-          </p>
-        ))}
-      <TicketFacts facts={kind.facts} />
-    </>
-  ) : (
-    <>
-      <TicketFacts facts={kind.facts} />
-      <OptionRow
-        label="Código de sala"
-        options={[
-          { value: false, label: "Mostrar" },
-          { value: true, label: "Ocultar" },
-        ]}
-        value={codeHidden}
-        onChange={(v) => v !== codeHidden && toggleCodeHidden()}
-      />
-      {online.length > 0 && (
-        <OptionRow
-          label="Invitar al crear la sala"
-          hint="Les llega la invitación en cuanto la crees"
-          multi
-          wrap
-          options={online.slice(0, INVITES_SHOWN).map((f) => ({ value: f.id, label: f.name }))}
-          value={invited}
-          onChange={(id) => setInvites((list) => (list.includes(id) ? list.filter((x) => x !== id) : [...list, id]))}
-          onSetAll={(list) => setInvites(list)}
+  );
+
+  // The main button: on the option's card, and on phones a bar of its own fixed at the bottom of the screen.
+  const mainButton = (className) => (
+    <button
+      type={pending ? "submit" : "button"}
+      form={pending ? "tv-play-name-form" : undefined}
+      className={`${className}${soon ? " is-soon" : ""}`}
+      data-sound={needsName && !pending ? undefined : "none"}
+      onClick={pending ? undefined : () => run(mainAction)}
+      disabled={busy || soon || (pending ? !name.trim() : false)}
+    >
+      {!pending && (
+        <Icon
+          name={soon ? "lock" : match ? "play" : "plus"}
+          size={22}
+          filled={Boolean(match) && !soon}
+          strokeWidth={soon ? 2.6 : match ? 1.5 : 3}
         />
       )}
-    </>
+      {soon ? "Próximamente" : mainLabel}
+    </button>
   );
 
   return (
@@ -566,73 +590,47 @@ export default function PlayPage({ leaving = false, toHome = false }) {
             </section>
           </div>
         ) : (
-          <div className="tv-lobby">
-            <div key={pageOf(kind.id)} className={`tv-lobby-row tv-c-${kind.color}${match ? " has-tabs" : ""}${out ? " is-out" : ""}`}>
-              {/* Pública's two tabs, Casual and Competitivo: a selector, the chosen one on a lighter pill that slides to
-                  it; each with its icon in its colour, its name and what it is. */}
-              {match && (
-                <nav className="tv-lobby-tabs" aria-label="Tipo de partida pública" style={{ "--at": PUBLIC_KINDS.findIndex((k) => k.id === kind.id) }}>
-                  <span className="tv-lobby-tabs-thumb" aria-hidden="true" />
-                  {PUBLIC_KINDS.map((k) => (
-                    <button
-                      key={k.id}
-                      type="button"
-                      className={`tv-lobby-tab tv-c-${k.color}`}
-                      aria-current={k.id === kind.id ? "page" : undefined}
-                      onClick={() => k.id !== wanted && nav(`/jugar/${k.id}`, { replace: true, state: location.state })}
-                    >
-                      <span className="tv-lobby-tab-badge" aria-hidden="true">
-                        <Icon name={k.icon} size={22} strokeWidth={2.4} />
-                      </span>
-                      <span className="tv-lobby-tab-text">
-                        <strong>{k.name}</strong>
-                        <small>{k.blurb}</small>
-                      </span>
-                    </button>
-                  ))}
-                </nav>
-              )}
-              <section className="tv-lobby-panel" aria-label={match ? "Partida" : "Unirme a una sala"}>
-                {match ? matchPanel : privatePanel}
-              </section>
-
-              {/* The ticket: the option's stub in its colour, a perforated line, what the match or room will be, and
-                  (a separate piece, so it can stay in sight on phones) the main button. */}
-              <aside ref={ticketRef} className={`tv-ticket tv-c-${kind.color}`} aria-labelledby="tv-ticket-name">
-                <div className="tv-ticket-stub">
-                  <span className="tv-ticket-top">
-                    <span className="tv-ticket-kicker">{kind.kicker}</span>
-                    <span className="tv-ticket-badge" aria-hidden="true">
-                      <Icon name={kind.icon} size={26} strokeWidth={2.4} />
-                    </span>
+          // The option's page, laid out like a game's in a room: its big card in its colour (what it is, how it goes and
+          // the main button) beside its settings.
+          <div key={pageOf(kind.id)} className={`tv-room-row tv-play-row tv-c-${kind.color}${match ? "" : " is-private"}${out ? " is-out" : ""}`}>
+            <ModeStage
+              mode={{ name: kind.name, icon: kind.icon, color: kind.color, steps: kind.facts }}
+              swapKey={match ? kind.id : null}
+              extra={
+                match ? (
+                  <span key={size} className="tv-mstage-chip">
+                    <Icon name={size === 2 ? "user" : "users"} size={18} strokeWidth={2.6} />
+                    {sizeName(size)}
                   </span>
-                  <h1 id="tv-ticket-name" className="tv-ticket-name">
-                    {kind.name}
-                  </h1>
-                  <p className="tv-ticket-blurb">{kind.blurb}</p>
-                </div>
-                <div className="tv-ticket-body">
-                  {ticketBody}
-                  {error && (
-                    <p className="tv-sheet-error" role="alert">
-                      {error}
-                    </p>
-                  )}
-                </div>
-              </aside>
-              <div className={`tv-ticket-cta tv-c-${kind.color}`}>
-                <button
-                  type={pending ? "submit" : "button"}
-                  form={pending ? "tv-play-name-form" : undefined}
-                  className="tv-btn tv-btn--block tv-lobby-go tv-shine"
-                  data-sound={needsName && !pending ? undefined : "none"}
-                  onClick={pending ? undefined : () => run(mainAction)}
-                  disabled={busy || (pending ? !name.trim() : false)}
-                >
-                  {!pending && <Icon name={match ? "play" : "plus"} size={26} filled={Boolean(match)} strokeWidth={match ? 1.5 : 3} />}
-                  {mainLabel}
-                </button>
+                ) : null
+              }
+            >
+              {error && (
+                <p className="tv-lobby-error" role="alert">
+                  {error}
+                </p>
+              )}
+              {mainButton("tv-mstage-start tv-shine tv-play-start")}
+            </ModeStage>
+
+            <section ref={settingsRef} className="tv-settings-card tv-settings-panel" aria-labelledby="tv-settings-title">
+              <div className="tv-settings-head">
+                <h2 id="tv-settings-title" className="tv-settings-title">
+                  {pending ? "¿Cómo te llamas?" : match ? "Elige tu partida" : "Elige tu sala"}
+                </h2>
               </div>
+              <div key={pending ? "name" : "settings"} className="tv-play-settings">
+                {pending ? nameForm : match ? matchSettings : privateSettings}
+              </div>
+            </section>
+
+            <div className="tv-play-cta">
+              {error && (
+                <p className="tv-lobby-error" role="alert">
+                  {error}
+                </p>
+              )}
+              {mainButton("tv-btn tv-btn--block tv-lobby-go tv-shine")}
             </div>
           </div>
         )}
@@ -641,64 +639,73 @@ export default function PlayPage({ leaving = false, toHome = false }) {
   );
 }
 
-// "Jugadores", the first choice and the one that stands out: Duelo and Todos contra todos as two real buttons, each with
-// its icon on a square of its own (like the game tiles). The chosen one takes the option's colour, its icon's square
-// turning white.
-function SizePick({ value, onChange }) {
+// A choice that matters, not a plain setting: big cards side by side, each a real button (its edge under it) with its
+// logo on a square, its name and a line under it. The chosen one fills with
+// its colour, its logo's square turning white; its logo pops in each time it's chosen.
+function BigChoice({ label, options, value, onChange }) {
   return (
-    <div className="tv-lobby-pick" role="radiogroup" aria-label="Jugadores">
-      <span className="tv-lobby-label">Jugadores</span>
-      <div className="tv-lobby-size">
-        {MATCH_SIZES.map((o) => (
-          <button key={o.value} type="button" role="radio" aria-checked={o.value === value} className="tv-lobby-size-btn" onClick={() => onChange(o.value)}>
-            <span className="tv-lobby-size-badge" aria-hidden="true">
-              <Icon name={o.icon} size={30} strokeWidth={2.4} />
-            </span>
-            <span className="tv-lobby-pick-text">
-              <strong>{o.label}</strong>
-              <small>{o.value === 2 ? "1 contra 1" : o.hint}</small>
-            </span>
-          </button>
-        ))}
+    <div className="tv-bigpick" role="radiogroup" aria-label={label}>
+      <span className="tv-optrow-label">{label}</span>
+      <div className="tv-bigpick-row">
+        {options.map((o) => {
+          const on = o.value === value;
+          return (
+            <button
+              key={o.value}
+              type="button"
+              role="radio"
+              aria-checked={on}
+              className={`tv-bigpick-card tv-c-${o.color}`}
+              onClick={() => !on && onChange(o.value)}
+            >
+              <span key={on ? "on" : "off"} className="tv-bigpick-logo" aria-hidden="true">
+                <Icon name={o.icon} size={30} strokeWidth={2.4} />
+              </span>
+              <span className="tv-bigpick-text">
+                <strong>{o.label}</strong>
+                <small>{o.hint}</small>
+              </span>
+              {o.tag && <span className="tv-bigpick-tag">{o.tag}</span>}
+            </button>
+          );
+        })}
       </div>
     </div>
   );
 }
 
-// "Duración": its two choices side by side, right under the players' two buttons, each with how many games it means
-// drawn as blocks. Flat (a choice already made), the chosen one filled in the option's colour.
-function FormatPick({ label, options, value, onChange, blocks = false }) {
+// Without an account: how to get one, quietly, like Adivina la canción's note (an ⓘ and one text, "Crear cuenta o
+// Iniciar sesión" as its links, then what for), in the option's colour.
+function AccountNote({ children }) {
   return (
-    <div className="tv-lobby-pick" role="radiogroup" aria-label={label}>
-      <span className="tv-lobby-label">{label}</span>
-      <div className="tv-lobby-pick-opts">
-        {options.map((o) => (
-          <button key={o.value} type="button" role="radio" aria-checked={o.value === value} className="tv-lobby-pick-btn" onClick={() => onChange(o.value)}>
-            <span className={`tv-pips${blocks ? " is-blocks" : ""}`} aria-hidden="true">
-              {Array.from({ length: o.pips }, (_, i) => (
-                <i key={i} />
-              ))}
-            </span>
-            <span className="tv-lobby-pick-text">
-              <strong>{o.label}</strong>
-              <small>{o.hint}</small>
-            </span>
-          </button>
-        ))}
-      </div>
-    </div>
+    <p className="tv-play-account-note">
+      <Icon name="info" size={16} strokeWidth={2.6} />
+      <span>
+        <Link to="/login">Crear cuenta</Link> o <Link to="/login?mode=login">Iniciar sesión</Link> {children}
+      </span>
+    </p>
   );
 }
 
-function TicketFacts({ facts }) {
+// The games there are, only to read, at the bottom of the panel: each one's icon in its colour and its name (and, for a
+// public match, its ways under it). Flat: nothing to press.
+function GameChips({ label, games }) {
   return (
-    <ul className="tv-ticket-facts">
-      {facts.map((f) => (
-        <li key={f.text}>
-          <Icon name={f.icon} size={20} strokeWidth={2.4} />
-          {f.text}
-        </li>
-      ))}
-    </ul>
+    <div className="tv-lobby-games">
+      <span className="tv-optrow-label">{label}</span>
+      <ul className="tv-lobby-gamechips">
+        {games.map((g) => (
+          <li key={g.id} className={`tv-lobby-gamechip tv-c-${g.color}`}>
+            <span className="tv-lobby-gamechip-icon" aria-hidden="true">
+              <Icon name={g.icon} size={20} strokeWidth={2.4} />
+            </span>
+            <span className="tv-lobby-gamechip-text">
+              {g.name}
+              {g.sub && <small>{g.sub}</small>}
+            </span>
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }
