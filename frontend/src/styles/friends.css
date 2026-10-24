@@ -88,8 +88,6 @@
 .tv-fr-copy:active { box-shadow: 0 0 0 var(--edge); }
 .tv-fr-form { display: grid; gap: 8px; }
 .tv-fr-form .tv-sheet-kicker { margin: 0; }
-.tv-fr-formrow { display: flex; gap: 10px; }
-.tv-fr-formrow .tv-field { flex: 1; min-width: 0; text-transform: uppercase; letter-spacing: 0.08em; }
 
 /* Top bar: the friends button with its badge. */
 .tv-chip--friends { position: relative; }
@@ -189,15 +187,7 @@
 .tv-fr-ask-text { flex: 1 1 90px; min-width: 0; margin: 0; font-size: 14px; font-weight: 700; overflow-wrap: anywhere; }
 .tv-fr-ask .tv-btn { flex-shrink: 0; height: 34px; padding: 0 12px; font-size: 14px; }
 
-/* /amigo/CODE */
-.tv-addfriend { display: grid; justify-items: center; gap: 14px; max-width: 420px; margin: 40px auto; padding: 28px 22px; text-align: center; }
-.tv-addfriend .tv-avatar { width: 84px; height: 84px; font-size: 32px; }
-.tv-addfriend h1 { margin: 0; font-size: 26px; }
-.tv-addfriend p { margin: 0; font-weight: 700; color: var(--tv-text-3); }
-
 /* Profile: the friend code card. */
-.tv-friendcode { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 14px; }
-.tv-friendcode .tv-fr-code { font-size: 28px; }
 
 .tv-roomhead-players { position: relative; }
 @media (max-width: 520px) {

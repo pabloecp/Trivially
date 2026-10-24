@@ -216,39 +216,6 @@
 }
 
 /* ---------- Home: logo, wordmark and Jugar in the middle of the screen, how to play under them ---------- */
-.tv-home {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 40px;
-  width: 100%;
-  min-height: calc(100svh - 120px);
-  padding-bottom: 30px;
-  text-align: center;
-  transition: transform 0.38s ease, filter 0.38s ease, opacity 0.38s ease;
-}
-/* Coming back from a room it zooms in from slightly big and blurred, the way it left. No overshoot, and a quick start,
-   so it is on screen the moment the room's panels are gone. */
-.tv-home.is-in-back { animation: tvZoomIn 0.5s cubic-bezier(0.2, 0.8, 0.3, 1) backwards; }
-/* Behind the Jugar sheet the home screen steps back. */
-.tv-home.is-behind { transform: scale(1.04); filter: blur(5px); opacity: 0.45; }
-/* Leaving for a room: a transition, not an animation, so it goes on from how the screen looks right now (stepped back
-   behind the sheet) instead of jumping to full brightness first. It keeps the stepped-back look (same scale and blur as
-   .is-behind) and only fades, quickly and starting fast: it has to be gone before the sheet's scrim has lifted, or the
-   blurred home would show through for a moment as the sheet closes. Lasts HOME_OUT_MS (Home.jsx), so nothing is cut off
-   when the room comes in. Declared after .is-behind, which it overrides. */
-.tv-home.is-leaving {
-  opacity: 0;
-  transform: scale(1.04);
-  filter: blur(5px);
-  pointer-events: none;
-  transition-duration: 0.18s;
-  transition-timing-function: ease-out;
-}
-@keyframes tvZoomIn { from { opacity: 0; transform: scale(1.12); filter: blur(6px); } }
-/* "Cómo se juega" is for wider screens; on phones the logo and Jugar get the whole screen. */
-@media (max-width: 720px) { .tv-home .tv-howto { display: none; } }
 
 /* A coloured square with an icon (Jugar sheet, how to play). */
 .tv-badge {
@@ -264,53 +231,6 @@
 }
 
 /* ---------- Home: how to play, under the logo ---------- */
-.tv-howto {
-  width: 100%;
-  max-width: 980px;
-  gap: 14px;
-  padding: 20px;
-  border-radius: 30px;
-  box-shadow: inset 0 0 0 1px var(--tv-line);
-  text-align: left;
-  animation-delay: 0.75s;
-}
-.tv-steps { display: grid; gap: 12px; margin: 0; padding: 0; list-style: none; }
-@media (min-width: 900px) { .tv-steps { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
-.tv-step {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 12px 14px 12px 12px;
-  border-radius: 22px;
-  background: var(--tv-option-bg);
-  animation: tvRise 0.45s var(--tv-spring) backwards;
-  animation-delay: calc(0.85s + var(--i) * 90ms);
-}
-.tv-step-text { display: grid; gap: 2px; flex: 1; min-width: 0; }
-.tv-step-text strong {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-family: var(--tv-display);
-  font-weight: 600;
-  font-size: 18px;
-  color: var(--tv-text);
-}
-.tv-step-text > span { font-weight: 700; font-size: 14px; color: var(--tv-text-2); }
-.tv-step-num {
-  display: grid;
-  place-items: center;
-  flex-shrink: 0;
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  background: var(--tv-text);
-  color: var(--tv-bg);
-  font-family: var(--tv-display);
-  font-weight: 700;
-  font-size: 12px;
-}
-.tv-play-icon { background: var(--p-on-site); color: var(--p-site-2); }
 .tv-topbar-end { display: flex; align-items: center; justify-content: flex-end; gap: 10px; min-width: 0; }
 /* The button that goes back a step ("Volver": leave the room or back to the game modes; or Inicio) and then the brand, together
    on the left. The button never shrinks; a long player name gets cut with "…" instead. */
@@ -340,23 +260,10 @@
 .tv-main--page { align-items: stretch; padding-top: 20px; }
 
 /* ---------- Hero ---------- */
-.tv-hero {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-}
 /* The logo and its name under it (Logo.jsx): Inicio's, and /jugar's smaller one (match.css). It crouches and lands on its
    base. */
 .tv-logo { display: flex; flex-direction: column; align-items: center; transform-origin: 50% 100%; }
 /* "Jugar": everything but the logo sinks away while the logo crouches to jump to /jugar (CROUCH_MS in Logo.jsx). */
-.tv-home.is-to-play { pointer-events: none; }
-.tv-home.is-to-play .tv-tagline,
-.tv-home.is-to-play .tv-play,
-.tv-home.is-to-play .tv-howto { animation: tvSinkOut 0.2s cubic-bezier(0.4, 0, 0.7, 0.4) forwards; }
-.tv-home.is-to-play .tv-play { animation-delay: 0.015s; }
-.tv-home.is-to-play .tv-howto { animation-delay: 0.03s; }
-@keyframes tvSinkOut { to { opacity: 0; transform: translateY(26px); } }
 
 .tv-appicon {
   /* --s is the tile's size: every part of the logo is measured from it. */
@@ -366,7 +273,6 @@
   height: calc(var(--s) + 16px);
   animation: tvPop 0.7s var(--tv-spring) 0.05s backwards;
 }
-@media (min-width: 721px) { .tv-hero .tv-appicon { --s: 150px; } }
 /* The app icon (AppIcon.jsx): a dark tile with a frame of five coloured slices and a white question mark, drawn
    in one SVG. The slices take --logo-1…5 from the colour option (palettes.css); the tile, the page's surface. */
 .tv-appicon-tile {
@@ -427,61 +333,6 @@
 }
 .tv-dot--yellow { background: var(--tv-dot-1, var(--tv-rb-yellow)); }
 .tv-dot--pink { background: var(--tv-dot-2, var(--tv-rb-red)); }
-
-.tv-tagline {
-  margin: 20px 0 0;
-  max-width: 30ch;
-  text-wrap: balance;
-  font-size: 20px;
-  font-weight: 600;
-  line-height: 1.45;
-  color: var(--tv-text-2);
-  animation: tvRise 0.5s ease-out 0.5s backwards;
-}
-
-/* ---------- Play button ---------- */
-.tv-play {
-  position: relative;
-  overflow: hidden;
-  overflow: clip; /* unlike hidden, can't be scrolled by focus/scrollIntoView */
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 14px;
-  width: 100%;
-  max-width: 380px;
-  height: 86px;
-  margin-top: 32px;
-  border: 0;
-  border-radius: 26px;
-  background: var(--tv-yellow-2);
-  box-shadow: 0 8px 0 var(--tv-yellow-edge);
-  font-family: var(--tv-display);
-  font-weight: 800;
-  font-size: 34px;
-  letter-spacing: 0.01em;
-  color: var(--p-on-site);
-  cursor: pointer;
-  transition: transform 0.12s ease, box-shadow 0.12s ease, filter 0.2s ease;
-  animation: tvRise 0.6s var(--tv-spring) 0.6s backwards;
-}
-.tv-play:hover { filter: brightness(1.07); }
-.tv-play:active {
-  transform: translateY(6px);
-  box-shadow: 0 2px 0 var(--tv-yellow-edge);
-}
-.tv-play-icon {
-  display: grid;
-  place-items: center;
-  width: 50px;
-  height: 50px;
-  padding-left: 3px;
-  border-radius: 50%;
-  background: var(--p-on-site);
-  color: var(--tv-yellow);
-  transition: transform 0.3s var(--tv-spring);
-}
-.tv-play:hover .tv-play-icon { transform: scale(1.1) rotate(-8deg); }
 
 /* ---------- Room screen ---------- */
 /* The room is wider than the other screens: the game's panel and settings side by side, and the room's column. */
@@ -566,15 +417,6 @@
 .tv-mode-logo { position: absolute; right: -14px; bottom: -22px; rotate: -14deg; pointer-events: none; }
 .tv-mode-logo .tv-appicon { --s: 118px; }
 .tv-mode.is-classic:hover .tv-mode-logo { animation: tvWiggle 0.5s ease; }
-.tv-wait-blocks { display: flex; gap: 10px; animation: tvGrowIn 0.6s cubic-bezier(0.2, 0.9, 0.3, 1.12) backwards; }
-.tv-wait-blocks span {
-  width: 60px;
-  height: 60px;
-  border-radius: 18px;
-  background: var(--c2);
-  animation: tvBlink 1.4s ease-in-out infinite;
-  animation-delay: calc(var(--i) * 0.25s);
-}
 
 /* Two columns: "Trivia" across both, then the other modes two by two. Every tile has a fixed height, so on a computer
    they stay small instead of filling the panel. */
@@ -860,28 +702,6 @@
   cursor: pointer;
 }
 .tv-invite-friends-empty:hover { background: var(--tv-neutral); color: var(--tv-text); }
-/* "Salir de la sala": a solid red button as wide as the code card above it. */
-.tv-leave-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  width: 100%;
-  margin-top: auto;
-  padding: 12px;
-  border: 0;
-  border-radius: 16px;
-  background: var(--p-bad);
-  box-shadow: 0 4px 0 var(--p-bad-edge);
-  color: #fff;
-  font: inherit;
-  font-weight: 800;
-  font-size: 15px;
-  cursor: pointer;
-  transition: transform 0.12s ease, box-shadow 0.12s ease, filter 0.2s ease;
-}
-.tv-leave-btn:hover { filter: brightness(1.08); }
-.tv-leave-btn:active { transform: translateY(4px); box-shadow: 0 0 0 var(--p-bad-edge); }
 
 /* The room's chat (RoomChat.jsx), between the players and "Salir de la sala": it takes the column's free height. */
 .tv-chat { display: flex; flex-direction: column; gap: 8px; flex: 1 1 auto; min-height: 220px; margin-top: 6px; }
@@ -917,8 +737,16 @@
 .tv-party.is-chat .tv-party-people,
 .tv-party:not(.is-chat) .tv-party-faces { grid-template-rows: 0fr; opacity: 0; margin-top: -12px; pointer-events: none; }
 .tv-party-faces > div { overflow: visible; }
-/* The players' list only clips while it is folded: open, a player's menu can hang below it, over the chat's space. */
-.tv-party-people > div { overflow: visible; }
+/* The players' list (and "Invitar amigos" under it) takes what the column has left above the chat and scrolls inside
+   when it doesn't fit (a full room in a short window), so the chat's button never goes under the column's edge. */
+.tv-party-people { flex: 0 1 auto; min-height: 0; }
+.tv-party-people > div {
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.18) transparent;
+}
 .tv-party.is-chat .tv-party-people > div { overflow: hidden; }
 .tv-party:not(.is-chat) .tv-party-faces > div { overflow: hidden; }
 .tv-party-stack {
@@ -968,7 +796,6 @@
 /* Its auto margin keeps it (and "Salir de la sala" under it) at the bottom: while the chat grows it only takes the
    space the chat hasn't reached yet. */
 .tv-party-chatbar { position: relative; flex-shrink: 0; height: 48px; margin-top: auto; }
-.tv-party-chatbar + .tv-leave-btn { margin-top: 0; }
 .tv-party-chatbtn,
 .tv-party-chatform {
   position: absolute;
@@ -1134,7 +961,7 @@
 /* Wide screens: the room's column keeps to the right. Narrower: it goes first, so the code is the first thing. */
 @media (min-width: 980px) { .tv-party { max-width: 320px; } }
 @media (min-width: 1200px) { .tv-party { flex-basis: 320px; max-width: 340px; } }
-@media (max-width: 979px) { .tv-leave-btn, .tv-party-chatbar { margin-top: 0; } }
+@media (max-width: 979px) { .tv-party-chatbar { margin-top: 0; } }
 @media (max-width: 640px) {
   .tv-mode { padding: 16px; border-radius: 24px; }
   .tv-mstage { min-height: 0; padding: 22px; border-radius: 28px; }
@@ -1333,24 +1160,6 @@
   display: grid;
   gap: 14px;
   animation: tvRise 0.35s var(--tv-spring) backwards;
-}
-.tv-sheet-note {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  align-items: center;
-  gap: 8px;
-  margin: 0;
-  text-align: center;
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--tv-text-3);
-}
-
-.tv-sheet-note a {
-  color: var(--tv-text);
-  text-decoration: underline;
-  text-underline-offset: 3px;
 }
 /* "Guarda tus puntos con una cuenta" and its two small buttons, on a thin line under "Continuar". */
 .tv-sheet-account {
@@ -1579,29 +1388,6 @@
   background: var(--tv-mint);
   animation: tvPulse 1.6s ease-out infinite;
 }
-.tv-party-active {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  align-items: center;
-  gap: 12px;
-  padding: 12px;
-  border-radius: 22px;
-  background: var(--tv-option-bg);
-}
-.tv-party-active-text {
-  margin: 0;
-  font-weight: 700;
-  font-size: 15px;
-  color: var(--tv-text-2);
-}
-.tv-party-active-text strong { color: var(--tv-text); }
-.tv-party-actions {
-  grid-column: 1 / -1;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-}
-.tv-party-actions .tv-btn { flex: 1 1 auto; }
 
 /* ---------- Lobby (game-mode room screen) ---------- */
 .tv-card {
@@ -1615,32 +1401,7 @@
   box-shadow: inset 0 0 0 1px var(--tv-line);
   animation: tvUp 0.55s var(--tv-ease-out) backwards;
 }
-.tv-lobby { display: grid; gap: 20px; width: 100%; margin: 0 auto; }
-.tv-lobby-head { grid-template-columns: 1fr auto; align-items: center; }
-.tv-lobby-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; align-items: start; }
-.tv-lobby-grid > .tv-card { animation-delay: 0.08s; }
-@media (min-width: 900px) {
-  .tv-lobby-grid.has-settings { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: stretch; }
-}
 /* "La partida": a little preview of the match, with the start button at the bottom. */
-.tv-match { display: flex; flex-direction: column; gap: 16px; }
-.tv-match > :last-child { margin-top: auto; }
-.tv-match-preview {
-  flex: 1;
-  display: grid;
-  justify-items: center;
-  align-content: center;
-  gap: 12px;
-  padding: 20px 14px;
-  border-radius: 22px;
-  background: var(--tv-option-bg);
-  text-align: center;
-}
-.tv-eq--sm { gap: 5px; height: 38px; }
-.tv-eq--sm span { width: 8px; }
-.tv-match-title { margin: 0; font-family: var(--tv-display); font-weight: 600; font-size: 20px; color: var(--tv-text); }
-.tv-match-title strong { color: var(--brand-text); font-size: 26px; }
-.tv-match-chips { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; }
 .tv-match-chip {
   display: inline-flex;
   align-items: center;
@@ -1653,21 +1414,10 @@
   color: var(--tv-text-2);
 }
 .tv-match-chip svg { color: var(--brand-text); }
-.tv-match-players { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 14px; color: var(--tv-text-3); }
-.tv-avatar-stack { display: flex; }
-.tv-avatar-stack .tv-avatar { width: 30px; height: 30px; font-size: 14px; box-shadow: 0 0 0 3px var(--tv-option-bg); }
-.tv-avatar-stack .tv-avatar + .tv-avatar { margin-left: -8px; }
 
 .tv-card-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .tv-card-title { margin: 0; font-family: var(--tv-display); font-weight: 600; font-size: 22px; letter-spacing: 0; color: var(--tv-text); }
-.tv-count {
-  display: grid; place-items: center; min-width: 32px; height: 32px; padding: 0 10px;
-  border-radius: 999px; background: var(--tv-violet); color: var(--p-ink); font-weight: 800; font-size: 15px;
-}
 .tv-hint { margin: 0; font-size: 14px; font-weight: 700; color: var(--tv-text-3); }
-.tv-lobby-players { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
-.tv-player--row { padding-right: 10px; }
-.tv-player--row .tv-player-text { flex: 1; }
 .tv-mini-btn {
   flex-shrink: 0; padding: 6px 12px; border: 0; border-radius: 12px;
   background: var(--tv-neutral); color: var(--tv-text); box-shadow: 0 3px 0 var(--tv-neutral-edge);
@@ -1676,18 +1426,13 @@
 }
 .tv-mini-btn:hover { transform: translateY(-2px); box-shadow: 0 5px 0 var(--tv-neutral-edge); }
 .tv-mini-btn:active { transform: translateY(3px); box-shadow: 0 0 0 var(--tv-neutral-edge); }
-.tv-party-testbot { display: block; margin: 10px auto 4px; }
 .tv-mini-btn.is-on { background: var(--p-bad); color: #fff; box-shadow: 0 3px 0 var(--p-bad-edge); }
 .tv-mini-btn.is-on:hover { box-shadow: 0 5px 0 var(--p-bad-edge); }
 .tv-mini-btn.is-on:active { box-shadow: 0 0 0 var(--p-bad-edge); }
 .tv-btn--sm { height: 38px; padding: 0 14px; font-size: 15px; border-radius: 13px; }
-.tv-stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
 .tv-stat { display: grid; gap: 4px; padding: 12px 14px; border-radius: 20px; background: var(--tv-option-bg); }
-.tv-stat--wide { grid-column: 1 / -1; }
 .tv-stat-label { font-size: 12px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: var(--tv-text-3); }
 .tv-stat-value { font-family: var(--tv-display); font-weight: 600; font-size: 28px; line-height: 1.1; color: var(--tv-text); }
-.tv-stat-value--sm { font-size: 17px; font-family: inherit; font-weight: 800; }
-.tv-lobby-actions { display: grid; gap: 10px; }
 .tv-lobby-error { margin: 0; padding: 10px 14px; border-radius: 14px; background: var(--tv-danger-bg); color: var(--tv-danger); font-weight: 800; font-size: 14px; }
 .tv-lobby-guest { max-width: 460px; margin: 20px auto 0; width: 100%; text-align: center; }
 .tv-lobby-title { margin: 0; font-family: var(--tv-display); font-weight: 700; font-size: 28px; letter-spacing: 0; color: var(--tv-text); }
@@ -1709,7 +1454,6 @@
 }
 .tv-page-sub { margin: 0; max-width: 34ch; font-weight: 700; font-size: 16px; line-height: 1.45; color: var(--tv-text-2); text-wrap: balance; }
 .tv-muted { color: var(--tv-text-3); }
-.tv-accent { color: var(--brand-text); }
 
 .tv-notice {
   display: flex;
@@ -1744,11 +1488,6 @@
 }
 .tv-field--sm { height: 52px; border-radius: 16px; font-family: inherit; font-weight: 700; font-size: 16px; }
 .tv-field:focus-visible { outline: 3px solid var(--tv-focus); outline-offset: 2px; }
-.tv-inline { display: flex; gap: 10px; }
-.tv-inline .tv-field { flex: 1; }
-.tv-inline .tv-btn { height: 52px; }
-.tv-fieldset { display: grid; gap: 10px; min-width: 0; margin: 0; padding: 0; border: 0; }
-.tv-fieldset legend { margin-bottom: 10px; }
 
 .tv-divider {
   display: flex;
@@ -1862,18 +1601,6 @@
 .tv-playlist-total.is-short { background: var(--tv-danger-bg); color: var(--tv-danger); }
 .tv-playlist-total.is-short svg,
 .tv-playlist-total.is-short strong { color: var(--tv-danger); }
-.tv-spotify-ask {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 12px;
-  border-radius: 16px;
-  background: rgba(var(--brand-rgb), 0.12);
-  font-weight: 800;
-  font-size: 14px;
-  animation: tvDropIn 0.3s var(--tv-spring);
-}
-.tv-spotify-ask span { flex: 1; }
 /* "Mis playlists": the Spotify playlists and albums kept on the account, under the playlists' row, on the same
    background as the option rows. */
 .tv-saved { padding: 6px; border-radius: 16px; background: var(--tv-option-bg); animation: tvDropIn 0.3s var(--tv-spring); }
@@ -2233,20 +1960,6 @@
 .tv-suggest-artist { grid-column: 1; font-weight: 700; font-size: 13px; color: var(--tv-text-3); }
 .tv-suggest-item .tv-kbd { grid-column: 2; grid-row: 1 / span 2; }
 .tv-suggest-empty { padding: 8px 10px; }
-.tv-suggest-group {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-top: 6px;
-  padding: 8px 14px 2px;
-  border-top: 2px solid rgba(127, 127, 127, 0.18);
-  font-weight: 800;
-  font-size: 12px;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--tv-text-3);
-}
-.tv-suggest-list li.tv-suggest-group:first-child { margin-top: 0; border-top: 0; }
 .tv-suggest-help { margin: 0; padding: 0 10px 4px; font-weight: 700; font-size: 12px; color: var(--tv-text-3); }
 /* Touch screens have no arrow keys or Enter hint to show. */
 @media (hover: none) {
@@ -2262,7 +1975,6 @@
 
 .tv-locked { display: grid; justify-items: center; gap: 6px; }
 .tv-locked.is-skipped .tv-locked-check { background: var(--tv-neutral); box-shadow: 0 5px 0 var(--tv-neutral-edge); color: var(--tv-text-2); }
-/* "Saltar": a quiet way out, under the answer box. */
 /* "Saltar" is a full-width button under the answer box; the confirming tap turns it solid red. */
 .tv-skip-btn.is-on { --c1: var(--p-bad); --c2: var(--p-bad); --edge: var(--p-bad-edge); --on: #ffffff; }
 .tv-locked-check {
@@ -2354,7 +2066,6 @@
 
 /* Results */
 .tv-results { justify-content: center; gap: 18px; }
-.tv-results-head { display: grid; justify-items: center; gap: 6px; text-align: center; }
 .tv-results-title { animation: tvPop 0.7s var(--tv-spring) 0.1s backwards; }
 .tv-podium { margin-top: 30px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: end; gap: 10px; }
 .tv-podium-spot { display: grid; justify-items: center; gap: 6px; min-width: 0; text-align: center; }
@@ -2390,9 +2101,6 @@
 .tv-podium-spot.is-1 .tv-podium-avatar { animation-delay: 0.9s; }
 .tv-podium-spot.is-2 .tv-podium-avatar { animation-delay: 0.7s; }
 .tv-podium-spot.is-3 .tv-podium-avatar { animation-delay: 0.55s; }
-
-.tv-results-actions { display: grid; gap: 12px; width: min(420px, 100%); animation: tvUp 0.55s var(--tv-ease-out) 1s backwards; }
-.tv-results-wait { width: 100%; background: var(--tv-option-bg); color: var(--tv-text-2); }
 .tv-podium { width: min(560px, 100%); }
 /* ---------- Results (MatchResults, the playlist's intermission and final screen; ResultsParts.jsx) ---------- */
 /* From the top, so nothing is cut when it doesn't fit (the head's and the bar's auto margins centre it when it does). */
@@ -2620,12 +2328,6 @@
   }
 }
 
-
-@media (max-height: 700px) and (max-width: 640px) {
-  .tv-hero .tv-appicon { transform: scale(0.88); margin: -8px 0; }
-  .tv-play { margin-top: 22px; }
-}
-
 /* ---------- Keyframes ---------- */
 @keyframes tvFade { from { opacity: 0; } }
 @keyframes tvFadeOut { to { opacity: 0; } }
@@ -2656,11 +2358,6 @@
   80% { translate: 0 -0.12em; }
   90% { translate: 0 0; }
 }
-@keyframes tvNudge {
-  0%, 70%, 100% { transform: scale(1); }
-  80% { transform: scale(1.15); }
-  90% { transform: scale(0.96); }
-}
 @keyframes tvShake {
   0%, 100% { transform: translateX(0); }
   20% { transform: translateX(-7px) rotate(-1.5deg); }
@@ -2674,10 +2371,6 @@
 @keyframes tvPulse {
   0% { box-shadow: 0 0 0 0 rgba(var(--brand-rgb), 0.6); }
   100% { box-shadow: 0 0 0 10px rgba(var(--brand-rgb), 0); }
-}
-@keyframes tvDrift {
-  from { transform: translate(0, 0) scale(1); }
-  to { transform: translate(6vmax, 4vmax) scale(1.12); }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -2753,31 +2446,6 @@ button.tv-chip { border: 0; font-family: inherit; color: inherit; cursor: pointe
   box-shadow: inset 0 0 0 1px var(--tv-line), 0 14px 36px rgba(0, 0, 0, 0.45);
 }
 .tv-volume-rows { display: grid; gap: 14px; }
-/* The sound sets, under the slider. */
-.tv-volume-packs { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--tv-line); }
-.tv-volume-packs-title { margin: 0 4px 8px; font-size: 12px; font-weight: 700; opacity: 0.6; text-transform: uppercase; letter-spacing: 0.06em; }
-.tv-volume-packs-list { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
-.tv-volume-pack {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 6px;
-  min-width: 0;
-  padding: 8px 10px;
-  border: 0;
-  border-radius: 12px;
-  background: transparent;
-  color: inherit;
-  font-family: inherit;
-  text-align: left;
-  cursor: pointer;
-}
-.tv-volume-pack span { display: grid; gap: 1px; min-width: 0; }
-.tv-volume-pack strong { font-size: 14px; }
-.tv-volume-pack small { font-size: 12px; opacity: 0.65; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.tv-volume-pack svg { flex: none; }
-.tv-volume-pack:hover { background: rgba(255, 255, 255, 0.06); }
-.tv-volume-pack.is-on { background: rgba(255, 255, 255, 0.12); }
 .tv-volume-row { display: flex; align-items: center; gap: 12px; }
 .tv-volume-toggle {
   display: grid;
@@ -2859,12 +2527,8 @@ body:has(.tv-app) {
 }
 /* Text straight on the page, not in a box: colour options with a coloured page set these (palettes.css). */
 .tv-wordmark,
-.tv-section-title,
-.tv-auth-head .tv-page-title,
-.tv-results-head .tv-page-title { color: var(--tv-page-text, var(--tv-text)); }
-.tv-tagline,
-.tv-auth-head .tv-page-sub,
-.tv-results-head .tv-mono-label { color: var(--tv-page-text-2, var(--tv-text-2)); }
+.tv-auth-head .tv-page-title { color: var(--tv-page-text, var(--tv-text)); }
+.tv-auth-head .tv-page-sub { color: var(--tv-page-text-2, var(--tv-text-2)); }
 .tv-wordmark { text-shadow: 0 5px 0 var(--tv-page-shadow, var(--tv-logo-shadow)); }
 .tv-dot { box-shadow: 0 5px 0 var(--tv-page-shadow, var(--tv-logo-shadow)); }
 
@@ -2970,7 +2634,6 @@ body::-webkit-scrollbar,
   .tv-topbar { flex-shrink: 0; width: 100%; }
   .tv-main { flex: 1; min-height: 0; width: 100%; overflow-y: auto; padding-bottom: 16px; }
   .tv-main--page { padding-top: 14px; }
-  .tv-home { flex: 1; min-height: 0; padding-bottom: 0; }
   .tv-room { flex: 1; min-height: 0; }
   .tv-room-main,
   .tv-room-row { min-height: 0; }
@@ -2987,7 +2650,6 @@ body::-webkit-scrollbar,
   .tv-mstage-head { gap: 10px; }
   .tv-mstage-name { font-size: clamp(38px, 4vw, 58px); }
   .tv-mstage-badge { width: 52px; height: 52px; border-radius: 16px; }
-  .tv-howto { display: none; }
   .tv-party-code { font-size: 32px; }
   .tv-podium-spot.is-1 .tv-podium-block { height: 100px; }
   .tv-podium-spot.is-2 .tv-podium-block { height: 76px; }
@@ -3676,7 +3338,7 @@ fieldset.tv-setsec-body { display: grid; gap: 18px; min-width: 0; margin: 0; pad
 @media (max-width: 520px) {
   .tv-chip--leave:not(.is-confirm) { width: var(--tv-barbtn); padding: 0; }
 }
-.tv-sheet-back { width: 52px; height: 52px; border-radius: 17px; } /* as big as the sheet's badge beside it */
+.tv-sheet-back { width: 52px; height: 52px; border-radius: 17px; }
 /* Signed out, the profile button is the "Entrar" icon: it keeps its frame on phones. */
 @media (max-width: 640px) {
   .tv-chip--profile:has(> .tv-avatar--empty) { width: var(--tv-barbtn); background: var(--tv-surface); box-shadow: inset 0 0 0 1px var(--tv-line); }

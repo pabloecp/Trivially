@@ -6,16 +6,12 @@ import {
   claimGuestStats,
   deleteGuest,
   deleteUser,
-  leaderboard,
   linkGoogle,
   linkSpotify,
-  listUsers,
   loginWithPassword,
   registerWithPassword,
-  reportHistoryMatch,
   sanitizeUser,
   sanitizeUserPublic,
-  setUserRole,
   unlinkGoogle,
   unlinkSpotify,
   updateUserAvatar,
@@ -27,7 +23,7 @@ import {
 import { createGoogleAuthUrl, exchangeGoogleCode, googleConfigured } from "./google.js";
 import { exchangeSpotifyCode, spotifyAuthUrl, spotifyConfigured } from "./spotify.js";
 import { authRateLimit } from "./rateLimit.js";
-import { hasRole, ROLES } from "./roles.js";
+import { hasRole } from "./roles.js";
 import { consumeTicket, createAuthToken, createSocketToken, createTicket } from "./socketToken.js";
 import crypto from "node:crypto";
 import { normalizeUsername, usernameError } from "./username.js";
@@ -309,27 +305,6 @@ export function createApiRouter({ catalog, store, friends = null, hub = null, so
     }
   });
 
-  // --- Roles / admin ---
-
-  router.get("/admin/roles", requireRole(store, "moderator"), (req, res) => {
-    res.json({ roles: ROLES });
-  });
-
-  router.get("/admin/users", requireRole(store, "moderator"), (req, res) => {
-    const users = listUsers(store, { search: String(req.query.search || ""), role: String(req.query.role || "") });
-    res.json({ users });
-  });
-
-  router.patch("/admin/users/:id/role", requireRole(store, "admin"), (req, res) => {
-    try {
-      const user = setUserRole(store, req.user.id, req.params.id, req.body?.role);
-      console.log(`[Roles] ${req.user.name} (${req.user.id}) cambió el rol de ${user.name} (${user.id}) a ${user.role}`);
-      res.json({ ok: true, user: { id: user.id, name: user.name, role: user.role } });
-    } catch (err) {
-      res.status(400).json({ error: err.message });
-    }
-  });
-
   // --- Catalog ---
 
   // Every song in the database for the game's search box (catalog + Spotify songs found), downloaded once.
@@ -362,23 +337,6 @@ export function createApiRouter({ catalog, store, friends = null, hub = null, so
       return { id: h.id, title: h.title, artistName: h.artistName, albumName: h.albumName, year: h.year, image: h.image, previewUrl: h.previewUrl };
     });
     res.json({ count: songs.length, matchingCount: songs.length, songs });
-  });
-
-  // --- Leaderboard ---
-
-  router.get("/leaderboard", (req, res) => {
-    res.json({ entries: leaderboard(store, req.query.sort) });
-  });
-
-  // "Reportar partida" on the profile: one of the signed-in account's own matches, sent as a question report.
-  router.post("/history/report", async (req, res) => {
-    try {
-      const report = reportHistoryMatch(store, req.session?.userId, String(req.body?.at || ""));
-      await saveQuestionReport(report);
-      res.json({ ok: true });
-    } catch (err) {
-      res.status(400).json({ error: err.message });
-    }
   });
 
   // --- Public User Profile (sanitized) ---

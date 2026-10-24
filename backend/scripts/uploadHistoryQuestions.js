@@ -61,7 +61,7 @@ for (let i = 0; i < rows.length; i += 500) {
         "La tabla aún no acepta los tipos 'year' o 'number'. Ejecuta en Supabase -> SQL Editor:\n" +
           "  alter table public.questions drop constraint if exists questions_type_check;\n" +
           "  alter table public.questions add constraint questions_type_check\n" +
-          "    check (type in ('multiple_choice', 'open', 'true_false', 'audio', 'location', 'year', 'number', 'minefield'));"
+          "    check (type in ('multiple_choice', 'open', 'true_false', 'location', 'year', 'number', 'minefield'));"
       );
     }
     process.exit(1);

@@ -38,14 +38,6 @@
   --tv-mode-bg: var(--tv-hm);
   --tv-on-mode: var(--tv-hm-on);
 }
-:root[data-mode="historia"][data-theme="light"] {
-  --brand: #d4572d;
-  --brand-rgb: 212, 87, 45;
-  --brand-text: #c24b22;
-  --brand-hover: #e0663b;
-  --brand-active: #8f3417;
-  --border-focus: #d4572d;
-}
 
 /* ---------- The round ---------- */
 /* Top to bottom, every part as tall in every phase so nothing moves: the event, the slot (countdown, the chosen year,

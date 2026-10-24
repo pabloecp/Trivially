@@ -56,7 +56,7 @@ for (let i = 0; i < rows.length; i += 500) {
         "La tabla aún no acepta el tipo 'location'. Ejecuta en Supabase -> SQL Editor:\n" +
           "  alter table public.questions drop constraint if exists questions_type_check;\n" +
           "  alter table public.questions add constraint questions_type_check\n" +
-          "    check (type in ('multiple_choice', 'open', 'true_false', 'audio', 'location'));"
+          "    check (type in ('multiple_choice', 'open', 'true_false', 'location', 'year', 'number', 'minefield'));"
       );
     }
     process.exit(1);

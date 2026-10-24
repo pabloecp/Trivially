@@ -5,20 +5,13 @@ import { setForcedGames, setOwnerView, useForcedGames, useOwnerView } from "../.
 import { findMode } from "../../modes/index.js";
 import Icon from "./Icon.jsx";
 import Segmented from "./Segmented.jsx";
+import { SoundPacks } from "./VolumeMenu.jsx";
 import { findVariant, variantsFor } from "./matchInfo.js";
 import "../../styles/admin.css";
 
 const MAX_FORCED = 5;
 // The design board (figma/, git-ignored) is served from the owner's own computer.
 const BOARD_URL = "http://localhost:5199";
-
-// "Trivia Cerradas": a variant's game and way.
-function variantName(id) {
-  const v = findVariant(id);
-  if (!v) return id;
-  const name = findMode(v.game)?.name || "";
-  return v.way ? `${name} ${v.way}` : name;
-}
 
 /**
  * The owners' panel (the gear in the top bar, owners only): for debugging. "Vista" switches between the owner's tools
@@ -57,12 +50,8 @@ export default function AdminPanel({ open, onClose }) {
   const canBot = Boolean(room) && room.phase === "lobby" && !room.matchmaking && !isCentral;
   // The variants a Casual match can draw, by id ("trivia-cerradas").
   const options = variantsFor("casual").map((v) => v.id);
-  const move = (i, to) => {
-    const next = [...forced];
-    const [item] = next.splice(i, 1);
-    next.splice(to, 0, item);
-    setForcedGames(next);
-  };
+  // A tap adds the game at the end of the order; another tap takes it out (the ones after it move up).
+  const toggle = (id) => setForcedGames(forced.includes(id) ? forced.filter((g) => g !== id) : [...forced, id]);
 
   async function bot() {
     if (busy) return;
@@ -96,8 +85,7 @@ export default function AdminPanel({ open, onClose }) {
         </header>
 
         <div className="tv-admin-body">
-          <div className="tv-admin-col">
-          <div className="tv-admin-block">
+          <div className="tv-admin-block is-third">
             <h3>Vista</h3>
             <Segmented
               label="Vista"
@@ -113,7 +101,7 @@ export default function AdminPanel({ open, onClose }) {
             </p>
           </div>
 
-              <div className="tv-admin-block">
+              <div className="tv-admin-block is-third">
                 <h3>Bot de prueba</h3>
                 <button type="button" className="tv-btn tv-btn--sm tv-c-coral" onClick={bot} disabled={!canBot || busy}>
                   <Icon name="plus" size={16} strokeWidth={3} />
@@ -123,74 +111,74 @@ export default function AdminPanel({ open, onClose }) {
                 {msg && <p className="tv-admin-msg" role="status">{msg}</p>}
               </div>
 
-              <div className="tv-admin-block">
+              <div className="tv-admin-block is-third">
                 <h3>Tablero de diseño</h3>
                 <div className="tv-admin-links">
                   <a className="tv-btn tv-btn--sm tv-c-site" href={`${BOARD_URL}/`} target="_blank" rel="noopener noreferrer">
-                    Tablero de diseño
+                    Colores y botones
                   </a>
                   <a className="tv-btn tv-btn--sm tv-c-site" href={`${BOARD_URL}/pantallas.html`} target="_blank" rel="noopener noreferrer">
-                    Mapa de pantallas
+                    Pantallas
                   </a>
                 </div>
-                <p className="tv-admin-hint">Los colores, botones y todas las pantallas con sus situaciones. Se abren desde tu computadora: npm run dev ya enciende el tablero si tienes la carpeta figma/.</p>
+                <p className="tv-admin-hint">Se abren desde tu computadora: npm run dev lo enciende si tienes la carpeta figma/.</p>
               </div>
-          </div>
 
-          <div className="tv-admin-col">
 
-              <div className="tv-admin-block">
-                <h3>Juegos de Casual</h3>
+              <div className="tv-admin-block is-wide">
+                {/* The way back to random sits beside the title and keeps its place while hidden: nothing moves when it shows. */}
+                <div className="tv-admin-block-head">
+                  <h3>Juegos de Casual</h3>
+                  <button
+                    type="button"
+                    className={`tv-optrow-action tv-admin-clear${forced.length ? "" : " is-hidden"}`}
+                    onClick={() => setForcedGames([])}
+                    disabled={!forced.length}
+                    aria-hidden={!forced.length}
+                  >
+                    Quitar el orden y jugar al azar
+                  </button>
+                </div>
                 <p className="tv-admin-hint">
                   Elige qué juegos salen en tus partidas públicas y en qué orden. Se juegan en una sala solo tuya (con bots) y solo con tu cuenta. Sin nada elegido, salen al azar.
                 </p>
                 {!debug && <p className="tv-admin-warn">Solo se usan en la vista «Owner (debug)»: cámbiala arriba para jugarlos.</p>}
-                {forced.length > 0 ? (
-                  <ol className="tv-admin-order">
-                    {forced.map((id, i) => {
-                      const v = findVariant(id);
-                      const m = v && findMode(v.game);
-                      return (
-                        <li key={`${id}-${i}`} className="tv-admin-item">
-                          <span className="tv-admin-num">{i + 1}</span>
-                          {m && (
-                            <span className={`tv-badge tv-c-${m.color} tv-admin-icon`} aria-hidden="true">
-                              <Icon name={m.icon} size={16} strokeWidth={2.4} />
-                            </span>
-                          )}
-                          <span className="tv-admin-name">{variantName(id)}</span>
-                          <button type="button" className="tv-admin-tool" disabled={i === 0} onClick={() => move(i, i - 1)} aria-label="Subir">↑</button>
-                          <button type="button" className="tv-admin-tool" disabled={i === forced.length - 1} onClick={() => move(i, i + 1)} aria-label="Bajar">↓</button>
-                          <button type="button" className="tv-admin-tool" onClick={() => setForcedGames(forced.filter((_, k) => k !== i))} aria-label="Quitar">✕</button>
-                        </li>
-                      );
-                    })}
-                  </ol>
-                ) : (
-                  <p className="tv-admin-empty">Al azar, como todos</p>
-                )}
-                <div className="tv-admin-add" role="group" aria-label="Añadir un juego">
+                {/* Every way of playing, the same size: the chosen ones carry their place in the order. */}
+                <div className="tv-admin-games" role="group" aria-label="Juegos de tus partidas">
                   {options.map((id) => {
-                    const m = findMode(findVariant(id)?.game);
+                    const v = findVariant(id);
+                    const m = findMode(v?.game);
+                    const place = forced.indexOf(id) + 1;
                     return (
-                      <button key={id} type="button" className="tv-admin-chip" disabled={forced.length >= MAX_FORCED} onClick={() => setForcedGames([...forced, id])}>
+                      <button
+                        key={id}
+                        type="button"
+                        className={`tv-admin-game${place ? " is-on" : ""}`}
+                        aria-pressed={Boolean(place)}
+                        disabled={!place && forced.length >= MAX_FORCED}
+                        onClick={() => toggle(id)}
+                      >
                         {m && (
                           <span className={`tv-admin-dot tv-c-${m.color}`} aria-hidden="true">
-                            <Icon name={m.icon} size={13} strokeWidth={2.6} />
+                            <Icon name={m.icon} size={15} strokeWidth={2.6} />
                           </span>
                         )}
-                        {variantName(id)}
+                        <span className="tv-admin-game-name">
+                          {m?.name}
+                          {v?.way && <small>{v.way}</small>}
+                        </span>
+                        {place > 0 && <span className="tv-admin-num">{place}</span>}
                       </button>
                     );
                   })}
                 </div>
-                {forced.length > 0 && (
-                  <button type="button" className="tv-optrow-action tv-admin-clear" onClick={() => setForcedGames([])}>
-                    Quitar el orden y jugar al azar
-                  </button>
-                )}
               </div>
-          </div>
+
+              <div className="tv-admin-block is-narrow">
+                <h3>Tipo de sonido</h3>
+                <p className="tv-admin-hint">Solo en este navegador; los jugadores escuchan Madera.</p>
+                <SoundPacks />
+              </div>
         </div>
       </section>
     </div>,

@@ -77,8 +77,8 @@ alter table public.spotify_songs enable row level security;
 -- (mode 'historia') con `npm run history:upload` y Campo de minas (mode 'minas') con `npm run mines:upload`. Solo el
 -- backend las lee: con RLS activado y sin políticas, nadie puede leerlas desde el navegador con la anon key. Nunca
 -- añadas una política de lectura pública.
---   type        multiple_choice | open | location | year | minefield | true_false | audio (true_false y audio aún no
---               se juegan)
+--   type        multiple_choice | open | location | year | number | minefield | true_false (true_false aún no se
+--               juega)
 --   mode        modo de juego que la usa ('opciones', 'mundo', 'historia', 'minas'); null = cualquiera
 --   category    ciencia, historia, literatura, musica, arte, deportes, peliculas_series, videojuegos, geografia, cultura
 --   data        según el tipo; multiple_choice: { "options": ["…", "…", "…", "…"], "correct": 2 }
@@ -89,7 +89,7 @@ alter table public.spotify_songs enable row level security;
 -- ---------------------------------------------------------------------------
 create table if not exists public.questions (
   id          uuid primary key default gen_random_uuid(),
-  type        text not null check (type in ('multiple_choice', 'open', 'true_false', 'audio', 'location', 'year', 'minefield')),
+  type        text not null check (type in ('multiple_choice', 'open', 'true_false', 'location', 'year', 'number', 'minefield')),
   mode        text,
   category    text not null,
   difficulty  text not null check (difficulty in ('facil', 'media', 'dificil')),
@@ -101,11 +101,11 @@ create table if not exists public.questions (
 );
 create index if not exists questions_pick_idx on public.questions (type, mode, difficulty) where active;
 alter table public.questions enable row level security;
--- Tablas creadas antes de las preguntas de ubicación (Geografía), de año (Historia) y de tablero (Campo de minas):
--- añade 'location', 'year' y 'minefield' a los tipos permitidos.
+-- Tablas creadas antes: deja como permitidos los tipos de hoy (con 'location', 'year', 'number' y 'minefield', y
+-- sin 'audio', que se quitó). Si quedara alguna fila de tipo 'audio', bórrala antes o esto falla.
 alter table public.questions drop constraint if exists questions_type_check;
 alter table public.questions add constraint questions_type_check
-  check (type in ('multiple_choice', 'open', 'true_false', 'audio', 'location', 'year', 'number', 'minefield'));
+  check (type in ('multiple_choice', 'open', 'true_false', 'location', 'year', 'number', 'minefield'));
 
 -- ---------------------------------------------------------------------------
 -- Reportes de preguntas: un owner toca "Reportar" durante una partida y aquí queda la pregunta tal como se jugó

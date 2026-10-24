@@ -189,7 +189,7 @@ export default function App() {
         <Route path="/play/*" element={<Navigate to="/" replace />} />
         <Route path="/musica" element={<Navigate to="/" replace />} />
         <Route path="/login" element={<Login />} />
-        {/* The leaderboard is hidden for now; its page is still in pages/LeaderboardPage.jsx. */}
+        {/* The leaderboard was removed: an old link to it goes to Inicio. */}
         <Route path="/leaderboard" element={<Navigate to="/" replace />} />
       </Routes>
     </>

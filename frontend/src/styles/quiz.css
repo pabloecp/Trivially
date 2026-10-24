@@ -69,24 +69,11 @@
   --border-focus: var(--tv-qm);
   --on-brand: #ffffff;
 }
-:root[data-mode="opciones"][data-theme="light"] {
-  --brand: #3a6bef;
-  --brand-rgb: 58, 107, 239;
-  --brand-hover: #2f5cd8;
-  --brand-active: #22389e;
-  --border-focus: #3a6bef;
-  --on-brand: #ffffff;
-}
 
 /* A difficulty as a small filled chip (summary and question). */
 .tv-app .tv-diff-chip { background: var(--c2); color: var(--on); }
 
 /* ---------- Summary ---------- */
-.tv-quiz-preview {
-  background:
-    radial-gradient(120% 90% at 50% 0%, rgba(var(--tv-qm-rgb), 0.18), transparent 70%),
-    var(--tv-option-bg);
-}
 /* ---------- Game ---------- */
 .tv-quiz-q {
   position: relative;

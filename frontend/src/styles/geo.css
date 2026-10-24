@@ -13,15 +13,6 @@
   --tv-geo-hover: #46516b;
   --tv-geo-picked: rgba(var(--brand-rgb), 0.45);
 }
-[data-theme="light"] {
-  --tv-geo-ocean: color-mix(in srgb, rgb(var(--p-world-rgb)) 20%, var(--tv-surface));
-  --tv-geo-land: #ffffff;
-  --tv-geo-border: #a3afc2;
-  --tv-geo-label: #1d1a33;
-  --tv-geo-halo: rgba(255, 255, 255, 0.92);
-  --tv-geo-hover: #e3e9f3;
-  --tv-geo-picked: rgba(var(--brand-rgb), 0.3);
-}
 
 /* Difficulty: lighter and deeper shades of the mode's blue. */
 .tv-c-world-light {
@@ -38,19 +29,6 @@
 }
 
 /* ---------- Summary ---------- */
-.tv-geo-preview {
-  background:
-    radial-gradient(120% 90% at 50% 0%, rgba(var(--p-world-rgb), 0.2), transparent 70%),
-    var(--tv-option-bg);
-}
-.tv-geo-preview-kinds { display: flex; gap: 8px; }
-.tv-geo-preview-kinds .tv-badge { animation: tvGeoHop 2.4s var(--tv-spring) infinite; animation-delay: calc(var(--i) * 0.3s); }
-@keyframes tvGeoHop {
-  0%, 60%, 100% { transform: none; }
-  20% { transform: translateY(-6px) rotate(-6deg); }
-  35% { transform: translateY(1px); }
-}
-.tv-geo-tiebreak-note { max-width: 36ch; text-align: center; }
 
 /* ---------- Game ---------- */
 .tv-geo-kind-kicker { display: inline-flex; align-items: center; gap: 6px; }
@@ -338,42 +316,11 @@ html.tv-geo-playing { touch-action: pan-x pan-y; }
 }
 .tv-geo-watch { text-align: center; }
 
-.tv-geo-verdict {
-  position: relative;
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 10px;
-  min-height: 52px;
-  padding: 6px 12px 6px 6px;
-  border-radius: 16px;
-  background: var(--tv-option-bg);
-}
-.tv-geo-verdict-icon {
-  display: grid;
-  place-items: center;
-  width: 40px;
-  height: 40px;
-  border-radius: 13px;
-  color: var(--p-ink);
-  animation: tvPop 0.6s var(--tv-spring);
-}
-.tv-geo-verdict-text { display: grid; min-width: 0; }
-.tv-geo-verdict-text strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: var(--tv-display); font-weight: 700; font-size: 18px; line-height: 1.15; color: var(--tv-text); }
-.tv-geo-verdict-text small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 700; font-size: 13px; color: var(--tv-text-2); }
-.tv-geo-verdict--ok { box-shadow: inset 0 0 0 2px var(--p-ok); }
-.tv-geo-verdict--ok .tv-geo-verdict-icon { background: var(--p-ok); box-shadow: 0 3px 0 var(--p-ok-edge); }
-.tv-geo-verdict--bad { box-shadow: inset 0 0 0 2px var(--p-bad); }
-.tv-geo-verdict--bad .tv-geo-verdict-icon { background: var(--p-bad); box-shadow: 0 3px 0 var(--p-bad-edge); color: #fff; }
-.tv-geo-verdict--timeout .tv-geo-verdict-icon { background: var(--p-accent-2); box-shadow: 0 3px 0 var(--p-accent-edge); }
-
 @media (prefers-reduced-motion: reduce) {
-  .tv-geo-preview-kinds .tv-badge,
   .tv-geo-target-ring,
   .tv-geo-pin > *,
   .tv-geo-flag,
-  .tv-geo-country,
-  .tv-geo-verdict-icon { animation: none; }
+  .tv-geo-country { animation: none; }
 }
 
 /* The end of a round, over the top of the map (the country it flies to stays in sight under it): an icon in the
@@ -454,7 +401,3 @@ html.tv-geo-playing { touch-action: pan-x pan-y; }
   .tv-geo-clue { left: 8px; bottom: 8px; padding: 6px; border-radius: 14px; }
 }
 @media (prefers-reduced-motion: reduce) { .tv-geo-clue, .tv-geo-clue-wait { animation: none; } }
-
-/* Computers: the written question's box sits in the middle of the map. Phones keep it near the top, clear of the
-   keyboard. */
-@media (min-width: 641px) { .tv-geo-veil { justify-content: center; } }

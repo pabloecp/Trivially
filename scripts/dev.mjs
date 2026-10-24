@@ -16,7 +16,7 @@ if (fs.existsSync(path.join(board, "node_modules", "vite"))) {
   commands.push({
     name: "tablero",
     // The board's example data first, like figma/iniciar.bat, then its server.
-    command: "node gen.mjs && node node_modules/vite/bin/vite.js --config vite.config.js",
+    command: "node escenas/gen.mjs && node node_modules/vite/bin/vite.js --config vite.config.js",
     cwd: board,
     prefixColor: "yellow",
   });

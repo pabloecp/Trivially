@@ -112,24 +112,10 @@
 }
 
 /* The kind's icon floats up and down while it searches; once full it pops into a tick and stays still. */
-.tv-ml-core {
-  width: 76px;
-  height: 76px;
-  margin-bottom: 8px;
-  border-radius: 24px;
-  animation: tvMlFloat 2.4s ease-in-out infinite;
-}
-.tv-ml.is-full .tv-ml-core { animation: tvMlPop 0.5s var(--tv-spring); }
-@keyframes tvMlFloat {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-8px); }
-}
 @keyframes tvMlPop {
   0% { transform: scale(0.6); }
   100% { transform: scale(1); }
 }
-
-.tv-ml-kicker { color: var(--tv-text-3); }
 
 .tv-ml-headline { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 12px; }
 /* How full it is (or the seconds left once full), in a pill of the kind's colour beside the title. */
@@ -199,8 +185,6 @@
   color: var(--tv-text);
 }
 .tv-ml-name.is-waiting { font-weight: 700; color: var(--tv-text-3); }
-
-.tv-ml-reel { width: 100%; }
 /* The same size whether it says "Cancelar búsqueda" or "Salir", so nothing moves when the room fills. */
 
 @media (max-width: 520px) {
@@ -415,7 +399,6 @@
   .tv-pm-panel,
   .tv-pm-body,
   .tv-mi-card { transition: none; }
-  .tv-ml-core,
   .tv-ml-empty { animation: none; }
   .tv-mi-step,
   .tv-mi-roulette,
@@ -520,11 +503,6 @@
 .tv-play-me-links .tv-btn { text-decoration: none; }
 .tv-play-me-login { font-weight: 800; font-size: 14px; color: var(--tv-text-2); text-decoration: none; }
 .tv-play-me-login:hover { color: var(--tv-text); }
-.tv-play-friends { display: grid; gap: 10px; margin-top: 6px; }
-.tv-play-perks { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; }
-.tv-play-perks li { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 14px; background: var(--tv-option-bg); font-weight: 700; font-size: 13px; line-height: 1.3; color: var(--tv-text-2); }
-.tv-play-perks svg { flex-shrink: 0; color: var(--tv-text-3); }
-.tv-play-side-badge { display: grid; place-items: center; min-width: 20px; height: 20px; padding: 0 6px; border-radius: 999px; background: var(--p-bad, #ff4d5e); color: #fff; font-size: 12px; }
 
 @media (max-width: 760px) {
   /* The panel with its three tiles sits in the middle of the screen, not stuck to the top (from the top when it's too tall). */
@@ -544,18 +522,6 @@
 @media (max-width: 640px) {
   .tv-main.is-room.is-playpage { padding-top: 14px; padding-bottom: calc(24px + env(safe-area-inset-bottom)); }
 }
-
-
-
-/* PlaySide's last matches (the profile's rows, a little tighter for the column) and its "Ver todas". */
-.tv-play-history { gap: 6px; }
-.tv-play-history .tv-history-row { gap: 10px; padding: 8px 10px; border-radius: 14px; }
-.tv-play-history .tv-history-icon { width: 34px; height: 34px; border-radius: 11px; }
-.tv-play-history .tv-history-main strong { font-size: 14px; }
-.tv-play-history .tv-history-main small,
-.tv-play-history .tv-history-place small { font-size: 12px; }
-.tv-play-side-more { font-weight: 800; font-size: 13px; color: var(--tv-text-3); text-decoration: none; }
-.tv-play-side-more:hover { color: var(--tv-text); }
 
 
 /* Competitivo: the player's rank in their column (PlaySide's RankCard), in its tier's colour (--rank). */
@@ -580,7 +546,6 @@
 .tv-play-rank-pts small { font-weight: 700; font-size: 12px; color: var(--tv-text-3); }
 .tv-play-rank-bar { overflow: hidden; height: 8px; border-radius: 999px; background: rgba(255, 255, 255, 0.08); }
 .tv-play-rank-bar span { display: block; height: 100%; border-radius: inherit; background: var(--rank); transition: width 0.6s var(--tv-ease-out); }
-.tv-play-rank-next { margin: 0; font-weight: 700; font-size: 12px; color: var(--tv-text-3); }
 
 
 /* The games of a public match (MatchGames.jsx), only to read: the roulette's cards (.tv-mi-card), three a row, each a
@@ -620,11 +585,6 @@
 
 /* The history in /jugar's column: "Ver todas (n)" at the end of its title's row. */
 .tv-history-more--head { justify-self: auto; padding: 0; font-size: 13px; color: var(--tv-text-3); }
-.tv-play-history .tv-history-empty { margin: 0; font-size: 13px; }
-/* In the narrow column, "Respuestas" is only its icon and the game's name stays on one line. */
-.tv-play-history .tv-history-answers span { display: none; }
-.tv-play-history .tv-history-answers { padding: 0 8px; }
-.tv-play-history .tv-history-main strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 /* "Amigos conectados" in Privada's settings: how many are online, beside the title. */
 .tv-play-online-count { margin-left: 8px; padding: 1px 8px; border-radius: 10px; font-size: 12px; background: rgba(255, 255, 255, 0.08); }

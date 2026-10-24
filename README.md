@@ -1,123 +1,107 @@
 # Trivially ⚡
 
-Plataforma interactiva de trivia musical en tiempo real con buscador predictivo inteligente. Pon a prueba tu oído reconociendo canciones solo o compitiendo con amigos en salas multijugador en vivo.
+Juego de trivia en tiempo real, solo o con amigos en salas privadas con un código de cinco letras y números, o en partidas públicas con gente de todas partes.
 
 ---
 
-## 🌐 Enlaces de Producción
+## 🌐 Enlaces de producción
 
-- **Frontend (Vercel)**: [https://triviallyonline.vercel.app](https://triviallyonline.vercel.app/)
-- **Backend API (Railway)**: [https://trivially-production.up.railway.app](https://trivially-production.up.railway.app) *(Puerto 8080)*
-
----
-
-## ✨ Características Principales
-
-- **🎮 Modos de Juego**:
-  - **Individual**: Entrena tu oído musical reconociendo y escribiendo canciones contra reloj.
-  - **Multijugador en Vivo**: Crea salas privadas con código `XO····` (ej. `XO4K9M`), comparte el enlace, invita amigos y compite en tiempo real sincronizado por WebSockets.
-- **🔍 Buscador Predictivo con Slide Bar**:
-  - Escribe el título de la canción conforme la escuchas (ej. al escribir `Bue`, se despliegan sugerencias como `Buenas`).
-  - Navega con las flechas del teclado (`↑` / `↓`) y pulsa `Enter` para seleccionarla al instante, o haz clic en cualquier sugerencia.
-- **🔊 Audio Streaming Inmediato**:
-  - Fragmentos de audio de alta calidad para todas las canciones sin cortes ni silencios.
-- **🔐 Autenticación Flexible**:
-  - Invitado instantáneo, correo/contraseña y login con **Google OAuth**.
-- **🌓 Modo Oscuro y Modo Claro**:
-  - Tema oscuro de alta fidelidad y tema claro con selector persistente.
-- **🎨 Interfaz Dinámica**:
-  - Visualizador sónico animado y ecualizador en tiempo real.
-  - Podio dinámico de ganadores, estadísticas de racha y desglose detallado de la partida.
-- **🏆 Leaderboard y Perfiles**:
-  - Puntuaciones acumuladas, estadísticas por jugador, precisión y mejores rachas.
+- **Página (Vercel)**: [https://triviallyonline.vercel.app](https://triviallyonline.vercel.app/)
+- **Servidor (Railway)**: [https://trivially-production.up.railway.app](https://trivially-production.up.railway.app)
 
 ---
 
-## 🚀 Requisitos Previos
+## 🎮 Juegos
 
-- **Node.js** 18.x o superior
-- **npm** 9.x o superior
+- **Trivia**: preguntas de todos los temas, eligiendo entre cuatro opciones o escribiendo la respuesta.
+- **Adivina la canción**: escucha 30 segundos de una canción y elige o escribe su título.
+- **Encuentra el país**: pon un pin en el mapa del mundo; el país se da por su nombre, su silueta o su bandera.
+- **Rango**: acércate lo más posible al año de un suceso en una línea del tiempo, o a un número en una barra.
+- **Campo de minas**: un tablero de respuestas donde algunas son minas, por turnos o en carrera.
+- **Lluvia**: las preguntas caen por la pantalla y cada una es de quien la responda primero.
+- **Rey de la colina**: el rey elige la pregunta y el primero que la responde se queda con la corona.
+- **Farsante**: un juego para una llamada: todos inventan una respuesta y después votan.
+
+Además:
+
+- **Partidas públicas**: Casual junta jugadores de todas partes para jugar dos juegos al azar.
+- **Clásico**: Normal y Extendido llevan una partida pública a una sala privada, con sus propios jugadores.
+- **Playlists**: varios juegos seguidos, cada uno con sus ajustes, guardados y compartidos con un código.
+- **Dispositivo central**: una pantalla (una tele, una laptop) muestra la partida y cada jugador responde desde su teléfono.
+- **Cuentas**: invitado al instante, correo y contraseña, o Google. Hay perfil con estadísticas, historial de partidas y amigos.
 
 ---
 
-## 🛠️ Instalación y Puesta en Marcha
+## 🚀 Requisitos
 
-1. **Clonar el repositorio:**
-   ```bash
-   git clone <URL_DE_TU_REPOSITORIO>
-   cd Trivially
-   ```
+- **Node.js** 18 o superior
+- **npm** 9 o superior
 
-2. **Instalar dependencias (raíz, backend y frontend):**
+---
+
+## 🛠️ Puesta en marcha
+
+1. **Instalar dependencias (servidor y página):**
    ```bash
    npm run install:all
    ```
 
-3. **Variables de entorno:**
-   Copia el archivo `.env.example` tanto en la raíz como en `backend/.env` y `frontend/.env`:
+2. **Variables de entorno:** copiar los ejemplos.
    ```bash
-   cp .env.example .env
    cp backend/.env.example backend/.env
    cp frontend/.env.example frontend/.env
    ```
+   En local, `VITE_API_URL` se deja vacío: Vite pasa las llamadas al servidor en `http://127.0.0.1:8080`. Google, Spotify y Supabase son opcionales; sin Supabase, las preguntas salen de archivos locales.
 
-   **Configuración para Backend local (`.env` o `backend/.env`):**
-   ```env
-   PORT=8080
-   CLIENT_ORIGIN=http://localhost:5173
-   SESSION_SECRET=trivially-dev-secret-key
-
-   # Google OAuth (Opcional)
-   GOOGLE_CLIENT_ID=tu_google_client_id
-   GOOGLE_CLIENT_SECRET=tu_google_client_secret
-   GOOGLE_REDIRECT_URI=http://localhost:8080/auth/google/callback
-   ```
-
-   **Configuración para Frontend local (`frontend/.env`):**
-   ```env
-   # En local se deja vacío para usar el proxy automático de Vite a http://127.0.0.1:8080
-   VITE_API_URL=
-   ```
-
-4. **Iniciar en modo desarrollo:**
+3. **Arrancar:**
    ```bash
    npm run dev
    ```
-   - **Frontend**: [http://localhost:5173](http://localhost:5173)
-   - **Backend API**: [http://localhost:8080](http://localhost:8080)
+   - **Página**: [http://localhost:5173](http://localhost:5173)
+   - **Servidor**: [http://localhost:8080](http://localhost:8080)
+
+4. **Pruebas del servidor:**
+   ```bash
+   npm test --prefix backend
+   ```
 
 ---
 
-## 📁 Estructura del Proyecto
+## 📁 Estructura
 
 ```text
 Trivially/
 ├── backend/
-│   ├── data/             # Base de datos persistente local (store.json)
-│   ├── src/
-│   │   ├── auth/         # Autenticación, sesiones y Google OAuth
-│   │   ├── catalog/      # Gestor de catálogo y selector de canciones
-│   │   ├── db/           # Adaptador de almacenamiento y usuarios
-│   │   ├── game/         # Lógica de salas (códigos XO), autocompletado y puntuación
-│   │   └── realtime/     # Servidor Socket.IO para sincronización en tiempo real
-│   ├── .env.example
-│   └── package.json
+│   ├── data/             # Cuentas y estadísticas en local (store.json)
+│   ├── scripts/          # Subir preguntas, canciones y tableros a Supabase
+│   ├── supabase/         # Esquema de la base de datos
+│   └── src/
+│       ├── auth/         # Cuentas, sesiones y Google
+│       ├── catalog/      # Canciones de Adivina la canción
+│       ├── db/           # Guardado de cuentas, reportes y playlists compartidas
+│       ├── friends/      # Amigos e invitaciones
+│       ├── game/         # Salas, partidas, puntos y las reglas de cada juego
+│       ├── geo/          # Países, mapa, siluetas y banderas
+│       ├── history/      # Sucesos y cifras de Rango
+│       ├── mines/        # Tableros de Campo de minas
+│       ├── farsante/     # Frases de Farsante
+│       ├── questions/    # Banco de preguntas
+│       ├── moderation/   # Filtro de enlaces
+│       └── realtime/     # Socket.IO: la partida en vivo
 ├── frontend/
-│   ├── public/           # Activos estáticos, logos e imágenes de artistas
-│   ├── src/
-│   │   ├── components/   # Componentes modulares (Navbar, Modales, TriviallySymbol)
-│   │   ├── pages/        # Vistas principales (Home, Setup, Lobby, Game, Leaderboard, etc.)
-│   │   ├── styles/       # Sistema de diseño, temas claro/oscuro y animaciones
-│   │   └── lib/          # Estado global (store), cliente Socket.IO y API
-│   ├── .env.example
-│   ├── vercel.json       # Configuración de enrutamiento SPA para Vercel
-│   └── package.json
-├── .env.example
-└── package.json
+│   ├── public/           # Íconos y manifiesto de la app
+│   └── src/
+│       ├── components/   # Piezas de la interfaz (components/home)
+│       ├── modes/        # Una carpeta por juego, más playlist y Clásico
+│       ├── pages/        # Inicio, inicio de sesión y perfil
+│       ├── styles/       # Estilos: los generales y uno por juego
+│       └── lib/          # Estado, cliente de Socket.IO, sonidos y API
+├── scripts/dev.mjs       # Lo que corre "npm run dev"
+└── CLAUDE.md             # Cómo funciona todo, en detalle
 ```
 
 ---
 
 ## 📄 Licencia
 
-MIT 
+MIT

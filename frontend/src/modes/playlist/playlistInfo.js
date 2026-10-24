@@ -3,7 +3,7 @@ import { geoConfig } from "../mundo/geoInfo.js";
 import { historyConfig } from "../historia/historyInfo.js";
 import { minesConfig } from "../minas/minesInfo.js";
 import { rainConfig } from "../lluvia/rainInfo.js";
-import { GAME_MODES, findMode, isGameTile } from "../index.js";
+import { GAME_MODES, isGameTile } from "../index.js";
 
 // Playlists of games (backend/src/game/playlist.js): the games a playlist can have, each item's settings, a line
 // that sums them up, and the JSON they're shared in.
@@ -68,83 +68,15 @@ export function itemSummary(item) {
     .join(" · ");
 }
 
-/* ---------- Sharing: the JSON a playlist is copied, downloaded and imported in ---------- */
+/* ---------- "Mis playlists": the ones saved in this browser ---------- */
 
-/**
- * The playlist as a JSON to share: its name, order and games, each with the game's id (the one the server knows),
- * its name (only for people reading it) and its settings.
- */
-export function toShareJson(playlist) {
-  return JSON.stringify(
-    {
-      trivially: "playlist",
-      version: 1,
-      name: playlist.name,
-      order: playlist.order,
-      items: playlist.items.map(({ game, config }) => ({ game, name: findMode(game)?.name || game, config })),
-    },
-    null,
-    2
-  );
-}
-
+// A name compared without accents, case or spaces around it ("Noche de juegos" = "noche de JUEGOS").
 const fold = (s) =>
   String(s ?? "")
     .normalize("NFD")
     .replace(/[̀-ͯ]/g, "")
     .trim()
     .toLowerCase();
-
-// An item's game: its id, or the game's name for a JSON written by hand ("Campo de minas").
-function gameOf(item) {
-  const games = playlistGames();
-  if (games.some((m) => m.id === item?.game)) return item.game;
-  const named = games.find((m) => fold(m.name) === fold(item?.game ?? item?.name));
-  return named?.id || null;
-}
-
-/**
- * A shared playlist read back from its JSON (or a bare list of games). Throws a message to show when it can't be read.
- * Games this site doesn't know are left out (`skipped` says how many); the server checks every setting again.
- */
-export function parsePlaylistJson(text) {
-  let data;
-  try {
-    data = JSON.parse(String(text ?? "").trim());
-  } catch {
-    throw new Error("Ese texto no es un JSON válido. Copia la playlist entera, de la primera llave a la última.");
-  }
-  const list = Array.isArray(data) ? data : data?.items;
-  if (!Array.isArray(list)) throw new Error("Ese JSON no tiene una lista de juegos (\"items\").");
-  const items = [];
-  for (const raw of list) {
-    const game = gameOf(raw);
-    if (!game) continue;
-    const config = raw.config && typeof raw.config === "object" && !Array.isArray(raw.config) ? raw.config : {};
-    items.push({ id: newItemId(), game, config });
-  }
-  if (!items.length) throw new Error("Esa playlist no tiene ningún juego que conozcamos.");
-  const name = typeof data?.name === "string" && data.name.trim() ? data.name.trim().slice(0, NAME_MAX) : "Playlist importada";
-  return {
-    playlist: { name, order: data?.order === "aleatorio" ? "aleatorio" : "orden", items: items.slice(0, MAX_ITEMS) },
-    skipped: list.length - items.length + Math.max(0, items.length - MAX_ITEMS),
-  };
-}
-
-/** Saves the playlist's JSON as a file ("noche-de-juegos.json"). */
-export function downloadPlaylist(playlist) {
-  const slug = fold(playlist.name).replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "playlist";
-  const url = URL.createObjectURL(new Blob([toShareJson(playlist)], { type: "application/json" }));
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `${slug}.json`;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
-}
-
-/* ---------- "Mis playlists": the ones saved in this browser ---------- */
 
 const LIBRARY_KEY = "trivially_playlists";
 const LIBRARY_MAX = 30;

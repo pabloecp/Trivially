@@ -281,9 +281,6 @@
 .tv-play-rankbox { padding: 16px 18px; border-radius: 20px; background: var(--tv-option-bg); }
 /* The row's label already says "Tu rango". */
 .tv-play-rankbox .tv-play-rank-text small { display: none; }
-
-/* The name, when there's no account yet: in place of the settings. */
-.tv-play-name { display: grid; gap: 16px; }
 /* Without an account, how to get one (AccountNote): a soft note in the option's colour with its own outline, an ⓘ and
    one text whose links are white, like Adivina la canción's under its Spotify box. Nothing to press but the links. */
 .tv-play-account-note {
@@ -303,7 +300,6 @@
 .tv-play-account-note svg { flex-shrink: 0; }
 .tv-app .tv-play-account-note a { color: #ffffff; font-weight: 800; text-decoration: none; transition: opacity 0.15s ease; }
 .tv-app .tv-play-account-note a:hover { opacity: 0.8; }
-.tv-play-name-back { justify-self: start; }
 
 /* The main button as a bar of its own on phones (where the card's is hidden, like a game's), always in sight at the
    bottom of the screen; fixed, since the app's frame keeps "sticky" from working. */

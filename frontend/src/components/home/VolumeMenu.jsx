@@ -85,39 +85,33 @@ function VolumeRows() {
   );
 }
 
-// The sound sets (SOUND_PACKS), under the slider: picking one plays a sample of it and keeps it in this browser.
-function SoundPacks() {
-  const current = soundPack();
+// The sound sets (SOUND_PACKS): only the chosen one shows, with ‹ › to go through them; each change plays a sample of it
+// and keeps it in this browser. Only in the owners' panel (AdminPanel.jsx); everyone else hears the default one, Madera.
+export function SoundPacks() {
+  const [, refresh] = useState(0);
+  useEffect(() => onSoundChange(() => refresh((n) => n + 1)), []);
+  const index = Math.max(0, SOUND_PACKS.findIndex((p) => p.id === soundPack()));
+  const pack = SOUND_PACKS[index];
+  const step = (by) => setSoundPack(SOUND_PACKS[(index + by + SOUND_PACKS.length) % SOUND_PACKS.length].id);
   return (
-    <section className="tv-volume-packs" aria-label="Tipo de sonido">
-      <p className="tv-volume-packs-title">Tipo de sonido</p>
-      <div className="tv-volume-packs-list" role="radiogroup" aria-label="Tipo de sonido">
-        {SOUND_PACKS.map((p) => {
-          const on = p.id === current;
-          return (
-            <button
-              key={p.id}
-              type="button"
-              role="radio"
-              aria-checked={on}
-              data-sound="none"
-              className={`tv-volume-pack${on ? " is-on" : ""}`}
-              onClick={() => setSoundPack(p.id)}
-            >
-              <span>
-                <strong>{p.label}</strong>
-                <small>{p.hint}</small>
-              </span>
-              {on && <Icon name="check" size={16} strokeWidth={3} />}
-            </button>
-          );
-        })}
-      </div>
-    </section>
+    <div className="tv-sound-pick">
+      <button type="button" className="tv-sound-step" data-sound="none" aria-label="Sonido anterior" onClick={() => step(-1)}>
+        <Icon name="chevron" size={18} strokeWidth={3} className="is-back" />
+      </button>
+      <span key={pack.id} className="tv-sound-now" aria-live="polite">
+        <strong>{pack.label}</strong>
+        <small>
+          {pack.hint} · {index + 1} de {SOUND_PACKS.length}
+        </small>
+      </span>
+      <button type="button" className="tv-sound-step" data-sound="none" aria-label="Sonido siguiente" onClick={() => step(1)}>
+        <Icon name="chevron" size={18} strokeWidth={3} />
+      </button>
+    </div>
   );
 }
 
-// The volume button: a speaker (crossed out when the sounds are off) that opens the slider and the sound sets. It is in the top bar and in
+// The volume button: a speaker (crossed out when the sounds are off) that opens the two sliders. It is in the top bar and in
 // the phones' room header (RoomBars.jsx); with `floating` it is pinned to the top right corner (App.jsx), only shown
 // where neither is (home.css: a Geografía match on a phone).
 export default function VolumeMenu({ floating = false }) {
@@ -164,7 +158,6 @@ export default function VolumeMenu({ floating = false }) {
       {open && (
         <div className="tv-volume-panel" role="dialog" aria-label="Volumen">
           <VolumeRows />
-          <SoundPacks />
         </div>
       )}
     </div>
