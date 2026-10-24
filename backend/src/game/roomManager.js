@@ -50,7 +50,6 @@ import {
   countMinesQuestions,
   defaultMinesConfig,
   hitPoints,
-  MINES_FIRST_TURN_EXTRA_MS,
   MINES_GAME,
   MINES_REVEAL_MS,
   mergeMinesConfig,
@@ -3406,9 +3405,7 @@ export class RoomManager {
     room.players.forEach((p) => {
       if (p.minefield && !p.minefield.out) p.status = "jugando";
     });
-    const firstTurn = room.turn === 1 && !this.isMinesRace(room);
-    const duration = this.roundMs(room) + (firstTurn ? MINES_FIRST_TURN_EXTRA_MS : 0);
-    this.setPhase(room, "playing", duration, () => this.endTurn(room, true));
+    this.setPhase(room, "playing", this.roundMs(room), () => this.endTurn(room, true));
   }
 
   /**

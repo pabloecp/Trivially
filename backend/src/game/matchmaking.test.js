@@ -4,7 +4,6 @@ import { CASUAL_GAMES, cleanMatchRequest, findVariant, gamesFor, INTRO_MS, MATCH
 
 // A match's games are variants ("trivia-cerradas"): the game each one plays.
 const gameOf = (variant) => findVariant(variant).game;
-import { MINES_FIRST_TURN_EXTRA_MS } from "./mines.js";
 import { RoomManager } from "./roomManager.js";
 
 // Partidas públicas: players are put together in a room of their kind and size until it's full, the match starts by
@@ -188,8 +187,7 @@ for (let round = 0; round < lone.totalRounds; round += 1) {
   // Every game has its own clock: 10 s a question or a turn, 15 s a song or a country, 30 s a shower or a race.
   const race = mgr.isMinesRace(lone);
   const expected = matchRoundMs(lone.game, race);
-  const firstTurnExtra = lone.game === "minas" && !race ? MINES_FIRST_TURN_EXTRA_MS : 0;
-  assert.equal(lone.phaseEndsAt - lone.phaseStartedAt, expected + firstTurnExtra, `${lone.game}${race ? " (carrera)" : ""}: its time`);
+  assert.equal(lone.phaseEndsAt - lone.phaseStartedAt, expected, `${lone.game}${race ? " (carrera)" : ""}: its time`);
   if (lone.game === "opciones") assert.equal(lone.config.quiz.roundMs, 10000, "the screen's timer reads the same 10 s");
   // Lluvia: some way into the shower, so questions are falling; bots try a few times, as they keep going in a round.
   const rain = mgr.isRainRound(lone);

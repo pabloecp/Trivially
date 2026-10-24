@@ -252,7 +252,7 @@ function GameScreen() {
   if (phase === "finished" && room.results) return <MatchResults room={room} color="mines" />;
 
   const isHost = !central && room.hostId === user?.id;
-  // A turn's length, from the phase itself: the first turn of a round is longer than the others.
+  // A turn's length, from the phase itself.
   const totalMs = room.phaseEndsAt && room.phaseStartedAt ? room.phaseEndsAt - room.phaseStartedAt : minesConfig(room).turnMs;
   const seconds = Math.max(0, Math.ceil(left / 1000));
   const pct =

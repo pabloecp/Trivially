@@ -18,12 +18,10 @@ export const MINES_STYLES = ["turnos", "carrera"];
 // Same limits as the settings on screen (frontend/src/modes/minas/minesInfo.js). `turnMs` is the time of each turn
 // ("turnos") and `roundMs` the time of a whole round ("carrera").
 export const MINES_LIMITS = {
-  rounds: { min: 5, max: 25 },
+  rounds: { min: 3, max: 25 },
   turnMs: { min: 5000, max: 25000 },
   roundMs: { min: 30000, max: 50000 },
 };
-// The first turn of a round lasts this much longer: it's when the 25 cells are read for the first time.
-export const MINES_FIRST_TURN_EXTRA_MS = 5000;
 // The reveal stays on screen long enough to see the whole board: the answers nobody found and where the mines were.
 export const MINES_REVEAL_MS = 6000;
 // Every right answer is worth the same: 100 points.
@@ -36,8 +34,8 @@ export function hitPoints() {
 export function defaultMinesConfig() {
   return {
     styles: [...MINES_STYLES],
-    // The shortest of each, like the settings on screen start.
-    rounds: 5,
+    // The shortest of each, like the settings on screen start (3 rounds, 5 s, 30 s).
+    rounds: 3,
     turnMs: 5000,
     roundMs: 30000,
     categories: [...MINES_CATEGORIES],

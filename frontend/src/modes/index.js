@@ -109,7 +109,7 @@ export const GAME_MODES = [
     steps: MINES_STYLES[0].steps,
     ready: (room) =>
       room.config?.mines?.styles?.length !== 0 &&
-      (room.questionsReady == null || room.questionsReady >= (room.config?.mines?.rounds || 5)),
+      (room.questionsReady == null || room.questionsReady >= (room.config?.mines?.rounds || 3)),
     Lobby: MinesLobbyPanel,
     // A prompt and a 5 × 5 board (modes/minas/Game.jsx).
     path: (room) => `/minas/${urlCode(room.code)}`,

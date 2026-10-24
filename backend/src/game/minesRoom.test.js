@@ -72,7 +72,7 @@ assert.throws(() => mgr.pickCell(room, "p-2", { cell: 0, turn: 1 }), /No se acep
 mgr.beginPlaying(room);
 stop(room);
 assert.equal(room.turn, 1);
-assert.equal(room.phaseEndsAt - room.phaseStartedAt, 13000, "the first turn has 5 s more to read the board");
+assert.equal(room.phaseEndsAt - room.phaseStartedAt, 8000, "the first turn lasts what the settings say");
 pub = mgr.publicState(room, "p-2");
 assert.equal(pub.question.turn, 1);
 assert.equal(cellsOf(pub).length, 25);
