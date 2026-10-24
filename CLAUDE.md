@@ -20,7 +20,7 @@ Plain JavaScript (ESM) throughout. No TypeScript, no linter, no frontend tests.
 
 ```bash
 npm run install:all            # install backend + frontend deps (root has only `concurrently`)
-npm run dev                    # backend on :8080 (node --watch) + Vite on :5173
+npm run dev                    # backend on :8080 (node --watch) + Vite on :5173 (+ the design board on :5199 if figma/ exists)
 npm test --prefix backend      # run all backend tests
 node backend/src/game/answers.test.js   # run one test file
 npm run build --prefix frontend         # production build to frontend/dist
