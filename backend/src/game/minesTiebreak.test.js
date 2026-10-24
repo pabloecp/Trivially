@@ -89,7 +89,7 @@ assert.equal(room.phase, "finished");
 pub = mgr.publicState(room);
 assert.equal(pub.results[0].id, "luis");
 assert.equal(pub.results[0].tiebreakWinner, true);
-assert.equal(room.board.players.luis.wins, 1, "the tiebreak's winner gets the win");
+assert.equal(mgr.matchWinner(room, mgr.rankedPlayers(room)), "luis", "the tiebreak's winner wins the match");
 
 // ---- Three tied: two find a right answer and play another tiebreak; there, the only one who picks wins ----
 const trio = endedRoom({ a: 400, b: 400, c: 400 });
@@ -137,8 +137,7 @@ assert.equal(idle.tiebreak.over, true);
 assert.equal(idle.tiebreak.winnerId, null);
 advance(idle);
 assert.equal(idle.phase, "finished", "no endless tiebreaks");
-assert.equal(idle.board.players.x.wins, 0, "a tie is nobody's win");
-assert.equal(idle.board.players.y.wins, 0);
+assert.equal(mgr.matchWinner(idle, mgr.rankedPlayers(idle)), null, "a tie is nobody's win");
 
 // ---- A tied player who left: the other one wins without playing ----
 const gone = endedRoom({ m: 100, n: 100, o: 100 });

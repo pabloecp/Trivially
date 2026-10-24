@@ -9,6 +9,9 @@ import { ChatForm, ChatMessages, ChatSheet, useChatUnread, usePhone, useRoomChat
 import { useInvite } from "./useInvite.js";
 import { shownCode, useHiddenCode } from "../../lib/hiddenCode.js";
 import InviteFriends from "./InviteFriends.jsx";
+import { useResultsLook, useScoreboardLook } from "../../lib/ownerView.js";
+import { findVariant } from "./matchInfo.js";
+import { findMode } from "../../modes/index.js";
 
 function playerTag(player, { isHost }) {
   if (!player.connected) return "Reconectando…";
@@ -70,6 +73,25 @@ function MatchTag({ player, room }) {
   return <span className="tv-player-tag">{room.phase === "playing" ? "Pensando…" : "Conectado"}</span>;
 }
 
+// The games a player already won in a public match (`run.results`: each game's variant and winners), by name: "Trivia
+// Cerradas". An older server sends only how many (`wins`).
+function wonGames(room, player) {
+  const games = (room.run?.results || []).filter((g) => g.winners?.includes(player.id));
+  return games.map((g) => {
+    const v = findVariant(g.variant);
+    const name = findMode(v?.game)?.name || "";
+    return v?.way ? `${name} ${v.way}` : name;
+  });
+}
+
+// "· Ganó Trivia Cerradas" (or "· Ganó 2 juegos"), after how their round is going: the "frase" scoreboard.
+function WonLine({ room, player }) {
+  const names = wonGames(room, player);
+  const n = player.wins || names.length;
+  if (!n) return null;
+  return <b className="tv-player-won">&nbsp;· Ganó {n === 1 && names[0] ? names[0] : n === 1 ? "1 juego" : `${n} juegos`}</b>;
+}
+
 // A ref that makes a folded part of the column `inert` (not tappable, not reachable with Tab, hidden from screen
 // readers) unless `shown`.
 const inertUnless = (shown) => (el) => {
@@ -109,13 +131,11 @@ export default function PartyPanel({ room, onToast, scores = false, display = fa
     return () => document.removeEventListener("keydown", onKey);
   }, [chatting]);
 
-  // Between matches, the room's scoreboard (the server's room.board): each player's wins, most first, once a match
-  // has been played. The one with most wins (if any) is highlighted.
-  const board = room.board || { matches: 0, players: [] };
-  // A public match shows the games each player won in it (the same numbers as its summary); a private room, the
-  // matches won so far.
-  const winsOf = (id) => (room.matchmaking ? room.players.find((p) => p.id === id)?.wins || 0 : board.players.find((b) => b.id === id)?.wins || 0);
-  const showBoard = !scores && (room.matchmaking ? room.phase === "finished" : board.matches > 0);
+  // A match decided by games won (a public one or a Clásico) sends each player's `wins`. Once it's over, the column lists
+  // them by games won, the one with most highlighted. Private rooms keep no scoreboard across their matches.
+  const hasWins = room.players.some((p) => p.wins !== undefined);
+  const winsOf = (id) => room.players.find((p) => p.id === id)?.wins || 0;
+  const showBoard = !scores && hasWins && room.phase === "finished";
   const topWins = showBoard ? Math.max(0, ...room.players.map((p) => winsOf(p.id))) : 0;
   // In a match, the ranking is of the players; those who joined mid-match (spectators) have their own list below it.
   const players = scores
@@ -124,6 +144,13 @@ export default function PartyPanel({ room, onToast, scores = false, display = fa
     ? [...room.players].sort((a, b) => winsOf(b.id) - winsOf(a.id))
     : room.players;
   const spectators = scores ? room.players.filter((p) => p.spectator) : [];
+  // The games each player already won, in the match's scoreboard and in the column once it's over: in words under the
+  // name ("frase", everyone's), in a box on the right ("numeros") or on the face ("insignia"); the last two only for an
+  // owner trying them.
+  const scoreLook = useScoreboardLook();
+  // The "insignia": a gold box with the number, or with the owner's "neutro" tone a small crown and the number.
+  const { tone } = useResultsLook();
+  const gameWins = hasWins && (scores ? room.phase !== "finished" : showBoard);
 
   const inMatch = room.phase !== "lobby";
   // The spot: always while the room waits (that's where it's set); in a match only while there is a central device.
@@ -170,7 +197,6 @@ export default function PartyPanel({ room, onToast, scores = false, display = fa
         <h2>{scores ? "Marcador" : "En la sala"}</h2>
         <span>
           {players.length === 1 ? "1 jugador" : `${players.length} jugadores`}
-          {showBoard && !room.matchmaking && ` · ${board.matches === 1 ? "1 partida" : `${board.matches} partidas`}`}
         </span>
       </div>
 
@@ -200,25 +226,42 @@ export default function PartyPanel({ room, onToast, scores = false, display = fa
                     onClick={() => setMenuFor((cur) => (cur === p.id ? null : p.id))}
                   >
                     {scores && !p.spectator && <span className="tv-player-pos">{i + 1}</span>}
-                    <Avatar name={p.name} avatar={p.avatar} />
+                    {gameWins && scoreLook === "insignia" && p.wins > 0 ? (
+                      <span className="tv-player-face">
+                        <Avatar name={p.name} avatar={p.avatar} />
+                        <span key={p.wins} className={`tv-player-badge is-${tone}`}>
+                          {tone === "neutro" && <Icon name="crown" size={13} strokeWidth={2.6} filled />}
+                          {p.wins}
+                        </span>
+                      </span>
+                    ) : (
+                      <Avatar name={p.name} avatar={p.avatar} />
+                    )}
                     <span className="tv-player-text">
                       <span className="tv-player-name">{p.name}</span>
-                      {scores ? (
+                      {gameWins && scoreLook === "frase" && !p.spectator ? (
+                        <span className="tv-player-tagline">
+                          {scores ? (
+                            <MatchTag player={p} room={room} />
+                          ) : (
+                            <span className={`tv-player-tag${isHostPlayer ? " is-host" : ""}`}>{playerTag(p, { isHost: isHostPlayer })}</span>
+                          )}
+                          <WonLine room={room} player={p} />
+                        </span>
+                      ) : scores ? (
                         <MatchTag player={p} room={room} />
                       ) : (
                         <span className={`tv-player-tag${isHostPlayer ? " is-host" : ""}`}>{playerTag(p, { isHost: isHostPlayer })}</span>
                       )}
                     </span>
+                    {!p.spectator && gameWins && scoreLook === "numeros" && (
+                      <span key={`w${p.wins}`} className={`tv-player-games${p.wins > 0 ? " is-on" : ""}`} aria-label={`${p.wins} juegos ganados`}>
+                        {p.wins}
+                      </span>
+                    )}
                     {scores && !p.spectator && (
                       <span key={p.score} className="tv-player-score">
                         {p.score}
-                      </span>
-                    )}
-                    {/* Between matches: the matches won here, like the match summary ("2 Victorias"); nothing with none. */}
-                    {showBoard && wins > 0 && (
-                      <span className="tv-player-wins">
-                        {wins}
-                        <small>{wins === 1 ? "Victoria" : "Victorias"}</small>
                       </span>
                     )}
                     {/* The host's crown, always last on the right. */}

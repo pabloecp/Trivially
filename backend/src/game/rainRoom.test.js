@@ -212,8 +212,7 @@ assert.deepEqual(
   ["p-2", "p-3", "host-1"]
 );
 assert.equal(results[0].correct, 4);
-assert.equal(room.board.matches, 1);
-assert.equal(room.board.players["p-2"].wins, 1, "Ana won the match");
+assert.equal(mgr.matchWinner(room, mgr.rankedPlayers(room)), "p-2", "Ana won the match");
 
 // ---- Back to the lobby ----
 mgr.restart(room, "host-1");

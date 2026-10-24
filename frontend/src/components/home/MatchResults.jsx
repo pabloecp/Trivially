@@ -3,11 +3,12 @@ import Confetti from "./Confetti.jsx";
 import Icon from "./Icon.jsx";
 import MatchSummarySheet from "./MatchSummarySheet.jsx";
 import PartyPanel from "./PartyPanel.jsx";
-import CountUp from "./CountUp.jsx";
-import { Podium, PodiumCard, RankingCard, countText } from "./ResultsParts.jsx";
+import { Podium, PodiumCard, countText } from "./ResultsParts.jsx";
 import { useApp } from "../../lib/store.jsx";
 import { withSound } from "../../lib/sounds.js";
 import { findMode } from "../../modes/index.js";
+import { useResultsLook } from "../../lib/ownerView.js";
+import { RetouchCard } from "./ResultsLooks.jsx";
 
 // Kept here too for the screens that imported it from this file.
 export { Podium };
@@ -31,12 +32,17 @@ function MatchEnd({ room, color }) {
   const top = room.results;
   const winner = top[0];
   // Geografía, Rango and Campo de minas settle a tie for first place with tiebreak rounds; if none of them had a winner, the tie stands.
-  const tied = Boolean(room.tiebreak) && !winner?.tiebreakWinner && top.length > 1 && top[1].score === winner.score;
+  // Nobody scored at all: a tie between everyone too.
+  const tied = top.length > 1 && ((Boolean(room.tiebreak) && !winner?.tiebreakWinner && top[1].score === winner.score) || !(winner?.score > 0));
   // This player's result and match round by round (none on the central device, which isn't a player).
   const mine = isCentral ? null : top.find((p) => p.id === user?.id) || null;
   const rounds = mine?.rounds || [];
   const questions = Math.max(0, ...top.map((p) => (p.rounds || []).length));
   const mode = findMode(room.game);
+  // The results' style and tone (everyone: "panel" in colour; an owner can try others), and who is ringed in it: the
+  // winner, or everyone tied for first.
+  const { style, tone } = useResultsLook();
+  const winners = top.length < 2 ? [] : tied ? top.filter((p) => p.score === winner.score).map((p) => p.id) : winner?.score > 0 ? [winner.id] : [];
 
   return (
     <div className="tv-room tv-game">
@@ -53,20 +59,23 @@ function MatchEnd({ room, color }) {
             </div>
           </header>
 
-          <div className="tv-res-cards tv-res-cards--pair">
+          <div className={`tv-res-cards tv-res-cards--pair rl-cards tv-c-${mode?.color || "site"} is-${tone}`}>
             <PodiumCard
               meta={`${countText(top.length, "jugador", "jugadores")}${questions ? ` · ${countText(questions, "pregunta", "preguntas")}` : ""}`}
             >
-              <Podium players={top} meId={mine?.id} />
+              <Podium players={top} meId={mine?.id} tied={tied ? top.filter((p) => p.score === winner.score).length : 0} />
             </PodiumCard>
-            <RankingCard
+            <RetouchCard
               icon={mode?.icon}
               color={mode?.color}
               title={mode?.name || "Clasificación"}
               players={top}
               meId={mine?.id}
               onOpen={rounds.length ? () => setShowSummary(true) : null}
-              value={(p) => <><CountUp value={p.score} /> pts</>}
+              points={(p) => p.score}
+              winners={winners}
+              retouch={style}
+              tone={tone}
             />
           </div>
 

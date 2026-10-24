@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { useApp } from "../../lib/store.jsx";
-import { setForcedGames, setOwnerView, useForcedGames, useOwnerView } from "../../lib/ownerView.js";
+import { setForcedGames, setOwnerView, setResultsStyle, setResultsTone, setScoreboardLook, useForcedGames, useOwnerView, useResultsChoice, useScoreboardChoice } from "../../lib/ownerView.js";
 import { findMode } from "../../modes/index.js";
 import Icon from "./Icon.jsx";
 import Segmented from "./Segmented.jsx";
@@ -22,6 +22,8 @@ export default function AdminPanel({ open, onClose }) {
   const { room, isCentral, addTestBot } = useApp();
   const view = useOwnerView();
   const forced = useForcedGames();
+  const results = useResultsChoice();
+  const scoreboard = useScoreboardChoice();
   const [mounted, setMounted] = useState(open);
   const [msg, setMsg] = useState("");
   const [busy, setBusy] = useState(false);
@@ -178,6 +180,57 @@ export default function AdminPanel({ open, onClose }) {
                 <h3>Tipo de sonido</h3>
                 <p className="tv-admin-hint">Solo en este navegador; los jugadores escuchan Madera.</p>
                 <SoundPacks />
+              </div>
+
+              {/* The results screens this owner sees, to try the new looks in real matches (lib/ownerView.js). */}
+              <div className="tv-admin-block is-narrow">
+                <h3>Pantalla de resultados</h3>
+                <Segmented
+                  label="Estilo"
+                  value={results.style}
+                  onChange={setResultsStyle}
+                  options={[
+                    { value: "panel", label: "Panel" },
+                    { value: "barras", label: "Barras" },
+                  ]}
+                />
+                <Segmented
+                  label="Color de la pantalla"
+                  value={results.tone}
+                  onChange={setResultsTone}
+                  options={[
+                    { value: "color", label: "En color" },
+                    { value: "neutro", label: "Neutra" },
+                  ]}
+                />
+                <p className="tv-admin-hint">Entre juegos, la ruleta, el tutorial y el final. Los jugadores ven «Panel» y «Neutra».</p>
+              </div>
+
+              {/* How the scoreboard of a public match says who already won a game (lib/ownerView.js). */}
+              <div className="tv-admin-block is-narrow">
+                <h3>Marcador</h3>
+                <Segmented
+                  label="Marcador"
+                  value={scoreboard}
+                  onChange={setScoreboardLook}
+                  options={[
+                    { value: "frase", label: "Frase" },
+                    { value: "numeros", label: "Números" },
+                    { value: "insignia", label: "Insignia" },
+                  ]}
+                />
+                {scoreboard === "insignia" && (
+                  <Segmented
+                    label="Color de la insignia"
+                    value={results.tone}
+                    onChange={setResultsTone}
+                    options={[
+                      { value: "color", label: "En caja" },
+                      { value: "neutro", label: "Con corona" },
+                    ]}
+                  />
+                )}
+                <p className="tv-admin-hint">Los juegos ganados en una partida pública. Los jugadores ven «Frase».</p>
               </div>
         </div>
       </section>

@@ -720,8 +720,26 @@ export class RoomManager {
   }
 
   /**
-   * A public match, at the end of each of its games: whoever scored the most in that game (with points) wins it, all of
-   * them on a tie for the most.
+   * A run (a playlist, a public match or a Clásico), at the end of each round: the points each player scored in it go to
+   * that round's game (run.itemPoints), so the final screen can say who won each game even in a mixed playlist.
+   */
+  tallyItemPoints(room) {
+    const run = room.run;
+    const track = room.tracks[room.currentRound];
+    if (!run || track?.playlistItem == null) return;
+    run.itemPoints ||= {};
+    run.roundBase ||= {};
+    const points = (run.itemPoints[track.playlistItem] ||= {});
+    for (const p of room.players.values()) {
+      if (p.spectator) continue;
+      points[p.id] = (points[p.id] || 0) + (p.score || 0) - (run.roundBase[p.id] || 0);
+      run.roundBase[p.id] = p.score || 0;
+    }
+  }
+
+  /**
+   * A public match or a Clásico, at the end of each of its games: whoever scored the most in that game (with points)
+   * wins it, all of them on a tie for the most.
    */
   scoreMatchGame(room) {
     const run = room.run;
@@ -742,6 +760,8 @@ export class RoomManager {
         .map((p) => ({ id: p.id, name: p.name, avatar: p.avatar, points: points(p) }))
         .sort((a, b) => b.points - a.points),
     };
+    // Every game's winners, in play order: the end of the match shows each game with whoever won it.
+    run.gameResults = [...(run.gameResults || []), { variant: run.lastGame.variant, winners: run.lastGame.winners }];
     run.gameBase = Object.fromEntries(players.map((p) => [p.id, p.score || 0]));
   }
 
@@ -778,6 +798,10 @@ export class RoomManager {
     const items = this.drawMatchItems(room, "casual", CLASSIC_GAMES[home]);
     room.run = newRun({ name: CLASSIC_NAMES[home], order: "orden", items }, room.config);
     room.run.classic = home;
+    // Like a public match, it's decided by games won (scoreMatchGame), and each game after the first starts with who
+    // won the one before.
+    room.run.gameWins = {};
+    room.run.gameBase = {};
     this.startMixed(room);
   }
 
@@ -831,9 +855,6 @@ export class RoomManager {
       customPlaylists: {},
       config: { ...defaultConfig(), ...config },
       players: new Map(),
-      // The room's scoreboard across its matches: how many were finished, and per player (even one who left) their
-      // name, avatar, matches played and wins.
-      board: { matches: 0, players: {} },
       // The playlist being made in the room's "Playlist" panel, and the one being played (null when none is).
       playlist: emptyPlaylist(),
       run: null,
@@ -2001,8 +2022,8 @@ export class RoomManager {
           p.lastPoints = 0;
           p.minefield = null;
         });
-        // A public match after its first game starts the intro with who won the one before (INTRO_RESULT_MS).
-        room.introResultMs = room.matchmaking && room.run.lastGame ? INTRO_RESULT_MS : 0;
+        // A public match or a Clásico after its first game starts the intro with who won the one before (INTRO_RESULT_MS).
+        room.introResultMs = room.run.lastGame ? INTRO_RESULT_MS : 0;
         this.setPhase(room, "intro", INTRO_MS + room.introResultMs, () => this.beginCountdown(room));
         return;
       }
@@ -2456,6 +2477,7 @@ export class RoomManager {
   }
 
   advance(room) {
+    this.tallyItemPoints(room);
     this.scoreMatchGame(room);
     if (this.endIfAlone(room)) return;
     if (room.currentRound + 1 >= (room.totalRounds || room.tracks.length)) {
@@ -2539,7 +2561,6 @@ export class RoomManager {
         // Competitivo moves each account's rank by its place (game/rank.js).
         rank: room.matchmaking?.kind === "competitivo" ? { rounds: room.matchmaking.rounds, winnerId: room.tiebreak?.winnerId || null } : null,
       });
-      this.recordWin(room, ranked);
       // A game of a playlist: its winner adds a win to the playlist's tally.
       if (room.run && !room.run.finished && ranked.length) {
         recordGame(room.run, room.run.mixed ? room.run.classic || PLAYLIST_GAME : room.game, ranked, this.matchWinner(room, ranked));
@@ -2560,21 +2581,6 @@ export class RoomManager {
     if (room.run?.gameWins) return second && !second.forfeit && wins(second) === wins(first) ? null : wins(first) > 0 ? first.id : null;
     const tied = second && wins(second) === wins(first) && second.score === first.score && first.id !== room.tiebreak?.winnerId;
     return first.score > 0 && !tied ? first.id : null;
-  }
-
-  /** Adds a finished match to the room's scoreboard (see matchWinner). */
-  recordWin(room, ranked) {
-    if (!ranked.length) return;
-    const board = room.board || (room.board = { matches: 0, players: {} });
-    board.matches += 1;
-    const winnerId = this.matchWinner(room, ranked);
-    for (const p of ranked) {
-      const entry = board.players[p.id] || (board.players[p.id] = { wins: 0, played: 0 });
-      entry.name = p.name;
-      entry.avatar = p.avatar;
-      entry.played += 1;
-      if (p.id === winnerId) entry.wins += 1;
-    }
   }
 
   endByHost(room, userId) {
@@ -3786,13 +3792,6 @@ export class RoomManager {
           .slice(0, 40),
       })),
       config: room.config,
-      // The room's scoreboard across matches (recordWin), most wins first.
-      board: {
-        matches: room.board?.matches || 0,
-        players: Object.entries(room.board?.players || {})
-          .map(([id, e]) => ({ id, name: e.name, avatar: e.avatar, wins: e.wins, played: e.played }))
-          .sort((a, b) => b.wins - a.wins || b.played - a.played),
-      },
       coHosts: [...(room.coHosts || [])],
       // What the host's friends can do from their friends list, and the friends asking to join (the host answers).
       joinMode: room.joinMode || "solicitud",

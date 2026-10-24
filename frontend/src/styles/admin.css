@@ -109,3 +109,7 @@
 .tv-afk h2 { margin: 0; font-family: var(--tv-display); font-weight: 800; font-size: 30px; line-height: 1; }
 .tv-afk p { margin: 0; font-weight: 700; font-size: 15px; line-height: 1.4; color: var(--tv-text-2); }
 .tv-afk .tv-btn { width: 100%; }
+
+/* "Juegos de Casual" spans both rows of the right side's two narrow blocks ("Tipo de sonido" and "Pantalla de resultados"). */
+.tv-admin-block.is-wide { grid-row: span 2; }
+@media (max-width: 760px) { .tv-admin-block.is-wide { grid-row: auto; } }

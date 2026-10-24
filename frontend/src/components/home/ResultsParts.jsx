@@ -24,7 +24,7 @@ export function RoundDots({ rounds = [] }) {
 /**
  * The podium: first place in the middle, second and third on each side. `players` are in final position; `score(p)`
  * is what shows under each name (the points, by default) and `below(p)` what shows inside each block under its place
- * (a match's right answers and dots). `meId` gets a "tú" badge beside the name.
+ * (a match's right answers and dots).
  */
 // `tied`: how many players share first place (a tie: nobody won). They all stand on the top step, with no crown.
 export function Podium({ players, score = (p) => <><CountUp value={p.score} /> pts</>, below = null, meId = null, tied = 0 }) {
@@ -45,7 +45,6 @@ export function Podium({ players, score = (p) => <><CountUp value={p.score} /> p
             </span>
             <span className="tv-podium-who">
               <PlayerName player={p} className="tv-podium-name" />
-              {p.id === meId && <span className="tv-podium-me">tú</span>}
             </span>
             <span className="tv-podium-score">{score(p)}</span>
             <div className="tv-podium-block">

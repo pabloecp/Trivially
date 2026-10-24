@@ -2243,7 +2243,6 @@
   gap: 14px;
   margin-bottom: auto;
   padding-top: 16px;
-  border-top: 1px solid var(--tv-line);
   animation: tvUp 0.55s var(--tv-ease-out) 0.7s backwards;
 }
 .tv-res-btn { flex: 0 1 320px; min-width: 0; height: 60px; padding: 0 20px; border-radius: 20px; font-size: 19px; }
@@ -3140,11 +3139,19 @@ fieldset.tv-setsec-body { display: grid; gap: 18px; min-width: 0; margin: 0; pad
   }
 }
 
-/* The room's scoreboard across matches, in the players' column between matches: each one's wins, and the leader ringed. */
-.tv-player-wins { display: flex; align-items: baseline; gap: 4px; flex-shrink: 0; font-family: var(--tv-display); font-weight: 800; font-size: 18px; color: var(--tv-text); font-variant-numeric: tabular-nums; }
-.tv-player-wins small { font-family: var(--tv-body); font-weight: 700; font-size: 11px; color: var(--tv-text-3); }
+/* Once a match decided by games won is over, the room's column ringing whoever won the most games. */
 .tv-player.is-leader .tv-player-btn { box-shadow: inset 0 0 0 2px var(--p-accent-2); }
-.tv-player.is-leader .tv-player-wins { color: var(--p-accent-text); }
+
+/* A public match's scoreboard: the games each player already won (PartyPanel, useScoreboardLook). "Frase": in gold after
+   how their round is going ("Listo · Ganó Trivia"); "Números": in a box beside the points; "Insignia": on the face. */
+.tv-player-tagline { display: flex; min-width: 0; white-space: nowrap; }
+.tv-player-tagline .tv-player-tag { flex-shrink: 0; max-width: 60%; }
+.tv-player-won { overflow: hidden; min-width: 0; font-size: 12px; font-weight: 800; text-overflow: ellipsis; color: var(--p-accent-text); animation: tvFade 0.4s ease-out; }
+.tv-player-games { display: grid; place-items: center; flex-shrink: 0; width: 30px; height: 32px; border-radius: 9px; background: var(--tv-option-bg); font-family: var(--tv-display); font-weight: 800; font-size: 18px; color: var(--tv-text-3); font-variant-numeric: tabular-nums; animation: tvScore 0.6s var(--tv-spring); }
+.tv-player-games.is-on { background: var(--p-accent-2); color: var(--p-on-accent); }
+.tv-player-face { position: relative; display: inline-grid; flex-shrink: 0; }
+.tv-player-badge { position: absolute; right: -5px; bottom: -4px; display: grid; place-items: center; min-width: 20px; height: 20px; padding: 0 4px; box-sizing: border-box; border-radius: 7px; background: var(--p-accent-2); color: var(--p-on-accent); font-family: var(--tv-display); font-weight: 800; font-size: 12px; line-height: 1; box-shadow: 0 0 0 2px var(--tv-surface); animation: tvScore 0.6s var(--tv-spring); }
+.tv-player-badge.is-neutro { right: -8px; bottom: -6px; display: inline-flex; gap: 1px; min-width: 0; height: auto; padding: 0; border-radius: 0; background: none; color: var(--p-accent-text); font-size: 15px; box-shadow: none; filter: drop-shadow(0 0 2px var(--tv-surface)) drop-shadow(0 0 1px var(--tv-surface)); }
 
 /* Guests watch the game menu: the tile the host is on lifts and gets a ring, the rest step back a little. */
 /* Guests can't pick: their tiles are dark with the game's colour only as an outline and on the icon (the host's are
