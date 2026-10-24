@@ -113,5 +113,23 @@ function duel() {
   assert.equal(mine.status, "bad");
   assert.equal(theirs.status, "none");
 }
+// An owner pauses (and resumes) any match, a public one with no host too; anyone else can't.
+{
+  process.env.OWNER_IDS = "owner-1";
+  const mgr = new RoomManager({ catalog: readLocalCatalog(), store: { users: { "owner-1": { id: "owner-1", name: "Owner" } } } });
+  const room = mgr.create({ host: { id: "host-1", name: "Host", socketId: "s1" }, mode: "multi", game: "opciones" });
+  room.hostId = null;
+  room.phase = "playing";
+  room.phaseEndsAt = Date.now() + 5000;
+  assert.throws(() => mgr.pause(room, "host-1", "host-1"), /Solo el anfitrión/);
+  mgr.pause(room, "host-1", "owner-1");
+  assert.ok(room.paused, "the owner paused it");
+  mgr.resume(room, "host-1", "owner-1");
+  assert.equal(room.paused, null);
+  clearTimeout(room.timer);
+  mgr.destroy(room);
+  delete process.env.OWNER_IDS;
+}
+
 console.log("publicForfeit ok");
 process.exit(0);

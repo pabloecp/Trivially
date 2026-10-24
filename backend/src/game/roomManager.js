@@ -2243,8 +2243,14 @@ export class RoomManager {
    * The host pauses the match: the clock of the current phase stops where it is (`room.paused.remainingMs`) and no
    * answer is taken until it goes on. Resuming starts the same phase's clock again with the time it had left.
    */
-  pause(room, userId) {
-    if (room.hostId !== userId) throw new Error("Solo el anfitrión puede pausar la partida");
+  /** The host pauses their room's match; an owner (the socket's verified account) any match, public ones too. */
+  canPause(room, userId, accountId = null) {
+    const owner = accountId && this.store?.users?.[accountId];
+    return room.hostId === userId || Boolean(owner && hasRole(owner, "owner"));
+  }
+
+  pause(room, userId, accountId = null) {
+    if (!this.canPause(room, userId, accountId)) throw new Error("Solo el anfitrión puede pausar la partida");
     if (!["countdown", "playing", "reveal"].includes(room.phase)) throw new Error("No hay ninguna partida en curso");
     if (room.paused) return;
     if (room.timer) clearTimeout(room.timer);
@@ -2252,8 +2258,8 @@ export class RoomManager {
     room.paused = { remainingMs: Math.max(0, (room.phaseEndsAt || Date.now()) - Date.now()), at: Date.now() };
   }
 
-  resume(room, userId) {
-    if (room.hostId !== userId) throw new Error("Solo el anfitrión puede reanudar la partida");
+  resume(room, userId, accountId = null) {
+    if (!this.canPause(room, userId, accountId)) throw new Error("Solo el anfitrión puede reanudar la partida");
     if (!room.paused) return;
     const { remainingMs, at } = room.paused;
     room.paused = null;

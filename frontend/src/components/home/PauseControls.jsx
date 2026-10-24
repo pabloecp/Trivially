@@ -83,9 +83,11 @@ export function SkipButton({ room, onError }) {
 // The host's "Pausar" / "Reanudar", next to "Terminar" on every game's screen: it stops the clock for everyone
 // (RoomManager.pause), and nobody can answer until it goes on. On phones only its icon shows, so the round's title
 // keeps its room.
+// The host's, and an owner's in any match (public or private, in the "Owner (debug)" view; the server checks the account).
 export function PauseButton({ room, isHost, onError }) {
-  const { pauseGame } = useApp();
-  if (!isHost || !["countdown", "playing", "reveal"].includes(room?.phase)) return null;
+  const { pauseGame, isCentral } = useApp();
+  const debug = useOwnerDebug();
+  if (isCentral || !(isHost || debug) || !["countdown", "playing", "reveal"].includes(room?.phase)) return null;
   return (
     <button
       type="button"
@@ -101,12 +103,13 @@ export function PauseButton({ room, isHost, onError }) {
 
 // Over a game's stage while the match is paused, so nobody tries to answer.
 export function PauseVeil({ room, isHost }) {
+  const debug = useOwnerDebug();
   if (!room?.paused) return null;
   return (
     <div className="tv-pause-veil" role="status">
       <Icon name="pause" size={30} filled strokeWidth={0} />
       <strong>Partida en pausa</strong>
-      <span>{isHost ? "Toca ▶ arriba para seguir." : "El anfitrión la reanudará en breve."}</span>
+      <span>{isHost || debug ? "Toca ▶ arriba para seguir." : room.hostId ? "El anfitrión la reanudará en breve." : "La partida seguirá en breve."}</span>
     </div>
   );
 }

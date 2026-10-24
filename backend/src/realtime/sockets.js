@@ -568,8 +568,9 @@ export function attachSockets(io, rooms, { friends = null, hub = null } = {}) {
     socket.on("room:pause", (paused, ack) => {
       try {
         const { room, userId } = requireRoom(rooms, socket);
-        if (paused) rooms.pause(room, userId);
-        else rooms.resume(room, userId);
+        // The host, or an owner in any match (public ones too): only the socket's verified account counts for that.
+        if (paused) rooms.pause(room, userId, socket.data.userId);
+        else rooms.resume(room, userId, socket.data.userId);
         ack?.({ ok: true });
         io.to(room.code).emit("room:state", rooms.publicState(room));
       } catch (err) {
