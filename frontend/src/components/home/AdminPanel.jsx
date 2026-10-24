@@ -133,7 +133,7 @@ export default function AdminPanel({ open, onClose }) {
                     Mapa de pantallas
                   </a>
                 </div>
-                <p className="tv-admin-hint">Los colores, botones y todas las pantallas con sus situaciones. Se abren desde tu computadora: antes enciende el tablero con figma/iniciar.bat.</p>
+                <p className="tv-admin-hint">Los colores, botones y todas las pantallas con sus situaciones. Se abren desde tu computadora: npm run dev ya enciende el tablero si tienes la carpeta figma/.</p>
               </div>
           </div>
 
