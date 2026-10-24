@@ -2384,12 +2384,11 @@
 }
 
 /* ---------- Room card: players you can tap, leave button ---------- */
+/* It opens under the player's row, in the list's flow (not over it), so the column's list makes room for it and
+   scrolls to it instead of cutting it. */
 .tv-player-menu {
-  position: absolute;
-  top: calc(100% + 8px);
-  /* As wide as the player's row it opens from. */
-  left: 0;
-  right: 0;
+  position: relative;
+  margin-top: 6px;
   z-index: 20;
   display: grid;
   gap: 2px;
@@ -3737,4 +3736,22 @@ html.tv-seamless .tv-room-main { animation: tvSeamIn 0.55s cubic-bezier(0.2, 0.9
 
 @media (prefers-reduced-motion: reduce) {
   :root { --tv-box-in: none; --tv-box-out: none; }
+}
+
+/* The light that sweeps across a big card (ModeStage): once as it comes in, and again on each swap of /jugar's Casual
+   and Competitivo. Here and not in lobby.css, which only some screens load: every game's lobby card has it. */
+.tv-mstage-flash {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: linear-gradient(110deg, transparent 30%, rgba(255, 255, 255, 0.32) 50%, transparent 70%);
+  transform: translateX(-110%);
+  pointer-events: none;
+  animation: tvCardSweep 0.9s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+@keyframes tvCardSweep { to { transform: translateX(110%); } }
+/* On any card as it comes in (not a swap): the light goes once the card is in place. */
+.tv-mstage:not(.has-swap) .tv-mstage-flash { animation-delay: 0.4s; }
+@media (prefers-reduced-motion: reduce) {
+  .tv-mstage-flash { display: none; }
 }

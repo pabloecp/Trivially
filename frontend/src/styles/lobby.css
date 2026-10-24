@@ -240,16 +240,6 @@
 /* ---------- The option's card when its kind changes (ModeStage's swapKey) ---------- */
 /* Its colour fades into the new one (its own transition); a light sweeps across it, its big icon spins in and its
    name, chip and steps come in anew, one after another. */
-.tv-mstage-flash {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  background: linear-gradient(110deg, transparent 30%, rgba(255, 255, 255, 0.32) 50%, transparent 70%);
-  transform: translateX(-110%);
-  pointer-events: none;
-  animation: tvCardSweep 0.9s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-}
-@keyframes tvCardSweep { to { transform: translateX(110%); } }
 .tv-mstage.has-swap .tv-mstage-watermark { animation: tvMarkIn 0.8s var(--tv-spring); }
 @keyframes tvMarkIn { from { opacity: 0; transform: rotate(-35deg) scale(0.4); } }
 .tv-mstage.has-swap .tv-mstage-head { animation: tvHeadIn 0.5s cubic-bezier(0.2, 0.9, 0.3, 1.1); }
@@ -384,7 +374,6 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .tv-mstage-flash { display: none; }
   .tv-ml.is-full .tv-ml-body .tv-ml-seats,
   .tv-ml.is-full .tv-ml-clock,
   .tv-ml.is-full .tv-ml-clock-time { animation: none; }
