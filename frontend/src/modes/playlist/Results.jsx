@@ -59,10 +59,13 @@ function ResultsScreen() {
   const what = publicMatch || classic ? "partida" : "playlist";
   let title = `¡Fin de la ${what}!`;
   if (winner && !solo) title = `¡${winner.name} gana la ${what}!`;
-  else if (!winner && standings[0]?.wins > 0) title = "¡Empate!";
+  else if (!winner && standings.length > 1 && (standings[0]?.wins > 0 || run?.bestOf)) title = "¡Empate!";
   // Every playlist is one match now (`mixed`; "aleatorio" also shuffles its rounds): the most points win. A public
   // match (`bestOf`) is won by games won instead, its points breaking a tie.
   const mixed = Boolean(run?.mixed) && !run?.bestOf;
+  // A tie (nobody won): everyone with as much as first place shares the top step of the podium.
+  const key = (p) => (mixed ? p.points : p.wins);
+  const tied = title === "¡Empate!" && standings.length > 1 ? standings.filter((p) => key(p) === key(standings[0])).length : 0;
   const pointsText = (p) => `${p.points.toLocaleString("es-ES")} pts`;
   // This player's rounds of every game, numbered one after another (none on the central device).
   const me = isCentral ? null : standings.find((p) => p.id === user?.id) || null;
@@ -71,7 +74,8 @@ function ResultsScreen() {
   if (mixed && winner) hint = `${pointsText(winner)} en ${run.total === 1 ? "1 juego" : `${run.total} juegos`}${run.order === "aleatorio" ? " mezclados" : ""}`;
   else if (mixed && standings[0]?.wins > 0) hint = "Mismos puntos";
   else if (winner && solo && !run.bestOf) hint = `Ganaste ${run.played.filter((g) => g.winnerId === winner.id).length} de ${run.total} juegos`;
-  else if (winner) hint = `${winsText(winner.wins)} de ${run.total}`;
+  else if (winner) hint = `Ganó ${winner.wins} de ${run.total} ${run.total === 1 ? "juego" : "juegos"}`;
+  else if (run?.bestOf && standings.length > 1) hint = "Nadie ganó: terminaron con las mismas victorias";
   else if (standings[0]?.wins > 0) hint = "Mismos juegos ganados y mismos puntos";
 
   return (
@@ -95,11 +99,11 @@ function ResultsScreen() {
               <PodiumCard
                 meta={`${countText(standings.length, "jugador", "jugadores")} · ${countText(run.total, "juego", "juegos")}`}
               >
-                <Podium players={standings} meId={me?.id} score={mixed ? pointsText : (p) => winsText(p.wins)} />
+                <Podium players={standings} meId={me?.id} score={mixed ? pointsText : (p) => winsText(p.wins)} tied={tied} />
               </PodiumCard>
               <RankingCard
-                icon={classic?.icon || "playlist"}
-                color={classic?.color || "playlist"}
+                icon={classic?.icon || (publicMatch && MATCH_KINDS[publicMatch.kind]?.icon) || "playlist"}
+                color={classic?.color || (publicMatch && MATCH_KINDS[publicMatch.kind]?.color) || "playlist"}
                 title={run.name}
                 players={standings}
                 meId={me?.id}
@@ -179,7 +183,7 @@ function ResultsScreen() {
         </section>
       </div>
       <PartyPanel room={room} display={isCentral} onToast={setErr} />
-      <MatchSummarySheet open={showSummary} rounds={myRounds} title={classic ? "Tu partida" : "Tu playlist"} showGame onClose={() => setShowSummary(false)} />
+      <MatchSummarySheet open={showSummary} rounds={myRounds} title={classic || publicMatch ? "Tu partida" : "Tu playlist"} showGame onClose={() => setShowSummary(false)} />
     </div>
   );
 }

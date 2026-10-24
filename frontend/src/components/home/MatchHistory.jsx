@@ -2,6 +2,13 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import Icon from "./Icon.jsx";
 import MatchSummarySheet from "./MatchSummarySheet.jsx";
 import { findMode } from "../../modes/index.js";
+import { MATCH_KINDS } from "./matchInfo.js";
+
+// A match of the history: a game, a Clásico, a playlist, or a public match ("casual"), as "Partida casual".
+const matchMode = (game) => {
+  const kind = MATCH_KINDS[game];
+  return kind ? { ...kind, fullName: `Partida ${kind.name.toLowerCase()}` } : findMode(game);
+};
 // Each game's colour lives in its own styles.
 import "../../styles/quiz.css";
 import "../../styles/history.css";
@@ -29,7 +36,7 @@ const playersText = (n) => `${n} ${n === 1 ? "jugador" : "jugadores"}`;
 // One match of the history: the game with its icon and colour, when, how many played, the place and the points, and
 // when the account's own answers came with it (sanitizeUser), "Respuestas", which opens them (MatchSummarySheet).
 export function MatchRow({ match: m, onAnswers }) {
-  const mode = findMode(m.game);
+  const mode = matchMode(m.game);
   const first = m.position === 1 && m.players > 1;
   return (
     <li className={`tv-history-row tv-c-${mode?.color || "neutral"}`}>
@@ -204,8 +211,8 @@ export default function MatchHistory({ matches = [], title = null }) {
       <MatchSummarySheet
         open={Boolean(answers)}
         rounds={answers?.rounds || []}
-        title={findMode(answers?.game)?.fullName || findMode(answers?.game)?.name || "Tu partida"}
-        showGame={answers?.game === "playlist"}
+        title={matchMode(answers?.game)?.fullName || matchMode(answers?.game)?.name || "Tu partida"}
+        showGame={answers?.game === "playlist" || Boolean(MATCH_KINDS[answers?.game])}
         onClose={() => setAnswers(null)}
       />
     </>

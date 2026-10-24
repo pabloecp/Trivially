@@ -3,9 +3,9 @@
    timeline the right year is the meaning green (--p-ok) and each player's year has their own colour. */
 
 :root {
-  --tv-hm-1: #f2845a;
-  --tv-hm: #e8693f;
-  --tv-hm-edge: #a3401f;
+  --tv-hm-1: #ff7a47;
+  --tv-hm: #ff5a1f;
+  --tv-hm-edge: #b32f00;
   --tv-hm-on: #ffffff;
   --tv-hm-rgb: 232, 105, 63;
   --tv-hm-text: #ff8d66;

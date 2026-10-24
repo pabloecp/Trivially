@@ -3,6 +3,8 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { roomPath } from "../../modes/index.js";
 import { useApp } from "../../lib/store.jsx";
 import { useFriends } from "../../lib/friends.jsx";
+import { useIsOwner } from "../../lib/ownerView.js";
+import AdminPanel from "./AdminPanel.jsx";
 import AppIcon from "./AppIcon.jsx";
 import ConfirmDialog from "./ConfirmDialog.jsx";
 import Icon from "./Icon.jsx";
@@ -107,6 +109,8 @@ export function useRoomExit({ onRoomScreen = true, onError } = {}) {
 export default function TvTopbar() {
   const { user, room, isCentral } = useApp();
   const friends = useFriends();
+  const isOwner = useIsOwner();
+  const [adminOpen, setAdminOpen] = useState(false);
   const { pathname } = useLocation();
   const roomTarget = room ? roomPath(room) : null;
   const awayFromRoom = Boolean(roomTarget) && pathname !== roomTarget;
@@ -215,6 +219,7 @@ export default function TvTopbar() {
 
   return (
     <>
+      {isOwner && <AdminPanel open={adminOpen} onClose={() => setAdminOpen(false)} />}
       <header className={`tv-topbar${backAnim ? ` is-back-${backAnim}` : ""}`}>
         <div className="tv-topbar-start">
           {shownButton}
@@ -226,6 +231,23 @@ export default function TvTopbar() {
         {/* The site's address, faint, in the middle of the bar (computers): on every screen, so the bar never changes. */}
         <span className="tv-topbar-url">playtrivially.com</span>
         <div className="tv-topbar-end">
+          {/* Owners only: the admin panel (the owner/user view, the test bot, the games forced in Casual). */}
+          {isOwner && !isCentral && (
+            <button
+              type="button"
+              className="tv-chip tv-chip--icon"
+              aria-label="Panel de owner"
+              aria-haspopup="dialog"
+              onClick={(e) => {
+                e.currentTarget.blur();
+                setAdminOpen(true);
+              }}
+            >
+              <span className="tv-avatar tv-avatar--empty">
+                <Icon name="settings" size={20} strokeWidth={2.4} />
+              </span>
+            </button>
+          )}
           {friends.isAccount && !isCentral && (
             <button
               type="button"

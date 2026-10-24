@@ -118,7 +118,10 @@ import {
   CLASSIC_GAMES,
   CLASSIC_NAMES,
   isClassic,
+  AFK_CONFIRM_MS,
+  cleanForced,
   INTRO_MS,
+  INTRO_RESULT_MS,
   INTRO_SPIN_MS,
   INTRO_TUTORIAL_MS,
   MATCH_FULL_MS,
@@ -207,6 +210,12 @@ function assertNameWithoutLink(user) {
 /** A player's rounds as they go out to the players: without the questions' ids. */
 // After this many rounds in a row without answering, a match stops waiting for the player (markIdle).
 export const IDLE_ROUNDS = 3;
+// A public match takes out whoever spends this many rounds in a row without any sign of life (answering, skipping,
+// picking a cell...): they are out of the match and finish last.
+export const PUBLIC_KICK_ROUNDS = 5;
+// When a bot answers, counted from the start of the round: anywhere between these two.
+export const BOT_MIN_MS = 3000;
+export const BOT_MAX_MS = 8000;
 
 export function publicRounds(rounds = []) {
   return rounds.map(({ questionId, ...round }) => round);
@@ -352,13 +361,20 @@ function publicPlayer(player, phase, room) {
     isGuest: Boolean(player.isGuest),
     // Never whether it's a bot (RoomManager.addBot): to the players, bots are like any other guest.
     status: player.status,
-    score: player.score,
+    // A public match counts each game on its own: the scoreboard starts again at every game (the match's total is
+    // kept for the end) and shows the games each player has won.
+    // A public match asks "¿Sigues ahí?" after PUBLIC_KICK_ROUNDS idle rounds: until when they can still answer.
+    afkUntil: !player.forfeit && (player.idleRounds || 0) >= PUBLIC_KICK_ROUNDS ? player.afkUntil || null : null,
+    score: room?.run?.gameWins && phase !== "finished" ? (player.score || 0) - (room.run.gameBase?.[player.id] || 0) : player.score,
+    ...(room?.run?.gameWins ? { wins: room.run.gameWins[player.id] || 0 } : {}),
     correct: player.correct,
     streak: player.streak,
     bestStreak: player.bestStreak,
     answered,
     // Hasn't answered in IDLE_ROUNDS rounds in a row: rounds no longer wait for them (it ends when they answer).
     idle: Boolean(player.idle),
+    // A public match: out of it ("salió" or "inactivo"); they finish last.
+    forfeit: player.forfeit || null,
     lastPoints: player.lastPoints || 0,
     lastAnswer: showAnswer ? player.lastAnswer : null,
     connected: player.connected,
@@ -409,6 +425,7 @@ export class RoomManager {
     if (userId && room.blocked?.has(userId)) throw new Error("El anfitrión te bloqueó de esta sala");
     // A public match (findMatch) is only entered by searching for one; its players can come back to it (a reload).
     if (room.matchmaking && !room.players.has(userId)) throw new Error("Esa sala es de una partida pública: búscala desde Jugar");
+    if (room.matchmaking && room.players.get(userId)?.forfeit) throw new Error("Saliste de esa partida: busca otra desde Jugar");
     return room;
   }
 
@@ -427,9 +444,12 @@ export class RoomManager {
   findMatch(user, input) {
     const { kind, rounds, size } = cleanMatchRequest(input);
     assertNameWithoutLink(user);
-    let room = [...this.rooms.values()].find(
+    // An owner's forced games (already checked against their account by the socket): their own room, nobody else's.
+    const force = cleanForced(input?.force);
+    let room = force.length ? undefined : [...this.rooms.values()].find(
       (r) =>
         r.matchmaking &&
+        !r.matchmaking.force &&
         r.phase === "lobby" &&
         !r.matchmaking.startsAt &&
         r.matchmaking.kind === kind &&
@@ -443,7 +463,7 @@ export class RoomManager {
       room = this.create({ host: user, game: null });
       room.hostId = null;
       room.joinMode = "invitacion";
-      room.matchmaking = { kind, rounds, versus: size, size: roomSize(size), games: null, startsAt: null, timer: null, botTimer: null };
+      room.matchmaking = { kind, rounds, versus: size, size: roomSize(size), games: null, startsAt: null, timer: null, botTimer: null, force: force.length ? force : null };
       if (kind === "casual") this.scheduleBotArrival(room, BOT_WAIT_MS);
     }
     this.checkMatchFull(room);
@@ -547,10 +567,9 @@ export class RoomManager {
         this.onPhaseChange?.(room);
         if (again) later(move, 2000 + Math.random() * 3500);
       };
-      // Not too quick: people usually answer first. In Farsante (a test bot's game) they take a few seconds, so a
-      // lone player doesn't wait for the whole stage; in Lluvia they start early and keep going (botMove says again).
-      const early = room.game === FARSANTE_GAME || this.isRainRound(room);
-      later(move, early ? 1500 + Math.random() * 3500 : left * (0.35 + Math.random() * 0.5));
+      // Like a person: between BOT_MIN_MS and BOT_MAX_MS into the round (or the turn, or Farsante's stage), never after
+      // the time runs out; in Lluvia they keep going after that (botMove says again).
+      later(move, Math.min(left - 400, BOT_MIN_MS + Math.random() * (BOT_MAX_MS - BOT_MIN_MS)));
     }
   }
 
@@ -683,8 +702,11 @@ export class RoomManager {
    */
   startMatch(room) {
     const { kind } = room.matchmaking;
-    const drawn = this.drawMatchItems(room, kind, MATCH_GAME_COUNT + 1);
-    const items = drawn.slice(0, MATCH_GAME_COUNT);
+    // An owner's forced games play in the order given; otherwise MATCH_GAME_COUNT drawn at random.
+    const force = room.matchmaking.force;
+    const gameCount = force?.length || MATCH_GAME_COUNT;
+    const drawn = this.drawMatchItems(room, kind, gameCount + 1, force);
+    const items = drawn.slice(0, gameCount);
     // What everyone sees of it: the variants, in play order (the decider joins them only if it's played).
     room.matchmaking.games = items.map((item) => item.variant);
     room.matchmaking.startsAt = null;
@@ -693,7 +715,7 @@ export class RoomManager {
     // Games won per player, and each player's score when the game being played started (gameWins, scoreMatchGame).
     room.run.gameWins = {};
     room.run.gameBase = {};
-    room.run.decider = drawn[MATCH_GAME_COUNT] || null;
+    room.run.decider = drawn[gameCount] || null;
     this.startMixed(room);
   }
 
@@ -707,10 +729,19 @@ export class RoomManager {
     const track = room.tracks[room.currentRound];
     const next = room.tracks[room.currentRound + 1];
     if (!track || (next && next.playlistItem === track.playlistItem)) return;
-    const players = [...room.players.values()].filter((p) => !p.spectator && room.participants?.has(p.id));
+    const players = [...room.players.values()].filter((p) => !p.spectator && !p.forfeit && room.participants?.has(p.id));
     const points = (p) => (p.score || 0) - (run.gameBase[p.id] || 0);
     const top = Math.max(0, ...players.map(points));
     if (top > 0) for (const p of players) if (points(p) === top) run.gameWins[p.id] = (run.gameWins[p.id] || 0) + 1;
+    // Who won this game and with how many points each: the next game's intro tells it (publicState's intro.previous).
+    const item = run.items[track.playlistItem];
+    run.lastGame = {
+      variant: item?.variant || item?.game || null,
+      winners: top > 0 ? players.filter((p) => points(p) === top).map((p) => p.id) : [],
+      ranking: players
+        .map((p) => ({ id: p.id, name: p.name, avatar: p.avatar, points: points(p) }))
+        .sort((a, b) => b.points - a.points),
+    };
     run.gameBase = Object.fromEntries(players.map((p) => [p.id, p.score || 0]));
   }
 
@@ -751,14 +782,16 @@ export class RoomManager {
   }
 
   /** The `count` games of a public match of `kind` (or of a Clásico), each a variant with its settings, all different. */
-  drawMatchItems(room, kind, count) {
+  drawMatchItems(room, kind, count, force = null) {
     // The times go in after cleaning, as they are: a public match is quicker than a game's own settings allow.
     const configFor = (game, variant, easy) => ({
       ...this.cleanItemConfig(room, game, matchItemConfig(game, kind, { easy, variant })),
       ...matchTimes(game),
     });
     const items = [];
-    for (const variant of pickMatchGames(null, Math.random, variantsFor(kind))) {
+    const random = pickMatchGames(null, Math.random, variantsFor(kind));
+    const order = force?.length ? [...force, ...random.filter((v) => !force.includes(v))] : random;
+    for (const variant of order) {
       if (items.length >= count) break;
       const { game } = findVariant(variant);
       const item = { id: `m${items.length}`, game, variant, config: configFor(game, variant, false) };
@@ -943,6 +976,8 @@ export class RoomManager {
       player.connected = false;
       player.status = "desconectado";
       player.socketId = null;
+      // A public match: whoever leaves it (or drops out for good) is out of it and finishes last (forfeit).
+      if (room.matchmaking && room.phase !== "finished" && !player.spectator) this.forfeit(room, player, "salió");
     }
     if (room.hostId === userId) this.transferHost(room);
     if (!this.hasPeople(room)) {
@@ -952,6 +987,34 @@ export class RoomManager {
     this.checkMinesTurn(room);
     this.checkMatchFull(room);
     return { room, left: true };
+  }
+
+  /**
+   * A public match: `player` is out of it (they left, dropped out for good, or were taken out for being inactive). They
+   * stay on the scoreboard, last, and win nothing; when only one player is left in it, that one wins the match at
+   * once (a duel's rival leaving). During a reveal it waits for the round to end (advance).
+   */
+  forfeit(room, player, reason) {
+    if (player.forfeit) return;
+    player.forfeit = reason;
+    player.connected = false;
+    player.status = reason === "inactivo" ? "expulsado" : "abandonó";
+    if (room.phase !== "reveal") this.endIfAlone(room);
+  }
+
+  /** The players still in a public match (not spectators, not out of it). */
+  stillIn(room) {
+    return [...room.players.values()].filter((p) => !p.spectator && !p.forfeit && room.participants?.has(p.id));
+  }
+
+  /** A public match with a single player left in it ends there: that player wins. Returns true when it ended. */
+  endIfAlone(room) {
+    if (!room.matchmaking || ["lobby", "finished"].includes(room.phase)) return false;
+    if (this.stillIn(room).length > 1) return false;
+    this.clearBotMoves?.(room);
+    this.finish(room);
+    this.onPhaseChange?.(room);
+    return true;
   }
 
   transferHost(room) {
@@ -1533,9 +1596,9 @@ export class RoomManager {
       entry = { id, name: playlist.name, image: playlist.image, tracks: playlist.tracks, songs: new Map(), done: new Set(), active: true };
       room.customPlaylists[id] = entry;
     }
-    // Adding one ticks it.
+    // Adding one ticks it, and Trivially's own catalog stops playing (it can be switched on again in the settings).
     const ids = room.config.playlistIds || [];
-    if (!ids.includes(id)) room.config = { ...room.config, playlistIds: [...ids, id] };
+    if (!ids.includes(id)) room.config = { ...room.config, useCatalog: false, playlistIds: [...ids, id] };
     entry.active = true;
     this.loadPlaylist(room, entry);
     return entry;
@@ -1938,7 +2001,9 @@ export class RoomManager {
           p.lastPoints = 0;
           p.minefield = null;
         });
-        this.setPhase(room, "intro", INTRO_MS, () => this.beginCountdown(room));
+        // A public match after its first game starts the intro with who won the one before (INTRO_RESULT_MS).
+        room.introResultMs = room.matchmaking && room.run.lastGame ? INTRO_RESULT_MS : 0;
+        this.setPhase(room, "intro", INTRO_MS + room.introResultMs, () => this.beginCountdown(room));
         return;
       }
     }
@@ -2073,6 +2138,7 @@ export class RoomManager {
   /** During a tiebreak only the tied players answer; the rest of the room watches. */
   isPlaying(room, userId) {
     if (room.players.get(userId)?.spectator) return false;
+    if (room.players.get(userId)?.forfeit) return false;
     // Rey de la colina: the king doesn't answer, the rest do (so a round never waits for the king).
     if (room.game === REY_GAME && room.king === userId) return false;
     return !room.tiebreak || room.tiebreak.playerIds.includes(userId);
@@ -2202,6 +2268,28 @@ export class RoomManager {
       this.onPhaseChange?.(room);
       return;
     }
+    // The owner who skips gave up on the question: their round counts as a wrong answer (not as no answer).
+    const skipper = room.players.get(userId);
+    if (skipper && !skipper.lastAnswer && room.phase !== "reveal" && this.isPlaying(room, userId) && !this.isMinesRound(room) && !this.isRainRound(room)) {
+      skipper.lastAnswer = { text: "Saltó la pregunta", correct: false, gaveUp: true, at: Date.now() };
+      skipper.lastPoints = 0;
+      skipper.streak = 0;
+      skipper.idleRounds = 0;
+      skipper.idle = false;
+    }
+    // Bots that hadn't answered yet get it wrong too (a question skipped is never a free one for them).
+    if (room.phase === "playing" && !this.isMinesRound(room) && !this.isRainRound(room) && room.game !== FARSANTE_GAME) {
+      const track = room.tracks[room.currentRound];
+      for (const bot of room.players.values()) {
+        if (!bot.bot || bot.lastAnswer || !this.isPlaying(room, bot.id)) continue;
+        const wrong = this.isChoiceRound(room) ? track.options.map((_, i) => i).filter((i) => i !== track.answer)[0] : null;
+        bot.lastAnswer = wrong != null ? { text: track.options[wrong], choice: wrong, at: Date.now() } : { text: "No lo sé", correct: false, at: Date.now() };
+        bot.answerRemainingMs = 0;
+        bot.lastPoints = 0;
+        bot.streak = 0;
+      }
+      this.clearBotMoves(room);
+    }
     if (room.phase !== "reveal") this.beginReveal(room);
     if (room.timer) clearTimeout(room.timer);
     this.advance(room);
@@ -2313,6 +2401,7 @@ export class RoomManager {
     const mines = this.isMinesRound(room);
     // Lluvia gives everyone their round's summary (gradeRain) before this: what counts is having sent any answer.
     const rain = this.isRainRound(room);
+    const kicked = [];
     for (const player of room.players.values()) {
       if (!this.isPlaying(room, player.id)) continue;
       const responded = mines ? Boolean(player.minefield?.pickedTurn) : rain ? Boolean(player.rain?.sent) : Boolean(player.lastAnswer);
@@ -2322,12 +2411,53 @@ export class RoomManager {
       } else {
         player.idleRounds = (player.idleRounds || 0) + 1;
         if (player.idleRounds >= IDLE_ROUNDS) player.idle = true;
+        if (room.matchmaking && !player.bot && player.idleRounds >= PUBLIC_KICK_ROUNDS) this.askStillThere(room, player);
       }
     }
   }
 
+  /**
+   * A public match, after PUBLIC_KICK_ROUNDS rounds with no sign of life: the player is asked if they are still there
+   * (`afkUntil`, a card on their screen). Any answer (or "Sigo aquí", present) is enough; with none in AFK_CONFIRM_MS
+   * they are out of the match (their screen hears it, onKicked) and it goes on without them.
+   */
+  askStillThere(room, player) {
+    if (player.afkTimer || player.forfeit) return;
+    player.afkUntil = Date.now() + AFK_CONFIRM_MS;
+    player.afkTimer = setTimeout(() => this.afkExpire(room, player.id), AFK_CONFIRM_MS);
+    player.afkTimer.unref?.();
+  }
+
+  afkExpire(room, userId) {
+    const player = room.players.get(userId);
+    if (!player) return;
+    player.afkTimer = null;
+    player.afkUntil = null;
+    if (this.rooms.get(room.code) !== room || room.phase === "finished" || player.forfeit) return;
+    if ((player.idleRounds || 0) < PUBLIC_KICK_ROUNDS) return;
+    const socketId = player.socketId;
+    if (socketId) this.socketToRoom.delete(socketId);
+    player.socketId = null;
+    this.forfeit(room, player, "inactivo");
+    if (socketId) this.onKicked?.(socketId, { code: room.code, reason: "inactivo" });
+    if (this.rooms.get(room.code) === room) this.onPhaseChange?.(room);
+  }
+
+  /** "Sigo aquí": the player answers the card that asks if they are still there. */
+  present(room, userId) {
+    const player = room.players.get(userId);
+    if (!player) return;
+    clearTimeout(player.afkTimer);
+    player.afkTimer = null;
+    player.afkUntil = null;
+    player.idleRounds = 0;
+    player.idle = false;
+    this.onPhaseChange?.(room);
+  }
+
   advance(room) {
     this.scoreMatchGame(room);
+    if (this.endIfAlone(room)) return;
     if (room.currentRound + 1 >= (room.totalRounds || room.tracks.length)) {
       if (this.beginDecider(room)) return;
       if (this.beginTiebreak(room)) return;
@@ -2391,7 +2521,7 @@ export class RoomManager {
     const wins = (p) => room.run?.gameWins?.[p.id] || 0;
     return [...room.players.values()]
       .filter((p) => !p.spectator)
-      .sort((a, b) => wins(b) - wins(a) || b.score - a.score || (b.id === winnerId) - (a.id === winnerId));
+      .sort((a, b) => Boolean(a.forfeit) - Boolean(b.forfeit) || wins(b) - wins(a) || b.score - a.score || (b.id === winnerId) - (a.id === winnerId));
   }
 
   finish(room) {
@@ -2403,7 +2533,8 @@ export class RoomManager {
       room.statsApplied = true;
       const ranked = this.rankedPlayers(room);
       applyMatchStats(this.store, ranked, {
-        game: room.run?.mixed ? room.run.classic || PLAYLIST_GAME : room.game,
+        // A public match is kept as its kind ("casual"), never as a playlist.
+        game: room.matchmaking ? room.matchmaking.kind : room.run?.mixed ? room.run.classic || PLAYLIST_GAME : room.game,
         room: room.code,
         // Competitivo moves each account's rank by its place (game/rank.js).
         rank: room.matchmaking?.kind === "competitivo" ? { rounds: room.matchmaking.rounds, winnerId: room.tiebreak?.winnerId || null } : null,
@@ -2421,8 +2552,12 @@ export class RoomManager {
   /** Who won a finished match: first place with points; a tie for first is nobody's unless a tiebreak settled it. */
   matchWinner(room, ranked) {
     const [first, second] = ranked;
-    if (!first) return null;
+    if (!first || first.forfeit) return null;
+    // A public match whose rivals all left: the one left wins it.
+    if (room.matchmaking && ranked.length > 1 && ranked.slice(1).every((p) => p.forfeit)) return first.id;
     const wins = (p) => room.run?.gameWins?.[p.id] || 0;
+    // Decided by games won: the same number of them (after the decider too) is a tie, whatever the points.
+    if (room.run?.gameWins) return second && !second.forfeit && wins(second) === wins(first) ? null : wins(first) > 0 ? first.id : null;
     const tied = second && wins(second) === wins(first) && second.score === first.score && first.id !== room.tiebreak?.winnerId;
     return first.score > 0 && !tied ? first.id : null;
   }
@@ -3701,6 +3836,9 @@ export class RoomManager {
               decider: room.run.deciderIndex != null && room.run.current === room.run.deciderIndex,
               spinMs: INTRO_SPIN_MS,
               tutorialMs: INTRO_TUTORIAL_MS,
+              // The game before: who won it (a time of its own at the start of the intro, `resultMs`).
+              resultMs: room.introResultMs || 0,
+              previous: room.introResultMs ? room.run.lastGame : null,
             }
           : null,
       audio: null,

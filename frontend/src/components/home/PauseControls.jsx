@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import Icon from "./Icon.jsx";
 import { useApp } from "../../lib/store.jsx";
+import { useOwnerDebug } from "../../lib/ownerView.js";
 
 // Every player: "Reportar", left of "Pausar", sends the question being played to be checked later (with its settings
 // and who was in the room; RoomManager.questionReport). The first tap turns it red to confirm, the second sends it, and
@@ -54,9 +55,10 @@ export function ReportButton({ room, onError }) {
 // Owners only: "Saltar", beside "Reportar", goes straight to the next question for everyone, with no reveal and no
 // countdown (RoomManager.skipRound; what was already answered still counts). Not on the room's central device.
 export function SkipButton({ room, onError }) {
-  const { user, isCentral, skipRound } = useApp();
+  const { isCentral, skipRound } = useApp();
+  const debug = useOwnerDebug();
   const [busy, setBusy] = useState(false);
-  if (isCentral || user?.role !== "owner" || !["countdown", "playing", "reveal"].includes(room?.phase)) return null;
+  if (isCentral || !debug || !["countdown", "playing", "reveal"].includes(room?.phase)) return null;
 
   async function onClick() {
     if (busy) return;

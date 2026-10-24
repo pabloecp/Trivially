@@ -2,6 +2,8 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { play } from "../../lib/sounds.js";
 import { findMode } from "../../modes/index.js";
 import Icon from "./Icon.jsx";
+import Avatar from "./Avatar.jsx";
+import { winsText } from "../../modes/playlist/Standings.jsx";
 import { ReelMarker } from "./SlowReel.jsx";
 import { MATCH_KINDS, TUTORIALS, VARIANT_TUTORIALS, findVariant, variantsFor } from "./matchInfo.js";
 import "../../styles/match.css";
@@ -184,6 +186,40 @@ function Tutorial({ intro, leftMs }) {
   );
 }
 
+// Who won the game before (from the second game on): the winner big, every player's points in it and, under each
+// name, the games won so far in the match (they start again from zero in the next game's scoreboard).
+function PreviousGame({ intro, players }) {
+  const prev = intro.previous;
+  const winsOf = (id) => players.find((p) => p.id === id)?.wins || 0;
+  const winners = prev.ranking.filter((r) => prev.winners.includes(r.id));
+  const title = !winners.length
+    ? "Nadie ganó este juego"
+    : winners.length === 1
+    ? `¡Ganó ${winners[0].name}!`
+    : `¡Empate entre ${winners.map((w) => w.name).join(" y ")}!`;
+  return (
+    <div className="tv-mi-prev">
+      <p className="tv-mono-label">Resultado del juego {intro.index}</p>
+      <h2 className="tv-mi-prev-title">{title}</h2>
+      <ul className="tv-mi-prev-list">
+        {prev.ranking.map((r) => {
+          const wins = winsOf(r.id);
+          return (
+            <li key={r.id} className={`tv-mi-prev-row${prev.winners.includes(r.id) ? " is-winner" : ""}`}>
+              <Avatar name={r.name} avatar={r.avatar} />
+              <span className="tv-mi-prev-name">{r.name}</span>
+              {/* The same as the match summary: the games won so far, and the points of this game. */}
+              <span className="tv-mi-prev-wins">{winsText(wins)}</span>
+              <span className="tv-mi-prev-points">{r.points}</span>
+            </li>
+          );
+        })}
+      </ul>
+      <p className="tv-mi-prev-note">El marcador empieza de cero en el siguiente juego</p>
+    </div>
+  );
+}
+
 /**
  * Before each game of a public match (the room's "intro" phase): a roulette picks the game among the ones still to
  * play, then a short tutorial of it for 5 s. It takes the room screen's main card (Home), beside the room's column,
@@ -194,7 +230,10 @@ export default function MatchIntro({ room }) {
   const now = useServerNow(room, 200);
 
   if (!intro) return null;
-  const elapsed = now - room.phaseStartedAt;
+  // From the second game on, the intro starts with the result of the game before (`resultMs`), then the roulette.
+  const resultMs = intro.previous ? intro.resultMs || 0 : 0;
+  const showingResult = now - room.phaseStartedAt < resultMs;
+  const elapsed = now - room.phaseStartedAt - resultMs;
   const spinning = elapsed < intro.spinMs;
   const leftMs = intro.spinMs + intro.tutorialMs - elapsed;
   const kind = MATCH_KINDS[room.matchmaking?.kind];
@@ -231,8 +270,10 @@ export default function MatchIntro({ room }) {
             </ol>
           )}
         </header>
-        {spinning ? (
-          <Roulette key={`r${intro.index}`} intro={intro} startedAt={room.phaseStartedAt} clockOffset={room.clockOffset || 0} color={kind?.color || classic?.color} kind={room.matchmaking?.kind || "casual"} />
+        {showingResult ? (
+          <PreviousGame intro={intro} players={room.players} />
+        ) : spinning ? (
+          <Roulette key={`r${intro.index}`} intro={intro} startedAt={room.phaseStartedAt + resultMs} clockOffset={room.clockOffset || 0} color={kind?.color || classic?.color} kind={room.matchmaking?.kind || "casual"} />
         ) : (
           <Tutorial key={`t${intro.index}`} intro={intro} leftMs={leftMs} />
         )}

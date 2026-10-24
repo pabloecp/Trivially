@@ -2,7 +2,7 @@ import Icon from "../../components/home/Icon.jsx";
 import { findMode } from "../index.js";
 import "../../styles/playlist.css";
 
-export const winsText = (n) => `${n} ${n === 1 ? "juego" : "juegos"}`;
+export const winsText = (n) => `${n} ${n === 1 ? "victoria" : "victorias"}`;
 
 // The playlist's games, small, in the kicker's line of its results: each game's icon in its colour, with a tick once
 // the playlist is over (it's one match, so every game was played). Their names are only read out to screen readers.

@@ -2,6 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import { api, setAuthToken } from "./api.js";
 import { emitAck, emitAckWithin, getSocket, reconnectSocket, setSocketTokenProvider } from "./socket.js";
 import { BACKEND_URL } from "./config.js";
+import { getForcedGames, getOwnerView } from "./ownerView.js";
 
 const AppContext = createContext(null);
 
@@ -362,10 +363,16 @@ export function AppProvider({ children }) {
     };
     // The server asks whether this tab is alive when the same account tries to enter a room from somewhere else.
     const onPing = (ack) => ack?.();
-    const onKicked = ({ code, blocked } = {}) => {
+    const onKicked = ({ code, blocked, reason } = {}) => {
       if (code !== roomCodeRef.current) return;
       clearRoom();
-      setKickedNotice(blocked ? "El anfitrión te bloqueó de la sala" : "El anfitrión te sacó de la sala. Puedes volver con el código");
+      setKickedNotice(
+        reason === "inactivo"
+          ? "Saliste de la partida por inactividad"
+          : blocked
+          ? "El anfitrión te bloqueó de la sala"
+          : "El anfitrión te sacó de la sala. Puedes volver con el código"
+      );
     };
     s.on("room:state", onState);
     s.on("room:kicked", onKicked);
@@ -568,7 +575,9 @@ export function AppProvider({ children }) {
       async findMatch(kind, size = 5, explicitUser) {
         const current = explicitUser || userRef.current;
         if (!current?.name) throw new Error("Debes identificarte antes de buscar partida");
-        const res = await emitAck("match:find", { user: current, kind, size });
+        // An owner in debug view can force the games of its match (the admin panel); the server checks the account.
+        const force = current.role === "owner" && getOwnerView() === "debug" ? getForcedGames() : [];
+        const res = await emitAck("match:find", { user: current, kind, size, ...(force.length ? { force } : {}) });
         if (!res.ok) throw new Error(res.error);
         return enterRoom(res.state);
       },
@@ -781,6 +790,9 @@ export function AppProvider({ children }) {
         if (res.state) setRoom(res.state);
       },
 
+      // "Sigo aquí": the answer to the card that asks an idle player of a public match if they are still there.
+      async stillHere() { await emitAck("room:present", null); },
+
       async setReady(ready) { await emitAck("room:ready", ready); },
       async startGame() { const res = await emitAck("room:start"); if (!res.ok) throw new Error(res.error); },
       async restartGame() { const res = await emitAck("room:restart"); if (!res.ok) throw new Error(res.error); },
@@ -791,7 +803,7 @@ export function AppProvider({ children }) {
       // Owners: reports the question being played, to check it later.
       async reportQuestion() { const res = await emitAck("room:report"); if (!res.ok) throw new Error(res.error); },
       // An owner's test bot for Farsante's lobby (to try it alone).
-      async addTestBot() { const res = await emitAck("room:addTestBot"); if (!res.ok) throw new Error(res.error); },
+      async addTestBot() { const res = await emitAck("room:addTestBot", null); if (!res.ok) throw new Error(res.error); },
       async skipRound() { const res = await emitAck("room:skipRound"); if (!res.ok) throw new Error(res.error); },
 
       async answer(answerTextOrId) {
