@@ -1,7 +1,10 @@
+import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import Avatar from "./Avatar.jsx";
 import CountUp from "./CountUp.jsx";
 import Icon from "./Icon.jsx";
 import PlayerName from "./PlayerName.jsx";
+import { usePhone } from "./RoomChat.jsx";
 
 // The pieces of the results screens (MatchResults, the playlist's intermission and its final screen, all in the same
 // frame): the podium in its card, the ranking in its card beside it, and a player's rounds as dots.
@@ -44,7 +47,11 @@ export function Podium({ players, score = (p) => <><CountUp value={p.score} /> p
               <Avatar name={p.name} avatar={p.avatar} className={place === 1 ? "tv-avatar--lg" : ""} />
             </span>
             <span className="tv-podium-who">
-              <PlayerName player={p} className="tv-podium-name" />
+              {/* On phones only the first name, whole ("Mateo", not "Mateo Com…"); the ranking beside keeps the full one. */}
+              <PlayerName player={p} className="tv-podium-name">
+                <span className="tv-podium-full">{p.name}</span>
+                <span className="tv-podium-first">{p.name.trim().split(/\s+/)[0]}</span>
+              </PlayerName>
             </span>
             <span className="tv-podium-score">{score(p)}</span>
             <div className="tv-podium-block">
@@ -56,6 +63,21 @@ export function Podium({ players, score = (p) => <><CountUp value={p.score} /> p
       })}
     </div>
   );
+}
+
+// What comes next at the end of a match (the buttons, or "Esperando a que el anfitrión…"). On phones it's a bar pinned to
+// the bottom like the room's (.tv-roomdock), so the buttons are always in sight however long the results are: put at
+// the end of the app's frame, outside the results, whose container (and entrance animations) would pin it to them.
+export function ResultsFoot({ children }) {
+  const phone = usePhone();
+  // The app's frame, once it's on the page (on the first render it may not be yet).
+  const [frame, setFrame] = useState(null);
+  useEffect(() => {
+    if (phone) setFrame(document.querySelector(".tv-app") || document.body);
+  }, [phone]);
+  const foot = <footer className="tv-res-foot">{children}</footer>;
+  if (!phone) return foot;
+  return frame ? createPortal(<div className="tv-res-dock">{foot}</div>, frame) : null;
 }
 
 // The podium in its card, titled "Podio", with a short line on the right ("2 jugadores · 5 preguntas").

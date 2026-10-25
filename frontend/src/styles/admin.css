@@ -27,12 +27,12 @@
 .tv-admin-head > div { flex: 1; min-width: 0; }
 .tv-admin-title { margin: 0; font-family: var(--tv-display); font-weight: 800; font-size: 26px; line-height: 1; }
 .tv-admin-x { flex-shrink: 0; width: 40px; height: 40px; border-radius: 12px; }
-/* Two even rows: the three small tools side by side, then the games (wide) and the sound (narrow); the blocks of a row
-   are all as tall as its tallest. */
+/* Three even rows: the three small tools (Vista, Bot de prueba, Tipo de sonido), then the games across the whole width,
+   then the two looks (results and scoreboard) half and half; the blocks of a row are all as tall as its tallest. */
 .tv-admin-body { min-height: 0; overscroll-behavior: contain; display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); align-items: stretch; gap: 14px; padding: 4px 22px 22px; overflow-y: auto; }
 .tv-admin-block.is-third { grid-column: span 2; align-content: start; }
-.tv-admin-block.is-wide { grid-column: span 4; align-content: start; }
-.tv-admin-block.is-narrow { grid-column: span 2; align-content: start; }
+.tv-admin-block.is-half { grid-column: span 3; align-content: start; }
+.tv-admin-block.is-full { grid-column: 1 / -1; align-content: start; }
 .tv-admin-block-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .tv-admin-block-head .tv-admin-clear { flex-shrink: 0; transition: opacity 0.15s; }
 .tv-admin-clear.is-hidden { visibility: hidden; opacity: 0; }
@@ -40,8 +40,8 @@
 @media (max-width: 760px) {
   .tv-admin-body { grid-template-columns: minmax(0, 1fr); }
   .tv-admin-block.is-third,
-  .tv-admin-block.is-wide,
-  .tv-admin-block.is-narrow { grid-column: auto; }
+  .tv-admin-block.is-half,
+  .tv-admin-block.is-full { grid-column: auto; }
 }
 .tv-admin-warn { margin: 0; padding: 10px 12px; border-radius: 12px; background: rgba(255, 214, 10, 0.1); font-weight: 800; font-size: 13px; color: var(--p-accent-text, #ffd60a); }
 .tv-admin-block { display: grid; gap: 10px; padding: 16px; border-radius: 20px; background: var(--tv-option-bg); }
@@ -72,8 +72,6 @@
 }
 @media (max-width: 760px) { .tv-admin-games { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 .tv-admin-dot { display: grid; place-items: center; flex-shrink: 0; width: 30px; height: 30px; border-radius: 8px; background: var(--c2); color: var(--on); }
-.tv-admin-links { display: flex; flex-wrap: wrap; gap: 8px; }
-.tv-admin-links .tv-btn { text-decoration: none; }
 /* "Tipo de sonido": the chosen set between ‹ and ›, small square buttons with their edge (grey, like the site's neutral
    ones); the name changes with a soft rise. */
 .tv-sound-pick { display: flex; align-items: center; gap: 8px; }
@@ -109,7 +107,3 @@
 .tv-afk h2 { margin: 0; font-family: var(--tv-display); font-weight: 800; font-size: 30px; line-height: 1; }
 .tv-afk p { margin: 0; font-weight: 700; font-size: 15px; line-height: 1.4; color: var(--tv-text-2); }
 .tv-afk .tv-btn { width: 100%; }
-
-/* "Juegos de Casual" spans both rows of the right side's two narrow blocks ("Tipo de sonido" and "Pantalla de resultados"). */
-.tv-admin-block.is-wide { grid-row: span 2; }
-@media (max-width: 760px) { .tv-admin-block.is-wide { grid-row: auto; } }

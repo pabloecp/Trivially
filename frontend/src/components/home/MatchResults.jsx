@@ -3,7 +3,7 @@ import Confetti from "./Confetti.jsx";
 import Icon from "./Icon.jsx";
 import MatchSummarySheet from "./MatchSummarySheet.jsx";
 import PartyPanel from "./PartyPanel.jsx";
-import { Podium, PodiumCard, countText } from "./ResultsParts.jsx";
+import { Podium, PodiumCard, ResultsFoot, countText } from "./ResultsParts.jsx";
 import { useApp } from "../../lib/store.jsx";
 import { withSound } from "../../lib/sounds.js";
 import { findMode } from "../../modes/index.js";
@@ -81,17 +81,18 @@ function MatchEnd({ room, color }) {
 
           {err && <p className="tv-lobby-error" role="alert">{err}</p>}
 
-          <footer className="tv-res-foot">
+          <ResultsFoot>
             {isHost ? (
               <>
                 <button
                   type="button"
                   className="tv-btn tv-c-neutral tv-res-btn"
                   data-sound="back"
+                  aria-label="Volver al lobby"
                   onClick={() => restartGame().catch((e) => setErr(e.message || "No se pudo volver al lobby"))}
                 >
                   <Icon name="back" size={18} />
-                  Volver al lobby
+                  <span className="tv-res-btn-label">Volver al lobby</span>
                 </button>
                 <button
                   className={`tv-btn tv-c-${color} tv-shine tv-res-btn`}
@@ -109,7 +110,7 @@ function MatchEnd({ room, color }) {
                 Esperando a que el anfitrión decida qué jugar
               </p>
             )}
-          </footer>
+          </ResultsFoot>
         </section>
       </div>
       <PartyPanel room={room} scores display={isCentral} onToast={setErr} />

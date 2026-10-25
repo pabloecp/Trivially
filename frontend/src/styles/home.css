@@ -2255,6 +2255,40 @@
   .tv-res-btn { flex: none; width: 100%; }
 }
 
+/* The podium's names: the full one, and on phones only the first name, whole (ResultsParts' Podium). */
+.tv-podium-first { display: none; }
+/* Phones: what comes next is a bar pinned to the bottom, like the room's (ResultsFoot): the way back as a square with
+   only its icon on the left, the main button filling the rest; the page leaves its height free at the end. */
+@media (max-width: 640px) {
+  .tv-podium-full { display: none; }
+  .tv-podium-first { display: inline; }
+
+  .tv-app:has(.tv-res-dock) .tv-main { padding-bottom: calc(100px + env(safe-area-inset-bottom)); }
+  .tv-res-dock {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 30;
+    padding: 18px 16px calc(12px + env(safe-area-inset-bottom));
+    background: linear-gradient(to top, var(--tv-bg) 72%, transparent);
+  }
+  .tv-res-dock .tv-res-foot { flex-direction: row; align-items: stretch; gap: 10px; width: 100%; padding-top: 0; animation: tvUp 0.45s var(--tv-ease-out) 0.2s backwards; }
+  .tv-app .tv-res-dock .tv-res-btn { flex: 1; width: auto; height: 60px; border-radius: 18px; font-size: 20px; }
+  .tv-app .tv-res-dock .tv-res-btn.tv-c-neutral { flex: none; width: 60px; padding: 0; }
+  .tv-res-dock .tv-res-btn.tv-c-neutral .tv-res-btn-label { display: none; }
+  .tv-res-dock .tv-res-wait {
+    flex: 1;
+    justify-content: center;
+    min-height: 60px;
+    padding: 0 14px;
+    border-radius: 18px;
+    background: var(--tv-surface);
+    box-shadow: inset 0 0 0 1px var(--tv-line);
+    text-align: center;
+  }
+}
+
 
 
 /* Confetti */
@@ -3006,7 +3040,7 @@ fieldset.tv-setsec-body { display: grid; gap: 18px; min-width: 0; margin: 0; pad
 @media (max-width: 640px) {
   /* They take the place of the usual top bar, the room's column and the start button on the game's card. */
   .tv-app:has(.tv-roomhead) .tv-topbar,
-  .tv-room:not(.tv-game) > .tv-party,
+  .tv-room:not(.tv-game):not(:has(> .tv-room-main > .tv-mcard)) > .tv-party,
   .tv-mstage .tv-mstage-start,
   .tv-mstage .tv-mstage-wait,
   .tv-mstage .tv-lobby-error { display: none; }
@@ -3015,6 +3049,12 @@ fieldset.tv-setsec-body { display: grid; gap: 18px; min-width: 0; margin: 0; pad
     padding-bottom: calc(100px + env(safe-area-inset-bottom));
   }
   .tv-room { min-height: 0; }
+  /* A public match's or a Clásico's intro (the roulette and the tutorial, .tv-mcard) keeps the scoreboard under its
+     card, where half the phone was left empty: the card is only as tall as what it holds. Without the chat, which on
+     phones has its own button. */
+  .tv-room:has(> .tv-room-main > .tv-mcard) .tv-mcard { flex: none; }
+  .tv-room:has(> .tv-room-main > .tv-mcard) > .tv-party { flex: none; width: 100%; }
+  .tv-room:has(> .tv-room-main > .tv-mcard) > .tv-party :is(.tv-party-chatbar, .tv-party-chatwrap) { display: none; }
 
   .tv-roomhead {
     position: fixed;

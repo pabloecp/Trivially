@@ -3,7 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import Confetti from "../../components/home/Confetti.jsx";
 import Icon from "../../components/home/Icon.jsx";
 import MatchSummarySheet from "../../components/home/MatchSummarySheet.jsx";
-import { Podium, PodiumCard, countText } from "../../components/home/ResultsParts.jsx";
+import { Podium, PodiumCard, ResultsFoot, countText } from "../../components/home/ResultsParts.jsx";
 import PartyPanel from "../../components/home/PartyPanel.jsx";
 import TvShell from "../../components/home/TvShell.jsx";
 import { useApp } from "../../lib/store.jsx";
@@ -138,13 +138,14 @@ function ResultsScreen() {
 
           {err && <p className="tv-lobby-error" role="alert">{err}</p>}
 
-          <footer className="tv-res-foot">
+          <ResultsFoot>
             {publicMatch && !isCentral ? (
               // Nobody is the host of a public match: everyone chooses for themselves.
               <>
                 <button
                   className="tv-btn tv-c-neutral tv-res-btn"
                   data-sound="back"
+                  aria-label="Salir"
                   onClick={() => {
                     leaveRoom();
                     nav(exitPath(room), { replace: true });
@@ -152,7 +153,7 @@ function ResultsScreen() {
                   type="button"
                 >
                   <Icon name="logout" size={18} />
-                  Salir
+                  <span className="tv-res-btn-label">Salir</span>
                 </button>
                 <button
                   className={`tv-btn tv-c-${MATCH_KINDS[publicMatch.kind]?.color || "music"} tv-shine tv-res-btn`}
@@ -179,11 +180,12 @@ function ResultsScreen() {
                 <button
                   className="tv-btn tv-c-neutral tv-res-btn"
                   data-sound="back"
+                  aria-label={classic ? "Volver al lobby" : "Volver a la playlist"}
                   onClick={() => restartGame().catch((e) => setErr(e.message || "No se pudo volver al lobby"))}
                   type="button"
                 >
                   <Icon name="back" size={18} />
-                  {classic ? "Volver al lobby" : "Volver a la playlist"}
+                  <span className="tv-res-btn-label">{classic ? "Volver al lobby" : "Volver a la playlist"}</span>
                 </button>
                 {run && (
                   <button
@@ -202,7 +204,7 @@ function ResultsScreen() {
                 Esperando a que el anfitrión decida qué jugar
               </p>
             )}
-          </footer>
+          </ResultsFoot>
         </section>
       </div>
       <PartyPanel room={room} display={isCentral} onToast={setErr} />

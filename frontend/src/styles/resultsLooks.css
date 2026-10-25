@@ -48,7 +48,7 @@
 .rl-tut.is-color .tv-clock-track { stroke: rgba(255, 255, 255, 0.22); }
 .rl-tut.is-color .tv-mi-clock .tv-clock-fill { stroke: #fff; }
 .rl-tut.is-color .tv-clock-num { color: #fff; }
-.rl-tut.is-neutro { background: var(--tv-option-bg); box-shadow: inset 0 0 0 2px var(--c2); }
+.rl-tut.is-neutro { background: var(--tv-option-bg); }
 .rl-tut.is-neutro .tv-mi-step,
 .rl-tut.is-neutro .tv-mi-bar { background: var(--tv-surface); }
 .rl-tut.is-neutro .tv-clock-track { stroke: var(--tv-surface); }

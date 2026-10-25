@@ -10,8 +10,6 @@ import { findVariant, variantsFor } from "./matchInfo.js";
 import "../../styles/admin.css";
 
 const MAX_FORCED = 5;
-// The design board (figma/, git-ignored) is served from the owner's own computer.
-const BOARD_URL = "http://localhost:5199";
 
 /**
  * The owners' panel (the gear in the top bar, owners only): for debugging. "Vista" switches between the owner's tools
@@ -114,20 +112,12 @@ export default function AdminPanel({ open, onClose }) {
               </div>
 
               <div className="tv-admin-block is-third">
-                <h3>Tablero de diseño</h3>
-                <div className="tv-admin-links">
-                  <a className="tv-btn tv-btn--sm tv-c-site" href={`${BOARD_URL}/`} target="_blank" rel="noopener noreferrer">
-                    Colores y botones
-                  </a>
-                  <a className="tv-btn tv-btn--sm tv-c-site" href={`${BOARD_URL}/pantallas.html`} target="_blank" rel="noopener noreferrer">
-                    Pantallas
-                  </a>
-                </div>
-                <p className="tv-admin-hint">Se abren desde tu computadora: npm run dev lo enciende si tienes la carpeta figma/.</p>
+                <h3>Tipo de sonido</h3>
+                <p className="tv-admin-hint">Solo en este navegador; los jugadores escuchan Madera.</p>
+                <SoundPacks />
               </div>
 
-
-              <div className="tv-admin-block is-wide">
+              <div className="tv-admin-block is-full">
                 {/* The way back to random sits beside the title and keeps its place while hidden: nothing moves when it shows. */}
                 <div className="tv-admin-block-head">
                   <h3>Juegos de Casual</h3>
@@ -176,14 +166,8 @@ export default function AdminPanel({ open, onClose }) {
                 </div>
               </div>
 
-              <div className="tv-admin-block is-narrow">
-                <h3>Tipo de sonido</h3>
-                <p className="tv-admin-hint">Solo en este navegador; los jugadores escuchan Madera.</p>
-                <SoundPacks />
-              </div>
-
               {/* The results screens this owner sees, to try the new looks in real matches (lib/ownerView.js). */}
-              <div className="tv-admin-block is-narrow">
+              <div className="tv-admin-block is-half">
                 <h3>Pantalla de resultados</h3>
                 <Segmented
                   label="Estilo"
@@ -207,7 +191,7 @@ export default function AdminPanel({ open, onClose }) {
               </div>
 
               {/* How the scoreboard of a public match says who already won a game (lib/ownerView.js). */}
-              <div className="tv-admin-block is-narrow">
+              <div className="tv-admin-block is-half">
                 <h3>Marcador</h3>
                 <Segmented
                   label="Marcador"

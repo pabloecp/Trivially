@@ -64,7 +64,8 @@ export function RoomHeader({ room, onToast }) {
         <AppIcon small />
       </div>
       <div className="tv-roomhead-text">
-        <span className="tv-roomhead-kicker">{publicKind ? "Partida pública" : `Sala · ${role}`}</span>
+        {/* One word, so it's never cut ("SALA · ANFIT…"): the code (or the kind) and the faces already say which room. */}
+        <span className="tv-roomhead-kicker">{publicKind ? "Pública" : role}</span>
         <span className="tv-roomhead-code">{publicKind || shownCode(room.code, codeHidden)}</span>
       </div>
       <button
