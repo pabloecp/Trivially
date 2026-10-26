@@ -3,15 +3,15 @@ import { buildHistoryQuestions, HISTORY_MODE } from "../history/historyQuestions
 import { QUESTION_CATEGORIES, toQuestion } from "../questions/questionSchema.js";
 
 // Rango (game id "historia", the old one on purpose): its settings (config.history), how a match draws its events, the
-// range each one is shown with and how an answer is scored. It has two ways of playing ("Modos de Juego",
-// `config.history.styles`): "linea" (Línea del tiempo: players choose an event's year on a timeline) and "cifras"
-// (a question whose answer is a number, chosen on a bar). Either way the exact answer gets every point, and the closer
-// a guess lands, the more it gets.
+// range each one is shown with and how an answer is scored. Its only way of playing (`config.history.styles`) is
+// "cifras" (a question whose answer is a number, chosen on a bar). The exact answer gets every point, and the closer
+// a guess lands, the more it gets. "linea" (Línea del tiempo: players choose an event's year on a timeline) is no
+// longer a way to choose, but its events and timelines are still here (toHistoryTrack, yearRange).
 
 export const HISTORY_GAME = HISTORY_MODE;
 export const HISTORY_LEVELS = ["facil", "media", "dificil"];
 // Its ways of playing, and the type of question each one plays.
-export const HISTORY_STYLES = ["linea", "cifras"];
+export const HISTORY_STYLES = ["cifras"];
 const styleOf = (q) => (q.type === "number" ? "cifras" : "linea");
 // Older clients send one `difficulty`, "mixta" being all three.
 export const HISTORY_DIFFICULTIES = [...HISTORY_LEVELS, "mixta"];
@@ -64,8 +64,8 @@ const levelsOf = (difficulty) => (difficulty === "mixta" ? [...HISTORY_LEVELS] :
 
 /**
  * Merges a settings change into the current Rango settings, keeping every value valid. Any list may be left empty
- * (the match then has no questions and can't start). The ages an older client may still send are ignored, and
- * settings from before "Cifras" (no `styles`) get both ways ticked.
+ * (the match then has no questions and can't start). The ages an older client may still send are ignored, and so
+ * are the `styles`: Cifras is the only way to play.
  */
 export function mergeHistoryConfig(current, change = {}) {
   const base = { ...defaultHistoryConfig(), ...current };
@@ -73,7 +73,7 @@ export function mergeHistoryConfig(current, change = {}) {
   return {
     rounds: change.rounds != null ? clamp(change.rounds, HISTORY_LIMITS.rounds, base.rounds) : base.rounds,
     roundMs: change.roundMs != null ? clamp(change.roundMs, HISTORY_LIMITS.roundMs, base.roundMs) : base.roundMs,
-    styles: pickList(change.styles, HISTORY_STYLES, pickList(base.styles, HISTORY_STYLES, [...HISTORY_STYLES])),
+    styles: [...HISTORY_STYLES],
     categories: pickList(change.categories, TOPICS, base.categories),
     difficulties: pickList(change.difficulties, HISTORY_LEVELS, levelsOf(change.difficulty) || baseLevels),
   };

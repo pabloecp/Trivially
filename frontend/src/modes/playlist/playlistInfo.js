@@ -54,15 +54,12 @@ const secondsText = (ms) => `${Math.round(ms / 1000)} s`;
 
 /**
  * One line with an item's rounds and seconds per round, the same words in every game: "5 rondas · 15 s por ronda".
- * Campo de minas by turns counts the seconds of a turn ("5 s por turno"); played only as a race, of the whole round.
  */
 export function itemSummary(item) {
   const c = item.config || {};
-  const byTurns = item.game === "minas" && !(c.styles?.length === 1 && c.styles[0] === "carrera");
-  const ms = item.game === "minas" ? (byTurns ? c.turnMs : c.roundMs) : c.roundMs;
   return [
     c.rounds ? `${c.rounds} ${c.rounds === 1 ? "ronda" : "rondas"}` : null,
-    ms ? `${secondsText(ms)} por ${byTurns ? "turno" : "ronda"}` : null,
+    c.roundMs ? `${secondsText(c.roundMs)} por ronda` : null,
   ]
     .filter(Boolean)
     .join(" · ");

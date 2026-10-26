@@ -3,7 +3,7 @@ import { readLocalCatalog } from "../catalog/catalogProvider.js";
 import { eraOf } from "./history.js";
 import { RoomManager } from "./roomManager.js";
 
-// Rango (Línea del tiempo): an event, a timeline and a year per player; the closer, the more points. Ties for first place are settled
+// Rango: a question, a line (a year on a timeline, or a number on a bar) and a guess per player; the closer, the more points. Ties for first place are settled
 // like Geografía's: the first to confirm the exact year wins, otherwise the closest.
 const mgr = new RoomManager({ catalog: readLocalCatalog(), store: { users: {} } });
 const stop = (room) => clearTimeout(room.timer);
@@ -14,7 +14,7 @@ mgr.addPlayer(room, { id: "p-3", name: "Luis", socketId: "s3" });
 // Lobby: the settings, and how many events they can draw. There are no ages: every category is ticked.
 assert.equal(room.config.history.eras, undefined);
 assert.equal(room.config.history.categories.length, 10);
-assert.ok(mgr.publicState(room).questionsReady > 200);
+assert.ok(mgr.publicState(room).questionsReady > 100);
 assert.equal(mgr.publicState(room).songsReady, undefined);
 assert.throws(() => mgr.updateConfig(room, "p-2", { history: { rounds: 10 } }), /permisos/);
 const all = mgr.publicState(room).questionsReady;
@@ -33,13 +33,13 @@ mgr.updateConfig(room, "host-1", { history: { categories: [], difficulties: ["fa
 assert.equal(mgr.publicState(room).questionsReady, 0, "no category ticked: nothing to play");
 assert.throws(() => mgr.start(room, "host-1"), /Solo hay 0 preguntas/);
 mgr.updateConfig(room, "host-1", { history: { categories: [...new Set(mgr.historyQuestions.map((q) => q.category))] } });
-mgr.updateConfig(room, "host-1", { history: { rounds: 5, roundMs: 20000, styles: ["linea"] } });
+mgr.updateConfig(room, "host-1", { history: { rounds: 5, roundMs: 20000 } });
 
 mgr.start(room, "host-1");
 stop(room);
 assert.equal(room.tracks.length, 5);
 assert.equal(room.totalRounds, 5);
-assert.equal(new Set(room.tracks.map((t) => t.year)).size, 5);
+assert.equal(new Set(room.tracks.map((t) => t.value)).size, 5);
 
 // The rounds below use known events.
 const known = (r, year, min, max) => Object.assign(r.tracks[r.currentRound], { kind: "linea", year, min, max, era: eraOf(year), prompt: "Evento de prueba" });

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { readLocalCatalog } from "../catalog/catalogProvider.js";
-import { CLASSIC_GAMES, findVariant, INTRO_MS, MATCH_QUESTION_MS } from "./matchmaking.js";
+import { CLASSIC_GAMES, findVariant, INTRO_MS, MATCH_QUESTION_MS, variantsFor } from "./matchmaking.js";
 import { RoomManager } from "./roomManager.js";
 
 // Clásico (Normal and Extendido): a private room's host starts a match like a Casual one, with its roulette, tutorials
@@ -19,7 +19,10 @@ for (const [game, count] of Object.entries(CLASSIC_GAMES)) {
   clearTimeout(room.timer);
   assert.equal(room.run.classic, game);
   assert.equal(room.run.items.length, count, `${game}: ${count} juegos`);
-  assert.equal(new Set(room.run.items.map((i) => i.variant)).size, count, "never the same variant twice");
+  // Each variant once while there are some left (a Clásico extendido has more games than variants), never one right after itself.
+  // (The test's bank has no four-option questions, so one variant can't be played.)
+  assert.equal(new Set(room.run.items.map((i) => i.variant)).size, Math.min(count, variantsFor("casual").length - 1), "never the same variant twice");
+  assert.ok(room.run.items.every((item, i) => i === 0 || item.variant !== room.run.items[i - 1].variant), "nor twice in a row");
   assert.equal(room.totalRounds, count * 5);
   assert.equal(room.phase, "intro", "every game opens with its roulette");
   assert.equal(room.phaseEndsAt - room.phaseStartedAt, INTRO_MS);

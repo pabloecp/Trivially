@@ -37,9 +37,7 @@ export const gamesFor = (kind) => (kind === "casual" ? CASUAL_GAMES : MATCH_GAME
 export const MATCH_VARIANTS = [
   { id: "trivia-cerradas", game: "opciones", config: { formats: ["opciones"] } },
   { id: "trivia-abiertas", game: "opciones", config: { formats: ["escribir"] } },
-  { id: "rango-linea", game: "historia", config: { styles: ["linea"] } },
   { id: "rango-cifras", game: "historia", config: { styles: ["cifras"] } },
-  { id: "minas-turnos", game: "minas", config: { styles: ["turnos"] } },
   { id: "minas-carrera", game: "minas", config: { styles: ["carrera"] } },
 ];
 export const findVariant = (id) => MATCH_VARIANTS.find((v) => v.id === id) || null;

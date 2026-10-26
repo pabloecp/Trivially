@@ -44,7 +44,7 @@ assert.equal(list.items[0].id, "a1");
 assert.notEqual(list.items[1].id, "a1", "repeated ids get a new one");
 assert.ok(list.items[2].id, "items without an id get one");
 assert.deepEqual(list.items[0].config.categories, ["historia"]);
-assert.deepEqual(list.items[0].config.styles, ["turnos"]);
+assert.deepEqual(list.items[0].config.styles, ["carrera"], "the only way of playing");
 assert.equal(list.items[0].config.rounds, 25, "at most 25 boards");
 assert.equal(list.items[1].config.rounds, 5, "at least 5 songs");
 assert.deepEqual(list.items[1].config.formats, ["opciones"]);
@@ -97,7 +97,7 @@ assert.deepEqual(
   "each game's rounds together, in the list's order"
 );
 assert.ok(
-  room.tracks.slice(0, 5).every((t) => t.category === "historia" && t.difficulty === "facil" && t.style === "turnos"),
+  room.tracks.slice(0, 5).every((t) => t.category === "historia" && t.difficulty === "facil" && t.style === "carrera"),
   "with its own settings"
 );
 assert.ok(room.tracks.slice(10).every((t) => t.category === "deportes"));

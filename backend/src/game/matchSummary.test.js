@@ -54,10 +54,9 @@ mgr.destroy(room);
 
 // Rango: a close year scores without being right ("near").
 const hist = mgr.create({ host: { id: "x", name: "X", socketId: "x1" }, game: "historia" });
-mgr.updateConfig(hist, "x", { history: { styles: ["linea"] } });
 mgr.start(hist, "x");
 stop(hist);
-Object.assign(hist.tracks[0], { year: 1989, min: 1930, max: 2030, era: "contemporanea", prompt: "Cae el Muro" });
+Object.assign(hist.tracks[0], { kind: "linea", year: 1989, min: 1930, max: 2030, era: "contemporanea", prompt: "Cae el Muro" });
 mgr.beginPlaying(hist);
 stop(hist);
 mgr.placeYear(hist, "x", { year: 1985, lock: true });

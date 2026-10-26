@@ -78,8 +78,7 @@ export const GAME_MODES = [
     path: (room) => `/mundo/${urlCode(room.code)}`,
   },
   {
-    // Rango: get as close as you can on a range. Its steps are general, since "Línea del tiempo" (an event's year) is
-    // only its first way of playing. The id is the old one on purpose (see GAME_IDS on the server).
+    // Rango: get as close as you can on a range. Its steps are general, in case it gets other ways of playing. The id is the old one on purpose (see GAME_IDS on the server).
     id: "historia",
     name: "Rango",
     kind: "extra",
@@ -105,11 +104,9 @@ export const GAME_MODES = [
     color: "mines",
     icon: "bomb",
     available: true,
-    // How it's played by turns; the lobby shows the steps of the ticked ways (minesInfo.js STYLES).
+    // How it's played, as a race (minesInfo.js STYLES).
     steps: MINES_STYLES[0].steps,
-    ready: (room) =>
-      room.config?.mines?.styles?.length !== 0 &&
-      (room.questionsReady == null || room.questionsReady >= (room.config?.mines?.rounds || 3)),
+    ready: (room) => room.questionsReady == null || room.questionsReady >= (room.config?.mines?.rounds || 3),
     Lobby: MinesLobbyPanel,
     // A prompt and a 5 × 5 board (modes/minas/Game.jsx).
     path: (room) => `/minas/${urlCode(room.code)}`,

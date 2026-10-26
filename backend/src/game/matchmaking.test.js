@@ -228,7 +228,7 @@ assert.equal(new Set(many.matchmaking.games).size, many.matchmaking.games.length
 assert.ok(many.matchmaking.games.every((v) => variantsFor("casual").includes(v)));
 
 // The roulette draws each game with one way of playing it, and that way is all its rounds have.
-assert.equal(MATCH_VARIANTS.length, 6);
+assert.equal(MATCH_VARIANTS.length, 4);
 assert.deepEqual(variantsFor("competitivo"), MATCH_VARIANTS.map((v) => v.id));
 assert.deepEqual(matchItemConfig("opciones", "casual", { variant: "trivia-cerradas" }).formats, ["opciones"]);
 assert.deepEqual(matchItemConfig("minas", "casual", { variant: "minas-carrera" }).styles, ["carrera"]);
@@ -243,7 +243,6 @@ for (const [i, variant] of ways.matchmaking.games.entries()) {
 for (const track of ways.tracks) {
   const variant = ways.matchmaking.games[track.playlistItem];
   if (variant.startsWith("trivia")) assert.equal(track.type === "choice" ? "trivia-cerradas" : "trivia-abiertas", variant, `${variant}: ${track.type}`);
-  if (variant === "rango-linea") assert.equal(track.kind, "linea");
   if (variant === "rango-cifras") assert.equal(track.kind, "cifras");
   if (variant.startsWith("minas")) assert.equal(`minas-${track.style}`, variant);
 }

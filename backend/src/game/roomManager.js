@@ -750,7 +750,11 @@ export class RoomManager {
     this.startMixed(room);
   }
 
-  /** The `count` games of a public match of `kind` (or of a Clásico), each a variant with its settings, all different. */
+  /**
+   * The `count` games of a public match of `kind` (or of a Clásico), each a variant with its settings, all different
+   * while there are variants left. A Clásico extendido asks for more games than there are variants: the draw then
+   * starts over, never with the variant it just played.
+   */
   drawMatchItems(room, kind, count) {
     // The times go in after cleaning, as they are: a public match is quicker than a game's own settings allow.
     const configFor = (game, variant, easy) => ({
@@ -758,16 +762,22 @@ export class RoomManager {
       ...matchTimes(game),
     });
     const items = [];
-    for (const variant of pickMatchGames(null, Math.random, variantsFor(kind))) {
-      if (items.length >= count) break;
-      const { game } = findVariant(variant);
-      const item = { id: `m${items.length}`, game, variant, config: configFor(game, variant, false) };
-      if (!this.itemProblem(room, item, room.config, { exact: true })) {
-        items.push(item);
-        continue;
+    while (items.length < count) {
+      const before = items.length;
+      const order = pickMatchGames(null, Math.random, variantsFor(kind));
+      if (order.length > 1 && order[0] === items.at(-1)?.variant) order.push(order.shift());
+      for (const variant of order) {
+        if (items.length >= count) break;
+        const { game } = findVariant(variant);
+        const item = { id: `m${items.length}`, game, variant, config: configFor(game, variant, false) };
+        if (!this.itemProblem(room, item, room.config, { exact: true })) {
+          items.push(item);
+          continue;
+        }
+        const easier = { ...item, config: configFor(game, variant, true) };
+        if (!this.itemProblem(room, easier, room.config, { exact: true })) items.push(easier);
       }
-      const easier = { ...item, config: configFor(game, variant, true) };
-      if (!this.itemProblem(room, easier, room.config, { exact: true })) items.push(easier);
+      if (items.length === before) break;
     }
     if (!items.length) throw new Error("No hay juegos disponibles para esta partida");
     return items;
@@ -1352,7 +1362,6 @@ export class RoomManager {
     }
     if (item.game === HISTORY_GAME) {
       const history = mergeHistoryConfig(config);
-      if (!history.styles.length) return "Elige al menos un modo de juego.";
       if (!history.categories.length) return "Elige al menos una categoría.";
       if (!history.difficulties.length) return "Elige al menos una dificultad.";
       const n = exact
@@ -1362,7 +1371,6 @@ export class RoomManager {
     }
     if (item.game === MINES_GAME) {
       const mines = mergeMinesConfig(config);
-      if (!mines.styles.length) return "Elige al menos un modo de juego.";
       if (!mines.categories.length) return "Elige al menos una categoría.";
       if (!mines.difficulties.length) return "Elige al menos una dificultad.";
       const n = exact ? pickMinesQuestions(this.minesQuestions, mines).length : this.cachedCount(item, () => countMinesQuestions(this.minesQuestions, mines));
@@ -1765,7 +1773,6 @@ export class RoomManager {
     } else if (room.game === HISTORY_GAME) {
       // Rango: the match's questions are drawn now, each with its own range (of years, or of the figure's bar).
       const history = mergeHistoryConfig(room.config.history);
-      if (!history.styles.length) throw new Error("Elige al menos un modo de juego");
       const tracks = pickHistoryQuestions(this.historyQuestions, history);
       if (tracks.length < history.rounds) {
         throw new Error(`Solo hay ${tracks.length} preguntas con esos ajustes para ${history.rounds} rondas. Baja las rondas o elige más categorías.`);
@@ -1776,7 +1783,6 @@ export class RoomManager {
     } else if (room.game === MINES_GAME) {
       // Campo de minas: the match's boards are drawn now, each with its cells shuffled.
       const mines = mergeMinesConfig(room.config.mines);
-      if (!mines.styles.length) throw new Error("Elige al menos un modo de juego");
       if (!mines.categories.length) throw new Error("Elige al menos una categoría");
       if (!mines.difficulties.length) throw new Error("Elige al menos una dificultad");
       const tracks = pickMinesQuestions(this.minesQuestions, mines);

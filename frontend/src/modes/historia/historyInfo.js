@@ -2,12 +2,8 @@
 import { TOPICS } from "../quiz/quizInfo.js";
 export { TOPICS };
 
-// Its ways of playing, "Modos de Juego" (HISTORY_STYLES on the server), both ticked in a new room: "Línea del tiempo"
-// (an event's year on a timeline) and "Cifras" (a question whose answer is a number, on a bar).
-export const STYLES = [
-  { id: "linea", label: "Línea del tiempo", hint: "Elige en qué año pasó cada acontecimiento" },
-  { id: "cifras", label: "Cifras", hint: "Elige el número en una barra" },
-];
+// Its way of playing (HISTORY_STYLES on the server): "Cifras", a question whose answer is a number, on a bar.
+export const STYLES = [{ id: "cifras", label: "Cifras", hint: "Elige el número en una barra" }];
 
 // The harder, the deeper the mode's colour; mixed takes the site's accent (colours in styles/history.css).
 export const DIFFICULTIES = [
@@ -32,7 +28,7 @@ export function historyConfig(room) {
   return {
     rounds: history.rounds || 5,
     roundMs: history.roundMs || 10000,
-    styles: history.styles ?? STYLES.map((s) => s.id),
+    styles: STYLES.map((s) => s.id),
     categories: history.categories ?? TOPICS.map((t) => t.id),
     difficulties: history.difficulties ?? LEVELS.map((d) => d.id),
   };

@@ -16,10 +16,11 @@ const luis = room.players.get("p-3");
 
 // Lobby: the settings, and how many boards they can draw.
 assert.equal(room.config.mines.categories.length, 10);
-assert.deepEqual(room.config.mines.styles, ["turnos", "carrera"], "both ways of playing ticked by default");
-mgr.updateConfig(room, "host-1", { mines: { styles: [] } });
-assert.throws(() => mgr.start(room, "host-1"), /al menos un modo de juego/, "no way of playing ticked: the match can't start");
+assert.deepEqual(room.config.mines.styles, ["carrera"], "the race is the only way of playing");
 mgr.updateConfig(room, "host-1", { mines: { styles: ["turnos"] } });
+assert.deepEqual(room.config.mines.styles, ["carrera"], "an older client's turns become the race");
+// The turns engine is still there (a tiebreak is played by turns): the story below forces the rounds to be by turns.
+const byTurns = (r) => r.tracks.forEach((t) => (t.style = "turnos"));
 assert.equal(mgr.publicState(room).questionsReady, 300);
 assert.equal(mgr.publicState(room).songsReady, undefined);
 mgr.updateConfig(room, "host-1", { mines: { categories: [] } });
@@ -41,7 +42,8 @@ stop(room);
 assert.equal(room.tracks.length, 5);
 assert.equal(room.totalRounds, 5);
 assert.equal(room.tracks[0].cells.length, 25);
-assert.ok(room.tracks.every((t) => t.style === "turnos"));
+assert.ok(room.tracks.every((t) => t.style === "carrera"));
+byTurns(room);
 // The story below plays three rounds: the match is cut to its first three boards (5 is the fewest the settings allow).
 room.tracks = room.tracks.slice(0, 3);
 room.totalRounds = 3;
@@ -213,9 +215,9 @@ assert.equal(room.phase, "lobby");
 // A kicked player isn't waited for either.
 const r2 = mgr.create({ host: { id: "a", name: "A", socketId: "ka" }, mode: "multi", game: "minas" });
 mgr.addPlayer(r2, { id: "b", name: "B", socketId: "kb" });
-mgr.updateConfig(r2, "a", { mines: { styles: ["turnos"] } });
 mgr.start(r2, "a");
 stop(r2);
+byTurns(r2);
 known(r2);
 mgr.beginPlaying(r2);
 stop(r2);
@@ -230,9 +232,9 @@ stop(r2);
 const r3 = mgr.create({ host: { id: "h", name: "H", socketId: "ph" }, mode: "multi", game: "minas" });
 mgr.addPlayer(r3, { id: "g", name: "G", socketId: "pg" });
 mgr.addPlayer(r3, { id: "k", name: "K", socketId: "pk" });
-mgr.updateConfig(r3, "h", { mines: { styles: ["turnos"] } });
 mgr.start(r3, "h");
 stop(r3);
+byTurns(r3);
 known(r3);
 mgr.beginPlaying(r3);
 stop(r3);
@@ -318,16 +320,15 @@ assert.equal(race.phase, "playing", "Dani is still standing");
 mgr.pickCell(race, "c2", { cell: 23, turn: 1 });
 stop(race);
 assert.equal(race.phase, "reveal", "nobody left standing");
-// Both ways ticked: the rounds share them evenly, and each round is played its own way.
+// Every round of a match is a race, whatever ways an older client asks for; only a tiebreak is played by turns.
 const mix = mgr.create({ host: { id: "m1", name: "M", socketId: "m1" }, mode: "multi", game: "minas" });
 mgr.updateConfig(mix, "m1", { mines: { styles: ["turnos", "carrera"], rounds: 6, turnMs: 5000, roundMs: 30000 } });
 mgr.start(mix, "m1");
 stop(mix);
-assert.deepEqual(mix.tracks.map((t) => t.style).sort(), ["carrera", "carrera", "carrera", "turnos", "turnos", "turnos"]);
-mix.currentRound = mix.tracks.findIndex((t) => t.style === "carrera");
+assert.deepEqual(mix.tracks.map((t) => t.style), Array(6).fill("carrera"));
 assert.equal(mgr.roundMs(mix), 30000, "a race round lasts the round's seconds");
 assert.equal(mgr.publicState(mix).question.style, "carrera");
-mix.currentRound = mix.tracks.findIndex((t) => t.style === "turnos");
-assert.equal(mgr.roundMs(mix), 5000, "a round by turns lasts the turn's seconds");
+byTurns(mix);
+assert.equal(mgr.roundMs(mix), 5000, "a round by turns (a tiebreak) lasts the turn's seconds");
 
 console.log("minesRoom.test ok");

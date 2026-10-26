@@ -53,9 +53,7 @@ export const gamesFor = (kind) => (kind === "casual" ? CASUAL_GAMES : MATCH_GAME
 export const MATCH_VARIANTS = [
   { id: "trivia-cerradas", game: "opciones", way: "Cerradas", hint: "Elige entre 4 opciones" },
   { id: "trivia-abiertas", game: "opciones", way: "Abiertas", hint: "Escribe la respuesta" },
-  { id: "rango-linea", game: "historia", way: "Línea del tiempo", hint: "El año de un suceso" },
   { id: "rango-cifras", game: "historia", way: "Cifras", hint: "Un número en una barra" },
-  { id: "minas-turnos", game: "minas", way: "Por turnos", hint: "Una casilla por turno" },
   { id: "minas-carrera", game: "minas", way: "Carrera", hint: "Todas las que puedas" },
 ];
 /** A variant by its id; an older server's plain game id is that game with no way. */
@@ -79,20 +77,10 @@ export const VARIANT_TUTORIALS = {
     { icon: "keyboard", text: "Escribe la respuesta: no hace falta que sea exacta" },
     { icon: "bolt", text: "Acierta rápido: hasta 1000 puntos por ronda" },
   ],
-  "rango-linea": [
-    { icon: "calendar", text: "Te diremos un suceso de la historia" },
-    { icon: "target", text: "Marca en la línea el año en que pasó" },
-    { icon: "star", text: "Más cerca, más puntos: el año exacto vale 1000" },
-  ],
   "rango-cifras": [
     { icon: "info", text: "Te haremos una pregunta cuya respuesta es un número" },
     { icon: "target", text: "Marca el número en la barra" },
     { icon: "star", text: "Más cerca, más puntos: el exacto vale 1000" },
-  ],
-  "minas-turnos": [
-    { icon: "grid", text: "Un tema y un tablero de 25 respuestas" },
-    { icon: "users", text: "Por turnos: cada uno toca una casilla y espera a los demás" },
-    { icon: "bomb", text: "Si pisas una mina, quedas fuera de la ronda" },
   ],
   "minas-carrera": [
     { icon: "grid", text: "Un tema y un tablero de 25 respuestas" },
@@ -109,13 +97,13 @@ export const TUTORIALS = {
     { icon: "bolt", text: "Acierta rápido: hasta 1000 puntos por ronda" },
   ],
   historia: [
-    { icon: "info", text: "Te diremos un suceso o una pregunta con cifra" },
-    { icon: "target", text: "Marca el año o el número en la línea" },
+    { icon: "info", text: "Te haremos una pregunta cuya respuesta es un número" },
+    { icon: "target", text: "Marca el número en la barra" },
     { icon: "star", text: "Más cerca, más puntos: el exacto vale 1000" },
   ],
   minas: [
     { icon: "grid", text: "Un tema y un tablero de 25 respuestas" },
-    { icon: "check", text: "Toca las correctas: cada acierto vale más" },
+    { icon: "bolt", text: "Carrera: toca todas las correctas que puedas, rápido" },
     { icon: "bomb", text: "Si pisas una mina, quedas fuera de la ronda" },
   ],
   musica: [

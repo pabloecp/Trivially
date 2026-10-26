@@ -3,20 +3,20 @@ import { QUESTION_CATEGORIES, toQuestion } from "../questions/questionSchema.js"
 
 // Campo de minas: its settings (config.mines), how a match draws its boards and how a hit is scored. Each round is a
 // prompt ("Países de Europa") and a 5 × 5 board of answers, some right and some mines. The first to pick a cell keeps
-// it. A right answer scores; a mine leaves the player out until the next round, with the points they had. Two ways to
-// play it (`style`): "turnos", where every player still in picks one cell per turn and the turn waits for them all,
-// and "carrera", with no turns: everyone picks as many cells as they like, as fast as they can, until they step on a
-// mine or the round's time runs out. Any of them can be ticked (`styles`, both by default): each round is played in one
-// of the ticked ways, shared as evenly as the rounds allow. The round ends when every right answer has been found or nobody is left standing.
+// it. A right answer scores; a mine leaves the player out until the next round, with the points they had. The only way
+// to play it (`style`) is "carrera", with no turns: everyone picks as many cells as they like, as fast as they can,
+// until they step on a mine or the round's time runs out. The round ends when every right answer has been found or
+// nobody is left standing. "turnos" (every player still in picks one cell per turn and the turn waits for them all) is
+// no longer a way to choose, but it is how a tiebreak is played (pickMinesTiebreak), with `turnMs` as its clock.
 
 export const MINES_GAME = MINES_MODE;
 export const MINES_CATEGORIES = Object.keys(QUESTION_CATEGORIES);
 // The difficulties a match can mix, any of them ticked (all by default), like Trivia's.
 export const MINES_LEVELS = ["facil", "media", "dificil"];
-// The ways to play: one cell per turn, or a race with no turns.
-export const MINES_STYLES = ["turnos", "carrera"];
-// Same limits as the settings on screen (frontend/src/modes/minas/minesInfo.js). `turnMs` is the time of each turn
-// ("turnos") and `roundMs` the time of a whole round ("carrera").
+// The ways to play: a race with no turns.
+export const MINES_STYLES = ["carrera"];
+// Same limits as the settings on screen (frontend/src/modes/minas/minesInfo.js). `turnMs` is the time of each turn of
+// a tiebreak and `roundMs` the time of a whole round ("carrera").
 export const MINES_LIMITS = {
   rounds: { min: 3, max: 25 },
   turnMs: { min: 5000, max: 25000 },
@@ -53,11 +53,9 @@ const pickList = (change, allowed, fallback) => (Array.isArray(change) ? allowed
  */
 export function mergeMinesConfig(current, change = {}) {
   const base = { ...defaultMinesConfig(), ...current };
-  // Rooms (and clients) from before could only choose one way: `style`.
-  if (!Array.isArray(current?.styles) && MINES_STYLES.includes(current?.style)) base.styles = [current.style];
-  const oneStyle = MINES_STYLES.includes(change.style) ? [change.style] : base.styles;
   return {
-    styles: pickList(change.styles, MINES_STYLES, oneStyle),
+    // There is a single way to play now: whatever a room or an older client has ("turnos") becomes the race.
+    styles: [...MINES_STYLES],
     rounds: change.rounds != null ? clamp(change.rounds, MINES_LIMITS.rounds, base.rounds) : base.rounds,
     turnMs: change.turnMs != null ? clamp(change.turnMs, MINES_LIMITS.turnMs, base.turnMs) : base.turnMs,
     roundMs: change.roundMs != null ? clamp(change.roundMs, MINES_LIMITS.roundMs, base.roundMs) : base.roundMs,
@@ -132,7 +130,7 @@ export function toMinesBoard(q) {
 
 /**
  * The boards of a match: the chosen categories share the rounds as evenly as they can (5 rounds of three categories =
- * 2 + 2 + 1), in random order. Each board gets the way it's played (`style`), the ticked ones shared the same way.
+ * 2 + 2 + 1), in random order. Each board gets the way it's played (`style`).
  */
 export function pickMinesQuestions(bank, config) {
   const settings = mergeMinesConfig(config);
@@ -144,9 +142,7 @@ export function pickMinesQuestions(bank, config) {
       if (pool.length) picked.push(pool.pop());
     }
   }
-  const styles = settings.styles.length ? settings.styles : [MINES_STYLES[0]];
-  const roundStyles = shuffle(picked.map((_, i) => styles[i % styles.length]));
-  return shuffle(picked).map((q, i) => ({ ...toMinesBoard(q), style: roundStyles[i] }));
+  return shuffle(picked).map((q) => ({ ...toMinesBoard(q), style: MINES_STYLES[0] }));
 }
 
 // A tiebreak board always has this many mines, whatever the number of tied players.

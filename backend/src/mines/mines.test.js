@@ -39,18 +39,19 @@ assert.ok(questionErrors({ ...board, data: { correct: "España" } }).length, "no
 
 // Settings stay within their limits.
 assert.deepEqual(mergeMinesConfig(), {
-  styles: ["turnos", "carrera"],
+  styles: ["carrera"],
   rounds: 3,
   turnMs: 5000,
   roundMs: 30000,
   categories: MINES_CATEGORIES,
   difficulties: ["facil", "media", "dificil"],
 });
+// The race is the only way to play: whatever a room or an older client sends ("turnos" was one) comes out as it.
 assert.deepEqual(mergeMinesConfig({}, { styles: ["carrera", "a ciegas"] }).styles, ["carrera"], "an unknown way to play is ignored");
-assert.deepEqual(mergeMinesConfig({}, { styles: [] }).styles, [], "every way can be unticked");
-// An older client or room with a single `style`.
-assert.deepEqual(mergeMinesConfig({}, { style: "carrera" }).styles, ["carrera"]);
-assert.deepEqual(mergeMinesConfig({ style: "carrera" }, { style: "a ciegas" }).styles, ["carrera"]);
+assert.deepEqual(mergeMinesConfig({}, { styles: ["turnos"] }).styles, ["carrera"]);
+assert.deepEqual(mergeMinesConfig({}, { styles: [] }).styles, ["carrera"], "the way of playing can't be unticked");
+assert.deepEqual(mergeMinesConfig({ styles: ["turnos"] }, {}).styles, ["carrera"]);
+assert.deepEqual(mergeMinesConfig({}, { style: "turnos" }).styles, ["carrera"]);
 assert.equal(mergeMinesConfig({}, { roundMs: 999999 }).roundMs, 50000);
 assert.equal(mergeMinesConfig({}, { roundMs: 1000 }).roundMs, 30000);
 assert.equal(mergeMinesConfig({}, { rounds: 99 }).rounds, 25);
