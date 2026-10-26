@@ -196,6 +196,10 @@
 .tv-brand { transition: opacity 0.22s ease, visibility 0s linear 0s; }
 .tv-brand.is-hidden { opacity: 0; visibility: hidden; transition: opacity 0.12s ease, visibility 0s linear 0.12s; }
 .tv-brand { display: flex; align-items: center; flex-shrink: 0; gap: 10px; padding: 4px; border-radius: 14px; }
+/* The logo is a link to Inicio, but it still looks like the brand: no button behind it, it only brightens on hover. */
+.tv-app button.tv-brand { margin: 0; border: 0; background: none; color: inherit; font: inherit; cursor: pointer; }
+.tv-brand:hover { filter: brightness(1.15); }
+.tv-brand:active { transform: scale(0.97); }
 .tv-brand-name {
   font-family: var(--tv-logo-font);
   font-weight: 800;
