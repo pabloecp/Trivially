@@ -3158,6 +3158,8 @@ fieldset.tv-setsec-body { display: grid; gap: 18px; min-width: 0; margin: 0; pad
   /* "Elige un modo de juego" is long: smaller, on two lines if it needs them, never wider than the bar. */
   .tv-app .tv-roomdock-start { overflow: hidden; }
   .tv-app .tv-roomdock-start.is-pick { padding: 0 12px; font-size: 16px; line-height: 1.15; white-space: normal; text-align: center; }
+  /* Locked, it sits over the page's tiles: dimmed without opacity, so nothing behind it shows through. */
+  .tv-app .tv-roomdock-start:disabled { opacity: 1; filter: brightness(0.6) saturate(0.6); }
   /* The chat has its own button in the bottom bar: not again in the players' drop-down. */
   .tv-party--drop .tv-party-chatwrap,
   .tv-party--drop .tv-party-chatbar { display: none; }
