@@ -17,8 +17,9 @@ import RoomSounds from "./lib/RoomSounds.jsx";
 import VolumeMenu from "./components/home/VolumeMenu.jsx";
 import CentralOffer from "./components/home/CentralOffer.jsx";
 import CentralRequests from "./components/home/CentralRequests.jsx";
+import StillThere from "./components/home/StillThere.jsx";
 import { useRoomExit } from "./components/home/TvTopbar.jsx";
-import { roomPath } from "./modes/index.js";
+import { isInlineMatch, roomPath } from "./modes/index.js";
 import { HIDDEN_SLUG, useHiddenCode } from "./lib/hiddenCode.js";
 
 // Screens tied to one room, e.g. /game/XOTRIV.
@@ -28,6 +29,26 @@ const ROOM_SCREEN = /^\/(?:lobby|game|quiz|mundo|historia|minas|lluvia|rey|farsa
 function LobbyRedirect() {
   const { code } = useParams();
   return <Navigate to={`/sala/${code}`} replace />;
+}
+
+const GAME_SCREENS = {
+  opciones: QuizGame,
+  musica: Game,
+  mundo: GeoGame,
+  historia: HistoryGame,
+  minas: MinesGame,
+  lluvia: RainGame,
+  rey: ReyGame,
+  farsante: FarsanteGame,
+};
+
+// The room's address: Home (the room screen) while it waits or spins its roulette, and, in a public match or a Clásico,
+// the game being played, on the same address. Inicio, /jugar and the room all use it, so Home stays mounted
+// between them (its seam animations depend on it).
+function RoomScreen() {
+  const { room } = useApp();
+  const Screen = isInlineMatch(room) && room.phase !== "lobby" && room.phase !== "intro" ? GAME_SCREENS[room.game] : null;
+  return Screen ? <Screen /> : <Home />;
 }
 
 function Guard({ children }) {
@@ -65,6 +86,23 @@ function RoomNavigator() {
   const target = room ? roomPath(room, codeHidden) : null;
   const lastTarget = useRef(null);
   const lastPath = useRef(pathname);
+  const lastPhase = useRef(null);
+
+  // A public match's intro (roulette and tutorial) and its games share the room's address, but each is a screen that
+  // mounts anew (RoomScreen). The room's column stays as it is (its entrance is cut, `html.tv-seamless-side`) and only
+  // the left side changes: the game's screen fades in over the intro (`html.tv-seamless`, which also cuts what's
+  // inside it from flying in on its own).
+  useLayoutEffect(() => {
+    const phase = room?.phase ?? null;
+    const before = lastPhase.current;
+    lastPhase.current = phase;
+    if (!room?.matchmaking && !room?.run?.classic) return;
+    const cls = before === "intro" && phase !== "intro" ? "tv-seamless" : phase === "intro" && before !== "intro" ? "tv-seamless-side" : null;
+    if (!cls) return;
+    const root = document.documentElement;
+    root.classList.add(cls);
+    setTimeout(() => root.classList.remove(cls), 1400);
+  }, [room?.phase]);
 
   // A layout effect, so a Back that lands on Home is turned around before anything is painted.
   useLayoutEffect(() => {
@@ -125,13 +163,15 @@ export default function App() {
       <CentralOffer />
       {/* The host, on every screen: players asking to use another device of theirs as the central one. */}
       <CentralRequests />
+      {/* A public match asks an idle player if they are still there. */}
+      <StillThere />
       <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/sala/:code" element={<Home />} />
+        <Route path="/" element={<RoomScreen />} />
+        <Route path="/sala/:code" element={<RoomScreen />} />
         {/* Inicio is "¿Cómo quieres jugar?" (Pública and Privada: components/home/PlayPage.jsx); each option has its address
             (Pública's two tabs, /jugar/casual and /jugar/competitivo, and /jugar/privada). */}
         <Route path="/jugar" element={<Navigate to="/" replace />} />
-        <Route path="/jugar/:option" element={<Home />} />
+        <Route path="/jugar/:option" element={<RoomScreen />} />
         <Route path="/lobby/:code" element={<LobbyRedirect />} />
         <Route path="/game/:code" element={<Game />} />
         <Route path="/quiz/:code" element={<QuizGame />} />
@@ -149,7 +189,7 @@ export default function App() {
         <Route path="/play/*" element={<Navigate to="/" replace />} />
         <Route path="/musica" element={<Navigate to="/" replace />} />
         <Route path="/login" element={<Login />} />
-        {/* The leaderboard is hidden for now; its page is still in pages/LeaderboardPage.jsx. */}
+        {/* The leaderboard was removed: an old link to it goes to Inicio. */}
         <Route path="/leaderboard" element={<Navigate to="/" replace />} />
       </Routes>
     </>

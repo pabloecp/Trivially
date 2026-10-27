@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { readLocalCatalog } from "../catalog/catalogProvider.js";
-import { mixRounds, playlistWinner, playOrder, rankedStandings } from "./playlist.js";
+import { mixRounds, playlistWinner, playOrder, publicRun, rankedStandings } from "./playlist.js";
 import { RoomManager } from "./roomManager.js";
 
 // Playlists: several games played one after another, each with its own settings. Whoever wins the most games wins the
@@ -83,7 +83,6 @@ mgr.updatePlaylist(room, "host-1", {
 list = room.playlist;
 
 // ---- Playing it, in order: one match, every round of the first game, then of the second... ----
-const matchesBefore = mgr.publicState(room).board?.matches || 0;
 mgr.start(room, "host-1");
 stop(room);
 assert.equal(room.game, "minas", "the first game of the list");
@@ -145,7 +144,6 @@ assert.deepEqual(
 );
 assert.equal(pub.run.winnerId, "host-1", "the most points win");
 assert.equal(pub.reveal, null, "nothing of the last round is left on show");
-assert.equal(mgr.publicState(room).board.matches, matchesBefore + 1, "the room's scoreboard counts it once");
 
 // "Volver a jugar": the whole playlist again, from its first game.
 mgr.replay(room, "host-1");
@@ -242,6 +240,18 @@ assert.deepEqual(
 assert.equal(playlistWinner(rankedStandings(run)), "c");
 assert.equal(playlistWinner(rankedStandings({ standings: { a: { wins: 1, points: 9 }, b: { wins: 1, points: 9 } } })), null, "a full tie");
 assert.equal(playlistWinner(rankedStandings({ standings: { a: { wins: 0, points: 900 } } })), null, "nobody won a game");
+
+// The final screen says who won each game of a playlist: whoever scored the most in it (all of them on a tie, nobody
+// when nobody scored), from the points each round gave to its game, in play order.
+{
+  const run = { name: "P", order: "orden", items: [{ game: "opciones" }, { game: "musica" }, { game: "minas" }], standings: {}, games: [], index: 2 };
+  run.itemPoints = { 0: { a: 900, b: 400 }, 1: { a: 300, b: 300 }, 2: { a: 0, b: 0 } };
+  assert.deepEqual(publicRun(run).results, [
+    { variant: "opciones", winners: ["a"] },
+    { variant: "musica", winners: ["a", "b"] },
+    { variant: "minas", winners: [] },
+  ]);
+}
 
 for (const r of mgr.rooms.values()) mgr.destroy(r);
 console.log("playlist ok");

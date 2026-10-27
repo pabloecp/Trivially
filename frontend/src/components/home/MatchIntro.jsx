@@ -2,8 +2,9 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { play } from "../../lib/sounds.js";
 import { findMode } from "../../modes/index.js";
 import Icon from "./Icon.jsx";
-import { ReelMarker } from "./SlowReel.jsx";
 import { MATCH_KINDS, TUTORIALS, VARIANT_TUTORIALS, findVariant, variantsFor } from "./matchInfo.js";
+import { useResultsLook } from "../../lib/ownerView.js";
+import { RetouchBetween } from "./ResultsLooks.jsx";
 import "../../styles/match.css";
 
 // The reel's cards: how wide each one is plus the gap after it (match.css: --mi-card and --mi-gap).
@@ -41,41 +42,37 @@ function variantName(id) {
 const variantsOf = (intro) => intro.variants || intro.games;
 const variantNow = (intro) => intro.variant || intro.game;
 
-// The roulette: the games not played yet (each with its way) go past under the marker, slowing down until the server's
-// pick is in the middle. It's drawn in JS (not a CSS transition) so each card that crosses the marker can tick.
-function Roulette({ intro, startedAt, clockOffset, color, kind }) {
+// The roulette: the games not played yet (each with its way) roll up in one panel that takes the colour of the game in
+// the middle as it goes, until the server's pick is there and it pulses. It's drawn in JS (not a CSS transition) so each
+// game that goes by can tick. In the "neutro" tone the panel stays dark and only the icon's tile takes the game's colour.
+const ROW = 92;
+function PanelRoulette({ intro, startedAt, clockOffset, kind, tone }) {
   const played = variantsOf(intro).slice(0, intro.index);
   const now = variantNow(intro);
   const all = intro.variants ? variantsFor(kind).map((v) => v.id) : intro.games;
   const left = all.filter((v) => !played.includes(v));
   const pool = left.includes(now) ? left : [now];
-  // It starts PAD cards in (a whole number of laps, so the order around the reel never breaks) and stops in its last
-  // lap, with PAD more cards after it.
   const start = Math.ceil(PAD / pool.length) * pool.length;
   const target = start + (LAPS - 1) * pool.length + Math.max(0, pool.indexOf(now));
   const reel = Array.from({ length: target + PAD + 1 }, (_, i) => pool[i % pool.length]);
-  const trackRef = useRef(null);
+  const iconsRef = useRef(null);
+  const namesRef = useRef(null);
+  const [cell, setCell] = useState(start);
   const [landed, setLanded] = useState(false);
 
   useLayoutEffect(() => {
-    const track = trackRef.current;
-    if (!track) return undefined;
-    const from = start * STEP;
-    const end = target * STEP;
     const duration = Math.max(1, intro.spinMs - SETTLE_MS);
-    const place = (x) => {
-      track.style.transform = `translateX(${-x - CARD / 2}px)`;
-    };
     let frame = 0;
     let lastCell = -1;
     const tick = () => {
       const t = Math.min(1, (Date.now() + clockOffset - startedAt) / duration);
-      const x = from + (end - from) * easeOut(t);
-      place(x);
-      const cell = Math.round(x / STEP);
-      if (cell !== lastCell) {
+      const x = start + (target - start) * easeOut(t);
+      for (const el of [iconsRef.current, namesRef.current]) if (el) el.style.transform = `translateY(${-x * ROW}px)`;
+      const c = Math.round(x);
+      if (c !== lastCell) {
         if (lastCell !== -1 && t < 1) play("tap");
-        lastCell = cell;
+        lastCell = c;
+        setCell(c);
       }
       if (t < 1) {
         frame = requestAnimationFrame(tick);
@@ -88,29 +85,41 @@ function Roulette({ intro, startedAt, clockOffset, color, kind }) {
     return () => cancelAnimationFrame(frame);
   }, [target, startedAt]);
 
+  const color = findMode(findVariant(reel[cell] || now).game).color;
+  const strip = (ref, render) => (
+    <div ref={ref} className="rl-spin-strip">
+      {reel.map((id, i) => {
+        const v = findVariant(id);
+        const m = findMode(v.game);
+        return (
+          <div key={i} className={`rl-spin-row tv-c-${m.color}`} aria-hidden={i !== target}>
+            {render(v, m)}
+          </div>
+        );
+      })}
+    </div>
+  );
   return (
-    <div className={`tv-mi-roulette${color ? ` tv-reel-${color}` : ""}${landed ? " is-landed" : ""}`}>
-      <div className="tv-mi-window">
-        <ReelMarker />
-        <div ref={trackRef} className="tv-mi-track">
-          {reel.map((id, i) => {
-            const v = findVariant(id);
-            const m = findMode(v.game);
-            return (
-              <div key={i} className={`tv-mi-card tv-c-${m.color}${landed && i === target ? " is-picked" : ""}`} aria-hidden={i !== target}>
-                {/* The game's icon, and its name and way small under it. */}
-                <span className="tv-mi-card-icon">
-                  <Icon name={m.icon} size={50} strokeWidth={2.2} />
-                </span>
-                <span className="tv-mi-card-name">{m.name}</span>
-                {v.way && <span className="tv-mi-card-way">{v.way}</span>}
-              </div>
-            );
-          })}
+    <div className={`rl-spin is-${tone}${landed ? " is-landed" : ""}`}>
+      <div className={`rl-spin-panel tv-c-${color}`}>
+        <div className="rl-spin-icons">
+          {strip(iconsRef, (v, m) => (
+            <span className="rl-spin-icon">
+              <Icon name={m.icon} size={46} strokeWidth={2.2} />
+            </span>
+          ))}
+        </div>
+        <div className="rl-spin-names">
+          {strip(namesRef, (v, m) => (
+            <span>
+              <b>{m.name}</b>
+              {v.way && <small>{v.way}</small>}
+            </span>
+          ))}
         </div>
       </div>
       <p className="tv-mi-caption" aria-live="polite">
-        {landed ? `¡${variantName(variantNow(intro))}!` : "Eligiendo el juego…"}
+        {landed ? `¡${variantName(now)}!` : "Eligiendo el juego…"}
       </p>
     </div>
   );
@@ -121,7 +130,7 @@ const RING = 119.4;
 
 // The game the roulette picked, with what to do in it, for exactly `tutorialMs` (5 s): a game's round clock counts the
 // seconds down meanwhile, its ring emptying smoothly, and a line beside it empties in the same time, like the ring.
-function Tutorial({ intro, leftMs }) {
+function Tutorial({ intro, leftMs, tone = "color" }) {
   const m = findMode(intro.game);
   const steps = VARIANT_TUTORIALS[intro.variant] || TUTORIALS[intro.game] || m.steps || [];
   const ringRef = useRef(null);
@@ -146,7 +155,7 @@ function Tutorial({ intro, leftMs }) {
   }, []);
   const seconds = Math.max(1, Math.ceil(leftMs / 1000));
   return (
-    <div className={`tv-mi-tutorial tv-c-${m.color}`}>
+    <div className={`tv-mi-tutorial tv-c-${m.color} rl-tut is-${tone}`}>
       <div className="tv-mi-tut-head">
         <span className={`tv-badge tv-c-${m.color} tv-mi-tut-badge`}>
           <Icon name={m.icon} size={34} strokeWidth={2.2} />
@@ -184,6 +193,41 @@ function Tutorial({ intro, leftMs }) {
   );
 }
 
+// Who won the game before (from the second game on): a quiet line with who won it, every player's points in it and,
+// on the right, the games won so far in the match (they start again from zero in the next game's scoreboard), the
+// winners ringed in the match's `color`.
+function PreviousGame({ intro, players, color = "site" }) {
+  const prev = intro.previous;
+  const { style, tone } = useResultsLook();
+  const winsOf = (id) => players.find((p) => p.id === id)?.wins || 0;
+  // Nobody scored (the server gives the game to nobody): it's shown as a tie between everyone.
+  const winners = prev.winners.length ? prev.ranking.filter((r) => prev.winners.includes(r.id)) : prev.ranking;
+  const total = variantsOf(intro).length;
+  const left = total - intro.index;
+  const line =
+    winners.length === 1
+      ? `${winners[0].name.split(" ")[0]} ganó el juego ${intro.index}`
+      : winners.length === 2
+      ? `${winners.map((w) => w.name.split(" ")[0]).join(" y ")} empataron el juego ${intro.index}`
+      : `Empate en el juego ${intro.index}`;
+  return (
+    <div className="tv-mi-prev">
+      <RetouchBetween
+        kicker={`Juego ${intro.index} de ${total}${prev.variant ? ` · ${variantName(prev.variant)}` : ""}`}
+        line={line}
+        note={left > 0 ? `${left === 1 ? "Queda 1 juego" : `Quedan ${left} juegos`} · gana la partida quien gane más juegos` : null}
+        players={prev.ranking}
+        winners={winners.map((w) => w.id)}
+        points={(r) => r.points}
+        wins={(r) => winsOf(r.id)}
+        retouch={style}
+        tone={tone}
+        color={color}
+      />
+    </div>
+  );
+}
+
 /**
  * Before each game of a public match (the room's "intro" phase): a roulette picks the game among the ones still to
  * play, then a short tutorial of it for 5 s. It takes the room screen's main card (Home), beside the room's column,
@@ -194,7 +238,10 @@ export default function MatchIntro({ room }) {
   const now = useServerNow(room, 200);
 
   if (!intro) return null;
-  const elapsed = now - room.phaseStartedAt;
+  // From the second game on, the intro starts with the result of the game before (`resultMs`), then the roulette.
+  const resultMs = intro.previous ? intro.resultMs || 0 : 0;
+  const showingResult = now - room.phaseStartedAt < resultMs;
+  const elapsed = now - room.phaseStartedAt - resultMs;
   const spinning = elapsed < intro.spinMs;
   const leftMs = intro.spinMs + intro.tutorialMs - elapsed;
   const kind = MATCH_KINDS[room.matchmaking?.kind];
@@ -202,6 +249,8 @@ export default function MatchIntro({ room }) {
   const classic = findMode(room.run?.classic);
   const label = kind ? `Partida ${kind.name.toLowerCase()}` : classic?.fullName;
   const total = variantsOf(intro).length;
+  // The roulette and the tutorial in the game's colour, or dark ("neutro", an owner's choice).
+  const { tone } = useResultsLook();
 
   return (
     <section className="tv-mcard tv-mi" aria-label="Siguiente juego">
@@ -231,10 +280,12 @@ export default function MatchIntro({ room }) {
             </ol>
           )}
         </header>
-        {spinning ? (
-          <Roulette key={`r${intro.index}`} intro={intro} startedAt={room.phaseStartedAt} clockOffset={room.clockOffset || 0} color={kind?.color || classic?.color} kind={room.matchmaking?.kind || "casual"} />
+        {showingResult ? (
+          <PreviousGame intro={intro} players={room.players} color={kind?.color || classic?.color} />
+        ) : spinning ? (
+          <PanelRoulette key={`r${intro.index}`} intro={intro} startedAt={room.phaseStartedAt + resultMs} clockOffset={room.clockOffset || 0} kind={room.matchmaking?.kind || "casual"} tone={tone} />
         ) : (
-          <Tutorial key={`t${intro.index}`} intro={intro} leftMs={leftMs} />
+          <Tutorial key={`t${intro.index}`} intro={intro} leftMs={leftMs} tone={tone} />
         )}
       </div>
     </section>

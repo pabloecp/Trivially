@@ -1,0 +1,12 @@
+# Campo de minas (id `minas`, `MINES_GAME`)
+
+Each round: a prompt and a 5 × 5 board of answers, some right, the rest mines.
+
+- **Only carrera** (no turns, as many cells as you like until a mine): `config.mines.styles` is always `["carrera"]` (`mergeMinesConfig` turns whatever is sent, `turnos` included, into it) and the settings show no "Modos de juego" nor seconds per turn. **Por turnos** was removed as a mode; the turn engine stays because a tiebreak is played by turns (`turnMs` is its clock). `isMinesRace` goes by the current round.
+- `config.mines`: `rounds` 3 or 5–25, `turnMs` 5–25 s, `roundMs` 30–50 s (race), `categories`, `difficulties`; an empty list blocks the start. `game/mines.js` (`toMinesBoard`, `minesCounts`, `hitPoints`: 100 per hit).
+- **Boards:** `mines/boards/<category>.js` (10 per difficulty, `[difficulty, prompt, right, mines]`, 25 cells; a mine must be wrong beyond doubt and never stop being so) → `mines/minesQuestions.js` (type `minefield`). `mines:upload`; `minesBank()` prefers Supabase rows.
+- **Turns** (only a tiebreak uses them now): each turn re-enters `setPhase("playing")`; `room.turn` counts them. Socket `game:cell` `{ cell, turn }` (`pickCell`): the first to pick a cell keeps it. A mine leaves the player out (`minefield.out = "mina"`); not picking in time, out (`"tiempo"`, `endTurn`). `checkMinesTurn` moves on when everyone still in picked (also on leave/kick/disconnect, and waits during a pause). The round ends when all right cells are found or nobody is left. No "Saltar".
+- **Race:** one long turn; the time running out ends the round and whoever stands survives.
+- **Tiebreak** (never in a playlist): `pickMinesTiebreak` makes a small board (players + 1 cells, `TIEBREAK_MINES` 2); by turns, no points. Mines in a turn where nobody got through → `revivedTurn`. `settleMinesTiebreak`: one through wins; several play again (`survivors`); nobody → the tie stands (`over`). Tests `game/minesTiebreak.test.js`.
+- `publicState`: prompt from the countdown, cells from `playing`, whether a cell is right only once picked (all at the reveal); players carry `out` and `hits`.
+- **Frontend** `modes/minas/` (`Game.jsx`, `MinesSettings.jsx`, `minesInfo.js`), styles `styles/mines.css` (`--tv-mn-*`, violet). One frame as tall as the screen (`.tv-mines-frame`, `--mines-top`); counters are icon + number only; cell text scales with the board (`--cell-font`, `hyphenate`, `sizeClass`); burst cards for mine / out of time / survived.

@@ -18,6 +18,10 @@ export default function PlayerMenu({ player, isMe, canManage, canCentral = false
   const [confirmHost, setConfirmHost] = useState(false);
   const [confirmBlock, setConfirmBlock] = useState(false);
 
+  // The whole menu in sight: the list scrolls to it when it opens near the bottom.
+  useEffect(() => {
+    ref.current?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  }, []);
   useEffect(() => {
     const away = (e) => {
       if (!ref.current?.parentElement?.contains(e.target)) onClose();

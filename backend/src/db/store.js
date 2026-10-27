@@ -6,7 +6,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { createClient } from "@supabase/supabase-js";
-import { assertCanSetRole, effectiveRole } from "../auth/roles.js";
+import { effectiveRole } from "../auth/roles.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DATA_DIR = path.join(__dirname, "../../data");
@@ -41,15 +41,15 @@ export function sanitizeUser(user) {
 }
 
 /**
- * A match history as it goes out: how many questions each match had and whether it was already reported, never the
+ * A match history as it goes out: how many questions each match had, never the
  * room. Only to the account itself (`answers`), its rounds too, as its match summary shows them (prompt, right answer,
  * what it answered, points), without the questions' ids, which stay on the server.
  */
 function publicHistory(history = [], { answers = false } = {}) {
-  return history.map(({ rounds, room, ...match }) => ({
+  // `reported` is left out: older matches may still carry it from the "Reportar partida" that is gone.
+  return history.map(({ rounds, room, reported, ...match }) => ({
     ...match,
     questions: (rounds || []).length,
-    reported: Boolean(match.reported),
     ...(answers ? { rounds: (rounds || []).map(({ questionId, ...round }) => round) } : {}),
   }));
 }
@@ -133,11 +133,6 @@ function readLocalStore() {
   } catch {
     return emptyStore();
   }
-}
-
-/** Sync loader (local JSON only). Prefer initStore(), which also reads from Supabase. */
-export function loadStore() {
-  return readLocalStore();
 }
 
 /** Loads the store at startup: from Supabase when configured, otherwise from data/store.json. */
@@ -587,86 +582,6 @@ export function applyMatchStats(store, players, { game = null, at = new Date().t
     }
   });
   saveStore(store);
-}
-
-/**
- * "Reportar partida" on the profile: one of this account's own matches (`at`, its time) as a question report
- * (db/reports.js keeps it like the ones sent during a match): every round with its question, the right answer and what
- * they answered. Each match is reported once. Returns the report to save.
- */
-export function reportHistoryMatch(store, userId, at) {
-  const user = store.users[userId];
-  if (!user || user.isGuest) throw new Error("Inicia sesión para reportar una partida");
-  const match = (user.history || []).find((m) => m.at === at);
-  if (!match) throw new Error("Esa partida ya no está en tu historial");
-  if (match.reported) throw new Error("Ya reportaste esta partida");
-  match.reported = true;
-  saveStore(store);
-  return {
-    kind: "partida",
-    game: match.game || "partida",
-    prompt: `Partida de ${match.game || "?"} con ${(match.rounds || []).length} preguntas`,
-    question: null,
-    rounds: match.rounds || [],
-    match: { at: match.at, position: match.position, players: match.players, score: match.score, opponents: match.opponents },
-    room: { code: match.room || null },
-    reporter: { id: user.id, name: user.name, verified: true },
-    createdAt: new Date().toISOString(),
-  };
-}
-
-/** Changes a user's role. `actorId` must outrank both the target's current role and the new one. */
-export function setUserRole(store, actorId, targetId, role) {
-  const actor = store.users[actorId];
-  const target = store.users[targetId];
-  if (!target) throw new Error("Usuario no encontrado");
-  assertCanSetRole(actor, target, role);
-  target.role = role;
-  saveStore(store);
-  return sanitizeUser(target);
-}
-
-/** Registered users for the admin panel, most active first. */
-export function listUsers(store, { search = "", role = "" } = {}) {
-  const q = search.trim().toLowerCase();
-  return Object.values(store.users)
-    .filter((u) => !u.isGuest)
-    .map((u) => ({
-      id: u.id,
-      name: u.name,
-      username: u.username || null,
-      email: u.email || null,
-      avatar: u.avatar,
-      role: effectiveRole(u),
-      googleLinked: Boolean(u.googleId),
-      gamesPlayed: u.stats?.gamesPlayed || 0,
-    }))
-    .filter((u) => !role || u.role === role)
-    .filter((u) => !q || u.name?.toLowerCase().includes(q) || u.username?.includes(q) || u.email?.toLowerCase().includes(q))
-    .sort((a, b) => b.gamesPlayed - a.gamesPlayed || (a.name || "").localeCompare(b.name || ""));
-}
-
-export function leaderboard(store, sort = "totalScore") {
-  const allowed = {
-    totalScore: (a, b) => b.stats.totalScore - a.stats.totalScore,
-    bestScore: (a, b) => b.stats.bestScore - a.stats.bestScore,
-    wins: (a, b) => b.stats.wins - a.stats.wins,
-    gamesPlayed: (a, b) => b.stats.gamesPlayed - a.stats.gamesPlayed,
-    bestStreak: (a, b) => b.stats.bestStreak - a.stats.bestStreak,
-  };
-  const cmp = allowed[sort] || allowed.totalScore;
-  return Object.values(store.users)
-    .filter((u) => !u.isGuest && u.stats && u.stats.gamesPlayed > 0)
-    .sort(cmp)
-    .map((u, i) => ({
-      position: i + 1,
-      id: u.id,
-      name: u.name,
-      username: u.username || null,
-      avatar: u.avatar,
-      isGuest: false,
-      ...u.stats,
-    }));
 }
 
 // Spotify playlists and albums an account added with their link (the "Agregar de Spotify" box of Adivina la canción),

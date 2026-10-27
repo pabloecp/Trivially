@@ -18,8 +18,6 @@ export const GEO_STYLES = ["nombre", "sombra", "bandera"];
 export const SHAPE_PROMPT = "¿De qué país es esta silueta?";
 // The difficulties a match can mix, any of them ticked (all by default), like Trivia's.
 export const GEO_LEVELS = ["facil", "media", "dificil"];
-// Older clients send one `difficulty`, "mixta" being all three.
-export const GEO_DIFFICULTIES = [...GEO_LEVELS, "mixta"];
 // Same limits as the sliders on screen (frontend/src/modes/mundo/geoInfo.js).
 export const GEO_LIMITS = {
   rounds: { min: 5, max: 25 },

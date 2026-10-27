@@ -21,11 +21,9 @@ const STATS = [
   { key: "bestStreak", label: "Mejor racha", color: "purple" },
 ];
 
-// Badge shown on the profile for staff roles (plain users get none).
+// Badge shown on the profile for owners (plain users get none).
 const ROLE_TAGS = {
   owner: { label: "Owner", icon: "star" },
-  admin: { label: "Admin", icon: "crown" },
-  moderator: { label: "Moderador", icon: "check" },
 };
 
 function Notice({ tone, icon, children }) {

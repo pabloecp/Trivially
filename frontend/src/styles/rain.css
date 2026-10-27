@@ -4,9 +4,9 @@
    (fácil, 1 point), yellow (media, 3) and red (difícil, 5). */
 
 :root {
-  --tv-rn-1: #5cc0ff;
-  --tv-rn: #2aa7ff;
-  --tv-rn-edge: #1468a8;
+  --tv-rn-1: #4cc4ff;
+  --tv-rn: #00a2ff;
+  --tv-rn-edge: #0a62a8;
   --tv-rn-on: #ffffff;
   --tv-rn-rgb: 42, 167, 255;
   --tv-rn-text: #5cbcff;

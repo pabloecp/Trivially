@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import Icon from "./Icon.jsx";
 import { useApp } from "../../lib/store.jsx";
+import { useOwnerDebug } from "../../lib/ownerView.js";
 
 // Every player: "Reportar", left of "Pausar", sends the question being played to be checked later (with its settings
 // and who was in the room; RoomManager.questionReport). The first tap turns it red to confirm, the second sends it, and
@@ -54,9 +55,10 @@ export function ReportButton({ room, onError }) {
 // Owners only: "Saltar", beside "Reportar", goes straight to the next question for everyone, with no reveal and no
 // countdown (RoomManager.skipRound; what was already answered still counts). Not on the room's central device.
 export function SkipButton({ room, onError }) {
-  const { user, isCentral, skipRound } = useApp();
+  const { isCentral, skipRound } = useApp();
+  const debug = useOwnerDebug();
   const [busy, setBusy] = useState(false);
-  if (isCentral || user?.role !== "owner" || !["countdown", "playing", "reveal"].includes(room?.phase)) return null;
+  if (isCentral || !debug || !["countdown", "playing", "reveal"].includes(room?.phase)) return null;
 
   async function onClick() {
     if (busy) return;
@@ -81,9 +83,11 @@ export function SkipButton({ room, onError }) {
 // The host's "Pausar" / "Reanudar", next to "Terminar" on every game's screen: it stops the clock for everyone
 // (RoomManager.pause), and nobody can answer until it goes on. On phones only its icon shows, so the round's title
 // keeps its room.
+// The host's, and an owner's in any match (public or private, in the "Owner (debug)" view; the server checks the account).
 export function PauseButton({ room, isHost, onError }) {
-  const { pauseGame } = useApp();
-  if (!isHost || !["countdown", "playing", "reveal"].includes(room?.phase)) return null;
+  const { pauseGame, isCentral } = useApp();
+  const debug = useOwnerDebug();
+  if (isCentral || !(isHost || debug) || !["countdown", "playing", "reveal"].includes(room?.phase)) return null;
   return (
     <button
       type="button"
@@ -99,12 +103,13 @@ export function PauseButton({ room, isHost, onError }) {
 
 // Over a game's stage while the match is paused, so nobody tries to answer.
 export function PauseVeil({ room, isHost }) {
+  const debug = useOwnerDebug();
   if (!room?.paused) return null;
   return (
     <div className="tv-pause-veil" role="status">
       <Icon name="pause" size={30} filled strokeWidth={0} />
       <strong>Partida en pausa</strong>
-      <span>{isHost ? "Toca ▶ arriba para seguir." : "El anfitrión la reanudará en breve."}</span>
+      <span>{isHost || debug ? "Toca ▶ arriba para seguir." : room.hostId ? "El anfitrión la reanudará en breve." : "La partida seguirá en breve."}</span>
     </div>
   );
 }

@@ -6,13 +6,14 @@ import Icon from "./Icon.jsx";
 // next to the icon. The host's way back to "Elige el juego" is in the top bar (TvTopbar).
 // A Clásico (Normal or Extendido) looks like its tile on the menu, like the site's logo: dark with the logo's rainbow
 // frame, the logo itself in place of the game's icon, and its name with its length ("3 juegos") at the top.
-// `swapKey` (/jugar's Casual and Competitivo, one card for both): each time it changes the card plays its swap, a
-// light sweeping across it while its icon, name and steps come in anew (and its colour fades into the new one).
+// A light sweeps across the card once it's in (every game's card, Privada's, a Clásico's). `swapKey` (/jugar's Casual
+// and Competitivo, one card for both): each time it changes the card plays its swap, the light sweeping across it again
+// while its icon, name and steps come in anew (and its colour fades into the new one).
 export default function ModeStage({ mode, extra = null, swapKey = null, children }) {
   const classic = mode.kind === "classic";
   return (
     <section className={`tv-mstage ${classic ? "is-classic" : `tv-c-${mode.color}`}${swapKey != null ? " has-swap" : ""}`} aria-label={mode.name}>
-      {swapKey != null && <span key={`flash-${swapKey}`} className="tv-mstage-flash" aria-hidden="true" />}
+      <span key={`flash-${swapKey ?? mode.id}`} className="tv-mstage-flash" aria-hidden="true" />
       {classic ? (
         <span className="tv-mstage-logo" aria-hidden="true">
           <AppIcon small />

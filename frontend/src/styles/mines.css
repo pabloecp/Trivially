@@ -114,15 +114,12 @@
 .tv-mines-stat-icon { display: grid; place-items: center; flex-shrink: 0; width: 34px; height: 34px; border-radius: 50%; background: var(--sc); color: var(--p-ink); }
 .tv-mines-stat strong { font-family: var(--tv-display); font-weight: 700; font-size: 26px; line-height: 1; color: var(--sc-text, var(--tv-text)); }
 .tv-mines-stat small { font-weight: 800; font-size: 14px; color: var(--tv-text-2); }
-.tv-mines-stat-text { display: grid; gap: 4px; }
 .tv-mines-stat.is-left { --sc: var(--brand); --sc-text: var(--brand-text); }
 .tv-mines-stat.is-left .tv-mines-stat-icon { color: var(--on-brand); }
 .tv-mines-stat.is-left.is-done { --sc: var(--p-ok); --sc-text: var(--p-ok); }
 .tv-mines-stat.is-mines { --sc: var(--p-bad); }
 .tv-mines-stat.is-mines .tv-mines-stat-icon { color: #fff; }
 .tv-mines-stat.is-alive { --sc: var(--p-accent-2); }
-.tv-mines-progress { position: relative; width: 64px; height: 6px; overflow: hidden; border-radius: 999px; background: rgba(255, 255, 255, 0.1); }
-.tv-mines-progress > span { position: absolute; inset: 0 auto 0 0; border-radius: inherit; background: var(--sc); transition: width 0.4s var(--tv-ease-out); }
 
 /* Stepping on a mine: a card pops up in the middle of the board, holds a moment and fades; the board shakes once.
    Running out of time looks the same in amber. */
@@ -314,30 +311,7 @@
 }
 
 /* ---------- The verdict at the reveal, in the counters' row: icon, what happened, the points ---------- */
-.tv-mines-verdict {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  max-width: 100%;
-  height: 40px;
-  padding: 4px 6px 4px 4px;
-  border-radius: 999px;
-  background: var(--tv-option-bg);
-  text-align: left;
-  animation: tvPop 0.5s var(--tv-spring);
-}
-.tv-mines-verdict-icon { display: grid; place-items: center; flex-shrink: 0; width: 32px; height: 32px; border-radius: 50%; color: var(--p-ink); }
-.tv-mines-verdict-text { display: flex; align-items: baseline; gap: 8px; min-width: 0; padding-right: 6px; white-space: nowrap; }
-.tv-mines-verdict-text strong { font-family: var(--tv-display); font-weight: 700; font-size: 17px; color: var(--tv-text); }
-.tv-mines-verdict-text small { overflow: hidden; text-overflow: ellipsis; font-weight: 700; font-size: 13px; color: var(--tv-text-2); }
 /* The points fit inside the coloured ring instead of running over it. */
-.tv-mines-verdict .tv-tag { flex-shrink: 0; padding: 2px 11px; font-size: 14px; line-height: 24px; }
-.tv-mines-verdict--ok { box-shadow: inset 0 0 0 2px var(--p-ok); }
-.tv-mines-verdict--ok .tv-mines-verdict-icon { background: var(--p-ok); }
-.tv-mines-verdict--bad { box-shadow: inset 0 0 0 2px var(--p-bad); animation: tvPop 0.5s var(--tv-spring), tvShake 0.5s ease 0.3s; }
-.tv-mines-verdict--bad .tv-mines-verdict-icon { background: var(--p-bad); color: #fff; }
-.tv-mines-verdict--timeout .tv-mines-verdict-icon { background: var(--p-accent-2); }
 
 @media (max-width: 640px) {
   /* Everything a little tighter, so the board keeps most of the screen. "Terminar" goes under the clock. */
@@ -356,13 +330,8 @@
   .tv-mines-stat-icon svg { width: 14px; height: 14px; }
   .tv-mines-stat strong { font-size: 21px; }
   .tv-mines-stat small { font-size: 12px; }
-  .tv-mines-progress { width: 40px; }
   .tv-mines-burst-card { padding: 14px 22px 12px; border-radius: 22px; }
   .tv-mines-burst-icon { width: 48px; height: 48px; }
-  .tv-mines-verdict .tv-tag { padding: 1px 9px; font-size: 13px; line-height: 20px; }
-  .tv-mines-verdict { height: 34px; gap: 8px; padding: 3px 4px 3px 3px; }
-  .tv-mines-verdict-icon { width: 28px; height: 28px; }
-  .tv-mines-verdict-text strong { font-size: 15px; }
   .tv-mines-board { --press: 3px; --row-min: 44px; --row-gap: 10px; --col-gap: 8px; }
   .tv-mines-cell { padding: 4px 3px; border-radius: 11px; font-size: 12px; box-shadow: 0 3px 0 var(--tv-neutral-edge); }
   .tv-mines-cell.is-long,
@@ -376,12 +345,6 @@
   .tv-mines-cell-mark { top: 2px; right: 2px; width: 15px; height: 15px; }
   .tv-mines-cell-mark svg { width: 10px; height: 10px; }
   .tv-mines-owner { left: 2px; bottom: 2px; min-width: 15px; height: 15px; padding: 0 3px; font-size: 9px; line-height: 15px; }
-  .tv-mines-verdict { height: 34px; gap: 8px; }
-  .tv-mines-verdict-icon { width: 26px; height: 26px; }
-  .tv-mines-verdict-icon svg { width: 16px; height: 16px; }
-  .tv-mines-verdict-text { gap: 6px; }
-  .tv-mines-verdict-text strong { font-size: 15px; }
-  .tv-mines-verdict-text small { font-size: 12px; }
 }
 
 /* Short windows (a laptop, a phone on its side): less air around the board, so its rows stay comfortable. */
@@ -397,8 +360,7 @@
   .tv-mines-cell.is-waiting,
   .tv-mines-cell.is-pending,
   .tv-mines-cell.is-hit,
-  .tv-mines-cell.is-mine,
-  .tv-mines-verdict { animation: none; }
+  .tv-mines-cell.is-mine { animation: none; }
   .tv-mines-burst-card,
   .tv-mines-board.is-boom { animation: none; }
 }

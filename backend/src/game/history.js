@@ -13,8 +13,6 @@ export const HISTORY_LEVELS = ["facil", "media", "dificil"];
 // Its ways of playing, and the type of question each one plays.
 export const HISTORY_STYLES = ["cifras"];
 const styleOf = (q) => (q.type === "number" ? "cifras" : "linea");
-// Older clients send one `difficulty`, "mixta" being all three.
-export const HISTORY_DIFFICULTIES = [...HISTORY_LEVELS, "mixta"];
 // The topics of the events (the ids of QUESTION_CATEGORIES, the same "Categorías" as Trivia).
 const TOPICS = Object.keys(QUESTION_CATEGORIES);
 // Same limits as the settings on screen (frontend/src/modes/historia/historyInfo.js).

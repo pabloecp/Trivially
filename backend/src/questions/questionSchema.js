@@ -12,14 +12,12 @@
 //   minefield        { "correct": ["España", …], "wrong": ["Marruecos", …] }   (Campo de minas: the 25 cells of the
 //                    board, the right answers and the mines)
 //   true_false       { "correct": true }
-//   audio            { "audio_url": "…", "answers": ["Titi Me Preguntó"] }
 // Geografía's questions (mode "mundo") also carry data.kind (capital, flag or location) and data.country (ISO code);
 // they are built from geo/countries.js (geo/geoQuestions.js). Historia's (mode "historia") from history/events.js, and
 // Campo de minas' (mode "minas") from mines/boards/ (mines/minesQuestions.js).
 
-export const QUESTION_TYPES = ["multiple_choice", "open", "true_false", "audio", "location", "year", "number", "minefield"];
-// Types the game can play so far; the others are accepted in the bank but not used yet.
-export const PLAYABLE_TYPES = ["multiple_choice", "open", "location", "year", "number", "minefield"];
+// "true_false" is accepted in the bank but not played yet.
+export const QUESTION_TYPES = ["multiple_choice", "open", "true_false", "location", "year", "number", "minefield"];
 export const QUESTION_DIFFICULTIES = ["facil", "media", "dificil"];
 // Category ids as stored in the database, and the name players see.
 export const QUESTION_CATEGORIES = {

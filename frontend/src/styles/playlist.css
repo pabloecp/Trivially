@@ -241,71 +241,6 @@ input.tv-pl-name:focus { outline: none; }
 .tv-pl-tool .is-up { transform: rotate(-90deg); }
 .tv-pl-tool .is-down { transform: rotate(90deg); }
 
-/* "Añadir juego", and the games to choose from once it's tapped. */
-.tv-pl-add {
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  width: 100%;
-  height: 54px;
-  border: 3px dashed rgba(255, 255, 255, 0.55);
-  border-radius: 20px;
-  background: none;
-  font-family: var(--tv-display);
-  font-weight: 800;
-  font-size: 19px;
-  cursor: pointer;
-  transition: background-color 0.15s ease, border-color 0.15s ease;
-}
-.tv-app .tv-pl-add { color: inherit; }
-.tv-pl-add:hover:not(:disabled) { background: rgba(255, 255, 255, 0.12); border-color: var(--on); }
-.tv-pl-add:disabled { opacity: 0.6; cursor: default; }
-.tv-pl-add-menu {
-  flex-shrink: 0;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  padding: 8px;
-  border-radius: 20px;
-  background: rgba(0, 0, 0, 0.2);
-  animation: tvGrowIn 0.35s cubic-bezier(0.2, 0.9, 0.3, 1.12) backwards;
-}
-.tv-pl-add-game {
-  flex: 1 1 auto;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 7px;
-  height: 44px;
-  padding: 0 14px;
-  border: 0;
-  border-radius: 14px;
-  background: var(--c2);
-  box-shadow: 0 3px 0 var(--edge);
-  font-family: var(--tv-display);
-  font-weight: 700;
-  font-size: 16px;
-  white-space: nowrap;
-  cursor: pointer;
-  transition: transform 0.18s var(--tv-spring), box-shadow 0.18s ease;
-}
-.tv-app .tv-pl-add-game { color: var(--on); }
-.tv-pl-add-game:hover { transform: translateY(-2px); box-shadow: 0 5px 0 var(--edge); }
-.tv-pl-add-game:active { transform: translateY(3px); box-shadow: 0 0 0 var(--edge); }
-.tv-pl-add-cancel {
-  display: grid;
-  place-items: center;
-  width: 44px;
-  height: 44px;
-  border: 0;
-  border-radius: 14px;
-  background: rgba(0, 0, 0, 0.22);
-  cursor: pointer;
-}
-.tv-app .tv-pl-add-cancel { color: inherit; }
-
 /* The foot: the order it's played in, why it can't start yet, and the start button. */
 .tv-pl-foot { flex-shrink: 0; gap: 12px; }
 .tv-pl-order {
@@ -339,19 +274,6 @@ input.tv-pl-name:focus { outline: none; }
 .tv-app .tv-pl-order-btn[aria-checked="true"] { color: var(--c2); }
 .tv-pl-order-btn:disabled { cursor: default; }
 .tv-pl-order-btn:disabled[aria-checked="false"] { opacity: 0.55; }
-.tv-pl-blocked {
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  margin: 0;
-  padding: 10px 12px;
-  border-radius: 14px;
-  background: rgba(0, 0, 0, 0.22);
-  font-weight: 800;
-  font-size: 14px;
-  line-height: 1.3;
-}
-.tv-pl-blocked svg { flex-shrink: 0; margin-top: 1px; }
 
 /* ---------- Beside it: the chosen game's settings, sharing and "Mis playlists" ---------- */
 .tv-pl-edit { display: grid; gap: 16px; min-width: 0; }
@@ -386,44 +308,10 @@ input.tv-pl-name:focus { outline: none; }
 .tv-pl-edit-text { min-width: 0; display: grid; gap: 2px; }
 .tv-pl-edit-kicker { margin: 0; font-weight: 800; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--tv-text-3); }
 .tv-pl-edit-title { margin: 0; font-family: var(--tv-display); font-weight: 800; font-size: 24px; line-height: 1.1; color: var(--tv-text); }
-.tv-pl-hint {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin: 0;
-  padding: 16px;
-  border-radius: 18px;
-  background: var(--tv-option-bg);
-  color: var(--tv-text-2);
-  font-weight: 700;
-  line-height: 1.35;
-}
-.tv-pl-hint svg { flex-shrink: 0; color: var(--brand-text); }
 .tv-pl-side { display: grid; gap: 10px; min-width: 0; padding-top: 18px; border-top: 1px solid var(--tv-line); }
 .tv-pl-side-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 12px; }
 .tv-pl-side-title { margin: 0; font-family: var(--tv-display); font-weight: 800; font-size: 20px; color: var(--tv-text); }
-.tv-pl-side-sub { font-weight: 700; font-size: 13px; color: var(--tv-text-3); }
-.tv-pl-side-actions { display: flex; flex-wrap: wrap; gap: 8px; }
-.tv-pl-side-actions .tv-btn { flex: 1 1 auto; }
 .tv-pl-side-note { margin: 0; font-weight: 700; font-size: 14px; line-height: 1.35; color: var(--tv-text-3); }
-.tv-pl-json { display: grid; gap: 8px; animation: tvGrowIn 0.3s var(--tv-ease-out) backwards; }
-.tv-pl-textarea {
-  width: 100%;
-  min-height: 120px;
-  padding: 12px 14px;
-  border: 0;
-  border-radius: 14px;
-  background: var(--tv-option-bg);
-  box-shadow: inset 0 0 0 1px var(--tv-option-edge);
-  color: var(--tv-text);
-  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
-  font-size: 13px;
-  line-height: 1.4;
-  resize: vertical;
-}
-.tv-pl-textarea:focus { outline: 2px solid var(--brand); outline-offset: 1px; }
-.tv-pl-link { justify-self: start; padding: 0; border: 0; background: none; font: inherit; font-weight: 800; font-size: 13px; cursor: pointer; }
-.tv-app .tv-pl-link { color: var(--brand-text); }
 .tv-pl-saved { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
 .tv-pl-saved-row {
   display: flex;
@@ -445,8 +333,6 @@ input.tv-pl-name:focus { outline: none; }
 /* ---------- Results: the games of the playlist and its tally ---------- */
 /* Centred when there's room; from the top (scrolling) when the tally makes it too long. */
 .tv-results.is-playlist { justify-content: flex-start; gap: 18px; }
-.tv-results.is-playlist .tv-results-head { margin-top: auto; }
-.tv-results.is-playlist .tv-results-actions { margin-bottom: auto; }
 .tv-results.is-playlist .tv-podium { margin-top: 18px; }
 
 
@@ -481,8 +367,6 @@ input.tv-pl-name:focus { outline: none; }
 
 @media (prefers-reduced-motion: reduce) {
   .tv-pl-item,
-  .tv-pl-add-menu,
-  .tv-pl-json,
   .tv-pl-entry-tag { animation: none; }
   .tv-pl-entry-stack span { transition: none; }
 }
@@ -616,18 +500,6 @@ input.tv-pl-name:focus { outline: none; }
 /* The list and "Añadir juego" sit over the card's big faded icon (an absolutely placed watermark would otherwise be
    painted on top of them). The games to add open over the bottom of the list, on a solid darker background. */
 .tv-pl-bodywrap { position: relative; }
-.tv-pl-add-menu {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 3;
-  background: color-mix(in srgb, var(--c2) 72%, #000000);
-  box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.25);
-}
-/* Opened from "Añadir juego" down (top set by LobbyPanel) or up from the list's bottom (bottom: 0). */
-.tv-pl-add-menu { bottom: auto; }
-.tv-pl-add-menu[style*="bottom"] { top: auto; }
 /* A game coming into the list fades in, a little smaller at first: it never moves below its place, where the list
    (which scrolls) would cut it and show a scroll bar for a moment. */
 .tv-pl-item { animation-name: tvPlIn; }

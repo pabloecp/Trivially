@@ -4,14 +4,22 @@
 //  - copy: the invite link copied;
 //  - correct / wrong: a round's result.
 // They come in a few sets (`SOUND_PACKS`), all soft: sine tones with a gentle attack and a long fade, through a
-// low-pass filter and a quiet master volume. Which set plays is chosen with the (temporary) menu of the top bar, and how loud with the volume panel.
+// low-pass filter and a quiet master volume. Which set plays is chosen in the owners' panel (Madera for everyone else),
+// and how loud with the volume panel.
 // `installClickSounds()` gives every click its sound in one place; a button can pick another with `data-sound="back"`
 // (or any other name), or none with `data-sound="none"`. Code that plays a sound of its own while handling a click
 // (`play`) keeps that click's generic one from also playing. Whether sounds are on, their volume and the set are
 // kept in localStorage.
 
 const SOUND_KEY = "trivially_sound";
-const PACK_KEY = "trivially_sound_pack";
+// A new key since the set became the owners' choice: whatever a player picked before is dropped, so everyone starts on
+// Madera (they can't pick another any more).
+const PACK_KEY = "trivially_sound_pack_v2";
+try {
+  localStorage.removeItem("trivially_sound_pack");
+} catch {
+  // Storage blocked: nothing to clean.
+}
 const VOLUME_KEY = "trivially_sound_volume";
 // The loudest the sounds get (slider at 100); the slider starts at 50.
 const MAX_GAIN = 0.9;
@@ -135,6 +143,20 @@ const N = {
 // The sets. Every one has the same six sounds; `wrong` is always a gentle fall, never a buzz.
 export const SOUND_PACKS = [
   {
+    id: "madera",
+    label: "Madera",
+    hint: "Marimba cálida",
+    sounds: {
+      tap: (ac) => note(ac, { freq: N.G4, dur: 0.12, attack: 0.005, gain: 0.1, partials: [[4, 0.25]] }),
+      next: (ac) => seq(ac, { dur: 0.2, attack: 0.005, gain: 0.1, partials: [[4, 0.25]] }, [[N.C5, 0], [N.G5, 0.09]]),
+      back: (ac) => seq(ac, { dur: 0.2, attack: 0.005, gain: 0.1, partials: [[4, 0.25]] }, [[N.G5, 0], [N.C5, 0.09]]),
+      copy: (ac) => seq(ac, { dur: 0.2, attack: 0.005, gain: 0.09, partials: [[4, 0.25]] }, [[N.E5, 0], [N.G5, 0.07], [N.C6, 0.14]]),
+      correct: (ac) =>
+        seq(ac, { dur: 0.3, attack: 0.005, gain: 0.1, partials: [[4, 0.25]] }, [[N.C5, 0], [N.E5, 0.1], [N.G5, 0.2], [N.C6, 0.3, { dur: 0.6 }]]),
+      wrong: (ac) => seq(ac, { dur: 0.35, attack: 0.005, gain: 0.1, partials: [[4, 0.2]] }, [[N.D4, 0], [N.A3, 0.15, { dur: 0.5 }]]),
+    },
+  },
+  {
     id: "burbuja",
     label: "Burbuja",
     hint: "Pops suaves que suben",
@@ -159,20 +181,6 @@ export const SOUND_PACKS = [
       correct: (ac) =>
         seq(ac, { dur: 0.7, gain: 0.045, partials: [[2.76, 0.18]] }, [[N.C5 * 2, 0], [N.E5 * 2, 0.1], [N.G5 * 2, 0.2], [N.C6 * 2, 0.3, { dur: 1 }]]),
       wrong: (ac) => seq(ac, { dur: 0.6, gain: 0.045, partials: [[2.76, 0.15]] }, [[N.A5, 0], [N.F5, 0.16, { dur: 0.8 }]]),
-    },
-  },
-  {
-    id: "madera",
-    label: "Madera",
-    hint: "Marimba cálida",
-    sounds: {
-      tap: (ac) => note(ac, { freq: N.G4, dur: 0.12, attack: 0.005, gain: 0.1, partials: [[4, 0.25]] }),
-      next: (ac) => seq(ac, { dur: 0.2, attack: 0.005, gain: 0.1, partials: [[4, 0.25]] }, [[N.C5, 0], [N.G5, 0.09]]),
-      back: (ac) => seq(ac, { dur: 0.2, attack: 0.005, gain: 0.1, partials: [[4, 0.25]] }, [[N.G5, 0], [N.C5, 0.09]]),
-      copy: (ac) => seq(ac, { dur: 0.2, attack: 0.005, gain: 0.09, partials: [[4, 0.25]] }, [[N.E5, 0], [N.G5, 0.07], [N.C6, 0.14]]),
-      correct: (ac) =>
-        seq(ac, { dur: 0.3, attack: 0.005, gain: 0.1, partials: [[4, 0.25]] }, [[N.C5, 0], [N.E5, 0.1], [N.G5, 0.2], [N.C6, 0.3, { dur: 0.6 }]]),
-      wrong: (ac) => seq(ac, { dur: 0.35, attack: 0.005, gain: 0.1, partials: [[4, 0.2]] }, [[N.D4, 0], [N.A3, 0.15, { dur: 0.5 }]]),
     },
   },
   {
@@ -359,7 +367,9 @@ export const SOUND_PACKS = [
   },
 ];
 
-let packId = load(PACK_KEY, SOUND_PACKS[0].id);
+// Madera by default; only owners can pick another one (AdminPanel.jsx).
+const DEFAULT_PACK = "madera";
+let packId = load(PACK_KEY, DEFAULT_PACK);
 const currentPack = () => SOUND_PACKS.find((p) => p.id === packId) || SOUND_PACKS[0];
 
 export function soundPack() {

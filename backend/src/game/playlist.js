@@ -154,6 +154,17 @@ export function playlistWinner(ranked) {
   return first.id;
 }
 
+/** A playlist's games in order, each with whoever scored the most in it (nobody when nobody scored). */
+function itemResults(run) {
+  return run.items
+    .map((item, i) => ({ item, points: run.itemPoints?.[i] }))
+    .filter(({ points }) => points)
+    .map(({ item, points }) => {
+      const top = Math.max(0, ...Object.values(points));
+      return { variant: item.variant || item.game, winners: top > 0 ? Object.keys(points).filter((id) => points[id] === top) : [] };
+    });
+}
+
 /** How a run goes out to the players (its items' settings and the room's own ones stay on the server). */
 export function publicRun(run) {
   const standings = rankedStandings(run);
@@ -170,6 +181,9 @@ export function publicRun(run) {
     total: run.items.length,
     games: run.items.map((item) => item.game),
     played: run.games,
+    // Each game's variant and its winners (all of them on a tie): a match decided by games won keeps them as it goes
+    // (gameResults); a playlist works them out from the points scored in each of its games (itemPoints).
+    results: run.gameResults || itemResults(run),
     finished: run.finished,
     standings,
     winnerId: run.finished ? playlistWinner(standings) : null,

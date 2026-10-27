@@ -1,0 +1,146 @@
+/* The results screens of a match (components/home/ResultsLooks.jsx): "panel" and "barras", in colour or neutral. Flat like every card and row; the match's colour is --c2 (a tv-c-* class on the board, card or
+   list), and whoever won is ringed in it. */
+
+/* Games won, in a small box like a scoreboard's; this game's winners lit in the match's colour, with a flip. */
+.rl-digit { display: grid; place-items: center; flex-shrink: 0; width: 34px; height: 36px; border-radius: 10px; background: var(--tv-surface); color: var(--tv-text-2); }
+.rl-digit b { display: block; font-family: var(--tv-display); font-weight: 800; font-size: 20px; line-height: 1; font-variant-numeric: tabular-nums; }
+.rl-digit.is-lit { background: var(--c2); color: var(--on); }
+.rl-digit.is-lit b { animation: rlFlip 0.5s cubic-bezier(0.3, 0.9, 0.3, 1) 0.6s backwards; }
+@keyframes rlFlip { from { opacity: 0; transform: perspective(300px) rotateX(-90deg); } }
+
+/* ---------- The roulette and the tutorial of these looks (MatchIntro: PanelRoulette, Tutorial's `look`) ---------- */
+/* One panel in the colour of the game rolling past, its icons and names going up under it; it pulses when it stops. */
+.rl-spin { display: grid; justify-items: center; gap: 22px; width: 100%; animation: tvMiGrow 0.7s cubic-bezier(0.2, 0.9, 0.3, 1.05) backwards; }
+.rl-spin-panel { position: relative; display: flex; align-items: center; gap: 22px; width: min(100%, 470px); height: 184px; padding: 0 30px; box-sizing: border-box; overflow: hidden; border-radius: 30px; background: var(--c2); color: var(--on); transition: background-color 0.16s; }
+.rl-spin.is-landed .rl-spin-panel { animation: rlSpinLand 0.6s var(--tv-spring); }
+@keyframes rlSpinLand { 40% { transform: scale(1.05); box-shadow: 0 0 0 5px #fff; } }
+.rl-spin-icons, .rl-spin-names { position: relative; align-self: stretch; overflow: hidden; -webkit-mask-image: linear-gradient(transparent, #000 30%, #000 70%, transparent); mask-image: linear-gradient(transparent, #000 30%, #000 70%, transparent); }
+.rl-spin-icons { flex: 0 0 96px; }
+.rl-spin-names { flex: 1; min-width: 0; text-align: left; }
+.rl-spin-strip { position: absolute; left: 0; right: 0; top: calc(50% - 46px); will-change: transform; }
+.rl-spin-row { display: flex; align-items: center; height: 92px; background: none; color: inherit; }
+.rl-spin-icons .rl-spin-row { justify-content: center; }
+.rl-spin-icon { display: grid; place-items: center; width: 74px; height: 74px; border-radius: 24px; background: rgba(255, 255, 255, 0.18); }
+.rl-spin-row > span:not(.rl-spin-icon) { display: grid; min-width: 0; }
+.rl-spin-row b { overflow: hidden; font-family: var(--tv-display); font-weight: 800; font-size: clamp(24px, 5vw, 34px); line-height: 1.05; text-overflow: ellipsis; white-space: nowrap; }
+.rl-spin-row small { font-weight: 700; font-size: 15px; opacity: 0.85; }
+.rl-spin.is-landed .tv-mi-caption { animation: tvMlPop 0.45s var(--tv-spring); }
+/* Neutral: a dark panel, only each icon's tile in its game's colour. */
+.rl-spin.is-neutro .rl-spin-panel { background: var(--tv-option-bg); color: var(--tv-text); }
+.rl-spin.is-neutro.is-landed .rl-spin-panel { animation-name: rlSpinLandNeutral; }
+@keyframes rlSpinLandNeutral { 40% { transform: scale(1.05); box-shadow: 0 0 0 4px var(--c2); } }
+.rl-spin.is-neutro .rl-spin-icon { background: var(--c2); color: var(--on); }
+.rl-spin.is-neutro .rl-spin-row small { color: var(--tv-text-3); opacity: 1; }
+@media (max-width: 520px) {
+  .rl-spin-panel { gap: 14px; height: 160px; padding: 0 18px; }
+  .rl-spin-icons { flex-basis: 74px; }
+  .rl-spin-icon { width: 62px; height: 62px; border-radius: 20px; }
+}
+
+/* The tutorial in the game's colour: a white badge, light steps and a white clock. Neutral: a dark card ringed in it. */
+.rl-tut.is-color { background: var(--c2); color: var(--on); }
+.rl-tut.is-color .tv-mi-tut-head .tv-mono-label { color: rgba(255, 255, 255, 0.78); }
+.rl-tut.is-color .tv-mi-tut-badge { background: #fff; color: var(--c2); box-shadow: 0 4px 0 rgba(0, 0, 0, 0.22); }
+.rl-tut.is-color .tv-mi-step { background: rgba(255, 255, 255, 0.16); color: #fff; }
+.rl-tut.is-color .tv-mi-step-icon { background: #fff; color: var(--c2); }
+.rl-tut.is-color .tv-mi-bar { background: rgba(255, 255, 255, 0.22); }
+.rl-tut.is-color .tv-mi-bar span { background: #fff; }
+.rl-tut.is-color .tv-clock-track { stroke: rgba(255, 255, 255, 0.22); }
+.rl-tut.is-color .tv-mi-clock .tv-clock-fill { stroke: #fff; }
+.rl-tut.is-color .tv-clock-num { color: #fff; }
+.rl-tut.is-neutro { background: var(--tv-option-bg); }
+.rl-tut.is-neutro .tv-mi-step,
+.rl-tut.is-neutro .tv-mi-bar { background: var(--tv-surface); }
+.rl-tut.is-neutro .tv-clock-track { stroke: var(--tv-surface); }
+
+@media (prefers-reduced-motion: reduce) {
+  .rl-spin, .rl-spin.is-landed .rl-spin-panel { animation: none; }
+}
+
+/* ---------- Between games and at the end (RetouchBetween, RetouchCard) ---------- */
+.rl-nb { display: grid; justify-items: center; gap: 12px; width: min(100%, 520px); margin: 0 auto; box-sizing: border-box; text-align: center; }
+.rl-nb .tv-mono-label, .rl-note { color: var(--tv-text-3); }
+.rl-line { margin: 0; font-family: var(--tv-display); font-weight: 700; font-size: clamp(19px, 3vw, 23px); line-height: 1.15; color: var(--tv-text); }
+.rl-note { margin: 0; font-weight: 700; font-size: 13px; }
+.rl-nlist { display: grid; gap: 8px; width: 100%; margin: 0; padding: 0; list-style: none; }
+.rl-nlist.is-many { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: repeat(var(--rows), auto); grid-auto-flow: column; gap: 5px 8px; }
+.rl-nb:has(.rl-nlist.is-many) { width: min(100%, 660px); }
+.rl-nrow { display: flex; align-items: center; gap: 12px; padding: 8px 8px 8px 14px; border-radius: 18px; background: var(--tv-option-bg); text-align: left; animation: tvRise 0.4s var(--tv-ease-out) backwards; animation-delay: calc(0.1s + var(--i) * 50ms); }
+.rl-nrow.is-win { background: color-mix(in srgb, var(--c2) 10%, var(--tv-option-bg)); box-shadow: inset 0 0 0 3px var(--c2); }
+.rl-nrow .tv-avatar { width: 36px; height: 36px; font-size: 16px; }
+.rl-nname { flex: 1; min-width: 0; display: grid; line-height: 1.2; }
+.rl-nname b { overflow: hidden; font-weight: 800; font-size: 16px; color: var(--tv-text); text-overflow: ellipsis; white-space: nowrap; }
+.rl-nname small, .rl-rankpts { font-family: var(--tv-display); font-weight: 800; font-size: 13px; color: var(--tv-text-3); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.rl-nname-top { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; min-width: 0; }
+.rl-ntrack { display: block; width: 100%; height: 6px; margin-top: 5px; overflow: hidden; border-radius: 99px; background: var(--tv-surface); }
+.rl-ntrack i { display: block; width: var(--w); height: 100%; border-radius: inherit; background: #4a4c53; transform-origin: left; animation: rlGrow 0.9s cubic-bezier(0.2, 0.9, 0.3, 1) 0.2s backwards; }
+.is-win .rl-ntrack i { background: var(--c2); }
+.rl-nlist.is-many .rl-nrow { gap: 8px; padding: 4px 6px 4px 8px; border-radius: 12px; }
+.rl-nlist.is-many .tv-avatar { width: 26px; height: 26px; font-size: 12px; }
+.rl-nlist.is-many .rl-nname b { font-size: 13px; }
+.rl-nlist.is-many .rl-nname small { font-size: 11px; }
+.rl-nlist.is-many .rl-digit { width: 28px; height: 26px; border-radius: 8px; }
+.rl-nlist.is-many .rl-digit b { font-size: 15px; }
+/* In the match's colour: all in one coloured panel, light rows, the winners white. */
+.rl-nb.is-color { padding: 20px 18px 18px; border-radius: 30px; background: var(--c2); color: var(--on); }
+.rl-nb.is-color .tv-mono-label, .rl-nb.is-color .rl-note { color: color-mix(in srgb, var(--on) 78%, transparent); }
+.rl-nb.is-color .rl-line { color: var(--on); }
+.rl-nb.is-color .rl-nrow { background: color-mix(in srgb, var(--on) 14%, transparent); color: var(--on); box-shadow: none; }
+.rl-nb.is-color .rl-nrow.is-win { background: var(--on); color: var(--c2); }
+.rl-nb.is-color .rl-nname b, .rl-nb.is-color .rl-nname small { color: inherit; }
+.rl-nb.is-color .rl-nname small { opacity: 0.8; }
+.rl-nb.is-color .rl-ntrack { background: color-mix(in srgb, var(--on) 20%, transparent); }
+.rl-nb.is-color .rl-ntrack i { background: color-mix(in srgb, var(--on) 75%, transparent); }
+.rl-nb.is-color .is-win .rl-ntrack { background: color-mix(in srgb, var(--c2) 20%, transparent); }
+.rl-nb.is-color .is-win .rl-ntrack i { background: var(--c2); }
+.rl-nb.is-color .rl-digit { background: rgba(0, 0, 0, 0.2); color: var(--on); }
+.rl-nb.is-color .rl-digit.is-lit { background: var(--c2); color: var(--on); }
+/* The ranking card at the end: its rows with the points under the name and the games won on the right. */
+.rl-rankrow .tv-res-row-main { display: grid; gap: 1px; flex: 1; min-width: 0; }
+.rl-rank.is-neutro .rl-rankrow.is-win { box-shadow: inset 0 0 0 2px var(--c2); }
+.rl-rank .rl-digit { width: 30px; height: 32px; border-radius: 9px; }
+.rl-rank .rl-digit b { font-size: 18px; }
+.rl-rank.is-color { background: var(--c2); color: var(--on); box-shadow: none; }
+.rl-rank.is-color .tv-res-card-title, .rl-rank.is-color .tv-res-link { color: var(--on); }
+.rl-rank.is-color .tv-res-game-icon { background: var(--on); color: var(--c2); box-shadow: none; }
+.rl-rank.is-color .rl-rankrow { background: color-mix(in srgb, var(--on) 14%, transparent); color: var(--on); box-shadow: none; }
+.rl-rank.is-color .rl-rankrow .tv-res-row-name, .rl-rank.is-color .rl-rankrow .tv-res-row-pos, .rl-rank.is-color .rl-rankrow .rl-rankpts, .rl-rank.is-color .rl-rankrow .tv-res-row-points { color: inherit; }
+.rl-rank.is-color .rl-rankrow.is-win { background: var(--on); color: var(--c2); }
+.rl-rank.is-color .rl-rankrow.is-me:not(.is-win) { box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--on) 55%, transparent); }
+.rl-rank.is-color .rl-digit { background: rgba(0, 0, 0, 0.2); color: var(--on); }
+.rl-rank.is-color .rl-digit.is-lit { background: var(--c2); color: var(--on); }
+.rl-rank.is-color .rl-ntrack { background: color-mix(in srgb, var(--on) 20%, transparent); }
+.rl-rank.is-color .rl-ntrack i { background: color-mix(in srgb, var(--on) 75%, transparent); }
+.rl-rank.is-color .rl-rankrow.is-win .rl-ntrack i { background: var(--c2); }
+@media (max-width: 560px) {
+  .rl-nlist.is-many { grid-template-columns: minmax(0, 1fr); grid-template-rows: none; grid-auto-flow: row; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .rl-nrow, .rl-ntrack i { animation: none; }
+}
+
+/* Every game of the match with whoever won it, under the final screen's title (GamesWon): a dark pill each, the
+   game's icon on its colour and the winners' faces. */
+.rl-won { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin: 8px 0 0; padding: 0; list-style: none; }
+.rl-won-game { display: flex; align-items: center; gap: 6px; padding: 4px; border-radius: 14px; background: var(--tv-option-bg); animation: tvRise 0.4s var(--tv-ease-out) backwards; animation-delay: calc(0.2s + var(--i) * 70ms); }
+.rl-won-icon { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 11px; background: var(--c2); color: var(--on); }
+.rl-won-game .tv-avatar { width: 34px; height: 34px; font-size: 14px; }
+@media (prefers-reduced-motion: reduce) {
+  .rl-won-game { animation: none; }
+}
+/* Nobody won that game: an empty face. */
+.rl-won-empty { width: 34px; height: 34px; border-radius: 50%; background: var(--tv-surface); }
+/* The podium's "2 victorias" and "Ver tus respuestas" in the match's colour (the playlist screen's own orange is not
+   the match's): the cards' wrapper carries it (its tv-c-* class), each podium step keeps its own. */
+.rl-cards { --rl-accent: var(--c2); }
+.rl-cards .tv-podium-score, .rl-cards .tv-res-link { color: var(--rl-accent); }
+
+/* The two cards at the end each on a background of their own: grey in "neutro" (the rows darker on it), the match's
+   colour in "color" (the podium's names, wins and title white on it; its steps keep gold, silver and bronze). */
+.rl-cards.is-neutro .tv-res-card { background: var(--tv-option-bg); box-shadow: none; }
+.rl-cards.is-neutro .rl-rankrow { background: var(--tv-surface); }
+.rl-cards.is-color .tv-res-podium { background: var(--c2); box-shadow: none; }
+.rl-cards.is-color .tv-res-podium .tv-res-card-title,
+.rl-cards.is-color .tv-res-podium .tv-podium-name,
+.rl-cards.is-color .tv-res-podium .tv-podium-score { color: var(--on); }
+.rl-cards.is-color .tv-res-podium .tv-res-meta { color: color-mix(in srgb, var(--on) 78%, transparent); }

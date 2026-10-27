@@ -3,7 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import Confetti from "../../components/home/Confetti.jsx";
 import Icon from "../../components/home/Icon.jsx";
 import MatchSummarySheet from "../../components/home/MatchSummarySheet.jsx";
-import { Podium, PodiumCard, RankingCard, countText } from "../../components/home/ResultsParts.jsx";
+import { Podium, PodiumCard, ResultsFoot, countText } from "../../components/home/ResultsParts.jsx";
 import PartyPanel from "../../components/home/PartyPanel.jsx";
 import TvShell from "../../components/home/TvShell.jsx";
 import { useApp } from "../../lib/store.jsx";
@@ -15,6 +15,9 @@ import { withSound } from "../../lib/sounds.js";
 import "../../styles/home.css";
 import "../../styles/playlist.css";
 import { resolveCode, urlCode } from "../../lib/hiddenCode.js";
+import { useResultsLook } from "../../lib/ownerView.js";
+import { GamesWon, RetouchCard } from "../../components/home/ResultsLooks.jsx";
+import { findVariant } from "../../components/home/matchInfo.js";
 
 // The end of a playlist (route /playlist/:code), in the same frame as a match's end (MatchResults): the title, the
 // podium (games won, or points when it was played mixed) and the ranking side by side (everyone's games won and points,
@@ -29,6 +32,8 @@ function ResultsScreen() {
   const nav = useNavigate();
   const [err, setErr] = useState("");
   const [showSummary, setShowSummary] = useState(false);
+  // The results' style and tone (everyone: "panel" in colour; an owner can try others).
+  const { style, tone } = useResultsLook();
 
   // Join the room after a reload. Going back to the room screen is handled by RoomNavigator (App.jsx).
   useEffect(() => {
@@ -59,10 +64,14 @@ function ResultsScreen() {
   const what = publicMatch || classic ? "partida" : "playlist";
   let title = `¡Fin de la ${what}!`;
   if (winner && !solo) title = `¡${winner.name} gana la ${what}!`;
-  else if (!winner && standings[0]?.wins > 0) title = "¡Empate!";
+  // Nobody won: the same points (in a playlist, also when nobody scored at all) or the same games won.
+  else if (!winner && standings.length > 1 && (run?.mixed || standings[0]?.wins > 0 || run?.bestOf)) title = "¡Empate!";
   // Every playlist is one match now (`mixed`; "aleatorio" also shuffles its rounds): the most points win. A public
   // match (`bestOf`) is won by games won instead, its points breaking a tie.
   const mixed = Boolean(run?.mixed) && !run?.bestOf;
+  // A tie (nobody won): everyone with as much as first place shares the top step of the podium.
+  const key = (p) => (mixed ? p.points : p.wins);
+  const tied = title === "¡Empate!" && standings.length > 1 ? standings.filter((p) => key(p) === key(standings[0])).length : 0;
   const pointsText = (p) => `${p.points.toLocaleString("es-ES")} pts`;
   // This player's rounds of every game, numbered one after another (none on the central device).
   const me = isCentral ? null : standings.find((p) => p.id === user?.id) || null;
@@ -71,8 +80,22 @@ function ResultsScreen() {
   if (mixed && winner) hint = `${pointsText(winner)} en ${run.total === 1 ? "1 juego" : `${run.total} juegos`}${run.order === "aleatorio" ? " mezclados" : ""}`;
   else if (mixed && standings[0]?.wins > 0) hint = "Mismos puntos";
   else if (winner && solo && !run.bestOf) hint = `Ganaste ${run.played.filter((g) => g.winnerId === winner.id).length} de ${run.total} juegos`;
-  else if (winner) hint = `${winsText(winner.wins)} de ${run.total}`;
+  else if (winner) hint = `Ganó ${winner.wins} de ${run.total} ${run.total === 1 ? "juego" : "juegos"}`;
+  else if (run?.bestOf && standings.length > 1) hint = "Nadie ganó: terminaron con las mismas victorias";
   else if (standings[0]?.wins > 0) hint = "Mismos juegos ganados y mismos puntos";
+  // Who is ringed in the new looks: the winner, or everyone who tied for first.
+  const winners = winner && !solo ? [winner.id] : tied > 1 ? standings.slice(0, tied).map((p) => p.id) : [];
+  const kindColor = classic?.color || (publicMatch && MATCH_KINDS[publicMatch.kind]?.color) || "playlist";
+  // Under the title, instead of "Ganó 2 de 2 juegos": each game's icon with whoever won it (an older server sends no
+  // results, and the line stays).
+  const gamesWon = (run?.results || []).map((g) => {
+    const mode = findMode(findVariant(g.variant)?.game || g.variant);
+    return {
+      icon: mode?.icon || "play",
+      color: mode?.color || "neutral",
+      winners: (g.winners || []).map((id) => standings.find((p) => p.id === id)).filter(Boolean),
+    };
+  });
 
   return (
     <div className="tv-room tv-game">
@@ -83,41 +106,46 @@ function ResultsScreen() {
             <div className="tv-res-heading">
               <div className="tv-res-kicker">
                 <p className="tv-mono-label">{publicMatch || classic ? "Partida terminada" : "Playlist terminada"}{run ? ` · ${run.name}` : ""}</p>
-                {run && <PlaylistProgress run={run} />}
+                {run && !gamesWon.length && <PlaylistProgress run={run} />}
               </div>
               <h1 className="tv-page-title tv-results-title">{title}</h1>
-              {hint && <p className="tv-hint">{hint}</p>}
+              {gamesWon.length ? <GamesWon items={gamesWon} /> : hint && <p className="tv-hint">{hint}</p>}
             </div>
           </header>
 
           {run && (
-            <div className="tv-res-cards tv-res-cards--pair">
+            <div className={`tv-res-cards tv-res-cards--pair rl-cards tv-c-${kindColor} is-${tone}`}>
               <PodiumCard
                 meta={`${countText(standings.length, "jugador", "jugadores")} · ${countText(run.total, "juego", "juegos")}`}
               >
-                <Podium players={standings} meId={me?.id} score={mixed ? pointsText : (p) => winsText(p.wins)} />
+                <Podium players={standings} meId={me?.id} score={mixed ? pointsText : (p) => winsText(p.wins)} tied={tied} />
               </PodiumCard>
-              <RankingCard
-                icon={classic?.icon || "playlist"}
-                color={classic?.color || "playlist"}
+              <RetouchCard
+                icon={classic?.icon || (publicMatch && MATCH_KINDS[publicMatch.kind]?.icon) || "playlist"}
+                color={kindColor}
                 title={run.name}
                 players={standings}
                 meId={me?.id}
                 onOpen={myRounds.length ? () => setShowSummary(true) : null}
-                value={(p) => (mixed ? pointsText(p) : `${winsText(p.wins)} · ${pointsText(p)}`)}
+                points={(p) => p.points}
+                wins={mixed ? null : (p) => p.wins}
+                winners={winners}
+                retouch={style}
+                tone={tone}
               />
             </div>
           )}
 
           {err && <p className="tv-lobby-error" role="alert">{err}</p>}
 
-          <footer className="tv-res-foot">
+          <ResultsFoot>
             {publicMatch && !isCentral ? (
               // Nobody is the host of a public match: everyone chooses for themselves.
               <>
                 <button
                   className="tv-btn tv-c-neutral tv-res-btn"
                   data-sound="back"
+                  aria-label="Salir"
                   onClick={() => {
                     leaveRoom();
                     nav(exitPath(room), { replace: true });
@@ -125,7 +153,7 @@ function ResultsScreen() {
                   type="button"
                 >
                   <Icon name="logout" size={18} />
-                  Salir
+                  <span className="tv-res-btn-label">Salir</span>
                 </button>
                 <button
                   className={`tv-btn tv-c-${MATCH_KINDS[publicMatch.kind]?.color || "music"} tv-shine tv-res-btn`}
@@ -152,11 +180,12 @@ function ResultsScreen() {
                 <button
                   className="tv-btn tv-c-neutral tv-res-btn"
                   data-sound="back"
+                  aria-label={classic ? "Volver al lobby" : "Volver a la playlist"}
                   onClick={() => restartGame().catch((e) => setErr(e.message || "No se pudo volver al lobby"))}
                   type="button"
                 >
                   <Icon name="back" size={18} />
-                  {classic ? "Volver al lobby" : "Volver a la playlist"}
+                  <span className="tv-res-btn-label">{classic ? "Volver al lobby" : "Volver a la playlist"}</span>
                 </button>
                 {run && (
                   <button
@@ -175,11 +204,11 @@ function ResultsScreen() {
                 Esperando a que el anfitrión decida qué jugar
               </p>
             )}
-          </footer>
+          </ResultsFoot>
         </section>
       </div>
       <PartyPanel room={room} display={isCentral} onToast={setErr} />
-      <MatchSummarySheet open={showSummary} rounds={myRounds} title={classic ? "Tu partida" : "Tu playlist"} showGame onClose={() => setShowSummary(false)} />
+      <MatchSummarySheet open={showSummary} rounds={myRounds} title={classic || publicMatch ? "Tu partida" : "Tu playlist"} showGame onClose={() => setShowSummary(false)} />
     </div>
   );
 }

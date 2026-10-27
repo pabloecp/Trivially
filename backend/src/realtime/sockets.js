@@ -8,6 +8,7 @@ import { assertCanShare, playlistByCode, shareCodeFor } from "../db/sharedPlayli
 import { forgetSpotifyLink, saveSpotifyLink, savedSpotifyLinks } from "../db/store.js";
 import { prefetchFlags } from "../geo/flags.js";
 import { isAccount } from "../auth/username.js";
+import { hasRole } from "../auth/roles.js";
 
 // The same friend can be invited to a room again after this long (friend:invite).
 export const INVITE_GAP_MS = 15000;
@@ -29,6 +30,14 @@ export function attachSockets(io, rooms, { friends = null, hub = null } = {}) {
   rooms.onMatchStart = (room) => {
     prefetchFlags(room.tracks);
     watchRoom(io, rooms, room);
+  };
+
+  // A public match took a player out for being inactive (RoomManager.markIdle): their screen leaves the room.
+  rooms.onKicked = (socketId, { code, reason }) => {
+    const target = io.sockets.sockets.get(socketId);
+    if (!target) return;
+    target.leave(code);
+    target.emit("room:kicked", { code, reason });
   };
 
   rooms.onPhaseChange = (room) => {
@@ -189,7 +198,10 @@ export function attachSockets(io, rooms, { friends = null, hub = null } = {}) {
         const user = bindUser(socket, payload?.user, rooms);
         await assertAccountFree(io, rooms, socket, user.id);
         leaveCurrentRoom(io, rooms, socket);
-        const room = rooms.findMatch(user, payload);
+        // Only an owner's account (checked here, never the client's word) can force the games of its own match.
+        const owner = rooms.store.users[socket.data.userId];
+        const force = owner && hasRole(owner, "owner") ? payload?.force : null;
+        const room = rooms.findMatch(user, { ...payload, force });
         socket.join(room.code);
         ack?.({ ok: true, state: rooms.publicState(room, user.id) });
         io.to(room.code).emit("room:state", rooms.publicState(room));
@@ -556,8 +568,9 @@ export function attachSockets(io, rooms, { friends = null, hub = null } = {}) {
     socket.on("room:pause", (paused, ack) => {
       try {
         const { room, userId } = requireRoom(rooms, socket);
-        if (paused) rooms.pause(room, userId);
-        else rooms.resume(room, userId);
+        // The host, or an owner in any match (public ones too): only the socket's verified account counts for that.
+        if (paused) rooms.pause(room, userId, socket.data.userId);
+        else rooms.resume(room, userId, socket.data.userId);
         ack?.({ ok: true });
         io.to(room.code).emit("room:state", rooms.publicState(room));
       } catch (err) {
@@ -706,7 +719,20 @@ export function attachSockets(io, rooms, { friends = null, hub = null } = {}) {
     });
 
     // An owner adds a test bot to Farsante's lobby (to try it alone).
+    // "Sigo aquí": the answer to the card that asks a public match's idle player if they are still there.
+    socket.on("room:present", (payload, ack) => {
+      try {
+        const { room, userId } = requireRoom(rooms, socket);
+        rooms.present(room, userId);
+        ack?.({ ok: true });
+      } catch (err) {
+        ack?.({ ok: false, error: err.message });
+      }
+    });
+
     socket.on("room:addTestBot", (payload, ack) => {
+      // Sent with no payload too: then the first argument is the ack.
+      if (typeof payload === "function") ack = payload;
       try {
         const { room } = requireRoom(rooms, socket);
         rooms.addTestBot(room, socket.data.userId);

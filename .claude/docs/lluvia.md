@@ -1,0 +1,10 @@
+# Lluvia (id `lluvia`, `RAIN_GAME`)
+
+Questions fall down the screen for `roundMs`; the first player to write a right answer takes that question and its points (`RAIN_POINTS`: fácil 1, media 3, difícil 5) and it leaves every screen. Most points in the round wins it; the match adds the rounds. No tiebreak, no "Reportar".
+
+- `config.rain`: `rounds` 1–5 (3), `roundMs` 30–90 s in steps of 15 (60), `categories`, `difficulties`. `game/rain.js` (`mergeRainConfig`, `rainProblem`: at least `RAIN_MIN_QUESTIONS` 10).
+- **Questions:** `rainPool()` = Trivia's written ones without flags. `pickRainRounds` draws every round at the start as drops `{ id, at, lane, points, question }`. `rainSchedule`: three columns (`RAIN_COLUMNS`), never the previous one, a column free only `RAIN_COLUMN_GAP_MS` after its last drop, so drops never overlap; difficulties and categories take turns.
+- **Falling:** `RAIN_FALL_MS` (13 s) per drop. Server time = `rainElapsed()` (stops during a pause). Socket `game:rain` (`rainAnswer`), one every `RAIN_ANSWER_GAP_MS`: takes the lowest on-screen untaken drop it's right for (`RAIN_GRACE_MS` for latency); returns `takenBy` when someone was first. `player.rain` = `{ hits, points, sent, sentAt }`; `gradeRain()` at the reveal.
+- `publicState` (`publicRainQuestion`): only drops on screen or arriving within `RAIN_LEAD_MS`, never answers or ids; at the reveal all drops with answers, `winners`, `best`.
+- **Frontend** `modes/lluvia/` (`Game.jsx`, `RainSettings.jsx`, `rainInfo.js`), styles `styles/rain.css` (`--tv-rn-*`). `Sky` places drops every frame from the server clock (`clockOffset`), so they're at the same height on every screen; text in container units.
+- **Phones (< 900 px):** `html.tv-rain-playing` locks the page; the frame follows `visualViewport` (`--rain-vv-top`/`--rain-vv-h`, `html.tv-rain-keyboard`). Safari scrolls to a natively focused box, so a tap's `touchend` is prevented and the box is focused with `preventScroll`. The keyboard's height is remembered per orientation (`trivially_rain_keyboard`) so the frame makes room at once.

@@ -35,6 +35,19 @@ for (const [game, count] of Object.entries(CLASSIC_GAMES)) {
   assert.equal(state.intro.index, 0);
   assert.equal(state.question, null, "nothing of the round during the roulette");
 
+  // Decided by games won, like a public match: Host wins the first game, and the next one starts with who won it.
+  assert.deepEqual(room.run.gameWins, {});
+  const first = room.tracks.findIndex((t) => t.playlistItem === 1) - 1;
+  room.currentRound = first;
+  room.players.get("host-1").score = 500;
+  mgr.tallyItemPoints(room);
+  mgr.scoreMatchGame(room);
+  assert.equal(room.run.gameWins["host-1"], 1);
+  assert.deepEqual(mgr.publicState(room).run.results, [{ variant: room.run.items[0].variant, winners: ["host-1"] }]);
+  room.currentRound = 0;
+  room.players.get("host-1").score = 0;
+  room.run.gameWins = {};
+
   // The public match's clock, not the game's own settings.
   if (room.game !== "minas") assert.equal(mgr.roundMs(room), MATCH_QUESTION_MS);
 

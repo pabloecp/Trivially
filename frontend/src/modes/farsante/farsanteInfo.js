@@ -16,8 +16,6 @@ export const ROUND_OPTIONS = [4, 6, 8, 10, 12];
 // Seconds to write an answer.
 export const SECONDS_OPTIONS = [30, 45, 60];
 export const MAX_CHARS = 60;
-export const MIN_PLAYERS = 3;
-export const POINTS = { real: 1000, vote: 500 };
 
 export function farsanteConfig(room) {
   const farsante = room?.config?.farsante || {};

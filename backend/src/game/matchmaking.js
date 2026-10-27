@@ -54,6 +54,14 @@ export const MATCH_FULL_MS = 3000;
 export const INTRO_SPIN_MS = 4000;
 export const INTRO_TUTORIAL_MS = 5000;
 export const INTRO_MS = INTRO_SPIN_MS + INTRO_TUTORIAL_MS;
+// Before the second game on, a public match's intro starts with who won the game before (and the games won so far).
+export const INTRO_RESULT_MS = 4500;
+// A public match's player who does nothing for PUBLIC_KICK_ROUNDS rounds in a row is asked if they are still there; with no
+// answer in AFK_CONFIRM_MS they are taken out of the match (RoomManager.askStillThere and afkExpire).
+export const AFK_CONFIRM_MS = 15000;
+// An owner can force the games of their own match (the admin panel, for debugging): variant ids in order.
+export const MAX_FORCED = 5;
+export const cleanForced = (list) => (Array.isArray(list) ? list.filter((id) => typeof id === "string" && MATCH_VARIANTS.some((v) => v.id === id)).slice(0, MAX_FORCED) : []);
 
 // Casual only: when the room hasn't filled after BOT_WAIT_MS, bots take the empty seats, one every BOT_GAP_MS or so
 // (as if people were arriving), and play by themselves (RoomManager.scheduleBots). Competitivo waits for people.

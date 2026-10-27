@@ -80,10 +80,6 @@ export async function loadCatalog() {
   return readLocalCatalog();
 }
 
-export function findSong(catalog, id) {
-  return catalog.songs.find((s) => s.id === id) || null;
-}
-
 export function hydrateSong(catalog, song) {
   return {
     ...song,

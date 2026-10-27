@@ -1,19 +1,17 @@
 import { useEffect, useState } from "react";
-import { createPortal } from "react-dom";
-import { useNavigate } from "react-router-dom";
 import { useApp } from "../../lib/store.jsx";
 import Avatar from "./Avatar.jsx";
 import CentralSpot from "./CentralSpot.jsx";
-import ConfirmDialog from "./ConfirmDialog.jsx";
 import Icon from "./Icon.jsx";
 import FriendsRoomControls from "./FriendsRoomControls.jsx";
 import PlayerMenu from "./PlayerMenu.jsx";
-import { PlayerCard } from "./PlaySide.jsx";
 import { ChatForm, ChatMessages, ChatSheet, useChatUnread, usePhone, useRoomChat } from "./RoomChat.jsx";
 import { useInvite } from "./useInvite.js";
 import { shownCode, useHiddenCode } from "../../lib/hiddenCode.js";
 import InviteFriends from "./InviteFriends.jsx";
-import { exitPath } from "./TvTopbar.jsx";
+import { useResultsLook, useScoreboardLook } from "../../lib/ownerView.js";
+import { findVariant } from "./matchInfo.js";
+import { findMode } from "../../modes/index.js";
 
 function playerTag(player, { isHost }) {
   if (!player.connected) return "Reconectando…";
@@ -75,6 +73,25 @@ function MatchTag({ player, room }) {
   return <span className="tv-player-tag">{room.phase === "playing" ? "Pensando…" : "Conectado"}</span>;
 }
 
+// The games a player already won in a public match (`run.results`: each game's variant and winners), by name: "Trivia
+// Cerradas". An older server sends only how many (`wins`).
+function wonGames(room, player) {
+  const games = (room.run?.results || []).filter((g) => g.winners?.includes(player.id));
+  return games.map((g) => {
+    const v = findVariant(g.variant);
+    const name = findMode(v?.game)?.name || "";
+    return v?.way ? `${name} ${v.way}` : name;
+  });
+}
+
+// "· Ganó Trivia Cerradas" (or "· Ganó 2 juegos"), after how their round is going: the "frase" scoreboard.
+function WonLine({ room, player }) {
+  const names = wonGames(room, player);
+  const n = player.wins || names.length;
+  if (!n) return null;
+  return <b className="tv-player-won">&nbsp;· Ganó {n === 1 && names[0] ? names[0] : n === 1 ? "1 juego" : `${n} juegos`}</b>;
+}
+
 // A ref that makes a folded part of the column `inert` (not tappable, not reachable with Tab, hidden from screen
 // readers) unless `shown`.
 const inertUnless = (shown) => (el) => {
@@ -88,8 +105,7 @@ const inertUnless = (shown) => (el) => {
 // match, picked from a player's menu (the host or a player with the settings permission). On the central device itself
 // the column only shows (`display`): no menus, chat or way out, and the code to join instead of "Invitar".
 export default function PartyPanel({ room, onToast, scores = false, display = false, className = "" }) {
-  const { user, isCentral, leaveRoom, addTestBot } = useApp();
-  const nav = useNavigate();
+  const { user, isCentral } = useApp();
   const [menuFor, setMenuFor] = useState(null);
   const { copied, copy: copyInvite } = useInvite(room.code, onToast);
   const [codeHidden, toggleCode] = useHiddenCode();
@@ -104,8 +120,6 @@ export default function PartyPanel({ room, onToast, scores = false, display = fa
   // same in the room and in a match.
   const [chatOpen, setChatOpen] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
-  // "Salir de la sala" asks first, in the same modal as the top bar's "X" during a match.
-  const [leaving, setLeaving] = useState(false);
   const phone = usePhone();
   const chatting = chatOpen && !phone;
   const unread = useChatUnread(room, chatting || sheetOpen);
@@ -117,19 +131,11 @@ export default function PartyPanel({ room, onToast, scores = false, display = fa
     return () => document.removeEventListener("keydown", onKey);
   }, [chatting]);
 
-  function leave() {
-    setLeaving(false);
-    leaveRoom();
-    // One step back, to the option of "¿Cómo quieres jugar?" the room came from. Replacing, not pushing: Back must not
-    // return to /sala/CODE, which joins the room again.
-    nav(exitPath(room), { replace: true });
-  }
-
-  // Between matches, the room's scoreboard (the server's room.board): each player's wins, most first, once a match
-  // has been played. The one with most wins (if any) is highlighted.
-  const board = room.board || { matches: 0, players: [] };
-  const winsOf = (id) => board.players.find((b) => b.id === id)?.wins || 0;
-  const showBoard = !scores && board.matches > 0;
+  // A match decided by games won (a public one or a Clásico) sends each player's `wins`. Once it's over, the column lists
+  // them by games won, the one with most highlighted. Private rooms keep no scoreboard across their matches.
+  const hasWins = room.players.some((p) => p.wins !== undefined);
+  const winsOf = (id) => room.players.find((p) => p.id === id)?.wins || 0;
+  const showBoard = !scores && hasWins && room.phase === "finished";
   const topWins = showBoard ? Math.max(0, ...room.players.map((p) => winsOf(p.id))) : 0;
   // In a match, the ranking is of the players; those who joined mid-match (spectators) have their own list below it.
   const players = scores
@@ -138,6 +144,13 @@ export default function PartyPanel({ room, onToast, scores = false, display = fa
     ? [...room.players].sort((a, b) => winsOf(b.id) - winsOf(a.id))
     : room.players;
   const spectators = scores ? room.players.filter((p) => p.spectator) : [];
+  // The games each player already won, in the match's scoreboard and in the column once it's over: in words under the
+  // name ("frase", everyone's), in a box on the right ("numeros") or on the face ("insignia"); the last two only for an
+  // owner trying them.
+  const scoreLook = useScoreboardLook();
+  // The "insignia": a gold box with the number, or with the owner's "neutro" tone a small crown and the number.
+  const { tone } = useResultsLook();
+  const gameWins = hasWins && (scores ? room.phase !== "finished" : showBoard);
 
   const inMatch = room.phase !== "lobby";
   // The spot: always while the room waits (that's where it's set); in a match only while there is a central device.
@@ -149,9 +162,6 @@ export default function PartyPanel({ room, onToast, scores = false, display = fa
       className={`tv-party${scores ? " is-scores" : ""}${chatting ? " is-chat" : ""}${display ? " is-display" : ""} ${className}`.trim()}
       aria-label="Tu sala"
     >
-      {/* A public match: the player's card (with the rank) stays at the top, as on /jugar where the search started; the
-          account is asked for again when it ends (the rank and history move). */}
-      {room.matchmaking && !display && <PlayerCard match refreshOn={room.phase === "finished"} />}
       {/* A public match has no code to share: nobody joins it but by searching. */}
       {!room.matchmaking && (
       <div className="tv-party-codebox">
@@ -187,7 +197,6 @@ export default function PartyPanel({ room, onToast, scores = false, display = fa
         <h2>{scores ? "Marcador" : "En la sala"}</h2>
         <span>
           {players.length === 1 ? "1 jugador" : `${players.length} jugadores`}
-          {showBoard && ` · ${board.matches === 1 ? "1 partida" : `${board.matches} partidas`}`}
         </span>
       </div>
 
@@ -217,24 +226,42 @@ export default function PartyPanel({ room, onToast, scores = false, display = fa
                     onClick={() => setMenuFor((cur) => (cur === p.id ? null : p.id))}
                   >
                     {scores && !p.spectator && <span className="tv-player-pos">{i + 1}</span>}
-                    <Avatar name={p.name} avatar={p.avatar} />
+                    {gameWins && scoreLook === "insignia" && p.wins > 0 ? (
+                      <span className="tv-player-face">
+                        <Avatar name={p.name} avatar={p.avatar} />
+                        <span key={p.wins} className={`tv-player-badge is-${tone}`}>
+                          {tone === "neutro" && <Icon name="crown" size={13} strokeWidth={2.6} filled />}
+                          {p.wins}
+                        </span>
+                      </span>
+                    ) : (
+                      <Avatar name={p.name} avatar={p.avatar} />
+                    )}
                     <span className="tv-player-text">
                       <span className="tv-player-name">{p.name}</span>
-                      {scores ? (
+                      {gameWins && scoreLook === "frase" && !p.spectator ? (
+                        <span className="tv-player-tagline">
+                          {scores ? (
+                            <MatchTag player={p} room={room} />
+                          ) : (
+                            <span className={`tv-player-tag${isHostPlayer ? " is-host" : ""}`}>{playerTag(p, { isHost: isHostPlayer })}</span>
+                          )}
+                          <WonLine room={room} player={p} />
+                        </span>
+                      ) : scores ? (
                         <MatchTag player={p} room={room} />
                       ) : (
                         <span className={`tv-player-tag${isHostPlayer ? " is-host" : ""}`}>{playerTag(p, { isHost: isHostPlayer })}</span>
                       )}
                     </span>
+                    {!p.spectator && gameWins && scoreLook === "numeros" && (
+                      <span key={`w${p.wins}`} className={`tv-player-games${p.wins > 0 ? " is-on" : ""}`} aria-label={`${p.wins} juegos ganados`}>
+                        {p.wins}
+                      </span>
+                    )}
                     {scores && !p.spectator && (
                       <span key={p.score} className="tv-player-score">
                         {p.score}
-                      </span>
-                    )}
-                    {showBoard && (
-                      <span className="tv-player-wins" aria-label={`${wins} ${wins === 1 ? "victoria" : "victorias"}`}>
-                        {wins}
-                        <small>{wins === 1 ? "victoria" : "victorias"}</small>
                       </span>
                     )}
                     {/* The host's crown, always last on the right. */}
@@ -254,16 +281,6 @@ export default function PartyPanel({ room, onToast, scores = false, display = fa
               );
             })}
           </ul>
-          {/* While the room waits, owners can try any game alone with bots that answer by themselves. */}
-          {room.phase === "lobby" && !room.matchmaking && !display && !isCentral && user?.role === "owner" && (
-            <button
-              type="button"
-              className="tv-mini-btn tv-party-testbot"
-              onClick={() => addTestBot().catch((e) => onToast?.(e.message || "No se pudo añadir el bot"))}
-            >
-              Añadir bot de prueba
-            </button>
-          )}
           {/* While the room waits: your friends who are online, to invite (instead of "Esperando amigos"). */}
           {!scores && !display && !room.matchmaking && <InviteFriends room={room} onToast={onToast} />}
           {spectators.length > 0 && (
@@ -336,24 +353,7 @@ export default function PartyPanel({ room, onToast, scores = false, display = fa
           </div>
 
           {sheetOpen && <ChatSheet room={room} onClose={() => setSheetOpen(false)} />}
-
-          <button type="button" className="tv-leave-btn" aria-haspopup="dialog" onClick={() => setLeaving(true)}>
-            <Icon name="logout" size={18} strokeWidth={2.4} />
-            Salir de la sala
-          </button>
         </>
-      )}
-      {createPortal(
-        <ConfirmDialog
-          open={leaving}
-          title="¿Seguro que quieres salir?"
-          text={inMatch ? "Saldrás de la sala y dejarás la partida en curso." : "Saldrás de la sala. Para volver a entrar necesitarás el código o el enlace de invitación."}
-          cancelLabel={inMatch ? "Seguir jugando" : "Quedarme"}
-          confirmLabel="Salir"
-          onCancel={() => setLeaving(false)}
-          onConfirm={leave}
-        />,
-        document.querySelector(".tv-app") || document.body
       )}
     </aside>
   );

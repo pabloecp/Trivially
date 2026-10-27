@@ -49,11 +49,6 @@ export function shownCode(code, hidden) {
   return hidden ? "•".repeat(String(code || "").length || 5) : code;
 }
 
-/** Whether this device hides the code right now (for code outside React, like the room's addresses). */
-export function isCodeHidden() {
-  return read();
-}
-
 /** The code as the room's addresses carry it: HIDDEN_SLUG while it's hidden. */
 export function urlCode(code) {
   return read() ? HIDDEN_SLUG : code;
