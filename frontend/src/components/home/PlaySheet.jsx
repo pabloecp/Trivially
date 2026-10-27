@@ -201,7 +201,7 @@ export default function PlaySheet({ mode, joinCode, open, onClose, askName = fal
       return;
     }
     if (onNamed) {
-      // The page that asked for the name does what it was doing (PlayPage).
+      // The page that asked for the name does what it was doing (HomeFrame).
       setBusy(false);
       onNamed();
     } else if (pending) {
@@ -348,7 +348,7 @@ export default function PlaySheet({ mode, joinCode, open, onClose, askName = fal
                               )}
                               <button
                                 type="button"
-                                className={`tv-btn tv-btn--block tv-c-${k.color} tv-shine tv-pm-go`}
+                                className="tv-btn tv-btn--block tv-btn--primary tv-pm-go"
                                 data-sound={!user?.name || user.isGuest ? undefined : "none"}
                                 onClick={() => run({ type: "match", kind: k.id, size })}
                                 disabled={busy}
@@ -416,7 +416,7 @@ export default function PlaySheet({ mode, joinCode, open, onClose, askName = fal
                   autoCapitalize="characters"
                   spellCheck="false"
                 />
-                <button type="submit" className="tv-btn tv-btn--block tv-c-yellow" data-sound="none" disabled={busy || code.length < ROOM_CODE_LENGTH}>
+                <button type="submit" className="tv-btn tv-btn--block tv-btn--primary" data-sound="none" disabled={busy || code.length < ROOM_CODE_LENGTH}>
                   Entrar a la sala
                 </button>
               </form>
@@ -459,7 +459,7 @@ export default function PlaySheet({ mode, joinCode, open, onClose, askName = fal
                     />
                   ))}
                 </div>
-                <button type="submit" className="tv-btn tv-btn--block tv-c-yellow" data-sound="none" disabled={busy || !name.trim()}>
+                <button type="submit" className="tv-btn tv-btn--block tv-btn--primary" data-sound="none" disabled={busy || !name.trim()}>
                   {busy ? "Entrando…" : "Continuar"}
                 </button>
                 {/* Without an account nothing is kept: one quiet line, with its two ways in. */}

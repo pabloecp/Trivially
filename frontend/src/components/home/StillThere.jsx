@@ -32,7 +32,7 @@ export default function StillThere() {
         <p>
           Llevas varias rondas sin responder. Si no confirmas en <strong>{left} s</strong>, te sacamos de la partida.
         </p>
-        <button type="button" className="tv-btn tv-c-site tv-shine" data-sound="none" onClick={() => stillHere()} autoFocus>
+        <button type="button" className="tv-btn tv-btn--primary" data-sound="none" onClick={() => stillHere()} autoFocus>
           Sigo aquí
         </button>
       </div>

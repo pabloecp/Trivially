@@ -135,6 +135,11 @@ import {
   newBot,
   pickMatchGames,
   publicMatchmaking,
+  AUDIENCES,
+  PUBLIC_GAMES,
+  PUBLIC_GROUP_MAX,
+  PUBLIC_VARIANT,
+  groupMatchSize,
 } from "./matchmaking.js";
 import { categoryName } from "../questions/questionSchema.js";
 import { flagToken, flagUrl } from "../geo/flags.js";
@@ -336,6 +341,26 @@ function defaultConfig() {
   };
 }
 
+/** How long a public match's roulette spins before each game: nothing to spin when the game was searched for by name. */
+const introSpinMs = (room) => (room.matchmaking?.game ? 0 : INTRO_SPIN_MS);
+
+// The part of the room's settings that belongs to `game`, as in a new room ("Restablecer"). Adivina la canción's are the
+// settings at the top level.
+const MUSIC_KEYS = ["rounds", "roundMs", "useCatalog", "languages", "genres", "difficulties", "playlistIds", "formats"];
+const CONFIG_KEYS = { opciones: "quiz", mundo: "geo", historia: "history", minas: "mines", lluvia: "rain", rey: "rey", farsante: "farsante" };
+function gameDefaults(game) {
+  const base = defaultConfig();
+  if (game === "musica") return Object.fromEntries(MUSIC_KEYS.map((k) => [k, base[k]]));
+  const key = CONFIG_KEYS[game];
+  return key ? { [key]: base[key] } : {};
+}
+
+/** Whether the room's settings for its game are still those of a new room (its "Restablecer" is then off). */
+function settingsChanged(room) {
+  const now = gameDefaults(room.game);
+  return Object.entries(now).some(([k, v]) => JSON.stringify(room.config?.[k]) !== JSON.stringify(v));
+}
+
 function publicPlayer(player, phase, room) {
   const showAnswer = phase === "reveal" || phase === "finished";
   const isHost = Boolean(room && room.hostId === player.id);
@@ -442,10 +467,12 @@ export class RoomManager {
    * ends it. When it has its size of players (2 or 5) it starts by itself (checkMatchFull).
    */
   findMatch(user, input) {
-    const { kind, rounds, size } = cleanMatchRequest(input);
+    const { kind, rounds, size, game } = cleanMatchRequest(input);
     assertNameWithoutLink(user);
     // An owner's forced games (already checked against their account by the socket): their own room, nobody else's.
-    const force = cleanForced(input?.force);
+    const force = game ? [] : cleanForced(input?.force);
+    // A game's queue fills any room searching for that game, a group's too (closePublic sends the strangers home once
+    // the group goes back to its own room); the roulette's rooms go by how many play.
     let room = force.length ? undefined : [...this.rooms.values()].find(
       (r) =>
         r.matchmaking &&
@@ -453,7 +480,8 @@ export class RoomManager {
         r.phase === "lobby" &&
         !r.matchmaking.startsAt &&
         r.matchmaking.kind === kind &&
-        r.matchmaking.versus === size &&
+        (r.matchmaking.game || null) === game &&
+        (game || r.matchmaking.versus === size) &&
         !r.blocked?.has(user.id) &&
         this.connectedCount(r) < r.matchmaking.size
     );
@@ -463,10 +491,108 @@ export class RoomManager {
       room = this.create({ host: user, game: null });
       room.hostId = null;
       room.joinMode = "invitacion";
-      room.matchmaking = { kind, rounds, versus: size, size: roomSize(size), games: null, startsAt: null, timer: null, botTimer: null, force: force.length ? force : null };
+      room.matchmaking = { kind, rounds, game, versus: size, size: roomSize(size), games: null, startsAt: null, timer: null, botTimer: null, force: force.length ? force : null };
       if (kind === "casual") this.scheduleBotArrival(room, BOT_WAIT_MS);
     }
     this.checkMatchFull(room);
+    return room;
+  }
+
+  /**
+   * Who the room's next match is for, as the host picked it in "¿Qué quieren jugar?": "grupo" (only its players, the
+   * host starts it) or "publica" (the group searches for a public match of the room's game together, findPublicForGroup).
+   */
+  setAudience(room, userId, audience) {
+    if (room.hostId !== userId) throw new Error("Solo el anfitrión puede elegir con quién juegan");
+    if (room.phase !== "lobby") throw new Error("La partida ya comenzó");
+    if (!AUDIENCES.includes(audience)) throw new Error("Esa opción no existe");
+    room.audience = audience;
+  }
+
+  /**
+   * "Partida pública" from a group: the room itself opens to the public queue of its game. It's a public room
+   * while it searches and plays (no host, bots fill the empty seats, strangers searching for that game sit in it), and
+   * `matchmaking.group` keeps what the room was, so closePublic can give it back to the group afterwards.
+   */
+  findPublicForGroup(room, userId) {
+    if (room.hostId !== userId) throw new Error("Solo el anfitrión puede buscar partida para el grupo");
+    if (room.matchmaking) throw new Error("Ya están buscando partida");
+    if (room.phase !== "lobby") throw new Error("Espera a que termine la partida");
+    if (room.central) throw new Error("Quita el dispositivo central para jugar con gente de todas partes");
+    if (!PUBLIC_GAMES.includes(room.game)) throw new Error(`${GAME_NAMES[room.game] || "Ese juego"} solo se puede jugar con tu grupo`);
+    const members = [...room.players.values()].filter((p) => p.connected && !p.bot);
+    if (members.length > PUBLIC_GROUP_MAX) throw new Error(`Una partida pública es de ${PUBLIC_GROUP_MAX} como mucho`);
+    const size = groupMatchSize(members.length);
+    room.matchmaking = {
+      kind: "casual",
+      rounds: matchItemConfig(room.game, "casual").rounds,
+      game: room.game,
+      versus: size,
+      size: roomSize(size),
+      games: null,
+      startsAt: null,
+      timer: null,
+      botTimer: null,
+      force: null,
+      group: {
+        hostId: room.hostId,
+        members: members.map((p) => p.id),
+        coHosts: [...(room.coHosts || [])],
+        joinMode: room.joinMode,
+        game: room.game,
+        config: room.config,
+        playlist: room.playlist,
+      },
+    };
+    room.hostId = null;
+    room.joinRequests = [];
+    room.preview = null;
+    room.suggestions = [];
+    this.scheduleBotArrival(room, BOT_WAIT_MS);
+    this.checkMatchFull(room);
+  }
+
+  /** Whether `userId` came to this public room with its group (and can take it back, closePublic). */
+  inGroup(room, userId) {
+    return Boolean(room.matchmaking?.group?.members.includes(userId));
+  }
+
+  /**
+   * The group's public search is cancelled (any of its players, while it waits) or its public match is over and the
+   * group goes back to its own room ("Volver al grupo"): the strangers are sent home (`onKicked`, reason "grupo"), the
+   * bots go, and the room is the group's again, in its game with its settings and its host (or the first of the group
+   * still connected). Returns the room.
+   */
+  closePublic(room, userId) {
+    const info = room.matchmaking;
+    const group = info?.group;
+    if (!group) throw new Error("Esta partida no es de tu grupo");
+    if (!this.inGroup(room, userId)) throw new Error("Solo los del grupo pueden volver a su sala");
+    if (room.phase !== "lobby" && room.phase !== "finished") throw new Error("Espera a que termine la partida");
+    clearTimeout(info.timer);
+    clearTimeout(info.botTimer);
+    this.clearBotMoves(room);
+    for (const p of [...room.players.values()]) {
+      if (group.members.includes(p.id)) continue;
+      room.players.delete(p.id);
+      clearTimeout(p.dropTimer);
+      if (p.socketId) {
+        this.socketToRoom.delete(p.socketId);
+        this.onKicked?.(p.socketId, { code: room.code, reason: "grupo" });
+      }
+    }
+    room.matchmaking = null;
+    room.run = null;
+    room.game = group.game;
+    room.config = group.config;
+    room.playlist = group.playlist;
+    room.joinMode = group.joinMode;
+    room.coHosts = group.coHosts.filter((id) => room.players.has(id));
+    const host = room.players.get(group.hostId);
+    room.hostId = host?.connected ? host.id : null;
+    if (!room.hostId) this.transferHost(room);
+    this.syncPlaylists(room);
+    this.resetMatch(room);
     return room;
   }
 
@@ -701,11 +827,12 @@ export class RoomManager {
    * drawn.
    */
   startMatch(room) {
-    const { kind } = room.matchmaking;
+    const { kind, game } = room.matchmaking;
+    // A game searched for by name is that game alone, in its public way, with no decider (the points decide it).
     // An owner's forced games play in the order given; otherwise MATCH_GAME_COUNT drawn at random.
-    const force = room.matchmaking.force;
+    const force = game ? [PUBLIC_VARIANT[game]] : room.matchmaking.force;
     const gameCount = force?.length || MATCH_GAME_COUNT;
-    const drawn = this.drawMatchItems(room, kind, gameCount + 1, force);
+    const drawn = game ? [this.publicGameItem(room, kind, game)] : this.drawMatchItems(room, kind, gameCount + 1, force);
     const items = drawn.slice(0, gameCount);
     // What everyone sees of it: the variants, in play order (the decider joins them only if it's played).
     room.matchmaking.games = items.map((item) => item.variant);
@@ -811,27 +938,28 @@ export class RoomManager {
    * starts over, never with the variant it just played. The variants in `force` go first, in their order.
    */
   drawMatchItems(room, kind, count, force = null) {
-    // The times go in after cleaning, as they are: a public match is quicker than a game's own settings allow.
-    const configFor = (game, variant, easy) => ({
-      ...this.cleanItemConfig(room, game, matchItemConfig(game, kind, { easy, variant })),
-      ...matchTimes(game),
-    });
+    const configFor = (game, variant, easy) => this.matchItemSettings(room, kind, game, variant, easy);
     const items = [];
     while (items.length < count) {
       const before = items.length;
       const random = pickMatchGames(null, Math.random, variantsFor(kind));
       const order = !before && force?.length ? [...force, ...random.filter((v) => !force.includes(v))] : random;
-      if (order.length > 1 && order[0] === items.at(-1)?.variant) order.push(order.shift());
+      // Only the variants that can be played make the pass, so the one that opens it is never the one just played.
+      const pass = [];
       for (const variant of order) {
-        if (items.length >= count) break;
         const { game } = findVariant(variant);
-        const item = { id: `m${items.length}`, game, variant, config: configFor(game, variant, false) };
+        const item = { game, variant, config: configFor(game, variant, false) };
         if (!this.itemProblem(room, item, room.config, { exact: true })) {
-          items.push(item);
+          pass.push(item);
           continue;
         }
         const easier = { ...item, config: configFor(game, variant, true) };
-        if (!this.itemProblem(room, easier, room.config, { exact: true })) items.push(easier);
+        if (!this.itemProblem(room, easier, room.config, { exact: true })) pass.push(easier);
+      }
+      if (pass.length > 1 && pass[0].variant === items.at(-1)?.variant) pass.push(pass.shift());
+      for (const item of pass) {
+        if (items.length >= count) break;
+        items.push({ id: `m${items.length}`, ...item });
       }
       if (items.length === before) break;
     }
@@ -839,13 +967,30 @@ export class RoomManager {
     return items;
   }
 
-  create({ host, mode, config, game = null }) {
+  /** A game's settings in a public match. The times go in after cleaning, as they are: it's quicker than its own settings allow. */
+  matchItemSettings(room, kind, game, variant, easy = false) {
+    return { ...this.cleanItemConfig(room, game, matchItemConfig(game, kind, { easy, variant })), ...matchTimes(game) };
+  }
+
+  /** The one game of a public match searched for by name: its public way, with the easy questions too if need be. */
+  publicGameItem(room, kind, game) {
+    const variant = PUBLIC_VARIANT[game];
+    for (const easy of [false, true]) {
+      const item = { id: "m0", game, variant, config: this.matchItemSettings(room, kind, game, variant, easy) };
+      if (!this.itemProblem(room, item, room.config, { exact: true })) return item;
+    }
+    throw new Error(`No hay preguntas para jugar ${GAME_NAMES[game] || "ese juego"} ahora`);
+  }
+
+  create({ host, mode, config, game = null, audience = "grupo" }) {
     assertNameWithoutLink(host);
     const code = createRoomCode(this.rooms);
     const room = {
       code,
       mode: mode || "multi",
       game: assertGame(game),
+      // Who the next match is for: only the group, or people from anywhere too (setAudience).
+      audience: AUDIENCES.includes(audience) ? audience : "grupo",
       hostId: host.id,
       coHosts: [],
       joinMode: "solicitud",
@@ -1014,6 +1159,9 @@ export class RoomManager {
       this.destroy(room);
       return { room: null, left: true };
     }
+    // A group's public room with nobody of the group left in it is an ordinary public room from now on.
+    const group = room.matchmaking?.group;
+    if (group && !group.members.some((id) => room.players.get(id)?.connected)) room.matchmaking.group = null;
     this.checkMinesTurn(room);
     this.checkMatchFull(room);
     return { room, left: true };
@@ -1330,6 +1478,12 @@ export class RoomManager {
       throw new Error("No tienes permisos para configurar la partida");
     }
     if (room.phase !== "lobby") throw new Error("La partida ya comenzó");
+    // "Restablecer" in a game's settings: that game's settings as in a new room (the Spotify playlists added stay).
+    if (config?.reset) {
+      room.config = { ...room.config, ...gameDefaults(String(config.reset)) };
+      this.syncPlaylists(room);
+      return;
+    }
     const next = { ...room.config, ...config };
     if (config?.quiz) next.quiz = mergeQuizConfig(room.config.quiz, config.quiz);
     if (config?.geo) next.geo = mergeGeoConfig(room.config.geo, config.geo);
@@ -2029,7 +2183,8 @@ export class RoomManager {
         });
         // A public match or a Clásico after its first game starts the intro with who won the one before (INTRO_RESULT_MS).
         room.introResultMs = room.run.lastGame ? INTRO_RESULT_MS : 0;
-        this.setPhase(room, "intro", INTRO_MS + room.introResultMs, () => this.beginCountdown(room));
+        // A game searched for by name has nothing to draw: only its tutorial.
+        this.setPhase(room, "intro", introSpinMs(room) + INTRO_TUTORIAL_MS + room.introResultMs, () => this.beginCountdown(room));
         return;
       }
     }
@@ -3803,6 +3958,10 @@ export class RoomManager {
           .slice(0, 40),
       })),
       config: room.config,
+      // In the lobby: whether the game's settings differ from a new room's ("Restablecer" is off when they don't).
+      settingsChanged: room.phase === "lobby" && room.game ? settingsChanged(room) : undefined,
+      // Who the next match is for: "grupo" or "publica" (with people from anywhere, findPublicForGroup).
+      audience: room.audience || "grupo",
       coHosts: [...(room.coHosts || [])],
       // What the host's friends can do from their friends list, and the friends asking to join (the host answers).
       joinMode: room.joinMode || "solicitud",
@@ -3844,7 +4003,7 @@ export class RoomManager {
               index: room.run.current ?? 0,
               // A public match's third game, played because the first two ended one each.
               decider: room.run.deciderIndex != null && room.run.current === room.run.deciderIndex,
-              spinMs: INTRO_SPIN_MS,
+              spinMs: introSpinMs(room),
               tutorialMs: INTRO_TUTORIAL_MS,
               // The game before: who won it (a time of its own at the start of the intro, `resultMs`).
               resultMs: room.introResultMs || 0,

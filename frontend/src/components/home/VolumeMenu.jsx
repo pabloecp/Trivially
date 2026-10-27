@@ -112,7 +112,7 @@ export function SoundPacks() {
 }
 
 // The volume button: a speaker (crossed out when the sounds are off) that opens the two sliders. It is in the top bar and in
-// the phones' room header (RoomBars.jsx); with `floating` it is pinned to the top right corner (App.jsx), only shown
+// the phones' top bar; with `floating` it is pinned to the top right corner (App.jsx), only shown
 // where neither is (home.css: a Geografía match on a phone).
 export default function VolumeMenu({ floating = false }) {
   const [open, setOpen] = useState(false);

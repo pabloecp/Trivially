@@ -182,6 +182,7 @@ export function attachSockets(io, rooms, { friends = null, hub = null } = {}) {
           config: payload.config || {},
           // Older clients don't send `game` and expect to land in the song lobby.
           game: payload.game === undefined ? "musica" : payload.game,
+          audience: payload.audience,
         });
         socket.join(room.code);
         ack?.({ ok: true, state: rooms.publicState(room, user.id) });
@@ -366,6 +367,42 @@ export function attachSockets(io, rooms, { friends = null, hub = null } = {}) {
       try {
         const { room, userId } = requireRoom(rooms, socket);
         rooms.setGame(room, userId, game);
+        ack?.({ ok: true, state: rooms.publicState(room, userId) });
+        io.to(room.code).emit("room:state", rooms.publicState(room));
+      } catch (err) {
+        ack?.({ ok: false, error: err.message });
+      }
+    });
+
+    // The host's "Partida pública" / "Partida privada" in "¿Qué quieren jugar?".
+    socket.on("room:audience", (audience, ack) => {
+      try {
+        const { room, userId } = requireRoom(rooms, socket);
+        rooms.setAudience(room, userId, audience);
+        ack?.({ ok: true, state: rooms.publicState(room, userId) });
+        io.to(room.code).emit("room:state", rooms.publicState(room));
+      } catch (err) {
+        ack?.({ ok: false, error: err.message });
+      }
+    });
+
+    // The host's "Jugar" with "Partida pública": the whole group searches for a public match of the room's game.
+    socket.on("room:findPublic", (ack) => {
+      try {
+        const { room, userId } = requireRoom(rooms, socket);
+        rooms.findPublicForGroup(room, userId);
+        ack?.({ ok: true, state: rooms.publicState(room, userId) });
+        io.to(room.code).emit("room:state", rooms.publicState(room));
+      } catch (err) {
+        ack?.({ ok: false, error: err.message });
+      }
+    });
+
+    // Anyone of the group: "Cancelar" while it searches, or "Volver al grupo" once its public match is over.
+    socket.on("room:closePublic", (ack) => {
+      try {
+        const { room, userId } = requireRoom(rooms, socket);
+        rooms.closePublic(room, userId);
         ack?.({ ok: true, state: rooms.publicState(room, userId) });
         io.to(room.code).emit("room:state", rooms.publicState(room));
       } catch (err) {

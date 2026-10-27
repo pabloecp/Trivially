@@ -380,7 +380,7 @@ function WriteRound({ room, question, me, answer, skipSong, seconds, central, co
 function GameScreen() {
   const [codeHidden] = useHiddenCode();
   const { code: codeParam } = useParams();
-  const { user, room, joinRoom, answer, skipSong, setGame } = useApp();
+  const { user, room, joinRoom, answer, skipSong, restartGame } = useApp();
   // The address's code ("oculta" while it's hidden: this tab's room, lib/hiddenCode.js).
   const code = resolveCode(codeParam, room);
   const nav = useNavigate();
@@ -413,7 +413,7 @@ function GameScreen() {
       return;
     }
     setConfirmHub(false);
-    setGame(null).catch((e) => setErr(e.message || "No se pudo volver a la sala"));
+    restartGame().catch((e) => setErr(e.message || "No se pudo volver a la sala"));
   }
 
   if (!room) {
@@ -428,7 +428,7 @@ function GameScreen() {
   }
 
   if (room.phase === "finished" && room.results) {
-    return <MatchResults room={room} color="quiz" />;
+    return <MatchResults room={room} />;
   }
 
   const playerObj = room.players?.find((p) => p.id === viewerId);

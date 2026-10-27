@@ -70,7 +70,7 @@ function Offers({ offers, canPick, onPick, picked }) {
 
 function GameScreen() {
   const { code: codeParam } = useParams();
-  const { user, room, joinRoom, answer, kingPick, setGame } = useApp();
+  const { user, room, joinRoom, answer, kingPick, restartGame } = useApp();
   const code = resolveCode(codeParam, room);
   const nav = useNavigate();
   const { central, controller, viewerId } = useView(room);
@@ -119,7 +119,7 @@ function GameScreen() {
       return;
     }
     setConfirmHub(false);
-    setGame(null).catch((e) => setErr(e.message || "No se pudo volver a la sala"));
+    restartGame().catch((e) => setErr(e.message || "No se pudo volver a la sala"));
   }
 
   if (!room) {
@@ -132,7 +132,7 @@ function GameScreen() {
       </div>
     );
   }
-  if (room.phase === "finished" && room.results) return <MatchResults room={room} color="rey" />;
+  if (room.phase === "finished" && room.results) return <MatchResults room={room} />;
 
   const rey = room.rey || {};
   const question = room.question;

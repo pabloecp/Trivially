@@ -369,6 +369,8 @@ export function AppProvider({ children }) {
       setKickedNotice(
         reason === "inactivo"
           ? "Saliste de la partida por inactividad"
+          : reason === "grupo"
+          ? "La partida terminó y el grupo volvió a su sala"
           : blocked
           ? "El anfitrión te bloqueó de la sala"
           : "El anfitrión te sacó de la sala. Puedes volver con el código"
@@ -561,23 +563,26 @@ export function AppProvider({ children }) {
 
       // `game` is where the room starts: null for the Home screen, or a game id such as "musica".
       // `explicitUser` is for callers that just created the user and want to be sure it's the one sent.
-      async createRoom(mode, config, game = "musica", explicitUser) {
+      // `audience` is who its next match is for ("grupo" or "publica", "¿Qué quieren jugar?").
+      async createRoom(mode, config, game = "musica", explicitUser, audience = "grupo") {
         const current = explicitUser || userRef.current;
         if (!current?.name) throw new Error("Debes identificarte antes de crear una sala");
-        const res = await emitAck("room:create", { user: current, mode, config, game });
+        const res = await emitAck("room:create", { user: current, mode, config, game, audience });
         if (!res.ok) throw new Error(res.error);
         return enterRoom(res.state);
       },
 
       // "Casual" (Competitivo is disabled for now): into a public room of that kind, which starts by itself once it's
       // full; every match is two games (and a third when they end one each). `size` is how many players it needs (2:
-      // "Duelo", or 5). Also "Buscar otra partida" at the end of one (the server leaves the old room first).
-      async findMatch(kind, size = 5, explicitUser) {
+      // "Duelo", not offered for now, or 5). Also "Buscar otra partida" at the end of one (the server leaves the old room
+      // first). With a `game` ("Partida pública" in "¿Qué quieren jugar?") it's a public match of that game alone,
+      // and the server picks its size (5).
+      async findMatch(kind, size = 5, explicitUser, game = null) {
         const current = explicitUser || userRef.current;
         if (!current?.name) throw new Error("Debes identificarte antes de buscar partida");
         // An owner in debug view can force the games of its match (the admin panel); the server checks the account.
-        const force = current.role === "owner" && getOwnerView() === "debug" ? getForcedGames() : [];
-        const res = await emitAck("match:find", { user: current, kind, size, ...(force.length ? { force } : {}) });
+        const force = !game && current.role === "owner" && getOwnerView() === "debug" ? getForcedGames() : [];
+        const res = await emitAck("match:find", { user: current, kind, ...(game ? { game } : { size }), ...(force.length ? { force } : {}) });
         if (!res.ok) throw new Error(res.error);
         return enterRoom(res.state);
       },
@@ -662,6 +667,34 @@ export function AppProvider({ children }) {
       async setGame(game) {
         previewRef.current = null;
         const res = await emitAck("room:setGame", game ?? null);
+        if (!res.ok) throw new Error(res.error);
+        if (res.state) setRoom(res.state);
+      },
+
+      // Host only: who the room's next match is for, "grupo" or "publica" ("¿Qué quieren jugar?").
+      async setAudience(audience) {
+        const res = await emitAck("room:audience", audience);
+        if (!res.ok) throw new Error(res.error);
+        if (res.state) setRoom(res.state);
+      },
+
+      // Host only, with "Partida pública": the whole group searches for a public match of the room's game.
+      async findPublicForGroup() {
+        const res = await emitAck("room:findPublic");
+        if (!res.ok) throw new Error(res.error);
+        if (res.state) setRoom(res.state);
+      },
+
+      // Anyone of the group: cancels its search, or takes it back to its own room once its public match is over.
+      async closePublic() {
+        const res = await emitAck("room:closePublic");
+        if (!res.ok) throw new Error(res.error);
+        if (res.state) setRoom(res.state);
+      },
+
+      // "Restablecer" in a game's settings: back to a new room's.
+      async resetConfig(game) {
+        const res = await emitAck("room:config", { reset: game });
         if (!res.ok) throw new Error(res.error);
         if (res.state) setRoom(res.state);
       },

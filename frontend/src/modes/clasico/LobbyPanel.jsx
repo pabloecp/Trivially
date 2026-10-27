@@ -1,6 +1,5 @@
 import MatchGames from "../../components/home/MatchGames.jsx";
 import ModeStage from "../../components/home/ModeStage.jsx";
-import ModeStart from "../../components/home/ModeStart.jsx";
 import { findMode } from "../index.js";
 import "../../styles/match.css";
 
@@ -12,9 +11,7 @@ export default function LobbyPanel({ room }) {
 
   return (
     <>
-      <ModeStage room={room} mode={mode}>
-        <ModeStart room={room} />
-      </ModeStage>
+      <ModeStage room={room} mode={mode} />
 
       <section className="tv-settings-card tv-settings-panel" aria-labelledby="tv-classic-games">
         <div className="tv-settings-head">

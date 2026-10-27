@@ -42,10 +42,26 @@ export const MATCH_VARIANTS = [
   { id: "trivia-abiertas", game: "opciones", config: { formats: ["escribir"] } },
   { id: "rango-cifras", game: "historia", config: { styles: ["cifras"] } },
   { id: "minas-carrera", game: "minas", config: { styles: ["carrera"] } },
+  // Only searched for by name (PUBLIC_GAMES): the roulette never draws them (gamesFor leaves their games out).
+  { id: "cancion", game: "musica", config: {} },
+  { id: "pais", game: "mundo", config: {} },
+  { id: "lluvia", game: "lluvia", config: {} },
 ];
 export const findVariant = (id) => MATCH_VARIANTS.find((v) => v.id === id) || null;
 /** The variants a public match of `kind` draws from: those of its games. */
 export const variantsFor = (kind) => MATCH_VARIANTS.filter((v) => gamesFor(kind).includes(v.game)).map((v) => v.id);
+
+// "Partida pública" with a game picked ("Fila de Trivia"): a public match of that game alone, one game of its
+// public way (PUBLIC_VARIANT: Trivia's four options, Rango's figures...) with the public clock. Rey de la colina and
+// Farsante need people who know each other, so they're only played in a group.
+export const PUBLIC_GAMES = ["opciones", "musica", "mundo", "historia", "minas", "lluvia"];
+export const PUBLIC_VARIANT = Object.fromEntries(PUBLIC_GAMES.map((game) => [game, MATCH_VARIANTS.find((v) => v.game === game).id]));
+// A group (a private room) can search for a public match together: it fills up to one more than the group, at least
+// two and at most PUBLIC_GROUP_MAX players (always PUBLIC_GROUP_MAX while DUELS_OPEN is off).
+export const PUBLIC_GROUP_MAX = 5;
+export const groupMatchSize = (members) => (DUELS_OPEN ? Math.min(PUBLIC_GROUP_MAX, Math.max(2, members + 1)) : PUBLIC_GROUP_MAX);
+// Who the room's "Vas a jugar" is for: only the group, or people from anywhere too (RoomManager.setAudience).
+export const AUDIENCES = ["grupo", "publica"];
 // MATCH_SIZE in the environment caps every room's size (1 fills it alone, to try it out).
 const SIZE_CAP = Math.max(1, Math.min(5, Math.round(Number(process.env.MATCH_SIZE)) || 5));
 
@@ -97,15 +113,20 @@ export function newBot(takenNames, random = Math.random) {
   };
 }
 
-/** A request to find a match, or an error in Spanish when it isn't one. */
+/**
+ * A request to find a match, or an error in Spanish when it isn't one. With a `game` it's a public match of that game
+ * alone, for five unless `size` says otherwise (for two with DUELS_OPEN); without one, the roulette's two games.
+ */
 export function cleanMatchRequest(input) {
   const kind = MATCH_KINDS.includes(input?.kind) ? input.kind : null;
+  const game = input?.game == null ? null : String(input.game);
   // Older clients don't send it: 5 players. The `rounds` they may send is ignored: every match is MATCH_ROUNDS.
-  const size = input?.size == null ? 5 : Number(input.size);
+  const size = input?.size == null ? (game && DUELS_OPEN ? 2 : 5) : Number(input.size);
   if (!kind) throw new Error("Elige el tipo de partida");
   if (!MATCH_KINDS_OPEN.includes(kind)) throw new Error("El modo Competitivo no está disponible por ahora");
+  if (game && !PUBLIC_GAMES.includes(game)) throw new Error("Ese juego solo se puede jugar con tu grupo");
   if (!MATCH_SIZES.includes(size)) throw new Error("Elige Uno contra Uno o Todos contra Todos");
-  return { kind, rounds: MATCH_ROUNDS, size };
+  return { kind, rounds: game ? ROUNDS_PER_GAME : MATCH_ROUNDS, size, game };
 }
 
 /** How many games a match of `rounds` rounds plays: one per ROUNDS_PER_GAME. */
@@ -171,5 +192,9 @@ export function publicMatchmaking(info, connected) {
     count: connected,
     games: info.games || null,
     startsAt: info.startsAt || null,
+    // The game searched for (null: the roulette's), and the group that searched together, if any: its players come
+    // back to their own room when it's over (RoomManager.closePublic).
+    game: info.game || null,
+    group: info.group ? { hostId: info.group.hostId, members: [...info.group.members] } : null,
   };
 }

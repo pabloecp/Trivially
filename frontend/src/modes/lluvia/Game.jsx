@@ -154,7 +154,7 @@ function Sky({ room, question, viewerId, nameOf, colorOf, onTap, children }) {
  * through the countdown, so a phone's keyboard is already up when the rain starts).
  */
 function AnswerBox({ room, open, inputRef, onResult }) {
-  const { rainAnswer } = useApp();
+  const { rainAnswer, restartGame } = useApp();
   const [text, setText] = useState("");
   const boxRef = useRef(null);
   const textRef = useRef("");
@@ -478,7 +478,7 @@ function GameScreen() {
       return;
     }
     setConfirmHub(false);
-    setGame(null).catch((e) => setErr(e.message || "No se pudo volver a la sala"));
+    restartGame().catch((e) => setErr(e.message || "No se pudo volver a la sala"));
   }
 
   function onResult(result) {
@@ -497,7 +497,7 @@ function GameScreen() {
     );
   }
 
-  if (phase === "finished" && room.results) return <MatchResults room={room} color="rain" />;
+  if (phase === "finished" && room.results) return <MatchResults room={room} />;
 
   const isHost = !central && room.hostId === user?.id;
   const me = room.players.find((p) => p.id === viewerId) || null;

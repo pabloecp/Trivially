@@ -12,7 +12,7 @@ import { RoomManager } from "./roomManager.js";
 assert.throws(() => cleanMatchRequest({ kind: "privada", rounds: 5 }), /tipo de partida/);
 assert.throws(() => cleanMatchRequest({ kind: "competitivo" }), /Competitivo no está disponible/);
 assert.throws(() => cleanMatchRequest({ kind: "casual", rounds: 5, size: 3 }), /Uno contra Uno o Todos contra Todos/);
-assert.deepEqual(cleanMatchRequest({ kind: "casual", rounds: "15" }), { kind: "casual", rounds: 10, size: 5 });
+assert.deepEqual(cleanMatchRequest({ kind: "casual", rounds: "15" }), { kind: "casual", rounds: 10, size: 5, game: null });
 assert.deepEqual(cleanMatchRequest({ kind: "casual", rounds: 5, size: 2 }).size, 2);
 for (const [rounds, count] of [[5, 1], [10, 2], [15, 3]]) {
   const games = pickMatchGames(rounds);
@@ -238,8 +238,9 @@ assert.equal(new Set(many.matchmaking.games).size, many.matchmaking.games.length
 assert.ok(many.matchmaking.games.every((v) => variantsFor("casual").includes(v)));
 
 // The roulette draws each game with one way of playing it, and that way is all its rounds have.
-assert.equal(MATCH_VARIANTS.length, 4);
-assert.deepEqual(variantsFor("competitivo"), MATCH_VARIANTS.map((v) => v.id));
+// (Adivina la canción, Encuentra el país and Lluvia have a variant too, only searched for by name: the roulette skips them.)
+assert.equal(variantsFor("casual").length, 4);
+assert.deepEqual(variantsFor("competitivo"), MATCH_VARIANTS.filter((v) => MATCH_GAMES.includes(v.game)).map((v) => v.id));
 assert.deepEqual(matchItemConfig("opciones", "casual", { variant: "trivia-cerradas" }).formats, ["opciones"]);
 assert.deepEqual(matchItemConfig("minas", "casual", { variant: "minas-carrera" }).styles, ["carrera"]);
 const ways = mgr.findMatch(user(50), { kind: "casual" });

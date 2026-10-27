@@ -1,7 +1,6 @@
 import { useEffect } from "react";
 import MusicSettings from "./MusicSettings.jsx";
 import ModeStage from "../../components/home/ModeStage.jsx";
-import ModeStart from "../../components/home/ModeStart.jsx";
 import SettingsPanel from "../../components/home/SettingsPanel.jsx";
 import SpotifyIcon from "../../components/home/SpotifyIcon.jsx";
 import { useApp } from "../../lib/store.jsx";
@@ -44,9 +43,7 @@ export default function LobbyPanel({ room, onToast }) {
             ))}
           </span>
         }
-      >
-        <ModeStart room={room} />
-      </ModeStage>
+      />
 
       <SettingsPanel room={room} readOnly={!canEditConfig}>
         <MusicSettings room={room} updateConfig={updateConfig} onToast={onToast} readOnly={!canEditConfig}>

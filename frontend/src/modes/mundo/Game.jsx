@@ -31,7 +31,7 @@ function joinNames(names) {
 
 function GameScreen() {
   const { code: codeParam } = useParams();
-  const { user, room, joinRoom, placePin, setGame } = useApp();
+  const { user, room, joinRoom, placePin, restartGame } = useApp();
   // The address's code ("oculta" while it's hidden: this tab's room, lib/hiddenCode.js).
   const code = resolveCode(codeParam, room);
   const nav = useNavigate();
@@ -154,7 +154,7 @@ function GameScreen() {
       return;
     }
     setConfirmHub(false);
-    setGame(null).catch((e) => setErr(e.message || "No se pudo volver a la sala"));
+    restartGame().catch((e) => setErr(e.message || "No se pudo volver a la sala"));
   }
 
   if (!room) {
@@ -168,7 +168,7 @@ function GameScreen() {
     );
   }
 
-  if (room.phase === "finished" && room.results) return <MatchResults room={room} color="world" />;
+  if (room.phase === "finished" && room.results) return <MatchResults room={room} />;
 
   const phase = room.phase;
   const isHost = !central && room.hostId === user?.id;

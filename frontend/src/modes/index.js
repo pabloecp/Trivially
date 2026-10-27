@@ -28,6 +28,8 @@ export const GAME_MODES = [
   {
     id: "opciones",
     name: "Trivia",
+    // Under its name on its card in "¿Qué quieren jugar?".
+    tagline: "Más rápido, más puntos",
     kind: "main",
     // Sky blue (styles/quiz.css); its answers have their own four colours.
     color: "quiz",
@@ -45,6 +47,7 @@ export const GAME_MODES = [
   {
     id: "musica",
     name: "Adivina la canción",
+    tagline: "Escucha y adivina el título",
     kind: "extra",
     color: "music",
     icon: "music",
@@ -63,6 +66,7 @@ export const GAME_MODES = [
   {
     id: "mundo",
     name: "Encuentra el país",
+    tagline: "Ponle tu pin en el mapa",
     kind: "extra",
     color: "world",
     icon: "globe",
@@ -81,6 +85,7 @@ export const GAME_MODES = [
     // Rango: get as close as you can on a range. Its steps are general, in case it gets other ways of playing. The id is the old one on purpose (see GAME_IDS on the server).
     id: "historia",
     name: "Rango",
+    tagline: "Más cerca, más puntos",
     kind: "extra",
     // Terracotta (styles/history.css).
     color: "history",
@@ -99,6 +104,7 @@ export const GAME_MODES = [
   {
     id: "minas",
     name: "Campo de minas",
+    tagline: "No pises la mina",
     kind: "extra",
     // The site's violet (styles/mines.css).
     color: "mines",
@@ -115,6 +121,7 @@ export const GAME_MODES = [
     // Lluvia: questions fall down the screen for a whole round; each one is for whoever writes its answer first.
     id: "lluvia",
     name: "Lluvia",
+    tagline: "Las preguntas caen",
     kind: "extra",
     // Rain blue (styles/rain.css); the questions fall in green, yellow or red by difficulty.
     color: "rain",
@@ -137,6 +144,7 @@ export const GAME_MODES = [
     // Rey de la colina: the king picks the question, the first to answer it takes the crown.
     id: "rey",
     name: "Rey de la colina",
+    tagline: "Destrona al rey",
     kind: "extra",
     // Crown gold (styles/rey.css).
     color: "rey",
@@ -160,6 +168,7 @@ export const GAME_MODES = [
     // Farsante: everyone invents an answer, then votes for the real one (or the best one); a game for a call with friends.
     id: "farsante",
     name: "Farsante",
+    tagline: "Inventa y engaña",
     kind: "extra",
     // Leafy green (styles/farsante.css).
     color: "farsante",

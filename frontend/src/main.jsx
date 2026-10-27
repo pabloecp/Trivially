@@ -8,6 +8,8 @@ import "./lib/theme.js";
 import "./styles/global.css";
 import "./styles/home.css";
 import "./styles/palettes.css";
+// Last: the look over everything else (see the file).
+import "./styles/look.css";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>

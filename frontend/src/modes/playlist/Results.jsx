@@ -25,7 +25,7 @@ import { findVariant } from "../../components/home/matchInfo.js";
 // middle: go back to its panel or play the playlist again (shuffled again if it's random).
 function ResultsScreen() {
   const { code: codeParam } = useParams();
-  const { user, room, isCentral, joinRoom, replayGame, restartGame, leaveRoom, findMatch } = useApp();
+  const { user, room, isCentral, joinRoom, replayGame, restartGame, leaveRoom, findMatch, closePublic } = useApp();
   const [searching, setSearching] = useState(false);
   // The address's code ("oculta" while it's hidden: this tab's room, lib/hiddenCode.js).
   const code = resolveCode(codeParam, room);
@@ -139,7 +139,40 @@ function ResultsScreen() {
           {err && <p className="tv-lobby-error" role="alert">{err}</p>}
 
           <ResultsFoot>
-            {publicMatch && !isCentral ? (
+            {publicMatch && !isCentral && publicMatch.group?.members.includes(user?.id) ? (
+              // A group that searched together: back to its own room (the strangers go home), or out of the group.
+              <>
+                <button
+                  className="tv-btn tv-c-neutral tv-res-btn"
+                  data-sound="back"
+                  aria-label="Salir del grupo"
+                  onClick={() => {
+                    leaveRoom();
+                    nav(exitPath(room), { replace: true });
+                  }}
+                  type="button"
+                >
+                  <Icon name="logout" size={18} />
+                  <span className="tv-res-btn-label">Salir</span>
+                </button>
+                <button
+                  className="tv-btn tv-btn--primary tv-res-btn"
+                  data-sound="none"
+                  disabled={searching}
+                  onClick={() => {
+                    setSearching(true);
+                    withSound(closePublic, null).catch((e) => {
+                      setErr(e.message || "No se pudo volver al grupo");
+                      setSearching(false);
+                    });
+                  }}
+                  type="button"
+                >
+                  <Icon name="users" size={18} strokeWidth={2.4} />
+                  Volver al grupo
+                </button>
+              </>
+            ) : publicMatch && !isCentral ? (
               // Nobody is the host of a public match: everyone chooses for themselves.
               <>
                 <button
@@ -156,12 +189,12 @@ function ResultsScreen() {
                   <span className="tv-res-btn-label">Salir</span>
                 </button>
                 <button
-                  className={`tv-btn tv-c-${MATCH_KINDS[publicMatch.kind]?.color || "music"} tv-shine tv-res-btn`}
+                  className="tv-btn tv-btn--primary tv-res-btn"
                   data-sound="none"
                   disabled={searching}
                   onClick={() => {
                     setSearching(true);
-                    withSound(() => findMatch(publicMatch.kind, publicMatch.versus || 5), null)
+                    withSound(() => findMatch(publicMatch.kind, publicMatch.versus || 5, undefined, publicMatch.game), null)
                       // This address is the old room's, which RoomNavigator leaves alone: go to the new one's screen.
                       .then((next) => nav(`/sala/${urlCode(next.code)}`, { replace: true }))
                       .catch((e) => {
@@ -189,7 +222,7 @@ function ResultsScreen() {
                 </button>
                 {run && (
                   <button
-                    className={`tv-btn tv-c-${classic?.color || "playlist"} tv-shine tv-res-btn`}
+                    className="tv-btn tv-btn--primary tv-res-btn"
                     onClick={() => replayGame().catch((e) => setErr(e.message || "No se pudo empezar otra vez la playlist"))}
                     type="button"
                   >

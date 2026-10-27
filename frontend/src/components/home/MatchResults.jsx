@@ -14,15 +14,15 @@ import { RetouchCard } from "./ResultsLooks.jsx";
 export { Podium };
 
 // The end of a match in any game. A playlist is one match that ends on its own results (modes/playlist/Results.jsx).
-export default function MatchResults({ room, color = "green" }) {
-  return <MatchEnd room={room} color={color} />;
+export default function MatchResults({ room }) {
+  return <MatchEnd room={room} />;
 }
 
 // A match's end, in the room's frame: the title, the podium and the ranking in two cards side by side (the game's icon
 // and name, everyone's points and a dot per round; "Ver tus respuestas" opens every round with its answer) and
 // the host's two buttons, the same size, in the middle: play again with the same settings, or back to the game's lobby.
-// Everyone's results are also in the room's column (PartyPanel). `color` is the mode's tile colour for "Volver a jugar".
-function MatchEnd({ room, color }) {
+// Everyone's results are also in the room's column (PartyPanel). "Volver a jugar" is the screen's yellow button.
+function MatchEnd({ room }) {
   const { user, isCentral, restartGame, replayGame } = useApp();
   const [err, setErr] = useState("");
   const [showSummary, setShowSummary] = useState(false);
@@ -95,7 +95,7 @@ function MatchEnd({ room, color }) {
                   <span className="tv-res-btn-label">Volver al lobby</span>
                 </button>
                 <button
-                  className={`tv-btn tv-c-${color} tv-shine tv-res-btn`}
+                  className="tv-btn tv-btn--primary tv-res-btn"
                   onClick={() => withSound(replayGame).catch((e) => setErr(e.message || "No se pudo empezar otra partida"))}
                   type="button"
                   data-sound="none"

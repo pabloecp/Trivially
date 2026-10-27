@@ -1,6 +1,5 @@
 import QuizSettings from "./QuizSettings.jsx";
 import ModeStage from "../../components/home/ModeStage.jsx";
-import ModeStart from "../../components/home/ModeStart.jsx";
 import SettingsPanel from "../../components/home/SettingsPanel.jsx";
 import { useApp } from "../../lib/store.jsx";
 import { findMode } from "../index.js";
@@ -20,9 +19,7 @@ export default function LobbyPanel({ room, onToast }) {
 
   return (
     <>
-      <ModeStage room={room} mode={mode}>
-        <ModeStart room={room} />
-      </ModeStage>
+      <ModeStage room={room} mode={mode} />
 
       <SettingsPanel room={room} readOnly={!canEditConfig}>
         <QuizSettings room={room} updateConfig={updateConfig} onToast={onToast} readOnly={!canEditConfig}>

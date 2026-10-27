@@ -168,8 +168,7 @@ export default function App() {
       <Routes>
         <Route path="/" element={<RoomScreen />} />
         <Route path="/sala/:code" element={<RoomScreen />} />
-        {/* Inicio is "¿Cómo quieres jugar?" (Pública and Privada: components/home/PlayPage.jsx); each option has its address
-            (Pública's two tabs, /jugar/casual and /jugar/competitivo, and /jugar/privada). */}
+        {/* The old pages of "¿Cómo quieres jugar?" (/jugar/casual, /jugar/privada…) open Inicio on the side they named. */}
         <Route path="/jugar" element={<Navigate to="/" replace />} />
         <Route path="/jugar/:option" element={<RoomScreen />} />
         <Route path="/lobby/:code" element={<LobbyRedirect />} />

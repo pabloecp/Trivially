@@ -104,7 +104,8 @@ const inertUnless = (shown) => (el) => {
 // At the top of the players, while the room has one, the "Dispositivo central" (CentralSpot): the screen that shows the
 // match, picked from a player's menu (the host or a player with the settings permission). On the central device itself
 // the column only shows (`display`): no menus, chat or way out, and the code to join instead of "Invitar".
-export default function PartyPanel({ room, onToast, scores = false, display = false, className = "" }) {
+// `group` is "Tu grupo" (GroupSheet): the code is in the sheet's own box above, and the list is "En el grupo".
+export default function PartyPanel({ room, onToast, scores = false, display = false, group = false, className = "" }) {
   const { user, isCentral } = useApp();
   const [menuFor, setMenuFor] = useState(null);
   const { copied, copy: copyInvite } = useInvite(room.code, onToast);
@@ -163,7 +164,7 @@ export default function PartyPanel({ room, onToast, scores = false, display = fa
       aria-label="Tu sala"
     >
       {/* A public match has no code to share: nobody joins it but by searching. */}
-      {!room.matchmaking && (
+      {!room.matchmaking && !group && (
       <div className="tv-party-codebox">
         <div className="tv-party-codehead">
           <p className="tv-mono-label">Código de sala</p>
@@ -194,7 +195,7 @@ export default function PartyPanel({ room, onToast, scores = false, display = fa
       {isHost && !display && <FriendsRoomControls room={room} onToast={onToast} />}
 
       <div className="tv-party-title">
-        <h2>{scores ? "Marcador" : "En la sala"}</h2>
+        <h2>{scores ? "Marcador" : group ? "En el grupo" : "En la sala"}</h2>
         <span>
           {players.length === 1 ? "1 jugador" : `${players.length} jugadores`}
         </span>

@@ -2,7 +2,6 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import Icon from "../../components/home/Icon.jsx";
 import SettingsPanel from "../../components/home/SettingsPanel.jsx";
-import { useStartGame } from "../../components/home/ModeStart.jsx";
 import { useApp } from "../../lib/store.jsx";
 import { play, withSound } from "../../lib/sounds.js";
 import { findMode } from "../index.js";
@@ -280,14 +279,6 @@ export default function LobbyPanel({ room, onToast }) {
 
   const setItemConfig = (id, config) => save({ ...draft, items: items.map((i) => (i.id === id ? { ...i, config } : i)) });
 
-  // Why it can't start yet, for everyone to see: no games, or the first game whose settings can't be played.
-  const blockedAt = items.findIndex((i) => status[i.id]?.problem);
-  const blocked = !items.length
-    ? "Añade al menos un juego para empezar."
-    : blockedAt >= 0
-    ? `Juego ${blockedAt + 1}, ${findMode(items[blockedAt].game)?.name}: ${status[items[blockedAt].id].problem}`
-    : null;
-
   return (
     <>
       <section className={`tv-mstage tv-c-${mode.color} tv-pl-stage`} aria-label={mode.name}>
@@ -493,13 +484,13 @@ export default function LobbyPanel({ room, onToast }) {
             </button>
           )}
           </div>
-          <PlaylistStart room={room} blocked={blocked} />
         </div>
       </section>
 
       <SettingsPanel
         room={room}
         readOnly={!canEdit}
+        inline
         actions={
           // Small, in the title's row: the chosen game's settings, or saving and sharing the playlist.
           <div className="tv-pl-views" role="tablist" aria-label="Qué ver">
@@ -596,26 +587,6 @@ export default function LobbyPanel({ room, onToast }) {
         {side === "guardar" && <PlaylistLibrary playlist={draft} canEdit={canEdit} onLoad={replaceWith} onToast={onToast} />}
         {side === "guardar" && <PlaylistShare playlist={draft} canEdit={canEdit} onImport={replaceWith} onToast={onToast} />}
       </SettingsPanel>
-    </>
-  );
-}
-
-// "Empezar playlist" at the bottom of the card, for the host (phones have it in the bottom bar instead, like every
-// game's start button); everyone else sees who they wait for.
-// While it can't start (`blocked`: no games, or a game whose settings can't be played) the button is just locked;
-// the game with the problem shows its ⓘ in the list.
-function PlaylistStart({ room, blocked }) {
-  const { isHost, canStart, busy, err, start } = useStartGame(room);
-  if (!isHost) {
-    return <p className="tv-mstage-wait">Esperando a que {room.hostName || "el anfitrión"} comience la partida</p>;
-  }
-  return (
-    <>
-      {err && <p className="tv-lobby-error">{err}</p>}
-      <button className="tv-mstage-start tv-shine" onClick={start} disabled={!canStart || Boolean(blocked)} type="button" data-sound="none">
-        <Icon name="play" size={22} filled strokeWidth={1.5} />
-        {busy ? "Empezando…" : "Comenzar partida"}
-      </button>
     </>
   );
 }

@@ -48,7 +48,7 @@ function Who({ option, room }) {
 
 function GameScreen() {
   const { code: codeParam } = useParams();
-  const { user, room, joinRoom, farsanteWrite, farsanteVote, setGame } = useApp();
+  const { user, room, joinRoom, farsanteWrite, farsanteVote, restartGame } = useApp();
   const code = resolveCode(codeParam, room);
   const nav = useNavigate();
   const { central, controller, viewerId } = useView(room);
@@ -94,7 +94,7 @@ function GameScreen() {
       return;
     }
     setConfirmHub(false);
-    setGame(null).catch((e) => setErr(e.message || "No se pudo volver a la sala"));
+    restartGame().catch((e) => setErr(e.message || "No se pudo volver a la sala"));
   }
 
   if (!room) {
@@ -107,7 +107,7 @@ function GameScreen() {
       </div>
     );
   }
-  if (room.phase === "finished" && room.results) return <MatchResults room={room} color="farsante" />;
+  if (room.phase === "finished" && room.results) return <MatchResults room={room} />;
 
   const fs = room.farsante;
   const kind = findKind(fs?.kind);
