@@ -36,11 +36,13 @@ export const ROUNDS_PER_GAME = 5;
 // Games of every public match, and its rounds (MATCH_GAME_COUNT and MATCH_ROUNDS on the server).
 export const MATCH_GAME_COUNT = 2;
 export const MATCH_ROUNDS = MATCH_GAME_COUNT * ROUNDS_PER_GAME;
-// How many players a room needs (MATCH_SIZES on the server): you against one, or five in all.
+// How many players a room needs (MATCH_SIZES on the server): you against one, or five in all. "Uno contra Uno" isn't
+// offered for now (`hidden`, DUELS_OPEN on the server): OPEN_SIZES are the ones a player can pick.
 export const MATCH_SIZES = [
-  { value: 2, label: "Uno contra Uno", hint: "1 Jugador", icon: "user" },
+  { value: 2, label: "Uno contra Uno", hint: "1 Jugador", icon: "user", hidden: true },
   { value: 5, label: "Todos contra Todos", hint: "5 Jugadores", icon: "users" },
 ];
+export const OPEN_SIZES = MATCH_SIZES.filter((o) => !o.hidden);
 export const sizeName = (size) => (size === 2 ? "Uno contra Uno" : "Todos contra Todos");
 // The games a public match draws from, in the roulette's order (gamesFor on the server): Trivia, Rango and Campo de
 // minas, in Casual and Competitivo alike.

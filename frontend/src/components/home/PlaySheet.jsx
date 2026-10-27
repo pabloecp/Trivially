@@ -6,7 +6,7 @@ import { findMode } from "../../modes/index.js";
 import Avatar from "./Avatar.jsx";
 import Icon from "./Icon.jsx";
 import Segmented from "./Segmented.jsx";
-import { MATCH_KINDS, MATCH_SIZES, gamesFor } from "./matchInfo.js";
+import { MATCH_KINDS, OPEN_SIZES, gamesFor } from "./matchInfo.js";
 import "../../styles/match.css";
 
 // A room's code is five letters and numbers (ROOM_CODE_LENGTH on the server).
@@ -14,8 +14,8 @@ const ROOM_CODE_LENGTH = 5;
 
 const DISMISS_DISTANCE = 90;
 const FOCUSABLE = "a[href], button:not([disabled]), input:not([disabled])";
-// The ways to play, each opening in place under its row: the public match (how many play, then search; Competitivo is
-// disabled for now) and "Privada" (create a room or join one with a code).
+// The ways to play, each opening in place under its row: the public match (how many play, when there's more than one
+// size to pick, then search; Competitivo is disabled for now) and "Privada" (create a room or join one with a code).
 const PLAY_KINDS = [
   MATCH_KINDS.casual,
   { id: "privada", name: "Privada", color: "blue", icon: "lock", blurb: "Crea una sala o entra con un código" },
@@ -40,7 +40,7 @@ export default function PlaySheet({ mode, joinCode, open, onClose, askName = fal
   const { user, saveGuest, createRoom, joinRoom, checkRoom, findMatch } = useApp();
   // Which row is open (null: none).
   const [kind, setKind] = useState(null);
-  const [size, setSize] = useState(MATCH_SIZES[1].value);
+  const [size, setSize] = useState(OPEN_SIZES[OPEN_SIZES.length - 1].value);
   const sheetRef = useRef(null);
   const dragStart = useRef(null);
   const [mounted, setMounted] = useState(open);
@@ -329,20 +329,23 @@ export default function PlaySheet({ mode, joinCode, open, onClose, askName = fal
                                 </span>
                                 <span className="tv-pm-detail">{k.detail}</span>
                               </div>
-                              <Segmented
-                                label="Jugadores"
-                                value={size}
-                                onChange={setSize}
-                                options={MATCH_SIZES.map((o) => ({
-                                  value: o.value,
-                                  label: (
-                                    <span className="tv-pm-round">
-                                      <b>{o.label}</b>
-                                      <small>{o.hint}</small>
-                                    </span>
-                                  ),
-                                }))}
-                              />
+                              {/* Only with more than one size to pick ("Uno contra Uno" is hidden for now). */}
+                              {OPEN_SIZES.length > 1 && (
+                                <Segmented
+                                  label="Jugadores"
+                                  value={size}
+                                  onChange={setSize}
+                                  options={OPEN_SIZES.map((o) => ({
+                                    value: o.value,
+                                    label: (
+                                      <span className="tv-pm-round">
+                                        <b>{o.label}</b>
+                                        <small>{o.hint}</small>
+                                      </span>
+                                    ),
+                                  }))}
+                                />
+                              )}
                               <button
                                 type="button"
                                 className={`tv-btn tv-btn--block tv-c-${k.color} tv-shine tv-pm-go`}

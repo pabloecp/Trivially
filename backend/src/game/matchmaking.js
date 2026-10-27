@@ -1,5 +1,5 @@
 // Partidas públicas ("Casual"; "Competitivo" is disabled for now, MATCH_KINDS_OPEN): players who don't know each other
-// are put in the same room until it's full (2 players for "Uno contra Uno", 5 for "Todos contra Todos"), and then the match starts
+// are put in the same room until it's full (5 players; "Uno contra Uno", for 2, isn't offered for now: DUELS_OPEN), and then the match starts
 // on its own. Its games aren't chosen by anyone: every match is MATCH_GAME_COUNT (2) games, drawn at random among
 // MATCH_VARIANTS (each game with one of its ways only: "Trivia Cerradas", "Rango Cifras"...) and played one after another
 // (a playlist in order, 5 rounds each). Each game is won by whoever scores the most in it, and the match by whoever wins
@@ -16,6 +16,9 @@ export const MATCH_GAME_COUNT = 2;
 export const MATCH_ROUNDS = MATCH_GAME_COUNT * ROUNDS_PER_GAME;
 // How many players a room needs: 2 ("Uno contra Uno") or 5 ("Todos contra Todos").
 export const MATCH_SIZES = [2, 5];
+// "Uno contra Uno" isn't offered to players for now (its code stays, like Competitivo's): a search that doesn't say its
+// size (a game's queue too) and a group searching together are always for 5. An explicit `size: 2` still makes a duel.
+export const DUELS_OPEN = false;
 // Competitivo's games: Trivia, Rango and Campo de minas, the ones judged only by what you know.
 export const MATCH_GAMES = ["opciones", "historia", "minas"];
 // Casual plays the same ones. (The other games still have their public-match clock and bots, matchRoundMs and
