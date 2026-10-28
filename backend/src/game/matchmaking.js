@@ -56,11 +56,11 @@ export const variantsFor = (kind) => MATCH_VARIANTS.filter((v) => gamesFor(kind)
 // Farsante need people who know each other, so they're only played in a group.
 export const PUBLIC_GAMES = ["opciones", "musica", "mundo", "historia", "minas", "lluvia"];
 export const PUBLIC_VARIANT = Object.fromEntries(PUBLIC_GAMES.map((game) => [game, MATCH_VARIANTS.find((v) => v.game === game).id]));
-// A group (a private room) can search for a public match together: it fills up to one more than the group, at least
-// two and at most PUBLIC_GROUP_MAX players (always PUBLIC_GROUP_MAX while DUELS_OPEN is off).
+// A group (game/groups.js) searches for a public match together, all in the same room: it fills up to one more than the
+// group, at least two and at most PUBLIC_GROUP_MAX players (always PUBLIC_GROUP_MAX while DUELS_OPEN is off).
 export const PUBLIC_GROUP_MAX = 5;
 export const groupMatchSize = (members) => (DUELS_OPEN ? Math.min(PUBLIC_GROUP_MAX, Math.max(2, members + 1)) : PUBLIC_GROUP_MAX);
-// Who the room's "Vas a jugar" is for: only the group, or people from anywhere too (RoomManager.setAudience).
+// Who "Vas a jugar" is for: people from anywhere ("Partida pública") or only you or your group ("Partida privada").
 export const AUDIENCES = ["grupo", "publica"];
 // MATCH_SIZE in the environment caps every room's size (1 fills it alone, to try it out).
 const SIZE_CAP = Math.max(1, Math.min(5, Math.round(Number(process.env.MATCH_SIZE)) || 5));
@@ -192,9 +192,7 @@ export function publicMatchmaking(info, connected) {
     count: connected,
     games: info.games || null,
     startsAt: info.startsAt || null,
-    // The game searched for (null: the roulette's), and the group that searched together, if any: its players come
-    // back to their own room when it's over (RoomManager.closePublic).
+    // The game searched for (null: the roulette's).
     game: info.game || null,
-    group: info.group ? { hostId: info.group.hostId, members: [...info.group.members] } : null,
   };
 }

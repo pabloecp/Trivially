@@ -135,7 +135,6 @@ import {
   newBot,
   pickMatchGames,
   publicMatchmaking,
-  AUDIENCES,
   PUBLIC_GAMES,
   PUBLIC_GROUP_MAX,
   PUBLIC_VARIANT,
@@ -195,12 +194,6 @@ const CHAT_GAP_MS = 700;
 // A player can ask to use another device as the central one this often, and a room keeps this many requests at once.
 export const CENTRAL_ASK_GAP_MS = 5000;
 const CENTRAL_REQUESTS_KEEP = 5;
-// What the host's friends can do from their friends list: join straight away, ask to join, or nothing (only the code).
-export const JOIN_MODES = ["abierta", "solicitud", "invitacion"];
-// A friend's request to join stays this long, and the same friend can ask again after this wait.
-const JOIN_REQUEST_TTL_MS = 60000;
-export const JOIN_ASK_GAP_MS = 10000;
-const JOIN_REQUESTS_KEEP = 8;
 
 export function assertGame(game) {
   if (game === null || GAME_IDS.includes(game)) return game;
@@ -462,17 +455,24 @@ export class RoomManager {
   }
 
   /**
-   * "Casual" (`{ kind, size }`; Competitivo is disabled for now): the player goes into a public room of that kind and
-   * size that is still waiting for players, or a new one. Nobody is its host: nobody picks the game, changes the settings, pauses or
-   * ends it. When it has its size of players (2 or 5) it starts by itself (checkMatchFull).
+   * "Casual" (`{ kind, size }`, or `{ kind, game }` for one game's queue; Competitivo is disabled for now): the player
+   * goes into a public room of that kind that is still waiting for players and has a seat for them, or a new one. With
+   * `party` (the other players of their group, game/groups.js) it takes a seat for each of them too, all in the same
+   * room. Nobody is its host: nobody picks the game, changes the settings, pauses or ends it. When it has its size of
+   * players (5) it starts by itself (checkMatchFull).
    */
-  findMatch(user, input) {
-    const { kind, rounds, size, game } = cleanMatchRequest(input);
+  findMatch(user, input, party = []) {
+    const { kind, rounds, size: asked, game } = cleanMatchRequest(input);
     assertNameWithoutLink(user);
+    party.forEach(assertNameWithoutLink);
+    const seats = 1 + party.length;
+    if (seats > PUBLIC_GROUP_MAX) throw new Error(`Una partida pública es de ${PUBLIC_GROUP_MAX} como mucho y tu grupo es de ${seats}`);
+    // A group fills it up to its size like anyone else (one more than the group with DUELS_OPEN).
+    const size = party.length ? groupMatchSize(seats) : asked;
+    const ids = [user.id, ...party.map((p) => p.id)];
     // An owner's forced games (already checked against their account by the socket): their own room, nobody else's.
     const force = game ? [] : cleanForced(input?.force);
-    // A game's queue fills any room searching for that game, a group's too (closePublic sends the strangers home once
-    // the group goes back to its own room); the roulette's rooms go by how many play.
+    // A game's queue fills any room searching for that game; the roulette's rooms go by how many play.
     let room = force.length ? undefined : [...this.rooms.values()].find(
       (r) =>
         r.matchmaking &&
@@ -482,117 +482,20 @@ export class RoomManager {
         r.matchmaking.kind === kind &&
         (r.matchmaking.game || null) === game &&
         (game || r.matchmaking.versus === size) &&
-        !r.blocked?.has(user.id) &&
-        this.connectedCount(r) < r.matchmaking.size
+        !ids.some((id) => r.blocked?.has(id)) &&
+        this.connectedCount(r) + seats <= r.matchmaking.size
     );
     if (room) {
       this.addPlayer(room, user);
     } else {
       room = this.create({ host: user, game: null });
       room.hostId = null;
-      room.joinMode = "invitacion";
-      room.matchmaking = { kind, rounds, game, versus: size, size: roomSize(size), games: null, startsAt: null, timer: null, botTimer: null, force: force.length ? force : null };
+      // A group bigger than what MATCH_SIZE lets fill (trying it out alone) still fits.
+      room.matchmaking = { kind, rounds, game, versus: size, size: Math.max(roomSize(size), seats), games: null, startsAt: null, timer: null, botTimer: null, force: force.length ? force : null };
       if (kind === "casual") this.scheduleBotArrival(room, BOT_WAIT_MS);
     }
+    for (const member of party) this.addPlayer(room, member);
     this.checkMatchFull(room);
-    return room;
-  }
-
-  /**
-   * Who the room's next match is for, as the host picked it in "¿Qué quieren jugar?": "grupo" (only its players, the
-   * host starts it) or "publica" (the group searches for a public match of the room's game together, findPublicForGroup).
-   */
-  setAudience(room, userId, audience) {
-    if (room.hostId !== userId) throw new Error("Solo el anfitrión puede elegir con quién juegan");
-    if (room.phase !== "lobby") throw new Error("La partida ya comenzó");
-    if (!AUDIENCES.includes(audience)) throw new Error("Esa opción no existe");
-    room.audience = audience;
-  }
-
-  /**
-   * "Partida pública" from a group: the room itself opens to the public queue of its game. It's a public room
-   * while it searches and plays (no host, bots fill the empty seats, strangers searching for that game sit in it), and
-   * `matchmaking.group` keeps what the room was, so closePublic can give it back to the group afterwards.
-   */
-  findPublicForGroup(room, userId) {
-    if (room.hostId !== userId) throw new Error("Solo el anfitrión puede buscar partida para el grupo");
-    if (room.matchmaking) throw new Error("Ya están buscando partida");
-    if (room.phase !== "lobby") throw new Error("Espera a que termine la partida");
-    if (room.central) throw new Error("Quita el dispositivo central para jugar con gente de todas partes");
-    if (!PUBLIC_GAMES.includes(room.game)) throw new Error(`${GAME_NAMES[room.game] || "Ese juego"} solo se puede jugar con tu grupo`);
-    const members = [...room.players.values()].filter((p) => p.connected && !p.bot);
-    if (members.length > PUBLIC_GROUP_MAX) throw new Error(`Una partida pública es de ${PUBLIC_GROUP_MAX} como mucho`);
-    const size = groupMatchSize(members.length);
-    room.matchmaking = {
-      kind: "casual",
-      rounds: matchItemConfig(room.game, "casual").rounds,
-      game: room.game,
-      versus: size,
-      size: roomSize(size),
-      games: null,
-      startsAt: null,
-      timer: null,
-      botTimer: null,
-      force: null,
-      group: {
-        hostId: room.hostId,
-        members: members.map((p) => p.id),
-        coHosts: [...(room.coHosts || [])],
-        joinMode: room.joinMode,
-        game: room.game,
-        config: room.config,
-        playlist: room.playlist,
-      },
-    };
-    room.hostId = null;
-    room.joinRequests = [];
-    room.preview = null;
-    room.suggestions = [];
-    this.scheduleBotArrival(room, BOT_WAIT_MS);
-    this.checkMatchFull(room);
-  }
-
-  /** Whether `userId` came to this public room with its group (and can take it back, closePublic). */
-  inGroup(room, userId) {
-    return Boolean(room.matchmaking?.group?.members.includes(userId));
-  }
-
-  /**
-   * The group's public search is cancelled (any of its players, while it waits) or its public match is over and the
-   * group goes back to its own room ("Volver al grupo"): the strangers are sent home (`onKicked`, reason "grupo"), the
-   * bots go, and the room is the group's again, in its game with its settings and its host (or the first of the group
-   * still connected). Returns the room.
-   */
-  closePublic(room, userId) {
-    const info = room.matchmaking;
-    const group = info?.group;
-    if (!group) throw new Error("Esta partida no es de tu grupo");
-    if (!this.inGroup(room, userId)) throw new Error("Solo los del grupo pueden volver a su sala");
-    if (room.phase !== "lobby" && room.phase !== "finished") throw new Error("Espera a que termine la partida");
-    clearTimeout(info.timer);
-    clearTimeout(info.botTimer);
-    this.clearBotMoves(room);
-    for (const p of [...room.players.values()]) {
-      if (group.members.includes(p.id)) continue;
-      room.players.delete(p.id);
-      clearTimeout(p.dropTimer);
-      if (p.socketId) {
-        this.socketToRoom.delete(p.socketId);
-        this.onKicked?.(p.socketId, { code: room.code, reason: "grupo" });
-      }
-    }
-    room.matchmaking = null;
-    room.run = null;
-    room.game = group.game;
-    room.config = group.config;
-    room.playlist = group.playlist;
-    room.joinMode = group.joinMode;
-    room.coHosts = group.coHosts.filter((id) => room.players.has(id));
-    const host = room.players.get(group.hostId);
-    room.hostId = host?.connected ? host.id : null;
-    if (!room.hostId) this.transferHost(room);
-    this.syncPlaylists(room);
-    this.resetMatch(room);
     return room;
   }
 
@@ -982,19 +885,18 @@ export class RoomManager {
     throw new Error(`No hay preguntas para jugar ${GAME_NAMES[game] || "ese juego"} ahora`);
   }
 
-  create({ host, mode, config, game = null, audience = "grupo" }) {
+  create({ host, mode, config, game = null, groupCode = null }) {
     assertNameWithoutLink(host);
     const code = createRoomCode(this.rooms);
     const room = {
       code,
       mode: mode || "multi",
       game: assertGame(game),
-      // Who the next match is for: only the group, or people from anywhere too (setAudience).
-      audience: AUDIENCES.includes(audience) ? audience : "grupo",
+      // The group whose private match this is (game/groups.js): its host is the group's leader, its players come
+      // into it, and it shows the group's code to invite more. Null for a match played alone and for public ones.
+      groupCode,
       hostId: host.id,
       coHosts: [],
-      joinMode: "solicitud",
-      joinRequests: [],
       createdAt: Date.now(),
       phase: "lobby",
       phaseStartedAt: Date.now(),
@@ -1026,8 +928,6 @@ export class RoomManager {
   addPlayer(room, user, isHost = false) {
     if (room.blocked?.has(user.id)) throw new Error("El anfitrión te bloqueó de esta sala");
     assertNameWithoutLink(user);
-    // Whoever was asking to join is in now.
-    if (room.joinRequests?.length) room.joinRequests = room.joinRequests.filter((r) => r.userId !== user.id);
     const existing = room.players.get(user.id);
     const isGuest = Boolean(user.isGuest ?? (user.id?.startsWith("gst_") || !user.email));
     const player = existing || {
@@ -1159,9 +1059,6 @@ export class RoomManager {
       this.destroy(room);
       return { room: null, left: true };
     }
-    // A group's public room with nobody of the group left in it is an ordinary public room from now on.
-    const group = room.matchmaking?.group;
-    if (group && !group.members.some((id) => room.players.get(id)?.connected)) room.matchmaking.group = null;
     this.checkMinesTurn(room);
     this.checkMatchFull(room);
     return { room, left: true };
@@ -2985,49 +2882,6 @@ export class RoomManager {
     return null;
   }
 
-  /** The host decides what their friends can do from the friends list: join, ask to join, or nothing. */
-  setJoinMode(room, userId, mode) {
-    if (room.hostId !== userId) throw new Error("Solo el Host puede cambiar quién se une");
-    if (!JOIN_MODES.includes(mode)) throw new Error("Esa opción no existe");
-    room.joinMode = mode;
-    if (mode !== "solicitud") room.joinRequests = [];
-  }
-
-  /** The requests to join that are still valid. */
-  openJoinRequests(room) {
-    const now = Date.now();
-    room.joinRequests = (room.joinRequests || []).filter((r) => now - r.at < JOIN_REQUEST_TTL_MS && !room.players.get(r.userId)?.connected);
-    return room.joinRequests;
-  }
-
-  /** A friend asks the host to let them in (only when the room is "solicitud"). */
-  addJoinRequest(room, user, now = Date.now()) {
-    if (room.joinMode !== "solicitud") throw new Error("Esa sala no recibe solicitudes");
-    if (room.blocked?.has(user.id)) throw new Error("No puedes unirte a esa sala");
-    if (room.players.get(user.id)?.connected) throw new Error("Ya estás en esa sala");
-    room.joinAsked = room.joinAsked || new Map();
-    const wait = (room.joinAsked.get(user.id) || 0) + JOIN_ASK_GAP_MS - now;
-    if (wait > 0) throw new Error(`Espera ${Math.ceil(wait / 1000)} s para pedirlo otra vez`);
-    const open = this.openJoinRequests(room).filter((r) => r.userId !== user.id);
-    if (open.length >= JOIN_REQUESTS_KEEP) throw new Error("Esa sala ya tiene muchas solicitudes. Inténtalo en un momento.");
-    room.joinAsked.set(user.id, now);
-    room.joinRequests = [...open, { userId: user.id, name: user.name, avatar: user.avatar, at: now }];
-  }
-
-  /** The requester takes their request back. */
-  cancelJoinRequest(room, userId) {
-    room.joinRequests = (room.joinRequests || []).filter((r) => r.userId !== userId);
-  }
-
-  /** The host lets a friend in (the friend then joins) or turns them down. Returns the request's user. */
-  answerJoinRequest(room, hostId, userId) {
-    if (room.hostId !== hostId) throw new Error("Solo el Host responde a las solicitudes");
-    const found = this.openJoinRequests(room).find((r) => r.userId === userId);
-    if (!found) throw new Error("Esa solicitud ya no está");
-    room.joinRequests = room.joinRequests.filter((r) => r.userId !== userId);
-    return found;
-  }
-
   // The game the host is pointing at on the menu, so every player sees it live before it is picked. Only while the
   // room has no game; it is cleared as soon as one is picked (or the host changes).
   previewGame(room, userId, game) {
@@ -3960,12 +3814,9 @@ export class RoomManager {
       config: room.config,
       // In the lobby: whether the game's settings differ from a new room's ("Restablecer" is off when they don't).
       settingsChanged: room.phase === "lobby" && room.game ? settingsChanged(room) : undefined,
-      // Who the next match is for: "grupo" or "publica" (with people from anywhere, findPublicForGroup).
-      audience: room.audience || "grupo",
       coHosts: [...(room.coHosts || [])],
-      // What the host's friends can do from their friends list, and the friends asking to join (the host answers).
-      joinMode: room.joinMode || "solicitud",
-      joinRequests: this.openJoinRequests(room).map((r) => ({ userId: r.userId, name: r.name, avatar: r.avatar, at: r.at })),
+      // The group whose private match this is: its code, to invite more people into the group (and so into it).
+      groupCode: room.groupCode || null,
       // The room's central device (whose account opened it, and whether it's connected: while it is, the players'
       // screens show only the ways to answer), and the players asking to use another device of theirs as it.
       central: room.central

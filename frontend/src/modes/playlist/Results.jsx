@@ -25,7 +25,7 @@ import { findVariant } from "../../components/home/matchInfo.js";
 // middle: go back to its panel or play the playlist again (shuffled again if it's random).
 function ResultsScreen() {
   const { code: codeParam } = useParams();
-  const { user, room, isCentral, joinRoom, replayGame, restartGame, leaveRoom, findMatch, closePublic } = useApp();
+  const { user, room, group, isCentral, joinRoom, replayGame, restartGame, leaveRoom, findMatch, groupHome } = useApp();
   const [searching, setSearching] = useState(false);
   // The address's code ("oculta" while it's hidden: this tab's room, lib/hiddenCode.js).
   const code = resolveCode(codeParam, room);
@@ -59,6 +59,9 @@ function ResultsScreen() {
   const solo = standings.length < 2;
   // A public match ("Casual" or "Competitivo") is played as a playlist of its games, but it's called a match.
   const publicMatch = room.matchmaking || null;
+  // In a group, its leader decides what's next for everyone (when the group is here, "Volver" takes it back too).
+  const followsLeader = Boolean(group) && group.leaderId !== user?.id;
+  const leadsGroup = Boolean(group) && group.leaderId === user?.id && group.place?.code === room.code;
   // So is a Clásico of a private room (Normal or Extendido): its host still decides what comes next.
   const classic = findMode(run?.classic);
   const what = publicMatch || classic ? "partida" : "playlist";
@@ -139,54 +142,50 @@ function ResultsScreen() {
           {err && <p className="tv-lobby-error" role="alert">{err}</p>}
 
           <ResultsFoot>
-            {publicMatch && !isCentral && publicMatch.group?.members.includes(user?.id) ? (
-              // A group that searched together: back to its own room (the strangers go home), or out of the group.
+            {publicMatch && !isCentral && followsLeader ? (
+              // A group's player: its leader decides what comes next for everyone; they can go back to Inicio alone
+              // (still in the group) meanwhile.
               <>
                 <button
                   className="tv-btn tv-c-neutral tv-res-btn"
                   data-sound="back"
-                  aria-label="Salir del grupo"
+                  aria-label="Volver al inicio"
                   onClick={() => {
                     leaveRoom();
                     nav(exitPath(room), { replace: true });
                   }}
                   type="button"
                 >
-                  <Icon name="logout" size={18} />
-                  <span className="tv-res-btn-label">Salir</span>
+                  <Icon name="back" size={18} />
+                  <span className="tv-res-btn-label">Volver</span>
                 </button>
-                <button
-                  className="tv-btn tv-btn--primary tv-res-btn"
-                  data-sound="none"
-                  disabled={searching}
-                  onClick={() => {
-                    setSearching(true);
-                    withSound(closePublic, null).catch((e) => {
-                      setErr(e.message || "No se pudo volver al grupo");
-                      setSearching(false);
-                    });
-                  }}
-                  type="button"
-                >
-                  <Icon name="users" size={18} strokeWidth={2.4} />
-                  Volver al grupo
-                </button>
+                <p className="tv-res-wait">
+                  <span className="tv-pulse" aria-hidden="true" />
+                  Esperando a {group.leaderName}
+                </p>
               </>
             ) : publicMatch && !isCentral ? (
-              // Nobody is the host of a public match: everyone chooses for themselves.
+              // Nobody is the host of a public match: everyone chooses for themselves (a group's leader, for the whole
+              // group: back to Inicio together, or another match together).
               <>
                 <button
                   className="tv-btn tv-c-neutral tv-res-btn"
                   data-sound="back"
-                  aria-label="Salir"
+                  aria-label={leadsGroup ? "Volver al inicio con tu grupo" : "Salir"}
                   onClick={() => {
+                    if (leadsGroup) {
+                      withSound(groupHome, null)
+                        .then(() => nav(exitPath(room), { replace: true }))
+                        .catch((e) => setErr(e.message || "No se pudo volver al inicio"));
+                      return;
+                    }
                     leaveRoom();
                     nav(exitPath(room), { replace: true });
                   }}
                   type="button"
                 >
-                  <Icon name="logout" size={18} />
-                  <span className="tv-res-btn-label">Salir</span>
+                  <Icon name={leadsGroup ? "back" : "logout"} size={18} />
+                  <span className="tv-res-btn-label">{leadsGroup ? "Volver" : "Salir"}</span>
                 </button>
                 <button
                   className="tv-btn tv-btn--primary tv-res-btn"

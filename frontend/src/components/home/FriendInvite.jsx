@@ -10,8 +10,8 @@ import "../../styles/central.css";
 const SHOW_MS = 20000;
 
 /**
- * A friend invited this account to their room (friend:invited, lib/friends.jsx): a card pinned under the top bar, on
- * every screen, "Ana te invita a su sala · Trivia" with "Unirme" (joins with the room's code) and an X. It sounds once
+ * A friend invited this account to their group (friend:invited, lib/friends.jsx): a card pinned under the top bar, on
+ * every screen, "Ana te invita a su grupo · Trivia" with "Unirme" (joins with the group's code) and an X. It sounds once
  * and goes away on its own after SHOW_MS. Same look as the central device's requests (CentralRequests.jsx).
  */
 export default function FriendInvite({ invite, onJoin, onClose }) {
@@ -44,7 +44,7 @@ export default function FriendInvite({ invite, onJoin, onClose }) {
           <Avatar name={invite.fromName} avatar={invite.fromAvatar} />
         </span>
         <p>
-          <strong>{invite.fromName}</strong> te invita a su sala{mode ? ` · ${mode.name}` : ""}
+          <strong>{invite.fromName}</strong> te invita a su grupo{mode ? ` · ${mode.name}` : ""}
         </p>
         <span className="tv-central-request-actions">
           <button type="button" className="tv-btn tv-btn--sm tv-c-green" onClick={join} disabled={busy} data-sound="none">

@@ -15,7 +15,7 @@ import "../../styles/home.css";
 import { PauseButton, ReportButton, SkipButton, PauseVeil } from "../../components/home/PauseControls.jsx";
 import "../../styles/quiz.css";
 import "../../styles/geo.css";
-import { resolveCode, shownCode, useHiddenCode } from "../../lib/hiddenCode.js";
+import { resolveCode } from "../../lib/hiddenCode.js";
 
 const COUNTDOWN_MS = 3000;
 // Keys that pick an option while a question is open: 1–4 or A–D.
@@ -378,7 +378,6 @@ function WriteRound({ room, question, me, answer, skipSong, seconds, central, co
 }
 
 function GameScreen() {
-  const [codeHidden] = useHiddenCode();
   const { code: codeParam } = useParams();
   const { user, room, joinRoom, answer, skipSong, restartGame } = useApp();
   // The address's code ("oculta" while it's hidden: this tab's room, lib/hiddenCode.js).
@@ -481,7 +480,7 @@ function GameScreen() {
         ) : (
           <section className="tv-game-top">
             <div className="tv-game-round">
-              <p className="tv-mono-label">Sala {shownCode(room.code, codeHidden)} · Trivia</p>
+              <p className="tv-mono-label">{room.matchmaking ? "Partida pública" : "Partida privada"} · Trivia</p>
               <h1 className="tv-card-title">
                 Pregunta {round + 1} <span className="tv-muted">de {room.totalRounds}</span>
               </h1>

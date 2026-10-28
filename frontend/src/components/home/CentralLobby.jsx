@@ -24,22 +24,25 @@ export default function CentralLobby({ room }) {
             Dispositivo central
           </p>
 
-          <div className="tv-central-join">
-            <p className="tv-central-join-text">
-              Entra en <strong>{window.location.host}</strong>, toca Jugar y escribe el código
-            </p>
-            <p className="tv-central-join-code">{shownCode(room.code, codeHidden)}</p>
-            <button
-              type="button"
-              className={`tv-code-eye${codeHidden ? " is-on" : ""}`}
-              onClick={toggleCode}
-              aria-pressed={codeHidden}
-              aria-label={codeHidden ? "Mostrar el código" : "Ocultar el código"}
-            >
-              <Icon name={codeHidden ? "eye-off" : "eye"} size={16} strokeWidth={2.4} />
-              <span>{codeHidden ? "Oculto" : "Ocultar"}</span>
-            </button>
-          </div>
+          {/* A group's private match: its code brings more people into the group, and so into it. */}
+          {room.groupCode && (
+            <div className="tv-central-join">
+              <p className="tv-central-join-text">
+                Entra en <strong>{window.location.host}</strong> y únete con el código
+              </p>
+              <p className="tv-central-join-code">{shownCode(room.groupCode, codeHidden)}</p>
+              <button
+                type="button"
+                className={`tv-code-eye${codeHidden ? " is-on" : ""}`}
+                onClick={toggleCode}
+                aria-pressed={codeHidden}
+                aria-label={codeHidden ? "Mostrar el código" : "Ocultar el código"}
+              >
+                <Icon name={codeHidden ? "eye-off" : "eye"} size={16} strokeWidth={2.4} />
+                <span>{codeHidden ? "Oculto" : "Ocultar"}</span>
+              </button>
+            </div>
+          )}
 
           {mode ? (
             <div key={mode.id} className={`tv-central-game tv-c-${mode.color}`}>

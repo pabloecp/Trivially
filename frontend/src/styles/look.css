@@ -269,9 +269,36 @@
 .tv-gbar-faces .tv-avatar { width: 36px; height: 36px; font-size: 16px; }
 .tv-gbar-faces .tv-avatar.is-me { box-shadow: 0 0 0 3px var(--tv-surface), 0 0 0 5px var(--p-accent-2); }
 .tv-gbar-faces .tv-avatar.is-away { opacity: 0.4; }
-.tv-gbar-code { display: inline-flex; align-items: center; gap: 2px; margin-left: 4px; font-family: var(--tv-display); font-weight: 800; font-size: 16px; letter-spacing: 0.06em; color: var(--tv-text); }
-.tv-gbar-code .is-hidden { letter-spacing: 0.12em; }
-.tv-gbar-play { display: flex; align-items: center; gap: 14px; min-width: 0; }
+/* In a group, after "+": "Salir del grupo" ("Salir" on phones). */
+.tv-app .tv-gbar-leave { gap: 6px; margin-left: 4px; padding: 0 14px; }
+/* Without a group: "Crear grupo" and the box to join a friend's group with its code. The box is flat: ringed in blue
+   while writing, in red when the code opens no group. */
+.tv-app .tv-gbar-create { gap: 8px; }
+.tv-gbar-join { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.tv-gbar-join-input {
+  width: 190px;
+  min-width: 0;
+  height: 44px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--tv-surface-2);
+  color: var(--tv-text);
+  font-family: var(--tv-display);
+  font-weight: 800;
+  font-size: 16px;
+  letter-spacing: 0.12em;
+  transition: box-shadow 0.15s ease;
+}
+.tv-gbar-join-input::placeholder { font-weight: 600; letter-spacing: 0; color: var(--tv-text-3); }
+.tv-gbar-join-input:focus { outline: none; box-shadow: inset 0 0 0 2px var(--brand); }
+.tv-gbar-join-input[aria-invalid="true"] { box-shadow: inset 0 0 0 2px var(--p-bad); }
+.tv-gbar-join-input:disabled { opacity: 0.45; }
+/* Codes hidden for streaming: dots while writing. */
+.tv-gbar-join-input.is-hidden { -webkit-text-security: disc; }
+.tv-app .tv-gbar-join-go { flex-shrink: 0; }
+/* On its own row (a narrow screen: the group's side didn't fit beside it), still on the right. */
+.tv-gbar-play { display: flex; align-items: center; gap: 14px; min-width: 0; margin-left: auto; }
 .tv-gbar-plan {
   display: flex;
   align-items: center;
@@ -315,12 +342,20 @@
 .tv-app .tv-gbar-go { min-width: 210px; text-transform: uppercase; letter-spacing: 0.02em; font-size: 20px; }
 .tv-gbar-note { margin: 0; padding: 0 12px; font-family: var(--tv-small); font-weight: 600; font-size: 14px; color: var(--tv-text-3); }
 .tv-gbar-error { flex-basis: 100%; margin: 0; font-weight: 700; font-size: 14px; color: var(--p-bad-text); text-align: right; }
+/* Creating or joining a group went wrong: said under that side. */
+.tv-gbar-error--group { text-align: left; }
 @media (max-width: 760px) {
   .tv-gbar { flex-direction: column; align-items: stretch; gap: 12px; padding: 12px; border-radius: 20px; }
   .tv-gbar-label { display: none; }
-  .tv-gbar-group { justify-content: space-between; }
-  .tv-gbar-join { margin-left: auto; }
-  .tv-gbar-play { flex-direction: column; align-items: stretch; gap: 12px; }
+  .tv-gbar-group { flex-wrap: wrap; gap: 10px; }
+  .tv-gbar-faces { gap: 6px; }
+  .tv-gbar-faces .tv-avatar { width: 32px; height: 32px; font-size: 15px; }
+  .tv-app .tv-gbar-leave { margin-left: auto; }
+  .tv-gbar-leave-more { display: none; }
+  .tv-app .tv-gbar-create { flex: 1 1 auto; }
+  .tv-gbar-join { flex: 1 1 220px; }
+  .tv-gbar-join-input { flex: 1; width: auto; }
+  .tv-gbar-play { flex-direction: column; align-items: stretch; gap: 12px; margin-left: 0; }
   .tv-app .tv-gbar-go { width: 100%; min-width: 0; }
   .tv-gbar-error { text-align: center; }
 }
@@ -495,7 +530,7 @@
   .tv-plan-extras { grid-template-columns: 1fr; }
 }
 
-/* ---------- "Tu grupo" and "Unirse" ---------- */
+/* ---------- "Tu grupo" ---------- */
 .tv-codebox { display: grid; gap: 10px; padding: 16px 18px 18px; border-radius: 14px; background: var(--tv-surface-2); }
 .tv-codebox-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .tv-codebox-head .tv-section-label { margin: 0; font-family: var(--tv-small); font-weight: 700; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--tv-text-3); }
@@ -503,8 +538,8 @@
 .tv-codebox-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
 .tv-app .tv-party--sheet { flex: none; width: 100%; max-width: none; height: auto; max-height: none; padding: 0; background: none; box-shadow: none; animation: none; }
 .tv-app .tv-modal:focus-visible { outline: none; }
-.tv-joinform { display: grid; gap: 12px; }
-.tv-joinform-hint { margin: 0; font-family: var(--tv-small); font-weight: 600; font-size: 13px; color: var(--tv-text-3); }
+/* The leader's tools on a player of "Tu grupo" (make leader, take out). */
+.tv-groupmember-tools { display: flex; gap: 6px; margin-left: auto; }
 
 /* ---------- Settings: tabs on a thin line, each option row in a darker box ---------- */
 .tv-app .tv-settabs { box-shadow: inset 0 -2px 0 var(--tv-line); }

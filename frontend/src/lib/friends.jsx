@@ -5,12 +5,13 @@ import { api } from "./api.js";
 import { emitAck, getSocket } from "./socket.js";
 import { useApp } from "./store.jsx";
 
-// The friends tab: the list (who is online and in which room), the requests, the friend code, and what a friend can do
-// about a room. The server pushes the whole view (`friends:state`) whenever something about it changes.
+// The friends tab: the list (who is online and where), the requests, the friend code, and what a friend can do about a
+// group (join it, or ask its leader). The server pushes the whole view (`friends:state`) whenever something about it
+// changes.
 const FriendsContext = createContext(null);
 
 export function FriendsProvider({ children }) {
-  const { user, joinRoom } = useApp();
+  const { user, joinGroup } = useApp();
   const isAccount = Boolean(user) && !user.isGuest;
   const [view, setView] = useState(null);
   const [open, setOpen] = useState(false);
@@ -21,9 +22,9 @@ export function FriendsProvider({ children }) {
     setNotice({ id, text, icon });
     setTimeout(() => setNotice((n) => (n?.id === id ? null : n)), 3000);
   }, []);
-  const joinRef = useRef(joinRoom);
-  joinRef.current = joinRoom;
-  // A friend's invitation to their room, shown as a card until it's answered (FriendInvite).
+  const joinRef = useRef(joinGroup);
+  joinRef.current = joinGroup;
+  // A friend's invitation to their group, shown as a card until it's answered (FriendInvite).
   const [invite, setInvite] = useState(null);
 
   // The view could not be loaded (the server is older than this page, or the connection failed): the panel says so.
@@ -51,17 +52,17 @@ export function FriendsProvider({ children }) {
       setView(next);
       setFailed(false);
     };
-    // The host let this account in: it enters the room with the code the server sends only now.
+    // The leader let this account in: it enters the group with the code the server sends only now.
     const onApproved = async ({ code, hostName } = {}) => {
       try {
         await joinRef.current(code);
-        say(`${hostName || "El anfitrión"} te dejó entrar`);
+        say(`${hostName || "El líder"} te dejó entrar a su grupo`);
       } catch (err) {
-        say(err.message || "No pudimos entrar a la sala", "lock");
+        say(err.message || "No pudimos entrar al grupo", "lock");
       }
     };
-    const onDeclined = ({ hostName } = {}) => say(`${hostName || "El anfitrión"} no te dejó entrar esta vez`, "lock");
-    // A friend invites this account to their room: a card with "Unirme".
+    const onDeclined = ({ hostName } = {}) => say(`${hostName || "El líder"} no te dejó entrar esta vez`, "lock");
+    // A friend invites this account to their group: a card with "Unirme".
     const onInvited = (data = {}) => data.code && setInvite({ ...data, id: Date.now() });
     s.on("friends:state", onState);
     s.on("friend:approved", onApproved);
@@ -90,14 +91,14 @@ export function FriendsProvider({ children }) {
       accept: (id) => call(`/api/friends/${id}/accept`, { method: "POST" }),
       decline: (id) => call(`/api/friends/${id}/decline`, { method: "POST" }),
       remove: (id) => call(`/api/friends/${id}`, { method: "DELETE" }),
-      // A friend in a room: straight in, or asking the host, as the room allows.
+      // A friend in a group: straight in, or asking its leader, as the group allows.
       async joinFriend(friendId) {
         const res = await emitAck("friend:join", { friendId });
         if (!res.ok) throw new Error(res.error);
         if (res.action === "join") await joinRef.current(res.code);
         return res.action;
       },
-      // Sends this room's code to a friend who is online (they see "Ana te invita a su sala").
+      // Sends this group's code to a friend who is online (they see "Ana te invita a su grupo").
       async inviteFriend(friendId) {
         const res = await emitAck("friend:invite", { friendId });
         if (!res.ok) throw new Error(res.error);
@@ -106,13 +107,13 @@ export function FriendsProvider({ children }) {
         const res = await emitAck("friend:cancelJoin", { friendId });
         if (!res.ok) throw new Error(res.error);
       },
-      // The host's side: what friends can do, and answering a friend who asks to join.
+      // The leader's side: what friends can do, and answering a friend who asks to join.
       async setJoinMode(mode) {
-        const res = await emitAck("room:joinMode", mode);
+        const res = await emitAck("group:joinMode", mode);
         if (!res.ok) throw new Error(res.error);
       },
       async answerJoin(userId, accept) {
-        const res = await emitAck("room:answerJoin", { userId, accept });
+        const res = await emitAck("group:answerJoin", { userId, accept });
         if (!res.ok) throw new Error(res.error);
       },
     };
@@ -154,10 +155,10 @@ export function FriendsProvider({ children }) {
           try {
             await joinRef.current(inv.code);
             setInvite(null);
-            say(`Entraste a la sala de ${inv.fromName}`);
+            say(`Entraste al grupo de ${inv.fromName}`);
           } catch (err) {
             setInvite(null);
-            if (!err.offer) say(err.message || "No pudimos entrar a la sala", "lock");
+            if (!err.offer) say(err.message || "No pudimos entrar al grupo", "lock");
           }
         }}
       />

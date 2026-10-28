@@ -8,22 +8,26 @@ import Icon from "./Icon.jsx";
 import Segmented from "./Segmented.jsx";
 import "../../styles/friends.css";
 
-// How a friend's line reads: where they are and what you can do about it.
+// How a friend's line reads: where they are (playing, getting a match ready, in a group on Inicio) and with how many.
 export function statusOf(friend) {
   if (!friend.online) return "Desconectado";
   if (!friend.room) return "En línea";
   const mode = findMode(friend.room.game)?.name;
   const where = friend.room.inMatch
     ? `Jugando${mode ? ` ${mode}` : ""}`
-    : mode
-      ? `En una sala · ${mode}`
-      : "En una sala";
+    : friend.room.inRoom === false
+      ? "En un grupo"
+      : mode
+        ? `Preparando ${mode}`
+        : "Preparando una partida";
   return `${where} · ${friend.room.players === 1 ? "1 jugador" : `${friend.room.players} jugadores`}`;
 }
 
+// What you can do about a friend's group: join it, ask its leader, or nothing (only by invitation). A friend playing
+// alone has no group to join.
 export function JoinButton({ friend, onJoin, onCancel, busy }) {
   const room = friend.room;
-  if (!room) return null;
+  if (!room || room.group === false) return null;
   if (room.joinMode === "abierta") {
     return (
       <button type="button" className="tv-btn tv-btn--sm tv-c-green" onClick={() => onJoin(friend)} disabled={busy}>
@@ -72,7 +76,8 @@ function FriendRow({ friend, onJoin, onCancel, onRemove, busy }) {
   );
 }
 
-// The friends tab, opened from the top bar: friends (and their rooms), requests, and a search by username to add someone.
+// The friends tab, opened from the top bar: friends (and where they are), requests, and a search by username to add
+// someone.
 export default function FriendsSheet() {
   const f = useFriends();
   const [tab, setTab] = useState("amigos");
@@ -154,7 +159,7 @@ export default function FriendsSheet() {
       () => f.joinFriend(friend.id),
       (action) =>
         action === "requested"
-          ? `Le pediste a ${friend.room?.hostName || "el anfitrión"} unirte. Esperando su respuesta…`
+          ? `Le pediste a ${friend.room?.hostName || "el líder"} unirte a su grupo. Esperando su respuesta…`
           : null,
     );
 

@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project
 
-Trivially is a real-time trivia game, solo or in multiplayer rooms with five-character codes (`createRoomCode`: letters and numbers, no I, O, 0 or 1). Games (`room.game`, ids in `GAME_IDS`; the old ids are kept on purpose, renaming them breaks open rooms): **Trivia** (`opciones`, the main one), **Adivina la canción** (`musica`), **Encuentra el país** (`mundo`), **Rango** (`historia`), **Campo de minas** (`minas`), **Lluvia** (`lluvia`), **Rey de la colina** (`rey`) and **Farsante** (`farsante`). `playlist`, `clasico` and `extendido` are in `GAME_IDS` but aren't games. The UI calls them *juegos* ("Elige el juego").
+Trivially is a real-time trivia game, played alone or with a group (the players who go together), in public or private matches (rooms). Groups and rooms have five-character codes (`createRoomCode`: letters and numbers, no I, O, 0 or 1); the one players share is the group's. Games (`room.game`, ids in `GAME_IDS`; the old ids are kept on purpose, renaming them breaks open rooms): **Trivia** (`opciones`, the main one), **Adivina la canción** (`musica`), **Encuentra el país** (`mundo`), **Rango** (`historia`), **Campo de minas** (`minas`), **Lluvia** (`lluvia`), **Rey de la colina** (`rey`) and **Farsante** (`farsante`). `playlist`, `clasico` and `extendido` are in `GAME_IDS` but aren't games. The UI calls them *juegos* ("Elige el juego").
 
 **Juego, modo de juego and tipo de respuestas are three different things; keep them apart in code, copy and docs:**
 
@@ -44,7 +44,7 @@ Commit messages are in Spanish and written for someone who doesn't read code.
 
 ## Rules that always apply
 
-- **The server decides everything.** All room state lives in memory in `backend/src/game/roomManager.js` (a restart drops every room). `publicState(room, forUserId)` is the **only** serializer sent to clients and where secrets are withheld (answers, other players' picks, question ids, the `bot` flag): any new room or player field must be added there deliberately.
+- **The server decides everything.** All room state lives in memory in `backend/src/game/roomManager.js` (a restart drops every room), and groups in `backend/src/game/groups.js`. `publicState(room, forUserId)` is the **only** serializer of a room sent to clients and where secrets are withheld (answers, other players' picks, question ids, the `bot` flag): any new room or player field must be added there deliberately. A group's is `publicGroup`.
 - **Trivia's real questions must never be committed: the GitHub repo is public.** They live in the Supabase table `questions` (RLS on, no policies: never add a public read policy or an API route that lists questions) and in the git-ignored `backend/private/questions.json`.
 - **Scoring:** at most 1000 points a round in every game (`game/scoring.js`), except Lluvia and Rey de la colina (1, 3 or 5 by difficulty).
 - **One yellow button per screen** (`.tv-btn--primary`); the rest are grey (`.tv-btn--neutral`). Chosen options are the site's blue.
@@ -58,7 +58,8 @@ In `.claude/docs/`:
 - `sala-y-partida.md`: rooms, phases, pause, report, skip, spectators, inactive players, chat, history, results screens, **Trivia** and Adivina la canción.
 - `preguntas.md`: the question bank, row shapes, categories, uploading.
 - One per game: `encuentra-el-pais.md`, `rango.md`, `campo-de-minas.md`, `lluvia.md`, `rey-de-la-colina.md`, `farsante.md`.
-- `playlists.md`, `partidas-publicas.md` (Inicio and the group's bar, public matches by game, a group searching together, bots, rank), `clasico.md`.
+- `grupos.md`: groups (who goes together) apart from rooms (the matches): the leader moves everyone, "Crear grupo", "Tu grupo", invite links.
+- `playlists.md`, `partidas-publicas.md` (Inicio and its bar, public matches by game, a group searching together, bots, rank), `clasico.md`.
 - `dispositivo-central.md`, `panel-owner.md`, `amigos-y-enlaces.md` (friends, @usernames, link filter).
 - `diseno.md`: the design rules: the look (`frontend/src/styles/look.css`, loaded last), layout, colours, type, pieces, panel motion, shadows.
 

@@ -3,17 +3,18 @@ import { useFriends } from "../../lib/friends.jsx";
 import Avatar from "./Avatar.jsx";
 import Icon from "./Icon.jsx";
 
-// What the host's friends can do from the friends tab, and what each choice means.
+// What the leader's friends can do from the friends tab, and what each choice means.
 const MODES = [
   { value: "abierta", label: "Unirse", hint: "Entran directo" },
   { value: "solicitud", label: "Pedir entrar", hint: "Te piden permiso" },
   { value: "invitacion", label: "Solo invitación", hint: "Solo con el código" },
 ];
 
-// In the room card, for the host (when their account has friends): one line, "Amigos: Pedir entrar ▾", whose menu
-// changes what their friends can do from the friends tab (join straight away, ask to join, or only by invitation), and
-// the friends who are asking, to let in or turn down. It's set once and rarely touched, so it takes little room.
-export default function FriendsRoomControls({ room, onToast }) {
+// In "Tu grupo", for its leader (when their account has friends): one line, "Tus amigos pueden: Pedir entrar ▾", whose
+// menu changes what their friends can do from the friends tab (join the group straight away, ask to join, or only by
+// invitation), and the friends who are asking, to let in or turn down. It's set once and rarely touched, so it takes
+// little room.
+export default function FriendsRoomControls({ group, onToast }) {
   const friends = useFriends();
   const [open, setOpen] = useState(false);
   const rootRef = useRef(null);
@@ -32,8 +33,8 @@ export default function FriendsRoomControls({ room, onToast }) {
   }, [open]);
 
   if (!friends.isAccount) return null;
-  const requests = room.joinRequests || [];
-  const current = MODES.find((m) => m.value === (room.joinMode || "solicitud")) || MODES[1];
+  const requests = group.joinRequests || [];
+  const current = MODES.find((m) => m.value === (group.joinMode || "solicitud")) || MODES[1];
 
   async function setMode(mode) {
     setOpen(false);

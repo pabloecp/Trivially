@@ -17,9 +17,10 @@ export const AVATAR_COLORS = [
 ];
 
 // Per-tab, so a reload puts you back in the same room, and as what: a player, or the room's central device
-// ("central": the screen that only shows the match).
+// ("central": the screen that only shows the match). And in the same group (the players you go with, apart from rooms).
 const ROOM_KEY = "trivially_room";
 const ROLE_KEY = "trivially_room_role";
+const GROUP_KEY = "trivially_group";
 
 // The saved identity. These keys used the project's old name (YOAVLLY) until they were renamed; the values saved
 // under the old keys are moved over once, on load, so nobody loses their guest id or account.
@@ -108,6 +109,21 @@ function saveRoomCode(code) {
   } catch {}
 }
 
+function loadSavedGroupCode() {
+  try {
+    return sessionStorage.getItem(GROUP_KEY);
+  } catch {
+    return null;
+  }
+}
+
+function saveGroupCode(code) {
+  try {
+    if (code) sessionStorage.setItem(GROUP_KEY, code);
+    else sessionStorage.removeItem(GROUP_KEY);
+  } catch {}
+}
+
 function loadSavedRole() {
   try {
     return sessionStorage.getItem(ROLE_KEY) === "central" ? "central" : "player";
@@ -127,6 +143,8 @@ export function AppProvider({ children }) {
   const [user, setUser] = useState(loadSavedUser);
   const [catalog, setCatalog] = useState(null);
   const [room, setRoomState] = useState(null);
+  // The group this player is in (game/groups.js on the server), or null: nobody has one until they make or join one.
+  const [group, setGroupState] = useState(null);
   // Every snapshot is stamped, on arrival, with how far the server's clock is from ours (see remainingMs).
   const setRoom = useCallback(
     (state) => setRoomState(state ? { ...state, clockOffset: (state.serverNow || Date.now()) - Date.now() } : state),
@@ -160,6 +178,7 @@ export function AppProvider({ children }) {
   const previewRef = useRef(null);
   userRef.current = user;
   const roomCodeRef = useRef(loadSavedRoomCode());
+  const groupCodeRef = useRef(loadSavedGroupCode());
 
   function applyUser(next) {
     userRef.current = next;
@@ -188,6 +207,25 @@ export function AppProvider({ children }) {
     setRoom(null);
   }
 
+  function enterGroup(state) {
+    groupCodeRef.current = state.code;
+    saveGroupCode(state.code);
+    setGroupState(state);
+    return state;
+  }
+
+  function clearGroup() {
+    groupCodeRef.current = null;
+    saveGroupCode(null);
+    setGroupState(null);
+  }
+
+  // Where the group took this player, as the server says (group:join's ack, room:moved): into a room, or to Inicio.
+  function placeIn(state) {
+    if (state) enterRoom(state);
+    else if (roomCodeRef.current) clearRoom();
+  }
+
   // A room this account already plays in from another device: instead of joining, offer to make this device the
   // room's central device. The error that comes with it is marked (`offer`), so whoever was joining stays quiet:
   // CentralOffer says it.
@@ -198,10 +236,12 @@ export function AppProvider({ children }) {
     return err;
   }
 
-  // Signing out (or deleting the account/guest) also leaves the room, so nobody stays seated as a ghost.
+  // Signing out (or deleting the account/guest) also leaves the room and the group, so nobody stays as a ghost.
   function forgetUser() {
     if (roomCodeRef.current) emitAck("room:leave").catch(() => {});
+    if (groupCodeRef.current) emitAck("group:leave", {}).catch(() => {});
     clearRoom();
+    clearGroup();
     setAuthToken(null);
     applyUser(null);
     setGuestActive(false);
@@ -317,16 +357,26 @@ export function AppProvider({ children }) {
       // A broadcast for a room we already left can still be in flight.
       if (state?.code === roomCodeRef.current) setRoom(state);
     };
-    // Re-enter our room after a reload or a dropped connection; the server holds the seat (or the central device's
-    // place) for a few seconds.
+    // Re-enter our group and our room after a reload or a dropped connection; the server holds both places (or the
+    // central device's) for a few seconds. The group first: it puts us back where it is, and then there's no room to
+    // rejoin.
     const rejoin = async () => {
       // A request to be a room's central device dies with the connection: it has to be asked again.
       const offer = offerRef.current;
       if (offer?.status === "waiting") setCentralOffer({ ...offer, status: "offer", error: "Se cortó la conexión. Pídelo otra vez." });
-      const code = roomCodeRef.current;
       const current = userRef.current;
-      if (!code || !current?.name) return;
       const central = roleRef.current === "central";
+      const groupCode = groupCodeRef.current;
+      if (groupCode && current?.name && !central) {
+        const res = await emitAck("group:join", { user: current, code: groupCode });
+        if (groupCodeRef.current !== groupCode) return;
+        if (res.ok) {
+          enterGroup(res.group);
+          if (res.room) return enterRoom(res.room);
+        } else clearGroup();
+      }
+      const code = roomCodeRef.current;
+      if (!code || !current?.name) return;
       const res = await emitAck("room:join", { user: current, code, central });
       if (roomCodeRef.current !== code) return;
       if (res.ok) enterRoom(res.state, res.role || "player");
@@ -363,14 +413,27 @@ export function AppProvider({ children }) {
     };
     // The server asks whether this tab is alive when the same account tries to enter a room from somewhere else.
     const onPing = (ack) => ack?.();
+    // The group changed (someone came or left, a new leader, a new plan, it moved).
+    const onGroupState = (state) => {
+      if (state?.code === groupCodeRef.current) setGroupState(state);
+    };
+    // The group took this player into another room (its private match, a public one) or back to Inicio.
+    const onMoved = ({ code, state } = {}) => {
+      if (code && state) enterRoom(state);
+      else if (!code && roomCodeRef.current) clearRoom();
+    };
+    // Out of the group: the leader took this player out of it.
+    const onGroupLeft = ({ code, reason } = {}) => {
+      if (code !== groupCodeRef.current) return;
+      clearGroup();
+      setKickedNotice(reason === "bloqueado" ? "El líder te bloqueó del grupo" : "El líder te sacó del grupo");
+    };
     const onKicked = ({ code, blocked, reason } = {}) => {
       if (code !== roomCodeRef.current) return;
       clearRoom();
       setKickedNotice(
         reason === "inactivo"
           ? "Saliste de la partida por inactividad"
-          : reason === "grupo"
-          ? "La partida terminó y el grupo volvió a su sala"
           : blocked
           ? "El anfitrión te bloqueó de la sala"
           : "El anfitrión te sacó de la sala. Puedes volver con el código"
@@ -380,6 +443,9 @@ export function AppProvider({ children }) {
     s.on("room:kicked", onKicked);
     s.on("room:role", onRole);
     s.on("room:ping", onPing);
+    s.on("group:state", onGroupState);
+    s.on("room:moved", onMoved);
+    s.on("group:left", onGroupLeft);
     s.on("connect", rejoin);
     if (s.connected) rejoin();
     return () => {
@@ -387,6 +453,9 @@ export function AppProvider({ children }) {
       s.off("room:kicked", onKicked);
       s.off("room:role", onRole);
       s.off("room:ping", onPing);
+      s.off("group:state", onGroupState);
+      s.off("room:moved", onMoved);
+      s.off("group:left", onGroupLeft);
       s.off("connect", rejoin);
     };
   }, []);
@@ -561,13 +630,13 @@ export function AppProvider({ children }) {
         return next;
       },
 
-      // `game` is where the room starts: null for the Home screen, or a game id such as "musica".
+      // A private match ("Partida privada"): yours alone, or, for a group's leader, the group's (the server brings the
+      // others into it). `game` is where the room starts, a game id such as "opciones".
       // `explicitUser` is for callers that just created the user and want to be sure it's the one sent.
-      // `audience` is who its next match is for ("grupo" or "publica", "¿Qué quieren jugar?").
-      async createRoom(mode, config, game = "musica", explicitUser, audience = "grupo") {
+      async createRoom(mode, config, game = "musica", explicitUser) {
         const current = explicitUser || userRef.current;
         if (!current?.name) throw new Error("Debes identificarte antes de crear una sala");
-        const res = await emitAck("room:create", { user: current, mode, config, game, audience });
+        const res = await emitAck("room:create", { user: current, mode, config, game });
         if (!res.ok) throw new Error(res.error);
         return enterRoom(res.state);
       },
@@ -576,7 +645,7 @@ export function AppProvider({ children }) {
       // full; every match is two games (and a third when they end one each). `size` is how many players it needs (2:
       // "Duelo", not offered for now, or 5). Also "Buscar otra partida" at the end of one (the server leaves the old room
       // first). With a `game` ("Partida pública" in "¿Qué quieren jugar?") it's a public match of that game alone,
-      // and the server picks its size (5).
+      // and the server picks its size (5). A group's leader searches for the whole group (the server seats everyone).
       async findMatch(kind, size = 5, explicitUser, game = null) {
         const current = explicitUser || userRef.current;
         if (!current?.name) throw new Error("Debes identificarte antes de buscar partida");
@@ -671,25 +740,72 @@ export function AppProvider({ children }) {
         if (res.state) setRoom(res.state);
       },
 
-      // Host only: who the room's next match is for, "grupo" or "publica" ("¿Qué quieren jugar?").
-      async setAudience(audience) {
-        const res = await emitAck("room:audience", audience);
+      // ---- The group: the players who go together from one match to the next ----
+
+      // "Crear grupo": a new group led by this player, with what they were going to play (`plan`). A private match
+      // they were playing alone becomes the group's.
+      async createGroup(plan, explicitUser) {
+        const current = explicitUser || userRef.current;
+        if (!current?.name) throw new Error("Debes identificarte antes de crear un grupo");
+        const res = await emitAck("group:create", { user: current, plan });
         if (!res.ok) throw new Error(res.error);
-        if (res.state) setRoom(res.state);
+        return enterGroup(res.group);
       },
 
-      // Host only, with "Partida pública": the whole group searches for a public match of the room's game.
-      async findPublicForGroup() {
-        const res = await emitAck("room:findPublic");
+      // Whether a code opens a group, before asking for a name.
+      async checkGroup(code) {
+        const res = await emitAckWithin(6000, "group:check", code.toUpperCase());
         if (!res.ok) throw new Error(res.error);
-        if (res.state) setRoom(res.state);
       },
 
-      // Anyone of the group: cancels its search, or takes it back to its own room once its public match is over.
-      async closePublic() {
-        const res = await emitAck("room:closePublic");
+      // Into a group with its code (its link, "Unirse con código", a friend's invitation): out of the one this player
+      // was in, and to wherever the new one is. The same account already in it on another device: this one can be
+      // the central device of the group's private match (an error with `offer`, like joinRoom's).
+      async joinGroup(code, explicitUser) {
+        const current = explicitUser || userRef.current;
+        if (!current?.name) throw new Error("Debes identificarte antes de unirte");
+        const res = await emitAck("group:join", { user: current, code: code.toUpperCase() });
+        if (!res.ok) {
+          if (res.offerRoom) return actions.joinRoom(res.offerRoom, current);
+          throw new Error(res.error);
+        }
+        enterGroup(res.group);
+        placeIn(res.room);
+        return res.group;
+      },
+
+      // "Salir del grupo": out of it, and of its private match.
+      async leaveGroup() {
+        const res = await emitAck("group:leave", {});
+        clearGroup();
+        if (res?.leftRoom) clearRoom();
+      },
+
+      // The leader takes the group back to Inicio (with `plan`, what it plays next).
+      async groupHome(plan) {
+        const res = await emitAck("group:home", plan ? { plan } : {});
         if (!res.ok) throw new Error(res.error);
-        if (res.state) setRoom(res.state);
+        enterGroup(res.group);
+        if (roomCodeRef.current) clearRoom();
+      },
+
+      // The leader's "¿Qué quieren jugar?" while the group is on Inicio.
+      async setGroupPlan(plan) {
+        const res = await emitAck("group:plan", plan);
+        if (!res.ok) throw new Error(res.error);
+        enterGroup(res.group);
+      },
+
+      // The leader gives the group (and the host of its private match) to someone else.
+      async giveLeader(userId) {
+        const res = await emitAck("group:leader", userId);
+        if (!res.ok) throw new Error(res.error);
+      },
+
+      // The leader takes someone out of the group; with `block` they can't come back with the code.
+      async kickFromGroup(userId, block = false) {
+        const res = await emitAck("group:kick", { userId, block });
+        if (!res.ok) throw new Error(res.error);
       },
 
       // "Restablecer" in a game's settings: back to a new room's.
@@ -928,6 +1044,7 @@ export function AppProvider({ children }) {
         refreshCatalog,
         room,
         setRoom,
+        group,
         isCentral,
         centralOffer,
         kickedNotice,

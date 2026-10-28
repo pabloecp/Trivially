@@ -4,8 +4,8 @@ import { cleanMatchRequest, DUELS_OPEN, groupMatchSize, PUBLIC_GAMES, PUBLIC_VAR
 import { RoomManager } from "./roomManager.js";
 import { sampleQuestions } from "../questions/sampleQuestions.js";
 
-// "Partida pública" with a game picked: a public match of that game alone, and a group (a private room) that
-// searches for one together and goes back to its own room afterwards.
+// "Partida pública" with a game picked: a public match of that game alone, and a group (game/groups.js) that searches
+// for one together: a seat for each of its players in the same room.
 
 // A game's queue: that game only, for five unless said otherwise ("Uno contra Uno" isn't offered: DUELS_OPEN); Rey de
 // la colina and Farsante aren't public. A group searching together is for five too, whatever its size.
@@ -20,8 +20,6 @@ assert.equal(groupMatchSize(9), 5);
 const store = { users: {} };
 const mgr = new RoomManager({ catalog: readLocalCatalog(), store, questions: sampleQuestions() });
 const user = (i) => ({ id: `u${i}`, name: `Jugador ${i}`, socketId: `s${i}` });
-const kicked = [];
-mgr.onKicked = (socketId, info) => kicked.push({ socketId, ...info });
 
 // Players looking for Trivia share a room; one looking for Rango doesn't go in it, nor one with the roulette.
 const trivia = mgr.findMatch(user(1), { kind: "casual", game: "opciones" });
@@ -61,76 +59,40 @@ for (const game of PUBLIC_GAMES) {
   mgr.destroy(room);
 }
 
-// A group: the host picks who plays ("grupo" by default) and only the host can.
-const group = mgr.create({ host: user(10), game: "opciones" });
-mgr.addPlayer(group, user(11));
-assert.equal(group.audience, "grupo");
-assert.throws(() => mgr.setAudience(group, "u11", "publica"), /Solo el anfitrión/);
-mgr.setAudience(group, "u10", "publica");
-assert.equal(mgr.publicState(group).audience, "publica");
-assert.throws(() => mgr.setAudience(group, "u10", "todos"), /no existe/);
+// A group searching together: its leader and the others sit in the same room, which needs a seat for each of them. Here
+// a stranger was already searching: the four fill it with him.
+const waiting = mgr.findMatch(user(20), { kind: "casual", game: "opciones" });
+clearTimeout(waiting.matchmaking.botTimer);
+assert.equal(mgr.findMatch(user(10), { kind: "casual", game: "opciones" }, [user(11), user(12), user(13)]), waiting);
+assert.deepEqual([...waiting.players.keys()].sort(), ["u10", "u11", "u12", "u13", "u20"]);
+assert.equal(waiting.hostId, null, "a public room has no host");
+assert.ok(waiting.matchmaking.startsAt, "five of five: about to start");
+clearTimeout(waiting.matchmaking.timer);
 
-// Rey de la colina can't be searched for in public.
-mgr.setGame(group, "u10", "rey");
-assert.throws(() => mgr.findPublicForGroup(group, "u10"), /solo se puede jugar con tu grupo/);
-mgr.setGame(group, "u10", "opciones");
-mgr.updateConfig(group, "u10", { quiz: { rounds: 10 } });
-assert.throws(() => mgr.findPublicForGroup(group, "u11"), /Solo el anfitrión/);
-
-// The group searches together: its room opens to Trivia's queue, for five.
-mgr.findPublicForGroup(group, "u10");
-clearTimeout(group.matchmaking.botTimer);
-assert.equal(group.hostId, null, "a public room has no host");
-assert.equal(group.matchmaking.size, 5);
-assert.deepEqual(mgr.publicState(group).matchmaking.group, { hostId: "u10", members: ["u10", "u11"] });
-assert.throws(() => mgr.findToJoin(group.code, "u99"), /partida pública/, "nobody joins it by code meanwhile");
-
-// Cancelling gives the room back to the group as it was.
-assert.throws(() => mgr.closePublic(group, "u99"), /Solo los del grupo/);
-mgr.closePublic(group, "u11");
-assert.equal(group.matchmaking, null);
-assert.equal(group.hostId, "u10", "its host again");
-assert.equal(group.config.quiz.rounds, 10, "its settings kept");
-assert.equal(group.game, "opciones");
-
-// Searching again: a stranger looking for Trivia sits in the group's room, and bots fill it.
-mgr.findPublicForGroup(group, "u10");
-clearTimeout(group.matchmaking.botTimer);
-assert.equal(mgr.findMatch(user(20), { kind: "casual", game: "opciones" }), group, "a stranger joins the group's search");
-while (mgr.connectedCount(group) < group.matchmaking.size) mgr.addBot(group);
-mgr.checkMatchFull(group);
-assert.ok(group.matchmaking.startsAt, "full");
-clearTimeout(group.matchmaking.timer);
-mgr.startMatch(group);
-clearTimeout(group.timer);
-assert.equal(group.run.items[0].config.rounds, 5, "the public match's settings, not the group's");
-assert.throws(() => mgr.closePublic(group, "u10"), /Espera a que termine/);
-
-// Over: "Volver al grupo" sends the stranger home and the group is in its own room again, with its settings.
-mgr.finish(group);
-assert.equal(group.phase, "finished");
-mgr.closePublic(group, "u10");
-assert.deepEqual([...group.players.keys()].sort(), ["u10", "u11"]);
-assert.deepEqual(kicked, [{ socketId: "s20", code: group.code, reason: "grupo" }]);
-assert.equal(group.phase, "lobby");
-assert.equal(group.game, "opciones");
-assert.equal(group.config.quiz.rounds, 10);
-assert.equal(group.hostId, "u10");
-assert.equal(group.run, null);
-
-// The group left and a stranger stayed: an ordinary public room from then on.
-mgr.findPublicForGroup(group, "u10");
-clearTimeout(group.matchmaking.botTimer);
-mgr.findMatch(user(21), { kind: "casual", game: "opciones" });
-clearTimeout(group.matchmaking.timer);
-group.matchmaking.startsAt = null;
-mgr.leave("s10");
-mgr.leave("s11");
-assert.equal(group.matchmaking.group, null);
+// Not enough seats left in the one searching: a room of their own (bots fill the rest of it).
+const pair = mgr.findMatch(user(30), { kind: "casual", game: "opciones" }, [user(31)]);
+clearTimeout(pair.matchmaking.botTimer);
+assert.notEqual(pair, waiting);
+const four = mgr.findMatch(user(40), { kind: "casual", game: "opciones" }, [user(41), user(42), user(43)]);
+clearTimeout(four.matchmaking.botTimer);
+assert.notEqual(four, pair, "two and four don't fit in five");
+assert.equal(mgr.connectedCount(four), 4);
+// Another game's queue, or a game that isn't public, never.
+assert.throws(() => mgr.findMatch(user(60), { kind: "casual", game: "rey" }, [user(61)]), /solo se puede jugar con tu grupo/);
+// A group of six doesn't fit in a public match.
+assert.throws(
+  () => mgr.findMatch(user(50), { kind: "casual", game: "opciones" }, [51, 52, 53, 54, 55].map(user)),
+  /5 como mucho y tu grupo es de 6/
+);
+// Someone of the group the room blocked keeps the whole group out of it.
+pair.blocked = new Set(["u71"]);
+const other = mgr.findMatch(user(70), { kind: "casual", game: "opciones" }, [user(71)]);
+clearTimeout(other.matchmaking.botTimer);
+assert.notEqual(other, pair);
+for (const room of [waiting, pair, four, other]) mgr.destroy(room);
 
 // "Restablecer": a game's settings back to a new room's.
-const reset = mgr.create({ host: user(30), game: "opciones", audience: "publica" });
-assert.equal(reset.audience, "publica");
+const reset = mgr.create({ host: user(30), game: "opciones" });
 assert.equal(mgr.publicState(reset).settingsChanged, false);
 mgr.updateConfig(reset, "u30", { quiz: { rounds: 15, roundMs: 25000 } });
 assert.equal(mgr.publicState(reset).settingsChanged, true);

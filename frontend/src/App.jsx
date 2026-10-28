@@ -83,6 +83,15 @@ function RoomNavigator() {
   useEffect(() => {
     if (kickedNotice && !room) nav("/", { replace: true });
   }, [kickedNotice]);
+
+  // Out of the room by the server (the group's leader took it back to Inicio): off its screens, so their address
+  // doesn't join it again.
+  const hadRoom = useRef(Boolean(room));
+  useEffect(() => {
+    const had = hadRoom.current;
+    hadRoom.current = Boolean(room);
+    if (had && !room && ROOM_SCREEN.test(pathname)) nav("/", { replace: true });
+  }, [room?.code]);
   const target = room ? roomPath(room, codeHidden) : null;
   const lastTarget = useRef(null);
   const lastPath = useRef(pathname);
@@ -168,6 +177,8 @@ export default function App() {
       <Routes>
         <Route path="/" element={<RoomScreen />} />
         <Route path="/sala/:code" element={<RoomScreen />} />
+        {/* A group's invite link: into the group, then wherever it is. */}
+        <Route path="/grupo/:groupCode" element={<RoomScreen />} />
         {/* The old pages of "¿Cómo quieres jugar?" (/jugar/casual, /jugar/privada…) open Inicio on the side they named. */}
         <Route path="/jugar" element={<Navigate to="/" replace />} />
         <Route path="/jugar/:option" element={<RoomScreen />} />

@@ -12,6 +12,7 @@ import { forgetOldShareCodes } from "./db/sharedPlaylists.js";
 import { TrackResolver } from "./catalog/trackResolver.js";
 import { ensureUsernames, flushStore, initStore } from "./db/store.js";
 import { RoomManager } from "./game/roomManager.js";
+import { GroupManager } from "./game/groups.js";
 import { loadQuestions } from "./questions/questionBank.js";
 import {
   createApiRouter,
@@ -44,9 +45,11 @@ if (assigned) console.log(`[Usuarios] ${assigned} cuentas recibieron un nombre d
 const questions = await loadQuestions();
 const resolver = new TrackResolver({ catalog });
 const rooms = new RoomManager({ catalog, store, questions, resolver });
+// The groups (players who go together from one match to the next), apart from the rooms (the matches).
+const groups = new GroupManager({ rooms });
 const friends = new Friendships({ store });
 await friends.init();
-const friendsHub = new FriendsHub({ store, friends, rooms });
+const friendsHub = new FriendsHub({ store, friends, rooms, groups });
 // The default Spotify playlists (catalog/defaultPlaylists.js): read now and once a day, and put in every room.
 startDefaultPlaylists(() => rooms.applyDefaultPlaylists());
 // Playlist codes nobody shared or opened in a year are deleted: now and once a day.
@@ -202,7 +205,7 @@ const io = new Server(server, {
     credentials: true,
   },
 });
-attachSockets(io, rooms, { friends, hub: friendsHub });
+attachSockets(io, rooms, { friends, hub: friendsHub, groups });
 
 // Make sure the last stats reach the database when the host stops the server (Railway sends SIGTERM on deploy).
 for (const signal of ["SIGTERM", "SIGINT"]) {

@@ -40,27 +40,39 @@ let hadBack = false;
 const BACK_ANIM_MS = 450;
 
 // The button on the left of the logo goes back one step, which depends on where you are in the room:
-//  - in the group's room, while it waits: out of the group. It asks first, in the modal "¿Seguro que quieres salir?"
-//    (`asking`, shared through the store; the top bar draws it), whose "Salir" calls `leaveNow`;
+//  - in a match's lobby or a search, while it waits: back to Inicio. It asks first, in a modal (`asking`, shared
+//    through the store; the top bar draws it), whose button calls `leaveNow`. The group's leader takes the whole group
+//    (`leadsGroup`, group:home); anyone else of a group goes alone and stays in it; alone, you leave the match;
 //  - on a match's own screen (`inGame`): the top bar turns it into an "X" that opens a modal instead (see TvTopbar),
-//    which calls `leaveNow` when it is confirmed. The host of a private room (`toMenu`) doesn't leave: the match ends
-//    for everyone and the group goes back to its room, like the games' "Terminar" (`endToMenu`).
+//    which calls `leaveNow` when it is confirmed. The host of a private match (`toMenu`) doesn't leave: the match ends
+//    for everyone and they go back to its lobby, like the games' "Terminar" (`endToMenu`).
 // `press` is the button's onClick; outside a room it lets the Inicio link go home. The browser's Back button does the
 // same through `step` (RoomNavigator, App.jsx). `onRoomScreen` is false away from the room's own screen (profile,
 // another page), where going back to the modes makes no sense. `onError` gets the message when going back to the
 // modes fails.
 export function useRoomExit({ onRoomScreen = true, onError } = {}) {
-  const { user, room, isCentral, restartGame, leaveRoom, leaveAsk, setLeaveAsk } = useApp();
+  const { user, room, group, isCentral, restartGame, leaveRoom, groupHome, leaveAsk, setLeaveAsk } = useApp();
   const nav = useNavigate();
   const inGame = onRoomScreen && Boolean(room) && room.phase !== "lobby";
   // A public match has no host and no menu to go back to, and only the host can change the room's game.
   const toMenu = inGame && !isCentral && !room.matchmaking && room.hostId === user?.id;
   const asking = leaveAsk && Boolean(room) && !inGame;
+  // The group's leader where the group is, outside a public match being played: going back takes the whole group.
+  const leadsGroup =
+    Boolean(group) && Boolean(room) && !isCentral && group.leaderId === user?.id && group.place?.code === room.code && !(room.matchmaking && inGame && room.phase !== "finished");
 
-  // Out of the room right away, back to Inicio (exitPath).
+  // Out of the room, back to Inicio (exitPath): the whole group with its leader, otherwise alone.
   // Replacing, not pushing: Back must not return to the room's address (/sala/CODE), which joins it again.
   function leaveNow() {
     const target = exitPath(room);
+    if (leadsGroup) {
+      return groupHome()
+        .then(() => {
+          setLeaveAsk(false);
+          nav(target, { replace: true });
+        })
+        .catch((err) => onError?.(err.message || "No se pudo volver al inicio"));
+    }
     setLeaveAsk(false);
     leaveRoom();
     nav(target, { replace: true });
@@ -84,7 +96,7 @@ export function useRoomExit({ onRoomScreen = true, onError } = {}) {
     step();
   }
 
-  return { toMenu, inGame, asking, press, step, leaveNow, endToMenu, cancelAsk: () => setLeaveAsk(false) };
+  return { toMenu, inGame, asking, leadsGroup, press, step, leaveNow, endToMenu, cancelAsk: () => setLeaveAsk(false) };
 }
 
 // Same top bar on every screen: on the left the way back and the small logo with "trivially", which is just the
@@ -96,7 +108,7 @@ export function useRoomExit({ onRoomScreen = true, onError } = {}) {
 //    no room;
 //  - nothing on the home screen itself.
 export default function TvTopbar() {
-  const { user, room, isCentral } = useApp();
+  const { user, room, group, isCentral } = useApp();
   const friends = useFriends();
   const isOwner = useIsOwner();
   const [adminOpen, setAdminOpen] = useState(false);
@@ -107,7 +119,7 @@ export default function TvTopbar() {
   const onHome = !room && pathname === "/";
   const goUp = useGoUp();
   const [modesErr, setModesErr] = useState("");
-  const { toMenu, inGame, asking, press, leaveNow, endToMenu, cancelAsk } = useRoomExit({
+  const { toMenu, inGame, asking, leadsGroup, press, leaveNow, endToMenu, cancelAsk } = useRoomExit({
     onRoomScreen: pathname === roomTarget,
     onError: setModesErr,
   });
@@ -163,7 +175,7 @@ export default function TvTopbar() {
       <button
         type="button"
         className="tv-chip tv-chip--leave"
-        aria-label="Volver: salir del grupo"
+        aria-label={leadsGroup ? "Volver al inicio con tu grupo" : "Volver al inicio"}
         aria-haspopup="dialog"
         onClick={press}
       >
@@ -254,43 +266,58 @@ export default function TvTopbar() {
           <ProfileChip user={user} />
         </div>
       </header>
-      {/* "Volver" out of the room, outside a match (this bar, the phones' room bar or the browser's Back): the same modal
-          as the room's "Salir de la sala". */}
+      {/* "Volver" out of the room, outside a match (this bar, the phones' room bar or the browser's Back). The leader
+          takes the group; anyone else of a group goes alone and stays in it. */}
       <ConfirmDialog
         open={asking}
-        icon={isCentral ? "tv" : "logout"}
-        title={isCentral ? "¿Dejar de ser el dispositivo central?" : "¿Seguro que quieres salir?"}
+        icon={isCentral ? "tv" : leadsGroup ? "users" : "logout"}
+        title={isCentral ? "¿Dejar de ser el dispositivo central?" : leadsGroup ? "¿Volver al inicio con tu grupo?" : "¿Volver al inicio?"}
         text={
           isCentral
             ? "Esta pantalla saldrá de la sala."
-            : "Saldrás del grupo. Para volver a entrar necesitarás el código o el enlace de invitación."
+            : leadsGroup
+            ? modesErr || "Todo el grupo volverá al inicio contigo."
+            : group
+            ? "Seguirás en tu grupo y podrás volver con él."
+            : room?.matchmaking
+            ? "Dejarás de buscar partida."
+            : "Saldrás de tu partida privada."
         }
         cancelLabel="Quedarme"
-        confirmLabel="Salir"
+        confirmLabel={leadsGroup || group ? "Volver" : "Salir"}
         onCancel={cancelAsk}
         onConfirm={leaveNow}
       />
       <ConfirmDialog
         open={leaving && inGame}
         icon={isCentral ? "tv" : toMenu ? "users" : "logout"}
-        title={isCentral ? "¿Dejar de ser el dispositivo central?" : toMenu ? "¿Volver a la sala del grupo?" : "¿Seguro que quieres salir?"}
+        title={isCentral ? "¿Dejar de ser el dispositivo central?" : toMenu ? "¿Volver a elegir el juego?" : "¿Seguro que quieres salir?"}
         text={
           isCentral
             ? "Esta pantalla saldrá de la sala y cada jugador volverá a ver la partida en su teléfono."
             : toMenu
             ? modesErr ||
               (room.phase === "finished"
-                ? "Todo el grupo volverá a su sala."
-                : "La partida se acabará para todos y el grupo volverá a su sala.")
-            : "Saldrás de la sala y dejarás la partida en curso."
+                ? "Todos volverán a la espera de la partida, en el mismo juego."
+                : "La partida se acabará para todos y volverán a la espera, en el mismo juego.")
+            : leadsGroup
+            ? modesErr || "Todo el grupo volverá al inicio contigo."
+            : group
+            ? "Dejarás la partida en curso. Seguirás en tu grupo."
+            : "Dejarás la partida en curso."
         }
         cancelLabel={isCentral ? "Seguir mostrándola" : "Seguir jugando"}
         confirmLabel={toMenu ? "Volver" : "Salir"}
         onCancel={() => setLeaving(false)}
         onConfirm={() => {
-          // Back to the menu the dialog stays up until the room has moved (or says why it couldn't).
+          // Back to the menu (or the group back to Inicio) the dialog stays up until the room has moved (or says why
+          // it couldn't).
           if (toMenu) {
             endToMenu();
+            return;
+          }
+          if (leadsGroup) {
+            leaveNow();
             return;
           }
           setLeaving(false);

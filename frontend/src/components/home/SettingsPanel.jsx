@@ -47,8 +47,6 @@ export default function SettingsPanel({ room, readOnly = false, actions = null, 
     );
   }
 
-  if (room.audience === "publica") return null;
-
   async function reset() {
     setBusy(true);
     try {

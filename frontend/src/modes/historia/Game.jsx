@@ -14,7 +14,7 @@ import "../../styles/home.css";
 import "../../styles/quiz.css";
 import "../../styles/history.css";
 import { PauseButton, ReportButton, SkipButton, PauseVeil } from "../../components/home/PauseControls.jsx";
-import { resolveCode, shownCode, useHiddenCode } from "../../lib/hiddenCode.js";
+import { resolveCode } from "../../lib/hiddenCode.js";
 
 const COUNTDOWN_MS = 3000;
 // One colour per player for their year on the reveal's timeline (never the green and red of right and wrong).
@@ -33,7 +33,6 @@ function joinNames(names) {
 }
 
 function GameScreen() {
-  const [codeHidden] = useHiddenCode();
   const { code: codeParam } = useParams();
   const { user, room, joinRoom, placeYear, restartGame } = useApp();
   // The address's code ("oculta" while it's hidden: this tab's room, lib/hiddenCode.js).
@@ -358,7 +357,7 @@ function GameScreen() {
         ) : (
           <section className="tv-game-top">
             <div className="tv-game-round">
-              <p className="tv-mono-label">Sala {shownCode(room.code, codeHidden)} · Rango</p>
+              <p className="tv-mono-label">{room.matchmaking ? "Partida pública" : "Partida privada"} · Rango</p>
               <h1 className="tv-card-title">
                 {tiebreak ? (
                   `Desempate${tiebreak.round > 1 ? ` ${tiebreak.round}` : ""}`

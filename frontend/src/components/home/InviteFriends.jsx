@@ -7,11 +7,11 @@ import Icon from "./Icon.jsx";
 const SHOWN = 4;
 
 /**
- * In the room's column while the room waits, under the players (accounts only): "Invitar amigos", your friends who are
- * online and not in this room, each with "Invitar" (they get a card with the room's code, friend:invite), which turns
- * into "Invitado" for a while. With nobody online it says so; with no friends yet, a button opens the friends sheet.
+ * In "Tu grupo", under its players (accounts only): "Invitar amigos", your friends who are online and not in the group,
+ * each with "Invitar" (they get a card with the group's code, friend:invite), which turns into "Invitado" for a while.
+ * With nobody online it says so; with no friends yet, a button opens the friends sheet.
  */
-export default function InviteFriends({ room, onToast }) {
+export default function InviteFriends({ group, onToast }) {
   const friends = useFriends();
   const [sent, setSent] = useState({});
 
@@ -25,8 +25,8 @@ export default function InviteFriends({ room, onToast }) {
 
   if (!friends.isAccount || !friends.view) return null;
   const all = friends.view.friends || [];
-  const inRoom = new Set(room.players.map((p) => p.id));
-  const online = all.filter((f) => f.online && !inRoom.has(f.id));
+  const inGroup = new Set(group.members.map((m) => m.id));
+  const online = all.filter((f) => f.online && !inGroup.has(f.id));
 
   async function invite(friend) {
     try {
@@ -59,7 +59,7 @@ export default function InviteFriends({ room, onToast }) {
               <Avatar name={f.name} avatar={f.avatar} />
               <span className="tv-invite-friend-text">
                 <strong>{f.name}</strong>
-                <small>{f.room ? "En otra sala" : "En línea"}</small>
+                <small>{f.room?.group ? "En otro grupo" : f.room ? "Jugando" : "En línea"}</small>
               </span>
               <button
                 type="button"

@@ -4,12 +4,12 @@ import GameCard from "./GameCard.jsx";
 import Icon from "./Icon.jsx";
 import Modal from "./Modal.jsx";
 
-// "¿Qué quieren jugar?", from the "Vas a jugar" box: who it's for ("Partida pública": a public match of the game,
-// or "Partida privada") and the game, as cards. With people from anywhere, Rey de la colina and Farsante are locked
-// (they need a group). With the group, "Más formas de jugar" adds the Clásicos and the playlist (several games in a
-// row). Picking a game closes it. `readOnly` (a player who isn't the host) only shows the choice, `hostName` says who
-// makes it.
-export default function PlanSheet({ open, onClose, plan, onAudience, onGame, readOnly = false, hostName = "" }) {
+// "¿Qué quieren jugar?" ("¿Qué quieres jugar?" alone), from the "Vas a jugar" box: who it's for ("Partida pública": a
+// public match of the game, or "Partida privada": yours alone or your group's) and the game, as cards. With people from
+// anywhere, Rey de la colina and Farsante are locked (they need people who know each other). In a private match, "Más
+// formas de jugar" adds the Clásicos and the playlist (several games in a row). Picking a game closes it. `readOnly` (a
+// player who isn't the leader or the host) only shows the choice, `hostName` says who makes it.
+export default function PlanSheet({ open, onClose, plan, onAudience, onGame, inGroup = false, readOnly = false, hostName = "" }) {
   const games = GAME_MODES.filter(isGameTile);
   const extras = GAME_MODES.filter((m) => m.kind === "classic" || m.kind === "playlist");
   const publicSide = plan.audience === "publica";
@@ -27,7 +27,7 @@ export default function PlanSheet({ open, onClose, plan, onAudience, onGame, rea
   }
 
   return (
-    <Modal open={open} onClose={onClose} title="¿Qué quieren jugar?" size="lg" className="tv-plan">
+    <Modal open={open} onClose={onClose} title={inGroup ? "¿Qué quieren jugar?" : "¿Qué quieres jugar?"} size="lg" className="tv-plan">
       <div className="tv-pills" role="radiogroup" aria-label="Con quién juegan">
         {AUDIENCES.map((a) => (
           <button

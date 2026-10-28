@@ -98,17 +98,20 @@ const inertUnless = (shown) => (el) => {
   if (el) el.inert = !shown;
 };
 
-// The room's side column, on the room screen and during a match: the invite code, who's in and the way out.
+// The room's side column, on the room screen and during a match: the group's code (a group's private match), who's in
+// and the way out.
 // With `scores` (a match) the players are ranked by points, each with their score and how their round is going.
 // `className` lets a game add its own (Geografía hides the column on phones, where it shows a strip instead).
 // At the top of the players, while the room has one, the "Dispositivo central" (CentralSpot): the screen that shows the
 // match, picked from a player's menu (the host or a player with the settings permission). On the central device itself
 // the column only shows (`display`): no menus, chat or way out, and the code to join instead of "Invitar".
-// `group` is "Tu grupo" (GroupSheet): the code is in the sheet's own box above, and the list is "En el grupo".
+// `group` is "Tu grupo" (GroupSheet): the code is in the sheet's own box above, the list is "En el grupo", and under it
+// the leader's options for their friends and the friends to invite.
 export default function PartyPanel({ room, onToast, scores = false, display = false, group = false, className = "" }) {
-  const { user, isCentral } = useApp();
+  const { user, isCentral, group: myGroup } = useApp();
   const [menuFor, setMenuFor] = useState(null);
-  const { copied, copy: copyInvite } = useInvite(room.code, onToast);
+  // A group's private match shows the group's code: it's how more people come into the group, and so into it.
+  const { copied, copy: copyInvite } = useInvite(room.groupCode, onToast);
   const [codeHidden, toggleCode] = useHiddenCode();
   // Who "you" are in the list: nobody on the central device, even when its account is one of the players'.
   const viewerId = isCentral ? null : user?.id;
@@ -163,11 +166,11 @@ export default function PartyPanel({ room, onToast, scores = false, display = fa
       className={`tv-party${scores ? " is-scores" : ""}${chatting ? " is-chat" : ""}${display ? " is-display" : ""} ${className}`.trim()}
       aria-label="Tu sala"
     >
-      {/* A public match has no code to share: nobody joins it but by searching. */}
-      {!room.matchmaking && !group && (
+      {/* Only a group's private match has a code to share (the group's). Nobody joins a public match but by searching. */}
+      {room.groupCode && !room.matchmaking && !group && (
       <div className="tv-party-codebox">
         <div className="tv-party-codehead">
-          <p className="tv-mono-label">Código de sala</p>
+          <p className="tv-mono-label">Código del grupo</p>
           {/* Hides the code on this device's screens, for streaming. */}
           <button
             type="button"
@@ -180,9 +183,9 @@ export default function PartyPanel({ room, onToast, scores = false, display = fa
             <span>{codeHidden ? "Oculto" : "Ocultar"}</span>
           </button>
         </div>
-        <p className={`tv-party-code${codeHidden ? " is-hidden" : ""}`}>{shownCode(room.code, codeHidden)}</p>
+        <p className={`tv-party-code${codeHidden ? " is-hidden" : ""}`}>{shownCode(room.groupCode, codeHidden)}</p>
         {display ? (
-          <p className="tv-party-joinhint">Entra a trivially, toca Jugar y escribe este código</p>
+          <p className="tv-party-joinhint">Entra a trivially y únete con este código</p>
         ) : (
           <button type="button" className="tv-btn tv-c-violet tv-invite-btn tv-shine" onClick={copyInvite} aria-label="Invitar con enlace">
             <Icon name={copied ? "check" : "link"} size={20} strokeWidth={2.6} />
@@ -192,7 +195,7 @@ export default function PartyPanel({ room, onToast, scores = false, display = fa
       </div>
       )}
 
-      {isHost && !display && <FriendsRoomControls room={room} onToast={onToast} />}
+      {group && myGroup?.leaderId === viewerId && <FriendsRoomControls group={myGroup} onToast={onToast} />}
 
       <div className="tv-party-title">
         <h2>{scores ? "Marcador" : group ? "En el grupo" : "En la sala"}</h2>
@@ -282,8 +285,8 @@ export default function PartyPanel({ room, onToast, scores = false, display = fa
               );
             })}
           </ul>
-          {/* While the room waits: your friends who are online, to invite (instead of "Esperando amigos"). */}
-          {!scores && !display && !room.matchmaking && <InviteFriends room={room} onToast={onToast} />}
+          {/* In "Tu grupo": your friends who are online, to invite into the group. */}
+          {group && myGroup && <InviteFriends group={myGroup} onToast={onToast} />}
           {spectators.length > 0 && (
             <>
               <div className="tv-party-title">

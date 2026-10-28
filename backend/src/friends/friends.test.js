@@ -10,7 +10,8 @@ process.env.FRIENDS_FILE = path.join(dir, "friends.json");
 const { Friendships, FRIEND_LIMITS } = await import("./friendships.js");
 
 const { FriendsHub } = await import("./friendsHub.js");
-const { RoomManager, JOIN_ASK_GAP_MS } = await import("../game/roomManager.js");
+const { RoomManager } = await import("../game/roomManager.js");
+const { GroupManager, JOIN_ASK_GAP_MS } = await import("../game/groups.js");
 const { readLocalCatalog } = await import("../catalog/catalogProvider.js");
 
 const store = {
@@ -77,11 +78,12 @@ assert.throws(() => friends.assertCanSearch("dani"), /buscando muy rápido/);
 assert.deepEqual(friends.removeAllOf("cami"), ["ana"]);
 assert.deepEqual(friends.friendsOf("ana"), []);
 
-// ---- What the friends tab shows, and what a friend can do about a room ----
+// ---- What the friends tab shows, and what a friend can do about a group ----
 friends.request("beto", "ana");
 friends.accept("ana", "beto");
 const mgr = new RoomManager({ catalog: readLocalCatalog(), store, questions: [] });
-const hub = new FriendsHub({ store, friends, rooms: mgr });
+const groups = new GroupManager({ rooms: mgr });
+const hub = new FriendsHub({ store, friends, rooms: mgr, groups });
 let view = hub.view("beto");
 assert.equal(view.friends[0].id, "ana");
 assert.equal(view.friends[0].online, false);
@@ -89,46 +91,60 @@ assert.equal(view.friends[0].room, null);
 assert.equal(view.username, "beto");
 assert.equal(view.friends[0].username, "ana_gamer");
 
-const room = mgr.create({ host: { id: "ana", name: "Ana", socketId: "s1" }, mode: "multi", game: null });
+const group = groups.create({ id: "ana", name: "Ana", socketId: "s1" }, { game: "opciones", audience: "publica" });
 view = hub.view("beto");
-assert.equal(view.friends[0].online, true, "someone in a room is online");
-assert.equal(view.friends[0].room.joinMode, "solicitud", "the default is asking the host");
+assert.equal(view.friends[0].online, true, "someone in a group is online");
+assert.equal(view.friends[0].room.group, true);
+assert.equal(view.friends[0].room.inRoom, false, "the group is on Inicio");
+assert.equal(view.friends[0].room.joinMode, "solicitud", "the default is asking the leader");
 assert.equal(view.friends[0].room.hostName, "Ana");
-assert.equal("code" in view.friends[0].room, false, "the room's code is never in the friends tab");
+assert.equal(view.friends[0].room.players, 1);
+assert.equal("code" in view.friends[0].room, false, "the group's code is never in the friends tab");
 
-// Only the host changes what friends can do, and only to a known option.
-assert.throws(() => mgr.setJoinMode(room, "beto", "abierta"), /Solo el Host/);
-assert.throws(() => mgr.setJoinMode(room, "ana", "todos"), /no existe/);
+// Only the leader changes what friends can do, and only to a known option.
+assert.throws(() => groups.setJoinMode(group, "beto", "abierta"), /Solo el líder/);
+assert.throws(() => groups.setJoinMode(group, "ana", "todos"), /no existe/);
 
-// "solicitud": the friend asks, the host answers, and it can't be repeated right away.
+// "solicitud": the friend asks, the leader answers, and it can't be repeated right away.
 const now = Date.now();
-mgr.addJoinRequest(room, { id: "beto", name: "Beto" }, now);
-assert.equal(mgr.publicState(room).joinRequests.length, 1);
+groups.addJoinRequest(group, { id: "beto", name: "Beto" }, now);
+assert.equal(groups.publicGroup(group).joinRequests.length, 1);
 assert.equal(hub.view("beto").friends[0].room.requested, true);
-assert.throws(() => mgr.addJoinRequest(room, { id: "beto", name: "Beto" }, now + 1000), /Espera/);
-assert.throws(() => mgr.answerJoinRequest(room, "beto", "beto"), /Solo el Host/);
-assert.equal(mgr.answerJoinRequest(room, "ana", "beto").userId, "beto");
-assert.equal(mgr.publicState(room).joinRequests.length, 0);
-assert.throws(() => mgr.answerJoinRequest(room, "ana", "beto"), /ya no está/);
-// After the wait he can ask again; once in the room, his request is gone.
-mgr.addJoinRequest(room, { id: "beto", name: "Beto" }, now + JOIN_ASK_GAP_MS + 1);
-assert.equal(mgr.openJoinRequests(room).length, 1);
-mgr.addPlayer(room, { id: "beto", name: "Beto", socketId: "s2" });
-assert.equal(mgr.openJoinRequests(room).length, 0);
-mgr.leave("s2");
+assert.throws(() => groups.addJoinRequest(group, { id: "beto", name: "Beto" }, now + 1000), /Espera/);
+assert.throws(() => groups.answerJoinRequest(group, "beto", "beto"), /Solo el líder/);
+assert.equal(groups.answerJoinRequest(group, "ana", "beto").userId, "beto");
+assert.equal(groups.publicGroup(group).joinRequests.length, 0);
+assert.throws(() => groups.answerJoinRequest(group, "ana", "beto"), /ya no está/);
+// After the wait he can ask again; once in the group, his request is gone.
+groups.addJoinRequest(group, { id: "beto", name: "Beto" }, now + JOIN_ASK_GAP_MS + 1);
+assert.equal(groups.openJoinRequests(group).length, 1);
+groups.join(group, { id: "beto", name: "Beto", socketId: "s2" });
+assert.equal(groups.openJoinRequests(group).length, 0);
+groups.removeMember(group, "beto");
 
 // "abierta" and "invitacion" take no requests.
-mgr.setJoinMode(room, "ana", "abierta");
-assert.throws(() => mgr.addJoinRequest(room, { id: "beto", name: "Beto" }), /no recibe solicitudes/);
-mgr.setJoinMode(room, "ana", "invitacion");
+groups.setJoinMode(group, "ana", "abierta");
+assert.throws(() => groups.addJoinRequest(group, { id: "beto", name: "Beto" }), /no recibe solicitudes/);
+groups.setJoinMode(group, "ana", "invitacion");
 assert.equal(hub.view("beto").friends[0].room.joinMode, "invitacion");
-assert.throws(() => mgr.addJoinRequest(room, { id: "beto", name: "Beto" }), /no recibe solicitudes/);
-assert.equal(mgr.roomOfUser("ana"), room);
-assert.equal(mgr.roomOfUser("cami"), null);
+assert.throws(() => groups.addJoinRequest(group, { id: "beto", name: "Beto" }), /no recibe solicitudes/);
+assert.equal(groups.ofUser("ana"), group);
+assert.equal(groups.ofUser("cami"), null);
 
 // Requests expire.
-mgr.setJoinMode(room, "ana", "solicitud");
-mgr.addJoinRequest(room, { id: "cami", name: "Cami" }, Date.now() - 61000);
-assert.equal(mgr.openJoinRequests(room).length, 0);
+groups.setJoinMode(group, "ana", "solicitud");
+groups.addJoinRequest(group, { id: "cami", name: "Cami" }, Date.now() - 61000);
+assert.equal(groups.openJoinRequests(group).length, 0);
+
+// A friend playing alone (a match of their own, no group): where they are, but nothing to join.
+groups.removeMember(group, "ana");
+assert.equal(groups.get(group.code), undefined, "the last one out: no group");
+const room = mgr.create({ host: { id: "ana", name: "Ana", socketId: "s1" }, mode: "multi", game: "opciones" });
+view = hub.view("beto");
+assert.equal(view.friends[0].room.group, false);
+assert.equal(view.friends[0].room.inRoom, true);
+assert.equal(mgr.roomOfUser("ana"), room);
+assert.equal(mgr.roomOfUser("cami"), null);
+mgr.destroy(room);
 
 console.log("friends.test ok");
