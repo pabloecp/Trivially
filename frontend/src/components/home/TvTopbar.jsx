@@ -99,8 +99,8 @@ export function useRoomExit({ onRoomScreen = true, onError } = {}) {
   return { toMenu, inGame, asking, leadsGroup, press, step, leaveNow, endToMenu, cancelAsk: () => setLeaveAsk(false) };
 }
 
-// Same top bar on every screen: on the left the way back and the small logo with "trivially", which is just the
-// brand and goes nowhere; the volume (music and sounds) and the profile on the right. The way back is "Volver" everywhere:
+// Same top bar on every screen: on the left the way back and the small logo with "trivially", which goes to Inicio
+// (inside a room, after asking, since it leaves the room); the volume (music and sounds) and the profile on the right. The way back is "Volver" everywhere:
 //  - on the room's own screen (see `useRoomExit`): back to the game menu, or out of the room after asking;
 //  - on a match's screen it is an "X" that asks in a modal before leaving (the host of a private room goes back to the
 //    game menu instead of leaving);
@@ -108,7 +108,8 @@ export function useRoomExit({ onRoomScreen = true, onError } = {}) {
 //    no room;
 //  - nothing on the home screen itself.
 export default function TvTopbar() {
-  const { user, room, group, isCentral } = useApp();
+  const { user, room, group, isCentral, leaveRoom, setLeaveAsk } = useApp();
+  const nav = useNavigate();
   const friends = useFriends();
   const isOwner = useIsOwner();
   const [adminOpen, setAdminOpen] = useState(false);
@@ -117,6 +118,7 @@ export default function TvTopbar() {
   const awayFromRoom = Boolean(roomTarget) && pathname !== roomTarget;
   const inMatch = Boolean(room) && room.phase !== "lobby";
   const onHome = !room && pathname === "/";
+  const brandHidden = onHome;
   const goUp = useGoUp();
   const [modesErr, setModesErr] = useState("");
   const { toMenu, inGame, asking, leadsGroup, press, leaveNow, endToMenu, cancelAsk } = useRoomExit({
@@ -125,6 +127,24 @@ export default function TvTopbar() {
   });
   // The modal that asks before leaving a match; it only makes sense while the match's own screen is up.
   const [leaving, setLeaving] = useState(false);
+  // The logo goes to Inicio: straight away outside a room, and after asking (out of the room) inside one.
+  const [homeAsk, setHomeAsk] = useState(false);
+
+  useEffect(() => {
+    if (!room) setHomeAsk(false);
+  }, [room]);
+
+  function goHome() {
+    if (room) setHomeAsk(true);
+    else nav("/");
+  }
+
+  function leaveHome() {
+    setHomeAsk(false);
+    setLeaveAsk(false);
+    leaveRoom();
+    nav("/", { replace: true });
+  }
 
   useEffect(() => {
     if (!modesErr) return undefined;
@@ -218,10 +238,16 @@ export default function TvTopbar() {
       <header className={`tv-topbar${backAnim ? ` is-back-${backAnim}` : ""}`}>
         <div className="tv-topbar-start">
           {shownButton}
-          <div className="tv-brand">
+          <button
+            type="button"
+            className={`tv-brand${brandHidden ? " is-hidden" : ""}`}
+            aria-label="Ir al inicio"
+            aria-haspopup={room ? "dialog" : undefined}
+            onClick={goHome}
+          >
             <AppIcon small />
             <span className="tv-brand-name">trivially</span>
-          </div>
+          </button>
         </div>
         {/* The site's address, faint, in the middle of the bar (computers): on every screen, so the bar never changes. */}
         <span className="tv-topbar-url">playtrivially.com</span>
@@ -287,6 +313,23 @@ export default function TvTopbar() {
         confirmLabel={leadsGroup || group ? "Volver" : "Salir"}
         onCancel={cancelAsk}
         onConfirm={leaveNow}
+      />
+      {/* The logo, inside a room: out of it (asking first) and to Inicio. */}
+      <ConfirmDialog
+        open={homeAsk && Boolean(room)}
+        icon={isCentral ? "tv" : "logout"}
+        title={isCentral ? "¿Dejar de ser el dispositivo central?" : "¿Seguro que quieres salir?"}
+        text={
+          isCentral
+            ? "Esta pantalla saldrá de la sala y volverá al inicio."
+            : inMatch
+            ? "Saldrás de la sala, dejarás la partida en curso y volverás al inicio."
+            : "Saldrás de la sala y volverás al inicio. Para volver a entrar necesitarás el código o el enlace de invitación."
+        }
+        cancelLabel={inMatch && !isCentral ? "Seguir jugando" : "Quedarme"}
+        confirmLabel="Salir"
+        onCancel={() => setHomeAsk(false)}
+        onConfirm={leaveHome}
       />
       <ConfirmDialog
         open={leaving && inGame}

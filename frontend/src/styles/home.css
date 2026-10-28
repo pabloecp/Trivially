@@ -196,6 +196,10 @@
 .tv-brand { transition: opacity 0.22s ease, visibility 0s linear 0s; }
 .tv-brand.is-hidden { opacity: 0; visibility: hidden; transition: opacity 0.12s ease, visibility 0s linear 0.12s; }
 .tv-brand { display: flex; align-items: center; flex-shrink: 0; gap: 10px; padding: 4px; border-radius: 14px; }
+/* The logo is a link to Inicio, but it still looks like the brand: no button behind it, it only brightens on hover. */
+.tv-app button.tv-brand { margin: 0; border: 0; background: none; color: inherit; font: inherit; cursor: pointer; }
+.tv-brand:hover { filter: brightness(1.15); }
+.tv-brand:active { transform: scale(0.97); }
 .tv-brand-name {
   font-family: var(--tv-logo-font);
   font-weight: 800;
@@ -2781,12 +2785,12 @@ body::-webkit-scrollbar,
   .tv-party-code { font-size: 30px; }
   .tv-app .tv-invite-btn { grid-column: 2; grid-row: 1 / span 2; width: auto; padding: 12px 18px; }
 
-  /* The round's bar: "Terminar" beside the clock instead of a row of its own. */
-  .tv-game-top { grid-template-columns: minmax(0, 1fr) auto auto; grid-template-areas: "round tools clock" "bar bar bar"; }
+  /* The round's bar: its buttons (Reportar, and the host's Pausar and Terminar) in a row under the round's text, the
+     clock on the right beside both, so neither squeezes the text nor leaves an empty strip. */
+  .tv-game-top { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "round clock" "tools clock" "bar bar"; row-gap: 10px; }
+  .tv-game-tools { justify-content: flex-start; }
+  .tv-game-tools:empty { display: none; }
   .tv-game-tools .tv-mini-btn { max-width: 116px; white-space: normal; text-align: center; line-height: 1.2; }
-  /* An owner has more tools (Reportar, Saltar, Pausar, Terminar): beside the clock they'd squeeze the round's text to
-     a thin column, so with three or more they take a row of their own under it. */
-  .tv-game-top:has(.tv-game-tools > :nth-child(3)) { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "round clock" "tools tools" "bar bar"; }
   .tv-game-round .tv-card-title { white-space: normal; line-height: 1.15; }
   .tv-game-round .tv-card-title .tv-muted { white-space: nowrap; }
 }
@@ -3158,6 +3162,8 @@ fieldset.tv-setsec-body { display: grid; gap: 18px; min-width: 0; margin: 0; pad
   /* "Elige un modo de juego" is long: smaller, on two lines if it needs them, never wider than the bar. */
   .tv-app .tv-roomdock-start { overflow: hidden; }
   .tv-app .tv-roomdock-start.is-pick { padding: 0 12px; font-size: 16px; line-height: 1.15; white-space: normal; text-align: center; }
+  /* Locked, it sits over the page's tiles: dimmed without opacity, so nothing behind it shows through. */
+  .tv-app .tv-roomdock-start:disabled { opacity: 1; filter: brightness(0.6) saturate(0.6); }
   /* The chat has its own button in the bottom bar: not again in the players' drop-down. */
   .tv-party--drop .tv-party-chatwrap,
   .tv-party--drop .tv-party-chatbar { display: none; }
