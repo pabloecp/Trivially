@@ -115,8 +115,8 @@ import {
   BOT_GAP_MS,
   BOT_WAIT_MS,
   cleanMatchRequest,
-  CLASSIC_GAMES,
   CLASSIC_NAMES,
+  CLASSIC_WINS,
   isClassic,
   AFK_CONFIRM_MS,
   cleanForced,
@@ -128,7 +128,8 @@ import {
   roomSize,
   matchItemConfig,
   findVariant,
-  MATCH_GAME_COUNT,
+  MATCH_WINS,
+  matchMaxGames,
   variantsFor,
   matchRoundMs,
   matchTimes,
@@ -158,10 +159,10 @@ export const ROOM_CODE_LENGTH = 5;
 // screen for a while, answered by writing). The question games keep their questions in room.tracks, in place of songs
 // (Lluvia, one track per round with all its questions). "playlist" isn't a game of its own: it's where the room makes a
 // playlist of them (game/playlist.js), and while one is played the room is in each of its games in turn. "clasico" and
-// "extendido" ("Clásico": Normal and Extendido) aren't games either: like a playlist, they play several games one after
-// another, drawn by a public match's roulette (startClassic).
+// "extendido" ("Clásico", and a longer one not offered for now) aren't games either: like a playlist, they play several
+// games one after another, drawn by a public match's roulette, until someone has won enough of them (startClassic).
 export const GAME_IDS = [
-  "musica", "opciones", "mundo", "historia", "minas", RAIN_GAME, REY_GAME, FARSANTE_GAME, PLAYLIST_GAME, ...Object.keys(CLASSIC_GAMES),
+  "musica", "opciones", "mundo", "historia", "minas", RAIN_GAME, REY_GAME, FARSANTE_GAME, PLAYLIST_GAME, ...Object.keys(CLASSIC_WINS),
 ];
 // "Trivia": its settings live in config.quiz and its questions take the place of songs in room.tracks.
 export const QUIZ_GAME = "opciones";
@@ -723,30 +724,40 @@ export class RoomManager {
   }
 
   /**
-   * Starts a full public room: its games are drawn (MATCH_GAME_COUNT, all different, among MATCH_VARIANTS: each game
-   * with one way of playing it, "Trivia Cerradas") and played as a playlist in that order, plus one more kept aside as
-   * the decider, played only when the others end tied on games won (beginDecider). Competitivo plays only medium and
-   * hard questions while there are enough of them; a game that can't be played at all gives its place to the next one
-   * drawn.
+   * Starts a full public room. A game searched for by name is that game alone, in its public way (the points decide
+   * it). The roulette's ("Clásico") is won by the first to win MATCH_WINS games: they're all drawn now (all different
+   * while there are some left, among MATCH_VARIANTS: each game with one way of playing it, "Trivia Cerradas"), but only
+   * the fewest it can take are played to begin with (playUntilWins); the next one joins after each game nobody has won
+   * the match in (beginNextGame). An owner's forced games go first, in the order given. Competitivo plays only medium and hard questions while there
+   * are enough of them; a game that can't be played at all gives its place to the next one drawn.
    */
   startMatch(room) {
     const { kind, game } = room.matchmaking;
-    // A game searched for by name is that game alone, in its public way, with no decider (the points decide it).
-    // An owner's forced games play in the order given; otherwise MATCH_GAME_COUNT drawn at random.
-    const force = game ? [PUBLIC_VARIANT[game]] : room.matchmaking.force;
-    const gameCount = force?.length || MATCH_GAME_COUNT;
-    const drawn = game ? [this.publicGameItem(room, kind, game)] : this.drawMatchItems(room, kind, gameCount + 1, force);
-    const items = drawn.slice(0, gameCount);
-    // What everyone sees of it: the variants, in play order (the decider joins them only if it's played).
+    const drawn = game
+      ? [this.publicGameItem(room, kind, game)]
+      : this.drawMatchItems(room, kind, matchMaxGames(this.connectedCount(room)), room.matchmaking.force);
+    const items = game ? drawn : drawn.slice(0, MATCH_WINS);
+    // What everyone sees of it: its variants so far, in play order (one more joins with each game added).
     room.matchmaking.games = items.map((item) => item.variant);
     room.matchmaking.startsAt = null;
-    room.playlist = { name: kind === "competitivo" ? "Partida competitiva" : "Partida casual", order: "orden", items };
+    const name = kind === "competitivo" ? "Partida competitiva" : game ? "Partida casual" : "Clásico";
+    room.playlist = { name, order: "orden", items };
     room.run = newRun(room.playlist, room.config);
     // Games won per player, and each player's score when the game being played started (gameWins, scoreMatchGame).
     room.run.gameWins = {};
     room.run.gameBase = {};
-    room.run.decider = drawn[gameCount] || null;
+    if (!game) this.playUntilWins(room.run, MATCH_WINS, drawn);
     this.startMixed(room);
+  }
+
+  /**
+   * A match of the roulette (public or a Clásico), won by the first to win `wins` games: that many are played for sure
+   * (nobody can win it with fewer), the first ones drawn (run.items); the others wait (run.upcoming) to be played one by
+   * one (beginNextGame).
+   */
+  playUntilWins(run, wins, drawn) {
+    run.winsToWin = wins;
+    run.upcoming = drawn.slice(wins);
   }
 
   /**
@@ -795,49 +806,70 @@ export class RoomManager {
     run.gameBase = Object.fromEntries(players.map((p) => [p.id, p.score || 0]));
   }
 
-  /**
-   * A public match after its games: when two or more connected players have won as many games as the best (one each),
-   * its decider is played as one more game, with its roulette and tutorial. Returns false when the match can end.
-   */
-  beginDecider(room) {
+  /** Whether a match of the roulette has its winner: one player alone has won the most games, `run.winsToWin` or more. */
+  matchDecided(room) {
     const run = room.run;
-    if (!run?.decider || run.deciderIndex != null) return false;
-    const players = [...room.players.values()].filter((p) => p.connected && !p.spectator && room.participants?.has(p.id));
+    const players = [...room.players.values()].filter((p) => !p.spectator && !p.forfeit && room.participants?.has(p.id));
     const wins = (p) => run.gameWins[p.id] || 0;
     const top = Math.max(0, ...players.map(wins));
-    if (players.filter((p) => wins(p) === top).length < 2) return false;
-    const tracks = run.deciderTracks || [];
-    if (!tracks.length) return false;
-    run.deciderIndex = run.items.length;
-    run.items.push(run.decider);
-    room.tracks.push(...tracks.map((track) => ({ ...track, playlistItem: run.deciderIndex })));
-    room.totalRounds = room.tracks.length;
-    if (room.matchmaking) room.matchmaking.games = [...(room.matchmaking.games || []), run.decider.variant];
-    room.currentRound += 1;
-    this.beginCountdown(room);
-    return true;
+    return top >= run.winsToWin && players.filter((p) => wins(p) === top).length === 1;
   }
 
   /**
-   * "Clásico" (Normal or Extendido, the room's game): the host starts a match like a Casual one for the room's players,
-   * its games drawn the same way (CLASSIC_GAMES of them) and each one introduced by the roulette and its tutorial. The
-   * room's own playlist is left alone; when it ends or is stopped the room is back in the Clásico it came from.
+   * A match of the roulette (public or a Clásico) after each of its games: while nobody has won it (matchDecided), the
+   * next game drawn is played, with its roulette and tutorial. Its rounds are drawn now, without repeating the games'
+   * before; one that can't be drawn gives its place to the next. Returns false when the match can end: someone won it,
+   * or there are no games left (matchMaxGames).
+   */
+  beginNextGame(room) {
+    const run = room.run;
+    if (!run?.winsToWin || this.matchDecided(room)) return false;
+    while (run.upcoming?.length) {
+      const item = run.upcoming.shift();
+      const music = room.tracks.filter((t) => run.items[t.playlistItem]?.game === "musica");
+      let tracks = [];
+      try {
+        tracks = this.drawItemTracks(room, item, music);
+      } catch (err) {
+        console.error("No se pudo sacar el siguiente juego de la partida", err);
+      }
+      if (!tracks.length) continue;
+      const index = run.items.length;
+      run.items.push(item);
+      room.tracks.push(...tracks.map((track) => ({ ...track, playlistItem: index })));
+      room.totalRounds = room.tracks.length;
+      if (item.game === "musica") this.onNewTracks?.(tracks);
+      if (room.matchmaking) room.matchmaking.games = [...(room.matchmaking.games || []), item.variant];
+      room.currentRound += 1;
+      this.beginCountdown(room);
+      return true;
+    }
+    return false;
+  }
+
+  /**
+   * "Clásico" (the room's game; "extendido" is a longer one): the host starts a match like a Casual one for the room's
+   * players, its games drawn the same way and each one introduced by the roulette and its tutorial, until someone has
+   * won CLASSIC_WINS of them (2). The room's own playlist is left alone; when it ends or is stopped the room is back in
+   * the Clásico it came from.
    */
   startClassic(room) {
     const home = room.game;
-    const items = this.drawMatchItems(room, "casual", CLASSIC_GAMES[home]);
-    room.run = newRun({ name: CLASSIC_NAMES[home], order: "orden", items }, room.config);
+    const wins = CLASSIC_WINS[home];
+    const drawn = this.drawMatchItems(room, "casual", matchMaxGames(this.connectedCount(room), wins));
+    room.run = newRun({ name: CLASSIC_NAMES[home], order: "orden", items: drawn.slice(0, wins) }, room.config);
     room.run.classic = home;
     // Like a public match, it's decided by games won (scoreMatchGame), and each game after the first starts with who
     // won the one before.
     room.run.gameWins = {};
     room.run.gameBase = {};
+    this.playUntilWins(room.run, wins, drawn);
     this.startMixed(room);
   }
 
   /**
    * The `count` games of a public match of `kind` (or of a Clásico), each a variant with its settings, all different
-   * while there are variants left. A Clásico extendido asks for more games than there are variants: the draw then
+   * while there are variants left. A match of the roulette asks for more games than there are variants: the draw then
    * starts over, never with the variant it just played. The variants in `force` go first, in their order.
    */
   drawMatchItems(room, kind, count, force = null) {
@@ -2544,7 +2576,7 @@ export class RoomManager {
     this.scoreMatchGame(room);
     if (this.endIfAlone(room)) return;
     if (room.currentRound + 1 >= (room.totalRounds || room.tracks.length)) {
-      if (this.beginDecider(room)) return;
+      if (this.beginNextGame(room)) return;
       if (this.beginTiebreak(room)) return;
       this.finish(room);
       return;
@@ -2640,7 +2672,7 @@ export class RoomManager {
     // A public match whose rivals all left: the one left wins it.
     if (room.matchmaking && ranked.length > 1 && ranked.slice(1).every((p) => p.forfeit)) return first.id;
     const wins = (p) => room.run?.gameWins?.[p.id] || 0;
-    // Decided by games won: the same number of them (after the decider too) is a tie, whatever the points.
+    // Decided by games won: the same number of them (a match of the roulette out of games) is a tie, whatever the points.
     if (room.run?.gameWins) return second && !second.forfeit && wins(second) === wins(first) ? null : wins(first) > 0 ? first.id : null;
     const tied = second && wins(second) === wins(first) && second.score === first.score && first.id !== room.tiebreak?.winnerId;
     return first.score > 0 && !tied ? first.id : null;
@@ -2705,9 +2737,6 @@ export class RoomManager {
         if (!tracks.length) throw new Error(`Revisa el juego ${i + 1}, ${GAME_NAMES[item.game]}. No hay preguntas con esos ajustes.`);
         return tracks;
       });
-      // A public match's decider is drawn now too, so it doesn't repeat the other games' questions; a decider that
-      // can't be drawn is simply not played.
-      if (run.decider) run.deciderTracks = this.drawItemTracks(room, run.decider, musicSoFar);
     } catch (err) {
       this.stopPlaylist(room);
       this.resetMatch(room);
@@ -3852,8 +3881,8 @@ export class RoomManager {
               variant: room.run.items[room.run.current ?? 0]?.variant || null,
               variants: room.run.items.map((item) => item.variant || item.game),
               index: room.run.current ?? 0,
-              // A public match's third game, played because the first two ended one each.
-              decider: room.run.deciderIndex != null && room.run.current === room.run.deciderIndex,
+              // A match of the roulette: how many games it takes to win it (the first to win 2).
+              winsToWin: room.run.winsToWin || null,
               spinMs: introSpinMs(room),
               tutorialMs: INTRO_TUTORIAL_MS,
               // The game before: who won it (a time of its own at the start of the intro, `resultMs`).

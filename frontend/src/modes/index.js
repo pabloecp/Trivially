@@ -209,26 +209,27 @@ export const GAME_MODES = [
     Lobby: PlaylistLobbyPanel,
     path: (room) => `/playlist/${urlCode(room.code)}`,
   },
-  // "Clásico" (`kind: "classic"`), above "Elige el juego": a match like Casual's for the room's own players, its games
-  // drawn by the roulette (`games` of them, 5 rounds each; CLASSIC_GAMES in backend/src/game/matchmaking.js). Like a
-  // playlist it isn't one game: while it's played the room is in each of its games, and it ends on the playlist's
-  // results screen. `fullName` is how it reads out of the menu (the match history).
+  // "Clásico" (`kind: "classic"`), above "Juego libre": games drawn by the roulette one after another (5 rounds each),
+  // until someone has won `wins` of them (CLASSIC_WINS in backend/src/game/matchmaking.js). With "Partida privada" it's
+  // the room's own match; with "Partida pública", the roulette's public match. Like a playlist it isn't one game: while
+  // it's played the room is in each of its games, and it ends on the playlist's results screen. `fullName` is how it
+  // reads out of the menu (the match history). "extendido", first to three, isn't offered anywhere for now.
   {
     id: "clasico",
-    name: "Normal",
-    fullName: "Clásico normal",
+    name: "Clásico",
+    fullName: "Clásico",
     // Under its name, on its tile and its card.
-    subtitle: "3 juegos",
+    subtitle: "Primero en ganar dos juegos",
     kind: "classic",
     // Casual's colour and icon (components/home/matchInfo.js).
     color: "music",
     icon: "bolt",
     available: true,
-    games: 3,
+    wins: 2,
     steps: [
-      { icon: "shuffle", text: "La ruleta elige 3 juegos" },
-      { icon: "info", text: "Cada uno con su tutorial" },
-      { icon: "star", text: "Gana quien sume más puntos" },
+      { icon: "shuffle", text: "La ruleta elige cada juego al azar" },
+      { icon: "info", text: "Cada uno de 5 rondas, con su tutorial" },
+      { icon: "crown", text: "Gana el primero en ganar 2 juegos" },
     ],
     Lobby: ClassicLobbyPanel,
     path: (room) => `/playlist/${urlCode(room.code)}`,
@@ -237,17 +238,17 @@ export const GAME_MODES = [
     id: "extendido",
     name: "Extendido",
     fullName: "Clásico extendido",
-    subtitle: "5 juegos",
+    subtitle: "Primero en ganar tres juegos",
     kind: "classic",
     // Competitivo's colour.
     color: "amber",
     icon: "star",
     available: true,
-    games: 5,
+    wins: 3,
     steps: [
-      { icon: "shuffle", text: "La ruleta elige 5 juegos" },
-      { icon: "info", text: "Cada uno con su tutorial" },
-      { icon: "star", text: "Gana quien sume más puntos" },
+      { icon: "shuffle", text: "La ruleta elige cada juego al azar" },
+      { icon: "info", text: "Cada uno de 5 rondas, con su tutorial" },
+      { icon: "crown", text: "Gana el primero en ganar 3 juegos" },
     ],
     Lobby: ClassicLobbyPanel,
     path: (room) => `/playlist/${urlCode(room.code)}`,
@@ -268,14 +269,19 @@ export function findMode(id) {
 // A match with a roulette before each game (public, or a Clásico), played without changing the address.
 export const isInlineMatch = (room) => Boolean(room?.matchmaking || room?.run?.classic) && isGameTile(findMode(room.game) || {});
 
-// The screen a room's players belong on: the room screen (/sala/CODE, Home with the room) while nobody is playing,
-// whatever game is picked, otherwise that game's own screens.
+// The screen a room's players belong on. While it waits (a private match before it starts, the search for a public
+// one) it's Inicio itself, on Inicio's address: the same screen (HomeFrame), so nothing says you went somewhere else.
+// Once it plays, that game's own screens.
 // `_hidden` only makes callers re-run it when the code is hidden or shown (the addresses read it themselves).
 export function roomPath(room, _hidden) {
+  if (waitsOnInicio(room)) return "/";
   const mode = findMode(room.game);
-  // A public match or a Clásico never leaves the room's address, like creating a room: the intro and every game's
-  // screens take turns on /sala/CODE (RoomScreen, App.jsx). Its end is still the playlist's results screen.
+  // A public match or a Clásico never leaves the room's address: the intro and every game's screens take turns on
+  // /sala/CODE (RoomScreen, App.jsx). Its end is still the playlist's results screen.
   if (isInlineMatch(room) && room.phase !== "finished") return `/sala/${urlCode(room.code)}`;
   // A public match's roulette and tutorial ("intro") are on the room screen too, beside the room's column.
-  return room.phase !== "lobby" && room.phase !== "intro" && mode?.path ? mode.path(room) : `/sala/${urlCode(room.code)}`;
+  return room.phase !== "intro" && mode?.path ? mode.path(room) : `/sala/${urlCode(room.code)}`;
 }
+
+/** Whether a room waits on Inicio (`roomPath` is "/"): for its players there's nowhere to go back from. */
+export const waitsOnInicio = (room) => room?.phase === "lobby";

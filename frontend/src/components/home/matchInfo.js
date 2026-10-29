@@ -1,6 +1,6 @@
 // Partidas públicas ("Casual" and "Competitivo", backend/src/game/matchmaking.js; Competitivo is disabled for now): their
-// names and colours, and the short tutorial each game shows after the roulette picks it (MatchIntro.jsx). Every match is
-// two games of 5 rounds, and a third when they end one each.
+// names and colours, and the short tutorial each game shows after the roulette picks it (MatchIntro.jsx). A match of the
+// roulette (the Clásico) plays games of 5 rounds, one after another, until someone has won two.
 
 export const MATCH_KINDS = {
   casual: {
@@ -11,9 +11,9 @@ export const MATCH_KINDS = {
     blurb: "Juega sin presión, cuando quieras",
     detail: "Para jugar sin presión",
     steps: [
-      { icon: "grid", text: "2 juegos al azar, de 5 rondas cada uno" },
+      { icon: "shuffle", text: "Juegos al azar, de 5 rondas cada uno" },
       { icon: "crown", text: "Gana cada juego quien más puntos saque" },
-      { icon: "bolt", text: "Si quedan uno a uno, un tercer juego desempata" },
+      { icon: "bolt", text: "Gana el primero en ganar 2 juegos" },
     ],
   },
   competitivo: {
@@ -32,9 +32,6 @@ export const MATCH_KINDS = {
 };
 
 export const ROUNDS_PER_GAME = 5;
-// Games of every public match, and its rounds (MATCH_GAME_COUNT and MATCH_ROUNDS on the server).
-export const MATCH_GAME_COUNT = 2;
-export const MATCH_ROUNDS = MATCH_GAME_COUNT * ROUNDS_PER_GAME;
 // How many players a room needs (MATCH_SIZES on the server): you against one, or five in all. "Uno contra Uno" isn't
 // offered for now (`hidden`, DUELS_OPEN on the server): OPEN_SIZES are the ones a player can pick.
 export const MATCH_SIZES = [
@@ -79,13 +76,6 @@ export const publicMatchLine = (game) => {
   const p = PUBLIC_MATCH[game];
   return p ? [p.rounds, p.time, p.way].filter(Boolean).join(" · ") : "";
 };
-/** The rows of a game's card with "Partida pública" (Inicio, the room's lobby). */
-export const publicFacts = (mode) => [
-  { icon: "users", text: `Te emparejamos con gente que también busca ${mode.name}` },
-  { icon: "grid", text: publicMatchLine(mode.id) },
-  { icon: "bolt", text: "Gana quien más puntos saque" },
-];
-
 export const gamesText = (rounds) => {
   const n = Math.round(rounds / ROUNDS_PER_GAME);
   return n === 1 ? "1 juego" : `${n} juegos`;

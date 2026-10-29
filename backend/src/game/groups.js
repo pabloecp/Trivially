@@ -1,5 +1,5 @@
 import { hasLink, NAME_LINK_ERROR } from "../moderation/links.js";
-import { AUDIENCES, PUBLIC_GAMES } from "./matchmaking.js";
+import { AUDIENCES, PUBLIC_CLASSIC, PUBLIC_GAMES } from "./matchmaking.js";
 import { createRoomCode, GAME_IDS } from "./roomManager.js";
 
 // A group ("Tu grupo"): the players who go together. It isn't a room: a room is a match (its lobby, its rounds, its
@@ -20,11 +20,15 @@ const JOIN_REQUESTS_KEEP = 8;
 
 const DEFAULT_PLAN = { game: "opciones", audience: "publica" };
 
-/** "Vas a jugar": a game and who it's for ("publica" or "grupo"); a public one only of the games played in public. */
+/**
+ * "Vas a jugar": a game and who it's for ("publica" or "grupo"); a public one only of the games played in public, or
+ * the Clásico (the roulette's public match).
+ */
 export function cleanPlan(plan) {
   const audience = AUDIENCES.includes(plan?.audience) ? plan.audience : DEFAULT_PLAN.audience;
   const game = GAME_IDS.includes(plan?.game) ? plan.game : DEFAULT_PLAN.game;
-  return { game: audience === "publica" && !PUBLIC_GAMES.includes(game) ? DEFAULT_PLAN.game : game, audience };
+  const inPublic = PUBLIC_GAMES.includes(game) || game === PUBLIC_CLASSIC;
+  return { game: audience === "publica" && !inPublic ? DEFAULT_PLAN.game : game, audience };
 }
 
 export class GroupManager {

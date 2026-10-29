@@ -20,8 +20,9 @@ const choiceName = (mode) => (mode?.kind === "playlist" ? "una playlist" : mode?
 // The old pages of "¿Cómo quieres jugar?" (/jugar/casual, /jugar/privada…) are Inicio now, on the side they named.
 const OPTION_AUDIENCE = { casual: "publica", competitivo: "publica", privada: "grupo" };
 
-// Inicio and the room's screen (/ and /sala/CODE; /grupo/CODE is a group's invite link). Inicio, a private match while
-// it waits and the search for a public match are the same frame (HomeFrame): the game's card in the middle and the
+// Inicio and the room's screen (/, also while a room waits, and /sala/CODE while a public match or a Clásico plays;
+// /grupo/CODE is a group's invite link). Inicio, a private match while it waits and the search for a public match are
+// the same frame (HomeFrame): the game's card in the middle and the
 // group's bar at the bottom. Before each game of a public match or a Clásico, its roulette and tutorial (MatchIntro)
 // take the card's place beside the scoreboard. The room's central device shows its own big waiting screen
 // (CentralLobby).
@@ -118,8 +119,8 @@ export default function Home() {
       .finally(() => nav("/", { replace: true }));
   }, [groupInvite, user?.name, askName]);
 
-  // A match's address (/sala/XOTRIV: a reload, the central device) joins it straight away, asking for a name first if
-  // we don't have one.
+  // A match's address (/sala/XOTRIV: an older link, a reload during a public match) joins it straight away, asking for a
+  // name first if we don't have one.
   useEffect(() => {
     if (!inviteCode || room?.code === inviteCode || sheetOpen) return;
     if (!user?.name) {

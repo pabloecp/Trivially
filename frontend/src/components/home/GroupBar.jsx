@@ -1,6 +1,8 @@
 import { useRef, useState } from "react";
 import { findMode } from "../../modes/index.js";
 import { useHiddenCode } from "../../lib/hiddenCode.js";
+import { audienceOf } from "../../lib/plan.js";
+import AppIcon from "./AppIcon.jsx";
 import Avatar from "./Avatar.jsx";
 import Icon from "./Icon.jsx";
 
@@ -14,19 +16,23 @@ function codeFrom(text) {
   return (link ? link[1] : text).toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, CODE_LENGTH);
 }
 
-// The bar at the bottom of Inicio and of a match's lobby. Without a group: "Crear grupo" (makes it straight away) and the
-// box to join a friend's group with its code ("Unirse"). With one: "Tu grupo" (its faces, yours ringed in yellow and
-// first, dimmed whoever isn't with it now), "+" to invite (the group's code is only in that window) and "Salir del
-// grupo". Then "Vas a jugar" (the game and who it's for; a tap opens "¿Qué quieren jugar?") and the screen's one yellow
-// button (JUGAR, EMPEZAR; CANCELAR, grey, while searching). On phones the group's row, the box and the button go one
-// under the other.
+// The bar at the bottom of Inicio and of a match's lobby. On the left, without a group, "Crear grupo" (makes it straight
+// away) and the box to join a friend's group with its code ("Unirse"); with one, the red "Salir del grupo" (the screen
+// asks first, `onLeave` is only the question), then "Tu grupo" (its faces, yours ringed in yellow and first, dimmed
+// whoever isn't with it now) and "+" to invite (the group's code is only in that window). On the right, one grey box
+// with who the match is for ("Partida pública" or "Partida privada", with its icon, as plain text) and "Vas a jugar"
+// (the game's own card, `.tv-gcard`, always the same width, the Clásico's in the logo's look; a tap opens "¿Qué quieren
+// jugar?"), and the screen's one
+// yellow button (JUGAR, EMPEZAR; CANCELAR, grey, while searching). On phones the group's side, the box and the button
+// go one under the other.
 // `action` is { label, onClick, disabled, neutral }; without it (waiting for the leader or the host) `note` takes its
 // place. `onGroup` opens "Tu grupo"; `onCreate()`, `onJoin(code)` (false when the code didn't work) and `onLeave()` do
 // what they say (`canCreate` false while searching for a match: no creating or joining then; `busy` is what is being
-// done, "group" while creating it). `groupError` is said
-// under the group's side, `error` under the button.
-export default function GroupBar({ members = [], meId, inGroup = false, canCreate = true, onGroup, onCreate, onJoin, onJoinEdit, onLeave, busy = false, inviteBadge = 0, plan, planText, onPlan, planLocked = false, action = null, note = "", error = "", groupError = "" }) {
+// done, "group" while creating it). `groupError` is said under the group's side, `error` under the button.
+export default function GroupBar({ members = [], meId, inGroup = false, canCreate = true, onGroup, onCreate, onJoin, onJoinEdit, onLeave, busy = false, inviteBadge = 0, plan, onPlan, planLocked = false, action = null, note = "", error = "", groupError = "" }) {
   const mode = findMode(plan.game);
+  const classic = mode?.kind === "classic";
+  const audience = audienceOf(plan.audience);
   const faces = [...members].sort((a, b) => (b.id === meId) - (a.id === meId));
   const shown = faces.slice(0, FACES);
   const more = faces.length - shown.length;
@@ -37,6 +43,12 @@ export default function GroupBar({ members = [], meId, inGroup = false, canCreat
       <div className="tv-gbar-group">
         {inGroup ? (
           <>
+            <button type="button" className="tv-btn tv-btn--bad tv-gbar-leave" data-sound="back" aria-label="Salir del grupo" onClick={onLeave} disabled={Boolean(busy)}>
+              <Icon name="logout" size={17} strokeWidth={2.4} />
+              <span>
+                Salir<span className="tv-gbar-leave-more"> del grupo</span>
+              </span>
+            </button>
             <span className="tv-gbar-label">Tu grupo</span>
             <button type="button" className="tv-gbar-faces" onClick={onGroup} aria-label={`${members.length === 1 ? "1 persona" : `${members.length} personas`} en tu grupo`}>
               {shown.map((p) => (
@@ -47,12 +59,6 @@ export default function GroupBar({ members = [], meId, inGroup = false, canCreat
             <button type="button" className="tv-iconbtn tv-iconbtn--sm" aria-label="Invitar a tu grupo" aria-haspopup="dialog" onClick={onGroup}>
               <Icon name="plus" size={18} strokeWidth={3} />
               {inviteBadge > 0 && <span className="tv-fr-badge">{inviteBadge}</span>}
-            </button>
-            <button type="button" className="tv-btn tv-btn--neutral tv-gbar-leave" data-sound="back" aria-label="Salir del grupo" onClick={onLeave} disabled={Boolean(busy)}>
-              <Icon name="logout" size={17} strokeWidth={2.4} />
-              <span>
-                Salir<span className="tv-gbar-leave-more"> del grupo</span>
-              </span>
             </button>
           </>
         ) : (
@@ -67,16 +73,29 @@ export default function GroupBar({ members = [], meId, inGroup = false, canCreat
       </div>
 
       <div className="tv-gbar-play">
-        <button type="button" className="tv-gbar-plan" aria-haspopup="dialog" onClick={onPlan} disabled={planLocked}>
-          <span className={`tv-gbar-plan-icon tv-c-${mode?.color || "neutral"}`} aria-hidden="true">
-            <Icon name={plan.audience === "publica" ? "globe" : mode?.icon || "grid"} size={20} strokeWidth={2.4} />
+        <div className="tv-gbar-plan-row">
+          <span className="tv-gbar-audience">
+            <Icon name={audience.icon} size={18} strokeWidth={2.6} />
+            {audience.label}
           </span>
-          <span className="tv-gbar-plan-text">
-            <small>Vas a jugar</small>
-            <strong>{planText}</strong>
-          </span>
-          {!planLocked && <Icon name="chevron" size={18} strokeWidth={3} className="tv-gbar-plan-chevron" />}
-        </button>
+          <button type="button" className={`tv-gcard tv-gbar-plan ${classic ? "is-classic" : `tv-c-${mode?.color || "neutral"}`}`} aria-haspopup="dialog" onClick={onPlan} disabled={planLocked}>
+            {classic ? (
+              <AppIcon small />
+            ) : (
+              <>
+                <Icon name={mode?.icon || "grid"} size={84} strokeWidth={1.6} className="tv-gcard-mark" />
+                <span className="tv-gcard-badge" aria-hidden="true">
+                  <Icon name={mode?.icon || "grid"} size={22} strokeWidth={2.4} />
+                </span>
+              </>
+            )}
+            <span className="tv-gcard-text">
+              <span className="tv-gcard-sub">Vas a jugar</span>
+              <span className="tv-gcard-name">{mode?.name}</span>
+            </span>
+            {!planLocked && <Icon name="chevron" size={18} strokeWidth={3} className="tv-gbar-plan-chevron" />}
+          </button>
+        </div>
         {action ? (
           <button
             type="button"
@@ -100,8 +119,9 @@ export default function GroupBar({ members = [], meId, inGroup = false, canCreat
   );
 }
 
-// "Unirse": the code of a friend's group (or its invite link pasted) and the button. A code that opens no group rings
-// the box in red and shakes it (`invalid`, the message is the bar's). Hidden codes (for streaming) show as dots.
+// "Unirse": the code of a friend's group (or its invite link pasted) in one box ("Código del grupo" as its placeholder)
+// and the white button. A code that opens no group rings the box in red and shakes it (`invalid`, the message is the bar's).
+// Hidden codes (for streaming) show as dots.
 function JoinField({ onJoin, onEdit, disabled, invalid }) {
   const [code, setCode] = useState("");
   const [joining, setJoining] = useState(false);
@@ -139,7 +159,7 @@ function JoinField({ onJoin, onEdit, disabled, invalid }) {
         autoCapitalize="characters"
         spellCheck="false"
       />
-      <button type="submit" className="tv-btn tv-btn--neutral tv-gbar-join-go" data-sound="none" disabled={disabled || joining || code.length < CODE_LENGTH}>
+      <button type="submit" className="tv-btn tv-btn--white tv-gbar-join-go" data-sound="none" disabled={disabled || joining || code.length < CODE_LENGTH}>
         {joining ? "Entrando…" : "Unirse"}
       </button>
     </form>

@@ -18,7 +18,6 @@ import VolumeMenu from "./components/home/VolumeMenu.jsx";
 import CentralOffer from "./components/home/CentralOffer.jsx";
 import CentralRequests from "./components/home/CentralRequests.jsx";
 import StillThere from "./components/home/StillThere.jsx";
-import { useRoomExit } from "./components/home/TvTopbar.jsx";
 import { isInlineMatch, roomPath } from "./modes/index.js";
 import { HIDDEN_SLUG, useHiddenCode } from "./lib/hiddenCode.js";
 
@@ -57,18 +56,14 @@ function Guard({ children }) {
   return children;
 }
 
-// Keeps every player on the screen of the game their room is in, which is how the host moves the whole party.
-//
-// It also makes the browser's Back button work as the "Volver" button while the room waits. The room's screen
-// (/sala/CODE) is always pushed on top of Home (/), so Back lands on Home with the room still open: that is read as
-// a press of "Volver" (back to the game menu, or the modal "¿Seguro que quieres salir?"), and the room's screen is
-// pushed again, so the next Back asks again. Arriving by an invite link has no Home below it, so one is put there.
+// Keeps every player on the screen of the game their room is in, which is how the host moves the whole party. While
+// the room waits that's Inicio (/, `roomPath`); a match's screens are pushed on top of it, and the browser's Back
+// from one lands on Inicio and is turned around (the match's "X" is the way out).
 function RoomNavigator() {
   const { room, kickedNotice } = useApp();
   const nav = useNavigate();
   const navType = useNavigationType();
   const { pathname } = useLocation();
-  const { step } = useRoomExit();
   // Hiding or showing the code changes the room's addresses (lib/hiddenCode.js): the screen moves to the new one.
   const [codeHidden] = useHiddenCode();
 
@@ -120,18 +115,21 @@ function RoomNavigator() {
     const pathChanged = pathname !== lastPath.current;
     lastPath.current = pathname;
     if (!target) return;
-    const waiting = target.startsWith("/sala/");
-    // Opened straight on the room's address: it is the first entry, so Back would leave the app. Put Home under it
-    // (the next run pushes the room's screen back on top).
-    if (waiting && pathname === target && window.history.state?.idx === 0) {
+    // On Inicio (waiting) or on the room's own address (a public match, a Clásico): neither takes you off another page.
+    const roomScreen = target.startsWith("/sala/");
+    const waiting = target === "/" || roomScreen;
+    // Opened straight on the room's address (a reload): it is the first entry, so Back would leave the app. Put Home
+    // under it (the next run pushes the room's screen back on top).
+    if (roomScreen && pathname === target && window.history.state?.idx === 0) {
       nav("/", { replace: true });
       return;
     }
     if (pathname === target) return;
 
-    // The Back button, from the waiting room to Home: it does what "Volver" does.
-    if (waiting && pathname === "/" && pathChanged && navType === "POP") {
-      if (!step({ fromBack: true })) nav(target);
+    // The Back button, from a match on the room's address to Home: back into it, pushed again so the next Back is
+    // turned around too.
+    if (roomScreen && pathname === "/" && pathChanged && navType === "POP") {
+      nav(target);
       return;
     }
 
@@ -142,18 +140,13 @@ function RoomNavigator() {
       if (screenCode === room.code || screenCode === HIDDEN_SLUG.toUpperCase()) nav(target, { replace: true });
       return;
     }
-    // From "¿Cómo quieres jugar?" (/jugar...) the room's address takes its place. The browser's Back landing there from
-    // the waiting room does what "Volver" does (out of the room, after asking, back to that option).
+    // The old pages of "¿Cómo quieres jugar?" (/jugar...): the room's address takes their place.
     if (pathname.startsWith("/jugar")) {
-      if (waiting && pathChanged && navType === "POP") {
-        if (!step({ fromBack: true })) nav(target);
-        return;
-      }
       nav(target, { replace: true });
       return;
     }
-    // On Home the address becomes the room's own (/sala/CODE) as soon as you create or join one, pushed on top of
-    // Home so that Back has somewhere to go. Other pages (profile...) are only left when a match starts.
+    // On Home a match's screens are pushed on top of it, so that Back has somewhere to go. Other pages (profile...) are
+    // only left when a match starts on its own screens.
     if (pathname === "/") nav(target, { replace: pathChanged && navType === "POP" });
     else if (moved && !waiting) nav(target);
   }, [target, pathname]);

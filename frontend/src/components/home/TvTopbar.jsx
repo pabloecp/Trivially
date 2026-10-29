@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { roomPath } from "../../modes/index.js";
+import { roomPath, waitsOnInicio } from "../../modes/index.js";
 import { useApp } from "../../lib/store.jsx";
 import { useFriends } from "../../lib/friends.jsx";
 import { useIsOwner } from "../../lib/ownerView.js";
@@ -39,17 +39,16 @@ let hadBack = false;
 // How long "Volver" takes to slide in or out (home.css, tvBackIn / tvBackOut).
 const BACK_ANIM_MS = 450;
 
-// The button on the left of the logo goes back one step, which depends on where you are in the room:
-//  - in a match's lobby or a search, while it waits: back to Inicio. It asks first, in a modal (`asking`, shared
-//    through the store; the top bar draws it), whose button calls `leaveNow`. The group's leader takes the whole group
-//    (`leadsGroup`, group:home); anyone else of a group goes alone and stays in it; alone, you leave the match;
-//  - on a match's own screen (`inGame`): the top bar turns it into an "X" that opens a modal instead (see TvTopbar),
-//    which calls `leaveNow` when it is confirmed. The host of a private match (`toMenu`) doesn't leave: the match ends
-//    for everyone and they go back to its lobby, like the games' "Terminar" (`endToMenu`).
-// `press` is the button's onClick; outside a room it lets the Inicio link go home. The browser's Back button does the
-// same through `step` (RoomNavigator, App.jsx). `onRoomScreen` is false away from the room's own screen (profile,
-// another page), where going back to the modes makes no sense. `onError` gets the message when going back to the
-// modes fails.
+// The way out of a room, which depends on where you are in it:
+//  - while it waits (a private match before it starts, a search) it's Inicio itself (`waitsOnInicio`): players have no
+//    "Volver" there. Only the central device has one, which asks first in a modal (`asking`, shared through the store;
+//    the top bar draws it) whose button calls `leaveNow`;
+//  - on a match's own screen (`inGame`): the top bar has an "X" that opens a modal (see TvTopbar), which calls
+//    `leaveNow` when it is confirmed. The group's leader takes the whole group (`leadsGroup`, group:home); anyone else
+//    of a group goes alone and stays in it. The host of a private match (`toMenu`) doesn't leave: the match ends for
+//    everyone and they go back to waiting in it, like the games' "Terminar" (`endToMenu`).
+// `press` is the central device's "Volver". `onRoomScreen` is false away from the room's own screen (profile, another
+// page). `onError` gets the message when going back fails.
 export function useRoomExit({ onRoomScreen = true, onError } = {}) {
   const { user, room, group, isCentral, restartGame, leaveRoom, groupHome, leaveAsk, setLeaveAsk } = useApp();
   const nav = useNavigate();
@@ -81,7 +80,7 @@ export function useRoomExit({ onRoomScreen = true, onError } = {}) {
   // The match ends for everyone and the group goes back to its room, in the same game (or the playlist's panel).
   // Resolves when the room has moved; the match's screens follow it (RoomNavigator, App.jsx).
   function endToMenu() {
-    return restartGame().catch((err) => onError?.(err.message || "No se pudo volver a la sala del grupo"));
+    return restartGame().catch((err) => onError?.(err.message || "No se pudo terminar la partida"));
   }
 
   // One step back. Returns true when it left the room.
@@ -96,17 +95,16 @@ export function useRoomExit({ onRoomScreen = true, onError } = {}) {
     step();
   }
 
-  return { toMenu, inGame, asking, leadsGroup, press, step, leaveNow, endToMenu, cancelAsk: () => setLeaveAsk(false) };
+  return { toMenu, inGame, asking, leadsGroup, press, leaveNow, endToMenu, cancelAsk: () => setLeaveAsk(false) };
 }
 
 // Same top bar on every screen: on the left the way back and the small logo with "trivially", which goes to Inicio
-// (inside a room, after asking, since it leaves the room); the volume (music and sounds) and the profile on the right. The way back is "Volver" everywhere:
-//  - on the room's own screen (see `useRoomExit`): back to the game menu, or out of the room after asking;
-//  - on a match's screen it is an "X" that asks in a modal before leaving (the host of a private room goes back to the
-//    game menu instead of leaving);
-//  - on any other page (profile...): back to the room, or to the match if one is running, and to Inicio when there is
-//    no room;
-//  - nothing on the home screen itself.
+// (during a match, after asking, since it leaves it); the volume (music and sounds) and the profile on the right. The way back:
+//  - nothing on Inicio itself, also while a room waits there (a private match before it starts, a search: the bar's
+//    own buttons change or cancel it). The central device has "Volver" (see `useRoomExit`);
+//  - on a match's screen it is an "X" that asks in a modal before leaving (the host of a private match goes back to
+//    waiting in it instead of leaving);
+//  - on any other page (profile...): "Volver", to the match if one is running, otherwise to Inicio.
 export default function TvTopbar() {
   const { user, room, group, isCentral, leaveRoom, setLeaveAsk } = useApp();
   const nav = useNavigate();
@@ -117,7 +115,9 @@ export default function TvTopbar() {
   const roomTarget = room ? roomPath(room) : null;
   const awayFromRoom = Boolean(roomTarget) && pathname !== roomTarget;
   const inMatch = Boolean(room) && room.phase !== "lobby";
-  const onHome = !room && pathname === "/";
+  // A room waiting on Inicio is Inicio for its players (not for the central device, whose screen is the room's).
+  const waitsHere = waitsOnInicio(room) && !isCentral;
+  const onHome = pathname === "/" && (!room || waitsHere);
   const brandHidden = onHome;
   const goUp = useGoUp();
   const [modesErr, setModesErr] = useState("");
@@ -135,7 +135,7 @@ export default function TvTopbar() {
   }, [room]);
 
   function goHome() {
-    if (room) setHomeAsk(true);
+    if (room && !waitsHere) setHomeAsk(true);
     else nav("/");
   }
 
@@ -183,22 +183,17 @@ export default function TvTopbar() {
     );
   } else if (awayFromRoom) {
     leaveButton = (
-      <Link to={roomTarget} className="tv-chip tv-chip--leave" aria-label={inMatch ? "Volver a la partida" : "Volver a la sala"}>
+      <Link to={roomTarget} className="tv-chip tv-chip--leave" aria-label={inMatch ? "Volver a la partida" : "Volver al inicio"}>
         <span className="tv-avatar tv-avatar--empty">
           <Icon name="back" size={20} strokeWidth={2.6} />
         </span>
         <span className="tv-chip-name tv-chip-long">Volver</span>
       </Link>
     );
-  } else if (room) {
+  } else if (room && !waitsHere) {
+    // The central device while the room waits: out of it, after asking.
     leaveButton = (
-      <button
-        type="button"
-        className="tv-chip tv-chip--leave"
-        aria-label={leadsGroup ? "Volver al inicio con tu grupo" : "Volver al inicio"}
-        aria-haspopup="dialog"
-        onClick={press}
-      >
+      <button type="button" className="tv-chip tv-chip--leave" aria-label="Dejar de ser el dispositivo central" aria-haspopup="dialog" onClick={press}>
         <span className="tv-avatar tv-avatar--empty">
           <Icon name="back" size={20} strokeWidth={2.6} />
         </span>
@@ -292,40 +287,23 @@ export default function TvTopbar() {
           <ProfileChip user={user} />
         </div>
       </header>
-      {/* "Volver" out of the room, outside a match (this bar, the phones' room bar or the browser's Back). The leader
-          takes the group; anyone else of a group goes alone and stays in it. */}
+      {/* The central device's "Volver" while the room waits. */}
       <ConfirmDialog
-        open={asking}
-        icon={isCentral ? "tv" : leadsGroup ? "users" : "logout"}
-        title={isCentral ? "¿Dejar de ser el dispositivo central?" : leadsGroup ? "¿Volver al inicio con tu grupo?" : "¿Volver al inicio?"}
-        text={
-          isCentral
-            ? "Esta pantalla saldrá de la sala."
-            : leadsGroup
-            ? modesErr || "Todo el grupo volverá al inicio contigo."
-            : group
-            ? "Seguirás en tu grupo y podrás volver con él."
-            : room?.matchmaking
-            ? "Dejarás de buscar partida."
-            : "Saldrás de tu partida privada."
-        }
+        open={asking && isCentral}
+        icon="tv"
+        title="¿Dejar de ser el dispositivo central?"
+        text="Esta pantalla saldrá de la partida."
         cancelLabel="Quedarme"
-        confirmLabel={leadsGroup || group ? "Volver" : "Salir"}
+        confirmLabel="Salir"
         onCancel={cancelAsk}
         onConfirm={leaveNow}
       />
-      {/* The logo, inside a room: out of it (asking first) and to Inicio. */}
+      {/* The logo during a match (or on the central device): out of it (asking first) and to Inicio. */}
       <ConfirmDialog
         open={homeAsk && Boolean(room)}
         icon={isCentral ? "tv" : "logout"}
         title={isCentral ? "¿Dejar de ser el dispositivo central?" : "¿Seguro que quieres salir?"}
-        text={
-          isCentral
-            ? "Esta pantalla saldrá de la sala y volverá al inicio."
-            : inMatch
-            ? "Saldrás de la sala, dejarás la partida en curso y volverás al inicio."
-            : "Saldrás de la sala y volverás al inicio. Para volver a entrar necesitarás el código o el enlace de invitación."
-        }
+        text={isCentral ? "Esta pantalla saldrá de la partida y volverá al inicio." : "Dejarás la partida en curso y volverás al inicio."}
         cancelLabel={inMatch && !isCentral ? "Seguir jugando" : "Quedarme"}
         confirmLabel="Salir"
         onCancel={() => setHomeAsk(false)}
@@ -337,7 +315,7 @@ export default function TvTopbar() {
         title={isCentral ? "¿Dejar de ser el dispositivo central?" : toMenu ? "¿Volver a elegir el juego?" : "¿Seguro que quieres salir?"}
         text={
           isCentral
-            ? "Esta pantalla saldrá de la sala y cada jugador volverá a ver la partida en su teléfono."
+            ? "Esta pantalla saldrá de la partida y cada jugador volverá a verla en su teléfono."
             : toMenu
             ? modesErr ||
               (room.phase === "finished"

@@ -42,15 +42,17 @@ function variantName(id) {
 const variantsOf = (intro) => intro.variants || intro.games;
 const variantNow = (intro) => intro.variant || intro.game;
 
-// The roulette: the games not played yet (each with its way) roll up in one panel that takes the colour of the game in
-// the middle as it goes, until the server's pick is there and it pulses. It's drawn in JS (not a CSS transition) so each
-// game that goes by can tick. In the "neutro" tone the panel stays dark and only the icon's tile takes the game's colour.
+// The roulette: the games not played yet (each with its way; once every one has been, the draw starts over, never with
+// the one just played) roll up in one panel that takes the colour of the game in the middle as it goes, until the
+// server's pick is there and it pulses. It's drawn in JS (not a CSS transition) so each game that goes by can tick. In
+// the "neutro" tone the panel stays dark and only the icon's tile takes the game's colour.
 const ROW = 92;
 function PanelRoulette({ intro, startedAt, clockOffset, kind, tone }) {
   const played = variantsOf(intro).slice(0, intro.index);
   const now = variantNow(intro);
   const all = intro.variants ? variantsFor(kind).map((v) => v.id) : intro.games;
-  const left = all.filter((v) => !played.includes(v));
+  const pass = played.slice(played.length - (played.length % all.length));
+  const left = all.filter((v) => !pass.includes(v) && (pass.length > 0 || v !== played.at(-1)));
   const pool = left.includes(now) ? left : [now];
   const start = Math.ceil(PAD / pool.length) * pool.length;
   const target = start + (LAPS - 1) * pool.length + Math.max(0, pool.indexOf(now));
@@ -195,17 +197,18 @@ function Tutorial({ intro, leftMs, tone = "color" }) {
 
 // Who won the game before (from the second game on): a quiet line with who won it, every player's points in it and,
 // on the right, the games won so far in the match (they start again from zero in the next game's scoreboard), the
-// winners ringed in the match's `color`.
+// winners ringed in the match's `color`. Under it, what it takes to win the match (the first to win 2 games), or that
+// the next game breaks a tie of those who got there together.
 function PreviousGame({ intro, players, color = "site" }) {
   const prev = intro.previous;
   const { style, tone } = useResultsLook();
   const winsOf = (id) => players.find((p) => p.id === id)?.wins || 0;
-  // Nobody scored (the server gives the game to nobody): it's shown as a tie between everyone.
-  const winners = prev.winners.length ? prev.ranking.filter((r) => prev.winners.includes(r.id)) : prev.ranking;
-  const total = variantsOf(intro).length;
-  const left = total - intro.index;
-  const line =
-    winners.length === 1
+  const topWins = Math.max(0, ...players.map((p) => p.wins || 0));
+  // Nobody scored: the server gives the game to nobody, and it doesn't count towards winning the match.
+  const winners = prev.ranking.filter((r) => prev.winners.includes(r.id));
+  const line = !winners.length
+    ? `Nadie ganó el juego ${intro.index}`
+    : winners.length === 1
       ? `${winners[0].name.split(" ")[0]} ganó el juego ${intro.index}`
       : winners.length === 2
       ? `${winners.map((w) => w.name.split(" ")[0]).join(" y ")} empataron el juego ${intro.index}`
@@ -213,9 +216,15 @@ function PreviousGame({ intro, players, color = "site" }) {
   return (
     <div className="tv-mi-prev">
       <RetouchBetween
-        kicker={`Juego ${intro.index} de ${total}${prev.variant ? ` · ${variantName(prev.variant)}` : ""}`}
+        kicker={`Juego ${intro.index}${prev.variant ? ` · ${variantName(prev.variant)}` : ""}`}
         line={line}
-        note={left > 0 ? `${left === 1 ? "Queda 1 juego" : `Quedan ${left} juegos`} · gana la partida quien gane más juegos` : null}
+        note={
+          intro.winsToWin
+            ? topWins >= intro.winsToWin
+              ? `Empate a ${topWins} juegos ganados: otro juego desempata`
+              : `Gana la partida el primero en ganar ${intro.winsToWin} juegos`
+            : null
+        }
         players={prev.ranking}
         winners={winners.map((w) => w.id)}
         points={(r) => r.points}
@@ -229,9 +238,11 @@ function PreviousGame({ intro, players, color = "site" }) {
 }
 
 /**
- * Before each game of a public match (the room's "intro" phase): a roulette picks the game among the ones still to
- * play, then a short tutorial of it for 5 s. It takes the room screen's main card (Home), beside the room's column,
- * so the top bar, the players and the chat stay in sight.
+ * Before each game of a public match or a Clásico (the room's "intro" phase): a roulette picks the game among the ones
+ * still to play, then a short tutorial of it for 5 s. It takes the room screen's main card (Home), beside the room's
+ * column, so the top bar, the players and the chat stay in sight. The roulette's matches have no set number of games
+ * (the first to win 2): its top line says which game this is, with a dot for each game it has so far (the two it always
+ * plays, and one more each time nobody has won it).
  */
 export default function MatchIntro({ room }) {
   const intro = room?.phase === "intro" ? room.intro : null;
@@ -245,10 +256,13 @@ export default function MatchIntro({ room }) {
   const spinning = elapsed < intro.spinMs;
   const leftMs = intro.spinMs + intro.tutorialMs - elapsed;
   const kind = MATCH_KINDS[room.matchmaking?.kind];
-  // A Clásico of a private room (Normal or Extendido): its name and colour instead of the public match's.
+  // A Clásico of a private room: its name and colour instead of the public match's. The roulette's public match is
+  // the Clásico too; a game searched for by name, its kind's ("Partida casual").
   const classic = findMode(room.run?.classic);
-  const label = kind ? `Partida ${kind.name.toLowerCase()}` : classic?.fullName;
+  const label = classic?.fullName || (intro.winsToWin ? "Clásico" : kind ? `Partida ${kind.name.toLowerCase()}` : null);
   const total = variantsOf(intro).length;
+  // Two or more who got to the games it takes to win at the same time: this game breaks the tie.
+  const tiebreak = Boolean(intro.winsToWin) && Math.max(0, ...room.players.map((p) => p.wins || 0)) >= intro.winsToWin;
   // The roulette and the tutorial in the game's colour, or dark ("neutro", an owner's choice).
   const { tone } = useResultsLook();
 
@@ -258,7 +272,7 @@ export default function MatchIntro({ room }) {
         <header className="tv-mi-head">
           <p className="tv-mono-label">
             {label ? `${label} · ` : ""}
-            {intro.decider ? "Juego de desempate" : `Juego ${intro.index + 1} de ${total}`}
+            {tiebreak ? "Juego de desempate" : intro.winsToWin ? `Juego ${intro.index + 1}` : `Juego ${intro.index + 1} de ${total}`}
           </p>
           {total > 1 && (
             <ol className="tv-mi-dots" aria-hidden="true">

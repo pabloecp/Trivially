@@ -40,12 +40,12 @@ assert.ok(trivia.matchmaking.startsAt, "five of five: about to start");
 clearTimeout(trivia.matchmaking.timer);
 assert.equal(mgr.publicState(trivia).matchmaking.game, "opciones");
 
-// It starts with that game alone, in its public way, and no decider.
+// It starts with that game alone, in its public way, and nothing after it (it isn't first to two wins).
 mgr.startMatch(trivia);
 clearTimeout(trivia.timer);
 assert.deepEqual(trivia.matchmaking.games, [PUBLIC_VARIANT.opciones]);
 assert.equal(trivia.run.items.length, 1);
-assert.equal(trivia.run.decider, null);
+assert.equal(trivia.run.winsToWin, undefined);
 assert.equal(trivia.game, "opciones");
 assert.equal(trivia.phase, "intro");
 mgr.destroy(trivia);

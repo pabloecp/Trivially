@@ -174,9 +174,9 @@ export function publicRun(run) {
     mixed: Boolean(run.mixed),
     // A Clásico's game id ("clasico" or "extendido"): it's played like a playlist, but it's a match.
     classic: run.classic || null,
-    // A public match: ranked by games won (then points), and whether its decider is being (or was) played.
+    // A public match: ranked by games won (then points); one of the roulette, how many it takes to win it.
     bestOf: Boolean(run.gameWins),
-    decider: run.deciderIndex ?? null,
+    winsToWin: run.winsToWin || null,
     index: run.index,
     total: run.items.length,
     games: run.items.map((item) => item.game),

@@ -548,41 +548,6 @@
 .tv-play-rank-bar span { display: block; height: 100%; border-radius: inherit; background: var(--rank); transition: width 0.6s var(--tv-ease-out); }
 
 
-/* The games of a public match (MatchGames.jsx), only to read: the roulette's cards (.tv-mi-card), three a row, each a
-   game with one way of playing it, in its game's colour: its icon on a see-through square, the name and the way as a
-   see-through label under it. Flat: nothing here is pressed. */
-/* Always squares: in a public match's lobby (.is-compact) three a row of a fixed size (--card); otherwise four a row,
-   filling the row's width. */
-.tv-mgames { --card: 126px; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin: 0; padding: 0; list-style: none; }
-.tv-mgames.is-compact { grid-template-columns: repeat(3, var(--card)); }
-.tv-mgame {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  min-width: 0;
-  aspect-ratio: 1;
-  padding: 8px;
-  border-radius: 22px;
-  background: var(--c2);
-  color: var(--on);
-  text-align: center;
-}
-.tv-mgame-icon { display: grid; place-items: center; flex-shrink: 0; width: 44px; height: 44px; margin-bottom: 2px; border-radius: 14px; background: rgba(255, 255, 255, 0.18); }
-.tv-mgame-name { max-width: 100%; font-weight: 800; font-size: 13px; line-height: 1.1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.tv-mgame-way { max-width: 100%; padding: 3px 8px; border-radius: 7px; background: rgba(255, 255, 255, 0.18); font-weight: 800; font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-/* In a public match's lobby: the same squares, in the middle. */
-.tv-mgames.is-compact { justify-content: center; }
-.tv-mgames.is-compact .tv-mgame { width: var(--card); }
-@media (max-width: 520px) {
-  .tv-mgames { --card: 104px; gap: 8px; grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  .tv-mgame-icon { width: 38px; height: 38px; border-radius: 12px; }
-  .tv-mgame-name { font-size: 12px; }
-  .tv-mgame-way { font-size: 10px; }
-}
-
-
 /* The history in /jugar's column: "Ver todas (n)" at the end of its title's row. */
 .tv-history-more--head { justify-self: auto; padding: 0; font-size: 13px; color: var(--tv-text-3); }
 

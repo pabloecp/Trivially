@@ -1,19 +1,25 @@
 // Partidas públicas ("Casual"; "Competitivo" is disabled for now, MATCH_KINDS_OPEN): players who don't know each other
 // are put in the same room until it's full (5 players; "Uno contra Uno", for 2, isn't offered for now: DUELS_OPEN), and then the match starts
-// on its own. Its games aren't chosen by anyone: every match is MATCH_GAME_COUNT (2) games, drawn at random among
+// on its own. A match of the roulette ("Clásico" on Inicio) has no games chosen by anyone: they're drawn at random among
 // MATCH_VARIANTS (each game with one of its ways only: "Trivia Cerradas", "Rango Cifras"...) and played one after another
-// (a playlist in order, 5 rounds each). Each game is won by whoever scores the most in it, and the match by whoever wins
-// more games: when the two games end tied (one won each), a third one decides it (RoomManager.beginDecider). Before each
-// game a roulette shows which one comes next, followed by a short tutorial of it (the room's "intro" phase:
-// INTRO_SPIN_MS + INTRO_TUTORIAL_MS).
+// (5 rounds each). Each game is won by whoever scores the most in it, and the match by the first to win MATCH_WINS (2)
+// games (RoomManager.beginNextGame). Before each game a roulette shows which one comes next, followed by a short
+// tutorial of it (the room's "intro" phase: INTRO_SPIN_MS + INTRO_TUTORIAL_MS).
 
 export const MATCH_KINDS = ["casual", "competitivo"];
 // The kinds that can be searched for now.
 export const MATCH_KINDS_OPEN = ["casual"];
 export const ROUNDS_PER_GAME = 5;
-// Games of every public match, before a possible decider.
-export const MATCH_GAME_COUNT = 2;
-export const MATCH_ROUNDS = MATCH_GAME_COUNT * ROUNDS_PER_GAME;
+// A match of the roulette (a public one, or a Clásico) is won by the first to win MATCH_WINS games: they're played one
+// after another, each drawn at random, until one player alone has won that many (two who get there in the same game,
+// tied in it, play another). It plays at least MATCH_ROUNDS rounds.
+export const MATCH_WINS = 2;
+export const MATCH_ROUNDS = MATCH_WINS * ROUNDS_PER_GAME;
+/**
+ * The most games a match of the roulette for `players` plays, first to `wins`: enough for each of them to win all but
+ * one of those, and two more (games nobody wins). Then whoever has won the most wins it.
+ */
+export const matchMaxGames = (players, wins = MATCH_WINS) => Math.max(wins, players) * (wins - 1) + 2;
 // How many players a room needs: 2 ("Uno contra Uno") or 5 ("Todos contra Todos").
 export const MATCH_SIZES = [2, 5];
 // "Uno contra Uno" isn't offered to players for now (its code stays, like Competitivo's): a search that doesn't say its
@@ -25,12 +31,14 @@ export const MATCH_GAMES = ["opciones", "historia", "minas"];
 // RoomManager.botMove, in case they're added here.)
 export const CASUAL_GAMES = [...MATCH_GAMES];
 
-// "Clásico", at the top of a private room's "Elige el juego": a match like Casual's (the roulette, the tutorials, the
-// same clocks and games) for the room's own players, started by its host, with no search, bots or rank. Its two game
-// ids are how many games each draws: "clasico" (Normal) 3, like a public match of 15 rounds, and "extendido" 5.
-export const CLASSIC_GAMES = { clasico: 3, extendido: 5 };
-export const CLASSIC_NAMES = { clasico: "Clásico normal", extendido: "Clásico extendido" };
-export const isClassic = (game) => Object.hasOwn(CLASSIC_GAMES, game ?? "");
+// "Clásico" with "Partida privada": a match like Casual's (the roulette, the tutorials, the same clocks and games) for
+// the room's own players, started by its host, with no search, bots or rank. Its two game ids are how many games it
+// takes to win: "clasico" 2, like a public match, and "extendido" 3 (not offered anywhere for now).
+export const CLASSIC_WINS = { clasico: MATCH_WINS, extendido: 3 };
+export const CLASSIC_NAMES = { clasico: "Clásico", extendido: "Clásico extendido" };
+export const isClassic = (game) => Object.hasOwn(CLASSIC_WINS, game ?? "");
+// "Clásico" with "Partida pública" is the roulette's public match (a search without a game).
+export const PUBLIC_CLASSIC = "clasico";
 
 /** The games a public match of `kind` draws from. */
 export const gamesFor = (kind) => (kind === "casual" ? CASUAL_GAMES : MATCH_GAMES);
@@ -78,7 +86,8 @@ export const INTRO_RESULT_MS = 4500;
 // A public match's player who does nothing for PUBLIC_KICK_ROUNDS rounds in a row is asked if they are still there; with no
 // answer in AFK_CONFIRM_MS they are taken out of the match (RoomManager.askStillThere and afkExpire).
 export const AFK_CONFIRM_MS = 15000;
-// An owner can force the games of their own match (the admin panel, for debugging): variant ids in order.
+// An owner can force the games of their own match (the admin panel, for debugging): variant ids, played first in that
+// order (then drawn ones, while nobody has won the match).
 export const MAX_FORCED = 5;
 export const cleanForced = (list) => (Array.isArray(list) ? list.filter((id) => typeof id === "string" && MATCH_VARIANTS.some((v) => v.id === id)).slice(0, MAX_FORCED) : []);
 
@@ -115,12 +124,12 @@ export function newBot(takenNames, random = Math.random) {
 
 /**
  * A request to find a match, or an error in Spanish when it isn't one. With a `game` it's a public match of that game
- * alone, for five unless `size` says otherwise (for two with DUELS_OPEN); without one, the roulette's two games.
+ * alone, for five unless `size` says otherwise (for two with DUELS_OPEN); without one, the roulette's ("Clásico").
  */
 export function cleanMatchRequest(input) {
   const kind = MATCH_KINDS.includes(input?.kind) ? input.kind : null;
   const game = input?.game == null ? null : String(input.game);
-  // Older clients don't send it: 5 players. The `rounds` they may send is ignored: every match is MATCH_ROUNDS.
+  // Older clients don't send it: 5 players. The `rounds` they may send is ignored: the roulette's is MATCH_ROUNDS at least.
   const size = input?.size == null ? (game && DUELS_OPEN ? 2 : 5) : Number(input.size);
   if (!kind) throw new Error("Elige el tipo de partida");
   if (!MATCH_KINDS_OPEN.includes(kind)) throw new Error("El modo Competitivo no está disponible por ahora");

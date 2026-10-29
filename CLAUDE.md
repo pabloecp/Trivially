@@ -4,11 +4,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project
 
-Trivially is a real-time trivia game, played alone or with a group (the players who go together), in public or private matches (rooms). Groups and rooms have five-character codes (`createRoomCode`: letters and numbers, no I, O, 0 or 1); the one players share is the group's. Games (`room.game`, ids in `GAME_IDS`; the old ids are kept on purpose, renaming them breaks open rooms): **Trivia** (`opciones`, the main one), **Adivina la canción** (`musica`), **Encuentra el país** (`mundo`), **Rango** (`historia`), **Campo de minas** (`minas`), **Lluvia** (`lluvia`), **Rey de la colina** (`rey`) and **Farsante** (`farsante`). `playlist`, `clasico` and `extendido` are in `GAME_IDS` but aren't games. The UI calls them *juegos* ("Elige el juego").
+Trivially is a real-time trivia game, played alone or with a group (the players who go together), in public or private matches (rooms). Groups and rooms have five-character codes (`createRoomCode`: letters and numbers, no I, O, 0 or 1); the one players share is the group's. Games (`room.game`, ids in `GAME_IDS`; the old ids are kept on purpose, renaming them breaks open rooms): **Trivia** (`opciones`, the main one), **Adivina la canción** (`musica`), **Encuentra el país** (`mundo`), **Rango** (`historia`), **Campo de minas** (`minas`), **Lluvia** (`lluvia`), **Rey de la colina** (`rey`) and **Farsante** (`farsante`). `playlist`, `clasico` and `extendido` are in `GAME_IDS` but aren't games. The UI calls them *juegos* ("Juego libre").
 
 **Juego, modo de juego and tipo de respuestas are three different things; keep them apart in code, copy and docs:**
 
-- **Juego**: what is played, chosen in "Elige el juego" (`room.game`). A playlist is not a game.
+- **Juego**: what is played, chosen in "Juego libre" (`room.game`). A playlist is not a game.
 - **Modo de juego** ("Modos de juego", `styles` in the config): a variant that changes the game's questions or rules. Only Encuentra el país (nombre / sombra / bandera) has more than one; Rango (only Cifras) and Campo de minas (only carrera) keep a single one in `styles` and show no "Modos de juego". "Línea del tiempo" and "Por turnos" were removed as modes (see their docs).
 - **Tipo de respuestas** ("Tipo de respuestas", `formats` in the config): only how a player answers, Cerradas (four options) or Abiertas (writing). Trivia and Adivina la canción have it. Never called a "modo de juego".
 

@@ -3,28 +3,32 @@ import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
 import { findMode } from "../../modes/index.js";
 import { useApp } from "../../lib/store.jsx";
-import { audienceName, isPublicGame, rememberPlan, useLocalPlan } from "../../lib/plan.js";
+import { CLASSIC, isPublicGame, rememberPlan, useLocalPlan } from "../../lib/plan.js";
 import { withSound } from "../../lib/sounds.js";
 import GroupBar from "./GroupBar.jsx";
 import GroupSheet from "./GroupSheet.jsx";
+import ConfirmDialog from "./ConfirmDialog.jsx";
 import Icon from "./Icon.jsx";
 import ModeStage from "./ModeStage.jsx";
 import PlanSheet from "./PlanSheet.jsx";
 import PlaySheet from "./PlaySheet.jsx";
+import { OpenSettingsContext } from "./SettingsPanel.jsx";
 import { useStartGame } from "./ModeStart.jsx";
 import { publicMatchLine } from "./matchInfo.js";
 import "../../styles/lobby.css";
 
 // Inicio, a private match's lobby and the search for a public match are one screen: the game's big card in the middle
-// (with, in a private match, its settings behind a summary) and the bar at the bottom (the group, "Vas a jugar" and the
-// one yellow button). Arriba la info, al centro el juego, abajo tu grupo y la acción.
+// (its settings behind a summary at its bottom) and the bar at the bottom (the group, "Vas a jugar" and the one yellow
+// button). Arriba la info, al centro el juego, abajo tu grupo y la acción.
+// The card's settings on Inicio: a public match's are the same for everyone, so they can't be changed (no "Ajustes");
+// a private match's belong to its room, so "Ajustes" makes the match first (the group comes into it) and they open there.
 // Nobody has a group to begin with: the bar has "Crear grupo" (it's made straight away) and "Unirse" with a friend's
 // code; in a group, its faces, "+" to invite (the code is in that window) and "Salir del grupo". Without a group you
 // play alone: a public match, or a private one only for you. A group only takes its players together: its
 // leader decides and everyone goes (the server moves them, game/groups.js).
 //  - On Inicio: the plan is this device's, or the group's (its leader's). "Partida pública" searches for a public match
-//    of the game (for the whole group); "Partida privada" makes the private match (picking a game for it, or EMPEZAR,
-//    which also starts it), and the group goes into it.
+//    of the game (for the whole group; the Clásico's is the roulette's, without a game); "Partida privada" makes the
+//    private match (picking a game for it, or EMPEZAR, which also starts it), and the group goes into it.
 //  - In a private match, while it waits: the game's own lobby (ModeStage and its settings), which only its host (the
 //    group's leader) changes. Switching it to "Partida pública" goes back to Inicio (the whole group) to search.
 //  - Searching (a public room that waits): the card says how the search goes and the leader's button cancels it (the
@@ -38,12 +42,16 @@ export default function HomeFrame({ room = null, onToast, Lobby = null, leaving 
   const [localPlan, updateLocalPlan] = useLocalPlan();
   const [sheet, setSheet] = useState(null);
   const [pending, setPending] = useState(null);
+  // "Salir del grupo" asks first.
+  const [confirmLeave, setConfirmLeave] = useState(false);
   // What is being done ("match", "join", "group", "leave"...), or "".
   const [busyType, setBusyType] = useState("");
   const busy = Boolean(busyType);
   const [error, setError] = useState("");
   // What went wrong creating or joining a group: said under the group's side of the bar.
   const [groupError, setGroupError] = useState("");
+  // "Ajustes" made the private match: its settings open as soon as its lobby shows (SettingsPanel).
+  const [settingsAsked, setSettingsAsked] = useState(false);
   const start = useStartGame(room || { players: [], game: null });
 
   const searching = Boolean(room?.matchmaking);
@@ -53,7 +61,7 @@ export default function HomeFrame({ room = null, onToast, Lobby = null, leaving 
   // The group is somewhere this player isn't (back on Inicio alone, or joined while it plays a public match).
   const away = Boolean(group?.place) && !room;
   const plan = searching
-    ? { game: room.matchmaking.game || "opciones", audience: "publica" }
+    ? { game: room.matchmaking.game || CLASSIC, audience: "publica" }
     : room
     ? { game: room.game, audience: "grupo" }
     : group
@@ -93,11 +101,14 @@ export default function HomeFrame({ room = null, onToast, Lobby = null, leaving 
     setGroupError("");
     try {
       await withSound(async () => {
-        if (action.type === "match") await findMatch("casual", undefined, undefined, action.game);
+        // The Clásico's public match is the roulette's: a search without a game.
+        if (action.type === "match") await findMatch("casual", undefined, undefined, action.game === CLASSIC ? null : action.game);
         else if (action.type === "join") await joinGroup(action.code);
         else if (action.type === "group") await createGroup(action.plan);
         else if (action.type === "follow") await joinGroup(group.code);
         else {
+          // "setup": the private match for its settings ("Ajustes" on Inicio's card).
+          if (action.type === "setup") setSettingsAsked(true);
           await createRoom("multi", {}, action.game);
           if (action.then === "start") await startGame();
         }
@@ -105,6 +116,7 @@ export default function HomeFrame({ room = null, onToast, Lobby = null, leaving 
       if (action.type === "group") onToast?.("Creaste un grupo. Invita a tus amigos con el +", "check");
       return true;
     } catch (err) {
+      setSettingsAsked(false);
       // Already playing in that match from another device: CentralOffer asks about this one instead.
       if (err.offer) return null;
       (forGroup ? setGroupError : setError)(err.message || (forGroup ? "No pudimos entrar a ese grupo" : "Algo salió mal, inténtalo otra vez"));
@@ -220,10 +232,18 @@ export default function HomeFrame({ room = null, onToast, Lobby = null, leaving 
     };
   }
 
+  // The summary and "Ajustes" at the bottom of Inicio's card. The Clásico has none: its card says how it goes instead.
+  const cardSettings =
+    mode.kind === "classic"
+      ? null
+      : plan.audience === "publica"
+      ? { summary: publicMatchLine(mode.id) || "Sin partidas públicas por ahora" }
+      : decides && !away
+      ? { summary: "Ajustes por defecto", onOpen: () => run({ type: "setup", game: plan.game }), disabled: busy }
+      : { summary: "Ajustes por defecto", note: away ? "Tu grupo ya está jugando" : `Los elige ${leaderName}` };
+
   // The group's faces: dimmed whoever isn't with it now (or is reconnecting).
   const members = group ? group.members.map((m) => ({ ...m, connected: m.connected && m.here })) : [];
-  const planText =
-    plan.audience === "publica" ? `${mode.name} · ${audienceName("publica")}` : `${group ? "Grupo" : "Tú solo"} · ${mode.fullName || mode.name}`;
 
   return (
     <div className={`tv-lobby${leaving ? " is-leaving" : ""}`}>
@@ -232,13 +252,15 @@ export default function HomeFrame({ room = null, onToast, Lobby = null, leaving 
           <SearchCard room={room} mode={mode} />
         ) : room && Lobby ? (
           <div key={room.game} className="tv-lobby-game">
-            <Lobby room={room} onToast={onToast} />
+            <OpenSettingsContext.Provider value={{ open: settingsAsked, done: () => setSettingsAsked(false) }}>
+              <Lobby room={room} onToast={onToast} />
+            </OpenSettingsContext.Provider>
           </div>
         ) : room ? (
           <ModeStage mode={{ id: "none", name: "Elige un juego", icon: "grid", color: "neutral", steps: [] }} title={decides ? "Elige un juego" : `${room.hostName || "El anfitrión"} está eligiendo`} />
         ) : (
           <>
-            <ModeStage mode={mode} audience={plan.audience} swapKey={`${mode.id}:${plan.audience}`} />
+            <ModeStage mode={mode} audience={plan.audience} swapKey={`${mode.id}:${plan.audience}`} settings={cardSettings} />
             {plan.audience === "grupo" && !group && (
               <p className="tv-lobby-hint">
                 <Icon name="users" size={16} strokeWidth={2.6} />
@@ -259,10 +281,9 @@ export default function HomeFrame({ room = null, onToast, Lobby = null, leaving 
         onCreate={() => run({ type: "group", plan })}
         onJoin={joinWithCode}
         onJoinEdit={() => setGroupError("")}
-        onLeave={leave}
+        onLeave={() => setConfirmLeave(true)}
         inviteBadge={group && isLeader ? group.joinRequests?.length || 0 : 0}
         plan={plan}
-        planText={planText}
         planLocked={searching}
         onPlan={() => setSheet("plan")}
         action={action}
@@ -297,12 +318,28 @@ export default function HomeFrame({ room = null, onToast, Lobby = null, leaving 
         />,
         document.querySelector(".tv-app") || document.body
       )}
+      {createPortal(
+        <ConfirmDialog
+          open={confirmLeave && Boolean(group)}
+          title="¿Seguro que quieres salir del grupo?"
+          text="Dejarás de jugar con tu grupo y, si están en su partida privada, saldrás de ella. Para volver tendrás que unirte otra vez con el código."
+          cancelLabel="Quedarme"
+          confirmLabel="Salir del grupo"
+          onCancel={() => setConfirmLeave(false)}
+          onConfirm={() => {
+            setConfirmLeave(false);
+            leave();
+          }}
+        />,
+        document.querySelector(".tv-app") || document.body
+      )}
     </div>
   );
 }
 
 // A public room while it fills: the game's card says it's searching ("Buscando jugadores de Trivia…"), for how long, the
-// game's queue and how many were found; once full, that it starts.
+// game's queue and how many were found; once full, that it starts. The roulette's (the Clásico's) has no game: its card
+// is the Clásico's.
 function SearchCard({ room, mode }) {
   const info = room.matchmaking;
   const found = room.players.filter((p) => p.connected).length;
@@ -316,19 +353,16 @@ function SearchCard({ room, mode }) {
   const waited = Math.max(0, Math.floor((now - since) / 1000));
   const clock = `${Math.floor(waited / 60)}:${String(waited % 60).padStart(2, "0")}`;
   const startsIn = full ? Math.max(1, Math.ceil((info.startsAt - (now + (room.clockOffset || 0))) / 1000)) : null;
-  // The roulette's matches (an older way in) have no game of their own.
-  const name = info.game ? mode.name : "una partida";
   const steps = [
     { icon: "hourglass", text: full ? `Empieza en ${startsIn}` : `${clock} buscando` },
-    { icon: "grid", text: info.game ? `Fila de ${mode.name} · ${publicMatchLine(info.game)}` : "Partida casual · 2 juegos al azar" },
+    { icon: "grid", text: info.game ? `Fila de ${mode.name} · ${publicMatchLine(info.game)}` : "Juegos al azar · gana el primero en ganar 2" },
     { icon: "users", text: `Jugadores encontrados: ${found} de ${info.size}` },
   ];
   return (
     <ModeStage
-      mode={info.game ? mode : { ...mode, color: "site", icon: "bolt" }}
-      title={full ? "¡Partida completa!" : `Buscando jugadores de ${name}…`}
+      mode={mode}
+      title={full ? "¡Partida completa!" : `Buscando jugadores de ${mode.name}…`}
       steps={steps}
-      tag={audienceName("publica")}
       swapKey={full ? "full" : "search"}
     />
   );
