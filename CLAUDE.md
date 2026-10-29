@@ -34,6 +34,12 @@ Tests are standalone scripts using `node:assert/strict`, no runner: each prints 
 
 **Gotcha:** `saveStore()` always writes to the tracked `backend/data/store.json`, even in tests. After running the store tests, check `git diff backend/data/store.json` and restore it.
 
+## Branches (Git Flow, see `CONTRIBUTING.md`)
+
+- **`main` is production** (Vercel and Railway deploy from it) and **`develop` is integration**. Never commit or push directly to either.
+- Every change goes in its own branch cut from an up-to-date `develop` (`feature/…`, `fix/…`, `chore/…`) and enters `develop` through a pull request. Publishing is a pull request from `develop` into `main`, merged with a merge commit. An urgent fix in production is a `hotfix/…` cut from `main`, merged into `main` and then into `develop`.
+- Pull requests target `develop` unless they are a release or a hotfix. Old personal branches (`dani`, `pablo`, `jonathan`) are no longer worked on. CI (`.github/workflows/ci.yml`) runs the backend tests and the frontend build on every pull request to either branch.
+
 ## Commits
 
 Commit messages are in Spanish and written for someone who doesn't read code.
