@@ -215,4 +215,73 @@ mgr.destroy(removable);
   assert.ok(older.customPlaylists[id]);
 }
 
+// Lynz's top 100 is a default playlist too: in every room, unticked, flagged as coming from Lynz, impossible to delete,
+// and its songs are looked up in the background (the ones not known yet) until the playlist is playable.
+{
+  const { refreshDefaultPlaylists, defaultSourceOf } = await import("../catalog/defaultPlaylists.js");
+  const { LYNZ_ID, lynzSongId } = await import("../catalog/lynz.js");
+  const id = `sp:${LYNZ_ID}`;
+  assert.equal(defaultSourceOf(id), "Lynz");
+  assert.equal(defaultSourceOf("sp:37i9dQZEVXbMDoHDwVN2tF"), "Spotify");
+  assert.equal(defaultSourceOf("sp:abc"), null);
+
+  const lynzSongs = [
+    { rank: 1, name: "Uno", artist: "Ana, Beto", rating: 9.4, reviewsCount: 37 },
+    { rank: 2, name: "Dos", artist: "Carla", rating: 9.1, reviewsCount: 20 },
+    { rank: 3, name: "Tres", artist: "Dani", rating: 8.9, reviewsCount: 12 },
+  ];
+  let refreshes = 0;
+  const lynz = { songs: lynzSongs, fetchedAt: 1000, refresh: async () => (refreshes += 1) === 1 };
+  // The global resolver knows "Uno"; "Dos" is found by iTunes' first search, "Tres" only by the deeper one.
+  const found = (n) => ({ id: `sp-${lynzSongId(lynzSongs[n].name, lynzSongs[n].artist)}`, title: lynzSongs[n].name, artistName: lynzSongs[n].artist, image: `https://img/${n}.jpg`, previewUrl: "https://audio-ssl.itunes.apple.com/x.m4a" });
+  const lookups = [];
+  const global = {
+    resolve: async (tracks, { onResult, deep }) => {
+      lookups.push({ deep: Boolean(deep), titles: tracks.map((t) => t.title) });
+      for (const t of tracks) {
+        const n = lynzSongs.findIndex((s) => s.name === t.title);
+        onResult(t.spotifyId, n === 0 || (n === 1 && !deep) || (n === 2 && deep) ? found(n) : null);
+      }
+    },
+  };
+  let told = 0;
+  await refreshDefaultPlaylists(() => (told += 1), async () => { throw new Error("ya leída hoy"); }, { lynz, resolver: global });
+  assert.ok(told >= 1, "the rooms are told");
+  await new Promise((r) => setTimeout(r, 20));
+  assert.deepEqual(lookups.map((l) => l.deep), [false, true], "every song once, then the missing ones deeper");
+  assert.deepEqual(lookups[1].titles, ["Tres"], "only what the first pass missed");
+  mgr.applyDefaultPlaylists();
+
+  const room = mgr.create({ host: { id: "owner", name: "Owner", socketId: "s12" }, game: "musica" });
+  assert.ok(room.customPlaylists[id], "already in a new room");
+  assert.ok(!(room.config.playlistIds || []).includes(id), "but not ticked");
+  assert.equal(room.customPlaylists[id].tracks.length, 3);
+  assert.deepEqual(room.customPlaylists[id].tracks[0].artists, ["Ana", "Beto"]);
+  const shown = mgr.publicState(room).customPlaylists.find((p) => p.id === id);
+  assert.equal(shown.defaultFrom, "Lynz");
+  assert.equal(shown.total, 3);
+  assert.equal(shown.image, "https://img/0.jpg", "the best song found is its cover");
+  assert.equal(mgr.publicState(room).customPlaylists.find((p) => p.id === "sp:37i9dQZEVXbMDoHDwVN2tF").defaultFrom, "Spotify");
+  const second = mgr.create({ host: { id: "owner2", name: "Owner 2", socketId: "s13" }, game: "musica" });
+  assert.equal(mgr.publicState(second).customPlaylists.find((p) => p.id === id).defaultFrom, "Lynz", "any room has it");
+  assert.throws(() => mgr.removeSpotifyPlaylist(room, "owner", id), /no se puede borrar/);
+
+  // Ticking it looks its songs up like any playlist's; the ones the server already knows come at once.
+  waiting.length = 0;
+  mgr.updateConfig(room, "owner", { playlistIds: [id] });
+  assert.deepEqual(room.config.playlistIds, [id]);
+  assert.equal(waiting.length, 1);
+  waiting[0].job.onResult(lynzSongId("Uno", "Ana, Beto"), found(0));
+  assert.equal(room.customPlaylists[id].songs.size, 1);
+  assert.equal(room.customPlaylists[id].songs.get(lynzSongId("Uno", "Ana, Beto")).artists.join(","), "Ana,Beto");
+
+  // A week later Lynz's list changes: rooms waiting in the lobby get it.
+  const next = [{ rank: 1, name: "Cuatro", artist: "Eli", rating: 9, reviewsCount: 5 }, lynzSongs[0]];
+  const later = { songs: next, fetchedAt: 2000, refresh: async () => true };
+  await refreshDefaultPlaylists(() => {}, async () => { throw new Error("ya leída hoy"); }, { lynz: later });
+  mgr.applyDefaultPlaylists();
+  assert.deepEqual(room.customPlaylists[id].tracks.map((t) => t.title), ["Cuatro", "Uno"]);
+  assert.ok(room.customPlaylists[id].songs.has(lynzSongId("Uno", "Ana, Beto")), "a song that stays keeps being playable");
+}
+
 console.log("spotifyRoom.test ok");

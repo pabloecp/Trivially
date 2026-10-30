@@ -50,8 +50,9 @@ const groups = new GroupManager({ rooms });
 const friends = new Friendships({ store });
 await friends.init();
 const friendsHub = new FriendsHub({ store, friends, rooms, groups });
-// The default Spotify playlists (catalog/defaultPlaylists.js): read now and once a day, and put in every room.
-startDefaultPlaylists(() => rooms.applyDefaultPlaylists());
+// The default playlists (catalog/defaultPlaylists.js): Spotify's Top 50 read now and once a day, and the top 100 of Lynz
+// once a week (its songs are looked up in the background); put in every room.
+startDefaultPlaylists(() => rooms.applyDefaultPlaylists(), { resolver });
 // Playlist codes nobody shared or opened in a year are deleted: now and once a day.
 forgetOldShareCodes().catch(() => {});
 setInterval(() => forgetOldShareCodes().catch(() => {}), 24 * 60 * 60 * 1000).unref?.();

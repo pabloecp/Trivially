@@ -1,4 +1,4 @@
-import { cachedDefaultPlaylists, isDefaultSpotify } from "../catalog/defaultPlaylists.js";
+import { cachedDefaultPlaylists, defaultSourceOf } from "../catalog/defaultPlaylists.js";
 import { SONG_DIFFICULTIES, SONG_GENRES, SONG_LANGUAGES, filterSongs, songCounts } from "../catalog/songFilters.js";
 import { hasRole } from "../auth/roles.js";
 import { CHAT_LINK_ERROR, hasLink, NAME_LINK_ERROR } from "../moderation/links.js";
@@ -1640,19 +1640,19 @@ export class RoomManager {
   }
 
   /**
-   * Puts the default playlists (read once a day, catalog/defaultPlaylists.js) in a room, unticked, so they are always
-   * loaded there and ticking one is instant. A room that has one from an earlier day gets today's songs, while it
-   * waits in the lobby (never in the middle of a match).
+   * Puts the default playlists (Spotify's read once a day and Lynz's once a week, catalog/defaultPlaylists.js) in a
+   * room, unticked, so they are always loaded there and ticking one is instant. A room that has one from an earlier
+   * read gets the current songs, while it waits in the lobby (never in the middle of a match).
    */
   ensureDefaultPlaylists(room) {
     if (!room?.customPlaylists) return;
-    for (const { playlist, day } of cachedDefaultPlaylists()) {
+    for (const { playlist, version } of cachedDefaultPlaylists()) {
       const id = `${SPOTIFY_PREFIX}${playlist.id}`;
       const entry = room.customPlaylists[id];
-      if (!entry) this.newLinkEntry(room, playlist).day = day;
-      else if (entry.day !== day && room.phase === "lobby") {
+      if (!entry) this.newLinkEntry(room, playlist).version = version;
+      else if (entry.version !== version && room.phase === "lobby") {
         this.refreshLinkEntry(entry, playlist);
-        entry.day = day;
+        entry.version = version;
         if (entry.active) this.loadPlaylist(room, entry);
       }
     }
@@ -1686,7 +1686,7 @@ export class RoomManager {
   /** Takes a Spotify playlist out of the room for good (its waiting searches stop); anyone who may change the settings. */
   removeSpotifyPlaylist(room, userId, playlistId) {
     this.assertPlaylistEditor(room, userId);
-    if (isDefaultSpotify(playlistId)) throw new Error("Esta playlist viene con el juego: no se puede borrar");
+    if (defaultSourceOf(playlistId)) throw new Error("Esta playlist viene con el juego: no se puede borrar");
     const entry = room.customPlaylists?.[playlistId];
     if (!entry) throw new Error("Esa playlist no está en la sala");
     entry.active = false;
@@ -3799,6 +3799,8 @@ export class RoomManager {
         name: e.name,
         image: e.image,
         total: e.tracks.length,
+        // "Spotify" or "Lynz" for the playlists that come with the game (they can't be deleted), else null.
+        defaultFrom: defaultSourceOf(e.id),
         ready: e.songs.size,
         // Songs looked at once, and the not-found ones waiting for the second, deeper search.
         checked: e.done.size,

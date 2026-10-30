@@ -164,3 +164,15 @@ alter table public.friendships enable row level security;
 alter table public.users
   add column if not exists username text generated always as (lower(data->>'username')) stored;
 create unique index if not exists users_username_key on public.users (username) where username is not null;
+
+-- ---------------------------------------------------------------------------
+-- Respuestas de servicios externos que se piden pocas veces y se guardan aquí para que reiniciar el servidor no las
+-- vuelva a pedir. Hoy: el top 100 de Lynz (key 'lynz-top-songs'), que solo responde 2 peticiones por semana. `data`
+-- guarda { songs, fetchedAt, requests } y `fetched_at` cuándo se leyó. Solo el backend lee y escribe.
+-- ---------------------------------------------------------------------------
+create table if not exists public.feed_cache (
+  key         text primary key,
+  data        jsonb not null,
+  fetched_at  timestamptz not null default now()
+);
+alter table public.feed_cache enable row level security;

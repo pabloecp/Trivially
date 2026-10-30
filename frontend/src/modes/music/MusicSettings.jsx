@@ -27,6 +27,8 @@ const GENRES = [
 const FILTERS = { languages: LANGUAGES, genres: GENRES, difficulties: LEVELS };
 // The Spotify playlists every room offers in "Tus playlists" (DEFAULT_SPOTIFY on the server): always listed first,
 // they can't be deleted, and the server keeps them loaded in every room (read once a day), so ticking one is instant.
+// So are the others the server puts in the room with `defaultFrom` (the top 100 of Lynz, read once a week): they are
+// listed right after, and only once the server has them.
 const DEFAULT_PLAYLISTS = [{ kind: "playlist", id: "37i9dQZEVXbMDoHDwVN2tF", name: "Top 50: Global" }];
 const defaultRoomId = (p) => `sp:${p.kind === "album" ? `album:${p.id}` : p.id}`;
 const DEFAULT_IDS = new Set(DEFAULT_PLAYLISTS.map(defaultRoomId));
@@ -291,7 +293,7 @@ export default function MusicSettings({ room, updateConfig, onToast, children, r
   const savedOf = (roomId) => (saved || []).find((item) => roomIdOf(item) === roomId);
   const inRoomIds = new Set(custom.map((p) => p.id));
   const rows = readOnly
-    ? chosenCustom.map((p) => ({ key: p.id, image: p.image, name: p.name, kind: p.id.startsWith("sp:album:") ? "album" : "playlist", total: p.total }))
+    ? chosenCustom.map((p) => ({ key: p.id, image: p.image, name: p.name, kind: p.id.startsWith("sp:album:") ? "album" : "playlist", total: p.total, from: p.defaultFrom }))
     : [
         ...DEFAULT_PLAYLISTS.map((p) => {
           const inRoom = custom.find((c) => c.id === defaultRoomId(p));
@@ -307,7 +309,18 @@ export default function MusicSettings({ room, updateConfig, onToast, children, r
             onToggle: () => toggleDefault(p),
           };
         }),
-        ...custom.filter((p) => !DEFAULT_IDS.has(p.id)).map((p) => ({
+        ...custom.filter((p) => p.defaultFrom && !DEFAULT_IDS.has(p.id)).map((p) => ({
+          key: p.id,
+          image: p.image,
+          name: p.name,
+          kind: "playlist",
+          total: p.total,
+          on: selected.includes(p.id),
+          fixed: true,
+          from: p.defaultFrom,
+          onToggle: () => togglePlaylist(p.id),
+        })),
+        ...custom.filter((p) => !p.defaultFrom && !DEFAULT_IDS.has(p.id)).map((p) => ({
           key: p.id,
           image: p.image,
           name: p.name,
@@ -331,12 +344,12 @@ export default function MusicSettings({ room, updateConfig, onToast, children, r
     const busy = row.busyKey && savedBusy === row.busyKey;
     return (
       <li key={row.key} className={`tv-saved-item${row.on ? " is-on" : ""}`}>
-        <SavedCover src={row.image} />
+        <SavedCover src={row.image} spotify={!row.from || row.from === "Spotify"} />
         <span className="tv-saved-text">
           <strong>{row.name}</strong>
           <small>
             {row.on && <span className="tv-saved-on">En la partida · </span>}
-            {row.fixed ? "Spotify" : row.kind === "album" ? "Álbum" : row.kind === "spotify" ? "Tu Spotify" : "Playlist"}
+            {row.fixed ? row.from || "Spotify" : row.kind === "album" ? "Álbum" : row.kind === "spotify" ? "Tu Spotify" : "Playlist"}
             {row.total ? ` · ${row.total} canciones` : ""}
           </small>
         </span>
@@ -528,9 +541,10 @@ export default function MusicSettings({ room, updateConfig, onToast, children, r
   );
 }
 
-// A saved playlist's or album's cover, or the Spotify icon when there is none or it doesn't load.
-function SavedCover({ src }) {
+// A saved playlist's or album's cover, or the Spotify icon (a music note for the default ones that aren't Spotify's)
+// when there is none or it doesn't load.
+function SavedCover({ src, spotify = true }) {
   const [failed, setFailed] = useState(false);
-  if (!src || failed) return <SpotifyIcon size={40} />;
+  if (!src || failed) return spotify ? <SpotifyIcon size={40} /> : <Icon name="music" size={40} strokeWidth={1.6} />;
   return <img src={src} alt="" loading="lazy" onError={() => setFailed(true)} />;
 }
