@@ -12,6 +12,7 @@ import InviteFriends from "./InviteFriends.jsx";
 import { useResultsLook, useScoreboardLook } from "../../lib/ownerView.js";
 import { findVariant } from "./matchInfo.js";
 import { findMode } from "../../modes/index.js";
+import { formatElo } from "../../lib/gameStats.js";
 
 function playerTag(player, { isHost }) {
   if (!player.connected) return "Reconectando…";
@@ -20,9 +21,18 @@ function playerTag(player, { isHost }) {
   return "Conectado";
 }
 
+// What the line under a name says once they answered, in each game's words ("Respondió", "Confirmó", "Ya votó"…);
+// yours in the second person.
+function doneWord(room, isMe) {
+  if (room.game === "mundo") return isMe ? "Confirmaste" : "Confirmó";
+  if (room.game === "historia") return isMe ? "Fijaste tu respuesta" : "Fijó su respuesta";
+  if (room.game === "farsante") return room.farsante?.stage === "voting" ? (isMe ? "Ya votaste" : "Ya votó") : isMe ? "Ya escribiste" : "Ya escribió";
+  return isMe ? "Respondiste" : "Respondió";
+}
+
 // During a match the line under each name says how their round is going. The server sends everyone's answer only
 // once the round is over (reveal), and at the end each player's totals (results).
-function MatchTag({ player, room }) {
+function MatchTag({ player, room, isMe = false }) {
   if (player.spectator) return <span className="tv-player-tag">Espectador</span>;
   if (!player.connected) return <span className="tv-player-tag">Reconectando…</span>;
   if (room.phase === "finished") {
@@ -55,14 +65,12 @@ function MatchTag({ player, room }) {
       </span>
     );
   }
-  if (player.answered) {
-    return (
-      <span className="tv-player-tag is-done">
-        <Icon name="check" size={12} strokeWidth={3.2} />
-        Listo
-      </span>
-    );
+  // Rey de la colina: who holds the crown, and who's trying to take it.
+  if (room.game === "rey" && room.phase === "playing" && room.rey?.roundKingId) {
+    if (player.id === room.rey.roundKingId) return <span className="tv-player-tag is-king">Rey</span>;
+    if (!player.answered) return <span className="tv-player-tag">Retador</span>;
   }
+  if (player.answered) return <span className="tv-player-tag is-done">{doneWord(room, isMe)}</span>;
   // Campo de minas: the right answers found so far in this round.
   if (room.phase === "playing" && player.hits > 0) {
     return <span className="tv-player-tag is-streak">{player.hits === 1 ? "1 acierto" : `${player.hits} aciertos`}</span>;
@@ -70,7 +78,7 @@ function MatchTag({ player, room }) {
   // Hasn't answered in a few rounds in a row: the rounds don't wait for them until they answer again.
   if (room.phase === "playing" && player.idle) return <span className="tv-player-tag">Inactivo</span>;
   if (player.streak > 1) return <span className="tv-player-tag is-streak">Racha de {player.streak}</span>;
-  return <span className="tv-player-tag">{room.phase === "playing" ? "Pensando…" : "Conectado"}</span>;
+  return <span className="tv-player-tag">{room.phase === "playing" ? (room.game === "mundo" ? "Buscando…" : "Pensando…") : room.phase === "countdown" ? "Preparándose…" : "Conectado"}</span>;
 }
 
 // The games a player already won in a public match (`run.results`: each game's variant and winners), by name: "Trivia
@@ -92,6 +100,13 @@ function WonLine({ room, player }) {
   return <b className="tv-player-won">&nbsp;· Ganó {n === 1 && names[0] ? names[0] : n === 1 ? "1 juego" : `${n} juegos`}</b>;
 }
 
+// The scoreboard's pill while a round is open: "Respondieron 3/4" (those still playing it); between rounds, the round.
+function answeredLine(room, players) {
+  if (room.phase !== "playing") return `Ronda ${Math.min(room.totalRounds || 1, (room.currentRound || 0) + 1)}`;
+  const inRound = players.filter((p) => p.connected && !p.idle && p.status !== "mirando");
+  return `Respondieron ${inRound.filter((p) => p.answered).length}/${inRound.length}`;
+}
+
 // A ref that makes a folded part of the column `inert` (not tappable, not reachable with Tab, hidden from screen
 // readers) unless `shown`.
 const inertUnless = (shown) => (el) => {
@@ -107,7 +122,9 @@ const inertUnless = (shown) => (el) => {
 // the column only shows (`display`): no menus, chat or way out, and the code to join instead of "Invitar".
 // `group` is "Tu grupo" (GroupSheet): the code is in the sheet's own box above, the list is "En el grupo", and under it
 // the leader's options for their friends and the friends to invite.
-export default function PartyPanel({ room, onToast, scores = false, display = false, group = false, className = "" }) {
+// In a match (`scores`) the header says how the round goes (`status`: "Respondieron 3/4"; by default how many answered)
+// and the chat is in the match's bottom bar (MatchFrame.jsx), not here.
+export default function PartyPanel({ room, onToast, scores = false, display = false, group = false, className = "", status }) {
   const { user, isCentral, group: myGroup } = useApp();
   const [menuFor, setMenuFor] = useState(null);
   // A group's private match shows the group's code: it's how more people come into the group, and so into it.
@@ -199,9 +216,11 @@ export default function PartyPanel({ room, onToast, scores = false, display = fa
 
       <div className="tv-party-title">
         <h2>{scores ? "Marcador" : group ? "En el grupo" : "En la sala"}</h2>
-        <span>
-          {players.length === 1 ? "1 jugador" : `${players.length} jugadores`}
-        </span>
+        {scores ? (
+          <span className="tv-party-status-pill">{status ?? answeredLine(room, players)}</span>
+        ) : (
+          <span>{players.length === 1 ? "1 jugador" : `${players.length} jugadores`}</span>
+        )}
       </div>
 
       {/* Folds away (and the row of faces unfolds) while the chat is open. */}
@@ -216,7 +235,7 @@ export default function PartyPanel({ room, onToast, scores = false, display = fa
               return (
                 <li
                   key={p.id}
-                  className={`tv-player${isMe ? " is-me" : ""}${p.spectator ? " is-spectator" : ""}${p.connected ? "" : " is-away"}${menuFor === p.id ? " is-open" : ""}${
+                  className={`tv-player${isMe ? " is-me" : ""}${scores && p.answered && room.phase === "playing" ? " is-answered" : ""}${p.spectator ? " is-spectator" : ""}${p.connected ? "" : " is-away"}${menuFor === p.id ? " is-open" : ""}${
                     scores && !p.spectator && i < 3 ? ` is-top-${i + 1}` : ""
                   }${showBoard && topWins > 0 && wins === topWins ? " is-leader" : ""}`}
                   style={{ "--i": i }}
@@ -242,18 +261,21 @@ export default function PartyPanel({ room, onToast, scores = false, display = fa
                       <Avatar name={p.name} avatar={p.avatar} />
                     )}
                     <span className="tv-player-text">
-                      <span className="tv-player-name">{p.name}</span>
+                      <span className="tv-player-name">
+                        {p.name}
+                        {scores && isMe ? " · tú" : ""}
+                      </span>
                       {gameWins && scoreLook === "frase" && !p.spectator ? (
                         <span className="tv-player-tagline">
                           {scores ? (
-                            <MatchTag player={p} room={room} />
+                            <MatchTag player={p} room={room} isMe={isMe} />
                           ) : (
                             <span className={`tv-player-tag${isHostPlayer ? " is-host" : ""}`}>{playerTag(p, { isHost: isHostPlayer })}</span>
                           )}
                           <WonLine room={room} player={p} />
                         </span>
                       ) : scores ? (
-                        <MatchTag player={p} room={room} />
+                        <MatchTag player={p} room={room} isMe={isMe} />
                       ) : (
                         <span className={`tv-player-tag${isHostPlayer ? " is-host" : ""}`}>{playerTag(p, { isHost: isHostPlayer })}</span>
                       )}
@@ -265,11 +287,11 @@ export default function PartyPanel({ room, onToast, scores = false, display = fa
                     )}
                     {scores && !p.spectator && (
                       <span key={p.score} className="tv-player-score">
-                        {p.score}
+                        {formatElo(p.score || 0)}
                       </span>
                     )}
                     {/* The host's crown, always last on the right. */}
-                    {isHostPlayer && <Icon name="crown" size={18} strokeWidth={1.5} filled className="tv-player-crown" />}
+                    {isHostPlayer && !scores && <Icon name="crown" size={18} strokeWidth={1.5} filled className="tv-player-crown" />}
                   </button>
                   {menuFor === p.id && !display && (
                     <PlayerMenu
@@ -328,7 +350,7 @@ export default function PartyPanel({ room, onToast, scores = false, display = fa
 
       {/* The chat, while the room waits and in a match. Its messages grow in place of the players' list; its box takes the
           "Chat" button's place, swapping with it where it stands. The central device only shows the room. */}
-      {!display && (
+      {!display && !scores && (
         <>
           <section className="tv-party-chatwrap" aria-label="Chat de la sala" ref={inertUnless(chatting)}>
             <div className="tv-chat tv-chat--side">

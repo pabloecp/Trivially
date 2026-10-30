@@ -9,8 +9,9 @@ import PartyPanel from "../../components/home/PartyPanel.jsx";
 import SpectatorBanner from "../../components/home/SpectatorBanner.jsx";
 import WaitingPill from "../../components/home/WaitingPill.jsx";
 import { ControllerBar, GetReady, PhoneHint } from "../../components/home/CentralBits.jsx";
-import { PauseButton, PauseVeil, SkipButton } from "../../components/home/PauseControls.jsx";
+import { PauseButton, PauseVeil, ReportButton, SkipButton } from "../../components/home/PauseControls.jsx";
 import { resolveCode } from "../../lib/hiddenCode.js";
+import { MatchBar, MatchCard, MatchQuestion } from "../../components/home/MatchFrame.jsx";
 import { useApp, useRemainingMs, useView } from "../../lib/store.jsx";
 import { MAX_CHARS, findKind, sameText } from "./farsanteInfo.js";
 import "../../styles/home.css";
@@ -168,10 +169,11 @@ function GameScreen() {
 
   const tools = (
     <>
+      <ReportButton room={room} onError={setErr} />
       <SkipButton room={room} onError={setErr} />
       <PauseButton room={room} isHost={isHost} onError={setErr} />
       {isHost && (
-        <button type="button" className={`tv-mini-btn${confirmHub ? " is-on" : ""}`} onClick={backToHub}>
+        <button type="button" className={`tv-mini-btn tv-end-btn${confirmHub ? " is-on" : ""}`} onClick={backToHub}>
           {confirmHub ? "¿Seguro? Toca otra vez" : "Terminar"}
         </button>
       )}
@@ -179,7 +181,7 @@ function GameScreen() {
   );
 
   return (
-    <div className={`tv-room tv-game tv-quiz tv-farsante${central ? " is-central" : ""}${controller ? " is-controller" : ""}`}>
+    <div className={`tv-room tv-game tv-match tv-farsante${central ? " is-central" : ""}${controller ? " is-controller" : ""}`}>
       <div className="tv-room-main tv-game-main">
         {spectator && <SpectatorBanner />}
         {controller ? (
@@ -187,59 +189,53 @@ function GameScreen() {
             {tools}
           </ControllerBar>
         ) : (
-          <section className="tv-game-top">
-            <div className="tv-game-round">
-              <p className="tv-mono-label">
-                Ronda {round + 1} de {room.totalRounds} · Farsante
-              </p>
-              <h1 key={`${round}-${title}`} className="tv-card-title">
-                {title}
-              </h1>
-              {hint && <p className="tv-hint">{hint}</p>}
-            </div>
-
-            <div className={`tv-clock${urgent ? " is-urgent" : ""}`} role="timer" aria-label={`${seconds} segundos`}>
-              <svg viewBox="0 0 44 44" aria-hidden="true">
-                <circle className="tv-clock-track" cx="22" cy="22" r="19" />
-                <circle className="tv-clock-fill" cx="22" cy="22" r="19" style={{ strokeDashoffset: 119.4 * (1 - pct / 100) }} />
-              </svg>
-              <span key={seconds} className="tv-clock-num">{seconds}</span>
-            </div>
-
-            <div className="tv-game-tools">{tools}</div>
-
-            <div className="tv-timer" aria-hidden="true">
-              <span className={`tv-timer-fill${urgent ? " is-urgent" : ""}`} style={{ width: `${pct}%` }} />
-            </div>
-          </section>
+          <MatchCard
+            room={room}
+            label={null}
+            pills={
+              <span className="tv-qc-steps">
+                {[
+                  ["Escribir", "pencil", countdown || writing],
+                  ["Votar", "check", voting],
+                  ["Revelar", "eye", reveal],
+                ].map(([name, icon, on]) => (
+                  <span key={name} className={`tv-qc-pill${on ? " is-on" : " is-dark"}`}>
+                    <Icon name={icon} size={16} strokeWidth={2.6} />
+                    {name}
+                  </span>
+                ))}
+              </span>
+            }
+            dir={
+              voting && fs?.kind === "dato"
+                ? "Dato: vota la respuesta real, no las que inventaron"
+                : hint
+                ? `${kind.label}: ${hint}`
+                : `${kind.label}: ${title}`
+            }
+            seconds={seconds}
+            pct={pct}
+            urgent={urgent}
+          >
+            <MatchQuestion>{fs?.prompt || title}</MatchQuestion>
+          </MatchCard>
         )}
 
-        <section key={round} className="tv-game-stage tv-quiz-stage is-open tv-fs-stage">
+        <section key={round} className={`tv-game-stage tv-fs-stage${voting || reveal ? "" : " tv-mpanel"}`}>
           <PauseVeil room={room} isHost={isHost} />
 
-          {fs && !controller && (
-            <div className="tv-fs-prompt">
-              <div className="tv-quiz-q-meta">
-                <span className="tv-match-chip">
-                  <Icon name={kind.icon} size={14} strokeWidth={2.8} /> {kind.label}
-                </span>
-              </div>
-              <h2 className="tv-fs-prompt-text">{fs.prompt}</h2>
-            </div>
-          )}
-
+          {!controller && (countdown || writing) && <span className="tv-mpanel-label">Tu respuesta</span>}
           {countdown && controller && <GetReady />}
 
           {writing && central && <PhoneHint room={room}>Escriban en su teléfono ({fs.written}/{players})</PhoneHint>}
           {writing && !central && !spectator && (
             <form className="tv-fs-write" onSubmit={submit}>
-              <div className="tv-search tv-quiz-write">
-                <div className="tv-search-box">
-                  <Icon name="keyboard" size={22} className="tv-search-icon" />
+              <div className="tv-mwrite">
+                <label className="tv-mwrite-box">
+                  <Icon name="keyboard" size={24} />
                   <input
                     ref={inputRef}
                     type="text"
-                    className="tv-search-input"
                     placeholder={fs.kind === "dato" ? "Una respuesta que suene real…" : "Escribe lo más gracioso…"}
                     value={text}
                     onChange={(e) => setText(e.target.value.slice(0, MAX_CHARS))}
@@ -250,12 +246,11 @@ function GameScreen() {
                     maxLength={MAX_CHARS}
                     aria-label="Tu respuesta"
                   />
-                  {text.trim() && (
-                    <button type="submit" className="tv-btn tv-btn--sm tv-c-green">
-                      {sent ? "Cambiar" : "Enviar"}
-                    </button>
-                  )}
-                </div>
+                </label>
+                <button type="submit" className="tv-btn tv-btn--primary tv-mwrite-send" disabled={!text.trim()}>
+                  <Icon name="send" size={20} strokeWidth={2.4} />
+                  {sent ? "Cambiar" : "Enviar"}
+                </button>
               </div>
               <span className={`tv-fs-count${text.length >= MAX_CHARS ? " is-full" : ""}`}>
                 {text.length}/{MAX_CHARS}
@@ -284,8 +279,10 @@ function GameScreen() {
                     onClick={interactive ? () => vote(o.id) : undefined}
                     className={`tv-fs-option${mine ? " is-mine" : ""}${voted === o.id ? " is-voted" : ""}${reveal && o.real ? " is-real" : ""}`}
                   >
+                    {mine && <Icon name="pencil" size={20} strokeWidth={2.4} />}
                     <span className="tv-fs-option-text">{o.text}</span>
-                    {mine && <span className="tv-fs-option-note">Tu respuesta</span>}
+                    {mine && <span className="tv-mtag">La escribiste tú</span>}
+                    {voted === o.id && !reveal && <span className="tv-mtag">Tu voto</span>}
                     {reveal && <Who option={o} room={room} />}
                   </Tag>
                 );
@@ -303,7 +300,16 @@ function GameScreen() {
       </div>
 
       {/* The scoreboard is the central device's, when there is one. */}
-      {!controller && <PartyPanel room={room} scores display={central} onToast={setErr} />}
+      {!controller && (
+        <PartyPanel
+          room={room}
+          scores
+          display={central}
+          onToast={setErr}
+          status={writing ? `Escribieron ${fs?.written || 0}/${players}` : voting ? `Votaron ${room.players.filter((p) => p.answered).length}/${players}` : undefined}
+        />
+      )}
+      {!controller && !central && <MatchBar room={room} viewerId={viewerId} tools={tools} verb={voting ? "votar" : "escribir"} />}
     </div>
   );
 }

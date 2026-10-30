@@ -4,14 +4,13 @@ import { roomPath, waitsOnInicio } from "../../modes/index.js";
 import { useApp } from "../../lib/store.jsx";
 import { useFriends } from "../../lib/friends.jsx";
 import { useIsOwner } from "../../lib/ownerView.js";
-import { formatElo, gameStats } from "../../lib/gameStats.js";
-import { CLASSIC } from "../../lib/plan.js";
-import { useHiddenCode } from "../../lib/hiddenCode.js";
+import { shownCode, useHiddenCode } from "../../lib/hiddenCode.js";
 import AdminPanel from "./AdminPanel.jsx";
 import ConfirmDialog from "./ConfirmDialog.jsx";
 import Icon from "./Icon.jsx";
 import ProfileChip from "./ProfileChip.jsx";
 import VolumeMenu from "./VolumeMenu.jsx";
+import { RoundSegments, gameLook, matchMode } from "./MatchFrame.jsx";
 
 /** Where leaving a room goes: Inicio, which keeps the game and the side (lib/plan.js) the room was on. */
 export function exitPath() {
@@ -100,6 +99,33 @@ export function useRoomExit({ onRoomScreen = true, onError } = {}) {
   return { toMenu, inGame, asking, leadsGroup, press, leaveNow, endToMenu, cancelAsk: () => setLeaveAsk(false) };
 }
 
+// In a match, beside "Salir": the game and how this round is played on a chip in its colour, then "RONDA 4 DE 10", the
+// match's code and one segment per round.
+function MatchInfo({ room, hidden }) {
+  const { color, icon, name } = gameLook(room);
+  const mode = matchMode(room);
+  const code = room.groupCode || (!room.matchmaking ? room.code : null);
+  return (
+    <>
+      <span className={`tv-chip tv-chip--game tv-c-${color}`}>
+        <Icon name={icon} size={20} strokeWidth={2.4} />
+        <span className="tv-chip-name">{mode ? `${name} · ${mode}` : name}</span>
+      </span>
+      <span className="tv-topbar-round">
+        <span className="tv-topbar-round-row">
+          <span>
+            {/* Phones have no room for the game's chip: its name goes here. */}
+            <span className="tv-topbar-round-game">{name} · </span>
+            Ronda {Math.min(room.totalRounds, (room.currentRound || 0) + 1)} de {room.totalRounds}
+          </span>
+          {code && <span>Sala {shownCode(code, hidden)}</span>}
+        </span>
+        <RoundSegments room={room} />
+      </span>
+    </>
+  );
+}
+
 // Same top bar on every screen: on the left only the way back (no logo); the volume (music and sounds) and the profile
 // on the right. The way back:
 //  - nothing on Inicio itself, nor while a search waits there (the bar's own button cancels it). A private match
@@ -112,7 +138,6 @@ export default function TvTopbar() {
   const { user, room, group, isCentral, leaveGroup } = useApp();
   const friends = useFriends();
   const online = (friends.view?.friends || []).filter((f) => f.online).length;
-  const elo = formatElo(gameStats(CLASSIC).elo);
   const isOwner = useIsOwner();
   const [adminOpen, setAdminOpen] = useState(false);
   const { pathname } = useLocation();
@@ -131,6 +156,8 @@ export default function TvTopbar() {
   // The modal that asks before leaving a match; it only makes sense while the match's own screen is up.
   const [leaving, setLeaving] = useState(false);
   const [codeHidden] = useHiddenCode();
+  // A match's round on its own screen: the game's chip and the round's progress beside "Salir".
+  const playing = inGame && ["countdown", "playing", "reveal"].includes(room?.phase) && Boolean(room?.totalRounds);
   const [codeCopied, setCodeCopied] = useState(false);
 
   useEffect(() => {
@@ -154,18 +181,19 @@ export default function TvTopbar() {
   );
   let leaveButton = null;
   if (inGame) {
-    // In a match, going back is leaving it, so the arrow is an "X" and a modal asks first.
+    // In a match, going back is leaving it ("Salir"), and a modal asks first.
     leaveButton = (
       <button
         type="button"
-        className="tv-chip tv-chip--leave tv-chip--icon"
+        className="tv-chip tv-chip--leave"
         aria-label={toMenu ? "Terminar la partida y volver a los juegos" : "Salir de la partida"}
         aria-haspopup="dialog"
         onClick={() => setLeaving(true)}
       >
         <span className="tv-avatar tv-avatar--empty">
-          <Icon name="close" size={20} strokeWidth={2.6} />
+          <Icon name="back" size={20} strokeWidth={2.6} />
         </span>
+        <span className="tv-chip-name tv-chip-long">Salir</span>
       </button>
     );
   } else if (awayFromRoom) {
@@ -226,6 +254,7 @@ export default function TvTopbar() {
       <header className={`tv-topbar${backAnim ? ` is-back-${backAnim}` : ""}`}>
         <div className="tv-topbar-start">
           {shownButton}
+          {playing && <MatchInfo room={room} hidden={codeHidden} />}
         </div>
         <div className="tv-topbar-end">
           {/* Owners only: the admin panel (the owner/user view, the test bot, the games forced in Casual). */}
@@ -245,6 +274,7 @@ export default function TvTopbar() {
               </span>
             </button>
           )}
+          <VolumeMenu />
           {group && !isCentral && !inGame && (
             // Your sala and its code, to share it: a tap copies it.
             <button
@@ -288,17 +318,7 @@ export default function TvTopbar() {
               {friends.pending > 0 && <span className="tv-fr-badge">{friends.pending}</span>}
             </button>
           )}
-          {user && !isCentral && (
-            // Your general elo: the Clásico's (example numbers until the system exists, lib/gameStats.js).
-            <Link to="/profile" className="tv-chip tv-chip--text tv-chip--elo" aria-label={`Tu elo general: ${elo}`}>
-              <span className="tv-avatar tv-avatar--empty">
-                <Icon name="star" size={20} strokeWidth={2.4} filled />
-              </span>
-              <span className="tv-chip-name">{elo}</span>
-            </Link>
-          )}
           <ProfileChip user={user} />
-          <VolumeMenu />
         </div>
       </header>
       {/* The central device's "Volver" while the room waits. */}

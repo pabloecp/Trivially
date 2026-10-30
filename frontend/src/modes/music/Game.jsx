@@ -16,6 +16,7 @@ import { createLyricPlayer } from "./lyricAudio.js";
 import "../../styles/quiz.css";
 import { PauseButton, ReportButton, SkipButton, PauseVeil } from "../../components/home/PauseControls.jsx";
 import { resolveCode } from "../../lib/hiddenCode.js";
+import { MatchBar, MatchCard, MatchQuestion } from "../../components/home/MatchFrame.jsx";
 
 // A closed round's four songs keep the same letters and colours as Trivia's options.
 const OPTION_LETTERS = ["A", "B", "C", "D"];
@@ -481,7 +482,7 @@ function GameScreen() {
       {isHost && (
         <button
           type="button"
-          className={`tv-mini-btn${confirmHub ? " is-on" : ""}`}
+          className={`tv-mini-btn tv-end-btn${confirmHub ? " is-on" : ""}`}
           onClick={() => backToHub({ confirm: true })}
         >
           {confirmHub ? "¿Seguro? Toca otra vez" : "Terminar"}
@@ -491,7 +492,7 @@ function GameScreen() {
   );
 
   return (
-    <div className={`tv-room tv-game${central ? " is-central" : ""}${controller ? " is-controller" : ""}`}>
+    <div className={`tv-room tv-game tv-match${central ? " is-central" : ""}${controller ? " is-controller" : ""}`}>
       <audio ref={audioRef} preload="auto" playsInline />
 
       <div className="tv-room-main tv-game-main">
@@ -502,34 +503,40 @@ function GameScreen() {
             {tools}
           </ControllerBar>
         ) : (
-          <section className="tv-game-top">
-            <div className="tv-game-round">
-              <p className="tv-mono-label">
-                {room.matchmaking ? "Partida pública" : "Partida privada"} · {room.mode === "solo" ? "Práctica" : "Adivina la canción"}
-              </p>
-              <h1 className="tv-card-title">
-                Ronda {room.currentRound + 1} <span className="tv-muted">de {room.totalRounds}</span>
-              </h1>
-            </div>
-
-            <div className={`tv-clock${urgent ? " is-urgent" : ""}`} role="timer" aria-label={`${seconds} segundos`}>
-              <svg viewBox="0 0 44 44" aria-hidden="true">
-                <circle className="tv-clock-track" cx="22" cy="22" r="19" />
-                <circle className="tv-clock-fill" cx="22" cy="22" r="19" style={{ strokeDashoffset: 119.4 * (1 - pct / 100) }} />
-              </svg>
-              <span key={seconds} className="tv-clock-num">{seconds}</span>
-            </div>
-
-            <div className="tv-game-tools">{tools}</div>
-
-            <div className="tv-timer" aria-hidden="true">
-              <span className={`tv-timer-fill${urgent ? " is-urgent" : ""}`} style={{ width: `${pct}%` }} />
-            </div>
-          </section>
+          <MatchCard
+            room={room}
+            size={lyrics ? "s" : "m"}
+            label={`${lyrics ? "Letra" : "Título"} · ${closed ? "Cerradas" : "Abiertas"}`}
+            icon="music"
+            dir={
+              lyrics
+                ? closed
+                  ? "La canción se corta: elige la palabra que sigue"
+                  : "La canción se corta: escribe la palabra que sigue"
+                : closed
+                ? "Escucha el fragmento y elige qué canción es · más rápido, más puntos"
+                : "Escucha el fragmento y escribe su título · más rápido, más puntos"
+            }
+            seconds={seconds}
+            pct={pct}
+            urgent={urgent}
+          >
+            {lyrics ? (
+              <MatchQuestion>{room.phase === "reveal" ? "Así seguía" : "¿Qué palabra sigue?"}</MatchQuestion>
+            ) : room.phase === "reveal" && room.reveal ? (
+              <MatchQuestion>{room.reveal.title}</MatchQuestion>
+            ) : (
+              <div className={`tv-qc-eq${room.phase === "playing" && !room.paused ? " is-on" : ""}`} aria-hidden="true">
+                {Array.from({ length: 30 }, (_, i) => (
+                  <i key={i} style={{ "--i": i }} />
+                ))}
+              </div>
+            )}
+          </MatchCard>
         )}
 
         {room.phase === "countdown" && (
-          <section key={`c${room.currentRound}`} className="tv-game-stage tv-countdown">
+          <section key={`c${room.currentRound}`} className="tv-game-stage tv-countdown tv-mpanel">
             <PauseVeil room={room} isHost={isHost} />
             {controller ? (
               <GetReady />
@@ -562,27 +569,11 @@ function GameScreen() {
         {/* A closed round stays on this screen at the reveal, like Trivia: the right song ringed in green, a wrong
             pick in red. */}
         {(room.phase === "playing" || (room.phase === "reveal" && closed)) && (
-          <section key={`p${room.currentRound}`} className="tv-game-stage tv-play-card">
+          <section key={`p${room.currentRound}`} className={`tv-game-stage tv-play-card${closed ? "" : " tv-mpanel"}`}>
             <PauseVeil room={room} isHost={isHost} />
             {/* Completa la letra: a small title and the lyrics following the song, like Spotify's. */}
-            {!controller && !lyrics && (
-              <>
-                <div className="tv-eq" aria-hidden="true">
-                  {Array.from({ length: 7 }, (_, i) => (
-                    <span key={i} style={{ "--i": i }} />
-                  ))}
-                </div>
-                <h2 className="tv-play-q">¿Qué canción está sonando?</h2>
-              </>
-            )}
-            {lyrics && (
-              <>
-                <p className="tv-mono-label">
-                  {room.phase === "playing" && cutRound === room.currentRound ? "¿Cómo sigue?" : "Letra"}
-                </p>
-                <LyricsPanel lyrics={lyrics} position={lyricPos} />
-              </>
-            )}
+            {!controller && !lyrics && !closed && <span className="tv-mpanel-label">Tu respuesta</span>}
+            {lyrics && <LyricsPanel lyrics={lyrics} position={lyricPos} />}
             {closed && room.phase === "reveal" && central && <RoomVerdict room={room} />}
             {closed && room.phase === "reveal" && !central && (() => {
               const isCorrect = Boolean(me?.lastAnswer?.correct);
@@ -669,8 +660,9 @@ function GameScreen() {
               </div>
             ) : !locked ? (
               <div className="tv-search">
+                <div className="tv-search-row">
                 <div className="tv-search-box">
-                  <Icon name={lyrics ? "keyboard" : "music"} size={22} className="tv-search-icon" />
+                  <Icon name="keyboard" size={22} className="tv-search-icon" />
                   <input
                     ref={inputRef}
                     type="text"
@@ -687,21 +679,23 @@ function GameScreen() {
                     aria-controls={lyrics ? undefined : "tv-suggest"}
                     maxLength={lyrics ? 100 : undefined}
                   />
-                  {query.trim().length > 0 && (
-                    <button
-                      type="button"
-                      className="tv-btn tv-btn--sm tv-c-green"
-                      onClick={() => {
-                        if (suggestions.length > 0 && suggestions[activeIndex]) {
-                          handleSubmitSong(suggestions[activeIndex]);
-                        } else if (query.trim()) {
-                          handleSubmitSong(query.trim());
-                        }
-                      }}
-                    >
-                      Enviar
-                    </button>
-                  )}
+                </div>
+                {/* The yellow "Enviar" beside the box, always there (off until something is typed). */}
+                <button
+                  type="button"
+                  className="tv-btn tv-btn--primary tv-mwrite-send"
+                  disabled={!query.trim()}
+                  onClick={() => {
+                    if (suggestions.length > 0 && suggestions[activeIndex]) {
+                      handleSubmitSong(suggestions[activeIndex]);
+                    } else if (query.trim()) {
+                      handleSubmitSong(query.trim());
+                    }
+                  }}
+                >
+                  <Icon name="send" size={20} strokeWidth={2.4} />
+                  Enviar
+                </button>
                 </div>
 
                 {/* Hidden while typing, but it keeps its space so the answer box never moves. */}
@@ -778,7 +772,7 @@ function GameScreen() {
           const didAnswer = !skipped && Boolean(me?.lastAnswer?.text || submittedSong);
           const tone = isCorrect ? "ok" : didAnswer ? "bad" : "timeout";
           return (
-            <section key={`r${room.currentRound}`} className="tv-game-stage tv-reveal">
+            <section key={`r${room.currentRound}`} className="tv-game-stage tv-reveal tv-mpanel">
               <PauseVeil room={room} isHost={isHost} />
               {/* The central device says how the room did; each phone how its player did (the song is on the big screen). */}
               {central && <RoomVerdict room={room} />}
@@ -845,6 +839,7 @@ function GameScreen() {
 
       {/* The scoreboard is the central device's, when there is one. */}
       {!controller && <PartyPanel room={room} scores display={central} onToast={setErr} />}
+      {!controller && !central && <MatchBar room={room} viewerId={viewerId} tools={tools} />}
     </div>
   );
 }
@@ -874,7 +869,7 @@ function LyricsPanel({ lyrics, position }) {
               <>
                 {before}
                 <span className={`tv-lyrics-gap${filled ? " is-filled" : ""}`} aria-label={filled ? undefined : "espacio en blanco"}>
-                  {filled ? lyrics.answer : ""}
+                  {filled ? lyrics.answer : "?"}
                 </span>
                 {after}
               </>
