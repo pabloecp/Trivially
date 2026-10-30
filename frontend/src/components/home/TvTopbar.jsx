@@ -4,8 +4,10 @@ import { roomPath, waitsOnInicio } from "../../modes/index.js";
 import { useApp } from "../../lib/store.jsx";
 import { useFriends } from "../../lib/friends.jsx";
 import { useIsOwner } from "../../lib/ownerView.js";
+import { formatElo, gameStats } from "../../lib/gameStats.js";
+import { CLASSIC } from "../../lib/plan.js";
+import { useHiddenCode } from "../../lib/hiddenCode.js";
 import AdminPanel from "./AdminPanel.jsx";
-import AppIcon from "./AppIcon.jsx";
 import ConfirmDialog from "./ConfirmDialog.jsx";
 import Icon from "./Icon.jsx";
 import ProfileChip from "./ProfileChip.jsx";
@@ -98,17 +100,19 @@ export function useRoomExit({ onRoomScreen = true, onError } = {}) {
   return { toMenu, inGame, asking, leadsGroup, press, leaveNow, endToMenu, cancelAsk: () => setLeaveAsk(false) };
 }
 
-// Same top bar on every screen: on the left the way back and the small logo with "trivially", which goes to Inicio
-// (during a match, after asking, since it leaves it); the volume (music and sounds) and the profile on the right. The way back:
-//  - nothing on Inicio itself, also while a room waits there (a private match before it starts, a search: the bar's
-//    own buttons change or cancel it). The central device has "Volver" (see `useRoomExit`);
+// Same top bar on every screen: on the left only the way back (no logo); the volume (music and sounds) and the profile
+// on the right. The way back:
+//  - nothing on Inicio itself, nor while a search waits there (the bar's own button cancels it). A private match
+//    waiting on Inicio has "Volver", out of it (`leaveNow`: its leader takes the group back, anyone else goes alone);
+//    the central device's "Volver" asks first (see `useRoomExit`);
 //  - on a match's screen it is an "X" that asks in a modal before leaving (the host of a private match goes back to
 //    waiting in it instead of leaving);
 //  - on any other page (profile...): "Volver", to the match if one is running, otherwise to Inicio.
 export default function TvTopbar() {
-  const { user, room, group, isCentral, leaveRoom, setLeaveAsk } = useApp();
-  const nav = useNavigate();
+  const { user, room, group, isCentral, leaveGroup } = useApp();
   const friends = useFriends();
+  const online = (friends.view?.friends || []).filter((f) => f.online).length;
+  const elo = formatElo(gameStats(CLASSIC).elo);
   const isOwner = useIsOwner();
   const [adminOpen, setAdminOpen] = useState(false);
   const { pathname } = useLocation();
@@ -118,7 +122,6 @@ export default function TvTopbar() {
   // A room waiting on Inicio is Inicio for its players (not for the central device, whose screen is the room's).
   const waitsHere = waitsOnInicio(room) && !isCentral;
   const onHome = pathname === "/" && (!room || waitsHere);
-  const brandHidden = onHome;
   const goUp = useGoUp();
   const [modesErr, setModesErr] = useState("");
   const { toMenu, inGame, asking, leadsGroup, press, leaveNow, endToMenu, cancelAsk } = useRoomExit({
@@ -127,24 +130,8 @@ export default function TvTopbar() {
   });
   // The modal that asks before leaving a match; it only makes sense while the match's own screen is up.
   const [leaving, setLeaving] = useState(false);
-  // The logo goes to Inicio: straight away outside a room, and after asking (out of the room) inside one.
-  const [homeAsk, setHomeAsk] = useState(false);
-
-  useEffect(() => {
-    if (!room) setHomeAsk(false);
-  }, [room]);
-
-  function goHome() {
-    if (room && !waitsHere) setHomeAsk(true);
-    else nav("/");
-  }
-
-  function leaveHome() {
-    setHomeAsk(false);
-    setLeaveAsk(false);
-    leaveRoom();
-    nav("/", { replace: true });
-  }
+  const [codeHidden] = useHiddenCode();
+  const [codeCopied, setCodeCopied] = useState(false);
 
   useEffect(() => {
     if (!modesErr) return undefined;
@@ -201,6 +188,12 @@ export default function TvTopbar() {
         <span className="tv-chip-name tv-chip-long">Volver</span>
       </button>
     );
+  } else if (room && waitsHere && !room.matchmaking) {
+    // A private match waiting on Inicio: back out of it (its leader takes the group, anyone else goes alone).
+    leaveButton = backChip({ "aria-label": "Salir de la partida privada", onClick: leaveNow });
+  } else if (onHome && !room && group && group.members.length <= 1) {
+    // Your sala with only you in it: "Volver" leaves it, back to "Elige un juego".
+    leaveButton = backChip({ "aria-label": "Salir de tu sala", onClick: () => leaveGroup() });
   } else if (!onHome) {
     leaveButton = backChip({ "aria-label": upPath(pathname) === "/" ? "Volver al inicio" : "Volver", onClick: goUp });
   }
@@ -233,19 +226,7 @@ export default function TvTopbar() {
       <header className={`tv-topbar${backAnim ? ` is-back-${backAnim}` : ""}`}>
         <div className="tv-topbar-start">
           {shownButton}
-          <button
-            type="button"
-            className={`tv-brand${brandHidden ? " is-hidden" : ""}`}
-            aria-label="Ir al inicio"
-            aria-haspopup={room ? "dialog" : undefined}
-            onClick={goHome}
-          >
-            <AppIcon small />
-            <span className="tv-brand-name">trivially</span>
-          </button>
         </div>
-        {/* The site's address, faint, in the middle of the bar (computers): on every screen, so the bar never changes. */}
-        <span className="tv-topbar-url">playtrivially.com</span>
         <div className="tv-topbar-end">
           {/* Owners only: the admin panel (the owner/user view, the test bot, the games forced in Casual). */}
           {isOwner && !isCentral && (
@@ -264,11 +245,33 @@ export default function TvTopbar() {
               </span>
             </button>
           )}
+          {group && !isCentral && !inGame && (
+            // Your sala and its code, to share it: a tap copies it.
+            <button
+              type="button"
+              className="tv-chip tv-chip--text"
+              aria-label={codeCopied ? "Código copiado" : `Copiar el código de tu sala`}
+              onClick={async (e) => {
+                e.currentTarget.blur();
+                try {
+                  await navigator.clipboard.writeText(group.code);
+                  setCodeCopied(true);
+                  setTimeout(() => setCodeCopied(false), 1500);
+                } catch {}
+              }}
+            >
+              <span className="tv-avatar tv-avatar--empty">
+                <Icon name={room && !room.matchmaking ? "lock" : "users"} size={20} strokeWidth={2.4} />
+              </span>
+              <span className="tv-chip-name tv-chip-long">{room && !room.matchmaking ? "Sala privada" : "Tu sala"}</span>
+              <b className="tv-chip-count">{codeCopied ? "Copiado" : codeHidden ? "•••••" : group.code}</b>
+            </button>
+          )}
           {friends.isAccount && !isCentral && (
             <button
               type="button"
-              className="tv-chip tv-chip--icon tv-chip--friends"
-              aria-label={friends.pending ? `Amigos (${friends.pending} solicitudes)` : "Amigos"}
+              className="tv-chip tv-chip--text tv-chip--friends"
+              aria-label={`Amigos: ${online} en línea${friends.pending ? `, ${friends.pending} solicitudes` : ""}`}
               aria-haspopup="dialog"
               onClick={(e) => {
                 // The sheet doesn't take the focus: left on this button, closing it with Escape drew the keyboard's
@@ -280,11 +283,22 @@ export default function TvTopbar() {
               <span className="tv-avatar tv-avatar--empty">
                 <Icon name="users" size={20} strokeWidth={2.4} />
               </span>
+              <span className="tv-chip-name tv-chip-long">Amigos</span>
+              <b className="tv-chip-count">{online}</b>
               {friends.pending > 0 && <span className="tv-fr-badge">{friends.pending}</span>}
             </button>
           )}
-          <VolumeMenu />
+          {user && !isCentral && (
+            // Your general elo: the Clásico's (example numbers until the system exists, lib/gameStats.js).
+            <Link to="/profile" className="tv-chip tv-chip--text tv-chip--elo" aria-label={`Tu elo general: ${elo}`}>
+              <span className="tv-avatar tv-avatar--empty">
+                <Icon name="star" size={20} strokeWidth={2.4} filled />
+              </span>
+              <span className="tv-chip-name">{elo}</span>
+            </Link>
+          )}
           <ProfileChip user={user} />
+          <VolumeMenu />
         </div>
       </header>
       {/* The central device's "Volver" while the room waits. */}
@@ -297,17 +311,6 @@ export default function TvTopbar() {
         confirmLabel="Salir"
         onCancel={cancelAsk}
         onConfirm={leaveNow}
-      />
-      {/* The logo during a match (or on the central device): out of it (asking first) and to Inicio. */}
-      <ConfirmDialog
-        open={homeAsk && Boolean(room)}
-        icon={isCentral ? "tv" : "logout"}
-        title={isCentral ? "¿Dejar de ser el dispositivo central?" : "¿Seguro que quieres salir?"}
-        text={isCentral ? "Esta pantalla saldrá de la partida y volverá al inicio." : "Dejarás la partida en curso y volverás al inicio."}
-        cancelLabel={inMatch && !isCentral ? "Seguir jugando" : "Quedarme"}
-        confirmLabel="Salir"
-        onCancel={() => setHomeAsk(false)}
-        onConfirm={leaveHome}
       />
       <ConfirmDialog
         open={leaving && inGame}

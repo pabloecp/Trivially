@@ -79,6 +79,6 @@ export async function loadLyricRounds({ db = null, file = LYRIC_ROUNDS_FILE, log
       log.warn?.(`[Letras] No se pudo leer la tabla ${LYRIC_ROUNDS_TABLE} (${err.message})`);
     }
   }
-  log.log?.(`[Letras] ${rounds.size} canciones listas para «Completa la letra»`);
+  log.log?.(`[Letras] ${rounds.size} canciones listas para el modo «Letra»`);
   return rounds;
 }

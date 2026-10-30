@@ -123,11 +123,18 @@
 /* The "X" of a match is only its icon: no room for "Volver", so it sits in the middle of its square. */
 .tv-app .tv-chip--leave.tv-chip--icon { padding: 0; justify-content: center; }
 .tv-app .tv-chip--leave.tv-chip--icon > .tv-avatar--empty { width: 40px; margin-left: 0; }
+/* "Amigos 3" and "★ 1.284": an icon, a word or number, and the count in yellow. */
+.tv-app .tv-chip--text { gap: 2px; padding-right: 14px; }
+.tv-app .tv-chip--text .tv-chip-name { font-family: var(--tv-display); font-weight: 700; font-size: 15px; }
+.tv-app .tv-chip-count { margin-left: 6px; font-family: var(--tv-display); font-weight: 800; font-size: 15px; color: var(--p-accent-2); }
+.tv-app .tv-chip--elo > .tv-avatar--empty { color: var(--p-accent-2); }
 .tv-app .tv-chip--profile { gap: 10px; padding: 0 14px 0 6px; }
 .tv-app .tv-chip--profile > .tv-avatar { width: 28px; height: 28px; font-size: 14px; }
 @media (max-width: 640px) {
   .tv-app .tv-topbar { padding: calc(14px + env(safe-area-inset-top)) 16px 0; }
   .tv-app .tv-chip--leave { width: 40px; padding: 0; }
+  .tv-app .tv-chip--text .tv-chip-long { display: none; }
+  .tv-app .tv-chip--text { padding-right: 12px; }
   .tv-app .tv-chip--leave > .tv-avatar--empty { width: 40px; margin: 0; }
   .tv-app .tv-chip--profile,
   .tv-app .tv-chip--profile:hover,
@@ -210,7 +217,14 @@
    The card: the game's icon and, in one row beside it, who the match is for over the game's name (one line); three
    short lines under them (how it's played, the settings, how many play now); the game's icon big and faint, cut by
    the bottom right corner. */
-.tv-lobby-stage:has(.tv-stage) { width: min(1260px, 100%); }
+.tv-lobby-stage:has(.tv-stage) { width: min(1260px, 100%); justify-content: flex-start; align-items: stretch; }
+/* Inicio's stage fills the space between the top bar and the group's bar, as in the design (no gaps above or below). */
+@media (min-width: 761px) {
+  .tv-app .tv-main.is-lobby:has(.tv-stage) { padding-top: 14px; padding-bottom: calc(16px + env(safe-area-inset-bottom)); }
+  .tv-lobby:has(.tv-stage) { gap: 14px; }
+  .tv-lobby-game:has(.tv-stage) { flex: 1; align-items: stretch; }
+  .tv-lobby-stage .tv-stage { flex: 1; height: auto; min-height: 380px; }
+}
 .tv-stage {
   flex: none;
   display: grid;
@@ -223,7 +237,7 @@
   transform-origin: 50% 100%;
   animation: var(--tv-box-in);
 }
-.tv-stage.has-aside { grid-template-columns: minmax(0, 1.5fr) minmax(280px, 1fr); }
+.tv-stage.has-aside { grid-template-columns: minmax(0, 1fr) 340px; }
 
 .tv-stage-card {
   position: relative;
@@ -240,6 +254,19 @@
   color: #fff;
   transition: background-color 0.6s ease;
 }
+/* The head at the top; "Ajustes" and the three lines together at the bottom. */
+.tv-stage-card:has(.tv-stage-bottom) { justify-content: flex-start; }
+.tv-stage-bottom { position: relative; display: flex; flex-direction: column; gap: 12px; margin-top: auto; min-width: 0; }
+.tv-stage-tools { display: flex; align-items: center; gap: 10px; }
+/* "Reglas fijas en la partida pública", or who chooses the settings: a quiet label, not a button. */
+.tv-stage-fixed { display: inline-flex; align-items: center; gap: 8px; height: 36px; padding: 0 12px; border-radius: 10px; background: rgba(0, 0, 0, 0.18); font-family: var(--tv-display); font-weight: 700; font-size: 14px; color: rgba(255, 255, 255, 0.92); }
+/* "Elige un juego": the grey card with the logo, a line of what there is, and "Elegir juego" beside the three lines. */
+.tv-stage-aud.is-quiet { height: auto; padding: 0; background: none; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--tv-text-3); }
+.tv-stage-intro { position: relative; max-width: 500px; margin: -6px 0 0; font-family: var(--tv-small); font-weight: 600; font-size: 18px; line-height: 1.35; color: #fff; }
+.tv-stage-card.tv-c-neutral .tv-stage-intro { color: var(--tv-text-2); }
+.tv-stage-choose-row { flex-direction: row; align-items: flex-end; justify-content: space-between; gap: 20px; }
+.tv-stage-card.is-choose .tv-stage-line-icon { background: var(--tv-neutral); }
+.tv-app .tv-stage-choose { flex-shrink: 0; gap: 8px; }
 .tv-stage-card.tv-c-neutral { background: var(--tv-surface); }
 .tv-stage-card:not(.has-swap) .tv-mstage-flash { animation-delay: 0.4s; }
 .tv-stage-mark { position: absolute; right: -50px; bottom: -70px; display: grid; color: rgba(255, 255, 255, 0.14); pointer-events: none; }
@@ -252,28 +279,26 @@
 .tv-stage-logo { flex-shrink: 0; display: grid; }
 .tv-stage-logo .tv-appicon { --s: 72px; }
 .tv-stage-heading { min-width: 0; }
-.tv-stage-aud { display: flex; align-items: center; gap: 6px; margin: 0 0 6px; font-family: var(--tv-display); font-weight: 700; font-size: 15px; line-height: 1.2; color: rgba(255, 255, 255, 0.9); }
+/* Who the match is for: a small glass label over the name. */
+.tv-stage-aud { display: flex; align-items: center; gap: 6px; width: max-content; height: 28px; margin: 0 0 8px; padding: 0 10px; border-radius: 10px; background: rgba(255, 255, 255, 0.2); font-family: var(--tv-small); font-weight: 700; font-size: 12px; line-height: 1; color: #fff; }
 /* The name on one line, as big as fits ("…" when even that doesn't). */
-.tv-stage-name { margin: 0; overflow: hidden; font-size: clamp(30px, 3.4vw, 50px); line-height: 1.05; color: #fff; white-space: nowrap; text-overflow: ellipsis; }
+.tv-stage-name { margin: 0; overflow: hidden; font-size: clamp(30px, 4vw, 60px); line-height: 1.05; color: #fff; white-space: nowrap; text-overflow: ellipsis; }
 .tv-stage-name.is-long { font-size: clamp(22px, 2.4vw, 32px); }
 
 /* The three lines: an icon on a lighter square and a few words; flat. */
-.tv-stage-lines { position: relative; display: flex; flex-direction: column; gap: 10px; width: min(100%, 560px); margin: 0; padding: 0; list-style: none; }
+.tv-stage-lines { position: relative; display: flex; flex-direction: column; gap: 12px; width: min(100%, 520px); margin: 0; padding: 0; list-style: none; }
 .tv-stage-lines li {
   display: flex;
   align-items: center;
-  gap: 14px;
-  min-height: 54px;
-  padding: 7px 8px 7px 7px;
-  border-radius: 12px;
-  background: rgba(0, 0, 0, 0.14);
-  font-family: var(--tv-display);
-  font-weight: 700;
-  font-size: 16px;
+  gap: 12px;
+  font-family: var(--tv-small);
+  font-weight: 600;
+  font-size: 15px;
   line-height: 1.25;
 }
 .tv-stage-lines b { font-family: var(--tv-title); font-weight: 800; font-variant-numeric: tabular-nums; }
-.tv-stage-line-icon { display: grid; place-items: center; flex-shrink: 0; width: 40px; height: 40px; border-radius: 10px; background: rgba(255, 255, 255, 0.18); }
+.tv-stage-line-icon { display: grid; place-items: center; flex-shrink: 0; width: 34px; height: 34px; border-radius: 10px; background: rgba(255, 255, 255, 0.18); }
+.tv-stage-line-icon svg { width: 18px; height: 18px; }
 .tv-stage-line-text { flex: 1; min-width: 0; }
 .tv-stage-note { font-weight: 600; color: rgba(255, 255, 255, 0.75); }
 /* "Jugando ahora": a white dot that keeps sending out a ring. */
@@ -283,6 +308,9 @@
 /* "Ajustes" (a private match), at the end of its line: glass over the card's colour, with a darker edge like any
    button on it. */
 .tv-stage-settings {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   flex-shrink: 0;
   height: 40px;
   padding: 0 16px;
@@ -320,24 +348,39 @@
 .tv-stage-card.is-classic .tv-stage-lines li { background: rgba(255, 255, 255, 0.06); }
 
 /* Beside the card: "Tu elo" (your character in its empty side) and "Reto del día" under it. Flat dark boxes. */
-.tv-stage-aside { display: grid; grid-template-rows: 1fr 1fr; gap: 16px; min-width: 0; }
+.tv-stage-aside { display: grid; grid-template-rows: auto auto minmax(0, 1fr); gap: 14px; min-width: 0; }
+.tv-stage-aside .tv-stage-box { padding: 18px 22px; }
+/* "Amigos en línea": up to three, each with what you can do ("Unirme", "Invitar"). */
+.tv-stage-box.tv-stage-friends { justify-content: flex-start; gap: 10px; overflow: hidden; }
+.tv-stage-friends-empty { margin: 0; font-family: var(--tv-small); font-weight: 600; font-size: 14px; line-height: 1.4; color: var(--tv-text-3); }
+.tv-stage-friends-list { display: flex; flex-direction: column; gap: 10px; margin: 0; padding: 0; list-style: none; }
+.tv-stage-friends-list li { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.tv-stage-friends-list .tv-avatar { width: 30px; height: 30px; }
+.tv-stage-friends-text { display: flex; flex: 1; flex-direction: column; gap: 1px; min-width: 0; }
+.tv-stage-friends-text b { overflow: hidden; font-family: var(--tv-display); font-weight: 800; font-size: 15px; color: var(--tv-text); white-space: nowrap; text-overflow: ellipsis; }
+.tv-stage-friends-text span { overflow: hidden; font-family: var(--tv-small); font-weight: 600; font-size: 12px; color: var(--tv-text-3); white-space: nowrap; text-overflow: ellipsis; }
+.tv-stage-friends-act { flex-shrink: 0; height: 30px; padding: 0 12px; border: 0; border-radius: 9px; background: var(--tv-neutral); box-shadow: 0 3px 0 var(--tv-neutral-edge); color: var(--tv-text); font-family: var(--tv-display); font-weight: 700; font-size: 13px; cursor: pointer; transition: transform 0.15s var(--tv-spring), box-shadow 0.15s ease; }
+.tv-stage-friends-act:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 4px 0 var(--tv-neutral-edge); }
+.tv-stage-friends-act:active:not(:disabled) { transform: translateY(3px); box-shadow: 0 0 0 var(--tv-neutral-edge); }
+.tv-stage-friends-act:disabled { opacity: 0.5; cursor: default; }
 .tv-stage-box { position: relative; display: flex; flex-direction: column; justify-content: center; gap: 12px; min-width: 0; padding: 22px 24px; border-radius: 24px; background: var(--tv-surface); border: 1px solid rgba(255, 255, 255, 0.07); }
 .tv-stage-label { font-family: var(--tv-small); font-weight: 700; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--tv-text-3); }
 .tv-stage-elo { flex-direction: row; align-items: center; justify-content: space-between; gap: 12px; }
 .tv-stage-elo-text { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
-.tv-stage-elo-num { display: flex; align-items: center; gap: 10px; font-family: var(--tv-title); font-weight: 900; font-size: 52px; line-height: 1; letter-spacing: -0.04em; font-variant-numeric: tabular-nums; color: var(--tv-text); }
+.tv-stage-elo-num { display: flex; align-items: center; gap: 10px; font-family: var(--tv-title); font-weight: 900; font-size: 46px; line-height: 1; letter-spacing: -0.04em; font-variant-numeric: tabular-nums; color: var(--tv-text); }
 .tv-stage-elo-num .tv-icon, .tv-stage-elo-num svg { color: var(--p-accent-2); }
 .tv-stage-elo-week { font-family: var(--tv-display); font-weight: 800; font-size: 14px; color: #2fe08a; }
 .tv-stage-elo-week.is-down { color: #ff6b6b; }
 /* Your character: Blob (Blob.jsx), white with a black line; it floats a little. */
-.tv-stage-blob { display: block; flex-shrink: 0; width: 42%; max-width: 170px; aspect-ratio: 1; margin: -10px -6px -14px 0; animation: tvBlobFloat 3.2s ease-in-out infinite; }
+.tv-stage-blob { display: block; flex-shrink: 0; width: 96px; aspect-ratio: 1; margin: -8px -4px -8px 0; animation: tvBlobFloat 3.2s ease-in-out infinite; }
 @keyframes tvBlobFloat { 50% { transform: translateY(-6px); } }
-.tv-stage-daily-row { display: flex; align-items: center; gap: 14px; }
-.tv-stage-daily-icon { display: grid; place-items: center; flex-shrink: 0; width: 52px; height: 52px; border-radius: 14px; background: var(--p-accent-2); color: var(--p-on-accent); box-shadow: 0 4px 0 var(--p-accent-edge); }
-.tv-stage-daily-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
-.tv-stage-daily-text strong { font-family: var(--tv-display); font-weight: 800; font-size: 17px; line-height: 1.2; color: var(--tv-text); }
+/* "Reto del día": the yellow square with the flame, the label over the goal, the count; the bar under them. */
+.tv-stage-daily-row { display: flex; align-items: center; gap: 12px; }
+.tv-stage-daily-icon { display: grid; place-items: center; flex-shrink: 0; width: 34px; height: 34px; border-radius: 10px; background: var(--p-accent-2); color: var(--p-on-accent); }
+.tv-stage-daily-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.tv-stage-daily-text strong { font-family: var(--tv-small); font-weight: 700; font-size: 14px; line-height: 1.2; color: var(--tv-text); }
 .tv-stage-daily-text span { font-family: var(--tv-small); font-weight: 600; font-size: 13px; color: var(--tv-text-3); }
-.tv-stage-daily-count { font-family: var(--tv-title); font-weight: 800; font-size: 22px; font-variant-numeric: tabular-nums; color: var(--tv-text); }
+.tv-stage-daily-count { font-family: var(--tv-display); font-weight: 800; font-size: 18px; font-variant-numeric: tabular-nums; color: var(--tv-text); }
 .tv-stage-daily-bar { display: block; height: 8px; overflow: hidden; border-radius: 4px; background: rgba(255, 255, 255, 0.08); }
 .tv-stage-daily-bar i { display: block; height: 100%; border-radius: 4px; background: var(--p-accent-2); }
 
@@ -358,6 +401,8 @@
   .tv-stage.has-aside { grid-template-columns: minmax(0, 1fr); height: auto; min-height: 0; }
   .tv-stage-card { padding: 24px 20px; }
   .tv-stage-aside { grid-template-rows: none; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .tv-stage-aside .tv-stage-friends { grid-column: 1 / -1; }
+  .tv-stage-choose-row { flex-direction: column; align-items: stretch; }
   .tv-stage-box { padding: 18px; }
   .tv-stage-elo-num { font-size: 40px; }
   .tv-stage-blob { width: 44%; }
@@ -381,38 +426,52 @@
 }
 
 /* ---------- The group's bar ---------- */
+/* Three zones, each with its small label over a flat grey box: TU GRUPO, PARTIDA, and the screen's yellow button. */
 .tv-gbar {
   display: flex;
   flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 14px 24px;
+  align-items: flex-end;
+  gap: 12px 14px;
   width: min(1260px, 100%);
-  padding: 16px 16px 16px 24px;
+  padding: 12px 14px 14px;
   border-radius: 22px;
   background: var(--tv-surface);
   animation: var(--tv-box-in);
 }
-.tv-gbar-group { display: flex; align-items: center; gap: 12px; min-width: 0; }
-.tv-gbar-label { font-family: var(--tv-display); font-weight: 700; font-size: 15px; color: var(--tv-text); white-space: nowrap; }
-.tv-gbar-faces { display: flex; align-items: center; gap: 8px; padding: 0; border: 0; background: none; cursor: pointer; }
-.tv-gbar-faces .tv-avatar { width: 36px; height: 36px; font-size: 16px; }
-.tv-gbar-faces .tv-avatar.is-me { box-shadow: 0 0 0 3px var(--tv-surface), 0 0 0 5px var(--p-accent-2); }
+.tv-gbar-zone { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.tv-gbar-zone--group { flex: 1 1 0; }
+.tv-gbar-cap { padding-left: 4px; font-family: var(--tv-small); font-weight: 700; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--tv-text-3); }
+.tv-gbar-box { display: flex; align-items: center; gap: 8px; min-width: 0; min-height: 64px; padding: 8px 10px; border-radius: 18px; background: var(--tv-surface-2); }
+.tv-gbar-group > .tv-avatar,
+.tv-gbar-faces .tv-avatar { width: 36px; height: 36px; }
+.tv-gbar-group .tv-avatar.is-me { box-shadow: 0 0 0 3px var(--tv-surface-2), 0 0 0 5px var(--p-accent-2); }
+.tv-gbar-faces { display: flex; align-items: center; padding: 0 0 0 4px; border: 0; background: none; cursor: pointer; }
+.tv-gbar-faces .tv-avatar + .tv-avatar,
+.tv-gbar-faces .tv-avatar + .tv-avatar--empty { margin-left: -4px; }
 .tv-gbar-faces .tv-avatar.is-away { opacity: 0.4; }
-/* In a group, first of the left side, before the faces: "Salir del grupo", red ("Salir" on phones). */
-.tv-app .tv-gbar-leave { gap: 6px; padding: 0 14px; }
-/* Without a group: "Crear grupo", and beside it the box to join a friend's group with its code and the white "Unirse".
-   The box is flat: ringed in blue while writing, in red when the code opens no group. */
-.tv-app .tv-gbar-create { gap: 8px; }
+/* Who decides ("Eres el líder"), or "Juegas solo" without a group. */
+.tv-gbar-who { display: flex; flex-direction: column; gap: 2px; flex: 0 1 auto; min-width: 90px; max-width: 240px; margin-right: auto; }
+.tv-gbar-who b { font-family: var(--tv-display); font-weight: 800; font-size: 15px; line-height: 1.1; color: var(--tv-text); white-space: nowrap; }
+.tv-gbar-who span { overflow: hidden; font-family: var(--tv-small); font-weight: 600; font-size: 12px; color: var(--tv-text-3); white-space: nowrap; text-overflow: ellipsis; }
+.tv-gbar-ask { font-family: var(--tv-small); font-weight: 600; font-size: 12px; color: var(--tv-text-3); white-space: nowrap; }
+/* The group's code, to share it, and "Copiar". */
+.tv-gbar-code { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.tv-gbar-code-text { display: flex; align-items: center; height: 40px; padding: 0 12px; border-radius: 12px; background: var(--tv-surface); font-family: var(--tv-title); font-weight: 800; font-size: 17px; letter-spacing: 0.16em; color: var(--tv-text); }
+.tv-app .tv-gbar-invite { position: relative; flex-shrink: 0; gap: 6px; padding: 0 14px; }
+/* "Salir del grupo", red ("Salir" on phones), last of the group's zone. */
+.tv-app .tv-gbar-leave { flex-shrink: 0; padding: 0 14px; }
+/* "¿Te invitaron?": the box to join a friend's group with its code and the white "Unirse". The box is flat: ringed in
+   blue while writing, in red when the code opens no group. */
 .tv-gbar-join { display: flex; align-items: center; gap: 8px; min-width: 0; }
 .tv-gbar-join-input {
-  width: 190px;
+  flex: none;
+  width: 110px;
   min-width: 0;
   height: 44px;
   padding: 0 14px;
   border: 0;
   border-radius: 12px;
-  background: var(--tv-surface-2);
+  background: var(--tv-surface);
   color: var(--tv-text);
   font-family: var(--tv-display);
   font-weight: 800;
@@ -420,20 +479,23 @@
   letter-spacing: 0.12em;
   transition: box-shadow 0.15s ease;
 }
-.tv-gbar-join-input::placeholder { font-weight: 600; letter-spacing: 0; color: var(--tv-text-3); }
+.tv-gbar-join-input::placeholder { font-weight: 800; font-size: 14px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--tv-text-3); }
 .tv-gbar-join-input:focus { outline: none; box-shadow: inset 0 0 0 2px var(--brand); }
 .tv-gbar-join-input[aria-invalid="true"] { box-shadow: inset 0 0 0 2px var(--p-bad); }
 .tv-gbar-join-input:disabled { opacity: 0.45; }
 /* Codes hidden for streaming: dots while writing. */
 .tv-gbar-join-input.is-hidden { -webkit-text-security: disc; }
+/* "Unirse" stays white even before a code is written (it only does something with one). */
 .tv-app .tv-gbar-join-go { flex-shrink: 0; }
-/* On its own row (a narrow screen: the group's side didn't fit beside it), still on the right. */
-.tv-gbar-play { display: flex; align-items: center; gap: 14px; min-width: 0; margin-left: auto; }
-/* Who the match is for and "Vas a jugar" are one piece: a flat grey box (corners 6 px wider than the card's) with the
-   audience, its icon and name as plain text, on the left and the game's card inside it. */
-.tv-gbar-plan-row { display: flex; align-items: center; gap: 14px; min-width: 0; padding: 6px 6px 6px 16px; border-radius: 20px; background: var(--tv-surface-2); }
-.tv-gbar-audience { display: inline-flex; align-items: center; gap: 8px; font-family: var(--tv-display); font-weight: 700; font-size: 15px; color: var(--tv-text); white-space: nowrap; }
-.tv-gbar-audience svg { flex-shrink: 0; color: var(--tv-text-3); }
+.tv-app .tv-gbar-join-go:disabled { opacity: 1; background: #fff; color: var(--tv-bg); }
+/* PARTIDA: "Pública" / "Privada" (the chosen one in the site's blue) and "Vas a jugar", in one grey box. */
+.tv-gbar-plan-row { gap: 8px; padding: 6px; }
+.tv-gbar-seg { display: flex; flex: none; gap: 4px; padding: 4px; border-radius: 12px; background: var(--tv-surface); }
+.tv-gbar-seg-btn { display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 10px; border: 0; border-radius: 9px; background: none; color: var(--tv-text-2); font-family: var(--tv-display); font-weight: 700; font-size: 14px; cursor: pointer; transition: color 0.15s ease; }
+.tv-gbar-seg-btn:hover:not(:disabled):not(.is-on) { color: var(--tv-text); }
+.tv-gbar-seg-btn.is-on { background: var(--tv-pick); color: #fff; box-shadow: 0 3px 0 var(--tv-pick-edge); }
+.tv-gbar-seg-btn:disabled { cursor: default; }
+.tv-gbar-seg-btn:not(.is-on):disabled { opacity: 0.5; }
 /* "Vas a jugar" is the game's own card (.tv-gcard: its colour, its edge, the white square with the icon, the faint icon cut
    by the corner), small and of one width whatever the game's name. */
 .tv-gcard.tv-gbar-plan {
@@ -442,19 +504,23 @@
   justify-content: flex-start;
   align-items: center;
   gap: 12px;
-  width: 270px;
-  min-height: 64px;
-  padding: 10px 14px 10px 10px;
+  width: 216px;
+  min-height: 52px;
+  padding: 6px 14px 6px 8px;
   border-radius: 14px;
   animation: none;
 }
 .tv-gcard.tv-gbar-plan:disabled { opacity: 0.6; }
+/* No game yet: the grey card with its edge, its square dark like the panel, no faint icon. */
+.tv-gcard.tv-gbar-plan.tv-c-neutral { background: var(--tv-surface-3); box-shadow: 0 4px 0 var(--tv-neutral-edge); color: var(--tv-text); }
+.tv-gbar-plan.tv-c-neutral .tv-gcard-badge { background: var(--tv-surface); color: var(--tv-text); box-shadow: none; }
+.tv-gbar-plan.tv-c-neutral .tv-gcard-mark { display: none; }
 .tv-gbar-plan .tv-gcard-mark { right: -12px; bottom: -22px; }
-.tv-gbar-plan .tv-gcard-badge { flex-shrink: 0; width: 44px; height: 44px; border-radius: 12px; }
+.tv-gbar-plan .tv-gcard-badge { flex-shrink: 0; width: 38px; height: 38px; border-radius: 11px; }
 .tv-gbar-plan .tv-gcard-text { min-width: 0; gap: 3px; }
 .tv-gbar-plan .tv-gcard-sub { font-size: 12px; line-height: 1; }
 .tv-gbar-plan .tv-gcard-name { overflow: hidden; font-size: 17px; line-height: 1.15; text-overflow: ellipsis; white-space: nowrap; }
-.tv-gbar-plan-chevron { position: relative; flex-shrink: 0; margin-left: auto; transform: rotate(90deg); }
+.tv-gbar-plan-chevron { position: relative; flex-shrink: 0; margin-left: auto; }
 /* The Clásico's, in the logo's look like its tile (.tv-ccard): black in the logo's coloured frame, the logo where a
    game's icon goes. The frame takes 4 px, so the padding is that much less. */
 .tv-gcard.tv-gbar-plan.is-classic {
@@ -466,27 +532,32 @@
     conic-gradient(var(--logo-1) 0 72deg, var(--logo-2) 72deg 144deg, var(--logo-3) 144deg 216deg, var(--logo-4) 216deg 288deg, var(--logo-5) 288deg 360deg) border-box;
 }
 .tv-gbar-plan.is-classic .tv-appicon { --s: 44px; flex-shrink: 0; }
-.tv-app .tv-gbar-go { min-width: 210px; text-transform: uppercase; letter-spacing: 0.02em; font-size: 20px; }
-.tv-gbar-note { margin: 0; padding: 0 12px; font-family: var(--tv-small); font-weight: 600; font-size: 14px; color: var(--tv-text-3); }
+/* JUGAR before a game is chosen: grey and still, with its lock (not faded). */
+.tv-app .tv-gbar-go.tv-btn--neutral:disabled { opacity: 1; background: var(--tv-surface-3); box-shadow: none; color: var(--tv-text-3); }
+.tv-app .tv-gbar-go { gap: 8px; min-width: 176px; height: 64px; text-transform: uppercase; letter-spacing: 0.02em; font-size: 20px; }
+.tv-gbar-note { margin: 0; padding: 0 12px 22px; font-family: var(--tv-small); font-weight: 600; font-size: 14px; color: var(--tv-text-3); }
 .tv-gbar-error { flex-basis: 100%; margin: 0; font-weight: 700; font-size: 14px; color: var(--p-bad-text); text-align: right; }
-/* Creating or joining a group went wrong: said under that side. */
+/* Joining a group went wrong: said under that side. */
 .tv-gbar-error--group { text-align: left; }
-@media (max-width: 760px) {
-  .tv-gbar { flex-direction: column; align-items: stretch; gap: 12px; padding: 12px; border-radius: 20px; }
-  .tv-gbar-label { display: none; }
-  .tv-gbar-group { flex-wrap: wrap; gap: 10px; }
-  .tv-gbar-faces { gap: 6px; }
-  .tv-gbar-faces .tv-avatar { width: 32px; height: 32px; font-size: 15px; }
+/* Not wide enough for the group's zone in full: the quiet lines go first. */
+@media (max-width: 1440px) {
   .tv-gbar-leave-more { display: none; }
-  .tv-app .tv-gbar-create { flex: 1 1 auto; }
-  .tv-gbar-join { flex: 1 1 220px; }
+}
+@media (max-width: 1180px) {
+  .tv-gbar-who span,
+  .tv-gbar-ask { display: none; }
+}
+@media (max-width: 760px) {
+  .tv-gbar { flex-direction: column; align-items: stretch; gap: 10px; padding: 12px; border-radius: 20px; }
+  .tv-gbar-box { flex-wrap: wrap; min-height: 0; }
+  .tv-gbar-faces .tv-avatar,
+  .tv-gbar-group > .tv-avatar { width: 32px; height: 32px; }
+  .tv-gbar-leave-more { display: none; }
+  .tv-gbar-join { flex: 1 1 200px; }
   .tv-gbar-join-input { flex: 1; width: auto; }
-  .tv-gbar-play { flex-direction: column; align-items: stretch; gap: 12px; margin-left: 0; }
-  /* The audience goes over the card, on the box's top left. */
-  .tv-gbar-plan-row { flex-direction: column; align-items: stretch; gap: 8px; padding: 10px 6px 6px; border-radius: 18px; }
-  .tv-gbar-audience { padding-left: 10px; font-size: 14px; }
   .tv-gcard.tv-gbar-plan { flex: 1 1 auto; width: auto; min-width: 0; }
-  .tv-app .tv-gbar-go { width: 100%; min-width: 0; }
+  .tv-app .tv-gbar-go { width: 100%; min-width: 0; height: 56px; }
+  .tv-gbar-note { padding: 0; text-align: center; }
   .tv-gbar-error { text-align: center; }
 }
 

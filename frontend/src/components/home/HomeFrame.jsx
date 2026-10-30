@@ -16,15 +16,19 @@ import { useStartGame } from "./ModeStart.jsx";
 import { publicMatchLine } from "./matchInfo.js";
 import "../../styles/lobby.css";
 
+// The card when no game is chosen (Inicio on a new device, or a private match before its host picks one).
+const CHOOSE = { id: "none", name: "Elige un juego", icon: "grid", color: "neutral", steps: [] };
+
 // Inicio, a private match's lobby and the search for a public match are one screen: the game's big card in the middle
 // (its settings behind a summary at its bottom) and the bar at the bottom (the group, "Vas a jugar" and the one yellow
 // button). Arriba la info, al centro el juego, abajo tu grupo y la acción.
 // The card's settings on Inicio: a public match's are the same for everyone, so they can't be changed (no "Ajustes");
 // a private match's belong to its room, so "Ajustes" makes the match first (the group comes into it) and they open there.
-// Nobody has a group to begin with: the bar has "Crear grupo" (it's made straight away) and "Unirse" with a friend's
-// code; in a group, its faces, "+" to invite (the code is in that window) and "Salir del grupo". Without a group you
-// play alone: a public match, or a private one only for you. A group only takes its players together: its
-// leader decides and everyone goes (the server moves them, game/groups.js).
+// Nobody has a group to begin with, and nothing is chosen on a new device: the card says "Elige un juego" and JUGAR
+// waits. Choosing a game makes your group straight away (your "sala": its code is on the bar to invite) and, on the
+// private side, its match too; without one the bar only has "Unirse" with a friend's code. In a group, its faces, its
+// code, "Invitar" and "Salir del grupo". A group only takes its players together: its leader decides and everyone goes
+// (the server moves them, game/groups.js).
 //  - On Inicio: the plan is this device's, or the group's (its leader's). "Partida pública" searches for a public match
 //    of the game (for the whole group; the Clásico's is the roulette's, without a game); "Partida privada" makes the
 //    private match (picking a game for it, or EMPEZAR, which also starts it), and the group goes into it.
@@ -65,8 +69,11 @@ export default function HomeFrame({ room = null, onToast, Lobby = null, leaving 
     ? { game: room.game, audience: "grupo" }
     : group
     ? group.plan
-    : localPlan;
-  const mode = findMode(plan.game) || findMode("opciones");
+    : // No group means no game yet: choosing one is what makes it ("Elige un juego" until then).
+      { ...localPlan, game: null };
+  const mode = (plan.game && findMode(plan.game)) || null;
+  // Inicio with nothing chosen yet (a new device): "Elige un juego" and JUGAR waits.
+  const noGame = !mode && !room && !searching;
   const needsName = !user?.name || user.isGuest;
   const leaderName = group?.leaderName || "el líder";
 
@@ -94,7 +101,7 @@ export default function HomeFrame({ room = null, onToast, Lobby = null, leaving 
 
   // True when it was done, false when it went wrong (said in the bar).
   async function perform(action) {
-    const forGroup = action.type === "join" || action.type === "group";
+    const forGroup = action.type === "join";
     setBusyType(action.type);
     setError("");
     setGroupError("");
@@ -103,8 +110,12 @@ export default function HomeFrame({ room = null, onToast, Lobby = null, leaving 
         // The Clásico's public match is the roulette's: a search without a game.
         if (action.type === "match") await findMatch("casual", undefined, undefined, action.game === CLASSIC ? null : action.game);
         else if (action.type === "join") await joinGroup(action.code);
-        else if (action.type === "group") await createGroup(action.plan);
-        else if (action.type === "follow") await joinGroup(group.code);
+        else if (action.type === "pick") {
+          // A game chosen with no group yet: your group at once (its code is on the bar), and on the private side its
+          // match too.
+          await createGroup({ audience: plan.audience, game: action.game });
+          if (plan.audience === "grupo") await createRoom("multi", {}, action.game);
+        } else if (action.type === "follow") await joinGroup(group.code);
         else {
           // "setup": the private match for its settings ("Ajustes" on Inicio's card).
           if (action.type === "setup") setSettingsAsked(true);
@@ -112,7 +123,7 @@ export default function HomeFrame({ room = null, onToast, Lobby = null, leaving 
           if (action.then === "start") await startGame();
         }
       });
-      if (action.type === "group") onToast?.("Creaste un grupo. Invita a tus amigos con el +", "check");
+      if (action.type === "pick") onToast?.("Se creó tu sala. Comparte el código para invitar", "check");
       return true;
     } catch (err) {
       setSettingsAsked(false);
@@ -189,8 +200,13 @@ export default function HomeFrame({ room = null, onToast, Lobby = null, leaving 
       if (game !== room.game) act(() => setGame(game));
       return;
     }
-    if (group) act(() => setGroupPlan({ game }));
-    else updateLocalPlan({ game });
+    if (!group) {
+      // No group yet: choosing makes it (and the private match, on that side).
+      updateLocalPlan({ game });
+      run({ type: "pick", game });
+      return;
+    }
+    act(() => setGroupPlan({ game }));
     // A game for a private match: the match straight away (its settings; the group comes into it).
     if (plan.audience === "grupo") run({ type: "create", game });
   }
@@ -215,9 +231,12 @@ export default function HomeFrame({ room = null, onToast, Lobby = null, leaving 
     note = "Tu grupo está jugando una partida…";
   } else if (!decides) {
     note = `Esperando a ${leaderName}…`;
+  } else if (noGame) {
+    action = { label: "Jugar", locked: true, disabled: true };
   } else if (plan.audience === "publica") {
     action = {
       label: busyType === "match" ? "Buscando…" : "Jugar",
+      play: busyType !== "match",
       sound: "none",
       disabled: busy || !isPublicGame(plan.game),
       onClick: () => run({ type: "match", game: plan.game }),
@@ -233,10 +252,10 @@ export default function HomeFrame({ room = null, onToast, Lobby = null, leaving 
 
   // The summary and "Ajustes" at the bottom of Inicio's card. The Clásico has none: its card says how it goes instead.
   const cardSettings =
-    mode.kind === "classic"
+    !mode || mode.kind === "classic"
       ? null
       : plan.audience === "publica"
-      ? { summary: publicMatchLine(mode.id) || "Sin partidas públicas por ahora" }
+      ? { summary: publicMatchLine(mode.id) || "Sin partidas públicas por ahora", fixed: true }
       : decides && !away
       ? { summary: "Ajustes por defecto", onOpen: () => run({ type: "setup", game: plan.game }), disabled: busy }
       : { summary: "Ajustes por defecto", note: away ? "Tu grupo ya está jugando" : `Los elige ${leaderName}` };
@@ -256,7 +275,9 @@ export default function HomeFrame({ room = null, onToast, Lobby = null, leaving 
             </OpenSettingsContext.Provider>
           </div>
         ) : room ? (
-          <ModeStage mode={{ id: "none", name: "Elige un juego", icon: "grid", color: "neutral", steps: [] }} title={decides ? "Elige un juego" : `${room.hostName || "El anfitrión"} está eligiendo`} />
+          <ModeStage mode={CHOOSE} title={decides ? "Elige un juego" : `${room.hostName || "El anfitrión"} está eligiendo`} />
+        ) : noGame ? (
+          <ModeStage mode={CHOOSE} empty onChoose={() => setSheet("plan")} swapKey="none" />
         ) : (
           <ModeStage mode={mode} audience={plan.audience} swapKey={`${mode.id}:${plan.audience}`} settings={cardSettings} />
         )}
@@ -266,10 +287,12 @@ export default function HomeFrame({ room = null, onToast, Lobby = null, leaving 
         members={members}
         meId={user?.id || "me"}
         inGroup={Boolean(group)}
-        canCreate={!searching}
+        code={group?.code || ""}
+        isLeader={Boolean(group) && isLeader}
+        canJoin={!searching}
         busy={busyType}
         onGroup={() => setSheet("group")}
-        onCreate={() => run({ type: "group", plan })}
+        onAudience={decides && !away ? chooseAudience : null}
         onJoin={joinWithCode}
         onJoinEdit={() => setGroupError("")}
         onLeave={() => setConfirmLeave(true)}

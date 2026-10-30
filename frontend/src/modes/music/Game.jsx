@@ -578,7 +578,7 @@ function GameScreen() {
             {lyrics && (
               <>
                 <p className="tv-mono-label">
-                  {room.phase === "playing" && cutRound === room.currentRound ? "¿Cómo sigue?" : "Completa la letra"}
+                  {room.phase === "playing" && cutRound === room.currentRound ? "¿Cómo sigue?" : "Letra"}
                 </p>
                 <LyricsPanel lyrics={lyrics} position={lyricPos} />
               </>
