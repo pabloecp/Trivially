@@ -1,4 +1,5 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { findMode } from "../../modes/index.js";
 import { useHiddenCode } from "../../lib/hiddenCode.js";
 import { AUDIENCES } from "../../lib/plan.js";
@@ -6,6 +7,7 @@ import AppIcon from "./AppIcon.jsx";
 import Avatar from "./Avatar.jsx";
 import { useApp } from "../../lib/store.jsx";
 import Icon from "./Icon.jsx";
+import { useInvite } from "./useInvite.js";
 
 const FACES = 5;
 const CODE_LENGTH = 5;
@@ -27,7 +29,9 @@ function codeFrom(text) {
 //    jugar?"): the game is changed from here.
 //  - The screen's one yellow button (JUGAR, EMPEZAR; CANCELAR, grey, while searching; JUGAR grey with a lock until a game
 //    is chosen, `action.locked`), or `note` while someone else decides.
-// On phones the zones go one under the other. `onJoin(code)` is false when the code didn't work; `canJoin` false while
+// On phones TU GRUPO goes up to the top bar, very short (SalaMenu: the faces and how many, a tap opens the whole zone like
+// the volume's panel), and the rest stays at the foot of the screen, always in sight: "Vas a jugar" and, in one row,
+// the invite link's copy button and the yellow one. `onJoin(code)` is false when the code didn't work; `canJoin` false while
 // searching for a match. `groupError` is said under the group's zone, `error` under the button.
 export default function GroupBar({ members = [], meId, inGroup = false, code = "", isLeader = false, canJoin = true, onGroup, onAudience = null, onJoin, onJoinEdit, onLeave, busy = false, inviteBadge = 0, plan, onPlan, planLocked = false, action = null, note = "", error = "", groupError = "" }) {
   const mode = plan.game ? findMode(plan.game) : null;
@@ -41,10 +45,9 @@ export default function GroupBar({ members = [], meId, inGroup = false, code = "
 
   // Your Blob in your colour.
   const myAvatar = useApp().user?.avatar;
-  return (
-    <div className="tv-gbar" role="region" aria-label="Tu grupo y la partida">
-      <div className="tv-gbar-zone tv-gbar-zone--group">
-        <span className="tv-gbar-cap">{alone ? "Tu sala · 1" : inGroup ? `Tu grupo · ${members.length}` : "Tu grupo"}</span>
+  const phone = useNarrow();
+  const cap = alone ? "Tu sala · 1" : inGroup ? `Tu grupo · ${members.length}` : "Tu grupo";
+  const groupBox = (
         <div className="tv-gbar-box tv-gbar-group">
           {alone ? (
             <>
@@ -94,7 +97,20 @@ export default function GroupBar({ members = [], meId, inGroup = false, code = "
             </>
           )}
         </div>
-      </div>
+  );
+
+  return (
+    <div className="tv-gbar" role="region" aria-label="Tu grupo y la partida">
+      {phone ? (
+        <SalaMenu members={shown} count={members.length} inGroup={inGroup} myAvatar={myAvatar} meId={meId} cap={cap} badge={inviteBadge} error={groupError}>
+          {groupBox}
+        </SalaMenu>
+      ) : (
+        <div className="tv-gbar-zone tv-gbar-zone--group">
+          <span className="tv-gbar-cap">{cap}</span>
+          {groupBox}
+        </div>
+      )}
 
       <div className="tv-gbar-zone tv-gbar-zone--plan">
         <span className="tv-gbar-cap">Partida</span>
@@ -126,7 +142,11 @@ export default function GroupBar({ members = [], meId, inGroup = false, code = "
               </>
             )}
             <span className="tv-gcard-text">
-              <span className="tv-gcard-sub">Vas a jugar</span>
+              <span className="tv-gcard-sub">
+                Vas a jugar
+                {/* Phones have no room for "Pública" / "Privada" beside it: it's said here and changed in "¿Qué quieren jugar?". */}
+                {mode && !classic && <span className="tv-gbar-plan-aud"> · {plan.audience === "publica" ? "Pública" : "Privada"}</span>}
+              </span>
               <span className="tv-gcard-name">{mode?.name || "Elige un juego"}</span>
             </span>
             {!planLocked && <Icon name="chevron" size={18} strokeWidth={3} className="tv-gbar-plan-chevron" />}
@@ -135,6 +155,7 @@ export default function GroupBar({ members = [], meId, inGroup = false, code = "
       </div>
 
       <div className="tv-gbar-zone tv-gbar-zone--go">
+        {phone && inGroup && code && <ShareLink code={code} />}
         {action ? (
           <button
             type="button"
@@ -151,12 +172,100 @@ export default function GroupBar({ members = [], meId, inGroup = false, code = "
           <p className="tv-gbar-note">{note}</p>
         )}
       </div>
-      {shownError && (
+      {(phone ? error : shownError) && (
         <p className={`tv-gbar-error${groupError ? " tv-gbar-error--group" : ""}`} role="alert">
-          {shownError}
+          {phone ? error : shownError}
         </p>
       )}
     </div>
+  );
+}
+
+// Whether the screen is as narrow as a phone's (where the bar's zones split up, look.css).
+function useNarrow() {
+  const query = "(max-width: 760px)";
+  const [narrow, setNarrow] = useState(() => Boolean(window.matchMedia?.(query).matches));
+  useEffect(() => {
+    const list = window.matchMedia?.(query);
+    if (!list) return undefined;
+    const onChange = () => setNarrow(list.matches);
+    list.addEventListener("change", onChange);
+    return () => list.removeEventListener("change", onChange);
+  }, []);
+  return narrow;
+}
+
+// Phones: your sala in the top bar (its slot, `.tv-topbar-sala` in TvTopbar), very short: its faces (yours first) and how
+// many are in it, or your Blob and "Unirse" without one. A tap opens the whole TU GRUPO zone under it, like the volume's
+// panel; a tap outside or Escape closes it. A code that didn't work (`error`) is said in it.
+function SalaMenu({ members, count, inGroup, myAvatar, meId, cap, badge, error, children }) {
+  const [open, setOpen] = useState(false);
+  const [slot, setSlot] = useState(null);
+  const rootRef = useRef(null);
+
+  useEffect(() => {
+    setSlot(document.querySelector(".tv-topbar-sala"));
+  }, []);
+
+  useEffect(() => {
+    if (!open) return undefined;
+    const onDown = (e) => {
+      if (!rootRef.current?.contains(e.target)) setOpen(false);
+    };
+    const onKey = (e) => e.key === "Escape" && setOpen(false);
+    document.addEventListener("pointerdown", onDown);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("pointerdown", onDown);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
+
+  if (!slot) return null;
+  const faces = inGroup ? members.slice(0, 3) : [{ id: meId, avatar: myAvatar }];
+  return createPortal(
+    <div className="tv-sala" ref={rootRef}>
+      <button
+        type="button"
+        className="tv-chip tv-chip--sala"
+        aria-haspopup="dialog"
+        aria-expanded={open}
+        aria-label={inGroup ? `${cap}: ver tu sala` : "Tu grupo: unirse a una sala"}
+        onClick={() => setOpen((v) => !v)}
+      >
+        <span className="tv-sala-faces">
+          {faces.map((p) => (
+            <Avatar key={p.id} avatar={p.avatar} className={p.id === meId ? "is-me" : ""} />
+          ))}
+        </span>
+        {inGroup ? <b className="tv-sala-count">{count}</b> : <span className="tv-chip-name">Unirse</span>}
+        <Icon name="chevron" size={14} strokeWidth={3} className={`tv-sala-chevron${open ? " is-open" : ""}`} />
+        {badge > 0 && <span className="tv-fr-badge">{badge}</span>}
+      </button>
+      {open && (
+        <div className="tv-sala-panel" role="dialog" aria-label={cap}>
+          <span className="tv-gbar-cap">{cap}</span>
+          {children}
+          {error && (
+            <p className="tv-gbar-error tv-gbar-error--group" role="alert">
+              {error}
+            </p>
+          )}
+        </div>
+      )}
+    </div>,
+    slot
+  );
+}
+
+// Phones, beside the yellow button: copies the sala's invite link (/grupo/CODE) to share it.
+function ShareLink({ code }) {
+  const { copied, copy } = useInvite(code);
+  return (
+    <button type="button" className="tv-btn tv-btn--neutral tv-btn--lg tv-gbar-share" data-sound="none" aria-label={copied ? "Enlace copiado" : "Copiar el enlace de tu sala"} onClick={copy}>
+      <Icon name={copied ? "check" : "link"} size={20} strokeWidth={2.6} />
+      <span>{copied ? "Copiado" : "Enlace"}</span>
+    </button>
   );
 }
 

@@ -95,6 +95,9 @@
   min-height: 100vh;
   min-height: 100dvh;
   overflow-x: hidden;
+  /* Clipped, not a scroll box of its own: the page scrolls, so what sticks to the window (the group's bar on phones)
+     can. */
+  overflow-x: clip;
   /* Flat black; see "The page" near the end of the file. */
   color: var(--tv-text);
   font-family: var(--tv-body);

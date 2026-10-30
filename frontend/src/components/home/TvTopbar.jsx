@@ -126,7 +126,7 @@ function MatchInfo({ room, hidden }) {
   );
 }
 
-// Same top bar on every screen: on the left only the way back (no logo); on the right, in this order, the owners' panel
+// Same top bar on every screen: on the left only the way back (no logo), and on phones your sala beside it; on the right, in this order, the owners' panel
 // (ajustes), the volume (music and sounds), friends and the profile. Your sala's code isn't here: it's in the address
 // and in the group's bar at the bottom. The way back:
 //  - nothing on Inicio itself, nor while a search waits there (the bar's own button cancels it). A private match
@@ -256,6 +256,8 @@ export default function TvTopbar() {
         <div className="tv-topbar-start">
           {shownButton}
           {playing && <MatchInfo room={room} hidden={codeHidden} />}
+          {/* Phones: your sala, very short, put here by the group's bar (GroupBar's SalaMenu) where it is on screen. */}
+          {!playing && <span className="tv-topbar-sala" />}
         </div>
         <div className="tv-topbar-end">
           {/* Owners only: the admin panel (the owner/user view, the test bot, the games forced in Casual). */}
