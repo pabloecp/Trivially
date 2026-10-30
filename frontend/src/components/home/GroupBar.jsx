@@ -102,8 +102,16 @@ export default function GroupBar({ members = [], meId, inGroup = false, code = "
   return (
     <div className="tv-gbar" role="region" aria-label="Tu grupo y la partida">
       {phone ? (
-        <SalaMenu members={shown} count={members.length} inGroup={inGroup} myAvatar={myAvatar} meId={meId} cap={cap} badge={inviteBadge} error={groupError}>
-          {groupBox}
+        <SalaMenu members={shown} count={members.length} inGroup={inGroup} meId={meId} cap={inGroup ? cap : "¿Te invitaron?"} badge={inviteBadge} error={groupError}>
+          {inGroup ? (
+            groupBox
+          ) : (
+            // No game chosen means no sala yet: here only the way into a friend's.
+            <div className="tv-gbar-box tv-gbar-group">
+              <span className="tv-sala-hint">Escribe el código o pega el enlace de la sala de un amigo. Si eliges un juego, se crea la tuya.</span>
+              <JoinField onJoin={onJoin} onEdit={onJoinEdit} disabled={!canJoin || Boolean(busy)} invalid={Boolean(groupError)} />
+            </div>
+          )}
         </SalaMenu>
       ) : (
         <div className="tv-gbar-zone tv-gbar-zone--group">
@@ -196,9 +204,9 @@ function useNarrow() {
 }
 
 // Phones: your sala in the top bar (its slot, `.tv-topbar-sala` in TvTopbar), very short: its faces (yours first) and how
-// many are in it, or your Blob and "Unirse" without one. A tap opens the whole TU GRUPO zone under it, like the volume's
+// many are in it. Without one (no game chosen yet, so no sala) it's only "Unirse", for a friend's code. A tap opens the whole TU GRUPO zone under it, like the volume's
 // panel; a tap outside or Escape closes it. A code that didn't work (`error`) is said in it.
-function SalaMenu({ members, count, inGroup, myAvatar, meId, cap, badge, error, children }) {
+function SalaMenu({ members, count, inGroup, meId, cap, badge, error, children }) {
   const [open, setOpen] = useState(false);
   const [slot, setSlot] = useState(null);
   const rootRef = useRef(null);
@@ -222,7 +230,6 @@ function SalaMenu({ members, count, inGroup, myAvatar, meId, cap, badge, error, 
   }, [open]);
 
   if (!slot) return null;
-  const faces = inGroup ? members.slice(0, 3) : [{ id: meId, avatar: myAvatar }];
   return createPortal(
     <div className="tv-sala" ref={rootRef}>
       <button
@@ -230,15 +237,24 @@ function SalaMenu({ members, count, inGroup, myAvatar, meId, cap, badge, error, 
         className="tv-chip tv-chip--sala"
         aria-haspopup="dialog"
         aria-expanded={open}
-        aria-label={inGroup ? `${cap}: ver tu sala` : "Tu grupo: unirse a una sala"}
+        aria-label={inGroup ? `${cap}: ver tu sala` : "Unirse a la sala de un amigo"}
         onClick={() => setOpen((v) => !v)}
       >
-        <span className="tv-sala-faces">
-          {faces.map((p) => (
-            <Avatar key={p.id} avatar={p.avatar} className={p.id === meId ? "is-me" : ""} />
-          ))}
-        </span>
-        {inGroup ? <b className="tv-sala-count">{count}</b> : <span className="tv-chip-name">Unirse</span>}
+        {inGroup ? (
+          <>
+            <span className="tv-sala-faces">
+              {members.slice(0, 3).map((p) => (
+                <Avatar key={p.id} avatar={p.avatar} className={`${p.id === meId ? "is-me" : ""}${p.connected === false ? " is-away" : ""}`.trim()} />
+              ))}
+            </span>
+            <b className="tv-sala-count">{count}</b>
+          </>
+        ) : (
+          <>
+            <Icon name="link" size={18} strokeWidth={2.6} />
+            <span className="tv-chip-name">Unirse</span>
+          </>
+        )}
         <Icon name="chevron" size={14} strokeWidth={3} className={`tv-sala-chevron${open ? " is-open" : ""}`} />
         {badge > 0 && <span className="tv-fr-badge">{badge}</span>}
       </button>
