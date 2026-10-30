@@ -71,6 +71,11 @@ export default function ModeStage({ mode, room = null, audience = null, title = 
           </div>
           {extra}
         </div>
+        {!steps && mode.description && (
+          <p key={`intro-${key}`} className="tv-stage-intro">
+            {mode.description}
+          </p>
+        )}
 
         <div className="tv-stage-bottom">
         {tools && (
@@ -133,7 +138,7 @@ export default function ModeStage({ mode, room = null, audience = null, title = 
         {children}
       </div>
 
-      {stats && <Boxes game={mode.id} color={mode.color} stats={stats} />}
+      {stats && <Boxes game={mode.id} gameName={mode.name} color={mode.color} stats={stats} />}
     </section>
   );
 }
@@ -206,7 +211,7 @@ function FriendsBox() {
 
   return (
     <div className="tv-stage-box tv-stage-friends">
-      <span className="tv-stage-label">Amigos en línea</span>
+      <span className="tv-stage-label">{group ? "Invita a tu sala" : "Amigos en línea"}</span>
       {!friends.isAccount ? (
         <p className="tv-stage-friends-empty">Con una cuenta puedes agregar amigos y ver aquí quién está jugando.</p>
       ) : online.length === 0 ? (
@@ -242,13 +247,13 @@ function FriendsBox() {
 
 // Beside the card: your elo in the game, with your character in the box's empty side, the day's challenge, and your
 // friends online.
-function Boxes({ game, color, stats }) {
+function Boxes({ game, gameName = "", color, stats }) {
   const { daily } = stats;
   return (
     <div key={game} className={`tv-stage-aside tv-c-${color}`}>
       <div className="tv-stage-box tv-stage-elo">
         <div className="tv-stage-elo-text">
-          <span className="tv-stage-label">Tu elo</span>
+          <span className="tv-stage-label">{gameName ? `Tu elo en ${gameName}` : "Tu elo"}</span>
           <strong className="tv-stage-elo-num">{formatElo(stats.elo)}</strong>
           {stats.week !== 0 && (
             <span className={`tv-stage-elo-week${stats.week < 0 ? " is-down" : ""}`}>
@@ -262,14 +267,13 @@ function Boxes({ game, color, stats }) {
       </div>
 
       <div className="tv-stage-box tv-stage-daily">
-        <span className="tv-stage-label">Reto del día</span>
         <div className="tv-stage-daily-row">
           <span className="tv-stage-daily-icon">
-            <Icon name="flame" size={26} strokeWidth={2.4} />
+            <Icon name="flame" size={20} strokeWidth={2.4} />
           </span>
           <div className="tv-stage-daily-text">
+            <span className="tv-stage-label">Reto del día</span>
             <strong>{daily.goal}</strong>
-            <span>{daily.how}</span>
           </div>
           <span className="tv-stage-daily-count">
             {daily.done}/{daily.of}

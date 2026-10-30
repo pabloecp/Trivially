@@ -15,7 +15,7 @@ const FORMAT_IDS = FORMATS.map((f) => f.id);
 // the songs with their verse ready). A new room plays only the title.
 const STYLES = [
   { id: "titulo", label: "Título", hint: "Adivina qué canción es" },
-  { id: "letra", label: "Completa la letra", hint: "Di lo que sigue en la canción" },
+  { id: "letra", label: "Letra", hint: "Di lo que sigue en la canción" },
 ];
 const STYLE_IDS = STYLES.map((s) => s.id);
 // The catalog's filters (SONG_LANGUAGES, SONG_GENRES and SONG_DIFFICULTIES on the server).
@@ -501,7 +501,7 @@ export default function MusicSettings({ room, updateConfig, onToast, children, r
           id: "partida",
           label: "Partida",
           icon: "hourglass",
-          note: `${lyricsOnly ? "Completa la letra · " : ""}${rounds} rondas · ${seconds} s`,
+          note: `${lyricsOnly ? "Letra · " : ""}${rounds} rondas · ${seconds} s`,
           alert: !formats.length || !styles.length,
           content: (
             <>

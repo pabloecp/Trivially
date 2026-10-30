@@ -27,6 +27,8 @@ export const GAME_MODES = [
     name: "Trivia",
     // Under its name on its card in "¿Qué quieren jugar?".
     tagline: "Más rápido, más puntos",
+    // Under its name on Inicio's card: what the game is, in one or two lines.
+    description: "Responde preguntas de todo tipo. Cuanto más rápido aciertas, más puntos sumas.",
     kind: "main",
     // Sky blue (styles/quiz.css); its answers have their own four colours.
     color: "quiz",
@@ -45,6 +47,7 @@ export const GAME_MODES = [
     id: "musica",
     name: "Adivina la canción",
     tagline: "Escucha y adivina el título",
+    description: "Suena un fragmento de una canción: adivina cuál es antes que los demás.",
     kind: "extra",
     color: "music",
     icon: "music",
@@ -66,6 +69,7 @@ export const GAME_MODES = [
     id: "mundo",
     name: "Encuentra el país",
     tagline: "Ponle tu pin en el mapa",
+    description: "Mira qué país te piden y ponle tu pin en el mapa. Cuanto más cerca, más puntos.",
     kind: "extra",
     color: "world",
     icon: "globe",
@@ -85,6 +89,7 @@ export const GAME_MODES = [
     id: "historia",
     name: "Rango",
     tagline: "Más cerca, más puntos",
+    description: "Mueve la barra hasta la cifra real. Exacto vale 1000; cuanto más cerca, más puntos.",
     kind: "extra",
     // Terracotta (styles/history.css).
     color: "history",
@@ -104,6 +109,7 @@ export const GAME_MODES = [
     id: "minas",
     name: "Campo de minas",
     tagline: "No pises la mina",
+    description: "Toca todas las casillas que cumplen la consigna. Si pisas una mina, quedas fuera.",
     kind: "extra",
     // The site's violet (styles/mines.css).
     color: "mines",
@@ -121,6 +127,7 @@ export const GAME_MODES = [
     id: "lluvia",
     name: "Lluvia",
     tagline: "Las preguntas caen",
+    description: "Las preguntas caen por la pantalla: escribe la respuesta antes que nadie y te la llevas.",
     kind: "extra",
     // Rain blue (styles/rain.css); the questions fall in green, yellow or red by difficulty.
     color: "rain",
@@ -144,6 +151,7 @@ export const GAME_MODES = [
     id: "rey",
     name: "Rey de la colina",
     tagline: "Destrona al rey",
+    description: "El rey elige la pregunta. Acierta antes que los demás y le quitas la corona.",
     kind: "extra",
     // Crown gold (styles/rey.css).
     color: "rey",
@@ -168,6 +176,7 @@ export const GAME_MODES = [
     id: "farsante",
     name: "Farsante",
     tagline: "Inventa y engaña",
+    description: "Cada uno inventa una respuesta falsa. Vota la verdadera y engaña a los demás con la tuya.",
     kind: "extra",
     // Leafy green (styles/farsante.css).
     color: "farsante",

@@ -217,7 +217,14 @@
    The card: the game's icon and, in one row beside it, who the match is for over the game's name (one line); three
    short lines under them (how it's played, the settings, how many play now); the game's icon big and faint, cut by
    the bottom right corner. */
-.tv-lobby-stage:has(.tv-stage) { width: min(1260px, 100%); }
+.tv-lobby-stage:has(.tv-stage) { width: min(1260px, 100%); justify-content: flex-start; align-items: stretch; }
+/* Inicio's stage fills the space between the top bar and the group's bar, as in the design (no gaps above or below). */
+@media (min-width: 761px) {
+  .tv-app .tv-main.is-lobby:has(.tv-stage) { padding-top: 14px; padding-bottom: calc(16px + env(safe-area-inset-bottom)); }
+  .tv-lobby:has(.tv-stage) { gap: 14px; }
+  .tv-lobby-game:has(.tv-stage) { flex: 1; align-items: stretch; }
+  .tv-lobby-stage .tv-stage { flex: 1; height: auto; min-height: 380px; }
+}
 .tv-stage {
   flex: none;
   display: grid;
@@ -230,7 +237,7 @@
   transform-origin: 50% 100%;
   animation: var(--tv-box-in);
 }
-.tv-stage.has-aside { grid-template-columns: minmax(0, 1.5fr) minmax(280px, 1fr); }
+.tv-stage.has-aside { grid-template-columns: minmax(0, 1fr) 340px; }
 
 .tv-stage-card {
   position: relative;
@@ -254,10 +261,10 @@
 /* "Reglas fijas en la partida pública", or who chooses the settings: a quiet label, not a button. */
 .tv-stage-fixed { display: inline-flex; align-items: center; gap: 8px; height: 36px; padding: 0 12px; border-radius: 10px; background: rgba(0, 0, 0, 0.18); font-family: var(--tv-display); font-weight: 700; font-size: 14px; color: rgba(255, 255, 255, 0.92); }
 /* "Elige un juego": the grey card with the logo, a line of what there is, and "Elegir juego" beside the three lines. */
-.tv-stage-aud.is-quiet { font-family: var(--tv-small); font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--tv-text-3); }
-.tv-stage-intro { position: relative; max-width: 520px; margin: 0; font-family: var(--tv-small); font-weight: 600; font-size: 17px; line-height: 1.4; color: var(--tv-text-2); }
+.tv-stage-aud.is-quiet { height: auto; padding: 0; background: none; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--tv-text-3); }
+.tv-stage-intro { position: relative; max-width: 500px; margin: -6px 0 0; font-family: var(--tv-small); font-weight: 600; font-size: 18px; line-height: 1.35; color: #fff; }
+.tv-stage-card.tv-c-neutral .tv-stage-intro { color: var(--tv-text-2); }
 .tv-stage-choose-row { flex-direction: row; align-items: flex-end; justify-content: space-between; gap: 20px; }
-.tv-stage-card.is-choose .tv-stage-lines li { background: var(--tv-surface-2); }
 .tv-stage-card.is-choose .tv-stage-line-icon { background: var(--tv-neutral); }
 .tv-app .tv-stage-choose { flex-shrink: 0; gap: 8px; }
 .tv-stage-card.tv-c-neutral { background: var(--tv-surface); }
@@ -272,28 +279,26 @@
 .tv-stage-logo { flex-shrink: 0; display: grid; }
 .tv-stage-logo .tv-appicon { --s: 72px; }
 .tv-stage-heading { min-width: 0; }
-.tv-stage-aud { display: flex; align-items: center; gap: 6px; margin: 0 0 6px; font-family: var(--tv-display); font-weight: 700; font-size: 15px; line-height: 1.2; color: rgba(255, 255, 255, 0.9); }
+/* Who the match is for: a small glass label over the name. */
+.tv-stage-aud { display: flex; align-items: center; gap: 6px; width: max-content; height: 28px; margin: 0 0 8px; padding: 0 10px; border-radius: 10px; background: rgba(255, 255, 255, 0.2); font-family: var(--tv-small); font-weight: 700; font-size: 12px; line-height: 1; color: #fff; }
 /* The name on one line, as big as fits ("…" when even that doesn't). */
-.tv-stage-name { margin: 0; overflow: hidden; font-size: clamp(30px, 3.4vw, 50px); line-height: 1.05; color: #fff; white-space: nowrap; text-overflow: ellipsis; }
+.tv-stage-name { margin: 0; overflow: hidden; font-size: clamp(30px, 4vw, 60px); line-height: 1.05; color: #fff; white-space: nowrap; text-overflow: ellipsis; }
 .tv-stage-name.is-long { font-size: clamp(22px, 2.4vw, 32px); }
 
 /* The three lines: an icon on a lighter square and a few words; flat. */
-.tv-stage-lines { position: relative; display: flex; flex-direction: column; gap: 10px; width: min(100%, 560px); margin: 0; padding: 0; list-style: none; }
+.tv-stage-lines { position: relative; display: flex; flex-direction: column; gap: 12px; width: min(100%, 520px); margin: 0; padding: 0; list-style: none; }
 .tv-stage-lines li {
   display: flex;
   align-items: center;
-  gap: 14px;
-  min-height: 54px;
-  padding: 7px 8px 7px 7px;
-  border-radius: 12px;
-  background: rgba(0, 0, 0, 0.14);
-  font-family: var(--tv-display);
-  font-weight: 700;
-  font-size: 16px;
+  gap: 12px;
+  font-family: var(--tv-small);
+  font-weight: 600;
+  font-size: 15px;
   line-height: 1.25;
 }
 .tv-stage-lines b { font-family: var(--tv-title); font-weight: 800; font-variant-numeric: tabular-nums; }
-.tv-stage-line-icon { display: grid; place-items: center; flex-shrink: 0; width: 40px; height: 40px; border-radius: 10px; background: rgba(255, 255, 255, 0.18); }
+.tv-stage-line-icon { display: grid; place-items: center; flex-shrink: 0; width: 34px; height: 34px; border-radius: 10px; background: rgba(255, 255, 255, 0.18); }
+.tv-stage-line-icon svg { width: 18px; height: 18px; }
 .tv-stage-line-text { flex: 1; min-width: 0; }
 .tv-stage-note { font-weight: 600; color: rgba(255, 255, 255, 0.75); }
 /* "Jugando ahora": a white dot that keeps sending out a ring. */
@@ -362,19 +367,20 @@
 .tv-stage-label { font-family: var(--tv-small); font-weight: 700; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--tv-text-3); }
 .tv-stage-elo { flex-direction: row; align-items: center; justify-content: space-between; gap: 12px; }
 .tv-stage-elo-text { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
-.tv-stage-elo-num { display: flex; align-items: center; gap: 10px; font-family: var(--tv-title); font-weight: 900; font-size: 52px; line-height: 1; letter-spacing: -0.04em; font-variant-numeric: tabular-nums; color: var(--tv-text); }
+.tv-stage-elo-num { display: flex; align-items: center; gap: 10px; font-family: var(--tv-title); font-weight: 900; font-size: 46px; line-height: 1; letter-spacing: -0.04em; font-variant-numeric: tabular-nums; color: var(--tv-text); }
 .tv-stage-elo-num .tv-icon, .tv-stage-elo-num svg { color: var(--p-accent-2); }
 .tv-stage-elo-week { font-family: var(--tv-display); font-weight: 800; font-size: 14px; color: #2fe08a; }
 .tv-stage-elo-week.is-down { color: #ff6b6b; }
 /* Your character: Blob (Blob.jsx), white with a black line; it floats a little. */
-.tv-stage-blob { display: block; flex-shrink: 0; width: 42%; max-width: 170px; aspect-ratio: 1; margin: -10px -6px -14px 0; animation: tvBlobFloat 3.2s ease-in-out infinite; }
+.tv-stage-blob { display: block; flex-shrink: 0; width: 96px; aspect-ratio: 1; margin: -8px -4px -8px 0; animation: tvBlobFloat 3.2s ease-in-out infinite; }
 @keyframes tvBlobFloat { 50% { transform: translateY(-6px); } }
-.tv-stage-daily-row { display: flex; align-items: center; gap: 14px; }
-.tv-stage-daily-icon { display: grid; place-items: center; flex-shrink: 0; width: 52px; height: 52px; border-radius: 14px; background: var(--p-accent-2); color: var(--p-on-accent); box-shadow: 0 4px 0 var(--p-accent-edge); }
-.tv-stage-daily-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
-.tv-stage-daily-text strong { font-family: var(--tv-display); font-weight: 800; font-size: 17px; line-height: 1.2; color: var(--tv-text); }
+/* "Reto del día": the yellow square with the flame, the label over the goal, the count; the bar under them. */
+.tv-stage-daily-row { display: flex; align-items: center; gap: 12px; }
+.tv-stage-daily-icon { display: grid; place-items: center; flex-shrink: 0; width: 34px; height: 34px; border-radius: 10px; background: var(--p-accent-2); color: var(--p-on-accent); }
+.tv-stage-daily-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.tv-stage-daily-text strong { font-family: var(--tv-small); font-weight: 700; font-size: 14px; line-height: 1.2; color: var(--tv-text); }
 .tv-stage-daily-text span { font-family: var(--tv-small); font-weight: 600; font-size: 13px; color: var(--tv-text-3); }
-.tv-stage-daily-count { font-family: var(--tv-title); font-weight: 800; font-size: 22px; font-variant-numeric: tabular-nums; color: var(--tv-text); }
+.tv-stage-daily-count { font-family: var(--tv-display); font-weight: 800; font-size: 18px; font-variant-numeric: tabular-nums; color: var(--tv-text); }
 .tv-stage-daily-bar { display: block; height: 8px; overflow: hidden; border-radius: 4px; background: rgba(255, 255, 255, 0.08); }
 .tv-stage-daily-bar i { display: block; height: 100%; border-radius: 4px; background: var(--p-accent-2); }
 
@@ -435,7 +441,7 @@
 .tv-gbar-zone { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
 .tv-gbar-zone--group { flex: 1 1 0; }
 .tv-gbar-cap { padding-left: 4px; font-family: var(--tv-small); font-weight: 700; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--tv-text-3); }
-.tv-gbar-box { display: flex; align-items: center; gap: 10px; min-width: 0; min-height: 64px; padding: 8px 10px; border-radius: 18px; background: var(--tv-surface-2); }
+.tv-gbar-box { display: flex; align-items: center; gap: 8px; min-width: 0; min-height: 64px; padding: 8px 10px; border-radius: 18px; background: var(--tv-surface-2); }
 .tv-gbar-group > .tv-avatar,
 .tv-gbar-faces .tv-avatar { width: 36px; height: 36px; }
 .tv-gbar-group .tv-avatar.is-me { box-shadow: 0 0 0 3px var(--tv-surface-2), 0 0 0 5px var(--p-accent-2); }
@@ -444,10 +450,10 @@
 .tv-gbar-faces .tv-avatar + .tv-avatar--empty { margin-left: -4px; }
 .tv-gbar-faces .tv-avatar.is-away { opacity: 0.4; }
 /* Who decides ("Eres el líder"), or "Juegas solo" without a group. */
-.tv-gbar-who { display: flex; flex-direction: column; gap: 2px; flex-shrink: 0; max-width: 220px; margin-right: auto; }
+.tv-gbar-who { display: flex; flex-direction: column; gap: 2px; flex: 0 1 auto; min-width: 90px; max-width: 200px; margin-right: auto; }
 .tv-gbar-who b { font-family: var(--tv-display); font-weight: 800; font-size: 15px; line-height: 1.1; color: var(--tv-text); white-space: nowrap; }
 .tv-gbar-who span { overflow: hidden; font-family: var(--tv-small); font-weight: 600; font-size: 12px; color: var(--tv-text-3); white-space: nowrap; text-overflow: ellipsis; }
-.tv-gbar-ask { font-family: var(--tv-small); font-weight: 600; font-size: 13px; color: var(--tv-text-3); white-space: nowrap; }
+.tv-gbar-ask { font-family: var(--tv-small); font-weight: 600; font-size: 12px; color: var(--tv-text-3); white-space: nowrap; }
 /* The group's code, to share it, and "Copiar". */
 .tv-gbar-code { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
 .tv-gbar-code-text { display: flex; align-items: center; height: 40px; padding: 0 12px; border-radius: 12px; background: var(--tv-surface); font-family: var(--tv-title); font-weight: 800; font-size: 17px; letter-spacing: 0.16em; color: var(--tv-text); }
@@ -458,7 +464,8 @@
    blue while writing, in red when the code opens no group. */
 .tv-gbar-join { display: flex; align-items: center; gap: 8px; min-width: 0; }
 .tv-gbar-join-input {
-  width: 150px;
+  flex: none;
+  width: 110px;
   min-width: 0;
   height: 44px;
   padding: 0 14px;
@@ -472,13 +479,15 @@
   letter-spacing: 0.12em;
   transition: box-shadow 0.15s ease;
 }
-.tv-gbar-join-input::placeholder { font-weight: 600; letter-spacing: 0; color: var(--tv-text-3); }
+.tv-gbar-join-input::placeholder { font-weight: 800; font-size: 14px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--tv-text-3); }
 .tv-gbar-join-input:focus { outline: none; box-shadow: inset 0 0 0 2px var(--brand); }
 .tv-gbar-join-input[aria-invalid="true"] { box-shadow: inset 0 0 0 2px var(--p-bad); }
 .tv-gbar-join-input:disabled { opacity: 0.45; }
 /* Codes hidden for streaming: dots while writing. */
 .tv-gbar-join-input.is-hidden { -webkit-text-security: disc; }
+/* "Unirse" stays white even before a code is written (it only does something with one). */
 .tv-app .tv-gbar-join-go { flex-shrink: 0; }
+.tv-app .tv-gbar-join-go:disabled { opacity: 1; background: #fff; color: var(--tv-bg); }
 /* PARTIDA: "Pública" / "Privada" (the chosen one in the site's blue) and "Vas a jugar", in one grey box. */
 .tv-gbar-plan-row { gap: 8px; padding: 6px; }
 .tv-gbar-seg { display: flex; flex: none; gap: 4px; padding: 4px; border-radius: 12px; background: var(--tv-surface); }
@@ -495,7 +504,7 @@
   justify-content: flex-start;
   align-items: center;
   gap: 12px;
-  width: 250px;
+  width: 230px;
   min-height: 52px;
   padding: 6px 14px 6px 8px;
   border-radius: 14px;

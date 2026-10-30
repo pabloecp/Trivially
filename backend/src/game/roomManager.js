@@ -2062,7 +2062,7 @@ export class RoomManager {
       const available = this.songsReady(room);
       // Completa la letra alone, and no song that plays has its round.
       if (lyricsOnly && !available && this.songPool(room).length) {
-        throw new Error("Ninguna de esas canciones tiene su letra lista para «Completa la letra»");
+        throw new Error("Ninguna de esas canciones tiene su letra lista para el modo «Letra»");
       }
       const loading = this.activePlaylists(room).some((entry) => entry.done.size < entry.tracks.length);
       if (!available) {

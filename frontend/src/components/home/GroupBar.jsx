@@ -35,13 +35,29 @@ export default function GroupBar({ members = [], meId, inGroup = false, code = "
   const shown = faces.slice(0, FACES);
   const more = faces.length - shown.length;
   const shownError = groupError || error;
+  // Your sala with only you in it: its code to share, "Invitar" (leaving it is the top bar's "Volver").
+  const alone = inGroup && members.length <= 1;
 
   return (
     <div className="tv-gbar" role="region" aria-label="Tu grupo y la partida">
       <div className="tv-gbar-zone tv-gbar-zone--group">
-        <span className="tv-gbar-cap">{inGroup ? `Tu grupo · ${members.length}` : "Tu grupo"}</span>
+        <span className="tv-gbar-cap">{alone ? "Tu sala · 1" : inGroup ? `Tu grupo · ${members.length}` : "Tu grupo"}</span>
         <div className="tv-gbar-box tv-gbar-group">
-          {inGroup ? (
+          {alone ? (
+            <>
+              <Avatar className="is-me" />
+              <span className="tv-gbar-who">
+                <b>Se creó tu sala</b>
+                <span>Comparte el código para que entren</span>
+              </span>
+              <GroupCode code={code} wide />
+              <button type="button" className="tv-btn tv-btn--neutral tv-gbar-invite" aria-haspopup="dialog" onClick={onGroup}>
+                <Icon name="plus" size={17} strokeWidth={3} />
+                Invitar
+                {inviteBadge > 0 && <span className="tv-fr-badge">{inviteBadge}</span>}
+              </button>
+            </>
+          ) : inGroup ? (
             <>
               <button type="button" className="tv-gbar-faces" onClick={onGroup} aria-label={`${members.length === 1 ? "1 persona" : `${members.length} personas`} en tu grupo`}>
                 {shown.map((p) => (
@@ -125,6 +141,7 @@ export default function GroupBar({ members = [], meId, inGroup = false, code = "
             disabled={action.disabled}
           >
             {action.locked && <Icon name="lock" size={18} strokeWidth={2.6} />}
+            {action.play && <Icon name="play" size={18} strokeWidth={2.6} filled />}
             {action.label}
           </button>
         ) : (
@@ -141,7 +158,7 @@ export default function GroupBar({ members = [], meId, inGroup = false, code = "
 }
 
 // The group's code on the bar, to share it, with "Copiar" (dots while codes are hidden, for streaming).
-function GroupCode({ code }) {
+function GroupCode({ code, wide = false }) {
   const [codeHidden] = useHiddenCode();
   const [copied, setCopied] = useState(false);
   if (!code) return null;
@@ -157,9 +174,15 @@ function GroupCode({ code }) {
       <span className="tv-gbar-code-text" aria-label="Código del grupo">
         {codeHidden ? "•••••" : code}
       </span>
-      <button type="button" className="tv-iconbtn tv-iconbtn--sm tv-gbar-copy" aria-label={copied ? "Código copiado" : "Copiar código"} title={copied ? "Copiado" : "Copiar"} onClick={copy}>
-        <Icon name={copied ? "check" : "copy"} size={17} strokeWidth={2.6} />
-      </button>
+      {wide ? (
+        <button type="button" className="tv-btn tv-btn--neutral tv-gbar-copy" onClick={copy}>
+          {copied ? "Copiado" : "Copiar"}
+        </button>
+      ) : (
+        <button type="button" className="tv-iconbtn tv-iconbtn--sm tv-gbar-copy" aria-label={copied ? "Código copiado" : "Copiar código"} title={copied ? "Copiado" : "Copiar"} onClick={copy}>
+          <Icon name={copied ? "check" : "copy"} size={17} strokeWidth={2.6} />
+        </button>
+      )}
     </span>
   );
 }

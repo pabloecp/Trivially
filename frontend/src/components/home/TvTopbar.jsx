@@ -6,6 +6,7 @@ import { useFriends } from "../../lib/friends.jsx";
 import { useIsOwner } from "../../lib/ownerView.js";
 import { formatElo, gameStats } from "../../lib/gameStats.js";
 import { CLASSIC } from "../../lib/plan.js";
+import { useHiddenCode } from "../../lib/hiddenCode.js";
 import AdminPanel from "./AdminPanel.jsx";
 import ConfirmDialog from "./ConfirmDialog.jsx";
 import Icon from "./Icon.jsx";
@@ -108,7 +109,7 @@ export function useRoomExit({ onRoomScreen = true, onError } = {}) {
 //    waiting in it instead of leaving);
 //  - on any other page (profile...): "Volver", to the match if one is running, otherwise to Inicio.
 export default function TvTopbar() {
-  const { user, room, group, isCentral } = useApp();
+  const { user, room, group, isCentral, leaveGroup } = useApp();
   const friends = useFriends();
   const online = (friends.view?.friends || []).filter((f) => f.online).length;
   const elo = formatElo(gameStats(CLASSIC).elo);
@@ -129,6 +130,8 @@ export default function TvTopbar() {
   });
   // The modal that asks before leaving a match; it only makes sense while the match's own screen is up.
   const [leaving, setLeaving] = useState(false);
+  const [codeHidden] = useHiddenCode();
+  const [codeCopied, setCodeCopied] = useState(false);
 
   useEffect(() => {
     if (!modesErr) return undefined;
@@ -188,6 +191,9 @@ export default function TvTopbar() {
   } else if (room && waitsHere && !room.matchmaking) {
     // A private match waiting on Inicio: back out of it (its leader takes the group, anyone else goes alone).
     leaveButton = backChip({ "aria-label": "Salir de la partida privada", onClick: leaveNow });
+  } else if (onHome && !room && group && group.members.length <= 1) {
+    // Your sala with only you in it: "Volver" leaves it, back to "Elige un juego".
+    leaveButton = backChip({ "aria-label": "Salir de tu sala", onClick: () => leaveGroup() });
   } else if (!onHome) {
     leaveButton = backChip({ "aria-label": upPath(pathname) === "/" ? "Volver al inicio" : "Volver", onClick: goUp });
   }
@@ -237,6 +243,28 @@ export default function TvTopbar() {
               <span className="tv-avatar tv-avatar--empty">
                 <Icon name="settings" size={20} strokeWidth={2.4} />
               </span>
+            </button>
+          )}
+          {group && !isCentral && !inGame && (
+            // Your sala and its code, to share it: a tap copies it.
+            <button
+              type="button"
+              className="tv-chip tv-chip--text"
+              aria-label={codeCopied ? "Código copiado" : `Copiar el código de tu sala`}
+              onClick={async (e) => {
+                e.currentTarget.blur();
+                try {
+                  await navigator.clipboard.writeText(group.code);
+                  setCodeCopied(true);
+                  setTimeout(() => setCodeCopied(false), 1500);
+                } catch {}
+              }}
+            >
+              <span className="tv-avatar tv-avatar--empty">
+                <Icon name={room && !room.matchmaking ? "lock" : "users"} size={20} strokeWidth={2.4} />
+              </span>
+              <span className="tv-chip-name tv-chip-long">{room && !room.matchmaking ? "Sala privada" : "Tu sala"}</span>
+              <b className="tv-chip-count">{codeCopied ? "Copiado" : codeHidden ? "•••••" : group.code}</b>
             </button>
           )}
           {friends.isAccount && !isCentral && (

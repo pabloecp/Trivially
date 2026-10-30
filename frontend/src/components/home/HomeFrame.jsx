@@ -69,7 +69,8 @@ export default function HomeFrame({ room = null, onToast, Lobby = null, leaving 
     ? { game: room.game, audience: "grupo" }
     : group
     ? group.plan
-    : localPlan;
+    : // No group means no game yet: choosing one is what makes it ("Elige un juego" until then).
+      { ...localPlan, game: null };
   const mode = (plan.game && findMode(plan.game)) || null;
   // Inicio with nothing chosen yet (a new device): "Elige un juego" and JUGAR waits.
   const noGame = !mode && !room && !searching;
@@ -235,6 +236,7 @@ export default function HomeFrame({ room = null, onToast, Lobby = null, leaving 
   } else if (plan.audience === "publica") {
     action = {
       label: busyType === "match" ? "Buscando…" : "Jugar",
+      play: busyType !== "match",
       sound: "none",
       disabled: busy || !isPublicGame(plan.game),
       onClick: () => run({ type: "match", game: plan.game }),
