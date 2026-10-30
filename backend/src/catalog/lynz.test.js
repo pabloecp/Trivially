@@ -56,6 +56,12 @@ const answer = (status, body, headers = {}) => async () => ({
 assert.equal((await fetchTopSongs("https://x", answer(200, { songs: [raw(1, "Uno", "A")] }))).length, 1);
 await assert.rejects(fetchTopSongs("https://x", answer(500, {})), /respondió 500/);
 await assert.rejects(fetchTopSongs("https://x", async () => { throw new Error("red"); }), /no respondió/);
+// A wrong address says why, and an ask that never reached Lynz doesn't count for its weekly limit.
+const noHost = Object.assign(new TypeError("fetch failed"), { cause: { code: "ENOTFOUND" } });
+const lost = await fetchTopSongs("https://x", async () => { throw noHost; }).catch((e) => e);
+assert.match(lost.message, /ENOTFOUND/);
+assert.equal(lost.neverReached, true);
+assert.equal((await fetchTopSongs("https://x", async () => { throw Object.assign(new Error("t"), { name: "TimeoutError" }); }).catch((e) => e)).neverReached, false, "a timeout may have reached it");
 await assert.rejects(fetchTopSongs("https://x", answer(200, { nope: true })), /no mandó canciones/);
 const limited = await fetchTopSongs("https://x", answer(429, { code: "RATE_LIMITED" }, { "retry-after": "86400" })).catch((e) => e);
 assert.match(limited.message, /límite/);
@@ -149,6 +155,25 @@ assert.equal(await top.refresh(), true, "the first ask of the week is a week old
 assert.equal(asks, 5);
 assert.deepEqual(top.songs.map((s) => s.name), ["Nueva"]);
 assert.ok(store.record.requests.filter((t) => clock.t - t < WEEK_MS).length <= MAX_REQUESTS_PER_WEEK);
+
+// Asks that never reach Lynz (a wrong address) don't use up the week's two, so fixing the address works right away.
+{
+  const typo = memory();
+  asks = 0;
+  const wrong = async () => {
+    asks += 1;
+    throw Object.assign(new TypeError("fetch failed"), { cause: { code: "ENOTFOUND" } });
+  };
+  for (let i = 0; i < 4; i += 1) {
+    const t = lynzWith(typo, wrong);
+    assert.equal(await t.refresh(), false);
+    clock.t += 13 * HOUR;
+  }
+  assert.equal(asks, 4, "it keeps trying: none of them reached Lynz");
+  assert.deepEqual(typo.record.requests, [], "and none counted");
+  reply = answer(200, { songs: [raw(1, "Uno", "A")] });
+  assert.equal(await lynzWith(typo, fetching).refresh(), true, "with the right address it reads at once");
+}
 
 // Nothing saved and the first ask fails: no songs, and it tries again later.
 {
