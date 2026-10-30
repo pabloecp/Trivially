@@ -33,10 +33,19 @@ const RETRY_MS = 12 * 60 * 60 * 1000; // after a failed ask that wasn't a 429
 const MIN_WAIT_MS = 60 * 1000;
 const NOT_REACHED = new Set(["ENOTFOUND", "EAI_AGAIN", "ECONNREFUSED", "ERR_INVALID_URL"]);
 
-/** Lynz's address from LYNZ_API_URL (a host, or the whole endpoint), or null when it isn't set. */
+/**
+ * Lynz's address from LYNZ_API_URL (a host, or the whole endpoint; without "http(s)://" it is https), or null when it
+ * isn't set or isn't an address.
+ */
 export function lynzEndpoint(url = process.env.LYNZ_API_URL) {
-  const base = String(url || "").trim().replace(/\/+$/, "");
-  if (!/^https?:\/\//i.test(base)) return null;
+  let base = String(url || "").trim().replace(/\/+$/, "");
+  if (!base) return null;
+  if (!/^https?:\/\//i.test(base)) base = `https://${base}`;
+  try {
+    new URL(base);
+  } catch {
+    return null;
+  }
   return base.endsWith(TOP_PATH) ? base : `${base}${TOP_PATH}`;
 }
 
@@ -174,7 +183,14 @@ export class LynzTop {
   async refresh() {
     const endpoint = this.endpoint;
     if (!endpoint) {
-      if (!this.warnedNoUrl) console.warn("[Lynz] Falta LYNZ_API_URL (la dirección de la API de Lynz, con https://): no se ofrece su playlist");
+      if (!this.warnedNoUrl) {
+        const given = String(this.url ?? process.env.LYNZ_API_URL ?? "").trim();
+        console.warn(
+          given
+            ? `[Lynz] LYNZ_API_URL ("${given}") no es una dirección válida: no se ofrece su playlist`
+            : "[Lynz] Falta LYNZ_API_URL (la dirección de la API de Lynz): no se ofrece su playlist"
+        );
+      }
       this.warnedNoUrl = true;
       return false;
     }
