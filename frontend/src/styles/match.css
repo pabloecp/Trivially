@@ -430,12 +430,6 @@
 .tv-play-logo .tv-appicon { --s: calc(150px * var(--k)); height: calc(166px * var(--k)); }
 .tv-play-logo .tv-appicon-shadow { left: calc(50% - 42px * var(--k)); width: calc(84px * var(--k)); height: calc(12px * var(--k)); filter: blur(calc(5px * var(--k))); }
 .tv-play-logo .tv-appicon-tile { --bob: calc(-9px * var(--k)); }
-.tv-play-logo .tv-wordmark {
-  margin-top: calc(4px * var(--k));
-  font-size: calc(124px * var(--k));
-  text-shadow: 0 calc(5px * var(--k)) 0 var(--tv-page-shadow, var(--tv-logo-shadow));
-}
-.tv-play-logo .tv-dot { box-shadow: 0 calc(5px * var(--k)) 0 var(--tv-page-shadow, var(--tv-logo-shadow)); }
 /* The tiles straight on the page, with no panel behind them and no title (only for screen readers): they say it
    themselves. */
 .tv-picker.tv-play-picker {

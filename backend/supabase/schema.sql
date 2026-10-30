@@ -108,6 +108,29 @@ alter table public.questions add constraint questions_type_check
   check (type in ('multiple_choice', 'open', 'true_false', 'location', 'year', 'number', 'minefield'));
 
 -- ---------------------------------------------------------------------------
+-- "Completa la letra" (Adivina la canción): la ronda de cada canción, preparada una vez offline (`npm run
+-- lyrics:build`: el fragmento que suena, transcrito con Whisper y comparado con la letra de LRCLIB). Una fila por
+-- canción, atada al audio exacto con que se midió: preview_url y preview_etag (si Apple o Spotify cambian el
+-- fragmento, la ronda se salta). song_id es el id del catálogo, o "sp-<id de Spotify>" para las canciones de una
+-- playlist de Spotify pegada como link (que suenan con su propio fragmento); spotify_id, el de Spotify cuando lo hay.
+-- data, solo lo mínimo: { "lines": [{ "at", "text" }] (las líneas que se muestran; la última con "___"), "cut" y
+-- "end" (segundos del fragmento: dónde se corta y hasta dónde suena al revelar), "answer", "wrong": [tres] }; null =
+-- esa canción no sirve. Las letras tienen derechos y el repo es público: solo el backend (service_role) lee y
+-- escribe, RLS activado y sin políticas. El servidor la lee al arrancar con LYRICS_DB=1; `npm run lyrics:upload` la
+-- llena desde backend/private/lyric-rounds.json.
+-- ---------------------------------------------------------------------------
+create table if not exists public.lyric_rounds (
+  song_id       text primary key,
+  spotify_id    text,
+  preview_url   text not null,
+  preview_etag  text,
+  data          jsonb,
+  updated_at    timestamptz not null default now()
+);
+create index if not exists lyric_rounds_spotify_idx on public.lyric_rounds (spotify_id);
+alter table public.lyric_rounds enable row level security;
+
+-- ---------------------------------------------------------------------------
 -- Reportes de preguntas: un owner toca "Reportar" durante una partida y aquí queda la pregunta tal como se jugó
 -- (con su respuesta), los ajustes de la partida y quiénes estaban en la sala, para revisarla después. Solo el backend
 -- (service_role) lee y escribe: RLS activado y sin políticas.
@@ -126,20 +149,8 @@ create table if not exists public.question_reports (
 create index if not exists question_reports_created_idx on public.question_reports (created_at desc);
 alter table public.question_reports enable row level security;
 
--- ---------------------------------------------------------------------------
--- Playlists compartidas por código ("Copiar código" en el panel de la playlist): el código (10 letras y números,
--- "K7P2M-XH4QN") apunta a la playlist (nombre, orden y juegos con sus ajustes). La misma playlist siempre tiene el mismo
--- código (hash único), y un código que nadie abre en un año se borra (last_used_at). Solo el backend lee y escribe.
--- ---------------------------------------------------------------------------
-create table if not exists public.shared_playlists (
-  code          text primary key,
-  hash          text not null unique,                   -- sha256 de la playlist: la misma playlist, el mismo código
-  data          jsonb not null,                         -- { name, order, items: [{ game, config }] }
-  created_at    timestamptz not null default now(),
-  last_used_at  timestamptz not null default now()      -- al compartirla o abrirla otra vez
-);
-create index if not exists shared_playlists_last_used_idx on public.shared_playlists (last_used_at);
-alter table public.shared_playlists enable row level security;
+-- La tabla shared_playlists (las playlists de juegos compartidas por código) ya no se usa: se quitó el juego Playlist.
+drop table if exists public.shared_playlists;
 
 -- ---------------------------------------------------------------------------
 -- Amigos. Una fila por pareja de cuentas (user_a < user_b): `pending` (alguien envió la solicitud, requested_by) o

@@ -13,7 +13,6 @@ export default function CentralLobby({ room }) {
   const mode = findMode(room.game);
   const host = room.hostName || "El anfitrión";
   const players = room.players.filter((p) => p.connected);
-  const playlist = mode?.kind === "playlist" ? room.playlist : null;
 
   return (
     <div className="tv-room tv-central-room">
@@ -50,31 +49,17 @@ export default function CentralLobby({ room }) {
                 <Icon name={mode.icon} size={34} strokeWidth={2.2} />
               </span>
               <div className="tv-central-game-text">
-                <p className="tv-central-game-kicker">{playlist ? "Playlist" : "Juego elegido"}</p>
-                <h1 className="tv-central-game-name">{playlist ? playlist.name || "Playlist" : mode.fullName || mode.name}</h1>
+                <p className="tv-central-game-kicker">Juego elegido</p>
+                <h1 className="tv-central-game-name">{mode.fullName || mode.name}</h1>
               </div>
-              {playlist ? (
-                <ol className="tv-central-steps">
-                  {(playlist.items || []).slice(0, 6).map((item, i) => {
-                    const game = findMode(item.game);
-                    return (
-                      <li key={item.id} style={{ "--i": i }}>
-                        <Icon name={game?.icon || "play"} size={20} strokeWidth={2.4} />
-                        {game?.name || "Juego"}
-                      </li>
-                    );
-                  })}
-                </ol>
-              ) : (
-                <ol className="tv-central-steps">
-                  {mode.steps.map((s, i) => (
-                    <li key={s.text} style={{ "--i": i }}>
-                      <Icon name={s.icon} size={20} strokeWidth={2.4} />
-                      {s.text}
-                    </li>
-                  ))}
-                </ol>
-              )}
+              <ol className="tv-central-steps">
+                {(mode.steps || []).map((s, i) => (
+                  <li key={s.text} style={{ "--i": i }}>
+                    <Icon name={s.icon} size={20} strokeWidth={2.4} />
+                    {s.text}
+                  </li>
+                ))}
+              </ol>
             </div>
           ) : (
             <div className="tv-central-game is-picking">

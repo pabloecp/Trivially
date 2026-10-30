@@ -6,6 +6,7 @@ import { hydrateSong } from "../catalog/catalogProvider.js";
 import { cleanTitle, displayTitle } from "../catalog/trackResolver.js";
 import { applyMatchStats } from "../db/store.js";
 import { isCorrectAnswer, normalizeAnswer, songKey } from "./answers.js";
+import { etagOf } from "../audio/mediaCache.js";
 import {
   countQuestions,
   defaultQuizConfig,
@@ -101,10 +102,7 @@ import {
   sameText,
 } from "./farsante.js";
 import {
-  cleanPlaylist,
   configWithItem,
-  mixRounds,
-  emptyPlaylist,
   GAME_NAMES,
   newRun,
   PLAYLIST_GAME,
@@ -162,7 +160,7 @@ export const ROOM_CODE_LENGTH = 5;
 // "extendido" ("Clásico", and a longer one not offered for now) aren't games either: like a playlist, they play several
 // games one after another, drawn by a public match's roulette, until someone has won enough of them (startClassic).
 export const GAME_IDS = [
-  "musica", "opciones", "mundo", "historia", "minas", RAIN_GAME, REY_GAME, FARSANTE_GAME, PLAYLIST_GAME, ...Object.keys(CLASSIC_WINS),
+  "musica", "opciones", "mundo", "historia", "minas", RAIN_GAME, REY_GAME, FARSANTE_GAME, ...Object.keys(CLASSIC_WINS),
 ];
 // "Trivia": its settings live in config.quiz and its questions take the place of songs in room.tracks.
 export const QUIZ_GAME = "opciones";
@@ -301,6 +299,17 @@ function artistKeys(song) {
 // Adivina la canción's ways of answering ("Modos"): closed questions, four songs to choose from ("opciones"), and open
 // ones, the title typed in the search box ("escribir"). Both are ticked in a new room; the rounds are shared evenly.
 export const MUSIC_FORMATS = ["opciones", "escribir"];
+// Its "Modos de juego": guess the title ("titulo"), or the words that come next in the song ("letra", Completa la
+// letra: only the songs with their round ready, lyrics/lyricRounds.js). A new room plays only "titulo": few songs have
+// their lyrics. With both ticked the rounds are shared evenly, and a "letra" round with no song left plays "titulo".
+export const MUSIC_STYLES = ["titulo", "letra"];
+const DEFAULT_MUSIC_STYLES = ["titulo"];
+// Completa la letra: the song is heard up to LYRICS_LEAD_MS before the cut (from its start when the cut comes sooner),
+// then the round's seconds to answer. The reveal plays again the last LYRICS_REPLAY_MS before the cut and goes on
+// until the words have been sung, and LYRICS_TAIL_MS more.
+const LYRICS_LEAD_MS = 10000;
+const LYRICS_REPLAY_MS = 3000;
+const LYRICS_TAIL_MS = 1800;
 // Same limits as its settings on screen: 5–25 rounds, 15–35 seconds to guess.
 const MUSIC_LIMITS = { rounds: { min: 5, max: 25 }, roundMs: { min: 15000, max: 35000 } };
 const clampTo = (n, { min, max }, fallback) => Math.min(max, Math.max(min, Math.round(Number(n)) || fallback));
@@ -325,6 +334,7 @@ function defaultConfig() {
     difficulties: [...SONG_DIFFICULTIES],
     playlistIds: [],
     formats: [...MUSIC_FORMATS],
+    styles: [...DEFAULT_MUSIC_STYLES],
     quiz: defaultQuizConfig(),
     geo: defaultGeoConfig(),
     history: defaultHistoryConfig(),
@@ -340,7 +350,7 @@ const introSpinMs = (room) => (room.matchmaking?.game ? 0 : INTRO_SPIN_MS);
 
 // The part of the room's settings that belongs to `game`, as in a new room ("Restablecer"). Adivina la canción's are the
 // settings at the top level.
-const MUSIC_KEYS = ["rounds", "roundMs", "useCatalog", "languages", "genres", "difficulties", "playlistIds", "formats"];
+const MUSIC_KEYS = ["rounds", "roundMs", "useCatalog", "languages", "genres", "difficulties", "playlistIds", "formats", "styles"];
 const CONFIG_KEYS = { opciones: "quiz", mundo: "geo", historia: "history", minas: "mines", lluvia: "rain", rey: "rey", farsante: "farsante" };
 function gameDefaults(game) {
   const base = defaultConfig();
@@ -405,8 +415,12 @@ function publicPlayer(player, phase, room) {
 }
 
 export class RoomManager {
-  constructor({ catalog, store, questions = [], resolver = null, reconnectGraceMs = RECONNECT_GRACE_MS }) {
+  constructor({ catalog, store, questions = [], lyrics = new Map(), lyricRounds = new Map(), resolver = null, reconnectGraceMs = RECONNECT_GRACE_MS }) {
     this.catalog = catalog;
+    // Completa la letra's rounds, loaded when the server starts (lyrics/lyricRounds.js): by song id, { previewUrl,
+    // etag, verse }. `lyrics` (song id → [verse]) gives rounds straight, without their audio's checks (tests).
+    this.lyrics = lyrics;
+    this.lyricRounds = lyricRounds;
     // The trivia question bank (backend/src/questions/questionBank.js loadQuestions).
     this.questions = questions;
     // Geografía's part of it (filled in from geo/countries.js for any kind the bank lacks).
@@ -681,8 +695,8 @@ export class RoomManager {
       return true;
     }
     if (track.type === "open") {
-      // A song is answered by its id, like picking it in the search box; a question by its answer.
-      const answer = room.game === QUIZ_GAME || room.game === REY_GAME ? track.answer : track.id;
+      // A song is answered by its id, like picking it in the search box; a question by its answer, and a verse by its words.
+      const answer = room.game === QUIZ_GAME || room.game === REY_GAME ? track.answer : track.lyric ? track.lyric.answer : track.id;
       this.submitAnswer(room, bot.id, right ? answer : "No lo sé");
     }
     return false;
@@ -943,8 +957,9 @@ export class RoomManager {
       customPlaylists: {},
       config: { ...defaultConfig(), ...config },
       players: new Map(),
-      // The playlist being made in the room's "Playlist" panel, and the one being played (null when none is).
-      playlist: emptyPlaylist(),
+      // A match of several games (a public match or a Clásico): its games (`playlist`, set when it starts) and how
+      // it's going (`run`; null when none is played).
+      playlist: null,
       run: null,
       // The room's central device (a screen that only shows the match, see setCentral) and the players asking to
       // use another device of theirs as it (requestCentral).
@@ -1426,6 +1441,8 @@ export class RoomManager {
     if (config?.roundMs != null) next.roundMs = clampTo(config.roundMs, MUSIC_LIMITS.roundMs, ROUND_MS);
     // Adivina la canción's ways of answering; both may be unticked (the match then can't start).
     if (Array.isArray(config?.formats)) next.formats = MUSIC_FORMATS.filter((f) => config.formats.includes(f));
+    // Its modes of play; both may be unticked too.
+    if (Array.isArray(config?.styles)) next.styles = MUSIC_STYLES.filter((s) => config.styles.includes(s));
     // The catalog on or off (off: only the ticked Spotify playlists play). Missing in an older room means on.
     if (config?.useCatalog != null) next.useCatalog = config.useCatalog !== false;
     // The catalog's filters; any list may be left empty (only the Spotify playlists then play, if any).
@@ -1476,6 +1493,7 @@ export class RoomManager {
       rounds: change.rounds != null ? clampTo(change.rounds, MUSIC_LIMITS.rounds, base.rounds) : base.rounds,
       roundMs: change.roundMs != null ? clampTo(change.roundMs, MUSIC_LIMITS.roundMs, base.roundMs) : base.roundMs,
       formats: pick(change.formats, MUSIC_FORMATS, base.formats),
+      styles: pick(change.styles, MUSIC_STYLES, base.styles),
       useCatalog: change.useCatalog != null ? change.useCatalog !== false : base.useCatalog,
       languages: pick(change.languages, SONG_LANGUAGES, base.languages),
       genres: pick(change.genres, SONG_GENRES, base.genres),
@@ -1485,27 +1503,10 @@ export class RoomManager {
   }
 
   /**
-   * The room's playlist changes (its name, order, games or one game's settings; or a whole one loaded or imported):
-   * the client sends all of it and it's kept cleaned (cleanPlaylist). Like the settings, the host and whoever has the
-   * permission can change it, while the room waits.
-   */
-  /** A playlist sent to be shared by code (one saved in "Mis playlists"), cleaned like the room's own. */
-  cleanSharedPlaylist(room, playlist) {
-    return cleanPlaylist(playlist, (game, config) => this.cleanItemConfig(room, game, config));
-  }
-
-  updatePlaylist(room, userId, playlist) {
-    if (!this.canEditConfig(room, userId)) throw new Error("No tienes permisos para cambiar la playlist");
-    if (room.phase !== "lobby") throw new Error("La partida ya comenzó");
-    room.playlist = cleanPlaylist(playlist, (game, config) => this.cleanItemConfig(room, game, config));
-    return room.playlist;
-  }
-
-  /**
-   * Why a game of the playlist can't be played with its settings (a Spanish sentence), or null when it can: a list
-   * left empty, or fewer questions, boards or songs than rounds. `exact` draws them as a match would (some can't be
-   * asked together: the same question twice, two events of the same year...), to check before the playlist starts;
-   * otherwise only counts them, cheap enough for every update of the room. `base` is the room's own settings.
+   * Why a game of a match of several games can't be played with its settings (a Spanish sentence), or null when it
+   * can: a list left empty, or fewer questions, boards or songs than rounds. `exact` draws them as a match would (some
+   * can't be asked together: the same question twice, two events of the same year...); otherwise only counts them.
+   * `base` is the room's own settings.
    */
   itemProblem(room, item, base = room.config, { exact = false } = {}) {
     const config = item.config;
@@ -1546,8 +1547,9 @@ export class RoomManager {
     // Adivina la canción: a different song for every round, from the catalog with its filters and its Spotify
     // playlists (whose songs may still be loading).
     if (!config.formats?.length) return "Elige al menos un tipo de respuesta.";
+    if (config.styles && !config.styles.length) return "Elige al menos un modo de juego.";
     if (config.useCatalog === false && !config.playlistIds?.length) return "Activa el catálogo o elige una playlist.";
-    const n = this.songPool({ ...room, config: configWithItem(base, item) }).length;
+    const n = this.songsReady({ ...room, config: configWithItem(base, item) });
     return n < config.rounds ? short(n, "canciones", config.rounds, "idiomas, géneros o dificultades") : null;
   }
 
@@ -1585,28 +1587,6 @@ export class RoomManager {
       this.countCache.set(key, count());
     }
     return this.countCache.get(key);
-  }
-
-  /**
-   * In the playlist's panel: for each game, why it can't be played yet (null when it can) and its chips' counts; for
-   * Adivina la canción, also how many songs its settings have ready.
-   */
-  playlistStatus(room) {
-    const status = {};
-    for (const item of room.playlist?.items || []) {
-      let counts;
-      let songsReady;
-      if (item.game === QUIZ_GAME) counts = this.cachedCount(item, () => questionCounts(this.quizQuestions, item.config), "chips");
-      else if (item.game === HISTORY_GAME) counts = this.cachedCount(item, () => historyCounts(this.historyQuestions, item.config), "chips");
-      else if (item.game === MINES_GAME) counts = this.cachedCount(item, () => minesCounts(this.minesQuestions, item.config), "chips");
-      else if (item.game === RAIN_GAME) counts = this.cachedCount(item, () => rainCounts(this.rainQuestions, item.config), "chips");
-      else if (item.game === "musica") {
-        counts = this.cachedCount(item, () => songCounts(this.catalog, item.config), "chips");
-        songsReady = this.songPool({ ...room, config: configWithItem(room.config, item) }).length;
-      }
-      status[item.id] = { problem: this.itemProblem(room, item), counts, songsReady };
-    }
-    return status;
   }
 
   /**
@@ -1802,13 +1782,22 @@ export class RoomManager {
       const pool = this.songPool(room);
       if (!pool.length) break;
       const used = new Set(room.tracks.map((t) => t.id));
-      const fresh = pool.filter((s) => !used.has(s.id));
+      // Completa la letra draws from the songs with their verse; when none is left and "titulo" is ticked too, the
+      // round guesses the title instead.
+      let style = this.nextStyle(room);
+      let songs = style === "letra" ? this.lyricPool(pool) : pool;
+      if (style === "letra" && !songs.some((s) => !used.has(s.id)) && this.musicStyles(room).includes("titulo")) {
+        style = "titulo";
+        songs = pool;
+      }
+      if (!songs.length) break;
+      const fresh = songs.filter((s) => !used.has(s.id));
       // A later round waits for new songs (Spotify ones may still arrive); only the round about to start repeats one.
       if (!fresh.length && room.tracks.length > room.currentRound) break;
-      const from = fresh.length ? fresh : pool.filter((s) => s.id !== room.tracks[room.tracks.length - 1]?.id);
-      const list = from.length ? from : pool;
+      const from = fresh.length ? fresh : songs.filter((s) => s.id !== room.tracks[room.tracks.length - 1]?.id);
+      const list = from.length ? from : songs;
       const song = list[Math.floor(Math.random() * list.length)];
-      const track = this.withFormat(room, song, pool);
+      const track = style === "letra" ? this.withLyric(room, song) : this.withFormat(room, song, pool);
       room.tracks.push(track);
       added.push(track);
     }
@@ -1821,6 +1810,88 @@ export class RoomManager {
     return Array.isArray(room.config.formats) ? room.config.formats : MUSIC_FORMATS;
   }
 
+  /** Adivina la canción's modes of play in this room (older rooms without the setting guess the title). */
+  musicStyles(room) {
+    return Array.isArray(room.config.styles) ? room.config.styles : DEFAULT_MUSIC_STYLES;
+  }
+
+  /** The songs of a pool that have a verse for Completa la letra. */
+  lyricPool(pool) {
+    return pool.filter((s) => this.lyricFor(s));
+  }
+
+  /**
+   * A song's Completa la letra round, or null. Only when it was measured on the very audio this song plays: the same
+   * preview, and the same version of it when the server already downloaded it (another ETag: the preview changed and
+   * the cut would fall somewhere else).
+   */
+  lyricFor(song) {
+    const given = this.lyrics.get(song.id)?.[0];
+    if (given) return given;
+    const round = this.lyricRounds.get(song.id);
+    if (!round) return null;
+    if (round.previewUrl && round.previewUrl !== song.previewUrl) return null;
+    const etag = etagOf(song.previewUrl);
+    if (round.etag && etag && round.etag !== etag) return null;
+    return round.verse;
+  }
+
+  /** How many different songs a match can draw: only those with their verse when Completa la letra is the only mode. */
+  songsReady(room) {
+    const pool = this.songPool(room);
+    return this.musicStyles(room).includes("titulo") ? pool.length : this.lyricPool(pool).length;
+  }
+
+  // The less used of the ticked choices so far (a tie drawn at random), so the rounds are shared evenly.
+  leastUsed(choices, used) {
+    const least = Math.min(...choices.map(used));
+    const candidates = choices.filter((c) => used(c) === least);
+    return candidates[Math.floor(Math.random() * candidates.length)];
+  }
+
+  /** The next round's mode of play ("titulo" when none is ticked: the match can't start then anyway). */
+  nextStyle(room) {
+    const styles = this.musicStyles(room).length ? this.musicStyles(room) : DEFAULT_MUSIC_STYLES;
+    return this.leastUsed(styles, (s) => room.tracks.filter((t) => (t.style || "titulo") === s).length);
+  }
+
+  /** The next round's way of answering. */
+  nextFormat(room) {
+    const formats = this.musicFormats(room);
+    if (!formats.includes("opciones")) return "escribir";
+    return this.leastUsed(formats, (f) => room.tracks.filter((t) => (t.type === "choice" ? "opciones" : "escribir") === f).length);
+  }
+
+  /**
+   * A song as a round of Completa la letra: one of its verses (`lyric`), the second the song stops at (`cutMs`, in its
+   * preview) and the one it's heard from (`startMs`, LYRICS_LEAD_MS before, or its start). Open, the words are written
+   * (graded like Trivia's open answers, the verse's other ways of writing them count); closed ("choice"), they're one of
+   * four options with the three wrong ones, shuffled. Nothing of the verse but its line goes out before the reveal.
+   */
+  withLyric(room, song) {
+    const verse = this.lyricFor(song);
+    const revealFromMs = Math.max(0, verse.cutMs - LYRICS_REPLAY_MS);
+    const lyric = {
+      id: verse.id,
+      line: verse.line,
+      lines: verse.lines,
+      cutMs: verse.cutMs,
+      startMs: Math.max(0, verse.cutMs - LYRICS_LEAD_MS),
+      answerEndMs: verse.answerEndMs,
+      // Quiet only while the answer is sung: back with the next word, until the line ends.
+      backMs: verse.backMs ?? verse.cutMs,
+      stopMs: verse.stopMs ?? verse.cutMs,
+      revealFromMs,
+      revealMs: verse.answerEndMs + LYRICS_TAIL_MS - revealFromMs,
+      answer: verse.answer,
+      aliases: verse.aliases,
+      wrong: verse.wrong,
+    };
+    if (this.nextFormat(room) !== "opciones") return { ...song, style: "letra", type: "open", lyric };
+    const options = [verse.answer, ...verse.wrong].sort(() => Math.random() - 0.5);
+    return { ...song, style: "letra", type: "choice", lyric, options, details: null, answer: options.indexOf(verse.answer) };
+  }
+
   /**
    * A song as a round of Adivina la canción, with its way of answering: the less used of the ticked ones so far (a tie
    * drawn at random), so the rounds are shared evenly. A closed round ("choice") gets four songs to choose from, the
@@ -1831,13 +1902,7 @@ export class RoomManager {
    * These copies stay on the server: the options only go out while the round is playing (see publicState).
    */
   withFormat(room, song, pool) {
-    const formats = this.musicFormats(room);
-    if (!formats.includes("opciones")) return { ...song, type: "open" };
-    const used = (f) => room.tracks.filter((t) => (t.type === "choice" ? "opciones" : "escribir") === f).length;
-    const least = Math.min(...formats.map(used));
-    const candidates = formats.filter((f) => used(f) === least);
-    const format = candidates[Math.floor(Math.random() * candidates.length)];
-    if (format !== "opciones") return { ...song, type: "open" };
+    if (this.nextFormat(room) !== "opciones") return { ...song, type: "open" };
     const label = (s) => (artistLine(s) ? `${s.title} - ${artistLine(s)}` : s.title);
     const keys = new Set([songKey(song)]);
     const others = [];
@@ -1899,10 +1964,8 @@ export class RoomManager {
     if (connected.length < 1) {
       throw new Error("Se necesita al menos 1 jugador");
     }
-    if (room.game === PLAYLIST_GAME) {
-      this.startPlaylist(room);
-      return;
-    }
+    // The results of a match of several games (a public match's end): nothing to start from there.
+    if (room.game === PLAYLIST_GAME) throw new Error("Elige un juego antes de empezar");
     if (isClassic(room.game)) {
       this.startClassic(room);
       return;
@@ -1994,7 +2057,13 @@ export class RoomManager {
     } else {
       room.tracks = [];
       room.totalRounds = room.config.rounds || 5;
-      const available = this.songPool(room).length;
+      if (!this.musicStyles(room).length) throw new Error("Elige al menos un modo de juego");
+      const lyricsOnly = !this.musicStyles(room).includes("titulo");
+      const available = this.songsReady(room);
+      // Completa la letra alone, and no song that plays has its round.
+      if (lyricsOnly && !available && this.songPool(room).length) {
+        throw new Error("Ninguna de esas canciones tiene su letra lista para «Completa la letra»");
+      }
       const loading = this.activePlaylists(room).some((entry) => entry.done.size < entry.tracks.length);
       if (!available) {
         if (loading) throw new Error("Tus canciones de Spotify se están cargando, espera unos segundos");
@@ -2008,7 +2077,7 @@ export class RoomManager {
       if (!this.musicFormats(room).length) throw new Error("Elige al menos un tipo de respuesta");
       if (available < room.totalRounds) {
         throw new Error(
-          `Solo hay ${available} ${available === 1 ? "canción lista" : "canciones listas"} para ${room.totalRounds} rondas. ` +
+          `Solo hay ${available} ${available === 1 ? "canción lista" : "canciones listas"} ${lyricsOnly ? "con su letra " : ""}para ${room.totalRounds} rondas. ` +
             (loading ? "Espera a que carguen más o baja las rondas." : "Baja las rondas o marca más idiomas, géneros o dificultades.")
         );
       }
@@ -2206,7 +2275,14 @@ export class RoomManager {
     // Lluvia: the whole shower, as long as the round was drawn.
     if (room.game === RAIN_GAME) return room.tracks[room.currentRound]?.roundMs || mergeRainConfig(room.config.rain).roundMs;
     if (room.game === REY_GAME) return room.tracks[room.currentRound]?.roundMs || mergeReyConfig(room.config.rey).roundMs;
-    return room.config.roundMs || ROUND_MS;
+    return (room.config.roundMs || ROUND_MS) + this.lyricLeadMs(room);
+  }
+
+  /** Completa la letra: the time the song plays (to the cut, and the rest of the line after the gap), on top of the
+   *  round's seconds (0 otherwise). */
+  lyricLeadMs(room) {
+    const lyric = room.game === "musica" ? room.tracks[room.currentRound]?.lyric : null;
+    return lyric ? Math.max(lyric.cutMs, lyric.stopMs ?? 0) - lyric.startMs : 0;
   }
 
   /** Lluvia's rounds: questions falling down the screen, answered by writing while they're on it. */
@@ -2293,6 +2369,7 @@ export class RoomManager {
       rounds: room.config.rounds,
       roundMs: room.config.roundMs,
       formats: room.config.formats,
+      styles: room.config.styles,
       useCatalog: room.config.useCatalog !== false,
       languages: room.config.languages,
       genres: room.config.genres,
@@ -2463,6 +2540,7 @@ export class RoomManager {
     else if (this.isRainRound(room)) revealMs = RAIN_REVEAL_MS;
     else if (room.game === REY_GAME) revealMs = REY_REVEAL_MS;
     else if (room.game === FARSANTE_GAME) revealMs = FARSANTE_REVEAL_MS;
+    else if (room.game === "musica" && track?.lyric) revealMs = track.lyric.revealMs;
     this.setPhase(room, "reveal", revealMs, () => this.advance(room));
     return { track, duration };
   }
@@ -2481,7 +2559,9 @@ export class RoomManager {
     const rain = this.isRainRound(room);
     const right = mines || rain ? null : this.rightAnswerText(room, track);
     const fell = rain ? track.drops.filter((d) => d.at < track.roundMs).length : 0;
-    const prompt = rain ? `Lluvia de ${fell} preguntas` : track.prompt || track.text || (room.game === "musica" ? "¿Qué canción es?" : null);
+    const prompt = rain
+      ? `Lluvia de ${fell} preguntas`
+      : track.prompt || track.text || (room.game === "musica" ? (track.lyric ? track.lyric.line : "¿Qué canción es?") : null);
     for (const player of room.players.values()) {
       if (!this.isPlaying(room, player.id) || (mines && !player.minefield) || (rain && !player.rain)) continue;
       const answer = player.lastAnswer;
@@ -2501,7 +2581,8 @@ export class RoomManager {
     if (room.game === GEO_GAME) return track.name || track.answer || null;
     if (room.game === FARSANTE_GAME) return track.truth || null;
     if (room.game === QUIZ_GAME || room.game === REY_GAME) return track.type === "choice" ? track.options[track.answer] : track.answer || null;
-    if (room.game === "musica") return artistLine(track) ? `${track.title} - ${artistLine(track)}` : track.title || null;
+    if (room.game === "musica" && track.lyric) return track.lyric.answer;
+    if (room.game === "musica") return artistLine(track) ?`${track.title} - ${artistLine(track)}` : track.title || null;
     return null;
   }
 
@@ -2686,7 +2767,7 @@ export class RoomManager {
   // "Volver al lobby": during a playlist (or at its end), the playlist is over and the room is back in its panel.
   restart(room, userId) {
     if (room.hostId !== userId) throw new Error("Solo el Host puede reiniciar la sala");
-    this.stopPlaylist(room);
+    this.stopRun(room);
     this.resetMatch(room);
   }
 
@@ -2698,33 +2779,16 @@ export class RoomManager {
   replay(room, userId) {
     if (room.hostId !== userId) throw new Error("Solo el Host puede empezar otra partida");
     if (room.phase !== "finished") throw new Error("La partida aún no ha terminado");
-    this.stopPlaylist(room);
+    this.stopRun(room);
     this.resetMatch(room);
     this.start(room, userId);
   }
 
   /**
-   * Starts the room's playlist (from start(), with the room in its panel): every game is checked first, so it doesn't
-   * stop halfway for settings that can't be played, then the first one starts. The room's own settings are kept to
-   * be put back when the playlist ends.
-   */
-  startPlaylist(room) {
-    const items = room.playlist?.items || [];
-    if (!items.length) throw new Error("Añade al menos un juego a la playlist");
-    items.forEach((item, i) => {
-      const problem = this.itemProblem(room, item, room.config, { exact: true });
-      if (problem) throw new Error(`Revisa el juego ${i + 1}, ${GAME_NAMES[item.game]}. ${problem}`);
-    });
-    room.run = newRun(room.playlist, room.config);
-    this.startMixed(room);
-  }
-
-  /**
-   * A playlist is played as one match: "orden" plays every round of its first game, then of the second, and so on;
-   * "aleatorio" mixes every game's rounds at random (two of Encuentra el país, then one of Adivina la canción, then
-   * Encuentra el país again...). Each game's questions or songs are drawn now with its own settings; each round,
+   * A match of several games (a public match or a Clásico) is played as one match: every round of its first game,
+   * then of the second, and so on. Each game's questions or songs are drawn now with its own settings; each round,
    * beginCountdown moves the room into its game (enterMixedRound). The scores add up across the whole match, which
-   * ends straight on the playlist's results.
+   * ends straight on its results.
    */
   startMixed(room) {
     const run = room.run;
@@ -2738,11 +2802,11 @@ export class RoomManager {
         return tracks;
       });
     } catch (err) {
-      this.stopPlaylist(room);
+      this.stopRun(room);
       this.resetMatch(room);
       throw err;
     }
-    const rounds = run.order === "aleatorio" ? mixRounds(perItem) : perItem.flatMap((tracks, item) => tracks.map((track) => ({ item, track })));
+    const rounds = perItem.flatMap((tracks, item) => tracks.map((track) => ({ item, track })));
     room.tracks = rounds.map(({ item, track }) => ({ ...track, playlistItem: item }));
     room.totalRounds = room.tracks.length;
     const music = room.tracks.filter((t) => run.items[t.playlistItem].game === "musica");
@@ -2843,8 +2907,11 @@ export class RoomManager {
     room.tiebreak = null;
   }
 
-  /** The playlist (or Clásico) is over or abandoned: the room is back in its panel with its own settings. */
-  stopPlaylist(room) {
+  /**
+   * A match of several games is over or abandoned: the room gets its own settings back, a Clásico's room back in it.
+   * (PLAYLIST_GAME is only where a public match's results show; nobody picks it.)
+   */
+  stopRun(room) {
     if (!room.run) return;
     room.config = room.run.savedConfig;
     room.game = room.run.classic || PLAYLIST_GAME;
@@ -2853,13 +2920,11 @@ export class RoomManager {
   }
 
   // Moves the whole room into another game (or back to the Home screen with `null`), abandoning any match in progress.
-  // A game's "Terminar" during a playlist (back to the menu, `null`) ends the playlist instead: the room goes back to
-  // the playlist's panel, where it came from.
+  // A game's "Terminar" during a Clásico (back to the menu, `null`) ends the Clásico instead: the room goes back to it.
   setGame(room, userId, game) {
     if (room.hostId !== userId) throw new Error("Solo el Host puede cambiar de juego");
-    const inPlaylist = Boolean(room.run);
-    const next = assertGame(game ?? null) ?? (inPlaylist ? room.run.classic || PLAYLIST_GAME : null);
-    this.stopPlaylist(room);
+    const next = assertGame(game ?? null) ?? room.run?.classic ?? null;
+    this.stopRun(room);
     this.resetMatch(room);
     room.game = next;
     room.preview = null;
@@ -2994,9 +3059,13 @@ export class RoomManager {
     const remainingMs = Math.max(0, (room.phaseEndsAt || Date.now()) - Date.now());
 
     // Check if the answer matches
-    const questionGame = room.game === QUIZ_GAME;
+    // Completa la letra's words are written like a Trivia open answer (the wrong options never count).
+    const lyric = room.game === "musica" ? track.lyric : null;
+    const questionGame = room.game === QUIZ_GAME || Boolean(lyric);
     if (questionGame) answerText = String(answerText ?? "").slice(0, 100);
-    const correct = questionGame
+    const correct = lyric
+      ? isCorrectOpenAnswer(answerText, { answer: lyric.answer, aliases: lyric.aliases, reject: lyric.wrong })
+      : questionGame
       ? isCorrectOpenAnswer(answerText, track)
       : answerText === track.id || this.pickedSameSong(room, track, answerText) || isCorrectAnswer(answerText, track);
     const scored = scoreAnswer({
@@ -3800,8 +3869,11 @@ export class RoomManager {
       // whether iTunes is making the Spotify songs wait.
       songsReady:
         room.phase === "lobby" && room.game !== PLAYLIST_GAME && !isClassic(room.game) && !QUESTION_GAMES.includes(room.game)
-          ? this.songPool(room).length
+          ? this.songsReady(room)
           : undefined,
+      // Adivina la canción, in the lobby: how many of those songs have their verse for Completa la letra.
+      lyricsReady:
+        room.phase === "lobby" && room.game === "musica" ? this.lyricPool(this.songPool(room)).length : undefined,
       // Opción múltiple, Geografía and Historia, in the lobby: how many different questions the chosen settings have
       // (one per round).
       questionsReady: room.phase === "lobby" ? this.questionsReady(room) : undefined,
@@ -3854,11 +3926,9 @@ export class RoomManager {
       centralRequests: (room.centralRequests || []).map((r) => ({ id: r.id, userId: r.userId, name: r.name, avatar: r.avatar, at: r.at })),
       // The room's chat, oldest first (sendChat).
       chat: room.chat || [],
-      // The playlist being made, while the room is in its panel or playing it; in the panel, also why each of its games
-      // can't be played yet (null when it can) and the counts for its settings' chips.
-      playlist: room.game === PLAYLIST_GAME || room.run ? room.playlist : undefined,
-      playlistStatus: room.game === PLAYLIST_GAME && room.phase === "lobby" ? this.playlistStatus(room) : undefined,
-      // The playlist being played: its games in play order, which one is on, who won each one and the tally.
+      // A match of several games being played (a public match or a Clásico): its games, and how it's going (in play
+      // order, which one is on, who won each one and the tally).
+      playlist: room.run ? room.playlist : undefined,
       run: room.run ? publicRun(room.run) : null,
       // What the host is pointing at on the game menu (null once a game is picked).
       preview: room.game ? null : room.preview || null,
@@ -3965,6 +4035,24 @@ export class RoomManager {
         answer: closed && showAnswer ? track.answer : null,
         picks: closed && showAnswer ? picks : null,
       };
+      // Completa la letra, from the countdown on: its lines with the ms of the preview each starts at (shown in time
+      // with the song), the last with the gap; where the song is heard from and where it stops; the round's whole time
+      // (that bit of song plus the seconds to answer); and where the reveal plays
+      // the song again from and until. The words only at the reveal.
+      if (track.lyric) {
+        const lyric = track.lyric;
+        payload.lyrics = {
+          lines: lyric.lines || [{ atMs: lyric.startMs, text: lyric.line }],
+          startMs: lyric.startMs,
+          cutMs: lyric.cutMs,
+          backMs: lyric.backMs ?? lyric.cutMs,
+          stopMs: lyric.stopMs ?? lyric.cutMs,
+          roundMs: this.roundMs(room),
+          revealFromMs: lyric.revealFromMs ?? lyric.cutMs,
+          answerEndMs: lyric.answerEndMs ?? lyric.cutMs,
+          answer: showAnswer ? lyric.answer : null,
+        };
+      }
     }
     // Send full search catalog for autocomplete during playing phase
     const songRound = !QUESTION_GAMES.includes(room.game);
@@ -4000,6 +4088,7 @@ export class RoomManager {
       payload.reveal = null;
       payload.audio = null;
       delete payload.choice;
+      delete payload.lyrics;
     }
     if (forUserId) {
       const me = room.players.get(forUserId);

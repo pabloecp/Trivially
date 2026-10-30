@@ -1,13 +1,11 @@
-// Playlists: several games of the room played one after another, each with its own settings ("Campo de minas" with
-// only easy boards about history, then "Adivina la canción" with the Spanish songs, then "Campo de minas" again...).
-// The room's playlist (`room.playlist`) is made in its own panel, like a game's settings: a name, the order to play it
-// in ("orden": each game whole, as listed; "aleatorio": one match with every game's rounds mixed at random) and its items, each a game id and that game's
-// settings. While it is played, `room.run` keeps the items in play order, which one is on and how many games each
-// player won: whoever wins the most games wins the playlist (points across all of them break a tie).
+// A match of several games played as one (a public match or a Clásico): its games ("items", each a game id and that
+// game's settings) are kept in `room.playlist` when it starts, and `room.run` keeps them in play order, which one is on
+// and how many games each player won: whoever wins the most games wins (points across all of them break a tie). The
+// rooms' own "Playlist" (games chosen and shared by players) no longer exists.
 
+// Where a public match's results show (`room.game` once it ends); nobody picks it.
 export const PLAYLIST_GAME = "playlist";
-// The games a playlist can have, and their names for the messages.
-export const PLAYLIST_GAMES = ["opciones", "musica", "mundo", "historia", "minas", "lluvia"];
+// The games' names for the messages.
 export const GAME_NAMES = {
   opciones: "Trivia",
   musica: "Adivina la canción",
@@ -16,42 +14,8 @@ export const GAME_NAMES = {
   minas: "Campo de minas",
   lluvia: "Lluvia",
 };
-export const PLAYLIST_ORDERS = ["orden", "aleatorio"];
-export const PLAYLIST_LIMITS = { items: 10, name: 40 };
-const DEFAULT_NAME = "Mi playlist";
 // Where each game keeps its settings in room.config (Adivina la canción's are at the top of it).
 const CONFIG_KEY = { opciones: "quiz", mundo: "geo", historia: "history", minas: "mines", lluvia: "rain", musica: null };
-
-export function emptyPlaylist() {
-  return { name: DEFAULT_NAME, order: "orden", items: [] };
-}
-
-function randomId() {
-  return Math.random().toString(36).slice(2, 10);
-}
-
-/**
- * A playlist as the room keeps it, from whatever a client sent (an edit, or a JSON someone imported): a name of at most
- * PLAYLIST_LIMITS.name letters, a known order and at most PLAYLIST_LIMITS.items items of known games. Each item keeps
- * its id when it is a short unique one (so the panel can keep it selected) and gets its settings from
- * `cleanConfig(game, config)`, which keeps every value valid (the game's own limits and lists).
- */
-export function cleanPlaylist(input, cleanConfig) {
-  const name = String(input?.name ?? "").replace(/\s+/g, " ").trim().slice(0, PLAYLIST_LIMITS.name) || DEFAULT_NAME;
-  const order = PLAYLIST_ORDERS.includes(input?.order) ? input.order : "orden";
-  const seen = new Set();
-  const items = (Array.isArray(input?.items) ? input.items : [])
-    .filter((item) => PLAYLIST_GAMES.includes(item?.game))
-    .slice(0, PLAYLIST_LIMITS.items)
-    .map((item) => {
-      let id = typeof item.id === "string" && /^[a-z0-9_-]{1,24}$/i.test(item.id) ? item.id : "";
-      if (!id || seen.has(id)) id = randomId();
-      seen.add(id);
-      const config = item.config && typeof item.config === "object" && !Array.isArray(item.config) ? item.config : {};
-      return { id, game: item.game, config: cleanConfig(item.game, config) };
-    });
-  return { name, order, items };
-}
 
 /** The room's settings with an item's in place of its game's: what the room plays while the item is on. */
 export function configWithItem(base, item) {
@@ -59,40 +23,15 @@ export function configWithItem(base, item) {
   return key ? { ...base, [key]: item.config } : { ...base, ...item.config };
 }
 
-/** The items in the order they are played: as listed, or shuffled. */
-export function playOrder(items, order, random = Math.random) {
-  const out = [...items];
-  if (order !== "aleatorio") return out;
-  for (let i = out.length - 1; i > 0; i -= 1) {
-    const j = Math.floor(random() * (i + 1));
-    [out[i], out[j]] = [out[j], out[i]];
-  }
-  return out;
-}
-
-/**
- * A mixed playlist's rounds: each game's rounds (`perItem[i]`, in the order each was drawn) put together in a random
- * order, every round of every game played once: [{ item: i, track }]. Two of one game can come in a row.
- */
-export function mixRounds(perItem, random = Math.random) {
-  const slots = perItem.flatMap((tracks, i) => tracks.map(() => i));
-  for (let i = slots.length - 1; i > 0; i -= 1) {
-    const j = Math.floor(random() * (i + 1));
-    [slots[i], slots[j]] = [slots[j], slots[i]];
-  }
-  const next = perItem.map(() => 0);
-  return slots.map((i) => ({ item: i, track: perItem[i][next[i]++] }));
-}
-
-/** A new playlist run, about to play its first item. `savedConfig` is the room's own settings, put back at the end. */
-export function newRun(playlist, savedConfig, random = Math.random) {
+/** A new run, about to play its first item. `savedConfig` is the room's own settings, put back at the end. */
+export function newRun(playlist, savedConfig) {
   return {
     name: playlist.name,
     order: playlist.order,
-    // Every playlist is a single match (RoomManager.startMixed): "orden" plays each game's rounds one game after the
-    // other, "aleatorio" mixes them. There is no screen between games; the match ends on the playlist's results.
+    // A single match (RoomManager.startMixed): each game's rounds one game after the other. There is no screen between
+    // games; the match ends on its results.
     mixed: true,
-    items: playOrder(playlist.items, playlist.order, random),
+    items: [...playlist.items],
     index: 0,
     // Per player (even one who left): name, avatar, games played and won, and points across them.
     standings: {},

@@ -305,39 +305,6 @@
 .tv-appicon--sm { --s: 36px; height: var(--s); animation: none; }
 .tv-appicon--sm .tv-appicon-tile { animation: none; }
 
-.tv-wordmark {
-  display: flex;
-  justify-content: center;
-  margin: 4px 0 0;
-  font-family: var(--tv-logo-font);
-  font-weight: var(--tv-logo-weight, 700);
-  font-size: clamp(64px, 17vw, 124px);
-  line-height: 0.95;
-  letter-spacing: var(--tv-logo-tracking, -0.01em);
-  color: var(--tv-text);
-  text-shadow: 0 5px 0 var(--tv-logo-shadow);
-}
-.tv-letter {
-  position: relative;
-  display: inline-block;
-  animation: tvLetter 0.6s var(--tv-spring) backwards;
-  animation-delay: calc(0.15s + var(--i) * 45ms);
-}
-.tv-dot {
-  position: absolute;
-  left: 50%;
-  top: 0.17em;
-  width: 0.2em;
-  height: 0.2em;
-  margin-left: -0.1em;
-  border-radius: 50%;
-  box-shadow: 0 5px 0 var(--tv-logo-shadow);
-  animation: tvDotDrop 0.8s var(--tv-spring) backwards, tvDotHop 3.2s ease-in-out infinite;
-  animation-delay: calc(0.65s + var(--i) * 60ms), calc(1.6s + var(--i) * 150ms);
-}
-.tv-dot--yellow { background: var(--tv-dot-1, var(--tv-rb-yellow)); }
-.tv-dot--pink { background: var(--tv-dot-2, var(--tv-rb-red)); }
-
 /* ---------- Room screen ---------- */
 /* The room is wider than the other screens: the game's panel and settings side by side, and the room's column. */
 .tv-main:has(> .tv-room),
@@ -1893,6 +1860,40 @@
 }
 .tv-eq span:nth-child(even) { animation-duration: 0.7s; }
 
+/* Completa la letra's lyrics, line by line: big and flat, every line in its place; the one being sung lit, the ones
+   already sung dimmed, the ones still to come fainter. The gap is one long thin line, always as wide, that the words
+   fill at the reveal without moving anything. */
+.tv-lyrics { display: grid; gap: 10px; width: 100%; max-width: 640px; text-align: left; }
+.tv-lyrics-line {
+  margin: 0;
+  font-family: var(--tv-display);
+  font-weight: 700;
+  font-size: clamp(22px, 5vw, 32px);
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+  color: var(--tv-text);
+  transition: opacity 0.3s ease;
+}
+.tv-lyrics-line.is-current { opacity: 1; }
+.tv-lyrics-line.is-past { opacity: 0.45; }
+.tv-lyrics-line.is-next { opacity: 0.3; }
+/* The gap's line, the question, reads clearly before the song gets to it. */
+.tv-lyrics-line.is-next:last-child { opacity: 0.7; }
+.tv-lyrics-gap {
+  display: inline-block;
+  width: 5.5em;
+  height: 1.2em;
+  margin: 0 0.1em;
+  vertical-align: bottom;
+  border-bottom: 3px solid var(--brand);
+  color: var(--brand-text);
+  text-align: center;
+  white-space: nowrap;
+  line-height: 1.2em;
+}
+.tv-game.is-central .tv-lyrics { max-width: 960px; }
+.tv-game.is-central .tv-lyrics-line { font-size: clamp(30px, min(3.4vw, 5.4vh), 54px); }
+
 .tv-search { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; width: 100%; max-width: 560px; text-align: left; }
 .tv-search-box {
   display: flex;
@@ -2382,19 +2383,6 @@
   0%, 100% { transform: scaleX(1); opacity: 1; }
   50% { transform: scaleX(0.78); opacity: 0.6; }
 }
-@keyframes tvLetter {
-  from { opacity: 0; transform: translateY(28px) scale(0.6); }
-  to { opacity: 1; transform: none; }
-}
-@keyframes tvDotDrop {
-  from { opacity: 0; transform: translateY(-60px); }
-  to { opacity: 1; transform: none; }
-}
-@keyframes tvDotHop {
-  0%, 70%, 100% { translate: 0 0; }
-  80% { translate: 0 -0.12em; }
-  90% { translate: 0 0; }
-}
 @keyframes tvShake {
   0%, 100% { transform: translateX(0); }
   20% { transform: translateX(-7px) rotate(-1.5deg); }
@@ -2562,11 +2550,8 @@ body:has(.tv-app) {
   background-attachment: fixed;
 }
 /* Text straight on the page, not in a box: colour options with a coloured page set these (palettes.css). */
-.tv-wordmark,
 .tv-auth-head .tv-page-title { color: var(--tv-page-text, var(--tv-text)); }
 .tv-auth-head .tv-page-sub { color: var(--tv-page-text-2, var(--tv-text-2)); }
-.tv-wordmark { text-shadow: 0 5px 0 var(--tv-page-shadow, var(--tv-logo-shadow)); }
-.tv-dot { box-shadow: 0 5px 0 var(--tv-page-shadow, var(--tv-logo-shadow)); }
 
 
 
@@ -3801,3 +3786,6 @@ html.tv-seamless .tv-room-main { animation: tvSeamIn 0.55s cubic-bezier(0.2, 0.9
 @media (prefers-reduced-motion: reduce) {
   .tv-mstage-flash { display: none; }
 }
+
+/* Adivina la canción's settings: how many songs have their Completa la letra round ready, under its "Modos de juego". */
+.tv-lyrics-note { margin: -4px 0 4px; font-size: 13px; color: var(--tv-text-dim, var(--tv-text)); }

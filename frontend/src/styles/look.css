@@ -120,6 +120,9 @@
 .tv-app .tv-chip--icon { width: 40px; }
 .tv-app .tv-chip--leave { padding-right: 16px; }
 .tv-app .tv-chip--leave > .tv-avatar--empty { width: 34px; margin-left: 4px; }
+/* The "X" of a match is only its icon: no room for "Volver", so it sits in the middle of its square. */
+.tv-app .tv-chip--leave.tv-chip--icon { padding: 0; justify-content: center; }
+.tv-app .tv-chip--leave.tv-chip--icon > .tv-avatar--empty { width: 40px; margin-left: 0; }
 .tv-app .tv-chip--profile { gap: 10px; padding: 0 14px 0 6px; }
 .tv-app .tv-chip--profile > .tv-avatar { width: 28px; height: 28px; font-size: 14px; }
 @media (max-width: 640px) {
@@ -160,16 +163,6 @@
 .tv-lobby-game:has(.tv-pl-stage) { flex-direction: row; flex-wrap: wrap; align-items: stretch; }
 .tv-app .tv-lobby-game > .tv-pl-stage { flex: 1 1 520px; width: auto; }
 .tv-app .tv-lobby-game > .tv-settings-card { flex: 1.2 1 440px; }
-.tv-lobby-hint {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  margin: 0;
-  font-family: var(--tv-small);
-  font-weight: 600;
-  font-size: 14px;
-  color: var(--tv-text-3);
-}
 @media (max-width: 760px) {
   .tv-app .tv-main.is-lobby { padding: 16px 16px calc(16px + env(safe-area-inset-bottom)); }
   .tv-lobby { gap: 16px; }
@@ -212,145 +205,87 @@
 .tv-app .tv-mstage.tv-c-neutral { background: var(--tv-surface); }
 
 /* ---------- The game's stage (ModeStage) ---------- */
-/* One panel in the game's colour, as wide as the group's bar, coming in as one panel (flat: only its "Ajustes" is
-   tapped). Three columns, the middle one exactly in the middle: on the left the game (its icon and name, and its little
-   tutorial under them), in the middle you (your name over your character, your elo under it), on the right the match
-   (who it's for and, under it, how many play now or its settings). A faint disc stands behind your character. */
+/* The stage: the game's card in its colour (flat: only its "Ajustes" is tapped) and, beside it, your boxes ("Tu elo" with
+   your character, and "Reto del día"), the whole as wide as the group's bar and coming in as one panel.
+   The card: the game's icon and, in one row beside it, who the match is for over the game's name (one line); three
+   short lines under them (how it's played, the settings, how many play now); the game's icon big and faint, cut by
+   the bottom right corner. */
 .tv-lobby-stage:has(.tv-stage) { width: min(1260px, 100%); }
 .tv-stage {
+  flex: none;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+  width: 100%;
+  min-height: 380px;
+  height: clamp(380px, calc(100vh - 360px), 520px);
+  height: clamp(380px, calc(100svh - 360px), 520px);
+  transform-origin: 50% 100%;
+  animation: var(--tv-box-in);
+}
+.tv-stage.has-aside { grid-template-columns: minmax(0, 1.5fr) minmax(280px, 1fr); }
+
+.tv-stage-card {
   position: relative;
   overflow: hidden;
   overflow: clip;
-  flex: none;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(200px, 300px) minmax(0, 1fr);
-  grid-template-areas: "game me side";
-  align-items: center;
-  column-gap: 32px;
-  width: 100%;
-  min-height: 440px;
-  height: clamp(440px, calc(100vh - 340px), 560px);
-  height: clamp(440px, calc(100svh - 340px), 560px);
-  padding: 28px 36px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 22px;
+  min-width: 0;
+  padding: 32px 36px;
   border-radius: 24px;
   background: var(--c2);
   color: #fff;
-  transform-origin: 50% 100%;
   transition: background-color 0.6s ease;
-  animation: var(--tv-box-in);
 }
-.tv-stage.tv-c-neutral { background: var(--tv-surface); }
-.tv-stage:not(.has-swap) .tv-mstage-flash { animation-delay: 0.4s; }
-.tv-stage-game,
-.tv-stage-me,
-.tv-stage-side { position: relative; min-width: 0; }
+.tv-stage-card.tv-c-neutral { background: var(--tv-surface); }
+.tv-stage-card:not(.has-swap) .tv-mstage-flash { animation-delay: 0.4s; }
+.tv-stage-mark { position: absolute; right: -50px; bottom: -70px; display: grid; color: rgba(255, 255, 255, 0.14); pointer-events: none; }
+.tv-stage-card.tv-c-neutral .tv-stage-mark { color: rgba(255, 255, 255, 0.04); }
 
-/* The game: its icon (or the logo) and name, and the tutorial. */
-.tv-stage-game { grid-area: game; display: flex; flex-direction: column; gap: 20px; width: 100%; max-width: 440px; }
-.tv-stage-title { display: flex; align-items: center; gap: 16px; min-width: 0; }
-.tv-stage-badge { display: grid; place-items: center; flex-shrink: 0; width: 60px; height: 60px; border-radius: 14px; background: #fff; color: var(--c2); }
+/* The head: the game's icon (or the logo) and, beside it, who the match is for over its name. */
+.tv-stage-head { position: relative; display: flex; align-items: center; gap: 18px; min-width: 0; }
+.tv-stage-badge { display: grid; place-items: center; flex-shrink: 0; width: 72px; height: 72px; border-radius: 18px; background: #fff; color: var(--c2); box-shadow: 0 4px 0 rgba(0, 0, 0, 0.22); }
+.tv-stage-card.tv-c-neutral .tv-stage-badge { background: var(--tv-surface-2); color: var(--tv-text); box-shadow: none; }
 .tv-stage-logo { flex-shrink: 0; display: grid; }
-.tv-stage-logo .tv-appicon { --s: 60px; }
+.tv-stage-logo .tv-appicon { --s: 72px; }
 .tv-stage-heading { min-width: 0; }
-.tv-stage-name { margin: 0; font-size: clamp(32px, 3.4vw, 46px); line-height: 1; color: #fff; overflow-wrap: anywhere; }
-.tv-stage-name.is-long { font-size: clamp(22px, 2.2vw, 28px); line-height: 1.1; }
-.tv-stage-sub { margin: 4px 0 0; font-family: var(--tv-display); font-weight: 800; font-size: 16px; color: rgba(255, 255, 255, 0.75); }
+.tv-stage-aud { display: flex; align-items: center; gap: 6px; margin: 0 0 6px; font-family: var(--tv-display); font-weight: 700; font-size: 15px; line-height: 1.2; color: rgba(255, 255, 255, 0.9); }
+/* The name on one line, as big as fits ("…" when even that doesn't). */
+.tv-stage-name { margin: 0; overflow: hidden; font-size: clamp(30px, 3.4vw, 50px); line-height: 1.05; color: #fff; white-space: nowrap; text-overflow: ellipsis; }
+.tv-stage-name.is-long { font-size: clamp(22px, 2.4vw, 32px); }
 
-/* The tutorial: the steps side by side, each an image with its text, and a dot for each under them (the lit one is the
-   step shown). The images are empty frames until they're made. */
-.tv-tut { display: grid; grid-template-columns: minmax(0, 1fr); gap: 6px; min-width: 0; }
-.tv-tut-view { overflow: hidden; overflow: clip; border-radius: 14px; }
-.tv-tut-track { display: flex; transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1); }
-.tv-tut-track.is-still { transition: none; }
-.tv-tut-slide { flex: 0 0 100%; display: grid; grid-template-columns: minmax(0, 1fr); align-content: start; gap: 12px; min-width: 0; margin: 0; }
-.tv-tut-img { aspect-ratio: 2 / 1; overflow: hidden; border-radius: 14px; background: rgba(0, 0, 0, 0.18); }
-.tv-tut-img img { display: block; width: 100%; height: 100%; object-fit: cover; }
-.tv-tut-text { min-height: 2.6em; margin: 0; padding: 0 4px; font-family: var(--tv-display); font-weight: 700; font-size: 17px; line-height: 1.3; color: #fff; text-align: center; }
-.tv-tut-dots { display: flex; justify-content: center; gap: 2px; }
-.tv-tut-dot { position: relative; width: 22px; height: 22px; padding: 0; border: 0; background: none; cursor: pointer; }
-.tv-tut-dot::before { content: ""; position: absolute; inset: 6px; border-radius: 50%; background: rgba(255, 255, 255, 0.32); transition: background-color 0.25s ease, transform 0.25s var(--tv-spring); }
-.tv-tut-dot:hover::before { background: rgba(255, 255, 255, 0.6); }
-.tv-tut-dot.is-on::before { background: #fff; transform: scale(1.15); }
-.tv-tut-dot:focus-visible { outline: 2px solid #fff; outline-offset: -2px; border-radius: 8px; }
-
-/* You: your name over your character, your elo under it. The figure takes the height the stage leaves it (it never
-   makes the stage taller). */
-.tv-stage-me { grid-area: me; align-self: stretch; container-type: inline-size; display: flex; flex-direction: column; align-items: center; gap: 10px; }
-.tv-stage-me-name {
-  max-width: 100%;
-  padding: 6px 14px;
-  border-radius: 10px;
-  background: var(--tv-surface);
+/* The three lines: an icon on a lighter square and a few words; flat. */
+.tv-stage-lines { position: relative; display: flex; flex-direction: column; gap: 10px; width: min(100%, 560px); margin: 0; padding: 0; list-style: none; }
+.tv-stage-lines li {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 54px;
+  padding: 7px 8px 7px 7px;
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.14);
   font-family: var(--tv-display);
   font-weight: 700;
   font-size: 16px;
-  line-height: 1.2;
-  color: var(--tv-text);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  line-height: 1.25;
 }
-.tv-stage-me-spot { position: relative; flex: 1; align-self: stretch; min-height: 0; }
-.tv-stage-me-floor { position: absolute; left: 4%; right: 4%; bottom: 0; height: 26px; border-radius: 50%; background: rgba(0, 0, 0, 0.18); }
-/* Never taller than the column is wide, so the disc behind it stays inside the column. */
-.tv-stage-me-figure { position: absolute; left: 50%; bottom: 13px; width: auto; height: min(calc(100% - 13px), 300px, 94cqw); translate: -50% 0; }
-.tv-stage-me-figure { overflow: visible; }
-/* The disc behind the figure (it grows and shrinks with it); the figure is one group opacity, so the shapes that
-   overlap don't show darker. */
-.tv-stage-me-disc { fill: rgba(255, 255, 255, 0.09); }
-.tv-stage-me-figure g { fill: #fff; opacity: 0.3; }
-.tv-stage-elo { display: grid; gap: 2px; margin: 0; padding: 8px 26px 10px; border-radius: 14px; background: rgba(0, 0, 0, 0.15); text-align: center; }
-.tv-stage-elo dt,
-.tv-stage-label { font-family: var(--tv-small); font-weight: 700; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(255, 255, 255, 0.8); }
-.tv-stage-elo dd {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  margin: 0;
-  font-family: var(--tv-title);
-  font-weight: 800;
-  font-size: 32px;
-  line-height: 1.1;
-  letter-spacing: -0.02em;
-  font-variant-numeric: tabular-nums;
-  color: #fff;
-}
-
-/* The match: who it's for, and how many play now (a public one) or its settings (a private one). */
-.tv-stage-side { grid-area: side; display: flex; flex-direction: column; gap: 12px; width: 100%; max-width: 400px; justify-self: end; }
-.tv-stage-aud { display: flex; align-items: center; gap: 12px; margin: 0; padding: 8px 18px 8px 8px; border-radius: 14px; background: rgba(0, 0, 0, 0.15); font-family: var(--tv-display); font-weight: 700; font-size: 20px; line-height: 1.1; color: #fff; }
-.tv-stage-aud-icon { display: grid; place-items: center; flex-shrink: 0; width: 44px; height: 44px; border-radius: 10px; background: rgba(255, 255, 255, 0.18); }
-.tv-stage-stat { display: grid; gap: 4px; padding: 12px 18px 16px; border-radius: 14px; background: rgba(0, 0, 0, 0.15); }
-.tv-stage-big {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-family: var(--tv-title);
-  font-weight: 800;
-  font-size: 40px;
-  line-height: 1.1;
-  letter-spacing: -0.02em;
-  font-variant-numeric: tabular-nums;
-  color: #fff;
-}
+.tv-stage-lines b { font-family: var(--tv-title); font-weight: 800; font-variant-numeric: tabular-nums; }
+.tv-stage-line-icon { display: grid; place-items: center; flex-shrink: 0; width: 40px; height: 40px; border-radius: 10px; background: rgba(255, 255, 255, 0.18); }
+.tv-stage-line-text { flex: 1; min-width: 0; }
+.tv-stage-note { font-weight: 600; color: rgba(255, 255, 255, 0.75); }
 /* "Jugando ahora": a white dot that keeps sending out a ring. */
-.tv-stage-live { position: relative; flex-shrink: 0; width: 12px; height: 12px; border-radius: 50%; background: #fff; }
+.tv-stage-live { position: relative; width: 12px; height: 12px; border-radius: 50%; background: #fff; }
 .tv-stage-live::after { content: ""; position: absolute; inset: 0; border-radius: inherit; background: #fff; animation: tvLive 1.8s ease-out infinite; }
 @keyframes tvLive { to { transform: scale(2.6); opacity: 0; } }
-.tv-stage-sum { font-family: var(--tv-display); font-weight: 700; font-size: 15px; line-height: 1.3; color: rgba(255, 255, 255, 0.9); }
-.tv-stage-sum.is-set { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; margin: 0; overflow: hidden; font-size: 17px; }
-.tv-stage-note { font-family: var(--tv-small); font-weight: 700; font-size: 13px; color: rgba(255, 255, 255, 0.8); }
-/* "Ajustes" (a private match): glass over the stage's colour (a see-through white with a thin light line), with the edge a
-   darker shade of it like any button on it. */
+/* "Ajustes" (a private match), at the end of its line: glass over the card's colour, with a darker edge like any
+   button on it. */
 .tv-stage-settings {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  height: 44px;
-  margin-top: 8px;
-  padding: 0 14px;
+  flex-shrink: 0;
+  height: 40px;
+  padding: 0 16px;
   border: 1px solid rgba(255, 255, 255, 0.4);
   border-radius: 12px;
   background: rgba(255, 255, 255, 0.18);
@@ -359,7 +294,7 @@
   box-shadow: 0 3px 0 rgba(0, 0, 0, 0.18);
   font-family: var(--tv-display);
   font-weight: 700;
-  font-size: 16px;
+  font-size: 15px;
   color: #fff;
   cursor: pointer;
   transition: transform 0.15s var(--tv-spring), box-shadow 0.15s ease, background-color 0.2s ease;
@@ -369,7 +304,7 @@
 .tv-stage-settings:disabled { opacity: 0.5; cursor: default; }
 
 /* A Clásico: the logo's dark tile framed by its five coloured slices, like its cards. */
-.tv-stage.is-classic {
+.tv-stage-card.is-classic {
   --c2: var(--tv-surface);
   --logo-frame: conic-gradient(
     var(--logo-1) 0 72deg,
@@ -378,50 +313,57 @@
     var(--logo-4) 216deg 288deg,
     var(--logo-5) 288deg 360deg
   );
-  padding: 22px 30px;
+  padding: 26px 30px;
   border: 6px solid transparent;
   background: linear-gradient(var(--tv-surface), var(--tv-surface)) padding-box, var(--logo-frame) border-box;
 }
-.tv-stage.is-classic :is(.tv-stage-aud, .tv-stage-stat, .tv-stage-elo, .tv-mstage-step, .tv-tut-img) { background: rgba(255, 255, 255, 0.06); }
+.tv-stage-card.is-classic .tv-stage-lines li { background: rgba(255, 255, 255, 0.06); }
 
-/* The swap (ModeStage's swapKey): the game's name and tutorial come in from the left, your elo and the match's rows
-   come in after them (your character stays: it's yours, whatever the game). */
-.tv-stage.has-swap .tv-stage-game { animation: tvHeadIn 0.5s cubic-bezier(0.2, 0.9, 0.3, 1.1); }
-.tv-stage.has-swap .tv-stage-elo { animation: tvSwap 0.45s var(--tv-ease-out) 0.12s backwards; }
-.tv-stage.has-swap .tv-stage-side > :not(.tv-mstage-steps) { animation: tvSwap 0.45s var(--tv-ease-out) 0.2s backwards; }
-.tv-stage.has-swap .tv-mstage-step { animation: tvSwap 0.45s var(--tv-ease-out) calc(0.2s + var(--i) * 70ms) backwards; }
+/* Beside the card: "Tu elo" (your character in its empty side) and "Reto del día" under it. Flat dark boxes. */
+.tv-stage-aside { display: grid; grid-template-rows: 1fr 1fr; gap: 16px; min-width: 0; }
+.tv-stage-box { position: relative; display: flex; flex-direction: column; justify-content: center; gap: 12px; min-width: 0; padding: 22px 24px; border-radius: 24px; background: var(--tv-surface); border: 1px solid rgba(255, 255, 255, 0.07); }
+.tv-stage-label { font-family: var(--tv-small); font-weight: 700; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--tv-text-3); }
+.tv-stage-elo { flex-direction: row; align-items: center; justify-content: space-between; gap: 12px; }
+.tv-stage-elo-text { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.tv-stage-elo-num { display: flex; align-items: center; gap: 10px; font-family: var(--tv-title); font-weight: 900; font-size: 52px; line-height: 1; letter-spacing: -0.04em; font-variant-numeric: tabular-nums; color: var(--tv-text); }
+.tv-stage-elo-num .tv-icon, .tv-stage-elo-num svg { color: var(--p-accent-2); }
+.tv-stage-elo-week { font-family: var(--tv-display); font-weight: 800; font-size: 14px; color: #2fe08a; }
+.tv-stage-elo-week.is-down { color: #ff6b6b; }
+/* Your character: Blob (Blob.jsx), white with a black line; it floats a little. */
+.tv-stage-blob { display: block; flex-shrink: 0; width: 42%; max-width: 170px; aspect-ratio: 1; margin: -10px -6px -14px 0; animation: tvBlobFloat 3.2s ease-in-out infinite; }
+@keyframes tvBlobFloat { 50% { transform: translateY(-6px); } }
+.tv-stage-daily-row { display: flex; align-items: center; gap: 14px; }
+.tv-stage-daily-icon { display: grid; place-items: center; flex-shrink: 0; width: 52px; height: 52px; border-radius: 14px; background: var(--p-accent-2); color: var(--p-on-accent); box-shadow: 0 4px 0 var(--p-accent-edge); }
+.tv-stage-daily-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.tv-stage-daily-text strong { font-family: var(--tv-display); font-weight: 800; font-size: 17px; line-height: 1.2; color: var(--tv-text); }
+.tv-stage-daily-text span { font-family: var(--tv-small); font-weight: 600; font-size: 13px; color: var(--tv-text-3); }
+.tv-stage-daily-count { font-family: var(--tv-title); font-weight: 800; font-size: 22px; font-variant-numeric: tabular-nums; color: var(--tv-text); }
+.tv-stage-daily-bar { display: block; height: 8px; overflow: hidden; border-radius: 4px; background: rgba(255, 255, 255, 0.08); }
+.tv-stage-daily-bar i { display: block; height: 100%; border-radius: 4px; background: var(--p-accent-2); }
+
+/* The swap (ModeStage's swapKey): the head comes in from the left and the lines after it; the boxes beside it change
+   with the game. */
+.tv-stage-card.has-swap .tv-stage-head { animation: tvHeadIn 0.5s cubic-bezier(0.2, 0.9, 0.3, 1.1); }
+.tv-stage-card.has-swap .tv-stage-lines li { animation: tvSwap 0.45s var(--tv-ease-out) calc(0.15s + var(--i, 0) * 70ms) backwards; }
 @media (prefers-reduced-motion: reduce) {
-  .tv-stage-live::after { animation: none; }
-  .tv-tut-track { transition: none; }
-  .tv-tut-dot::before { transition: none; }
-  .tv-stage.has-swap .tv-stage-game,
-  .tv-stage.has-swap .tv-stage-elo,
-  .tv-stage.has-swap .tv-stage-side > :not(.tv-mstage-steps),
-  .tv-stage.has-swap .tv-mstage-step { animation: none; }
+  .tv-stage-live::after,
+  .tv-stage-blob,
+  .tv-stage-card.has-swap .tv-stage-head,
+  .tv-stage-card.has-swap .tv-stage-lines li { animation: none; }
 }
 
-/* Not wide enough for three columns: the game (and its tutorial) across the top, you and the match under it. */
+/* Not wide enough for both: the card across the top, the boxes side by side under it. */
 @media (max-width: 860px) {
-  .tv-stage {
-    grid-template-columns: 124px minmax(0, 1fr);
-    grid-template-areas: "game game" "me side";
-    align-items: center;
-    gap: 18px 16px;
-    height: auto;
-    min-height: 0;
-    padding: 22px 20px;
-  }
-  .tv-stage.is-classic { padding: 16px 14px; }
-  .tv-stage-game { max-width: 560px; }
-  .tv-tut-img { aspect-ratio: 3 / 1; }
-  .tv-stage-me { align-self: end; gap: 6px; }
-  .tv-stage-me-name { padding: 4px 10px; font-size: 14px; }
-  .tv-stage-me-spot { flex: none; height: 110px; }
-  .tv-stage-me-floor { height: 18px; }
-  .tv-stage-me-figure { bottom: 9px; height: 101px; max-height: 94cqw; }
-  .tv-stage-elo { padding: 6px 14px 8px; }
-  .tv-stage-elo dd { font-size: 26px; }
-  .tv-stage-side { max-width: none; justify-self: stretch; }
+  .tv-stage,
+  .tv-stage.has-aside { grid-template-columns: minmax(0, 1fr); height: auto; min-height: 0; }
+  .tv-stage-card { padding: 24px 20px; }
+  .tv-stage-aside { grid-template-rows: none; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .tv-stage-box { padding: 18px; }
+  .tv-stage-elo-num { font-size: 40px; }
+  .tv-stage-blob { width: 44%; }
+}
+@media (max-width: 560px) {
+  .tv-stage-aside { grid-template-columns: minmax(0, 1fr); }
 }
 @media (max-width: 760px) {
   .tv-app .tv-mstage { gap: 16px; padding: 20px; }
@@ -429,16 +371,13 @@
   .tv-app .tv-mstage-name { font-size: 40px; }
   .tv-app .tv-mstage-step { font-size: 15px; }
   .tv-app .tv-mstage-watermark { width: 240px; height: 240px; right: -60px; bottom: auto; top: 0; }
-  .tv-stage-badge { width: 48px; height: 48px; }
-  .tv-stage-logo .tv-appicon { --s: 48px; }
-  .tv-stage-title { gap: 12px; }
+  .tv-stage-badge { width: 56px; height: 56px; border-radius: 14px; }
+  .tv-stage-logo .tv-appicon { --s: 56px; }
+  .tv-stage-head { gap: 14px; }
   .tv-stage-name { font-size: 28px; }
   .tv-stage-name.is-long { font-size: 20px; }
-  .tv-tut-text { font-size: 15px; }
-  .tv-stage-aud { gap: 10px; font-size: 17px; }
-  .tv-stage-aud-icon { width: 36px; height: 36px; }
-  .tv-stage-big { font-size: 32px; }
-  .tv-stage-stat { padding: 10px 14px 14px; }
+  .tv-stage-lines li { min-height: 48px; font-size: 15px; }
+  .tv-stage-line-icon { width: 34px; height: 34px; }
 }
 
 /* ---------- The group's bar ---------- */
