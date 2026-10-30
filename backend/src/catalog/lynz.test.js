@@ -20,7 +20,11 @@ assert.equal(lynzEndpoint("https://api.lynz.example/"), "https://api.lynz.exampl
 assert.equal(lynzEndpoint("https://api.lynz.example/api/rankings/top-songs"), "https://api.lynz.example/api/rankings/top-songs");
 assert.equal(lynzEndpoint(""), null);
 assert.equal(lynzEndpoint(undefined), null);
-assert.equal(lynzEndpoint("api.lynz.example"), null, "needs http(s)");
+// Without "https://" (how it was typed in Railway) it is https; something that isn't an address is nothing.
+assert.equal(lynzEndpoint("api-production-6434.up.railway.app"), "https://api-production-6434.up.railway.app/api/rankings/top-songs");
+assert.equal(lynzEndpoint(" api.lynz.example/ "), "https://api.lynz.example/api/rankings/top-songs");
+assert.equal(lynzEndpoint("http://localhost:9911"), "http://localhost:9911/api/rankings/top-songs");
+assert.equal(lynzEndpoint("hola mundo"), null);
 
 // Lynz's answer, cleaned: by rank, no repeats, nothing without title or artist, at most 100.
 const raw = (rank, name, artist, rating = 9, reviewsCount = 10) => ({ rank, name, artist, rating, reviewsCount });
