@@ -3,7 +3,7 @@ import { Link, Navigate, useNavigate, useParams, useSearchParams } from "react-r
 import { api } from "../lib/api.js";
 import UsernameField, { useUsernameCheck } from "../components/home/UsernameField.jsx";
 import { USERNAME_MIN } from "../lib/username.js";
-import { AVATAR_COLORS, useApp } from "../lib/store.jsx";
+import { useApp } from "../lib/store.jsx";
 import TvShell from "../components/home/TvShell.jsx";
 import Avatar from "../components/home/Avatar.jsx";
 import CountUp from "../components/home/CountUp.jsx";
@@ -48,7 +48,7 @@ function handleInfo(info) {
 }
 
 function ProfileScreen() {
-  const { user: currentUser, updateUsername, changeHandle, updateAvatar, linkGoogle, connectSpotify, unlinkSpotify, linkingStatus, logout } =
+  const { user: currentUser, updateUsername, changeHandle, linkGoogle, connectSpotify, unlinkSpotify, linkingStatus, logout } =
     useApp();
   const [spotifyBusy, setSpotifyBusy] = useState(false);
   // "Activo" on Spotify: the first tap turns it into "Desconectar", the second one disconnects.
@@ -74,9 +74,6 @@ function ProfileScreen() {
   const [newUserName, setNewUserName] = useState("");
   // The @username: changes are limited, so it is saved apart from the name for the games and shows how many are left.
   const [newHandle, setNewHandle] = useState("");
-  // The color picked but not saved yet (a color from AVATAR_COLORS or "google"); null while nothing is pending.
-  // Picking only previews it here: nothing goes to the server (or to the other players) until "Guardar".
-  const [draftAvatar, setDraftAvatar] = useState(null);
   const [saving, setSaving] = useState(false);
 
   const [msg, setMsg] = useState("");
@@ -128,28 +125,12 @@ function ProfileScreen() {
     return () => clearTimeout(t);
   }, [msg]);
 
-  function onPickColor(color) {
-    if (saving) return;
-    if (color === "google" && !googlePhoto) {
-      setMsg("");
-      setErr(
-        isGuest
-          ? "Para poner tu foto tienes que iniciar sesión con Google."
-          : "Para poner tu foto tienes que vincular tu cuenta de Google."
-      );
-      return;
-    }
-    setErr("");
-    setDraftAvatar(color);
-  }
-
-  // One button saves whatever was edited: the name, the color, or both.
+  // One button saves whatever was edited: the name, the @username, or both. (No colour or photo: everyone is a Blob.)
   async function onSaveProfile(e) {
     e?.preventDefault();
     if (!canSave || saving) return;
     const withName = nameChanged;
     const withHandle = handleChanged;
-    const withColor = colorChanged;
     setSaving(true);
     setErr("");
     try {
@@ -161,19 +142,7 @@ function ProfileScreen() {
         await changeHandle(newHandle);
         setNewHandle("");
       }
-      if (withColor) {
-        await updateAvatar(draftAvatar);
-        setDraftAvatar(null);
-      }
-      setMsg(
-        [withName, withHandle, withColor].filter(Boolean).length > 1
-          ? "Perfil actualizado."
-          : withName
-            ? "Nombre actualizado."
-            : withHandle
-              ? "Nombre de usuario actualizado."
-              : "Color actualizado."
-      );
+      setMsg(withName && withHandle ? "Perfil actualizado." : withName ? "Nombre actualizado." : "Nombre de usuario actualizado.");
     } catch (e) {
       // What was already saved is cleared above; the rest stays so it can be saved again.
       setErr(e.message);
@@ -213,18 +182,11 @@ function ProfileScreen() {
   const activeUser = isOtherUser ? profileData : currentUser;
   const isGuest = Boolean(activeUser?.isGuest);
   const hasGoogle = Boolean(activeUser?.googleId || activeUser?.googleLinked || (!isOtherUser && linkingStatus?.googleLinked));
-  // Older Google accounts have no googlePhoto yet; their photo is still the avatar itself.
-  const googlePhoto =
-    activeUser?.googlePhoto || (hasGoogle && activeUser?.avatar?.startsWith("http") ? activeUser.avatar : null);
   const canLinkGoogle = !isOtherUser && !isGuest && !hasGoogle;
-  // What the avatar shows right now: the saved one, or the one picked and not saved yet.
-  const pickedAvatar = draftAvatar === "google" ? googlePhoto : draftAvatar;
-  const shownAvatar = pickedAvatar || activeUser?.avatar;
-  const colorChanged = Boolean(pickedAvatar) && pickedAvatar !== activeUser?.avatar;
   const nameChanged = Boolean(newUserName.trim()) && newUserName.trim() !== activeUser?.name;
   const handleCheck = useUsernameCheck(newHandle, activeUser?.username);
   const handleChanged = newHandle.length >= USERNAME_MIN && newHandle !== activeUser?.username && handleCheck.state !== "bad";
-  const canSave = nameChanged || handleChanged || colorChanged;
+  const canSave = nameChanged || handleChanged;
   const roleTag = ROLE_TAGS[activeUser?.role];
   const googleNotice = searchParams.get("google");
   const hasSpotify = Boolean(activeUser?.spotify || activeUser?.spotifyLinked);
@@ -268,7 +230,7 @@ function ProfileScreen() {
         <Notice tone="brand" icon="star">¡Tu cuenta está lista! Puedes cambiar tu nombre cuando quieras.</Notice>
       )}
       {(googleNotice === "success" || googleNotice === "link_success") && (
-        <Notice tone="ok" icon="check">Google conectado. Tu foto de perfil se sincronizó.</Notice>
+        <Notice tone="ok" icon="check">Google conectado.</Notice>
       )}
       {googleNotice === "link_error" && (
         <Notice tone="bad" icon="lock">
@@ -285,8 +247,8 @@ function ProfileScreen() {
       {err && <Notice tone="bad" icon="lock">{err}</Notice>}
 
       <section className="tv-card tv-profile-hero">
-        <span className={`tv-profile-avatar${saving && colorChanged ? " is-saving" : ""}`}>
-          <Avatar name={activeUser?.name} avatar={shownAvatar} className="tv-avatar--xl" />
+        <span className="tv-profile-avatar">
+          <Avatar className="tv-avatar--xl" />
         </span>
         <div className="tv-profile-who">
           <p className="tv-party-kicker">{isOtherUser ? "Perfil de jugador" : "Tu perfil"}</p>
@@ -406,43 +368,6 @@ function ProfileScreen() {
               )}
             </form>
 
-            <div className="tv-form-row">
-              <span className="tv-label">Color de tu avatar</span>
-              <div className="tv-swatches" role="group" aria-label="Color de tu avatar">
-                {AVATAR_COLORS.map((c, i) => (
-                  <button
-                    key={c}
-                    type="button"
-                    className="tv-swatch"
-                    style={{ "--sw": c }}
-                    aria-pressed={shownAvatar === c}
-                    aria-label={`Color ${i + 1}`}
-                    disabled={saving}
-                    onClick={() => onPickColor(c)}
-                  />
-                ))}
-                <button
-                  type="button"
-                  className={`tv-swatch tv-swatch--photo${googlePhoto ? "" : " is-locked"}`}
-                  aria-pressed={Boolean(googlePhoto) && shownAvatar === googlePhoto}
-                  aria-label={googlePhoto ? "Usar tu foto de Google" : "Foto de perfil (requiere Google)"}
-                  disabled={saving}
-                  onClick={() => onPickColor("google")}
-                >
-                  {googlePhoto ? (
-                    <img src={googlePhoto} alt="" referrerPolicy="no-referrer" />
-                  ) : (
-                    <Icon name="user" size={16} strokeWidth={2.6} />
-                  )}
-                </button>
-              </div>
-              {!googlePhoto && (
-                <span className="tv-hint">
-                  {isGuest ? "Inicia sesión con Google" : "Vincula Google"} para poner tu foto de perfil.
-                </span>
-              )}
-            </div>
-
             {isGuest && (
               <div className="tv-row-card">
                 <Icon name="user" size={26} />
@@ -458,7 +383,7 @@ function ProfileScreen() {
                 <GoogleIcon size={26} />
                 <div className="tv-row-card-text">
                   <strong>Vincula Google</strong>
-                  <span>Usa tu foto de Google y entra con un clic.</span>
+                  <span>Entra con un clic con tu cuenta de Google.</span>
                 </div>
                 <button type="button" className="tv-btn tv-btn--sm tv-btn--google" onClick={() => linkGoogle("/profile")}>
                   Vincular
@@ -470,7 +395,7 @@ function ProfileScreen() {
                 <GoogleIcon size={26} />
                 <div className="tv-row-card-text">
                   <strong>Google vinculado</strong>
-                  <span>Foto de perfil sincronizada</span>
+                  <span>Entras con tu cuenta de Google</span>
                 </div>
                 <span className="tv-tag tv-tag--ok">Activo</span>
               </div>

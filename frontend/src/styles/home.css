@@ -167,6 +167,9 @@
   background: var(--tv-neutral);
   color: var(--tv-neutral-on);
 }
+/* Every player's face is their Blob (Avatar.jsx): no photo, no colour; the rings (yours, yellow) still go around it. */
+.tv-avatar.tv-avatar--blob { overflow: visible; background: transparent; }
+.tv-avatar--blob .tv-blob { display: block; width: 112%; height: 112%; margin: -6%; }
 .tv-chip-name {
   overflow: hidden;
   text-overflow: ellipsis;

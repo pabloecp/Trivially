@@ -22,12 +22,13 @@ export const audienceOf = (audience) => AUDIENCES.find((a) => a.value === audien
 export const audienceName = (audience) => audienceOf(audience).label;
 
 const KEY = "trivially_plan";
-const DEFAULT = { audience: "publica", game: "opciones" };
+// Nothing chosen yet on a new device: Inicio shows "Elige un juego" and JUGAR waits for a game.
+const DEFAULT = { audience: "publica", game: null };
 
 function readPlan() {
   try {
     const saved = JSON.parse(localStorage.getItem(KEY) || "null");
-    const game = findMode(saved?.game) ? saved.game : DEFAULT.game;
+    const game = saved?.game && plannable(saved.game) ? saved.game : DEFAULT.game;
     const audience = AUDIENCES.some((a) => a.value === saved?.audience) ? saved.audience : DEFAULT.audience;
     return { audience, game: audience === "publica" && !isPublicGame(game) ? DEFAULT.game : game };
   } catch {
@@ -57,8 +58,8 @@ export function useLocalPlan() {
   }, []);
   const update = useCallback((change) => {
     current = { ...currentPlan(), ...change };
-    // A game that can't be public takes the public side back to Trivia.
-    if (current.audience === "publica" && !isPublicGame(current.game)) current.game = DEFAULT.game;
+    // A game that can't be public takes the public side back to no game.
+    if (current.audience === "publica" && current.game && !isPublicGame(current.game)) current.game = DEFAULT.game;
     savePlan(current);
     listeners.forEach((fn) => fn(current));
   }, []);
