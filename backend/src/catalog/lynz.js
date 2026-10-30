@@ -31,6 +31,7 @@ export const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
 export const MAX_REQUESTS_PER_WEEK = 2;
 const RETRY_MS = 12 * 60 * 60 * 1000; // after a failed ask that wasn't a 429
 const MIN_WAIT_MS = 60 * 1000;
+const NOT_REACHED = new Set(["ENOTFOUND", "EAI_AGAIN", "ECONNREFUSED", "ERR_INVALID_URL"]);
 
 /** Lynz's address from LYNZ_API_URL (a host, or the whole endpoint), or null when it isn't set. */
 export function lynzEndpoint(url = process.env.LYNZ_API_URL) {
@@ -72,8 +73,12 @@ export async function fetchTopSongs(endpoint, fetchImpl = fetch) {
   let res;
   try {
     res = await fetchImpl(endpoint, { headers: { Accept: "application/json" }, signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS) });
-  } catch {
-    throw new Error("Lynz no respondió");
+  } catch (cause) {
+    const why = cause?.cause?.code || cause?.code || cause?.name || "sin detalle";
+    const err = new Error(`Lynz no respondió (${why}) en ${endpoint}`);
+    // The address doesn't exist or nobody answers there: the ask never reached Lynz, so it doesn't count for its limit.
+    err.neverReached = NOT_REACHED.has(cause?.cause?.code || cause?.code) || cause instanceof TypeError;
+    throw err;
   }
   if (res.status === 429) {
     const err = new Error("Lynz llegó a su límite de peticiones por semana");
@@ -168,7 +173,11 @@ export class LynzTop {
   /** Whether `songs` changed (loaded from what was saved, or just fetched). */
   async refresh() {
     const endpoint = this.endpoint;
-    if (!endpoint) return false;
+    if (!endpoint) {
+      if (!this.warnedNoUrl) console.warn("[Lynz] Falta LYNZ_API_URL (la dirección de la API de Lynz, con https://): no se ofrece su playlist");
+      this.warnedNoUrl = true;
+      return false;
+    }
     let changed = false;
     if (!this.loaded) {
       this.loaded = true;
@@ -182,6 +191,7 @@ export class LynzTop {
         if (Array.isArray(saved.songs) && saved.songs.length) {
           this.songs = saved.songs;
           changed = true;
+          console.log(`[Lynz] ${this.songs.length} canciones guardadas, leídas hace ${Math.floor((this.now() - this.fetchedAt) / 86_400_000)} días`);
         }
       }
     }
@@ -190,6 +200,7 @@ export class LynzTop {
     this.requests = this.requests.filter((t) => now - t < WEEK_MS);
     if (this.requests.length >= MAX_REQUESTS_PER_WEEK) {
       this.nextTryAt = this.requests[0] + WEEK_MS;
+      console.warn(`[Lynz] Ya se hicieron ${this.requests.length} peticiones esta semana (el límite de Lynz): vuelvo a pedir el ${new Date(this.nextTryAt).toISOString()}`);
       return changed;
     }
     // The ask is written down before it is made: if the server stops in the middle, the next start still counts it.
@@ -202,6 +213,7 @@ export class LynzTop {
       changed = true;
       console.log(`[Lynz] ${this.songs.length} canciones leídas`);
     } catch (err) {
+      if (err.neverReached) this.requests.pop();
       this.nextTryAt = now + (err.retryAfterMs ?? RETRY_MS);
       console.warn(`[Lynz] ${err.message}; ${this.songs ? "sigo con la lista anterior y " : ""}lo intento otra vez más tarde`);
     }
