@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import TvShell from "../../components/home/TvShell.jsx";
 import Avatar from "../../components/home/Avatar.jsx";
+import Blob from "../../components/home/Blob.jsx";
 import Confetti from "../../components/home/Confetti.jsx";
 import Icon from "../../components/home/Icon.jsx";
 import MatchResults from "../../components/home/MatchResults.jsx";
@@ -9,8 +10,9 @@ import PartyPanel from "../../components/home/PartyPanel.jsx";
 import SpectatorBanner from "../../components/home/SpectatorBanner.jsx";
 import WaitingPill from "../../components/home/WaitingPill.jsx";
 import { ControllerBar, GetReady, PhoneHint } from "../../components/home/CentralBits.jsx";
-import { PauseButton, PauseVeil, SkipButton } from "../../components/home/PauseControls.jsx";
+import { PauseButton, PauseVeil, ReportButton, SkipButton } from "../../components/home/PauseControls.jsx";
 import { resolveCode } from "../../lib/hiddenCode.js";
+import { MatchBar, MatchCard, MatchQuestion, topicIcon } from "../../components/home/MatchFrame.jsx";
 import { useApp, useRemainingMs, useView } from "../../lib/store.jsx";
 import { findDifficulty, pointsText, reyConfig } from "./reyInfo.js";
 import "../../styles/home.css";
@@ -19,6 +21,46 @@ import "../../styles/rey.css";
 
 const PICK_MS = 10000;
 const LEVEL_CLASS = { facil: "is-facil", media: "is-media", dificil: "is-dificil" };
+
+// While a question is played: the king big on the left (the crown, their Blob, their name) and the ones trying to take
+// the crown on the right, "RETADORES", each with how their round goes.
+function Court({ room, king, viewerId }) {
+  const reveal = room.phase === "reveal";
+  const challengers = room.players.filter((p) => !p.spectator && p.id !== king?.id);
+  const status = (p) => {
+    if (reveal) return p.lastAnswer?.correct ? ["Acertó", "is-ok"] : p.lastAnswer?.text ? ["Falló", "is-bad"] : ["Sin respuesta", ""];
+    if (p.answered) return [p.id === viewerId ? "Respondiste" : "Respondió", ""];
+    return [p.id === viewerId ? "Tu turno" : "Pensando…", ""];
+  };
+  return (
+    <div className="tv-rey-court">
+      <div className="tv-rey-throne">
+        <Icon name="crown" size={44} strokeWidth={1.2} filled className="tv-rey-throne-crown" />
+        <span className="tv-rey-throne-blob">
+          <Blob />
+        </span>
+        <b>{king ? (king.id === viewerId ? "Tú" : king.name) : "Sin rey"}</b>
+        <span>{reveal && room.rey?.dethronedBy ? "Era el rey" : "El rey · eligió esta"}</span>
+      </div>
+      <div className="tv-rey-challengers">
+        <span className="tv-mpanel-label">Retadores</span>
+        {challengers.map((p) => {
+          const [text, tone] = status(p);
+          return (
+            <div key={p.id} className={`tv-rey-challenger${p.id === viewerId ? " is-me" : ""}`}>
+              <Avatar />
+              <b>
+                {p.name}
+                {p.id === viewerId ? " · tú" : ""}
+              </b>
+              <span className={tone}>{text}</span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
 
 // Who holds the crown now: their face, their name and what they have.
 function KingBar({ room, king, you }) {
@@ -198,10 +240,11 @@ function GameScreen() {
 
   const tools = (
     <>
+      <ReportButton room={room} onError={setErr} />
       <SkipButton room={room} onError={setErr} />
       <PauseButton room={room} isHost={isHost} onError={setErr} />
       {isHost && (
-        <button type="button" className={`tv-mini-btn${confirmHub ? " is-on" : ""}`} onClick={backToHub}>
+        <button type="button" className={`tv-mini-btn tv-end-btn${confirmHub ? " is-on" : ""}`} onClick={backToHub}>
           {confirmHub ? "¿Seguro? Toca otra vez" : "Terminar"}
         </button>
       )}
@@ -211,7 +254,7 @@ function GameScreen() {
   const level = question ? findDifficulty(question.difficulty) : null;
 
   return (
-    <div className={`tv-room tv-game tv-quiz tv-rey${central ? " is-central" : ""}${controller ? " is-controller" : ""}`}>
+    <div className={`tv-room tv-game tv-match tv-rey${central ? " is-central" : ""}${controller ? " is-controller" : ""}`}>
       <div className="tv-room-main tv-game-main">
         {spectator && <SpectatorBanner />}
         {controller ? (
@@ -219,55 +262,35 @@ function GameScreen() {
             {tools}
           </ControllerBar>
         ) : (
-          <section className="tv-game-top">
-            <div className="tv-game-round">
-              <p className="tv-mono-label">
-                Ronda {round + 1} de {room.totalRounds} · Rey de la colina
-              </p>
-              <h1 key={`${round}-${title}`} className="tv-card-title tv-rey-title">
-                {title}
-              </h1>
-              {hint && <p className="tv-hint tv-rey-hint">{hint}</p>}
-            </div>
-
-            <div className={`tv-clock${urgent ? " is-urgent" : ""}`} role="timer" aria-label={`${seconds} segundos`}>
-              <svg viewBox="0 0 44 44" aria-hidden="true">
-                <circle className="tv-clock-track" cx="22" cy="22" r="19" />
-                <circle className="tv-clock-fill" cx="22" cy="22" r="19" style={{ strokeDashoffset: 119.4 * (1 - pct / 100) }} />
-              </svg>
-              <span key={seconds} className="tv-clock-num">{seconds}</span>
-            </div>
-
-            <div className="tv-game-tools">{tools}</div>
-
-            <div className="tv-timer" aria-hidden="true">
-              <span className={`tv-timer-fill${urgent ? " is-urgent" : ""}`} style={{ width: `${pct}%` }} />
-            </div>
-          </section>
+          <MatchCard
+            room={room}
+            label={!picking && question ? question.category : "El rey elige"}
+            icon={!picking && question ? topicIcon(question.category) : "crown"}
+            pills={!picking && question && <span className="tv-qc-pill is-dark">{level.label} · {pointsText(level.points)}</span>}
+            dir={
+              playing && !youAreRoundKing
+                ? "Abiertas: acierta primero y quítale la corona; si nadie acierta, puntos para el rey"
+                : [title, hint].filter(Boolean).join(" · ")
+            }
+            seconds={seconds}
+            pct={pct}
+            urgent={urgent}
+          >
+            <MatchQuestion>{!picking && question ? question.text : title}</MatchQuestion>
+          </MatchCard>
         )}
 
-        <section key={round} className="tv-game-stage tv-quiz-stage is-open tv-rey-stage">
+        <section key={round} className="tv-game-stage tv-rey-stage tv-mpanel">
           <PauseVeil room={room} isHost={isHost} />
-          {!controller && <KingBar room={room} king={king} you={!central && viewerId === king?.id} />}
+          {!controller && picking && <KingBar room={room} king={king} you={!central && viewerId === king?.id} />}
+          {!controller && !picking && <Court room={room} king={roundKing || king} viewerId={central ? null : viewerId} />}
 
           {picking && rey.offers && !controller && (
             <Offers offers={rey.offers} canPick={kingPicking} onPick={pick} picked={picked} />
           )}
           {picking && controller && (kingPicking ? <Offers offers={rey.offers || []} canPick onPick={pick} picked={picked} /> : <GetReady />)}
 
-          {!picking && question && !controller && (
-            <div className="tv-quiz-q">
-              <div className="tv-quiz-q-meta">
-                <span className="tv-match-chip">{question.category}</span>
-                <span className={`tv-match-chip tv-rey-level ${LEVEL_CLASS[question.difficulty] || ""}`}>
-                  {level.label} · +{level.points}
-                </span>
-              </div>
-              <h2 className="tv-quiz-q-text">{question.text}</h2>
-            </div>
-          )}
-
-          <div className="tv-quiz-answer">
+          <div className="tv-rey-answerbox">
             {reveal && question && (
               <>
                 {rey.dethronedBy && <Confetti pieces={22} />}
@@ -281,13 +304,12 @@ function GameScreen() {
             )}
             {playing && central && <PhoneHint room={room}>Escriban la respuesta en su teléfono</PhoneHint>}
             {playing && !central && !locked && (
-              <form className="tv-search tv-quiz-write" onSubmit={submit}>
-                <div className="tv-search-box">
-                  <Icon name="keyboard" size={22} className="tv-search-icon" />
+              <form className="tv-mwrite" onSubmit={submit}>
+                <label className="tv-mwrite-box">
+                  <Icon name="keyboard" size={24} />
                   <input
                     ref={inputRef}
                     type="text"
-                    className="tv-search-input"
                     placeholder="Escribe tu respuesta…"
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
@@ -298,17 +320,16 @@ function GameScreen() {
                     maxLength={80}
                     aria-label="Tu respuesta"
                   />
-                  {query.trim() && (
-                    <button type="submit" className="tv-btn tv-btn--sm tv-c-green">
-                      Enviar
-                    </button>
-                  )}
-                </div>
+                </label>
+                <button type="submit" className="tv-btn tv-btn--primary tv-mwrite-send" disabled={!query.trim()}>
+                  <Icon name="send" size={20} strokeWidth={2.4} />
+                  Enviar
+                </button>
               </form>
             )}
             {playing && !central && locked && !spectator && (
               <>
-                <p className="tv-geo-sent tv-quiz-sent">
+                <p className="tv-mwrite-sent">
                   <Icon name={isKing ? "crown" : "check"} size={18} strokeWidth={3} filled={isKing} />
                   {isKing ? "Eres el rey. A ver si alguien te la quita…" : sent?.text || me?.lastAnswer?.text || "Respuesta enviada"}
                 </p>
@@ -321,7 +342,23 @@ function GameScreen() {
       </div>
 
       {/* The scoreboard is the central device's, when there is one. */}
-      {!controller && <PartyPanel room={room} scores display={central} onToast={setErr} />}
+      {!controller && (
+        <PartyPanel
+          room={room}
+          scores
+          display={central}
+          onToast={setErr}
+          status={`En juego: ${room.players.filter((p) => !p.spectator && p.connected).length}`}
+        />
+      )}
+      {!controller && !central && (
+        <MatchBar
+          room={room}
+          viewerId={viewerId}
+          tools={tools}
+          line={playing && roundKing ? `Nadie le ha quitado la corona a ${viewerId === roundKing.id ? "ti" : roundKing.name} todavía` : undefined}
+        />
+      )}
     </div>
   );
 }

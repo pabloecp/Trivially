@@ -16,6 +16,7 @@ import { PauseButton, ReportButton, SkipButton, PauseVeil } from "../../componen
 import "../../styles/quiz.css";
 import "../../styles/geo.css";
 import { resolveCode } from "../../lib/hiddenCode.js";
+import { MatchBar, MatchCard, MatchQuestion, topicIcon } from "../../components/home/MatchFrame.jsx";
 
 const COUNTDOWN_MS = 3000;
 // Keys that pick an option while a question is open: 1–4 or A–D.
@@ -23,47 +24,40 @@ const KEYS = { 1: 0, 2: 1, 3: 2, 4: 3, a: 0, b: 1, c: 2, d: 3 };
 
 const flagSrc = (path) => (path ? `${BACKEND_URL}${path}` : null);
 
-// The end of a round of options or a written answer: right, wrong or out of time, and the points.
-function Verdict({ me, answered, detail }) {
+// The end of a round, on the card's first row: right (and the points), wrong or out of time.
+function Verdict({ me, answered }) {
   const isCorrect = Boolean(me?.lastAnswer?.correct);
   const skipped = Boolean(me?.lastAnswer?.skipped);
   const tone = isCorrect ? "ok" : answered ? "bad" : "timeout";
   return (
-    <div className={`tv-quiz-verdict tv-quiz-verdict--${tone}`} role="status">
+    <span className={`tv-qc-verdict is-${tone}`} role="status">
       {isCorrect && <Confetti pieces={18} />}
-      <span className="tv-quiz-verdict-icon">
-        <Icon name={isCorrect ? "check" : answered ? "close" : "hash"} size={22} strokeWidth={3.2} />
-      </span>
-      <strong className="tv-quiz-verdict-title">
-        {isCorrect ? "¡Correcto!" : answered ? "Incorrecto" : skipped ? "Te la saltaste" : "¡Se acabó el tiempo!"}
-      </strong>
-      {detail && <span className="tv-quiz-verdict-detail">{detail}</span>}
-      <span className="tv-tags">
-        {isCorrect && <span className="tv-tag tv-tag--points">+{me?.lastPoints || 0} pts</span>}
-        {me?.streak > 1 && <span className="tv-tag tv-tag--streak">Racha de {me.streak}</span>}
-      </span>
-    </div>
+      <Icon name={isCorrect ? "check" : answered ? "close" : "hash"} size={16} strokeWidth={3.2} />
+      {isCorrect ? `¡Correcto! +${me?.lastPoints || 0}` : answered ? "Incorrecto" : skipped ? "Te la saltaste" : "Se acabó el tiempo"}
+    </span>
   );
 }
 
-// How each question is answered, on its chip.
-const FORMAT_LABELS = { choice: "Pregunta cerrada", open: "Pregunta abierta" };
+// What to do, under the card's first row.
+const DIRECTIONS = {
+  choice: "Cerradas: elige una de las cuatro · más rápido, más puntos",
+  open: "Abiertas: escribe la respuesta · más rápido, más puntos",
+};
 
-// The question's card: its topic, how it's answered and its difficulty, the question, and (for four options) under it
-// a slot that is always the same height (the countdown, what to do, or the verdict), so nothing moves between phases.
-// Written questions have no slot: their countdown and verdict go where the answer is given, under the card.
-function QuestionCard({ question, slot = true, children }) {
-  const level = findDifficulty(question.difficulty);
+// The question's card (MatchCard): its topic, what to do and the time; the question at the bottom. `note` goes on its
+// first row (the verdict at the end of the round).
+function QuestionCard({ room, question, clock, note }) {
   return (
-    <div className="tv-quiz-q">
-      <div className="tv-quiz-q-meta">
-        <span className="tv-match-chip">{question.category}</span>
-        <span className="tv-match-chip">{FORMAT_LABELS[question.type] || FORMAT_LABELS.choice}</span>
-        <span className={`tv-match-chip tv-diff-chip tv-c-${level.color}`}>{level.label}</span>
-      </div>
-      <h2 className="tv-quiz-q-text">{question.text}</h2>
-      {slot && <div className="tv-quiz-slot">{children}</div>}
-    </div>
+    <MatchCard
+      room={room}
+      label={question.category}
+      icon={topicIcon(question.category)}
+      pills={note}
+      dir={DIRECTIONS[question.type] || DIRECTIONS.choice}
+      {...clock}
+    >
+      <MatchQuestion>{question.text}</MatchQuestion>
+    </MatchCard>
   );
 }
 
@@ -98,7 +92,7 @@ function Hint({ icon, sent, children }) {
 
 // Four options, A to D (tap, or the keys 1–4 / A–D). On the room's central device they only show (with how many picked
 // each at the reveal); on a player's phone beside it (`controller`) only the options are there, not the question.
-function ChoiceRound({ room, question, me, answer, seconds, central, controller }) {
+function ChoiceRound({ room, question, me, answer, seconds, clock, central, controller }) {
   const round = room.currentRound;
   const [picked, setPicked] = useState(null);
   const [err, setErr] = useState("");
@@ -109,7 +103,6 @@ function ChoiceRound({ room, question, me, answer, seconds, central, controller 
   const locked = room.phase !== "playing" || Boolean(me?.answered) || Number.isInteger(localChoice) || spectator || central;
   const reveal = room.phase === "reveal";
   const multiplayer = room.players.length > 1;
-  const Card = controller ? ControllerCard : QuestionCard;
 
   async function choose(choice) {
     if (locked || sending.current || !question.options) return;
@@ -141,25 +134,27 @@ function ChoiceRound({ room, question, me, answer, seconds, central, controller 
 
   return (
     <>
-      <Card question={question}>
-        {room.phase === "countdown" && (controller ? <GetReady /> : <Count seconds={seconds} />)}
-        {room.phase === "playing" && central && <PhoneHint room={room}>Respondan desde su teléfono</PhoneHint>}
-        {room.phase === "playing" && !central && (
-          <Hint key={spectator ? "watch" : locked ? "sent" : "pick"} icon={spectator ? "info" : locked ? "check" : "bolt"} sent={locked}>
-            {spectator ? (
-              "Estás viendo la partida"
-            ) : locked ? (
-              <WaitingPill room={room} userId={me?.id} inline fallback="Respuesta enviada" />
-            ) : (
-              <>
-                Toca una opción<span className="tv-quiz-keys"> o pulsa 1–4</span>
-              </>
-            )}
-          </Hint>
-        )}
-        {reveal && central && <RoomVerdict room={room} />}
-        {reveal && !spectator && !central && <Verdict me={me} answered={Number.isInteger(myChoice)} />}
-      </Card>
+      {controller ? (
+        <ControllerCard>
+          {room.phase === "countdown" && <GetReady />}
+          {room.phase === "playing" && (
+            <Hint key={spectator ? "watch" : locked ? "sent" : "pick"} icon={spectator ? "info" : locked ? "check" : "bolt"} sent={locked}>
+              {spectator ? "Estás viendo la partida" : locked ? <WaitingPill room={room} userId={me?.id} inline fallback="Respuesta enviada" /> : "Toca una opción"}
+            </Hint>
+          )}
+          {reveal && !spectator && <Verdict me={me} answered={Number.isInteger(myChoice)} />}
+        </ControllerCard>
+      ) : (
+        <QuestionCard
+          room={room}
+          question={question}
+          clock={clock}
+          note={
+            reveal && central ? <RoomVerdict room={room} /> : reveal && !spectator && !central ? <Verdict me={me} answered={Number.isInteger(myChoice)} /> : null
+          }
+        />
+      )}
+      {room.phase === "playing" && central && <PhoneHint room={room}>Respondan desde su teléfono</PhoneHint>}
 
       <div className={`tv-quiz-options${reveal ? " is-reveal" : ""}`} role="group" aria-label="Opciones">
         {OPTION_LETTERS.map((letter, i) => {
@@ -198,6 +193,7 @@ function ChoiceRound({ room, question, me, answer, seconds, central, controller 
             >
               <span className="tv-quiz-opt-letter">{letter}</span>
               <span className="tv-quiz-opt-text">{text}</span>
+              {isMine && !reveal && <span className="tv-quiz-opt-mine">Tu respuesta</span>}
               {reveal && (isRight || isMine) && (
                 <span className="tv-quiz-opt-mark">
                   <Icon name={isRight ? "check" : "close"} size={18} strokeWidth={3.4} />
@@ -235,7 +231,7 @@ function Flag({ src }) {
 // A written answer (a capital, the country of a flag...), checked with some tolerance for typos. On the room's central
 // device the question (and the flag) shows while the players write on their phones, which (`controller`) have only the
 // box; the answer and how many got it show at the reveal.
-function WriteRound({ room, question, me, answer, skipSong, seconds, central, controller }) {
+function WriteRound({ room, question, me, answer, skipSong, seconds, clock, central, controller }) {
   const round = room.currentRound;
   const [query, setQuery] = useState("");
   const [sent, setSent] = useState(null);
@@ -301,76 +297,90 @@ function WriteRound({ room, question, me, answer, skipSong, seconds, central, co
 
   return (
     <>
-      {!controller && <QuestionCard question={question} slot={false} />}
-      {/* A flag question keeps the flag's place from the countdown on, so nothing jumps when it shows. */}
-      {/* During the countdown that place is a flag-shaped card with the number in it, so nothing floats far below. A
-          phone beside the central device has no flag: it's on the big screen. */}
-      {isFlag && !controller && (
-        <div className="tv-quiz-flag">
-          {question.flag ? (
-            <Flag src={flagSrc(question.flag)} />
-          ) : room.phase === "countdown" ? (
-            <div className="tv-quiz-flag-wait">
-              <Count seconds={seconds} />
-            </div>
-          ) : null}
-        </div>
+      {!controller && (
+        <QuestionCard
+          room={room}
+          question={question}
+          clock={clock}
+          note={reveal && central ? <RoomVerdict room={room} /> : reveal && !spectator && !central ? <Verdict me={me} answered={answered} /> : null}
+        />
       )}
-      <div className="tv-quiz-answer">
-        {room.phase === "countdown" && controller && <GetReady />}
-        {room.phase === "countdown" && !controller && !isFlag && <Count seconds={seconds} />}
-        {reveal && central && (
-          <>
-            <p className="tv-central-answer">{question.answer}</p>
-            <RoomVerdict room={room} />
-          </>
+      {/* The answer's panel: the flag (a flag question), then the box to write in, or what was sent, or the answer. */}
+      <div className="tv-mpanel">
+        {isFlag && !controller && (
+          <div className="tv-quiz-flag">
+            {question.flag ? (
+              <Flag src={flagSrc(question.flag)} />
+            ) : room.phase === "countdown" ? (
+              <div className="tv-quiz-flag-wait">
+                <Count seconds={seconds} />
+              </div>
+            ) : null}
+          </div>
         )}
-        {reveal && !spectator && !central && <Verdict me={me} answered={answered} detail={controller ? "" : `Respuesta: ${question.answer}`} />}
-        {reveal && spectator && <p className="tv-geo-sent tv-quiz-sent">Respuesta: {question.answer}</p>}
+        {room.phase === "countdown" && controller && <GetReady />}
+        {!controller && room.phase !== "reveal" && <span className="tv-mpanel-label">Tu respuesta</span>}
+        {room.phase === "countdown" && !controller && (
+          <div className="tv-mwrite is-off">
+            <span className="tv-mwrite-box">
+              <Icon name="keyboard" size={24} />
+              <span className="tv-mwrite-ph">Escribe cuando empiece la pregunta…</span>
+            </span>
+          </div>
+        )}
+        {reveal && (
+          <div className="tv-mreveal">
+            <span className="tv-mpanel-label">La respuesta</span>
+            <p className="tv-mreveal-answer">{question.answer}</p>
+            {!central && !spectator && (me?.lastAnswer?.text || skipped) && (
+              <p className={`tv-mreveal-mine ${me?.lastAnswer?.correct ? "is-ok" : "is-bad"}`}>
+                <Icon name={me?.lastAnswer?.correct ? "check" : "close"} size={16} strokeWidth={3} />
+                {skipped ? "Te la saltaste" : `Escribiste: ${me.lastAnswer.text}`}
+              </p>
+            )}
+          </div>
+        )}
         {room.phase === "playing" && central && <PhoneHint room={room}>Escriban la respuesta en su teléfono</PhoneHint>}
-      {room.phase === "playing" && !central &&
-        (!locked ? (
-          <form className="tv-search tv-quiz-write" onSubmit={submit}>
-            <div className="tv-search-box">
-              <Icon name="keyboard" size={22} className="tv-search-icon" />
-              <input
-                ref={inputRef}
-                type="text"
-                className="tv-search-input"
-                placeholder={isFlag ? "Escribe el país…" : "Escribe tu respuesta…"}
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                autoComplete="off"
-                autoCapitalize="sentences"
-                spellCheck="false"
-                enterKeyHint="send"
-                maxLength={80}
-                aria-label="Tu respuesta"
-              />
-              {query.trim() && (
-                <button type="submit" className="tv-btn tv-btn--sm tv-c-green">
-                  Enviar
-                </button>
-              )}
-            </div>
-            {/* Always there, even with something typed: a player may still give up on the question. */}
-            <button
-              type="button"
-              className={`tv-btn tv-btn--block tv-c-neutral tv-skip-btn${confirmSkip ? " is-on" : ""}`}
-              onClick={skip}
-              aria-live="polite"
-            >
-              <Icon name={confirmSkip ? "lock" : "close"} size={16} strokeWidth={3} />
+        {room.phase === "playing" &&
+          !central &&
+          (!locked ? (
+            <form className="tv-mwrite" onSubmit={submit}>
+              <label className="tv-mwrite-box">
+                <Icon name="keyboard" size={24} />
+                <input
+                  ref={inputRef}
+                  type="text"
+                  placeholder={isFlag ? "Escribe el país…" : "Escribe tu respuesta…"}
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  autoComplete="off"
+                  autoCapitalize="sentences"
+                  spellCheck="false"
+                  enterKeyHint="send"
+                  maxLength={80}
+                  aria-label="Tu respuesta"
+                />
+              </label>
+              <button type="submit" className="tv-btn tv-btn--primary tv-mwrite-send" disabled={!query.trim()}>
+                <Icon name="send" size={20} strokeWidth={2.4} />
+                Enviar
+              </button>
+            </form>
+          ) : (
+            <p className={`tv-mwrite-sent${skipped ? " is-skipped" : ""}`}>
+              <Icon name={spectator ? "info" : skipped ? "close" : "check"} size={20} strokeWidth={3} />
+              {spectator ? "Estás viendo la partida" : skipped ? "Te la saltaste" : mySent?.text || me?.lastAnswer?.text || "Respuesta enviada"}
+            </p>
+          ))}
+        {room.phase === "playing" && !locked && !central && (
+          <div className="tv-mpanel-foot">
+            <span>Se aceptan pequeños errores al escribir. Puedes enviar una sola vez.</span>
+            {/* A player may still give up on the question: the first tap asks, the second skips. */}
+            <button type="button" className={`tv-mpanel-skip${confirmSkip ? " is-on" : ""}`} onClick={skip} aria-live="polite">
               {confirmSkip ? "No te dará puntos. Toca otra vez" : "Saltar"}
             </button>
-          </form>
-        ) : (
-          <p className={`tv-geo-sent tv-quiz-sent${skipped ? " is-skipped" : ""}`}>
-            <Icon name={spectator ? "info" : skipped ? "close" : "check"} size={18} strokeWidth={3} />
-            {spectator ? "Estás viendo la partida" : skipped ? "Te la saltaste" : mySent?.text || me?.lastAnswer?.text || "Respuesta enviada"}
-          </p>
-        ))}
-        {room.phase === "playing" && locked && !spectator && !central && <WaitingPill room={room} userId={me?.id} />}
+          </div>
+        )}
       </div>
       {err && <p className="tv-lobby-error" role="alert">{err}</p>}
     </>
@@ -449,7 +459,8 @@ function GameScreen() {
       : 100;
   const seconds = Math.max(0, Math.ceil(left / 1000));
   const urgent = room.phase === "playing" && left <= 4000;
-  const props = { room, question, me, answer, skipSong, seconds, central, controller };
+  const clock = { seconds, pct, urgent };
+  const props = { room, question, me, answer, skipSong, seconds, clock, central, controller };
   // The host's controls of the match: in the round's card, or in the thin bar of a phone beside a central device.
   const tools = (
     <>
@@ -459,7 +470,7 @@ function GameScreen() {
       {isHost && (
         <button
           type="button"
-          className={`tv-mini-btn${confirmHub ? " is-on" : ""}`}
+          className={`tv-mini-btn tv-end-btn${confirmHub ? " is-on" : ""}`}
           onClick={backToHub}
         >
           {confirmHub ? "¿Seguro? Toca otra vez" : "Terminar"}
@@ -469,43 +480,20 @@ function GameScreen() {
   );
 
   return (
-    <div className={`tv-room tv-game tv-quiz${central ? " is-central" : ""}${controller ? " is-controller" : ""}`}>
+    <div className={`tv-room tv-game tv-match tv-quiz${central ? " is-central" : ""}${controller ? " is-controller" : ""}`}>
       <div className="tv-room-main tv-game-main">
         {me?.spectator && <SpectatorBanner />}
         {/* Beside a central device the round, the clock and the question are on the big screen: only the options here. */}
-        {controller ? (
+        {controller && (
           <ControllerBar seconds={seconds} pct={pct} urgent={urgent}>
             {tools}
           </ControllerBar>
-        ) : (
-          <section className="tv-game-top">
-            <div className="tv-game-round">
-              <p className="tv-mono-label">{room.matchmaking ? "Partida pública" : "Partida privada"} · Trivia</p>
-              <h1 className="tv-card-title">
-                Pregunta {round + 1} <span className="tv-muted">de {room.totalRounds}</span>
-              </h1>
-            </div>
-
-            <div className={`tv-clock${urgent ? " is-urgent" : ""}`} role="timer" aria-label={`${seconds} segundos`}>
-              <svg viewBox="0 0 44 44" aria-hidden="true">
-                <circle className="tv-clock-track" cx="22" cy="22" r="19" />
-                <circle className="tv-clock-fill" cx="22" cy="22" r="19" style={{ strokeDashoffset: 119.4 * (1 - pct / 100) }} />
-              </svg>
-              <span key={seconds} className="tv-clock-num">{seconds}</span>
-            </div>
-
-            <div className="tv-game-tools">{tools}</div>
-
-            <div className="tv-timer" aria-hidden="true">
-              <span className={`tv-timer-fill${urgent ? " is-urgent" : ""}`} style={{ width: `${pct}%` }} />
-            </div>
-          </section>
         )}
 
         {question ? (
           <section key={round} className={`tv-game-stage tv-quiz-stage is-${type}`}>
             <PauseVeil room={room} isHost={isHost} />
-            {/* Every kind of round draws itself from the countdown on (empty option tiles, an empty timeline...), so
+            {/* Every kind of round draws itself from the countdown on (empty option tiles, an empty answer box), so
                 nothing jumps when the round opens. */}
             {type === "choice" && <ChoiceRound {...props} />}
             {type === "open" && <WriteRound {...props} />}
@@ -524,6 +512,7 @@ function GameScreen() {
 
       {/* The scoreboard is the central device's, when there is one. */}
       {!controller && <PartyPanel room={room} scores display={central} onToast={setErr} />}
+      {!controller && !central && <MatchBar room={room} viewerId={viewerId} tools={tools} />}
     </div>
   );
 }

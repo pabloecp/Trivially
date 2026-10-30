@@ -15,6 +15,7 @@ import "../../styles/quiz.css";
 import "../../styles/history.css";
 import { PauseButton, ReportButton, SkipButton, PauseVeil } from "../../components/home/PauseControls.jsx";
 import { resolveCode } from "../../lib/hiddenCode.js";
+import { MatchBar, MatchCard, MatchQuestion } from "../../components/home/MatchFrame.jsx";
 
 const COUNTDOWN_MS = 3000;
 // One colour per player for their year on the reveal's timeline (never the green and red of right and wrong).
@@ -311,7 +312,7 @@ function GameScreen() {
     action = (
       <button
         type="button"
-        className="tv-btn tv-btn--block tv-c-history"
+        className="tv-btn tv-btn--primary tv-hist-confirm"
         onClick={confirm}
         disabled={!open || myGuess?.year == null}
         aria-live="polite"
@@ -320,8 +321,8 @@ function GameScreen() {
           <WaitingPill names={waiting} inline />
         ) : (
           <>
-            <Icon name={confirmed ? "check" : isNum ? "hash" : "calendar"} size={20} strokeWidth={2.6} />
-            {confirmed ? words.done : myGuess ? `Confirmar ${fmt(myGuess.year)}` : isNum ? "Elige un número en la barra" : "Elige un año en la línea"}
+            <Icon name="check" size={20} strokeWidth={2.6} />
+            {confirmed ? words.done : "Fijar respuesta"}
           </>
         )}
       </button>
@@ -337,7 +338,7 @@ function GameScreen() {
       {isHost && (
         <button
           type="button"
-          className={`tv-mini-btn${confirmHub ? " is-on" : ""}`}
+          className={`tv-mini-btn tv-end-btn${confirmHub ? " is-on" : ""}`}
           onClick={backToHub}
         >
           {confirmHub ? "¿Seguro? Toca otra vez" : "Terminar"}
@@ -347,7 +348,7 @@ function GameScreen() {
   );
 
   return (
-    <div className={`tv-room tv-game tv-hist${central ? " is-central" : ""}${controller ? " is-controller" : ""}`}>
+    <div className={`tv-room tv-game tv-match tv-hist${central ? " is-central" : ""}${controller ? " is-controller" : ""}`}>
       <div className="tv-room-main tv-game-main">
         {/* Beside a central device the round and the clock are on the big screen: only the timeline here. */}
         {controller ? (
@@ -355,57 +356,39 @@ function GameScreen() {
             {tools}
           </ControllerBar>
         ) : (
-          <section className="tv-game-top">
-            <div className="tv-game-round">
-              <p className="tv-mono-label">{room.matchmaking ? "Partida pública" : "Partida privada"} · Rango</p>
-              <h1 className="tv-card-title">
-                {tiebreak ? (
-                  `Desempate${tiebreak.round > 1 ? ` ${tiebreak.round}` : ""}`
-                ) : (
-                  <>
-                    Ronda {round + 1} <span className="tv-muted">de {room.totalRounds}</span>
-                  </>
-                )}
-              </h1>
-            </div>
-
-            <div className={`tv-clock${urgent ? " is-urgent" : ""}`} role="timer" aria-label={`${seconds} segundos`}>
-              <svg viewBox="0 0 44 44" aria-hidden="true">
-                <circle className="tv-clock-track" cx="22" cy="22" r="19" />
-                <circle className="tv-clock-fill" cx="22" cy="22" r="19" style={{ strokeDashoffset: 119.4 * (1 - pct / 100) }} />
-              </svg>
-              <span key={seconds} className="tv-clock-num">{seconds}</span>
-            </div>
-
-            <div className="tv-game-tools">{tools}</div>
-
-            <div className="tv-timer" aria-hidden="true">
-              <span className={`tv-timer-fill${urgent ? " is-urgent" : ""}`} style={{ width: `${pct}%` }} />
-            </div>
-          </section>
+          <MatchCard
+            room={room}
+            label={tiebreak ? `Desempate${tiebreak.round > 1 ? ` ${tiebreak.round}` : ""}` : isNum ? "Cifras" : "Año"}
+            icon="hourglass"
+            dir={
+              reveal || tiebreak || !iPlay
+                ? hint
+                : isNum
+                ? "Mueve la barra hasta la cifra real y fíjala · exacto 1000, más cerca, más puntos"
+                : "Mueve la barra hasta el año y fíjalo · exacto 1000, más cerca, más puntos"
+            }
+            seconds={seconds}
+            pct={pct}
+            urgent={urgent}
+          >
+            <MatchQuestion>{question?.prompt || "Cargando la pregunta…"}</MatchQuestion>
+          </MatchCard>
         )}
 
         {question ? (
-          <section key={round} className="tv-game-stage tv-hist-stage">
+          <section key={round} className="tv-game-stage tv-hist-stage tv-mpanel">
             <PauseVeil room={room} isHost={isHost} />
-            <div className="tv-hist-event">
-              {!controller && (
-                <>
-                  <div className="tv-quiz-q-meta">
-                    {question.category && <span className="tv-match-chip">{question.category}</span>}
-                    <span className={`tv-match-chip tv-diff-chip tv-c-${level.color}`}>{level.label}</span>
-                  </div>
-                  <h2 className="tv-hist-prompt">{question.prompt}</h2>
-                </>
-              )}
-              <p className="tv-hint tv-hist-hint" aria-live="polite">
-                {hint}
-              </p>
-            </div>
-
-            {/* Always the same height, so nothing moves: the countdown, the chosen year with its buttons, then the
-                verdict. */}
+            {controller && (
+              <div className="tv-hist-event">
+                <p className="tv-hint tv-hist-hint" aria-live="polite">
+                  {hint}
+                </p>
+              </div>
+            )}
+            {/* The answer's row, always as tall: "TU RESPUESTA" and, on the right, the countdown, the chosen number (or
+                year) big, or the verdict. */}
             <div className="tv-hist-slot">
+              {!controller && <span className="tv-mpanel-label">{reveal ? "Cómo te fue" : "Tu respuesta"}</span>}
               {phase === "countdown" && controller && <GetReady />}
               {phase === "countdown" && !controller && (
                 <span key={Math.max(1, seconds)} className="tv-quiz-count" aria-label={`Empieza en ${Math.max(1, seconds)}`}>
@@ -422,82 +405,69 @@ function GameScreen() {
                 <Verdict room={room} me={null} user={null} tiebreak={tiebreak} tiedNames={tiedNames} iPlay={false} fmt={fmt} isNum={isNum} />
               )}
               {phase === "playing" && !central && (
-                <div className={`tv-hist-picker${confirmed ? " is-locked" : ""}`}>
-                  <button
-                    type="button"
-                    className="tv-hist-step"
-                    onClick={() => nudge(-step)}
-                    disabled={!open}
-                    aria-label={isNum ? `Restar ${figureLabel(step)}` : `${step} años antes`}
-                  >
-                    −{isNum ? figureScale(step) : step}
-                  </button>
-                  <button
-                    type="button"
-                    className="tv-hist-step"
-                    onClick={() => nudge(-fine)}
-                    disabled={!open}
-                    aria-label={isNum ? `Restar ${figureLabel(fine)}` : "Un año antes"}
-                  >
-                    −{isNum ? figureScale(fine) : 1}
-                  </button>
-                  <output className={`tv-hist-year${myGuess ? "" : " is-empty"}${isNum ? " is-number" : ""}`} aria-live="polite">
-                    {myGuess && isNum ? (
-                      <>
-                        {figureLabel(myGuess.year)}
-                        {unit && <small>{unit}</small>}
-                      </>
-                    ) : myGuess ? (
-                      <>
-                        {Math.abs(myGuess.year)}
-                        {(myGuess.year < 0 || crossesZero) && <small>{myGuess.year < 0 ? "a. C." : "d. C."}</small>}
-                      </>
-                    ) : (
-                      "¿?"
-                    )}
-                  </output>
-                  <button
-                    type="button"
-                    className="tv-hist-step"
-                    onClick={() => nudge(fine)}
-                    disabled={!open}
-                    aria-label={isNum ? `Sumar ${figureLabel(fine)}` : "Un año después"}
-                  >
-                    +{isNum ? figureScale(fine) : 1}
-                  </button>
-                  <button
-                    type="button"
-                    className="tv-hist-step"
-                    onClick={() => nudge(step)}
-                    disabled={!open}
-                    aria-label={isNum ? `Sumar ${figureLabel(step)}` : `${step} años después`}
-                  >
-                    +{isNum ? figureScale(step) : step}
-                  </button>
-                </div>
+                <output className={`tv-hist-year${myGuess ? "" : " is-empty"}${isNum ? " is-number" : ""}`} aria-live="polite">
+                  {myGuess && isNum ? (
+                    <>
+                      {figureLabel(myGuess.year)}
+                      {unit && <small>{unit}</small>}
+                    </>
+                  ) : myGuess ? (
+                    <>
+                      {Math.abs(myGuess.year)}
+                      {(myGuess.year < 0 || crossesZero) && <small>{myGuess.year < 0 ? "a. C." : "d. C."}</small>}
+                    </>
+                  ) : (
+                    "¿?"
+                  )}
+                </output>
               )}
               {reveal && !spectator && !central && (
                 <Verdict room={room} me={me} user={user} tiebreak={tiebreak} tiedNames={tiedNames} iPlay={iPlay} fmt={fmt} isNum={isNum} />
               )}
             </div>
 
-            <Timeline
-              min={min}
-              max={max}
-              value={myGuess?.year ?? null}
-              onChoose={choose}
-              onRelease={flush}
-              disabled={!open}
-              answer={answerValue}
-              marks={marks}
-              format={fmt}
-              numeric={isNum}
-              snap={snap}
-              scaleFormat={figureScale}
-              label={
-                min == null ? (isNum ? "Barra" : "Línea del tiempo") : `${isNum ? "Barra" : "Línea del tiempo"} de ${fmt(min)} a ${fmt(max)}`
-              }
-            />
+            {/* The bar between "−" and "+" (a little at a time; the arrow keys too). */}
+            <div className={`tv-hist-barrow${confirmed ? " is-locked" : ""}`}>
+              {!central && (
+                <button
+                  type="button"
+                  className="tv-hist-step"
+                  onClick={() => nudge(-fine)}
+                  disabled={!open}
+                  aria-label={isNum ? `Restar ${figureLabel(fine)}` : "Un año antes"}
+                >
+                  <Icon name="minus" size={20} strokeWidth={3} />
+                </button>
+              )}
+              <Timeline
+                min={min}
+                max={max}
+                value={myGuess?.year ?? null}
+                onChoose={choose}
+                onRelease={flush}
+                disabled={!open}
+                answer={answerValue}
+                marks={marks}
+                format={fmt}
+                numeric={isNum}
+                snap={snap}
+                scaleFormat={figureScale}
+                label={
+                  min == null ? (isNum ? "Barra" : "Línea del tiempo") : `${isNum ? "Barra" : "Línea del tiempo"} de ${fmt(min)} a ${fmt(max)}`
+                }
+              />
+              {!central && (
+                <button
+                  type="button"
+                  className="tv-hist-step"
+                  onClick={() => nudge(fine)}
+                  disabled={!open}
+                  aria-label={isNum ? `Sumar ${figureLabel(fine)}` : "Un año después"}
+                >
+                  <Icon name="plus" size={20} strokeWidth={3} />
+                </button>
+              )}
+            </div>
 
             <div className="tv-hist-action">{action}</div>
 
@@ -519,9 +489,17 @@ function GameScreen() {
       </div>
 
       {/* The scoreboard is the central device's, when there is one. */}
-      {!controller && <PartyPanel room={room} scores display={central} onToast={setErr} />}
+      {!controller && <PartyPanel room={room} scores display={central} onToast={setErr} status={fixedLine(room)} />}
+      {!controller && !central && <MatchBar room={room} viewerId={viewerId} tools={tools} verb="fijar" />}
     </div>
   );
+}
+
+// The scoreboard's pill while a round is open: "Fijaron 2/4".
+function fixedLine(room) {
+  if (room.phase !== "playing") return undefined;
+  const inRound = room.players.filter((p) => !p.spectator && p.connected && !p.idle && p.status !== "mirando");
+  return `Fijaron ${inRound.filter((p) => p.answered).length}/${inRound.length}`;
 }
 
 // At the reveal, with more than one player: who came closest this round (or got the exact year or number).
