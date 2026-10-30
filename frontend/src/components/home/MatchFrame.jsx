@@ -86,7 +86,7 @@ export function MatchBar({ room, viewerId, tools, verb = "responder", line }) {
         <span className="tv-mbar-faces" aria-hidden="true">
           {players.slice(0, 6).map((p) => (
             <span key={p.id} className={`tv-mbar-face${p.id === viewerId ? " is-me" : ""}${p.answered ? " is-done" : ""}${p.connected ? "" : " is-away"}`}>
-              <Avatar />
+              <Avatar avatar={p.avatar} />
             </span>
           ))}
           {players.length > 6 && <span className="tv-mbar-more">+{players.length - 6}</span>}

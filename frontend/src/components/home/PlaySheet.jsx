@@ -422,9 +422,9 @@ export default function PlaySheet({ mode, joinCode, open, onClose, askName = fal
 
             {step === "name" && (
               <form className="tv-sheet-form" onSubmit={submitName}>
-                {/* Your Blob beside the name box (everyone's is white: no colours to pick). */}
+                {/* Your Blob beside the name box (its colour is chosen on the profile). */}
                 <div className="tv-name-row">
-                  <Avatar className="tv-avatar--lg" />
+                  <Avatar className="tv-avatar--lg" avatar={user?.avatar} />
                   <div className="tv-name-fields">
                     <label className="tv-sr-only" htmlFor="tv-name">
                       Tu nombre

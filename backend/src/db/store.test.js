@@ -62,15 +62,19 @@ const user2 = registerWithPassword(testStore, { name: "Registrado", username: "r
 assert.equal(deleteGuest(testStore, user2.id), false);
 assert.ok(testStore.users[user2.id]);
 
-// Test 7: Avatar is a color or the Google photo; picking a color keeps the photo for later
+// Test 7: Avatar is one of the Blob's colours (gold only for owners) or the Google photo; picking a color keeps the
+// photo for later
 assert.throws(() => updateUserAvatar(testStore, user2.id, "google"), /Google/);
 assert.throws(() => updateUserAvatar(testStore, user2.id, "https://evil.test/x.png"), /no válido/);
-assert.equal(updateUserAvatar(testStore, user2.id, "#33A8C7").avatar, "#33A8C7");
+assert.throws(() => updateUserAvatar(testStore, user2.id, "#33A8C7"), /no válido/);
+assert.throws(() => updateUserAvatar(testStore, user2.id, "#FFC93C"), /owners/);
+assert.equal(updateUserAvatar(testStore, user2.id, "#8fd3ff").avatar, "#8FD3FF");
+assert.equal(updateUserAvatar(testStore, user2.id, "#FFFFFF").avatar, "#FFFFFF");
 const gUser = upsertGoogleUser(testStore, { name: "G", email: "g@trivially.test", avatar: "https://photo.test/g.jpg", googleId: "g_1" });
 assert.equal(gUser.avatar, "https://photo.test/g.jpg");
-updateUserAvatar(testStore, gUser.id, "#FF8A00");
+updateUserAvatar(testStore, gUser.id, "#FFA6D2");
 upsertGoogleUser(testStore, { email: "g@trivially.test", avatar: "https://photo.test/g2.jpg", googleId: "g_1" });
-assert.equal(testStore.users[gUser.id].avatar, "#FF8A00");
+assert.equal(testStore.users[gUser.id].avatar, "#FFA6D2");
 assert.equal(updateUserAvatar(testStore, gUser.id, "google").avatar, "https://photo.test/g2.jpg");
 
 // Usernames ("@pepe"): needed to register, unique, and the way to sign in (names for the games aren't unique).

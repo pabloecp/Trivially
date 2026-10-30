@@ -10,8 +10,9 @@ const EVENT = "trivially:hidecode";
 
 // Stands for the code in the room's addresses while it's hidden. Never a real code: codes have no "O".
 export const HIDDEN_SLUG = "oculta";
-// This tab's room (lib/store.jsx keeps it here).
+// This tab's room and group (lib/store.jsx keeps them here).
 const ROOM_KEY = "trivially_room";
+const GROUP_KEY = "trivially_group";
 
 function read() {
   try {
@@ -63,4 +64,20 @@ export function resolveCode(param, room) {
   } catch {
     return null;
   }
+}
+
+/** This tab's group's code: the one it's in, or the one saved while a reload brings it back. */
+export function tabGroupCode(group) {
+  if (group?.code) return group.code;
+  try {
+    return sessionStorage.getItem(GROUP_KEY) || null;
+  } catch {
+    return null;
+  }
+}
+
+/** The group's code from an address's `:groupCode`: HIDDEN_SLUG is this tab's group. */
+export function resolveGroupCode(param, group) {
+  if (!param || param.toLowerCase() !== HIDDEN_SLUG) return param;
+  return tabGroupCode(group);
 }

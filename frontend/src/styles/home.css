@@ -2256,6 +2256,33 @@
 .tv-res-btn { flex: 0 1 320px; min-width: 0; height: 60px; padding: 0 20px; border-radius: 20px; font-size: 19px; }
 .tv-res-wait { display: inline-flex; align-items: center; gap: 10px; margin: 0 auto; font-weight: 700; font-size: 15px; color: var(--tv-text-2); }
 
+/* Side by side, the whole screen fits the panel with no scrolling: the cards give up height when it's short (the
+   ranking's rows share what's left, the podium is cut from its empty top), and on short screens everything is a little
+   smaller (the head, the podium, the rows and the buttons). */
+@container (min-width: 721px) {
+  .tv-res-cards--pair { flex: 0 1 auto; min-height: 0; grid-template-rows: minmax(0, 1fr); }
+  .tv-res-cards--pair > .tv-res-card { min-height: 0; overflow: hidden; }
+  .tv-res-cards--pair > .tv-res-game { grid-template-rows: auto minmax(0, 1fr); }
+  .tv-res-cards--pair .tv-res-table { min-height: 0; grid-auto-rows: minmax(0, auto); align-content: start; }
+}
+@media (min-width: 641px) and (max-height: 860px) {
+  .tv-results { gap: 12px; }
+  .tv-results .tv-res-head { gap: 6px; }
+  .tv-app .tv-results .tv-results-title { font-size: clamp(28px, 4.6vh, 40px); }
+  .tv-res-card { gap: 10px; padding: 14px 16px; }
+  .tv-res-podium .tv-podium { margin-top: 10px; }
+  .tv-res-podium .tv-avatar--lg { width: 50px; height: 50px; font-size: 20px; }
+  .tv-res-podium .tv-podium-spot.is-1 .tv-podium-block { height: 84px; }
+  .tv-res-podium .tv-podium-spot.is-2 .tv-podium-block { height: 64px; }
+  .tv-res-podium .tv-podium-spot.is-3 .tv-podium-block { height: 50px; }
+  .tv-res-podium .tv-podium-place { font-size: 24px; }
+  .tv-res-table { gap: 5px; }
+  .tv-res-row { gap: 10px; padding: 5px 12px 5px 8px; border-radius: 13px; }
+  .tv-res-row .tv-avatar { width: 28px; height: 28px; font-size: 13px; }
+  .tv-res-foot { padding-top: 6px; }
+  .tv-res-btn { height: 52px; border-radius: 16px; font-size: 17px; }
+}
+
 /* Narrow (a phone, or the room's column beside it): one column, the strip wraps and the buttons go full width. */
 @container (max-width: 720px) {
   .tv-res-cards--pair { grid-template-columns: minmax(0, 1fr); }

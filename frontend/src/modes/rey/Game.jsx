@@ -48,10 +48,9 @@ function Court({ room, king, viewerId }) {
           const [text, tone] = status(p);
           return (
             <div key={p.id} className={`tv-rey-challenger${p.id === viewerId ? " is-me" : ""}`}>
-              <Avatar />
+              <Avatar avatar={p.avatar} />
               <b>
                 {p.name}
-                {p.id === viewerId ? " · tú" : ""}
               </b>
               <span className={tone}>{text}</span>
             </div>

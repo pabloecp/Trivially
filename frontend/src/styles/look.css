@@ -253,12 +253,9 @@
   color: #fff;
   transition: background-color 0.6s ease;
 }
-/* The head at the top; "Ajustes" and the three lines together at the bottom. */
+/* The head at the top; the three lines (a private match's last one is "Ajustes") at the bottom. */
 .tv-stage-card:has(.tv-stage-bottom) { justify-content: flex-start; }
 .tv-stage-bottom { position: relative; display: flex; flex-direction: column; gap: 12px; margin-top: auto; min-width: 0; }
-.tv-stage-tools { display: flex; align-items: center; gap: 10px; }
-/* "Reglas fijas en la partida pública", or who chooses the settings: a quiet label, not a button. */
-.tv-stage-fixed { display: inline-flex; align-items: center; gap: 8px; height: 36px; padding: 0 12px; border-radius: 10px; background: rgba(0, 0, 0, 0.18); font-family: var(--tv-display); font-weight: 700; font-size: 14px; color: rgba(255, 255, 255, 0.92); }
 /* "Elige un juego": the grey card with the logo, a line of what there is, and "Elegir juego" beside the three lines. */
 .tv-stage-aud.is-quiet { height: auto; padding: 0; background: none; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--tv-text-3); }
 .tv-stage-intro { position: relative; max-width: 500px; margin: -6px 0 0; font-family: var(--tv-small); font-weight: 600; font-size: 18px; line-height: 1.35; color: #fff; }
@@ -304,7 +301,7 @@
 .tv-stage-live { position: relative; width: 12px; height: 12px; border-radius: 50%; background: #fff; }
 .tv-stage-live::after { content: ""; position: absolute; inset: 0; border-radius: inherit; background: #fff; animation: tvLive 1.8s ease-out infinite; }
 @keyframes tvLive { to { transform: scale(2.6); opacity: 0; } }
-/* "Ajustes" (a private match), at the end of its line: glass over the card's colour, with a darker edge like any
+/* "Ajustes" (a private match), as its card's last line: glass over the card's colour, with a darker edge like any
    button on it. */
 .tv-stage-settings {
   display: inline-flex;
@@ -375,6 +372,14 @@
 @keyframes tvBlobFloat { 50% { transform: translateY(-6px); } }
 /* "Reto del día": the yellow square with the flame, the label over the goal, the count; the bar under them. */
 .tv-stage-daily-row { display: flex; align-items: center; gap: 12px; }
+/* With a sala: its code (in place of the day's challenge) and who's in it (in place of the friends). */
+.tv-stage-code-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-width: 0; }
+.tv-stage-code-text { font-family: var(--tv-title); font-weight: 900; font-size: 34px; line-height: 1; letter-spacing: 0.06em; color: var(--tv-text); }
+.tv-stage-code-copy { display: inline-flex; align-items: center; gap: 6px; }
+.tv-stage-members .tv-stage-friends-list li { padding: 10px; border-radius: 14px; background: var(--tv-surface-2); }
+.tv-stage-members .tv-stage-friends-list li.is-me { outline: 2px solid var(--p-accent-2, #ffd60a); outline-offset: -2px; }
+.tv-stage-members .tv-stage-friends-list .tv-avatar { width: 36px; height: 36px; }
+.tv-stage-members li.is-away { opacity: 0.5; }
 .tv-stage-daily-icon { display: grid; place-items: center; flex-shrink: 0; width: 34px; height: 34px; border-radius: 10px; background: var(--p-accent-2); color: var(--p-on-accent); }
 .tv-stage-daily-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
 .tv-stage-daily-text strong { font-family: var(--tv-small); font-weight: 700; font-size: 14px; line-height: 1.2; color: var(--tv-text); }
@@ -1087,8 +1092,9 @@
 .tv-match .tv-quiz-flag { display: flex; justify-content: center; }
 .tv-match .tv-quiz-flag .tv-geo-flag { max-height: 150px; width: auto; border-radius: 12px; }
 
-/* The scoreboard: "MARCADOR" and how the round goes, then one flat box per player (you with a yellow ring). */
-.tv-app .tv-match .tv-party {
+/* The scoreboard: "MARCADOR" and how the round goes, then one flat box per player (you with a yellow ring). The same
+   during a game's roulette and tutorial (`.tv-room.is-intro`), so it doesn't change when the first round starts. */
+.tv-app :is(.tv-match, .tv-room.is-intro) .tv-party {
   gap: 10px;
   padding: 12px;
   border-radius: 18px;
@@ -1096,8 +1102,8 @@
   box-shadow: none;
   overflow-y: auto;
 }
-.tv-app .tv-match .tv-party-title { display: flex; align-items: center; justify-content: space-between; margin: 0; }
-.tv-app .tv-match .tv-party-title h2 { font: 700 11px/1 var(--tv-small); letter-spacing: 0.02em; text-transform: uppercase; color: var(--tv-text-3); }
+.tv-app :is(.tv-match, .tv-room.is-intro) .tv-party-title { display: flex; align-items: center; justify-content: space-between; margin: 0; }
+.tv-app :is(.tv-match, .tv-room.is-intro) .tv-party-title h2 { font: 700 11px/1 var(--tv-small); letter-spacing: 0.02em; text-transform: uppercase; color: var(--tv-text-3); }
 .tv-party-status-pill {
   display: inline-flex;
   align-items: center;
@@ -1109,19 +1115,19 @@
   color: #fff;
   white-space: nowrap;
 }
-.tv-app .tv-match .tv-party-players { display: flex; flex-direction: column; gap: 10px; }
-.tv-app .tv-match .tv-player-btn {
+.tv-app :is(.tv-match, .tv-room.is-intro) .tv-party-players { display: flex; flex-direction: column; gap: 10px; }
+.tv-app :is(.tv-match, .tv-room.is-intro) .tv-player-btn {
   gap: 10px;
   padding: 10px;
   border-radius: 14px;
   background: var(--tv-surface-2);
   box-shadow: none;
 }
-.tv-app .tv-match .tv-player.is-me .tv-player-btn { box-shadow: none; outline: 2px solid var(--p-accent-2, #ffd60a); outline-offset: -2px; }
-.tv-app .tv-match .tv-player-pos { width: 16px; background: none; box-shadow: none; color: #fff; font: 800 16px/1 var(--tv-display); }
-.tv-app .tv-match .tv-player-name { font: 700 14px/1.2 var(--tv-small); }
-.tv-app .tv-match .tv-player-score { font: 800 17px/1 var(--tv-display); color: #fff; }
-.tv-app .tv-match .tv-player .tv-avatar { width: 36px; height: 36px; }
+.tv-app :is(.tv-match, .tv-room.is-intro) .tv-player.is-me .tv-player-btn { box-shadow: none; outline: 2px solid var(--p-accent-2, #ffd60a); outline-offset: -2px; }
+.tv-app :is(.tv-match, .tv-room.is-intro) .tv-player-pos { width: 16px; background: none; box-shadow: none; color: #fff; font: 800 16px/1 var(--tv-display); }
+.tv-app :is(.tv-match, .tv-room.is-intro) .tv-player-name { font: 700 14px/1.2 var(--tv-small); }
+.tv-app :is(.tv-match, .tv-room.is-intro) .tv-player-score { font: 800 17px/1 var(--tv-display); color: #fff; }
+.tv-app :is(.tv-match, .tv-room.is-intro) .tv-player .tv-avatar { width: 36px; height: 36px; }
 
 /* The bar at the bottom: everyone's face, who's missing, and the chat and the tools on the right. */
 .tv-mbar {
@@ -1339,8 +1345,8 @@ html.tv-geo-playing .tv-app .tv-topbar:has(.tv-topbar-round) { display: flex; }
   background: #1fd24a;
   border: 3px solid var(--tv-surface-2);
 }
-.tv-app .tv-match .tv-player-tag { padding: 0; background: none; font: 600 12px/1.2 var(--tv-small); color: var(--tv-text-3); }
-.tv-app .tv-match .tv-player-tag svg { display: none; }
+.tv-app :is(.tv-match, .tv-room.is-intro) .tv-player-tag { padding: 0; background: none; font: 600 12px/1.2 var(--tv-small); color: var(--tv-text-3); }
+.tv-app :is(.tv-match, .tv-room.is-intro) .tv-player-tag svg { display: none; }
 .tv-app .tv-match .tv-player-tag.is-king { color: var(--p-accent-2, #ffd60a); }
 .tv-app .tv-match .tv-player-answer.is-wrong { color: var(--p-bad); }
 .tv-app .tv-match .tv-player-answer.is-right { color: #7fe077; }
@@ -1471,3 +1477,35 @@ html.tv-geo-playing .tv-app .tv-topbar:has(.tv-topbar-round) { display: flex; }
   .tv-app .tv-mbar .tv-btn,
   .tv-app .tv-mbar .tv-mini-btn { flex: 1; justify-content: center; padding: 0 8px; font-size: 14px; }
 }
+
+/* ---------- Profile: "Color de tu Blob" (Profile.jsx BlobColors) ---------- */
+/* Two stats only (Victorias, Aciertos): side by side. */
+.tv-stat-grid.tv-stat-grid--two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.tv-blob-colors { display: grid; gap: 12px; margin-top: 20px; }
+.tv-blob-opts { display: flex; flex-wrap: wrap; gap: 10px; }
+/* Each colour is a grey square to tap with its edge; the one you wear is the site's blue; the locked ones are dimmed. */
+.tv-blob-opt {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 60px;
+  height: 60px;
+  padding: 8px;
+  border: 0;
+  border-radius: 14px;
+  background: var(--tv-neutral);
+  box-shadow: 0 3px 0 var(--tv-neutral-edge);
+  cursor: pointer;
+  transition: transform 0.15s var(--tv-spring), box-shadow 0.15s ease;
+}
+.tv-blob-opt .tv-blob { width: 100%; height: 100%; }
+.tv-blob-opt:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 5px 0 var(--tv-neutral-edge); }
+.tv-blob-opt:active:not(:disabled) { transform: translateY(3px); box-shadow: 0 0 0 var(--tv-neutral-edge); }
+.tv-blob-opt.is-on { background: var(--tv-pick); box-shadow: 0 3px 0 var(--tv-pick-edge); }
+.tv-blob-opt.is-on:hover:not(:disabled) { box-shadow: 0 5px 0 var(--tv-pick-edge); }
+.tv-blob-opt.is-locked .tv-blob { opacity: 0.45; filter: grayscale(0.25); }
+.tv-blob-opt.is-asked { outline: 2px solid var(--tv-text-3); outline-offset: 2px; }
+.tv-blob-opt:disabled { cursor: default; }
+.tv-blob-lock { position: absolute; right: 4px; bottom: 4px; display: grid; place-items: center; width: 20px; height: 20px; border-radius: 6px; background: var(--tv-surface); color: var(--tv-text-2); }
+.tv-blob-note { margin: 0; font-family: var(--tv-small); font-weight: 600; font-size: 14px; color: var(--tv-text-2); }
+.tv-blob-note b { color: var(--tv-text); }

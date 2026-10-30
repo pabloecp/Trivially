@@ -4,6 +4,7 @@ import { useHiddenCode } from "../../lib/hiddenCode.js";
 import { AUDIENCES } from "../../lib/plan.js";
 import AppIcon from "./AppIcon.jsx";
 import Avatar from "./Avatar.jsx";
+import { useApp } from "../../lib/store.jsx";
 import Icon from "./Icon.jsx";
 
 const FACES = 5;
@@ -38,6 +39,8 @@ export default function GroupBar({ members = [], meId, inGroup = false, code = "
   // Your sala with only you in it: its code to share, "Invitar" (leaving it is the top bar's "Volver").
   const alone = inGroup && members.length <= 1;
 
+  // Your Blob in your colour.
+  const myAvatar = useApp().user?.avatar;
   return (
     <div className="tv-gbar" role="region" aria-label="Tu grupo y la partida">
       <div className="tv-gbar-zone tv-gbar-zone--group">
@@ -45,7 +48,7 @@ export default function GroupBar({ members = [], meId, inGroup = false, code = "
         <div className="tv-gbar-box tv-gbar-group">
           {alone ? (
             <>
-              <Avatar className="is-me" />
+              <Avatar className="is-me" avatar={myAvatar} />
               <span className="tv-gbar-who">
                 <b>Se creó tu sala</b>
                 <span>Comparte el código para que entren</span>
@@ -61,7 +64,7 @@ export default function GroupBar({ members = [], meId, inGroup = false, code = "
             <>
               <button type="button" className="tv-gbar-faces" onClick={onGroup} aria-label={`${members.length === 1 ? "1 persona" : `${members.length} personas`} en tu grupo`}>
                 {shown.map((p) => (
-                  <Avatar key={p.id} className={`${p.id === meId ? "is-me" : ""}${p.connected === false ? " is-away" : ""}`.trim()} />
+                  <Avatar key={p.id} avatar={p.avatar} className={`${p.id === meId ? "is-me" : ""}${p.connected === false ? " is-away" : ""}`.trim()} />
                 ))}
                 {more > 0 && <span className="tv-avatar tv-avatar--empty">+{more}</span>}
               </button>
@@ -81,7 +84,7 @@ export default function GroupBar({ members = [], meId, inGroup = false, code = "
             </>
           ) : (
             <>
-              <Avatar className="is-me" />
+              <Avatar className="is-me" avatar={myAvatar} />
               <span className="tv-gbar-who">
                 <b>Juegas solo</b>
                 <span>Al elegir un juego se crea tu sala</span>

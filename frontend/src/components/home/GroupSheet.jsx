@@ -61,7 +61,7 @@ export default function GroupSheet({ open, onClose, room, onToast }) {
   );
 }
 
-// The group's players outside its private match: the leader's crown, "Tú", and who isn't with the group now. The
+// The group's players outside its private match: the leader's crown, and who isn't with the group now. The
 // leader can make someone else the leader or take them out; then their friends' options and friends to invite.
 function GroupMembers({ group, onToast }) {
   const { user, giveLeader, kickFromGroup } = useApp();
@@ -91,7 +91,7 @@ function GroupMembers({ group, onToast }) {
         {group.members.map((m) => {
           const isMe = m.id === user?.id;
           const leads = m.id === group.leaderId;
-          const tag = !m.connected ? "Reconectando…" : !m.here ? "En otra partida" : leads ? "Líder" : isMe ? "Tú" : "En el grupo";
+          const tag = !m.connected ? "Reconectando…" : !m.here ? "En otra partida" : leads ? "Líder" : "En el grupo";
           return (
             <li key={m.id} className={`tv-player${isMe ? " is-me" : ""}${m.connected && m.here ? "" : " is-away"}`}>
               <div className="tv-player-btn tv-groupmember">

@@ -257,8 +257,8 @@ export default function HomeFrame({ room = null, onToast, Lobby = null, leaving 
       : plan.audience === "publica"
       ? { summary: publicMatchLine(mode.id) || "Sin partidas públicas por ahora", fixed: true }
       : decides && !away
-      ? { summary: "Ajustes por defecto", onOpen: () => run({ type: "setup", game: plan.game }), disabled: busy }
-      : { summary: "Ajustes por defecto", note: away ? "Tu grupo ya está jugando" : `Los elige ${leaderName}` };
+      ? { onOpen: () => run({ type: "setup", game: plan.game }), disabled: busy }
+      : { note: away ? "Tu grupo ya está jugando" : `Los elige ${leaderName}` };
 
   // The group's faces: dimmed whoever isn't with it now (or is reconnecting).
   const members = group ? group.members.map((m) => ({ ...m, connected: m.connected && m.here })) : [];

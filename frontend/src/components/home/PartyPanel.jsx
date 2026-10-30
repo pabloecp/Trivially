@@ -263,7 +263,6 @@ export default function PartyPanel({ room, onToast, scores = false, display = fa
                     <span className="tv-player-text">
                       <span className="tv-player-name">
                         {p.name}
-                        {scores && isMe ? " · tú" : ""}
                       </span>
                       {gameWins && scoreLook === "frase" && !p.spectator ? (
                         <span className="tv-player-tagline">

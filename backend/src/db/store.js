@@ -15,6 +15,11 @@ const STORE_PATH = path.join(DATA_DIR, "store.json");
 const MAX_NAME_LENGTH = 24;
 export const DEFAULT_AVATAR = "#FF2D55";
 const HEX_COLOR = /^#[0-9a-f]{6}$/i;
+// The Blob's colours on the profile (frontend lib/blobColors.js): white for everyone, three more for accounts, and gold
+// only for owners. Older avatar colours still saved show as white.
+export const BLOB_WHITE = "#FFFFFF";
+const BLOB_ACCOUNT = ["#8FD3FF", "#FFA6D2", "#8EF0B0"];
+export const BLOB_GOLD = "#FFC93C";
 
 function emptyStore() {
   return { users: {} };
@@ -477,10 +482,16 @@ export function updateUserAvatar(store, userId, choice) {
     const photo = user.googlePhoto || (user.googleId && !HEX_COLOR.test(user.avatar || "") ? user.avatar : null);
     if (!photo) throw new Error("Inicia sesión con Google para usar tu foto de perfil");
     user.avatar = photo;
-  } else if (HEX_COLOR.test(choice || "")) {
-    user.avatar = choice;
   } else {
-    throw new Error("Color no válido");
+    const color = String(choice || "").toUpperCase();
+    if (color === BLOB_GOLD) {
+      if (effectiveRole(user) !== "owner") throw new Error("Ese color es solo para los owners");
+    } else if (BLOB_ACCOUNT.includes(color)) {
+      if (user.isGuest) throw new Error("Crea una cuenta para usar ese color");
+    } else if (color !== BLOB_WHITE) {
+      throw new Error("Color no válido");
+    }
+    user.avatar = color;
   }
   saveStore(store);
   return sanitizeUser(user);

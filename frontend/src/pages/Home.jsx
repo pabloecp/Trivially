@@ -12,7 +12,7 @@ import MatchIntro from "../components/home/MatchIntro.jsx";
 import PartyPanel from "../components/home/PartyPanel.jsx";
 import PlaySheet from "../components/home/PlaySheet.jsx";
 import "../styles/home.css";
-import { resolveCode } from "../lib/hiddenCode.js";
+import { resolveCode, resolveGroupCode, tabGroupCode } from "../lib/hiddenCode.js";
 
 // How a choice of the menu reads in a sentence: "Trivia", "Clásico normal".
 const choiceName = (mode) => mode?.fullName || mode?.name || "un juego";
@@ -20,8 +20,8 @@ const choiceName = (mode) => mode?.fullName || mode?.name || "un juego";
 // The old pages of "¿Cómo quieres jugar?" (/jugar/casual, /jugar/privada…) are Inicio now, on the side they named.
 const OPTION_AUDIENCE = { casual: "publica", competitivo: "publica", privada: "grupo" };
 
-// Inicio and the room's screen (/, also while a room waits, and /sala/CODE while a public match or a Clásico plays;
-// /grupo/CODE is a group's invite link). Inicio, a private match while it waits and the search for a public match are
+// Inicio and the room's screen (/, or your sala's /grupo/CODE while you have one, also while a room waits, and
+// /sala/CODE while a public match or a Clásico plays; another group's /grupo/CODE is its invite link). Inicio, a private match while it waits and the search for a public match are
 // the same frame (HomeFrame): the game's card in the middle and the
 // group's bar at the bottom. Before each game of a public match or a Clásico, its roulette and tutorial (MatchIntro)
 // take the card's place beside the scoreboard. The room's central device shows its own big waiting screen
@@ -101,14 +101,17 @@ export default function Home() {
   }, [inviteCode, nav]);
 
   // A group's invite link (/grupo/CODE) joins it straight away (and goes where it is), asking for a name first if we
-  // don't have one. Then the address is Inicio's (or the group's match's, RoomNavigator).
-  const groupInvite = groupParam?.toUpperCase();
+  // don't have one. Then the address is Inicio's, now the group's own (or the group's match's, RoomNavigator).
+  const groupInvite = resolveGroupCode(groupParam, group)?.toUpperCase();
   useEffect(() => {
-    if (!groupInvite || askName) return;
-    if (group?.code === groupInvite) {
+    if (!groupParam || askName) return;
+    // "oculta" with no sala in this tab: nothing to join.
+    if (!groupInvite) {
       nav("/", { replace: true });
       return;
     }
+    // Your own sala's address (Inicio while you have one, or a reload, whose rejoin brings the sala back).
+    if (tabGroupCode(group) === groupInvite) return;
     if (!user?.name) {
       setAskName(true);
       return;
@@ -156,7 +159,7 @@ export default function Home() {
           intro ? <MatchIntro room={room} /> : <CentralLobby room={room} />
         ) : intro ? (
           // Before each game of a public match or a Clásico: the roulette and how it's played, beside the scoreboard.
-          <div className="tv-room">
+          <div className="tv-room is-intro">
             <div className="tv-room-main">
               <MatchIntro room={room} />
             </div>
