@@ -8,7 +8,6 @@ import { withSound } from "../../lib/sounds.js";
 import GroupBar from "./GroupBar.jsx";
 import GroupSheet from "./GroupSheet.jsx";
 import ConfirmDialog from "./ConfirmDialog.jsx";
-import Icon from "./Icon.jsx";
 import ModeStage from "./ModeStage.jsx";
 import PlanSheet from "./PlanSheet.jsx";
 import PlaySheet from "./PlaySheet.jsx";
@@ -259,15 +258,7 @@ export default function HomeFrame({ room = null, onToast, Lobby = null, leaving 
         ) : room ? (
           <ModeStage mode={{ id: "none", name: "Elige un juego", icon: "grid", color: "neutral", steps: [] }} title={decides ? "Elige un juego" : `${room.hostName || "El anfitrión"} está eligiendo`} />
         ) : (
-          <>
-            <ModeStage mode={mode} audience={plan.audience} swapKey={`${mode.id}:${plan.audience}`} settings={cardSettings} />
-            {plan.audience === "grupo" && !group && (
-              <p className="tv-lobby-hint">
-                <Icon name="users" size={16} strokeWidth={2.6} />
-                Juegas tú solo. Crea un grupo para jugar con tus amigos.
-              </p>
-            )}
-          </>
+          <ModeStage mode={mode} audience={plan.audience} swapKey={`${mode.id}:${plan.audience}`} settings={cardSettings} />
         )}
       </div>
 

@@ -12,7 +12,7 @@
 
 ## Code
 - In `GAME_IDS` but not games (`kind: "classic"`, hidden by `isGameTile`). `CLASSIC_WINS`/`CLASSIC_NAMES`/`isClassic`/`PUBLIC_CLASSIC` in `matchmaking.js`; a group's plan can be `clasico` on both sides (`cleanPlan` in `groups.js`).
-- Private: `start()` → `startClassic` (run with `run.classic`; the room's own playlist is untouched). `endRun`, `stopPlaylist` and `setGame` return to the Clásico. Public: `startMatch`.
+- Private: `start()` → `startClassic` (run with `run.classic`). `endRun`, `stopRun` and `setGame` return to the Clásico. A match of several games (Clásico, public matches) uses `game/playlist.js` (`newRun`, `recordGame`) and ends on `modes/playlist/Results.jsx`; the rooms' own "Playlist" game was removed. Public: `startMatch`.
 - Client: the mode in `modes/index.js` (`wins`, `steps`); its card on Inicio and in its lobby is `ModeStage` in the logo's look, with its tutorial (no settings): `modes/clasico/LobbyPanel.jsx` is only that card. "Vas a jugar" in the logo's look too (`GroupBar.jsx`). The search card is the Clásico's (`SearchCard` in `HomeFrame.jsx`).
 - Intro (`MatchIntro.jsx`): "Clásico · Juego 3" (no total), a dot per game so far, "Juego de desempate" when two are tied at 2; the result of the game before says what it takes to win ("Gana la partida el primero en ganar 2 juegos", or that the next one breaks a tie). The roulette leaves out what was played since the draw started over. End = the playlist's results screen.
 - Tests `game/classic.test.js` (private), `game/matchmaking.test.js` (public: duels decided 2–0, 2–1, after a tie at 2, out of games).

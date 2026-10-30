@@ -8,12 +8,12 @@ import cookieSession from "cookie-session";
 import { Server } from "socket.io";
 import { loadCatalog } from "./catalog/catalogProvider.js";
 import { startDefaultPlaylists } from "./catalog/defaultPlaylists.js";
-import { forgetOldShareCodes } from "./db/sharedPlaylists.js";
 import { TrackResolver } from "./catalog/trackResolver.js";
-import { ensureUsernames, flushStore, initStore } from "./db/store.js";
+import { ensureUsernames, flushStore, getSupabase, initStore, supabaseEnabled } from "./db/store.js";
 import { RoomManager } from "./game/roomManager.js";
 import { GroupManager } from "./game/groups.js";
 import { loadQuestions } from "./questions/questionBank.js";
+import { loadLyricRounds } from "./lyrics/lyricRounds.js";
 import {
   createApiRouter,
   handleGoogleCallback,
@@ -43,8 +43,11 @@ const store = await initStore();
 const assigned = ensureUsernames(store);
 if (assigned) console.log(`[Usuarios] ${assigned} cuentas recibieron un nombre de usuario`);
 const questions = await loadQuestions();
+// Completa la letra's rounds, worked out offline (npm run lyrics:build) and only read here: from
+// backend/private/lyric-rounds.json, and from Supabase's lyric_rounds table with LYRICS_DB=1.
+const lyricRounds = await loadLyricRounds({ db: process.env.LYRICS_DB === "1" && supabaseEnabled() ? getSupabase() : null });
 const resolver = new TrackResolver({ catalog });
-const rooms = new RoomManager({ catalog, store, questions, resolver });
+const rooms = new RoomManager({ catalog, store, questions, lyricRounds, resolver });
 // The groups (players who go together from one match to the next), apart from the rooms (the matches).
 const groups = new GroupManager({ rooms });
 const friends = new Friendships({ store });
@@ -52,9 +55,6 @@ await friends.init();
 const friendsHub = new FriendsHub({ store, friends, rooms, groups });
 // The default Spotify playlists (catalog/defaultPlaylists.js): read now and once a day, and put in every room.
 startDefaultPlaylists(() => rooms.applyDefaultPlaylists());
-// Playlist codes nobody shared or opened in a year are deleted: now and once a day.
-forgetOldShareCodes().catch(() => {});
-setInterval(() => forgetOldShareCodes().catch(() => {}), 24 * 60 * 60 * 1000).unref?.();
 // Spotify songs found in earlier games join the search box too.
 resolver.preloadSaved().catch((err) => console.warn(`[Spotify] No se pudieron precargar las canciones (${err.message})`));
 
@@ -131,6 +131,22 @@ app.get("/api/audio/proxy", async (req, res) => {
     res.setHeader("Content-Type", isSpotifyPreviewUrl(url) ? "audio/mpeg" : "audio/mp4");
     res.setHeader("Cache-Control", "public, max-age=86400");
     res.setHeader("Access-Control-Allow-Origin", "*");
+    // Byte ranges, so the browser can jump to any second of the song (Completa la letra plays it from a given one);
+    // without them Chrome starts it from the beginning.
+    res.setHeader("Accept-Ranges", "bytes");
+    const range = /^bytes=(\d*)-(\d*)$/.exec(req.headers.range || "");
+    if (range && (range[1] || range[2])) {
+      const size = audio.length;
+      const start = range[1] ? Number(range[1]) : Math.max(0, size - Number(range[2]));
+      const end = range[1] && range[2] ? Math.min(Number(range[2]), size - 1) : size - 1;
+      if (start >= size || start > end) {
+        res.setHeader("Content-Range", `bytes */${size}`);
+        return res.status(416).end();
+      }
+      res.status(206);
+      res.setHeader("Content-Range", `bytes ${start}-${end}/${size}`);
+      return res.send(audio.subarray(start, end + 1));
+    }
     res.send(audio);
   } catch (e) {
     res.status(502).json({ error: e.message });

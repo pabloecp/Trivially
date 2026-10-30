@@ -14,8 +14,8 @@ import PlaySheet from "../components/home/PlaySheet.jsx";
 import "../styles/home.css";
 import { resolveCode } from "../lib/hiddenCode.js";
 
-// How a choice of the menu reads in a sentence: "Trivia", "Clásico normal", or "una playlist" (it isn't a game).
-const choiceName = (mode) => (mode?.kind === "playlist" ? "una playlist" : mode?.fullName || mode?.name || "un juego");
+// How a choice of the menu reads in a sentence: "Trivia", "Clásico normal".
+const choiceName = (mode) => mode?.fullName || mode?.name || "un juego";
 
 // The old pages of "¿Cómo quieres jugar?" (/jugar/casual, /jugar/privada…) are Inicio now, on the side they named.
 const OPTION_AUDIENCE = { casual: "publica", competitivo: "publica", privada: "grupo" };
@@ -66,7 +66,7 @@ export default function Home() {
     // A public match has no host: its games come from the roulette, which says so itself.
     if (picked && !isHost && !room.matchmaking) {
       const host = room.hostName || "El anfitrión";
-      showToast(picked.kind === "playlist" ? `${host} está preparando una playlist` : `${host} eligió ${choiceName(picked)}`, "play");
+      showToast(`${host} eligió ${choiceName(picked)}`, "play");
     }
   }, [game, room?.code]);
 

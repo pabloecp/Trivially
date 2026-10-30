@@ -4,7 +4,6 @@ import { prefetchMedia } from "../audio/mediaCache.js";
 import { readPublicSpotify, spotifyLinkFrom } from "../catalog/spotifyEmbed.js";
 import { readSpotifyPlaylist } from "../catalog/spotifyLibrary.js";
 import { saveQuestionReport } from "../db/reports.js";
-import { assertCanShare, playlistByCode, shareCodeFor } from "../db/sharedPlaylists.js";
 import { forgetSpotifyLink, saveSpotifyLink, savedSpotifyLinks } from "../db/store.js";
 import { prefetchFlags } from "../geo/flags.js";
 import { isAccount } from "../auth/username.js";
@@ -687,42 +686,6 @@ export function attachSockets(io, rooms, { friends = null, hub = null, groups = 
         rooms.updateConfig(room, userId, config);
         ack?.({ ok: true, state: rooms.publicState(room, userId) });
         io.to(room.code).emit("room:state", rooms.publicState(room));
-      } catch (err) {
-        ack?.({ ok: false, error: err.message });
-      }
-    });
-
-    // The room's playlist of games, all of it (its name, order and games with their settings), from its panel.
-    socket.on("room:playlist", (playlist, ack) => {
-      try {
-        const { room, userId } = requireRoom(rooms, socket);
-        rooms.updatePlaylist(room, userId, playlist);
-        ack?.({ ok: true, state: rooms.publicState(room, userId) });
-        io.to(room.code).emit("room:state", rooms.publicState(room));
-      } catch (err) {
-        ack?.({ ok: false, error: err.message });
-      }
-    });
-
-    // "Copiar código": the room's playlist (already cleaned), or a saved one sent along (cleaned the same way), is
-    // kept on the server and its code comes back. The same playlist always gets the same code; each person (or
-    // connection) can make only a few codes a minute.
-    socket.on("playlist:share", async (playlist, ack) => {
-      if (typeof playlist === "function") [ack, playlist] = [playlist, null];
-      try {
-        const { room, userId } = requireRoom(rooms, socket);
-        assertCanShare(socket.data.userId || userId || socket.id);
-        const chosen = playlist && typeof playlist === "object" ? rooms.cleanSharedPlaylist(room, playlist) : room.playlist;
-        ack?.({ ok: true, code: await shareCodeFor(chosen) });
-      } catch (err) {
-        ack?.({ ok: false, error: err.message });
-      }
-    });
-
-    // A pasted code: the playlist it points to ({ name, order, items }); loading it is the panel's own update.
-    socket.on("playlist:byCode", async (code, ack) => {
-      try {
-        ack?.({ ok: true, playlist: await playlistByCode(code) });
       } catch (err) {
         ack?.({ ok: false, error: err.message });
       }

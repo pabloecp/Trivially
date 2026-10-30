@@ -64,7 +64,7 @@ function ResultsScreen() {
   const leadsGroup = Boolean(group) && group.leaderId === user?.id && group.place?.code === room.code;
   // So is a Clásico of a private room (Normal or Extendido): its host still decides what comes next.
   const classic = findMode(run?.classic);
-  const what = publicMatch || classic ? "partida" : "playlist";
+  const what = "partida";
   let title = `¡Fin de la ${what}!`;
   if (winner && !solo) title = `¡${winner.name} gana la ${what}!`;
   // Nobody won: the same points (in a playlist, also when nobody scored at all) or the same games won.
@@ -108,7 +108,7 @@ function ResultsScreen() {
           <header className="tv-res-head">
             <div className="tv-res-heading">
               <div className="tv-res-kicker">
-                <p className="tv-mono-label">{publicMatch || classic ? "Partida terminada" : "Playlist terminada"}{run ? ` · ${run.name}` : ""}</p>
+                <p className="tv-mono-label">Partida terminada{run ? ` · ${run.name}` : ""}</p>
                 {run && !gamesWon.length && <PlaylistProgress run={run} />}
               </div>
               <h1 className="tv-page-title tv-results-title">{title}</h1>

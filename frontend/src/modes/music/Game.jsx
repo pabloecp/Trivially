@@ -12,6 +12,7 @@ import { useApp, useRemainingMs, useView } from "../../lib/store.jsx";
 import { BACKEND_URL } from "../../lib/config.js";
 import { useSongList } from "../../lib/songList.js";
 import { useMasterVolume } from "../../lib/volume.js";
+import { createLyricPlayer } from "./lyricAudio.js";
 import "../../styles/quiz.css";
 import { PauseButton, ReportButton, SkipButton, PauseVeil } from "../../components/home/PauseControls.jsx";
 import { resolveCode } from "../../lib/hiddenCode.js";
@@ -139,6 +140,13 @@ function GameScreen() {
   // Track the currently loaded audio source to avoid re-setting it
   const currentAudioSrc = useRef(null);
 
+  // Completa la letra: the verse with its gap, and where the song is heard from and stops (ms of its preview).
+  const lyrics = room?.lyrics || null;
+  // The song already stopped at the gap in this round (its round number).
+  const [cutRound, setCutRound] = useState(null);
+  // The song as the reveal plays it on from the cut (room.audio only goes out until the round ends).
+  const lyricRevealUrl = room?.phase === "reveal" && lyrics ? room.reveal?.previewUrl : null;
+
   // Audio preview playback handling
   useEffect(() => {
     const audio = audioRef.current;
@@ -148,47 +156,100 @@ function GameScreen() {
       audio.pause();
       return;
     }
+    const load = (url) => {
+      if (currentAudioSrc.current !== url) {
+        currentAudioSrc.current = url;
+        audio.src = proxyUrl(url);
+        audio.load();
+      }
+    };
+    const play = () => {
+      const p = audio.play();
+      if (p !== undefined) p.catch((e) => console.warn("Autoplay waiting for user gesture:", e));
+    };
+    const elapsed = Math.max(0, (Date.now() - (room.phaseStartedAt || Date.now())) / 1000);
+
+    // Completa la letra plays through Web Audio (lyricPlayer, below): this element stays quiet.
+    if (lyrics) {
+      audio.pause();
+      return;
+    }
 
     // Paused by the host: the song stops, and on "Reanudar" it goes on from the same moment (phaseStartedAt moves).
     if (room.phase === "playing" && room.audio?.previewUrl && !room.paused) {
-      const src = proxyUrl(room.audio.previewUrl);
-      if (currentAudioSrc.current !== room.audio.previewUrl) {
-        currentAudioSrc.current = room.audio.previewUrl;
-        audio.src = src;
-        audio.load();
-      }
+      load(room.audio.previewUrl);
       // A preview shorter than the round (Spotify's last 15–22 s, iTunes' 30 s) starts again instead of going quiet.
       audio.loop = true;
-      const elapsed = Math.max(0, (Date.now() - (room.phaseStartedAt || Date.now())) / 1000);
       const target = Number.isFinite(audio.duration) && audio.duration > 0 ? elapsed % audio.duration : elapsed;
       if (Math.abs(audio.currentTime - target) > 1.2) {
         try {
           audio.currentTime = target;
         } catch {}
       }
-      const p = audio.play();
-      if (p !== undefined) {
-        p.catch((e) => {
-          console.warn("Autoplay waiting for user gesture:", e);
-        });
-      }
+      play();
     } else {
       audio.pause();
-      if (room.phase === "countdown" && room.audio?.previewUrl) {
-        const src = proxyUrl(room.audio.previewUrl);
-        if (currentAudioSrc.current !== room.audio.previewUrl) {
-          currentAudioSrc.current = room.audio.previewUrl;
-          audio.src = src;
-          audio.load();
-        }
-      }
+      if (room.phase === "countdown" && room.audio?.previewUrl) load(room.audio.previewUrl);
     }
-  }, [room?.phase, room?.currentRound, room?.audio?.previewUrl, Boolean(room?.paused), room?.phaseStartedAt, controller]);
+  }, [room?.phase, room?.currentRound, room?.audio?.previewUrl, lyricRevealUrl, lyrics?.cutMs, Boolean(room?.paused), room?.phaseStartedAt, controller]);
+
+  // Completa la letra's song, cut to the sample (lyricAudio.js): downloaded and decoded during the countdown; while the
+  // round plays, from `startMs` (where the room is) to the cut, exactly; at the reveal, from `revealFromMs` on. A pause
+  // stops it, and "Reanudar" picks up from the same moment (phaseStartedAt moves).
+  const lyricPlayer = useMemo(() => createLyricPlayer(), []);
+  useEffect(() => () => lyricPlayer.stop(), [lyricPlayer]);
+  useEffect(() => {
+    if (!lyrics || controller || !room) return undefined;
+    const elapsed = () => Math.max(0, (Date.now() - (room.phaseStartedAt || Date.now())) / 1000);
+    if (room.phase === "countdown" && room.audio?.previewUrl) {
+      lyricPlayer.load(proxyUrl(room.audio.previewUrl)).catch(() => {});
+      return undefined;
+    }
+    if (room.paused) {
+      lyricPlayer.stop();
+      return undefined;
+    }
+    const round = room.currentRound;
+    if (room.phase === "playing" && room.audio?.previewUrl) {
+      // Quiet only while the answer is sung, then the rest of its line ("de mí"), then it stops.
+      const then = lyrics.stopMs > lyrics.backMs ? { back: lyrics.backMs / 1000, stop: lyrics.stopMs / 1000 } : null;
+      lyricPlayer.play(proxyUrl(room.audio.previewUrl), () => lyrics.startMs / 1000 + elapsed(), lyrics.cutMs / 1000, () => setCutRound(round), then);
+    } else if (lyricRevealUrl) {
+      lyricPlayer.play(proxyUrl(lyricRevealUrl), () => (lyrics.revealFromMs ?? lyrics.cutMs) / 1000 + elapsed());
+    }
+    return () => lyricPlayer.stop();
+  }, [Boolean(lyrics), room?.phase, room?.currentRound, room?.audio?.previewUrl, lyricRevealUrl, Boolean(room?.paused), room?.phaseStartedAt, controller]);
+
+  // Completa la letra: where the song is (seconds of its preview), for the lyrics to follow it like Spotify's: the
+  // audio's own position while it plays here (it may have started late), else the room's clock.
+  const [lyricPos, setLyricPos] = useState(0);
+  useEffect(() => {
+    if (!lyrics) return undefined;
+    const tick = () => {
+      // Paused: the lyrics stay where they were.
+      if (room.paused) return;
+      const elapsed = Math.max(0, (Date.now() - (room.phaseStartedAt || Date.now())) / 1000);
+      let pos = lyrics.startMs / 1000;
+      const lastHeard = Math.max(lyrics.cutMs, lyrics.stopMs || 0) / 1000;
+      if (room.phase === "playing") pos = Math.min(lastHeard, lyrics.startMs / 1000 + elapsed);
+      else if (room.phase === "reveal" || room.phase === "finished") pos = (lyrics.revealFromMs ?? lyrics.cutMs) / 1000 + elapsed;
+      const heard = lyricPlayer.position();
+      if (heard != null && (room.phase === "playing" || room.phase === "reveal")) {
+        pos = room.phase === "playing" ? Math.min(lastHeard, heard) : heard;
+      }
+      setLyricPos(pos);
+    };
+    tick();
+    const id = setInterval(tick, 100);
+    return () => clearInterval(id);
+  }, [Boolean(lyrics), room?.phase, room?.currentRound, room?.phaseStartedAt, Boolean(room?.paused), controller]);
 
   // Unlock audio on any click/key press if browser blocked initial autoplay
   useEffect(() => {
     const unlock = () => {
       const audio = audioRef.current;
+      // Completa la letra's song plays through Web Audio, which a tap lets start.
+      if (lyrics) return lyricPlayer.unlock();
       if (audio && !controller && room?.phase === "playing" && !room?.paused && audio.paused) {
         audio.play().catch(() => {});
       }
@@ -199,7 +260,7 @@ function GameScreen() {
       window.removeEventListener("click", unlock);
       window.removeEventListener("keydown", unlock);
     };
-  }, [room?.phase, room?.paused, controller]);
+  }, [room?.phase, room?.paused, controller, Boolean(lyrics), cutRound, room?.currentRound]);
 
   const isSubmittingRef = useRef(false);
 
@@ -284,7 +345,8 @@ function GameScreen() {
       setErr(e.message || "No se pudo saltar la canción");
     });
   }
-  const totalMs = room?.config?.roundMs || 15000;
+  // Completa la letra's round also has the bit of song before the cut.
+  const totalMs = lyrics?.roundMs || room?.config?.roundMs || 15000;
   const pct =
     room?.phase === "playing"
       ? Math.max(0, Math.min(100, (left / totalMs) * 100))
@@ -304,7 +366,8 @@ function GameScreen() {
   // Autocomplete by song name only: titles that start with what was typed first, then titles that contain it.
   const suggestions = useMemo(() => {
     const q = normalize(query);
-    if (!q || locked) return [];
+    // Completa la letra's words are written as they are: no songs to suggest.
+    if (!q || locked || lyrics) return [];
     const matches = [];
     const seen = new Set();
     for (const song of searchList) {
@@ -317,7 +380,7 @@ function GameScreen() {
     }
     matches.sort((a, b) => b.score - a.score || a.song.title.localeCompare(b.song.title));
     return matches.slice(0, 12).map((m) => m.song);
-  }, [query, searchList, locked]);
+  }, [query, searchList, locked, Boolean(lyrics)]);
 
   // Keep active index within bounds
   useEffect(() => {
@@ -477,7 +540,11 @@ function GameScreen() {
               </>
             )}
             <p className="tv-hint">
-              {central
+              {lyrics
+                ? `${central ? "La canción se corta: completen" : "La canción se corta: completa"} lo que sigue en la letra${
+                    closed ? " entre cuatro opciones" : ""
+                  }${central ? " desde su teléfono" : controller ? " desde aquí" : ""}.`
+                : central
                 ? closed
                   ? "Elijan la canción en su teléfono entre cuatro opciones."
                   : "Escriban el título en su teléfono en cuanto reconozcan la canción."
@@ -497,7 +564,8 @@ function GameScreen() {
         {(room.phase === "playing" || (room.phase === "reveal" && closed)) && (
           <section key={`p${room.currentRound}`} className="tv-game-stage tv-play-card">
             <PauseVeil room={room} isHost={isHost} />
-            {!controller && (
+            {/* Completa la letra: a small title and the lyrics following the song, like Spotify's. */}
+            {!controller && !lyrics && (
               <>
                 <div className="tv-eq" aria-hidden="true">
                   {Array.from({ length: 7 }, (_, i) => (
@@ -505,6 +573,14 @@ function GameScreen() {
                   ))}
                 </div>
                 <h2 className="tv-play-q">¿Qué canción está sonando?</h2>
+              </>
+            )}
+            {lyrics && (
+              <>
+                <p className="tv-mono-label">
+                  {room.phase === "playing" && cutRound === room.currentRound ? "¿Cómo sigue?" : "Completa la letra"}
+                </p>
+                <LyricsPanel lyrics={lyrics} position={lyricPos} />
               </>
             )}
             {closed && room.phase === "reveal" && central && <RoomVerdict room={room} />}
@@ -533,7 +609,7 @@ function GameScreen() {
               <WaitingPill room={room} userId={user?.id} />
             )}
             {!closed && room.phase === "playing" && central ? (
-              <PhoneHint room={room}>Escriban el título en su teléfono</PhoneHint>
+              <PhoneHint room={room}>{lyrics ? "Escriban lo que falta en su teléfono" : "Escriban el título en su teléfono"}</PhoneHint>
             ) : closed && (room.phase === "reveal" || central || (!spectator && (!locked || Number.isInteger(myChoice)))) ? (
               <div className={`tv-quiz-options tv-music-options${room.phase === "reveal" ? " is-reveal" : ""}`} role="group" aria-label="Opciones">
                 {OPTION_LETTERS.map((letter, i) => {
@@ -594,21 +670,22 @@ function GameScreen() {
             ) : !locked ? (
               <div className="tv-search">
                 <div className="tv-search-box">
-                  <Icon name="music" size={22} className="tv-search-icon" />
+                  <Icon name={lyrics ? "keyboard" : "music"} size={22} className="tv-search-icon" />
                   <input
                     ref={inputRef}
                     type="text"
                     className="tv-search-input"
-                    placeholder="Escribe el título…"
+                    placeholder={lyrics ? "Escribe lo que falta…" : "Escribe el título…"}
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
                     onKeyDown={handleKeyDown}
                     autoComplete="off"
                     autoFocus
                     spellCheck="false"
-                    aria-label="Título de la canción"
-                    aria-autocomplete="list"
-                    aria-controls="tv-suggest"
+                    aria-label={lyrics ? "Lo que falta en la letra" : "Título de la canción"}
+                    aria-autocomplete={lyrics ? undefined : "list"}
+                    aria-controls={lyrics ? undefined : "tv-suggest"}
+                    maxLength={lyrics ? 100 : undefined}
                   />
                   {query.trim().length > 0 && (
                     <button
@@ -640,7 +717,7 @@ function GameScreen() {
                   {confirmSkip ? "No te dará puntos. Toca otra vez" : "Saltar"}
                 </button>
 
-                {query.trim().length > 0 && (
+                {query.trim().length > 0 && !lyrics && (
                   <div className="tv-suggest" id="tv-suggest">
                     {suggestions.length > 0 ? (
                       <ul className="tv-suggest-list" ref={suggestionsListRef} role="listbox">
@@ -727,6 +804,9 @@ function GameScreen() {
               </div>
               )}
 
+              {/* Completa la letra: the whole verse, with the words that were missing, while the song goes on. */}
+              {lyrics && !controller && <LyricsPanel lyrics={lyrics} position={lyricPos} />}
+
               {!controller && (
                 <div className={`tv-song${coverReadyFor === room.reveal.title ? "" : " is-waiting"}`}>
                   {/* Flips in once the image has loaded, never half-drawn. */}
@@ -765,6 +845,43 @@ function GameScreen() {
 
       {/* The scoreboard is the central device's, when there is one. */}
       {!controller && <PartyPanel room={room} scores display={central} onToast={setErr} />}
+    </div>
+  );
+}
+
+// Completa la letra's lyrics, line by line: every line is there from the start, in its place (nothing appears or
+// pushes the rest down); the one being sung is lit, the others dim. `position` is where the song is (seconds of its
+// preview). The last line has the gap: one long line, always as wide (it never tells how long the words are), filled
+// with them in the same place once the reveal's song gets to them.
+function LyricsPanel({ lyrics, position }) {
+  const lines = lyrics.lines || [];
+  const filled = Boolean(lyrics.answer) && position >= lyrics.cutMs / 1000;
+  let current = -1;
+  lines.forEach((l, i) => {
+    if (l.atMs / 1000 <= position + 0.05) current = i;
+  });
+  return (
+    <div className="tv-lyrics">
+      {lines.map((line, i) => {
+        const state = i === current ? " is-current" : i < current ? " is-past" : " is-next";
+        // The gap, with any punctuation stuck to it ("___," keeps its comma).
+        const [before, after] = line.text.split("___");
+        return (
+          <p key={i === lines.length - 1 ? "gap" : `${i}-${line.atMs}`} className={`tv-lyrics-line${state}`}>
+            {after === undefined ? (
+              line.text
+            ) : (
+              <>
+                {before}
+                <span className={`tv-lyrics-gap${filled ? " is-filled" : ""}`} aria-label={filled ? undefined : "espacio en blanco"}>
+                  {filled ? lyrics.answer : ""}
+                </span>
+                {after}
+              </>
+            )}
+          </p>
+        );
+      })}
     </div>
   );
 }

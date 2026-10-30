@@ -917,28 +917,6 @@ export function AppProvider({ children }) {
         if (res.state) setRoom(res.state);
       },
 
-      // The room's playlist, all of it (name, order and games with their settings); the server keeps it valid.
-      // A playlist kept on the server, the room's (or `playlist`, a saved one): its code ("K7P2M-XH4QN"), the same for
-      // the same playlist.
-      async sharePlaylist(playlist = null) {
-        const res = await emitAckWithin(10000, "playlist:share", playlist);
-        if (!res.ok) throw new Error(res.error);
-        return res.code;
-      },
-
-      // The playlist a pasted code points to ({ name, order, items }).
-      async playlistByCode(code) {
-        const res = await emitAckWithin(10000, "playlist:byCode", code);
-        if (!res.ok) throw new Error(res.error);
-        return res.playlist;
-      },
-
-      async updatePlaylist(playlist) {
-        const res = await emitAck("room:playlist", playlist);
-        if (!res.ok) throw new Error(res.error);
-        if (res.state) setRoom(res.state);
-      },
-
       // "Sigo aquí": the answer to the card that asks an idle player of a public match if they are still there.
       async stillHere() { await emitAck("room:present", null); },
 

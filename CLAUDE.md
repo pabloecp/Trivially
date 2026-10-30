@@ -9,7 +9,7 @@ Trivially is a real-time trivia game, played alone or with a group (the players 
 **Juego, modo de juego and tipo de respuestas are three different things; keep them apart in code, copy and docs:**
 
 - **Juego**: what is played, chosen in "Juego libre" (`room.game`). A playlist is not a game.
-- **Modo de juego** ("Modos de juego", `styles` in the config): a variant that changes the game's questions or rules. Only Encuentra el país (nombre / sombra / bandera) has more than one; Rango (only Cifras) and Campo de minas (only carrera) keep a single one in `styles` and show no "Modos de juego". "Línea del tiempo" and "Por turnos" were removed as modes (see their docs).
+- **Modo de juego** ("Modos de juego", `styles` in the config): a variant that changes the game's questions or rules. Only Encuentra el país (nombre / sombra / bandera) and Adivina la canción (Título / Completa la letra) have more than one; Rango (only Cifras) and Campo de minas (only carrera) keep a single one in `styles` and show no "Modos de juego". "Línea del tiempo" and "Por turnos" were removed as modes (see their docs).
 - **Tipo de respuestas** ("Tipo de respuestas", `formats` in the config): only how a player answers, Cerradas (four options) or Abiertas (writing). Trivia and Adivina la canción have it. Never called a "modo de juego".
 
 All UI copy and server error messages are in Spanish, Latin American (ustedes, never vosotros). Don't rename the session cookie (`backend/src/index.js`) or change `SESSION_SECRET`: either logs every account out. Don't rename the `localStorage` identity keys (`trivially_user`, `trivially_guest_id`, `trivially_guest_name`) without a migration in `lib/store.jsx`.
@@ -28,6 +28,8 @@ npm run questions:upload --prefix backend   # Trivia's private questions to Supa
 npm run geo:upload --prefix backend         # Encuentra el país (geo/countries.js)
 npm run history:upload --prefix backend     # Rango (history/events.js, figures.js)
 npm run mines:upload --prefix backend       # Campo de minas (mines/boards/)
+npm run lyrics:build --prefix backend       # Completa la letra, offline: rounds into private/lyric-rounds.json (local Whisper)
+npm run lyrics:upload --prefix backend      # that file to Supabase's lyric_rounds table (-- --check)
 ```
 
 Tests are standalone scripts using `node:assert/strict`, no runner: each prints `"<name> ok"`. A new test file must be appended to the `&&` chain in `backend/package.json` `scripts.test`.
@@ -65,7 +67,7 @@ In `.claude/docs/`:
 - `preguntas.md`: the question bank, row shapes, categories, uploading.
 - One per game: `encuentra-el-pais.md`, `rango.md`, `campo-de-minas.md`, `lluvia.md`, `rey-de-la-colina.md`, `farsante.md`.
 - `grupos.md`: groups (who goes together) apart from rooms (the matches): the leader moves everyone, "Crear grupo", "Tu grupo", invite links.
-- `playlists.md`, `partidas-publicas.md` (Inicio and its bar, public matches by game, a group searching together, bots, rank), `clasico.md`.
+- `partidas-publicas.md` (Inicio and its bar, public matches by game, a group searching together, bots, rank), `clasico.md`.
 - `dispositivo-central.md`, `panel-owner.md`, `amigos-y-enlaces.md` (friends, @usernames, link filter).
 - `diseno.md`: the design rules: the look (`frontend/src/styles/look.css`, loaded last), layout, colours, type, pieces, panel motion, shadows.
 
