@@ -5,6 +5,7 @@ import {
   ensureUsernames,
   linkGoogle,
   loginWithPassword,
+  playerAvatar,
   registerWithPassword,
   sanitizeUserPublic,
   unlinkGoogle,
@@ -76,6 +77,20 @@ updateUserAvatar(testStore, gUser.id, "#FFA6D2");
 upsertGoogleUser(testStore, { email: "g@trivially.test", avatar: "https://photo.test/g2.jpg", googleId: "g_1" });
 assert.equal(testStore.users[gUser.id].avatar, "#FFA6D2");
 assert.equal(updateUserAvatar(testStore, gUser.id, "google").avatar, "https://photo.test/g2.jpg");
+
+// The colour a browser sends can't skip those rules: a guest's gold or account colour isn't saved, and in rooms a
+// player shows the account's colour only while they can use it.
+const fakeGuest = upsertUser(testStore, { id: "gst_fake01", name: "Falso", avatar: "#FFC93C", isGuest: true });
+assert.notEqual(fakeGuest.avatar, "#FFC93C");
+upsertUser(testStore, { id: "gst_fake01", name: "Falso", avatar: "#8FD3FF" });
+assert.notEqual(testStore.users.gst_fake01.avatar, "#8FD3FF");
+upsertUser(testStore, { id: user2.id, name: "Registrado", avatar: "#FFC93C" });
+assert.equal(testStore.users[user2.id].avatar, "#FFFFFF");
+assert.equal(playerAvatar(undefined), "#FFFFFF");
+assert.equal(playerAvatar({ isGuest: true, avatar: "#FFA6D2" }), "#FFFFFF");
+assert.equal(playerAvatar({ isGuest: false, role: "user", avatar: "#FFC93C" }), "#FFFFFF");
+assert.equal(playerAvatar({ isGuest: false, role: "user", avatar: "#FFA6D2" }), "#FFA6D2");
+deleteGuest(testStore, "gst_fake01");
 
 // Usernames ("@pepe"): needed to register, unique, and the way to sign in (names for the games aren't unique).
 assert.throws(() => registerWithPassword(testStore, { name: "Otro", username: "ab", email: "o@trivially.test", password: "ab" }), /al menos 3/);

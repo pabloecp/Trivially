@@ -4,7 +4,7 @@ import { prefetchMedia } from "../audio/mediaCache.js";
 import { readPublicSpotify, spotifyLinkFrom } from "../catalog/spotifyEmbed.js";
 import { readSpotifyPlaylist } from "../catalog/spotifyLibrary.js";
 import { saveQuestionReport } from "../db/reports.js";
-import { forgetSpotifyLink, saveSpotifyLink, savedSpotifyLinks } from "../db/store.js";
+import { forgetSpotifyLink, playerAvatar, saveSpotifyLink, savedSpotifyLinks } from "../db/store.js";
 import { prefetchFlags } from "../geo/flags.js";
 import { isAccount } from "../auth/username.js";
 import { hasRole } from "../auth/roles.js";
@@ -227,7 +227,7 @@ export function attachSockets(io, rooms, { friends = null, hub = null, groups = 
         if (group.members.get(userId)?.connected) throw new Error("Ya estás en ese grupo");
         if (group.joinMode === "abierta") return ack?.({ ok: true, action: "join", code: group.code });
         if (group.joinMode !== "solicitud") throw new Error("Ese grupo es solo por invitación");
-        groups.addJoinRequest(group, { id: userId, name: me.name, avatar: me.avatar });
+        groups.addJoinRequest(group, { id: userId, name: me.name, avatar: playerAvatar(me) });
         sendGroup(group);
         hub?.refresh(userId);
         ack?.({ ok: true, action: "requested" });
@@ -255,7 +255,7 @@ export function attachSockets(io, rooms, { friends = null, hub = null, groups = 
         if (wait > 0) throw new Error(`Ya lo invitaste: espera ${Math.ceil(wait / 1000)} s`);
         invitedAt.set(key, Date.now());
         const place = groups.place(group);
-        io.to(`user:${friendId}`).emit("friend:invited", { code: group.code, fromName: me.name, fromAvatar: me.avatar, game: place?.game ?? group.plan.game });
+        io.to(`user:${friendId}`).emit("friend:invited", { code: group.code, fromName: me.name, fromAvatar: playerAvatar(me), game: place?.game ?? group.plan.game });
         ack?.({ ok: true });
       } catch (err) {
         ack?.({ ok: false, error: err.message });
@@ -839,11 +839,13 @@ export function attachSockets(io, rooms, { friends = null, hub = null, groups = 
 
     socket.on("player:update", (data, ack) => {
       try {
+        // The colour is the account's (changed through PATCH /api/users/:id/avatar, which checks it), not the one sent.
+        const changes = { name: data?.name, avatar: playerAvatar(rooms.store?.users?.[socket.data.userId]) };
         const group = groups.ofSocket(socket.id);
-        if (group) sendGroup(groups.updateMember(socket.data.userId, data || {}));
+        if (group) sendGroup(groups.updateMember(socket.data.userId, changes));
         if (group && !rooms.socketToRoom.has(socket.id)) return ack?.({ ok: true });
         const { room, userId } = requireRoom(rooms, socket);
-        rooms.updatePlayer(room, userId, data || {});
+        rooms.updatePlayer(room, userId, changes);
         ack?.({ ok: true, state: rooms.publicState(room, userId) });
         io.to(room.code).emit("room:state", rooms.publicState(room));
       } catch (err) {
@@ -1116,8 +1118,9 @@ function leaveCurrentRoom(io, rooms, socket, keepCode) {
   if (result?.room) io.to(result.room.code).emit("room:state", rooms.publicState(result.room));
 }
 
-// The player for this socket: the id comes from the verified token; name/avatar from the saved account when
-// there is one (so nobody can show up under another player's name), otherwise from what the client sent.
+// The player for this socket: the id comes from the verified token; the name from the saved account when there is one
+// (so nobody can show up under another player's name), otherwise from what the client sent. The colour always comes
+// from the saved account (playerAvatar), never from the client.
 function bindUser(socket, user, rooms) {
   const id = socket.data.userId;
   if (!id) throw new Error("Tu sesión no es válida. Recarga la página.");
@@ -1128,7 +1131,7 @@ function bindUser(socket, user, rooms) {
     ...(user || {}),
     id,
     name,
-    avatar: saved?.avatar || user?.avatar,
+    avatar: playerAvatar(saved),
     isGuest: saved ? Boolean(saved.isGuest) : true,
   };
   socket.data.profile = profile;

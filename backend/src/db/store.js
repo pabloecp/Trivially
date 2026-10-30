@@ -21,6 +21,23 @@ export const BLOB_WHITE = "#FFFFFF";
 const BLOB_ACCOUNT = ["#8FD3FF", "#FFA6D2", "#8EF0B0"];
 export const BLOB_GOLD = "#FFC93C";
 
+// Why `user` can't use the Blob colour `color`, or null when it can. Anything that isn't one of the Blob's colours (an
+// old colour, a Google photo) is drawn white, so it gives nothing away.
+function blobColorError(user, color) {
+  const id = String(color || "").toUpperCase();
+  if (id === BLOB_GOLD) return effectiveRole(user) === "owner" ? null : "Ese color es solo para los owners";
+  if (BLOB_ACCOUNT.includes(id)) return user && !user.isGuest ? null : "Crea una cuenta para usar ese color";
+  return null;
+}
+
+/**
+ * The colour a player shows in rooms and groups: always the one saved on their account (never what their browser
+ * sends), and white if they can no longer use it (a guest, or an owner who stopped being one).
+ */
+export function playerAvatar(user) {
+  return user?.avatar && !blobColorError(user, user.avatar) ? user.avatar : BLOB_WHITE;
+}
+
 function emptyStore() {
   return { users: {} };
 }
@@ -249,7 +266,7 @@ export function upsertUser(store, user) {
   const current = store.users[user.id] || {
     id: user.id,
     name: user.name,
-    avatar: user.avatar,
+    avatar: DEFAULT_AVATAR,
     isGuest: Boolean(user.isGuest),
     email: user.email || null,
     role: "user",
@@ -264,7 +281,8 @@ export function upsertUser(store, user) {
     },
   };
   current.name = user.name || current.name;
-  current.avatar = user.avatar || current.avatar;
+  // The colour comes from the browser here, so one it can't use (gold for a guest) is left out.
+  if (user.avatar && !blobColorError(current, user.avatar)) current.avatar = user.avatar;
   if (user.email) current.email = user.email;
   if (user.isGuest !== undefined) current.isGuest = user.isGuest;
   if (user.passwordHash) current.passwordHash = user.passwordHash;
@@ -484,13 +502,9 @@ export function updateUserAvatar(store, userId, choice) {
     user.avatar = photo;
   } else {
     const color = String(choice || "").toUpperCase();
-    if (color === BLOB_GOLD) {
-      if (effectiveRole(user) !== "owner") throw new Error("Ese color es solo para los owners");
-    } else if (BLOB_ACCOUNT.includes(color)) {
-      if (user.isGuest) throw new Error("Crea una cuenta para usar ese color");
-    } else if (color !== BLOB_WHITE) {
-      throw new Error("Color no válido");
-    }
+    if (color !== BLOB_WHITE && color !== BLOB_GOLD && !BLOB_ACCOUNT.includes(color)) throw new Error("Color no válido");
+    const problem = blobColorError(user, color);
+    if (problem) throw new Error(problem);
     user.avatar = color;
   }
   saveStore(store);
