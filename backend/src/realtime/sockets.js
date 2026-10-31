@@ -312,7 +312,11 @@ export function attachSockets(io, rooms, { friends = null, hub = null, groups = 
     socket.on("group:create", (payload, ack) => {
       try {
         const user = bindUser(socket, payload?.user, rooms);
-        if (groups.ofUser(user.id)) throw new Error("Ya estás en un grupo: sal de él para crear otro");
+        // A group whose place is only kept for them (the app was closed, it's waiting for them to come back) is left
+        // for the new one; only one they're really in, from another device or tab, stops them.
+        const old = groups.ofUser(user.id);
+        if (old?.members.get(user.id)?.connected) throw new Error("Ya estás en un grupo: sal de él para crear otro");
+        if (old) leaveGroup(old, user.id, null);
         const ref = rooms.socketToRoom.get(socket.id);
         const room = ref && !ref.central ? rooms.get(ref.code) : null;
         if (room?.matchmaking) throw new Error("Termina la partida pública para crear un grupo");

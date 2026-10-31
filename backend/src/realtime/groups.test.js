@@ -67,6 +67,18 @@ assert.deepEqual(made.group.plan, { game: "opciones", audience: "publica" });
 assert.equal(made.group.place, null, "on Inicio");
 assert.match((await ana.call("group:create", user("Ana"))).error, /Ya estás en un grupo/);
 
+// Someone who closed the app keeps their place for a while, but making a new group (they came back without it) takes
+// them out of the old one instead of saying they're already in a group.
+const fede = connect("fede");
+const fedeOld = (await fede.call("group:create", { ...user("Fede"), plan: { game: "opciones", audience: "publica" } })).group.code;
+fede.drop();
+const fede2 = connect("fede");
+const fedeNew = await fede2.call("group:create", { ...user("Fede"), plan: { game: "historia", audience: "publica" } });
+assert.equal(fedeNew.ok, true);
+assert.notEqual(fedeNew.group.code, fedeOld);
+assert.equal(groups.groups.get(fedeOld), undefined, "the old group, empty, is gone");
+await fede2.call("group:leave", {});
+
 // Beto joins with the code (checked first); a wrong code says so.
 assert.match((await beto.call("group:check", "ZZZZZ")).error, /No hay ningún grupo/);
 assert.equal((await beto.call("group:check", code)).ok, true);

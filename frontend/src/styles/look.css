@@ -626,8 +626,21 @@
     bottom: calc(10px + env(safe-area-inset-bottom));
     z-index: 20;
     gap: 10px;
-    box-shadow: 0 14px 36px rgba(0, 0, 0, 0.55);
+    background: none;
+    isolation: isolate;
   }
+  /* Under the bar, down to the window's foot and out to its sides, the page's own black (::before), and over it the
+     bar's own panel with its soft shadow (::after): what scrolls behind never shows around it. */
+  .tv-gbar::before,
+  .tv-gbar::after {
+    content: "";
+    position: absolute;
+    pointer-events: none;
+  }
+  .tv-gbar::before { z-index: -2; inset: 0 -16px calc(-10px - env(safe-area-inset-bottom)); background: var(--tv-bg); }
+  .tv-gbar::after { z-index: -1; inset: 0; border-radius: inherit; background: var(--tv-surface); box-shadow: 0 14px 36px rgba(0, 0, 0, 0.55); }
+  /* The middle of the page stays under the bar (iPhones painted the stage's animated boxes over it). */
+  .tv-lobby-stage { position: relative; z-index: 0; }
   .tv-gbar-zone--plan .tv-gbar-cap { display: none; }
   /* "Pública" / "Privada" and "Vas a jugar" in one row: the switch as tall as the card. */
   .tv-gbar-plan-row { flex-wrap: nowrap; min-height: 0; padding: 0; background: none; }
@@ -701,6 +714,12 @@
   .tv-app .tv-chip--sala,
   .tv-app .tv-chip--sala:not(:has(.tv-sala-count)) { padding: 0 4px; }
 }
+
+/* The friends' panel: its close is the grey one of every panel (never a black edge), its title in Outfit. */
+.tv-app .tv-fr-close { background: var(--tv-neutral); color: var(--tv-neutral-on); box-shadow: 0 3px 0 var(--tv-neutral-edge); }
+.tv-app .tv-fr-close:hover { box-shadow: 0 4px 0 var(--tv-neutral-edge); }
+.tv-app .tv-fr-close:active { box-shadow: 0 0 0 var(--tv-neutral-edge); }
+.tv-app .tv-fr-sheet .tv-sheet-title { font-family: var(--tv-title); font-weight: 800; letter-spacing: -0.03em; }
 
 /* ---------- Panels over the page ---------- */
 .tv-modal-root {

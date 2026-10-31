@@ -123,7 +123,8 @@ export default function HomeFrame({ room = null, onToast, Lobby = null, leaving 
           if (action.then === "start") await startGame();
         }
       });
-      if (action.type === "pick") onToast?.("Se creó tu sala. Comparte el código para invitar", "check");
+      // Phones skip it: it covered the top bar, where the sala's code already shows.
+      if (action.type === "pick" && !window.matchMedia?.("(max-width: 760px)").matches) onToast?.("Se creó tu sala. Comparte el código para invitar", "check");
       return true;
     } catch (err) {
       setSettingsAsked(false);
