@@ -284,7 +284,7 @@ function SalaMembersBox({ group, meId }) {
       <ul className="tv-stage-friends-list">
         {members.map((m) => (
           <li key={m.id} className={`${m.id === meId ? "is-me" : ""}${m.here === false ? " is-away" : ""}`.trim() || undefined}>
-            <Avatar className="tv-avatar--sm" avatar={m.avatar} />
+            <Avatar className="tv-avatar--sm" avatar={m.avatar} mood="neutral" />
             <span className="tv-stage-friends-text">
               <b>{m.name}</b>
               <span>{m.id === group.leaderId ? "Líder" : m.here === false ? "No está en la sala ahora" : "En la sala"}</span>
@@ -315,7 +315,7 @@ function Boxes({ game, gameName = "", color, stats }) {
           )}
         </div>
         {/* Your character: "Blob". */}
-        <Blob className="tv-stage-blob" color={blobColor(user?.avatar)} />
+        <Blob className="tv-stage-blob" color={blobColor(user?.avatar)} mood="neutral" />
       </div>
 
       {group ? (

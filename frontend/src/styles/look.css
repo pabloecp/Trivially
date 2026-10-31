@@ -368,8 +368,7 @@
 .tv-stage-elo-week { font-family: var(--tv-display); font-weight: 800; font-size: 14px; color: #2fe08a; }
 .tv-stage-elo-week.is-down { color: #ff6b6b; }
 /* Your character: Blob (Blob.jsx), white with a black line; it floats a little. */
-.tv-stage-blob { display: block; flex-shrink: 0; width: 96px; aspect-ratio: 1; margin: -8px -4px -8px 0; animation: tvBlobFloat 3.2s ease-in-out infinite; }
-@keyframes tvBlobFloat { 50% { transform: translateY(-6px); } }
+.tv-stage-blob { display: block; flex-shrink: 0; width: 96px; aspect-ratio: 1; margin: -8px -4px -8px 0; }
 /* "Reto del día": the yellow square with the flame, the label over the goal, the count; the bar under them. */
 .tv-stage-daily-row { display: flex; align-items: center; gap: 12px; }
 /* With a sala: its code (in place of the day's challenge) and who's in it (in place of the friends). */
@@ -1680,13 +1679,58 @@ html.tv-geo-playing .tv-app .tv-topbar:has(.tv-topbar-round) { display: flex; }
 .tv-blob-note { margin: 0; font-family: var(--tv-small); font-weight: 600; font-size: 14px; color: var(--tv-text-2); }
 .tv-blob-note b { color: var(--tv-text); }
 
-/* ---------- The owners' gold Blob (Blob.jsx) ---------- */
-/* Metal, with no glow around it: a line of light crosses the body (inside it only) once every 5 s. */
-.tv-blob-shine { animation: tvGoldShine 5s ease-in-out infinite; }
-@keyframes tvGoldShine {
-  0% { transform: translateX(0); }
-  28%, 100% { transform: translateX(160px); }
+/* ---------- The Blob's skin and moods (Blob.jsx) ---------- */
+/* The skin: the shadow inside, half see-through so the colour shows through it, and the light, faint. */
+.tv-blob .tv-blob-shade { opacity: 0.5; }
+.tv-blob .tv-blob-light { opacity: 0.28; }
+.tv-blob .tv-blob-eyes { transform-box: view-box; transform-origin: 50px 45px; }
+.tv-blob.is-victoria,
+.tv-blob.is-derrota { overflow: visible; transform-origin: 50% 100%; }
+/* Victoria (first place on the podium): a jump straight up, then a rest (2.8 s each); it looks up as it crouches and
+   back ahead once it lands. */
+.tv-blob.is-victoria { animation: tvBlobWin 2.8s cubic-bezier(0.3, 0.7, 0.4, 1) infinite; }
+.tv-blob.is-victoria .tv-blob-eyes { animation: tvBlobLookUp 2.8s ease-in-out infinite; }
+@keyframes tvBlobWin {
+  0% { transform: translateY(0) scale(1, 1); }
+  6% { transform: translateY(0) scale(1.14, 0.86); }
+  14% { transform: translateY(-7%) scale(0.9, 1.12); }
+  28% { transform: translateY(-55%) scale(0.98, 1.03); }
+  40% { transform: translateY(0) scale(1, 1); }
+  45% { transform: translateY(0) scale(1.16, 0.84); }
+  51% { transform: translateY(0) scale(0.97, 1.04); }
+  56%, 100% { transform: translateY(0) scale(1, 1); }
+}
+@keyframes tvBlobLookUp {
+  0%, 62%, 100% { transform: translateY(0); }
+  6%, 44% { transform: translateY(-8px); }
+}
+/* Derrota (second and third): no effects; it sinks a little while its eyes drop, look down to one side and the other,
+   half close and come back up (5 s). */
+.tv-blob.is-derrota { animation: tvBlobSag 5s ease-in-out infinite; }
+.tv-blob.is-derrota .tv-blob-eyes { animation: tvBlobLookDown 5s ease-in-out infinite; }
+@keyframes tvBlobSag {
+  0%, 100% { transform: scale(1, 1); }
+  25%, 82% { transform: scale(1.05, 0.95); }
+}
+@keyframes tvBlobLookDown {
+  0%, 100% { transform: translate(0, 0) scaleY(1); }
+  12% { transform: translate(0, 7px) scaleY(1); }
+  25%, 34% { transform: translate(-6px, 9px) scaleY(1); }
+  44%, 52% { transform: translate(6px, 9px) scaleY(1); }
+  62%, 82% { transform: translate(0, 10px) scaleY(0.4); }
+}
+/* Neutral (the scoreboards, a group's list, the big one beside your elo): only the eyes look left and right now and
+   then, each Blob at its own moment (--blob-delay). */
+.tv-blob.is-neutral .tv-blob-eyes { animation: tvBlobScan 6s ease-in-out infinite; animation-delay: var(--blob-delay, 0s); }
+@keyframes tvBlobScan {
+  0%, 18%, 100% { transform: translateX(0); }
+  30%, 45% { transform: translateX(-7px); }
+  60%, 75% { transform: translateX(7px); }
+  88% { transform: translateX(0); }
 }
 @media (prefers-reduced-motion: reduce) {
-  .tv-blob-shine { animation: none; }
+  .tv-blob.is-victoria,
+  .tv-blob.is-derrota,
+  .tv-blob .tv-blob-eyes { animation: none; }
 }
+

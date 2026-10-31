@@ -63,15 +63,17 @@ const user2 = registerWithPassword(testStore, { name: "Registrado", username: "r
 assert.equal(deleteGuest(testStore, user2.id), false);
 assert.ok(testStore.users[user2.id]);
 
-// Test 7: Avatar is one of the Blob's colours (gold only for owners) or the Google photo; picking a color keeps the
+// Test 7: Avatar is one of the Blob's colours or the Google photo; picking a color keeps the
 // photo for later
 assert.throws(() => updateUserAvatar(testStore, user2.id, "google"), /Google/);
 assert.throws(() => updateUserAvatar(testStore, user2.id, "https://evil.test/x.png"), /no válido/);
 assert.throws(() => updateUserAvatar(testStore, user2.id, "#33A8C7"), /no válido/);
-assert.throws(() => updateUserAvatar(testStore, user2.id, "#FFC93C"), /owners/);
+assert.throws(() => updateUserAvatar(testStore, user2.id, "#FFC93C"), /no válido/, "the owners' gold is gone");
 assert.equal(updateUserAvatar(testStore, user2.id, "#2f6bff").avatar, "#2F6BFF");
-// The old account colours (celeste, rosa, menta) still work: they are their new colour.
+// The old account colours (celeste, rosa, menta, amarillo, naranja) still work: they are their new colour.
 assert.equal(updateUserAvatar(testStore, user2.id, "#8fd3ff").avatar, "#2F6BFF");
+assert.equal(updateUserAvatar(testStore, user2.id, "#FF8A00").avatar, "#FF5A1F");
+assert.equal(updateUserAvatar(testStore, user2.id, "#1fd24a").avatar, "#1FD24A");
 assert.equal(updateUserAvatar(testStore, user2.id, "#FFFFFF").avatar, "#FFFFFF");
 const gUser = upsertGoogleUser(testStore, { name: "G", email: "g@trivially.test", avatar: "https://photo.test/g.jpg", googleId: "g_1" });
 assert.equal(gUser.avatar, "https://photo.test/g.jpg");
@@ -80,20 +82,18 @@ upsertGoogleUser(testStore, { email: "g@trivially.test", avatar: "https://photo.
 assert.equal(testStore.users[gUser.id].avatar, "#FF2FC0");
 assert.equal(updateUserAvatar(testStore, gUser.id, "google").avatar, "https://photo.test/g2.jpg");
 
-// The colour a browser sends can't skip those rules: a guest's gold or account colour isn't saved, and in rooms a
-// player shows the account's colour only while they can use it.
-const fakeGuest = upsertUser(testStore, { id: "gst_fake01", name: "Falso", avatar: "#FFC93C", isGuest: true });
-assert.notEqual(fakeGuest.avatar, "#FFC93C");
+// The colour a browser sends can't skip those rules: a guest's account colour isn't saved, and in rooms a player shows
+// the account's colour only while they can use it.
+const fakeGuest = upsertUser(testStore, { id: "gst_fake01", name: "Falso", avatar: "#A63DFF", isGuest: true });
+assert.notEqual(fakeGuest.avatar, "#A63DFF");
 upsertUser(testStore, { id: "gst_fake01", name: "Falso", avatar: "#2F6BFF" });
 assert.notEqual(testStore.users.gst_fake01.avatar, "#2F6BFF");
 upsertUser(testStore, { id: "gst_fake01", name: "Falso", avatar: "#8FD3FF" });
 assert.notEqual(testStore.users.gst_fake01.avatar, "#8FD3FF", "nor an old account colour");
-upsertUser(testStore, { id: user2.id, name: "Registrado", avatar: "#FFC93C" });
-assert.equal(testStore.users[user2.id].avatar, "#FFFFFF");
 assert.equal(playerAvatar(undefined), "#FFFFFF");
 assert.equal(playerAvatar({ isGuest: true, avatar: "#FFA6D2" }), "#FFFFFF");
-assert.equal(playerAvatar({ isGuest: false, role: "user", avatar: "#FFC93C" }), "#FFFFFF");
-assert.equal(playerAvatar({ isGuest: false, role: "user", avatar: "#FF8A00" }), "#FF8A00");
+assert.equal(playerAvatar({ isGuest: false, role: "user", avatar: "#00A2FF" }), "#00A2FF");
+assert.equal(playerAvatar({ isGuest: false, role: "user", avatar: "#FF8A00" }), "#FF5A1F");
 assert.equal(playerAvatar({ isGuest: false, role: "user", avatar: "#FFA6D2" }), "#FF2FC0", "an old colour shows as its new one");
 deleteGuest(testStore, "gst_fake01");
 

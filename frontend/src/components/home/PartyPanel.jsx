@@ -247,14 +247,14 @@ export default function PartyPanel({ room, onToast, scores = false, display = fa
                     {scores && !p.spectator && <span className="tv-player-pos">{i + 1}</span>}
                     {gameWins && scoreLook === "insignia" && p.wins > 0 ? (
                       <span className="tv-player-face">
-                        <Avatar name={p.name} avatar={p.avatar} />
+                        <Avatar name={p.name} avatar={p.avatar} mood="neutral" />
                         <span key={p.wins} className={`tv-player-badge is-${tone}`}>
                           {tone === "neutro" && <Icon name="crown" size={13} strokeWidth={2.6} filled />}
                           {p.wins}
                         </span>
                       </span>
                     ) : (
-                      <Avatar name={p.name} avatar={p.avatar} />
+                      <Avatar name={p.name} avatar={p.avatar} mood="neutral" />
                     )}
                     <span className="tv-player-text">
                       <span className="tv-player-name">
@@ -314,7 +314,7 @@ export default function PartyPanel({ room, onToast, scores = false, display = fa
                 {spectators.map((p) => (
                   <li key={p.id} className={`tv-player is-spectator${p.id === viewerId ? " is-me" : ""}${p.connected ? "" : " is-away"}`}>
                     <div className="tv-player-btn">
-                      <Avatar name={p.name} avatar={p.avatar} />
+                      <Avatar name={p.name} avatar={p.avatar} mood="neutral" />
                       <span className="tv-player-text">
                         <span className="tv-player-name">{p.name}</span>
                         <span className="tv-player-tag">{p.connected ? "Entra en la próxima partida" : "Reconectando…"}</span>

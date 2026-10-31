@@ -104,7 +104,7 @@ function GroupMembers({ group, onToast }) {
           return (
             <li key={m.id} className={`tv-player${isMe ? " is-me" : ""}${m.connected && m.here ? "" : " is-away"}`}>
               <div className="tv-player-btn tv-groupmember">
-                <Avatar name={m.name} avatar={m.avatar} />
+                <Avatar name={m.name} avatar={m.avatar} mood="neutral" />
                 <span className="tv-player-text">
                   <span className="tv-player-name">{m.name}</span>
                   <span className={`tv-player-tag${leads ? " is-host" : ""}`}>{tag}</span>

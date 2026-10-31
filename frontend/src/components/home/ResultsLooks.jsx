@@ -61,7 +61,7 @@ export function RetouchBetween({ kicker, line, note, players, winners = [], poin
           const pts = <small>{points(p).toLocaleString("es-ES")} pts</small>;
           return (
             <li key={p.id} className={`rl-nrow${win ? " is-win" : ""}`} style={{ "--i": i }}>
-              <Avatar name={p.name} avatar={p.avatar} />
+              <Avatar name={p.name} avatar={p.avatar} mood="neutral" />
               <span className="rl-nname">
                 {retouch === "barras" ? (
                   <>
@@ -120,7 +120,7 @@ export function RetouchCard({ icon = "play", color = "neutral", title, players, 
           return (
             <li key={p.id} className={`tv-res-row rl-rankrow${p.id === meId ? " is-me" : ""}${win ? " is-win" : ""}`} style={{ "--i": i }}>
               <span className="tv-res-row-pos">{i + 1}</span>
-              <Avatar name={p.name} avatar={p.avatar} />
+              <Avatar name={p.name} avatar={p.avatar} mood="neutral" />
               <span className="tv-res-row-main">
                 {retouch === "barras" ? (
                   <>

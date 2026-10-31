@@ -42,7 +42,8 @@ export function Podium({ players, score = (p) => <><CountUp value={p.score} /> p
         return (
           <div key={p.id} role="listitem" className={`tv-podium-spot is-${place}`}>
             <span className="tv-podium-avatar">
-              <Avatar name={p.name} avatar={p.avatar} className={place === 1 ? "tv-avatar--lg" : ""} />
+              {/* First place celebrates (tied, all of them); second and third look down. */}
+              <Avatar name={p.name} avatar={p.avatar} className={place === 1 ? "tv-avatar--lg" : ""} mood={place === 1 ? "victoria" : "derrota"} />
             </span>
             <span className="tv-podium-who">
               {/* On phones only the first name, whole ("Mateo", not "Mateo Com…"); the ranking beside keeps the full one. */}
@@ -117,7 +118,7 @@ export function RankingCard({ icon = "play", color = "neutral", title, players, 
         {players.map((p, i) => (
           <li key={p.id} className={`tv-res-row${p.id === meId ? " is-me" : ""}`} style={{ "--i": i }}>
             <span className="tv-res-row-pos">{i + 1}</span>
-            <Avatar name={p.name} avatar={p.avatar} />
+            <Avatar name={p.name} avatar={p.avatar} mood="neutral" />
             <span className="tv-res-row-main">
               <PlayerName player={p} className="tv-res-row-name" />
               <RoundDots rounds={p.rounds} />

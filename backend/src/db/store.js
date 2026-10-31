@@ -15,13 +15,13 @@ const STORE_PATH = path.join(DATA_DIR, "store.json");
 const MAX_NAME_LENGTH = 24;
 export const DEFAULT_AVATAR = "#FF2D55";
 const HEX_COLOR = /^#[0-9a-f]{6}$/i;
-// The Blob's colours on the profile (frontend lib/blobColors.js): white for everyone, the site's main colours (the
-// logo's five and orange) for accounts, and gold only for owners. Older avatar colours still saved show as white.
+// The Blob's colours on the profile (frontend lib/blobColors.js): white for everyone and, for accounts, the colours of
+// the games (Trivia, Canción, Mundo, Lluvia, Rango, Farsante, Minas). Older avatar colours still saved show as white.
 export const BLOB_WHITE = "#FFFFFF";
-const BLOB_ACCOUNT = ["#FF2FC0", "#FFD60A", "#00D1C1", "#2F6BFF", "#A63DFF", "#FF8A00"];
-export const BLOB_GOLD = "#FFC93C";
-// The account colours the Blob had before (celeste, rosa, menta): saved ones count as their new colour.
-const BLOB_RENAMED = { "#8FD3FF": "#2F6BFF", "#FFA6D2": "#FF2FC0", "#8EF0B0": "#00D1C1" };
+const BLOB_ACCOUNT = ["#2F6BFF", "#FF2FC0", "#00D1C1", "#00A2FF", "#FF5A1F", "#1FD24A", "#A63DFF"];
+// The account colours the Blob had before (celeste, rosa, menta; then amarillo and naranja): saved ones count as their
+// new colour. The owners' gold is gone: saved, it shows white.
+const BLOB_RENAMED = { "#8FD3FF": "#2F6BFF", "#FFA6D2": "#FF2FC0", "#8EF0B0": "#00D1C1", "#FFD60A": "#FF5A1F", "#FF8A00": "#FF5A1F" };
 const blobId = (color) => {
   const id = String(color || "").toUpperCase();
   return BLOB_RENAMED[id] || id;
@@ -31,14 +31,13 @@ const blobId = (color) => {
 // old colour, a Google photo) is drawn white, so it gives nothing away.
 function blobColorError(user, color) {
   const id = blobId(color);
-  if (id === BLOB_GOLD) return effectiveRole(user) === "owner" ? null : "Ese color es solo para los owners";
   if (BLOB_ACCOUNT.includes(id)) return user && !user.isGuest ? null : "Crea una cuenta para usar ese color";
   return null;
 }
 
 /**
  * The colour a player shows in rooms and groups: always the one saved on their account (never what their browser
- * sends), and white if they can no longer use it (a guest, or an owner who stopped being one).
+ * sends), and white if they can't use it (a guest).
  */
 export function playerAvatar(user) {
   if (!user?.avatar || blobColorError(user, user.avatar)) return BLOB_WHITE;
@@ -510,7 +509,7 @@ export function updateUserAvatar(store, userId, choice) {
     user.avatar = photo;
   } else {
     const color = blobId(choice);
-    if (color !== BLOB_WHITE && color !== BLOB_GOLD && !BLOB_ACCOUNT.includes(color)) throw new Error("Color no válido");
+    if (color !== BLOB_WHITE && !BLOB_ACCOUNT.includes(color)) throw new Error("Color no válido");
     const problem = blobColorError(user, color);
     if (problem) throw new Error(problem);
     user.avatar = color;
