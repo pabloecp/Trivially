@@ -246,7 +246,7 @@ function AnswerBox({ room, open, inputRef, onResult }) {
         onMouseDown={(e) => e.preventDefault()}
       >
         <Icon name="send" size={20} strokeWidth={2.4} />
-        Enviar
+        <span className="tv-mwrite-send-label">Enviar</span>
       </button>
       </div>
     </form>

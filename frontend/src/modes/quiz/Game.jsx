@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import TvShell from "../../components/home/TvShell.jsx";
 import Confetti from "../../components/home/Confetti.jsx";
 import Icon from "../../components/home/Icon.jsx";
+import AnswerSkip from "../../components/home/AnswerSkip.jsx";
 import WaitingPill, { waitingNames } from "../../components/home/WaitingPill.jsx";
 import SpectatorBanner from "../../components/home/SpectatorBanner.jsx";
 import MatchResults from "../../components/home/MatchResults.jsx";
@@ -254,8 +255,13 @@ function WriteRound({ room, question, me, answer, skipSong, seconds, clock, cent
     if (room.phase === "playing" && !locked) inputRef.current?.focus();
   }, [room.phase, round]);
 
+  // Time running out with something written: it goes on its own, as if "Enviar" had been pressed.
+  useEffect(() => {
+    if (room.phase === "playing" && !locked && query.trim() && clock.left > 0 && clock.left <= 500) submit();
+  }, [clock.left]);
+
   async function submit(e) {
-    e.preventDefault();
+    e?.preventDefault();
     const text = query.trim();
     if (locked || sending.current || !text) return;
     sending.current = true;
@@ -363,7 +369,7 @@ function WriteRound({ room, question, me, answer, skipSong, seconds, clock, cent
               </label>
               <button type="submit" className="tv-btn tv-btn--primary tv-mwrite-send" disabled={!query.trim()}>
                 <Icon name="send" size={20} strokeWidth={2.4} />
-                Enviar
+                <span className="tv-mwrite-send-label">Enviar</span>
               </button>
             </form>
           ) : (
@@ -374,11 +380,8 @@ function WriteRound({ room, question, me, answer, skipSong, seconds, clock, cent
           ))}
         {room.phase === "playing" && !locked && !central && (
           <div className="tv-mpanel-foot">
-            <span>Se aceptan pequeños errores al escribir. Puedes enviar una sola vez.</span>
             {/* A player may still give up on the question: the first tap asks, the second skips. */}
-            <button type="button" className={`tv-mpanel-skip${confirmSkip ? " is-on" : ""}`} onClick={skip} aria-live="polite">
-              {confirmSkip ? "No te dará puntos. Toca otra vez" : "Saltar"}
-            </button>
+            <AnswerSkip confirm={confirmSkip} onClick={skip} />
           </div>
         )}
       </div>
@@ -459,7 +462,7 @@ function GameScreen() {
       : 100;
   const seconds = Math.max(0, Math.ceil(left / 1000));
   const urgent = room.phase === "playing" && left <= 4000;
-  const clock = { seconds, pct, urgent };
+  const clock = { seconds, pct, urgent, left };
   const props = { room, question, me, answer, skipSong, seconds, clock, central, controller };
   // The host's controls of the match: in the round's card, or in the thin bar of a phone beside a central device.
   const tools = (

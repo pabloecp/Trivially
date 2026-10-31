@@ -370,8 +370,9 @@
 /* The text keeps clear of the corner marks (right or mine at the top right, whose cell at the bottom left): the
    cell leaves room at both sides for them, always, so nothing moves when a mark appears. */
 .tv-mines-cell-text { padding-inline: 18px; }
+/* On a phone's narrow cells the text keeps almost all the width, so a short word (Ensayo, Fresco) fits whole. */
 @media (max-width: 640px) {
-  .tv-mines-cell-text { padding-inline: 9px; }
+  .tv-mines-cell-text { padding-inline: 1px; }
 }
 
 /* By turns, after picking: who the turn still waits for, in the shared pill (.tv-wait-pill) over the board. */

@@ -15,6 +15,35 @@ const STORE_PATH = path.join(DATA_DIR, "store.json");
 const MAX_NAME_LENGTH = 24;
 export const DEFAULT_AVATAR = "#FF2D55";
 const HEX_COLOR = /^#[0-9a-f]{6}$/i;
+// The Blob's colours on the profile (frontend lib/blobColors.js): white for everyone and, for accounts, the colours of
+// the games (Trivia, Canción, Mundo, Lluvia, Rango, Farsante, Minas). Older avatar colours still saved show as white.
+export const BLOB_WHITE = "#FFFFFF";
+const BLOB_ACCOUNT = ["#2F6BFF", "#FF2FC0", "#00D1C1", "#00A2FF", "#FF5A1F", "#1FD24A", "#A63DFF"];
+// The account colours the Blob had before (celeste, rosa, menta; then amarillo and naranja): saved ones count as their
+// new colour. The owners' gold is gone: saved, it shows white.
+const BLOB_RENAMED = { "#8FD3FF": "#2F6BFF", "#FFA6D2": "#FF2FC0", "#8EF0B0": "#00D1C1", "#FFD60A": "#FF5A1F", "#FF8A00": "#FF5A1F" };
+const blobId = (color) => {
+  const id = String(color || "").toUpperCase();
+  return BLOB_RENAMED[id] || id;
+};
+
+// Why `user` can't use the Blob colour `color`, or null when it can. Anything that isn't one of the Blob's colours (an
+// old colour, a Google photo) is drawn white, so it gives nothing away.
+function blobColorError(user, color) {
+  const id = blobId(color);
+  if (BLOB_ACCOUNT.includes(id)) return user && !user.isGuest ? null : "Crea una cuenta para usar ese color";
+  return null;
+}
+
+/**
+ * The colour a player shows in rooms and groups: always the one saved on their account (never what their browser
+ * sends), and white if they can't use it (a guest).
+ */
+export function playerAvatar(user) {
+  if (!user?.avatar || blobColorError(user, user.avatar)) return BLOB_WHITE;
+  // An old account colour as its new one; anything else as it was saved.
+  return BLOB_RENAMED[String(user.avatar).toUpperCase()] || user.avatar;
+}
 
 function emptyStore() {
   return { users: {} };
@@ -244,7 +273,7 @@ export function upsertUser(store, user) {
   const current = store.users[user.id] || {
     id: user.id,
     name: user.name,
-    avatar: user.avatar,
+    avatar: DEFAULT_AVATAR,
     isGuest: Boolean(user.isGuest),
     email: user.email || null,
     role: "user",
@@ -259,7 +288,8 @@ export function upsertUser(store, user) {
     },
   };
   current.name = user.name || current.name;
-  current.avatar = user.avatar || current.avatar;
+  // The colour comes from the browser here, so one it can't use (gold for a guest) is left out.
+  if (user.avatar && !blobColorError(current, user.avatar)) current.avatar = user.avatar;
   if (user.email) current.email = user.email;
   if (user.isGuest !== undefined) current.isGuest = user.isGuest;
   if (user.passwordHash) current.passwordHash = user.passwordHash;
@@ -477,10 +507,12 @@ export function updateUserAvatar(store, userId, choice) {
     const photo = user.googlePhoto || (user.googleId && !HEX_COLOR.test(user.avatar || "") ? user.avatar : null);
     if (!photo) throw new Error("Inicia sesión con Google para usar tu foto de perfil");
     user.avatar = photo;
-  } else if (HEX_COLOR.test(choice || "")) {
-    user.avatar = choice;
   } else {
-    throw new Error("Color no válido");
+    const color = blobId(choice);
+    if (color !== BLOB_WHITE && !BLOB_ACCOUNT.includes(color)) throw new Error("Color no válido");
+    const problem = blobColorError(user, color);
+    if (problem) throw new Error(problem);
+    user.avatar = color;
   }
   saveStore(store);
   return sanitizeUser(user);

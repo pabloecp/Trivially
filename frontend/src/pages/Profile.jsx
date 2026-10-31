@@ -6,19 +6,17 @@ import { USERNAME_MIN } from "../lib/username.js";
 import { useApp } from "../lib/store.jsx";
 import TvShell from "../components/home/TvShell.jsx";
 import Avatar from "../components/home/Avatar.jsx";
+import Blob from "../components/home/Blob.jsx";
 import CountUp from "../components/home/CountUp.jsx";
-import MatchHistory from "../components/home/MatchHistory.jsx";
 import GoogleIcon from "../components/home/GoogleIcon.jsx";
 import SpotifyIcon from "../components/home/SpotifyIcon.jsx";
 import Icon from "../components/home/Icon.jsx";
+import { BLOB_COLORS, HOW_TO_GET, blobColor, canUseColor } from "../lib/blobColors.js";
 
+// Only what matters: how many matches you won and how many questions you got right.
 const STATS = [
-  { key: "totalScore", label: "Puntuación total", color: "pink" },
-  { key: "bestScore", label: "Mejor partida", color: "violet" },
   { key: "wins", label: "Victorias", color: "amber" },
-  { key: "gamesPlayed", label: "Partidas jugadas", color: "sky" },
   { key: "correctAnswers", label: "Aciertos", color: "green" },
-  { key: "bestStreak", label: "Mejor racha", color: "purple" },
 ];
 
 // Badge shown on the profile for owners (plain users get none).
@@ -35,6 +33,69 @@ function Notice({ tone, icon, children }) {
   );
 }
 
+// "Color de tu Blob": every colour, like an inventory. The ones you can use are tapped to wear them (the one you wear in
+// the site's blue); the others are dimmed with a lock, and a tap says how to get them (lib/blobColors.js).
+function BlobColors({ user, onPick }) {
+  const [info, setInfo] = useState(null);
+  const [busy, setBusy] = useState("");
+  const current = blobColor(user?.avatar);
+  const shown = BLOB_COLORS.find((c) => c.id === (info || current));
+  const locked = shown && !canUseColor(user, shown);
+
+  async function choose(c) {
+    if (!canUseColor(user, c)) {
+      setInfo((cur) => (cur === c.id ? null : c.id));
+      return;
+    }
+    setInfo(null);
+    if (c.id === current || busy) return;
+    setBusy(c.id);
+    try {
+      await onPick(c.id);
+    } finally {
+      setBusy("");
+    }
+  }
+
+  return (
+    <div className="tv-blob-colors">
+      <div className="tv-card-head">
+        <h2 className="tv-card-title">Color de tu Blob</h2>
+      </div>
+      <div className="tv-blob-opts" role="radiogroup" aria-label="Color de tu Blob">
+        {BLOB_COLORS.map((c) => {
+          const ok = canUseColor(user, c);
+          return (
+            <button
+              key={c.id}
+              type="button"
+              role="radio"
+              aria-checked={c.id === current}
+              aria-label={ok ? c.name : `${c.name} (bloqueado)`}
+              className={`tv-blob-opt${c.id === current ? " is-on" : ""}${ok ? "" : " is-locked"}${info === c.id ? " is-asked" : ""}`}
+              disabled={Boolean(busy)}
+              onClick={() => choose(c)}
+            >
+              <Blob color={c.id} />
+              {!ok && (
+                <span className="tv-blob-lock" aria-hidden="true">
+                  <Icon name="lock" size={12} strokeWidth={2.8} />
+                </span>
+              )}
+            </button>
+          );
+        })}
+      </div>
+      {shown && (
+        <p className={`tv-blob-note${locked ? " is-locked" : ""}`} aria-live="polite">
+          <b>{shown.name}</b>
+          {locked ? ` · ${HOW_TO_GET[shown.needs]}` : shown.id === current ? " · Es el que llevas" : ""}
+        </p>
+      )}
+    </div>
+  );
+}
+
 // What the profile says about the @username's changes.
 function handleInfo(info) {
   let left;
@@ -48,7 +109,7 @@ function handleInfo(info) {
 }
 
 function ProfileScreen() {
-  const { user: currentUser, updateUsername, changeHandle, linkGoogle, connectSpotify, unlinkSpotify, linkingStatus, logout } =
+  const { user: currentUser, updateUsername, changeHandle, updateAvatar, linkGoogle, connectSpotify, unlinkSpotify, linkingStatus, logout } =
     useApp();
   const [spotifyBusy, setSpotifyBusy] = useState(false);
   // "Activo" on Spotify: the first tap turns it into "Desconectar", the second one disconnects.
@@ -125,7 +186,17 @@ function ProfileScreen() {
     return () => clearTimeout(t);
   }, [msg]);
 
-  // One button saves whatever was edited: the name, the @username, or both. (No colour or photo: everyone is a Blob.)
+  // A colour is worn as soon as it's tapped (BlobColors).
+  async function onPickColor(color) {
+    setErr("");
+    try {
+      await updateAvatar(color);
+    } catch (e) {
+      setErr(e.message || "No se pudo cambiar el color");
+    }
+  }
+
+  // One button saves whatever was edited: the name, the @username, or both.
   async function onSaveProfile(e) {
     e?.preventDefault();
     if (!canSave || saving) return;
@@ -248,40 +319,29 @@ function ProfileScreen() {
 
       <section className="tv-card tv-profile-hero">
         <span className="tv-profile-avatar">
-          <Avatar className="tv-avatar--xl" />
+          <Avatar className="tv-avatar--xl" avatar={activeUser?.avatar} />
         </span>
         <div className="tv-profile-who">
           <p className="tv-party-kicker">{isOtherUser ? "Perfil de jugador" : "Tu perfil"}</p>
           <h1 className="tv-page-title">{activeUser?.name || "Jugador"}</h1>
           {activeUser?.username && <p className="tv-handle tv-profile-handle">@{activeUser.username}</p>}
-          <div className="tv-tags">
-            {roleTag && (
-              <span className={`tv-tag tv-tag--${activeUser.role}`}>
-                <Icon name={roleTag.icon} size={13} filled className={activeUser.role === "owner" ? "tv-tag-sparkle" : ""} />
-                {roleTag.label}
-              </span>
-            )}
-            {isGuest ? (
-              <span className="tv-tag">Invitado</span>
-            ) : (
-              <span className="tv-tag tv-tag--ok">
-                <Icon name="verified" size={15} strokeWidth={2.4} className="tv-tag-verified" />
-                Registrado
-              </span>
-            )}
-            {hasSpotify && (
-              <span className="tv-tag tv-tag--ok">
-                <SpotifyIcon size={13} color="#000" waves="#2bd94f" />
-                Spotify
-              </span>
-            )}
-            {hasGoogle && (
-              <span className="tv-tag">
-                <GoogleIcon size={13} />
-                Google
-              </span>
-            )}
-          </div>
+          {/* Only two tags: "Registrado" (any account) and "Owner". */}
+          {(roleTag || !isGuest) && (
+            <div className="tv-tags">
+              {roleTag && (
+                <span className={`tv-tag tv-tag--${activeUser.role}`}>
+                  <Icon name={roleTag.icon} size={13} filled className={activeUser.role === "owner" ? "tv-tag-sparkle" : ""} />
+                  {roleTag.label}
+                </span>
+              )}
+              {!isGuest && (
+                <span className="tv-tag tv-tag--ok">
+                  <Icon name="verified" size={15} strokeWidth={2.4} className="tv-tag-verified" />
+                  Registrado
+                </span>
+              )}
+            </div>
+          )}
         </div>
       </section>
 
@@ -297,7 +357,7 @@ function ProfileScreen() {
           {isGuest ? (
             <p className="tv-hint">Los invitados no guardan estadísticas.</p>
           ) : (
-            <div className="tv-stat-grid" aria-busy={statsLoading}>
+            <div className="tv-stat-grid tv-stat-grid--two" aria-busy={statsLoading}>
               {STATS.map((s, i) => (
                 <div key={s.key} className={`tv-stat tv-stat--pop tv-c-${s.color}`} style={{ "--i": i }}>
                   <span className="tv-stat-dot" aria-hidden="true" />
@@ -315,14 +375,7 @@ function ProfileScreen() {
               ))}
             </div>
           )}
-          {!isGuest && (
-            <div className="tv-history-wrap">
-              <div className="tv-card-head">
-                <h2 className="tv-card-title">Historial</h2>
-              </div>
-              {statsLoading ? <span className="tv-skeleton" aria-hidden="true" /> : <MatchHistory matches={profileData?.history || []} />}
-            </div>
-          )}
+          {!isOtherUser && <BlobColors user={currentUser} onPick={onPickColor} />}
         </section>
 
         {!isOtherUser && (
@@ -352,7 +405,6 @@ function ProfileScreen() {
                   maxLength={24}
                   disabled={saving}
                 />
-                <span className="tv-handle-status">Es como te ven en las partidas. Cámbialo cuando quieras.</span>
               </label>
               {!isGuest && (
                 <>
@@ -388,16 +440,6 @@ function ProfileScreen() {
                 <button type="button" className="tv-btn tv-btn--sm tv-btn--google" onClick={() => linkGoogle("/profile")}>
                   Vincular
                 </button>
-              </div>
-            )}
-            {hasGoogle && (
-              <div className="tv-row-card">
-                <GoogleIcon size={26} />
-                <div className="tv-row-card-text">
-                  <strong>Google vinculado</strong>
-                  <span>Entras con tu cuenta de Google</span>
-                </div>
-                <span className="tv-tag tv-tag--ok">Activo</span>
               </div>
             )}
             {canSpotify && (

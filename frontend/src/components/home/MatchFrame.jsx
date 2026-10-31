@@ -32,13 +32,13 @@ export function MatchCard({ room, label, icon, pills = null, dir, seconds, pct =
       <Icon name={gameIcon} size={220} strokeWidth={1.5} className="tv-qc-mark" />
       <div className="tv-qc-head">
         {label && (
-          <span className="tv-qc-pill">
+          <span className="tv-qc-pill tv-qc-topic">
             {icon && <Icon name={icon} size={16} strokeWidth={2.6} />}
-            {label}
+            <span className="tv-qc-topic-text">{label}</span>
           </span>
         )}
         {pills}
-        <span className={`tv-qc-time${urgent ? " is-urgent" : ""}`} role="timer" aria-label={counting ? `Empieza en ${seconds}` : `${seconds} segundos`}>
+        <span className={`tv-qc-time${urgent ? " is-urgent" : ""}${room.phase === "reveal" ? " is-reveal" : ""}`} role="timer" aria-label={counting ? `Empieza en ${seconds}` : `${seconds} segundos`}>
           {counting ? `Empieza en ${Math.max(1, seconds)}` : room.phase === "reveal" ? "Respuesta" : `${seconds} s`}
         </span>
         {dir && <span className="tv-qc-dir">{dir}</span>}
@@ -86,7 +86,7 @@ export function MatchBar({ room, viewerId, tools, verb = "responder", line }) {
         <span className="tv-mbar-faces" aria-hidden="true">
           {players.slice(0, 6).map((p) => (
             <span key={p.id} className={`tv-mbar-face${p.id === viewerId ? " is-me" : ""}${p.answered ? " is-done" : ""}${p.connected ? "" : " is-away"}`}>
-              <Avatar />
+              <Avatar avatar={p.avatar} />
             </span>
           ))}
           {players.length > 6 && <span className="tv-mbar-more">+{players.length - 6}</span>}

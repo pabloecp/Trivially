@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { roomPath, waitsOnInicio } from "../../modes/index.js";
+import { homePath, roomPath, waitsOnInicio } from "../../modes/index.js";
 import { useApp } from "../../lib/store.jsx";
 import { useFriends } from "../../lib/friends.jsx";
 import { useIsOwner } from "../../lib/ownerView.js";
-import { shownCode, useHiddenCode } from "../../lib/hiddenCode.js";
+import { shownCode, tabGroupCode, useHiddenCode } from "../../lib/hiddenCode.js";
 import AdminPanel from "./AdminPanel.jsx";
 import ConfirmDialog from "./ConfirmDialog.jsx";
 import Icon from "./Icon.jsx";
@@ -126,8 +126,10 @@ function MatchInfo({ room, hidden }) {
   );
 }
 
-// Same top bar on every screen: on the left only the way back (no logo); the volume (music and sounds) and the profile
-// on the right. The way back:
+// Same top bar on every screen: on the left only the way back (no logo), and on phones your sala beside it (and there the
+// owners' volume is inside their panel, Amigos has no count and your Blob no name); on the right, in this order, the owners' panel
+// (ajustes), the volume (music and sounds), friends and the profile. Your sala's code isn't here: it's in the address
+// and in the group's bar at the bottom. The way back:
 //  - nothing on Inicio itself, nor while a search waits there (the bar's own button cancels it). A private match
 //    waiting on Inicio has "Volver", out of it (`leaveNow`: its leader takes the group back, anyone else goes alone);
 //    the central device's "Volver" asks first (see `useRoomExit`);
@@ -141,12 +143,14 @@ export default function TvTopbar() {
   const isOwner = useIsOwner();
   const [adminOpen, setAdminOpen] = useState(false);
   const { pathname } = useLocation();
-  const roomTarget = room ? roomPath(room) : null;
+  const [codeHidden] = useHiddenCode();
+  const home = homePath(tabGroupCode(group));
+  const roomTarget = room ? roomPath(room, codeHidden, home) : null;
   const awayFromRoom = Boolean(roomTarget) && pathname !== roomTarget;
   const inMatch = Boolean(room) && room.phase !== "lobby";
   // A room waiting on Inicio is Inicio for its players (not for the central device, whose screen is the room's).
   const waitsHere = waitsOnInicio(room) && !isCentral;
-  const onHome = pathname === "/" && (!room || waitsHere);
+  const onHome = (pathname === "/" || pathname === home) && (!room || waitsHere);
   const goUp = useGoUp();
   const [modesErr, setModesErr] = useState("");
   const { toMenu, inGame, asking, leadsGroup, press, leaveNow, endToMenu, cancelAsk } = useRoomExit({
@@ -155,10 +159,8 @@ export default function TvTopbar() {
   });
   // The modal that asks before leaving a match; it only makes sense while the match's own screen is up.
   const [leaving, setLeaving] = useState(false);
-  const [codeHidden] = useHiddenCode();
   // A match's round on its own screen: the game's chip and the round's progress beside "Salir".
   const playing = inGame && ["countdown", "playing", "reveal"].includes(room?.phase) && Boolean(room?.totalRounds);
-  const [codeCopied, setCodeCopied] = useState(false);
 
   useEffect(() => {
     if (!modesErr) return undefined;
@@ -255,6 +257,8 @@ export default function TvTopbar() {
         <div className="tv-topbar-start">
           {shownButton}
           {playing && <MatchInfo room={room} hidden={codeHidden} />}
+          {/* Phones: your sala, very short, put here by the group's bar (GroupBar's SalaMenu) where it is on screen. */}
+          {!playing && <span className="tv-topbar-sala" />}
         </div>
         <div className="tv-topbar-end">
           {/* Owners only: the admin panel (the owner/user view, the test bot, the games forced in Casual). */}
@@ -274,29 +278,7 @@ export default function TvTopbar() {
               </span>
             </button>
           )}
-          <VolumeMenu />
-          {group && !isCentral && !inGame && (
-            // Your sala and its code, to share it: a tap copies it.
-            <button
-              type="button"
-              className="tv-chip tv-chip--text"
-              aria-label={codeCopied ? "Código copiado" : `Copiar el código de tu sala`}
-              onClick={async (e) => {
-                e.currentTarget.blur();
-                try {
-                  await navigator.clipboard.writeText(group.code);
-                  setCodeCopied(true);
-                  setTimeout(() => setCodeCopied(false), 1500);
-                } catch {}
-              }}
-            >
-              <span className="tv-avatar tv-avatar--empty">
-                <Icon name={room && !room.matchmaking ? "lock" : "users"} size={20} strokeWidth={2.4} />
-              </span>
-              <span className="tv-chip-name tv-chip-long">{room && !room.matchmaking ? "Sala privada" : "Tu sala"}</span>
-              <b className="tv-chip-count">{codeCopied ? "Copiado" : codeHidden ? "•••••" : group.code}</b>
-            </button>
-          )}
+          <VolumeMenu inOwnerPanel={isOwner && !isCentral} />
           {friends.isAccount && !isCentral && (
             <button
               type="button"

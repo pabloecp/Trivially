@@ -66,7 +66,7 @@ assert.equal(room.central.socketId, "eva-laptop");
 assert.deepEqual(rooms.socketToRoom.get("eva-laptop"), { code, userId: "usr_eva", central: true });
 assert.equal(evaLaptop.lastRole().role, "central");
 assert.equal(evaLaptop.lastRole().state.code, code);
-assert.deepEqual(made.state.central, { userId: "usr_eva", name: "Eva", avatar: "#fff", connected: true });
+assert.deepEqual(made.state.central, { userId: "usr_eva", name: "Eva", avatar: "#FFFFFF", connected: true });
 
 // The central device only shows the match: nothing it sends is taken.
 const fromCentral = await evaLaptop.call("room:chat", "hola");

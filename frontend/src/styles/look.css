@@ -253,12 +253,9 @@
   color: #fff;
   transition: background-color 0.6s ease;
 }
-/* The head at the top; "Ajustes" and the three lines together at the bottom. */
+/* The head at the top; the three lines (a private match's last one is "Ajustes") at the bottom. */
 .tv-stage-card:has(.tv-stage-bottom) { justify-content: flex-start; }
 .tv-stage-bottom { position: relative; display: flex; flex-direction: column; gap: 12px; margin-top: auto; min-width: 0; }
-.tv-stage-tools { display: flex; align-items: center; gap: 10px; }
-/* "Reglas fijas en la partida pública", or who chooses the settings: a quiet label, not a button. */
-.tv-stage-fixed { display: inline-flex; align-items: center; gap: 8px; height: 36px; padding: 0 12px; border-radius: 10px; background: rgba(0, 0, 0, 0.18); font-family: var(--tv-display); font-weight: 700; font-size: 14px; color: rgba(255, 255, 255, 0.92); }
 /* "Elige un juego": the grey card with the logo, a line of what there is, and "Elegir juego" beside the three lines. */
 .tv-stage-aud.is-quiet { height: auto; padding: 0; background: none; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--tv-text-3); }
 .tv-stage-intro { position: relative; max-width: 500px; margin: -6px 0 0; font-family: var(--tv-small); font-weight: 600; font-size: 18px; line-height: 1.35; color: #fff; }
@@ -304,7 +301,7 @@
 .tv-stage-live { position: relative; width: 12px; height: 12px; border-radius: 50%; background: #fff; }
 .tv-stage-live::after { content: ""; position: absolute; inset: 0; border-radius: inherit; background: #fff; animation: tvLive 1.8s ease-out infinite; }
 @keyframes tvLive { to { transform: scale(2.6); opacity: 0; } }
-/* "Ajustes" (a private match), at the end of its line: glass over the card's colour, with a darker edge like any
+/* "Ajustes" (a private match), as its card's last line: glass over the card's colour, with a darker edge like any
    button on it. */
 .tv-stage-settings {
   display: inline-flex;
@@ -371,10 +368,17 @@
 .tv-stage-elo-week { font-family: var(--tv-display); font-weight: 800; font-size: 14px; color: #2fe08a; }
 .tv-stage-elo-week.is-down { color: #ff6b6b; }
 /* Your character: Blob (Blob.jsx), white with a black line; it floats a little. */
-.tv-stage-blob { display: block; flex-shrink: 0; width: 96px; aspect-ratio: 1; margin: -8px -4px -8px 0; animation: tvBlobFloat 3.2s ease-in-out infinite; }
-@keyframes tvBlobFloat { 50% { transform: translateY(-6px); } }
+.tv-stage-blob { display: block; flex-shrink: 0; width: 96px; aspect-ratio: 1; margin: -8px -4px -8px 0; }
 /* "Reto del día": the yellow square with the flame, the label over the goal, the count; the bar under them. */
 .tv-stage-daily-row { display: flex; align-items: center; gap: 12px; }
+/* With a sala: its code (in place of the day's challenge) and who's in it (in place of the friends). */
+.tv-stage-code-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-width: 0; }
+.tv-stage-code-text { font-family: var(--tv-title); font-weight: 900; font-size: 34px; line-height: 1; letter-spacing: 0.06em; color: var(--tv-text); }
+.tv-stage-code-copy { display: inline-flex; align-items: center; gap: 6px; }
+.tv-stage-members .tv-stage-friends-list li { padding: 10px; border-radius: 14px; background: var(--tv-surface-2); }
+.tv-stage-members .tv-stage-friends-list li.is-me { outline: 2px solid var(--p-accent-2, #ffd60a); outline-offset: -2px; }
+.tv-stage-members .tv-stage-friends-list .tv-avatar { width: 36px; height: 36px; }
+.tv-stage-members li.is-away { opacity: 0.5; }
 .tv-stage-daily-icon { display: grid; place-items: center; flex-shrink: 0; width: 34px; height: 34px; border-radius: 10px; background: var(--p-accent-2); color: var(--p-on-accent); }
 .tv-stage-daily-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
 .tv-stage-daily-text strong { font-family: var(--tv-small); font-weight: 700; font-size: 14px; line-height: 1.2; color: var(--tv-text); }
@@ -559,6 +563,168 @@
   .tv-gbar-note { padding: 0; text-align: center; }
   .tv-gbar-error { text-align: center; }
 }
+
+/* ---------- Phones: your sala up in the top bar, the action always at the foot ---------- */
+/* The group's bar keeps only "Vas a jugar" and, in one row, the link's copy button and the yellow one, and stays at the
+   bottom of the window while the page scrolls (over the page: its soft drop shadow). TU GRUPO is the top bar's short
+   chip (SalaMenu), which opens the whole zone like the volume's panel. "Pública" / "Privada" is said on "Vas a jugar"
+   and changed in "¿Qué quieren jugar?". */
+.tv-topbar-sala { display: contents; }
+.tv-sala { position: relative; display: flex; align-items: center; flex-shrink: 0; gap: 6px; }
+.tv-app .tv-chip--sala { position: relative; gap: 6px; padding: 0 10px 0 6px; color: var(--tv-text); }
+.tv-sala-faces { display: flex; align-items: center; }
+.tv-sala-faces .tv-avatar { position: relative; width: 28px; height: 28px; }
+/* Each face over the next one, yours (first) on top, so none is hidden under two. */
+.tv-sala-faces .tv-avatar:nth-child(1) { z-index: 3; }
+.tv-sala-faces .tv-avatar:nth-child(2) { z-index: 2; }
+.tv-sala-faces .tv-avatar + .tv-avatar { margin-left: -10px; }
+.tv-sala-faces .tv-avatar.is-me { box-shadow: 0 0 0 2px var(--tv-neutral), 0 0 0 4px var(--p-accent-2); }
+.tv-sala-faces .tv-avatar.is-away { opacity: 0.4; }
+/* Yours goes first and on top, so the next face doesn't cover its yellow ring. */
+.tv-sala-panel .tv-gbar-faces .tv-avatar.is-me { position: relative; z-index: 1; }
+.tv-app .tv-chip--sala:not(:has(.tv-sala-faces)) { padding-left: 12px; }
+.tv-sala-hint { flex-basis: 100%; font-family: var(--tv-small); font-weight: 600; font-size: 13px; line-height: 1.35; color: var(--tv-text-3); }
+/* The sala's code beside its faces: a tap copies it, and it turns green for a moment. */
+.tv-app .tv-chip--code { gap: 6px; padding: 0 12px 0 10px; color: var(--tv-text); }
+.tv-chip--code svg { flex-shrink: 0; color: var(--tv-text-3); transition: color 0.2s ease; }
+.tv-chip--code.is-copied svg { color: var(--p-ok-text); }
+.tv-chip-code { font-family: var(--tv-title); font-weight: 800; font-size: 15px; letter-spacing: 0.1em; transition: color 0.2s ease; }
+.tv-chip--code.is-copied .tv-chip-code { color: var(--p-ok-text); }
+.tv-sala-count { font-family: var(--tv-display); font-weight: 800; font-size: 16px; color: var(--tv-text); }
+.tv-app .tv-chip--sala .tv-chip-name { font-family: var(--tv-display); font-weight: 700; font-size: 15px; }
+.tv-sala-chevron { rotate: 90deg; color: var(--tv-text-3); transition: rotate 0.2s ease; }
+.tv-sala-chevron.is-open { rotate: -90deg; }
+.tv-chip--sala .tv-fr-badge { top: -6px; right: -6px; }
+.tv-sala-panel {
+  position: fixed;
+  top: calc(64px + env(safe-area-inset-top));
+  left: 16px;
+  right: 16px;
+  z-index: 60;
+  display: grid;
+  gap: 8px;
+  max-height: min(78vh, 640px);
+  overflow-y: auto;
+  padding: 14px;
+  border-radius: 20px;
+  background: var(--tv-surface);
+  box-shadow: inset 0 0 0 1px var(--tv-line), 0 14px 36px rgba(0, 0, 0, 0.45);
+  animation: var(--tv-box-in);
+}
+.tv-sala-panel .tv-gbar-group { flex-wrap: wrap; gap: 10px; padding: 12px; }
+.tv-sala-panel .tv-gbar-who { flex: 1 1 0; min-width: 0; max-width: none; margin-right: 0; }
+.tv-sala-panel .tv-gbar-who span { display: block; white-space: normal; }
+.tv-sala-panel .tv-gbar-ask { display: block; flex-basis: 100%; }
+.tv-sala-panel .tv-gbar-code { flex: 1 1 100%; }
+.tv-sala-panel .tv-gbar-code-text { flex: 1; justify-content: center; }
+.tv-app .tv-sala-panel .tv-gbar-invite { flex: 1 1 0; justify-content: center; }
+.tv-sala-panel .tv-gbar-join { flex: 1 1 100%; }
+.tv-sala-panel .tv-gbar-join-input { flex: 1; width: auto; min-width: 0; }
+@media (max-width: 760px) {
+  .tv-gbar {
+    position: sticky;
+    bottom: calc(10px + env(safe-area-inset-bottom));
+    z-index: 20;
+    gap: 10px;
+    background: none;
+    isolation: isolate;
+  }
+  /* The bar's own panel, drawn behind it, goes on down to the window's foot (nothing moves): what scrolls behind never
+     shows under it. */
+  .tv-gbar::after {
+    content: "";
+    position: absolute;
+    z-index: -1;
+    inset: 0 0 calc(-10px - env(safe-area-inset-bottom));
+    border-radius: inherit;
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+    background: var(--tv-surface);
+    box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.45);
+    pointer-events: none;
+  }
+  /* The middle of the page stays under the bar (iPhones painted the stage's animated boxes over it). */
+  .tv-lobby-stage { position: relative; z-index: 0; }
+  .tv-gbar-zone--plan .tv-gbar-cap { display: none; }
+  /* "Pública" / "Privada" and "Vas a jugar" in one row: the switch as tall as the card. */
+  .tv-gbar-plan-row { flex-wrap: nowrap; min-height: 0; padding: 0; background: none; }
+  /* "Pública" / "Privada" only their icons (globe, lock), as tall as the card beside them. */
+  .tv-gbar-seg { align-self: stretch; align-items: stretch; gap: 4px; }
+  .tv-gbar-seg-btn { justify-content: center; width: 52px; height: auto; padding: 0; }
+  .tv-gbar-seg-label { display: none; }
+  .tv-gbar-seg-btn svg { width: 22px; height: 22px; }
+  .tv-gbar-plan .tv-gcard-sub { white-space: nowrap; }
+  .tv-gcard.tv-gbar-plan { min-height: 56px; }
+  .tv-gbar-zone--go { flex-direction: row; align-items: center; }
+  .tv-app .tv-gbar-go { flex: 1; width: auto; }
+  /* Waiting a moment (switching "Pública" / "Privada"): not pressable, but it doesn't dim (on iPhones the dimming
+     showed as a dark band across it). */
+  .tv-app .tv-gbar-go.is-waiting:disabled { opacity: 1; cursor: progress; }
+  .tv-gbar-note { flex: 1; }
+  /* The code is in the sala's panel up top and the link at the foot: the stage's own box would only repeat it. */
+  .tv-stage-aside .tv-stage-code { display: none; }
+}
+/* Phones: the top bar keeps every button (Volver, your sala and its code, the volume or the owners' gear, Amigos, your
+   Blob) in one row, never squeezed: 36 px buttons, the sala's chip without its arrow. Narrower still, the gaps close up
+   and the code gets smaller. */
+/* The owners' panel only shows the volume on phones, where their top bar has no volume button. */
+.tv-admin-volume { display: none; }
+@media (max-width: 760px) {
+  .tv-volume--owner { display: none; }
+  .tv-admin-volume { display: grid; }
+  /* Amigos is only its icon (its requests keep their red badge) and your profile only your Blob. */
+  .tv-app .tv-topbar .tv-chip--friends { width: 36px; padding: 0; }
+  .tv-app .tv-topbar .tv-chip--friends > .tv-avatar--empty { width: 36px; margin: 0; }
+  .tv-app .tv-topbar .tv-chip--friends .tv-chip-count,
+  .tv-app .tv-topbar .tv-chip--profile .tv-chip-name { display: none; }
+  .tv-app .tv-topbar .tv-chip--profile,
+  .tv-app .tv-topbar .tv-chip--profile:hover,
+  .tv-app .tv-topbar .tv-chip--profile:active { padding: 0; background: none; box-shadow: none; transform: none; }
+  .tv-app .tv-topbar .tv-chip { flex-shrink: 0; height: 36px; }
+  .tv-app .tv-topbar .tv-chip--icon,
+  .tv-app .tv-topbar .tv-chip--leave,
+  .tv-app .tv-topbar .tv-chip > .tv-avatar--empty { width: 36px; height: 36px; }
+  .tv-app .tv-topbar .tv-chip--profile > .tv-avatar { width: 36px; height: 36px; }
+  .tv-sala-faces .tv-avatar { width: 26px; height: 26px; }
+  .tv-sala-chevron { display: none; }
+  .tv-app .tv-chip--sala { padding: 0 9px 0 5px; }
+  .tv-app .tv-chip--sala:not(:has(.tv-sala-count)) { padding-right: 5px; }
+  .tv-app .tv-chip--sala:not(:has(.tv-sala-faces)) { padding: 0 12px; }
+  .tv-app .tv-topbar-start,
+  .tv-app .tv-topbar-end { gap: 6px; }
+  .tv-app .tv-topbar { gap: 6px; }
+}
+@media (max-width: 380px) {
+  .tv-app .tv-topbar-start,
+  .tv-app .tv-topbar-end,
+  .tv-app .tv-topbar,
+  .tv-sala { gap: 4px; }
+  .tv-app .tv-chip--code { padding: 0 8px; }
+  .tv-chip-code { font-size: 14px; letter-spacing: 0.04em; }
+}
+/* The narrowest phones (320 px): a little smaller still. */
+@media (max-width: 340px) {
+  .tv-app .tv-topbar-start,
+  .tv-app .tv-topbar-end,
+  .tv-app .tv-topbar,
+  .tv-sala { gap: 3px; }
+  .tv-app .tv-chip--code { padding: 0 6px; }
+  .tv-app .tv-topbar .tv-chip { height: 34px; }
+  .tv-app .tv-topbar .tv-chip--icon,
+  .tv-app .tv-topbar .tv-chip--leave,
+  .tv-app .tv-topbar .tv-chip--friends,
+  .tv-app .tv-topbar .tv-chip > .tv-avatar--empty,
+  .tv-app .tv-topbar .tv-chip--friends > .tv-avatar--empty,
+  .tv-app .tv-topbar .tv-chip--profile > .tv-avatar { width: 34px; height: 34px; }
+  .tv-app .tv-chip--sala,
+  .tv-app .tv-chip--sala:not(:has(.tv-sala-count)) { padding: 0 4px; }
+}
+
+/* The friends' panel: its close is the grey one of every panel (never a black edge), its title in Outfit. */
+.tv-app .tv-fr-close { background: var(--tv-neutral); color: var(--tv-neutral-on); box-shadow: 0 3px 0 var(--tv-neutral-edge); }
+.tv-app .tv-fr-close:hover { box-shadow: 0 4px 0 var(--tv-neutral-edge); }
+.tv-app .tv-fr-close:active { box-shadow: 0 0 0 var(--tv-neutral-edge); }
+.tv-app .tv-fr-sheet .tv-sheet-title { font-family: var(--tv-title); font-weight: 800; letter-spacing: -0.03em; }
 
 /* ---------- Panels over the page ---------- */
 .tv-modal-root {
@@ -907,6 +1073,8 @@
   white-space: nowrap;
 }
 .tv-qc-pill.is-dark { background: rgba(0, 0, 0, 0.2); }
+/* A long topic is cut with "…" rather than pushing the other pills to a second row. */
+.tv-qc-topic-text { overflow: hidden; max-width: 220px; text-overflow: ellipsis; }
 .tv-qc-time {
   margin-left: auto;
   padding: 6px 10px;
@@ -969,10 +1137,16 @@
   animation: var(--tv-box-in);
 }
 .tv-mpanel-label { font: 700 11px/1 var(--tv-small); letter-spacing: 0.02em; text-transform: uppercase; color: var(--tv-text-3); }
-.tv-mpanel-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; font: 600 13px/1.3 var(--tv-small); color: var(--tv-text-3); }
-.tv-mpanel-skip { flex: none; padding: 0; border: 0; background: none; font: 800 14px/1 var(--tv-display); color: var(--tv-text-3); cursor: pointer; }
-.tv-mpanel-skip:hover { color: #fff; }
-.tv-mpanel-skip.is-on { color: var(--p-bad); }
+.tv-mpanel-foot { display: flex; align-items: center; justify-content: flex-end; gap: 12px; font: 600 13px/1.3 var(--tv-small); color: var(--tv-text-3); }
+/* "Saltar" (AnswerSkip): a grey button as wide as the box and "Enviar" above it; the first tap turns it red with the
+   warning. Both labels share one cell, so it never changes size or moves anything. */
+.tv-app .tv-skipbtn { display: inline-grid; flex: 1 1 auto; width: 100%; padding: 0 14px; }
+.tv-skipbtn-label { grid-area: 1 / 1; display: inline-flex; align-items: center; justify-content: center; gap: 6px; white-space: nowrap; }
+.tv-skipbtn:not(.is-on) .tv-skipbtn-label + .tv-skipbtn-label,
+.tv-skipbtn.is-on .tv-skipbtn-label:first-child { visibility: hidden; }
+.tv-app .tv-skipbtn.is-hidden { visibility: hidden; }
+/* The countdown before a song: everything in the middle of its panel. */
+.tv-app .tv-mpanel.tv-countdown { align-items: center; text-align: center; }
 /* The box to write in and its yellow "Enviar". */
 .tv-mwrite { display: flex; align-items: stretch; gap: 12px; margin: 0; }
 .tv-mwrite-box {
@@ -1087,8 +1261,9 @@
 .tv-match .tv-quiz-flag { display: flex; justify-content: center; }
 .tv-match .tv-quiz-flag .tv-geo-flag { max-height: 150px; width: auto; border-radius: 12px; }
 
-/* The scoreboard: "MARCADOR" and how the round goes, then one flat box per player (you with a yellow ring). */
-.tv-app .tv-match .tv-party {
+/* The scoreboard: "MARCADOR" and how the round goes, then one flat box per player (you with a yellow ring). The same
+   during a game's roulette and tutorial (`.tv-room.is-intro`), so it doesn't change when the first round starts. */
+.tv-app :is(.tv-match, .tv-room.is-intro) .tv-party {
   gap: 10px;
   padding: 12px;
   border-radius: 18px;
@@ -1096,8 +1271,8 @@
   box-shadow: none;
   overflow-y: auto;
 }
-.tv-app .tv-match .tv-party-title { display: flex; align-items: center; justify-content: space-between; margin: 0; }
-.tv-app .tv-match .tv-party-title h2 { font: 700 11px/1 var(--tv-small); letter-spacing: 0.02em; text-transform: uppercase; color: var(--tv-text-3); }
+.tv-app :is(.tv-match, .tv-room.is-intro) .tv-party-title { display: flex; align-items: center; justify-content: space-between; margin: 0; }
+.tv-app :is(.tv-match, .tv-room.is-intro) .tv-party-title h2 { font: 700 11px/1 var(--tv-small); letter-spacing: 0.02em; text-transform: uppercase; color: var(--tv-text-3); }
 .tv-party-status-pill {
   display: inline-flex;
   align-items: center;
@@ -1109,19 +1284,23 @@
   color: #fff;
   white-space: nowrap;
 }
-.tv-app .tv-match .tv-party-players { display: flex; flex-direction: column; gap: 10px; }
-.tv-app .tv-match .tv-player-btn {
+.tv-app :is(.tv-match, .tv-room.is-intro) .tv-party-players { display: flex; flex-direction: column; gap: 10px; }
+.tv-app :is(.tv-match, .tv-room.is-intro) .tv-player-btn {
   gap: 10px;
   padding: 10px;
   border-radius: 14px;
   background: var(--tv-surface-2);
   box-shadow: none;
 }
-.tv-app .tv-match .tv-player.is-me .tv-player-btn { box-shadow: none; outline: 2px solid var(--p-accent-2, #ffd60a); outline-offset: -2px; }
-.tv-app .tv-match .tv-player-pos { width: 16px; background: none; box-shadow: none; color: #fff; font: 800 16px/1 var(--tv-display); }
-.tv-app .tv-match .tv-player-name { font: 700 14px/1.2 var(--tv-small); }
-.tv-app .tv-match .tv-player-score { font: 800 17px/1 var(--tv-display); color: #fff; }
-.tv-app .tv-match .tv-player .tv-avatar { width: 36px; height: 36px; }
+.tv-app :is(.tv-match, .tv-room.is-intro) .tv-player.is-me .tv-player-btn { box-shadow: none; outline: 2px solid var(--p-accent-2, #ffd60a); outline-offset: -2px; }
+.tv-app :is(.tv-match, .tv-room.is-intro) .tv-player-pos { width: 16px; background: none; box-shadow: none; color: #fff; font: 800 16px/1 var(--tv-display); }
+.tv-app :is(.tv-match, .tv-room.is-intro) .tv-player-name { font: 700 14px/1.2 var(--tv-small); }
+.tv-app :is(.tv-match, .tv-room.is-intro) .tv-player-score { font: 800 17px/1 var(--tv-display); color: #fff; }
+.tv-app :is(.tv-match, .tv-room.is-intro) .tv-player .tv-avatar { width: 36px; height: 36px; }
+/* A big match (7 players or more): tighter rows, so everyone fits in the column without scrolling. */
+.tv-app :is(.tv-match, .tv-room.is-intro) .tv-party-players:has(> li:nth-child(7)) { gap: 6px; }
+.tv-app :is(.tv-match, .tv-room.is-intro) .tv-party-players:has(> li:nth-child(7)) .tv-player-btn { padding: 6px 10px; }
+.tv-app :is(.tv-match, .tv-room.is-intro) .tv-party-players:has(> li:nth-child(7)) .tv-avatar { width: 30px; height: 30px; }
 
 /* The bar at the bottom: everyone's face, who's missing, and the chat and the tools on the right. */
 .tv-mbar {
@@ -1339,8 +1518,8 @@ html.tv-geo-playing .tv-app .tv-topbar:has(.tv-topbar-round) { display: flex; }
   background: #1fd24a;
   border: 3px solid var(--tv-surface-2);
 }
-.tv-app .tv-match .tv-player-tag { padding: 0; background: none; font: 600 12px/1.2 var(--tv-small); color: var(--tv-text-3); }
-.tv-app .tv-match .tv-player-tag svg { display: none; }
+.tv-app :is(.tv-match, .tv-room.is-intro) .tv-player-tag { padding: 0; background: none; font: 600 12px/1.2 var(--tv-small); color: var(--tv-text-3); }
+.tv-app :is(.tv-match, .tv-room.is-intro) .tv-player-tag svg { display: none; }
 .tv-app .tv-match .tv-player-tag.is-king { color: var(--p-accent-2, #ffd60a); }
 .tv-app .tv-match .tv-player-answer.is-wrong { color: var(--p-bad); }
 .tv-app .tv-match .tv-player-answer.is-right { color: #7fe077; }
@@ -1397,6 +1576,19 @@ html.tv-geo-playing .tv-app .tv-topbar:has(.tv-topbar-round) { display: flex; }
 .tv-rey-challenger span { font: 600 12px/1.2 var(--tv-small); color: var(--tv-text-3); }
 .tv-rey-challenger span.is-bad { color: var(--p-bad); }
 .tv-rey-challenger span.is-ok { color: #7fe077; }
+/* Many challengers (7 or more): tighter rows, and the list scrolls inside instead of being cut at the bottom. */
+.tv-rey-challengers { overflow-y: auto; justify-content: safe center; }
+.tv-rey-challengers:has(> .tv-rey-challenger:nth-of-type(7)) { gap: 6px; }
+.tv-rey-challengers:has(> .tv-rey-challenger:nth-of-type(7)) .tv-rey-challenger { padding: 5px 10px; }
+.tv-rey-challengers:has(> .tv-rey-challenger:nth-of-type(7)) .tv-rey-challenger > .tv-avatar { width: 28px; height: 28px; }
+/* Phones: a narrower king, so the challengers' names fit. */
+@media (max-width: 640px) {
+  .tv-rey-court { gap: 12px; }
+  .tv-rey-throne { width: 92px; }
+  .tv-rey-throne-blob { width: 64px; height: 64px; margin: 4px 0 8px; }
+  .tv-rey-throne b { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 15px; }
+  .tv-rey-throne span:last-child { text-align: center; }
+}
 
 /* Farsante's three steps on the card: dark, the one now white. */
 .tv-qc-steps .tv-qc-pill { font-size: 12px; }
@@ -1414,8 +1606,6 @@ html.tv-geo-playing .tv-app .tv-topbar:has(.tv-topbar-round) { display: flex; }
   .tv-app .tv-match .tv-party { padding: 8px 10px; border-radius: 16px; overflow: visible; }
   .tv-app .tv-match .tv-party-title,
   .tv-app .tv-match .tv-party-spectators,
-  .tv-app .tv-match .tv-party .tv-player-text,
-  .tv-app .tv-match .tv-party .tv-player-pos,
   .tv-app .tv-match .tv-party .tv-player-crown,
   .tv-app .tv-match .tv-party .tv-player-badge,
   .tv-app .tv-match .tv-party .tv-player-games { display: none; }
@@ -1436,10 +1626,18 @@ html.tv-geo-playing .tv-app .tv-topbar:has(.tv-topbar-round) { display: flex; }
   .tv-topbar-round { gap: 5px; padding: 0 4px; }
   .tv-topbar-round-game { display: inline; }
   .tv-topbar-round-row > span + span { display: none; }
+  /* A long game's name ("Adivina la canción · Ronda 1 de 5") is cut with "…" before the volume button. */
+  .tv-topbar-round-row > span:first-child { overflow: hidden; min-width: 0; text-overflow: ellipsis; }
   .tv-qc { gap: 6px; padding: 14px 16px; border-radius: 20px; }
-  .tv-qc--s { height: 170px; }
-  .tv-qc--m { height: 200px; }
-  .tv-qc--l { height: 230px; }
+  /* Phones: at the reveal the verdict ("¡Correcto! +970") says it all, so "Respuesta" goes, and the topic is shorter:
+     the first row never wraps. */
+  .tv-qc-time.is-reveal { display: none; }
+  .tv-qc-topic-text { max-width: 120px; }
+  /* A height to start from, growing when the pills wrap to a second row (Farsante's steps and "Empieza en 1"), so the
+     question never runs over the line above it. */
+  .tv-qc--s { height: auto; min-height: 170px; }
+  .tv-qc--m { height: auto; min-height: 200px; }
+  .tv-qc--l { height: auto; min-height: 230px; }
   .tv-qc-mark { width: 170px; height: 170px; }
   .tv-qc-pill { height: 28px; font-size: 12px; }
   .tv-qc-time { font-size: 16px; padding: 5px 8px; }
@@ -1452,10 +1650,12 @@ html.tv-geo-playing .tv-app .tv-topbar:has(.tv-topbar-round) { display: flex; }
   .tv-app .tv-match .tv-fs-options { grid-template-columns: minmax(0, 1fr); gap: 10px; }
   .tv-app .tv-match .tv-quiz-opt { min-height: 56px; font-size: 18px; }
   .tv-mpanel { gap: 14px; padding: 16px; border-radius: 20px; }
-  .tv-mwrite { flex-direction: column; }
-  .tv-mwrite-box { height: 56px; }
+  .tv-mwrite-box { flex: 1; min-width: 0; height: 56px; }
   .tv-mwrite-box input { font-size: 18px; }
-  .tv-app .tv-mwrite-send { height: 52px; }
+  /* "Enviar" is only its icon beside the box (its word stays for screen readers). */
+  .tv-app .tv-mwrite-send,
+  .tv-app .tv-match .tv-search-row > .tv-mwrite-send { flex: none; width: 60px; min-height: 0; height: 56px; padding: 0; }
+  .tv-mwrite-send-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
   .tv-mreveal-answer { font-size: 30px; }
   .tv-app .tv-match .tv-lyrics-line { font-size: 19px; }
   .tv-app .tv-match .tv-lyrics-gap { width: 110px; height: 36px; margin: 0 8px; font-size: 18px; line-height: 30px; }
@@ -1471,3 +1671,88 @@ html.tv-geo-playing .tv-app .tv-topbar:has(.tv-topbar-round) { display: flex; }
   .tv-app .tv-mbar .tv-btn,
   .tv-app .tv-mbar .tv-mini-btn { flex: 1; justify-content: center; padding: 0 8px; font-size: 14px; }
 }
+
+/* ---------- Profile: "Color de tu Blob" (Profile.jsx BlobColors) ---------- */
+/* Two stats only (Victorias, Aciertos): side by side. */
+.tv-stat-grid.tv-stat-grid--two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.tv-blob-colors { display: grid; gap: 12px; margin-top: 20px; }
+/* Eight colours in two full rows of four, the squares as wide as the card allows. */
+.tv-blob-opts { display: grid; grid-template-columns: repeat(4, minmax(0, 72px)); gap: 12px; }
+/* Each colour is a grey square to tap with its edge; the one you wear is the site's blue; the locked ones are dimmed. */
+.tv-blob-opt {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1;
+  padding: 10px;
+  border: 0;
+  border-radius: 14px;
+  background: var(--tv-neutral);
+  box-shadow: 0 3px 0 var(--tv-neutral-edge);
+  cursor: pointer;
+  transition: transform 0.15s var(--tv-spring), box-shadow 0.15s ease;
+}
+.tv-blob-opt .tv-blob { width: 100%; height: 100%; }
+.tv-blob-opt:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 5px 0 var(--tv-neutral-edge); }
+.tv-blob-opt:active:not(:disabled) { transform: translateY(3px); box-shadow: 0 0 0 var(--tv-neutral-edge); }
+.tv-blob-opt.is-on { background: var(--tv-pick); box-shadow: 0 3px 0 var(--tv-pick-edge); }
+.tv-blob-opt.is-on:hover:not(:disabled) { box-shadow: 0 5px 0 var(--tv-pick-edge); }
+.tv-blob-opt.is-locked .tv-blob { opacity: 0.45; filter: grayscale(0.25); }
+.tv-blob-opt.is-asked { outline: 2px solid var(--tv-text-3); outline-offset: 2px; }
+.tv-blob-opt:disabled { cursor: default; }
+.tv-blob-lock { position: absolute; right: 4px; bottom: 4px; display: grid; place-items: center; width: 20px; height: 20px; border-radius: 6px; background: var(--tv-surface); color: var(--tv-text-2); }
+.tv-blob-note { margin: 0; font-family: var(--tv-small); font-weight: 600; font-size: 14px; color: var(--tv-text-2); }
+.tv-blob-note b { color: var(--tv-text); }
+
+/* ---------- The Blob's skin and moods (Blob.jsx) ---------- */
+/* The skin: the shadow inside, half see-through so the colour shows through it, and the light, faint. */
+.tv-blob .tv-blob-shade { opacity: 0.5; }
+.tv-blob .tv-blob-light { opacity: 0.28; }
+.tv-blob .tv-blob-eyes { transform-box: view-box; transform-origin: 50px 45px; }
+.tv-blob.is-victoria,
+.tv-blob.is-derrota { overflow: visible; transform-origin: 50% 100%; }
+/* Victoria (first place on the podium): a jump straight up, then a rest (2.8 s each); it looks up as it crouches and
+   back ahead once it lands. */
+.tv-blob.is-victoria { animation: tvBlobWin 2.8s cubic-bezier(0.3, 0.7, 0.4, 1) infinite; }
+.tv-blob.is-victoria .tv-blob-eyes { animation: tvBlobLookUp 2.8s ease-in-out infinite; }
+@keyframes tvBlobWin {
+  0% { transform: translateY(0) scale(1, 1); }
+  6% { transform: translateY(0) scale(1.14, 0.86); }
+  14% { transform: translateY(-7%) scale(0.9, 1.12); }
+  28% { transform: translateY(-55%) scale(0.98, 1.03); }
+  40% { transform: translateY(0) scale(1, 1); }
+  45% { transform: translateY(0) scale(1.16, 0.84); }
+  51% { transform: translateY(0) scale(0.97, 1.04); }
+  56%, 100% { transform: translateY(0) scale(1, 1); }
+}
+@keyframes tvBlobLookUp {
+  0%, 62%, 100% { transform: translateY(0); }
+  6%, 44% { transform: translateY(-8px); }
+}
+/* Derrota (second and third): no effects; it sinks a little while its eyes drop, look down to one side and the other,
+   half close and come back up (5 s). */
+.tv-blob.is-derrota { animation: tvBlobSag 5s ease-in-out infinite; }
+.tv-blob.is-derrota .tv-blob-eyes { animation: tvBlobLookDown 5s ease-in-out infinite; }
+@keyframes tvBlobSag {
+  0%, 100% { transform: scale(1, 1); }
+  25%, 82% { transform: scale(1.05, 0.95); }
+}
+@keyframes tvBlobLookDown {
+  0%, 100% { transform: translate(0, 0) scaleY(1); }
+  12% { transform: translate(0, 7px) scaleY(1); }
+  25%, 34% { transform: translate(-6px, 9px) scaleY(1); }
+  44%, 52% { transform: translate(6px, 9px) scaleY(1); }
+  62%, 82% { transform: translate(0, 10px) scaleY(0.4); }
+}
+/* Neutral (the scoreboards, a group's list, the big one beside your elo): only the eyes look left and right now and
+   then, each Blob at its own moment (--blob-delay). Only an owner can keep them still ("Reducir movimiento", Blob.jsx). */
+.tv-blob.is-neutral .tv-blob-eyes { animation: tvBlobScan 6s ease-in-out infinite; animation-delay: var(--blob-delay, 0s); }
+@keyframes tvBlobScan {
+  0%, 18%, 100% { transform: translateX(0); }
+  30%, 45% { transform: translateX(-7px); }
+  60%, 75% { transform: translateX(7px); }
+  88% { transform: translateX(0); }
+}
+

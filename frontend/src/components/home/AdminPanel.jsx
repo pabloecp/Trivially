@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { useApp } from "../../lib/store.jsx";
-import { setForcedGames, setOwnerView, setResultsStyle, setResultsTone, setScoreboardLook, useForcedGames, useOwnerView, useResultsChoice, useScoreboardChoice } from "../../lib/ownerView.js";
+import { setBlobStyle, setBlobsStill, useBlobsStillChoice, setForcedGames, setOwnerView, useBlobStyleChoice, setResultsStyle, setResultsTone, setScoreboardLook, useForcedGames, useOwnerView, useResultsChoice, useScoreboardChoice } from "../../lib/ownerView.js";
 import { findMode } from "../../modes/index.js";
 import Icon from "./Icon.jsx";
 import Segmented from "./Segmented.jsx";
-import { SoundPacks } from "./VolumeMenu.jsx";
+import { SoundPacks, VolumeRows } from "./VolumeMenu.jsx";
 import { findVariant, variantsFor } from "./matchInfo.js";
 import "../../styles/admin.css";
 
@@ -17,6 +17,8 @@ const MAX_FORCED = 5;
  * owner's own public matches, in the order they choose instead of the random draw.
  */
 export default function AdminPanel({ open, onClose }) {
+  const blobStyle = useBlobStyleChoice();
+  const blobsStill = useBlobsStillChoice();
   const { room, isCentral, addTestBot } = useApp();
   const view = useOwnerView();
   const forced = useForcedGames();
@@ -85,6 +87,45 @@ export default function AdminPanel({ open, onClose }) {
         </header>
 
         <div className="tv-admin-body">
+          {/* How the Blobs are drawn on this device (lib/ownerView.js): everyone else sees "Sombra interior". */}
+          <div className="tv-admin-block is-third">
+            <h3>Estilo de los Blobs</h3>
+            <Segmented
+              label="Estilo de los Blobs"
+              value={blobStyle}
+              onChange={setBlobStyle}
+              options={[
+                { value: "plano", label: "Plano" },
+                { value: "sombra", label: "Sombra" },
+                { value: "luz", label: "Luz y sombra" },
+              ]}
+            />
+            <p className="tv-admin-hint">
+              {blobStyle === "sombra" ? "El que ven todos: su color con una sombra por dentro." : "Solo lo ves tú, en la vista de owner. Los demás ven «Sombra»."}
+            </p>
+          </div>
+
+          {/* The Blobs' jumps and looks (Blob.jsx): only an owner can stop them, on this device. */}
+          <div className="tv-admin-block is-third">
+            <h3>Reducir movimiento</h3>
+            <Segmented
+              label="Reducir movimiento"
+              value={blobsStill ? "si" : "no"}
+              onChange={(v) => setBlobsStill(v === "si")}
+              options={[
+                { value: "no", label: "Con movimiento" },
+                { value: "si", label: "Quietos" },
+              ]}
+            />
+            <p className="tv-admin-hint">{blobsStill ? "Los Blobs no saltan ni miran a los lados en esta pantalla." : "Los Blobs saltan en el podio y miran a los lados en los marcadores."}</p>
+          </div>
+
+          {/* On phones the owners' top bar has no volume button: it's here (VolumeMenu `inOwnerPanel`). */}
+          <div className="tv-admin-block is-third tv-admin-volume">
+            <h3>Volumen</h3>
+            <VolumeRows />
+          </div>
+
           <div className="tv-admin-block is-third">
             <h3>Vista</h3>
             <Segmented

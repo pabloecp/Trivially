@@ -1,11 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
 import { findMode } from "../../modes/index.js";
 import { useApp } from "../../lib/store.jsx";
 import { CLASSIC, isPublicGame, rememberPlan, useLocalPlan } from "../../lib/plan.js";
 import { withSound } from "../../lib/sounds.js";
-import GroupBar from "./GroupBar.jsx";
+import GroupBar, { useNarrow } from "./GroupBar.jsx";
 import GroupSheet from "./GroupSheet.jsx";
 import ConfirmDialog from "./ConfirmDialog.jsx";
 import ModeStage from "./ModeStage.jsx";
@@ -13,7 +13,7 @@ import PlanSheet from "./PlanSheet.jsx";
 import PlaySheet from "./PlaySheet.jsx";
 import { OpenSettingsContext } from "./SettingsPanel.jsx";
 import { useStartGame } from "./ModeStart.jsx";
-import { publicMatchLine } from "./matchInfo.js";
+import { privateMatchLine, publicMatchLine } from "./matchInfo.js";
 import "../../styles/lobby.css";
 
 // The card when no game is chosen (Inicio on a new device, or a private match before its host picks one).
@@ -56,6 +56,8 @@ export default function HomeFrame({ room = null, onToast, Lobby = null, leaving 
   // "Ajustes" made the private match: its settings open as soon as its lobby shows (SettingsPanel).
   const [settingsAsked, setSettingsAsked] = useState(false);
   const start = useStartGame(room || { players: [], game: null });
+  // Phones open "Tu grupo" from the top bar and have no group's bar to leave from: "Salir del grupo" goes in it.
+  const phone = useNarrow();
 
   const searching = Boolean(room?.matchmaking);
   const isLeader = group ? group.leaderId === user?.id : true;
@@ -76,6 +78,17 @@ export default function HomeFrame({ room = null, onToast, Lobby = null, leaving 
   const noGame = !mode && !room && !searching;
   const needsName = !user?.name || user.isGuest;
   const leaderName = group?.leaderName || "el líder";
+
+  // The host gave (or took back) permission to change the match's settings: say so, once, when it changes.
+  const canSet = Boolean(room && user?.id && room.hostId !== user.id && room.coHosts?.includes(user.id));
+  const hadSet = useRef(null);
+  useEffect(() => {
+    const before = hadSet.current;
+    hadSet.current = room ? canSet : null;
+    if (!room || before === null || before === canSet) return;
+    if (canSet) onToast?.(`${room.hostName || "El anfitrión"} te dio permiso para cambiar los ajustes`, "sliders");
+    else onToast?.("Ya no puedes cambiar los ajustes de la partida", "lock");
+  }, [canSet, room?.code]);
 
   // Leaving the match or the group later finds the same game and side on Inicio.
   useEffect(() => {
@@ -123,7 +136,8 @@ export default function HomeFrame({ room = null, onToast, Lobby = null, leaving 
           if (action.then === "start") await startGame();
         }
       });
-      if (action.type === "pick") onToast?.("Se creó tu sala. Comparte el código para invitar", "check");
+      // Phones skip it: it covered the top bar, where the sala's code already shows.
+      if (action.type === "pick" && !window.matchMedia?.("(max-width: 760px)").matches) onToast?.("Se creó tu sala. Comparte el código para invitar", "check");
       return true;
     } catch (err) {
       setSettingsAsked(false);
@@ -238,13 +252,18 @@ export default function HomeFrame({ room = null, onToast, Lobby = null, leaving 
       label: busyType === "match" ? "Buscando…" : "Jugar",
       play: busyType !== "match",
       sound: "none",
+      // Only waiting (switching "Pública" / "Privada"…): it can't be pressed, but it doesn't dim for those seconds.
+      waiting: busy && isPublicGame(plan.game),
       disabled: busy || !isPublicGame(plan.game),
       onClick: () => run({ type: "match", game: plan.game }),
     };
   } else {
     action = {
-      label: busyType === "create" || start.busy ? "Empezando…" : "Empezar",
+      // "Jugar" on both sides: public or private, the button says the same.
+      label: busyType === "create" || start.busy ? "Empezando…" : "Jugar",
+      play: !(busyType === "create" || start.busy),
       sound: "none",
+      waiting: busy && (room ? start.canStart : true),
       disabled: busy || (room ? !start.canStart : false),
       onClick: () => (room ? start.start() : run({ type: "create", game: plan.game, then: "start" })),
     };
@@ -257,8 +276,8 @@ export default function HomeFrame({ room = null, onToast, Lobby = null, leaving 
       : plan.audience === "publica"
       ? { summary: publicMatchLine(mode.id) || "Sin partidas públicas por ahora", fixed: true }
       : decides && !away
-      ? { summary: "Ajustes por defecto", onOpen: () => run({ type: "setup", game: plan.game }), disabled: busy }
-      : { summary: "Ajustes por defecto", note: away ? "Tu grupo ya está jugando" : `Los elige ${leaderName}` };
+      ? { summary: privateMatchLine(mode.id), onOpen: () => run({ type: "setup", game: plan.game }), disabled: busy }
+      : { summary: privateMatchLine(mode.id), note: away ? "Tu grupo ya está jugando" : `Los elige ${leaderName}` };
 
   // The group's faces: dimmed whoever isn't with it now (or is reconnecting).
   const members = group ? group.members.map((m) => ({ ...m, connected: m.connected && m.here })) : [];
@@ -316,7 +335,22 @@ export default function HomeFrame({ room = null, onToast, Lobby = null, leaving 
         readOnly={!decides}
         hostName={room ? room.hostName : leaderName}
       />
-      <GroupSheet open={sheet === "group" && Boolean(group)} onClose={() => setSheet(null)} room={room} onToast={onToast} />
+      <GroupSheet
+        open={sheet === "group" && Boolean(group)}
+        onClose={() => setSheet(null)}
+        room={room}
+        onToast={onToast}
+        onLeave={
+          phone
+            ? () => {
+                // The question goes over the page, not under the sheet.
+                setSheet(null);
+                setConfirmLeave(true);
+              }
+            : null
+        }
+        leaving={busyType === "leave"}
+      />
       {/* Without a name, the sheet asks for it (as it always did) and then it does what was asked. */}
       {createPortal(
         <PlaySheet

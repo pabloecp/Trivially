@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import TvShell from "../../components/home/TvShell.jsx";
 import Confetti from "../../components/home/Confetti.jsx";
 import Icon from "../../components/home/Icon.jsx";
+import AnswerSkip from "../../components/home/AnswerSkip.jsx";
 import WaitingPill, { waitingNames } from "../../components/home/WaitingPill.jsx";
 import PartyPanel from "../../components/home/PartyPanel.jsx";
 import SpectatorBanner from "../../components/home/SpectatorBanner.jsx";
@@ -396,6 +397,13 @@ function GameScreen() {
     }
   }, [activeIndex]);
 
+  // Time running out with a title written: it goes on its own (the highlighted suggestion, or what was typed), as if
+  // "Enviar" had been pressed.
+  useEffect(() => {
+    if (room?.phase !== "playing" || locked || closed || !query.trim() || left <= 0 || left > 500) return;
+    handleSubmitSong(suggestions.length > 0 && suggestions[activeIndex] ? suggestions[activeIndex] : query.trim());
+  }, [left]);
+
   async function handleSubmitSong(songOrText) {
     if (locked || isSubmittingRef.current) return;
     const titleToDisplay = typeof songOrText === "object" ? songOrText.title : songOrText;
@@ -694,22 +702,14 @@ function GameScreen() {
                   }}
                 >
                   <Icon name="send" size={20} strokeWidth={2.4} />
-                  Enviar
+                  <span className="tv-mwrite-send-label">Enviar</span>
                 </button>
                 </div>
 
                 {/* Hidden while typing, but it keeps its space so the answer box never moves. */}
-                <button
-                  type="button"
-                  className={`tv-btn tv-btn--block tv-c-neutral tv-skip-btn${confirmSkip ? " is-on" : ""}${query.trim() ? " is-hidden" : ""}`}
-                  onClick={handleSkip}
-                  aria-live="polite"
-                  aria-hidden={query.trim() ? "true" : undefined}
-                  tabIndex={query.trim() ? -1 : undefined}
-                >
-                  <Icon name={confirmSkip ? "lock" : "close"} size={16} strokeWidth={3} />
-                  {confirmSkip ? "No te dará puntos. Toca otra vez" : "Saltar"}
-                </button>
+                <div className="tv-mpanel-foot">
+                  <AnswerSkip confirm={confirmSkip} onClick={handleSkip} hidden={Boolean(query.trim())} />
+                </div>
 
                 {query.trim().length > 0 && !lyrics && (
                   <div className="tv-suggest" id="tv-suggest">

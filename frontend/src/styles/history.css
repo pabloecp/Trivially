@@ -342,3 +342,11 @@
   .tv-hist-verdict,
   .tv-hist-line.is-empty .tv-hist-rail { animation: none; }
 }
+/* Phones: the verdict has the row to itself (its label would only repeat it) and its two lines wrap instead of being
+   cut ("¡Se acabó el tiempo!", "No elegiste un número. Era 10 países."). */
+@media (max-width: 640px) {
+  .tv-hist-slot:has(.tv-hist-verdict) > .tv-mpanel-label { display: none; }
+  .tv-hist-slot .tv-hist-verdict { flex: 1; min-width: 0; }
+  .tv-hist-verdict-text strong,
+  .tv-hist-verdict-text small { white-space: normal; }
+}

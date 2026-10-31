@@ -76,6 +76,19 @@ export const publicMatchLine = (game) => {
   const p = PUBLIC_MATCH[game];
   return p ? [p.rounds, p.time, p.way].filter(Boolean).join(" · ") : "";
 };
+// A new private match's settings (the server's default*Config: game/quiz.js, geo.js…), said like the summary of its
+// "Ajustes" tabs, so Inicio's card has it before the match exists, even when nothing was changed.
+export const PRIVATE_MATCH = {
+  opciones: "5 rondas · 15 s · Todas las categorías",
+  musica: "5 rondas · 15 s",
+  mundo: "5 rondas · 15 s",
+  historia: "5 rondas · 10 s · Todas las categorías",
+  minas: "3 rondas · Todas las categorías",
+  lluvia: "3 rondas · 60 s · Todas las categorías",
+  rey: "10 rondas · 20 s · Todas las categorías",
+  farsante: "8 rondas · 45 s · Todos los tipos",
+};
+export const privateMatchLine = (game) => PRIVATE_MATCH[game] || "";
 export const gamesText = (rounds) => {
   const n = Math.round(rounds / ROUNDS_PER_GAME);
   return n === 1 ? "1 juego" : `${n} juegos`;

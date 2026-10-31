@@ -249,7 +249,7 @@ function GameScreen() {
                 </label>
                 <button type="submit" className="tv-btn tv-btn--primary tv-mwrite-send" disabled={!text.trim()}>
                   <Icon name="send" size={20} strokeWidth={2.4} />
-                  {sent ? "Cambiar" : "Enviar"}
+                  <span className="tv-mwrite-send-label">{sent ? "Cambiar" : "Enviar"}</span>
                 </button>
               </div>
               <span className={`tv-fs-count${text.length >= MAX_CHARS ? " is-full" : ""}`}>

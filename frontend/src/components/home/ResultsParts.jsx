@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import Avatar from "./Avatar.jsx";
 import CountUp from "./CountUp.jsx";
@@ -11,6 +11,32 @@ import { usePhone } from "./RoomChat.jsx";
 
 // "1 jugador", "4 jugadores".
 export const countText = (n, one, many) => `${n} ${n === 1 ? one : many}`;
+
+// A ranking's list (its <ol>) with more than five players shows five whole rows and scrolls inside for the rest: its
+// height is measured to end right under the fifth row, and the scroll stops on whole rows (home.css, .is-five).
+export function useFiveRows(count) {
+  const ref = useRef(null);
+  useLayoutEffect(() => {
+    const list = ref.current;
+    if (!list || count <= 5) return undefined;
+    const fit = () => {
+      const rows = list.children;
+      if (rows.length <= 5) return;
+      list.style.maxHeight = "";
+      const height = rows[4].offsetTop + rows[4].offsetHeight - rows[0].offsetTop;
+      if (height > 0) list.style.maxHeight = `${height}px`;
+    };
+    fit();
+    const watch = new ResizeObserver(fit);
+    // The first row's size changes with the screen's (the list's own height is the one set here).
+    watch.observe(list.children[0]);
+    return () => {
+      watch.disconnect();
+      list.style.maxHeight = "";
+    };
+  }, [count]);
+  return [ref, count > 5 ? " is-five" : ""];
+}
 
 // A player's rounds as dots, each in its colour (RoomManager.recordRound's status): right, close, wrong, no answer.
 export function RoundDots({ rounds = [] }) {
@@ -29,7 +55,7 @@ export function RoundDots({ rounds = [] }) {
  * is what shows under each name (the points, by default) and `below(p)` what shows inside each block under its place
  * (a match's right answers and dots).
  */
-// `tied`: how many players share first place (a tie: nobody won). They all stand on the top step, with no crown.
+// `tied`: how many players share first place (a tie: nobody won). They all stand on the top step.
 export function Podium({ players, score = (p) => <><CountUp value={p.score} /> pts</>, below = null, meId = null, tied = 0 }) {
   const podium = [players[1], players[0], players[2]]; // 2nd, 1st, 3rd
   const rank = (p) => (tied > 1 && players.indexOf(p) < tied ? 1 : players.indexOf(p) + 1);
@@ -39,12 +65,11 @@ export function Podium({ players, score = (p) => <><CountUp value={p.score} /> p
         const slot = i === 1 ? 1 : i === 0 ? 2 : 3;
         if (!p) return <div key={slot} className="tv-podium-spot is-empty" aria-hidden="true" />;
         const place = rank(p);
-        const crowned = place === 1 && tied < 2;
         return (
           <div key={p.id} role="listitem" className={`tv-podium-spot is-${place}`}>
             <span className="tv-podium-avatar">
-              {crowned && <Icon name="crown" size={30} filled strokeWidth={1.6} className="tv-podium-crown" />}
-              <Avatar name={p.name} avatar={p.avatar} className={place === 1 ? "tv-avatar--lg" : ""} />
+              {/* First place celebrates (tied, all of them); second and third look down. */}
+              <Avatar name={p.name} avatar={p.avatar} className={place === 1 ? "tv-avatar--lg" : ""} mood={place === 1 ? "victoria" : "derrota"} />
             </span>
             <span className="tv-podium-who">
               {/* On phones only the first name, whole ("Mateo", not "Mateo Com…"); the ranking beside keeps the full one. */}
@@ -99,6 +124,7 @@ export function PodiumCard({ meta, children }) {
  * ringed. "Ver tus respuestas" (`onOpen`, only when this player has rounds) opens their answers.
  */
 export function RankingCard({ icon = "play", color = "neutral", title, players, meId = null, onOpen = null, value }) {
+  const [listRef, five] = useFiveRows(players.length);
   return (
     <section className="tv-res-card tv-res-game" aria-labelledby="tv-res-game-title">
       <div className="tv-res-card-head">
@@ -115,11 +141,11 @@ export function RankingCard({ icon = "play", color = "neutral", title, players, 
           </button>
         )}
       </div>
-      <ol className="tv-res-table">
+      <ol ref={listRef} className={`tv-res-table${five}`}>
         {players.map((p, i) => (
           <li key={p.id} className={`tv-res-row${p.id === meId ? " is-me" : ""}`} style={{ "--i": i }}>
             <span className="tv-res-row-pos">{i + 1}</span>
-            <Avatar name={p.name} avatar={p.avatar} />
+            <Avatar name={p.name} avatar={p.avatar} mood="neutral" />
             <span className="tv-res-row-main">
               <PlayerName player={p} className="tv-res-row-name" />
               <RoundDots rounds={p.rounds} />

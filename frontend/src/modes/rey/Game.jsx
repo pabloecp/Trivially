@@ -48,10 +48,9 @@ function Court({ room, king, viewerId }) {
           const [text, tone] = status(p);
           return (
             <div key={p.id} className={`tv-rey-challenger${p.id === viewerId ? " is-me" : ""}`}>
-              <Avatar />
+              <Avatar avatar={p.avatar} />
               <b>
                 {p.name}
-                {p.id === viewerId ? " · tú" : ""}
               </b>
               <span className={tone}>{text}</span>
             </div>
@@ -323,7 +322,7 @@ function GameScreen() {
                 </label>
                 <button type="submit" className="tv-btn tv-btn--primary tv-mwrite-send" disabled={!query.trim()}>
                   <Icon name="send" size={20} strokeWidth={2.4} />
-                  Enviar
+                  <span className="tv-mwrite-send-label">Enviar</span>
                 </button>
               </form>
             )}

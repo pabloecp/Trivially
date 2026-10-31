@@ -41,6 +41,25 @@ export function getForcedGames() {
 }
 export const setForcedGames = (list) => write(FORCED_KEY, JSON.stringify(list.filter((id) => typeof id === "string")));
 
+// How the Blobs are drawn (their skin): everyone sees "sombra" (its colour with a shadow inside, low on the right); an
+// owner, in debug view, can try "plano" (only the colour) and "luz" (the shadow and a light high on the left), from the
+// admin panel. Only on this device.
+const BLOB_STYLE_KEY = "trivially_blob_style";
+export const BLOB_STYLES = ["plano", "sombra", "luz"];
+const getBlobStyle = () => {
+  const style = read(BLOB_STYLE_KEY, "sombra");
+  return BLOB_STYLES.includes(style) ? style : "sombra";
+};
+export const setBlobStyle = (style) => write(BLOB_STYLE_KEY, BLOB_STYLES.includes(style) ? style : "sombra");
+/** The owner's choice, whatever the view (the admin panel's switch). */
+export const useBlobStyleChoice = () => useSyncExternalStore(subscribe, getBlobStyle, () => "sombra");
+
+// "Reducir movimiento" (the admin panel): the Blobs stay still (no jumps nor looks). Only an owner can turn it on,
+// for this device; everyone else always sees them move.
+const STILL_KEY = "trivially_blobs_still";
+export const setBlobsStill = (still) => write(STILL_KEY, still ? "1" : "0");
+export const useBlobsStillChoice = () => useSyncExternalStore(subscribe, () => read(STILL_KEY, "0") === "1", () => false);
+
 /** Whether this account is an owner. */
 export function useIsOwner() {
   const { user } = useApp();
@@ -123,4 +142,18 @@ export function useScoreboardLook() {
   const debug = useOwnerDebug();
   const choice = useScoreboardChoice();
   return debug ? choice : "frase";
+}
+
+/** The Blobs' skin on this screen: the owner's choice in debug view, "sombra" for everyone else. */
+export function useBlobStyle() {
+  const debug = useOwnerDebug();
+  const style = useBlobStyleChoice();
+  return debug ? style : "sombra";
+}
+
+/** Whether the Blobs stay still on this screen: only for an owner who turned on "Reducir movimiento". */
+export function useBlobsStill() {
+  const owner = useIsOwner();
+  const still = useBlobsStillChoice();
+  return owner && still;
 }
