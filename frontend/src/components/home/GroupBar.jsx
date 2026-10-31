@@ -102,7 +102,7 @@ export default function GroupBar({ members = [], meId, inGroup = false, code = "
   return (
     <div className="tv-gbar" role="region" aria-label="Tu grupo y la partida">
       {phone ? (
-        <SalaMenu members={shown} count={members.length} inGroup={inGroup} code={code} meId={meId} cap={inGroup ? cap : "¿Te invitaron?"} badge={inviteBadge} error={groupError}>
+        <SalaMenu members={shown} count={members.length} inGroup={inGroup} code={code} meId={meId} onGroup={onGroup} cap={inGroup ? cap : "¿Te invitaron?"} badge={inviteBadge} error={groupError}>
           {inGroup ? (
             groupBox
           ) : (
@@ -188,7 +188,7 @@ export default function GroupBar({ members = [], meId, inGroup = false, code = "
 }
 
 // Whether the screen is as narrow as a phone's (where the bar's zones split up, look.css).
-function useNarrow() {
+export function useNarrow() {
   const query = "(max-width: 760px)";
   const [narrow, setNarrow] = useState(() => Boolean(window.matchMedia?.(query).matches));
   useEffect(() => {
@@ -202,9 +202,10 @@ function useNarrow() {
 }
 
 // Phones: your sala in the top bar (its slot, `.tv-topbar-sala` in TvTopbar), very short: its faces (yours first) and how
-// many are in it. Without one (no game chosen yet, so no sala) it's only "Unirse", for a friend's code. A tap opens the whole TU GRUPO zone under it, like the volume's
-// panel; a tap outside or Escape closes it. A code that didn't work (`error`) is said in it.
-function SalaMenu({ members, count, inGroup, code, meId, cap, badge, error, children }) {
+// many are in it, whose tap opens "Tu grupo" (GroupSheet, `onGroup`: the code, who is in it, "Salir del grupo"). Without
+// one (no game chosen yet, so no sala) it's only "Unirse", for a friend's code, whose tap opens a small panel under it
+// like the volume's; a tap outside or Escape closes it. A code that didn't work (`error`) is said in it.
+function SalaMenu({ members, count, inGroup, code, meId, onGroup, cap, badge, error, children }) {
   const [open, setOpen] = useState(false);
   const [slot, setSlot] = useState(null);
   const rootRef = useRef(null);
@@ -236,7 +237,7 @@ function SalaMenu({ members, count, inGroup, code, meId, cap, badge, error, chil
         aria-haspopup="dialog"
         aria-expanded={open}
         aria-label={inGroup ? `${cap}: ver tu sala` : "Unirse a la sala de un amigo"}
-        onClick={() => setOpen((v) => !v)}
+        onClick={() => (inGroup ? onGroup?.() : setOpen((v) => !v))}
       >
         {inGroup ? (
           <>

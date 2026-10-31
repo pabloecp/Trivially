@@ -5,7 +5,7 @@ import { findMode } from "../../modes/index.js";
 import { useApp } from "../../lib/store.jsx";
 import { CLASSIC, isPublicGame, rememberPlan, useLocalPlan } from "../../lib/plan.js";
 import { withSound } from "../../lib/sounds.js";
-import GroupBar from "./GroupBar.jsx";
+import GroupBar, { useNarrow } from "./GroupBar.jsx";
 import GroupSheet from "./GroupSheet.jsx";
 import ConfirmDialog from "./ConfirmDialog.jsx";
 import ModeStage from "./ModeStage.jsx";
@@ -56,6 +56,8 @@ export default function HomeFrame({ room = null, onToast, Lobby = null, leaving 
   // "Ajustes" made the private match: its settings open as soon as its lobby shows (SettingsPanel).
   const [settingsAsked, setSettingsAsked] = useState(false);
   const start = useStartGame(room || { players: [], game: null });
+  // Phones open "Tu grupo" from the top bar and have no group's bar to leave from: "Salir del grupo" goes in it.
+  const phone = useNarrow();
 
   const searching = Boolean(room?.matchmaking);
   const isLeader = group ? group.leaderId === user?.id : true;
@@ -319,7 +321,22 @@ export default function HomeFrame({ room = null, onToast, Lobby = null, leaving 
         readOnly={!decides}
         hostName={room ? room.hostName : leaderName}
       />
-      <GroupSheet open={sheet === "group" && Boolean(group)} onClose={() => setSheet(null)} room={room} onToast={onToast} />
+      <GroupSheet
+        open={sheet === "group" && Boolean(group)}
+        onClose={() => setSheet(null)}
+        room={room}
+        onToast={onToast}
+        onLeave={
+          phone
+            ? () => {
+                // The question goes over the page, not under the sheet.
+                setSheet(null);
+                setConfirmLeave(true);
+              }
+            : null
+        }
+        leaving={busyType === "leave"}
+      />
       {/* Without a name, the sheet asks for it (as it always did) and then it does what was asked. */}
       {createPortal(
         <PlaySheet

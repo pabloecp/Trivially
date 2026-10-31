@@ -13,7 +13,8 @@ import { useInvite } from "./useInvite.js";
 // only place the code shows; "Salir del grupo" is on the bar), then who is in it. In the group's private match, the
 // match's column (PartyPanel: everyone with their menu, your friends online to invite, the chat); elsewhere the group's
 // own list (GroupMembers), where the leader can pass the group on or take someone out.
-export default function GroupSheet({ open, onClose, room, onToast }) {
+// `onLeave` (phones, where the group's bar has no "Salir del grupo"): the red "Salir del grupo" at its foot, which asks first.
+export default function GroupSheet({ open, onClose, room, onToast, onLeave = null, leaving = false }) {
   const { group } = useApp();
   const [codeHidden, toggleCode] = useHiddenCode();
   const link = useInvite(group?.code, onToast);
@@ -28,6 +29,14 @@ export default function GroupSheet({ open, onClose, room, onToast }) {
       title="Tu grupo"
       size="md"
       className="tv-groupsheet"
+      foot={
+        onLeave ? (
+          <button type="button" className="tv-btn tv-btn--bad tv-btn--block" data-sound="back" onClick={onLeave} disabled={leaving}>
+            <Icon name="logout" size={18} strokeWidth={2.6} />
+            Salir del grupo
+          </button>
+        ) : null
+      }
     >
       <div className="tv-codebox">
         <div className="tv-codebox-head">
