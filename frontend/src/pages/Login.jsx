@@ -8,6 +8,7 @@ import Icon from "../components/home/Icon.jsx";
 import Segmented from "../components/home/Segmented.jsx";
 import UsernameField, { useUsernameCheck } from "../components/home/UsernameField.jsx";
 import { USERNAME_MIN } from "../lib/username.js";
+import { withSound } from "../lib/sounds.js";
 
 // In-app browsers (Instagram, WhatsApp, Facebook, TikTok...) are blocked by Google for sign-in.
 const IN_APP_BROWSER = typeof navigator !== "undefined" && /Instagram|FBAN|FBAV|FB_IAB|WhatsApp|Line\/|TikTok|musical_ly|Snapchat|; wv\)/i.test(navigator.userAgent);

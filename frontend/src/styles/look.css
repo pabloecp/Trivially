@@ -575,12 +575,14 @@
 .tv-sala { position: relative; flex-shrink: 0; }
 .tv-app .tv-chip--sala { position: relative; gap: 6px; padding: 0 10px 0 6px; color: var(--tv-text); }
 .tv-sala-faces { display: flex; align-items: center; }
-.tv-sala-faces .tv-avatar { width: 28px; height: 28px; }
+.tv-sala-faces .tv-avatar { position: relative; width: 28px; height: 28px; }
+/* Each face over the next one, yours (first) on top, so none is hidden under two. */
+.tv-sala-faces .tv-avatar:nth-child(1) { z-index: 3; }
+.tv-sala-faces .tv-avatar:nth-child(2) { z-index: 2; }
 .tv-sala-faces .tv-avatar + .tv-avatar { margin-left: -10px; }
 .tv-sala-faces .tv-avatar.is-me { box-shadow: 0 0 0 2px var(--tv-neutral), 0 0 0 4px var(--p-accent-2); }
 .tv-sala-faces .tv-avatar.is-away { opacity: 0.4; }
 /* Yours goes first and on top, so the next face doesn't cover its yellow ring. */
-.tv-sala-faces .tv-avatar.is-me,
 .tv-sala-panel .tv-gbar-faces .tv-avatar.is-me { position: relative; z-index: 1; }
 .tv-app .tv-chip--sala:not(:has(.tv-sala-faces)) { padding-left: 12px; }
 .tv-sala-hint { flex-basis: 100%; font-family: var(--tv-small); font-weight: 600; font-size: 13px; line-height: 1.35; color: var(--tv-text-3); }
@@ -638,6 +640,23 @@
 }
 @media (max-width: 360px) {
   .tv-app .tv-gbar-share span { display: none; }
+}
+/* Narrow phones: the top bar keeps every button (Volver, your sala, the owners' gear, the volume, Amigos, your Blob),
+   a little smaller: the sala's chip loses its arrow, then everything goes down to 36 px and the sala shows two faces. */
+@media (max-width: 400px) {
+  .tv-sala-chevron { display: none; }
+  .tv-app .tv-chip--sala { padding-right: 12px; }
+}
+@media (max-width: 359px) {
+  .tv-app .tv-topbar .tv-chip { height: 36px; }
+  .tv-app .tv-topbar .tv-chip--icon,
+  .tv-app .tv-topbar .tv-chip--leave,
+  .tv-app .tv-topbar .tv-chip > .tv-avatar--empty { width: 36px; height: 36px; }
+  .tv-app .tv-topbar .tv-chip--profile > .tv-avatar { width: 36px; height: 36px; }
+  .tv-app .tv-topbar .tv-chip--text { padding-right: 10px; }
+  .tv-app .tv-topbar-start { gap: 6px; }
+  .tv-app .tv-topbar-end { gap: 6px; }
+  .tv-sala-faces .tv-avatar:nth-child(3) { display: none; }
 }
 
 /* ---------- Panels over the page ---------- */
