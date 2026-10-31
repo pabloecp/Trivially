@@ -13,7 +13,7 @@ import PlanSheet from "./PlanSheet.jsx";
 import PlaySheet from "./PlaySheet.jsx";
 import { OpenSettingsContext } from "./SettingsPanel.jsx";
 import { useStartGame } from "./ModeStart.jsx";
-import { publicMatchLine } from "./matchInfo.js";
+import { privateMatchLine, publicMatchLine } from "./matchInfo.js";
 import "../../styles/lobby.css";
 
 // The card when no game is chosen (Inicio on a new device, or a private match before its host picks one).
@@ -241,6 +241,8 @@ export default function HomeFrame({ room = null, onToast, Lobby = null, leaving 
       label: busyType === "match" ? "Buscando…" : "Jugar",
       play: busyType !== "match",
       sound: "none",
+      // Only waiting (switching "Pública" / "Privada"…): it can't be pressed, but it doesn't dim for those seconds.
+      waiting: busy && isPublicGame(plan.game),
       disabled: busy || !isPublicGame(plan.game),
       onClick: () => run({ type: "match", game: plan.game }),
     };
@@ -250,6 +252,7 @@ export default function HomeFrame({ room = null, onToast, Lobby = null, leaving 
       label: busyType === "create" || start.busy ? "Empezando…" : "Jugar",
       play: !(busyType === "create" || start.busy),
       sound: "none",
+      waiting: busy && (room ? start.canStart : true),
       disabled: busy || (room ? !start.canStart : false),
       onClick: () => (room ? start.start() : run({ type: "create", game: plan.game, then: "start" })),
     };
@@ -262,8 +265,8 @@ export default function HomeFrame({ room = null, onToast, Lobby = null, leaving 
       : plan.audience === "publica"
       ? { summary: publicMatchLine(mode.id) || "Sin partidas públicas por ahora", fixed: true }
       : decides && !away
-      ? { onOpen: () => run({ type: "setup", game: plan.game }), disabled: busy }
-      : { note: away ? "Tu grupo ya está jugando" : `Los elige ${leaderName}` };
+      ? { summary: privateMatchLine(mode.id), onOpen: () => run({ type: "setup", game: plan.game }), disabled: busy }
+      : { summary: privateMatchLine(mode.id), note: away ? "Tu grupo ya está jugando" : `Los elige ${leaderName}` };
 
   // The group's faces: dimmed whoever isn't with it now (or is reconnecting).
   const members = group ? group.members.map((m) => ({ ...m, connected: m.connected && m.here })) : [];

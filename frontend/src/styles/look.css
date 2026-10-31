@@ -630,16 +630,20 @@
     background: none;
     isolation: isolate;
   }
-  /* Under the bar, down to the window's foot and out to its sides, the page's own black (::before), and over it the
-     bar's own panel with its soft shadow (::after): what scrolls behind never shows around it. */
-  .tv-gbar::before,
+  /* The bar's own panel, drawn behind it, goes on down to the window's foot (nothing moves): what scrolls behind never
+     shows under it. */
   .tv-gbar::after {
     content: "";
     position: absolute;
+    z-index: -1;
+    inset: 0 0 calc(-10px - env(safe-area-inset-bottom));
+    border-radius: inherit;
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+    background: var(--tv-surface);
+    box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.45);
     pointer-events: none;
   }
-  .tv-gbar::before { z-index: -2; inset: 0 -16px calc(-10px - env(safe-area-inset-bottom)); background: var(--tv-bg); }
-  .tv-gbar::after { z-index: -1; inset: 0; border-radius: inherit; background: var(--tv-surface); box-shadow: 0 14px 36px rgba(0, 0, 0, 0.55); }
   /* The middle of the page stays under the bar (iPhones painted the stage's animated boxes over it). */
   .tv-lobby-stage { position: relative; z-index: 0; }
   .tv-gbar-zone--plan .tv-gbar-cap { display: none; }
@@ -654,6 +658,9 @@
   .tv-gcard.tv-gbar-plan { min-height: 56px; }
   .tv-gbar-zone--go { flex-direction: row; align-items: center; }
   .tv-app .tv-gbar-go { flex: 1; width: auto; }
+  /* Waiting a moment (switching "Pública" / "Privada"): not pressable, but it doesn't dim (on iPhones the dimming
+     showed as a dark band across it). */
+  .tv-app .tv-gbar-go.is-waiting:disabled { opacity: 1; cursor: progress; }
   .tv-gbar-note { flex: 1; }
   /* The code is in the sala's panel up top and the link at the foot: the stage's own box would only repeat it. */
   .tv-stage-aside .tv-stage-code { display: none; }
@@ -1575,8 +1582,6 @@ html.tv-geo-playing .tv-app .tv-topbar:has(.tv-topbar-round) { display: flex; }
   .tv-app .tv-match .tv-party { padding: 8px 10px; border-radius: 16px; overflow: visible; }
   .tv-app .tv-match .tv-party-title,
   .tv-app .tv-match .tv-party-spectators,
-  .tv-app .tv-match .tv-party .tv-player-text,
-  .tv-app .tv-match .tv-party .tv-player-pos,
   .tv-app .tv-match .tv-party .tv-player-crown,
   .tv-app .tv-match .tv-party .tv-player-badge,
   .tv-app .tv-match .tv-party .tv-player-games { display: none; }

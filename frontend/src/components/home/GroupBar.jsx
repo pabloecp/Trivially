@@ -165,7 +165,7 @@ export default function GroupBar({ members = [], meId, inGroup = false, code = "
         {action ? (
           <button
             type="button"
-            className={`tv-btn tv-btn--lg tv-gbar-go ${action.neutral || action.locked ? "tv-btn--neutral" : "tv-btn--primary"}`}
+            className={`tv-btn tv-btn--lg tv-gbar-go ${action.neutral || action.locked ? "tv-btn--neutral" : "tv-btn--primary"}${action.waiting ? " is-waiting" : ""}`}
             data-sound={action.sound}
             onClick={action.onClick}
             disabled={action.disabled}
