@@ -9,16 +9,15 @@ import Modal from "./Modal.jsx";
 import PartyPanel from "./PartyPanel.jsx";
 import { useInvite } from "./useInvite.js";
 
-// "Tu grupo", from the group's bar ("+" or the faces): the group's code with "Copiar código" and "Copiar enlace" (the
-// only place the code shows; "Salir del grupo" is on the bar), then who is in it. In the group's private match, the
-// match's column (PartyPanel: everyone with their menu, your friends online to invite, the chat); elsewhere the group's
+// "Tu sala", from the group's bar ("+" or the faces): the group's code with one button that copies the invite link (the
+// only place the code shows; "Salir de la sala" is on the bar), then who is in it. In the group's private match, the
+// match's column (PartyPanel: everyone with their menu and your friends online to invite); elsewhere the group's
 // own list (GroupMembers), where the leader can pass the group on or take someone out.
-// `onLeave` (phones, where the group's bar has no "Salir del grupo"): the red "Salir del grupo" at its foot, which asks first.
+// `onLeave` (phones, where the group's bar has no "Salir de la sala"): the red "Salir de la sala" at its foot, which asks first.
 export default function GroupSheet({ open, onClose, room, onToast, onLeave = null, leaving = false }) {
   const { group } = useApp();
   const [codeHidden, toggleCode] = useHiddenCode();
   const link = useInvite(group?.code, onToast);
-  const code = useInvite(group?.code, onToast, { what: "code" });
   if (!group) return null;
   const own = Boolean(room) && room.groupCode === group.code && !room.matchmaking;
 
@@ -26,25 +25,25 @@ export default function GroupSheet({ open, onClose, room, onToast, onLeave = nul
     <Modal
       open={open}
       onClose={onClose}
-      title="Tu grupo"
+      title="Tu sala"
       size="md"
       className="tv-groupsheet"
       foot={
         onLeave ? (
           <button type="button" className="tv-btn tv-btn--bad tv-btn--block" data-sound="back" onClick={onLeave} disabled={leaving}>
             <Icon name="logout" size={18} strokeWidth={2.6} />
-            Salir del grupo
+            Salir de la sala
           </button>
         ) : null
       }
     >
       <div className="tv-codebox">
         <div className="tv-codebox-head">
-          <span className="tv-section-label">Código del grupo</span>
+          <span className="tv-section-label">Código de la sala</span>
           {/* Hides the code on this device's screens, for streaming. */}
           <button
             type="button"
-            className={`tv-textbtn${codeHidden ? " is-on" : ""}`}
+            className={`tv-textbtn tv-hidebtn${codeHidden ? " is-on" : ""}`}
             onClick={toggleCode}
             aria-pressed={codeHidden}
             aria-label={codeHidden ? "Mostrar el código" : "Ocultar el código"}
@@ -53,15 +52,10 @@ export default function GroupSheet({ open, onClose, room, onToast, onLeave = nul
             {codeHidden ? "Oculto" : "Ocultar"}
           </button>
         </div>
-        <p className={`tv-codebox-code${codeHidden ? " is-hidden" : ""}`}>{shownCode(group.code, codeHidden)}</p>
-        <div className="tv-codebox-actions">
-          <button type="button" className="tv-btn tv-btn--neutral" onClick={code.copy}>
-            <Icon name={code.copied ? "check" : "copy"} size={18} strokeWidth={2.6} />
-            {code.copied ? "¡Copiado!" : "Copiar código"}
-          </button>
-          <button type="button" className="tv-btn tv-btn--neutral" onClick={link.copy}>
-            <Icon name={link.copied ? "check" : "link"} size={18} strokeWidth={2.6} />
-            {link.copied ? "¡Copiado!" : "Copiar enlace"}
+        <div className="tv-codebox-row">
+          <p className={`tv-codebox-code${codeHidden ? " is-hidden" : ""}`}>{shownCode(group.code, codeHidden)}</p>
+          <button type="button" className="tv-btn tv-btn--neutral tv-codebox-copy" aria-label={link.copied ? "Enlace copiado" : "Copiar enlace de la sala"} title={link.copied ? "Copiado" : "Copiar enlace"} onClick={link.copy}>
+            <Icon name={link.copied ? "check" : "link"} size={26} strokeWidth={2.6} />
           </button>
         </div>
       </div>
@@ -93,14 +87,14 @@ function GroupMembers({ group, onToast }) {
     <div className="tv-party tv-party--sheet">
       {isLeader && <FriendsRoomControls group={group} onToast={onToast} />}
       <div className="tv-party-title">
-        <h2>En el grupo</h2>
+        <h2>En la sala</h2>
         <span>{group.members.length === 1 ? "1 jugador" : `${group.members.length} jugadores`}</span>
       </div>
-      <ul className="tv-party-players" aria-label="Jugadores del grupo">
+      <ul className="tv-party-players" aria-label="Jugadores de la sala">
         {group.members.map((m) => {
           const isMe = m.id === user?.id;
           const leads = m.id === group.leaderId;
-          const tag = !m.connected ? "Reconectando…" : !m.here ? "En otra partida" : leads ? "Líder" : "En el grupo";
+          const tag = !m.connected ? "Reconectando…" : !m.here ? "En otra partida" : leads ? "Líder" : "En la sala";
           return (
             <li key={m.id} className={`tv-player${isMe ? " is-me" : ""}${m.connected && m.here ? "" : " is-away"}`}>
               <div className="tv-player-btn tv-groupmember">
@@ -125,10 +119,10 @@ function GroupMembers({ group, onToast }) {
                     <button
                       type="button"
                       className="tv-iconbtn tv-iconbtn--sm"
-                      aria-label={`Sacar a ${m.name} del grupo`}
-                      title="Sacar del grupo"
+                      aria-label={`Sacar a ${m.name} de la sala`}
+                      title="Sacar de la sala"
                       disabled={Boolean(busy)}
-                      onClick={() => act(`kick:${m.id}`, () => kickFromGroup(m.id), `Sacaste a ${m.name} del grupo`)}
+                      onClick={() => act(`kick:${m.id}`, () => kickFromGroup(m.id), `Sacaste a ${m.name} de la sala`)}
                     >
                       <Icon name="close" size={16} strokeWidth={2.8} />
                     </button>

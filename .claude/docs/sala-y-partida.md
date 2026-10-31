@@ -7,7 +7,7 @@
 - When the host gives or takes back permission to change the settings (`room.coHosts`, the player's menu), that player gets a toast saying so (`HomeFrame`).
 - While a room waits (a private match before it starts, a search) it is Inicio for its players: Inicio's address (`/`, `roomPath`, `waitsOnInicio`), no "Volver" and no logo in the top bar, so the code never shows in the address. The bar changes it (another game; "Partida pública" goes back to Inicio to search) or cancels the search. Only the central device has "Volver" there. In a match the "X" asks first: the group's leader takes the whole group to Inicio (`group:home`), anyone else goes alone (still in their group). A game's "Terminar" and the host's X in a match go back to the room's lobby in the same game (`room:restart`, `restartGame`), not to a menu.
 - `leave()` removes a player at once; `disconnect()` keeps the seat and host role `RECONNECT_GRACE_MS` (20 s), and `addPlayer()` with the same user id reclaims it. The room dies when the last connected player goes.
-- **A match's screen** is the same frame in every game (`components/home/MatchFrame.jsx`, see `diseno.md`, "A match"): the round's card (`MatchCard`), what to answer with under it, the scoreboard (`PartyPanel scores`, its `status` pill) and the bottom bar (`MatchBar`: who's missing, Chat, Reportar, Pausar, Terminar). The top bar shows the game, its mode (`matchMode`) and the round. A central device and the phones beside it keep their own (`ControllerBar`).
+- **A match's screen** is the same frame in every game (`components/home/MatchFrame.jsx`, see `diseno.md`, "A match"): the round's card (`MatchCard`), what to answer with under it, the scoreboard (`PartyPanel scores`, its `status` pill) and the bottom bar (`MatchBar`: who's missing, Reportar, Pausar, Terminar). The top bar shows the game, its mode (`matchMode`) and the round. A central device and the phones beside it keep their own (`ControllerBar`).
 - Host handover: `PlayerMenu.jsx` "Hacer anfitrión" (two taps) → `room:giveHost` / `giveHost`; the old host becomes a co-host (`transferHost`).
 
 ## Phases
@@ -35,7 +35,7 @@
 - Phones: during an intro (`.tv-mcard`) the scoreboard stays under the card (home.css, "Phones: the room's bars").
 
 ## Room extras
-- **Chat** (`RoomChat.jsx` in `PartyPanel`, `room:chat`, `sendChat`): `room.chat`, newest 40, ≤200 chars, one per 0.7 s per player. On phones, a sheet.
+- **No chat:** the room has none (it was removed). A sala (a group and its private match) holds at most `SALA_MAX` (10) players (`matchmaking.js`; `groups.js addMember`, `RoomManager.addPlayer`). Scoreboards and lists of players come in with no animation (`look.css`, end); only the final podium keeps its own.
 - **Hidden code** (`lib/hiddenCode.js`, key `trivially_hide_code`): dots on this device, and the URL uses `HIDDEN_SLUG` "oculta" instead of the code (`urlCode`, `resolveCode`, `RoomNavigator`).
 
 ## Trivia (`opciones`, `QUIZ_GAME`)

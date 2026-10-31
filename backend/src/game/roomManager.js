@@ -1,10 +1,12 @@
 import { cachedDefaultPlaylists, isDefaultSpotify } from "../catalog/defaultPlaylists.js";
 import { SONG_DIFFICULTIES, SONG_GENRES, SONG_LANGUAGES, filterSongs, songCounts } from "../catalog/songFilters.js";
 import { hasRole } from "../auth/roles.js";
-import { CHAT_LINK_ERROR, hasLink, NAME_LINK_ERROR } from "../moderation/links.js";
+import { hasLink, NAME_LINK_ERROR } from "../moderation/links.js";
 import { hydrateSong } from "../catalog/catalogProvider.js";
 import { cleanTitle, displayTitle } from "../catalog/trackResolver.js";
-import { applyMatchStats } from "../db/store.js";
+import { applyMatchStats, saveStore } from "../db/store.js";
+import { botProfile, pickBots } from "./bots.js";
+import { addTogether, applyElo, countsTogether, ELO_START, eloDeltas, eloOf, searchElo } from "./elo.js";
 import { isCorrectAnswer, normalizeAnswer, songKey } from "./answers.js";
 import { etagOf } from "../audio/mediaCache.js";
 import {
@@ -131,11 +133,11 @@ import {
   variantsFor,
   matchRoundMs,
   matchTimes,
-  newBot,
   pickMatchGames,
   publicMatchmaking,
   PUBLIC_GAMES,
   PUBLIC_GROUP_MAX,
+  SALA_MAX,
   PUBLIC_VARIANT,
   groupMatchSize,
 } from "./matchmaking.js";
@@ -186,10 +188,6 @@ const RECONNECT_GRACE_MS = 20000;
 // A player can suggest a game this often, and a suggestion stays on the host's screen this long.
 export const SUGGEST_COOLDOWN_MS = 5000;
 const SUGGESTION_TTL_MS = 60000;
-// The room's chat: how long a message can be, how many the room keeps (the newest), and how often one player can send.
-export const CHAT_MAX_LENGTH = 200;
-const CHAT_KEEP = 40;
-const CHAT_GAP_MS = 700;
 // A player can ask to use another device as the central one this often, and a room keeps this many requests at once.
 export const CENTRAL_ASK_GAP_MS = 5000;
 const CENTRAL_REQUESTS_KEEP = 5;
@@ -211,6 +209,11 @@ export const IDLE_ROUNDS = 3;
 // picking a cell...): they are out of the match and finish last.
 export const PUBLIC_KICK_ROUNDS = 5;
 // When a bot answers, counted from the start of the round: anywhere between these two.
+// A public search is put with a room whose players' elo is at most this far from the player's; the longer the room has
+// waited, the wider it gets.
+export const ELO_WINDOW = 300;
+export const ELO_WIDEN_EVERY_MS = 5000;
+export const ELO_WIDEN_BY = 250;
 export const BOT_MIN_MS = 3000;
 export const BOT_MAX_MS = 8000;
 
@@ -481,10 +484,12 @@ export class RoomManager {
     assertNameWithoutLink(user);
     party.forEach(assertNameWithoutLink);
     const seats = 1 + party.length;
-    if (seats > PUBLIC_GROUP_MAX) throw new Error(`Una partida pública es de ${PUBLIC_GROUP_MAX} como mucho y tu grupo es de ${seats}`);
+    if (seats > PUBLIC_GROUP_MAX) throw new Error(`Una partida pública es de ${PUBLIC_GROUP_MAX} como mucho y tu sala es de ${seats}`);
     // A group fills it up to its size like anyone else (one more than the group with DUELS_OPEN).
     const size = party.length ? groupMatchSize(seats) : asked;
     const ids = [user.id, ...party.map((p) => p.id)];
+    // The elo this search is for (the group's average): it is put with rivals of a close one (eloFits).
+    const mine = this.searchRating([user, ...party], game);
     // An owner's forced games (already checked against their account by the socket): their own room, nobody else's.
     const force = game ? [] : cleanForced(input?.force);
     // A game's queue fills any room searching for that game; the roulette's rooms go by how many play.
@@ -498,7 +503,8 @@ export class RoomManager {
         (r.matchmaking.game || null) === game &&
         (game || r.matchmaking.versus === size) &&
         !ids.some((id) => r.blocked?.has(id)) &&
-        this.connectedCount(r) + seats <= r.matchmaking.size
+        this.connectedCount(r) + seats <= r.matchmaking.size &&
+        this.eloFits(r, mine)
     );
     if (room) {
       this.addPlayer(room, user);
@@ -506,7 +512,7 @@ export class RoomManager {
       room = this.create({ host: user, game: null });
       room.hostId = null;
       // A group bigger than what MATCH_SIZE lets fill (trying it out alone) still fits.
-      room.matchmaking = { kind, rounds, game, versus: size, size: Math.max(roomSize(size), seats), games: null, startsAt: null, timer: null, botTimer: null, force: force.length ? force : null };
+      room.matchmaking = { kind, rounds, game, versus: size, size: Math.max(roomSize(size), seats), createdAt: Date.now(), games: null, startsAt: null, timer: null, botTimer: null, force: force.length ? force : null };
       if (kind === "casual") this.scheduleBotArrival(room, BOT_WAIT_MS);
     }
     for (const member of party) this.addPlayer(room, member);
@@ -536,9 +542,48 @@ export class RoomManager {
     info.botTimer.unref?.();
   }
 
+  /** An account's stored profile, or null for a guest, a bot or nobody (only accounts have an elo and a rank saved). */
+  accountOf(id) {
+    const user = this.store?.users?.[id];
+    return user && !user.isGuest ? user : null;
+  }
+
+  /** The elo of someone in a game (null: the Clásico's general one): a bot's, an account's, or the starting one. */
+  ratingOf(player, game) {
+    const who = player.bot ? botProfile(player.id) : this.accountOf(player.id);
+    return searchElo(who, game);
+  }
+
+  /** The average elo of some players (users or room players) for a search of `game`. */
+  searchRating(players, game) {
+    if (!players.length) return searchElo(null, game);
+    return players.reduce((sum, p) => sum + this.ratingOf(p, game), 0) / players.length;
+  }
+
+  /**
+   * Whether a waiting public room is close enough in elo to `rating`. The longer the room has waited the wider it gets,
+   * so nobody waits for long (and the bots fill what is left with an elo close to the room's).
+   */
+  eloFits(room, rating) {
+    const info = room.matchmaking;
+    const humans = [...room.players.values()].filter((p) => !p.bot);
+    if (!humans.length) return true;
+    const waited = Date.now() - (info.createdAt || Date.now());
+    const window = ELO_WINDOW + Math.floor(waited / ELO_WIDEN_EVERY_MS) * ELO_WIDEN_BY;
+    return Math.abs(this.searchRating(humans, info.game) - rating) <= window;
+  }
+
   /** A bot in the room: a player with no connection who answers by itself while a round is played (scheduleBots). */
   addBot(room) {
-    const bot = newBot(new Set([...room.players.values()].map((p) => p.name)));
+    const game = room.matchmaking?.game || null;
+    const humans = [...room.players.values()].filter((p) => !p.bot);
+    const [bot] = pickBots(1, {
+      game,
+      target: humans.length ? this.searchRating(humans, game) : ELO_START,
+      takenIds: new Set(room.players.keys()),
+      takenNames: new Set([...room.players.values()].map((p) => p.name)),
+    });
+    if (!bot) throw new Error("No hay más bots");
     room.players.set(bot.id, {
       ...bot,
       score: 0,
@@ -817,7 +862,32 @@ export class RoomManager {
     };
     // Every game's winners, in play order: the end of the match shows each game with whoever won it.
     run.gameResults = [...(run.gameResults || []), { variant: run.lastGame.variant, winners: run.lastGame.winners }];
+    // Each game moves its own elo (the Clásico's too: every game of it counts for that game).
+    this.rateGame(room, item?.game, players, points);
     run.gameBase = Object.fromEntries(players.map((p) => [p.id, p.score || 0]));
+  }
+
+  /**
+   * A finished game of a public match moves the elo of `game` of everyone who played it: bots (their profile) and accounts
+   * (saved with them); a guest plays as the starting elo and keeps nothing. Two accounts that have already played
+   * TOGETHER_LIMIT matches together don't count against each other.
+   */
+  rateGame(room, game, players, points) {
+    if (!room.matchmaking || !game || players.length < 2) return;
+    const whoIs = (p) => (p.bot ? botProfile(p.id) : this.accountOf(p.id));
+    const byId = new Map(players.map((p) => [p.id, p]));
+    const entries = players.map((p) => ({ id: p.id, rating: eloOf(whoIs(p), game), points: points(p) }));
+    const counts = (a, b) => {
+      const ua = this.accountOf(a);
+      const ub = this.accountOf(b);
+      return !ua || !ub || countsTogether(ua, ub);
+    };
+    const deltas = eloDeltas(entries, counts);
+    for (const [id, delta] of deltas) {
+      const who = whoIs(byId.get(id));
+      if (who) applyElo(who, game, delta);
+    }
+    saveStore(this.store);
   }
 
   /** Whether a match of the roulette has its winner: one player alone has won the most games, `run.winsToWin` or more. */
@@ -976,6 +1046,7 @@ export class RoomManager {
     if (room.blocked?.has(user.id)) throw new Error("El anfitrión te bloqueó de esta sala");
     assertNameWithoutLink(user);
     const existing = room.players.get(user.id);
+    if (!existing && !room.matchmaking && room.players.size >= SALA_MAX) throw new Error(`La sala está llena (máximo ${SALA_MAX} jugadores)`);
     const isGuest = Boolean(user.isGuest ?? (user.id?.startsWith("gst_") || !user.email));
     const player = existing || {
       id: user.id,
@@ -2730,12 +2801,16 @@ export class RoomManager {
     if (!room.statsApplied) {
       room.statsApplied = true;
       const ranked = this.rankedPlayers(room);
+      const rated = this.rankedMatch(room);
+      const discount = rated ? this.rivalDiscount(ranked) : null;
+      if (room.matchmaking) this.countTogether(ranked);
       applyMatchStats(this.store, ranked, {
         // A public match is kept as its kind ("casual"), never as a playlist.
         game: room.matchmaking ? room.matchmaking.kind : room.run?.mixed ? room.run.classic || PLAYLIST_GAME : room.game,
         room: room.code,
+        public: Boolean(room.matchmaking),
         // Competitivo moves each account's rank by its place (game/rank.js).
-        rank: room.matchmaking?.kind === "competitivo" ? { rounds: room.matchmaking.rounds, winnerId: room.tiebreak?.winnerId || null } : null,
+        rank: rated ? { rounds: room.matchmaking.rounds, winnerId: room.tiebreak?.winnerId || null, discount } : null,
       });
       // A game of a playlist: its winner adds a win to the playlist's tally.
       if (room.run && !room.run.finished && ranked.length) {
@@ -2744,6 +2819,38 @@ export class RoomManager {
     }
     // A mixed playlist is a single match: when it ends, so does the playlist.
     if (room.run?.mixed && !room.run.finished) this.endRun(room);
+  }
+
+  /** Whether a finished match moves the rank: the Casual's Clásico (a public match with no game picked), and Competitivo. */
+  rankedMatch(room) {
+    const info = room.matchmaking;
+    return Boolean(info) && (info.kind === "competitivo" || (info.kind === "casual" && !info.game));
+  }
+
+  /**
+   * For each account in a finished public match, the share of its rivals that count for its rank (1 when all of them):
+   * the rivals it has already played TOGETHER_LIMIT matches with don't, and its points are scaled by that share.
+   */
+  rivalDiscount(ranked) {
+    const out = new Map();
+    for (const p of ranked) {
+      const me = this.accountOf(p.id);
+      if (!me) continue;
+      const rivals = ranked.filter((q) => q.id !== p.id);
+      if (!rivals.length) continue;
+      const counting = rivals.filter((q) => {
+        const other = this.accountOf(q.id);
+        return !other || countsTogether(me, other);
+      }).length;
+      out.set(p.id, counting / rivals.length);
+    }
+    return out;
+  }
+
+  /** A finished public match: each account adds one match played with each other account that was in it. */
+  countTogether(ranked) {
+    const accounts = ranked.map((p) => this.accountOf(p.id)).filter(Boolean);
+    for (const me of accounts) addTogether(me, accounts.filter((u) => u.id !== me.id).map((u) => u.id));
   }
 
   /** Who won a finished match: first place with points; a tie for first is nobody's unless a tiebreak settled it. */
@@ -2946,26 +3053,6 @@ export class RoomManager {
     player.suggestedAt = Date.now();
     room.suggestions = (room.suggestions || []).filter((s) => s.userId !== userId);
     room.suggestions.push({ userId, name: player.name, game, at: Date.now() });
-  }
-
-  /**
-   * A chat message from a player of the room (PartyPanel's chat). Spaces are squeezed and it is cut at CHAT_MAX_LENGTH;
-   * the room keeps the newest CHAT_KEEP, and a player can send one every CHAT_GAP_MS. It is closed while a round is
-   * played (countdown and playing), so nobody can pass on the answer. Like the rest of the room it lives only in memory.
-   */
-  sendChat(room, userId, text) {
-    const player = room.players.get(userId);
-    if (!player) throw new Error("Jugador no encontrado");
-    const clean = String(text ?? "").replace(/\s+/g, " ").trim().slice(0, CHAT_MAX_LENGTH);
-    if (!clean) throw new Error("Escribe un mensaje");
-    if (hasLink(clean)) throw new Error(CHAT_LINK_ERROR);
-    const now = Date.now();
-    if (now - (player.chattedAt || 0) < CHAT_GAP_MS) throw new Error("Espera un momento antes de mandar otro mensaje");
-    player.chattedAt = now;
-    room.chatSeq = (room.chatSeq || 0) + 1;
-    room.chat = [...(room.chat || []), { id: room.chatSeq, userId, name: player.name, avatar: player.avatar, text: clean, at: now }].slice(
-      -CHAT_KEEP
-    );
   }
 
   /** The room a player is in right now (not just reconnecting), or null. Used to show friends where someone plays. */
@@ -3924,8 +4011,6 @@ export class RoomManager {
         ? { userId: room.central.userId, name: room.central.name, avatar: room.central.avatar, connected: room.central.connected }
         : null,
       centralRequests: (room.centralRequests || []).map((r) => ({ id: r.id, userId: r.userId, name: r.name, avatar: r.avatar, at: r.at })),
-      // The room's chat, oldest first (sendChat).
-      chat: room.chat || [],
       // A match of several games being played (a public match or a Clásico): its games, and how it's going (in play
       // order, which one is on, who won each one and the tally).
       playlist: room.run ? room.playlist : undefined,

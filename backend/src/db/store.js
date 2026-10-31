@@ -1,3 +1,4 @@
+import { applyDaily, dailyView } from "../game/daily.js";
 import { applyRank, rankDeltas } from "../game/rank.js";
 import { hasLink, NAME_LINK_ERROR } from "../moderation/links.js";
 import { assignUsername, changeUsername, normalizeUsername, usernameError, usernameStatus } from "../auth/username.js";
@@ -18,7 +19,7 @@ const HEX_COLOR = /^#[0-9a-f]{6}$/i;
 // The Blob's colours on the profile (frontend lib/blobColors.js): white for everyone and, for accounts, the colours of
 // the games (Trivia, Canción, Mundo, Lluvia, Rango, Farsante, Minas). Older avatar colours still saved show as white.
 export const BLOB_WHITE = "#FFFFFF";
-const BLOB_ACCOUNT = ["#2F6BFF", "#FF2FC0", "#00D1C1", "#00A2FF", "#FF5A1F", "#1FD24A", "#A63DFF"];
+export const BLOB_ACCOUNT = ["#2F6BFF", "#FF2FC0", "#00D1C1", "#00A2FF", "#FF5A1F", "#1FD24A", "#A63DFF"];
 // The account colours the Blob had before (celeste, rosa, menta; then amarillo and naranja): saved ones count as their
 // new colour. The owners' gold is gone: saved, it shows white.
 const BLOB_RENAMED = { "#8FD3FF": "#2F6BFF", "#FFA6D2": "#FF2FC0", "#8EF0B0": "#00D1C1", "#FFD60A": "#FF5A1F", "#FF8A00": "#FF5A1F" };
@@ -58,11 +59,13 @@ function publicSpotify(spotify) {
 export function sanitizeUser(user) {
   if (!user) return null;
   // The username's history (which reserves old ones) and change dates stay on the server; the account sees the count.
-  const { passwordHash, passwordSalt, spotify, usernameHistory, usernameChanges, usernameAuto, friendCode, ...safe } = user;
+  const { passwordHash, passwordSalt, spotify, usernameHistory, usernameChanges, usernameAuto, friendCode, together, ...safe } = user;
   return {
     ...safe,
     // The account's own: each match with what it answered (its "Ver respuestas").
     history: publicHistory(user.history, { answers: true }),
+    // Today's challenge with its progress, and how many the account has completed (game/daily.js).
+    daily: dailyView(user),
     spotify: publicSpotify(spotify),
     role: effectiveRole(user),
     ...(user.isGuest ? {} : { usernameInfo: usernameStatus(user) }),
@@ -95,6 +98,10 @@ export function sanitizeUserPublic(user) {
     stats: user.stats || {},
     // Competitivo's rank (game/rank.js), null before the first competitive match.
     rank: user.rank || null,
+    // The elo of each game ({ rating, games, best }), from the public matches.
+    elo: user.elo || {},
+    // How many daily challenges the account has completed.
+    dailyDone: user.dailyDone || 0,
     // The last matches, like the stats: shown on the profile.
     history: publicHistory(user.history),
     googleLinked: Boolean(user.googleId),
@@ -562,13 +569,15 @@ export const MATCH_HISTORY_LIMIT = 10;
  * (`user.history`): which game, when, the place they finished in, how many played, their points, who they played
  * against, the room and their rounds (each question with its answer, for "Reportar partida": reportHistoryMatch).
  * `players` come in final position (a tiebreak's winner first); `game` is the game's id ("playlist" for a playlist).
- * `rank` ({ rounds, winnerId }) only for a Competitivo match: each account's rank points move by its place
+ * `public` is a public match (for "Reto del día"). `rank` ({ rounds, winnerId, discount }) only for a Competitivo match: each account's rank points move by its place
  * (game/rank.js), and the history entry keeps how many (`rank`).
  */
-export function applyMatchStats(store, players, { game = null, at = new Date().toISOString(), room = null, rank = null } = {}) {
+export function applyMatchStats(store, players, { game = null, at = new Date().toISOString(), room = null, rank = null, public: isPublic = false } = {}) {
   const ranked = [...players].sort((a, b) => b.score - a.score);
   const order = players.map((p) => p.id);
   const deltas = rank ? rankDeltas(players, rank) : null;
+  // Rivals that no longer count (game/elo.js TOGETHER_LIMIT) take their share off an account's points.
+  if (deltas && rank.discount) for (const [id, share] of rank.discount) deltas.set(id, Math.round((deltas.get(id) || 0) * share));
   const [first, second] = players;
   const soleWinner = first && second && (first.score > second.score || first.id === rank?.winnerId) ? first.id : null;
   players.forEach((player, index) => {
@@ -588,6 +597,8 @@ export function applyMatchStats(store, players, { game = null, at = new Date().t
       ...(deltas ? { rank: deltas.get(player.id) || 0 } : {}),
     };
     user.history = [entry, ...(user.history || [])].slice(0, MATCH_HISTORY_LIMIT);
+    // The day's challenge moves with every match (game/daily.js).
+    applyDaily(user, { game, public: isPublic, position: index + 1, players: order.length, score: player.score || 0, correct: player.correct || 0, bestStreak: player.bestStreak || 0 });
   });
   ranked.forEach((player, index) => {
     // Only registered users get stats saved (never guests)

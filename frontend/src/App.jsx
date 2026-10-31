@@ -21,12 +21,12 @@ import { homePath, isInlineMatch, roomPath } from "./modes/index.js";
 import { HIDDEN_SLUG, tabGroupCode, useHiddenCode } from "./lib/hiddenCode.js";
 
 // Screens tied to one room, e.g. /game/XOTRIV.
-const ROOM_SCREEN = /^\/(?:lobby|game|quiz|mundo|historia|minas|lluvia|rey|farsante|playlist|sala)\/([^/]+)/;
+const ROOM_SCREEN = /^\/(?:lobby|game|quiz|mundo|historia|minas|lluvia|rey|farsante|playlist|partida)\/([^/]+)/;
 
-// Old /lobby/CODE links: the waiting room now lives on the room screen, which /sala/CODE opens and joins.
+// Old /lobby/CODE links: the waiting room now lives on the room screen, which /partida/CODE opens and joins.
 function LobbyRedirect() {
   const { code } = useParams();
-  return <Navigate to={`/sala/${code}`} replace />;
+  return <Navigate to={`/partida/${code}`} replace />;
 }
 
 const GAME_SCREENS = {
@@ -58,7 +58,7 @@ function Guard({ children }) {
 // Keeps every player on the screen of the game their room is in, which is how the host moves the whole party. While
 // the room waits that's Inicio (`roomPath`); a match's screens are pushed on top of it, and the browser's Back
 // from one lands on Inicio and is turned around (the match's "X" is the way out).
-// Inicio's address is your sala's while you have one (/grupo/CODE, `homePath`): choosing a game (which makes the sala)
+// Inicio's address is your sala's while you have one (/sala/CODE, `homePath`): choosing a game (which makes the sala)
 // or joining one swaps "/" for it, and leaving it swaps it back, always replacing, on the same screen.
 function RoomNavigator() {
   const { room, group, kickedNotice } = useApp();
@@ -128,7 +128,7 @@ function RoomNavigator() {
     }
     if (!target) return;
     // On Inicio (waiting) or on the room's own address (a public match, a Clásico): neither takes you off another page.
-    const roomScreen = target.startsWith("/sala/");
+    const roomScreen = target.startsWith("/partida/");
     const waiting = target === home || roomScreen;
     // Opened straight on the room's address (a reload): it is the first entry, so Back would leave the app. Put Home
     // under it (the next run pushes the room's screen back on top).
@@ -179,8 +179,9 @@ export default function App() {
       <StillThere />
       <Routes>
         <Route path="/" element={<RoomScreen />} />
-        <Route path="/sala/:code" element={<RoomScreen />} />
-        {/* A group's invite link: into the group, then wherever it is. Also your own sala's address (Inicio). */}
+        <Route path="/partida/:code" element={<RoomScreen />} />
+        {/* A group's invite link: into the group, then wherever it is. Also your own sala's address (Inicio). /grupo/ is the older address. */}
+        <Route path="/sala/:groupCode" element={<RoomScreen />} />
         <Route path="/grupo/:groupCode" element={<RoomScreen />} />
         {/* The old pages of "¿Cómo quieres jugar?" (/jugar/casual, /jugar/privada…) open Inicio on the side they named. */}
         <Route path="/jugar" element={<Navigate to="/" replace />} />

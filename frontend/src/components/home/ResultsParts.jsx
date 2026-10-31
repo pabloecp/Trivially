@@ -4,7 +4,7 @@ import Avatar from "./Avatar.jsx";
 import CountUp from "./CountUp.jsx";
 import Icon from "./Icon.jsx";
 import PlayerName from "./PlayerName.jsx";
-import { usePhone } from "./RoomChat.jsx";
+import { usePhone } from "../../lib/usePhone.js";
 
 // The pieces of the results screens (MatchResults, the playlist's intermission and its final screen, all in the same
 // frame): the podium in its card, the ranking in its card beside it, and a player's rounds as dots.

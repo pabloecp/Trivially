@@ -223,10 +223,10 @@ export function attachSockets(io, rooms, { friends = null, hub = null, groups = 
         const friendId = String(payload?.friendId || "");
         if (!friends?.areFriends(userId, friendId)) throw new Error("Esa persona no es tu amiga");
         const group = groups.ofUser(friendId);
-        if (!group) throw new Error("Tu amigo no está en un grupo");
-        if (group.members.get(userId)?.connected) throw new Error("Ya estás en ese grupo");
+        if (!group) throw new Error("Tu amigo no está en una sala");
+        if (group.members.get(userId)?.connected) throw new Error("Ya estás en esa sala");
         if (group.joinMode === "abierta") return ack?.({ ok: true, action: "join", code: group.code });
-        if (group.joinMode !== "solicitud") throw new Error("Ese grupo es solo por invitación");
+        if (group.joinMode !== "solicitud") throw new Error("Esa sala es solo por invitación");
         groups.addJoinRequest(group, { id: userId, name: me.name, avatar: playerAvatar(me) });
         sendGroup(group);
         hub?.refresh(userId);
@@ -247,8 +247,8 @@ export function attachSockets(io, rooms, { friends = null, hub = null, groups = 
         const friendId = String(payload?.friendId || "");
         if (!friends?.areFriends(userId, friendId)) throw new Error("Esa persona no es tu amiga");
         const group = groups.ofUser(userId);
-        if (!group) throw new Error("Crea un grupo para invitar a tus amigos");
-        if (group.members.get(friendId)?.connected) throw new Error("Ya está en tu grupo");
+        if (!group) throw new Error("Crea una sala para invitar a tus amigos");
+        if (group.members.get(friendId)?.connected) throw new Error("Ya está en tu sala");
         if (!hub?.isOnline(friendId)) throw new Error("Tu amigo no está conectado ahora");
         const key = `${userId}>${friendId}`;
         const wait = (invitedAt.get(key) || 0) + INVITE_GAP_MS - Date.now();
@@ -315,11 +315,11 @@ export function attachSockets(io, rooms, { friends = null, hub = null, groups = 
         // A group whose place is only kept for them (the app was closed, it's waiting for them to come back) is left
         // for the new one; only one they're really in, from another device or tab, stops them.
         const old = groups.ofUser(user.id);
-        if (old?.members.get(user.id)?.connected) throw new Error("Ya estás en un grupo: sal de él para crear otro");
+        if (old?.members.get(user.id)?.connected) throw new Error("Ya estás en una sala: sal de ella para crear otra");
         if (old) leaveGroup(old, user.id, null);
         const ref = rooms.socketToRoom.get(socket.id);
         const room = ref && !ref.central ? rooms.get(ref.code) : null;
-        if (room?.matchmaking) throw new Error("Termina la partida pública para crear un grupo");
+        if (room?.matchmaking) throw new Error("Termina la partida pública para crear una sala");
         const group = groups.create(user, payload?.plan);
         if (room && room.hostId === user.id && !room.groupCode) {
           room.groupCode = group.code;
@@ -357,8 +357,8 @@ export function attachSockets(io, rooms, { friends = null, hub = null, groups = 
         const alive = other?.connected && (await other.timeout(SEAT_PING_MS).emitWithAck("room:ping").then(() => true, () => false));
         if (alive) {
           const place = groups.place(group);
-          if (place && !place.matchmaking) return ack?.({ ok: false, offerRoom: place.code, error: "Ya estás en este grupo desde otro dispositivo" });
-          throw new Error("Ya estás en este grupo desde otro dispositivo");
+          if (place && !place.matchmaking) return ack?.({ ok: false, offerRoom: place.code, error: "Ya estás en esta sala desde otro dispositivo" });
+          throw new Error("Ya estás en esta sala desde otro dispositivo");
         }
         if (!seated) await assertAccountFree(io, rooms, socket, user.id);
         const before = groups.ofUser(user.id);
@@ -397,7 +397,7 @@ export function attachSockets(io, rooms, { friends = null, hub = null, groups = 
     socket.on("group:home", (payload, ack) => {
       try {
         const { group, userId } = requireGroup(groups, socket);
-        groups.assertLeader(group, userId, "Solo el líder puede llevar al grupo al inicio");
+        groups.assertLeader(group, userId, "Solo el líder puede llevar a la sala al inicio");
         const place = groups.place(group);
         if (place?.matchmaking && !["lobby", "finished"].includes(place.phase)) throw new Error("Espera a que termine la partida");
         if (payload?.plan) groups.setPlan(group, userId, payload.plan);
@@ -458,7 +458,7 @@ export function attachSockets(io, rooms, { friends = null, hub = null, groups = 
         const user = bindUser(socket, payload?.user, rooms);
         // In a group, only its leader makes its private match, and the whole group goes into it.
         const group = groups.ofUser(user.id);
-        if (group) groups.assertLeader(group, user.id, "Solo el líder del grupo elige la partida");
+        if (group) groups.assertLeader(group, user.id, "Solo el líder de la sala elige la partida");
         await assertAccountFree(io, rooms, socket, user.id);
         leaveCurrentRoom(io, rooms, socket);
         const room = rooms.create({
@@ -484,12 +484,12 @@ export function attachSockets(io, rooms, { friends = null, hub = null, groups = 
       try {
         const user = bindUser(socket, payload?.user, rooms);
         const group = groups.ofUser(user.id);
-        if (group) groups.assertLeader(group, user.id, "Solo el líder del grupo puede buscar partida");
+        if (group) groups.assertLeader(group, user.id, "Solo el líder de la sala puede buscar partida");
         await assertAccountFree(io, rooms, socket, user.id);
         const party = group ? movable(group, user.id) : [];
         // Checked before anyone leaves where they are.
         cleanMatchRequest(payload);
-        if (party.length + 1 > PUBLIC_GROUP_MAX) throw new Error(`Una partida pública es de ${PUBLIC_GROUP_MAX} como mucho y tu grupo es de ${party.length + 1}`);
+        if (party.length + 1 > PUBLIC_GROUP_MAX) throw new Error(`Una partida pública es de ${PUBLIC_GROUP_MAX} como mucho y tu sala es de ${party.length + 1}`);
         leaveCurrentRoom(io, rooms, socket);
         for (const { socket: other } of party) leaveCurrentRoom(io, rooms, other);
         // Only an owner's account (checked here, never the client's word) can force the games of its own match.
@@ -642,18 +642,6 @@ export function attachSockets(io, rooms, { friends = null, hub = null, groups = 
       try {
         const { room, userId } = requireRoom(rooms, socket);
         rooms.previewGame(room, userId, game);
-        ack?.({ ok: true });
-        io.to(room.code).emit("room:state", rooms.publicState(room));
-      } catch (err) {
-        ack?.({ ok: false, error: err.message });
-      }
-    });
-
-    // A chat message to everyone in the room.
-    socket.on("room:chat", (text, ack) => {
-      try {
-        const { room, userId } = requireRoom(rooms, socket);
-        rooms.sendChat(room, userId, text);
         ack?.({ ok: true });
         io.to(room.code).emit("room:state", rooms.publicState(room));
       } catch (err) {
@@ -1156,7 +1144,7 @@ function requireRoom(rooms, socket) {
 // The group of a player's connection.
 function requireGroup(groups, socket) {
   const group = groups.ofSocket(socket.id);
-  if (!group) throw new Error("No estás en un grupo");
+  if (!group) throw new Error("No estás en una sala");
   return { group, userId: socket.data.userId };
 }
 

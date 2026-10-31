@@ -9,7 +9,6 @@ const isRight = (p) => Boolean(p?.lastAnswer && !p.lastAnswer.skipped && (p.last
 //  - a round's reveal: right or wrong (a near answer, a pin or a year, counts as right from half the points on);
 //  - Campo de minas, while it is played: each right answer found, and the mine stepped on, at once (Lluvia's own
 //    answers sound on the screen that sent them, lluvia/Game.jsx);
-//  - a chat message from someone else: a soft tap;
 //  - what the host does, for everyone else: a game picked or a match started (next), back to the menu or the lobby
 //    (back). The host already heard their own click.
 // With a central device in the room the match's sounds are its own: it plays every round's start, the reveal (right
@@ -21,18 +20,6 @@ export default function RoomSounds() {
   const prev = useRef(null);
 
   useEffect(() => installClickSounds(), []);
-
-  // A chat message from someone else (not the ones already there when the room was entered). The central device
-  // doesn't show the chat.
-  const lastChat = useRef(null);
-  const newestChat = room?.chat?.at(-1) || null;
-  useEffect(() => {
-    const key = room ? `${room.code}:${newestChat?.id ?? 0}` : null;
-    const was = lastChat.current;
-    lastChat.current = key;
-    if (isCentral || !was || !key || was === key || was.split(":")[0] !== room.code) return;
-    if (newestChat && newestChat.userId !== user?.id) play("tap");
-  }, [room?.code, newestChat?.id]);
 
   useEffect(() => {
     const before = prev.current;

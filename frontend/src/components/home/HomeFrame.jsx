@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
 import { findMode } from "../../modes/index.js";
+import { LEAVE_SALA_EVENT } from "../../lib/leaveSala.js";
 import { useApp } from "../../lib/store.jsx";
 import { CLASSIC, isPublicGame, rememberPlan, useLocalPlan } from "../../lib/plan.js";
 import { withSound } from "../../lib/sounds.js";
@@ -21,13 +22,13 @@ const CHOOSE = { id: "none", name: "Elige un juego", icon: "grid", color: "neutr
 
 // Inicio, a private match's lobby and the search for a public match are one screen: the game's big card in the middle
 // (its settings behind a summary at its bottom) and the bar at the bottom (the group, "Vas a jugar" and the one yellow
-// button). Arriba la info, al centro el juego, abajo tu grupo y la acción.
+// button). Arriba la info, al centro el juego, abajo tu sala y la acción.
 // The card's settings on Inicio: a public match's are the same for everyone, so they can't be changed (no "Ajustes");
 // a private match's belong to its room, so "Ajustes" makes the match first (the group comes into it) and they open there.
 // Nobody has a group to begin with, and nothing is chosen on a new device: the card says "Elige un juego" and JUGAR
 // waits. Choosing a game makes your group straight away (your "sala": its code is on the bar to invite) and, on the
 // private side, its match too; without one the bar only has "Unirse" with a friend's code. In a group, its faces, its
-// code, "Invitar" and "Salir del grupo". A group only takes its players together: its leader decides and everyone goes
+// code, "Invitar" and "Salir de la sala". A group only takes its players together: its leader decides and everyone goes
 // (the server moves them, game/groups.js).
 //  - On Inicio: the plan is this device's, or the group's (its leader's). "Partida pública" searches for a public match
 //    of the game (for the whole group; the Clásico's is the roulette's, without a game); "Partida privada" makes the
@@ -36,7 +37,7 @@ const CHOOSE = { id: "none", name: "Elige un juego", icon: "grid", color: "neutr
 //    group's leader) changes. Switching it to "Partida pública" goes back to Inicio (the whole group) to search.
 //  - Searching (a public room that waits): the card says how the search goes and the leader's button cancels it (the
 //    whole group goes back to Inicio).
-//  - A group's player away from it (they went back alone, or came in while it plays a public match): "Ir con el grupo"
+//  - A group's player away from it (they went back alone, or came in while it plays a public match): "Ir con la sala"
 //    when they can go into its private match, otherwise they wait for it.
 // Without a name (a guest's first time), the name is asked first (PlaySheet) and then it does what was asked.
 export default function HomeFrame({ room = null, onToast, Lobby = null, leaving = false }) {
@@ -45,8 +46,14 @@ export default function HomeFrame({ room = null, onToast, Lobby = null, leaving 
   const [localPlan, updateLocalPlan] = useLocalPlan();
   const [sheet, setSheet] = useState(null);
   const [pending, setPending] = useState(null);
-  // "Salir del grupo" asks first.
+  // "Salir de la sala" asks first.
   const [confirmLeave, setConfirmLeave] = useState(false);
+  // The top bar's "Volver" of a sala with more people asks here.
+  useEffect(() => {
+    const ask = () => setConfirmLeave(true);
+    window.addEventListener(LEAVE_SALA_EVENT, ask);
+    return () => window.removeEventListener(LEAVE_SALA_EVENT, ask);
+  }, []);
   // What is being done ("match", "join", "group", "leave"...), or "".
   const [busyType, setBusyType] = useState("");
   const busy = Boolean(busyType);
@@ -56,7 +63,7 @@ export default function HomeFrame({ room = null, onToast, Lobby = null, leaving 
   // "Ajustes" made the private match: its settings open as soon as its lobby shows (SettingsPanel).
   const [settingsAsked, setSettingsAsked] = useState(false);
   const start = useStartGame(room || { players: [], game: null });
-  // Phones open "Tu grupo" from the top bar and have no group's bar to leave from: "Salir del grupo" goes in it.
+  // Phones open "Tu sala" from the top bar and have no group's bar to leave from: "Salir de la sala" goes in it.
   const phone = useNarrow();
 
   const searching = Boolean(room?.matchmaking);
@@ -76,7 +83,8 @@ export default function HomeFrame({ room = null, onToast, Lobby = null, leaving 
   const mode = (plan.game && findMode(plan.game)) || null;
   // Inicio with nothing chosen yet (a new device): "Elige un juego" and JUGAR waits.
   const noGame = !mode && !room && !searching;
-  const needsName = !user?.name || user.isGuest;
+  // The name is asked once: a guest who already gave theirs (choosing a game, joining a sala) isn't asked again.
+  const needsName = !user?.name;
   const leaderName = group?.leaderName || "el líder";
 
   // The host gave (or took back) permission to change the match's settings: say so, once, when it changes.
@@ -143,7 +151,7 @@ export default function HomeFrame({ room = null, onToast, Lobby = null, leaving 
       setSettingsAsked(false);
       // Already playing in that match from another device: CentralOffer asks about this one instead.
       if (err.offer) return null;
-      (forGroup ? setGroupError : setError)(err.message || (forGroup ? "No pudimos entrar a ese grupo" : "Algo salió mal, inténtalo otra vez"));
+      (forGroup ? setGroupError : setError)(err.message || (forGroup ? "No pudimos entrar a esa sala" : "Algo salió mal, inténtalo otra vez"));
       return false;
     } finally {
       setBusyType("");
@@ -168,7 +176,7 @@ export default function HomeFrame({ room = null, onToast, Lobby = null, leaving 
     try {
       await withSound(() => checkGroup(code), "next");
     } catch (err) {
-      setGroupError(err.message || "No hay ningún grupo con ese código");
+      setGroupError(err.message || "No hay ninguna sala con ese código");
       return false;
     }
     return run({ type: "join", code });
@@ -180,9 +188,9 @@ export default function HomeFrame({ room = null, onToast, Lobby = null, leaving 
     try {
       await leaveGroup();
       setSheet(null);
-      onToast?.("Saliste del grupo", "logout");
+      onToast?.("Saliste de la sala", "logout");
     } catch (err) {
-      setError(err.message || "No se pudo salir del grupo");
+      setError(err.message || "No se pudo salir de la sala");
     } finally {
       setBusyType("");
     }
@@ -238,13 +246,13 @@ export default function HomeFrame({ room = null, onToast, Lobby = null, leaving 
     if (group && !isLeader) note = `Buscando con ${leaderName}…`;
     else action = { label: "Cancelar", neutral: true, sound: "back", onClick: cancelSearch, disabled: busy };
   } else if (room && !decides) {
-    note = `Esperando a ${room.hostName || "el anfitrión"}…`;
+    action = { label: "Esperando", play: true, neutral: true, waiting: true, disabled: true };
   } else if (away && !group.place.public) {
-    action = { label: busyType === "follow" ? "Entrando…" : "Ir con el grupo", sound: "none", disabled: busy, onClick: () => run({ type: "follow" }) };
+    action = { label: busyType === "follow" ? "Entrando…" : "Ir con la sala", sound: "none", disabled: busy, onClick: () => run({ type: "follow" }) };
   } else if (away && !isLeader) {
-    note = "Tu grupo está jugando una partida…";
+    action = { label: "Esperando", play: true, neutral: true, waiting: true, disabled: true };
   } else if (!decides) {
-    note = `Esperando a ${leaderName}…`;
+    action = { label: "Esperando", play: true, neutral: true, waiting: true, disabled: true };
   } else if (noGame) {
     action = { label: "Jugar", locked: true, disabled: true };
   } else if (plan.audience === "publica") {
@@ -277,7 +285,7 @@ export default function HomeFrame({ room = null, onToast, Lobby = null, leaving 
       ? { summary: publicMatchLine(mode.id) || "Sin partidas públicas por ahora", fixed: true }
       : decides && !away
       ? { summary: privateMatchLine(mode.id), onOpen: () => run({ type: "setup", game: plan.game }), disabled: busy }
-      : { summary: privateMatchLine(mode.id), note: away ? "Tu grupo ya está jugando" : `Los elige ${leaderName}` };
+      : { summary: privateMatchLine(mode.id), note: away ? "Tu sala ya está jugando" : `Los elige ${leaderName}` };
 
   // The group's faces: dimmed whoever isn't with it now (or is reconnecting).
   const members = group ? group.members.map((m) => ({ ...m, connected: m.connected && m.here })) : [];
@@ -369,10 +377,10 @@ export default function HomeFrame({ room = null, onToast, Lobby = null, leaving 
       {createPortal(
         <ConfirmDialog
           open={confirmLeave && Boolean(group)}
-          title="¿Seguro que quieres salir del grupo?"
-          text="Dejarás de jugar con tu grupo y, si están en su partida privada, saldrás de ella. Para volver tendrás que unirte otra vez con el código."
+          title="¿Salir de la sala?"
+          text="Para volver tendrás que usar el código otra vez."
           cancelLabel="Quedarme"
-          confirmLabel="Salir del grupo"
+          confirmLabel="Salir de la sala"
           onCancel={() => setConfirmLeave(false)}
           onConfirm={() => {
             setConfirmLeave(false);

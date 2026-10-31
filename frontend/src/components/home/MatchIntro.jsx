@@ -240,7 +240,7 @@ function PreviousGame({ intro, players, color = "site" }) {
 /**
  * Before each game of a public match or a Clásico (the room's "intro" phase): a roulette picks the game among the ones
  * still to play, then a short tutorial of it for 5 s. It takes the room screen's main card (Home), beside the room's
- * column, so the top bar, the players and the chat stay in sight. The roulette's matches have no set number of games
+ * column, so the top bar and the players stay in sight. The roulette's matches have no set number of games
  * (the first to win 2): its top line says which game this is, with a dot for each game it has so far (the two it always
  * plays, and one more each time nobody has won it).
  */

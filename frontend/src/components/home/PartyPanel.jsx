@@ -5,11 +5,10 @@ import CentralSpot from "./CentralSpot.jsx";
 import Icon from "./Icon.jsx";
 import FriendsRoomControls from "./FriendsRoomControls.jsx";
 import PlayerMenu from "./PlayerMenu.jsx";
-import { ChatForm, ChatMessages, ChatSheet, useChatUnread, usePhone, useRoomChat } from "./RoomChat.jsx";
 import { useInvite } from "./useInvite.js";
 import { shownCode, useHiddenCode } from "../../lib/hiddenCode.js";
 import InviteFriends from "./InviteFriends.jsx";
-import { useResultsLook, useScoreboardLook } from "../../lib/ownerView.js";
+import { useScoreboardBadge, useScoreboardLook } from "../../lib/ownerView.js";
 import { findVariant } from "./matchInfo.js";
 import { findMode } from "../../modes/index.js";
 import { formatElo } from "../../lib/gameStats.js";
@@ -102,23 +101,16 @@ function answeredLine(room, players) {
   return `Respondieron ${inRound.filter((p) => p.answered).length}/${inRound.length}`;
 }
 
-// A ref that makes a folded part of the column `inert` (not tappable, not reachable with Tab, hidden from screen
-// readers) unless `shown`.
-const inertUnless = (shown) => (el) => {
-  if (el) el.inert = !shown;
-};
-
 // The room's side column, on the room screen and during a match: the group's code (a group's private match), who's in
 // and the way out.
 // With `scores` (a match) the players are ranked by points, each with their score and how their round is going.
 // `className` lets a game add its own (Geografía hides the column on phones, where it shows a strip instead).
 // At the top of the players, while the room has one, the "Dispositivo central" (CentralSpot): the screen that shows the
 // match, picked from a player's menu (the host or a player with the settings permission). On the central device itself
-// the column only shows (`display`): no menus, chat or way out, and the code to join instead of "Invitar".
-// `group` is "Tu grupo" (GroupSheet): the code is in the sheet's own box above, the list is "En el grupo", and under it
+// the column only shows (`display`): no menus or way out, and the code to join instead of "Invitar".
+// `group` is "Tu sala" (GroupSheet): the code is in the sheet's own box above, the list is "En la sala", and under it
 // the leader's options for their friends and the friends to invite.
-// In a match (`scores`) the header says how the round goes (`status`: "Respondieron 3/4"; by default how many answered)
-// and the chat is in the match's bottom bar (MatchFrame.jsx), not here.
+// In a match (`scores`) the header says how the round goes (`status`: "Respondieron 3/4"; by default how many answered).
 export default function PartyPanel({ room, onToast, scores = false, display = false, group = false, className = "", status }) {
   const { user, isCentral, group: myGroup } = useApp();
   const [menuFor, setMenuFor] = useState(null);
@@ -130,23 +122,6 @@ export default function PartyPanel({ room, onToast, scores = false, display = fa
   const isHost = Boolean(viewerId) && room.hostId === viewerId;
   // The host or a player with the settings permission: they pick the central device (any player, themselves too).
   const canCentral = Boolean(viewerId) && (isHost || Boolean(room.coHosts?.includes(viewerId)));
-  // The chat opens in the column (while the room waits and in a match): the players' list (or the scoreboard) folds
-  // into a row of faces (tap it, or Escape, to close the chat and unfold it again).
-  // On phones the same button opens the chat in a sheet from the bottom, as in the room's bottom bar, so it looks the
-  // same in the room and in a match.
-  const [chatOpen, setChatOpen] = useState(false);
-  const [sheetOpen, setSheetOpen] = useState(false);
-  const phone = usePhone();
-  const chatting = chatOpen && !phone;
-  const unread = useChatUnread(room, chatting || sheetOpen);
-  const chat = useRoomChat(room, { focus: chatting });
-  useEffect(() => {
-    if (!chatting) return undefined;
-    const onKey = (e) => e.key === "Escape" && setChatOpen(false);
-    document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
-  }, [chatting]);
-
   // A match decided by games won (a public one or a Clásico) sends each player's `wins`. Once it's over, the column lists
   // them by games won, the one with most highlighted. Private rooms keep no scoreboard across their matches.
   const hasWins = room.players.some((p) => p.wins !== undefined);
@@ -165,7 +140,7 @@ export default function PartyPanel({ room, onToast, scores = false, display = fa
   // owner trying them.
   const scoreLook = useScoreboardLook();
   // The "insignia": a gold box with the number, or with the owner's "neutro" tone a small crown and the number.
-  const { tone } = useResultsLook();
+  const tone = useScoreboardBadge();
   const gameWins = hasWins && (scores ? room.phase !== "finished" : showBoard);
 
   const inMatch = room.phase !== "lobby";
@@ -175,7 +150,7 @@ export default function PartyPanel({ room, onToast, scores = false, display = fa
 
   return (
     <aside
-      className={`tv-party${scores ? " is-scores" : ""}${chatting ? " is-chat" : ""}${display ? " is-display" : ""} ${className}`.trim()}
+      className={`tv-party${scores ? " is-scores" : ""}${display ? " is-display" : ""} ${className}`.trim()}
       aria-label="Tu sala"
     >
       {/* Only a group's private match has a code to share (the group's). Nobody joins a public match but by searching. The
@@ -183,7 +158,7 @@ export default function PartyPanel({ room, onToast, scores = false, display = fa
       {room.groupCode && !room.matchmaking && !group && !scores && (
       <div className="tv-party-codebox">
         <div className="tv-party-codehead">
-          <p className="tv-mono-label">Código del grupo</p>
+          <p className="tv-mono-label">Código de la sala</p>
           {/* Hides the code on this device's screens, for streaming. */}
           <button
             type="button"
@@ -211,7 +186,7 @@ export default function PartyPanel({ room, onToast, scores = false, display = fa
       {group && myGroup?.leaderId === viewerId && <FriendsRoomControls group={myGroup} onToast={onToast} />}
 
       <div className="tv-party-title">
-        <h2>{scores ? "Marcador" : group ? "En el grupo" : "En la sala"}</h2>
+        <h2>{scores ? "Marcador" : group ? "En la sala" : "En la sala"}</h2>
         {scores ? (
           <span className="tv-party-status-pill">{status ?? answeredLine(room, players)}</span>
         ) : (
@@ -219,8 +194,7 @@ export default function PartyPanel({ room, onToast, scores = false, display = fa
         )}
       </div>
 
-      {/* Folds away (and the row of faces unfolds) while the chat is open. */}
-      <div className="tv-fold tv-party-people" ref={inertUnless(!chatting)}>
+      <div className="tv-party-people">
         <div>
           {showSpot && <CentralSpot room={room} canEdit={canCentral} onToast={onToast} />}
           <ul className="tv-party-players" aria-label={scores ? "Marcador" : "Jugadores en la sala"}>
@@ -302,7 +276,7 @@ export default function PartyPanel({ room, onToast, scores = false, display = fa
               );
             })}
           </ul>
-          {/* In "Tu grupo": your friends who are online, to invite into the group. */}
+          {/* In "Tu sala": your friends who are online, to invite into the group. */}
           {group && myGroup && <InviteFriends group={myGroup} onToast={onToast} />}
           {spectators.length > 0 && (
             <>
@@ -327,55 +301,6 @@ export default function PartyPanel({ room, onToast, scores = false, display = fa
           )}
         </div>
       </div>
-      <div className="tv-fold tv-party-faces" ref={inertUnless(chatting)}>
-        <div>
-          <button type="button" className="tv-party-stack" data-sound="back" onClick={() => setChatOpen(false)}>
-            <span className="tv-party-stack-faces" aria-hidden="true">
-              {players.slice(0, 5).map((p) => (
-                <Avatar key={p.id} name={p.name} avatar={p.avatar} className={p.connected ? "" : "is-away"} />
-              ))}
-              {players.length > 5 && <span className="tv-avatar tv-avatar--empty">+{players.length - 5}</span>}
-            </span>
-            <span className="tv-party-stack-text">Ver jugadores</span>
-            <Icon name="chevron" size={18} strokeWidth={3} className="tv-party-stack-chevron" />
-          </button>
-        </div>
-      </div>
-
-
-      {/* The chat, while the room waits and in a match. Its messages grow in place of the players' list; its box takes the
-          "Chat" button's place, swapping with it where it stands. The central device only shows the room. */}
-      {!display && !scores && (
-        <>
-          <section className="tv-party-chatwrap" aria-label="Chat de la sala" ref={inertUnless(chatting)}>
-            <div className="tv-chat tv-chat--side">
-              <ChatMessages chat={chat} />
-            </div>
-          </section>
-          <div className="tv-party-chatbar">
-            <button
-              type="button"
-              className="tv-party-chatbtn"
-              ref={inertUnless(!chatting)}
-              onClick={() => {
-                setMenuFor(null);
-                if (phone) setSheetOpen(true);
-                else setChatOpen(true);
-              }}
-              aria-label={unread ? `Chat: ${unread} mensajes nuevos` : "Abrir el chat"}
-            >
-              <Icon name="chat" size={18} strokeWidth={2.6} />
-              Chat
-              {unread > 0 && <span className="tv-chat-badge">{unread > 9 ? "9+" : unread}</span>}
-            </button>
-            <div className="tv-party-chatform" ref={inertUnless(chatting)}>
-              <ChatForm chat={chat} />
-            </div>
-          </div>
-
-          {sheetOpen && <ChatSheet room={room} onClose={() => setSheetOpen(false)} />}
-        </>
-      )}
     </aside>
   );
 }

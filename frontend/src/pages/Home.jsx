@@ -20,8 +20,8 @@ const choiceName = (mode) => mode?.fullName || mode?.name || "un juego";
 // The old pages of "¿Cómo quieres jugar?" (/jugar/casual, /jugar/privada…) are Inicio now, on the side they named.
 const OPTION_AUDIENCE = { casual: "publica", competitivo: "publica", privada: "grupo" };
 
-// Inicio and the room's screen (/, or your sala's /grupo/CODE while you have one, also while a room waits, and
-// /sala/CODE while a public match or a Clásico plays; another group's /grupo/CODE is its invite link). Inicio, a private match while it waits and the search for a public match are
+// Inicio and the room's screen (/, or your sala's /sala/CODE while you have one, also while a room waits, and
+// /partida/CODE while a public match or a Clásico plays; another group's /sala/CODE is its invite link). Inicio, a private match while it waits and the search for a public match are
 // the same frame (HomeFrame): the game's card in the middle and the
 // group's bar at the bottom. Before each game of a public match or a Clásico, its roulette and tutorial (MatchIntro)
 // take the card's place beside the scoreboard. The room's central device shows its own big waiting screen
@@ -79,7 +79,7 @@ export default function Home() {
       const key = `${r.userId}:${r.at}`;
       if (askedBefore.current.has(key)) continue;
       askedBefore.current.add(key);
-      showToast(`${r.name} quiere unirse a tu grupo`, "users");
+      showToast(`${r.name} quiere unirse a tu sala`, "users");
     }
   }, [group?.joinRequests, isLeader]);
 
@@ -100,7 +100,7 @@ export default function Home() {
     if (inviteCode) nav("/", { replace: true });
   }, [inviteCode, nav]);
 
-  // A group's invite link (/grupo/CODE) joins it straight away (and goes where it is), asking for a name first if we
+  // A group's invite link (/sala/CODE) joins it straight away (and goes where it is), asking for a name first if we
   // don't have one. Then the address is Inicio's, now the group's own (or the group's match's, RoomNavigator).
   const groupInvite = resolveGroupCode(groupParam, group)?.toUpperCase();
   useEffect(() => {
@@ -117,12 +117,12 @@ export default function Home() {
       return;
     }
     joinGroup(groupInvite)
-      .then(() => showToast("Entraste al grupo", "users"))
-      .catch((err) => !err.offer && showToast(err.message || "No pudimos entrar a ese grupo"))
+      .then(() => showToast("Entraste a la sala", "users"))
+      .catch((err) => !err.offer && showToast(err.message || "No pudimos entrar a esa sala"))
       .finally(() => nav("/", { replace: true }));
   }, [groupInvite, user?.name, askName]);
 
-  // A match's address (/sala/XOTRIV: an older link, a reload during a public match) joins it straight away, asking for a
+  // A match's address (/partida/XOTRIV: an older link, a reload during a public match) joins it straight away, asking for a
   // name first if we don't have one.
   useEffect(() => {
     if (!inviteCode || room?.code === inviteCode || sheetOpen) return;
@@ -133,7 +133,7 @@ export default function Home() {
     }
     joinRoom(inviteCode).catch((err) => {
       // Already playing in it from another device: CentralOffer asks whether this one is its central device.
-      if (!err.offer) showToast(err.message || "No pudimos entrar a ese grupo");
+      if (!err.offer) showToast(err.message || "No pudimos entrar a esa sala");
       nav("/", { replace: true });
     });
   }, [inviteCode, user?.name]);

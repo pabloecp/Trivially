@@ -65,7 +65,7 @@ const code = made.group.code;
 assert.equal(made.group.leaderId, "gst_ana");
 assert.deepEqual(made.group.plan, { game: "opciones", audience: "publica" });
 assert.equal(made.group.place, null, "on Inicio");
-assert.match((await ana.call("group:create", user("Ana"))).error, /Ya estás en un grupo/);
+assert.match((await ana.call("group:create", user("Ana"))).error, /Ya estás en una sala/);
 
 // Someone who closed the app keeps their place for a while, but making a new group (they came back without it) takes
 // them out of the old one instead of saying they're already in a group.
@@ -80,7 +80,7 @@ assert.equal(groups.groups.get(fedeOld), undefined, "the old group, empty, is go
 await fede2.call("group:leave", {});
 
 // Beto joins with the code (checked first); a wrong code says so.
-assert.match((await beto.call("group:check", "ZZZZZ")).error, /No hay ningún grupo/);
+assert.match((await beto.call("group:check", "ZZZZZ")).error, /No hay ninguna sala/);
 assert.equal((await beto.call("group:check", code)).ok, true);
 const joined = await beto.call("group:join", { ...user("Beto"), code });
 assert.equal(joined.ok, true);
@@ -172,7 +172,7 @@ assert.ok(again.players.has("gst_dani"), "Dani stays with his results");
 const extra = ["eva", "fede", "gabi"].map(connect);
 for (const s of extra) await s.call("group:join", { user: { name: s.id }, code });
 const tooMany = await ana.call("match:find", { ...user("Ana"), kind: "casual", game: "historia" });
-assert.match(tooMany.error, /5 como mucho y tu grupo es de 6/);
+assert.match(tooMany.error, /5 como mucho y tu sala es de 6/);
 assert.ok(next.players.get("gst_beto")?.connected, "Beto is still where he was");
 
 // The leader takes someone out (and out of the group's match), and someone leaves.

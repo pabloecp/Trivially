@@ -263,10 +263,10 @@ export function findMode(id) {
 // A match with a roulette before each game (public, or a Clásico), played without changing the address.
 export const isInlineMatch = (room) => Boolean(room?.matchmaking || room?.run?.classic) && isGameTile(findMode(room.game) || {});
 
-// Inicio's address: "/" without a sala, and with one (made when a game is chosen, or joined) its own, /grupo/CODE,
+// Inicio's address: "/" without a sala, and with one (made when a game is chosen, or joined) its own, /sala/CODE,
 // which is also its invite link. Both are the same screen (RoomScreen, App.jsx), so going from one to the other
 // changes nothing on the page. `groupCode` is this tab's group's (tabGroupCode).
-export const homePath = (groupCode) => (groupCode ? `/grupo/${urlCode(groupCode)}` : "/");
+export const homePath = (groupCode) => (groupCode ? `/sala/${urlCode(groupCode)}` : "/");
 
 // The screen a room's players belong on. While it waits (a private match before it starts, the search for a public
 // one) it's Inicio itself, on Inicio's address (`home`, homePath): the same screen (HomeFrame), so nothing says you
@@ -276,10 +276,10 @@ export function roomPath(room, _hidden, home = "/") {
   if (waitsOnInicio(room)) return home;
   const mode = findMode(room.game);
   // A public match or a Clásico never leaves the room's address: the intro and every game's screens take turns on
-  // /sala/CODE (RoomScreen, App.jsx). Its end is still the playlist's results screen.
-  if (isInlineMatch(room) && room.phase !== "finished") return `/sala/${urlCode(room.code)}`;
+  // /partida/CODE (RoomScreen, App.jsx). Its end is still the playlist's results screen.
+  if (isInlineMatch(room) && room.phase !== "finished") return `/partida/${urlCode(room.code)}`;
   // A public match's roulette and tutorial ("intro") are on the room screen too, beside the room's column.
-  return room.phase !== "intro" && mode?.path ? mode.path(room) : `/sala/${urlCode(room.code)}`;
+  return room.phase !== "intro" && mode?.path ? mode.path(room) : `/partida/${urlCode(room.code)}`;
 }
 
 /** Whether a room waits on Inicio (`roomPath` is Inicio's address): for its players there's nowhere to go back from. */

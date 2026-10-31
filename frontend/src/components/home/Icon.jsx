@@ -261,7 +261,6 @@ const PATHS = {
       <path d="m21.85 2.15-10.94 10.94" />
     </>
   ),
-  chat: <path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z" />,
   // An arrow going up: send what was pasted (the Spotify playlist's link).
   upload: <path d="M12 19V5M5 12l7-7 7 7" />,
   // A bin: delete for good (a saved Spotify playlist).

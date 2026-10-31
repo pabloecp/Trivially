@@ -6,6 +6,7 @@ import { findMode } from "../../modes/index.js";
 import Avatar from "./Avatar.jsx";
 import Icon from "./Icon.jsx";
 import Segmented from "./Segmented.jsx";
+import { codeFromText } from "./useInvite.js";
 import { MATCH_KINDS, OPEN_SIZES, gamesFor } from "./matchInfo.js";
 import "../../styles/match.css";
 
@@ -406,7 +407,7 @@ export default function PlaySheet({ mode, joinCode, open, onClose, askName = fal
                   aria-describedby={error ? "tv-sheet-error" : undefined}
                   value={code}
                   onChange={(e) => {
-                    setCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, ROOM_CODE_LENGTH));
+                    setCode(codeFromText(e.target.value, ROOM_CODE_LENGTH));
                     setError("");
                   }}
                   placeholder="YOAVH"

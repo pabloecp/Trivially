@@ -13,10 +13,11 @@ import SpotifyIcon from "../components/home/SpotifyIcon.jsx";
 import Icon from "../components/home/Icon.jsx";
 import { BLOB_COLORS, HOW_TO_GET, blobColor, canUseColor } from "../lib/blobColors.js";
 
-// Only what matters: how many matches you won and how many questions you got right.
+// Only what matters: how many matches you won, how many questions you got right and how many daily challenges you completed.
 const STATS = [
   { key: "wins", label: "Victorias", color: "amber" },
   { key: "correctAnswers", label: "Aciertos", color: "green" },
+  { key: "dailyDone", label: "Retos del día", color: "pink" },
 ];
 
 // Badge shown on the profile for owners (plain users get none).
@@ -152,7 +153,7 @@ function ProfileScreen() {
         .then((d) => {
           if (!alive) return;
           setProfileData(d.user);
-          setStats(d.user?.stats || null);
+          setStats(d.user?.stats ? { ...d.user.stats, dailyDone: d.user.dailyDone || 0 } : null);
           setLoadingUser(false);
         })
         .catch(() => {
@@ -167,7 +168,7 @@ function ProfileScreen() {
       api(`/api/users/${currentUser.id}`)
         .then((d) => {
           if (!alive) return;
-          setStats(d.user?.stats || null);
+          setStats(d.user?.stats ? { ...d.user.stats, dailyDone: d.user.dailyDone || 0 } : null);
           if (d.user) setProfileData(d.user);
         })
         .catch(() => {})
@@ -343,40 +344,29 @@ function ProfileScreen() {
             </div>
           )}
         </div>
+        {/* The three stats beside the name (accounts only: guests keep none). */}
+        {!isGuest && (
+          <div className="tv-profile-stats" aria-busy={statsLoading} aria-label="Estadísticas">
+            {STATS.map((s, i) => (
+              <div key={s.key} className={`tv-stat tv-stat--pop tv-c-${s.color}`} style={{ "--i": i }}>
+                <span className="tv-stat-dot" aria-hidden="true" />
+                <span className="tv-stat-label">{s.label}</span>
+                <span className="tv-stat-value">
+                  {statsLoading ? <span className="tv-skeleton" aria-hidden="true" /> : stats ? <CountUp value={stats[s.key] || 0} /> : "—"}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
       </section>
 
       <div className={`tv-profile-grid${isOtherUser ? " is-single" : ""}`}>
-        <section className="tv-card" aria-labelledby="tv-stats-title">
-          <div className="tv-card-head">
-            <h2 id="tv-stats-title" className="tv-card-title">Estadísticas</h2>
-            <span className="tv-live">
-              <span className="tv-pulse" aria-hidden="true" />
-              {statsLoading && !isGuest ? "Cargando…" : "En vivo"}
-            </span>
-          </div>
-          {isGuest ? (
-            <p className="tv-hint">Los invitados no guardan estadísticas.</p>
-          ) : (
-            <div className="tv-stat-grid tv-stat-grid--two" aria-busy={statsLoading}>
-              {STATS.map((s, i) => (
-                <div key={s.key} className={`tv-stat tv-stat--pop tv-c-${s.color}`} style={{ "--i": i }}>
-                  <span className="tv-stat-dot" aria-hidden="true" />
-                  <span className="tv-stat-label">{s.label}</span>
-                  <span className="tv-stat-value">
-                    {statsLoading ? (
-                      <span className="tv-skeleton" aria-hidden="true" />
-                    ) : stats ? (
-                      <CountUp value={stats[s.key] || 0} />
-                    ) : (
-                      "—"
-                    )}
-                  </span>
-                </div>
-              ))}
-            </div>
-          )}
-          {!isOtherUser && <BlobColors user={currentUser} onPick={onPickColor} />}
-        </section>
+        {/* The colour of the Blob, a section of its own. */}
+        {!isOtherUser && (
+          <section className="tv-card tv-profile-blob" aria-label="Color de tu Blob">
+            <BlobColors user={currentUser} onPick={onPickColor} />
+          </section>
+        )}
 
         {!isOtherUser && (
           <section className="tv-card" aria-labelledby="tv-account-title">

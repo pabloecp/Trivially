@@ -208,7 +208,7 @@ assert.equal(bots.length, 4);
 assert.equal(new Set(bots.map((b) => b.name)).size, 4, "every bot has its own name");
 const seen = mgr.publicState(lone).players.find((p) => p.id === bots[0].id);
 assert.equal(seen.bot, undefined, "nobody can tell a bot from a person");
-assert.ok(seen.isGuest && bots[0].id.startsWith("gst_"), "bots look like guests");
+assert.ok(bots.every((b) => (b.isGuest ? b.id.startsWith("gst_") && b.avatar === "#FFFFFF" : b.id.startsWith("usr_"))), "bots look like guests or accounts");
 mgr.checkMatchFull(lone);
 assert.ok(lone.matchmaking.startsAt, "bots fill the room: it starts");
 clearTimeout(lone.matchmaking.timer);

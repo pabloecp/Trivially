@@ -1,3 +1,4 @@
+import { LEAVE_SALA_EVENT } from "../../lib/leaveSala.js";
 import { useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { homePath, roomPath, waitsOnInicio } from "../../modes/index.js";
@@ -221,9 +222,13 @@ export default function TvTopbar() {
   } else if (room && waitsHere && !room.matchmaking) {
     // A private match waiting on Inicio: back out of it (its leader takes the group, anyone else goes alone).
     leaveButton = backChip({ "aria-label": "Salir de la partida privada", onClick: leaveNow });
-  } else if (onHome && !room && group && group.members.length <= 1) {
-    // Your sala with only you in it: "Volver" leaves it, back to "Elige un juego".
-    leaveButton = backChip({ "aria-label": "Salir de tu sala", onClick: () => leaveGroup() });
+  } else if (onHome && !room && group) {
+    // Your sala on Inicio: "Volver" leaves it, back to "Elige un juego". Alone it goes at once; with more people Inicio asks
+    // first (HomeFrame listens for LEAVE_SALA_EVENT).
+    leaveButton = backChip({
+      "aria-label": "Salir de tu sala",
+      onClick: () => (group.members.length <= 1 ? leaveGroup() : window.dispatchEvent(new Event(LEAVE_SALA_EVENT))),
+    });
   } else if (!onHome) {
     leaveButton = backChip({ "aria-label": upPath(pathname) === "/" ? "Volver al inicio" : "Volver", onClick: goUp });
   }
@@ -327,9 +332,9 @@ export default function TvTopbar() {
                 ? "Todos volverán a la espera de la partida, en el mismo juego."
                 : "La partida se acabará para todos y volverán a la espera, en el mismo juego.")
             : leadsGroup
-            ? modesErr || "Todo el grupo volverá al inicio contigo."
+            ? modesErr || "Toda la sala volverá al inicio contigo."
             : group
-            ? "Dejarás la partida en curso. Seguirás en tu grupo."
+            ? "Dejarás la partida en curso. Seguirás en tu sala."
             : "Dejarás la partida en curso."
         }
         cancelLabel={isCentral ? "Seguir mostrándola" : "Seguir jugando"}
