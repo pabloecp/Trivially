@@ -1668,26 +1668,12 @@ html.tv-geo-playing .tv-app .tv-topbar:has(.tv-topbar-round) { display: flex; }
 .tv-blob-note b { color: var(--tv-text); }
 
 /* ---------- The owners' gold Blob (Blob.jsx) ---------- */
-/* Metal: a warm aura that breathes around it, a light that sweeps across the body now and then, and two sparkles. */
-.tv-blob.is-gold { overflow: visible; filter: drop-shadow(0 0 4px rgba(255, 201, 60, 0.55)); animation: tvGoldAura 2.8s ease-in-out infinite; }
-.tv-blob-shine { animation: tvGoldShine 3.4s ease-in-out infinite; }
-.tv-blob-spark { transform-box: fill-box; transform-origin: center; animation: tvGoldSpark 2.4s ease-in-out infinite; }
-.tv-blob-spark.is-late { animation-delay: 1.2s; }
-@keyframes tvGoldAura {
-  50% { filter: drop-shadow(0 0 9px rgba(255, 214, 90, 0.9)) drop-shadow(0 0 2px rgba(255, 244, 184, 0.8)); }
-}
+/* Metal, with no glow around it: a line of light crosses the body (inside it only) once every 5 s. */
+.tv-blob-shine { animation: tvGoldShine 5s ease-in-out infinite; }
 @keyframes tvGoldShine {
-  0%, 35% { transform: translateX(0); }
-  75%, 100% { transform: translateX(170px); }
-}
-@keyframes tvGoldSpark {
-  0%, 100% { opacity: 0; transform: scale(0.3) rotate(0deg); }
-  45% { opacity: 1; transform: scale(1) rotate(45deg); }
-  70% { opacity: 0; transform: scale(0.4) rotate(90deg); }
+  0% { transform: translateX(0); }
+  28%, 100% { transform: translateX(160px); }
 }
 @media (prefers-reduced-motion: reduce) {
-  .tv-blob.is-gold,
-  .tv-blob-shine,
-  .tv-blob-spark { animation: none; }
-  .tv-blob-spark { opacity: 1; }
+  .tv-blob-shine { animation: none; }
 }
