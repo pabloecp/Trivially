@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
 import { findMode } from "../../modes/index.js";
@@ -78,6 +78,17 @@ export default function HomeFrame({ room = null, onToast, Lobby = null, leaving 
   const noGame = !mode && !room && !searching;
   const needsName = !user?.name || user.isGuest;
   const leaderName = group?.leaderName || "el líder";
+
+  // The host gave (or took back) permission to change the match's settings: say so, once, when it changes.
+  const canSet = Boolean(room && user?.id && room.hostId !== user.id && room.coHosts?.includes(user.id));
+  const hadSet = useRef(null);
+  useEffect(() => {
+    const before = hadSet.current;
+    hadSet.current = room ? canSet : null;
+    if (!room || before === null || before === canSet) return;
+    if (canSet) onToast?.(`${room.hostName || "El anfitrión"} te dio permiso para cambiar los ajustes`, "sliders");
+    else onToast?.("Ya no puedes cambiar los ajustes de la partida", "lock");
+  }, [canSet, room?.code]);
 
   // Leaving the match or the group later finds the same game and side on Inicio.
   useEffect(() => {

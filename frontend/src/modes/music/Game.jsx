@@ -397,6 +397,13 @@ function GameScreen() {
     }
   }, [activeIndex]);
 
+  // Time running out with a title written: it goes on its own (the highlighted suggestion, or what was typed), as if
+  // "Enviar" had been pressed.
+  useEffect(() => {
+    if (room?.phase !== "playing" || locked || closed || !query.trim() || left <= 0 || left > 500) return;
+    handleSubmitSong(suggestions.length > 0 && suggestions[activeIndex] ? suggestions[activeIndex] : query.trim());
+  }, [left]);
+
   async function handleSubmitSong(songOrText) {
     if (locked || isSubmittingRef.current) return;
     const titleToDisplay = typeof songOrText === "object" ? songOrText.title : songOrText;

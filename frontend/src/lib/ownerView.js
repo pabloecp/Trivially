@@ -54,6 +54,12 @@ export const setBlobStyle = (style) => write(BLOB_STYLE_KEY, BLOB_STYLES.include
 /** The owner's choice, whatever the view (the admin panel's switch). */
 export const useBlobStyleChoice = () => useSyncExternalStore(subscribe, getBlobStyle, () => "sombra");
 
+// "Reducir movimiento" (the admin panel): the Blobs stay still (no jumps nor looks). Only an owner can turn it on,
+// for this device; everyone else always sees them move.
+const STILL_KEY = "trivially_blobs_still";
+export const setBlobsStill = (still) => write(STILL_KEY, still ? "1" : "0");
+export const useBlobsStillChoice = () => useSyncExternalStore(subscribe, () => read(STILL_KEY, "0") === "1", () => false);
+
 /** Whether this account is an owner. */
 export function useIsOwner() {
   const { user } = useApp();
@@ -143,4 +149,11 @@ export function useBlobStyle() {
   const debug = useOwnerDebug();
   const style = useBlobStyleChoice();
   return debug ? style : "sombra";
+}
+
+/** Whether the Blobs stay still on this screen: only for an owner who turned on "Reducir movimiento". */
+export function useBlobsStill() {
+  const owner = useIsOwner();
+  const still = useBlobsStillChoice();
+  return owner && still;
 }

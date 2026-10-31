@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { useApp } from "../../lib/store.jsx";
-import { setBlobStyle, setForcedGames, setOwnerView, useBlobStyleChoice, setResultsStyle, setResultsTone, setScoreboardLook, useForcedGames, useOwnerView, useResultsChoice, useScoreboardChoice } from "../../lib/ownerView.js";
+import { setBlobStyle, setBlobsStill, useBlobsStillChoice, setForcedGames, setOwnerView, useBlobStyleChoice, setResultsStyle, setResultsTone, setScoreboardLook, useForcedGames, useOwnerView, useResultsChoice, useScoreboardChoice } from "../../lib/ownerView.js";
 import { findMode } from "../../modes/index.js";
 import Icon from "./Icon.jsx";
 import Segmented from "./Segmented.jsx";
@@ -18,6 +18,7 @@ const MAX_FORCED = 5;
  */
 export default function AdminPanel({ open, onClose }) {
   const blobStyle = useBlobStyleChoice();
+  const blobsStill = useBlobsStillChoice();
   const { room, isCentral, addTestBot } = useApp();
   const view = useOwnerView();
   const forced = useForcedGames();
@@ -102,6 +103,21 @@ export default function AdminPanel({ open, onClose }) {
             <p className="tv-admin-hint">
               {blobStyle === "sombra" ? "El que ven todos: su color con una sombra por dentro." : "Solo lo ves tú, en la vista de owner. Los demás ven «Sombra»."}
             </p>
+          </div>
+
+          {/* The Blobs' jumps and looks (Blob.jsx): only an owner can stop them, on this device. */}
+          <div className="tv-admin-block is-third">
+            <h3>Reducir movimiento</h3>
+            <Segmented
+              label="Reducir movimiento"
+              value={blobsStill ? "si" : "no"}
+              onChange={(v) => setBlobsStill(v === "si")}
+              options={[
+                { value: "no", label: "Con movimiento" },
+                { value: "si", label: "Quietos" },
+              ]}
+            />
+            <p className="tv-admin-hint">{blobsStill ? "Los Blobs no saltan ni miran a los lados en esta pantalla." : "Los Blobs saltan en el podio y miran a los lados en los marcadores."}</p>
           </div>
 
           {/* On phones the owners' top bar has no volume button: it's here (VolumeMenu `inOwnerPanel`). */}

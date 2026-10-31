@@ -2545,16 +2545,6 @@ button.tv-chip { border: 0; font-family: inherit; color: inherit; cursor: pointe
   background: #fff;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
 }
-.tv-volume--floating {
-  position: fixed;
-  top: calc(10px + env(safe-area-inset-top));
-  right: calc(12px + env(safe-area-inset-right));
-  z-index: 1000;
-  display: none;
-}
-@media (max-width: 899px) {
-  html.tv-geo-playing .tv-volume--floating { display: block; }
-}
 @media (max-width: 640px) {
   .tv-volume-panel { position: fixed; top: calc(70px + env(safe-area-inset-top)); left: 16px; right: 16px; width: auto; }
   /* Phones: your profile is only your avatar, never your name. */
@@ -3434,6 +3424,8 @@ fieldset.tv-setsec-body { display: grid; gap: 18px; min-width: 0; margin: 0; pad
 .tv-wait-pill.is-float { max-width: calc(100% - 24px); padding: 12px 20px; background: var(--tv-surface); box-shadow: inset 0 0 0 2px var(--brand), 0 14px 40px rgba(0, 0, 0, 0.5); font-size: 16px; }
 .tv-wait-text { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .tv-wait-text strong { color: var(--tv-text); }
+/* Inside a button ("Esperando a Ana" on Encuentra el país' "Confirmar pin"), the names take the button's own colour. */
+.tv-btn .tv-wait-text strong { color: inherit; }
 @media (max-width: 640px) { .tv-wait-pill { gap: 8px; padding: 9px 14px; font-size: 13px; } }
 
 /* ---------- The site's address ---------- */

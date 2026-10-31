@@ -255,8 +255,13 @@ function WriteRound({ room, question, me, answer, skipSong, seconds, clock, cent
     if (room.phase === "playing" && !locked) inputRef.current?.focus();
   }, [room.phase, round]);
 
+  // Time running out with something written: it goes on its own, as if "Enviar" had been pressed.
+  useEffect(() => {
+    if (room.phase === "playing" && !locked && query.trim() && clock.left > 0 && clock.left <= 500) submit();
+  }, [clock.left]);
+
   async function submit(e) {
-    e.preventDefault();
+    e?.preventDefault();
     const text = query.trim();
     if (locked || sending.current || !text) return;
     sending.current = true;
@@ -457,7 +462,7 @@ function GameScreen() {
       : 100;
   const seconds = Math.max(0, Math.ceil(left / 1000));
   const urgent = room.phase === "playing" && left <= 4000;
-  const clock = { seconds, pct, urgent };
+  const clock = { seconds, pct, urgent, left };
   const props = { room, question, me, answer, skipSong, seconds, clock, central, controller };
   // The host's controls of the match: in the round's card, or in the thin bar of a phone beside a central device.
   const tools = (

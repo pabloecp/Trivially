@@ -1073,6 +1073,8 @@
   white-space: nowrap;
 }
 .tv-qc-pill.is-dark { background: rgba(0, 0, 0, 0.2); }
+/* A long topic is cut with "…" rather than pushing the other pills to a second row. */
+.tv-qc-topic-text { overflow: hidden; max-width: 220px; text-overflow: ellipsis; }
 .tv-qc-time {
   margin-left: auto;
   padding: 6px 10px;
@@ -1136,9 +1138,9 @@
 }
 .tv-mpanel-label { font: 700 11px/1 var(--tv-small); letter-spacing: 0.02em; text-transform: uppercase; color: var(--tv-text-3); }
 .tv-mpanel-foot { display: flex; align-items: center; justify-content: flex-end; gap: 12px; font: 600 13px/1.3 var(--tv-small); color: var(--tv-text-3); }
-/* "Saltar" (SkipButton): a small grey button; the first tap turns it red with the warning. Both labels share one cell
-   (the hidden one keeps its room), so it never changes size or moves anything. */
-.tv-app .tv-skipbtn { display: inline-grid; flex: none; padding: 0 14px; }
+/* "Saltar" (AnswerSkip): a grey button as wide as the box and "Enviar" above it; the first tap turns it red with the
+   warning. Both labels share one cell, so it never changes size or moves anything. */
+.tv-app .tv-skipbtn { display: inline-grid; flex: 1 1 auto; width: 100%; padding: 0 14px; }
 .tv-skipbtn-label { grid-area: 1 / 1; display: inline-flex; align-items: center; justify-content: center; gap: 6px; white-space: nowrap; }
 .tv-skipbtn:not(.is-on) .tv-skipbtn-label + .tv-skipbtn-label,
 .tv-skipbtn.is-on .tv-skipbtn-label:first-child { visibility: hidden; }
@@ -1295,6 +1297,10 @@
 .tv-app :is(.tv-match, .tv-room.is-intro) .tv-player-name { font: 700 14px/1.2 var(--tv-small); }
 .tv-app :is(.tv-match, .tv-room.is-intro) .tv-player-score { font: 800 17px/1 var(--tv-display); color: #fff; }
 .tv-app :is(.tv-match, .tv-room.is-intro) .tv-player .tv-avatar { width: 36px; height: 36px; }
+/* A big match (7 players or more): tighter rows, so everyone fits in the column without scrolling. */
+.tv-app :is(.tv-match, .tv-room.is-intro) .tv-party-players:has(> li:nth-child(7)) { gap: 6px; }
+.tv-app :is(.tv-match, .tv-room.is-intro) .tv-party-players:has(> li:nth-child(7)) .tv-player-btn { padding: 6px 10px; }
+.tv-app :is(.tv-match, .tv-room.is-intro) .tv-party-players:has(> li:nth-child(7)) .tv-avatar { width: 30px; height: 30px; }
 
 /* The bar at the bottom: everyone's face, who's missing, and the chat and the tools on the right. */
 .tv-mbar {
@@ -1607,7 +1613,13 @@ html.tv-geo-playing .tv-app .tv-topbar:has(.tv-topbar-round) { display: flex; }
   .tv-topbar-round { gap: 5px; padding: 0 4px; }
   .tv-topbar-round-game { display: inline; }
   .tv-topbar-round-row > span + span { display: none; }
+  /* A long game's name ("Adivina la canción · Ronda 1 de 5") is cut with "…" before the volume button. */
+  .tv-topbar-round-row > span:first-child { overflow: hidden; min-width: 0; text-overflow: ellipsis; }
   .tv-qc { gap: 6px; padding: 14px 16px; border-radius: 20px; }
+  /* Phones: at the reveal the verdict ("¡Correcto! +970") says it all, so "Respuesta" goes, and the topic is shorter:
+     the first row never wraps. */
+  .tv-qc-time.is-reveal { display: none; }
+  .tv-qc-topic-text { max-width: 120px; }
   .tv-qc--s { height: 170px; }
   .tv-qc--m { height: 200px; }
   .tv-qc--l { height: 230px; }
@@ -1720,17 +1732,12 @@ html.tv-geo-playing .tv-app .tv-topbar:has(.tv-topbar-round) { display: flex; }
   62%, 82% { transform: translate(0, 10px) scaleY(0.4); }
 }
 /* Neutral (the scoreboards, a group's list, the big one beside your elo): only the eyes look left and right now and
-   then, each Blob at its own moment (--blob-delay). */
+   then, each Blob at its own moment (--blob-delay). Only an owner can keep them still ("Reducir movimiento", Blob.jsx). */
 .tv-blob.is-neutral .tv-blob-eyes { animation: tvBlobScan 6s ease-in-out infinite; animation-delay: var(--blob-delay, 0s); }
 @keyframes tvBlobScan {
   0%, 18%, 100% { transform: translateX(0); }
   30%, 45% { transform: translateX(-7px); }
   60%, 75% { transform: translateX(7px); }
   88% { transform: translateX(0); }
-}
-@media (prefers-reduced-motion: reduce) {
-  .tv-blob.is-victoria,
-  .tv-blob.is-derrota,
-  .tv-blob .tv-blob-eyes { animation: none; }
 }
 

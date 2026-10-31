@@ -14,7 +14,6 @@ import FarsanteGame from "./modes/farsante/Game.jsx";
 import PlaylistResults from "./modes/playlist/Results.jsx";
 import { useApp } from "./lib/store.jsx";
 import RoomSounds from "./lib/RoomSounds.jsx";
-import VolumeMenu from "./components/home/VolumeMenu.jsx";
 import CentralOffer from "./components/home/CentralOffer.jsx";
 import CentralRequests from "./components/home/CentralRequests.jsx";
 import StillThere from "./components/home/StillThere.jsx";
@@ -172,8 +171,6 @@ export default function App() {
     <>
       <RoomNavigator />
       <RoomSounds />
-      {/* The volume where no bar shows it (a Geografía match on a phone). */}
-      <VolumeMenu floating />
       {/* Opening a room this account already plays in from another device: it can be the room's central device. */}
       <CentralOffer />
       {/* The host, on every screen: players asking to use another device of theirs as the central one. */}
