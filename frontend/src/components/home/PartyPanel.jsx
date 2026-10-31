@@ -38,13 +38,8 @@ function MatchTag({ player, room, isMe = false }) {
   if (room.phase === "finished") {
     const r = room.results?.find((x) => x.id === player.id);
     if (!r) return <span className="tv-player-tag">Sin resultados</span>;
-    return (
-      <span className="tv-player-tag">
-        {r.correct} aciertos · racha {r.bestStreak}
-        {r.avgMs ? ` · ${(r.avgMs / 1000).toFixed(1)} s` : ""}
-        {r.tiebreakWinner ? " · ganó el desempate" : ""}
-      </span>
-    );
+    // Only the right answers ("1 acierto", "6 aciertos").
+    return <span className="tv-player-tag">{r.correct === 1 ? "1 acierto" : `${r.correct || 0} aciertos`}</span>;
   }
   if (room.phase === "reveal") {
     const a = player.lastAnswer;
@@ -183,8 +178,9 @@ export default function PartyPanel({ room, onToast, scores = false, display = fa
       className={`tv-party${scores ? " is-scores" : ""}${chatting ? " is-chat" : ""}${display ? " is-display" : ""} ${className}`.trim()}
       aria-label="Tu sala"
     >
-      {/* Only a group's private match has a code to share (the group's). Nobody joins a public match but by searching. */}
-      {room.groupCode && !room.matchmaking && !group && (
+      {/* Only a group's private match has a code to share (the group's). Nobody joins a public match but by searching. The
+          scoreboard of a match has none: only the scoreboard (the code is in the top bar and the group's bar). */}
+      {room.groupCode && !room.matchmaking && !group && !scores && (
       <div className="tv-party-codebox">
         <div className="tv-party-codehead">
           <p className="tv-mono-label">Código del grupo</p>
