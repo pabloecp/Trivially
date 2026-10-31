@@ -14,8 +14,9 @@ import Icon from "./Icon.jsx";
 
 // The volume rows: "Canciones" (the songs of Adivina la canción and any other <audio>, lib/volume.js) and "Sonidos"
 // (the taps and results, lib/sounds.js). In each the icon turns it off and on and the slider sets how loud (kept in this
-// browser). The sounds' tap plays at the new volume when the slider is let go.
-function VolumeRows() {
+// browser). The sounds' tap plays at the new volume when the slider is let go. Also in the owners' panel (AdminPanel.jsx),
+// which is where owners find it on phones.
+export function VolumeRows() {
   const [, refresh] = useState(0);
   const songs = useVolume();
   useEffect(() => {
@@ -113,8 +114,9 @@ export function SoundPacks() {
 
 // The volume button: a speaker (crossed out when the sounds are off) that opens the two sliders. It is in the top bar and in
 // the phones' top bar; with `floating` it is pinned to the top right corner (App.jsx), only shown
-// where neither is (home.css: a Geografía match on a phone).
-export default function VolumeMenu({ floating = false }) {
+// where neither is (home.css: a Geografía match on a phone). With `inOwnerPanel` (an owner's top bar) it's hidden on
+// phones: owners have it inside the owners' panel there, so the bar has room for everything else.
+export default function VolumeMenu({ floating = false, inOwnerPanel = false }) {
   const [open, setOpen] = useState(false);
   const [, refresh] = useState(0);
   const rootRef = useRef(null);
@@ -142,7 +144,7 @@ export default function VolumeMenu({ floating = false }) {
   // Crossed out only when nothing makes a sound: neither the songs nor the effects.
   const silent = (!soundEnabled() || !soundVolume()) && songs.shown === 0;
   return (
-    <div className={`tv-volume${floating ? " tv-volume--floating" : ""}`} ref={rootRef}>
+    <div className={`tv-volume${floating ? " tv-volume--floating" : ""}${inOwnerPanel ? " tv-volume--owner" : ""}`} ref={rootRef}>
       <button
         type="button"
         className="tv-chip tv-chip--icon tv-chip--sound"

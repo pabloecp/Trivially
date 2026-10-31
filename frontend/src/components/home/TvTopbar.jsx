@@ -126,7 +126,8 @@ function MatchInfo({ room, hidden }) {
   );
 }
 
-// Same top bar on every screen: on the left only the way back (no logo), and on phones your sala beside it; on the right, in this order, the owners' panel
+// Same top bar on every screen: on the left only the way back (no logo), and on phones your sala beside it (and there the
+// owners' volume is inside their panel, Amigos has no count and your Blob no name); on the right, in this order, the owners' panel
 // (ajustes), the volume (music and sounds), friends and the profile. Your sala's code isn't here: it's in the address
 // and in the group's bar at the bottom. The way back:
 //  - nothing on Inicio itself, nor while a search waits there (the bar's own button cancels it). A private match
@@ -277,7 +278,7 @@ export default function TvTopbar() {
               </span>
             </button>
           )}
-          <VolumeMenu />
+          <VolumeMenu inOwnerPanel={isOwner && !isCentral} />
           {friends.isAccount && !isCentral && (
             <button
               type="button"

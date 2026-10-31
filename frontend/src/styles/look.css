@@ -646,18 +646,27 @@
 @media (max-width: 360px) {
   .tv-app .tv-gbar-share span { display: none; }
 }
-/* Phones: the top bar keeps every button (Volver, your sala and its code, the owners' gear, the volume, Amigos, your
-   Blob) in one row, never squeezed: 36 px buttons, Amigos tighter, the sala's chip without its arrow. Narrower still,
-   the gaps close up, the code gets smaller and the sala shows two faces. */
+/* Phones: the top bar keeps every button (Volver, your sala and its code, the volume or the owners' gear, Amigos, your
+   Blob) in one row, never squeezed: 36 px buttons, the sala's chip without its arrow. Narrower still, the gaps close up
+   and the code gets smaller. */
+/* The owners' panel only shows the volume on phones, where their top bar has no volume button. */
+.tv-admin-volume { display: none; }
 @media (max-width: 760px) {
+  .tv-volume--owner { display: none; }
+  .tv-admin-volume { display: grid; }
+  /* Amigos is only its icon (its requests keep their red badge) and your profile only your Blob. */
+  .tv-app .tv-topbar .tv-chip--friends { width: 36px; padding: 0; }
+  .tv-app .tv-topbar .tv-chip--friends > .tv-avatar--empty { width: 36px; margin: 0; }
+  .tv-app .tv-topbar .tv-chip--friends .tv-chip-count,
+  .tv-app .tv-topbar .tv-chip--profile .tv-chip-name { display: none; }
+  .tv-app .tv-topbar .tv-chip--profile,
+  .tv-app .tv-topbar .tv-chip--profile:hover,
+  .tv-app .tv-topbar .tv-chip--profile:active { padding: 0; background: none; box-shadow: none; transform: none; }
   .tv-app .tv-topbar .tv-chip { flex-shrink: 0; height: 36px; }
   .tv-app .tv-topbar .tv-chip--icon,
   .tv-app .tv-topbar .tv-chip--leave,
   .tv-app .tv-topbar .tv-chip > .tv-avatar--empty { width: 36px; height: 36px; }
   .tv-app .tv-topbar .tv-chip--profile > .tv-avatar { width: 36px; height: 36px; }
-  .tv-app .tv-topbar .tv-chip--friends { padding-right: 9px; }
-  .tv-app .tv-topbar .tv-chip--friends > .tv-avatar--empty { width: 30px; margin-left: 2px; }
-  .tv-app .tv-topbar .tv-chip--friends .tv-chip-count { margin-left: 2px; }
   .tv-sala-faces .tv-avatar { width: 26px; height: 26px; }
   .tv-sala-chevron { display: none; }
   .tv-app .tv-chip--sala { padding: 0 9px 0 5px; }
@@ -674,15 +683,9 @@
   .tv-sala { gap: 4px; }
   .tv-app .tv-chip--code { padding: 0 8px; }
   .tv-chip-code { font-size: 14px; letter-spacing: 0.04em; }
-  .tv-sala-faces .tv-avatar:nth-child(3) { display: none; }
 }
-/* The narrowest phones (320 px): your face alone in the sala's chip, and Amigos only its icon (its requests still on
-   their red badge). */
+/* The narrowest phones (320 px): a little smaller still. */
 @media (max-width: 340px) {
-  .tv-sala-faces .tv-avatar:nth-child(n + 2) { display: none; }
-  .tv-app .tv-topbar .tv-chip--friends { width: 36px; padding: 0; }
-  .tv-app .tv-topbar .tv-chip--friends > .tv-avatar--empty { width: 36px; margin: 0; }
-  .tv-app .tv-topbar .tv-chip--friends .tv-chip-count { display: none; }
   .tv-app .tv-topbar-start,
   .tv-app .tv-topbar-end,
   .tv-app .tv-topbar,

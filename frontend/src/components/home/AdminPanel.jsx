@@ -5,7 +5,7 @@ import { setForcedGames, setOwnerView, setResultsStyle, setResultsTone, setScore
 import { findMode } from "../../modes/index.js";
 import Icon from "./Icon.jsx";
 import Segmented from "./Segmented.jsx";
-import { SoundPacks } from "./VolumeMenu.jsx";
+import { SoundPacks, VolumeRows } from "./VolumeMenu.jsx";
 import { findVariant, variantsFor } from "./matchInfo.js";
 import "../../styles/admin.css";
 
@@ -85,6 +85,12 @@ export default function AdminPanel({ open, onClose }) {
         </header>
 
         <div className="tv-admin-body">
+          {/* On phones the owners' top bar has no volume button: it's here (VolumeMenu `inOwnerPanel`). */}
+          <div className="tv-admin-block is-third tv-admin-volume">
+            <h3>Volumen</h3>
+            <VolumeRows />
+          </div>
+
           <div className="tv-admin-block is-third">
             <h3>Vista</h3>
             <Segmented
