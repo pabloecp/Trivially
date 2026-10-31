@@ -570,9 +570,8 @@
    bottom of the window while the page scrolls (over the page: its soft drop shadow). TU GRUPO is the top bar's short
    chip (SalaMenu), which opens the whole zone like the volume's panel. "Pública" / "Privada" is said on "Vas a jugar"
    and changed in "¿Qué quieren jugar?". */
-.tv-gbar-plan-aud { display: none; }
 .tv-topbar-sala { display: contents; }
-.tv-sala { position: relative; flex-shrink: 0; }
+.tv-sala { position: relative; display: flex; align-items: center; flex-shrink: 0; gap: 6px; }
 .tv-app .tv-chip--sala { position: relative; gap: 6px; padding: 0 10px 0 6px; color: var(--tv-text); }
 .tv-sala-faces { display: flex; align-items: center; }
 .tv-sala-faces .tv-avatar { position: relative; width: 28px; height: 28px; }
@@ -586,6 +585,10 @@
 .tv-sala-panel .tv-gbar-faces .tv-avatar.is-me { position: relative; z-index: 1; }
 .tv-app .tv-chip--sala:not(:has(.tv-sala-faces)) { padding-left: 12px; }
 .tv-sala-hint { flex-basis: 100%; font-family: var(--tv-small); font-weight: 600; font-size: 13px; line-height: 1.35; color: var(--tv-text-3); }
+/* The sala's code beside its faces: a tap copies it, and it turns green for a moment. */
+.tv-app .tv-chip--code { padding: 0 12px; color: var(--tv-text); }
+.tv-chip-code { font-family: var(--tv-title); font-weight: 800; font-size: 15px; letter-spacing: 0.1em; transition: color 0.2s ease; }
+.tv-chip--code.is-copied .tv-chip-code { color: var(--p-ok-text); }
 .tv-sala-count { font-family: var(--tv-display); font-weight: 800; font-size: 16px; color: var(--tv-text); }
 .tv-app .tv-chip--sala .tv-chip-name { font-family: var(--tv-display); font-weight: 700; font-size: 15px; }
 .tv-sala-chevron { rotate: 90deg; color: var(--tv-text-3); transition: rotate 0.2s ease; }
@@ -625,38 +628,75 @@
     gap: 10px;
     box-shadow: 0 14px 36px rgba(0, 0, 0, 0.55);
   }
-  .tv-gbar-zone--plan .tv-gbar-cap,
-  .tv-gbar-seg { display: none; }
-  .tv-gbar-plan-row { min-height: 0; padding: 0; background: none; }
+  .tv-gbar-zone--plan .tv-gbar-cap { display: none; }
+  /* "Pública" / "Privada" and "Vas a jugar" in one row: the switch as tall as the card. */
+  .tv-gbar-plan-row { flex-wrap: nowrap; min-height: 0; padding: 0; background: none; }
+  .tv-gbar-seg { align-self: stretch; align-items: center; gap: 2px; }
+  .tv-gbar-seg-btn { height: 100%; padding: 0 9px; font-size: 14px; }
+  .tv-gbar-seg-btn svg { display: none; }
+  .tv-gbar-plan .tv-gcard-sub { white-space: nowrap; }
   .tv-gcard.tv-gbar-plan { min-height: 56px; }
-  .tv-gbar-plan-aud { display: inline; }
   .tv-gbar-zone--go { flex-direction: row; align-items: center; }
   .tv-app .tv-gbar-share { display: inline-flex; flex: none; gap: 8px; height: 56px; padding: 0 16px; font-size: 16px; }
   .tv-app .tv-gbar-go { flex: 1; width: auto; }
   .tv-gbar-note { flex: 1; }
-  .tv-app .tv-topbar-start { gap: 8px; }
   /* The code is in the sala's panel up top and the link at the foot: the stage's own box would only repeat it. */
   .tv-stage-aside .tv-stage-code { display: none; }
 }
 @media (max-width: 360px) {
   .tv-app .tv-gbar-share span { display: none; }
 }
-/* Narrow phones: the top bar keeps every button (Volver, your sala, the owners' gear, the volume, Amigos, your Blob),
-   a little smaller: the sala's chip loses its arrow, then everything goes down to 36 px and the sala shows two faces. */
-@media (max-width: 400px) {
-  .tv-sala-chevron { display: none; }
-  .tv-app .tv-chip--sala { padding-right: 12px; }
-}
-@media (max-width: 359px) {
-  .tv-app .tv-topbar .tv-chip { height: 36px; }
+/* Phones: the top bar keeps every button (Volver, your sala and its code, the owners' gear, the volume, Amigos, your
+   Blob) in one row, never squeezed: 36 px buttons, Amigos tighter, the sala's chip without its arrow. Narrower still,
+   the gaps close up, the code gets smaller and the sala shows two faces. */
+@media (max-width: 760px) {
+  .tv-app .tv-topbar .tv-chip { flex-shrink: 0; height: 36px; }
   .tv-app .tv-topbar .tv-chip--icon,
   .tv-app .tv-topbar .tv-chip--leave,
   .tv-app .tv-topbar .tv-chip > .tv-avatar--empty { width: 36px; height: 36px; }
   .tv-app .tv-topbar .tv-chip--profile > .tv-avatar { width: 36px; height: 36px; }
-  .tv-app .tv-topbar .tv-chip--text { padding-right: 10px; }
-  .tv-app .tv-topbar-start { gap: 6px; }
+  .tv-app .tv-topbar .tv-chip--friends { padding-right: 9px; }
+  .tv-app .tv-topbar .tv-chip--friends > .tv-avatar--empty { width: 30px; margin-left: 2px; }
+  .tv-app .tv-topbar .tv-chip--friends .tv-chip-count { margin-left: 2px; }
+  .tv-sala-faces .tv-avatar { width: 26px; height: 26px; }
+  .tv-sala-chevron { display: none; }
+  .tv-app .tv-chip--sala { padding: 0 9px 0 5px; }
+  .tv-app .tv-chip--sala:not(:has(.tv-sala-count)) { padding-right: 5px; }
+  .tv-app .tv-chip--sala:not(:has(.tv-sala-faces)) { padding: 0 12px; }
+  .tv-app .tv-topbar-start,
   .tv-app .tv-topbar-end { gap: 6px; }
+  .tv-app .tv-topbar { gap: 6px; }
+}
+@media (max-width: 380px) {
+  .tv-app .tv-topbar-start,
+  .tv-app .tv-topbar-end,
+  .tv-app .tv-topbar,
+  .tv-sala { gap: 4px; }
+  .tv-app .tv-chip--code { padding: 0 8px; }
+  .tv-chip-code { font-size: 14px; letter-spacing: 0.04em; }
   .tv-sala-faces .tv-avatar:nth-child(3) { display: none; }
+}
+/* The narrowest phones (320 px): your face alone in the sala's chip, and Amigos only its icon (its requests still on
+   their red badge). */
+@media (max-width: 340px) {
+  .tv-sala-faces .tv-avatar:nth-child(n + 2) { display: none; }
+  .tv-app .tv-topbar .tv-chip--friends { width: 36px; padding: 0; }
+  .tv-app .tv-topbar .tv-chip--friends > .tv-avatar--empty { width: 36px; margin: 0; }
+  .tv-app .tv-topbar .tv-chip--friends .tv-chip-count { display: none; }
+  .tv-app .tv-topbar-start,
+  .tv-app .tv-topbar-end,
+  .tv-app .tv-topbar,
+  .tv-sala { gap: 3px; }
+  .tv-app .tv-chip--code { padding: 0 6px; }
+  .tv-app .tv-topbar .tv-chip { height: 34px; }
+  .tv-app .tv-topbar .tv-chip--icon,
+  .tv-app .tv-topbar .tv-chip--leave,
+  .tv-app .tv-topbar .tv-chip--friends,
+  .tv-app .tv-topbar .tv-chip > .tv-avatar--empty,
+  .tv-app .tv-topbar .tv-chip--friends > .tv-avatar--empty,
+  .tv-app .tv-topbar .tv-chip--profile > .tv-avatar { width: 34px; height: 34px; }
+  .tv-app .tv-chip--sala,
+  .tv-app .tv-chip--sala:not(:has(.tv-sala-count)) { padding: 0 4px; }
 }
 
 /* ---------- Panels over the page ---------- */

@@ -30,8 +30,8 @@ function codeFrom(text) {
 //  - The screen's one yellow button (JUGAR, EMPEZAR; CANCELAR, grey, while searching; JUGAR grey with a lock until a game
 //    is chosen, `action.locked`), or `note` while someone else decides.
 // On phones TU GRUPO goes up to the top bar, very short (SalaMenu: the faces and how many, a tap opens the whole zone like
-// the volume's panel), and the rest stays at the foot of the screen, always in sight: "Vas a jugar" and, in one row,
-// the invite link's copy button and the yellow one. `onJoin(code)` is false when the code didn't work; `canJoin` false while
+// the volume's panel; beside them the sala's code, a tap copies it), and the rest stays at the foot of the screen, always
+// in sight: "Pública" / "Privada" with "Vas a jugar" and, in one row, the invite link's copy button and the yellow one. `onJoin(code)` is false when the code didn't work; `canJoin` false while
 // searching for a match. `groupError` is said under the group's zone, `error` under the button.
 export default function GroupBar({ members = [], meId, inGroup = false, code = "", isLeader = false, canJoin = true, onGroup, onAudience = null, onJoin, onJoinEdit, onLeave, busy = false, inviteBadge = 0, plan, onPlan, planLocked = false, action = null, note = "", error = "", groupError = "" }) {
   const mode = plan.game ? findMode(plan.game) : null;
@@ -102,7 +102,7 @@ export default function GroupBar({ members = [], meId, inGroup = false, code = "
   return (
     <div className="tv-gbar" role="region" aria-label="Tu grupo y la partida">
       {phone ? (
-        <SalaMenu members={shown} count={members.length} inGroup={inGroup} meId={meId} cap={inGroup ? cap : "¿Te invitaron?"} badge={inviteBadge} error={groupError}>
+        <SalaMenu members={shown} count={members.length} inGroup={inGroup} code={code} meId={meId} cap={inGroup ? cap : "¿Te invitaron?"} badge={inviteBadge} error={groupError}>
           {inGroup ? (
             groupBox
           ) : (
@@ -150,11 +150,7 @@ export default function GroupBar({ members = [], meId, inGroup = false, code = "
               </>
             )}
             <span className="tv-gcard-text">
-              <span className="tv-gcard-sub">
-                Vas a jugar
-                {/* Phones have no room for "Pública" / "Privada" beside it: it's said here and changed in "¿Qué quieren jugar?". */}
-                {mode && !classic && <span className="tv-gbar-plan-aud"> · {plan.audience === "publica" ? "Pública" : "Privada"}</span>}
-              </span>
+              <span className="tv-gcard-sub">Vas a jugar</span>
               <span className="tv-gcard-name">{mode?.name || "Elige un juego"}</span>
             </span>
             {!planLocked && <Icon name="chevron" size={18} strokeWidth={3} className="tv-gbar-plan-chevron" />}
@@ -206,7 +202,7 @@ function useNarrow() {
 // Phones: your sala in the top bar (its slot, `.tv-topbar-sala` in TvTopbar), very short: its faces (yours first) and how
 // many are in it. Without one (no game chosen yet, so no sala) it's only "Unirse", for a friend's code. A tap opens the whole TU GRUPO zone under it, like the volume's
 // panel; a tap outside or Escape closes it. A code that didn't work (`error`) is said in it.
-function SalaMenu({ members, count, inGroup, meId, cap, badge, error, children }) {
+function SalaMenu({ members, count, inGroup, code, meId, cap, badge, error, children }) {
   const [open, setOpen] = useState(false);
   const [slot, setSlot] = useState(null);
   const rootRef = useRef(null);
@@ -247,7 +243,7 @@ function SalaMenu({ members, count, inGroup, meId, cap, badge, error, children }
                 <Avatar key={p.id} avatar={p.avatar} className={`${p.id === meId ? "is-me" : ""}${p.connected === false ? " is-away" : ""}`.trim()} />
               ))}
             </span>
-            <b className="tv-sala-count">{count}</b>
+            {count > 1 && <b className="tv-sala-count">{count}</b>}
           </>
         ) : (
           <>
@@ -258,6 +254,7 @@ function SalaMenu({ members, count, inGroup, meId, cap, badge, error, children }
         <Icon name="chevron" size={14} strokeWidth={3} className={`tv-sala-chevron${open ? " is-open" : ""}`} />
         {badge > 0 && <span className="tv-fr-badge">{badge}</span>}
       </button>
+      {inGroup && code && <SalaCode code={code} />}
       {open && (
         <div className="tv-sala-panel" role="dialog" aria-label={cap}>
           <span className="tv-gbar-cap">{cap}</span>
@@ -271,6 +268,19 @@ function SalaMenu({ members, count, inGroup, meId, cap, badge, error, children }
       )}
     </div>,
     slot
+  );
+}
+
+// Phones, in the top bar beside the sala's faces: its code, always in sight; a tap copies it (green for a moment). Dots
+// while codes are hidden, for streaming (the real one is still what's copied).
+function SalaCode({ code }) {
+  const [codeHidden] = useHiddenCode();
+  const { copied, copy } = useInvite(code, null, { what: "code" });
+  return (
+    <button type="button" className={`tv-chip tv-chip--code${copied ? " is-copied" : ""}`} data-sound="none" aria-label={copied ? "Código copiado" : `Copiar el código de la sala, ${codeHidden ? "oculto" : code}`} onClick={copy}>
+      <span className="tv-chip-code">{codeHidden ? "•••••" : code}</span>
+      <span className="tv-sr-only" aria-live="polite">{copied ? "Código copiado" : ""}</span>
+    </button>
   );
 }
 
