@@ -125,6 +125,8 @@
 /* The letter follows the sky's size (it's a size container), so a question takes about as much of its column's
    height on any screen and the next one in it never reaches it. */
 .tv-rain-card-text { font-weight: 800; font-size: clamp(11px, min(3.3cqh, 1.9cqw), 16px); line-height: 1.2; text-wrap: balance; }
+/* A word longer than a phone's narrow card (estadounidense, puertorriqueño) splits with a hyphen instead of spilling out. */
+.tv-rain-card-text { hyphens: auto; overflow-wrap: break-word; }
 /* At the reveal: the answer, under the question. */
 .tv-rain-card-answer {
   display: flex;

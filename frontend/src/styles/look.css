@@ -1576,6 +1576,19 @@ html.tv-geo-playing .tv-app .tv-topbar:has(.tv-topbar-round) { display: flex; }
 .tv-rey-challenger span { font: 600 12px/1.2 var(--tv-small); color: var(--tv-text-3); }
 .tv-rey-challenger span.is-bad { color: var(--p-bad); }
 .tv-rey-challenger span.is-ok { color: #7fe077; }
+/* Many challengers (7 or more): tighter rows, and the list scrolls inside instead of being cut at the bottom. */
+.tv-rey-challengers { overflow-y: auto; justify-content: safe center; }
+.tv-rey-challengers:has(> .tv-rey-challenger:nth-of-type(7)) { gap: 6px; }
+.tv-rey-challengers:has(> .tv-rey-challenger:nth-of-type(7)) .tv-rey-challenger { padding: 5px 10px; }
+.tv-rey-challengers:has(> .tv-rey-challenger:nth-of-type(7)) .tv-rey-challenger > .tv-avatar { width: 28px; height: 28px; }
+/* Phones: a narrower king, so the challengers' names fit. */
+@media (max-width: 640px) {
+  .tv-rey-court { gap: 12px; }
+  .tv-rey-throne { width: 92px; }
+  .tv-rey-throne-blob { width: 64px; height: 64px; margin: 4px 0 8px; }
+  .tv-rey-throne b { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 15px; }
+  .tv-rey-throne span:last-child { text-align: center; }
+}
 
 /* Farsante's three steps on the card: dark, the one now white. */
 .tv-qc-steps .tv-qc-pill { font-size: 12px; }
@@ -1620,9 +1633,11 @@ html.tv-geo-playing .tv-app .tv-topbar:has(.tv-topbar-round) { display: flex; }
      the first row never wraps. */
   .tv-qc-time.is-reveal { display: none; }
   .tv-qc-topic-text { max-width: 120px; }
-  .tv-qc--s { height: 170px; }
-  .tv-qc--m { height: 200px; }
-  .tv-qc--l { height: 230px; }
+  /* A height to start from, growing when the pills wrap to a second row (Farsante's steps and "Empieza en 1"), so the
+     question never runs over the line above it. */
+  .tv-qc--s { height: auto; min-height: 170px; }
+  .tv-qc--m { height: auto; min-height: 200px; }
+  .tv-qc--l { height: auto; min-height: 230px; }
   .tv-qc-mark { width: 170px; height: 170px; }
   .tv-qc-pill { height: 28px; font-size: 12px; }
   .tv-qc-time { font-size: 16px; padding: 5px 8px; }

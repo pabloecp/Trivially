@@ -1,6 +1,7 @@
 import Avatar from "./Avatar.jsx";
 import Icon from "./Icon.jsx";
 import PlayerName from "./PlayerName.jsx";
+import { useFiveRows } from "./ResultsParts.jsx";
 import "../../styles/resultsLooks.css";
 
 // The results screens of a match (between games and at the end), in two styles (lib/ownerView.js, useResultsLook):
@@ -97,6 +98,7 @@ export function RetouchBetween({ kicker, line, note, players, winners = [], poin
  */
 export function RetouchCard({ icon = "play", color = "neutral", title, players, meId = null, onOpen = null, points, wins = null, winners = [], retouch = "panel", tone = "color" }) {
   const max = Math.max(1, ...players.map(points));
+  const [listRef, five] = useFiveRows(players.length);
   return (
     <section className={`tv-res-card tv-res-game rl-rank tv-c-${color} is-${tone}`} aria-labelledby="tv-res-game-title">
       <div className="tv-res-card-head">
@@ -113,7 +115,7 @@ export function RetouchCard({ icon = "play", color = "neutral", title, players, 
           </button>
         )}
       </div>
-      <ol className="tv-res-table">
+      <ol ref={listRef} className={`tv-res-table${five}`}>
         {players.map((p, i) => {
           const win = winners.includes(p.id);
           const pts = `${points(p).toLocaleString("es-ES")} pts`;

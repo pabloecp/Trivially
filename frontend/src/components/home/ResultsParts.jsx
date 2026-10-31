@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import Avatar from "./Avatar.jsx";
 import CountUp from "./CountUp.jsx";
@@ -11,6 +11,32 @@ import { usePhone } from "./RoomChat.jsx";
 
 // "1 jugador", "4 jugadores".
 export const countText = (n, one, many) => `${n} ${n === 1 ? one : many}`;
+
+// A ranking's list (its <ol>) with more than five players shows five whole rows and scrolls inside for the rest: its
+// height is measured to end right under the fifth row, and the scroll stops on whole rows (home.css, .is-five).
+export function useFiveRows(count) {
+  const ref = useRef(null);
+  useLayoutEffect(() => {
+    const list = ref.current;
+    if (!list || count <= 5) return undefined;
+    const fit = () => {
+      const rows = list.children;
+      if (rows.length <= 5) return;
+      list.style.maxHeight = "";
+      const height = rows[4].offsetTop + rows[4].offsetHeight - rows[0].offsetTop;
+      if (height > 0) list.style.maxHeight = `${height}px`;
+    };
+    fit();
+    const watch = new ResizeObserver(fit);
+    // The first row's size changes with the screen's (the list's own height is the one set here).
+    watch.observe(list.children[0]);
+    return () => {
+      watch.disconnect();
+      list.style.maxHeight = "";
+    };
+  }, [count]);
+  return [ref, count > 5 ? " is-five" : ""];
+}
 
 // A player's rounds as dots, each in its colour (RoomManager.recordRound's status): right, close, wrong, no answer.
 export function RoundDots({ rounds = [] }) {
@@ -98,6 +124,7 @@ export function PodiumCard({ meta, children }) {
  * ringed. "Ver tus respuestas" (`onOpen`, only when this player has rounds) opens their answers.
  */
 export function RankingCard({ icon = "play", color = "neutral", title, players, meId = null, onOpen = null, value }) {
+  const [listRef, five] = useFiveRows(players.length);
   return (
     <section className="tv-res-card tv-res-game" aria-labelledby="tv-res-game-title">
       <div className="tv-res-card-head">
@@ -114,7 +141,7 @@ export function RankingCard({ icon = "play", color = "neutral", title, players, 
           </button>
         )}
       </div>
-      <ol className="tv-res-table">
+      <ol ref={listRef} className={`tv-res-table${five}`}>
         {players.map((p, i) => (
           <li key={p.id} className={`tv-res-row${p.id === meId ? " is-me" : ""}`} style={{ "--i": i }}>
             <span className="tv-res-row-pos">{i + 1}</span>

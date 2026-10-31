@@ -3813,3 +3813,11 @@ html.tv-seamless .tv-room-main { animation: tvSeamIn 0.55s cubic-bezier(0.2, 0.9
 
 /* Adivina la canción's settings: how many songs have their Completa la letra round ready, under its "Modos de juego". */
 .tv-lyrics-note { margin: -4px 0 4px; font-size: 13px; color: var(--tv-text-dim, var(--tv-text)); }
+
+/* More than five players: five whole rows show and the rest scroll inside the card (ResultsParts.useFiveRows sets the
+   height), stopping on whole rows. The rows keep their size instead of sharing the card's height. */
+.tv-res-table.is-five { grid-auto-rows: auto; overflow-y: auto; overscroll-behavior: contain; scroll-snap-type: y mandatory; scrollbar-width: thin; }
+.tv-res-table.is-five > .tv-res-row { scroll-snap-align: start; }
+@container (min-width: 721px) {
+  .tv-res-cards--pair .tv-res-table.is-five { grid-auto-rows: auto; }
+}

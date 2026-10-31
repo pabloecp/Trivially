@@ -31,7 +31,7 @@
 - `applyMatchStats` writes per-user stats; `matchWinner`: first place with points, a tie counts for nobody unless a tiebreak settled it.
 - History: `user.history` (newest first, `MATCH_HISTORY_LIMIT` 10). Question ids never go out: `publicHistory`, `sanitizeUser` (own account, with rounds), `sanitizeUserPublic` (never rounds), `publicRounds`. UI: `MatchHistory.jsx`, `MatchSummarySheet`.
 - Summary: `recordRound` fills `player.rounds` (`{ round, game, prompt, answer, yours, points, status }`, status `ok|near|bad|none`), sent as `results[].rounds`.
-- Results screens share `components/home/ResultsParts.jsx` (`PodiumCard`, `RetouchCard` from `ResultsLooks.jsx`, `GamesWon`). One column below 720 px. On phones the buttons go in `ResultsFoot`, a bar pinned to the bottom like `.tv-roomdock` (portal into `.tv-app`; the way back is a square with its icon), and the podium shows only first names (`.tv-podium-first`).
+- Results screens share `components/home/ResultsParts.jsx` (`PodiumCard`, `RetouchCard` from `ResultsLooks.jsx`, `GamesWon`). One column below 720 px. On phones the buttons go in `ResultsFoot`, a bar pinned to the bottom like `.tv-roomdock` (portal into `.tv-app`; the way back is a square with its icon), and the podium shows only first names (`.tv-podium-first`). With more than five players the ranking shows five whole rows and scrolls inside for the rest (`useFiveRows`, `.tv-res-table.is-five`, snapping to whole rows).
 - Phones: during an intro (`.tv-mcard`) the scoreboard stays under the card (home.css, "Phones: the room's bars").
 
 ## Room extras

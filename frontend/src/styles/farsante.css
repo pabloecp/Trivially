@@ -27,14 +27,15 @@
 }
 
 /* ---------- The match ---------- */
-.tv-fs-stage { display: grid; align-content: start; gap: 14px; }
+.tv-fs-stage { display: grid; grid-template-columns: minmax(0, 1fr); align-content: start; gap: 14px; }
 
 /* The round's prompt. */
 .tv-fs-prompt { display: grid; gap: 10px; justify-items: center; text-align: center; }
 .tv-fs-prompt-text { margin: 0; font-size: clamp(20px, 3vw, 32px); font-weight: 800; line-height: 1.2; overflow-wrap: anywhere; text-wrap: balance; }
 
 /* The box to write the answer in, with its counter. */
-.tv-fs-write { display: grid; gap: 8px; }
+/* One column no wider than the screen, so on a phone "Enviar" and "Esperando a…" never go past its edge. */
+.tv-fs-write { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; }
 .tv-fs-count { justify-self: end; font-size: 13px; font-weight: 800; color: var(--tv-text-3); }
 .tv-fs-count.is-full { color: var(--p-accent-2); }
 .tv-fs-sent { margin: 0; display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: 800; color: var(--tv-fs-text); overflow-wrap: anywhere; }
