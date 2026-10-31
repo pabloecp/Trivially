@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import TvShell from "../../components/home/TvShell.jsx";
 import Confetti from "../../components/home/Confetti.jsx";
 import Icon from "../../components/home/Icon.jsx";
+import AnswerSkip from "../../components/home/AnswerSkip.jsx";
 import WaitingPill, { waitingNames } from "../../components/home/WaitingPill.jsx";
 import SpectatorBanner from "../../components/home/SpectatorBanner.jsx";
 import MatchResults from "../../components/home/MatchResults.jsx";
@@ -363,7 +364,7 @@ function WriteRound({ room, question, me, answer, skipSong, seconds, clock, cent
               </label>
               <button type="submit" className="tv-btn tv-btn--primary tv-mwrite-send" disabled={!query.trim()}>
                 <Icon name="send" size={20} strokeWidth={2.4} />
-                Enviar
+                <span className="tv-mwrite-send-label">Enviar</span>
               </button>
             </form>
           ) : (
@@ -375,9 +376,7 @@ function WriteRound({ room, question, me, answer, skipSong, seconds, clock, cent
         {room.phase === "playing" && !locked && !central && (
           <div className="tv-mpanel-foot">
             {/* A player may still give up on the question: the first tap asks, the second skips. */}
-            <button type="button" className={`tv-mpanel-skip${confirmSkip ? " is-on" : ""}`} onClick={skip} aria-live="polite">
-              {confirmSkip ? "No te dará puntos. Toca otra vez" : "Saltar"}
-            </button>
+            <AnswerSkip confirm={confirmSkip} onClick={skip} />
           </div>
         )}
       </div>

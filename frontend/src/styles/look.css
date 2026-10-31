@@ -1137,9 +1137,15 @@
 }
 .tv-mpanel-label { font: 700 11px/1 var(--tv-small); letter-spacing: 0.02em; text-transform: uppercase; color: var(--tv-text-3); }
 .tv-mpanel-foot { display: flex; align-items: center; justify-content: flex-end; gap: 12px; font: 600 13px/1.3 var(--tv-small); color: var(--tv-text-3); }
-.tv-mpanel-skip { flex: none; padding: 0; border: 0; background: none; font: 800 14px/1 var(--tv-display); color: var(--tv-text-3); cursor: pointer; }
-.tv-mpanel-skip:hover { color: #fff; }
-.tv-mpanel-skip.is-on { color: var(--p-bad); }
+/* "Saltar" (SkipButton): a small grey button; the first tap turns it red with the warning. Both labels share one cell
+   (the hidden one keeps its room), so it never changes size or moves anything. */
+.tv-app .tv-skipbtn { display: inline-grid; flex: none; padding: 0 14px; }
+.tv-skipbtn-label { grid-area: 1 / 1; display: inline-flex; align-items: center; justify-content: center; gap: 6px; white-space: nowrap; }
+.tv-skipbtn:not(.is-on) .tv-skipbtn-label + .tv-skipbtn-label,
+.tv-skipbtn.is-on .tv-skipbtn-label:first-child { visibility: hidden; }
+.tv-app .tv-skipbtn.is-hidden { visibility: hidden; }
+/* The countdown before a song: everything in the middle of its panel. */
+.tv-app .tv-mpanel.tv-countdown { align-items: center; text-align: center; }
 /* The box to write in and its yellow "Enviar". */
 .tv-mwrite { display: flex; align-items: stretch; gap: 12px; margin: 0; }
 .tv-mwrite-box {
@@ -1618,10 +1624,12 @@ html.tv-geo-playing .tv-app .tv-topbar:has(.tv-topbar-round) { display: flex; }
   .tv-app .tv-match .tv-fs-options { grid-template-columns: minmax(0, 1fr); gap: 10px; }
   .tv-app .tv-match .tv-quiz-opt { min-height: 56px; font-size: 18px; }
   .tv-mpanel { gap: 14px; padding: 16px; border-radius: 20px; }
-  .tv-mwrite { flex-direction: column; }
-  .tv-mwrite-box { height: 56px; }
+  .tv-mwrite-box { flex: 1; min-width: 0; height: 56px; }
   .tv-mwrite-box input { font-size: 18px; }
-  .tv-app .tv-mwrite-send { height: 52px; }
+  /* "Enviar" is only its icon beside the box (its word stays for screen readers). */
+  .tv-app .tv-mwrite-send,
+  .tv-app .tv-match .tv-search-row > .tv-mwrite-send { flex: none; width: 60px; min-height: 0; height: 56px; padding: 0; }
+  .tv-mwrite-send-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
   .tv-mreveal-answer { font-size: 30px; }
   .tv-app .tv-match .tv-lyrics-line { font-size: 19px; }
   .tv-app .tv-match .tv-lyrics-gap { width: 110px; height: 36px; margin: 0 8px; font-size: 18px; line-height: 30px; }

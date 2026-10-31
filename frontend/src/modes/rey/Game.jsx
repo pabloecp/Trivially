@@ -322,7 +322,7 @@ function GameScreen() {
                 </label>
                 <button type="submit" className="tv-btn tv-btn--primary tv-mwrite-send" disabled={!query.trim()}>
                   <Icon name="send" size={20} strokeWidth={2.4} />
-                  Enviar
+                  <span className="tv-mwrite-send-label">Enviar</span>
                 </button>
               </form>
             )}
