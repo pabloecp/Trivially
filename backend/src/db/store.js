@@ -15,16 +15,22 @@ const STORE_PATH = path.join(DATA_DIR, "store.json");
 const MAX_NAME_LENGTH = 24;
 export const DEFAULT_AVATAR = "#FF2D55";
 const HEX_COLOR = /^#[0-9a-f]{6}$/i;
-// The Blob's colours on the profile (frontend lib/blobColors.js): white for everyone, three more for accounts, and gold
-// only for owners. Older avatar colours still saved show as white.
+// The Blob's colours on the profile (frontend lib/blobColors.js): white for everyone, the site's main colours (the
+// logo's five and orange) for accounts, and gold only for owners. Older avatar colours still saved show as white.
 export const BLOB_WHITE = "#FFFFFF";
-const BLOB_ACCOUNT = ["#8FD3FF", "#FFA6D2", "#8EF0B0"];
+const BLOB_ACCOUNT = ["#FF2FC0", "#FFD60A", "#00D1C1", "#2F6BFF", "#A63DFF", "#FF8A00"];
 export const BLOB_GOLD = "#FFC93C";
+// The account colours the Blob had before (celeste, rosa, menta): saved ones count as their new colour.
+const BLOB_RENAMED = { "#8FD3FF": "#2F6BFF", "#FFA6D2": "#FF2FC0", "#8EF0B0": "#00D1C1" };
+const blobId = (color) => {
+  const id = String(color || "").toUpperCase();
+  return BLOB_RENAMED[id] || id;
+};
 
 // Why `user` can't use the Blob colour `color`, or null when it can. Anything that isn't one of the Blob's colours (an
 // old colour, a Google photo) is drawn white, so it gives nothing away.
 function blobColorError(user, color) {
-  const id = String(color || "").toUpperCase();
+  const id = blobId(color);
   if (id === BLOB_GOLD) return effectiveRole(user) === "owner" ? null : "Ese color es solo para los owners";
   if (BLOB_ACCOUNT.includes(id)) return user && !user.isGuest ? null : "Crea una cuenta para usar ese color";
   return null;
@@ -35,7 +41,9 @@ function blobColorError(user, color) {
  * sends), and white if they can no longer use it (a guest, or an owner who stopped being one).
  */
 export function playerAvatar(user) {
-  return user?.avatar && !blobColorError(user, user.avatar) ? user.avatar : BLOB_WHITE;
+  if (!user?.avatar || blobColorError(user, user.avatar)) return BLOB_WHITE;
+  // An old account colour as its new one; anything else as it was saved.
+  return BLOB_RENAMED[String(user.avatar).toUpperCase()] || user.avatar;
 }
 
 function emptyStore() {
@@ -501,7 +509,7 @@ export function updateUserAvatar(store, userId, choice) {
     if (!photo) throw new Error("Inicia sesión con Google para usar tu foto de perfil");
     user.avatar = photo;
   } else {
-    const color = String(choice || "").toUpperCase();
+    const color = blobId(choice);
     if (color !== BLOB_WHITE && color !== BLOB_GOLD && !BLOB_ACCOUNT.includes(color)) throw new Error("Color no válido");
     const problem = blobColorError(user, color);
     if (problem) throw new Error(problem);
