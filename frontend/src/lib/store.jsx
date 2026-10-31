@@ -426,7 +426,7 @@ export function AppProvider({ children }) {
     const onGroupLeft = ({ code, reason } = {}) => {
       if (code !== groupCodeRef.current) return;
       clearGroup();
-      setKickedNotice(reason === "bloqueado" ? "El líder te bloqueó del grupo" : "El líder te sacó del grupo");
+      setKickedNotice(reason === "bloqueado" ? "El líder te bloqueó de la sala" : "El líder te sacó de la sala");
     };
     const onKicked = ({ code, blocked, reason } = {}) => {
       if (code !== roomCodeRef.current) return;
@@ -746,7 +746,7 @@ export function AppProvider({ children }) {
       // they were playing alone becomes the group's.
       async createGroup(plan, explicitUser) {
         const current = explicitUser || userRef.current;
-        if (!current?.name) throw new Error("Debes identificarte antes de crear un grupo");
+        if (!current?.name) throw new Error("Debes identificarte antes de crear una sala");
         const res = await emitAck("group:create", { user: current, plan });
         if (!res.ok) throw new Error(res.error);
         return enterGroup(res.group);
@@ -774,7 +774,7 @@ export function AppProvider({ children }) {
         return res.group;
       },
 
-      // "Salir del grupo": out of it, and of its private match.
+      // "Salir de la sala": out of it, and of its private match.
       async leaveGroup() {
         const res = await emitAck("group:leave", {});
         clearGroup();
@@ -821,12 +821,6 @@ export function AppProvider({ children }) {
         if (next === previewRef.current) return Promise.resolve();
         previewRef.current = next;
         return emitAck("room:preview", next).catch(() => {});
-      },
-
-      // A message to the room's chat (the server refuses it while a round is played, or too soon after the last one).
-      async sendChat(text) {
-        const res = await emitAck("room:chat", text);
-        if (!res.ok) throw new Error(res.error);
       },
 
       // Any player but the host: suggests a game to the host (allowed once every 5 s; the error says how long to wait).

@@ -67,6 +67,8 @@ export const PUBLIC_VARIANT = Object.fromEntries(PUBLIC_GAMES.map((game) => [gam
 // A group (game/groups.js) searches for a public match together, all in the same room: it fills up to one more than the
 // group, at least two and at most PUBLIC_GROUP_MAX players (always PUBLIC_GROUP_MAX while DUELS_OPEN is off).
 export const PUBLIC_GROUP_MAX = 5;
+// A sala (a group and its private match) holds at most this many players.
+export const SALA_MAX = 10;
 export const groupMatchSize = (members) => (DUELS_OPEN ? Math.min(PUBLIC_GROUP_MAX, Math.max(2, members + 1)) : PUBLIC_GROUP_MAX);
 // Who "Vas a jugar" is for: people from anywhere ("Partida pública") or only you or your group ("Partida privada").
 export const AUDIENCES = ["grupo", "publica"];
@@ -95,32 +97,7 @@ export const cleanForced = (list) => (Array.isArray(list) ? list.filter((id) => 
 // (as if people were arriving), and play by themselves (RoomManager.scheduleBots). Competitivo waits for people.
 export const BOT_WAIT_MS = 1000;
 export const BOT_GAP_MS = [700, 1600];
-// Two words, like game bots: a first name and a nickname, in Spanish or English ("Andrea Galaxy", "Leo Tormenta").
-const BOT_FIRST = [
-  "Andrea", "Leo", "Sofía", "Max", "Lucía", "Diego", "Emma", "Mateo", "Valeria", "Nico", "Camila", "Bruno",
-  "Olivia", "Hugo", "Mía", "Iker", "Zoe", "Tomás", "Ava", "Gael", "Noah", "Daniela", "Liam", "Renata",
-];
-const BOT_LAST = [
-  "Galaxy", "Tormenta", "Nova", "Thunder", "Pixel", "Cometa", "Blaze", "Rayo", "Storm", "Shadow", "Luna", "Fénix",
-  "Spark", "Volcán", "Frost", "Turbo", "Eclipse", "Neón", "Rocket", "Tigre", "Ninja", "Trueno", "Comet", "Ciclón",
-];
-const BOT_COLORS = ["#FF2D55", "#FF8A00", "#2BD94F", "#0A9BFF", "#A63DFF", "#FF5FB8"];
-
-/** A bot for a room: a name nobody there has, a colour, and how good it is (`skill`, 0.15–0.45: they lose more than win). */
-export function newBot(takenNames, random = Math.random) {
-  const pick = (list) => list[Math.floor(random() * list.length)];
-  let name = `${pick(BOT_FIRST)} ${pick(BOT_LAST)}`;
-  for (let i = 0; i < 20 && takenNames.has(name); i += 1) name = `${pick(BOT_FIRST)} ${pick(BOT_LAST)}`;
-  return {
-    // Like a guest's id: nothing a player sees says it's a bot.
-    id: `gst_${Array.from({ length: 10 }, () => Math.floor(Math.random() * 16).toString(16)).join("")}`,
-    name,
-    avatar: BOT_COLORS[Math.floor(random() * BOT_COLORS.length)],
-    isGuest: true,
-    bot: true,
-    skill: 0.15 + random() * 0.3,
-  };
-}
+// (The bots themselves, with their names, colours and elo, are in bots.js.)
 
 /**
  * A request to find a match, or an error in Spanish when it isn't one. With a `game` it's a public match of that game
@@ -133,7 +110,7 @@ export function cleanMatchRequest(input) {
   const size = input?.size == null ? (game && DUELS_OPEN ? 2 : 5) : Number(input.size);
   if (!kind) throw new Error("Elige el tipo de partida");
   if (!MATCH_KINDS_OPEN.includes(kind)) throw new Error("El modo Competitivo no está disponible por ahora");
-  if (game && !PUBLIC_GAMES.includes(game)) throw new Error("Ese juego solo se puede jugar con tu grupo");
+  if (game && !PUBLIC_GAMES.includes(game)) throw new Error("Ese juego solo se puede jugar con tu sala");
   if (!MATCH_SIZES.includes(size)) throw new Error("Elige Uno contra Uno o Todos contra Todos");
   return { kind, rounds: game ? ROUNDS_PER_GAME : MATCH_ROUNDS, size, game };
 }

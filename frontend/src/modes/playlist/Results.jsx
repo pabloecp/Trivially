@@ -171,7 +171,7 @@ function ResultsScreen() {
                 <button
                   className="tv-btn tv-c-neutral tv-res-btn"
                   data-sound="back"
-                  aria-label={leadsGroup ? "Volver al inicio con tu grupo" : "Salir"}
+                  aria-label={leadsGroup ? "Volver al inicio con tu sala" : "Salir"}
                   onClick={() => {
                     if (leadsGroup) {
                       withSound(groupHome, null)
@@ -195,7 +195,7 @@ function ResultsScreen() {
                     setSearching(true);
                     withSound(() => findMatch(publicMatch.kind, publicMatch.versus || 5, undefined, publicMatch.game), null)
                       // This address is the old room's, which RoomNavigator leaves alone: go to the new one's screen.
-                      .then((next) => nav(`/sala/${urlCode(next.code)}`, { replace: true }))
+                      .then((next) => nav(`/partida/${urlCode(next.code)}`, { replace: true }))
                       .catch((e) => {
                         setErr(e.message || "No se pudo buscar otra partida");
                         setSearching(false);

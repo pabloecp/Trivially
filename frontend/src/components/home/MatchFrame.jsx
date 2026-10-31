@@ -1,12 +1,11 @@
 import { useState } from "react";
 import Avatar from "./Avatar.jsx";
 import Icon from "./Icon.jsx";
-import { ChatSheet, useChatUnread } from "./RoomChat.jsx";
 import { joinNames, waitingNames } from "./WaitingPill.jsx";
 import { findMode } from "../../modes/index.js";
 
 // The pieces every game's match shares (the "Partidas" boards of the redesign): the round's card in the game's colour
-// (`MatchCard`), the bar at the bottom (`MatchBar`: who's in, who's still missing, the chat and the match's tools) and
+// (`MatchCard`), the bar at the bottom (`MatchBar`: who's in, who's still missing and the match's tools) and
 // what goes on the top bar (`matchTitle`, the game and its mode). The scoreboard is PartyPanel's (`scores`).
 
 // Each topic's icon on a card's pill (Trivia's, Rey's).
@@ -72,12 +71,10 @@ function missingLine(room, verb) {
 
 /**
  * The bar at the bottom of a match: everyone's face (a green mark once they answered), who the round still waits for,
- * the chat and the match's tools (Reportar, Saltar, Pausar, Terminar: `tools`). `line` replaces the waiting line for a
+ * and the match's tools (Reportar, Saltar, Pausar, Terminar: `tools`). `line` replaces the waiting line for a
  * game that says it its own way.
  */
 export function MatchBar({ room, viewerId, tools, verb = "responder", line }) {
-  const [chat, setChat] = useState(false);
-  const unread = useChatUnread(room, chat);
   const players = room.players.filter((p) => !p.spectator);
   const text = line ?? missingLine(room, verb);
   return (
@@ -94,14 +91,8 @@ export function MatchBar({ room, viewerId, tools, verb = "responder", line }) {
         {text && <span className="tv-mbar-text">{text}</span>}
       </div>
       <div className="tv-mbar-tools">
-        <button type="button" className="tv-btn tv-btn--neutral tv-mbar-btn" onClick={() => setChat(true)} aria-label={unread ? `Chat: ${unread} mensajes nuevos` : "Abrir el chat"}>
-          <Icon name="chat" size={20} strokeWidth={2.4} />
-          <span className="tv-mbar-label">Chat</span>
-          {unread > 0 && <span className="tv-chat-badge">{unread > 9 ? "9+" : unread}</span>}
-        </button>
         {tools}
       </div>
-      {chat && <ChatSheet room={room} onClose={() => setChat(false)} />}
     </div>
   );
 }

@@ -16,17 +16,13 @@ for (const text of ["Hola a todos", "Sr.Pérez", "1.5 segundos", "Vamos!!! ...",
   assert.equal(hasLink(text), false, `no debería ser un enlace: "${text}"`);
 }
 
-// In a room: a name with a link doesn't get in, and the chat refuses a message with one.
+// In a room: a name with a link doesn't get in.
 const mgr = new RoomManager({ catalog: readLocalCatalog(), store: { users: {} } });
 assert.throws(() => mgr.create({ host: { id: "gst_a", name: "visita algo.com", isGuest: true, socketId: "s0" } }), /enlaces/);
 assert.equal(mgr.rooms.size, 0, "no room is left half made");
 const room = mgr.create({ host: { id: "gst_b", name: "Ana", isGuest: true, socketId: "s1" } });
 assert.throws(() => mgr.addPlayer(room, { id: "gst_c", name: "www.spam.net", isGuest: true, socketId: "s2" }), /enlaces/);
 assert.throws(() => mgr.updatePlayer(room, "gst_b", { name: "https://x.io" }), /enlaces/);
-assert.throws(() => mgr.sendChat(room, "gst_b", "entren a bit.ly/premio"), /No se pueden enviar enlaces/);
-assert.equal((room.chat || []).length, 0);
-mgr.sendChat(room, "gst_b", "Sr.Pérez, ¿otra?");
-assert.equal(room.chat.at(-1).text, "Sr.Pérez, ¿otra?");
 mgr.destroy(room);
 
 console.log("links.test ok");

@@ -1,5 +1,5 @@
 import { hasLink, NAME_LINK_ERROR } from "../moderation/links.js";
-import { AUDIENCES, PUBLIC_CLASSIC, PUBLIC_GAMES } from "./matchmaking.js";
+import { AUDIENCES, PUBLIC_CLASSIC, PUBLIC_GAMES, SALA_MAX } from "./matchmaking.js";
 import { createRoomCode, GAME_IDS } from "./roomManager.js";
 
 // A group ("Tu grupo"): the players who go together. It isn't a room: a room is a match (its lobby, its rounds, its
@@ -62,8 +62,9 @@ export class GroupManager {
   /** The group a code opens (before asking for a name, and to join it). */
   findToJoin(code, userId = null) {
     const group = this.get(code);
-    if (!group) throw new Error("No hay ningún grupo con ese código");
-    if (userId && group.blocked.has(userId)) throw new Error("El líder te bloqueó de este grupo");
+    if (!group) throw new Error("No hay ninguna sala con ese código");
+    if (userId && group.blocked.has(userId)) throw new Error("El líder te bloqueó de esta sala");
+    if (userId && !group.members.has(userId) && group.members.size >= SALA_MAX) throw new Error(`La sala está llena (máximo ${SALA_MAX} jugadores)`);
     return group;
   }
 
@@ -95,12 +96,13 @@ export class GroupManager {
 
   /** Into the group, or back into it (a reload keeps the same place). Out of any other group first. */
   join(group, user) {
-    if (group.blocked.has(user.id)) throw new Error("El líder te bloqueó de este grupo");
+    if (group.blocked.has(user.id)) throw new Error("El líder te bloqueó de esta sala");
     if (hasLink(user?.name)) throw new Error(NAME_LINK_ERROR);
     return this.addMember(group, user);
   }
 
   addMember(group, user) {
+    if (!group.members.has(user.id) && group.members.size >= SALA_MAX) throw new Error(`La sala está llena (máximo ${SALA_MAX} jugadores)`);
     const other = this.ofUser(user.id);
     if (other && other !== group) this.removeMember(other, user.id);
     const existing = group.members.get(user.id);
@@ -174,7 +176,7 @@ export class GroupManager {
     return group;
   }
 
-  assertLeader(group, userId, what = "Solo el líder del grupo puede hacer eso") {
+  assertLeader(group, userId, what = "Solo el líder de la sala puede hacer eso") {
     if (group.leaderId !== userId) throw new Error(what);
   }
 
@@ -183,7 +185,7 @@ export class GroupManager {
     this.assertLeader(group, leaderId, "Solo el líder puede pasar el liderazgo");
     if (leaderId === targetId) throw new Error("Ya eres el líder");
     const member = group.members.get(targetId);
-    if (!member) throw new Error("Esa persona no está en el grupo");
+    if (!member) throw new Error("Esa persona no está en la sala");
     if (!member.connected) throw new Error("Esa persona no está conectada ahora");
     group.leaderId = targetId;
     return member;
@@ -191,10 +193,10 @@ export class GroupManager {
 
   /** The leader takes someone out of the group; with `block` they can't come back with the code. */
   kick(group, leaderId, targetId, { block = false } = {}) {
-    this.assertLeader(group, leaderId, "Solo el líder puede sacar a alguien del grupo");
+    this.assertLeader(group, leaderId, "Solo el líder puede sacar a alguien de la sala");
     if (leaderId === targetId) throw new Error("No puedes sacarte a ti mismo");
     const member = group.members.get(targetId);
-    if (!member) throw new Error("Esa persona no está en el grupo");
+    if (!member) throw new Error("Esa persona no está en la sala");
     if (block) group.blocked.add(targetId);
     this.removeMember(group, targetId);
     return member;
@@ -202,7 +204,7 @@ export class GroupManager {
 
   /** The leader's "¿Qué quieren jugar?" while the group is on Inicio. */
   setPlan(group, userId, plan) {
-    this.assertLeader(group, userId, "Solo el líder elige qué juega el grupo");
+    this.assertLeader(group, userId, "Solo el líder elige qué juega la sala");
     group.plan = cleanPlan({ ...group.plan, ...plan });
   }
 
@@ -247,13 +249,13 @@ export class GroupManager {
 
   /** A friend asks the leader to let them in (only when the group is "solicitud"). */
   addJoinRequest(group, user, now = Date.now()) {
-    if (group.joinMode !== "solicitud") throw new Error("Ese grupo no recibe solicitudes");
-    if (group.blocked.has(user.id)) throw new Error("No puedes unirte a ese grupo");
-    if (group.members.has(user.id)) throw new Error("Ya estás en ese grupo");
+    if (group.joinMode !== "solicitud") throw new Error("Esa sala no recibe solicitudes");
+    if (group.blocked.has(user.id)) throw new Error("No puedes unirte a esa sala");
+    if (group.members.has(user.id)) throw new Error("Ya estás en esa sala");
     const wait = (group.joinAsked.get(user.id) || 0) + JOIN_ASK_GAP_MS - now;
     if (wait > 0) throw new Error(`Espera ${Math.ceil(wait / 1000)} s para pedirlo otra vez`);
     const open = this.openJoinRequests(group).filter((r) => r.userId !== user.id);
-    if (open.length >= JOIN_REQUESTS_KEEP) throw new Error("Ese grupo ya tiene muchas solicitudes. Inténtalo en un momento.");
+    if (open.length >= JOIN_REQUESTS_KEEP) throw new Error("Esa sala ya tiene muchas solicitudes. Inténtalo en un momento.");
     group.joinAsked.set(user.id, now);
     group.joinRequests = [...open, { userId: user.id, name: user.name, avatar: user.avatar, at: now }];
   }

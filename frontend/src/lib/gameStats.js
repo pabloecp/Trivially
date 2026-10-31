@@ -1,6 +1,5 @@
-// Your elo in each game (and how much it moved this week), how many people are playing it right now, and its daily
-// challenge, on the game's card (ModeStage). None of these systems exists yet: these are example numbers, always the
-// same, until the server sends the real ones.
+// How many people are playing each game right now and the daily challenge example numbers (the real challenge, game/daily.js,
+// comes with the account: `user.daily`), on the game's card (ModeStage). Your elo is real (eloIn).
 const EXAMPLES = {
   // The Clásico's elo is the general one: the top bar shows it, and Inicio's boxes before a game is chosen.
   clasico: { elo: 1284, week: 38, online: 0, daily: { goal: "Acierta 10 seguidas", how: "En cualquier juego", done: 4, of: 10 } },
@@ -19,3 +18,13 @@ export const formatElo = (n) => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ".");
 
 /** `{ elo, week, online, daily }` for a game (or the Clásico's, the general one), or null for what isn't one. */
 export const gameStats = (game) => EXAMPLES[game] || null;
+
+const ELO_START = 500;
+const CLASSIC_ELO_GAMES = ["opciones", "historia", "minas"];
+
+/** Your real elo in a game (the Clásico's: the average of its games), 500 before you have played it. Guests have none. */
+export function eloIn(user, game) {
+  const of = (g) => user?.elo?.[g]?.rating ?? ELO_START;
+  if (game === "clasico") return Math.round(CLASSIC_ELO_GAMES.reduce((sum, g) => sum + of(g), 0) / CLASSIC_ELO_GAMES.length);
+  return of(game);
+}

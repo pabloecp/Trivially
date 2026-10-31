@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { useApp } from "../../lib/store.jsx";
-import { setBlobStyle, setBlobsStill, useBlobsStillChoice, setForcedGames, setOwnerView, useBlobStyleChoice, setResultsStyle, setResultsTone, setScoreboardLook, useForcedGames, useOwnerView, useResultsChoice, useScoreboardChoice } from "../../lib/ownerView.js";
+import { setBlobStyle, setBlobsStill, useBlobsStillChoice, setForcedGames, setOwnerView, useBlobStyleChoice, setResultsStyle, setResultsTone, setScoreboardBadge, setScoreboardLook, useForcedGames, useOwnerView, useResultsChoice, useScoreboardBadgeChoice, useScoreboardChoice } from "../../lib/ownerView.js";
 import { findMode } from "../../modes/index.js";
 import Icon from "./Icon.jsx";
 import Segmented from "./Segmented.jsx";
@@ -24,6 +24,7 @@ export default function AdminPanel({ open, onClose }) {
   const forced = useForcedGames();
   const results = useResultsChoice();
   const scoreboard = useScoreboardChoice();
+  const badge = useScoreboardBadgeChoice();
   const [mounted, setMounted] = useState(open);
   const [msg, setMsg] = useState("");
   const [busy, setBusy] = useState(false);
@@ -228,7 +229,7 @@ export default function AdminPanel({ open, onClose }) {
                     { value: "neutro", label: "Neutra" },
                   ]}
                 />
-                <p className="tv-admin-hint">Entre juegos, la ruleta, el tutorial y el final. Los jugadores ven «Panel» y «Neutra».</p>
+                <p className="tv-admin-hint">Entre juegos, la ruleta, el tutorial y el final. Los jugadores ven «Barras» y «En color».</p>
               </div>
 
               {/* How the scoreboard of a public match says who already won a game (lib/ownerView.js). */}
@@ -247,15 +248,15 @@ export default function AdminPanel({ open, onClose }) {
                 {scoreboard === "insignia" && (
                   <Segmented
                     label="Color de la insignia"
-                    value={results.tone}
-                    onChange={setResultsTone}
+                    value={badge}
+                    onChange={setScoreboardBadge}
                     options={[
                       { value: "color", label: "En caja" },
                       { value: "neutro", label: "Con corona" },
                     ]}
                   />
                 )}
-                <p className="tv-admin-hint">Los juegos ganados en una partida pública. Los jugadores ven «Frase».</p>
+                <p className="tv-admin-hint">Los juegos ganados en una partida pública. Los jugadores ven «Insignia» con corona.</p>
               </div>
         </div>
       </section>

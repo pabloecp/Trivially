@@ -1,7 +1,8 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { isGameTile } from "../../modes/index.js";
 import { audienceName } from "../../lib/plan.js";
-import { formatElo, gameStats } from "../../lib/gameStats.js";
+import { eloIn, formatElo, gameStats } from "../../lib/gameStats.js";
 import { useApp } from "../../lib/store.jsx";
 import { useFriends } from "../../lib/friends.jsx";
 import { shownCode, useHiddenCode } from "../../lib/hiddenCode.js";
@@ -11,6 +12,7 @@ import Blob from "./Blob.jsx";
 import { blobColor } from "../../lib/blobColors.js";
 import Icon from "./Icon.jsx";
 import { statusOf } from "./FriendsSheet.jsx";
+import { useInvite } from "./useInvite.js";
 
 // The stage in the middle of Inicio and of a private match's lobby: the game's card in its colour, and beside it your
 // boxes.
@@ -149,7 +151,7 @@ export default function ModeStage({ mode, room = null, audience = null, title = 
 // stays grey until a game is chosen). Beside it the same boxes, with the general (Clásico) elo and challenge.
 const CHOOSE_LINES = [
   { icon: "grid", text: "Trivia, música, mapas, minas y más" },
-  { icon: "users", text: "Solo o con tu grupo, hasta 8" },
+  { icon: "users", text: "Solo o en sala, hasta 10 jugadores" },
   { icon: "globe", text: "Partida pública o privada" },
 ];
 function ChooseStage({ onChoose }) {
@@ -215,7 +217,17 @@ function FriendsBox() {
     <div className="tv-stage-box tv-stage-friends">
       <span className="tv-stage-label">{group ? "Invita a tu sala" : "Amigos en línea"}</span>
       {!friends.isAccount ? (
-        <p className="tv-stage-friends-empty">Con una cuenta puedes agregar amigos y ver aquí quién está jugando.</p>
+        <>
+          <p className="tv-stage-friends-empty">Con una cuenta puedes agregar amigos y ver aquí quién está jugando.</p>
+          <div className="tv-stage-login">
+            <Link to="/login?mode=login&returnTo=/" className="tv-btn tv-btn--neutral">
+              Iniciar sesión
+            </Link>
+            <Link to="/login?returnTo=/" className="tv-btn tv-btn--neutral">
+              Crear cuenta
+            </Link>
+          </div>
+        </>
       ) : online.length === 0 ? (
         <p className="tv-stage-friends-empty">Ninguno de tus amigos está en línea ahora.</p>
       ) : (
@@ -247,17 +259,46 @@ function FriendsBox() {
   );
 }
 
+// "Reto del día": today's challenge, with how far it is and how many you have completed in all (the server's, game/daily.js).
+// Guests have none.
+function DailyBox({ daily }) {
+  // No account, no challenges (the friends' box has the way in).
+  if (!daily) {
+    return (
+      <div className="tv-stage-box tv-stage-daily">
+        <span className="tv-stage-label">Reto del día</span>
+        <p className="tv-stage-friends-empty">Con una cuenta tienes un reto distinto cada día y llevas la cuenta de los que completas.</p>
+      </div>
+    );
+  }
+  const done = Boolean(daily?.done);
+  const target = daily?.target || 1;
+  const progress = Math.min(target, daily?.progress || 0);
+  return (
+    <div className={`tv-stage-box tv-stage-daily${done ? " is-done" : ""}`}>
+      <div className="tv-stage-daily-row">
+        <span className="tv-stage-daily-icon">
+          <Icon name={done ? "check" : "flame"} size={20} strokeWidth={2.4} />
+        </span>
+        <div className="tv-stage-daily-text">
+          <span className="tv-stage-label">Reto del día</span>
+          <strong>{daily.goal}</strong>
+        </div>
+        <span className="tv-stage-daily-count">
+          {formatElo(progress)}/{formatElo(target)}
+        </span>
+      </div>
+      <span className="tv-stage-daily-bar" role="progressbar" aria-valuemin={0} aria-valuemax={target} aria-valuenow={progress} aria-label="Avance del reto">
+        <i style={{ width: `${Math.round((progress / target) * 100)}%` }} />
+      </span>
+    </div>
+  );
+}
+
 // "Código de la sala": your sala's code, big, with "Copiar" (dots while codes are hidden, for streaming).
 function SalaCodeBox({ code }) {
   const [codeHidden] = useHiddenCode();
-  const [copied, setCopied] = useState(false);
-  async function copy() {
-    try {
-      await navigator.clipboard.writeText(code);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1500);
-    } catch {}
-  }
+  const { copied, copy } = useInvite(code);
   return (
     <div className="tv-stage-box tv-stage-code">
       <span className="tv-stage-label">Código de la sala</span>
@@ -265,9 +306,8 @@ function SalaCodeBox({ code }) {
         <strong className="tv-stage-code-text" aria-label="Código de la sala">
           {shownCode(code, codeHidden)}
         </strong>
-        <button type="button" className="tv-stage-friends-act tv-stage-code-copy" onClick={copy}>
-          <Icon name={copied ? "check" : "copy"} size={16} strokeWidth={2.6} />
-          {copied ? "Copiado" : "Copiar"}
+        <button type="button" className="tv-stage-friends-act tv-stage-code-copy" aria-label={copied ? "Enlace copiado" : "Copiar enlace de la sala"} title={copied ? "Copiado" : "Copiar enlace"} onClick={copy}>
+          <Icon name={copied ? "check" : "link"} size={24} strokeWidth={2.6} />
         </button>
       </div>
     </div>
@@ -277,20 +317,27 @@ function SalaCodeBox({ code }) {
 // "En tu sala": who's in it, one flat box each like the match's scoreboard (yours with the yellow ring, never a "tú"),
 // you first, the leader marked, dimmed whoever isn't with the sala right now.
 function SalaMembersBox({ group, meId }) {
-  const members = [...group.members].sort((a, b) => (b.id === meId) - (a.id === meId));
+  const members = group.members;
   return (
     <div className="tv-stage-box tv-stage-friends tv-stage-members">
       <span className="tv-stage-label">En tu sala · {members.length}</span>
-      <ul className="tv-stage-friends-list">
-        {members.map((m) => (
-          <li key={m.id} className={`${m.id === meId ? "is-me" : ""}${m.here === false ? " is-away" : ""}`.trim() || undefined}>
-            <Avatar className="tv-avatar--sm" avatar={m.avatar} mood="neutral" />
-            <span className="tv-stage-friends-text">
-              <b>{m.name}</b>
-              <span>{m.id === group.leaderId ? "Líder" : m.here === false ? "No está en la sala ahora" : "En la sala"}</span>
-            </span>
-          </li>
-        ))}
+      {/* The same rows as "Tu sala" (GroupSheet), without the crown. */}
+      <ul className="tv-party-players" aria-label="Jugadores de la sala">
+        {members.map((m) => {
+          const leads = m.id === group.leaderId;
+          const tag = !m.connected ? "Reconectando…" : !m.here ? "En otra partida" : leads ? "Líder" : "En la sala";
+          return (
+            <li key={m.id} className={`tv-player${m.id === meId ? " is-me" : ""}${m.connected && m.here ? "" : " is-away"}`}>
+              <div className="tv-player-btn">
+                <Avatar name={m.name} avatar={m.avatar} mood="neutral" />
+                <span className="tv-player-text">
+                  <span className="tv-player-name">{m.name}</span>
+                  <span className={`tv-player-tag${leads ? " is-host" : ""}`}>{tag}</span>
+                </span>
+              </div>
+            </li>
+          );
+        })}
       </ul>
     </div>
   );
@@ -298,14 +345,25 @@ function SalaMembersBox({ group, meId }) {
 
 // Beside the card: your elo in the game, with your character in the box's empty side, the day's challenge, and your
 // friends online; with a sala, its code and who's in it instead of those two.
-function Boxes({ game, gameName = "", color, stats }) {
-  const { daily } = stats;
+function Boxes({ game, gameName = "", color, stats: example }) {
   const { user, group } = useApp();
+  // The elo is yours, from the server; the week's change isn't tracked yet, so it isn't shown.
+  const stats = { ...example, elo: eloIn(user, game), week: 0 };
   return (
     <div key={game} className={`tv-stage-aside tv-c-${color}`}>
       <div className="tv-stage-box tv-stage-elo">
         <div className="tv-stage-elo-text">
-          <span className="tv-stage-label">{gameName ? `Tu elo en ${gameName}` : "Tu elo"}</span>
+          <span className="tv-stage-label">
+            {gameName ? (
+              <>
+                Elo en
+                <br />
+                {gameName}
+              </>
+            ) : (
+              "Tu elo"
+            )}
+          </span>
           <strong className="tv-stage-elo-num">{formatElo(stats.elo)}</strong>
           {stats.week !== 0 && (
             <span className={`tv-stage-elo-week${stats.week < 0 ? " is-down" : ""}`}>
@@ -321,23 +379,7 @@ function Boxes({ game, gameName = "", color, stats }) {
       {group ? (
         <SalaCodeBox code={group.code} />
       ) : (
-        <div className="tv-stage-box tv-stage-daily">
-          <div className="tv-stage-daily-row">
-            <span className="tv-stage-daily-icon">
-              <Icon name="flame" size={20} strokeWidth={2.4} />
-            </span>
-            <div className="tv-stage-daily-text">
-              <span className="tv-stage-label">Reto del día</span>
-              <strong>{daily.goal}</strong>
-            </div>
-            <span className="tv-stage-daily-count">
-              {daily.done}/{daily.of}
-            </span>
-          </div>
-          <span className="tv-stage-daily-bar" role="progressbar" aria-valuemin={0} aria-valuemax={daily.of} aria-valuenow={daily.done} aria-label="Avance del reto">
-            <i style={{ width: `${Math.round((daily.done / daily.of) * 100)}%` }} />
-          </span>
-        </div>
+        <DailyBox daily={user?.daily} />
       )}
 
       {group ? <SalaMembersBox group={group} meId={user?.id} /> : <FriendsBox />}

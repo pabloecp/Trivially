@@ -11,8 +11,8 @@ import { sampleQuestions } from "../questions/sampleQuestions.js";
 // la colina and Farsante aren't public. A group searching together is for five too, whatever its size.
 assert.equal(DUELS_OPEN, false);
 assert.deepEqual(cleanMatchRequest({ kind: "casual", game: "opciones" }), { kind: "casual", rounds: 5, size: 5, game: "opciones" });
-assert.throws(() => cleanMatchRequest({ kind: "casual", game: "farsante" }), /solo se puede jugar con tu grupo/);
-assert.throws(() => cleanMatchRequest({ kind: "casual", game: "rey" }), /solo se puede jugar con tu grupo/);
+assert.throws(() => cleanMatchRequest({ kind: "casual", game: "farsante" }), /solo se puede jugar con tu sala/);
+assert.throws(() => cleanMatchRequest({ kind: "casual", game: "rey" }), /solo se puede jugar con tu sala/);
 assert.equal(groupMatchSize(1), 5);
 assert.equal(groupMatchSize(2), 5);
 assert.equal(groupMatchSize(9), 5);
@@ -78,11 +78,11 @@ clearTimeout(four.matchmaking.botTimer);
 assert.notEqual(four, pair, "two and four don't fit in five");
 assert.equal(mgr.connectedCount(four), 4);
 // Another game's queue, or a game that isn't public, never.
-assert.throws(() => mgr.findMatch(user(60), { kind: "casual", game: "rey" }, [user(61)]), /solo se puede jugar con tu grupo/);
+assert.throws(() => mgr.findMatch(user(60), { kind: "casual", game: "rey" }, [user(61)]), /solo se puede jugar con tu sala/);
 // A group of six doesn't fit in a public match.
 assert.throws(
   () => mgr.findMatch(user(50), { kind: "casual", game: "opciones" }, [51, 52, 53, 54, 55].map(user)),
-  /5 como mucho y tu grupo es de 6/
+  /5 como mucho y tu sala es de 6/
 );
 // Someone of the group the room blocked keeps the whole group out of it.
 pair.blocked = new Set(["u71"]);
@@ -103,6 +103,12 @@ mgr.setGame(reset, "u30", "musica");
 mgr.updateConfig(reset, "u30", { rounds: 20 });
 mgr.updateConfig(reset, "u30", { reset: "musica" });
 assert.equal(reset.config.rounds, 5);
+
+// A sala holds 10 players: the eleventh doesn't get in.
+const full = mgr.create({ host: { id: "full0", name: "Jugador 0", socketId: "sf0" }, game: null });
+for (let i = 1; i < 10; i += 1) mgr.addPlayer(full, { id: `full${i}`, name: `Jugador ${i}`, socketId: `sf${i}` });
+assert.throws(() => mgr.addPlayer(full, { id: "full10", name: "Jugador 10", socketId: "sf10" }), /sala está llena \(máximo 10/);
+mgr.addPlayer(full, { id: "full3", name: "Jugador 3", socketId: "sf3b" });
 
 for (const room of [...mgr.rooms.values()]) mgr.destroy(room);
 console.log("publicGroup ok");

@@ -1,3 +1,4 @@
+import { botPublicProfile } from "../game/bots.js";
 import { Router } from "express";
 import { hydrateSong } from "../catalog/catalogProvider.js";
 import { selectSongs } from "../catalog/songSelector.js";
@@ -343,7 +344,11 @@ export function createApiRouter({ catalog, store, friends = null, hub = null, so
 
   router.get("/users/:id", (req, res) => {
     const user = store.users[req.params.id];
-    if (!user) return res.status(404).json({ error: "No encontrado" });
+    // A bot with an account's look (game/bots.js) has a profile like any other.
+    if (!user) {
+      const bot = botPublicProfile(req.params.id);
+      return bot ? res.json({ user: bot }) : res.status(404).json({ error: "No encontrado" });
+    }
 
     // If requesting own profile, return full sanitized data; otherwise public-only
     const isOwner = req.session?.userId === req.params.id;

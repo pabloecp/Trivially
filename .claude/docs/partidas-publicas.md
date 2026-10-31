@@ -22,7 +22,18 @@
 ## Rank (Competitivo)
 `game/rank.js`: `user.rank` `{ points, matches, wins, best }` moved by place (`PLACE_POINTS`), never below 0. Tiers `RANK_TIERS` (Bronce 0 … Maestro 1500, divisions of `DIVISION_POINTS` 100), mirrored in `frontend/src/lib/rank.js`. Tests `rank.test.js`.
 
+## Elo, matchmaking and rank (Casual)
+- **Elo per game** (`game/elo.js`, tests `elo.test.js`): `user.elo[game]` `{ rating, games, best }`, start 500, moved by every game of a public match (`RoomManager.rateGame`, from `scoreMatchGame`): a single game's queue or each game of a Clásico. Each pair is a small duel by that game's points; guests play as 1000 and keep nothing. The profile sends `elo`; Inicio's "Tu elo" reads it (`eloIn`; the Clásico's is the average of its games).
+- **Matchmaking by elo:** `findMatch` only joins a room whose humans' average elo is within `ELO_WINDOW` (300), widening `ELO_WIDEN_BY` every `ELO_WIDEN_EVERY_MS` the room has waited (`eloFits`).
+- **Rank** (`rank.js`) now moves in the Casual's Clásico too (`rankedMatch`), by place.
+- **Same rivals:** `user.together[rivalId]` counts public matches between two accounts; from `TOGETHER_LIMIT` (5) on they stop counting for each other's elo, and rank points are scaled by the share of rivals that still count (`rivalDiscount`).
+
+## Reto del día (`game/daily.js`, tests `daily.test.js`)
+- One challenge a day per account, drawn at random from 10 (`CHALLENGES`, each sized for 3 to 5 matches: play 4, win 3, podium 4 times, 20 right answers, 8.000 points, a streak of 3 in 3 matches, 4+ right in 3 matches, 3 public matches, 3 different games, 2.000+ points in 4 matches). It is the same all day and changes at midnight Mexico City time (`DAILY_TZ`).
+- Every finished match of an account, in any game, public or private, adds to it (`applyDaily` from `applyMatchStats`). `user.daily` keeps today's progress and `user.dailyDone` how many challenges the account has completed in all; the account's data sends `daily` (today's with its goal, `target`, `progress`, `done`, `total`) and the public profile `dailyDone`. Guests have none. Inicio's "Reto del día" box (`DailyBox`) shows today's; the total is the profile's "Retos del día" stat.
+
 ## Bots (Casual)
+- Bots are fixed in-memory profiles (`game/bots.js`) that look like accounts or guests: guests white (`gst_` id), accounts white or an account colour (`usr_` id, with a profile page and friend requests that go nowhere). Each has an elo per game that moves like anyone's; `pickBots` takes ones close to the room's elo and `skillFor` turns it into difficulty.
 - `scheduleBotArrival` adds a bot every second after `BOT_WAIT_MS` until full (`addBot`: `bot: true` server-only, guest-like id, a Spanish/English two-word name, `skill` 0.15–0.45). **Players must never be able to tell a bot from a person**: `bot` is never sent and no text mentions bots.
 - `scheduleBots`/`botMove` act between `BOT_MIN_MS` and `BOT_MAX_MS` (3–8 s) into a round. A room with only bots closes (`hasPeople`). Bots get no stats.
 
@@ -32,5 +43,5 @@
 
 ## Client
 - The search is HomeFrame's `SearchCard`: "Buscando jugadores de Trivia…" with how long (`useSearchStart`), the game's queue ("Fila de Trivia · 5 rondas · 10 s · Cerradas", `publicMatchLine` in `matchInfo.js`) and how many were found; once full, "¡Partida completa!" and "Empieza en 3". Its button is CANCELAR (grey): the group's `group:home` (the leader's; the others see "Buscando con Ana…"), or leaving the room.
-- **One address for the whole match once it plays:** `/sala/CODE` (the search waits on `/`) (`isInlineMatch`, `roomPath`, `RoomScreen`/`GAME_SCREENS` in `App.jsx`); only the end is `/playlist/CODE`. `RoomNavigator` adds `tv-seamless` / `tv-seamless-side` on `<html>` for 1.4 s so screens swap without re-animating (lengths 0 s, not `none`).
+- **One address for the whole match once it plays:** `/partida/CODE` (the search waits on `/`) (`isInlineMatch`, `roomPath`, `RoomScreen`/`GAME_SCREENS` in `App.jsx`); only the end is `/playlist/CODE`. `RoomNavigator` adds `tv-seamless` / `tv-seamless-side` on `<html>` for 1.4 s so screens swap without re-animating (lengths 0 s, not `none`).
 - `MatchIntro.jsx` (`PanelRoulette`, tutorial), styles `styles/match.css`.

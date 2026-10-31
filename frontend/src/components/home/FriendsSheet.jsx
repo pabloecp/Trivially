@@ -16,7 +16,7 @@ export function statusOf(friend) {
   const where = friend.room.inMatch
     ? `Jugando${mode ? ` ${mode}` : ""}`
     : friend.room.inRoom === false
-      ? "En un grupo"
+      ? "En una sala"
       : mode
         ? `Preparando ${mode}`
         : "Preparando una partida";
@@ -159,7 +159,7 @@ export default function FriendsSheet() {
       () => f.joinFriend(friend.id),
       (action) =>
         action === "requested"
-          ? `Le pediste a ${friend.room?.hostName || "el líder"} unirte a su grupo. Esperando su respuesta…`
+          ? `Le pediste a ${friend.room?.hostName || "el líder"} unirte a su sala. Esperando su respuesta…`
           : null,
     );
 
@@ -187,15 +187,9 @@ export default function FriendsSheet() {
             aria-labelledby="tv-fr-title"
           >
             <div className="tv-sheet-head tv-fr-head">
-              <span className="tv-badge tv-c-yellow">
-                <Icon name="users" size={26} />
-              </span>
-              <div>
-                <p className="tv-sheet-kicker">Social</p>
-                <h2 id="tv-fr-title" className="tv-sheet-title">
-                  Amigos
-                </h2>
-              </div>
+              <h2 id="tv-fr-title" className="tv-sheet-title">
+                Amigos
+              </h2>
               <button type="button" className="tv-fr-close" onClick={() => f.setOpen(false)} aria-label="Cerrar">
                 <Icon name="close" size={20} strokeWidth={3} />
               </button>

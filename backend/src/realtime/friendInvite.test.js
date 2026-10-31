@@ -47,7 +47,7 @@ function connect(id, userId) {
 
 const ana = connect("s-ana", "usr_ana");
 // Not in a group yet.
-assert.match((await ana.call("friend:invite", { friendId: "usr_luis" })).error, /Crea un grupo/);
+assert.match((await ana.call("friend:invite", { friendId: "usr_luis" })).error, /Crea una sala/);
 const code = (await ana.call("group:create", { user: { name: "Ana", avatar: "#f00" }, plan: { game: "opciones", audience: "publica" } })).group.code;
 
 // Not a friend: no.
@@ -67,7 +67,7 @@ assert.match((await ana.call("friend:invite", { friendId: "usr_luis" })).error, 
 // Already in the group: nothing to invite.
 const luis = connect("s-luis", "usr_luis");
 assert.equal((await luis.call("group:join", { user: { name: "Luis", avatar: "#0f0" }, code })).ok, true);
-assert.match((await ana.call("friend:invite", { friendId: "usr_luis" })).error, /Ya está en tu grupo/);
+assert.match((await ana.call("friend:invite", { friendId: "usr_luis" })).error, /Ya está en tu sala/);
 
 for (const r of [...rooms.rooms.values()]) rooms.destroy(r);
 console.log("friendInvite.test ok");
