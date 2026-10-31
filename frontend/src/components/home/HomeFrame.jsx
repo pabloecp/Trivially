@@ -244,7 +244,9 @@ export default function HomeFrame({ room = null, onToast, Lobby = null, leaving 
     };
   } else {
     action = {
-      label: busyType === "create" || start.busy ? "Empezando…" : "Empezar",
+      // "Jugar" on both sides: public or private, the button says the same.
+      label: busyType === "create" || start.busy ? "Empezando…" : "Jugar",
+      play: !(busyType === "create" || start.busy),
       sound: "none",
       disabled: busy || (room ? !start.canStart : false),
       onClick: () => (room ? start.start() : run({ type: "create", game: plan.game, then: "start" })),

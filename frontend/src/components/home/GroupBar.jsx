@@ -27,11 +27,11 @@ function codeFrom(text) {
 //  - PARTIDA. "Pública" / "Privada" (`onAudience`; read-only without it) and "Vas a jugar" (the game's own card,
 //    `.tv-gcard`, the Clásico's in the logo's look, grey "Elige un juego" with no game; a tap opens "¿Qué quieren
 //    jugar?"): the game is changed from here.
-//  - The screen's one yellow button (JUGAR, EMPEZAR; CANCELAR, grey, while searching; JUGAR grey with a lock until a game
+//  - The screen's one yellow button (JUGAR, public or private; CANCELAR, grey, while searching; JUGAR grey with a lock until a game
 //    is chosen, `action.locked`), or `note` while someone else decides.
 // On phones TU GRUPO goes up to the top bar, very short (SalaMenu: the faces and how many, a tap opens the whole zone like
 // the volume's panel; beside them the sala's code, a tap copies it), and the rest stays at the foot of the screen, always
-// in sight: "Pública" / "Privada" with "Vas a jugar" and, in one row, the invite link's copy button and the yellow one. `onJoin(code)` is false when the code didn't work; `canJoin` false while
+// in sight: "Pública" / "Privada" (only their icons) with "Vas a jugar", and the yellow button under them. `onJoin(code)` is false when the code didn't work; `canJoin` false while
 // searching for a match. `groupError` is said under the group's zone, `error` under the button.
 export default function GroupBar({ members = [], meId, inGroup = false, code = "", isLeader = false, canJoin = true, onGroup, onAudience = null, onJoin, onJoinEdit, onLeave, busy = false, inviteBadge = 0, plan, onPlan, planLocked = false, action = null, note = "", error = "", groupError = "" }) {
   const mode = plan.game ? findMode(plan.game) : null;
@@ -130,11 +130,14 @@ export default function GroupBar({ members = [], meId, inGroup = false, code = "
                 type="button"
                 className={`tv-gbar-seg-btn${plan.audience === a.value ? " is-on" : ""}`}
                 aria-pressed={plan.audience === a.value}
+                aria-label={a.value === "publica" ? "Partida pública" : "Partida privada"}
+                title={a.value === "publica" ? "Partida pública" : "Partida privada"}
                 disabled={!onAudience || planLocked}
                 onClick={() => plan.audience !== a.value && onAudience?.(a.value)}
               >
                 <Icon name={a.value === "publica" ? "globe" : "lock"} size={16} strokeWidth={2.6} />
-                {a.value === "publica" ? "Pública" : "Privada"}
+                {/* Phones show only the icon (look.css): the button still says which it is. */}
+                <span className="tv-gbar-seg-label">{a.value === "publica" ? "Pública" : "Privada"}</span>
               </button>
             ))}
           </div>
@@ -159,7 +162,6 @@ export default function GroupBar({ members = [], meId, inGroup = false, code = "
       </div>
 
       <div className="tv-gbar-zone tv-gbar-zone--go">
-        {phone && inGroup && code && <ShareLink code={code} />}
         {action ? (
           <button
             type="button"
@@ -271,26 +273,16 @@ function SalaMenu({ members, count, inGroup, code, meId, cap, badge, error, chil
   );
 }
 
-// Phones, in the top bar beside the sala's faces: its code, always in sight; a tap copies it (green for a moment). Dots
-// while codes are hidden, for streaming (the real one is still what's copied).
+// Phones, in the top bar beside the sala's faces: its code with a link icon, always in sight; a tap copies the invite
+// link (/grupo/CODE, green for a moment). Dots while codes are hidden, for streaming (the real link is still copied).
 function SalaCode({ code }) {
   const [codeHidden] = useHiddenCode();
-  const { copied, copy } = useInvite(code, null, { what: "code" });
-  return (
-    <button type="button" className={`tv-chip tv-chip--code${copied ? " is-copied" : ""}`} data-sound="none" aria-label={copied ? "Código copiado" : `Copiar el código de la sala, ${codeHidden ? "oculto" : code}`} onClick={copy}>
-      <span className="tv-chip-code">{codeHidden ? "•••••" : code}</span>
-      <span className="tv-sr-only" aria-live="polite">{copied ? "Código copiado" : ""}</span>
-    </button>
-  );
-}
-
-// Phones, beside the yellow button: copies the sala's invite link (/grupo/CODE) to share it.
-function ShareLink({ code }) {
   const { copied, copy } = useInvite(code);
   return (
-    <button type="button" className="tv-btn tv-btn--neutral tv-btn--lg tv-gbar-share" data-sound="none" aria-label={copied ? "Enlace copiado" : "Copiar el enlace de tu sala"} onClick={copy}>
-      <Icon name={copied ? "check" : "link"} size={20} strokeWidth={2.6} />
-      <span>{copied ? "Copiado" : "Enlace"}</span>
+    <button type="button" className={`tv-chip tv-chip--code${copied ? " is-copied" : ""}`} data-sound="none" aria-label={copied ? "Enlace copiado" : `Copiar el enlace de la sala, ${codeHidden ? "código oculto" : code}`} onClick={copy}>
+      <Icon name={copied ? "check" : "link"} size={16} strokeWidth={2.6} />
+      <span className="tv-chip-code">{codeHidden ? "•••••" : code}</span>
+      <span className="tv-sr-only" aria-live="polite">{copied ? "Enlace copiado" : ""}</span>
     </button>
   );
 }
