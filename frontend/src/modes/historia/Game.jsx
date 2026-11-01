@@ -298,6 +298,26 @@ function GameScreen() {
       : "Elijan el año en la línea del tiempo de su teléfono.";
   }
 
+  // The two buttons on each side of the chosen number: a little (a year, a hundredth of the bar) and a lot (ten years, a
+  // tenth of it), the small one next to the number.
+  const stepButtons = (dir) => {
+    const mark = dir < 0 ? "−" : "+";
+    const sizes = dir < 0 ? [step, fine] : [fine, step];
+    return sizes.map((n) => (
+      <button
+        key={n}
+        type="button"
+        className="tv-hist-step"
+        onClick={() => nudge(dir * n)}
+        disabled={!open}
+        aria-label={`${dir < 0 ? "Restar" : "Sumar"} ${isNum ? figureLabel(n) : n === 1 ? "un año" : `${n} años`}`}
+      >
+        {mark}
+        {isNum ? figureLabel(n) : n}
+      </button>
+    ));
+  };
+
   // The row under the timeline, always the same height: confirm, or what's going on.
   let action;
   if (central) {
@@ -405,40 +425,33 @@ function GameScreen() {
                 <Verdict room={room} me={null} user={null} tiebreak={tiebreak} tiedNames={tiedNames} iPlay={false} fmt={fmt} isNum={isNum} />
               )}
               {phase === "playing" && !central && (
-                <output className={`tv-hist-year${myGuess ? "" : " is-empty"}${isNum ? " is-number" : ""}`} aria-live="polite">
-                  {myGuess && isNum ? (
-                    <>
-                      {figureLabel(myGuess.year)}
-                      {unit && <small>{unit}</small>}
-                    </>
-                  ) : myGuess ? (
-                    <>
-                      {Math.abs(myGuess.year)}
-                      {(myGuess.year < 0 || crossesZero) && <small>{myGuess.year < 0 ? "a. C." : "d. C."}</small>}
-                    </>
-                  ) : (
-                    "¿?"
-                  )}
-                </output>
+                <div className={`tv-hist-picker${confirmed ? " is-locked" : ""}`}>
+                  {stepButtons(-1)}
+                    <output className={`tv-hist-year${myGuess ? "" : " is-empty"}${isNum ? " is-number" : ""}`} aria-live="polite">
+                      {myGuess && isNum ? (
+                        <>
+                          {figureLabel(myGuess.year)}
+                          {unit && <small>{unit}</small>}
+                        </>
+                      ) : myGuess ? (
+                        <>
+                          {Math.abs(myGuess.year)}
+                          {(myGuess.year < 0 || crossesZero) && <small>{myGuess.year < 0 ? "a. C." : "d. C."}</small>}
+                        </>
+                      ) : (
+                        "¿?"
+                      )}
+                    </output>
+                  {stepButtons(1)}
+                </div>
               )}
               {reveal && !spectator && !central && (
                 <Verdict room={room} me={me} user={user} tiebreak={tiebreak} tiedNames={tiedNames} iPlay={iPlay} fmt={fmt} isNum={isNum} />
               )}
             </div>
 
-            {/* The bar between "−" and "+" (a little at a time; the arrow keys too). */}
+            {/* The bar (the arrow keys move it too). */}
             <div className={`tv-hist-barrow${confirmed ? " is-locked" : ""}`}>
-              {!central && (
-                <button
-                  type="button"
-                  className="tv-hist-step"
-                  onClick={() => nudge(-fine)}
-                  disabled={!open}
-                  aria-label={isNum ? `Restar ${figureLabel(fine)}` : "Un año antes"}
-                >
-                  <Icon name="minus" size={20} strokeWidth={3} />
-                </button>
-              )}
               <Timeline
                 min={min}
                 max={max}
@@ -456,17 +469,6 @@ function GameScreen() {
                   min == null ? (isNum ? "Barra" : "Línea del tiempo") : `${isNum ? "Barra" : "Línea del tiempo"} de ${fmt(min)} a ${fmt(max)}`
                 }
               />
-              {!central && (
-                <button
-                  type="button"
-                  className="tv-hist-step"
-                  onClick={() => nudge(fine)}
-                  disabled={!open}
-                  aria-label={isNum ? `Sumar ${figureLabel(fine)}` : "Un año después"}
-                >
-                  <Icon name="plus" size={20} strokeWidth={3} />
-                </button>
-              )}
             </div>
 
             <div className="tv-hist-action">{action}</div>

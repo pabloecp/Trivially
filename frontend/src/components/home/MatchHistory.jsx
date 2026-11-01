@@ -212,7 +212,7 @@ export default function MatchHistory({ matches = [], title = null }) {
         open={Boolean(answers)}
         rounds={answers?.rounds || []}
         title={matchMode(answers?.game)?.fullName || matchMode(answers?.game)?.name || "Tu partida"}
-        showGame={answers?.game === "playlist" || Boolean(MATCH_KINDS[answers?.game])}
+       
         onClose={() => setAnswers(null)}
       />
     </>

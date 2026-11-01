@@ -1,7 +1,9 @@
 import { Link } from "react-router-dom";
 
-export function profilePath(id) {
-  return `/profile/${encodeURIComponent(id)}`;
+// A profile's address: "/profile/pabloecp" when the player's username is known; by id otherwise (the profile then moves to it).
+export function profilePath(idOrPlayer) {
+  const username = idOrPlayer?.username;
+  return username ? `/profile/${username}` : `/profile/${encodeURIComponent(idOrPlayer?.id ?? idOrPlayer)}`;
 }
 
 // A player's name that opens their profile (registered players only; guests have none). Opens in a new tab

@@ -11,6 +11,7 @@
 - Host handover: `PlayerMenu.jsx` "Hacer anfitrión" (two taps) → `room:giveHost` / `giveHost`; the old host becomes a co-host (`transferHost`).
 
 ## Phases
+- A private match of one game starts with its "Cómo se juega" (phase `intro`, `INTRO_TUTORIAL_MS`, no roulette; `MatchIntro`), so every game has it. Only with `tutorials: true` (`index.js`): tests go straight to the rounds.
 - `lobby → countdown (3 s) → playing (config.roundMs) → reveal → next countdown … → finished`. The reveal is 3 s (`REVEAL_MS`) except Campo de minas (`MINES_REVEAL_MS`, 6 s), Lluvia (`RAIN_REVEAL_MS`, 5 s), Rey (4 s) and Farsante (8 s).
 - `setPhase()` owns the single `room.timer`; every transition calls `rooms.onPhaseChange`, which `sockets.js` wires to broadcast `room:state`; `watchRoom()` re-broadcasts about once a second during a match.
 - "Volver a jugar" = `room:replay` (same game and settings); "Volver al lobby" = `room:restart`.
@@ -30,7 +31,7 @@
 ## After a match
 - `applyMatchStats` writes per-user stats; `matchWinner`: first place with points, a tie counts for nobody unless a tiebreak settled it.
 - History: `user.history` (newest first, `MATCH_HISTORY_LIMIT` 10). Question ids never go out: `publicHistory`, `sanitizeUser` (own account, with rounds), `sanitizeUserPublic` (never rounds), `publicRounds`. UI: `MatchHistory.jsx`, `MatchSummarySheet`.
-- Summary: `recordRound` fills `player.rounds` (`{ round, game, prompt, answer, yours, points, status }`, status `ok|near|bad|none`), sent as `results[].rounds`.
+- Summary: `recordRound` fills `player.rounds` (`{ round, game, style?, prompt, answer, yours, points, status }`, `style` only where the game has modes: Encuentra el país, Adivina la canción), sent as `results[].rounds`. `status` is the same colour in every game: `ok` green (won it all), `near` yellow (scored but didn't win: a mine with right cells too), `bad` red (lost with no points, also what was written or placed and went in on its own when the time ran out), `none` grey (no answer, a question skipped, or a mines board the time ran out on, with no points). Campo de minas says how the board ended and, only if there were some, how many right cells. UI: `MatchSummarySheet`, the game's card (its colour and icon, "Varios juegos" in a playlist or Clásico) and five rounds at a time with arrows at the foot.
 - Results screens share `components/home/ResultsParts.jsx` (`PodiumCard`, `RetouchCard` from `ResultsLooks.jsx`, `GamesWon`). One column below 720 px. On phones the buttons go in `ResultsFoot`, a bar pinned to the bottom like `.tv-roomdock` (portal into `.tv-app`; the way back is a square with its icon), and the podium shows only first names (`.tv-podium-first`). With more than five players the ranking shows five whole rows and scrolls inside for the rest (`useFiveRows`, `.tv-res-table.is-five`, snapping to whole rows).
 - Phones: during an intro (`.tv-mcard`) the scoreboard stays under the card (home.css, "Phones: the room's bars").
 
@@ -39,11 +40,11 @@
 - **Hidden code** (`lib/hiddenCode.js`, key `trivially_hide_code`): dots on this device, and the URL uses `HIDDEN_SLUG` "oculta" instead of the code (`urlCode`, `resolveCode`, `RoomNavigator`).
 
 ## Trivia (`opciones`, `QUIZ_GAME`)
-- `config.quiz`: `rounds` 5–20, `roundMs` 15–35 s, and the ticked lists `categories`, `formats` (`opciones|escribir`) and `difficulties`; an empty list blocks the start.
+- `config.quiz`: `rounds` 5–25, `roundMs` 15–35 s, and the ticked lists `categories`, `formats` (`opciones|escribir`) and `difficulties`; an empty list blocks the start.
 - `game/quiz.js` `quizPool()`: bank `multiple_choice` and `open` rows, plus the capitals and flags of `geoBank()`. Every four-option question is also a written one (`asWritten`: id `<id>:escribir`, `data.aliases`, the other options in `reject`); questions needing the options ("¿Cuál de los siguientes…?") are left out, and a match never draws both versions (`sameQuestion`).
 - `pickQuizQuestions` shares the rounds between kinds; `choice` answers are recorded by `submitQuizAnswer` and graded together by `gradeQuiz()` at the reveal; `open` ones go through `isCorrectOpenAnswer` (`isChoiceRound`).
 - A written answer (Trivia, Adivina la canción) left in its box when the time runs out goes on its own half a second before the end (`WriteRound` and the song's box, from `useRemainingMs`), as if "Enviar" had been pressed (the song's: the highlighted suggestion, else what was typed).
-- `publicQuestion()` never sends the id; options and flag from `playing`, answer and `picks` at `reveal`. The lobby gets `questionCounts`.
+- `publicQuestion()` never sends the id; options and flag from `playing`, answer and `picks` at `reveal`. The lobby gets `questionCounts`: what each choice has with the other lists, where a list left empty filters nothing (otherwise, with two lists empty, nothing could be ticked again).
 - Frontend `src/modes/quiz/` (`/quiz/:code`), styles `styles/quiz.css`.
 
 ## Adivina la canción (`musica`)

@@ -40,7 +40,7 @@ for (const q of picked) {
 // Settings stay inside their limits.
 assert.deepEqual(
   mergeQuizConfig(undefined, { rounds: 99, roundMs: 1000, difficulties: ["imposible", "media"], categories: ["cocina", "ciencia"], formats: ["dibujar", "escribir"] }),
-  { rounds: 20, roundMs: 15000, difficulties: ["media"], categories: ["ciencia"], formats: ["escribir"] }
+  { rounds: 25, roundMs: 15000, difficulties: ["media"], categories: ["ciencia"], formats: ["escribir"] }
 );
 // Everything is chosen by default; an older client's single difficulty still works.
 assert.deepEqual(mergeQuizConfig().difficulties, ["facil", "media", "dificil"]);
@@ -234,5 +234,30 @@ assert.ok(w.timer && w.phaseEndsAt - Date.now() > 7000 && w.phaseEndsAt - Date.n
 mgr.skip(w, "w-1");
 assert.equal(w.phase, "reveal");
 for (const r of [room, big, none, w]) clearTimeout(r.timer);
+
+// Every list left empty: each choice still counts its questions, so it can be ticked again.
+{
+  const counts = questionCounts([{ category: "ciencia", difficulty: "facil", type: "open" }], { categories: [], difficulties: [], formats: [] });
+  assert.equal(counts.categories.ciencia, 1);
+  assert.equal(counts.difficulties.facil, 1);
+}
+
+// With tutorials on (the server), a private match of one game starts with its "Cómo se juega", then its rounds.
+{
+  const tmgr = new RoomManager({ catalog: readLocalCatalog(), store: { users: {} }, questions: bank, tutorials: true });
+  const host = { id: "tut-1", name: "Host", socketId: "tut-s1" };
+  const troom = tmgr.create({ host, mode: "multi", game: "opciones" });
+  tmgr.updateConfig?.(troom, host.id, { quiz: { formats: ["opciones"] } });
+  tmgr.start(troom, host.id);
+  assert.equal(troom.phase, "intro");
+  const tintro = tmgr.publicState(troom, host.id).intro;
+  assert.equal(tintro.game, "opciones");
+  assert.equal(tintro.spinMs, 0, "nothing to draw");
+  assert.equal(tintro.previous, null);
+  assert.equal(tmgr.publicState(troom, host.id).question, null, "no question during the tutorial");
+  troom.phaseOnEnd();
+  assert.equal(troom.phase, "countdown");
+  clearTimeout(troom.timer);
+}
 
 console.log("quiz.test ok");

@@ -133,12 +133,6 @@
 .tv-central-offer { color: var(--tv-text); }
 .tv-central-offer .tv-btn { color: var(--on); }
 .tv-central-offer :focus-visible { outline: 3px solid var(--tv-focus); outline-offset: 4px; }
-.tv-central-offer .tv-confirm-actions { grid-template-columns: minmax(0, 1fr) minmax(0, 1.7fr); }
-.tv-central-offer .tv-confirm-actions.is-single { grid-template-columns: minmax(0, 1fr); }
-.tv-central-offer .tv-confirm-actions .tv-btn { height: auto; min-height: 50px; padding: 8px 12px; white-space: normal; line-height: 1.15; }
-.tv-central-offer .tv-confirm-text { display: flex; align-items: baseline; gap: 10px; }
-.tv-central-offer .tv-confirm-text .tv-pulse { position: relative; top: -1px; }
-.tv-central-offer .tv-sheet-error { margin: -8px 0 16px; }
 
 /* ---------- The central device's waiting screen (CentralLobby.jsx) ---------- */
 /* No phone bars on it (RoomHeader, RoomDock): the usual top bar stays, so no room is kept for them. */

@@ -63,7 +63,7 @@ export class GroupManager {
   findToJoin(code, userId = null) {
     const group = this.get(code);
     if (!group) throw new Error("No hay ninguna sala con ese código");
-    if (userId && group.blocked.has(userId)) throw new Error("El líder te bloqueó de esta sala");
+    if (userId && group.kicked?.has(userId)) throw new Error("Te sacaron de esta sala: no puedes volver a entrar");
     if (userId && !group.members.has(userId) && group.members.size >= SALA_MAX) throw new Error(`La sala está llena (máximo ${SALA_MAX} jugadores)`);
     return group;
   }
@@ -82,7 +82,6 @@ export class GroupManager {
       joinMode: "solicitud",
       joinRequests: [],
       joinAsked: new Map(),
-      blocked: new Set(),
       plan: cleanPlan(plan),
       // The room the group went to last (its private match or a public one); where it is while any of its players
       // is still in it (place).
@@ -96,7 +95,7 @@ export class GroupManager {
 
   /** Into the group, or back into it (a reload keeps the same place). Out of any other group first. */
   join(group, user) {
-    if (group.blocked.has(user.id)) throw new Error("El líder te bloqueó de esta sala");
+    if (group.kicked?.has(user.id)) throw new Error("Te sacaron de esta sala: no puedes volver a entrar");
     if (hasLink(user?.name)) throw new Error(NAME_LINK_ERROR);
     return this.addMember(group, user);
   }
@@ -112,6 +111,7 @@ export class GroupManager {
     member.dropTimer = null;
     member.name = user.name;
     member.avatar = user.avatar;
+    member.username = user.username || null;
     member.isGuest = Boolean(user.isGuest ?? (user.id?.startsWith("gst_") || !user.email));
     member.connected = true;
     member.socketId = user.socketId || null;
@@ -128,6 +128,7 @@ export class GroupManager {
     clearTimeout(member.dropTimer);
     if (member.socketId) this.socketToGroup.delete(member.socketId);
     group.members.delete(userId);
+    group.settingsBy?.delete(userId);
     if (!group.members.size) {
       this.destroy(group);
       return null;
@@ -188,16 +189,34 @@ export class GroupManager {
     if (!member) throw new Error("Esa persona no está en la sala");
     if (!member.connected) throw new Error("Esa persona no está conectada ahora");
     group.leaderId = targetId;
+    group.settingsBy?.delete(targetId);
     return member;
   }
 
-  /** The leader takes someone out of the group; with `block` they can't come back with the code. */
-  kick(group, leaderId, targetId, { block = false } = {}) {
+  /** Someone taken out of the group (here or from its private match) can't come back. */
+  markKicked(group, userId) {
+    (group.kicked ||= new Set()).add(userId);
+  }
+
+  /** The leader lets a member change the settings of the group's private matches, or not. Returns whether they can now. */
+  togglePermission(group, leaderId, targetId) {
+    this.assertLeader(group, leaderId, "Solo el líder puede dar permisos");
+    if (leaderId === targetId) throw new Error("El líder ya puede cambiar los ajustes");
+    if (!group.members.has(targetId)) throw new Error("Esa persona no está en la sala");
+    group.settingsBy ||= new Set();
+    const granted = !group.settingsBy.has(targetId);
+    if (granted) group.settingsBy.add(targetId);
+    else group.settingsBy.delete(targetId);
+    return granted;
+  }
+
+  /** The leader takes someone out of the group, for good: the code doesn't let them back in. */
+  kick(group, leaderId, targetId) {
     this.assertLeader(group, leaderId, "Solo el líder puede sacar a alguien de la sala");
     if (leaderId === targetId) throw new Error("No puedes sacarte a ti mismo");
     const member = group.members.get(targetId);
     if (!member) throw new Error("Esa persona no está en la sala");
-    if (block) group.blocked.add(targetId);
+    this.markKicked(group, targetId);
     this.removeMember(group, targetId);
     return member;
   }
@@ -250,7 +269,7 @@ export class GroupManager {
   /** A friend asks the leader to let them in (only when the group is "solicitud"). */
   addJoinRequest(group, user, now = Date.now()) {
     if (group.joinMode !== "solicitud") throw new Error("Esa sala no recibe solicitudes");
-    if (group.blocked.has(user.id)) throw new Error("No puedes unirte a esa sala");
+    if (group.kicked?.has(user.id)) throw new Error("No puedes unirte a esa sala");
     if (group.members.has(user.id)) throw new Error("Ya estás en esa sala");
     const wait = (group.joinAsked.get(user.id) || 0) + JOIN_ASK_GAP_MS - now;
     if (wait > 0) throw new Error(`Espera ${Math.ceil(wait / 1000)} s para pedirlo otra vez`);
@@ -290,7 +309,9 @@ export class GroupManager {
         name: m.name,
         avatar: m.avatar,
         isGuest: m.isGuest,
+        username: m.username || null,
         connected: m.connected,
+        canEditConfig: Boolean(group.settingsBy?.has(m.id)),
         here: place ? Boolean(place.players.get(m.id)?.connected) : !this.rooms.roomOfUser(m.id),
       })),
       plan: group.plan,

@@ -80,7 +80,7 @@ assert.equal(counts.categories.arte, 10);
 assert.deepEqual(counts.difficulties, { facil: 20, media: 20, dificil: 20 }, "difficulties are counted, ticked or not");
 counts = minesCounts(bank, { categories: [], difficulties: ["facil", "dificil"] });
 assert.equal(counts.categories.arte, 20);
-assert.deepEqual(counts.difficulties, {});
+assert.deepEqual(counts.difficulties, { facil: 100, media: 100, dificil: 100 }, "no category ticked: the difficulties can still be ticked");
 
 // A match: one board per round, the chosen categories shared out, never the same board twice.
 const picked = pickMinesQuestions(bank, { rounds: 6, categories: ["ciencia", "deportes", "musica"] });
@@ -104,5 +104,12 @@ assert.ok(orders.size > 1, "the cells are shuffled");
 
 // Each hit of a round is worth 100 more than the last, up to 500.
 assert.deepEqual([1, 2, 3, 4, 5, 6, 9].map(hitPoints), [100, 100, 100, 100, 100, 100, 100]);
+
+// Every list left empty: each choice still counts its questions, so it can be ticked again.
+{
+  const counts = minesCounts([{ category: "ciencia", difficulty: "facil" }], { categories: [], difficulties: [] });
+  assert.equal(counts.categories.ciencia, 1);
+  assert.equal(counts.difficulties.facil, 1);
+}
 
 console.log("mines.test ok");

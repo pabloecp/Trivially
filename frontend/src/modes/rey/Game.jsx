@@ -154,6 +154,11 @@ function GameScreen() {
     if (playing && !locked) inputRef.current?.focus();
   }, [playing, round]);
 
+  // Time running out with something written: it goes on its own, as if "Enviar" had been pressed.
+  useEffect(() => {
+    if (playing && !locked && query.trim() && left > 0 && left <= 500) submit();
+  }, [left]);
+
   function backToHub() {
     if (!confirmHub) {
       setConfirmHub(true);
@@ -205,7 +210,7 @@ function GameScreen() {
   }
 
   async function submit(e) {
-    e.preventDefault();
+    e?.preventDefault();
     const text = query.trim();
     if (locked || sending.current || !text) return;
     sending.current = true;

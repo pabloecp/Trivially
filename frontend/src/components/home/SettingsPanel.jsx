@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useLayoutEffect, useState } from "react";
 import { useApp } from "../../lib/store.jsx";
 import { findMode } from "../../modes/index.js";
+import Icon from "./Icon.jsx";
 import Modal from "./Modal.jsx";
 
 // The game's settings, hidden behind a summary: at the bottom of the game's card (`card`, given `{ summary, onOpen }`
@@ -25,7 +26,7 @@ export function useSettingsSummary(text) {
   }, [set, text]);
 }
 
-/** In the "Ajustes de …" panel the tabs' settings go one after another, the tabs on top jumping to each (SettingsTabs). */
+/** Kept for SettingsTabs' stacked mode (every tab one after another), which the "Ajustes de …" panel no longer uses: it shows one tab at a time. */
 export const useSettingsStacked = () => useContext(StackedContext);
 
 export default function SettingsPanel({ room, readOnly = false, actions = null, inline = false, card = null, children }) {
@@ -77,23 +78,23 @@ export default function SettingsPanel({ room, readOnly = false, actions = null, 
         onClose={() => setOpen(false)}
         title={`Ajustes de ${mode?.name || "la partida"}`}
         size="lg"
-        className="tv-settings-modal"
+        className={`tv-settings-modal tv-c-${mode?.color || "neutral"}`}
         foot={
           <>
             {readOnly ? (
               <span className="tv-settings-who">Los elige {room.hostName || "el anfitrión"}</span>
             ) : (
-              <button type="button" className="tv-btn tv-btn--neutral" disabled={busy || !room.settingsChanged} onClick={reset}>
-                Restablecer
+              <button type="button" className="tv-iconbtn tv-settings-reset" aria-label="Restablecer los ajustes" title="Restablecer los ajustes" disabled={busy || !room.settingsChanged} onClick={reset}>
+                <Icon name="reset" size={20} strokeWidth={2.6} />
               </button>
             )}
-            <button type="button" className="tv-btn tv-btn--primary tv-btn--lg" onClick={() => setOpen(false)}>
+            <button type="button" className="tv-btn tv-btn--primary tv-btn--lg tv-settings-done" onClick={() => setOpen(false)}>
               Listo
             </button>
           </>
         }
       >
-        <StackedContext.Provider value>{children}</StackedContext.Provider>
+        <StackedContext.Provider value={false}>{children}</StackedContext.Provider>
       </Modal>
     </SummaryContext.Provider>
   );

@@ -1,5 +1,6 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useContext, useState } from "react";
+import GuestFriends from "./GuestFriends.jsx";
+import { JoinField, OpenSalaContext, SalaJoinContext, useNarrow } from "./GroupBar.jsx";
 import { isGameTile } from "../../modes/index.js";
 import { audienceName } from "../../lib/plan.js";
 import { eloIn, formatElo, gameStats } from "../../lib/gameStats.js";
@@ -28,7 +29,7 @@ import { useInvite } from "./useInvite.js";
 //    "Reto del día" (gameStats: example numbers until those systems exist); always "Amigos en línea" under them. With a
 //    sala (a group) the challenge gives its place to the sala's code (with "Copiar") and the friends to who's in it.
 // `room` gives who it's for (a public match, or a private one); `audience` says it without a room (Inicio). `title`
-// replaces the game's name ("Buscando jugadores de Trivia…"). `extra` goes after the name, `children` at the end of
+// replaces the game's name. `extra` goes after the name, `children` at the end of
 // the card. A Clásico (Normal or Extendido) looks like the site's logo: dark with the logo's rainbow frame and the logo
 // in place of the game's icon. "Elige un juego" is the card alone, with no lines.
 // A light sweeps across the card once it's in. `swapKey`: each time it changes the card plays its swap, the light
@@ -45,7 +46,7 @@ export default function ModeStage({ mode, room = null, audience = null, title = 
   const how = mode.tagline || mode.subtitle;
 
   return (
-    <section className={`tv-stage${stats ? " has-aside" : ""}`} aria-label={mode.name}>
+    <section className={`tv-stage${stats || classic ? " has-aside" : ""}`} aria-label={mode.name}>
       <div className={`tv-stage-card ${classic ? "is-classic" : `tv-c-${mode.color}`}${swapKey != null ? " has-swap" : ""}`}>
         <span key={`flash-${key}`} className="tv-mstage-flash" aria-hidden="true" />
         {!classic && (
@@ -75,7 +76,7 @@ export default function ModeStage({ mode, room = null, audience = null, title = 
           </div>
           {extra}
         </div>
-        {!steps && mode.description && (
+        {mode.description && (
           <p key={`intro-${key}`} className="tv-stage-intro">
             {mode.description}
           </p>
@@ -85,7 +86,7 @@ export default function ModeStage({ mode, room = null, audience = null, title = 
         <ul key={`lines-${key}`} className="tv-stage-lines">
           {steps ? (
             steps.map((step, i) => (
-              <li key={step.text} style={{ "--i": i }}>
+              <li key={i} style={{ "--i": i }}>
                 <span className="tv-stage-line-icon">
                   <Icon name={step.icon} size={20} strokeWidth={2.4} />
                 </span>
@@ -142,7 +143,8 @@ export default function ModeStage({ mode, room = null, audience = null, title = 
         {children}
       </div>
 
-      {stats && <Boxes game={mode.id} gameName={mode.name} color={mode.color} stats={stats} />}
+      {/* The Clásico has the same boxes as a game: its elo is the general one. */}
+      {classic ? <Boxes game="clasico" gameName={mode.name} color="neutral" stats={gameStats("clasico")} /> : stats && <Boxes game={mode.id} gameName={mode.name} color={mode.color} stats={stats} />}
     </section>
   );
 }
@@ -189,7 +191,7 @@ function ChooseStage({ onChoose }) {
         </div>
       </div>
       {/* Your general elo and challenge (the Clásico's), and your friends. */}
-      <Boxes game="clasico" color="neutral" stats={gameStats("clasico")} />
+      <Boxes game="clasico" gameName="Clásico" color="neutral" stats={gameStats("clasico")} />
     </section>
   );
 }
@@ -217,17 +219,7 @@ function FriendsBox() {
     <div className="tv-stage-box tv-stage-friends">
       <span className="tv-stage-label">{group ? "Invita a tu sala" : "Amigos en línea"}</span>
       {!friends.isAccount ? (
-        <>
-          <p className="tv-stage-friends-empty">Con una cuenta puedes agregar amigos y ver aquí quién está jugando.</p>
-          <div className="tv-stage-login">
-            <Link to="/login?mode=login&returnTo=/" className="tv-btn tv-btn--neutral">
-              Iniciar sesión
-            </Link>
-            <Link to="/login?returnTo=/" className="tv-btn tv-btn--neutral">
-              Crear cuenta
-            </Link>
-          </div>
-        </>
+        <GuestFriends />
       ) : online.length === 0 ? (
         <p className="tv-stage-friends-empty">Ninguno de tus amigos está en línea ahora.</p>
       ) : (
@@ -295,13 +287,50 @@ function DailyBox({ daily }) {
   );
 }
 
+// Without a sala: the same box as "Código de la sala", but to write a friend's code and join theirs ("Unirse"), with the
+// eye that hides codes beside its title (a game chosen makes yours).
+function JoinBox({ join }) {
+  const [codeHidden, toggleCode] = useHiddenCode();
+  return (
+    <div className="tv-stage-box tv-stage-code tv-stage-join">
+      <div className="tv-codebox-head">
+        <span className="tv-stage-label">Código de la sala</span>
+        <button
+          type="button"
+          className={`tv-codebox-eye${codeHidden ? " is-on" : ""}`}
+          onClick={toggleCode}
+          aria-pressed={codeHidden}
+          aria-label={codeHidden ? "Mostrar el código" : "Ocultar el código"}
+          title={codeHidden ? "Mostrar el código" : "Ocultar el código"}
+        >
+          <Icon name={codeHidden ? "eye-off" : "eye"} size={16} strokeWidth={2.6} />
+        </button>
+      </div>
+      <JoinField onJoin={join.onJoin} onEdit={join.onEdit} disabled={join.disabled} invalid={join.invalid} eye={false} example="YOAVH" />
+    </div>
+  );
+}
+
 // "Código de la sala": your sala's code, big, with "Copiar" (dots while codes are hidden, for streaming).
 function SalaCodeBox({ code }) {
-  const [codeHidden] = useHiddenCode();
+  const [codeHidden, toggleCode] = useHiddenCode();
   const { copied, copy } = useInvite(code);
   return (
     <div className="tv-stage-box tv-stage-code">
-      <span className="tv-stage-label">Código de la sala</span>
+      <div className="tv-codebox-head">
+        <span className="tv-stage-label">Código de la sala</span>
+        {/* Hides the code on this device's screens, for streaming. */}
+        <button
+          type="button"
+          className={`tv-codebox-eye${codeHidden ? " is-on" : ""}`}
+          onClick={toggleCode}
+          aria-pressed={codeHidden}
+          aria-label={codeHidden ? "Mostrar el código" : "Ocultar el código"}
+          title={codeHidden ? "Mostrar el código" : "Ocultar el código"}
+        >
+          <Icon name={codeHidden ? "eye-off" : "eye"} size={16} strokeWidth={2.6} />
+        </button>
+      </div>
       <div className="tv-stage-code-row">
         <strong className="tv-stage-code-text" aria-label="Código de la sala">
           {shownCode(code, codeHidden)}
@@ -318,6 +347,8 @@ function SalaCodeBox({ code }) {
 // you first, the leader marked, dimmed whoever isn't with the sala right now.
 function SalaMembersBox({ group, meId }) {
   const members = group.members;
+  // A tap on any row opens "Tu sala", where you invite (HomeFrame's OpenSalaContext).
+  const openSala = useContext(OpenSalaContext);
   return (
     <div className="tv-stage-box tv-stage-friends tv-stage-members">
       <span className="tv-stage-label">En tu sala · {members.length}</span>
@@ -328,13 +359,13 @@ function SalaMembersBox({ group, meId }) {
           const tag = !m.connected ? "Reconectando…" : !m.here ? "En otra partida" : leads ? "Líder" : "En la sala";
           return (
             <li key={m.id} className={`tv-player${m.id === meId ? " is-me" : ""}${m.connected && m.here ? "" : " is-away"}`}>
-              <div className="tv-player-btn">
+              <button type="button" className="tv-player-btn" aria-haspopup="dialog" onClick={openSala || undefined} disabled={!openSala}>
                 <Avatar name={m.name} avatar={m.avatar} mood="neutral" />
                 <span className="tv-player-text">
                   <span className="tv-player-name">{m.name}</span>
                   <span className={`tv-player-tag${leads ? " is-host" : ""}`}>{tag}</span>
                 </span>
-              </div>
+              </button>
             </li>
           );
         })}
@@ -347,6 +378,10 @@ function SalaMembersBox({ group, meId }) {
 // friends online; with a sala, its code and who's in it instead of those two.
 function Boxes({ game, gameName = "", color, stats: example }) {
   const { user, group } = useApp();
+  // Inicio without a sala, on wide screens: the way into a friend's sala takes this place (today's challenge goes down to
+  // the bar). On phones it is in the top bar, so the challenge stays here.
+  const join = useContext(SalaJoinContext);
+  const phone = useNarrow();
   // The elo is yours, from the server; the week's change isn't tracked yet, so it isn't shown.
   const stats = { ...example, elo: eloIn(user, game), week: 0 };
   return (
@@ -378,6 +413,8 @@ function Boxes({ game, gameName = "", color, stats: example }) {
 
       {group ? (
         <SalaCodeBox code={group.code} />
+      ) : join && !phone ? (
+        <JoinBox join={join} />
       ) : (
         <DailyBox daily={user?.daily} />
       )}

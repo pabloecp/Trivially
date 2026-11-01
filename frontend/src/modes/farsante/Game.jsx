@@ -89,6 +89,11 @@ function GameScreen() {
     if (stage === "writing" && room?.phase === "playing" && canAct) inputRef.current?.focus();
   }, [stage, round, room?.phase]);
 
+  // Time running out with something written (and not sent yet): it goes on its own, as if "Enviar" had been pressed.
+  useEffect(() => {
+    if (stage === "writing" && room?.phase === "playing" && canAct && text.trim() && text.trim() !== sent && left > 0 && left <= 500) submit();
+  }, [left]);
+
   function backToHub() {
     if (!confirmHub) {
       setConfirmHub(true);
@@ -126,7 +131,7 @@ function GameScreen() {
   const players = room.players.filter((p) => p.connected && !p.spectator).length;
 
   async function submit(e) {
-    e.preventDefault();
+    e?.preventDefault();
     const value = text.trim();
     if (!value || !canAct || !writing) return;
     setErr("");

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
 import { findMode } from "../../modes/index.js";
@@ -6,7 +6,7 @@ import { LEAVE_SALA_EVENT } from "../../lib/leaveSala.js";
 import { useApp } from "../../lib/store.jsx";
 import { CLASSIC, isPublicGame, rememberPlan, useLocalPlan } from "../../lib/plan.js";
 import { withSound } from "../../lib/sounds.js";
-import GroupBar, { useNarrow } from "./GroupBar.jsx";
+import GroupBar, { OpenSalaContext, SalaJoinContext, useNarrow } from "./GroupBar.jsx";
 import GroupSheet from "./GroupSheet.jsx";
 import ConfirmDialog from "./ConfirmDialog.jsx";
 import ModeStage from "./ModeStage.jsx";
@@ -98,6 +98,15 @@ export default function HomeFrame({ room = null, onToast, Lobby = null, leaving 
     else onToast?.("Ya no puedes cambiar los ajustes de la partida", "lock");
   }, [canSet, room?.code]);
 
+  // The sala passed to you: say so, once, like the settings' permission (not when you make one or come into one).
+  const leadsNow = Boolean(group && user?.id && group.leaderId === user.id);
+  const ledBefore = useRef({ code: group?.code, leads: leadsNow });
+  useEffect(() => {
+    const before = ledBefore.current;
+    ledBefore.current = { code: group?.code, leads: leadsNow };
+    if (group && before.code === group.code && !before.leads && leadsNow) onToast?.("Ahora eres el líder de la sala", "crown");
+  }, [group?.code, leadsNow]);
+
   // Leaving the match or the group later finds the same game and side on Inicio.
   useEffect(() => {
     if (!searching && (room || group)) rememberPlan(plan);
@@ -107,6 +116,13 @@ export default function HomeFrame({ room = null, onToast, Lobby = null, leaving 
     setError("");
     setGroupError("");
   }, [plan.game, plan.audience, room?.code, group?.code]);
+
+  // What went wrong shows as a notification (like "Se creó tu sala"), never as a line under the bar that moves the boxes.
+  // The code that opened no group also rings the box in red (GroupBar's `groupError`).
+  const problem = error || start.err || groupError;
+  useEffect(() => {
+    if (problem) onToast?.(problem, "lock");
+  }, [problem]);
 
   function run(action) {
     if (needsName) {
@@ -182,12 +198,27 @@ export default function HomeFrame({ room = null, onToast, Lobby = null, leaving 
     return run({ type: "join", code });
   }
 
+  // The card comes in once, with the screen. After that it only updates (choosing a game, a sala made or left, public or
+  // private, a search): no more entrances, only its sweep of light (look.css, .is-settled).
+  const [settled, setSettled] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setSettled(true), 900);
+    return () => clearTimeout(t);
+  }, []);
+
+  // "En tu sala" beside the card opens "Tu sala" (to invite) like the bar's faces.
+  const openSala = () => setSheet("group");
+  // Without a sala, the box beside the card is the way into a friend's (GroupBar's SalaJoinContext).
+  const joinBox = { onJoin: joinWithCode, onEdit: () => setGroupError(""), disabled: searching || busy, invalid: Boolean(groupError) };
+
   async function leave() {
     setBusyType("leave");
     setError("");
     try {
       await leaveGroup();
       setSheet(null);
+      // Without a sala Inicio is "Elige un juego" (no game until one is chosen): on its own address, not the sala's.
+      nav("/", { replace: true });
       onToast?.("Saliste de la sala", "logout");
     } catch (err) {
       setError(err.message || "No se pudo salir de la sala");
@@ -244,7 +275,7 @@ export default function HomeFrame({ room = null, onToast, Lobby = null, leaving 
   let note = "";
   if (searching) {
     if (group && !isLeader) note = `Buscando con ${leaderName}…`;
-    else action = { label: "Cancelar", neutral: true, sound: "back", onClick: cancelSearch, disabled: busy };
+    else action = { label: "Cancelar", bad: true, sound: "back", onClick: cancelSearch, disabled: busy };
   } else if (room && !decides) {
     action = { label: "Esperando", play: true, neutral: true, waiting: true, disabled: true };
   } else if (away && !group.place.public) {
@@ -287,14 +318,22 @@ export default function HomeFrame({ room = null, onToast, Lobby = null, leaving 
       ? { summary: privateMatchLine(mode.id), onOpen: () => run({ type: "setup", game: plan.game }), disabled: busy }
       : { summary: privateMatchLine(mode.id), note: away ? "Tu sala ya está jugando" : `Los elige ${leaderName}` };
 
+  // The same element choosing a game and searching with it, so the card stays as it is when the search starts.
+  const gameStage = mode && (
+    <SalaJoinContext.Provider value={group ? null : joinBox}>
+      <GameStage searchRoom={searching ? room : null} mode={mode} audience={plan.audience} settings={cardSettings} />
+    </SalaJoinContext.Provider>
+  );
+
   // The group's faces: dimmed whoever isn't with it now (or is reconnecting).
   const members = group ? group.members.map((m) => ({ ...m, connected: m.connected && m.here })) : [];
 
   return (
     <div className={`tv-lobby${leaving ? " is-leaving" : ""}`}>
-      <div className="tv-lobby-stage">
+      <OpenSalaContext.Provider value={openSala}>
+      <div className={`tv-lobby-stage${settled ? " is-settled" : ""}`}>
         {searching ? (
-          <SearchCard room={room} mode={mode} />
+          gameStage
         ) : room && Lobby ? (
           <div key={room.game} className="tv-lobby-game">
             <OpenSettingsContext.Provider value={{ open: settingsAsked, done: () => setSettingsAsked(false) }}>
@@ -304,11 +343,14 @@ export default function HomeFrame({ room = null, onToast, Lobby = null, leaving 
         ) : room ? (
           <ModeStage mode={CHOOSE} title={decides ? "Elige un juego" : `${room.hostName || "El anfitrión"} está eligiendo`} />
         ) : noGame ? (
-          <ModeStage mode={CHOOSE} empty onChoose={() => setSheet("plan")} swapKey="none" />
+          <SalaJoinContext.Provider value={joinBox}>
+            <ModeStage mode={CHOOSE} empty onChoose={() => setSheet("plan")} swapKey="none" />
+          </SalaJoinContext.Provider>
         ) : (
-          <ModeStage mode={mode} audience={plan.audience} swapKey={`${mode.id}:${plan.audience}`} settings={cardSettings} />
+          gameStage
         )}
       </div>
+      </OpenSalaContext.Provider>
 
       <GroupBar
         members={members}
@@ -329,8 +371,9 @@ export default function HomeFrame({ room = null, onToast, Lobby = null, leaving 
         onPlan={() => setSheet("plan")}
         action={action}
         note={note}
-        error={error || start.err}
         groupError={groupError}
+        // The boxes beside the card show the sala's code and who is in it: the bar shows today's challenge instead.
+        daily
       />
 
       <PlanSheet
@@ -393,50 +436,48 @@ export default function HomeFrame({ room = null, onToast, Lobby = null, leaving 
   );
 }
 
-// A public room while it fills: the game's card says it's searching ("Buscando jugadores de Trivia…"), for how long, the
+// The chosen game's card on Inicio, and the same one while a public room fills (`searchRoom`): nothing on it moves or
+// changes when the search starts (the same component stays, with the same keys), only its lines say for how long, the
 // game's queue and how many were found; once full, that it starts. The roulette's (the Clásico's) has no game: its card
 // is the Clásico's.
-function SearchCard({ room, mode }) {
-  const info = room.matchmaking;
-  const found = room.players.filter((p) => p.connected).length;
-  const full = Boolean(info.startsAt);
-  const since = useSearchStart(room.code);
+function GameStage({ searchRoom = null, mode, audience, settings }) {
+  const steps = useSearchSteps(searchRoom, mode);
+  return <ModeStage mode={mode} audience={audience} swapKey={`${mode.id}:${audience}`} settings={settings} steps={steps} />;
+}
+
+function useSearchSteps(room, mode) {
+  const info = room?.matchmaking || null;
+  const full = Boolean(info?.startsAt);
+  const since = useMemo(() => (room ? searchStart(room.code) : 0), [room?.code]);
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
+    if (!info) return undefined;
+    setNow(Date.now());
     const id = setInterval(() => setNow(Date.now()), full ? 200 : 500);
     return () => clearInterval(id);
-  }, [full]);
+  }, [Boolean(info), full]);
+  if (!info) return null;
+  const found = room.players.filter((p) => p.connected).length;
   const waited = Math.max(0, Math.floor((now - since) / 1000));
   const clock = `${Math.floor(waited / 60)}:${String(waited % 60).padStart(2, "0")}`;
   const startsIn = full ? Math.max(1, Math.ceil((info.startsAt - (now + (room.clockOffset || 0))) / 1000)) : null;
-  const steps = [
+  return [
     { icon: "hourglass", text: full ? `Empieza en ${startsIn}` : `${clock} buscando` },
     { icon: "grid", text: info.game ? `Fila de ${mode.name} · ${publicMatchLine(info.game)}` : "Juegos al azar · gana el primero en ganar 2" },
     { icon: "users", text: `Jugadores encontrados: ${found} de ${info.size}` },
   ];
-  return (
-    <ModeStage
-      mode={mode}
-      title={full ? "¡Partida completa!" : `Buscando jugadores de ${mode.name}…`}
-      steps={steps}
-      swapKey={full ? "full" : "search"}
-    />
-  );
 }
 
 // When this device started searching in a room (sessionStorage, so a reload keeps counting from the same moment).
-function useSearchStart(code) {
-  const [since] = useState(() => {
-    const key = `trivially_search_since_${code}`;
-    try {
-      const saved = Number(sessionStorage.getItem(key));
-      if (saved > 0) return saved;
-      const t = Date.now();
-      sessionStorage.setItem(key, String(t));
-      return t;
-    } catch {
-      return Date.now();
-    }
-  });
-  return since;
+function searchStart(code) {
+  const key = `trivially_search_since_${code}`;
+  try {
+    const saved = Number(sessionStorage.getItem(key));
+    if (saved > 0) return saved;
+    const t = Date.now();
+    sessionStorage.setItem(key, String(t));
+    return t;
+  } catch {
+    return Date.now();
+  }
 }

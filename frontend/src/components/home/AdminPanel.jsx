@@ -35,9 +35,9 @@ export default function AdminPanel({ open, onClose }) {
       setMsg("");
       return undefined;
     }
-    // Closing: it goes once its way out has played (0.18 s, tvAdminOut in admin.css); the animations are on its backdrop and card,
+    // Closing: it goes once its way out has played (0.3 s, --tv-box-out); the animations are on its backdrop and card,
     // not on the root, so it doesn't wait for an animationend that never comes there.
-    const t = setTimeout(() => setMounted(false), 190);
+    const t = setTimeout(() => setMounted(false), 310);
     return () => clearTimeout(t);
   }, [open]);
   useEffect(() => {

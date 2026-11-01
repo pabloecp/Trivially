@@ -294,10 +294,6 @@ export default function MusicSettings({ room, updateConfig, onToast, children, r
   // Its songs come prepared (backend/private/lyric-rounds.json, or the lyric_rounds table): it can't be ticked when
   // none of the songs that play has its round (but can be unticked).
   const noLyrics = room.lyricsReady === 0;
-  const lyricsNote =
-    styles.includes("letra") && room.lyricsReady != null
-      ? `${room.lyricsReady} ${room.lyricsReady === 1 ? "canción tiene" : "canciones tienen"} su letra lista`
-      : null;
   const lyricsOnly = styles.length === 1 && styles[0] === "letra";
 
   function togglePlaylist(id) {
@@ -519,11 +515,6 @@ export default function MusicSettings({ room, updateConfig, onToast, children, r
                 onChange={toggleStyle}
                 onSetAll={(list) => save({ styles: list })}
               />
-              {lyricsNote && (
-                <p className="tv-note tv-lyrics-note">
-                  <span className="tv-note-text">{lyricsNote}</span>
-                </p>
-              )}
               <OptionRow
                 label="Tipo de respuestas"
                 multi

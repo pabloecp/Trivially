@@ -240,7 +240,7 @@ function ResultsScreen() {
         </section>
       </div>
       <PartyPanel room={room} display={isCentral} onToast={setErr} />
-      <MatchSummarySheet open={showSummary} rounds={myRounds} title={classic || publicMatch ? "Tu partida" : "Tu playlist"} showGame onClose={() => setShowSummary(false)} />
+      <MatchSummarySheet open={showSummary} rounds={myRounds} title={classic || publicMatch ? "Tu partida" : "Tu playlist"} onClose={() => setShowSummary(false)} />
     </div>
   );
 }

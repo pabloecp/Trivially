@@ -95,9 +95,9 @@ const bank = new Map([s1, s2, s3].map((s, i) => [s.id, [row(s.id, i + 1)]]));
 const mgr = new RoomManager({ catalog, store: { users: {} }, lyrics: bank });
 const host = { id: "h-1", name: "Host", socketId: "s1" };
 
-// A new room only guesses the title; nothing changes for it.
+// A new room has both modes ticked: the title and the lyrics.
 const plain = mgr.create({ host, mode: "multi", game: "musica" });
-assert.deepEqual(plain.config.styles, ["titulo"]);
+assert.deepEqual(plain.config.styles, ["titulo", "letra"]);
 assert.ok(mgr.publicState(plain).lyricsReady >= 3);
 
 // Only Completa la letra: just the songs with their verse play; with fewer than the rounds the match can't start.

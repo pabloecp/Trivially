@@ -1,129 +1,124 @@
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import Icon from "./Icon.jsx";
+import Modal from "./Modal.jsx";
 import { findMode } from "../../modes/index.js";
 
-// How many rounds show at once; the rest scroll under the fixed head.
-const VISIBLE = 3;
+// How many rounds show at once; the arrows at the foot move on to the next ones.
+const PAGE = 5;
 
-// How each round went (RoomManager.recordRound): its icon and what the player's line says.
+// How each round went (RoomManager.recordRound): green won it all, yellow scored without winning, red lost with no points,
+// grey no points and nothing answered (or a board the time ran out on).
 const STATUS = {
-  ok: { icon: "check", label: "Acertaste" },
-  near: { icon: "target", label: "Cerca" },
-  bad: { icon: "close", label: "Fallaste" },
-  none: { icon: "hash", label: "Sin responder" },
+  ok: { label: "Acertaste" },
+  near: { label: "Cerca" },
+  bad: { label: "Fallaste" },
+  none: { label: "Sin responder" },
 };
+// What the card counts as "won", in each game's own words.
+const WON = { historia: "exactas", minas: "superados", lluvia: "con aciertos" };
+// The modes of play a round can come from (Encuentra el país's and Adivina la canción's): named in its row only when the
+// match had more than one.
+const STYLES = { nombre: "Nombre", sombra: "Sombra", bandera: "Bandera", titulo: "Título", letra: "Letra" };
 
-// The whole match round by round for this player (results[].rounds), in the Jugar sheet's look (a card in the
-// middle on wide screens, a sheet from the bottom on phones): each question, the right answer, what they answered and
-// the points (in a playlist, `showGame` adds each round's game). The head stays put and the rounds scroll under it, VISIBLE at a time, snapping to each one, with the
-// same thin scroll bar as a playlist's games. Escape, the close button and a tap outside close it.
-export default function MatchSummarySheet({ open, rounds, onClose, title = "Tu partida", showGame = false }) {
-  const [mounted, setMounted] = useState(open);
-  const closeRef = useRef(null);
-  const listRef = useRef(null);
-  // The list's height: exactly its first VISIBLE rounds (they aren't all as tall).
-  const [listHeight, setListHeight] = useState(null);
-  const onCloseRef = useRef(onClose);
-  onCloseRef.current = onClose;
-
+// The whole match round by round for this player (results[].rounds), in the same panel as every other one (Modal):
+//  - the game's card on top, in its colour (or "Varios juegos", in a playlist or a Clásico, whose rows then say their
+//    game), with how many rounds they won and their points;
+//  - the rounds, PAGE at a time, one row each: its number in a square coloured by how it went, the question, what they
+//    answered (and the right answer after an arrow when they missed it) and the points;
+//  - at the foot, which rounds are showing and the arrows to move through them.
+export default function MatchSummarySheet({ open, rounds, onClose, title = "Tu partida" }) {
+  const [page, setPage] = useState(0);
   useEffect(() => {
-    if (open) setMounted(true);
+    if (open) setPage(0);
   }, [open]);
 
-  useEffect(() => {
-    if (!open || !mounted) return undefined;
-    closeRef.current?.focus({ preventScroll: true });
-    const onKey = (e) => {
-      if (e.key === "Escape") onCloseRef.current();
-    };
-    const prevOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    window.addEventListener("keydown", onKey);
-    return () => {
-      window.removeEventListener("keydown", onKey);
-      document.body.style.overflow = prevOverflow;
-    };
-  }, [open, mounted]);
-
-  useLayoutEffect(() => {
-    const list = listRef.current;
-    if (!open || !mounted || !list) return undefined;
-    function fit() {
-      const items = list.children;
-      if (items.length <= VISIBLE) return setListHeight(null);
-      const first = items[0];
-      const last = items[VISIBLE - 1];
-      setListHeight(last.offsetTop + last.offsetHeight - first.offsetTop);
-    }
-    fit();
-    list.scrollTop = 0;
-    window.addEventListener("resize", fit);
-    return () => window.removeEventListener("resize", fit);
-  }, [open, mounted, rounds.length]);
-
-  if (!mounted) return null;
-
-  function onAnimationEnd(e) {
-    if (!open && e.target === e.currentTarget) setMounted(false);
-  }
-
-  const right = rounds.filter((r) => r.status === "ok").length;
+  const games = [...new Set(rounds.map((r) => r.game).filter(Boolean))];
+  const single = games.length === 1 ? findMode(games[0]) : null;
+  const styles = new Set(rounds.map((r) => r.style).filter(Boolean));
+  const won = rounds.filter((r) => r.status === "ok").length;
   const total = rounds.reduce((sum, r) => sum + (r.points || 0), 0);
+  const pages = Math.max(1, Math.ceil(rounds.length / PAGE));
+  const at = Math.min(page, pages - 1);
+  const from = at * PAGE;
+  const shown = rounds.slice(from, from + PAGE);
+  const count = rounds.length === 1 ? "1 ronda" : `${rounds.length} rondas`;
+  const sub = single ? `${count} · ${won} ${WON[games[0]] || "acertadas"}` : `${count} · varios juegos`;
 
   return (
-    <div className={`tv-sheet-root ${open ? "is-open" : "is-closing"}`}>
-      <div className="tv-sheet-backdrop" onClick={onClose} />
-      <div className="tv-sheet-pos">
-        <div
-          className="tv-sheet tv-sheet--summary"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="tv-summary-title"
-          onAnimationEnd={onAnimationEnd}
-        >
-          <div className="tv-sheet-head">
-            <span className="tv-badge tv-c-accent">
-              <Icon name="list" size={24} strokeWidth={2.4} />
-            </span>
-            <span className="tv-summary-head">
-              <h2 id="tv-summary-title" className="tv-sheet-title">{title}</h2>
-              <small>
-                {right} de {rounds.length} acertadas · {total.toLocaleString("es-ES")} pts
-              </small>
-            </span>
-            <button ref={closeRef} type="button" className="tv-summary-close" data-sound="back" onClick={onClose} aria-label="Cerrar">
-              <Icon name="close" size={20} />
+    <Modal
+      open={open}
+      onClose={onClose}
+      title={title}
+      size="md"
+      className={`tv-summary-modal tv-c-${single?.color || "playlist"}`}
+      foot={
+        <>
+          <span className="tv-summary-where">
+            Rondas{" "}
+            <b>
+              {rounds.length ? from + 1 : 0}–{from + shown.length}
+            </b>{" "}
+            de {rounds.length}
+          </span>
+          <span className="tv-summary-nav">
+            <button type="button" className="tv-iconbtn tv-summary-prev" aria-label="Rondas anteriores" disabled={at <= 0} onClick={() => setPage(at - 1)}>
+              <Icon name="chevron" size={20} strokeWidth={3} />
             </button>
-          </div>
-          <ol ref={listRef} className="tv-summary" style={listHeight ? { maxHeight: listHeight } : undefined}>
-            {rounds.map((r) => {
-              const status = STATUS[r.status] || STATUS.none;
-              return (
-                <li key={`${r.round}-${r.game}-${r.prompt}`} className={`tv-summary-round is-${r.status}`}>
-                  <span className="tv-summary-top">
-                    <span className="tv-summary-num">
-                      Ronda {r.round}
-                      {showGame && r.game ? ` · ${findMode(r.game)?.name || ""}` : ""}
-                    </span>
-                    <span className="tv-summary-points">+{(r.points || 0).toLocaleString("es-ES")}</span>
-                  </span>
-                  {r.prompt && <p className="tv-summary-prompt">{r.prompt}</p>}
-                  {r.answer && r.status !== "ok" && (
-                    <p className="tv-summary-line is-right">
-                      <Icon name="check" size={16} strokeWidth={3} />
-                      <span>{r.answer}</span>
-                    </p>
-                  )}
-                  <p className="tv-summary-line is-yours">
-                    <Icon name={status.icon} size={16} strokeWidth={3} />
-                    <span>{r.yours ? (r.status === "ok" && r.answer ? r.answer : r.yours) : status.label}</span>
-                  </p>
-                </li>
-              );
-            })}
-          </ol>
-        </div>
+            <button type="button" className="tv-iconbtn" aria-label="Rondas siguientes" disabled={at >= pages - 1} onClick={() => setPage(at + 1)}>
+              <Icon name="chevron" size={20} strokeWidth={3} />
+            </button>
+          </span>
+        </>
+      }
+    >
+      <div className="tv-summary-hero">
+        <span className="tv-summary-hero-icon">
+          <Icon name={single?.icon || "playlist"} size={28} strokeWidth={2.4} />
+        </span>
+        <span className="tv-summary-hero-text">
+          <b>{single?.name || "Varios juegos"}</b>
+          <small>{sub}</small>
+        </span>
+        <span className="tv-summary-hero-score">
+          <b>{total.toLocaleString("es-ES")}</b>
+          <small>puntos</small>
+        </span>
       </div>
-    </div>
+      <ol className="tv-summary">
+        {shown.map((r) => {
+          const status = STATUS[r.status] || STATUS.none;
+          const yours = r.yours ? (r.status === "ok" && r.answer ? r.answer : r.yours) : status.label;
+          const tag = [!single && r.game ? findMode(r.game)?.name : "", styles.size > 1 && r.style ? STYLES[r.style] : ""].filter(Boolean).join(" · ");
+          return (
+            <li key={`${r.round}-${r.game}-${r.prompt}`} className={`tv-summary-round is-${r.status}`}>
+              <span className="tv-summary-mark" title={status.label}>
+                <span className="tv-sr-only">{status.label}, ronda </span>
+                {r.round}
+              </span>
+              <div className="tv-summary-body">
+                <p className="tv-summary-prompt" title={r.prompt || undefined}>
+                  {tag && <small>{tag}</small>}
+                  {r.prompt}
+                </p>
+                <p className="tv-summary-answers">
+                  <span className={`tv-summary-yours${r.status === "bad" && r.answer ? " is-cut" : ""}`}>{yours}</span>
+                  {r.answer && r.status !== "ok" && (
+                    <>
+                      <Icon name="chevron" size={14} strokeWidth={3} />
+                      <span className="tv-summary-right">{r.answer}</span>
+                    </>
+                  )}
+                </p>
+              </div>
+              <span className="tv-summary-points">+{(r.points || 0).toLocaleString("es-ES")}</span>
+            </li>
+          );
+        })}
+        {/* The last page keeps the panel's height: empty rows hold the places of the missing ones. */}
+        {Array.from({ length: PAGE - shown.length }, (_, i) => (
+          <li key={`empty-${i}`} className="tv-summary-round is-empty" aria-hidden="true" />
+        ))}
+      </ol>
+    </Modal>
   );
 }

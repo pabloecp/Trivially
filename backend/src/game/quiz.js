@@ -18,7 +18,7 @@ const FORMAT_OF_TYPE = { multiple_choice: "opciones", open: "escribir" };
 const TOPICS = Object.keys(QUESTION_CATEGORIES);
 // Same limits as the settings on screen (frontend/src/modes/quiz/quizInfo.js).
 export const QUIZ_LIMITS = {
-  rounds: { min: 5, max: 20 },
+  rounds: { min: 5, max: 25 },
   roundMs: { min: 15000, max: 35000 },
 };
 // The same wait between rounds as every mode (game/scoring.js).
@@ -112,9 +112,17 @@ export function countQuestions(pool, config) {
  * settings.
  */
 export function questionCounts(pool, config) {
+  const { difficulties, categories, formats } = mergeQuizConfig(config);
+  // A list left empty filters nothing here (like songCounts): otherwise, with two lists empty, nothing could be ticked again.
+  const open = {
+    ...config,
+    difficulties: difficulties.length ? difficulties : QUIZ_LEVELS,
+    categories: categories.length ? categories : TOPICS,
+    formats: formats.length ? formats : QUIZ_FORMATS,
+  };
   const tally = (ignore, key) => {
     const out = {};
-    for (const q of questionsFor(pool, config, ignore)) out[key(q)] = (out[key(q)] || 0) + 1;
+    for (const q of questionsFor(pool, open, ignore)) out[key(q)] = (out[key(q)] || 0) + 1;
     return out;
   };
   return {

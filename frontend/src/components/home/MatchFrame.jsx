@@ -20,7 +20,7 @@ export function gameLook(room) {
 
 /**
  * The round's card, in the game's colour: on its first row the round's mode or topic (`label`, with its `icon`), any
- * `pills`, the time left on the right and under them what to do (`dir`); the question (children) at the bottom and the
+ * `pills`, and under them what to do (`dir`); the question (children) at the bottom and the
  * clock's bar under it. Three fixed heights (`size` s, m, l) so a game's card never changes size between rounds.
  */
 export function MatchCard({ room, label, icon, pills = null, dir, seconds, pct = 100, urgent = false, size = "m", className = "", children }) {
@@ -37,8 +37,9 @@ export function MatchCard({ room, label, icon, pills = null, dir, seconds, pct =
           </span>
         )}
         {pills}
-        <span className={`tv-qc-time${urgent ? " is-urgent" : ""}${room.phase === "reveal" ? " is-reveal" : ""}`} role="timer" aria-label={counting ? `Empieza en ${seconds}` : `${seconds} segundos`}>
-          {counting ? `Empieza en ${Math.max(1, seconds)}` : room.phase === "reveal" ? "Respuesta" : `${seconds} s`}
+        {/* On screen the time is only the bar under the card; screen readers can still ask for it. */}
+        <span className="tv-sr-only" role="timer">
+          {counting ? `Empieza en ${Math.max(1, seconds)}` : room.phase === "reveal" ? "Respuesta" : `${seconds} segundos`}
         </span>
         {dir && <span className="tv-qc-dir">{dir}</span>}
       </div>
