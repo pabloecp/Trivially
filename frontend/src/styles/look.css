@@ -139,6 +139,11 @@
   .tv-app .tv-chip--text .tv-chip-long { display: none; }
   .tv-app .tv-chip--text { padding-right: 12px; }
   .tv-app .tv-chip--leave > .tv-avatar--empty { width: 40px; margin: 0; }
+  /* Only its icon, and in the middle of its square (above 520 px home.css still showed "Volver", which pushed the arrow aside). */
+  .tv-app .tv-chip--leave:not(.is-confirm) { justify-content: center; gap: 0; }
+  .tv-app .tv-chip--leave .tv-chip-long { display: none; }
+  .tv-app .tv-topbar:not(:has(.tv-topbar-round)) .tv-chip--leave { display: grid; place-items: center; gap: 0; padding: 0; }
+  .tv-app .tv-topbar:not(:has(.tv-topbar-round)) .tv-chip--leave > .tv-avatar--empty { margin: 0; }
   .tv-app .tv-chip--profile,
   .tv-app .tv-chip--profile:hover,
   .tv-app .tv-chip--profile:active { padding: 0; background: none; box-shadow: none; transform: none; }
@@ -439,7 +444,7 @@
   display: flex;
   flex-wrap: wrap;
   align-items: flex-end;
-  gap: 12px 14px;
+  gap: 12px 10px;
   width: 100%;
   padding: 12px 14px 14px;
   border-radius: 22px;
@@ -454,7 +459,7 @@
 .tv-gbar-faces .tv-avatar { width: 36px; height: 36px; }
 .tv-blob.has-ring { overflow: visible; }
 /* Your face on the match bar: the ring is the Blob's own (Avatar.jsx), so nothing else is drawn around it. */
-.tv-gbar-faces { display: flex; align-items: center; padding: 0 0 0 4px; border: 0; background: none; cursor: pointer; }
+.tv-gbar-faces { position: relative; display: flex; align-items: center; padding: 0 0 0 4px; border: 0; background: none; cursor: pointer; }
 .tv-gbar-faces .tv-avatar + .tv-avatar,
 .tv-gbar-faces .tv-avatar + .tv-avatar--empty { margin-left: -4px; }
 .tv-gbar-faces .tv-avatar.is-away { opacity: 0.4; }
@@ -467,13 +472,17 @@
 .tv-gbar-code { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
 .tv-gbar-code-text { display: flex; align-items: center; height: 40px; padding: 0 12px; border-radius: 12px; background: var(--tv-surface); font-family: var(--tv-title); font-weight: 800; font-size: 17px; letter-spacing: 0.16em; color: var(--tv-text); }
 
+.tv-app .tv-gbar-codebtn { flex-shrink: 0; gap: 8px; height: 40px; min-height: 0; padding: 0 14px 0 12px; border-radius: 12px; }
+.tv-gbar-codebtn .tv-gbar-code-text, .tv-gbar-code .tv-gbar-codebtn .tv-gbar-code-text { height: auto; padding: 0; border-radius: 0; background: none; font-size: 17px; letter-spacing: 0.14em; }
+.tv-gbar-codebtn svg { color: var(--tv-text-3); transition: color 0.2s ease; }
+.tv-gbar-codebtn.is-copied svg, .tv-gbar-codebtn.is-copied .tv-gbar-code-text { color: var(--p-ok-text); }
 .tv-app .tv-gbar-invite { position: relative; flex-shrink: 0; gap: 6px; padding: 0 14px; }
 /* Every button of the sala's zone (hide, link, invite, leave) is as tall as the code beside them: 40 px. */
 .tv-app .tv-gbar-invite { height: 40px; min-height: 0; border-radius: 12px; }
 .tv-app .tv-gbar-box .tv-iconbtn { width: 40px; height: 40px; border-radius: 12px; }
 /* "Salir del grupo", red ("Salir" on phones), last of the group's zone. */
 .tv-app .tv-gbar-leave { flex-shrink: 0; padding: 0; }
-/* "¿Te invitaron?": the box to join a friend's group with its code and the white "Unirse". The box is flat: ringed in
+/* "¿Te invitaron?": the box to join a friend's group with its code and the blue "Unirse". The box is flat: ringed in
    blue while writing, in red when the code opens no group. */
 .tv-gbar-join { display: flex; align-items: center; gap: 8px; min-width: 0; }
 .tv-gbar-join-input {
@@ -498,9 +507,10 @@
 .tv-gbar-join-input:disabled { opacity: 0.45; }
 /* Codes hidden for streaming: dots while writing. */
 .tv-gbar-join-input.is-hidden { -webkit-text-security: disc; }
-/* "Unirse" stays white even before a code is written (it only does something with one). */
-.tv-app .tv-gbar-join-go { flex-shrink: 0; }
-.tv-app .tv-gbar-join-go:disabled { opacity: 1; background: #fff; color: var(--tv-bg); }
+/* "Unirse" is the site's blue (like the chosen "Pública" / "Privada") and stays so even before a code is written (it only does something with one). */
+.tv-app .tv-gbar-join-go { flex-shrink: 0; gap: 8px; height: 40px; min-height: 0; padding: 0 20px; border-radius: 12px; font-size: 17px; }
+.tv-app .tv-gbar-join-go.tv-btn--white { --c2: var(--tv-pick); --edge: var(--tv-pick-edge); --on: #fff; }
+.tv-app .tv-gbar-join-go:disabled { opacity: 1; }
 /* PARTIDA: "Pública" / "Privada" (the chosen one in the site's blue) and "Vas a jugar", in one grey box. */
 .tv-gbar-plan-row { gap: 8px; padding: 6px; }
 .tv-gbar-seg { display: flex; flex: none; gap: 4px; padding: 4px; border-radius: 12px; background: var(--tv-surface); }
@@ -548,11 +558,15 @@
 /* JUGAR before a game is chosen: grey and still, with its lock (not faded). */
 .tv-app .tv-gbar-go.tv-btn--neutral:disabled { opacity: 1; background: var(--tv-surface-3); box-shadow: none; color: var(--tv-text-3); }
 .tv-app .tv-gbar-go { gap: 8px; min-width: 176px; height: 64px; text-transform: uppercase; letter-spacing: 0.02em; font-size: 20px; }
-/* Very wide only (the whole bar fits on one row): JUGAR is as wide as the boxes above it (the stage's side column, 340 px,
-   less the bar's own padding). Narrower, it keeps its own size and the bar's zones share the row as before. */
-@media (min-width: 1600px) {
-  .tv-gbar-zone--go { width: 326px; flex: none; }
-  .tv-app .tv-gbar-go { width: 100%; }
+/* Desktop: everything on one row while it fits (the sala's box takes the free room, JUGAR is the side column's width,
+   326 px, and as tall as the boxes beside it, sitting on the same line). When it doesn't fit, only JUGAR goes down, to its
+   own row, as wide as the bar. */
+@media (min-width: 761px) {
+  .tv-gbar-zone--group { flex: 1000 1 auto; min-width: min-content; }
+  .tv-gbar-zone--plan { flex: 0 0 auto; }
+  .tv-gbar-zone--go { flex: 1 1 326px; }
+  .tv-gbar-zone--go .tv-gbar-cap { display: none; }
+  .tv-app .tv-gbar-go { width: 100%; height: 64px; }
 }
 .tv-gbar-note { margin: 0; padding: 0 12px 22px; font-family: var(--tv-small); font-weight: 600; font-size: 14px; color: var(--tv-text-3); }
 .tv-gbar-error { flex-basis: 100%; margin: 0; font-weight: 700; font-size: 14px; color: var(--p-bad-text); text-align: right; }
@@ -672,13 +686,12 @@
   .tv-gbar-plan .tv-gcard-sub { white-space: nowrap; }
   .tv-gcard.tv-gbar-plan { min-height: 56px; }
   .tv-gbar-zone--go { flex-direction: row; align-items: center; }
+  .tv-gbar-zone--go .tv-gbar-cap { display: none; }
   .tv-app .tv-gbar-go { flex: 1; width: auto; }
   /* Waiting a moment (switching "Pública" / "Privada"): not pressable, but it doesn't dim (on iPhones the dimming
      showed as a dark band across it). */
   .tv-app .tv-gbar-go.is-waiting:disabled { opacity: 1; cursor: progress; }
   .tv-gbar-note { flex: 1; }
-  /* The code is in the sala's panel up top and the link at the foot: the stage's own box would only repeat it. */
-  .tv-stage-aside .tv-stage-code { display: none; }
 }
 /* Phones: the top bar keeps every button (Volver, your sala and its code, the volume or the owners' gear, Amigos, your
    Blob) in one row, never squeezed: 36 px buttons, the sala's chip without its arrow. Narrower still, the gaps close up
@@ -932,6 +945,18 @@
 /* ---------- "Tu grupo" ---------- */
 .tv-codebox { display: grid; gap: 10px; padding: 16px 18px 18px; border-radius: 14px; background: var(--tv-surface-2); }
 .tv-codebox-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+/* "Amigos" without an account: the image, what an account gives, the two buttons. */
+.tv-fr-guest { display: flex; flex-direction: column; align-items: center; gap: 16px; text-align: center; }
+.tv-fr-guest > * { flex-shrink: 0; }
+.tv-app .tv-fr-sheet .tv-fr-guest { max-height: none; overflow: visible; }
+.tv-fr-guest-art { display: grid; place-items: center; width: 100%; min-height: clamp(72px, 18vh, 140px); color: var(--tv-text-3); }
+.tv-fr-guest-art img { display: block; max-width: 100%; max-height: clamp(72px, 22vh, 180px); object-fit: contain; }
+.tv-fr-guest .tv-stage-login { width: 100%; }
+/* The eye that hides the code sits right after the label, small and flat: a detail of the label, not a button of its own. */
+.tv-codebox-head { justify-content: flex-start; gap: 6px; }
+.tv-codebox-eye { display: grid; place-items: center; width: 24px; height: 24px; padding: 0; border: 0; border-radius: 8px; background: none; color: var(--tv-text-3); cursor: pointer; transition: color 0.15s ease, background-color 0.15s ease; }
+.tv-codebox-eye:hover, .tv-codebox-eye.is-on { color: var(--tv-text); }
+.tv-codebox-eye:hover { background: rgba(255, 255, 255, 0.07); }
 .tv-codebox-head .tv-section-label { margin: 0; font-family: var(--tv-small); font-weight: 700; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--tv-text-3); }
 .tv-codebox-code { margin: 0; font-family: var(--tv-title); font-weight: 800; font-size: 40px; line-height: 1; letter-spacing: 0.06em; color: var(--tv-text); }
 .tv-codebox-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
@@ -1092,15 +1117,6 @@
 .tv-qc-pill.is-dark { background: rgba(0, 0, 0, 0.2); }
 /* A long topic is cut with "…" rather than pushing the other pills to a second row. */
 .tv-qc-topic-text { overflow: hidden; max-width: 220px; text-overflow: ellipsis; }
-.tv-qc-time {
-  margin-left: auto;
-  padding: 6px 10px;
-  border-radius: 10px;
-  background: rgba(0, 0, 0, 0.2);
-  font: 800 18px/1 var(--tv-display);
-  white-space: nowrap;
-}
-.tv-qc-time.is-urgent { background: var(--p-bad); }
 .tv-qc-dir {
   flex-basis: 100%;
   display: -webkit-box;
@@ -1309,7 +1325,6 @@
   background: var(--tv-surface-2);
   box-shadow: none;
 }
-.tv-app :is(.tv-match, .tv-room.is-intro) .tv-player.is-me .tv-player-btn { box-shadow: none; outline: 2px solid var(--p-accent-2, #ffd60a); outline-offset: -2px; }
 .tv-app :is(.tv-match, .tv-room.is-intro) .tv-player-pos { width: 16px; background: none; box-shadow: none; color: #fff; font: 800 16px/1 var(--tv-display); }
 .tv-app :is(.tv-match, .tv-room.is-intro) .tv-player-name { font: 700 14px/1.2 var(--tv-small); }
 .tv-app :is(.tv-match, .tv-room.is-intro) .tv-player-score { font: 800 17px/1 var(--tv-display); color: #fff; }
@@ -1463,7 +1478,7 @@ html.tv-geo-playing .tv-app .tv-topbar:has(.tv-topbar-round) { display: flex; }
 .tv-app .tv-match .tv-hist-year { font: 800 72px/1 var(--tv-title); letter-spacing: -0.03em; }
 .tv-app .tv-match .tv-hist-year small { font: 800 24px/1 var(--tv-display); color: var(--tv-text-2, #cbcbcb); }
 .tv-app .tv-match .tv-hist-stage > * { width: 100%; max-width: none; }
-.tv-app .tv-match .tv-hist-action { display: flex; justify-content: flex-end; min-height: 0; }
+.tv-app .tv-match .tv-hist-action { display: flex; justify-content: center; min-height: 0; }
 /* The bar: thicker, filled in the game's colour up to the chosen number, with a white square knob. */
 .tv-app .tv-match .tv-hist-rail { height: 18px; background: rgba(255, 255, 255, 0.12); clip-path: inset(-40px -30px -40px 0 round 9px); }
 .tv-app .tv-match .tv-hist-thumb::before { content: ""; position: absolute; right: 0; top: -9px; width: 4000px; height: 18px; border-radius: 9px; background: var(--tv-hm); }
@@ -1549,14 +1564,18 @@ html.tv-geo-playing .tv-app .tv-topbar:has(.tv-topbar-round) { display: flex; }
 .tv-app .tv-match .tv-geo-zoom button { width: 40px; height: 40px; border-radius: 12px; background: var(--tv-surface-3); box-shadow: 0 3px 0 var(--tv-neutral-edge); color: #fff; }
 
 /* Rango: "TU RESPUESTA" and the number big on its right, the bar between "−" and "+", "Fijar respuesta" bottom right. */
-.tv-app .tv-match .tv-hist-slot { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; height: 76px; }
+.tv-app .tv-match .tv-hist-slot { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; height: auto; min-height: 76px; }
 .tv-app .tv-match .tv-hist-slot .tv-quiz-count,
-.tv-app .tv-match .tv-hist-slot .tv-hist-year { margin-left: auto; }
+.tv-app .tv-match .tv-hist-slot .tv-hist-year { margin: 0; }
+/* The chosen number in the middle, two buttons on each side of it (−10 −1 · 89 · +1 +10), the small ones next to it. */
+.tv-app .tv-match .tv-hist-picker { display: flex; align-items: center; justify-content: center; gap: 10px; animation: none; }
+.tv-app .tv-match .tv-hist-picker .tv-hist-year { min-width: 3.2ch; }
+.tv-app .tv-match .tv-hist-picker .tv-hist-step { min-width: 52px; height: 44px; padding: 0 10px; border-radius: 12px; background: var(--tv-surface-3); box-shadow: 0 3px 0 var(--tv-neutral-edge); color: #fff; font-size: 16px; }
+.tv-app .tv-match .tv-hist-picker .tv-hist-step:disabled { background: var(--tv-surface-2); box-shadow: none; opacity: 1; color: var(--tv-text-3); }
 .tv-app .tv-match .tv-hist-year.is-empty { color: var(--tv-text-3); }
 .tv-app .tv-match .tv-hist-year small { margin-left: 8px; }
 .tv-hist-barrow { display: flex; align-items: center; gap: 16px; min-width: 0; }
 .tv-hist-barrow > .tv-hist-line { flex: 1; min-width: 0; }
-.tv-app .tv-match .tv-hist-barrow .tv-hist-step { flex: none; width: 40px; height: 40px; padding: 0; border-radius: 12px; background: var(--tv-surface-3); box-shadow: 0 3px 0 var(--tv-neutral-edge); color: #fff; }
 
 /* Campo de minas: no counters over the board; the cells grey and tapped, a right one green and flat. */
 .tv-app .tv-match .tv-mines-bar:has(.tv-mines-chips) { display: none; }
@@ -1645,9 +1664,7 @@ html.tv-geo-playing .tv-app .tv-topbar:has(.tv-topbar-round) { display: flex; }
   /* A long game's name ("Adivina la canción · Ronda 1 de 5") is cut with "…" before the volume button. */
   .tv-topbar-round-row > span:first-child { overflow: hidden; min-width: 0; text-overflow: ellipsis; }
   .tv-qc { gap: 6px; padding: 14px 16px; border-radius: 20px; }
-  /* Phones: at the reveal the verdict ("¡Correcto! +970") says it all, so "Respuesta" goes, and the topic is shorter:
-     the first row never wraps. */
-  .tv-qc-time.is-reveal { display: none; }
+  /* Phones: the topic is shorter, so the first row never wraps. */
   .tv-qc-topic-text { max-width: 120px; }
   /* A height to start from, growing when the pills wrap to a second row (Farsante's steps and "Empieza en 1"), so the
      question never runs over the line above it. */
@@ -1656,7 +1673,6 @@ html.tv-geo-playing .tv-app .tv-topbar:has(.tv-topbar-round) { display: flex; }
   .tv-qc--l { height: auto; min-height: 230px; }
   .tv-qc-mark { width: 170px; height: 170px; }
   .tv-qc-pill { height: 28px; font-size: 12px; }
-  .tv-qc-time { font-size: 16px; padding: 5px 8px; }
   .tv-qc-dir { -webkit-line-clamp: 1; font-size: 13px; }
   .tv-qc-q { font-size: 26px; line-height: 1.12; }
   .tv-qc-q.is-mid { font-size: 22px; }
@@ -1797,12 +1813,26 @@ html.tv-geo-playing .tv-app .tv-topbar:has(.tv-topbar-round) { display: flex; }
 
 /* "En tu sala" on Inicio lists its players like "Tu sala" does (the same rows), inside the box. */
 .tv-stage-members .tv-party-players { margin: 0 -8px; }
-.tv-stage-members .tv-player-btn { cursor: default; }
+/* A tap on a row opens "Tu sala" (to invite): it lights up on hover. */
+.tv-stage-members .tv-player-btn { width: 100%; border: 0; font: inherit; text-align: left; cursor: pointer; transition: background-color 0.15s ease; }
+.tv-stage-members .tv-player-btn:hover:not(:disabled) { background: var(--tv-surface-3); }
+.tv-stage-members .tv-player-btn:disabled { cursor: default; }
+
+/* Just short of room for the sala's zone, PARTIDA and JUGAR on one row (and, narrower, for the first two): "Invitar" keeps only its icon so they still fit together. */
+@media (min-width: 761px) {
+  .tv-gbar { container-type: inline-size; }
+}
+@container (max-width: 1480px) {
+  .tv-gbar-invite-label { display: none; }
+  .tv-app .tv-gbar-invite { width: 40px; padding: 0; justify-content: center; }
+  /* A little tighter too, so the sala's zone and PARTIDA fit in one row with some room to spare. */
+  .tv-gbar-zone--group .tv-gbar-box, .tv-gbar-code { gap: 6px; }
+  .tv-gbar-code-text { padding: 0 10px; letter-spacing: 0.1em; }
+}
 
 /* Medium widths: the sala's zone never squeezes into a sliver (its label stacking letter by letter, its Blobs under the
    buttons): it keeps what its buttons need and the bar's zones wrap onto another row instead. */
 @media (min-width: 761px) and (max-width: 1599px) {
-  .tv-gbar-zone--group { flex: 1 1 auto; min-width: min-content; }
   .tv-gbar-zone--group .tv-gbar-cap { white-space: nowrap; }
   .tv-gbar-zone--group .tv-gbar-box { flex-wrap: nowrap; }
 }
@@ -1827,3 +1857,276 @@ html.tv-geo-playing .tv-app .tv-topbar:has(.tv-topbar-round) { display: flex; }
   .tv-profile-hero { grid-template-columns: auto minmax(0, 1fr); }
   .tv-profile-stats { grid-column: 1 / -1; min-width: 0; }
 }
+
+/* The friends notice breaks into evenly long lines, never one long and one with a single word. */
+.tv-stage-friends-empty { text-wrap: balance; }
+
+/* ---------- Settings panel ("Ajustes de …"), the same for every game: one simple format ---------- */
+/* One tab at a time, and in each its settings one under the other, every one the panel's whole width: the name (and
+   "Seleccionar todos" at the end of its line when it takes several) and under it its choices side by side, the same
+   width each, the chosen ones in the game's own colour. The letters are the project's own sizes (the same as the rest
+   of the screens): nothing here sets a font size. */
+.tv-app .tv-modal.tv-settings-modal { max-width: 560px; }
+.tv-app .tv-settings-modal .tv-modal-head { padding: 22px 24px 4px; }
+.tv-app .tv-settings-modal .tv-modal-title { font-size: 28px; }
+.tv-app .tv-settings-modal .tv-modal-body { gap: 0; padding: 14px 24px 18px; }
+.tv-app .tv-settings-modal .tv-modal-foot { padding: 14px 24px 20px; }
+/* The foot: "Listo" taking the room and a small square icon (restablecer) at the right end, both 44 px tall. */
+.tv-app .tv-settings-modal .tv-modal-foot { gap: 10px; }
+.tv-app .tv-settings-modal .tv-settings-reset { order: 2; width: 44px; height: 44px; border-radius: 12px; }
+.tv-app .tv-settings-modal .tv-settings-reset:disabled { opacity: 0.45; cursor: default; transform: none; box-shadow: 0 3px 0 var(--tv-neutral-edge); }
+.tv-app .tv-settings-modal .tv-settings-done { flex: 1; height: 44px; padding: 0 20px; border-radius: 12px; font-size: 17px; }
+.tv-app .tv-settings-modal .tv-settings-tabbed,
+.tv-app .tv-settings-modal .tv-settab-panel,
+.tv-app .tv-settings-modal .tv-settings-tabbed fieldset.tv-settings,
+.tv-app .tv-settings-modal fieldset.tv-setsec-body { gap: 16px; }
+.tv-app .tv-settings-modal .tv-settab { padding: 4px 8px 12px; }
+.tv-app .tv-settings-modal .tv-optrow { gap: 8px; }
+.tv-app .tv-settings-modal .tv-optrow-opts { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 8px; padding: 0; border-radius: 0; background: none; }
+.tv-app .tv-settings-modal .tv-optrow-opts.is-wrap { display: flex; flex-wrap: wrap; }
+.tv-app .tv-settings-modal .tv-optrow-opts.is-wrap .tv-optrow-btn { flex: 1 1 auto; }
+.tv-app .tv-settings-modal .tv-optrow-btn { height: 42px; padding: 0 12px; border-radius: 10px; background: var(--tv-surface-2); }
+.tv-app .tv-settings-modal .tv-optrow-btn:hover:not(:disabled):not([aria-pressed="true"]) { background: var(--tv-surface-3); }
+.tv-app .tv-settings-modal .tv-optrow-btn[aria-pressed="true"],
+.tv-app .tv-settings-modal .tv-optrow-btn[aria-pressed="true"]:hover { background: var(--c2); box-shadow: 0 3px 0 var(--edge); color: var(--on); }
+.tv-app .tv-settings-modal .tv-optrow-box { display: none; }
+.tv-app .tv-settings-modal .tv-settabs::after { background: var(--c2); }
+.tv-app .tv-settings-modal .tv-settab[aria-selected="true"] .tv-settab-label svg { color: var(--c2); }
+.tv-app .tv-settings-modal .tv-optrow-action { color: var(--c2); }
+/* The parts of a tab ("Catálogo" | "Tus playlists"): two buttons like the choices under them, the open one in the game's
+   colour; the catalog's on/off switch sits at the end of its button, in the middle of it. */
+.tv-app .tv-settings-modal .tv-settabs.is-sub { gap: 8px; padding: 0; overflow: visible; border-radius: 0; background: none; box-shadow: none; }
+.tv-app .tv-settings-modal .tv-settabs.is-sub::after { display: none; }
+.tv-app .tv-settings-modal .tv-settabs.is-sub .tv-settab { align-items: center; height: 42px; padding: 0 12px; border-radius: 10px; background: var(--tv-surface-2); box-shadow: none; }
+.tv-app .tv-settings-modal .tv-settabs.is-sub .tv-settab-label { font-family: var(--tv-display); font-weight: 700; font-size: 15px; }
+.tv-app .tv-settings-modal .tv-settabs.is-sub .tv-settab:hover:not([aria-selected="true"]) { background: var(--tv-surface-3); }
+.tv-app .tv-settings-modal .tv-settabs.is-sub .tv-settab[aria-selected="true"] { background: var(--c2); box-shadow: 0 3px 0 var(--edge); }
+.tv-app .tv-settings-modal .tv-settabs.is-sub .tv-settab[aria-selected="true"] .tv-settab-label { color: var(--on); }
+.tv-app .tv-settings-modal .tv-settabs.is-sub .tv-settab.has-toggle { padding-right: 56px; }
+.tv-app .tv-settings-modal .tv-settab-switch { right: 12px; }
+.tv-app .tv-settings-modal .tv-settab-wrap:has(.tv-settab[aria-selected="true"]) .tv-settab-switch { background: rgba(0, 0, 0, 0.28); }
+.tv-app .tv-settings-modal .tv-settab-wrap:has(.tv-settab[aria-selected="true"]) .tv-settab-switch[aria-checked="true"] { background: #fff; }
+.tv-app .tv-settings-modal .tv-settab-wrap:has(.tv-settab[aria-selected="true"]) .tv-settab-switch[aria-checked="true"] .tv-switch-knob { background: var(--c2); }
+@media (max-width: 640px) {
+  .tv-app .tv-settings-modal .tv-modal-title { font-size: 24px; }
+  .tv-app .tv-settings-modal .tv-modal-body { padding: 12px 18px 14px; }
+  .tv-app .tv-settings-modal .tv-modal-foot { padding: 12px 18px 18px; }
+}
+
+/* ---------- "Tu partida" (MatchSummarySheet): the game's card, five rows at a time, arrows at the foot ---------- */
+.tv-app .tv-modal.tv-summary-modal { max-width: 520px; }
+.tv-app .tv-summary-modal .tv-modal-head { padding: 20px 22px 2px; }
+.tv-app .tv-summary-modal .tv-modal-title { font-size: 26px; }
+.tv-app .tv-summary-modal .tv-modal-body { gap: 10px; padding: 12px 22px 18px; }
+.tv-app .tv-summary-modal .tv-modal-foot { padding: 12px 22px 18px; }
+/* The game's card, in its own colour. */
+.tv-summary-hero { display: flex; align-items: center; gap: 14px; padding: 14px 18px 14px 14px; border-radius: 18px; background: var(--c2); color: var(--on); }
+.tv-summary-hero-icon { display: grid; place-items: center; flex: none; width: 52px; height: 52px; border-radius: 15px; background: #fff; box-shadow: 0 4px 0 rgba(0, 0, 0, 0.25); color: var(--c2); }
+.tv-summary-hero-text, .tv-summary-hero-score { display: grid; gap: 3px; min-width: 0; }
+.tv-summary-hero-text { flex: 1; }
+.tv-summary-hero-score { text-align: right; }
+.tv-summary-hero b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tv-summary-hero-text b { font-family: var(--tv-title); font-weight: 800; font-size: 26px; line-height: 1; letter-spacing: -0.02em; }
+.tv-summary-hero-score b { font-family: var(--tv-display); font-weight: 800; font-size: 30px; line-height: 1; font-variant-numeric: tabular-nums; }
+.tv-summary-hero small { font-family: var(--tv-small); font-weight: 700; font-size: 13px; opacity: 0.8; }
+/* Five rows, always the same height. */
+.tv-app .tv-summary-modal .tv-summary { display: grid; align-content: start; gap: 6px; max-height: none; margin: 0; padding: 0; overflow: visible; scroll-snap-type: none; }
+.tv-app .tv-summary-modal .tv-summary-round { --edge-mark: #5e636c; display: flex; align-items: center; gap: 12px; height: 58px; padding: 8px 12px 8px 8px; border-radius: 14px; background: var(--tv-surface-2); box-shadow: none; }
+.tv-app .tv-summary-modal .tv-summary-round.is-ok { --edge-mark: var(--p-ok-edge); }
+.tv-app .tv-summary-modal .tv-summary-round.is-near { --edge-mark: var(--p-accent-edge); }
+.tv-app .tv-summary-modal .tv-summary-round.is-bad { --edge-mark: var(--p-bad-edge); }
+.tv-summary-round.is-none { --mark: #8b9099; }
+.tv-app .tv-summary-modal .tv-summary-round.is-empty { visibility: hidden; }
+.tv-summary-mark { display: grid; place-items: center; flex: none; width: 36px; height: 36px; border-radius: 11px; background: var(--mark); box-shadow: 0 3px 0 var(--edge-mark); color: #0a0b0c; font-family: var(--tv-display); font-weight: 800; font-size: 17px; }
+.tv-summary-body { display: grid; flex: 1; gap: 1px; min-width: 0; }
+.tv-app .tv-summary-modal .tv-summary-prompt { margin: 0; overflow: hidden; font-family: var(--tv-display); font-weight: 700; font-size: 15px; line-height: 1.25; text-overflow: ellipsis; white-space: nowrap; color: var(--tv-text); }
+.tv-summary-prompt small { margin-right: 8px; padding: 1px 7px; border-radius: 6px; background: var(--tv-surface-3); font-family: var(--tv-small); font-weight: 700; font-size: 11px; color: var(--tv-text-2); }
+.tv-summary-answers { display: flex; align-items: center; gap: 6px; min-width: 0; margin: 0; overflow: hidden; font-family: var(--tv-display); font-weight: 700; font-size: 14px; white-space: nowrap; }
+.tv-summary-answers > span { overflow: hidden; text-overflow: ellipsis; }
+.tv-summary-yours { color: var(--mark); }
+.tv-summary-yours.is-cut { text-decoration: line-through; text-decoration-thickness: 1.5px; }
+.tv-summary-answers svg { flex: none; color: var(--tv-text-3); }
+.tv-summary-right { flex: none; color: var(--p-ok-text); }
+.tv-app .tv-summary-modal .tv-summary-points { flex: none; font-family: var(--tv-display); font-weight: 800; font-size: 18px; color: var(--tv-text-2); font-variant-numeric: tabular-nums; }
+.tv-app .tv-summary-modal .tv-summary-round.is-ok .tv-summary-points { color: var(--p-ok-text); }
+/* The foot: which rounds show and the arrows. */
+.tv-summary-where { font-family: var(--tv-small); font-weight: 700; font-size: 14px; color: var(--tv-text-3); }
+.tv-summary-where b { font-family: var(--tv-display); font-weight: 800; font-size: 15px; color: var(--tv-text); }
+.tv-summary-nav { display: flex; gap: 8px; }
+.tv-summary-nav .tv-iconbtn:disabled { opacity: 0.35; box-shadow: none; transform: none; cursor: default; }
+.tv-summary-prev svg { transform: rotate(180deg); }
+@media (max-width: 640px) {
+  .tv-app .tv-summary-modal .tv-modal-title { font-size: 24px; }
+  .tv-app .tv-summary-modal .tv-modal-body { padding: 10px 14px 14px; }
+  .tv-app .tv-summary-modal .tv-modal-foot { padding: 12px 14px 16px; }
+  .tv-summary-hero-text b { font-size: 22px; }
+}
+
+/* ---------- "Ya estás en esta sala" (CentralOffer): the common panel, one line of text and two buttons ---------- */
+.tv-app .tv-central-offer .tv-modal-head { padding: 22px 24px 4px; }
+.tv-app .tv-central-offer .tv-modal-title { font-size: 24px; }
+.tv-app .tv-central-offer .tv-modal-body { padding: 10px 24px 18px; }
+.tv-app .tv-central-offer .tv-modal-foot { padding: 14px 24px 22px; gap: 10px; }
+.tv-central-offer-text { display: flex; align-items: flex-start; gap: 12px; margin: 0; font-family: var(--tv-small); font-weight: 600; font-size: 15px; line-height: 1.45; color: var(--tv-text-2); }
+.tv-central-offer-text > svg, .tv-central-offer-text > .tv-pulse { flex: none; margin-top: 2px; color: var(--tv-text-3); }
+.tv-app .tv-central-offer .tv-modal-foot .tv-btn { height: 46px; min-height: 0; padding: 0 18px; border-radius: 12px; font-size: 16px; white-space: nowrap; }
+.tv-app .tv-central-offer .tv-central-offer-go { flex: 1; }
+@media (max-width: 640px) {
+  .tv-app .tv-central-offer .tv-modal-head { padding: 18px 18px 4px; }
+  .tv-app .tv-central-offer .tv-modal-body { padding: 10px 18px 16px; }
+  .tv-app .tv-central-offer .tv-modal-foot { padding: 12px 18px 18px; }
+  .tv-app .tv-central-offer .tv-modal-foot .tv-btn { font-size: 15px; padding: 0 12px; white-space: normal; line-height: 1.1; }
+}
+
+/* Inicio's boxes beside the card measure the same with a sala or without one: the elo's label always keeps room for two
+   lines ("Elo en / Trivia", or "Tu elo" alone), and the second box ("Reto del día" or "Código de la sala") is at least
+   as tall as the code's. */
+.tv-stage-elo .tv-stage-label { line-height: 1.3; min-height: 2.6em; }
+.tv-stage-aside > .tv-stage-box:nth-child(2) { min-height: 122px; }
+
+/* Inicio without a sala (wide screens): "Tu sala" beside the card (your Blob, a friend's code, the eye, "Unirse"), and
+   "Reto del día" down in the bar where the sala's zone goes. */
+/* The way into a friend's sala is "Código de la sala" itself: the code in the same big letters and place (in five slots of
+   the same width, so any code and its dots take the same room; the example faint until one is written), and where the
+   link button goes, a blue square with an arrow ("Unirse"). The real box is under the slots, unseen. */
+.tv-gbar-join-field { display: contents; }
+.tv-gbar-join-field.has-slots { position: relative; display: block; flex: 1; min-width: 0; }
+.tv-stage-join .tv-gbar-join { justify-content: space-between; gap: 12px; }
+.tv-stage-join .tv-gbar-join-input,
+.tv-stage-join .tv-gbar-join-input:focus,
+.tv-stage-join .tv-gbar-join-input[aria-invalid="true"] { display: block; width: 100%; min-width: 0; height: 48px; padding: 0; border: 0; border-radius: 0; background: none; box-shadow: none; color: transparent; caret-color: transparent; font-size: 34px; outline: none; }
+.tv-stage-join .tv-gbar-join-input::selection { background: transparent; }
+.tv-gbar-join-slots.tv-codemask { position: absolute; top: 50%; left: 0; transform: translateY(-50%); pointer-events: none; }
+.tv-gbar-join-slots i { position: relative; font-style: normal; color: var(--tv-text-3); opacity: 0.4; }
+.tv-gbar-join-slots i.is-on { color: var(--tv-text); opacity: 1; }
+.tv-gbar-join-slots i.is-bad.is-on { color: var(--p-bad-text); }
+/* Where the next letter goes, while writing: a short line under its slot. */
+.tv-gbar-join-slots i.is-at::after { content: ""; position: absolute; left: 0; bottom: -8px; width: 0.6em; height: 3px; border-radius: 2px; background: var(--tv-pick); }
+.tv-app .tv-stage-join .tv-gbar-join-go.is-icon { flex: none; display: grid; place-items: center; width: 48px; height: 48px; min-height: 0; padding: 0; border-radius: 12px; }
+.tv-stage-join .tv-gbar-join-go.is-icon svg { transform: rotate(180deg); }
+.tv-gbar-box.tv-gbar-daily { gap: 18px; padding-left: 12px; }
+/* Without an account: what the challenge would be, in two lines, in the same letters as the friends' notice. */
+.tv-gbar-daily-guest { display: block; }
+.tv-gbar-daily-text { display: grid; flex: 1; gap: 6px; min-width: 0; }
+.tv-gbar-daily-text strong { overflow: hidden; font-family: var(--tv-display); font-weight: 700; font-size: 15px; line-height: 1.2; text-overflow: ellipsis; white-space: nowrap; color: var(--tv-text); }
+.tv-gbar-daily .tv-stage-daily-count { flex: none; padding-right: 4px; }
+.tv-gbar-daily.is-done .tv-stage-daily-bar i { background: var(--p-good, #1fd24a); }
+
+/* The square icon buttons of Inicio's code boxes (the sala's link, "Unirse"'s arrow): the icon dead in the middle, with
+   nothing (padding, a line's height, a gap) pushing it aside. */
+.tv-app .tv-stage-code-copy,
+.tv-app .tv-stage-join .tv-gbar-join-go.is-icon { display: grid; place-items: center; flex: none; width: 48px; height: 48px; min-width: 0; min-height: 0; padding: 0; gap: 0; line-height: 0; }
+.tv-app .tv-stage-code-copy svg,
+.tv-app .tv-stage-join .tv-gbar-join-go.is-icon svg { display: block; margin: 0; }
+
+/* Inicio once it is on screen: the card only updates, with no entrance of the box, its head or its lines. The sweep of light
+   (.tv-mstage-flash) stays: it is what says something changed. */
+.tv-lobby-stage.is-settled .tv-stage,
+.tv-lobby-stage.is-settled .tv-stage-head,
+.tv-lobby-stage.is-settled .tv-stage-lines li { animation: none; }
+
+/* Every panel over the page moves like "Tu sala" (Modal): up from below and back down, whole, its backdrop fading in step. */
+.tv-sheet-backdrop { background: rgba(0, 0, 0, 0.6); -webkit-backdrop-filter: none; backdrop-filter: none; }
+.tv-sheet { animation: var(--tv-box-in); }
+.tv-sheet-form { animation: none; }
+.tv-sheet-root.is-closing .tv-sheet-backdrop { animation: tvFadeOut 0.3s ease-in forwards; }
+.tv-sheet-root.is-closing .tv-sheet { animation: var(--tv-box-out); }
+@media (min-width: 640px) {
+  .tv-sheet { animation: var(--tv-box-in); }
+  .tv-sheet-root.is-closing .tv-sheet { animation: var(--tv-box-out); }
+}
+/* With reduced motion they just appear and go; the way out still has to end, it is what takes them off the screen. */
+@media (prefers-reduced-motion: reduce) {
+  .tv-sheet-root.is-closing .tv-sheet { animation: tvFadeOut 0.01s forwards; }
+}
+
+/* "¿Qué quieren jugar?": the panel comes in whole; its tiles don't come in on their own. */
+.tv-plan .tv-gcard,
+.tv-plan .tv-ccard { animation: none; }
+
+/* "Tu sala": each player's buttons at the end of their row; the permission, when given, in the site's blue. */
+.tv-groupmember-tools { flex: none; }
+.tv-groupmember .tv-player-text { flex: 1; min-width: 0; }
+.tv-groupmember-tools a.tv-iconbtn { color: var(--tv-neutral-on); }
+.tv-groupmember-tools .tv-iconbtn.is-on { background: var(--tv-pick); box-shadow: 0 3px 0 var(--tv-pick-edge); color: #fff; }
+/* Who leads: the crown's button in yellow, not to be tapped. A guest's profile: faded, and tapping it does nothing. */
+.tv-groupmember-tools .tv-iconbtn.is-leader,
+.tv-groupmember-tools .tv-iconbtn.is-leader:hover,
+.tv-groupmember-tools .tv-iconbtn.is-leader:active { background: var(--p-accent-2); box-shadow: 0 3px 0 var(--p-accent-edge); color: var(--p-ink); transform: none; cursor: default; }
+.tv-groupmember-tools .tv-iconbtn.is-none,
+.tv-groupmember-tools .tv-iconbtn.is-none:hover,
+.tv-groupmember-tools .tv-iconbtn.is-none:active { opacity: 0.4; box-shadow: none; transform: none; cursor: not-allowed; }
+
+/* The scoreboard's menu: a row of icon buttons, the same as "Tu sala", at the row's right end. */
+/* Under the player's row and as wide as it, its buttons sharing the width equally, with no box around them. */
+.tv-app .tv-player-menu { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 6px; width: 100%; margin: 6px 0 0; padding: 0 0 3px; border-radius: 0; background: none; box-shadow: none; }
+.tv-app .tv-player-menu .tv-iconbtn { display: flex; align-items: center; justify-content: center; gap: 6px; width: 100%; height: 38px; font-family: var(--tv-display); font-weight: 700; font-size: 14px; text-decoration: none; white-space: nowrap; }
+.tv-app :is(.tv-match, .tv-room.is-intro) .tv-player,
+.tv-app :is(.tv-match, .tv-room.is-intro) .tv-player:hover { background: none; }
+.tv-iconbtn.is-on { background: var(--tv-pick); box-shadow: 0 3px 0 var(--tv-pick-edge); color: #fff; }
+.tv-iconbtn.is-on:hover { box-shadow: 0 5px 0 var(--tv-pick-edge); }
+.tv-player-menu a.tv-iconbtn { color: var(--tv-neutral-on); }
+.tv-player-menu .tv-iconbtn.is-none,
+.tv-player-menu .tv-iconbtn.is-none:hover,
+.tv-player-menu .tv-iconbtn.is-none:active { opacity: 0.4; box-shadow: none; transform: none; cursor: not-allowed; }
+
+/* ---------- Profile: three columns of the same width and height; two sizes of letter for what repeats ---------- */
+.tv-pf { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; width: 100%; }
+.tv-pf.is-other { grid-template-columns: minmax(0, 480px); justify-content: center; }
+.tv-app .tv-pf > .tv-pf-card { position: relative; display: flex; flex-direction: column; gap: 12px; min-width: 0; min-height: 396px; margin: 0; padding: 20px; border-radius: 24px; animation: var(--tv-box-in); }
+.tv-pf-who { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.tv-app .tv-pf-who .tv-profile-avatar { flex: none; }
+.tv-app .tv-pf-who .tv-avatar--xl { width: 76px; height: 76px; }
+.tv-pf-names { display: grid; flex: 1; gap: 4px; min-width: 0; }
+.tv-app .tv-pf-name { margin: 0; overflow: hidden; font-family: var(--tv-title); font-weight: 800; font-size: 24px; line-height: 1.15; letter-spacing: -0.02em; text-overflow: ellipsis; white-space: nowrap; color: var(--tv-text); }
+.tv-pf-handle, .tv-pf-mail { margin: 0; overflow: hidden; font-family: var(--tv-display); font-weight: 700; font-size: 16px; line-height: 1.2; text-overflow: ellipsis; white-space: nowrap; color: var(--tv-text-3); }
+.tv-pf-handle { min-height: 1.2em; }
+.tv-pf-tags { display: flex; gap: 6px; height: 26px; }
+.tv-pf-stats { display: grid; gap: 6px; margin-top: auto; }
+.tv-pf-stat { display: flex; align-items: center; justify-content: space-between; gap: 8px; height: 44px; padding: 0 14px; border-radius: 12px; background: var(--tv-surface-2); }
+.tv-pf-label, .tv-app .tv-pf .tv-label { font-family: var(--tv-small); font-weight: 700; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--tv-text-3); }
+.tv-pf-num { font-family: var(--tv-display); font-weight: 800; font-size: 20px; line-height: 1; font-variant-numeric: tabular-nums; }
+/* The colours: two columns, four rows, filling the column. */
+.tv-app .tv-pf-blob .tv-blob-colors { display: flex; flex: 1; flex-direction: column; gap: 12px; margin: 0; }
+.tv-app .tv-pf-blob .tv-card-head { display: flex; align-items: center; height: 44px; margin: 0; }
+.tv-app .tv-pf-blob .tv-card-title, .tv-app .tv-pf-title { margin: 0; font-family: var(--tv-display); font-weight: 800; font-size: 20px; line-height: 1; color: var(--tv-text); }
+.tv-app .tv-pf-blob .tv-blob-opts { flex: 1; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-rows: minmax(66px, 1fr); gap: 8px; }
+.tv-app .tv-pf-blob .tv-blob-opt { width: 100%; height: 100%; aspect-ratio: auto; padding: 6px; }
+.tv-app .tv-pf-blob .tv-blob-opt .tv-blob { width: auto; aspect-ratio: 1; margin: auto; }
+.tv-pf-blobnote { position: absolute; right: 20px; bottom: 20px; left: 20px; z-index: 2; margin: 0; padding: 10px 12px; border-radius: 12px; background: var(--tv-surface-3); font-family: var(--tv-small); font-weight: 600; font-size: 13px; line-height: 1.35; color: var(--tv-text-2); }
+.tv-pf-blobnote b { color: var(--tv-text); }
+/* The account. */
+.tv-pf-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; height: 44px; }
+.tv-pf-form { display: grid; gap: 12px; min-width: 0; }
+.tv-app .tv-pf-form .tv-form-row { display: flex; flex-direction: column; gap: 8px; min-width: 0; margin: 0; }
+.tv-app .tv-pf-form .tv-field { width: 100%; height: 44px; border-radius: 12px; text-overflow: ellipsis; }
+.tv-pf-foot { display: grid; gap: 8px; margin-top: auto; min-width: 0; }
+.tv-pf-mail { line-height: 1.5; }
+.tv-pf-actions { display: flex; gap: 8px; min-width: 0; }
+.tv-app .tv-pf-actions .tv-btn { flex: 1; min-width: 0; padding: 0 10px; }
+.tv-app .tv-pf-icon { width: 44px; height: 44px; }
+.tv-pf-icon.is-faint svg { opacity: 0.55; }
+@media (max-width: 1000px) {
+  .tv-pf, .tv-pf.is-other { grid-template-columns: minmax(0, 1fr); }
+  .tv-app .tv-pf > .tv-pf-card { min-height: 0; }
+  .tv-pf-stats { margin-top: 0; }
+  .tv-app .tv-pf-blob .tv-blob-opts { grid-template-columns: repeat(4, minmax(0, 1fr)); grid-auto-rows: 72px; }
+}
+/* The Blob's ring stays inside the card; someone else's profile has no empty space to fill. */
+.tv-pf-who { gap: 16px; padding: 4px 0 4px 4px; }
+.tv-app .tv-pf.is-other > .tv-pf-card { min-height: 0; }
+.tv-pf.is-other .tv-pf-stats { margin-top: 0; }
+/* The colours' tiles have a fixed height, so the three columns always measure the same. */
+.tv-app .tv-pf-blob .tv-blob-opts { flex: none; grid-auto-rows: 72px; }
+.tv-app .tv-pf-blob .tv-blob-opt { height: 72px; }
+.tv-app .tv-pf-blob .tv-blob-opt .tv-blob { width: 58px; height: 58px; aspect-ratio: auto; }
+.tv-app .tv-pf > .tv-pf-card { min-height: 420px; }
+@media (max-width: 1000px) {
+  .tv-app .tv-pf > .tv-pf-card { min-height: 0; }
+  .tv-pf-blobnote { position: static; }
+}
+/* Spotify, one tap away from disconnecting: red, with its own edge. */
+.tv-app .tv-pf-icon.is-danger,
+.tv-app .tv-pf-icon.is-danger:hover { background: var(--p-bad); box-shadow: 0 3px 0 var(--p-bad-edge); }
+/* The scoreboard: your row with its background, like "En tu sala"; the others' with none. */
+.tv-app :is(.tv-match, .tv-room.is-intro) .tv-player:not(.is-me) .tv-player-btn { background: none; }

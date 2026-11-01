@@ -42,6 +42,6 @@
 - After `PUBLIC_KICK_ROUNDS` (5) idle rounds, "¿Sigues ahí?" (`askStillThere`, `AFK_CONFIRM_MS` 15 s, `StillThere.jsx`, `room:present`); no answer → `afkExpire`. Tests `game/publicForfeit.test.js`. Private rooms never kick anyone.
 
 ## Client
-- The search is HomeFrame's `SearchCard`: "Buscando jugadores de Trivia…" with how long (`useSearchStart`), the game's queue ("Fila de Trivia · 5 rondas · 10 s · Cerradas", `publicMatchLine` in `matchInfo.js`) and how many were found; once full, "¡Partida completa!" and "Empieza en 3". Its button is CANCELAR (grey): the group's `group:home` (the leader's; the others see "Buscando con Ana…"), or leaving the room.
+- The search is the chosen game's own card, unchanged (HomeFrame's `GameStage`: same name, description and size, nothing moves when it starts), and only its lines change, with how long (`useSearchSteps`), the game's queue ("Fila de Trivia · 5 rondas · 10 s · Cerradas", `publicMatchLine` in `matchInfo.js`) and how many were found; once full, "Empieza en 3". Its button is CANCELAR (red): the group's `group:home` (the leader's; the others see "Buscando con Ana…"), or leaving the room.
 - **One address for the whole match once it plays:** `/partida/CODE` (the search waits on `/`) (`isInlineMatch`, `roomPath`, `RoomScreen`/`GAME_SCREENS` in `App.jsx`); only the end is `/playlist/CODE`. `RoomNavigator` adds `tv-seamless` / `tv-seamless-side` on `<html>` for 1.4 s so screens swap without re-animating (lengths 0 s, not `none`).
 - `MatchIntro.jsx` (`PanelRoulette`, tutorial), styles `styles/match.css`.

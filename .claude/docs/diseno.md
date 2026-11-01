@@ -48,6 +48,8 @@ The look comes from the "Trivially rediseño" canvas (1 · Inicio, 2 · ¿Qué q
 
 ## How big panels move
 - Every big panel (the game's stage, the group's bar, a panel over the page, the room's column, a public match's card, the central lobby, profile cards) comes in all together, nothing inside it animating apart, up from below: `--tv-box-in` (`tvBoxIn`, in `home.css`'s `:root`). Going out is the reverse, all together: `--tv-box-out` (`tvBoxOut`, 0.3 s). Reduced motion: none.
+- Inicio's card comes in once, with the screen. After that (a game chosen, a sala made or left, public or private, a search) it only updates: no entrance of the box, its head or its lines (`.is-settled` in `look.css`, set by `HomeFrame`). Its sweep of light (`.tv-mstage-flash`) stays, as the sign that something changed.
+- Every panel over the page (`Modal`, `.tv-sheet`: confirmations, Amigos, the name, the history; the owner's panel) moves the same: `--tv-box-in` / `--tv-box-out`, its backdrop fading in step, with no blur. Whatever unmounts one on a timer waits past the 0.3 s of the way out.
 
 ## Shadows
 - **With a shadow** (a solid edge in the piece's own darker colour, `box-shadow: 0 3px 0 var(--edge)`): only what is tapped and does something. Buttons (`.tv-btn`, `.tv-iconbtn`, the top bar's `.tv-chip`), answers (`.tv-option`, `.tv-quiz-opt`), cells (`.tv-mines-cell`), the games' cards (`.tv-gcard`), chosen options (`.tv-optrow-btn` pressed), coloured icons. On hover it rises (1–2 px) and the edge grows; pressed, it goes down and the edge disappears.

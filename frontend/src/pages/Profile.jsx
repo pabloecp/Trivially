@@ -17,7 +17,7 @@ import { BLOB_COLORS, HOW_TO_GET, blobColor, canUseColor } from "../lib/blobColo
 const STATS = [
   { key: "wins", label: "Victorias", color: "amber" },
   { key: "correctAnswers", label: "Aciertos", color: "green" },
-  { key: "dailyDone", label: "Retos del día", color: "pink" },
+  { key: "dailyDone", label: "Retos", color: "pink" },
 ];
 
 // Badge shown on the profile for owners (plain users get none).
@@ -87,26 +87,19 @@ function BlobColors({ user, onPick }) {
           );
         })}
       </div>
-      {shown && (
-        <p className={`tv-blob-note${locked ? " is-locked" : ""}`} aria-live="polite">
-          <b>{shown.name}</b>
-          {locked ? ` · ${HOW_TO_GET[shown.needs]}` : shown.id === current ? " · Es el que llevas" : ""}
+      {/* Over the colours, so saying it moves nothing. */}
+      {locked && (
+        <p className="tv-pf-blobnote" aria-live="polite">
+          <b>{shown.name}</b> · {HOW_TO_GET[shown.needs]}
         </p>
       )}
     </div>
   );
 }
 
-// What the profile says about the @username's changes.
-function handleInfo(info) {
-  let left;
-  if (info.changesLeft > 0) left = `Te quedan ${info.changesLeft} ${info.changesLeft === 1 ? "cambio" : "cambios"} este mes.`;
-  else {
-    const when = new Date(info.nextChangeAt).toLocaleDateString("es", { day: "numeric", month: "long" });
-    left = `Ya no te quedan cambios este mes. Podrás cambiarlo el ${when}.`;
-  }
-  // An assigned username (made from the name) says so; changing it counts like any change.
-  return info.assigned ? `Te asignamos este usuario. ${left}` : left;
+// The username's label, with how many changes are left this month.
+function handleLabel(info) {
+  return info ? `Usuario · ${info.changesLeft} ${info.changesLeft === 1 ? "cambio" : "cambios"}` : "Usuario";
 }
 
 function ProfileScreen() {
@@ -125,7 +118,7 @@ function ProfileScreen() {
   const nav = useNavigate();
 
   // If userId is present in URL and differs from currentUser.id, we view a public profile
-  const isOtherUser = Boolean(userId && userId !== currentUser?.id);
+  const isOtherUser = Boolean(userId && userId !== currentUser?.id && userId !== currentUser?.username);
 
   const [profileData, setProfileData] = useState(null);
   const [loadingUser, setLoadingUser] = useState(isOtherUser);
@@ -223,6 +216,17 @@ function ProfileScreen() {
     }
   }
 
+  // The profile's address is its username, whatever link opened it (the id never shows).
+  const shownUser = isOtherUser ? profileData : currentUser;
+  const shownHandle = shownUser?.username;
+  useEffect(() => {
+    if (!userId || loadingUser || !shownHandle || userId === shownHandle) return;
+    nav(`/profile/${shownHandle}`, { replace: true });
+  }, [userId, loadingUser, shownHandle]);
+
+  // Before any of the returns below: a screen must call the same hooks every time.
+  const handleCheck = useUsernameCheck(newHandle, shownUser?.username);
+
   if (loadingUser) {
     return (
       <div className="tv-card tv-lobby-guest">
@@ -256,7 +260,6 @@ function ProfileScreen() {
   const hasGoogle = Boolean(activeUser?.googleId || activeUser?.googleLinked || (!isOtherUser && linkingStatus?.googleLinked));
   const canLinkGoogle = !isOtherUser && !isGuest && !hasGoogle;
   const nameChanged = Boolean(newUserName.trim()) && newUserName.trim() !== activeUser?.name;
-  const handleCheck = useUsernameCheck(newHandle, activeUser?.username);
   const handleChanged = newHandle.length >= USERNAME_MIN && newHandle !== activeUser?.username && handleCheck.state !== "bad";
   const canSave = nameChanged || handleChanged;
   const roleTag = ROLE_TAGS[activeUser?.role];
@@ -318,75 +321,56 @@ function ProfileScreen() {
       {msg && <Notice tone="ok" icon="check">{msg}</Notice>}
       {err && <Notice tone="bad" icon="lock">{err}</Notice>}
 
-      <section className="tv-card tv-profile-hero">
-        <span className="tv-profile-avatar">
-          <Avatar className="tv-avatar--xl" avatar={activeUser?.avatar} />
-        </span>
-        <div className="tv-profile-who">
-          <p className="tv-party-kicker">{isOtherUser ? "Perfil de jugador" : "Tu perfil"}</p>
-          <h1 className="tv-page-title">{activeUser?.name || "Jugador"}</h1>
-          {activeUser?.username && <p className="tv-handle tv-profile-handle">@{activeUser.username}</p>}
-          {/* Only two tags: "Registrado" (any account) and "Owner". */}
-          {(roleTag || !isGuest) && (
-            <div className="tv-tags">
-              {roleTag && (
-                <span className={`tv-tag tv-tag--${activeUser.role}`}>
-                  <Icon name={roleTag.icon} size={13} filled className={activeUser.role === "owner" ? "tv-tag-sparkle" : ""} />
-                  {roleTag.label}
-                </span>
-              )}
-              {!isGuest && (
-                <span className="tv-tag tv-tag--ok">
-                  <Icon name="verified" size={15} strokeWidth={2.4} className="tv-tag-verified" />
-                  Registrado
-                </span>
-              )}
+      {/* Three columns of the same width and height: who it is, the Blob's colour and the account. The same places with or
+          without an account, whatever the name's length (it's cut with "…"). Someone else's profile is only the first. */}
+      <div className={`tv-pf${isOtherUser ? " is-other" : ""}`}>
+        <section className="tv-card tv-pf-card" aria-label="Perfil">
+          <div className="tv-pf-who">
+            <span className="tv-profile-avatar">
+              <Avatar className="tv-avatar--xl" avatar={activeUser?.avatar} />
+            </span>
+            <div className="tv-pf-names">
+              <h1 className="tv-pf-name" title={activeUser?.name || "Jugador"}>{activeUser?.name || "Jugador"}</h1>
+              <p className="tv-pf-handle">{isGuest ? "Juega como invitado" : activeUser?.username ? `@${activeUser.username}` : ""}</p>
             </div>
-          )}
-        </div>
-        {/* The three stats beside the name (accounts only: guests keep none). */}
-        {!isGuest && (
-          <div className="tv-profile-stats" aria-busy={statsLoading} aria-label="Estadísticas">
-            {STATS.map((s, i) => (
-              <div key={s.key} className={`tv-stat tv-stat--pop tv-c-${s.color}`} style={{ "--i": i }}>
-                <span className="tv-stat-dot" aria-hidden="true" />
-                <span className="tv-stat-label">{s.label}</span>
-                <span className="tv-stat-value">
-                  {statsLoading ? <span className="tv-skeleton" aria-hidden="true" /> : stats ? <CountUp value={stats[s.key] || 0} /> : "—"}
+          </div>
+          <div className="tv-pf-tags">
+            {roleTag && (
+              <span className={`tv-tag tv-tag--${activeUser.role}`}>
+                <Icon name={roleTag.icon} size={13} filled className={activeUser.role === "owner" ? "tv-tag-sparkle" : ""} />
+                {roleTag.label}
+              </span>
+            )}
+          </div>
+          <div className="tv-pf-stats" aria-busy={statsLoading} aria-label="Estadísticas">
+            {STATS.map((s) => (
+              <div key={s.key} className="tv-pf-stat">
+                <span className="tv-pf-label">{s.label}</span>
+                <span className="tv-pf-num">
+                  {statsLoading ? <span className="tv-skeleton" aria-hidden="true" /> : stats ? <CountUp value={stats[s.key] || 0} /> : 0}
                 </span>
               </div>
             ))}
           </div>
-        )}
-      </section>
+        </section>
 
-      <div className={`tv-profile-grid${isOtherUser ? " is-single" : ""}`}>
-        {/* The colour of the Blob, a section of its own. */}
         {!isOtherUser && (
-          <section className="tv-card tv-profile-blob" aria-label="Color de tu Blob">
+          <section className="tv-card tv-pf-card tv-pf-blob" aria-label="Color de tu Blob">
             <BlobColors user={currentUser} onPick={onPickColor} />
           </section>
         )}
 
         {!isOtherUser && (
-          <section className="tv-card" aria-labelledby="tv-account-title">
-            <div className="tv-card-head">
-              <h2 id="tv-account-title" className="tv-card-title">Tu cuenta</h2>
-              <button
-                type="button"
-                className="tv-btn tv-btn--sm tv-c-pink"
-                onClick={onSaveProfile}
-                disabled={!canSave || saving}
-                aria-busy={saving}
-              >
-                {saving && <span className="tv-spinner" aria-hidden="true" />}
+          <section className="tv-card tv-pf-card" aria-labelledby="tv-account-title">
+            <div className="tv-pf-head">
+              <h2 id="tv-account-title" className="tv-pf-title">Tu cuenta</h2>
+              <button type="button" className="tv-btn tv-btn--primary" onClick={onSaveProfile} disabled={!canSave || saving} aria-busy={saving}>
                 {saving ? "Guardando…" : "Guardar"}
               </button>
             </div>
-
-            <form onSubmit={onSaveProfile} className="tv-form">
+            <form onSubmit={onSaveProfile} className="tv-pf-form">
               <label className="tv-form-row">
-                <span className="tv-label">Tu nombre</span>
+                <span className="tv-label">Nombre</span>
                 <input
                   className="tv-field tv-field--sm"
                   value={newUserName}
@@ -396,99 +380,61 @@ function ProfileScreen() {
                   disabled={saving}
                 />
               </label>
-              {!isGuest && (
-                <>
-                  <UsernameField
-                    value={newHandle}
-                    onChange={setNewHandle}
-                    check={handleCheck}
-                    placeholder={activeUser?.username || "tu_usuario"}
-                    disabled={saving}
-                    note={activeUser?.usernameInfo ? handleInfo(activeUser.usernameInfo) : null}
-                  />
-                </>
+              {isGuest ? (
+                <label className="tv-form-row">
+                  <span className="tv-label">Usuario</span>
+                  <input className="tv-field tv-field--sm" placeholder="Crea una cuenta para tener uno" disabled />
+                </label>
+              ) : (
+                <UsernameField
+                  label={handleLabel(activeUser?.usernameInfo)}
+                  value={newHandle}
+                  onChange={setNewHandle}
+                  check={handleCheck}
+                  placeholder={activeUser?.username || "tu_usuario"}
+                  disabled={saving}
+                />
               )}
             </form>
-
-            {isGuest && (
-              <div className="tv-row-card">
-                <Icon name="user" size={26} />
-                <div className="tv-row-card-text">
-                  <strong>Estás como invitado</strong>
-                  <span>Crea una cuenta o inicia sesión para guardar tus puntos.</span>
+            <div className="tv-pf-foot">
+              <p className="tv-pf-mail" title={isGuest ? undefined : activeUser?.email}>{isGuest ? "Sin cuenta" : activeUser?.email || ""}</p>
+              {isGuest ? (
+                <div className="tv-pf-actions">
+                  <Link to="/login?mode=login&returnTo=/profile" className="tv-btn tv-btn--neutral">Iniciar sesión</Link>
+                  <Link to="/login?returnTo=/profile" className="tv-btn tv-btn--neutral">Crear cuenta</Link>
                 </div>
-              </div>
-            )}
-
-            {canLinkGoogle && (
-              <div className="tv-row-card">
-                <GoogleIcon size={26} />
-                <div className="tv-row-card-text">
-                  <strong>Vincula Google</strong>
-                  <span>Entra con un clic con tu cuenta de Google.</span>
-                </div>
-                <button type="button" className="tv-btn tv-btn--sm tv-btn--google" onClick={() => linkGoogle("/profile")}>
-                  Vincular
-                </button>
-              </div>
-            )}
-            {canSpotify && (
-              <div className="tv-row-card">
-                <SpotifyIcon size={26} />
-                <div className="tv-row-card-text">
-                  <strong>{hasSpotify ? "Spotify conectado" : "Conecta Spotify"}</strong>
-                  <span>
-                    {hasSpotify
-                      ? activeUser.spotify?.displayName || "Tu cuenta de Spotify"
-                      : "Vincula tu cuenta de Spotify a tu perfil."}
-                  </span>
-                </div>
-                {hasSpotify ? (
+              ) : (
+                <div className="tv-pf-actions">
+                  {canLinkGoogle && (
+                    <button type="button" className="tv-iconbtn tv-pf-icon" aria-label="Vincular Google" title="Vincular Google" onClick={() => linkGoogle("/profile")}>
+                      <GoogleIcon size={22} />
+                    </button>
+                  )}
+                  {canSpotify && (
+                    <button
+                      type="button"
+                      className={`tv-iconbtn tv-pf-icon${hasSpotify ? "" : " is-faint"}${confirmUnlink ? " is-danger" : ""}`}
+                      aria-label={confirmUnlink ? "Toca otra vez para desconectar Spotify" : hasSpotify ? "Spotify conectado. Toca para desconectarlo" : "Conectar Spotify"}
+                      title={confirmUnlink ? "Toca otra vez para desconectar" : hasSpotify ? activeUser.spotify?.displayName || "Spotify conectado" : "Conectar Spotify"}
+                      onClick={hasSpotify ? onSpotifyActive : onConnectSpotify}
+                      disabled={spotifyBusy}
+                    >
+                      <SpotifyIcon size={22} />
+                    </button>
+                  )}
                   <button
                     type="button"
-                    className={`tv-tag tv-tag--ok tv-tag-btn${confirmUnlink ? " is-confirm" : ""}`}
-                    onClick={onSpotifyActive}
-                    disabled={spotifyBusy}
-                    aria-label={confirmUnlink ? "Toca otra vez para desconectar Spotify" : "Spotify activo. Toca para desconectarlo"}
+                    className="tv-btn tv-btn--bad"
+                    onClick={() => {
+                      logout();
+                      nav("/login");
+                    }}
                   >
-                    {spotifyBusy ? "Desconectando…" : confirmUnlink ? "Desconectar" : "Activo"}
+                    Cerrar sesión
                   </button>
-                ) : (
-                  <button type="button" className="tv-btn tv-btn--sm tv-btn--spotify" onClick={onConnectSpotify} disabled={spotifyBusy}>
-                    {spotifyBusy ? "Abriendo…" : "Conectar"}
-                  </button>
-                )}
-              </div>
-            )}
-
-            {isGuest ? (
-              // A guest has nothing to sign out of: they sign in or create the account instead.
-              <div className="tv-account-foot tv-account-foot--guest">
-                <Link to="/login?mode=login&returnTo=/profile" className="tv-btn tv-btn--sm tv-c-neutral">
-                  Iniciar sesión
-                </Link>
-                <Link to="/login?returnTo=/profile" className="tv-btn tv-btn--sm tv-c-pink">
-                  Crear cuenta
-                </Link>
-              </div>
-            ) : (
-              <div className="tv-account-foot">
-                {activeUser?.email && (
-                  <span className="tv-email">{activeUser.email}</span>
-                )}
-                <button
-                  type="button"
-                  className="tv-link-btn tv-link-btn--danger"
-                  onClick={() => {
-                    logout();
-                    nav("/login");
-                  }}
-                >
-                  <Icon name="logout" size={18} />
-                  Cerrar sesión
-                </button>
-              </div>
-            )}
+                </div>
+              )}
+            </div>
           </section>
         )}
       </div>

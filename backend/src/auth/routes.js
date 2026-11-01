@@ -27,7 +27,7 @@ import { authRateLimit } from "./rateLimit.js";
 import { hasRole } from "./roles.js";
 import { consumeTicket, createAuthToken, createSocketToken, createTicket } from "./socketToken.js";
 import crypto from "node:crypto";
-import { normalizeUsername, usernameError } from "./username.js";
+import { findByUsername, normalizeUsername, usernameError } from "./username.js";
 import { hasLink, NAME_LINK_ERROR } from "../moderation/links.js";
 import { saveQuestionReport } from "../db/reports.js";
 
@@ -342,8 +342,9 @@ export function createApiRouter({ catalog, store, friends = null, hub = null, so
 
   // --- Public User Profile (sanitized) ---
 
+  // By id, or by username (the address a profile shows).
   router.get("/users/:id", (req, res) => {
-    const user = store.users[req.params.id];
+    const user = store.users[req.params.id] || findByUsername(store, req.params.id);
     // A bot with an account's look (game/bots.js) has a profile like any other.
     if (!user) {
       const bot = botPublicProfile(req.params.id);
@@ -351,7 +352,7 @@ export function createApiRouter({ catalog, store, friends = null, hub = null, so
     }
 
     // If requesting own profile, return full sanitized data; otherwise public-only
-    const isOwner = req.session?.userId === req.params.id;
+    const isOwner = req.session?.userId === user.id;
     if (isOwner) {
       res.json({ user: sanitizeUser(user) });
     } else {

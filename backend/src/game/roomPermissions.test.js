@@ -71,24 +71,16 @@ assert.equal(room.coHosts.includes("player-3"), false);
 assert.equal(mgr.socketToRoom.has("sock-3"), false);
 assert.throws(() => mgr.kick(room, "host-1", "player-3"), /no está en la sala/);
 
-// Entering the code again works: they come back as a new player, without the permission they had.
-mgr.addPlayer(room, { ...player3, socketId: "sock-3b" });
-assert.equal(room.players.get("player-3").connected, true);
-assert.equal(mgr.socketToRoom.get("sock-3b").userId, "player-3");
-assert.equal(mgr.canEditConfig(room, "player-3"), false);
-mgr.kick(room, "host-1", "player-3");
-assert.equal(room.players.has("player-3"), false);
-
-// Blocking: the same, but they can't come back to this room; the others still can.
-mgr.addPlayer(room, { ...player3, socketId: "sock-3c" });
-assert.throws(() => mgr.kick(room, "player-2", "player-3", { block: true }), /Solo el anfitrión/);
-assert.equal(room.players.has("player-3"), true);
-const blocked = mgr.kick(room, "host-1", "player-3", { block: true });
-assert.equal(blocked.socketId, "sock-3c");
-assert.equal(room.players.has("player-3"), false);
-assert.equal(mgr.socketToRoom.has("sock-3c"), false);
-assert.throws(() => mgr.addPlayer(room, { ...player3, socketId: "sock-3d" }), /bloque/);
+// Taken out, the code doesn't let them back in; anyone else can still come in.
+assert.throws(() => mgr.addPlayer(room, { ...player3, socketId: "sock-3b" }), /Te sacaron/);
+assert.throws(() => mgr.findToJoin(room.code, "player-3"), /Te sacaron/);
 assert.equal(room.players.has("player-3"), false);
 assert.equal(mgr.addPlayer(room, { id: "player-4", name: "Eva", socketId: "sock-4" }).connected, true);
+
+// Permissions and the host only change while the room waits.
+room.phase = "playing";
+assert.throws(() => mgr.toggleConfigPermission(room, "host-1", "player-4"), /antes de empezar/);
+assert.throws(() => mgr.giveHost(room, "host-1", "player-4"), /antes de empezar/);
+room.phase = "lobby";
 
 console.log("roomPermissions.test ok");

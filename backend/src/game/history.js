@@ -108,9 +108,17 @@ export function countHistoryQuestions(bank, config) {
 
 /** For the settings' chips: how many questions each way of playing, topic and difficulty has with the other settings. */
 export function historyCounts(bank, config) {
+  const { styles, categories, difficulties } = mergeHistoryConfig(config);
+  // A list left empty filters nothing here (like songCounts): otherwise, with two lists empty, nothing could be ticked again.
+  const open = {
+    ...config,
+    styles: styles.length ? styles : HISTORY_STYLES,
+    categories: categories.length ? categories : TOPICS,
+    difficulties: difficulties.length ? difficulties : HISTORY_LEVELS,
+  };
   const tally = (ignore, key) => {
     const out = {};
-    for (const q of questionsFor(bank, config, ignore)) out[key(q)] = (out[key(q)] || 0) + 1;
+    for (const q of questionsFor(bank, open, ignore)) out[key(q)] = (out[key(q)] || 0) + 1;
     return out;
   };
   return {

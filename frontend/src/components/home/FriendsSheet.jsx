@@ -102,7 +102,7 @@ export default function FriendsSheet() {
       const t = setTimeout(() => {
         setMounted(false);
         setClosing(false);
-      }, 260);
+      }, 310);
       return () => clearTimeout(t);
     }
     return undefined;

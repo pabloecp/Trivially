@@ -93,9 +93,14 @@ export function countMinesQuestions(bank, config) {
  */
 export function minesCounts(bank, config) {
   const settings = mergeMinesConfig(config);
+  // A list left empty filters nothing here (like songCounts): otherwise, with two lists empty, nothing could be ticked again.
+  const open = {
+    categories: settings.categories.length ? settings.categories : MINES_CATEGORIES,
+    difficulties: settings.difficulties.length ? settings.difficulties : MINES_LEVELS,
+  };
   const tally = (ignore, key) => {
     const out = {};
-    for (const q of questionsFor(bank, settings, ignore)) out[key(q)] = (out[key(q)] || 0) + 1;
+    for (const q of questionsFor(bank, open, ignore)) out[key(q)] = (out[key(q)] || 0) + 1;
     return out;
   };
   return { categories: tally("categories", (q) => q.category), difficulties: tally("difficulties", (q) => q.difficulty) };

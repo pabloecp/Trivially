@@ -239,7 +239,8 @@ function PreviousGame({ intro, players, color = "site" }) {
 
 /**
  * Before each game of a public match or a Clásico (the room's "intro" phase): a roulette picks the game among the ones
- * still to play, then a short tutorial of it for 5 s. It takes the room screen's main card (Home), beside the room's
+ * still to play, then a short tutorial of it for 5 s. A private match of one game, or one searched for by name, has only
+ * the tutorial. It takes the room screen's main card (Home), beside the room's
  * column, so the top bar and the players stay in sight. The roulette's matches have no set number of games
  * (the first to win 2): its top line says which game this is, with a dot for each game it has so far (the two it always
  * plays, and one more each time nobody has won it).
@@ -271,8 +272,10 @@ export default function MatchIntro({ room }) {
       <div className="tv-mi-frame">
         <header className="tv-mi-head">
           <p className="tv-mono-label">
-            {label ? `${label} · ` : ""}
-            {tiebreak ? "Juego de desempate" : intro.winsToWin ? `Juego ${intro.index + 1}` : `Juego ${intro.index + 1} de ${total}`}
+            {/* One game alone isn't "Juego 1 de 1": only what kind of match it is. */}
+            {total === 1 && !intro.winsToWin
+              ? label || "Partida privada"
+              : `${label ? `${label} · ` : ""}${tiebreak ? "Juego de desempate" : intro.winsToWin ? `Juego ${intro.index + 1}` : `Juego ${intro.index + 1} de ${total}`}`}
           </p>
           {total > 1 && (
             <ol className="tv-mi-dots" aria-hidden="true">

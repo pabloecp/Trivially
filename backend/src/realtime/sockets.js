@@ -70,9 +70,20 @@ export function attachSockets(io, rooms, { friends = null, hub = null, groups = 
   // Every player of the group hears how it is now; their friends' lists change too (where they are, who leads it).
   const sendGroup = (group) => {
     if (!group) return;
+    syncPermissions(group);
     const state = groups.publicGroup(group);
     for (const m of group.members.values()) if (m.socketId) io.to(m.socketId).emit("group:state", state);
     hub?.touch(...group.members.keys());
+  };
+
+  // Who the leader lets change the settings (`group.settingsBy`, given on Inicio too) can in the group's private match.
+  const syncPermissions = (group) => {
+    const room = groups.place(group);
+    if (!room || room.groupCode !== group.code) return;
+    const missing = [...(group.settingsBy || [])].filter((id) => id !== room.hostId && !room.coHosts?.includes(id));
+    if (!missing.length) return;
+    room.coHosts = [...(room.coHosts || []), ...missing];
+    io.to(room.code).emit("room:state", rooms.publicState(room));
   };
 
   // The leader is the host of the group's private match: when the group gets a new leader, the match gets a new host.
@@ -183,15 +194,16 @@ export function attachSockets(io, rooms, { friends = null, hub = null, groups = 
     return null;
   };
 
-  // A player leaves the group (or is taken out of it), and so its private match, which is the group's. The last one
-  // stays where they are: the group is gone and the match is theirs alone. Returns whether they left a room.
+  // A player leaves the group (or is taken out of it), and so its private match, which is the group's. The last one too:
+  // with no group there is no game chosen (Inicio is "Elige un juego"), so the match goes with it. Returns whether they
+  // left a room.
   const leaveGroup = (group, userId, socket) => {
     const place = groups.place(group);
     const own = place?.groupCode === group.code;
     const left = groups.removeMember(group, userId);
     const ref = socket ? rooms.socketToRoom.get(socket.id) : null;
     let leftRoom = false;
-    if (left && own && ref && !ref.central && ref.code === place.code) {
+    if (own && ref && !ref.central && ref.code === place.code) {
       leaveCurrentRoom(io, rooms, socket);
       leftRoom = true;
     }
@@ -411,10 +423,31 @@ export function attachSockets(io, rooms, { friends = null, hub = null, groups = 
       }
     });
 
+    // The leader lets a member change the settings of the group's private matches, or takes it back.
+    socket.on("group:permission", (targetUserId, ack) => {
+      try {
+        const { group, userId } = requireGroup(groups, socket);
+        const target = String(targetUserId || "");
+        const room = groups.place(group);
+        if (room && room.phase !== "lobby") throw new Error("Los permisos solo se cambian antes de empezar la partida");
+        const granted = groups.togglePermission(group, userId, target);
+        if (!granted && room?.groupCode === group.code && room.coHosts?.includes(target)) {
+          room.coHosts = room.coHosts.filter((id) => id !== target);
+          io.to(room.code).emit("room:state", rooms.publicState(room));
+        }
+        sendGroup(group);
+        ack?.({ ok: true, granted, group: groups.publicGroup(group) });
+      } catch (err) {
+        ack?.({ ok: false, error: err.message });
+      }
+    });
+
     // The leader gives the group to someone else (and with it, the host of its private match).
     socket.on("group:leader", (targetUserId, ack) => {
       try {
         const { group, userId } = requireGroup(groups, socket);
+        const place = groups.place(group);
+        if (place && place.phase !== "lobby") throw new Error("El líder solo se cambia antes de empezar la partida");
         groups.setLeader(group, userId, String(targetUserId || ""));
         syncHost(group);
         sendGroup(group);
@@ -424,21 +457,20 @@ export function attachSockets(io, rooms, { friends = null, hub = null, groups = 
       }
     });
 
-    // The leader takes someone out of the group (`block`: for good), and so out of its private match.
+    // The leader takes someone out of the group, and so out of its private match.
     socket.on("group:kick", (payload, ack) => {
       try {
         const { group, userId } = requireGroup(groups, socket);
-        const block = Boolean(payload?.block);
         const place = groups.place(group);
-        const member = groups.kick(group, userId, String(payload?.userId || ""), { block });
+        const member = groups.kick(group, userId, String(payload?.userId || ""));
         if (place?.groupCode === group.code && place.players.has(member.id)) {
-          const { socketId } = rooms.kick(place, place.hostId, member.id, { block });
+          const { socketId } = rooms.kick(place, place.hostId, member.id);
           const target = socketId && io.sockets.sockets.get(socketId);
           target?.leave(place.code);
-          target?.emit("room:kicked", { code: place.code, blocked: block });
+          target?.emit("room:kicked", { code: place.code });
           io.to(place.code).emit("room:state", rooms.publicState(place));
         }
-        if (member.socketId) io.to(member.socketId).emit("group:left", { code: group.code, reason: block ? "bloqueado" : "sacado" });
+        if (member.socketId) io.to(member.socketId).emit("group:left", { code: group.code, reason: "sacado" });
         sendGroup(group);
         hub?.touch(member.id);
         ack?.({ ok: true });
@@ -752,6 +784,14 @@ export function attachSockets(io, rooms, { friends = null, hub = null, groups = 
       try {
         const { room, userId } = requireRoom(rooms, socket);
         const result = rooms.toggleConfigPermission(room, userId, targetUserId);
+        // From a match's scoreboard: the group's list says the same.
+        const group = room.groupCode ? groups.get(room.groupCode) : null;
+        if (group?.members.has(targetUserId)) {
+          group.settingsBy ||= new Set();
+          if (result.granted) group.settingsBy.add(targetUserId);
+          else group.settingsBy.delete(targetUserId);
+          sendGroup(group);
+        }
         ack?.({ ok: true, ...result, state: rooms.publicState(room, userId) });
         io.to(room.code).emit("room:state", rooms.publicState(room));
       } catch (err) {
@@ -776,22 +816,22 @@ export function attachSockets(io, rooms, { friends = null, hub = null, groups = 
       }
     });
 
-    // The host takes a player out of the room: "kick" lets them come back with the code, "block" doesn't.
-    const takeOut = (block) => (targetUserId, ack) => {
+    // The host takes a player out of the room, for good: the code doesn't let them back in.
+    socket.on("room:kick", (targetUserId, ack) => {
       try {
         const { room, userId } = requireRoom(rooms, socket);
-        const { socketId } = rooms.kick(room, userId, targetUserId, { block });
+        const { socketId } = rooms.kick(room, userId, targetUserId);
         const target = socketId && io.sockets.sockets.get(socketId);
         if (target) {
           target.leave(room.code);
-          target.emit("room:kicked", { code: room.code, blocked: block });
+          target.emit("room:kicked", { code: room.code });
         }
         const group = room.groupCode ? groups.get(room.groupCode) : null;
         const member = group?.members.get(targetUserId);
         if (member) {
-          if (block) group.blocked.add(targetUserId);
+          groups.markKicked(group, targetUserId);
           groups.removeMember(group, targetUserId);
-          if (member.socketId) io.to(member.socketId).emit("group:left", { code: group.code, reason: block ? "bloqueado" : "sacado" });
+          if (member.socketId) io.to(member.socketId).emit("group:left", { code: group.code, reason: "sacado" });
           sendGroup(group);
         }
         ack?.({ ok: true, state: rooms.publicState(room, userId) });
@@ -799,9 +839,7 @@ export function attachSockets(io, rooms, { friends = null, hub = null, groups = 
       } catch (err) {
         ack?.({ ok: false, error: err.message });
       }
-    };
-    socket.on("room:kick", takeOut(false));
-    socket.on("room:block", takeOut(true));
+    });
 
     socket.on("room:ready", (ready, ack) => {
       try {
@@ -1125,6 +1163,7 @@ function bindUser(socket, user, rooms) {
     name,
     avatar: playerAvatar(saved),
     isGuest: saved ? Boolean(saved.isGuest) : true,
+    username: saved && !saved.isGuest ? saved.username || null : null,
   };
   socket.data.profile = profile;
   return { ...profile, socketId: socket.id };

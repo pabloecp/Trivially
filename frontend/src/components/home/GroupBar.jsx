@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { createContext, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { findMode } from "../../modes/index.js";
 import { shownCode, useHiddenCode } from "../../lib/hiddenCode.js";
@@ -8,49 +8,55 @@ import Avatar from "./Avatar.jsx";
 import { useApp } from "../../lib/store.jsx";
 import Icon from "./Icon.jsx";
 import { codeFromText, useInvite } from "./useInvite.js";
+import { formatElo } from "../../lib/gameStats.js";
+
+/** Inicio without a sala (wide screens): the way into a friend's sala goes in the box beside the card (ModeStage), and
+ *  HomeFrame gives it what joining needs: `{ onJoin, onEdit, disabled, invalid }`. */
+export const SalaJoinContext = createContext(null);
+/** Opens "Tu sala" (GroupSheet: who is in it, "Invitar"), for the rows of "En tu sala" beside the card. */
+export const OpenSalaContext = createContext(null);
 
 const FACES = 5;
 const CODE_LENGTH = 5;
 
 // The bar at the bottom of Inicio and of a match's lobby, in three zones, each with its small label:
-//  - TU GRUPO. Without a group, your Blob, "Juegas solo" (choosing a game makes your group: there's no "Crear grupo") and
-//    "¿Te invitaron?" with the box for a friend's code ("Unirse"). With one, its faces (yours ringed in yellow and
+//  - TU GRUPO. Without a group (wide screens), "Reto del día" takes its place: the box for a friend's code is beside the
+//    game's card (ModeStage's "Tu sala", through SalaJoinContext). With one, its faces (yours ringed in yellow and
 //    first, dimmed whoever isn't with it now; a tap opens "Tu sala"), who decides, its code with "Copiar", "Invitar"
 //    and the red "Salir de la sala" (the screen asks first: `onLeave` is only the question).
 //  - PARTIDA. "Pública" / "Privada" (`onAudience`; read-only without it) and "Vas a jugar" (the game's own card,
 //    `.tv-gcard`, the Clásico's in the logo's look, grey "Elige un juego" with no game; a tap opens "¿Qué quieren
 //    jugar?"): the game is changed from here.
-//  - The screen's one yellow button (JUGAR, public or private; CANCELAR, grey, while searching; JUGAR grey with a lock until a game
+//  - The screen's one yellow button (JUGAR, public or private; CANCELAR, red, while searching; JUGAR grey with a lock until a game
 //    is chosen, `action.locked`), or `note` while someone else decides.
 // On phones TU GRUPO goes up to the top bar, very short (SalaMenu: the faces and how many, a tap opens the whole zone like
 // the volume's panel; beside them the sala's code, a tap copies it), and the rest stays at the foot of the screen, always
 // in sight: "Pública" / "Privada" (only their icons) with "Vas a jugar", and the yellow button under them. `onJoin(code)` is false when the code didn't work; `canJoin` false while
-// searching for a match. `groupError` is said under the group's zone, `error` under the button.
-export default function GroupBar({ members = [], meId, inGroup = false, code = "", isLeader = false, canJoin = true, onGroup, onAudience = null, onJoin, onJoinEdit, onLeave, busy = false, inviteBadge = 0, plan, onPlan, planLocked = false, action = null, note = "", error = "", groupError = "" }) {
+// searching for a match. What went wrong is not said here: HomeFrame shows it as a notification; `groupError` only rings the code's box in red.
+export default function GroupBar({ members = [], meId, inGroup = false, code = "", isLeader = false, canJoin = true, onGroup, onAudience = null, onJoin, onJoinEdit, onLeave, busy = false, inviteBadge = 0, plan, onPlan, planLocked = false, action = null, note = "", groupError = "", daily = false }) {
   const mode = plan.game ? findMode(plan.game) : null;
   const classic = mode?.kind === "classic";
   const faces = [...members].sort((a, b) => (b.id === meId) - (a.id === meId));
   const shown = faces.slice(0, FACES);
   const more = faces.length - shown.length;
-  const shownError = groupError || error;
-  // Your sala with only you in it: its code to share, "Invitar" (leaving it is the top bar's "Volver").
+  // Your sala with only you in it: its code to share, "Invitar" (leaving it is the top bar's "Volver", which asks first).
   const alone = inGroup && members.length <= 1;
 
   // Your Blob in your colour.
-  const myAvatar = useApp().user?.avatar;
+  const user = useApp().user;
+  const myAvatar = user?.avatar;
   const phone = useNarrow();
   const cap = alone ? "Tu sala · 1" : inGroup ? `Tu sala · ${members.length}` : "Tu sala";
   const groupBox = (
         <div className="tv-gbar-box tv-gbar-group">
           {alone ? (
             <>
-              <Avatar className="is-me" avatar={myAvatar} />
-              <GroupCode code={code} wide />
-              <button type="button" className="tv-btn tv-btn--neutral tv-gbar-invite" aria-haspopup="dialog" onClick={onGroup}>
-                <Icon name="plus" size={17} strokeWidth={3} />
-                Invitar
+              {/* Your Blob opens "Tu sala" (invite from there), as on phones. */}
+              <button type="button" className="tv-gbar-faces" aria-haspopup="dialog" aria-label="Tu sala: invitar" title="Invitar" onClick={onGroup}>
+                <Avatar className="is-me" avatar={myAvatar} />
                 {inviteBadge > 0 && <span className="tv-fr-badge">{inviteBadge}</span>}
               </button>
+              <GroupCode code={code} wide />
             </>
           ) : inGroup ? (
             <>
@@ -61,9 +67,9 @@ export default function GroupBar({ members = [], meId, inGroup = false, code = "
                 {more > 0 && <span className="tv-avatar tv-avatar--empty">+{more}</span>}
               </button>
               <GroupCode code={code} />
-              <button type="button" className="tv-btn tv-btn--neutral tv-gbar-invite" aria-haspopup="dialog" onClick={onGroup}>
+              <button type="button" className="tv-btn tv-btn--neutral tv-gbar-invite" aria-label="Invitar" title="Invitar" aria-haspopup="dialog" onClick={onGroup}>
                 <Icon name="plus" size={17} strokeWidth={3} />
-                Invitar
+                <span className="tv-gbar-invite-label">Invitar</span>
                 {inviteBadge > 0 && <span className="tv-fr-badge">{inviteBadge}</span>}
               </button>
               <button type="button" className="tv-iconbtn tv-iconbtn--sm tv-gbar-leave" data-sound="back" aria-label="Salir de la sala" title="Salir de la sala" onClick={onLeave} disabled={Boolean(busy)}>
@@ -82,7 +88,7 @@ export default function GroupBar({ members = [], meId, inGroup = false, code = "
   return (
     <div className="tv-gbar" role="region" aria-label="Tu sala y la partida">
       {phone ? (
-        <SalaMenu members={shown} count={members.length} inGroup={inGroup} code={code} meId={meId} onGroup={onGroup} cap={inGroup ? cap : "Unirse a una sala"} badge={inviteBadge} error={groupError}>
+        <SalaMenu members={shown} count={members.length} inGroup={inGroup} code={code} meId={meId} onGroup={onGroup} cap={inGroup ? cap : "Unirse a una sala"} badge={inviteBadge}>
           {inGroup ? (
             groupBox
           ) : (
@@ -93,11 +99,15 @@ export default function GroupBar({ members = [], meId, inGroup = false, code = "
             </div>
           )}
         </SalaMenu>
-      ) : (
+      ) : inGroup && !daily ? (
         <div className="tv-gbar-zone tv-gbar-zone--group">
           <span className="tv-gbar-cap">{cap}</span>
           {groupBox}
         </div>
+      ) : (
+        // Today's challenge: with no sala (the way into a friend's is beside the card), and with one when the boxes beside
+        // the card already show its code and who is in it (`daily`).
+        <DailyZone daily={user?.daily} />
       )}
 
       <div className="tv-gbar-zone tv-gbar-zone--plan">
@@ -142,10 +152,12 @@ export default function GroupBar({ members = [], meId, inGroup = false, code = "
       </div>
 
       <div className="tv-gbar-zone tv-gbar-zone--go">
+        {/* Hidden on phones and desktop alike: it only keeps the button level with the boxes beside it. */}
+        <span className="tv-gbar-cap" aria-hidden="true">Partida</span>
         {action ? (
           <button
             type="button"
-            className={`tv-btn tv-btn--lg tv-gbar-go ${action.neutral || action.locked ? "tv-btn--neutral" : "tv-btn--primary"}${action.waiting ? " is-waiting" : ""}`}
+            className={`tv-btn tv-btn--lg tv-gbar-go ${action.bad ? "tv-btn--bad" : action.neutral || action.locked ? "tv-btn--neutral" : "tv-btn--primary"}${action.waiting ? " is-waiting" : ""}`}
             data-sound={action.sound}
             onClick={action.onClick}
             disabled={action.disabled}
@@ -158,11 +170,45 @@ export default function GroupBar({ members = [], meId, inGroup = false, code = "
           <p className="tv-gbar-note">{note}</p>
         )}
       </div>
-      {(phone ? error : shownError) && (
-        <p className={`tv-gbar-error${groupError ? " tv-gbar-error--group" : ""}`} role="alert">
-          {phone ? error : shownError}
-        </p>
-      )}
+    </div>
+  );
+}
+
+// "Reto del día" in the bar, where the sala's zone goes once there is one: the flame, today's goal over its bar, and how far
+// it is. Guests have none: one line says what an account gives.
+function DailyZone({ daily }) {
+  const done = Boolean(daily?.done);
+  const target = daily?.target || 1;
+  const progress = Math.min(target, daily?.progress || 0);
+  return (
+    <div className="tv-gbar-zone tv-gbar-zone--group">
+      <span className="tv-gbar-cap">Reto del día</span>
+      <div className={`tv-gbar-box tv-gbar-daily${done ? " is-done" : ""}`}>
+        <span className="tv-stage-daily-icon">
+          <Icon name={done ? "check" : "flame"} size={20} strokeWidth={2.4} />
+        </span>
+        {daily ? (
+          <>
+            <span className="tv-gbar-daily-text">
+              <strong title={daily.goal}>{daily.goal}</strong>
+              <span className="tv-stage-daily-bar" role="progressbar" aria-valuemin={0} aria-valuemax={target} aria-valuenow={progress} aria-label="Avance del reto">
+                <i style={{ width: `${Math.round((progress / target) * 100)}%` }} />
+              </span>
+            </span>
+            <span className="tv-stage-daily-count">
+              {formatElo(progress)}/{formatElo(target)}
+            </span>
+          </>
+        ) : (
+          <span className="tv-gbar-daily-text">
+            <span className="tv-stage-friends-empty tv-gbar-daily-guest">
+              Con una cuenta tienes un reto distinto cada día
+              <br />
+              y llevas la cuenta de los que completas.
+            </span>
+          </span>
+        )}
+      </div>
     </div>
   );
 }
@@ -184,8 +230,8 @@ export function useNarrow() {
 // Phones: your sala in the top bar (its slot, `.tv-topbar-sala` in TvTopbar), very short: its faces (yours first) and how
 // many are in it, whose tap opens "Tu sala" (GroupSheet, `onGroup`: the code, who is in it, "Salir de la sala"). Without
 // one (no game chosen yet, so no sala) it's only "Unirse", for a friend's code, whose tap opens a small panel under it
-// like the volume's; a tap outside or Escape closes it. A code that didn't work (`error`) is said in it.
-function SalaMenu({ members, count, inGroup, code, meId, onGroup, cap, badge, error, children }) {
+// like the volume's; a tap outside or Escape closes it.
+function SalaMenu({ members, count, inGroup, code, meId, onGroup, cap, badge, children }) {
   const [open, setOpen] = useState(false);
   const [slot, setSlot] = useState(null);
   const rootRef = useRef(null);
@@ -242,11 +288,6 @@ function SalaMenu({ members, count, inGroup, code, meId, onGroup, cap, badge, er
         <div className="tv-sala-panel" role="dialog" aria-label={cap}>
           <span className="tv-gbar-cap">{cap}</span>
           {children}
-          {error && (
-            <p className="tv-gbar-error tv-gbar-error--group" role="alert">
-              {error}
-            </p>
-          )}
         </div>
       )}
     </div>,
@@ -275,22 +316,15 @@ function GroupCode({ code, wide = false }) {
   if (!code) return null;
   return (
     <span className="tv-gbar-code">
-      <span className="tv-gbar-code-text" aria-label="Código de la sala">
-        {shownCode(code, codeHidden)}
-      </span>
+      {/* The code as a button: a tap copies the sala's link (the link icon says so). */}
+      <button type="button" className={`tv-btn tv-btn--neutral tv-gbar-codebtn${copied ? " is-copied" : ""}`} data-sound="none" aria-label={copied ? "Enlace copiado" : `Copiar el enlace de la sala, ${codeHidden ? "código oculto" : code}`} title={copied ? "Copiado" : "Copiar enlace"} onClick={copy}>
+        <Icon name={copied ? "check" : "link"} size={17} strokeWidth={2.6} />
+        <span className="tv-gbar-code-text">{shownCode(code, codeHidden)}</span>
+      </button>
       {/* Hides the code on this device's screens, for streaming. */}
       <button type="button" className={`tv-iconbtn${wide ? "" : " tv-iconbtn--sm"} tv-gbar-copy`} aria-pressed={codeHidden} aria-label={codeHidden ? "Mostrar el código" : "Ocultar el código"} title={codeHidden ? "Mostrar el código" : "Ocultar el código"} onClick={toggleCode}>
         <Icon name={codeHidden ? "eye-off" : "eye"} size={wide ? 22 : 17} strokeWidth={2.6} />
       </button>
-      {wide ? (
-        <button type="button" className="tv-iconbtn tv-gbar-copy" aria-label={copied ? "Enlace copiado" : "Copiar enlace de la sala"} title={copied ? "Copiado" : "Copiar enlace"} onClick={copy}>
-          <Icon name={copied ? "check" : "link"} size={22} strokeWidth={2.6} />
-        </button>
-      ) : (
-        <button type="button" className="tv-iconbtn tv-iconbtn--sm tv-gbar-copy" aria-label={copied ? "Enlace copiado" : "Copiar enlace de la sala"} title={copied ? "Copiado" : "Copiar"} onClick={copy}>
-          <Icon name={copied ? "check" : "link"} size={17} strokeWidth={2.6} />
-        </button>
-      )}
     </span>
   );
 }
@@ -298,36 +332,46 @@ function GroupCode({ code, wide = false }) {
 // "Unirse": the code of a friend's group (or its invite link pasted) in one box ("Código de la sala" as its placeholder)
 // and the white button. A code that opens no group rings the box in red and shakes it (`invalid`, the message is the bar's).
 // Hidden codes (for streaming) show as dots.
-function JoinField({ onJoin, onEdit, disabled, invalid }) {
+// `example` (beside the card) draws the code in five slots of the same width over the box, so any code (and its dots
+// while codes are hidden) takes the same room; until something is written the slots show that example code, faint.
+export function JoinField({ onJoin, onEdit, disabled, invalid, eye = true, example = "" }) {
   const [code, setCode] = useState("");
+  const [focused, setFocused] = useState(false);
   const [joining, setJoining] = useState(false);
-  const [codeHidden] = useHiddenCode();
+  const [codeHidden, toggleCode] = useHiddenCode();
   const boxRef = useRef(null);
 
   async function submit(e) {
     e.preventDefault();
-    if (code.length < CODE_LENGTH || joining || disabled) return;
+    if (joining || disabled) return;
+    // Without a whole code it only shakes the box (the button stays pressable like any other).
+    if (code.length < CODE_LENGTH) return shake();
     setJoining(true);
     const ok = await onJoin(code);
     setJoining(false);
-    if (ok === false) {
-      boxRef.current?.animate(
-        [{ transform: "translateX(0)" }, { transform: "translateX(-7px)" }, { transform: "translateX(6px)" }, { transform: "translateX(-3px)" }, { transform: "translateX(0)" }],
-        { duration: 320, easing: "ease-out" }
-      );
-    }
+    if (ok === false) shake();
+  }
+
+  function shake() {
+    boxRef.current?.animate(
+      [{ transform: "translateX(0)" }, { transform: "translateX(-7px)" }, { transform: "translateX(6px)" }, { transform: "translateX(-3px)" }, { transform: "translateX(0)" }],
+      { duration: 320, easing: "ease-out" }
+    );
   }
 
   return (
     <form ref={boxRef} className="tv-gbar-join" onSubmit={submit}>
+      <span className={`tv-gbar-join-field${example ? " has-slots" : ""}`}>
       <input
-        className={`tv-gbar-join-input${codeHidden ? " is-hidden" : ""}`}
+        className={`tv-gbar-join-input${codeHidden && !example ? " is-hidden" : ""}`}
         value={code}
         onChange={(e) => {
           setCode(codeFromText(e.target.value, CODE_LENGTH));
           onEdit?.();
         }}
-        placeholder="Código"
+        onFocus={() => setFocused(true)}
+        onBlur={() => setFocused(false)}
+        placeholder={example ? "" : "Código"}
         aria-label="Código de la sala de un amigo"
         aria-invalid={invalid || undefined}
         disabled={disabled && !joining}
@@ -335,9 +379,41 @@ function JoinField({ onJoin, onEdit, disabled, invalid }) {
         autoCapitalize="characters"
         spellCheck="false"
       />
-      <button type="submit" className="tv-btn tv-btn--white tv-gbar-join-go" data-sound="none" disabled={disabled || joining || code.length < CODE_LENGTH}>
-        {joining ? "Entrando…" : "Unirse"}
-      </button>
+      {example && (
+        // The same letters and spacing as "Código de la sala" (shownCode's mask: as wide as "WWWWW", the five spread over it).
+        <span className="tv-gbar-join-slots tv-stage-code-text tv-codemask" aria-hidden="true">
+          <span className="tv-codemask-size">WWWWW</span>
+          <span className="tv-codemask-dots">
+          {Array.from({ length: CODE_LENGTH }, (_, i) => {
+            const ch = code[i];
+            const shown = codeHidden ? "•" : ch || example[i] || "";
+            return (
+              <i key={i} className={`${ch ? "is-on" : ""}${focused && i === code.length ? " is-at" : ""}${invalid ? " is-bad" : ""}`.trim() || undefined}>
+                {shown}
+              </i>
+            );
+          })}
+          </span>
+        </span>
+      )}
+      </span>
+      {/* Hides the code on this device's screens, for streaming (the same button as the sala's own). Beside the card the
+          eye is next to the box's title instead (`eye` false). */}
+      {eye && (
+        <button type="button" className="tv-iconbtn tv-gbar-copy" aria-pressed={codeHidden} aria-label={codeHidden ? "Mostrar el código" : "Ocultar el código"} title={codeHidden ? "Mostrar el código" : "Ocultar el código"} onClick={toggleCode}>
+          <Icon name={codeHidden ? "eye-off" : "eye"} size={22} strokeWidth={2.6} />
+        </button>
+      )}
+      {example ? (
+        // Beside the card: only an arrow, where the sala's link button goes in "Código de la sala".
+        <button type="submit" className="tv-btn tv-btn--white tv-gbar-join-go is-icon" data-sound="none" disabled={disabled || joining} aria-label={joining ? "Entrando…" : "Unirse"} title="Unirse">
+          <Icon name="back" size={24} strokeWidth={2.8} />
+        </button>
+      ) : (
+        <button type="submit" className="tv-btn tv-btn--white tv-gbar-join-go" data-sound="none" disabled={disabled || joining}>
+          {joining ? "Entrando…" : "Unirse"}
+        </button>
+      )}
     </form>
   );
 }

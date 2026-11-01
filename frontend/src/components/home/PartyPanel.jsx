@@ -3,11 +3,9 @@ import { useApp } from "../../lib/store.jsx";
 import Avatar from "./Avatar.jsx";
 import CentralSpot from "./CentralSpot.jsx";
 import Icon from "./Icon.jsx";
-import FriendsRoomControls from "./FriendsRoomControls.jsx";
 import PlayerMenu from "./PlayerMenu.jsx";
 import { useInvite } from "./useInvite.js";
 import { shownCode, useHiddenCode } from "../../lib/hiddenCode.js";
-import InviteFriends from "./InviteFriends.jsx";
 import { useScoreboardBadge, useScoreboardLook } from "../../lib/ownerView.js";
 import { findVariant } from "./matchInfo.js";
 import { findMode } from "../../modes/index.js";
@@ -108,11 +106,9 @@ function answeredLine(room, players) {
 // At the top of the players, while the room has one, the "Dispositivo central" (CentralSpot): the screen that shows the
 // match, picked from a player's menu (the host or a player with the settings permission). On the central device itself
 // the column only shows (`display`): no menus or way out, and the code to join instead of "Invitar".
-// `group` is "Tu sala" (GroupSheet): the code is in the sheet's own box above, the list is "En la sala", and under it
-// the leader's options for their friends and the friends to invite.
 // In a match (`scores`) the header says how the round goes (`status`: "Respondieron 3/4"; by default how many answered).
-export default function PartyPanel({ room, onToast, scores = false, display = false, group = false, className = "", status }) {
-  const { user, isCentral, group: myGroup } = useApp();
+export default function PartyPanel({ room, onToast, scores = false, display = false, className = "", status }) {
+  const { user, isCentral } = useApp();
   const [menuFor, setMenuFor] = useState(null);
   // A group's private match shows the group's code: it's how more people come into the group, and so into it.
   const { copied, copy: copyInvite } = useInvite(room.groupCode, onToast);
@@ -155,7 +151,7 @@ export default function PartyPanel({ room, onToast, scores = false, display = fa
     >
       {/* Only a group's private match has a code to share (the group's). Nobody joins a public match but by searching. The
           scoreboard of a match has none: only the scoreboard (the code is in the top bar and the group's bar). */}
-      {room.groupCode && !room.matchmaking && !group && !scores && (
+      {room.groupCode && !room.matchmaking && !scores && (
       <div className="tv-party-codebox">
         <div className="tv-party-codehead">
           <p className="tv-mono-label">Código de la sala</p>
@@ -183,10 +179,9 @@ export default function PartyPanel({ room, onToast, scores = false, display = fa
       </div>
       )}
 
-      {group && myGroup?.leaderId === viewerId && <FriendsRoomControls group={myGroup} onToast={onToast} />}
 
       <div className="tv-party-title">
-        <h2>{scores ? "Marcador" : group ? "En la sala" : "En la sala"}</h2>
+        <h2>{scores ? "Marcador" : "En la sala"}</h2>
         {scores ? (
           <span className="tv-party-status-pill">{status ?? answeredLine(room, players)}</span>
         ) : (
@@ -267,7 +262,7 @@ export default function PartyPanel({ room, onToast, scores = false, display = fa
                       player={p}
                       isMe={isMe}
                       canManage={isHost && !isMe}
-                      canCentral={canCentral && !inMatch}
+                      inMatch={inMatch}
                       onClose={() => setMenuFor(null)}
                       onToast={onToast}
                     />
@@ -276,8 +271,6 @@ export default function PartyPanel({ room, onToast, scores = false, display = fa
               );
             })}
           </ul>
-          {/* In "Tu sala": your friends who are online, to invite into the group. */}
-          {group && myGroup && <InviteFriends group={myGroup} onToast={onToast} />}
           {spectators.length > 0 && (
             <>
               <div className="tv-party-title">

@@ -123,4 +123,11 @@ assert.equal(rainRoundText(1, 3), "1 acierto · 3 puntos");
 assert.equal(rainRoundText(4, 1 + 3 + 5 + 5), "4 aciertos · 14 puntos");
 assert.equal(rainRoundText(1, 1), "1 acierto · 1 punto");
 
+// Every list left empty: each choice still counts its questions, so it can be ticked again.
+{
+  const counts = rainCounts([{ category: "ciencia", difficulty: "facil" }], { categories: [], difficulties: [] });
+  assert.equal(counts.categories.ciencia, 1);
+  assert.equal(counts.difficulties.facil, 1);
+}
+
 console.log("rain ok");

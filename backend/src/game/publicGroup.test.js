@@ -84,8 +84,8 @@ assert.throws(
   () => mgr.findMatch(user(50), { kind: "casual", game: "opciones" }, [51, 52, 53, 54, 55].map(user)),
   /5 como mucho y tu sala es de 6/
 );
-// Someone of the group the room blocked keeps the whole group out of it.
-pair.blocked = new Set(["u71"]);
+// Someone of the group the room took out keeps the whole group out of it.
+pair.kicked = new Set(["u71"]);
 const other = mgr.findMatch(user(70), { kind: "casual", game: "opciones" }, [user(71)]);
 clearTimeout(other.matchmaking.botTimer);
 assert.notEqual(other, pair);

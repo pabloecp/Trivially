@@ -5,7 +5,7 @@ import { homePath, roomPath, waitsOnInicio } from "../../modes/index.js";
 import { useApp } from "../../lib/store.jsx";
 import { useFriends } from "../../lib/friends.jsx";
 import { useIsOwner } from "../../lib/ownerView.js";
-import { shownCode, tabGroupCode, useHiddenCode } from "../../lib/hiddenCode.js";
+import { tabGroupCode, useHiddenCode } from "../../lib/hiddenCode.js";
 import AdminPanel from "./AdminPanel.jsx";
 import ConfirmDialog from "./ConfirmDialog.jsx";
 import Icon from "./Icon.jsx";
@@ -100,12 +100,11 @@ export function useRoomExit({ onRoomScreen = true, onError } = {}) {
   return { toMenu, inGame, asking, leadsGroup, press, leaveNow, endToMenu, cancelAsk: () => setLeaveAsk(false) };
 }
 
-// In a match, beside "Salir": the game and how this round is played on a chip in its colour, then "RONDA 4 DE 10", the
-// match's code and one segment per round.
-function MatchInfo({ room, hidden }) {
+// In a match, beside "Salir": the game and how this round is played on a chip in its colour, then "RONDA 4 DE 10" and one
+// segment per round.
+function MatchInfo({ room }) {
   const { color, icon, name } = gameLook(room);
   const mode = matchMode(room);
-  const code = room.groupCode || (!room.matchmaking ? room.code : null);
   return (
     <>
       <span className={`tv-chip tv-chip--game tv-c-${color}`}>
@@ -119,7 +118,6 @@ function MatchInfo({ room, hidden }) {
             <span className="tv-topbar-round-game">{name} · </span>
             Ronda {Math.min(room.totalRounds, (room.currentRound || 0) + 1)} de {room.totalRounds}
           </span>
-          {code && <span>Sala {shownCode(code, hidden)}</span>}
         </span>
         <RoundSegments room={room} />
       </span>
@@ -138,7 +136,7 @@ function MatchInfo({ room, hidden }) {
 //    waiting in it instead of leaving);
 //  - on any other page (profile...): "Volver", to the match if one is running, otherwise to Inicio.
 export default function TvTopbar() {
-  const { user, room, group, isCentral, leaveGroup } = useApp();
+  const { user, room, group, isCentral } = useApp();
   const friends = useFriends();
   const online = (friends.view?.friends || []).filter((f) => f.online).length;
   const isOwner = useIsOwner();
@@ -220,14 +218,18 @@ export default function TvTopbar() {
       </button>
     );
   } else if (room && waitsHere && !room.matchmaking) {
-    // A private match waiting on Inicio: back out of it (its leader takes the group, anyone else goes alone).
-    leaveButton = backChip({ "aria-label": "Salir de la partida privada", onClick: leaveNow });
+    // A private match waiting on Inicio: with a sala, "Volver" leaves the sala and asks first (Inicio's own dialog, the
+    // same as without a match); one that is only a room goes back out of it at once.
+    leaveButton = backChip({
+      "aria-label": group ? "Salir de tu sala" : "Salir de la partida privada",
+      onClick: group ? () => window.dispatchEvent(new Event(LEAVE_SALA_EVENT)) : leaveNow,
+    });
   } else if (onHome && !room && group) {
-    // Your sala on Inicio: "Volver" leaves it, back to "Elige un juego". Alone it goes at once; with more people Inicio asks
-    // first (HomeFrame listens for LEAVE_SALA_EVENT).
+    // Your sala on Inicio: "Volver" leaves it, back to "Elige un juego", and Inicio asks first, alone or not (HomeFrame
+    // listens for LEAVE_SALA_EVENT).
     leaveButton = backChip({
       "aria-label": "Salir de tu sala",
-      onClick: () => (group.members.length <= 1 ? leaveGroup() : window.dispatchEvent(new Event(LEAVE_SALA_EVENT))),
+      onClick: () => window.dispatchEvent(new Event(LEAVE_SALA_EVENT)),
     });
   } else if (!onHome) {
     leaveButton = backChip({ "aria-label": upPath(pathname) === "/" ? "Volver al inicio" : "Volver", onClick: goUp });
@@ -261,7 +263,7 @@ export default function TvTopbar() {
       <header className={`tv-topbar${backAnim ? ` is-back-${backAnim}` : ""}`}>
         <div className="tv-topbar-start">
           {shownButton}
-          {playing && <MatchInfo room={room} hidden={codeHidden} />}
+          {playing && <MatchInfo room={room} />}
           {/* Phones: your sala, very short, put here by the group's bar (GroupBar's SalaMenu) where it is on screen. */}
           {!playing && <span className="tv-topbar-sala" />}
         </div>
@@ -284,11 +286,11 @@ export default function TvTopbar() {
             </button>
           )}
           <VolumeMenu inOwnerPanel={isOwner && !isCentral} />
-          {friends.isAccount && !isCentral && (
+          {!isCentral && (
             <button
               type="button"
               className="tv-chip tv-chip--text tv-chip--friends"
-              aria-label={`Amigos: ${online} en línea${friends.pending ? `, ${friends.pending} solicitudes` : ""}`}
+              aria-label={friends.isAccount ? `Amigos: ${online} en línea${friends.pending ? `, ${friends.pending} solicitudes` : ""}` : "Amigos"}
               aria-haspopup="dialog"
               onClick={(e) => {
                 // The sheet doesn't take the focus: left on this button, closing it with Escape drew the keyboard's
@@ -301,7 +303,7 @@ export default function TvTopbar() {
                 <Icon name="users" size={20} strokeWidth={2.4} />
               </span>
               <span className="tv-chip-name tv-chip-long">Amigos</span>
-              <b className="tv-chip-count">{online}</b>
+              {friends.isAccount && <b className="tv-chip-count">{online}</b>}
               {friends.pending > 0 && <span className="tv-fr-badge">{friends.pending}</span>}
             </button>
           )}

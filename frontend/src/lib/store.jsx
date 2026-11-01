@@ -423,20 +423,18 @@ export function AppProvider({ children }) {
       else if (!code && roomCodeRef.current) clearRoom();
     };
     // Out of the group: the leader took this player out of it.
-    const onGroupLeft = ({ code, reason } = {}) => {
+    const onGroupLeft = ({ code } = {}) => {
       if (code !== groupCodeRef.current) return;
       clearGroup();
-      setKickedNotice(reason === "bloqueado" ? "El líder te bloqueó de la sala" : "El líder te sacó de la sala");
+      setKickedNotice("El líder te sacó de la sala");
     };
-    const onKicked = ({ code, blocked, reason } = {}) => {
+    const onKicked = ({ code, reason } = {}) => {
       if (code !== roomCodeRef.current) return;
       clearRoom();
       setKickedNotice(
         reason === "inactivo"
           ? "Saliste de la partida por inactividad"
-          : blocked
-          ? "El anfitrión te bloqueó de la sala"
-          : "El anfitrión te sacó de la sala. Puedes volver con el código"
+          : "El anfitrión te sacó de la sala"
       );
     };
     s.on("room:state", onState);
@@ -802,9 +800,17 @@ export function AppProvider({ children }) {
         if (!res.ok) throw new Error(res.error);
       },
 
-      // The leader takes someone out of the group; with `block` they can't come back with the code.
-      async kickFromGroup(userId, block = false) {
-        const res = await emitAck("group:kick", { userId, block });
+      // The leader lets a member change the settings of the group's private matches, or takes it back. Whether they can now.
+      async toggleGroupPermission(userId) {
+        const res = await emitAck("group:permission", userId);
+        if (!res.ok) throw new Error(res.error);
+        enterGroup(res.group);
+        return res.granted;
+      },
+
+      // The leader takes someone out of the group, for good.
+      async kickFromGroup(userId) {
+        const res = await emitAck("group:kick", { userId });
         if (!res.ok) throw new Error(res.error);
       },
 
@@ -897,16 +903,9 @@ export function AppProvider({ children }) {
         if (res.state) setRoom(res.state);
       },
 
-      // Host only: takes a player out of the room; they can come back with the code.
+      // Host only: takes a player out of the room, for good.
       async kickPlayer(targetUserId) {
         const res = await emitAck("room:kick", targetUserId);
-        if (!res.ok) throw new Error(res.error);
-        if (res.state) setRoom(res.state);
-      },
-
-      // Host only: takes a player out of the room for good (they can't join it again).
-      async blockPlayer(targetUserId) {
-        const res = await emitAck("room:block", targetUserId);
         if (!res.ok) throw new Error(res.error);
         if (res.state) setRoom(res.state);
       },

@@ -58,6 +58,8 @@ Commit messages are in Spanish and written for someone who doesn't read code.
 - **One yellow button per screen** (`.tv-btn--primary`); the rest are grey (`.tv-btn--neutral`). Chosen options are the site's blue.
 - **Shadows:** only what is tapped has one, a solid edge in its own darker colour (`box-shadow: 0 3px 0 var(--edge)`), rising on hover and going flat when pressed; never a plain black edge under a coloured or white button. Everything else (boxes to write in, selectors, cards, labels) is flat, at most a thin line. Never an inset shadow at the top. Buttons are rounded rectangles, never circles or pills. Text buttons are never underlined.
 - **Big panels** come in with `--tv-box-in` and go with `--tv-box-out` (`home.css`), all together.
+- **Panels over the page** (`Modal`, `.tv-sheet`, every window that opens and closes) all move the same way: `--tv-box-in` to open and `--tv-box-out` to close, moving whole, with nothing inside them animating on its own, and their backdrop fading in step, with no blur. A new panel uses `Modal`; whatever unmounts one on a timer waits past the 0.3 s of the way out.
+- **No sala, no game chosen.** Leaving a sala, even as its last member, always lands on "Elige un juego": a chosen game, a private match or its settings only exist inside a sala (`group:leave` takes the last member out of the private match too).
 
 ## Detailed docs (read the one you need before working on that part)
 

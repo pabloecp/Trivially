@@ -110,7 +110,7 @@ function duel() {
   stop(room);
   const [mine] = room.players.get("u1").rounds;
   const [theirs] = room.players.get("u2").rounds;
-  assert.equal(mine.status, "bad");
+  assert.equal(mine.status, "none", "a question skipped is grey, like no answer");
   assert.equal(theirs.status, "none");
 }
 // An owner pauses (and resumes) any match, a public one with no host too; anyone else can't.

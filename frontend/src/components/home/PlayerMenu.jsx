@@ -1,22 +1,17 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { useApp } from "../../lib/store.jsx";
-import { useFriends } from "../../lib/friends.jsx";
 import Icon from "./Icon.jsx";
 import { profilePath } from "./PlayerName.jsx";
 
-// What tapping a player offers, in the room card and on the live scoreboard: their profile (registered players),
-// and for the host, letting them change the match settings or not, making them the host (a second tap confirms it)
-// taking them out of the room (they can come back with the code) and blocking them (a second tap confirms it: they
-// can't join the room again). `canCentral` (the host or a player with the settings permission, while the room
-// waits): making that player's device the room's central device, the same as dragging them onto the spot; your own
-// too ("Usar mi pantalla como central"; if you're the host, the host role passes to the next player).
-export default function PlayerMenu({ player, isMe, canManage, canCentral = false, onClose, onToast }) {
-  const { toggleConfigPermission, kickPlayer, blockPlayer, giveHost, makeCentral } = useApp();
-  const friends = useFriends();
+// What tapping a player offers on a match's scoreboard, the same buttons and order as "Tu sala" (GroupSheet), only their
+// icons: for the host, taking them out of the room (for good) and, only while the room waits (`inMatch` false), letting
+// them change the settings or not and making them the host (a second tap confirms it); and for everyone their profile
+// (faded and doing nothing on a guest, who has none).
+export default function PlayerMenu({ player, isMe, canManage, inMatch = false, onClose, onToast }) {
+  const { toggleConfigPermission, kickPlayer, giveHost } = useApp();
   const ref = useRef(null);
   const [confirmHost, setConfirmHost] = useState(false);
-  const [confirmBlock, setConfirmBlock] = useState(false);
 
   // The whole menu in sight: the list scrolls to it when it opens near the bottom.
   useEffect(() => {
@@ -45,18 +40,6 @@ export default function PlayerMenu({ player, isMe, canManage, canCentral = false
     }
   }
 
-  // "Añadir amigo": only between two accounts.
-  const relation = friends.relationTo(player.id);
-  async function addFriend() {
-    onClose();
-    try {
-      const res = await friends.requestUser(player.id);
-      onToast?.(res.status === "accepted" ? `¡Ahora ${player.name} y tú son amigos!` : `Le enviaste una solicitud a ${player.name}`, "check");
-    } catch (err) {
-      onToast?.(err.message || "No se pudo enviar la solicitud");
-    }
-  }
-
   async function makeHost() {
     if (!confirmHost) {
       setConfirmHost(true);
@@ -71,16 +54,6 @@ export default function PlayerMenu({ player, isMe, canManage, canCentral = false
     }
   }
 
-  async function toCentral() {
-    onClose();
-    try {
-      await makeCentral(player.id);
-      onToast?.(isMe ? "Tu pantalla es ahora el dispositivo central" : `La pantalla de ${player.name} es ahora el dispositivo central`, "check");
-    } catch (err) {
-      onToast?.(err.message || "No se pudo cambiar el dispositivo central");
-    }
-  }
-
   async function kick() {
     onClose();
     try {
@@ -91,84 +64,53 @@ export default function PlayerMenu({ player, isMe, canManage, canCentral = false
     }
   }
 
-  async function block() {
-    if (!confirmBlock) {
-      setConfirmBlock(true);
-      return;
-    }
-    onClose();
-    try {
-      await blockPlayer(player.id);
-      onToast?.(`Bloqueaste a ${player.name}: ya no puede volver a esta sala`, "check");
-    } catch (err) {
-      onToast?.(err.message || "No se pudo bloquear al jugador");
-    }
-  }
+  // Few buttons (a match's two at most) have room for their names; the four of a room waiting are only icons.
+  const named = !canManage || inMatch;
 
   return (
     <div ref={ref} className="tv-player-menu" role="menu">
-      {player.isGuest ? (
-        <p className="tv-player-menu-note">{isMe ? "Juegas como invitado" : "Juega como invitado"}</p>
-      ) : (
-        // Same tab: the socket stays connected, so the seat is kept, and the profile has a way back to the room.
-        <Link role="menuitem" className="tv-player-menu-item" to={profilePath(player.id)} onClick={onClose}>
-          <Icon name="user" size={16} strokeWidth={2.6} />
-          {isMe ? "Ver mi perfil" : "Ver perfil"}
-        </Link>
-      )}
-      {friends.isAccount && !isMe && !player.isGuest && (
+      {canManage && !inMatch && (
         <button
           type="button"
           role="menuitem"
-          className="tv-player-menu-item"
-          onClick={addFriend}
-          disabled={relation === "friends" || relation === "asked"}
+          className={`tv-iconbtn tv-iconbtn--sm${player.canEditConfig ? " is-on" : ""}`}
+          aria-label={`${player.canEditConfig ? "Quitarle" : "Darle"} a ${player.name} permiso de ajustes`}
+          title={player.canEditConfig ? "Quitar permiso de ajustes" : "Dar permiso de ajustes"}
+          onClick={togglePermission}
         >
-          <Icon name={relation === "friends" ? "check" : "plus"} size={16} strokeWidth={2.8} />
-          {relation === "friends" ? "Ya son amigos" : relation === "asked" ? "Solicitud enviada" : relation === "asking" ? "Aceptar como amigo" : "Añadir amigo"}
+          <Icon name="sliders" size={16} strokeWidth={2.6} />
         </button>
       )}
       {canManage && (
-        <button type="button" role="menuitem" className="tv-player-menu-item" onClick={togglePermission}>
-          <Icon name={player.canEditConfig ? "lock" : "check"} size={16} strokeWidth={2.8} />
-          {player.canEditConfig ? "Quitar permiso de ajustes" : "Dar permiso de ajustes"}
+        <button type="button" role="menuitem" className="tv-iconbtn tv-iconbtn--sm" aria-label={`Sacar a ${player.name} de la sala`} title="Sacar de la sala" onClick={kick}>
+          <Icon name="close" size={16} strokeWidth={2.8} />
+          {named && "Sacar"}
         </button>
       )}
-      {canManage && player.connected && (
+      {canManage && !inMatch && player.connected && (
         <button
           type="button"
           role="menuitem"
-          className={`tv-player-menu-item${confirmHost ? " is-confirm" : ""}`}
+          className={`tv-iconbtn tv-iconbtn--sm${confirmHost ? " is-on" : ""}`}
           data-sound={confirmHost ? "next" : undefined}
+          aria-label={confirmHost ? "¿Seguro? Toca otra vez" : `Hacer anfitrión a ${player.name}`}
+          title={confirmHost ? "¿Seguro? Toca otra vez" : "Hacer anfitrión"}
           onClick={makeHost}
         >
-          <Icon name="crown" size={16} strokeWidth={2.2} />
-          {confirmHost ? "¿Seguro? Toca otra vez" : "Hacer anfitrión"}
+          <Icon name={confirmHost ? "check" : "crown"} size={16} strokeWidth={2.4} />
         </button>
       )}
-      {canCentral && player.connected && (
-        <button type="button" role="menuitem" className="tv-player-menu-item" onClick={toCentral}>
-          <Icon name="tv" size={16} strokeWidth={2.4} />
-          {isMe ? "Usar mi pantalla como central" : "Usar su pantalla como central"}
+      {player.isGuest ? (
+        <button type="button" role="menuitem" className="tv-iconbtn tv-iconbtn--sm is-none" aria-disabled="true" aria-label={`${player.name} juega como invitado: no tiene perfil`} title="Juega como invitado: no tiene perfil">
+          <Icon name="user" size={16} strokeWidth={2.6} />
+          {named && "Sin perfil"}
         </button>
-      )}
-      {canManage && (
-        <button type="button" role="menuitem" className="tv-player-menu-item tv-player-menu-item--danger" onClick={kick}>
-          <Icon name="logout" size={16} strokeWidth={2.6} />
-          Sacar de la sala
-        </button>
-      )}
-      {canManage && (
-        <button
-          type="button"
-          role="menuitem"
-          className={`tv-player-menu-item tv-player-menu-item--danger${confirmBlock ? " is-confirm" : ""}`}
-          data-sound={confirmBlock ? "next" : undefined}
-          onClick={block}
-        >
-          <Icon name="close" size={16} strokeWidth={2.8} />
-          {confirmBlock ? "¿Seguro? No podrá volver" : "Bloquear"}
-        </button>
+      ) : (
+        // Same tab: the socket stays connected, so the seat is kept, and the profile has a way back to the room.
+        <Link role="menuitem" className="tv-iconbtn tv-iconbtn--sm" to={profilePath(player)} aria-label={isMe ? "Ver mi perfil" : `Ver el perfil de ${player.name}`} title={isMe ? "Ver mi perfil" : "Ver perfil"} onClick={onClose}>
+          <Icon name="user" size={16} strokeWidth={2.6} />
+          {named && (isMe ? "Mi perfil" : "Perfil")}
+        </Link>
       )}
     </div>
   );

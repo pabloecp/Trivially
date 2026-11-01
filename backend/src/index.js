@@ -47,7 +47,7 @@ const questions = await loadQuestions();
 // backend/private/lyric-rounds.json, and from Supabase's lyric_rounds table with LYRICS_DB=1.
 const lyricRounds = await loadLyricRounds({ db: process.env.LYRICS_DB === "1" && supabaseEnabled() ? getSupabase() : null });
 const resolver = new TrackResolver({ catalog });
-const rooms = new RoomManager({ catalog, store, questions, lyricRounds, resolver });
+const rooms = new RoomManager({ catalog, store, questions, lyricRounds, resolver, tutorials: true });
 // The groups (players who go together from one match to the next), apart from the rooms (the matches).
 const groups = new GroupManager({ rooms });
 const friends = new Friendships({ store });

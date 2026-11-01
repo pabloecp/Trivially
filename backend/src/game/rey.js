@@ -60,9 +60,12 @@ export function countReyQuestions(pool, config) {
 
 /** For the settings' chips: how many questions each category and difficulty has with the other settings. */
 export function reyCounts(pool, config) {
+  const { categories, difficulties } = mergeReyConfig(config);
+  // A list left empty filters nothing here (like songCounts): otherwise, with two lists empty, nothing could be ticked again.
+  const open = { ...config, categories: categories.length ? categories : REY_CATEGORIES, difficulties: difficulties.length ? difficulties : REY_LEVELS };
   const tally = (ignore, key) => {
     const out = {};
-    for (const q of questionsFor(pool, config, ignore)) out[key(q)] = (out[key(q)] || 0) + 1;
+    for (const q of questionsFor(pool, open, ignore)) out[key(q)] = (out[key(q)] || 0) + 1;
     return out;
   };
   return { categories: tally("categories", (q) => q.category), difficulties: tally("difficulties", (q) => q.difficulty) };

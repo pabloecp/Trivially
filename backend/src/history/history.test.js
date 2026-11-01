@@ -226,4 +226,11 @@ const short = pickHistoryQuestions(fullBank, { rounds: 25, categories: ["arte"] 
 assert.equal(short.length, Math.min(12, artAnswers), "never two figures with the same answer");
 assert.equal(new Set(short.map((t) => t.value)).size, short.length);
 
+// Every list left empty: each choice still counts its questions, so it can be ticked again.
+{
+  const counts = historyCounts([{ type: "number", category: "ciencia", difficulty: "facil" }], { styles: [], categories: [], difficulties: [] });
+  assert.equal(counts.categories.ciencia, 1);
+  assert.equal(counts.difficulties.facil, 1);
+}
+
 console.log("history.test ok");

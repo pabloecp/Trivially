@@ -104,7 +104,7 @@ function RoomNavigator() {
     const phase = room?.phase ?? null;
     const before = lastPhase.current;
     lastPhase.current = phase;
-    if (!room?.matchmaking && !room?.run?.classic) return;
+    if (!room?.matchmaking && !room?.run?.classic && before !== "intro" && phase !== "intro") return;
     const cls = before === "intro" && phase !== "intro" ? "tv-seamless" : phase === "intro" && before !== "intro" ? "tv-seamless-side" : null;
     if (!cls) return;
     const root = document.documentElement;

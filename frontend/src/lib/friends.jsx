@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import FriendInvite from "../components/home/FriendInvite.jsx";
 import FriendsSheet from "../components/home/FriendsSheet.jsx";
+import FriendsGuestSheet from "../components/home/FriendsGuestSheet.jsx";
 import { api } from "./api.js";
 import { emitAck, getSocket } from "./socket.js";
 import { useApp } from "./store.jsx";
@@ -147,7 +148,7 @@ export function FriendsProvider({ children }) {
   return (
     <FriendsContext.Provider value={value}>
       {children}
-      {isAccount && <FriendsSheet />}
+      {isAccount ? <FriendsSheet /> : <FriendsGuestSheet />}
       <FriendInvite
         invite={invite}
         onClose={() => setInvite(null)}

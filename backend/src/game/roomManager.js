@@ -303,10 +303,10 @@ function artistKeys(song) {
 // ones, the title typed in the search box ("escribir"). Both are ticked in a new room; the rounds are shared evenly.
 export const MUSIC_FORMATS = ["opciones", "escribir"];
 // Its "Modos de juego": guess the title ("titulo"), or the words that come next in the song ("letra", Completa la
-// letra: only the songs with their round ready, lyrics/lyricRounds.js). A new room plays only "titulo": few songs have
-// their lyrics. With both ticked the rounds are shared evenly, and a "letra" round with no song left plays "titulo".
+// letra: only the songs with their round ready, lyrics/lyricRounds.js). A new room has both ticked, shared evenly
+// among the rounds, and a "letra" round with no song left plays "titulo".
 export const MUSIC_STYLES = ["titulo", "letra"];
-const DEFAULT_MUSIC_STYLES = ["titulo"];
+const DEFAULT_MUSIC_STYLES = [...MUSIC_STYLES];
 // Completa la letra: the song is heard up to LYRICS_LEAD_MS before the cut (from its start when the cut comes sooner),
 // then the round's seconds to answer. The reveal plays again the last LYRICS_REPLAY_MS before the cut and goes on
 // until the words have been sung, and LYRICS_TAIL_MS more.
@@ -348,8 +348,15 @@ function defaultConfig() {
   };
 }
 
+/** A private Trivia played only with closed or only with open questions: that way's tutorial. */
+function soloVariant(room) {
+  const formats = room.game === QUIZ_GAME ? room.config?.quiz?.formats : null;
+  if (formats?.length !== 1) return null;
+  return formats[0] === "opciones" ? "trivia-cerradas" : "trivia-abiertas";
+}
+
 /** How long a public match's roulette spins before each game: nothing to spin when the game was searched for by name. */
-const introSpinMs = (room) => (room.matchmaking?.game ? 0 : INTRO_SPIN_MS);
+const introSpinMs = (room) => (room.matchmaking ? (room.matchmaking.game ? 0 : INTRO_SPIN_MS) : room.run?.classic ? INTRO_SPIN_MS : 0);
 
 // The part of the room's settings that belongs to `game`, as in a new room ("Restablecer"). Adivina la canción's are the
 // settings at the top level.
@@ -418,8 +425,10 @@ function publicPlayer(player, phase, room) {
 }
 
 export class RoomManager {
-  constructor({ catalog, store, questions = [], lyrics = new Map(), lyricRounds = new Map(), resolver = null, reconnectGraceMs = RECONNECT_GRACE_MS }) {
+  constructor({ catalog, store, questions = [], lyrics = new Map(), lyricRounds = new Map(), resolver = null, tutorials = false, reconnectGraceMs = RECONNECT_GRACE_MS }) {
     this.catalog = catalog;
+    // Whether a private match of one game starts with its tutorial (the server's; the tests go straight to the rounds).
+    this.tutorials = tutorials;
     // Completa la letra's rounds, loaded when the server starts (lyrics/lyricRounds.js): by song id, { previewUrl,
     // etag, verse }. `lyrics` (song id → [verse]) gives rounds straight, without their audio's checks (tests).
     this.lyrics = lyrics;
@@ -458,7 +467,7 @@ export class RoomManager {
   findToJoin(code, userId = null) {
     const room = this.get(String(code || ""));
     if (!room) throw new Error("No hay ninguna sala con ese código");
-    if (userId && room.blocked?.has(userId)) throw new Error("El anfitrión te bloqueó de esta sala");
+    if (userId && room.kicked?.has(userId)) throw new Error("Te sacaron de esta sala: no puedes volver a entrar");
     // A public match (findMatch) is only entered by searching for one; its players can come back to it (a reload).
     if (room.matchmaking && !room.players.has(userId)) throw new Error("Esa sala es de una partida pública: búscala desde Jugar");
     if (room.matchmaking && room.players.get(userId)?.forfeit) throw new Error("Saliste de esa partida: busca otra desde Jugar");
@@ -502,7 +511,7 @@ export class RoomManager {
         r.matchmaking.kind === kind &&
         (r.matchmaking.game || null) === game &&
         (game || r.matchmaking.versus === size) &&
-        !ids.some((id) => r.blocked?.has(id)) &&
+        !ids.some((id) => r.kicked?.has(id)) &&
         this.connectedCount(r) + seats <= r.matchmaking.size &&
         this.eloFits(r, mine)
     );
@@ -1043,7 +1052,7 @@ export class RoomManager {
   }
 
   addPlayer(room, user, isHost = false) {
-    if (room.blocked?.has(user.id)) throw new Error("El anfitrión te bloqueó de esta sala");
+    if (room.kicked?.has(user.id)) throw new Error("Te sacaron de esta sala: no puedes volver a entrar");
     assertNameWithoutLink(user);
     const existing = room.players.get(user.id);
     if (!existing && !room.matchmaking && room.players.size >= SALA_MAX) throw new Error(`La sala está llena (máximo ${SALA_MAX} jugadores)`);
@@ -1260,6 +1269,7 @@ export class RoomManager {
     if (hostUserId === targetUserId) {
       throw new Error("El Host ya cuenta con todos los privilegios");
     }
+    if (room.phase !== "lobby") throw new Error("Los permisos solo se cambian antes de empezar la partida");
     if (!room.players.has(targetUserId)) {
       throw new Error("El jugador no está en la sala");
     }
@@ -1285,6 +1295,7 @@ export class RoomManager {
     if (!room) throw new Error("Sala no encontrada");
     if (room.hostId !== hostUserId) throw new Error("Solo el anfitrión puede pasar el anfitrión");
     if (hostUserId === targetUserId) throw new Error("Ya eres el anfitrión");
+    if (room.phase !== "lobby") throw new Error("El anfitrión solo se cambia antes de empezar la partida");
     const player = room.players.get(targetUserId);
     if (!player) throw new Error("El jugador no está en la sala");
     if (!player.connected) throw new Error("Ese jugador no está conectado ahora");
@@ -1295,9 +1306,8 @@ export class RoomManager {
     return { name: player.name };
   }
 
-  // The host takes a player out of the room: their seat goes (even mid-match). By default it isn't a ban: entering the
-  // code again joins as a new player (a spectator if a match is running). With `block` they can't join this room again.
-  kick(room, hostUserId, targetUserId, { block = false } = {}) {
+  // The host takes a player out of the room: their seat goes (even mid-match), and the code doesn't let them back in.
+  kick(room, hostUserId, targetUserId) {
     if (!room) throw new Error("Sala no encontrada");
     if (room.hostId !== hostUserId) throw new Error("Solo el anfitrión puede sacar jugadores");
     if (hostUserId === targetUserId) throw new Error("No puedes sacarte a ti mismo");
@@ -1307,7 +1317,7 @@ export class RoomManager {
     if (player.socketId) this.socketToRoom.delete(player.socketId);
     room.players.delete(targetUserId);
     room.coHosts = (room.coHosts || []).filter((id) => id !== targetUserId);
-    if (block) (room.blocked ||= new Set()).add(targetUserId);
+    (room.kicked ||= new Set()).add(targetUserId);
     this.checkMinesTurn(room);
     return { socketId: player.socketId, name: player.name };
   }
@@ -1354,7 +1364,7 @@ export class RoomManager {
     room.central = null;
     if (!central.socketId) return null;
     const why = replaced ? "Otro dispositivo es ahora el central" : "Este dispositivo ya no es el central";
-    if (!room.players.has(central.userId) && !room.blocked?.has(central.userId)) {
+    if (!room.players.has(central.userId) && !room.kicked?.has(central.userId)) {
       this.addPlayer(room, { id: central.userId, name: central.name, avatar: central.avatar, isGuest: central.isGuest, socketId: central.socketId });
       this.onRoleChange?.(central.socketId, { code: room.code, role: "player", notice: `${why}: vuelves a jugar desde aquí` });
       return { socketId: central.socketId, role: "player" };
@@ -1391,7 +1401,7 @@ export class RoomManager {
 
   /** The host's account, from another device than the one they play on: it becomes the central device straight away. */
   joinAsCentral(room, user) {
-    if (room.blocked?.has(user.id)) throw new Error("El anfitrión te bloqueó de esta sala");
+    if (room.kicked?.has(user.id)) throw new Error("Te sacaron de esta sala: no puedes volver a entrar");
     if (room.hostId !== user.id) throw new Error("Pídele al anfitrión que acepte este dispositivo como central");
     if (room.central?.socketId === user.socketId) return room.central;
     return this.setCentral(room, user);
@@ -1403,7 +1413,7 @@ export class RoomManager {
    * replaces it), one every CENTRAL_ASK_GAP_MS.
    */
   requestCentral(room, user) {
-    if (room.blocked?.has(user.id)) throw new Error("El anfitrión te bloqueó de esta sala");
+    if (room.kicked?.has(user.id)) throw new Error("Te sacaron de esta sala: no puedes volver a entrar");
     if (room.hostId === user.id) throw new Error("Eres el anfitrión: puedes entrar directamente como dispositivo central");
     const player = room.players.get(user.id);
     if (!player) throw new Error("Entra primero a la sala como jugador");
@@ -2164,6 +2174,12 @@ export class RoomManager {
       p.idle = false;
       p.status = "jugando";
     });
+    // A private match of one game: first its tutorial ("intro"), with nothing to draw, like a game searched for by name.
+    if (this.tutorials) {
+      room.introResultMs = 0;
+      this.setPhase(room, "intro", INTRO_TUTORIAL_MS, () => this.beginCountdown(room));
+      return;
+    }
     this.beginCountdown(room);
   }
 
@@ -2532,7 +2548,7 @@ export class RoomManager {
       this.onPhaseChange?.(room);
       return;
     }
-    // The owner who skips gave up on the question: their round counts as a wrong answer (not as no answer).
+    // The owner who skips gave up on the question: said in their round, which shows grey like no answer (recordRound).
     const skipper = room.players.get(userId);
     if (skipper && !skipper.lastAnswer && room.phase !== "reveal" && this.isPlaying(room, userId) && !this.isMinesRound(room) && !this.isRainRound(room)) {
       skipper.lastAnswer = { text: "Saltó la pregunta", correct: false, gaveUp: true, at: Date.now() };
@@ -2621,8 +2637,9 @@ export class RoomManager {
    * question, the right answer (null in Campo de minas, whose board has no single one, and in Lluvia, a shower of
    * them), what they answered (null with no answer; in Lluvia their round, "4 aciertos · 12 puntos", if they sent
    * anything), the points and how it went (`status`): "ok" right (Rango's exact answer, a pin inside the country, a
-   * board survived, a question taken in the rain), "near" not right but with points (a close year or pin), "bad" wrong
-   * or a mine, "none" no answer. Not in a tiebreak, which gives no points.
+   * board survived, a question taken in the rain), "near" not right but with points (a close year or pin, a board lost
+   * after some right cells), "bad" wrong or a mine with no points, "none" no answer (or a board the time ran out on, with
+   * no points). Not in a tiebreak, which gives no points.
    */
   recordRound(room, track) {
     if (room.tiebreak || !track) return;
@@ -2633,16 +2650,29 @@ export class RoomManager {
     const prompt = rain
       ? `Lluvia de ${fell} preguntas`
       : track.prompt || track.text || (room.game === "musica" ? (track.lyric ? track.lyric.line : "¿Qué canción es?") : null);
+    // The round's mode of play, when its game has several (Encuentra el país's, Adivina la canción's): the summary names it.
+    const style = room.game === "musica" ? (track.lyric ? "letra" : "titulo") : track.style || null;
     for (const player of room.players.values()) {
       if (!this.isPlaying(room, player.id) || (mines && !player.minefield) || (rain && !player.rain)) continue;
       const answer = player.lastAnswer;
       const sent = rain ? player.rain.sent > 0 : true;
-      const yours = sent && answer && !answer.skipped && answer.text ? answer.text : null;
+      let yours = sent && answer && !answer.skipped && answer.text ? answer.text : null;
       const points = player.lastPoints || 0;
       const correct = mines ? !answer?.out : Boolean(answer?.correct);
-      const status = correct ? "ok" : !yours ? "none" : points > 0 && !answer?.out ? "near" : "bad";
+      // Campo de minas: how its board ended, and how many right cells they found (said only when there were some).
+      if (mines && answer) {
+        const ended = { mina: "Pisó una mina", tiempo: "Se acabó el tiempo", tarde: "Sin casilla correcta" }[answer.out] || "Terminó el tablero";
+        const hits = answer.hits || 0;
+        yours = hits ? `${ended} · ${hits === 1 ? "1 acierto" : `${hits} aciertos`}` : ended;
+      }
+      // How it went, in the summary's colours: "ok" won it all (green); "near" didn't, but scored (yellow); "bad" lost with
+      // no points (red: a wrong answer, a mine, or something written/placed that went in on its own when the time ran out);
+      // "none" no points and nothing to show for it (grey: no answer at all, a question skipped, or a mines board the time
+      // ran out on).
+      const timedOut = mines && (answer?.out === "tiempo" || answer?.out === "tarde");
+      const status = correct ? "ok" : points > 0 ? "near" : !yours || timedOut || answer?.gaveUp ? "none" : "bad";
       // `questionId` stays on the server (a report names the question; players never see ids).
-      (player.rounds ||= []).push({ round: room.currentRound + 1, game: room.game, questionId: track.id ?? null, prompt, answer: right, yours, points, status });
+      (player.rounds ||= []).push({ round: room.currentRound + 1, game: room.game, ...(style ? { style } : {}), questionId: track.id ?? null, prompt, answer: right, yours, points, status });
     }
   }
 
@@ -4043,6 +4073,20 @@ export class RoomManager {
               // The game before: who won it (a time of its own at the start of the intro, `resultMs`).
               resultMs: room.introResultMs || 0,
               previous: room.introResultMs ? room.run.lastGame : null,
+            }
+          : room.phase === "intro"
+          ? // A private match of one game: only its tutorial, with its way when Trivia is played in only one.
+            {
+              game: room.game,
+              games: [room.game],
+              variant: soloVariant(room),
+              variants: [soloVariant(room) || room.game],
+              index: 0,
+              winsToWin: null,
+              spinMs: 0,
+              tutorialMs: INTRO_TUTORIAL_MS,
+              resultMs: 0,
+              previous: null,
             }
           : null,
       audio: null,

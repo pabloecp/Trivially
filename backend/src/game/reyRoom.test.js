@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { readLocalCatalog } from "../catalog/catalogProvider.js";
-import { REY_PICK_MS, REY_POINTS, mergeReyConfig, pickReyRounds, reyPool } from "./rey.js";
+import { REY_PICK_MS, REY_POINTS, mergeReyConfig, pickReyRounds, reyCounts, reyPool } from "./rey.js";
 import { RoomManager } from "./roomManager.js";
 
 // Rey de la colina: the king picks one of three questions, the others write the answer; the first right one takes
@@ -127,4 +127,11 @@ assert.equal(room.phaseEndsAt - room.phaseStartedAt, REY_PICK_MS, "the new king 
 // ---- Back to the lobby: no king ----
 mgr.resetMatch(room);
 assert.equal(room.king, null);
+// Every list left empty: each choice still counts its questions, so it can be ticked again.
+{
+  const counts = reyCounts([{ category: "ciencia", difficulty: "facil" }], { categories: [], difficulties: [] });
+  assert.equal(counts.categories.ciencia, 1);
+  assert.equal(counts.difficulties.facil, 1);
+}
+
 console.log("reyRoom ok");
