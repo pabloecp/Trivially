@@ -1,22 +1,15 @@
-// Light backgrounds need a dark letter; the darker ones keep the white one.
-function inkFor(hex) {
-  const m = /^#?([0-9a-f]{6})$/i.exec(hex || "");
-  if (!m) return undefined;
-  const n = parseInt(m[1], 16);
-  const lum = 0.299 * (n >> 16) + 0.587 * ((n >> 8) & 255) + 0.114 * (n & 255);
-  return lum > 150 ? "#0A0B0C" : undefined;
-}
+import Blob from "./Blob.jsx";
+import { blobColor } from "../../lib/blobColors.js";
 
-// Round avatar: the profile photo when there is one, otherwise the initial on the player's color.
-export default function Avatar({ name, avatar, className = "" }) {
-  const cls = `tv-avatar ${className}`.trim();
-  if (avatar?.startsWith("http")) {
-    return <img className={cls} src={avatar} alt="" referrerPolicy="no-referrer" />;
-  }
-  const bg = avatar || "#0A9BFF";
+// A player's face: there are no profile photos, everyone is a Blob with a black line, in the colour of their `avatar`
+// (lib/blobColors.js; white when it isn't one of the Blob's). `name` is only for screen readers, which the rows already
+// read beside it. `mood` moves the Blob (Blob.jsx): only where it's asked for (the podium, the scoreboards, a group's
+// list, the big one beside your elo); faces on buttons and in stacks stay still. Yours (`is-me`) wears the yellow ring, drawn
+// by the Blob around its own shape.
+export default function Avatar({ className = "", avatar = null, mood = null }) {
   return (
-    <span className={cls} style={{ background: bg, color: inkFor(bg) }}>
-      {(name || "U").slice(0, 1).toUpperCase()}
+    <span className={`tv-avatar tv-avatar--blob ${className}`.trim()} aria-hidden="true">
+      <Blob color={blobColor(avatar)} mood={mood} ring={/(^|\s)is-me(\s|$)/.test(className) ? "var(--p-accent-2, #ffd60a)" : /tv-avatar--xl/.test(className) ? "var(--brand)" : null} />
     </span>
   );
 }

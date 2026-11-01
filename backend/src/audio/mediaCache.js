@@ -24,9 +24,23 @@ export function revealCoverUrl(url) {
   return isCoverUrl(url) ? url.replace(/\/\d+x\d+bb\./, "/300x300bb.") : url;
 }
 
+// Each downloaded file's ETag, as its server gave it (quotes taken off): Completa la letra's rounds were measured on
+// one version of a preview, and a preview that changed (another ETag) no longer fits them.
+const etags = new Map();
+
+/** The ETag of a file already downloaded (null when unknown). */
+export function etagOf(url) {
+  return etags.get(url) || null;
+}
+
+/** An ETag without its quotes or its weak mark (W/"abc" → abc). */
+export const cleanEtag = (value) => (value ? String(value).replace(/^W\//, "").replace(/"/g, "") : null);
+
 async function download(url) {
   const res = await fetch(url);
   if (!res.ok) throw new Error(`Respuesta ${res.status}`);
+  const etag = cleanEtag(res.headers?.get?.("etag"));
+  if (etag) etags.set(url, etag);
   return Buffer.from(await res.arrayBuffer());
 }
 

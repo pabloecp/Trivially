@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { readLocalCatalog } from "../catalog/catalogProvider.js";
-import { REY_PICK_MS, REY_POINTS, mergeReyConfig, pickReyRounds, reyPool } from "./rey.js";
+import { REY_PICK_MS, REY_POINTS, mergeReyConfig, pickReyRounds, reyCounts, reyPool } from "./rey.js";
 import { RoomManager } from "./roomManager.js";
 
 // Rey de la colina: the king picks one of three questions, the others write the answer; the first right one takes
@@ -48,7 +48,9 @@ let pub = mgr.publicState(room, "p-2");
 assert.equal(pub.rey.kingId, first);
 assert.equal(pub.rey.offers.length, 3);
 assert.ok(pub.rey.offers.every((o) => o.text && !("answer" in o)));
-assert.equal(JSON.stringify(pub).includes(room.tracks[0].offers[0].answer), false, "no answer in the state");
+// (Without the questions' own words: the capital of Panamá is Panamá, and that gives nothing away that the question doesn't.)
+const withoutTexts = JSON.stringify({ ...pub, rey: { ...pub.rey, offers: pub.rey.offers.map((o) => ({ ...o, text: "" })) } });
+for (const offer of room.tracks[0].offers) assert.equal(withoutTexts.includes(offer.answer), false, "no answer in the state");
 assert.equal(pub.question, null);
 const other = ["host-1", "p-2", "p-3"].find((id) => id !== first);
 assert.throws(() => mgr.reyPick(room, other, 0), /Solo el rey/);
@@ -127,4 +129,11 @@ assert.equal(room.phaseEndsAt - room.phaseStartedAt, REY_PICK_MS, "the new king 
 // ---- Back to the lobby: no king ----
 mgr.resetMatch(room);
 assert.equal(room.king, null);
+// Every list left empty: each choice still counts its questions, so it can be ticked again.
+{
+  const counts = reyCounts([{ category: "ciencia", difficulty: "facil" }], { categories: [], difficulties: [] });
+  assert.equal(counts.categories.ciencia, 1);
+  assert.equal(counts.difficulties.facil, 1);
+}
+
 console.log("reyRoom ok");

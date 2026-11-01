@@ -4,12 +4,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project
 
-Trivially is a real-time trivia game, played alone or with a group (the players who go together), in public or private matches (rooms). Groups and rooms have five-character codes (`createRoomCode`: letters and numbers, no I, O, 0 or 1); the one players share is the group's. Games (`room.game`, ids in `GAME_IDS`; the old ids are kept on purpose, renaming them breaks open rooms): **Trivia** (`opciones`, the main one), **Adivina la canción** (`musica`), **Encuentra el país** (`mundo`), **Rango** (`historia`), **Campo de minas** (`minas`), **Lluvia** (`lluvia`), **Rey de la colina** (`rey`) and **Farsante** (`farsante`). `playlist`, `clasico` and `extendido` are in `GAME_IDS` but aren't games. The UI calls them *juegos* ("Elige el juego").
+Trivially is a real-time trivia game, played alone or with a group (the players who go together), in public or private matches (rooms). Groups and rooms have five-character codes (`createRoomCode`: letters and numbers, no I, O, 0 or 1); the one players share is the group's. Games (`room.game`, ids in `GAME_IDS`; the old ids are kept on purpose, renaming them breaks open rooms): **Trivia** (`opciones`, the main one), **Adivina la canción** (`musica`), **Encuentra el país** (`mundo`), **Rango** (`historia`), **Campo de minas** (`minas`), **Lluvia** (`lluvia`), **Rey de la colina** (`rey`) and **Farsante** (`farsante`). `playlist`, `clasico` and `extendido` are in `GAME_IDS` but aren't games. The UI calls them *juegos* ("Juego libre").
 
 **Juego, modo de juego and tipo de respuestas are three different things; keep them apart in code, copy and docs:**
 
-- **Juego**: what is played, chosen in "Elige el juego" (`room.game`). A playlist is not a game.
-- **Modo de juego** ("Modos de juego", `styles` in the config): a variant that changes the game's questions or rules. Only Encuentra el país (nombre / sombra / bandera) has more than one; Rango (only Cifras) and Campo de minas (only carrera) keep a single one in `styles` and show no "Modos de juego". "Línea del tiempo" and "Por turnos" were removed as modes (see their docs).
+- **Juego**: what is played, chosen in "Juego libre" (`room.game`). A playlist is not a game.
+- **Modo de juego** ("Modos de juego", `styles` in the config): a variant that changes the game's questions or rules. Only Encuentra el país (nombre / sombra / bandera) and Adivina la canción (Título / Letra, called "Completa la letra" in code comments and older docs) have more than one; Rango (only Cifras) and Campo de minas (only carrera) keep a single one in `styles` and show no "Modos de juego". "Línea del tiempo" and "Por turnos" were removed as modes (see their docs).
 - **Tipo de respuestas** ("Tipo de respuestas", `formats` in the config): only how a player answers, Cerradas (four options) or Abiertas (writing). Trivia and Adivina la canción have it. Never called a "modo de juego".
 
 All UI copy and server error messages are in Spanish, Latin American (ustedes, never vosotros). Don't rename the session cookie (`backend/src/index.js`) or change `SESSION_SECRET`: either logs every account out. Don't rename the `localStorage` identity keys (`trivially_user`, `trivially_guest_id`, `trivially_guest_name`) without a migration in `lib/store.jsx`.
@@ -28,11 +28,19 @@ npm run questions:upload --prefix backend   # Trivia's private questions to Supa
 npm run geo:upload --prefix backend         # Encuentra el país (geo/countries.js)
 npm run history:upload --prefix backend     # Rango (history/events.js, figures.js)
 npm run mines:upload --prefix backend       # Campo de minas (mines/boards/)
+npm run lyrics:build --prefix backend       # Completa la letra, offline: rounds into private/lyric-rounds.json (local Whisper)
+npm run lyrics:upload --prefix backend      # that file to Supabase's lyric_rounds table (-- --check)
 ```
 
 Tests are standalone scripts using `node:assert/strict`, no runner: each prints `"<name> ok"`. A new test file must be appended to the `&&` chain in `backend/package.json` `scripts.test`.
 
 **Gotcha:** `saveStore()` always writes to the tracked `backend/data/store.json`, even in tests. After running the store tests, check `git diff backend/data/store.json` and restore it.
+
+## Branches (Git Flow, see `CONTRIBUTING.md`)
+
+- **`main` is production** (Vercel and Railway deploy from it) and **`develop` is integration**. Never commit or push directly to either.
+- Every change goes in its own branch cut from an up-to-date `develop` (`feature/…`, `fix/…`, `chore/…`) and enters `develop` through a pull request. Publishing is a pull request from `develop` into `main`, merged with a merge commit. An urgent fix in production is a `hotfix/…` cut from `main`, merged into `main` and then into `develop`.
+- Pull requests target `develop` unless they are a release or a hotfix. Old personal branches (`dani`, `pablo`, `jonathan`) are no longer worked on. CI (`.github/workflows/ci.yml`) runs the backend tests and the frontend build on every pull request to either branch.
 
 ## Commits
 
@@ -50,6 +58,8 @@ Commit messages are in Spanish and written for someone who doesn't read code.
 - **One yellow button per screen** (`.tv-btn--primary`); the rest are grey (`.tv-btn--neutral`). Chosen options are the site's blue.
 - **Shadows:** only what is tapped has one, a solid edge in its own darker colour (`box-shadow: 0 3px 0 var(--edge)`), rising on hover and going flat when pressed; never a plain black edge under a coloured or white button. Everything else (boxes to write in, selectors, cards, labels) is flat, at most a thin line. Never an inset shadow at the top. Buttons are rounded rectangles, never circles or pills. Text buttons are never underlined.
 - **Big panels** come in with `--tv-box-in` and go with `--tv-box-out` (`home.css`), all together.
+- **Panels over the page** (`Modal`, `.tv-sheet`, every window that opens and closes) all move the same way: `--tv-box-in` to open and `--tv-box-out` to close, moving whole, with nothing inside them animating on its own, and their backdrop fading in step, with no blur. A new panel uses `Modal`; whatever unmounts one on a timer waits past the 0.3 s of the way out.
+- **No sala, no game chosen.** Leaving a sala, even as its last member, always lands on "Elige un juego": a chosen game, a private match or its settings only exist inside a sala (`group:leave` takes the last member out of the private match too).
 
 ## Detailed docs (read the one you need before working on that part)
 
@@ -59,7 +69,7 @@ In `.claude/docs/`:
 - `preguntas.md`: the question bank, row shapes, categories, uploading.
 - One per game: `encuentra-el-pais.md`, `rango.md`, `campo-de-minas.md`, `lluvia.md`, `rey-de-la-colina.md`, `farsante.md`.
 - `grupos.md`: groups (who goes together) apart from rooms (the matches): the leader moves everyone, "Crear grupo", "Tu grupo", invite links.
-- `playlists.md`, `partidas-publicas.md` (Inicio and its bar, public matches by game, a group searching together, bots, rank), `clasico.md`.
+- `partidas-publicas.md` (Inicio and its bar, public matches by game, a group searching together, bots, rank), `clasico.md`.
 - `dispositivo-central.md`, `panel-owner.md`, `amigos-y-enlaces.md` (friends, @usernames, link filter).
 - `diseno.md`: the design rules: the look (`frontend/src/styles/look.css`, loaded last), layout, colours, type, pieces, panel motion, shadows.
 

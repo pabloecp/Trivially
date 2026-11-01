@@ -1,17 +1,18 @@
-import { GAME_MODES, isGameTile } from "../../modes/index.js";
-import { AUDIENCES, isPublicGame } from "../../lib/plan.js";
+import { GAME_MODES, findMode, isGameTile } from "../../modes/index.js";
+import { AUDIENCES, CLASSIC, isPublicGame } from "../../lib/plan.js";
+import AppIcon from "./AppIcon.jsx";
 import GameCard from "./GameCard.jsx";
 import Icon from "./Icon.jsx";
 import Modal from "./Modal.jsx";
 
 // "¿Qué quieren jugar?" ("¿Qué quieres jugar?" alone), from the "Vas a jugar" box: who it's for ("Partida pública": a
-// public match of the game, or "Partida privada": yours alone or your group's) and the game, as cards. With people from
-// anywhere, Rey de la colina and Farsante are locked (they need people who know each other). In a private match, "Más
-// formas de jugar" adds the Clásicos and the playlist (several games in a row). Picking a game closes it. `readOnly` (a
-// player who isn't the leader or the host) only shows the choice, `hostName` says who makes it.
+// public match of the game, or "Partida privada": yours alone or your group's) and the game, as cards. "Clásico" goes
+// first, above "Juego libre" (the games), on both sides: games drawn by the roulette until someone has won two, a
+// public match of them or your own. With people from anywhere, Rey de la colina and Farsante are locked (they need
+// people who know each other). Picking one closes it. `readOnly` (a player who isn't the leader or the host) only shows
+// the choice, `hostName` says who makes it.
 export default function PlanSheet({ open, onClose, plan, onAudience, onGame, inGroup = false, readOnly = false, hostName = "" }) {
   const games = GAME_MODES.filter(isGameTile);
-  const extras = GAME_MODES.filter((m) => m.kind === "classic" || m.kind === "playlist");
   const publicSide = plan.audience === "publica";
 
   function pick(mode, el) {
@@ -50,7 +51,22 @@ export default function PlanSheet({ open, onClose, plan, onAudience, onGame, inG
           Lo elige {hostName || "el anfitrión"}
         </p>
       )}
-      <h3 className="tv-section-label">Elige el juego</h3>
+      <button
+        type="button"
+        className={`tv-ccard${plan.game === CLASSIC ? " is-selected" : ""}`}
+        aria-pressed={plan.game === CLASSIC}
+        disabled={readOnly}
+        onClick={(e) => pick(findMode(CLASSIC), e.currentTarget)}
+      >
+        <span className="tv-ccard-logo" aria-hidden="true">
+          <AppIcon small />
+        </span>
+        <span className="tv-ccard-text">
+          <span className="tv-ccard-name">Clásico</span>
+          <span className="tv-ccard-sub">Primero en ganar dos juegos</span>
+        </span>
+      </button>
+      <h3 className="tv-section-label">Juego libre</h3>
       <div className="tv-gcard-grid">
         {games.map((mode, i) => (
           <GameCard
@@ -65,31 +81,6 @@ export default function PlanSheet({ open, onClose, plan, onAudience, onGame, inG
           />
         ))}
       </div>
-      {!publicSide && (
-        <>
-          <h3 className="tv-section-label">Más formas de jugar</h3>
-          <div className="tv-plan-extras">
-            {extras.map((mode) => (
-              <button
-                key={mode.id}
-                type="button"
-                className={`tv-plan-extra tv-c-${mode.color}`}
-                aria-pressed={plan.game === mode.id}
-                disabled={readOnly}
-                onClick={() => onGame(mode.id)}
-              >
-                <span className="tv-plan-extra-icon" aria-hidden="true">
-                  <Icon name={mode.icon} size={18} strokeWidth={2.4} />
-                </span>
-                <span className="tv-plan-extra-text">
-                  <strong>{mode.fullName || mode.name}</strong>
-                  <small>{mode.kind === "playlist" ? "Varios juegos seguidos" : mode.subtitle}</small>
-                </span>
-              </button>
-            ))}
-          </div>
-        </>
-      )}
     </Modal>
   );
 }

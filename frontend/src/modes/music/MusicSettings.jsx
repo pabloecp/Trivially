@@ -11,6 +11,13 @@ import { forgetLocalSpotify, loadLocalSpotify, saveLocalSpotify } from "../../li
 import { withSound } from "../../lib/sounds.js";
 
 const FORMAT_IDS = FORMATS.map((f) => f.id);
+// Its "Modos de juego" (MUSIC_STYLES on the server): guess the title, or the words that come next in the song (only
+// the songs with their verse ready). A new room plays only the title.
+const STYLES = [
+  { id: "titulo", label: "Título", hint: "Adivina qué canción es" },
+  { id: "letra", label: "Letra", hint: "Di lo que sigue en la canción" },
+];
+const STYLE_IDS = STYLES.map((s) => s.id);
 // The catalog's filters (SONG_LANGUAGES, SONG_GENRES and SONG_DIFFICULTIES on the server).
 const LANGUAGES = [
   { id: "es", label: "Español" },
@@ -43,6 +50,7 @@ function configKey(config) {
     config?.rounds,
     config?.roundMs,
     config?.formats,
+    config?.styles,
     config?.useCatalog,
     config?.languages,
     config?.genres,
@@ -238,6 +246,7 @@ export default function MusicSettings({ room, updateConfig, onToast, children, r
         rounds: next.rounds || rounds,
         roundMs: next.roundMs || seconds * 1000,
         formats: next.formats ?? formats,
+        styles: next.styles ?? styles,
         useCatalog: next.useCatalog ?? useCatalog,
         languages: next.languages ?? listOf("languages"),
         genres: next.genres ?? listOf("genres"),
@@ -276,6 +285,18 @@ export default function MusicSettings({ room, updateConfig, onToast, children, r
     const on = formats.includes(id);
     save({ formats: FORMAT_IDS.filter((f) => (f === id ? !on : formats.includes(f))) });
   }
+
+  // "Modos de juego": a missing list (an older room) means only the title. Completa la letra can't be ticked when none
+  // of the songs that play has its verse (but can be unticked).
+  const styles = draft?.styles ?? ["titulo"];
+  function toggleStyle(id) {
+    const on = styles.includes(id);
+    save({ styles: STYLE_IDS.filter((s) => (s === id ? !on : styles.includes(s))) });
+  }
+  // Its songs come prepared (backend/private/lyric-rounds.json, or the lyric_rounds table): it can't be ticked when
+  // none of the songs that play has its round (but can be unticked).
+  const noLyrics = room.lyricsReady === 0;
+  const lyricsOnly = styles.length === 1 && styles[0] === "letra";
 
   function togglePlaylist(id) {
     if (selected.includes(id)) {
@@ -489,15 +510,33 @@ export default function MusicSettings({ room, updateConfig, onToast, children, r
           id: "partida",
           label: "Partida",
           icon: "hourglass",
-          note: `${rounds} rondas · ${seconds} s`,
-          alert: !formats.length,
+          note: `${lyricsOnly ? "Letra · " : ""}${rounds} rondas · ${seconds} s`,
+          alert: !formats.length || !styles.length,
           content: (
             <>
+              <OptionRow
+                label="Modos de juego"
+                multi
+                wrap
+                options={STYLES.map((s) => ({
+                  value: s.id,
+                  label: s.label,
+                  title: s.id === "letra" && noLyrics ? "No hay canciones con su letra lista" : s.hint,
+                  disabled: s.id === "letra" && noLyrics && !styles.includes(s.id),
+                }))}
+                value={styles}
+                onChange={toggleStyle}
+                onSetAll={(list) => save({ styles: list })}
+              />
               <OptionRow
                 label="Tipo de respuestas"
                 multi
                 wrap
-                options={FORMATS.map((f) => ({ value: f.id, label: f.label, title: f.id === "opciones" ? "Elige la canción entre cuatro" : "Escribe el título" }))}
+                options={FORMATS.map((f) => ({
+                  value: f.id,
+                  label: f.label,
+                  title: f.id === "opciones" ? "Elige entre cuatro opciones" : lyricsOnly ? "Escribe lo que falta" : "Escribe el título",
+                }))}
                 value={formats}
                 onChange={toggleFormat}
                 onSetAll={(list) => save({ formats: list })}

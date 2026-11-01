@@ -15,6 +15,7 @@ import "../../styles/quiz.css";
 import "../../styles/mines.css";
 import { PauseButton, ReportButton, SkipButton, PauseVeil } from "../../components/home/PauseControls.jsx";
 import { resolveCode } from "../../lib/hiddenCode.js";
+import { MatchBar, MatchCard, MatchQuestion } from "../../components/home/MatchFrame.jsx";
 
 const COUNTDOWN_MS = 3000;
 const CELLS = 25;
@@ -361,7 +362,7 @@ function GameScreen() {
       {isHost && (
         <button
           type="button"
-          className={`tv-mini-btn${confirmHub ? " is-on" : ""}`}
+          className={`tv-mini-btn tv-end-btn${confirmHub ? " is-on" : ""}`}
           onClick={backToHub}
         >
           {confirmHub ? "¿Seguro? Toca otra vez" : "Terminar"}
@@ -378,7 +379,7 @@ function GameScreen() {
   );
 
   return (
-    <div className={`tv-room tv-game tv-mines${central ? " is-central" : ""}${controller ? " is-controller" : ""}`}>
+    <div className={`tv-room tv-game tv-match tv-mines${central ? " is-central" : ""}${controller ? " is-controller" : ""}`}>
       <div ref={frameRef} className="tv-room-main tv-game-main tv-mines-frame">
         {spectator && <SpectatorBanner />}
         {/* The top card, like the one of Encuentra el país: the round, the topic and its difficulty; the prompt; and
@@ -389,36 +390,22 @@ function GameScreen() {
             {tools}
           </ControllerBar>
         ) : (
-          <section className="tv-game-top">
-            <div className="tv-game-round tv-mines-find">
-              <p className="tv-mono-label">
-                {tiebreak ? `Desempate${tiebreak.round > 1 ? ` ${tiebreak.round}` : ""}` : `Ronda ${round + 1} de ${room.totalRounds}`}
-                {question ? ` · ${question.category} · ${level.label}` : " · Campo de minas"}
-              </p>
-              <h1 key={round} className={`tv-card-title tv-mines-prompt${question?.prompt?.length > 40 ? " is-long" : ""}`}>
-                {question?.prompt || "Prepárate…"}
-              </h1>
-              {hintLine}
-            </div>
-
-            <div className={`tv-clock${urgent ? " is-urgent" : ""}`} role="timer" aria-label={`${seconds} segundos`}>
-              <svg viewBox="0 0 44 44" aria-hidden="true">
-                <circle className="tv-clock-track" cx="22" cy="22" r="19" />
-                <circle className="tv-clock-fill" cx="22" cy="22" r="19" style={{ strokeDashoffset: 119.4 * (1 - pct / 100) }} />
-              </svg>
-              <span key={seconds} className="tv-clock-num">{seconds}</span>
-            </div>
-
-            <div className="tv-game-tools">{tools}</div>
-
-            <div className="tv-timer" aria-hidden="true">
-              <span className={`tv-timer-fill${urgent ? " is-urgent" : ""}`} style={{ width: `${pct}%` }} />
-            </div>
-          </section>
+          <MatchCard
+            room={room}
+            size="s"
+            label={tiebreak ? `Desempate${tiebreak.round > 1 ? ` ${tiebreak.round}` : ""}` : "Carrera"}
+            icon="bomb"
+            dir={phase === "playing" && !tiebreak && !me?.out ? "Toca todas las casillas que cumplen · 100 por acierto, una mina y quedas fuera" : hint}
+            seconds={seconds}
+            pct={pct}
+            urgent={urgent}
+          >
+            <MatchQuestion>{question?.prompt || "Prepárate…"}</MatchQuestion>
+          </MatchCard>
         )}
 
         {question ? (
-          <section key={round} className="tv-game-stage tv-mines-stage">
+          <section key={round} className="tv-game-stage tv-mines-stage tv-mpanel">
             <PauseVeil room={room} isHost={isHost} />
             {/* One row over the board, always there: the board's counters, which only update (how this player's round
                 went shows over the board). On a phone beside the central device it says what to do now instead: the
@@ -548,7 +535,22 @@ function GameScreen() {
       </div>
 
       {/* The scoreboard is the central device's, when there is one. */}
-      {!controller && <PartyPanel room={room} scores display={central} onToast={setErr} />}
+      {!controller && (
+        <PartyPanel
+          room={room}
+          scores
+          display={central}
+          onToast={setErr}
+          status={phase === "playing" ? `Siguen ${standing.length}/${room.players.filter((p) => !p.spectator).length}` : undefined}
+        />
+      )}
+      {!controller && !central && <MatchBar
+          room={room}
+          viewerId={viewerId}
+          tools={tools}
+          verb="elegir"
+          line={phase === "playing" && fallen.length ? `${fallen[fallen.length - 1].name} quedó fuera de esta ronda` : undefined}
+        />}
     </div>
   );
 }

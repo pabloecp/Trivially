@@ -1,4 +1,4 @@
-// No links in what players write for others to see (names and the chat), so nobody can send people to another page.
+// No links in what players write for others to see (names), so nobody can send people to another page.
 // A link is an address with its scheme ("https://…", "ftp://…"), one starting with "www.", or a name followed by a
 // known ending ("algo.com", "bit.ly/x", "discord.gg/abc"), also written with spaces or brackets around the dot
 // ("algo . com", "algo[.]com") or the dot in words ("algo punto com"). Only the endings in TLDS count, so "Sr.Pérez" or
@@ -28,5 +28,4 @@ export function hasLink(text) {
   return SCHEME.test(s) || WWW.test(s) || DOMAIN.test(s) || SPACED.test(s);
 }
 
-export const CHAT_LINK_ERROR = "No se pueden enviar enlaces en el chat";
 export const NAME_LINK_ERROR = "El nombre no puede llevar enlaces";

@@ -1,18 +1,22 @@
-import { createContext, useContext, useLayoutEffect, useState } from "react";
+import { createContext, useContext, useEffect, useLayoutEffect, useState } from "react";
 import { useApp } from "../../lib/store.jsx";
 import { findMode } from "../../modes/index.js";
 import Icon from "./Icon.jsx";
 import Modal from "./Modal.jsx";
 
-// The game's settings, hidden behind a summary: under the game's card, one line of what's chosen ("5 rondas · 15 s ·
-// Todas las categorías", the notes of its tabs, SettingsTabs) and "Ajustes", which opens them in a panel ("Ajustes de
-// Trivia") with "Restablecer" (back to a new room's) and "Listo" at the bottom. Each mode puts its own settings (and
-// any warning) inside. Players who can't change them still open them to look ("Los elige Ana"). With "Gente de todas
-// partes" the public match has its own settings, so there's nothing to show.
+// The game's settings, hidden behind a summary: at the bottom of the game's card (`card`, given `{ summary, onOpen }`
+// for ModeStage's `settings`), one line of what's chosen ("5 rondas · 15 s · Todas las categorías", the notes of its
+// tabs, SettingsTabs) and "Ajustes", which opens them in a panel ("Ajustes de Trivia") with "Restablecer" (back to a
+// new room's) and "Listo" at the bottom. Each mode puts its own settings (and any warning) inside. Players who can't
+// change them still open them to look ("Los elige Ana"). A public match's can't be changed: its card only says them.
 // `inline` keeps the old card beside the game's (the playlist, whose games each have their settings): a title, who
 // chooses, `actions` at the end of the title's row, and the settings under it.
 const SummaryContext = createContext(null);
 const StackedContext = createContext(false);
+
+/** `{ open, done }`: "Ajustes" was tapped on Inicio before the private match existed (HomeFrame), so the match's
+ *  settings open as soon as it shows. */
+export const OpenSettingsContext = createContext(null);
 
 /** SettingsTabs sends its tabs' notes here, so the summary line shows them with the panel closed. */
 export function useSettingsSummary(text) {
@@ -22,15 +26,22 @@ export function useSettingsSummary(text) {
   }, [set, text]);
 }
 
-/** In the "Ajustes de …" panel the tabs' settings go one after another, the tabs on top jumping to each (SettingsTabs). */
+/** Kept for SettingsTabs' stacked mode (every tab one after another), which the "Ajustes de …" panel no longer uses: it shows one tab at a time. */
 export const useSettingsStacked = () => useContext(StackedContext);
 
-export default function SettingsPanel({ room, readOnly = false, actions = null, inline = false, children }) {
+export default function SettingsPanel({ room, readOnly = false, actions = null, inline = false, card = null, children }) {
   const { resetConfig } = useApp();
   const [open, setOpen] = useState(false);
   const [summary, setSummary] = useState("");
   const [busy, setBusy] = useState(false);
   const mode = findMode(room.game);
+  const openAsked = useContext(OpenSettingsContext);
+
+  useEffect(() => {
+    if (inline || !openAsked?.open) return;
+    openAsked.done();
+    setOpen(true);
+  }, [openAsked?.open]);
 
   if (inline) {
     return (
@@ -60,36 +71,30 @@ export default function SettingsPanel({ room, readOnly = false, actions = null, 
 
   return (
     <SummaryContext.Provider value={setSummary}>
-      <div className="tv-setsum">
-        <p className="tv-setsum-text">{summary}</p>
-        <button type="button" className="tv-btn tv-btn--neutral tv-btn--sm" aria-haspopup="dialog" onClick={() => setOpen(true)}>
-          <Icon name="settings" size={17} strokeWidth={2.6} />
-          Ajustes
-        </button>
-      </div>
+      {card?.({ summary, onOpen: () => setOpen(true) })}
       <Modal
         open={open}
         keep
         onClose={() => setOpen(false)}
         title={`Ajustes de ${mode?.name || "la partida"}`}
         size="lg"
-        className="tv-settings-modal"
+        className={`tv-settings-modal tv-c-${mode?.color || "neutral"}`}
         foot={
           <>
             {readOnly ? (
               <span className="tv-settings-who">Los elige {room.hostName || "el anfitrión"}</span>
             ) : (
-              <button type="button" className="tv-btn tv-btn--neutral" disabled={busy || !room.settingsChanged} onClick={reset}>
-                Restablecer
+              <button type="button" className="tv-iconbtn tv-settings-reset" aria-label="Restablecer los ajustes" title="Restablecer los ajustes" disabled={busy || !room.settingsChanged} onClick={reset}>
+                <Icon name="reset" size={20} strokeWidth={2.6} />
               </button>
             )}
-            <button type="button" className="tv-btn tv-btn--primary tv-btn--lg" onClick={() => setOpen(false)}>
+            <button type="button" className="tv-btn tv-btn--primary tv-btn--lg tv-settings-done" onClick={() => setOpen(false)}>
               Listo
             </button>
           </>
         }
       >
-        <StackedContext.Provider value>{children}</StackedContext.Provider>
+        <StackedContext.Provider value={false}>{children}</StackedContext.Provider>
       </Modal>
     </SummaryContext.Provider>
   );

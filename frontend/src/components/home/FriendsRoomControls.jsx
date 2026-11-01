@@ -10,7 +10,7 @@ const MODES = [
   { value: "invitacion", label: "Solo invitación", hint: "Solo con el código" },
 ];
 
-// In "Tu grupo", for its leader (when their account has friends): one line, "Tus amigos pueden: Pedir entrar ▾", whose
+// In "Tu sala", for its leader (when their account has friends): one line, "Tus amigos pueden: Pedir entrar ▾", whose
 // menu changes what their friends can do from the friends tab (join the group straight away, ask to join, or only by
 // invitation), and the friends who are asking, to let in or turn down. It's set once and rarely touched, so it takes
 // little room.

@@ -1,67 +1,425 @@
+import { useContext, useState } from "react";
+import GuestFriends from "./GuestFriends.jsx";
+import { JoinField, OpenSalaContext, SalaJoinContext, useNarrow } from "./GroupBar.jsx";
 import { isGameTile } from "../../modes/index.js";
 import { audienceName } from "../../lib/plan.js";
+import { eloIn, formatElo, gameStats } from "../../lib/gameStats.js";
+import { useApp } from "../../lib/store.jsx";
+import { useFriends } from "../../lib/friends.jsx";
+import { shownCode, useHiddenCode } from "../../lib/hiddenCode.js";
 import AppIcon from "./AppIcon.jsx";
+import Avatar from "./Avatar.jsx";
+import Blob from "./Blob.jsx";
+import { blobColor } from "../../lib/blobColors.js";
 import Icon from "./Icon.jsx";
-import { publicFacts } from "./matchInfo.js";
+import { statusOf } from "./FriendsSheet.jsx";
+import { useInvite } from "./useInvite.js";
 
-// The game's big card, in the middle of Inicio and of a private match's lobby, in the game's colour (flat: nothing on
-// it is tapped): its icon on a white square, beside it who it's for ("Partida pública", only for a public match), its
-// name big, and three rows of how it goes (the game's `steps`; for a public match, how it's matched and how long it is),
-// with the icon again huge and faint in the bottom right corner. `room` gives who it's for (a public match, or a private
-// one); `audience` says it without a room (Inicio). `title`, `steps` and `tag` replace the game's own ("Buscando jugadores de Trivia…").
-// `extra` goes beside the icon, `children` under the rows.
-// A Clásico (Normal or Extendido) looks like the site's logo: dark with the logo's rainbow frame and the logo itself in
-// place of the game's icon, its name with its length ("3 juegos") at the top.
+// The stage in the middle of Inicio and of a private match's lobby: the game's card in its colour, and beside it your
+// boxes.
+//  - The card: the game's icon and, in one row beside it, who the match is for ("Partida pública" or "Partida
+//    privada") over the game's name (always one line); under them three short lines: how it's played (the game's
+//    tagline), the match's settings (`settings.summary`, a private match's only once they're its own) and, last, how
+//    many are playing the game now; in a private match that last line is the "Ajustes" button (`settings.onOpen`) or
+//    who chooses them (`settings.note`). The search for a public match has its rows of how it goes there instead (`steps`:
+//    "1:04 buscando"…). The game's icon, big and faint, is cut by the corner.
+//  - `empty`: no game chosen yet (Inicio on a new device). The card is grey with the logo, "Elige un juego", what there
+//    is and the screen's yellow button, "Elegir juego" (`onChoose`).
+//  - Beside it: for a game, "Tu elo" with your character (Blob, white with a black line) in its empty side and the
+//    "Reto del día" (gameStats: example numbers until those systems exist); always "Amigos en línea" under them. With a
+//    sala (a group) the challenge gives its place to the sala's code (with "Copiar") and the friends to who's in it.
+// `room` gives who it's for (a public match, or a private one); `audience` says it without a room (Inicio). `title`
+// replaces the game's name. `extra` goes after the name, `children` at the end of
+// the card. A Clásico (Normal or Extendido) looks like the site's logo: dark with the logo's rainbow frame and the logo
+// in place of the game's icon. "Elige un juego" is the card alone, with no lines.
 // A light sweeps across the card once it's in. `swapKey`: each time it changes the card plays its swap, the light
-// sweeping across it again while its icon, name and rows come in anew.
-export default function ModeStage({ mode, room = null, audience = null, title = null, steps = null, tag = undefined, extra = null, swapKey = null, children }) {
+// sweeping across it again while its lines come in anew.
+const AUDIENCE_ICONS = { publica: "globe", grupo: "lock" };
+
+export default function ModeStage({ mode, room = null, audience = null, title = null, steps = null, extra = null, settings = null, swapKey = null, empty = false, onChoose = null, children }) {
+  if (empty) return <ChooseStage onChoose={onChoose} />;
   const classic = mode.kind === "classic";
-  const who = audience || (room?.matchmaking ? "publica" : null);
-  const isPublic = who === "publica" && isGameTile(mode);
-  const rows = steps || (isPublic ? publicFacts(mode) : mode.steps || []);
-  const label = tag !== undefined ? tag : isPublic ? audienceName("publica") : null;
-  const key = swapKey ?? `${mode.id}:${isPublic}`;
+  const who = audience || (room ? (room.matchmaking ? "publica" : "grupo") : null);
+  const key = swapKey ?? `${mode.id}:${who}`;
+  const stats = isGameTile(mode) ? gameStats(mode.id) : null;
+  const name = title || mode.name;
+  const how = mode.tagline || mode.subtitle;
+
   return (
-    <section className={`tv-mstage ${classic ? "is-classic" : `tv-c-${mode.color}`}${swapKey != null ? " has-swap" : ""}`} aria-label={mode.name}>
-      <span key={`flash-${key}`} className="tv-mstage-flash" aria-hidden="true" />
-      {classic ? (
-        <span className="tv-mstage-logo" aria-hidden="true">
-          <AppIcon small />
-        </span>
-      ) : (
-        <Icon key={`mark-${key}`} name={mode.icon} size={360} strokeWidth={1.2} className="tv-mstage-watermark" />
-      )}
-      <div key={`head-${key}`} className="tv-mstage-head">
+    <section className={`tv-stage${stats || classic ? " has-aside" : ""}`} aria-label={mode.name}>
+      <div className={`tv-stage-card ${classic ? "is-classic" : `tv-c-${mode.color}`}${swapKey != null ? " has-swap" : ""}`}>
+        <span key={`flash-${key}`} className="tv-mstage-flash" aria-hidden="true" />
         {!classic && (
-          <div className="tv-mstage-badges">
-            <span className="tv-mstage-badge">
-              <Icon name={mode.icon} size={30} strokeWidth={2.2} />
-            </span>
-            {label && (
-              <span className="tv-mstage-tag">
-                <Icon name="globe" size={16} strokeWidth={2.6} />
-                {label}
-              </span>
-            )}
-            {extra}
-          </div>
+          <span className="tv-stage-mark" aria-hidden="true">
+            <Icon name={mode.icon} size={300} strokeWidth={2} />
+          </span>
         )}
-        <h2 className="tv-mstage-name">{title || mode.name}</h2>
-        {classic && <p className="tv-mstage-sub">{mode.subtitle}</p>}
-      </div>
-      <div className="tv-mstage-foot">
-        <ol key={`steps-${key}`} className="tv-mstage-steps" aria-label="Cómo se juega">
-          {rows.map((step, i) => (
-            <li key={step.text} className="tv-mstage-step" style={{ "--i": i }}>
-              <span className="tv-mstage-step-icon">
-                <Icon name={step.icon} size={18} strokeWidth={2.4} />
-              </span>
-              {step.text}
-            </li>
-          ))}
-        </ol>
+
+        <div key={name} className="tv-stage-head">
+          {classic ? (
+            <span className="tv-stage-logo" aria-hidden="true">
+              <AppIcon small />
+            </span>
+          ) : (
+            <span className="tv-stage-badge">
+              <Icon name={mode.icon} size={34} strokeWidth={2.2} />
+            </span>
+          )}
+          <div className="tv-stage-heading">
+            {who && (
+              <p className="tv-stage-aud">
+                <Icon name={AUDIENCE_ICONS[who]} size={16} strokeWidth={2.6} />
+                {audienceName(who)}
+              </p>
+            )}
+            <h2 className={`tv-stage-name${title ? " is-long" : ""}`}>{name}</h2>
+          </div>
+          {extra}
+        </div>
+        {mode.description && (
+          <p key={`intro-${key}`} className="tv-stage-intro">
+            {mode.description}
+          </p>
+        )}
+
+        <div className="tv-stage-bottom">
+        <ul key={`lines-${key}`} className="tv-stage-lines">
+          {steps ? (
+            steps.map((step, i) => (
+              <li key={i} style={{ "--i": i }}>
+                <span className="tv-stage-line-icon">
+                  <Icon name={step.icon} size={20} strokeWidth={2.4} />
+                </span>
+                {step.text}
+              </li>
+            ))
+          ) : (
+            <>
+              {how && (
+                <li style={{ "--i": 0 }}>
+                  <span className="tv-stage-line-icon">
+                    <Icon name={classic ? "star" : mode.icon} size={20} strokeWidth={2.4} />
+                  </span>
+                  {how}
+                </li>
+              )}
+              {settings?.summary && (
+                <li style={{ "--i": 1 }}>
+                  <span className="tv-stage-line-icon">
+                    <Icon name="sliders" size={20} strokeWidth={2.4} />
+                  </span>
+                  <span className="tv-stage-line-text">{settings.summary}</span>
+                </li>
+              )}
+              {settings?.onOpen ? (
+                // A private match: its settings, where a public one says how many are playing.
+                <li style={{ "--i": 2 }}>
+                  <button type="button" className="tv-stage-settings" aria-haspopup="dialog" disabled={settings.disabled} onClick={settings.onOpen}>
+                    <Icon name="sliders" size={18} strokeWidth={2.4} />
+                    Ajustes
+                  </button>
+                </li>
+              ) : settings?.note ? (
+                <li style={{ "--i": 2 }}>
+                  <span className="tv-stage-line-icon">
+                    <Icon name="lock" size={18} strokeWidth={2.6} />
+                  </span>
+                  {settings.note}
+                </li>
+              ) : stats && (
+                <li style={{ "--i": 2 }}>
+                  <span className="tv-stage-line-icon">
+                    <span className="tv-stage-live" aria-hidden="true" />
+                  </span>
+                  <span>
+                    <b>{stats.online.toLocaleString("es-ES")}</b> jugando ahora
+                  </span>
+                </li>
+              )}
+            </>
+          )}
+        </ul>
+        </div>
         {children}
       </div>
+
+      {/* The Clásico has the same boxes as a game: its elo is the general one. */}
+      {classic ? <Boxes game="clasico" gameName={mode.name} color="neutral" stats={gameStats("clasico")} /> : stats && <Boxes game={mode.id} gameName={mode.name} color={mode.color} stats={stats} />}
     </section>
+  );
+}
+
+// No game chosen yet: the grey card with the logo, what there is, and "Elegir juego" (the screen's yellow button: JUGAR
+// stays grey until a game is chosen). Beside it the same boxes, with the general (Clásico) elo and challenge.
+const CHOOSE_LINES = [
+  { icon: "grid", text: "Trivia, música, mapas, minas y más" },
+  { icon: "users", text: "Solo o en sala, hasta 10 jugadores" },
+  { icon: "globe", text: "Partida pública o privada" },
+];
+function ChooseStage({ onChoose }) {
+  return (
+    <section className="tv-stage has-aside" aria-label="Elige un juego">
+      <div className="tv-stage-card tv-c-neutral is-choose">
+        <span className="tv-stage-mark" aria-hidden="true">
+          <Icon name="grid" size={300} strokeWidth={2} />
+        </span>
+        <div className="tv-stage-head">
+          <span className="tv-stage-logo" aria-hidden="true">
+            <AppIcon small />
+          </span>
+          <div className="tv-stage-heading">
+            <p className="tv-stage-aud is-quiet">Aún no has elegido</p>
+            <h2 className="tv-stage-name">Elige un juego</h2>
+          </div>
+        </div>
+        <p className="tv-stage-intro">Ocho juegos y el Clásico. Al elegir uno se crea tu sala y ya puedes invitar a tus amigos.</p>
+        <div className="tv-stage-bottom tv-stage-choose-row">
+          <ul className="tv-stage-lines">
+            {CHOOSE_LINES.map((line, i) => (
+              <li key={line.text} style={{ "--i": i }}>
+                <span className="tv-stage-line-icon">
+                  <Icon name={line.icon} size={20} strokeWidth={2.4} />
+                </span>
+                {line.text}
+              </li>
+            ))}
+          </ul>
+          <button type="button" className="tv-btn tv-btn--primary tv-btn--lg tv-stage-choose" aria-haspopup="dialog" onClick={onChoose}>
+            <Icon name="grid" size={20} strokeWidth={2.6} />
+            Elegir juego
+          </button>
+        </div>
+      </div>
+      {/* Your general elo and challenge (the Clásico's), and your friends. */}
+      <Boxes game="clasico" gameName="Clásico" color="neutral" stats={gameStats("clasico")} />
+    </section>
+  );
+}
+
+// "Amigos en línea": up to three friends who are online, where each one is, and what you can do: "Unirme" to a friend's
+// open group, or "Invitar" them to yours. Without an account, how to have friends.
+function FriendsBox() {
+  const friends = useFriends();
+  const { group } = useApp();
+  const [busy, setBusy] = useState("");
+  const online = (friends.view?.friends || []).filter((f) => f.online).slice(0, 3);
+
+  async function act(friend, fn) {
+    setBusy(friend.id);
+    try {
+      await fn(friend.id);
+    } catch (err) {
+      friends.say(err.message || "No se pudo, inténtalo otra vez", "lock");
+    } finally {
+      setBusy("");
+    }
+  }
+
+  return (
+    <div className="tv-stage-box tv-stage-friends">
+      <span className="tv-stage-label">{group ? "Invita a tu sala" : "Amigos en línea"}</span>
+      {!friends.isAccount ? (
+        <GuestFriends />
+      ) : online.length === 0 ? (
+        <p className="tv-stage-friends-empty">Ninguno de tus amigos está en línea ahora.</p>
+      ) : (
+        <ul className="tv-stage-friends-list">
+          {online.map((friend) => {
+            const canJoin = friend.room && friend.room.group !== false && friend.room.joinMode === "abierta";
+            return (
+              <li key={friend.id}>
+                <Avatar className="tv-avatar--sm" />
+                <span className="tv-stage-friends-text">
+                  <b>{friend.name}</b>
+                  <span>{statusOf(friend)}</span>
+                </span>
+                {canJoin ? (
+                  <button type="button" className="tv-stage-friends-act" disabled={busy === friend.id} onClick={() => act(friend, friends.joinFriend)}>
+                    Unirme
+                  </button>
+                ) : group ? (
+                  <button type="button" className="tv-stage-friends-act" disabled={busy === friend.id} onClick={() => act(friend, friends.inviteFriend)}>
+                    Invitar
+                  </button>
+                ) : null}
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+// "Reto del día": today's challenge, with how far it is and how many you have completed in all (the server's, game/daily.js).
+// Guests have none.
+function DailyBox({ daily }) {
+  // No account, no challenges (the friends' box has the way in).
+  if (!daily) {
+    return (
+      <div className="tv-stage-box tv-stage-daily">
+        <span className="tv-stage-label">Reto del día</span>
+        <p className="tv-stage-friends-empty">Con una cuenta tienes un reto distinto cada día y llevas la cuenta de los que completas.</p>
+      </div>
+    );
+  }
+  const done = Boolean(daily?.done);
+  const target = daily?.target || 1;
+  const progress = Math.min(target, daily?.progress || 0);
+  return (
+    <div className={`tv-stage-box tv-stage-daily${done ? " is-done" : ""}`}>
+      <div className="tv-stage-daily-row">
+        <span className="tv-stage-daily-icon">
+          <Icon name={done ? "check" : "flame"} size={20} strokeWidth={2.4} />
+        </span>
+        <div className="tv-stage-daily-text">
+          <span className="tv-stage-label">Reto del día</span>
+          <strong>{daily.goal}</strong>
+        </div>
+        <span className="tv-stage-daily-count">
+          {formatElo(progress)}/{formatElo(target)}
+        </span>
+      </div>
+      <span className="tv-stage-daily-bar" role="progressbar" aria-valuemin={0} aria-valuemax={target} aria-valuenow={progress} aria-label="Avance del reto">
+        <i style={{ width: `${Math.round((progress / target) * 100)}%` }} />
+      </span>
+    </div>
+  );
+}
+
+// Without a sala: the same box as "Código de la sala", but to write a friend's code and join theirs ("Unirse"), with the
+// eye that hides codes beside its title (a game chosen makes yours).
+function JoinBox({ join }) {
+  const [codeHidden, toggleCode] = useHiddenCode();
+  return (
+    <div className="tv-stage-box tv-stage-code tv-stage-join">
+      <div className="tv-codebox-head">
+        <span className="tv-stage-label">Código de la sala</span>
+        <button
+          type="button"
+          className={`tv-codebox-eye${codeHidden ? " is-on" : ""}`}
+          onClick={toggleCode}
+          aria-pressed={codeHidden}
+          aria-label={codeHidden ? "Mostrar el código" : "Ocultar el código"}
+          title={codeHidden ? "Mostrar el código" : "Ocultar el código"}
+        >
+          <Icon name={codeHidden ? "eye-off" : "eye"} size={16} strokeWidth={2.6} />
+        </button>
+      </div>
+      <JoinField onJoin={join.onJoin} onEdit={join.onEdit} disabled={join.disabled} invalid={join.invalid} eye={false} example="YOAVH" />
+    </div>
+  );
+}
+
+// "Código de la sala": your sala's code, big, with "Copiar" (dots while codes are hidden, for streaming).
+function SalaCodeBox({ code }) {
+  const [codeHidden, toggleCode] = useHiddenCode();
+  const { copied, copy } = useInvite(code);
+  return (
+    <div className="tv-stage-box tv-stage-code">
+      <div className="tv-codebox-head">
+        <span className="tv-stage-label">Código de la sala</span>
+        {/* Hides the code on this device's screens, for streaming. */}
+        <button
+          type="button"
+          className={`tv-codebox-eye${codeHidden ? " is-on" : ""}`}
+          onClick={toggleCode}
+          aria-pressed={codeHidden}
+          aria-label={codeHidden ? "Mostrar el código" : "Ocultar el código"}
+          title={codeHidden ? "Mostrar el código" : "Ocultar el código"}
+        >
+          <Icon name={codeHidden ? "eye-off" : "eye"} size={16} strokeWidth={2.6} />
+        </button>
+      </div>
+      <div className="tv-stage-code-row">
+        <strong className="tv-stage-code-text" aria-label="Código de la sala">
+          {shownCode(code, codeHidden)}
+        </strong>
+        <button type="button" className="tv-stage-friends-act tv-stage-code-copy" aria-label={copied ? "Enlace copiado" : "Copiar enlace de la sala"} title={copied ? "Copiado" : "Copiar enlace"} onClick={copy}>
+          <Icon name={copied ? "check" : "link"} size={24} strokeWidth={2.6} />
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// "En tu sala": who's in it, one flat box each like the match's scoreboard (yours with the yellow ring, never a "tú"),
+// you first, the leader marked, dimmed whoever isn't with the sala right now.
+function SalaMembersBox({ group, meId }) {
+  const members = group.members;
+  // A tap on any row opens "Tu sala", where you invite (HomeFrame's OpenSalaContext).
+  const openSala = useContext(OpenSalaContext);
+  return (
+    <div className="tv-stage-box tv-stage-friends tv-stage-members">
+      <span className="tv-stage-label">En tu sala · {members.length}</span>
+      {/* The same rows as "Tu sala" (GroupSheet), without the crown. */}
+      <ul className="tv-party-players" aria-label="Jugadores de la sala">
+        {members.map((m) => {
+          const leads = m.id === group.leaderId;
+          const tag = !m.connected ? "Reconectando…" : !m.here ? "En otra partida" : leads ? "Líder" : "En la sala";
+          return (
+            <li key={m.id} className={`tv-player${m.id === meId ? " is-me" : ""}${m.connected && m.here ? "" : " is-away"}`}>
+              <button type="button" className="tv-player-btn" aria-haspopup="dialog" onClick={openSala || undefined} disabled={!openSala}>
+                <Avatar name={m.name} avatar={m.avatar} mood="neutral" />
+                <span className="tv-player-text">
+                  <span className="tv-player-name">{m.name}</span>
+                  <span className={`tv-player-tag${leads ? " is-host" : ""}`}>{tag}</span>
+                </span>
+              </button>
+            </li>
+          );
+        })}
+      </ul>
+    </div>
+  );
+}
+
+// Beside the card: your elo in the game, with your character in the box's empty side, the day's challenge, and your
+// friends online; with a sala, its code and who's in it instead of those two.
+function Boxes({ game, gameName = "", color, stats: example }) {
+  const { user, group } = useApp();
+  // Inicio without a sala, on wide screens: the way into a friend's sala takes this place (today's challenge goes down to
+  // the bar). On phones it is in the top bar, so the challenge stays here.
+  const join = useContext(SalaJoinContext);
+  const phone = useNarrow();
+  // The elo is yours, from the server; the week's change isn't tracked yet, so it isn't shown.
+  const stats = { ...example, elo: eloIn(user, game), week: 0 };
+  return (
+    <div key={game} className={`tv-stage-aside tv-c-${color}`}>
+      <div className="tv-stage-box tv-stage-elo">
+        <div className="tv-stage-elo-text">
+          <span className="tv-stage-label">
+            {gameName ? (
+              <>
+                Elo en
+                <br />
+                {gameName}
+              </>
+            ) : (
+              "Tu elo"
+            )}
+          </span>
+          <strong className="tv-stage-elo-num">{formatElo(stats.elo)}</strong>
+          {stats.week !== 0 && (
+            <span className={`tv-stage-elo-week${stats.week < 0 ? " is-down" : ""}`}>
+              {stats.week > 0 ? "+" : "−"}
+              {Math.abs(stats.week)} esta semana
+            </span>
+          )}
+        </div>
+        {/* Your character: "Blob". */}
+        <Blob className="tv-stage-blob" color={blobColor(user?.avatar)} mood="neutral" />
+      </div>
+
+      {group ? (
+        <SalaCodeBox code={group.code} />
+      ) : join && !phone ? (
+        <JoinBox join={join} />
+      ) : (
+        <DailyBox daily={user?.daily} />
+      )}
+
+      {group ? <SalaMembersBox group={group} meId={user?.id} /> : <FriendsBox />}
+    </div>
   );
 }

@@ -12,16 +12,17 @@ import MatchIntro from "../components/home/MatchIntro.jsx";
 import PartyPanel from "../components/home/PartyPanel.jsx";
 import PlaySheet from "../components/home/PlaySheet.jsx";
 import "../styles/home.css";
-import { resolveCode } from "../lib/hiddenCode.js";
+import { resolveCode, resolveGroupCode, tabGroupCode } from "../lib/hiddenCode.js";
 
-// How a choice of the menu reads in a sentence: "Trivia", "Clásico normal", or "una playlist" (it isn't a game).
-const choiceName = (mode) => (mode?.kind === "playlist" ? "una playlist" : mode?.fullName || mode?.name || "un juego");
+// How a choice of the menu reads in a sentence: "Trivia", "Clásico normal".
+const choiceName = (mode) => mode?.fullName || mode?.name || "un juego";
 
 // The old pages of "¿Cómo quieres jugar?" (/jugar/casual, /jugar/privada…) are Inicio now, on the side they named.
 const OPTION_AUDIENCE = { casual: "publica", competitivo: "publica", privada: "grupo" };
 
-// Inicio and the room's screen (/ and /sala/CODE; /grupo/CODE is a group's invite link). Inicio, a private match while
-// it waits and the search for a public match are the same frame (HomeFrame): the game's card in the middle and the
+// Inicio and the room's screen (/, or your sala's /sala/CODE while you have one, also while a room waits, and
+// /partida/CODE while a public match or a Clásico plays; another group's /sala/CODE is its invite link). Inicio, a private match while it waits and the search for a public match are
+// the same frame (HomeFrame): the game's card in the middle and the
 // group's bar at the bottom. Before each game of a public match or a Clásico, its roulette and tutorial (MatchIntro)
 // take the card's place beside the scoreboard. The room's central device shows its own big waiting screen
 // (CentralLobby).
@@ -65,7 +66,7 @@ export default function Home() {
     // A public match has no host: its games come from the roulette, which says so itself.
     if (picked && !isHost && !room.matchmaking) {
       const host = room.hostName || "El anfitrión";
-      showToast(picked.kind === "playlist" ? `${host} está preparando una playlist` : `${host} eligió ${choiceName(picked)}`, "play");
+      showToast(`${host} eligió ${choiceName(picked)}`, "play");
     }
   }, [game, room?.code]);
 
@@ -78,7 +79,7 @@ export default function Home() {
       const key = `${r.userId}:${r.at}`;
       if (askedBefore.current.has(key)) continue;
       askedBefore.current.add(key);
-      showToast(`${r.name} quiere unirse a tu grupo`, "users");
+      showToast(`${r.name} quiere unirse a tu sala`, "users");
     }
   }, [group?.joinRequests, isLeader]);
 
@@ -99,27 +100,30 @@ export default function Home() {
     if (inviteCode) nav("/", { replace: true });
   }, [inviteCode, nav]);
 
-  // A group's invite link (/grupo/CODE) joins it straight away (and goes where it is), asking for a name first if we
-  // don't have one. Then the address is Inicio's (or the group's match's, RoomNavigator).
-  const groupInvite = groupParam?.toUpperCase();
+  // A group's invite link (/sala/CODE) joins it straight away (and goes where it is), asking for a name first if we
+  // don't have one. Then the address is Inicio's, now the group's own (or the group's match's, RoomNavigator).
+  const groupInvite = resolveGroupCode(groupParam, group)?.toUpperCase();
   useEffect(() => {
-    if (!groupInvite || askName) return;
-    if (group?.code === groupInvite) {
+    if (!groupParam || askName) return;
+    // "oculta" with no sala in this tab: nothing to join.
+    if (!groupInvite) {
       nav("/", { replace: true });
       return;
     }
+    // Your own sala's address (Inicio while you have one, or a reload, whose rejoin brings the sala back).
+    if (tabGroupCode(group) === groupInvite) return;
     if (!user?.name) {
       setAskName(true);
       return;
     }
     joinGroup(groupInvite)
-      .then(() => showToast("Entraste al grupo", "users"))
-      .catch((err) => !err.offer && showToast(err.message || "No pudimos entrar a ese grupo"))
+      .then(() => showToast("Entraste a la sala", "users"))
+      .catch((err) => !err.offer && showToast(err.message || "No pudimos entrar a esa sala"))
       .finally(() => nav("/", { replace: true }));
   }, [groupInvite, user?.name, askName]);
 
-  // A match's address (/sala/XOTRIV: a reload, the central device) joins it straight away, asking for a name first if
-  // we don't have one.
+  // A match's address (/partida/XOTRIV: an older link, a reload during a public match) joins it straight away, asking for a
+  // name first if we don't have one.
   useEffect(() => {
     if (!inviteCode || room?.code === inviteCode || sheetOpen) return;
     if (!user?.name) {
@@ -129,7 +133,7 @@ export default function Home() {
     }
     joinRoom(inviteCode).catch((err) => {
       // Already playing in it from another device: CentralOffer asks whether this one is its central device.
-      if (!err.offer) showToast(err.message || "No pudimos entrar a ese grupo");
+      if (!err.offer) showToast(err.message || "No pudimos entrar a esa sala");
       nav("/", { replace: true });
     });
   }, [inviteCode, user?.name]);
@@ -155,7 +159,7 @@ export default function Home() {
           intro ? <MatchIntro room={room} /> : <CentralLobby room={room} />
         ) : intro ? (
           // Before each game of a public match or a Clásico: the roulette and how it's played, beside the scoreboard.
-          <div className="tv-room">
+          <div className="tv-room is-intro">
             <div className="tv-room-main">
               <MatchIntro room={room} />
             </div>

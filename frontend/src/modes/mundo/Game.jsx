@@ -16,6 +16,7 @@ import "../../styles/home.css";
 import "../../styles/geo.css";
 import { PauseButton, ReportButton, SkipButton, PauseVeil } from "../../components/home/PauseControls.jsx";
 import { resolveCode } from "../../lib/hiddenCode.js";
+import { MatchBar, MatchCard, MatchQuestion } from "../../components/home/MatchFrame.jsx";
 
 const COUNTDOWN_MS = 3000;
 // One colour per player for the pins on the reveal map (never the green and red of right and wrong).
@@ -272,13 +273,13 @@ function GameScreen() {
     action = <p className="tv-hint tv-geo-watch">Mira el desempate entre {joinNames(tiedNames)}</p>;
   } else {
     action = (
-      <button type="button" className="tv-btn tv-btn--block tv-c-world" onClick={confirmPin} disabled={phase !== "playing" || !myPin || pinLocked} aria-live="polite">
+      <button type="button" className="tv-btn tv-btn--primary tv-geo-confirm" onClick={confirmPin} disabled={phase !== "playing" || !myPin || pinLocked} aria-live="polite">
         {pinLocked && !tiebreak && waiting.length ? (
           <WaitingPill names={waiting} inline />
         ) : (
           <>
             <Icon name={pinLocked ? "check" : "pin"} size={20} strokeWidth={2.6} />
-            {pinLocked ? "Pin confirmado" : myPin ? "Confirmar pin" : "Pon tu pin en el mapa"}
+            {pinLocked ? "Pin confirmado" : "Confirmar pin"}
           </>
         )}
       </button>
@@ -286,46 +287,32 @@ function GameScreen() {
   }
 
   return (
-    <div className={`tv-room tv-game tv-geo-game${central ? " is-central" : ""}${controller ? " is-controller" : ""}`} ref={gameRef}>
+    <div className={`tv-room tv-game tv-match tv-geo-game${central ? " is-central" : ""}${controller ? " is-controller" : ""}`} ref={gameRef}>
       <div className="tv-room-main tv-game-main tv-geo-stage">
-        <section className="tv-game-top">
-          <div className="tv-game-round tv-geo-find">
-            <p className="tv-mono-label">{kicker}</p>
-            <h1 key={title} className="tv-card-title tv-geo-country">
-              {title}
-            </h1>
-            <p className="tv-hint" aria-live="polite">
-              {hint}
-            </p>
+        <MatchCard
+          room={room}
+          size={byName ? "s" : "m"}
+          label={tiebreak ? "Desempate" : style.label}
+          icon="pin"
+          dir={
+            phase === "playing" && iPlay && !tiebreak && !pinLocked
+              ? byName
+                ? "Pon tu pin dentro del país y confírmalo · más cerca, más puntos"
+                : `Pon tu pin en el país de esta ${style.id === "sombra" ? "silueta" : "bandera"} y confírmalo · más cerca, más puntos`
+              : hint
+          }
+          seconds={seconds}
+          pct={pct}
+          urgent={urgent}
+        >
+          <div className="tv-qc-find">
+            {/* The silhouette or the flag of the country to find, while it's searched and at the reveal. */}
+            {!byName && (phase === "playing" || phase === "reveal") && <Clue question={question} />}
+            <MatchQuestion big={byName || phase !== "playing"}>
+              {phase === "countdown" ? title : phase === "reveal" ? room.reveal?.name || title : byName ? `Encuentra ${title}` : "Encuentra este país"}
+            </MatchQuestion>
           </div>
-
-          <div className={`tv-clock${urgent ? " is-urgent" : ""}`} role="timer" aria-label={`${seconds} segundos`}>
-            <svg viewBox="0 0 44 44" aria-hidden="true">
-              <circle className="tv-clock-track" cx="22" cy="22" r="19" />
-              <circle className="tv-clock-fill" cx="22" cy="22" r="19" style={{ strokeDashoffset: 119.4 * (1 - pct / 100) }} />
-            </svg>
-            <span key={seconds} className="tv-clock-num">{seconds}</span>
-          </div>
-
-          <div className="tv-game-tools">
-            <ReportButton room={room} onError={setErr} />
-            <SkipButton room={room} onError={setErr} />
-            <PauseButton room={room} isHost={isHost} onError={setErr} />
-            {isHost && (
-              <button
-                type="button"
-                className={`tv-mini-btn${confirmHub ? " is-on" : ""}`}
-                onClick={backToHub}
-              >
-                {confirmHub ? "¿Seguro? Toca otra vez" : "Terminar"}
-              </button>
-            )}
-          </div>
-
-          <div className="tv-timer" aria-hidden="true">
-            <span className={`tv-timer-fill${urgent ? " is-urgent" : ""}`} style={{ width: `${pct}%` }} />
-          </div>
-        </section>
+        </MatchCard>
 
         {/* The same map for the whole match. Only what's on it changes, never its size. */}
         <section className={`tv-card tv-geo-map-card is-${phase}`}>
@@ -359,8 +346,6 @@ function GameScreen() {
                 </div>
               )}
 
-              {/* The silhouette or the flag of the country to find, while it's searched and at the reveal. */}
-              {!byName && (phase === "playing" || phase === "reveal") && <Clue question={question} />}
 
               {/* How the round went, in a card over the map: this player's, or on the central device who won a
                   tiebreak (how the whole room did is in the row under the map). */}
@@ -385,9 +370,35 @@ function GameScreen() {
       </div>
 
       {/* The scoreboard is the central device's, when there is one. */}
-      {!controller && <PartyPanel room={room} scores display={central} className="tv-geo-side" />}
+      {!controller && <PartyPanel room={room} scores display={central} className="tv-geo-side" status={confirmedLine(room)} />}
+      {!controller && !central && (
+        <MatchBar
+          room={room}
+          viewerId={viewerId}
+          verb="confirmar"
+          tools={
+            <>
+              <ReportButton room={room} onError={setErr} />
+              <SkipButton room={room} onError={setErr} />
+              <PauseButton room={room} isHost={isHost} onError={setErr} />
+              {isHost && (
+                <button type="button" className={`tv-mini-btn tv-end-btn${confirmHub ? " is-on" : ""}`} onClick={backToHub}>
+                  {confirmHub ? "¿Seguro? Toca otra vez" : "Terminar"}
+                </button>
+              )}
+            </>
+          }
+        />
+      )}
     </div>
   );
+}
+
+// The scoreboard's pill while a round is open: "Confirmaron 2/4".
+function confirmedLine(room) {
+  if (room.phase !== "playing") return undefined;
+  const inRound = room.players.filter((p) => !p.spectator && p.connected && !p.idle && p.status !== "mirando");
+  return `Confirmaron ${inRound.filter((p) => p.answered).length}/${inRound.length}`;
 }
 
 // The country to find in a "Sombra" or "Bandera" round: its silhouette or its flag, in a card at the bottom left of the

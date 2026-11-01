@@ -17,9 +17,7 @@ export default function LobbyPanel({ room, onToast }) {
 
   return (
     <>
-      <ModeStage room={room} mode={mode} />
-
-      <SettingsPanel room={room} readOnly={!canEdit}>
+      <SettingsPanel room={room} readOnly={!canEdit} card={(settings) => <ModeStage room={room} mode={mode} settings={settings} />}>
         <GeoSettings room={room} updateConfig={updateConfig} onToast={onToast} readOnly={!canEdit}>
         </GeoSettings>
       </SettingsPanel>

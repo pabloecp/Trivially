@@ -1,13 +1,14 @@
 import { useEffect, useState } from "react";
 import { useFriends } from "../../lib/friends.jsx";
 import Avatar from "./Avatar.jsx";
+import GuestFriends from "./GuestFriends.jsx";
 import Icon from "./Icon.jsx";
 
 // How many friends show at once (the friends sheet has them all).
 const SHOWN = 4;
 
 /**
- * In "Tu grupo", under its players (accounts only): "Invitar amigos", your friends who are online and not in the group,
+ * In "Tu sala", under its players (accounts only): "Invitar amigos", your friends who are online and not in the group,
  * each with "Invitar" (they get a card with the group's code, friend:invite), which turns into "Invitado" for a while.
  * With nobody online it says so; with no friends yet, a button opens the friends sheet.
  */
@@ -23,7 +24,18 @@ export default function InviteFriends({ group, onToast }) {
     return () => clearTimeout(t);
   }, [sent]);
 
-  if (!friends.isAccount || !friends.view) return null;
+  // Without an account the section is still there: it shows the same notice as everywhere else.
+  if (!friends.isAccount) {
+    return (
+      <div className="tv-invite-friends">
+        <div className="tv-party-title">
+          <h2>Invitar amigos</h2>
+        </div>
+        <GuestFriends />
+      </div>
+    );
+  }
+  if (!friends.view) return null;
   const all = friends.view.friends || [];
   const inGroup = new Set(group.members.map((m) => m.id));
   const online = all.filter((f) => f.online && !inGroup.has(f.id));
@@ -59,7 +71,7 @@ export default function InviteFriends({ group, onToast }) {
               <Avatar name={f.name} avatar={f.avatar} />
               <span className="tv-invite-friend-text">
                 <strong>{f.name}</strong>
-                <small>{f.room?.group ? "En otro grupo" : f.room ? "Jugando" : "En línea"}</small>
+                <small>{f.room?.group ? "En otra sala" : f.room ? "Jugando" : "En línea"}</small>
               </span>
               <button
                 type="button"

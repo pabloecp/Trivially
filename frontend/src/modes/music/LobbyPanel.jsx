@@ -33,19 +33,24 @@ export default function LobbyPanel({ room, onToast }) {
 
   return (
     <>
-      <ModeStage
+      <SettingsPanel
         room={room}
-        mode={mode}
-        extra={
-          <span className="tv-eq tv-eq--stage" aria-hidden="true">
-            {Array.from({ length: 7 }, (_, i) => (
-              <span key={i} style={{ "--i": i }} />
-            ))}
-          </span>
-        }
-      />
-
-      <SettingsPanel room={room} readOnly={!canEditConfig}>
+        readOnly={!canEditConfig}
+        card={(settings) => (
+          <ModeStage
+            room={room}
+            mode={mode}
+            settings={settings}
+            extra={
+              <span className="tv-eq tv-eq--stage" aria-hidden="true">
+                {Array.from({ length: 7 }, (_, i) => (
+                  <span key={i} style={{ "--i": i }} />
+                ))}
+              </span>
+            }
+          />
+        )}
+      >
         <MusicSettings room={room} updateConfig={updateConfig} onToast={onToast} readOnly={!canEditConfig}>
           {loading.length > 0 && (
             <p className="tv-playlist-total tv-spotify-loading" aria-live="polite">

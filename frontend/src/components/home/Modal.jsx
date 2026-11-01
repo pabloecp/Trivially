@@ -2,7 +2,7 @@ import { useEffect, useId, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import Icon from "./Icon.jsx";
 
-// A big panel over the page ("¿Qué quieren jugar?", a game's "Ajustes", "Tu grupo", "Unirse"): a dark card in the middle
+// A big panel over the page ("¿Qué quieren jugar?", a game's "Ajustes", "Tu sala", "Unirse"): a dark card in the middle
 // with the page darkened behind it, and on phones a sheet that takes the whole screen. It comes in and goes out whole,
 // like every big panel (--tv-box-in / --tv-box-out). Escape, the X and a tap outside close it. `foot` is a row of
 // buttons under what scrolls. While closed it stays mounted when `keep` is set (a game's settings send their summary

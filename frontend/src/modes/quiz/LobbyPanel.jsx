@@ -19,9 +19,7 @@ export default function LobbyPanel({ room, onToast }) {
 
   return (
     <>
-      <ModeStage room={room} mode={mode} />
-
-      <SettingsPanel room={room} readOnly={!canEditConfig}>
+      <SettingsPanel room={room} readOnly={!canEditConfig} card={(settings) => <ModeStage room={room} mode={mode} settings={settings} />}>
         <QuizSettings room={room} updateConfig={updateConfig} onToast={onToast} readOnly={!canEditConfig}>
         </QuizSettings>
       </SettingsPanel>

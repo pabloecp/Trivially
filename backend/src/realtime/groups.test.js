@@ -65,10 +65,22 @@ const code = made.group.code;
 assert.equal(made.group.leaderId, "gst_ana");
 assert.deepEqual(made.group.plan, { game: "opciones", audience: "publica" });
 assert.equal(made.group.place, null, "on Inicio");
-assert.match((await ana.call("group:create", user("Ana"))).error, /Ya estás en un grupo/);
+assert.match((await ana.call("group:create", user("Ana"))).error, /Ya estás en una sala/);
+
+// Someone who closed the app keeps their place for a while, but making a new group (they came back without it) takes
+// them out of the old one instead of saying they're already in a group.
+const fede = connect("fede");
+const fedeOld = (await fede.call("group:create", { ...user("Fede"), plan: { game: "opciones", audience: "publica" } })).group.code;
+fede.drop();
+const fede2 = connect("fede");
+const fedeNew = await fede2.call("group:create", { ...user("Fede"), plan: { game: "historia", audience: "publica" } });
+assert.equal(fedeNew.ok, true);
+assert.notEqual(fedeNew.group.code, fedeOld);
+assert.equal(groups.groups.get(fedeOld), undefined, "the old group, empty, is gone");
+await fede2.call("group:leave", {});
 
 // Beto joins with the code (checked first); a wrong code says so.
-assert.match((await beto.call("group:check", "ZZZZZ")).error, /No hay ningún grupo/);
+assert.match((await beto.call("group:check", "ZZZZZ")).error, /No hay ninguna sala/);
 assert.equal((await beto.call("group:check", code)).ok, true);
 const joined = await beto.call("group:join", { ...user("Beto"), code });
 assert.equal(joined.ok, true);
@@ -160,15 +172,16 @@ assert.ok(again.players.has("gst_dani"), "Dani stays with his results");
 const extra = ["eva", "fede", "gabi"].map(connect);
 for (const s of extra) await s.call("group:join", { user: { name: s.id }, code });
 const tooMany = await ana.call("match:find", { ...user("Ana"), kind: "casual", game: "historia" });
-assert.match(tooMany.error, /5 como mucho y tu grupo es de 6/);
+assert.match(tooMany.error, /5 como mucho y tu sala es de 6/);
 assert.ok(next.players.get("gst_beto")?.connected, "Beto is still where he was");
 
 // The leader takes someone out (and out of the group's match), and someone leaves.
 assert.equal((await ana.call("group:kick", { userId: "gst_gabi" })).ok, true);
 assert.equal(extra[2].last("group:left").reason, "sacado");
 assert.equal(groups.get(code).members.has("gst_gabi"), false);
-assert.equal((await ana.call("group:kick", { userId: "gst_fede", block: true })).ok, true);
-assert.match((await extra[1].call("group:join", { user: { name: "fede" }, code })).error, /te bloqueó/);
+// Taken out, the code doesn't let them back in.
+assert.equal((await ana.call("group:kick", { userId: "gst_fede" })).ok, true);
+assert.match((await extra[1].call("group:join", { user: { name: "fede" }, code })).error, /Te sacaron/);
 await extra[0].call("group:leave", {});
 assert.equal(groups.get(code).members.has("gst_eva"), false);
 
@@ -195,11 +208,26 @@ assert.ok(match.players.has("gst_mati"));
 assert.equal((await lia.call("room:kick", "gst_mati")).ok, true);
 assert.equal(groups.get(theirs).members.has("gst_mati"), false);
 assert.equal(mati.last("group:left").reason, "sacado");
-// Leaving the group takes you out of its match too, but the last one keeps it as their own.
+// The leader lets someone change the settings, also before there is a match: it holds in the group's private match.
+{
+  const uno = connect("uno");
+  const dos = connect("dos");
+  const sala = (await uno.call("group:create", { ...user("Uno"), plan: { game: "opciones", audience: "grupo" } })).group.code;
+  await dos.call("group:join", { ...user("Dos"), code: sala });
+  assert.equal((await dos.call("group:permission", "gst_uno")).ok, false, "only the leader");
+  const given = await uno.call("group:permission", "gst_dos");
+  assert.equal(given.granted, true);
+  assert.equal(given.group.members.find((m) => m.id === "gst_dos").canEditConfig, true);
+  const privada = rooms.get((await uno.call("room:create", { ...user("Uno"), game: "opciones" })).state.code);
+  assert.ok(privada.coHosts.includes("gst_dos"));
+  assert.equal((await uno.call("group:permission", "gst_dos")).granted, false);
+  assert.equal(privada.coHosts.includes("gst_dos"), false);
+}
+
+// Leaving the group takes you out of its match too, the last one as well: no sala, no game chosen.
 await lia.call("group:leave", {});
 assert.equal(groups.get(theirs), undefined);
-assert.ok(match.players.get("gst_lia")?.connected, "Lía plays alone now");
-assert.equal(match.groupCode, null);
+assert.equal(rooms.socketToRoom.get("s-lia"), undefined, "Lía is out of the match");
 
 // A dropped connection keeps the place a while; past it, the player is out (the leader too: the next one leads).
 ana.drop();

@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import FriendInvite from "../components/home/FriendInvite.jsx";
 import FriendsSheet from "../components/home/FriendsSheet.jsx";
+import FriendsGuestSheet from "../components/home/FriendsGuestSheet.jsx";
 import { api } from "./api.js";
 import { emitAck, getSocket } from "./socket.js";
 import { useApp } from "./store.jsx";
@@ -56,9 +57,9 @@ export function FriendsProvider({ children }) {
     const onApproved = async ({ code, hostName } = {}) => {
       try {
         await joinRef.current(code);
-        say(`${hostName || "El líder"} te dejó entrar a su grupo`);
+        say(`${hostName || "El líder"} te dejó entrar a su sala`);
       } catch (err) {
-        say(err.message || "No pudimos entrar al grupo", "lock");
+        say(err.message || "No pudimos entrar a la sala", "lock");
       }
     };
     const onDeclined = ({ hostName } = {}) => say(`${hostName || "El líder"} no te dejó entrar esta vez`, "lock");
@@ -98,7 +99,7 @@ export function FriendsProvider({ children }) {
         if (res.action === "join") await joinRef.current(res.code);
         return res.action;
       },
-      // Sends this group's code to a friend who is online (they see "Ana te invita a su grupo").
+      // Sends this group's code to a friend who is online (they see "Ana te invita a su sala").
       async inviteFriend(friendId) {
         const res = await emitAck("friend:invite", { friendId });
         if (!res.ok) throw new Error(res.error);
@@ -147,7 +148,7 @@ export function FriendsProvider({ children }) {
   return (
     <FriendsContext.Provider value={value}>
       {children}
-      {isAccount && <FriendsSheet />}
+      {isAccount ? <FriendsSheet /> : <FriendsGuestSheet />}
       <FriendInvite
         invite={invite}
         onClose={() => setInvite(null)}
@@ -155,10 +156,10 @@ export function FriendsProvider({ children }) {
           try {
             await joinRef.current(inv.code);
             setInvite(null);
-            say(`Entraste al grupo de ${inv.fromName}`);
+            say(`Entraste a la sala de ${inv.fromName}`);
           } catch (err) {
             setInvite(null);
-            if (!err.offer) say(err.message || "No pudimos entrar al grupo", "lock");
+            if (!err.offer) say(err.message || "No pudimos entrar a la sala", "lock");
           }
         }}
       />

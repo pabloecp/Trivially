@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { AVATAR_COLORS, savedGuest, useApp } from "../../lib/store.jsx";
+import { savedGuest, useApp } from "../../lib/store.jsx";
 import { withSound } from "../../lib/sounds.js";
 import { findMode } from "../../modes/index.js";
 import Avatar from "./Avatar.jsx";
 import Icon from "./Icon.jsx";
 import Segmented from "./Segmented.jsx";
+import { codeFromText } from "./useInvite.js";
 import { MATCH_KINDS, OPEN_SIZES, gamesFor } from "./matchInfo.js";
 import "../../styles/match.css";
 
@@ -50,7 +51,6 @@ export default function PlaySheet({ mode, joinCode, open, onClose, askName = fal
   const [code, setCode] = useState("");
   const [name, setName] = useState("");
   const rootRef = useRef(null);
-  const [color, setColor] = useState(AVATAR_COLORS[0]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const codeRef = useRef(null);
@@ -65,9 +65,8 @@ export default function PlaySheet({ mode, joinCode, open, onClose, askName = fal
       setPending(joinCode ? { type: "join", code: joinCode } : null);
       setStep(joinCode || askName ? "name" : "menu");
       setKind(null);
-      const last = user?.isGuest ? { name: user.name, avatar: user.avatar } : savedGuest();
+      const last = user?.isGuest ? { name: user.name } : savedGuest();
       setName(last.name || "");
-      setColor(AVATAR_COLORS.includes(last.avatar) ? last.avatar : AVATAR_COLORS[0]);
     }
   }, [open]);
 
@@ -194,7 +193,7 @@ export default function PlaySheet({ mode, joinCode, open, onClose, askName = fal
     setBusy(true);
     setError("");
     try {
-      await withSound(() => saveGuest(name, color), null);
+      await withSound(() => saveGuest(name), null);
     } catch (err) {
       setError(err.message);
       setBusy(false);
@@ -408,7 +407,7 @@ export default function PlaySheet({ mode, joinCode, open, onClose, askName = fal
                   aria-describedby={error ? "tv-sheet-error" : undefined}
                   value={code}
                   onChange={(e) => {
-                    setCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, ROOM_CODE_LENGTH));
+                    setCode(codeFromText(e.target.value, ROOM_CODE_LENGTH));
                     setError("");
                   }}
                   placeholder="YOAVH"
@@ -424,9 +423,9 @@ export default function PlaySheet({ mode, joinCode, open, onClose, askName = fal
 
             {step === "name" && (
               <form className="tv-sheet-form" onSubmit={submitName}>
-                {/* The avatar beside the name box, and its colours in a row under both, as wide as the sheet. */}
+                {/* Your Blob beside the name box (its colour is chosen on the profile). */}
                 <div className="tv-name-row">
-                  <Avatar name={name.trim() || "?"} avatar={color} className="tv-avatar--lg" />
+                  <Avatar className="tv-avatar--lg" avatar={user?.avatar} />
                   <div className="tv-name-fields">
                     <label className="tv-sr-only" htmlFor="tv-name">
                       Tu nombre
@@ -445,19 +444,6 @@ export default function PlaySheet({ mode, joinCode, open, onClose, askName = fal
                       autoComplete="nickname"
                     />
                   </div>
-                </div>
-                <div className="tv-swatches" role="group" aria-label="Color de tu avatar">
-                  {AVATAR_COLORS.map((c, i) => (
-                    <button
-                      key={c}
-                      type="button"
-                      className="tv-swatch"
-                      style={{ "--sw": c }}
-                      aria-pressed={color === c}
-                      aria-label={`Color ${i + 1}`}
-                      onClick={() => setColor(c)}
-                    />
-                  ))}
                 </div>
                 <button type="submit" className="tv-btn tv-btn--block tv-btn--primary" data-sound="none" disabled={busy || !name.trim()}>
                   {busy ? "Entrando…" : "Continuar"}

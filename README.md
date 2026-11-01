@@ -102,6 +102,12 @@ Trivially/
 
 ---
 
+## 🌿 Cómo contribuir
+
+Trabajamos con Git Flow: `main` es producción, `develop` es donde se junta lo nuevo y cada cambio va en su propia rama (`feature/`, `fix/`, `chore/`) con un pull request hacia `develop`. Los detalles están en [CONTRIBUTING.md](CONTRIBUTING.md).
+
+---
+
 ## 📄 Licencia
 
 MIT

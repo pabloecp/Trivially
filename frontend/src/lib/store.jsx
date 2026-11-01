@@ -423,20 +423,18 @@ export function AppProvider({ children }) {
       else if (!code && roomCodeRef.current) clearRoom();
     };
     // Out of the group: the leader took this player out of it.
-    const onGroupLeft = ({ code, reason } = {}) => {
+    const onGroupLeft = ({ code } = {}) => {
       if (code !== groupCodeRef.current) return;
       clearGroup();
-      setKickedNotice(reason === "bloqueado" ? "El líder te bloqueó del grupo" : "El líder te sacó del grupo");
+      setKickedNotice("El líder te sacó de la sala");
     };
-    const onKicked = ({ code, blocked, reason } = {}) => {
+    const onKicked = ({ code, reason } = {}) => {
       if (code !== roomCodeRef.current) return;
       clearRoom();
       setKickedNotice(
         reason === "inactivo"
           ? "Saliste de la partida por inactividad"
-          : blocked
-          ? "El anfitrión te bloqueó de la sala"
-          : "El anfitrión te sacó de la sala. Puedes volver con el código"
+          : "El anfitrión te sacó de la sala"
       );
     };
     s.on("room:state", onState);
@@ -746,7 +744,7 @@ export function AppProvider({ children }) {
       // they were playing alone becomes the group's.
       async createGroup(plan, explicitUser) {
         const current = explicitUser || userRef.current;
-        if (!current?.name) throw new Error("Debes identificarte antes de crear un grupo");
+        if (!current?.name) throw new Error("Debes identificarte antes de crear una sala");
         const res = await emitAck("group:create", { user: current, plan });
         if (!res.ok) throw new Error(res.error);
         return enterGroup(res.group);
@@ -774,7 +772,7 @@ export function AppProvider({ children }) {
         return res.group;
       },
 
-      // "Salir del grupo": out of it, and of its private match.
+      // "Salir de la sala": out of it, and of its private match.
       async leaveGroup() {
         const res = await emitAck("group:leave", {});
         clearGroup();
@@ -802,9 +800,17 @@ export function AppProvider({ children }) {
         if (!res.ok) throw new Error(res.error);
       },
 
-      // The leader takes someone out of the group; with `block` they can't come back with the code.
-      async kickFromGroup(userId, block = false) {
-        const res = await emitAck("group:kick", { userId, block });
+      // The leader lets a member change the settings of the group's private matches, or takes it back. Whether they can now.
+      async toggleGroupPermission(userId) {
+        const res = await emitAck("group:permission", userId);
+        if (!res.ok) throw new Error(res.error);
+        enterGroup(res.group);
+        return res.granted;
+      },
+
+      // The leader takes someone out of the group, for good.
+      async kickFromGroup(userId) {
+        const res = await emitAck("group:kick", { userId });
         if (!res.ok) throw new Error(res.error);
       },
 
@@ -821,12 +827,6 @@ export function AppProvider({ children }) {
         if (next === previewRef.current) return Promise.resolve();
         previewRef.current = next;
         return emitAck("room:preview", next).catch(() => {});
-      },
-
-      // A message to the room's chat (the server refuses it while a round is played, or too soon after the last one).
-      async sendChat(text) {
-        const res = await emitAck("room:chat", text);
-        if (!res.ok) throw new Error(res.error);
       },
 
       // Any player but the host: suggests a game to the host (allowed once every 5 s; the error says how long to wait).
@@ -903,38 +903,9 @@ export function AppProvider({ children }) {
         if (res.state) setRoom(res.state);
       },
 
-      // Host only: takes a player out of the room; they can come back with the code.
+      // Host only: takes a player out of the room, for good.
       async kickPlayer(targetUserId) {
         const res = await emitAck("room:kick", targetUserId);
-        if (!res.ok) throw new Error(res.error);
-        if (res.state) setRoom(res.state);
-      },
-
-      // Host only: takes a player out of the room for good (they can't join it again).
-      async blockPlayer(targetUserId) {
-        const res = await emitAck("room:block", targetUserId);
-        if (!res.ok) throw new Error(res.error);
-        if (res.state) setRoom(res.state);
-      },
-
-      // The room's playlist, all of it (name, order and games with their settings); the server keeps it valid.
-      // A playlist kept on the server, the room's (or `playlist`, a saved one): its code ("K7P2M-XH4QN"), the same for
-      // the same playlist.
-      async sharePlaylist(playlist = null) {
-        const res = await emitAckWithin(10000, "playlist:share", playlist);
-        if (!res.ok) throw new Error(res.error);
-        return res.code;
-      },
-
-      // The playlist a pasted code points to ({ name, order, items }).
-      async playlistByCode(code) {
-        const res = await emitAckWithin(10000, "playlist:byCode", code);
-        if (!res.ok) throw new Error(res.error);
-        return res.playlist;
-      },
-
-      async updatePlaylist(playlist) {
-        const res = await emitAck("room:playlist", playlist);
         if (!res.ok) throw new Error(res.error);
         if (res.state) setRoom(res.state);
       },

@@ -3,22 +3,21 @@ import { Link, Navigate, useNavigate, useParams, useSearchParams } from "react-r
 import { api } from "../lib/api.js";
 import UsernameField, { useUsernameCheck } from "../components/home/UsernameField.jsx";
 import { USERNAME_MIN } from "../lib/username.js";
-import { AVATAR_COLORS, useApp } from "../lib/store.jsx";
+import { useApp } from "../lib/store.jsx";
 import TvShell from "../components/home/TvShell.jsx";
 import Avatar from "../components/home/Avatar.jsx";
+import Blob from "../components/home/Blob.jsx";
 import CountUp from "../components/home/CountUp.jsx";
-import MatchHistory from "../components/home/MatchHistory.jsx";
 import GoogleIcon from "../components/home/GoogleIcon.jsx";
 import SpotifyIcon from "../components/home/SpotifyIcon.jsx";
 import Icon from "../components/home/Icon.jsx";
+import { BLOB_COLORS, HOW_TO_GET, blobColor, canUseColor } from "../lib/blobColors.js";
 
+// Only what matters: how many matches you won, how many questions you got right and how many daily challenges you completed.
 const STATS = [
-  { key: "totalScore", label: "Puntuación total", color: "pink" },
-  { key: "bestScore", label: "Mejor partida", color: "violet" },
   { key: "wins", label: "Victorias", color: "amber" },
-  { key: "gamesPlayed", label: "Partidas jugadas", color: "sky" },
   { key: "correctAnswers", label: "Aciertos", color: "green" },
-  { key: "bestStreak", label: "Mejor racha", color: "purple" },
+  { key: "dailyDone", label: "Retos", color: "pink" },
 ];
 
 // Badge shown on the profile for owners (plain users get none).
@@ -35,16 +34,72 @@ function Notice({ tone, icon, children }) {
   );
 }
 
-// What the profile says about the @username's changes.
-function handleInfo(info) {
-  let left;
-  if (info.changesLeft > 0) left = `Te quedan ${info.changesLeft} ${info.changesLeft === 1 ? "cambio" : "cambios"} este mes.`;
-  else {
-    const when = new Date(info.nextChangeAt).toLocaleDateString("es", { day: "numeric", month: "long" });
-    left = `Ya no te quedan cambios este mes. Podrás cambiarlo el ${when}.`;
+// "Color de tu Blob": every colour, like an inventory. The ones you can use are tapped to wear them (the one you wear in
+// the site's blue); the others are dimmed with a lock, and a tap says how to get them (lib/blobColors.js).
+function BlobColors({ user, onPick }) {
+  const [info, setInfo] = useState(null);
+  const [busy, setBusy] = useState("");
+  const current = blobColor(user?.avatar);
+  const shown = BLOB_COLORS.find((c) => c.id === (info || current));
+  const locked = shown && !canUseColor(user, shown);
+
+  async function choose(c) {
+    if (!canUseColor(user, c)) {
+      setInfo((cur) => (cur === c.id ? null : c.id));
+      return;
+    }
+    setInfo(null);
+    if (c.id === current || busy) return;
+    setBusy(c.id);
+    try {
+      await onPick(c.id);
+    } finally {
+      setBusy("");
+    }
   }
-  // An assigned username (made from the name) says so; changing it counts like any change.
-  return info.assigned ? `Te asignamos este usuario. ${left}` : left;
+
+  return (
+    <div className="tv-blob-colors">
+      <div className="tv-card-head">
+        <h2 className="tv-card-title">Color de tu Blob</h2>
+      </div>
+      <div className="tv-blob-opts" role="radiogroup" aria-label="Color de tu Blob">
+        {BLOB_COLORS.map((c) => {
+          const ok = canUseColor(user, c);
+          return (
+            <button
+              key={c.id}
+              type="button"
+              role="radio"
+              aria-checked={c.id === current}
+              aria-label={ok ? c.name : `${c.name} (bloqueado)`}
+              className={`tv-blob-opt${c.id === current ? " is-on" : ""}${ok ? "" : " is-locked"}${info === c.id ? " is-asked" : ""}`}
+              disabled={Boolean(busy)}
+              onClick={() => choose(c)}
+            >
+              <Blob color={c.id} />
+              {!ok && (
+                <span className="tv-blob-lock" aria-hidden="true">
+                  <Icon name="lock" size={12} strokeWidth={2.8} />
+                </span>
+              )}
+            </button>
+          );
+        })}
+      </div>
+      {/* Over the colours, so saying it moves nothing. */}
+      {locked && (
+        <p className="tv-pf-blobnote" aria-live="polite">
+          <b>{shown.name}</b> · {HOW_TO_GET[shown.needs]}
+        </p>
+      )}
+    </div>
+  );
+}
+
+// The username's label, with how many changes are left this month.
+function handleLabel(info) {
+  return info ? `Usuario · ${info.changesLeft} ${info.changesLeft === 1 ? "cambio" : "cambios"}` : "Usuario";
 }
 
 function ProfileScreen() {
@@ -63,7 +118,7 @@ function ProfileScreen() {
   const nav = useNavigate();
 
   // If userId is present in URL and differs from currentUser.id, we view a public profile
-  const isOtherUser = Boolean(userId && userId !== currentUser?.id);
+  const isOtherUser = Boolean(userId && userId !== currentUser?.id && userId !== currentUser?.username);
 
   const [profileData, setProfileData] = useState(null);
   const [loadingUser, setLoadingUser] = useState(isOtherUser);
@@ -74,9 +129,6 @@ function ProfileScreen() {
   const [newUserName, setNewUserName] = useState("");
   // The @username: changes are limited, so it is saved apart from the name for the games and shows how many are left.
   const [newHandle, setNewHandle] = useState("");
-  // The color picked but not saved yet (a color from AVATAR_COLORS or "google"); null while nothing is pending.
-  // Picking only previews it here: nothing goes to the server (or to the other players) until "Guardar".
-  const [draftAvatar, setDraftAvatar] = useState(null);
   const [saving, setSaving] = useState(false);
 
   const [msg, setMsg] = useState("");
@@ -94,7 +146,7 @@ function ProfileScreen() {
         .then((d) => {
           if (!alive) return;
           setProfileData(d.user);
-          setStats(d.user?.stats || null);
+          setStats(d.user?.stats ? { ...d.user.stats, dailyDone: d.user.dailyDone || 0 } : null);
           setLoadingUser(false);
         })
         .catch(() => {
@@ -109,7 +161,7 @@ function ProfileScreen() {
       api(`/api/users/${currentUser.id}`)
         .then((d) => {
           if (!alive) return;
-          setStats(d.user?.stats || null);
+          setStats(d.user?.stats ? { ...d.user.stats, dailyDone: d.user.dailyDone || 0 } : null);
           if (d.user) setProfileData(d.user);
         })
         .catch(() => {})
@@ -128,28 +180,22 @@ function ProfileScreen() {
     return () => clearTimeout(t);
   }, [msg]);
 
-  function onPickColor(color) {
-    if (saving) return;
-    if (color === "google" && !googlePhoto) {
-      setMsg("");
-      setErr(
-        isGuest
-          ? "Para poner tu foto tienes que iniciar sesión con Google."
-          : "Para poner tu foto tienes que vincular tu cuenta de Google."
-      );
-      return;
-    }
+  // A colour is worn as soon as it's tapped (BlobColors).
+  async function onPickColor(color) {
     setErr("");
-    setDraftAvatar(color);
+    try {
+      await updateAvatar(color);
+    } catch (e) {
+      setErr(e.message || "No se pudo cambiar el color");
+    }
   }
 
-  // One button saves whatever was edited: the name, the color, or both.
+  // One button saves whatever was edited: the name, the @username, or both.
   async function onSaveProfile(e) {
     e?.preventDefault();
     if (!canSave || saving) return;
     const withName = nameChanged;
     const withHandle = handleChanged;
-    const withColor = colorChanged;
     setSaving(true);
     setErr("");
     try {
@@ -161,19 +207,7 @@ function ProfileScreen() {
         await changeHandle(newHandle);
         setNewHandle("");
       }
-      if (withColor) {
-        await updateAvatar(draftAvatar);
-        setDraftAvatar(null);
-      }
-      setMsg(
-        [withName, withHandle, withColor].filter(Boolean).length > 1
-          ? "Perfil actualizado."
-          : withName
-            ? "Nombre actualizado."
-            : withHandle
-              ? "Nombre de usuario actualizado."
-              : "Color actualizado."
-      );
+      setMsg(withName && withHandle ? "Perfil actualizado." : withName ? "Nombre actualizado." : "Nombre de usuario actualizado.");
     } catch (e) {
       // What was already saved is cleared above; the rest stays so it can be saved again.
       setErr(e.message);
@@ -181,6 +215,17 @@ function ProfileScreen() {
       setSaving(false);
     }
   }
+
+  // The profile's address is its username, whatever link opened it (the id never shows).
+  const shownUser = isOtherUser ? profileData : currentUser;
+  const shownHandle = shownUser?.username;
+  useEffect(() => {
+    if (!userId || loadingUser || !shownHandle || userId === shownHandle) return;
+    nav(`/profile/${shownHandle}`, { replace: true });
+  }, [userId, loadingUser, shownHandle]);
+
+  // Before any of the returns below: a screen must call the same hooks every time.
+  const handleCheck = useUsernameCheck(newHandle, shownUser?.username);
 
   if (loadingUser) {
     return (
@@ -213,18 +258,10 @@ function ProfileScreen() {
   const activeUser = isOtherUser ? profileData : currentUser;
   const isGuest = Boolean(activeUser?.isGuest);
   const hasGoogle = Boolean(activeUser?.googleId || activeUser?.googleLinked || (!isOtherUser && linkingStatus?.googleLinked));
-  // Older Google accounts have no googlePhoto yet; their photo is still the avatar itself.
-  const googlePhoto =
-    activeUser?.googlePhoto || (hasGoogle && activeUser?.avatar?.startsWith("http") ? activeUser.avatar : null);
   const canLinkGoogle = !isOtherUser && !isGuest && !hasGoogle;
-  // What the avatar shows right now: the saved one, or the one picked and not saved yet.
-  const pickedAvatar = draftAvatar === "google" ? googlePhoto : draftAvatar;
-  const shownAvatar = pickedAvatar || activeUser?.avatar;
-  const colorChanged = Boolean(pickedAvatar) && pickedAvatar !== activeUser?.avatar;
   const nameChanged = Boolean(newUserName.trim()) && newUserName.trim() !== activeUser?.name;
-  const handleCheck = useUsernameCheck(newHandle, activeUser?.username);
   const handleChanged = newHandle.length >= USERNAME_MIN && newHandle !== activeUser?.username && handleCheck.state !== "bad";
-  const canSave = nameChanged || handleChanged || colorChanged;
+  const canSave = nameChanged || handleChanged;
   const roleTag = ROLE_TAGS[activeUser?.role];
   const googleNotice = searchParams.get("google");
   const hasSpotify = Boolean(activeUser?.spotify || activeUser?.spotifyLinked);
@@ -268,7 +305,7 @@ function ProfileScreen() {
         <Notice tone="brand" icon="star">¡Tu cuenta está lista! Puedes cambiar tu nombre cuando quieras.</Notice>
       )}
       {(googleNotice === "success" || googleNotice === "link_success") && (
-        <Notice tone="ok" icon="check">Google conectado. Tu foto de perfil se sincronizó.</Notice>
+        <Notice tone="ok" icon="check">Google conectado.</Notice>
       )}
       {googleNotice === "link_error" && (
         <Notice tone="bad" icon="lock">
@@ -284,104 +321,56 @@ function ProfileScreen() {
       {msg && <Notice tone="ok" icon="check">{msg}</Notice>}
       {err && <Notice tone="bad" icon="lock">{err}</Notice>}
 
-      <section className="tv-card tv-profile-hero">
-        <span className={`tv-profile-avatar${saving && colorChanged ? " is-saving" : ""}`}>
-          <Avatar name={activeUser?.name} avatar={shownAvatar} className="tv-avatar--xl" />
-        </span>
-        <div className="tv-profile-who">
-          <p className="tv-party-kicker">{isOtherUser ? "Perfil de jugador" : "Tu perfil"}</p>
-          <h1 className="tv-page-title">{activeUser?.name || "Jugador"}</h1>
-          {activeUser?.username && <p className="tv-handle tv-profile-handle">@{activeUser.username}</p>}
-          <div className="tv-tags">
+      {/* Three columns of the same width and height: who it is, the Blob's colour and the account. The same places with or
+          without an account, whatever the name's length (it's cut with "…"). Someone else's profile is only the first. */}
+      <div className={`tv-pf${isOtherUser ? " is-other" : ""}`}>
+        <section className="tv-card tv-pf-card" aria-label="Perfil">
+          <div className="tv-pf-who">
+            <span className="tv-profile-avatar">
+              <Avatar className="tv-avatar--xl" avatar={activeUser?.avatar} />
+            </span>
+            <div className="tv-pf-names">
+              <h1 className="tv-pf-name" title={activeUser?.name || "Jugador"}>{activeUser?.name || "Jugador"}</h1>
+              <p className="tv-pf-handle">{isGuest ? "Juega como invitado" : activeUser?.username ? `@${activeUser.username}` : ""}</p>
+            </div>
+          </div>
+          <div className="tv-pf-tags">
             {roleTag && (
               <span className={`tv-tag tv-tag--${activeUser.role}`}>
                 <Icon name={roleTag.icon} size={13} filled className={activeUser.role === "owner" ? "tv-tag-sparkle" : ""} />
                 {roleTag.label}
               </span>
             )}
-            {isGuest ? (
-              <span className="tv-tag">Invitado</span>
-            ) : (
-              <span className="tv-tag tv-tag--ok">
-                <Icon name="verified" size={15} strokeWidth={2.4} className="tv-tag-verified" />
-                Registrado
-              </span>
-            )}
-            {hasSpotify && (
-              <span className="tv-tag tv-tag--ok">
-                <SpotifyIcon size={13} color="#000" waves="#2bd94f" />
-                Spotify
-              </span>
-            )}
-            {hasGoogle && (
-              <span className="tv-tag">
-                <GoogleIcon size={13} />
-                Google
-              </span>
-            )}
           </div>
-        </div>
-      </section>
-
-      <div className={`tv-profile-grid${isOtherUser ? " is-single" : ""}`}>
-        <section className="tv-card" aria-labelledby="tv-stats-title">
-          <div className="tv-card-head">
-            <h2 id="tv-stats-title" className="tv-card-title">Estadísticas</h2>
-            <span className="tv-live">
-              <span className="tv-pulse" aria-hidden="true" />
-              {statsLoading && !isGuest ? "Cargando…" : "En vivo"}
-            </span>
-          </div>
-          {isGuest ? (
-            <p className="tv-hint">Los invitados no guardan estadísticas.</p>
-          ) : (
-            <div className="tv-stat-grid" aria-busy={statsLoading}>
-              {STATS.map((s, i) => (
-                <div key={s.key} className={`tv-stat tv-stat--pop tv-c-${s.color}`} style={{ "--i": i }}>
-                  <span className="tv-stat-dot" aria-hidden="true" />
-                  <span className="tv-stat-label">{s.label}</span>
-                  <span className="tv-stat-value">
-                    {statsLoading ? (
-                      <span className="tv-skeleton" aria-hidden="true" />
-                    ) : stats ? (
-                      <CountUp value={stats[s.key] || 0} />
-                    ) : (
-                      "—"
-                    )}
-                  </span>
-                </div>
-              ))}
-            </div>
-          )}
-          {!isGuest && (
-            <div className="tv-history-wrap">
-              <div className="tv-card-head">
-                <h2 className="tv-card-title">Historial</h2>
+          <div className="tv-pf-stats" aria-busy={statsLoading} aria-label="Estadísticas">
+            {STATS.map((s) => (
+              <div key={s.key} className="tv-pf-stat">
+                <span className="tv-pf-label">{s.label}</span>
+                <span className="tv-pf-num">
+                  {statsLoading ? <span className="tv-skeleton" aria-hidden="true" /> : stats ? <CountUp value={stats[s.key] || 0} /> : 0}
+                </span>
               </div>
-              {statsLoading ? <span className="tv-skeleton" aria-hidden="true" /> : <MatchHistory matches={profileData?.history || []} />}
-            </div>
-          )}
+            ))}
+          </div>
         </section>
 
         {!isOtherUser && (
-          <section className="tv-card" aria-labelledby="tv-account-title">
-            <div className="tv-card-head">
-              <h2 id="tv-account-title" className="tv-card-title">Tu cuenta</h2>
-              <button
-                type="button"
-                className="tv-btn tv-btn--sm tv-c-pink"
-                onClick={onSaveProfile}
-                disabled={!canSave || saving}
-                aria-busy={saving}
-              >
-                {saving && <span className="tv-spinner" aria-hidden="true" />}
+          <section className="tv-card tv-pf-card tv-pf-blob" aria-label="Color de tu Blob">
+            <BlobColors user={currentUser} onPick={onPickColor} />
+          </section>
+        )}
+
+        {!isOtherUser && (
+          <section className="tv-card tv-pf-card" aria-labelledby="tv-account-title">
+            <div className="tv-pf-head">
+              <h2 id="tv-account-title" className="tv-pf-title">Tu cuenta</h2>
+              <button type="button" className="tv-btn tv-btn--primary" onClick={onSaveProfile} disabled={!canSave || saving} aria-busy={saving}>
                 {saving ? "Guardando…" : "Guardar"}
               </button>
             </div>
-
-            <form onSubmit={onSaveProfile} className="tv-form">
+            <form onSubmit={onSaveProfile} className="tv-pf-form">
               <label className="tv-form-row">
-                <span className="tv-label">Tu nombre</span>
+                <span className="tv-label">Nombre</span>
                 <input
                   className="tv-field tv-field--sm"
                   value={newUserName}
@@ -390,148 +379,62 @@ function ProfileScreen() {
                   maxLength={24}
                   disabled={saving}
                 />
-                <span className="tv-handle-status">Es como te ven en las partidas. Cámbialo cuando quieras.</span>
               </label>
-              {!isGuest && (
-                <>
-                  <UsernameField
-                    value={newHandle}
-                    onChange={setNewHandle}
-                    check={handleCheck}
-                    placeholder={activeUser?.username || "tu_usuario"}
-                    disabled={saving}
-                    note={activeUser?.usernameInfo ? handleInfo(activeUser.usernameInfo) : null}
-                  />
-                </>
+              {isGuest ? (
+                <label className="tv-form-row">
+                  <span className="tv-label">Usuario</span>
+                  <input className="tv-field tv-field--sm" placeholder="Crea una cuenta para tener uno" disabled />
+                </label>
+              ) : (
+                <UsernameField
+                  label={handleLabel(activeUser?.usernameInfo)}
+                  value={newHandle}
+                  onChange={setNewHandle}
+                  check={handleCheck}
+                  placeholder={activeUser?.username || "tu_usuario"}
+                  disabled={saving}
+                />
               )}
             </form>
-
-            <div className="tv-form-row">
-              <span className="tv-label">Color de tu avatar</span>
-              <div className="tv-swatches" role="group" aria-label="Color de tu avatar">
-                {AVATAR_COLORS.map((c, i) => (
-                  <button
-                    key={c}
-                    type="button"
-                    className="tv-swatch"
-                    style={{ "--sw": c }}
-                    aria-pressed={shownAvatar === c}
-                    aria-label={`Color ${i + 1}`}
-                    disabled={saving}
-                    onClick={() => onPickColor(c)}
-                  />
-                ))}
-                <button
-                  type="button"
-                  className={`tv-swatch tv-swatch--photo${googlePhoto ? "" : " is-locked"}`}
-                  aria-pressed={Boolean(googlePhoto) && shownAvatar === googlePhoto}
-                  aria-label={googlePhoto ? "Usar tu foto de Google" : "Foto de perfil (requiere Google)"}
-                  disabled={saving}
-                  onClick={() => onPickColor("google")}
-                >
-                  {googlePhoto ? (
-                    <img src={googlePhoto} alt="" referrerPolicy="no-referrer" />
-                  ) : (
-                    <Icon name="user" size={16} strokeWidth={2.6} />
+            <div className="tv-pf-foot">
+              <p className="tv-pf-mail" title={isGuest ? undefined : activeUser?.email}>{isGuest ? "Sin cuenta" : activeUser?.email || ""}</p>
+              {isGuest ? (
+                <div className="tv-pf-actions">
+                  <Link to="/login?mode=login&returnTo=/profile" className="tv-btn tv-btn--neutral">Iniciar sesión</Link>
+                  <Link to="/login?returnTo=/profile" className="tv-btn tv-btn--neutral">Crear cuenta</Link>
+                </div>
+              ) : (
+                <div className="tv-pf-actions">
+                  {canLinkGoogle && (
+                    <button type="button" className="tv-iconbtn tv-pf-icon" aria-label="Vincular Google" title="Vincular Google" onClick={() => linkGoogle("/profile")}>
+                      <GoogleIcon size={22} />
+                    </button>
                   )}
-                </button>
-              </div>
-              {!googlePhoto && (
-                <span className="tv-hint">
-                  {isGuest ? "Inicia sesión con Google" : "Vincula Google"} para poner tu foto de perfil.
-                </span>
+                  {canSpotify && (
+                    <button
+                      type="button"
+                      className={`tv-iconbtn tv-pf-icon${hasSpotify ? "" : " is-faint"}${confirmUnlink ? " is-danger" : ""}`}
+                      aria-label={confirmUnlink ? "Toca otra vez para desconectar Spotify" : hasSpotify ? "Spotify conectado. Toca para desconectarlo" : "Conectar Spotify"}
+                      title={confirmUnlink ? "Toca otra vez para desconectar" : hasSpotify ? activeUser.spotify?.displayName || "Spotify conectado" : "Conectar Spotify"}
+                      onClick={hasSpotify ? onSpotifyActive : onConnectSpotify}
+                      disabled={spotifyBusy}
+                    >
+                      <SpotifyIcon size={22} />
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    className="tv-btn tv-btn--bad"
+                    onClick={() => {
+                      logout();
+                      nav("/login");
+                    }}
+                  >
+                    Cerrar sesión
+                  </button>
+                </div>
               )}
             </div>
-
-            {isGuest && (
-              <div className="tv-row-card">
-                <Icon name="user" size={26} />
-                <div className="tv-row-card-text">
-                  <strong>Estás como invitado</strong>
-                  <span>Crea una cuenta o inicia sesión para guardar tus puntos.</span>
-                </div>
-              </div>
-            )}
-
-            {canLinkGoogle && (
-              <div className="tv-row-card">
-                <GoogleIcon size={26} />
-                <div className="tv-row-card-text">
-                  <strong>Vincula Google</strong>
-                  <span>Usa tu foto de Google y entra con un clic.</span>
-                </div>
-                <button type="button" className="tv-btn tv-btn--sm tv-btn--google" onClick={() => linkGoogle("/profile")}>
-                  Vincular
-                </button>
-              </div>
-            )}
-            {hasGoogle && (
-              <div className="tv-row-card">
-                <GoogleIcon size={26} />
-                <div className="tv-row-card-text">
-                  <strong>Google vinculado</strong>
-                  <span>Foto de perfil sincronizada</span>
-                </div>
-                <span className="tv-tag tv-tag--ok">Activo</span>
-              </div>
-            )}
-            {canSpotify && (
-              <div className="tv-row-card">
-                <SpotifyIcon size={26} />
-                <div className="tv-row-card-text">
-                  <strong>{hasSpotify ? "Spotify conectado" : "Conecta Spotify"}</strong>
-                  <span>
-                    {hasSpotify
-                      ? activeUser.spotify?.displayName || "Tu cuenta de Spotify"
-                      : "Vincula tu cuenta de Spotify a tu perfil."}
-                  </span>
-                </div>
-                {hasSpotify ? (
-                  <button
-                    type="button"
-                    className={`tv-tag tv-tag--ok tv-tag-btn${confirmUnlink ? " is-confirm" : ""}`}
-                    onClick={onSpotifyActive}
-                    disabled={spotifyBusy}
-                    aria-label={confirmUnlink ? "Toca otra vez para desconectar Spotify" : "Spotify activo. Toca para desconectarlo"}
-                  >
-                    {spotifyBusy ? "Desconectando…" : confirmUnlink ? "Desconectar" : "Activo"}
-                  </button>
-                ) : (
-                  <button type="button" className="tv-btn tv-btn--sm tv-btn--spotify" onClick={onConnectSpotify} disabled={spotifyBusy}>
-                    {spotifyBusy ? "Abriendo…" : "Conectar"}
-                  </button>
-                )}
-              </div>
-            )}
-
-            {isGuest ? (
-              // A guest has nothing to sign out of: they sign in or create the account instead.
-              <div className="tv-account-foot tv-account-foot--guest">
-                <Link to="/login?mode=login&returnTo=/profile" className="tv-btn tv-btn--sm tv-c-neutral">
-                  Iniciar sesión
-                </Link>
-                <Link to="/login?returnTo=/profile" className="tv-btn tv-btn--sm tv-c-pink">
-                  Crear cuenta
-                </Link>
-              </div>
-            ) : (
-              <div className="tv-account-foot">
-                {activeUser?.email && (
-                  <span className="tv-email">{activeUser.email}</span>
-                )}
-                <button
-                  type="button"
-                  className="tv-link-btn tv-link-btn--danger"
-                  onClick={() => {
-                    logout();
-                    nav("/login");
-                  }}
-                >
-                  <Icon name="logout" size={18} />
-                  Cerrar sesión
-                </button>
-              </div>
-            )}
           </section>
         )}
       </div>

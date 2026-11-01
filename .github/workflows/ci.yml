@@ -1,0 +1,29 @@
+name: CI
+
+# Corre en cada pull request hacia develop o main, y en cada subida a esas ramas.
+on:
+  pull_request:
+    branches: [develop, main]
+  push:
+    branches: [develop, main]
+
+jobs:
+  tests-y-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            backend/package-lock.json
+            frontend/package-lock.json
+      - name: Instalar dependencias
+        run: |
+          npm ci --prefix backend
+          npm ci --prefix frontend
+      - name: Tests del backend
+        run: npm test --prefix backend
+      - name: Compilar el frontend
+        run: npm run build --prefix frontend

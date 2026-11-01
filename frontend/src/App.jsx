@@ -14,21 +14,19 @@ import FarsanteGame from "./modes/farsante/Game.jsx";
 import PlaylistResults from "./modes/playlist/Results.jsx";
 import { useApp } from "./lib/store.jsx";
 import RoomSounds from "./lib/RoomSounds.jsx";
-import VolumeMenu from "./components/home/VolumeMenu.jsx";
 import CentralOffer from "./components/home/CentralOffer.jsx";
 import CentralRequests from "./components/home/CentralRequests.jsx";
 import StillThere from "./components/home/StillThere.jsx";
-import { useRoomExit } from "./components/home/TvTopbar.jsx";
-import { isInlineMatch, roomPath } from "./modes/index.js";
-import { HIDDEN_SLUG, useHiddenCode } from "./lib/hiddenCode.js";
+import { homePath, isInlineMatch, roomPath } from "./modes/index.js";
+import { HIDDEN_SLUG, tabGroupCode, useHiddenCode } from "./lib/hiddenCode.js";
 
 // Screens tied to one room, e.g. /game/XOTRIV.
-const ROOM_SCREEN = /^\/(?:lobby|game|quiz|mundo|historia|minas|lluvia|rey|farsante|playlist|sala)\/([^/]+)/;
+const ROOM_SCREEN = /^\/(?:lobby|game|quiz|mundo|historia|minas|lluvia|rey|farsante|playlist|partida)\/([^/]+)/;
 
-// Old /lobby/CODE links: the waiting room now lives on the room screen, which /sala/CODE opens and joins.
+// Old /lobby/CODE links: the waiting room now lives on the room screen, which /partida/CODE opens and joins.
 function LobbyRedirect() {
   const { code } = useParams();
-  return <Navigate to={`/sala/${code}`} replace />;
+  return <Navigate to={`/partida/${code}`} replace />;
 }
 
 const GAME_SCREENS = {
@@ -57,18 +55,16 @@ function Guard({ children }) {
   return children;
 }
 
-// Keeps every player on the screen of the game their room is in, which is how the host moves the whole party.
-//
-// It also makes the browser's Back button work as the "Volver" button while the room waits. The room's screen
-// (/sala/CODE) is always pushed on top of Home (/), so Back lands on Home with the room still open: that is read as
-// a press of "Volver" (back to the game menu, or the modal "¿Seguro que quieres salir?"), and the room's screen is
-// pushed again, so the next Back asks again. Arriving by an invite link has no Home below it, so one is put there.
+// Keeps every player on the screen of the game their room is in, which is how the host moves the whole party. While
+// the room waits that's Inicio (`roomPath`); a match's screens are pushed on top of it, and the browser's Back
+// from one lands on Inicio and is turned around (the match's "X" is the way out).
+// Inicio's address is your sala's while you have one (/sala/CODE, `homePath`): choosing a game (which makes the sala)
+// or joining one swaps "/" for it, and leaving it swaps it back, always replacing, on the same screen.
 function RoomNavigator() {
-  const { room, kickedNotice } = useApp();
+  const { room, group, kickedNotice } = useApp();
   const nav = useNavigate();
   const navType = useNavigationType();
   const { pathname } = useLocation();
-  const { step } = useRoomExit();
   // Hiding or showing the code changes the room's addresses (lib/hiddenCode.js): the screen moves to the new one.
   const [codeHidden] = useHiddenCode();
 
@@ -79,9 +75,12 @@ function RoomNavigator() {
     if (counting && window.scrollY > 4) window.scrollTo({ top: 0 });
   }, [counting, room?.currentRound, pathname]);
 
+  const home = homePath(tabGroupCode(group));
+  const lastHome = useRef(home);
+
   // Taken out of the room by the host: leave its screens (Home shows why).
   useEffect(() => {
-    if (kickedNotice && !room) nav("/", { replace: true });
+    if (kickedNotice && !room) nav(home, { replace: true });
   }, [kickedNotice]);
 
   // Out of the room by the server (the group's leader took it back to Inicio): off its screens, so their address
@@ -90,9 +89,9 @@ function RoomNavigator() {
   useEffect(() => {
     const had = hadRoom.current;
     hadRoom.current = Boolean(room);
-    if (had && !room && ROOM_SCREEN.test(pathname)) nav("/", { replace: true });
+    if (had && !room && ROOM_SCREEN.test(pathname)) nav(home, { replace: true });
   }, [room?.code]);
-  const target = room ? roomPath(room, codeHidden) : null;
+  const target = room ? roomPath(room, codeHidden, home) : null;
   const lastTarget = useRef(null);
   const lastPath = useRef(pathname);
   const lastPhase = useRef(null);
@@ -105,7 +104,7 @@ function RoomNavigator() {
     const phase = room?.phase ?? null;
     const before = lastPhase.current;
     lastPhase.current = phase;
-    if (!room?.matchmaking && !room?.run?.classic) return;
+    if (!room?.matchmaking && !room?.run?.classic && before !== "intro" && phase !== "intro") return;
     const cls = before === "intro" && phase !== "intro" ? "tv-seamless" : phase === "intro" && before !== "intro" ? "tv-seamless-side" : null;
     if (!cls) return;
     const root = document.documentElement;
@@ -119,19 +118,30 @@ function RoomNavigator() {
     lastTarget.current = target;
     const pathChanged = pathname !== lastPath.current;
     lastPath.current = pathname;
+    const homeBefore = lastHome.current;
+    lastHome.current = home;
+    // Inicio on "/" with a sala, or on the address of a sala that's no longer ours (left it, joined another, the code
+    // hidden or shown): Inicio's own address takes its place.
+    if ((pathname === "/" && home !== "/") || (pathname === homeBefore && homeBefore !== home)) {
+      nav(home, { replace: true });
+      return;
+    }
     if (!target) return;
-    const waiting = target.startsWith("/sala/");
-    // Opened straight on the room's address: it is the first entry, so Back would leave the app. Put Home under it
-    // (the next run pushes the room's screen back on top).
-    if (waiting && pathname === target && window.history.state?.idx === 0) {
-      nav("/", { replace: true });
+    // On Inicio (waiting) or on the room's own address (a public match, a Clásico): neither takes you off another page.
+    const roomScreen = target.startsWith("/partida/");
+    const waiting = target === home || roomScreen;
+    // Opened straight on the room's address (a reload): it is the first entry, so Back would leave the app. Put Home
+    // under it (the next run pushes the room's screen back on top).
+    if (roomScreen && pathname === target && window.history.state?.idx === 0) {
+      nav(home, { replace: true });
       return;
     }
     if (pathname === target) return;
 
-    // The Back button, from the waiting room to Home: it does what "Volver" does.
-    if (waiting && pathname === "/" && pathChanged && navType === "POP") {
-      if (!step({ fromBack: true })) nav(target);
+    // The Back button, from a match on the room's address to Home: back into it, pushed again so the next Back is
+    // turned around too.
+    if (roomScreen && pathname === home && pathChanged && navType === "POP") {
+      nav(target);
       return;
     }
 
@@ -142,21 +152,16 @@ function RoomNavigator() {
       if (screenCode === room.code || screenCode === HIDDEN_SLUG.toUpperCase()) nav(target, { replace: true });
       return;
     }
-    // From "¿Cómo quieres jugar?" (/jugar...) the room's address takes its place. The browser's Back landing there from
-    // the waiting room does what "Volver" does (out of the room, after asking, back to that option).
+    // The old pages of "¿Cómo quieres jugar?" (/jugar...): the room's address takes their place.
     if (pathname.startsWith("/jugar")) {
-      if (waiting && pathChanged && navType === "POP") {
-        if (!step({ fromBack: true })) nav(target);
-        return;
-      }
       nav(target, { replace: true });
       return;
     }
-    // On Home the address becomes the room's own (/sala/CODE) as soon as you create or join one, pushed on top of
-    // Home so that Back has somewhere to go. Other pages (profile...) are only left when a match starts.
-    if (pathname === "/") nav(target, { replace: pathChanged && navType === "POP" });
+    // On Home a match's screens are pushed on top of it, so that Back has somewhere to go. Other pages (profile...) are
+    // only left when a match starts on its own screens.
+    if (pathname === home) nav(target, { replace: pathChanged && navType === "POP" });
     else if (moved && !waiting) nav(target);
-  }, [target, pathname]);
+  }, [target, pathname, home]);
 
   return null;
 }
@@ -166,8 +171,6 @@ export default function App() {
     <>
       <RoomNavigator />
       <RoomSounds />
-      {/* The volume where no bar shows it (a Geografía match on a phone). */}
-      <VolumeMenu floating />
       {/* Opening a room this account already plays in from another device: it can be the room's central device. */}
       <CentralOffer />
       {/* The host, on every screen: players asking to use another device of theirs as the central one. */}
@@ -176,8 +179,9 @@ export default function App() {
       <StillThere />
       <Routes>
         <Route path="/" element={<RoomScreen />} />
-        <Route path="/sala/:code" element={<RoomScreen />} />
-        {/* A group's invite link: into the group, then wherever it is. */}
+        <Route path="/partida/:code" element={<RoomScreen />} />
+        {/* A group's invite link: into the group, then wherever it is. Also your own sala's address (Inicio). /grupo/ is the older address. */}
+        <Route path="/sala/:groupCode" element={<RoomScreen />} />
         <Route path="/grupo/:groupCode" element={<RoomScreen />} />
         {/* The old pages of "¿Cómo quieres jugar?" (/jugar/casual, /jugar/privada…) open Inicio on the side they named. */}
         <Route path="/jugar" element={<Navigate to="/" replace />} />

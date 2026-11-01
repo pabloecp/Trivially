@@ -2,6 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { getSupabase, supabaseEnabled } from "../db/store.js";
+import { botProfile } from "../game/bots.js";
 import { findByUsername, isAccount } from "../auth/username.js";
 
 // Friendships between accounts: a pair is `pending` (someone asked) or `accepted`. They live in the Supabase table
@@ -144,6 +145,8 @@ export class Friendships {
    */
   request(userId, targetId, now = Date.now()) {
     this.assertAccount(userId);
+    // A bot with an account's look (game/bots.js) takes the request like anyone; nothing comes of it.
+    if (botProfile(targetId)) return "pending";
     if (!isAccount(this.store.users[targetId])) throw new Error("No encontramos a esa persona");
     if (userId === targetId) throw new Error("Ese es tu propio código");
     const rec = this.get(userId, targetId);
