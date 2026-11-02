@@ -9,7 +9,6 @@ import SpectatorBanner from "../../components/home/SpectatorBanner.jsx";
 import { ControllerBar, GetReady, PhoneHint, joinNames } from "../../components/home/CentralBits.jsx";
 import { PauseButton, PauseVeil, SkipButton } from "../../components/home/PauseControls.jsx";
 import { resolveCode } from "../../lib/hiddenCode.js";
-import { MatchBar, MatchCard, MatchQuestion } from "../../components/home/MatchFrame.jsx";
 import { useApp, useRemainingMs, useView } from "../../lib/store.jsx";
 import { play } from "../../lib/sounds.js";
 import { DIFFICULTIES, findDifficulty, hitsText, pointsText, rainConfig } from "./rainInfo.js";
@@ -123,12 +122,9 @@ function Sky({ room, question, viewerId, nameOf, colorOf, onTap, children }) {
             style={{ "--lane": d.lane, zIndex: 1000 - d.id, visibility: "hidden" }}
           >
             <div className={`tv-rain-card is-${level.id}`} aria-label={`${level.label}, ${pointsText(d.points)}: ${d.text}`}>
-              {/* A drop, its points and difficulty ("5 · difícil"), and the question. */}
               <span className="tv-rain-card-top">
-                <Icon name="drop" size={16} strokeWidth={2.6} className="tv-rain-card-icon" />
-                <span className="tv-rain-card-pts">
-                  {d.points} · {level.label.toLowerCase()}
-                </span>
+                <span className="tv-rain-card-cat">{d.category}</span>
+                <span className="tv-rain-card-pts">+{d.points}</span>
               </span>
               <span className="tv-rain-card-text">{d.text}</span>
               {d.answer && (
@@ -217,7 +213,6 @@ function AnswerBox({ room, open, inputRef, onResult }) {
 
   return (
     <form className="tv-search tv-rain-form" onSubmit={submit}>
-      <div className="tv-search-row">
       <div ref={boxRef} className="tv-search-box tv-rain-box">
         <Icon name="keyboard" size={22} className="tv-search-icon" />
         <input
@@ -236,18 +231,12 @@ function AnswerBox({ room, open, inputRef, onResult }) {
           maxLength={80}
           aria-label="Tu respuesta"
         />
-      </div>
-      {/* Beside the box, always there; pressing it doesn't take the keyboard away from the box. */}
-      <button
-        type="submit"
-        className="tv-btn tv-btn--primary tv-mwrite-send"
-        data-sound="none"
-        disabled={!text.trim() || !open}
-        onMouseDown={(e) => e.preventDefault()}
-      >
-        <Icon name="send" size={20} strokeWidth={2.4} />
-        <span className="tv-mwrite-send-label">Enviar</span>
-      </button>
+        {text.trim() && open && (
+          // Pressing it doesn't take the keyboard away from the box.
+          <button type="submit" className="tv-btn tv-btn--sm tv-c-rain" data-sound="none" aria-label="Enviar" onMouseDown={(e) => e.preventDefault()}>
+            <Icon name="send" size={18} strokeWidth={2.6} />
+          </button>
+        )}
       </div>
     </form>
   );
@@ -583,7 +572,7 @@ function GameScreen() {
       <SkipButton room={room} onError={setErr} />
       <PauseButton room={room} isHost={isHost} onError={setErr} />
       {isHost && (
-        <button type="button" className={`tv-mini-btn tv-end-btn${confirmHub ? " is-on" : ""}`} onClick={backToHub}>
+        <button type="button" className={`tv-mini-btn${confirmHub ? " is-on" : ""}`} onClick={backToHub}>
           {confirmHub ? "¿Seguro? Toca otra vez" : "Terminar"}
         </button>
       )}
@@ -631,7 +620,7 @@ function GameScreen() {
   );
 
   return (
-    <div className={`tv-room tv-game tv-match tv-rain${central ? " is-central" : ""}${controller ? " is-controller" : ""}`}>
+    <div className={`tv-room tv-game tv-rain${central ? " is-central" : ""}${controller ? " is-controller" : ""}`}>
       <div ref={frameRef} className="tv-room-main tv-game-main tv-rain-frame">
         {spectator && <SpectatorBanner />}
         {controller ? (
@@ -639,18 +628,40 @@ function GameScreen() {
             {tools}
           </ControllerBar>
         ) : (
-          <MatchCard
-            room={room}
-            size="s"
-            label="Abiertas"
-            icon="drop"
-            dir={open && !last ? "Escribe la respuesta de una gota antes que nadie · fácil 1, media 3, difícil 5" : hint}
-            seconds={seconds}
-            pct={pct}
-            urgent={urgent}
-          >
-            <MatchQuestion>{open ? "Responde la gota que quieras" : title}</MatchQuestion>
-          </MatchCard>
+          <section className="tv-game-top">
+            <div className="tv-game-round tv-mines-find">
+              <p className="tv-mono-label">
+                Ronda {round + 1} de {room.totalRounds} · Lluvia
+              </p>
+              <h1 key={`${round}-${title}`} className="tv-card-title tv-mines-prompt tv-rain-title">
+                {title}
+              </h1>
+              <ol className="tv-rain-standings" aria-label="Marcador">
+                {standings.map((p, i) => (
+                  <li key={p.id} className={p.id === viewerId ? "is-me" : ""}>
+                    <span className="tv-rain-standings-pos">{i + 1}</span>
+                    <span className="tv-rain-standings-name">{p.id === viewerId ? "Tú" : p.name}</span>
+                    <strong key={p.score}>{p.score}</strong>
+                  </li>
+                ))}
+              </ol>
+              {hintLine}
+            </div>
+
+            <div className={`tv-clock${urgent ? " is-urgent" : ""}`} role="timer" aria-label={`${seconds} segundos`}>
+              <svg viewBox="0 0 44 44" aria-hidden="true">
+                <circle className="tv-clock-track" cx="22" cy="22" r="19" />
+                <circle className="tv-clock-fill" cx="22" cy="22" r="19" style={{ strokeDashoffset: 119.4 * (1 - pct / 100) }} />
+              </svg>
+              <span key={seconds} className="tv-clock-num">{seconds}</span>
+            </div>
+
+            <div className="tv-game-tools">{tools}</div>
+
+            <div className="tv-timer" aria-hidden="true">
+              <span className={`tv-timer-fill${urgent ? " is-urgent" : ""}`} style={{ width: `${pct}%` }} />
+            </div>
+          </section>
         )}
 
         {question ? (
@@ -729,16 +740,8 @@ function GameScreen() {
 
       {/* The scoreboard is the central device's, when there is one. */}
       {!controller && <PartyPanel room={room} scores display={central} onToast={setErr} status={`Ronda ${round + 1}`} />}
-      {!controller && !central && <MatchBar room={room} viewerId={viewerId} tools={tools} line={phase === "playing" ? lastTaken(room) : undefined} />}
     </div>
   );
-}
-
-// The bottom bar's line in a rain: who took the last drop answered, or what the drops are worth.
-function lastTaken(room) {
-  const taken = (room.question?.drops || []).filter((d) => d.by);
-  const by = taken.length ? room.players.find((p) => p.id === taken[taken.length - 1].by) : null;
-  return by ? `${by.name} se llevó la última gota` : "Cada gota es de quien la responda primero";
 }
 
 export default function Game() {

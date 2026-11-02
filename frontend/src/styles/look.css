@@ -1490,11 +1490,6 @@ html.tv-geo-playing .tv-app .tv-topbar:has(.tv-topbar-round) { display: flex; }
 .tv-app .tv-match .tv-mines-stage.tv-mpanel { justify-content: flex-start; padding: 14px; }
 .tv-app .tv-match .tv-mines-stage > .tv-mines-board { width: 100%; max-height: none; }
 
-/* Lluvia: the sky fills the panel, the box to write at its foot. */
-.tv-app .tv-match .tv-rain-frame > .tv-rain-stage { padding: 0; }
-.tv-app .tv-match .tv-rain-sky { border-radius: 22px; background-color: var(--tv-surface); }
-.tv-app .tv-match .tv-rain-form { max-width: none; }
-
 /* Rey de la colina: who's king, the questions to pick, the box to write. */
 .tv-app .tv-match .tv-rey-stage { justify-content: center; }
 .tv-app .tv-match .tv-rey-answerbox { display: flex; flex-direction: column; gap: 12px; }
@@ -1583,17 +1578,6 @@ html.tv-geo-playing .tv-app .tv-topbar:has(.tv-topbar-round) { display: flex; }
 .tv-app .tv-match .tv-mines-cell { border-radius: 12px; background: var(--tv-surface-3); box-shadow: 0 3px 0 var(--tv-neutral-edge); color: #fff; font-family: var(--tv-small); font-weight: 700; }
 .tv-app .tv-match .tv-mines-cell.is-hit { background: rgba(31, 210, 74, 0.18); box-shadow: none; color: #7fe077; }
 .tv-app .tv-match .tv-mines-cell.is-mine { background: var(--p-bad); box-shadow: none; color: #fff; }
-
-/* Lluvia: the drops in the game's blue with "5 · difícil", the box to write at the sky's foot, on it. */
-.tv-app .tv-match .tv-rain-stage { position: relative; }
-.tv-app .tv-match .tv-rain-bar { position: absolute; left: 14px; right: 14px; bottom: 14px; z-index: 50; }
-.tv-app .tv-match .tv-rain-score { display: none; }
-.tv-app .tv-match .tv-rain-form { flex: 1; }
-.tv-app .tv-match .tv-rain-box { height: 56px; border-radius: 14px; background: var(--tv-surface-2); box-shadow: inset 0 0 0 2px var(--tv-pick); }
-.tv-app .tv-match .tv-rain-card { --rc: var(--tv-rn); --rc-edge: var(--tv-rn-edge); --rc-on: #fff; gap: 6px; padding: 12px 14px; box-shadow: 0 4px 0 var(--rc-edge); }
-.tv-app .tv-match .tv-rain-card-top { justify-content: flex-start; }
-.tv-app .tv-match .tv-rain-card-pts { height: 24px; padding: 0 10px; border-radius: 10px; background: rgba(0, 0, 0, 0.2); font: 700 12px/24px var(--tv-small); }
-.tv-app .tv-match .tv-rain-card-text { font: 700 15px/1.25 var(--tv-small); }
 
 /* Rey de la colina: the king on the left, the challengers on the right. */
 .tv-rey-court { flex: 1; display: flex; gap: 22px; min-height: 0; }
