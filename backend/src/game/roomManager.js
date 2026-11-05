@@ -1959,9 +1959,6 @@ export class RoomManager {
       cutMs: verse.cutMs,
       startMs: Math.max(0, verse.cutMs - LYRICS_LEAD_MS),
       answerEndMs: verse.answerEndMs,
-      // Quiet only while the answer is sung: back with the next word, until the line ends.
-      backMs: verse.backMs ?? verse.cutMs,
-      stopMs: verse.stopMs ?? verse.cutMs,
       revealFromMs,
       revealMs: verse.answerEndMs + LYRICS_TAIL_MS - revealFromMs,
       answer: verse.answer,
@@ -2365,11 +2362,10 @@ export class RoomManager {
     return (room.config.roundMs || ROUND_MS) + this.lyricLeadMs(room);
   }
 
-  /** Completa la letra: the time the song plays (to the cut, and the rest of the line after the gap), on top of the
-   *  round's seconds (0 otherwise). */
+  /** Completa la letra: the time the song plays (to the cut), on top of the round's seconds (0 otherwise). */
   lyricLeadMs(room) {
     const lyric = room.game === "musica" ? room.tracks[room.currentRound]?.lyric : null;
-    return lyric ? Math.max(lyric.cutMs, lyric.stopMs ?? 0) - lyric.startMs : 0;
+    return lyric ? lyric.cutMs - lyric.startMs : 0;
   }
 
   /** Lluvia's rounds: questions falling down the screen, answered by writing while they're on it. */
@@ -4174,8 +4170,6 @@ export class RoomManager {
           lines: lyric.lines || [{ atMs: lyric.startMs, text: lyric.line }],
           startMs: lyric.startMs,
           cutMs: lyric.cutMs,
-          backMs: lyric.backMs ?? lyric.cutMs,
-          stopMs: lyric.stopMs ?? lyric.cutMs,
           roundMs: this.roundMs(room),
           revealFromMs: lyric.revealFromMs ?? lyric.cutMs,
           answerEndMs: lyric.answerEndMs ?? lyric.cutMs,

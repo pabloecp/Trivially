@@ -213,9 +213,7 @@ function GameScreen() {
     }
     const round = room.currentRound;
     if (room.phase === "playing" && room.audio?.previewUrl) {
-      // Quiet only while the answer is sung, then the rest of its line ("de mí"), then it stops.
-      const then = lyrics.stopMs > lyrics.backMs ? { back: lyrics.backMs / 1000, stop: lyrics.stopMs / 1000 } : null;
-      lyricPlayer.play(proxyUrl(room.audio.previewUrl), () => lyrics.startMs / 1000 + elapsed(), lyrics.cutMs / 1000, () => setCutRound(round), then);
+      lyricPlayer.play(proxyUrl(room.audio.previewUrl), () => lyrics.startMs / 1000 + elapsed(), lyrics.cutMs / 1000, () => setCutRound(round));
     } else if (lyricRevealUrl) {
       lyricPlayer.play(proxyUrl(lyricRevealUrl), () => (lyrics.revealFromMs ?? lyrics.cutMs) / 1000 + elapsed());
     }
@@ -232,7 +230,7 @@ function GameScreen() {
       if (room.paused) return;
       const elapsed = Math.max(0, (Date.now() - (room.phaseStartedAt || Date.now())) / 1000);
       let pos = lyrics.startMs / 1000;
-      const lastHeard = Math.max(lyrics.cutMs, lyrics.stopMs || 0) / 1000;
+      const lastHeard = lyrics.cutMs / 1000;
       if (room.phase === "playing") pos = Math.min(lastHeard, lyrics.startMs / 1000 + elapsed);
       else if (room.phase === "reveal" || room.phase === "finished") pos = (lyrics.revealFromMs ?? lyrics.cutMs) / 1000 + elapsed;
       const heard = lyricPlayer.position();
@@ -845,8 +843,8 @@ function GameScreen() {
 
 // Completa la letra's lyrics, line by line: every line is there from the start, in its place (nothing appears or
 // pushes the rest down); the one being sung is lit, the others dim. `position` is where the song is (seconds of its
-// preview). The last line has the gap: one long line, always as wide (it never tells how long the words are), filled
-// with them in the same place once the reveal's song gets to them.
+// preview). The last line ends in the gap: one long line, always as wide (it never tells how long the words are),
+// filled with them in the same place once the reveal's song gets to them.
 function LyricsPanel({ lyrics, position }) {
   const lines = lyrics.lines || [];
   const filled = Boolean(lyrics.answer) && position >= lyrics.cutMs / 1000;
@@ -858,19 +856,17 @@ function LyricsPanel({ lyrics, position }) {
     <div className="tv-lyrics">
       {lines.map((line, i) => {
         const state = i === current ? " is-current" : i < current ? " is-past" : " is-next";
-        // The gap, with any punctuation stuck to it ("___," keeps its comma).
-        const [before, after] = line.text.split("___");
+        const gapAt = line.text.indexOf("___");
         return (
           <p key={i === lines.length - 1 ? "gap" : `${i}-${line.atMs}`} className={`tv-lyrics-line${state}`}>
-            {after === undefined ? (
+            {gapAt < 0 ? (
               line.text
             ) : (
               <>
-                {before}
+                {line.text.slice(0, gapAt)}
                 <span className={`tv-lyrics-gap${filled ? " is-filled" : ""}`} aria-label={filled ? undefined : "espacio en blanco"}>
                   {filled ? lyrics.answer : "?"}
                 </span>
-                {after}
               </>
             )}
           </p>

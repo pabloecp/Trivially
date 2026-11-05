@@ -3,19 +3,18 @@ import { editDistance, normalizeOpen } from "../game/openAnswers.js";
 // Completa la letra's rounds, worked out once, offline (`npm run lyrics:build`): the song's own preview transcribed by
 // Whisper with each word's time (only for the times: Whisper mishears with the music behind) is matched word by word to
 // the song's real lyrics from LRCLIB (the text shown). The gap is a word heard clearly, never an article, with at least
-// MIN_LEAD_S of song before it, in the middle of its line, a chorus one when it can; the song stops CUT_BEFORE_S before
-// that word starts.
+// MIN_LEAD_S of song before it, the last of its line when it can (and a chorus one); the song stops CUT_BEFORE_S before
+// that word starts and doesn't play on, and the line shown ends at the gap: "Y yo que hasta ayer solo fui un ___".
 
 export const LYRIC_GAP = "___";
 const MIN_LEAD_S = 8;
 const CUT_BEFORE_S = 0.08;
 // Whisper's own confidence in the gap's word, at least.
 const MIN_PROBABILITY = 0.6;
+// The preview goes on at least this long after the gap's word.
+const MIN_AFTER_S = 0.5;
 // The reveal plays on this long after the gap's line has been sung (when the preview lasts that long).
 const TAIL_S = 1;
-// While playing, the song comes back this long before the word after the gap, and stops this long after its line.
-const BACK_BEFORE_S = 0.05;
-const STOP_AFTER_S = 0.3;
 
 // Words that never make a gap: too common to guess, or sounds rather than words.
 export const STOPWORDS = new Set(
@@ -31,6 +30,19 @@ export const STOPWORDS = new Set(
     "cant wont gonna wanna gotta just youre theyre thats ive ill id hes shes weve youve ain aint lets whats theres yall"
   ).split(" ")
 );
+
+/** A line as it's shown: nothing after the gap, not even punctuation stuck to it, and no sign left open by that. */
+export function endAtGap(text) {
+  const at = text.indexOf(LYRIC_GAP);
+  if (at < 0) return text;
+  let shown = text.slice(0, at);
+  const count = (c) => shown.split(c).length - 1;
+  if (count('"') % 2) shown = shown.replaceAll('"', "");
+  for (const [open, close] of [["(", ")"], ["¿", "?"], ["¡", "!"]]) {
+    if (count(open) > count(close)) shown = shown.replaceAll(open, "");
+  }
+  return `${shown.replace(/^\s+/, "")}${LYRIC_GAP}`;
+}
 
 /** LRCLIB's lyrics as lines of text: the synced ones without their "[mm:ss.xx]", else the plain ones; no empty lines. */
 export function lyricLines(synced, plain) {
@@ -108,13 +120,16 @@ export function pickRound(lines, heard, { length = 30, language = "es" } = {}) {
     const heardWord = match[k];
     if (!heardWord || heardWord.prob < MIN_PROBABILITY || heardWord.start < MIN_LEAD_S) return;
     if (w.key.length < 3 || STOPWORDS.has(w.key) || /\d/.test(w.key)) return;
+    // The reveal must let the answer be heard: not a word the preview ends on.
+    if (heardWord.end > length - MIN_AFTER_S) return;
     const line = wordsOf(w.line);
     const at = line.findIndex((x) => x.k === k);
-    // In the middle of its line: two words before it, one after; the word right before it heard too (the cut follows it).
-    if (at < 2 || at > line.length - 2 || !match[k - 1]) return;
+    // Two words before it in its line, the one right before it heard too (the cut follows it).
+    if (at < 2 || !match[k - 1]) return;
     const chorus = (lineCount.get(normalizeOpen(lines[w.line])) || 0) > 1;
     const sung = line.filter((x) => match[x.k]).length / line.length;
-    const score = (chorus ? 3 : 0) + sung * 2 + Math.min(w.key.length, 9) / 9 + heardWord.prob;
+    // The last word of its line above any other: the line reads whole, nothing is left out after the gap.
+    const score = (at === line.length - 1 ? 10 : 0) + (chorus ? 3 : 0) + sung * 2 + Math.min(w.key.length, 9) / 9 + heardWord.prob;
     candidates.push({ score, k, w, line, heardWord });
   });
   // The best one whose answer isn't given away on screen (a chorus line shown just before says it).
@@ -127,12 +142,8 @@ export function pickRound(lines, heard, { length = 30, language = "es" } = {}) {
   function buildRound({ k, w, line, heardWord }) {
     const previous = match[k - 1];
     const cut = Math.max(heardWord.start - CUT_BEFORE_S, previous.start + 0.6 * (previous.end - previous.start));
-    // The song goes quiet only while the gap's word is sung and comes back with the next word ("Tu jeva se pasa ___ de
-    // mí": silent on the answer, then "de mí"), until its line ends; the reveal plays it all, and a bit more.
+    // Only the reveal plays on from the cut: the answer, the rest of its line, and a bit more.
     const lineEnd = Math.max(...line.map((x) => match[x.k]?.end || 0));
-    const nextWord = match[k + 1];
-    const back = nextWord ? Math.max(heardWord.end + 0.04, nextWord.start - BACK_BEFORE_S) : heardWord.end + 0.15;
-    const stop = Math.min(length, Math.max(back, lineEnd) + STOP_AFTER_S);
     const end = Math.min(length, Math.max(heardWord.end, lineEnd) + TAIL_S);
     // The lines shown: the gap's and the ones heard before it, each from its first heard word.
     const lineStart = (l) => {
@@ -146,8 +157,8 @@ export function pickRound(lines, heard, { length = 30, language = "es" } = {}) {
       shown.unshift({ at: Math.max(0, at), text: lines[l].replace(/\([^)]*\)/g, "").replace(/\s+/g, " ").trim() });
     }
     const answer = w.text.replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, "");
-    const gapLine = line.map((x) => (x.k === k ? x.text.replace(answer, LYRIC_GAP) : x.text)).join(" ");
-    // Nowhere else on screen: not in the lines shown before it, nor again in its own line.
+    const gapLine = endAtGap(line.map((x) => (x.k === k ? x.text.replace(answer, LYRIC_GAP) : x.text)).join(" "));
+    // Nowhere else on screen: not in the lines shown before it, nor earlier in its own line.
     const onScreen = [...shown.map((l) => l.text), gapLine].join(" ").split(/\s+/).map(norm);
     if (onScreen.some((x) => x && like(x, w.key))) return null;
     shown.push({ at: Math.max(0, Math.min(lineStart(w.line) ?? cut, cut)), text: gapLine });
@@ -155,8 +166,6 @@ export function pickRound(lines, heard, { length = 30, language = "es" } = {}) {
     return {
       lines: shown.map((l) => ({ at: round(l.at), text: l.text })),
       cut: round(cut),
-      back: round(back),
-      stop: round(stop),
       end: round(end),
       answer,
       wrong: wrongAnswers(answer, lines, language, new Set(line.map((x) => x.key))),
