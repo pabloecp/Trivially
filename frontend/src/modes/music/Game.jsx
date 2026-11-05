@@ -513,7 +513,6 @@ function GameScreen() {
         ) : (
           <MatchCard
             room={room}
-            size={lyrics ? "s" : "m"}
             label={`${lyrics ? "Letra" : "Título"} · ${closed ? "Cerradas" : "Abiertas"}`}
             icon="music"
             dir={

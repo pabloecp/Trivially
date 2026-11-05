@@ -291,7 +291,6 @@ function GameScreen() {
       <div className="tv-room-main tv-game-main tv-geo-stage">
         <MatchCard
           room={room}
-          size={byName ? "s" : "m"}
           label={tiebreak ? "Desempate" : style.label}
           icon="pin"
           dir={
@@ -308,7 +307,7 @@ function GameScreen() {
           <div className="tv-qc-find">
             {/* The silhouette or the flag of the country to find, while it's searched and at the reveal. */}
             {!byName && (phase === "playing" || phase === "reveal") && <Clue question={question} />}
-            <MatchQuestion big={byName || phase !== "playing"}>
+            <MatchQuestion>
               {phase === "countdown" ? title : phase === "reveal" ? room.reveal?.name || title : byName ? `Encuentra ${title}` : "Encuentra este país"}
             </MatchQuestion>
           </div>

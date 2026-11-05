@@ -1041,10 +1041,11 @@
 .tv-rounds i.is-done { background: var(--tv-pick); }
 .tv-rounds i.is-now { background: #fff; }
 
-/* The round's card: three fixed heights for every game, so it never changes size from one round to the next. */
+/* The round's card: one height for every game and every round (220 px on a phone), so it never changes size. */
 .tv-qc {
   position: relative;
   flex: none;
+  height: 240px;
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -1056,9 +1057,6 @@
   text-align: left;
   animation: var(--tv-box-in);
 }
-.tv-qc--s { height: 180px; }
-.tv-qc--m { height: 220px; }
-.tv-qc--l { height: 260px; }
 .tv-qc-mark { position: absolute; right: -30px; bottom: -34px; color: #fff; opacity: 0.14; transform: rotate(-10deg); pointer-events: none; }
 .tv-qc-head { position: relative; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; min-width: 0; }
 .tv-qc-pill {
@@ -1085,16 +1083,17 @@
   color: rgba(255, 255, 255, 0.92);
 }
 .tv-qc-body { position: relative; flex: 1; display: flex; flex-direction: column; justify-content: flex-end; min-height: 0; }
+/* The same size for every question of every game; a very long one is cut after three lines. */
 .tv-qc-q {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
   margin: 0;
-  max-width: 26em;
-  font: 800 38px/1.1 var(--tv-title);
+  font: 800 28px/1.14 var(--tv-title);
   letter-spacing: -0.03em;
   overflow-wrap: anywhere;
 }
-.tv-qc-q.is-mid { font-size: 32px; }
-.tv-qc-q.is-long { max-width: none; font-size: 26px; }
-.tv-qc-q.is-big { font-size: 50px; line-height: 1; }
 .tv-qc-timer { position: relative; flex: none; height: 12px; overflow: hidden; border-radius: 6px; background: rgba(0, 0, 0, 0.2); }
 .tv-qc-timer i { display: block; height: 100%; border-radius: 6px; background: #fff; transition: width 0.25s linear; }
 /* The verdict at the end of a round, on the card's first row. */
@@ -1608,18 +1607,12 @@ html.tv-geo-playing .tv-app .tv-topbar:has(.tv-topbar-round) { display: flex; }
   .tv-qc { gap: 6px; padding: 14px 16px; border-radius: 20px; }
   /* Phones: the topic is shorter, so the first row never wraps. */
   .tv-qc-topic-text { max-width: 120px; }
-  /* A height to start from, growing when the pills wrap to a second row (Farsante's steps and "Empieza en 1"), so the
-     question never runs over the line above it. */
-  .tv-qc--s { height: auto; min-height: 170px; }
-  .tv-qc--m { height: auto; min-height: 200px; }
-  .tv-qc--l { height: auto; min-height: 230px; }
+  /* Phones: the same height in every game. */
+  .tv-qc { height: 220px; }
   .tv-qc-mark { width: 170px; height: 170px; }
   .tv-qc-pill { height: 28px; font-size: 12px; }
   .tv-qc-dir { -webkit-line-clamp: 1; font-size: 13px; }
-  .tv-qc-q { font-size: 26px; line-height: 1.12; }
-  .tv-qc-q.is-mid { font-size: 22px; }
-  .tv-qc-q.is-long { font-size: 19px; }
-  .tv-qc-q.is-big { font-size: 32px; }
+  .tv-qc-q { -webkit-line-clamp: 4; font-size: 21px; line-height: 1.14; }
   .tv-app .tv-match .tv-quiz-options,
   .tv-app .tv-match .tv-fs-options { grid-template-columns: minmax(0, 1fr); gap: 10px; }
   .tv-app .tv-match .tv-quiz-opt { min-height: 56px; font-size: 18px; }

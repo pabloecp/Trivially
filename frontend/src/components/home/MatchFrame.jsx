@@ -21,13 +21,13 @@ export function gameLook(room) {
 /**
  * The round's card, in the game's colour: on its first row the round's mode or topic (`label`, with its `icon`), any
  * `pills`, and under them what to do (`dir`); the question (children) at the bottom and the
- * clock's bar under it. Three fixed heights (`size` s, m, l) so a game's card never changes size between rounds.
+ * clock's bar under it. One fixed height for every game and round (`.tv-qc`), so the card never changes size.
  */
-export function MatchCard({ room, label, icon, pills = null, dir, seconds, pct = 100, urgent = false, size = "m", className = "", children }) {
+export function MatchCard({ room, label, icon, pills = null, dir, seconds, pct = 100, urgent = false, className = "", children }) {
   const { color, icon: gameIcon } = gameLook(room);
   const counting = room.phase === "countdown";
   return (
-    <section className={`tv-qc tv-qc--${size} tv-c-${color} ${className}`.trim()}>
+    <section className={`tv-qc tv-c-${color} ${className}`.trim()}>
       <Icon name={gameIcon} size={220} strokeWidth={1.5} className="tv-qc-mark" />
       <div className="tv-qc-head">
         {label && (
@@ -51,11 +51,9 @@ export function MatchCard({ room, label, icon, pills = null, dir, seconds, pct =
   );
 }
 
-/** The question's text inside the card, its size picked by how long it is. */
-export function MatchQuestion({ children, big = false }) {
-  const text = typeof children === "string" ? children : "";
-  const long = text.length > 90 ? " is-long" : text.length > 60 ? " is-mid" : "";
-  return <h2 className={`tv-qc-q${big ? " is-big" : ""}${long}`}>{children}</h2>;
+/** The question's text inside the card: always the same size, in every game. */
+export function MatchQuestion({ children }) {
+  return <h2 className="tv-qc-q">{children}</h2>;
 }
 
 /** "Falta Lynz por responder", "Faltan Pablo y Lynz por confirmar", "Faltan 3 por responder" (you by your name too).
