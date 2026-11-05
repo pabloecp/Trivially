@@ -171,7 +171,7 @@ function ResultsScreen() {
                 <button
                   className="tv-btn tv-c-neutral tv-res-btn"
                   data-sound="back"
-                  aria-label={leadsGroup ? "Volver al inicio con tu sala" : "Salir"}
+                  aria-label={leadsGroup ? "Volver al inicio con tu grupo" : "Salir"}
                   onClick={() => {
                     if (leadsGroup) {
                       withSound(groupHome, null)

@@ -62,7 +62,7 @@ export default function AdminPanel({ open, onClose }) {
     setMsg("");
     try {
       await addTestBot();
-      setMsg("Bot añadido a la sala");
+      setMsg("Bot añadido a la partida");
     } catch (e) {
       setMsg(e.message || "No se pudo añadir el bot");
     } finally {
@@ -174,7 +174,7 @@ export default function AdminPanel({ open, onClose }) {
                   </button>
                 </div>
                 <p className="tv-admin-hint">
-                  Elige qué juegos salen en tus partidas públicas y en qué orden. Se juegan en una sala solo tuya (con bots) y solo con tu cuenta. Sin nada elegido, salen al azar.
+                  Elige qué juegos salen en tus partidas públicas y en qué orden. Se juegan en una partida solo tuya (con bots) y solo con tu cuenta. Sin nada elegido, salen al azar.
                 </p>
                 {!debug && <p className="tv-admin-warn">Solo se usan en la vista «Owner (debug)»: cámbiala arriba para jugarlos.</p>}
                 {/* Every way of playing, the same size: the chosen ones carry their place in the order. */}

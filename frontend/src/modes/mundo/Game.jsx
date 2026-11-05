@@ -155,7 +155,7 @@ function GameScreen() {
       return;
     }
     setConfirmHub(false);
-    restartGame().catch((e) => setErr(e.message || "No se pudo volver a la sala"));
+    restartGame().catch((e) => setErr(e.message || "No se pudo terminar la partida"));
   }
 
   if (!room) {
@@ -244,7 +244,7 @@ function GameScreen() {
   }
 
   // Someone who joined mid-match only watches: the same lines, without the instructions to answer.
-  if (spectator && phase !== "reveal") hint = "Estás viendo la partida. Entrarás a la sala cuando termine.";
+  if (spectator && phase !== "reveal") hint = "Estás viendo la partida. Entrarás a jugar cuando termine.";
   // The central device talks to the whole room: they put their pins from their phones.
   if (central && phase === "countdown" && !tiebreak) {
     hint = byName

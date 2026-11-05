@@ -203,7 +203,7 @@ function GameScreen() {
       return;
     }
     setConfirmHub(false);
-    restartGame().catch((e) => setErr(e.message || "No se pudo volver a la sala"));
+    restartGame().catch((e) => setErr(e.message || "No se pudo terminar la partida"));
   }
 
   if (!room) {
@@ -282,7 +282,7 @@ function GameScreen() {
   else if (myGuess) hint = `Ajusta con los botones${touch ? "" : " o las flechas"} y confirma.`;
   else hint = touch ? `Toca ${words.line} para elegir ${words.pick}.` : `Haz clic en ${words.line} o usa las flechas del teclado.`;
 
-  if (spectator && phase !== "reveal") hint = "Estás viendo la partida. Entrarás a la sala cuando termine.";
+  if (spectator && phase !== "reveal") hint = "Estás viendo la partida. Entrarás a jugar cuando termine.";
   // The central device talks to the whole room: they pick the year on their phones.
   if (central && phase === "countdown") {
     hint = tiebreak

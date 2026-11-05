@@ -36,7 +36,7 @@
 - Phones: during an intro (`.tv-mcard`) the scoreboard stays under the card (home.css, "Phones: the room's bars").
 
 ## Room extras
-- **No chat:** the room has none (it was removed). A sala (a group and its private match) holds at most `SALA_MAX` (10) players (`matchmaking.js`; `groups.js addMember`, `RoomManager.addPlayer`). Scoreboards and lists of players come in with no animation (`look.css`, end); only the final podium keeps its own.
+- **No chat:** the room has none (it was removed). A group, and a private match, hold at most `GROUP_MAX` (10) players (`matchmaking.js`; `groups.js addMember`, `RoomManager.addPlayer`). Scoreboards and lists of players come in with no animation (`look.css`, end); only the final podium keeps its own.
 - **Hidden code** (`lib/hiddenCode.js`, key `trivially_hide_code`): dots on this device, and the URL uses `HIDDEN_SLUG` "oculta" instead of the code (`urlCode`, `resolveCode`, `RoomNavigator`).
 
 ## Trivia (`opciones`, `QUIZ_GAME`)

@@ -1,6 +1,5 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useApp } from "../../lib/store.jsx";
-import { shownCode, useHiddenCode } from "../../lib/hiddenCode.js";
 import Avatar from "./Avatar.jsx";
 import FriendsRoomControls from "./FriendsRoomControls.jsx";
 import Icon from "./Icon.jsx";
@@ -11,15 +10,21 @@ import CentralSpot from "./CentralSpot.jsx";
 import { profilePath } from "./PlayerName.jsx";
 import { useInvite } from "./useInvite.js";
 
-// "Tu sala", from the group's bar ("+" or the faces): the group's code with one button that copies the invite link (the
-// only place the code shows; "Salir de la sala" is on the bar), then who is in it. In the group's private match, the
+// "Tu grupo", from "Invitar" beside the game's card (the top bar's faces on phones): the group's invite link
+// hidden every time it opens (its "Mostrar" button swaps the label for the link, in the same box), with one button that copies it (the only place the code shows, inside the link; "Salir del grupo" is beside the card), then
+// who is in it. In the group's private match, the
 // match's column (PartyPanel: everyone with their menu and your friends online to invite); elsewhere the group's
 // own list (GroupMembers), where the leader can pass the group on or take someone out.
-// `onLeave` (phones, where the group's bar has no "Salir de la sala"): the red "Salir de la sala" at its foot, which asks first.
+// `onLeave` (phones, where there's no "Tu grupo" box beside the card; only with someone else in the group): the red "Salir del grupo" at its foot, which asks first.
 export default function GroupSheet({ open, onClose, room, onToast, onLeave = null, leaving = false }) {
   const { group } = useApp();
-  const [codeHidden, toggleCode] = useHiddenCode();
-  const link = useInvite(group?.code, onToast);
+  // The link is hidden every time the window opens; only its "Mostrar" button shows it (for whoever streams).
+  const [linkHidden, setLinkHidden] = useState(true);
+  useEffect(() => {
+    if (!open) setLinkHidden(true);
+  }, [open]);
+  const url = `${window.location.host}/grupo/${group?.code}`;
+  const link = useInvite(group?.code, onToast, { done: "Enlace copiado" });
   if (!group) return null;
   const own = Boolean(room) && room.groupCode === group.code && !room.matchmaking;
 
@@ -27,38 +32,35 @@ export default function GroupSheet({ open, onClose, room, onToast, onLeave = nul
     <Modal
       open={open}
       onClose={onClose}
-      title="Tu sala"
+      title="Tu grupo"
       size="md"
       className="tv-groupsheet"
       foot={
         onLeave ? (
           <button type="button" className="tv-btn tv-btn--bad tv-btn--block" data-sound="back" onClick={onLeave} disabled={leaving}>
             <Icon name="logout" size={18} strokeWidth={2.6} />
-            Salir de la sala
+            Salir del grupo
           </button>
         ) : null
       }
     >
       <div className="tv-codebox">
-        <div className="tv-codebox-head">
-          <span className="tv-section-label">Código de la sala</span>
-          {/* Hides the code on this device's screens, for streaming. */}
-          <button
-            type="button"
-            className={`tv-codebox-eye${codeHidden ? " is-on" : ""}`}
-            onClick={toggleCode}
-            aria-pressed={codeHidden}
-            aria-label={codeHidden ? "Mostrar el código" : "Ocultar el código"}
-            title={codeHidden ? "Mostrar el código" : "Ocultar el código"}
-          >
-            <Icon name={codeHidden ? "eye-off" : "eye"} size={16} strokeWidth={2.6} />
-          </button>
-        </div>
         <div className="tv-codebox-row">
-          <p className={`tv-codebox-code${codeHidden ? " is-hidden" : ""}`}>{shownCode(group.code, codeHidden)}</p>
-          <button type="button" className="tv-btn tv-btn--neutral tv-codebox-copy" aria-label={link.copied ? "Enlace copiado" : "Copiar enlace de la sala"} title={link.copied ? "Copiado" : "Copiar enlace"} onClick={link.copy}>
-            <Icon name={link.copied ? "check" : "link"} size={26} strokeWidth={2.6} />
-          </button>
+          {linkHidden ? (
+            <span className="tv-section-label tv-codebox-label">Enlace del grupo</span>
+          ) : (
+            <span className="tv-section-label tv-codebox-label is-link" title={url}>
+              {url}
+            </span>
+          )}
+          <div className="tv-codebox-btns">
+            <button type="button" className="tv-btn tv-btn--neutral tv-codebox-show" aria-expanded={!linkHidden} onClick={() => setLinkHidden((h) => !h)}>
+              {linkHidden ? "Mostrar" : "Ocultar"}
+            </button>
+            <button type="button" className="tv-btn tv-btn--neutral tv-codebox-copy" aria-label={link.copied ? "Enlace copiado" : "Copiar enlace del grupo"} title={link.copied ? "Copiado" : "Copiar enlace"} onClick={link.copy}>
+              <Icon name={link.copied ? "check" : "link"} size={20} strokeWidth={2.6} />
+            </button>
+          </div>
         </div>
       </div>
       <GroupMembers group={group} room={own ? room : null} onToast={onToast} onClose={onClose} />
@@ -66,7 +68,7 @@ export default function GroupSheet({ open, onClose, room, onToast, onLeave = nul
   );
 }
 
-// The sala's players, the same with a private match or without one: the leader's crown, who isn't with the group now, and
+// The group's players, the same with a private match or without one: the leader's crown, who isn't with the group now, and
 // each one's buttons: their profile (accounts) for everyone, and for the leader, on the others, the settings' permission,
 // making them the leader and taking them out. Then their friends' options and friends to invite.
 function GroupMembers({ group, room, onToast, onClose }) {
@@ -91,14 +93,14 @@ function GroupMembers({ group, room, onToast, onClose }) {
       {isLeader && <FriendsRoomControls group={group} onToast={onToast} />}
       {room?.central && <CentralSpot room={room} canEdit={isLeader || Boolean(room.coHosts?.includes(user?.id))} onToast={onToast} />}
       <div className="tv-party-title">
-        <h2>En la sala</h2>
+        <h2>En el grupo</h2>
         <span>{group.members.length === 1 ? "1 jugador" : `${group.members.length} jugadores`}</span>
       </div>
-      <ul className="tv-party-players" aria-label="Jugadores de la sala">
+      <ul className="tv-party-players" aria-label="Jugadores del grupo">
         {group.members.map((m) => {
           const isMe = m.id === user?.id;
           const leads = m.id === group.leaderId;
-          const tag = !m.connected ? "Reconectando…" : !m.here ? "En otra partida" : leads ? "Líder" : m.canEditConfig ? "Puede cambiar ajustes" : "En la sala";
+          const tag = !m.connected ? "Reconectando…" : !m.here ? "En otra partida" : leads ? "Líder" : m.canEditConfig ? "Puede cambiar ajustes" : "En el grupo";
           return (
             <li key={m.id} className={`tv-player${isMe ? " is-me" : ""}${m.connected && m.here ? "" : " is-away"}`}>
               <div className="tv-player-btn tv-groupmember">
@@ -130,10 +132,10 @@ function GroupMembers({ group, room, onToast, onClose }) {
                       <button
                         type="button"
                         className="tv-iconbtn tv-iconbtn--sm"
-                        aria-label={`Sacar a ${m.name} de la sala`}
-                        title="Sacar de la sala"
+                        aria-label={`Sacar a ${m.name} del grupo`}
+                        title="Sacar del grupo"
                         disabled={Boolean(busy)}
-                        onClick={() => act(`kick:${m.id}`, () => kickFromGroup(m.id), `Sacaste a ${m.name} de la sala`)}
+                        onClick={() => act(`kick:${m.id}`, () => kickFromGroup(m.id), `Sacaste a ${m.name} del grupo`)}
                       >
                         <Icon name="close" size={16} strokeWidth={2.8} />
                       </button>
@@ -151,7 +153,7 @@ function GroupMembers({ group, room, onToast, onClose }) {
                   )}
                   {/* Who leads: the crown's button in yellow, only to look at. */}
                   {leads && (
-                    <span className="tv-iconbtn tv-iconbtn--sm is-leader" role="img" aria-label="Líder de la sala" title="Líder de la sala">
+                    <span className="tv-iconbtn tv-iconbtn--sm is-leader" role="img" aria-label="Líder del grupo" title="Líder del grupo">
                       <Icon name="crown" size={16} strokeWidth={2.2} filled />
                     </span>
                   )}

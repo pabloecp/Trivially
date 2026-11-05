@@ -147,14 +147,14 @@ export default function PartyPanel({ room, onToast, scores = false, display = fa
   return (
     <aside
       className={`tv-party${scores ? " is-scores" : ""}${display ? " is-display" : ""} ${className}`.trim()}
-      aria-label="Tu sala"
+      aria-label="La partida"
     >
       {/* Only a group's private match has a code to share (the group's). Nobody joins a public match but by searching. The
-          scoreboard of a match has none: only the scoreboard (the code is in the top bar and the group's bar). */}
+          scoreboard of a match has none: only the scoreboard (the code is only here and in "Tu grupo"). */}
       {room.groupCode && !room.matchmaking && !scores && (
       <div className="tv-party-codebox">
         <div className="tv-party-codehead">
-          <p className="tv-mono-label">Código de la sala</p>
+          <p className="tv-mono-label">Código del grupo</p>
           {/* Hides the code on this device's screens, for streaming. */}
           <button
             type="button"
@@ -181,7 +181,7 @@ export default function PartyPanel({ room, onToast, scores = false, display = fa
 
 
       <div className="tv-party-title">
-        <h2>{scores ? "Marcador" : "En la sala"}</h2>
+        <h2>{scores ? "Marcador" : "En la partida"}</h2>
         {scores ? (
           <span className="tv-party-status-pill">{status ?? answeredLine(room, players)}</span>
         ) : (
@@ -192,7 +192,7 @@ export default function PartyPanel({ room, onToast, scores = false, display = fa
       <div className="tv-party-people">
         <div>
           {showSpot && <CentralSpot room={room} canEdit={canCentral} onToast={onToast} />}
-          <ul className="tv-party-players" aria-label={scores ? "Marcador" : "Jugadores en la sala"}>
+          <ul className="tv-party-players" aria-label={scores ? "Marcador" : "Jugadores en la partida"}>
             {players.map((p, i) => {
               const isMe = p.id === viewerId;
               const isHostPlayer = p.id === room.hostId;

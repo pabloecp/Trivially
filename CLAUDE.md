@@ -59,7 +59,7 @@ Commit messages are in Spanish and written for someone who doesn't read code.
 - **Shadows:** only what is tapped has one, a solid edge in its own darker colour (`box-shadow: 0 3px 0 var(--edge)`), rising on hover and going flat when pressed; never a plain black edge under a coloured or white button. Everything else (boxes to write in, selectors, cards, labels) is flat, at most a thin line. Never an inset shadow at the top. Buttons are rounded rectangles, never circles or pills. Text buttons are never underlined.
 - **Big panels** come in with `--tv-box-in` and go with `--tv-box-out` (`home.css`), all together.
 - **Panels over the page** (`Modal`, `.tv-sheet`, every window that opens and closes) all move the same way: `--tv-box-in` to open and `--tv-box-out` to close, moving whole, with nothing inside them animating on its own, and their backdrop fading in step, with no blur. A new panel uses `Modal`; whatever unmounts one on a timer waits past the 0.3 s of the way out.
-- **No sala, no game chosen.** Leaving a sala, even as its last member, always lands on "Elige un juego": a chosen game, a private match or its settings only exist inside a sala (`group:leave` takes the last member out of the private match too).
+- **Groups are apart from matches, and players never see "sala".** Nobody has a group on arrival and choosing a game never makes one: only "Invitar" (which makes it) or a friend's link does. Without a group you play alone, public or private (a new device starts on Trivia). A group's code shows only in "Tu grupo" (the window "Invitar" opens), never on the bar, beside the card or in the address: Inicio is `/` with a group or without one, also while a private match waits there (no "Volver" then). The last one to leave a group keeps its private match, alone. See `grupos.md`.
 
 ## Detailed docs (read the one you need before working on that part)
 
@@ -68,7 +68,7 @@ In `.claude/docs/`:
 - `sala-y-partida.md`: rooms, phases, pause, report, skip, spectators, inactive players, chat, history, results screens, **Trivia** and Adivina la canción.
 - `preguntas.md`: the question bank, row shapes, categories, uploading.
 - One per game: `encuentra-el-pais.md`, `rango.md`, `campo-de-minas.md`, `lluvia.md`, `rey-de-la-colina.md`, `farsante.md`.
-- `grupos.md`: groups (who goes together) apart from rooms (the matches): the leader moves everyone, "Crear grupo", "Tu grupo", invite links.
+- `grupos.md`: groups (who goes together) apart from rooms (the matches): the leader moves everyone, "Invitar", "Tu grupo", invite links.
 - `partidas-publicas.md` (Inicio and its bar, public matches by game, a group searching together, bots, rank), `clasico.md`.
 - `dispositivo-central.md`, `panel-owner.md`, `amigos-y-enlaces.md` (friends, @usernames, link filter).
 - `diseno.md`: the design rules: the look (`frontend/src/styles/look.css`, loaded last), layout, colours, type, pieces, panel motion, shadows.
