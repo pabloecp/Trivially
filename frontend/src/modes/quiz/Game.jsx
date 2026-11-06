@@ -46,8 +46,11 @@ const DIRECTIONS = {
 };
 
 // The question's card (MatchCard): its topic, what to do and the time; the question at the bottom. `note` goes on its
-// first row (the verdict at the end of the round).
+// first row (the verdict at the end of the round). An "Imágenes" question (a picture or a flag) has it inside the card,
+// on the left of the question, like Encuentra el país's flag.
 function QuestionCard({ room, question, clock, note }) {
+  const pictured = Boolean(question.pictured) || question.kind === "flag";
+  const media = pictured ? <CardPicture question={question} /> : null;
   return (
     <MatchCard
       room={room}
@@ -55,6 +58,8 @@ function QuestionCard({ room, question, clock, note }) {
       icon={topicIcon(question.category)}
       pills={note}
       dir={DIRECTIONS[question.type] || DIRECTIONS.choice}
+      media={media}
+      className={pictured ? "tv-qc--pictured" : ""}
       {...clock}
     >
       <MatchQuestion>{question.text}</MatchQuestion>
@@ -69,15 +74,6 @@ function ControllerCard({ children }) {
     <div className="tv-quiz-q is-controller">
       <div className="tv-quiz-slot">{children}</div>
     </div>
-  );
-}
-
-function Count({ seconds }) {
-  const n = Math.max(1, seconds);
-  return (
-    <span key={n} className="tv-quiz-count" aria-label={`Empieza en ${n}`}>
-      {n}
-    </span>
   );
 }
 
@@ -156,9 +152,7 @@ function ChoiceRound({ room, question, me, answer, seconds, clock, central, cont
         />
       )}
       {room.phase === "playing" && central && <PhoneHint room={room}>Respondan desde su teléfono</PhoneHint>}
-      {/* An "Imágenes" question: its picture between the question and the options (not on a phone beside the
-          room's central device, which shows it). */}
-      {question.pictured && !controller && <QuestionImage room={room} question={question} seconds={seconds} />}
+      {question.pictured && !controller && <PictureCredit room={room} question={question} />}
 
       <div className={`tv-quiz-options${reveal ? " is-reveal" : ""}`} role="group" aria-label="Opciones">
         {OPTION_LETTERS.map((letter, i) => {
@@ -218,51 +212,36 @@ function ChoiceRound({ room, question, me, answer, seconds, clock, central, cont
   );
 }
 
-function Flag({ src }) {
-  const [failed, setFailed] = useState(false);
-  useEffect(() => setFailed(false), [src]);
-  if (!src || failed) {
-    return (
-      <div className="tv-geo-flag is-missing" role="img" aria-label="Bandera">
-        <Icon name="flag" size={40} />
-        <span>No se pudo cargar la bandera</span>
-      </div>
-    );
-  }
-  return <img key={src} className="tv-geo-flag" src={src} alt="Bandera de un país misterioso" onError={() => setFailed(true)} />;
-}
-
-// The picture of an "Imágenes" question (a film's scene, a painting...), like a flag's.
-function Picture({ src }) {
-  const [failed, setFailed] = useState(false);
-  useEffect(() => setFailed(false), [src]);
-  if (!src || failed) {
-    return (
-      <div className="tv-geo-flag is-missing" role="img" aria-label="Imagen de la pregunta">
-        <Icon name="eye" size={40} />
-        <span>No se pudo cargar la imagen</span>
-      </div>
-    );
-  }
-  return <img key={src} className="tv-geo-flag tv-quiz-picture" src={src} alt="Imagen de la pregunta" onError={() => setFailed(true)} />;
-}
-
-// Where a question's flag or picture goes: the image once the round is playing, the countdown's number in its place
-// before. With the answer, whose picture it is and its licence (`credit`), small under it.
-function QuestionImage({ room, question, seconds }) {
+// The picture of an "Imágenes" question (a painting, a monument, a flag...), inside the question's card on the left of
+// the question, as tall as the card lets it. Its address never names the answer (a token the server serves).
+function CardPicture({ question }) {
   const isFlag = question.kind === "flag";
   const src = imageSrc(isFlag ? question.flag : question.image);
+  const [failed, setFailed] = useState(false);
+  useEffect(() => setFailed(false), [src]);
+  if (!src) return null;
   return (
-    <div className="tv-quiz-flag">
-      {src ? (
-        isFlag ? <Flag src={src} /> : <Picture src={src} />
-      ) : room.phase === "countdown" ? (
-        <div className="tv-quiz-flag-wait">
-          <Count seconds={seconds} />
-        </div>
-      ) : null}
-      {src && question.credit && <p className="tv-quiz-credit">Imagen: {question.credit}</p>}
-    </div>
+    <figure className={`tv-quiz-media${isFlag ? " is-flag" : ""}`}>
+      {failed ? (
+        <span className="tv-quiz-media-missing" role="img" aria-label={isFlag ? "Bandera" : "Imagen de la pregunta"}>
+          <Icon name={isFlag ? "flag" : "eye"} size={26} />
+          {isFlag ? "No se pudo cargar la bandera" : "No se pudo cargar la imagen"}
+        </span>
+      ) : (
+        <img key={src} src={src} alt={isFlag ? "Bandera de un país misterioso" : "Imagen de la pregunta"} onError={() => setFailed(true)} />
+      )}
+    </figure>
+  );
+}
+
+// Whose picture it is and its licence, small under the card, once the answer shows. Its line is there from the start
+// (empty), so nothing under the card moves at the reveal.
+function PictureCredit({ room, question }) {
+  if (!question.image) return null;
+  return (
+    <p className="tv-quiz-credit" aria-hidden={room.phase !== "reveal" || !question.credit}>
+      {room.phase === "reveal" && question.credit ? `Imagen: ${question.credit}` : " "}
+    </p>
   );
 }
 
@@ -290,8 +269,6 @@ function WriteRound({ room, question, me, answer, skipSong, seconds, clock, cent
   const locked = room.phase !== "playing" || Boolean(me?.answered) || Boolean(mySent) || spectator || central;
   const reveal = room.phase === "reveal";
   const isFlag = question.kind === "flag";
-  // A question with a picture: a flag, or an "Imágenes" one.
-  const pictured = isFlag || Boolean(question.pictured);
 
   useEffect(() => {
     setQuery("");
@@ -349,7 +326,7 @@ function WriteRound({ room, question, me, answer, skipSong, seconds, clock, cent
   const skipped = Boolean(mySent?.skipped || me?.lastAnswer?.skipped);
   const answered = Boolean(me?.lastAnswer?.text) && !skipped;
 
-  const showMarks = !pictured && !controller && !central && room.phase === "playing";
+  const showMarks = !controller && !central && room.phase === "playing";
 
   return (
     <>
@@ -361,10 +338,10 @@ function WriteRound({ room, question, me, answer, skipSong, seconds, clock, cent
           note={reveal && central ? <RoomVerdict room={room} /> : reveal && !spectator && !central ? <Verdict me={me} answered={answered} /> : null}
         />
       )}
+      {question.pictured && !controller && <PictureCredit room={room} question={question} />}
       {/* The answer's panel: the flag or the picture (if it has one), then the box to write in, or what was sent, or
           the answer. */}
       <div className="tv-mpanel">
-        {pictured && !controller && <QuestionImage room={room} question={question} seconds={seconds} />}
         {room.phase === "countdown" && controller && <GetReady />}
         {/* While the question is open (without a picture): a few still question marks, as big as the song's bars in
             Adivina la canción, and the topic under them, so the panel isn't an empty space over the box. */}
