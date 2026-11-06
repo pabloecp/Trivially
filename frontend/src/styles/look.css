@@ -1059,7 +1059,7 @@
 .tv-skipbtn.is-on .tv-skipbtn-label:first-child { visibility: hidden; }
 .tv-app .tv-skipbtn.is-hidden { visibility: hidden; }
 /* The countdown before a song: everything in the middle of its panel. */
-.tv-app .tv-mpanel.tv-countdown { align-items: center; text-align: center; }
+.tv-app .tv-mpanel.tv-countdown { align-items: center; justify-content: center; text-align: center; }
 /* The box to write in and its yellow "Enviar". */
 .tv-mwrite { display: flex; align-items: stretch; gap: 12px; margin: 0; }
 .tv-mwrite-box {
@@ -2498,14 +2498,15 @@ html.tv-match-lock .tv-app .tv-qc-timer-mark { top: -2px; bottom: -2px; width: 3
 
 /* Letra: the lyrics in a panel under the small card, every line the same size as the card's "¿Qué palabra sigue?": the
    one being sung white, the others grey, the gap a pink dashed box (filled pink at the reveal). The panel is always as
-   tall (five lines), whatever the song: the lines sit at its bottom and those that don't fit fade out at its top. */
-.tv-app .tv-match .tv-lyrics-stage { flex: none; height: 216px; justify-content: flex-end; min-height: 0; padding: 20px 28px; }
+   tall (five lines), whatever the song: the lines sit in its middle, and when they don't fit, at its bottom (the gap
+   always in sight), those above fading out. */
+.tv-app .tv-match .tv-lyrics-stage { flex: none; height: 216px; justify-content: center; min-height: 0; padding: 20px 28px; }
 .tv-app .tv-match .tv-mpanel .tv-lyrics {
   flex: 1 1 auto;
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
-  gap: 8px;
+  gap: 0;
   height: auto;
   min-height: 0;
   overflow: hidden;
@@ -2513,9 +2514,13 @@ html.tv-match-lock .tv-app .tv-qc-timer-mark { top: -2px; bottom: -2px; width: 3
   -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 1.2em);
   mask-image: linear-gradient(180deg, transparent 0, #000 1.2em);
 }
-.tv-app .tv-match .tv-mpanel .tv-lyrics-line { flex: none; margin: 0; font: 800 1em/1.2 var(--tv-title); letter-spacing: -0.02em; color: var(--tv-text-3); transition: color 0.25s ease; }
+/* Two springs around the lines: they center them while they fit; once they don't, they're gone and the lines keep to
+   the bottom. */
+.tv-app .tv-match .tv-mpanel .tv-lyrics::before,
+.tv-app .tv-match .tv-mpanel .tv-lyrics::after { content: ""; flex: 1 1 0; min-height: 0; }
+.tv-app .tv-match .tv-mpanel .tv-lyrics-line { flex: none; margin: 0; padding: 4px 0; font: 800 1em/1.2 var(--tv-title); letter-spacing: -0.02em; color: var(--tv-text-3); opacity: 1; transition: color 0.25s ease; }
 .tv-app .tv-match .tv-mpanel .tv-lyrics-line.is-current { color: #fff; }
-.tv-app .tv-match .tv-mpanel .tv-lyrics-gap { width: 140px; height: 1.2em; margin: 0 6px; border: 3px dashed var(--p-music-1); border-radius: 10px; color: var(--p-music-1); font: 800 0.8em/calc(1.2em - 6px) var(--tv-display); text-align: center; vertical-align: middle; }
+.tv-app .tv-match .tv-mpanel .tv-lyrics-gap { display: inline-block; box-sizing: border-box; overflow: hidden; white-space: nowrap; width: 140px; height: 1.2em; margin: 0 6px; border: 3px dashed var(--p-music-1); border-radius: 10px; color: var(--p-music-1); font: 800 0.8em/calc(1.2em - 6px) var(--tv-display); text-align: center; vertical-align: middle; }
 .tv-app .tv-match .tv-mpanel .tv-lyrics-gap.is-filled { width: auto; min-width: 0; padding: 0 12px; border-style: solid; background: var(--p-music-1); color: #fff; }
 /* With Abiertas the lyrics and the box to write in share the panel: the lyrics on top, the box (or the answer) under. */
 .tv-app .tv-match .tv-play-card.tv-mpanel:has(> .tv-lyrics) { justify-content: space-between; padding-top: 22px; }
@@ -2535,7 +2540,8 @@ html.tv-match-lock .tv-app .tv-qc-timer-mark { top: -2px; bottom: -2px; width: 3
 
 @media (max-width: 899px), (max-height: 500px) {
   .tv-app .tv-match .tv-lyrics-stage { height: 178px; padding: 14px 16px; }
-  .tv-app .tv-match .tv-mpanel .tv-lyrics { gap: 6px; font-size: 21px; }
+  .tv-app .tv-match .tv-mpanel .tv-lyrics { font-size: 21px; }
+  .tv-app .tv-match .tv-mpanel .tv-lyrics-line { padding: 3px 0; }
   .tv-app .tv-match .tv-mpanel .tv-lyrics-gap { width: 84px; margin: 0 4px; border-width: 2px; border-radius: 8px; line-height: calc(1.2em - 4px); }
   .tv-app .tv-match .tv-mpanel .tv-lyrics-gap.is-filled { width: auto; }
   html.tv-match-lock .tv-app .tv-room-main > .tv-lyrics-stage { flex: none; }
@@ -2545,7 +2551,7 @@ html.tv-match-lock .tv-app .tv-qc-timer-mark { top: -2px; bottom: -2px; width: 3
 }
 /* The keyboard up: the bars and the lyrics give way to the box. */
 html.tv-match-lock.tv-keyboard-up .tv-app .tv-match .tv-song-now { display: none; }
-html.tv-match-lock.tv-keyboard-up .tv-app .tv-match .tv-mpanel .tv-lyrics { font-size: 16px; gap: 4px; }
+html.tv-match-lock.tv-keyboard-up .tv-app .tv-match .tv-mpanel .tv-lyrics { font-size: 16px; }
 
 /* Trivia with Abiertas: a few still question marks in the panel, as big as the song's bars in Adivina la canción
    (240 × 110; 150 × 80 on a phone), in Trivia's blue, the topic under them; the box to write in under that. */
