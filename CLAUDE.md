@@ -62,6 +62,7 @@ Commit messages are in Spanish and written for someone who doesn't read code.
 ## Rules that always apply
 
 - **The server decides everything.** All room state lives in memory in `backend/src/game/roomManager.js` (a restart drops every room), and groups in `backend/src/game/groups.js`. `publicState(room, forUserId)` is the **only** serializer of a room sent to clients and where secrets are withheld (answers, other players' picks, question ids, the `bot` flag): any new room or player field must be added there deliberately. A group's is `publicGroup`.
+- **Accounts in Supabase are one column per field** (`users` table, `ACCOUNT_COLUMNS` in `backend/src/db/store.js`, `backend/supabase/schema.sql`). A new account field gets its column in both; until then it lands in `extra`. A row whose `data` is still filled was saved before the columns and is rewritten on the next start.
 - **Trivia's real questions must never be committed: the GitHub repo is public.** They live in the Supabase table `questions` (RLS on, no policies: never add a public read policy or an API route that lists questions) and in the git-ignored `backend/private/questions.json`.
 - **Scoring:** at most 1000 points a round in every game (`game/scoring.js`), except Lluvia and Rey de la colina (1, 3 or 5 by difficulty).
 - **One yellow button per screen** (`.tv-btn--primary`); the rest are grey (`.tv-btn--neutral`). Chosen options are the site's blue.

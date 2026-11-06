@@ -1,28 +1,77 @@
 -- Trivially: tabla de usuarios. Pégalo en Supabase -> SQL Editor -> New query -> Run.
+-- Cada cuenta es una fila con una columna por dato (backend/src/db/store.js, ACCOUNT_COLUMNS). Lo que no tiene columna
+-- propia va en `extra`. Solo las cuentas: los invitados viven en la memoria del servidor.
 create table if not exists public.users (
-  id          text primary key,
-  email       text,
-  google_id   text,
-  name        text,
-  avatar      text,
-  is_guest    boolean not null default false,
-  stats       jsonb   not null default '{}'::jsonb,   -- totalScore, bestScore, gamesPlayed, wins, bestStreak, correctAnswers, artistHits
-  data        jsonb   not null,                        -- el usuario completo (incluye hash de contraseña)
-  updated_at  timestamptz not null default now()
+  id                text primary key,
+  name              text,
+  username          text,                                 -- @usuario, en minúsculas
+  email             text,
+  avatar            text,                                 -- color del Blob o foto de Google
+  role              text,                                 -- user, moderator, admin u owner (vacío = user)
+  password_hash     text,                                 -- contraseña cifrada (scrypt); nadie puede leerla
+  password_salt     text,
+  google_id         text,
+  google_photo      text,
+  is_guest          boolean not null default false,
+  stats             jsonb   not null default '{}'::jsonb, -- totalScore, bestScore, gamesPlayed, wins, bestStreak, correctAnswers, artistHits
+  rank              jsonb,                                -- rango de Competitivo
+  elo               jsonb,                                -- elo de cada juego
+  together          jsonb,                                -- con quién jugó cuántas veces (contra el abuso del elo)
+  daily             jsonb,                                -- reto del día
+  daily_done        integer,                              -- retos completados
+  history           jsonb,                                -- últimas 10 partidas
+  spotify           jsonb,                                -- cuenta de Spotify conectada (con sus claves)
+  saved_spotify     jsonb,                                -- playlists guardadas
+  username_history  jsonb,                                -- @usuarios anteriores (los reserva un tiempo)
+  username_changes  jsonb,                                -- cuándo cambió de @usuario
+  username_auto     boolean,                              -- @usuario puesto por el servidor
+  extra             jsonb   not null default '{}'::jsonb, -- cualquier otro dato de la cuenta
+  data              jsonb,                                -- la cuenta entera, como se guardaba antes; vacío ya reordenada
+  updated_at        timestamptz not null default now()
 );
+
+-- Una tabla de antes (todo en `data`, con `role` y `username` sacadas de ahí) pasa a columnas. Se puede correr las
+-- veces que sea: solo cambia lo que falta. El servidor reescribe cada cuenta en columnas al arrancar.
+do $$
+begin
+  if exists (select 1 from information_schema.columns where table_schema = 'public' and table_name = 'users'
+             and column_name = 'role' and is_generated = 'ALWAYS') then
+    alter table public.users drop column role;
+  end if;
+  if exists (select 1 from information_schema.columns where table_schema = 'public' and table_name = 'users'
+             and column_name = 'username' and is_generated = 'ALWAYS') then
+    alter table public.users drop column username;
+  end if;
+end $$;
+alter table public.users
+  add column if not exists username          text,
+  add column if not exists role              text,
+  add column if not exists password_hash     text,
+  add column if not exists password_salt     text,
+  add column if not exists google_photo      text,
+  add column if not exists rank              jsonb,
+  add column if not exists elo               jsonb,
+  add column if not exists together          jsonb,
+  add column if not exists daily             jsonb,
+  add column if not exists daily_done        integer,
+  add column if not exists history           jsonb,
+  add column if not exists spotify           jsonb,
+  add column if not exists saved_spotify     jsonb,
+  add column if not exists username_history  jsonb,
+  add column if not exists username_changes  jsonb,
+  add column if not exists username_auto     boolean,
+  add column if not exists extra             jsonb not null default '{}'::jsonb;
+alter table public.users alter column data drop not null;
 
 create unique index if not exists users_google_id_key on public.users (google_id) where google_id is not null;
 create index if not exists users_email_idx on public.users (lower(email));
+-- @usuario único sin importar mayúsculas: si dos cuentas llegaran a tener el mismo, Supabase rechaza la segunda.
+create unique index if not exists users_username_key on public.users (lower(username)) where username is not null;
+create index if not exists users_role_idx on public.users (role);
 
 -- El backend usa la service_role key (se salta RLS). Con RLS activado y sin políticas,
 -- nadie puede leer/escribir la tabla desde el navegador con la anon key.
 alter table public.users enable row level security;
-
--- Roles (user, moderator, admin, owner). El rol se guarda dentro de `data`; esta columna
--- solo lo muestra en el Table Editor y permite filtrar. Es de solo lectura (generada).
-alter table public.users
-  add column if not exists role text generated always as (coalesce(data->>'role', 'user')) stored;
-create index if not exists users_role_idx on public.users (role);
 
 -- ---------------------------------------------------------------------------
 -- Catálogo de canciones. Se rellena con `npm run catalog:upload --prefix backend` (copia
@@ -167,14 +216,6 @@ create table if not exists public.friendships (
 );
 create index if not exists friendships_b_idx on public.friendships (user_b);
 alter table public.friendships enable row level security;
-
--- ---------------------------------------------------------------------------
--- Nombre de usuario (@usuario): único en toda la tabla sin importar mayúsculas. Vive dentro de `data` (el servidor
--- lo valida); esta columna generada solo lo muestra en el Table Editor y hace de red de seguridad: si dos cuentas
--- llegaran a tener el mismo, Supabase rechaza la segunda.
-alter table public.users
-  add column if not exists username text generated always as (lower(data->>'username')) stored;
-create unique index if not exists users_username_key on public.users (username) where username is not null;
 
 -- ---------------------------------------------------------------------------
 -- Respuestas de servicios externos que se piden pocas veces y se guardan aquí para que reiniciar el servidor no las
