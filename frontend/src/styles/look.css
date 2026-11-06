@@ -2568,3 +2568,10 @@ html.tv-match-lock.tv-keyboard-up .tv-app .tv-match .tv-mpanel .tv-lyrics { font
   .tv-app .tv-match .tv-quiz-marks-note { font-size: 12.5px; }
 }
 html.tv-match-lock.tv-keyboard-up .tv-app .tv-match .tv-quiz-marks { display: none; }
+
+/* ---------- Error pages (pages/ErrorPages.jsx) ---------- */
+/* "Esta página no existe" and "Algo salió mal": the login page's column, centred. "Algo salió mal" has no frame of
+   the site around it, so it brings the page's background and fills the screen itself. */
+.tv-errorpage { padding-top: 24px; }
+.tv-errorpage .tv-btn { text-decoration: none; }
+.tv-errorpage--crash { min-height: 100dvh; display: grid; place-items: center; padding: 24px 16px; }
