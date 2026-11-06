@@ -645,7 +645,10 @@
 /* ---------- Panels over the page ---------- */
 .tv-modal-root {
   position: fixed;
-  inset: 0;
+  /* The part of the screen the phone's keyboard leaves visible (lib/useKeyboardFit.js sets these); the whole screen
+     otherwise. */
+  inset: var(--tv-vv-top, 0px) 0 auto;
+  height: var(--tv-vv-h, 100%);
   z-index: 60;
   display: grid;
   place-items: center;
@@ -690,12 +693,14 @@
   .tv-modal,
   .tv-modal--sm,
   .tv-modal--md,
-  .tv-modal--lg { max-width: none; max-height: calc(100dvh - 20px); border-radius: 24px 24px 0 0; padding-bottom: env(safe-area-inset-bottom); }
+  .tv-modal--lg { max-width: none; max-height: calc(var(--tv-vv-h, 100dvh) - 20px); border-radius: 24px 24px 0 0; padding-bottom: env(safe-area-inset-bottom); }
   .tv-modal-head { padding: 20px 18px 4px; }
   .tv-modal-title { font-size: 26px; }
   .tv-modal-body { padding: 12px 18px 20px; }
   .tv-modal-foot { padding: 14px 18px 18px; }
-  .tv-settings-modal { height: calc(100dvh - 20px); }
+  .tv-settings-modal { height: calc(var(--tv-vv-h, 100dvh) - 20px); }
+  /* Keyboard up: the screen's bottom edge is under it. */
+  .tv-modal-root.is-keyboard .tv-modal { padding-bottom: 0; }
 }
 
 /* A small label over a part of a panel ("Juego libre", "Código del grupo"). */
@@ -2569,6 +2574,12 @@ html.tv-match-lock.tv-keyboard-up .tv-app .tv-match .tv-mpanel .tv-lyrics { font
 }
 html.tv-match-lock.tv-keyboard-up .tv-app .tv-match .tv-quiz-marks { display: none; }
 
+/* ---------- Error pages (pages/ErrorPages.jsx) ---------- */
+/* "Esta página no existe" and "Algo salió mal": the login page's column, centred. "Algo salió mal" has no frame of
+   the site around it, so it brings the page's background and fills the screen itself. */
+.tv-errorpage { padding-top: 24px; }
+.tv-errorpage .tv-btn { text-decoration: none; }
+.tv-errorpage--crash { min-height: 100dvh; display: grid; place-items: center; padding: 24px 16px; }
 /* "¿Olvidaste tu contraseña?" under the login form (and "Ya me acordé"): a quiet text button, centred, never underlined. */
 .tv-app .tv-auth-forgot { justify-self: center; padding: 4px 8px; color: var(--tv-text-2); font-weight: 700; font-size: 14px; text-decoration: none; }
 .tv-app .tv-auth-forgot:hover { color: var(--tv-text); }
