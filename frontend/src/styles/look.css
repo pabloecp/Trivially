@@ -2583,3 +2583,23 @@ html.tv-match-lock.tv-keyboard-up .tv-app .tv-match .tv-quiz-marks { display: no
 /* "¿Olvidaste tu contraseña?" under the login form (and "Ya me acordé"): a quiet text button, centred, never underlined. */
 .tv-app .tv-auth-forgot { justify-self: center; padding: 4px 8px; color: var(--tv-text-2); font-weight: 700; font-size: 14px; text-decoration: none; }
 .tv-app .tv-auth-forgot:hover { color: var(--tv-text); }
+/* ---------- Términos de uso y Aviso de privacidad (pages/Legal.jsx) ---------- */
+.tv-legal { display: grid; gap: 18px; width: 100%; max-width: 760px; margin: 0 auto; }
+.tv-legal-head { display: grid; justify-items: center; gap: 6px; text-align: center; }
+.tv-legal-head .tv-page-sub { max-width: none; }
+.tv-legal-body { gap: 0; padding: 26px 28px; font-family: var(--tv-small); font-weight: 600; font-size: 16px; line-height: 1.6; color: var(--tv-text-2); }
+.tv-legal-body h2 { margin: 26px 0 8px; font-family: var(--tv-display); font-weight: 800; font-size: 22px; line-height: 1.2; color: var(--tv-text); }
+.tv-legal-body h3 { margin: 14px 0 4px; font-family: var(--tv-display); font-weight: 800; font-size: 17px; color: var(--tv-text); }
+.tv-legal-body p { margin: 0 0 10px; }
+.tv-legal-body ul { margin: 0 0 10px; padding-left: 22px; display: grid; gap: 6px; }
+.tv-legal-body b, .tv-legal-body a { color: var(--tv-text); }
+.tv-legal-foot, .tv-legal-links { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 18px; }
+.tv-legal-foot a, .tv-legal-links a { font-family: var(--tv-small); font-weight: 700; font-size: 14px; color: var(--tv-text-2); text-decoration: none; }
+.tv-legal-foot a:hover, .tv-legal-links a:hover { color: var(--tv-text); }
+.tv-legal-note { margin: 0; text-align: center; font-family: var(--tv-small); font-weight: 600; font-size: 13px; line-height: 1.5; color: var(--tv-text-3); }
+.tv-legal-note a { color: var(--tv-text-2); font-weight: 700; text-decoration: none; }
+.tv-legal-note a:hover { color: var(--tv-text); }
+@media (max-width: 640px) {
+  .tv-legal-body { padding: 20px 18px; font-size: 15px; }
+  .tv-legal-body h2 { font-size: 19px; }
+}

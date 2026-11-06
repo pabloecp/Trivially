@@ -4,6 +4,7 @@ import { NotFound } from "./pages/ErrorPages.jsx";
 import Home from "./pages/Home.jsx";
 import Login from "./pages/Login.jsx";
 import ResetPassword from "./pages/ResetPassword.jsx";
+import { Privacy, Terms } from "./pages/Legal.jsx";
 import Profile from "./pages/Profile.jsx";
 import Game from "./modes/music/Game.jsx";
 import QuizGame from "./modes/quiz/Game.jsx";
@@ -195,6 +196,8 @@ export default function App() {
         <Route path="/login" element={<Login />} />
         {/* "¿Olvidaste tu contraseña?": ask for the email link, or (with its token) choose the new password. */}
         <Route path="/restablecer" element={<ResetPassword />} />
+        <Route path="/terminos" element={<Terms />} />
+        <Route path="/privacidad" element={<Privacy />} />
         {/* The leaderboard was removed: an old link to it goes to Inicio. */}
         <Route path="/leaderboard" element={<Navigate to="/" replace />} />
         {/* Any other address: "Esta página no existe" (pages/ErrorPages.jsx). */}

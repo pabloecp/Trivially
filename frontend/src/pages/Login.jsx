@@ -188,6 +188,10 @@ function LoginScreen() {
           </form>
         )}
       </section>
+
+      <p className="tv-legal-note">
+        Al entrar aceptas los <Link to="/terminos">Términos de uso</Link> y el <Link to="/privacidad">Aviso de privacidad</Link>.
+      </p>
     </div>
   );
 }
