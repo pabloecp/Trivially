@@ -80,6 +80,7 @@ In `.claude/docs/`:
 - `grupos.md`: groups (who goes together) apart from rooms (the matches): the leader moves everyone, "Invitar", "Tu grupo", invite links.
 - `partidas-publicas.md` (Inicio and its bar, public matches by game, a group searching together, bots, rank), `clasico.md`.
 - `dispositivo-central.md`, `panel-owner.md`, `amigos-y-enlaces.md` (friends, @usernames, link filter).
+- `avisos-y-errores.md`: UptimeRobot and Sentry (knowing when the server is down or something fails).
 - `diseno.md`: the design rules: the look (`frontend/src/styles/look.css`, loaded last), layout, colours, type, pieces, panel motion, shadows.
 
 When a change alters how a part works, update its doc there, not this file.
