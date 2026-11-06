@@ -9,8 +9,32 @@ const TOKEN_TTL_MS = 6 * 60 * 60 * 1000;
 const MAX_BYTES = 5 * 1024 * 1024;
 // How many downloaded pictures are kept; the oldest go first.
 const MAX_IMAGES = 300;
-// Wikimedia (where most pictures come from) refuses requests without a User-Agent of their own.
-const USER_AGENT = "Trivially/1.0 (trivia game image proxy)";
+// Wikimedia (where most pictures come from) slows down or refuses clients that don't say who they are and where to
+// find them (its User-Agent policy): the name of the game and its address.
+const USER_AGENT = "Trivially/1.0 (https://triviallyonline.vercel.app; trivia game image proxy)";
+// When Wikimedia answers "too many requests" (429) or "busy" (503): how many more times, and the longest wait.
+const RETRIES = 3;
+const MAX_WAIT_MS = 4000;
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+async function download(url) {
+  for (let attempt = 0; ; attempt++) {
+    const res = await fetch(url, { headers: { "User-Agent": USER_AGENT } });
+    if ((res.status === 429 || res.status === 503) && attempt < RETRIES) {
+      await res.arrayBuffer().catch(() => {});
+      const asked = Number(res.headers.get("retry-after")) * 1000;
+      await sleep(Math.min(MAX_WAIT_MS, asked > 0 ? asked : 1000 * (attempt + 1)));
+      continue;
+    }
+    if (!res.ok) throw new Error(`La imagen respondió ${res.status}`);
+    const type = res.headers.get("content-type") || "";
+    // No SVG: it can carry scripts, and it would be served from the game's own address.
+    if (!/^image\/(png|jpeg|webp|gif|avif)/.test(type)) throw new Error("La dirección no es una imagen PNG, JPEG, WebP, GIF o AVIF");
+    const data = Buffer.from(await res.arrayBuffer());
+    if (data.length > MAX_BYTES) throw new Error("La imagen es demasiado grande");
+    return { type, data };
+  }
+}
 const tokens = new Map();
 const images = new Map();
 
@@ -39,27 +63,21 @@ export function imageUrl(token) {
 export function getImage(url) {
   if (!/^https:\/\//.test(url || "")) return Promise.reject(new Error("Imagen desconocida"));
   if (!images.has(url)) {
-    const download = fetch(url, { headers: { "User-Agent": USER_AGENT } })
-      .then(async (res) => {
-        if (!res.ok) throw new Error(`La imagen respondió ${res.status}`);
-        const type = res.headers.get("content-type") || "";
-        // No SVG: it can carry scripts, and it would be served from the game's own address.
-        if (!/^image\/(png|jpeg|webp|gif|avif)/.test(type)) throw new Error("La dirección no es una imagen PNG, JPEG, WebP, GIF o AVIF");
-        const data = Buffer.from(await res.arrayBuffer());
-        if (data.length > MAX_BYTES) throw new Error("La imagen es demasiado grande");
-        return { type, data };
-      });
+    const pending = download(url);
     // A failed download is tried again next time.
-    download.catch(() => images.delete(url));
-    images.set(url, download);
+    pending.catch(() => images.delete(url));
+    images.set(url, pending);
     if (images.size > MAX_IMAGES) images.delete(images.keys().next().value);
   }
   return images.get(url);
 }
 
-/** Downloads the pictures of a match's questions as it starts, so none makes a round wait. */
-export function prefetchImages(tracks) {
+/**
+ * Downloads the pictures of a match's questions as it starts, so none makes a round wait: one after another, never all
+ * at once (Wikimedia answers "too many requests" to a burst). The first round's picture goes first.
+ */
+export async function prefetchImages(tracks) {
   for (const t of tracks || []) {
-    if (t.image) getImage(t.image).catch(() => {});
+    if (t.image) await getImage(t.image).catch(() => {});
   }
 }
