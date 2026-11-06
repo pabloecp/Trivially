@@ -19,6 +19,7 @@
     "db:restore": "node scripts/restore.js"
   },
   "dependencies": {
+    "@sentry/node": "^11.11.0",
     "@supabase/supabase-js": "^2.117.2",
     "cookie-session": "^2.1.0",
     "cors": "^2.8.5",

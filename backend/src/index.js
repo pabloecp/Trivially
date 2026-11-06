@@ -1,3 +1,5 @@
+// First: Sentry, so it sees every failure (only on with SENTRY_DSN).
+import { Sentry, sentryOn } from "./instrument.js";
 import dotenv from "dotenv";
 import http from "node:http";
 import path from "node:path";
@@ -216,6 +218,9 @@ app.get("*", (req, res, next) => {
     if (err) next();
   });
 });
+
+// After every route: an error none of them handled goes to Sentry (when it's on), then to Express's own answer.
+if (sentryOn) Sentry.setupExpressErrorHandler(app);
 
 const server = http.createServer(app);
 const io = new Server(server, {

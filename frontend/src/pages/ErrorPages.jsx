@@ -2,6 +2,7 @@ import { Component } from "react";
 import { Link } from "react-router-dom";
 import TvShell from "../components/home/TvShell.jsx";
 import AppIcon from "../components/home/AppIcon.jsx";
+import { reportError } from "../lib/monitoring.js";
 
 // The two pages for when something isn't there: an address that doesn't exist ("Esta página no existe", the last
 // route of App.jsx), and the screen that takes the place of the whole site when it fails while drawing ("Algo salió
@@ -57,6 +58,8 @@ export class ErrorBoundary extends Component {
 
   componentDidCatch(error, info) {
     console.error("[Trivially] La página falló:", error, info?.componentStack);
+    // To Sentry too, when the site has its key (lib/monitoring.js): the one failure players can't get past alone.
+    reportError(error);
   }
 
   render() {
