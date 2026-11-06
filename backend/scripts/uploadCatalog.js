@@ -1,6 +1,6 @@
 // Copies backend/src/catalog/catalog.json to the Supabase table `songs` (create it first with
 // backend/supabase/schema.sql). Songs that are no longer in the file are deleted, so the database ends up exactly like
-// the file. The rankings (and so the difficulty) come from each song's language and streams; there are no playlists.
+// the file, except the songs that joined from Spotify while playing (ids `sp-…`). The rankings (and so the difficulty) come from each song's language and streams; there are no playlists.
 //
 //   SUPABASE_URL=... SUPABASE_SERVICE_ROLE_KEY=... npm run catalog:upload --prefix backend
 import path from "node:path";
@@ -58,7 +58,8 @@ await run("songs", db.from("songs").upsert(songRows));
 
 // Drop whatever the file no longer has.
 const keepSongs = new Set(songRows.map((s) => s.id));
-const staleSongs = (await ids("songs")).filter((id) => !keepSongs.has(id));
+// Songs that joined from Spotify while playing (`sp-…`, catalog/catalogGrowth.js) aren't in the file: they stay.
+const staleSongs = (await ids("songs")).filter((id) => !keepSongs.has(id) && !id.startsWith("sp-"));
 for (let i = 0; i < staleSongs.length; i += 200) {
   await run("songs (borrar)", db.from("songs").delete().in("id", staleSongs.slice(i, i + 200)));
 }
