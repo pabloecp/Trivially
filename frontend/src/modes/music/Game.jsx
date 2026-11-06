@@ -547,15 +547,6 @@ function GameScreen() {
             pct={pct}
             urgent={urgent}
             pills={room.phase === "reveal" ? central ? <RoomVerdict room={room} /> : !spectator ? roundVerdict : null : null}
-            media={
-              lyrics || bigBars ? null : (
-                <div className={`tv-qc-eq${room.phase === "playing" && !room.paused ? " is-on" : ""}`} aria-hidden="true">
-                  {Array.from({ length: 12 }, (_, i) => (
-                    <i key={i} style={{ "--i": i }} />
-                  ))}
-                </div>
-              )
-            }
           >
             {/* The card's text never changes, at the reveal either. */}
             <MatchQuestion>{lyrics ? "¿Qué palabra sigue?" : "¿Qué canción es?"}</MatchQuestion>
