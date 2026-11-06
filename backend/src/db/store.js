@@ -153,18 +153,57 @@ export function getSupabase() {
   return supabase;
 }
 
-function toRow(user) {
-  return {
-    id: user.id,
-    email: user.email || null,
-    google_id: user.googleId || null,
-    name: user.name || null,
-    avatar: user.avatar || null,
-    is_guest: false,
-    stats: user.stats || {},
-    data: user,
-    updated_at: new Date().toISOString(),
-  };
+// Each account field and its column in Supabase's `users` table (backend/supabase/schema.sql). A field that isn't here
+// goes in the `extra` column, so nothing is ever lost; a field that is read or written often deserves its own column.
+// An empty column (null) is a field the account doesn't have.
+export const ACCOUNT_COLUMNS = [
+  ["name", "name"],
+  ["username", "username"],
+  ["email", "email"],
+  ["avatar", "avatar"],
+  ["role", "role"],
+  ["passwordHash", "password_hash"],
+  ["passwordSalt", "password_salt"],
+  ["googleId", "google_id"],
+  ["googlePhoto", "google_photo"],
+  ["stats", "stats"],
+  ["rank", "rank"],
+  ["elo", "elo"],
+  ["together", "together"],
+  ["daily", "daily"],
+  ["dailyDone", "daily_done"],
+  ["history", "history"],
+  ["spotify", "spotify"],
+  ["savedSpotify", "saved_spotify"],
+  ["usernameHistory", "username_history"],
+  ["usernameChanges", "username_changes"],
+  ["usernameAuto", "username_auto"],
+];
+const COLUMN_FIELDS = new Set(["id", "isGuest", ...ACCOUNT_COLUMNS.map(([field]) => field)]);
+
+/** An account as its row: one column per field, the rest in `extra`. `data` (the whole account, as it was saved before) is emptied. */
+export function toRow(user) {
+  const row = { id: user.id, is_guest: false };
+  for (const [field, column] of ACCOUNT_COLUMNS) row[column] = user[field] ?? null;
+  row.stats = user.stats || {};
+  row.extra = Object.fromEntries(Object.entries(user).filter(([field]) => !COLUMN_FIELDS.has(field)));
+  row.data = null;
+  row.updated_at = new Date().toISOString();
+  return row;
+}
+
+/**
+ * A row as the account the server keeps in memory. A row whose `data` still has the whole account was saved before
+ * the columns (or by a server of before, during a deploy): that account is the newest and is used as it is, and the
+ * next save rewrites it in columns.
+ */
+export function fromRow(row) {
+  if (row.data) return row.data;
+  const user = { id: row.id, ...(row.extra || {}), isGuest: false };
+  for (const [field, column] of ACCOUNT_COLUMNS) {
+    if (row[column] !== null && row[column] !== undefined) user[field] = row[column];
+  }
+  return user;
 }
 
 function readLocalStore() {
@@ -182,14 +221,22 @@ export async function initStore() {
   const db = getSupabase();
   const store = emptyStore();
   const pageSize = 1000;
+  let unsorted = 0;
   for (let from = 0; ; from += pageSize) {
-    const { data, error } = await db.from("users").select("id, data").range(from, from + pageSize - 1);
+    const { data, error } = await db.from("users").select("*").order("id").range(from, from + pageSize - 1);
     if (error) throw new Error(`Supabase: no se pudieron cargar los usuarios (${error.message})`);
     for (const row of data) {
-      store.users[row.id] = row.data;
-      synced.set(row.id, JSON.stringify(row.data));
+      const user = fromRow(row);
+      store.users[row.id] = user;
+      // An account still saved whole (in `data`) is left out of `synced`, so the save below writes it in columns.
+      if (row.data) unsorted += 1;
+      else synced.set(row.id, JSON.stringify(user));
     }
     if (data.length < pageSize) break;
+  }
+  if (unsorted) {
+    console.log(`[Supabase] ${unsorted} usuarios guardados a la antigua: se reescriben en columnas`);
+    scheduleFlush(store);
   }
 
   // First run against an empty database: bring over the accounts from the old local file.
