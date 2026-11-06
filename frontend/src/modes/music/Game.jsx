@@ -71,7 +71,11 @@ function GameScreen() {
     const panel = el?.closest(".tv-mpanel");
     if (!el || !panel || !query.trim()) return;
     const box = el.querySelector(".tv-search-box") || el;
-    const room = panel.getBoundingClientRect().bottom - box.getBoundingClientRect().bottom - 8 - 12;
+    // Título with Abiertas opens them upwards, over the song's bars: then the room is above the box.
+    const up = Boolean(panel.querySelector(":scope > .tv-song-now"));
+    const room = up
+      ? box.getBoundingClientRect().top - panel.getBoundingClientRect().top - 8 - 12
+      : panel.getBoundingClientRect().bottom - box.getBoundingClientRect().bottom - 8 - 12;
     el.style.setProperty("--suggest-max", `${Math.max(140, Math.round(room))}px`);
   }, [query]);
   const [submittedSong, setSubmittedSong] = useState(null);
@@ -489,8 +493,16 @@ function GameScreen() {
     </>
   );
 
-  // Completa la letra: the lyrics go in the card once the song plays (before it, the question).
-  const lyricsInCard = Boolean(lyrics) && (room.phase === "playing" || room.phase === "reveal") && (lyrics.lines || []).length > 0;
+  // Completa la letra: once the song plays the lyrics are in the panel under the card, big (before it, the countdown).
+  const showLyrics = Boolean(lyrics) && (room.phase === "playing" || room.phase === "reveal") && (lyrics.lines || []).length > 0;
+  // Where the song is cut, as a notch on the card's time bar (the bar shrinks from the right: the round's time left
+  // at the cut). Only while it plays.
+  const cutMark =
+    lyrics && room.phase === "playing" && lyrics.cutMs != null && lyrics.startMs != null
+      ? Math.round((1 - (lyrics.cutMs - lyrics.startMs) / totalMs) * 1000) / 10
+      : null;
+  // Título with Abiertas: the song's bars go big in the panel, over the box to write in, instead of in the card.
+  const bigBars = !lyrics && !closed && !central;
 
   // How the round went for this player, on the card's first row at the reveal (the same in every game).
   const isCorrect = Boolean(me?.lastAnswer?.correct);
@@ -520,14 +532,11 @@ function GameScreen() {
             room={room}
             label={`${lyrics ? "Letra" : "Título"} · ${closed ? "Cerradas" : "Abiertas"}`}
             icon="music"
+            small={Boolean(lyrics)}
+            mark={cutMark}
             dir={
               lyrics
-                ? // While the lyrics are in the card this line asks the question; before them, the question is the card's own.
-                  lyricsInCard
-                  ? closed
-                    ? "¿Qué palabra sigue? Elige la que completa la letra"
-                    : "¿Qué palabra sigue? Escribe la que completa la letra"
-                  : closed
+                ? closed
                   ? "La canción se corta: elige la palabra que completa la letra"
                   : "La canción se corta: escribe la palabra que completa la letra"
                 : closed
@@ -539,7 +548,7 @@ function GameScreen() {
             urgent={urgent}
             pills={room.phase === "reveal" ? central ? <RoomVerdict room={room} /> : !spectator ? roundVerdict : null : null}
             media={
-              lyricsInCard ? null : (
+              lyrics || bigBars ? null : (
                 <div className={`tv-qc-eq${room.phase === "playing" && !room.paused ? " is-on" : ""}`} aria-hidden="true">
                   {Array.from({ length: 12 }, (_, i) => (
                     <i key={i} style={{ "--i": i }} />
@@ -548,13 +557,8 @@ function GameScreen() {
               )
             }
           >
-            {/* Completa la letra: the lyrics are the question, in the card where every game's question goes (the last
-                four lines, the gap at the end, filled in its place at the reveal). The card's text never changes. */}
-            {lyricsInCard ? (
-              <LyricsPanel lyrics={lyrics} position={lyricPos} reveal={room.phase === "reveal"} />
-            ) : (
-              <MatchQuestion>{lyrics ? "¿Qué palabra sigue?" : "¿Qué canción es?"}</MatchQuestion>
-            )}
+            {/* The card's text never changes, at the reveal either. */}
+            <MatchQuestion>{lyrics ? "¿Qué palabra sigue?" : "¿Qué canción es?"}</MatchQuestion>
           </MatchCard>
         )}
 
@@ -589,14 +593,31 @@ function GameScreen() {
           </section>
         )}
 
+        {/* Completa la letra with Cerradas: the lyrics in a panel of their own, big, over the four options. */}
+        {showLyrics && closed && (
+          <section key={`l${room.currentRound}`} className="tv-game-stage tv-mpanel tv-lyrics-stage">
+            <LyricsPanel lyrics={lyrics} position={lyricPos} reveal={room.phase === "reveal"} />
+          </section>
+        )}
+
         {/* The round stays on this screen at the reveal: four options are marked in place (the right song green, a
             wrong pick red), and the box to write in turns into the answer's card. */}
         {(room.phase === "playing" || room.phase === "reveal") && (
           <section key={`p${room.currentRound}`} className={`tv-game-stage tv-play-card${closed ? "" : " tv-mpanel"}`}>
             <PauseVeil room={room} isHost={isHost} />
-            {!controller && !lyrics && !closed && room.phase === "playing" && <span className="tv-mpanel-label">Tu respuesta</span>}
-            {/* A phone beside the central device has no card: the lyrics go here. */}
-            {lyrics && controller && <LyricsPanel lyrics={lyrics} position={lyricPos} reveal={room.phase === "reveal"} />}
+            {/* Completa la letra with Abiertas (and a phone beside the central device, whatever the way of answering): the
+                lyrics at the top of the panel, the box to write in (or the answer's card) under them. */}
+            {lyrics && (controller || (showLyrics && !closed)) && <LyricsPanel lyrics={lyrics} position={lyricPos} reveal={room.phase === "reveal"} />}
+            {/* Título with Abiertas: the song's bars big over the box to write in. */}
+            {bigBars && !controller && room.phase === "playing" && !locked && (
+              <div className="tv-song-now" aria-hidden="true">
+                <div className={`tv-qc-eq tv-song-now-eq${!room.paused ? " is-on" : ""}`}>
+                  {Array.from({ length: 12 }, (_, i) => (
+                    <i key={i} style={{ "--i": i }} />
+                  ))}
+                </div>
+              </div>
+            )}
 
             {closed && room.phase === "playing" && central && <PhoneHint room={room}>Elijan desde su teléfono</PhoneHint>}
             {closed && room.phase === "playing" && !central && !spectator && Number.isInteger(myChoice) && (
