@@ -1,6 +1,7 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import Icon from "./Icon.jsx";
+import useKeyboardFit from "../../lib/useKeyboardFit.js";
 
 // A big panel over the page ("¿Qué quieren jugar?", a game's "Ajustes", "Tu grupo"): a dark card in the middle
 // with the page darkened behind it, and on phones a sheet that takes the whole screen. It comes in and goes out whole,
@@ -11,6 +12,9 @@ export default function Modal({ open, title, onClose, foot = null, size = "md", 
   const [shown, setShown] = useState(open);
   const [leaving, setLeaving] = useState(false);
   const cardRef = useRef(null);
+  const rootRef = useRef(null);
+  // On a phone the panel is a sheet at the bottom: it stays above the keyboard (a game's settings have boxes to write in).
+  useKeyboardFit(rootRef, open && shown);
   const onCloseRef = useRef(onClose);
   onCloseRef.current = onClose;
   const titleId = useId();
@@ -50,7 +54,7 @@ export default function Modal({ open, title, onClose, foot = null, size = "md", 
   if (!shown && !keep) return null;
 
   return createPortal(
-    <div className={`tv-modal-root${shown ? "" : " is-hidden"}${leaving ? " is-leaving" : ""}`} hidden={!shown}>
+    <div ref={rootRef} className={`tv-modal-root${shown ? "" : " is-hidden"}${leaving ? " is-leaving" : ""}`} hidden={!shown}>
       <div className="tv-modal-scrim" onClick={() => onCloseRef.current?.()} />
       <section
         ref={cardRef}

@@ -44,7 +44,9 @@ function LoginScreen() {
   const [loading, setLoading] = useState(false);
 
   const nav = useNavigate();
-  const returnTo = params.get("returnTo") || "/";
+  // Where to go after logging in: only a page of this site ("/…"), never another address ("//x.com", "/\x.com"),
+  // like safePath on the server.
+  const returnTo = safeReturnTo(params.get("returnTo"));
 
   function switchMode(mode) {
     setAccountMode(mode);
@@ -185,6 +187,10 @@ function LoginScreen() {
       </section>
     </div>
   );
+}
+
+function safeReturnTo(path) {
+  return typeof path === "string" && path.startsWith("/") && !path.startsWith("//") && !path.includes("\\") ? path : "/";
 }
 
 export default function Login() {
