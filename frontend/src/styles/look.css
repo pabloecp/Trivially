@@ -2511,6 +2511,7 @@ html.tv-match-lock .tv-app .tv-qc-timer-mark { top: -2px; bottom: -2px; width: 3
   min-height: 0;
   overflow: hidden;
   font-size: 24px;
+  text-align: center;
   -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 1.2em);
   mask-image: linear-gradient(180deg, transparent 0, #000 1.2em);
 }
@@ -2529,7 +2530,7 @@ html.tv-match-lock .tv-app .tv-qc-timer-mark { top: -2px; bottom: -2px; width: 3
    lines centred too. */
 .tv-app .tv-match .tv-play-card.tv-mpanel:has(> .tv-lyrics):has(> .tv-acard) { justify-content: center; gap: 26px; }
 .tv-app .tv-match .tv-play-card.tv-mpanel:has(> .tv-lyrics) > .tv-acard { order: -1; align-self: center; }
-.tv-app .tv-match .tv-play-card.tv-mpanel:has(> .tv-acard) > .tv-lyrics { flex: 0 1 auto; align-self: stretch; text-align: center; }
+.tv-app .tv-match .tv-play-card.tv-mpanel:has(> .tv-acard) > .tv-lyrics { flex: 0 1 auto; align-self: stretch; }
 /* With Cerradas the four options take all the room left under the lyrics, laid out as in Trivia, so they're always the
    same size whatever the lyrics. */
 .tv-app .tv-match .tv-lyrics-stage ~ .tv-play-card { flex: 1 1 0; min-height: 0; }
