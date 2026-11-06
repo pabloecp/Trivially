@@ -137,7 +137,7 @@ import {
   publicMatchmaking,
   PUBLIC_GAMES,
   PUBLIC_GROUP_MAX,
-  SALA_MAX,
+  GROUP_MAX,
   PUBLIC_VARIANT,
   groupMatchSize,
 } from "./matchmaking.js";
@@ -469,7 +469,7 @@ export class RoomManager {
   findToJoin(code, userId = null) {
     const room = this.get(String(code || ""));
     if (!room) throw new Error("No hay ninguna sala con ese código");
-    if (userId && room.kicked?.has(userId)) throw new Error("Te sacaron de esta sala: no puedes volver a entrar");
+    if (userId && room.kicked?.has(userId)) throw new Error("Te sacaron de esta partida: no puedes volver a entrar");
     // A public match (findMatch) is only entered by searching for one; its players can come back to it (a reload).
     if (room.matchmaking && !room.players.has(userId)) throw new Error("Esa sala es de una partida pública: búscala desde Jugar");
     if (room.matchmaking && room.players.get(userId)?.forfeit) throw new Error("Saliste de esa partida: busca otra desde Jugar");
@@ -495,7 +495,7 @@ export class RoomManager {
     assertNameWithoutLink(user);
     party.forEach(assertNameWithoutLink);
     const seats = 1 + party.length;
-    if (seats > PUBLIC_GROUP_MAX) throw new Error(`Una partida pública es de ${PUBLIC_GROUP_MAX} como mucho y tu sala es de ${seats}`);
+    if (seats > PUBLIC_GROUP_MAX) throw new Error(`Una partida pública es de ${PUBLIC_GROUP_MAX} como mucho y tu grupo es de ${seats}`);
     // A group fills it up to its size like anyone else (one more than the group with DUELS_OPEN).
     const size = party.length ? groupMatchSize(seats) : asked;
     const ids = [user.id, ...party.map((p) => p.id)];
@@ -1054,10 +1054,10 @@ export class RoomManager {
   }
 
   addPlayer(room, user, isHost = false) {
-    if (room.kicked?.has(user.id)) throw new Error("Te sacaron de esta sala: no puedes volver a entrar");
+    if (room.kicked?.has(user.id)) throw new Error("Te sacaron de esta partida: no puedes volver a entrar");
     assertNameWithoutLink(user);
     const existing = room.players.get(user.id);
-    if (!existing && !room.matchmaking && room.players.size >= SALA_MAX) throw new Error(`La sala está llena (máximo ${SALA_MAX} jugadores)`);
+    if (!existing && !room.matchmaking && room.players.size >= GROUP_MAX) throw new Error(`La partida está llena (máximo ${GROUP_MAX} jugadores)`);
     const isGuest = Boolean(user.isGuest ?? (user.id?.startsWith("gst_") || !user.email));
     const player = existing || {
       id: user.id,
@@ -1403,7 +1403,7 @@ export class RoomManager {
 
   /** The host's account, from another device than the one they play on: it becomes the central device straight away. */
   joinAsCentral(room, user) {
-    if (room.kicked?.has(user.id)) throw new Error("Te sacaron de esta sala: no puedes volver a entrar");
+    if (room.kicked?.has(user.id)) throw new Error("Te sacaron de esta partida: no puedes volver a entrar");
     if (room.hostId !== user.id) throw new Error("Pídele al anfitrión que acepte este dispositivo como central");
     if (room.central?.socketId === user.socketId) return room.central;
     return this.setCentral(room, user);
@@ -1415,7 +1415,7 @@ export class RoomManager {
    * replaces it), one every CENTRAL_ASK_GAP_MS.
    */
   requestCentral(room, user) {
-    if (room.kicked?.has(user.id)) throw new Error("Te sacaron de esta sala: no puedes volver a entrar");
+    if (room.kicked?.has(user.id)) throw new Error("Te sacaron de esta partida: no puedes volver a entrar");
     if (room.hostId === user.id) throw new Error("Eres el anfitrión: puedes entrar directamente como dispositivo central");
     const player = room.players.get(user.id);
     if (!player) throw new Error("Entra primero a la sala como jugador");

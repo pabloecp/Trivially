@@ -109,7 +109,7 @@ export function PauseVeil({ room, isHost }) {
     <div className="tv-pause-veil" role="status">
       <Icon name="pause" size={30} filled strokeWidth={0} />
       <strong>Partida en pausa</strong>
-      <span>{isHost || debug ? "Toca ▶ arriba para seguir." : room.hostId ? "El anfitrión la reanudará en breve." : "La partida seguirá en breve."}</span>
+      <span>{isHost || debug ? "Toca ▶ para seguir." : room.hostId ? "El anfitrión la reanudará en breve." : "La partida seguirá en breve."}</span>
     </div>
   );
 }

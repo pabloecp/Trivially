@@ -12,7 +12,7 @@ import { useApp } from "./store.jsx";
 const FriendsContext = createContext(null);
 
 export function FriendsProvider({ children }) {
-  const { user, joinGroup } = useApp();
+  const { user, joinGroup, adoptGroup } = useApp();
   const isAccount = Boolean(user) && !user.isGuest;
   const [view, setView] = useState(null);
   const [open, setOpen] = useState(false);
@@ -25,6 +25,8 @@ export function FriendsProvider({ children }) {
   }, []);
   const joinRef = useRef(joinGroup);
   joinRef.current = joinGroup;
+  const adoptRef = useRef(adoptGroup);
+  adoptRef.current = adoptGroup;
   // A friend's invitation to their group, shown as a card until it's answered (FriendInvite).
   const [invite, setInvite] = useState(null);
 
@@ -57,20 +59,24 @@ export function FriendsProvider({ children }) {
     const onApproved = async ({ code, hostName } = {}) => {
       try {
         await joinRef.current(code);
-        say(`${hostName || "El líder"} te dejó entrar a su sala`);
+        say(`${hostName || "El líder"} te dejó entrar a su grupo`);
       } catch (err) {
-        say(err.message || "No pudimos entrar a la sala", "lock");
+        say(err.message || "No pudimos entrar al grupo", "lock");
       }
     };
     const onDeclined = ({ hostName } = {}) => say(`${hostName || "El líder"} no te dejó entrar esta vez`, "lock");
     // A friend invites this account to their group: a card with "Unirme".
     const onInvited = (data = {}) => data.code && setInvite({ ...data, id: Date.now() });
+    // A friend asked to join this account, which had no group: the server made one, and it shows in "Tu grupo".
+    const onGroupMade = ({ group } = {}) => adoptRef.current(group);
     s.on("friends:state", onState);
+    s.on("friend:groupMade", onGroupMade);
     s.on("friend:approved", onApproved);
     s.on("friend:declined", onDeclined);
     s.on("friend:invited", onInvited);
     return () => {
       s.off("friends:state", onState);
+      s.off("friend:groupMade", onGroupMade);
       s.off("friend:approved", onApproved);
       s.off("friend:declined", onDeclined);
       s.off("friend:invited", onInvited);
@@ -99,7 +105,7 @@ export function FriendsProvider({ children }) {
         if (res.action === "join") await joinRef.current(res.code);
         return res.action;
       },
-      // Sends this group's code to a friend who is online (they see "Ana te invita a su sala").
+      // Sends this group's code to a friend who is online (they see "Ana te invita a su grupo").
       async inviteFriend(friendId) {
         const res = await emitAck("friend:invite", { friendId });
         if (!res.ok) throw new Error(res.error);
@@ -156,10 +162,10 @@ export function FriendsProvider({ children }) {
           try {
             await joinRef.current(inv.code);
             setInvite(null);
-            say(`Entraste a la sala de ${inv.fromName}`);
+            say(`Entraste al grupo de ${inv.fromName}`);
           } catch (err) {
             setInvite(null);
-            if (!err.offer) say(err.message || "No pudimos entrar a la sala", "lock");
+            if (!err.offer) say(err.message || "No pudimos entrar al grupo", "lock");
           }
         }}
       />

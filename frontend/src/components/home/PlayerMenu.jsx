@@ -4,7 +4,7 @@ import { useApp } from "../../lib/store.jsx";
 import Icon from "./Icon.jsx";
 import { profilePath } from "./PlayerName.jsx";
 
-// What tapping a player offers on a match's scoreboard, the same buttons and order as "Tu sala" (GroupSheet), only their
+// What tapping a player offers on a match's scoreboard, the same buttons and order as "Tu grupo" (GroupSheet), only their
 // icons: for the host, taking them out of the room (for good) and, only while the room waits (`inMatch` false), letting
 // them change the settings or not and making them the host (a second tap confirms it); and for everyone their profile
 // (faded and doing nothing on a guest, who has none).
@@ -58,7 +58,7 @@ export default function PlayerMenu({ player, isMe, canManage, inMatch = false, o
     onClose();
     try {
       await kickPlayer(player.id);
-      onToast?.(`Sacaste a ${player.name} de la sala`, "check");
+      onToast?.(`Sacaste a ${player.name} de la partida`, "check");
     } catch (err) {
       onToast?.(err.message || "No se pudo sacar al jugador");
     }
@@ -82,7 +82,7 @@ export default function PlayerMenu({ player, isMe, canManage, inMatch = false, o
         </button>
       )}
       {canManage && (
-        <button type="button" role="menuitem" className="tv-iconbtn tv-iconbtn--sm" aria-label={`Sacar a ${player.name} de la sala`} title="Sacar de la sala" onClick={kick}>
+        <button type="button" role="menuitem" className="tv-iconbtn tv-iconbtn--sm" aria-label={`Sacar a ${player.name} de la partida`} title="Sacar de la partida" onClick={kick}>
           <Icon name="close" size={16} strokeWidth={2.8} />
           {named && "Sacar"}
         </button>

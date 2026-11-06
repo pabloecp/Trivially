@@ -1,8 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useApp } from "../../lib/store.jsx";
 import Avatar from "./Avatar.jsx";
 import CentralSpot from "./CentralSpot.jsx";
 import Icon from "./Icon.jsx";
+import Modal from "./Modal.jsx";
 import PlayerMenu from "./PlayerMenu.jsx";
 import { useInvite } from "./useInvite.js";
 import { shownCode, useHiddenCode } from "../../lib/hiddenCode.js";
@@ -99,6 +100,49 @@ function answeredLine(room, players) {
   return `Respondieron ${inRound.filter((p) => p.answered).length}/${inRound.length}`;
 }
 
+// A match's scoreboard on a phone, under the game: one chip per player in the order of the ranking (face, name and points,
+// a green dot once they answered, you with the yellow ring), sideways when they don't fit, always with you in sight. A tap
+// opens the whole scoreboard (`onOpen`).
+function ScoreStrip({ players, viewerId, disabled, room, onOpen }) {
+  const ref = useRef(null);
+  const myPlace = players.findIndex((p) => p.id === viewerId);
+  useEffect(() => {
+    const strip = ref.current;
+    const chip = strip?.children[myPlace];
+    if (!chip) return;
+    if (chip.offsetLeft < strip.scrollLeft || chip.offsetLeft + chip.offsetWidth > strip.scrollLeft + strip.clientWidth) {
+      strip.scrollTo({ left: chip.offsetLeft - 8, behavior: "smooth" });
+    }
+  }, [myPlace, players.length]);
+  return (
+    <div ref={ref} className="tv-pstrip" role="group" aria-label="Marcador">
+      {players.map((p, i) => {
+        const done = p.answered && room.phase === "playing";
+        return (
+          <button
+            key={p.id}
+            type="button"
+            className={`tv-pstrip-chip${p.id === viewerId ? " is-me" : ""}${done ? " is-done" : ""}${p.connected ? "" : " is-away"}`}
+            disabled={disabled}
+            onClick={onOpen}
+            aria-label={`${i + 1}. ${p.name}, ${formatElo(p.score || 0)} puntos. Ver el marcador`}
+          >
+            <span className="tv-pstrip-face">
+              <Avatar name={p.name} avatar={p.avatar} />
+            </span>
+            <span className="tv-pstrip-text">
+              <span className="tv-pstrip-name">{p.name}</span>
+              <b key={p.score} className="tv-pstrip-score">
+                {formatElo(p.score || 0)}
+              </b>
+            </span>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 // The room's side column, on the room screen and during a match: the group's code (a group's private match), who's in
 // and the way out.
 // With `scores` (a match) the players are ranked by points, each with their score and how their round is going.
@@ -110,6 +154,8 @@ function answeredLine(room, players) {
 export default function PartyPanel({ room, onToast, scores = false, display = false, className = "", status }) {
   const { user, isCentral } = useApp();
   const [menuFor, setMenuFor] = useState(null);
+  // Phones: the whole scoreboard, opened from its strip.
+  const [boardOpen, setBoardOpen] = useState(false);
   // A group's private match shows the group's code: it's how more people come into the group, and so into it.
   const { copied, copy: copyInvite } = useInvite(room.groupCode, onToast);
   const [codeHidden, toggleCode] = useHiddenCode();
@@ -143,18 +189,128 @@ export default function PartyPanel({ room, onToast, scores = false, display = fa
   // The spot: always while the room waits (that's where it's set); in a match only while there is a central device.
   // "Dispositivo central": only while the room has one (it's picked from a player's menu).
   const showSpot = !display && Boolean(room.central);
+  const statusLine = status ?? answeredLine(room, players);
+
+  // The players, with their places in a match: in the column, and on a phone in the panel its strip opens.
+  const people = (
+    <div className="tv-party-people">
+      <div>
+        {showSpot && <CentralSpot room={room} canEdit={canCentral} onToast={onToast} />}
+        <ul className="tv-party-players" aria-label={scores ? "Marcador" : "Jugadores en la partida"}>
+          {players.map((p, i) => {
+            const isMe = p.id === viewerId;
+            const isHostPlayer = p.id === room.hostId;
+            const wins = winsOf(p.id);
+            return (
+              <li
+                key={p.id}
+                className={`tv-player${isMe ? " is-me" : ""}${scores && p.answered && room.phase === "playing" ? " is-answered" : ""}${p.spectator ? " is-spectator" : ""}${p.connected ? "" : " is-away"}${menuFor === p.id ? " is-open" : ""}${
+                  scores && !p.spectator && i < 3 ? ` is-top-${i + 1}` : ""
+                }${showBoard && topWins > 0 && wins === topWins ? " is-leader" : ""}`}
+                style={{ "--i": i }}
+              >
+                <button
+                  type="button"
+                  className="tv-player-btn"
+                  aria-haspopup={display ? undefined : "menu"}
+                  aria-expanded={display ? undefined : menuFor === p.id}
+                  disabled={display}
+                  onClick={() => setMenuFor((cur) => (cur === p.id ? null : p.id))}
+                >
+                  {scores && !p.spectator && <span className="tv-player-pos">{i + 1}</span>}
+                  {gameWins && scoreLook === "insignia" && p.wins > 0 ? (
+                    <span className="tv-player-face">
+                      <Avatar name={p.name} avatar={p.avatar} mood="neutral" />
+                      <span key={p.wins} className={`tv-player-badge is-${tone}`}>
+                        {tone === "neutro" && <Icon name="crown" size={13} strokeWidth={2.6} filled />}
+                        {p.wins}
+                      </span>
+                    </span>
+                  ) : (
+                    <Avatar name={p.name} avatar={p.avatar} mood="neutral" />
+                  )}
+                  <span className="tv-player-text">
+                    <span className="tv-player-name">
+                      {p.name}
+                    </span>
+                    {gameWins && scoreLook === "frase" && !p.spectator ? (
+                      <span className="tv-player-tagline">
+                        {scores ? (
+                          <MatchTag player={p} room={room} isMe={isMe} />
+                        ) : (
+                          <span className={`tv-player-tag${isHostPlayer ? " is-host" : ""}`}>{playerTag(p, { isHost: isHostPlayer })}</span>
+                        )}
+                        <WonLine room={room} player={p} />
+                      </span>
+                    ) : scores ? (
+                      <MatchTag player={p} room={room} isMe={isMe} />
+                    ) : (
+                      <span className={`tv-player-tag${isHostPlayer ? " is-host" : ""}`}>{playerTag(p, { isHost: isHostPlayer })}</span>
+                    )}
+                  </span>
+                  {!p.spectator && gameWins && scoreLook === "numeros" && (
+                    <span key={`w${p.wins}`} className={`tv-player-games${p.wins > 0 ? " is-on" : ""}`} aria-label={`${p.wins} juegos ganados`}>
+                      {p.wins}
+                    </span>
+                  )}
+                  {scores && !p.spectator && (
+                    <span key={p.score} className="tv-player-score">
+                      {formatElo(p.score || 0)}
+                    </span>
+                  )}
+                  {/* The host's crown, always last on the right. */}
+                  {isHostPlayer && !scores && <Icon name="crown" size={18} strokeWidth={1.5} filled className="tv-player-crown" />}
+                </button>
+                {menuFor === p.id && !display && (
+                  <PlayerMenu
+                    player={p}
+                    isMe={isMe}
+                    canManage={isHost && !isMe}
+                    inMatch={inMatch}
+                    onClose={() => setMenuFor(null)}
+                    onToast={onToast}
+                  />
+                )}
+              </li>
+            );
+          })}
+        </ul>
+        {spectators.length > 0 && (
+          <>
+            <div className="tv-party-title">
+              <h2>Espectadores</h2>
+              <span>{spectators.length === 1 ? "1 espectador" : `${spectators.length} espectadores`}</span>
+            </div>
+            <ul className="tv-party-players tv-party-spectators" aria-label="Espectadores">
+              {spectators.map((p) => (
+                <li key={p.id} className={`tv-player is-spectator${p.id === viewerId ? " is-me" : ""}${p.connected ? "" : " is-away"}`}>
+                  <div className="tv-player-btn">
+                    <Avatar name={p.name} avatar={p.avatar} mood="neutral" />
+                    <span className="tv-player-text">
+                      <span className="tv-player-name">{p.name}</span>
+                      <span className="tv-player-tag">{p.connected ? "Entra en la próxima partida" : "Reconectando…"}</span>
+                    </span>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </>
+        )}
+      </div>
+    </div>
+  );
 
   return (
     <aside
       className={`tv-party${scores ? " is-scores" : ""}${display ? " is-display" : ""} ${className}`.trim()}
-      aria-label="Tu sala"
+      aria-label="La partida"
     >
       {/* Only a group's private match has a code to share (the group's). Nobody joins a public match but by searching. The
-          scoreboard of a match has none: only the scoreboard (the code is in the top bar and the group's bar). */}
+          scoreboard of a match has none: only the scoreboard (the code is only here and in "Tu grupo"). */}
       {room.groupCode && !room.matchmaking && !scores && (
       <div className="tv-party-codebox">
         <div className="tv-party-codehead">
-          <p className="tv-mono-label">Código de la sala</p>
+          <p className="tv-mono-label">Código del grupo</p>
           {/* Hides the code on this device's screens, for streaming. */}
           <button
             type="button"
@@ -181,119 +337,26 @@ export default function PartyPanel({ room, onToast, scores = false, display = fa
 
 
       <div className="tv-party-title">
-        <h2>{scores ? "Marcador" : "En la sala"}</h2>
+        <h2>{scores ? "Marcador" : "En la partida"}</h2>
         {scores ? (
-          <span className="tv-party-status-pill">{status ?? answeredLine(room, players)}</span>
+          <span className="tv-party-status-pill">{statusLine}</span>
         ) : (
           <span>{players.length === 1 ? "1 jugador" : `${players.length} jugadores`}</span>
         )}
       </div>
 
-      <div className="tv-party-people">
-        <div>
-          {showSpot && <CentralSpot room={room} canEdit={canCentral} onToast={onToast} />}
-          <ul className="tv-party-players" aria-label={scores ? "Marcador" : "Jugadores en la sala"}>
-            {players.map((p, i) => {
-              const isMe = p.id === viewerId;
-              const isHostPlayer = p.id === room.hostId;
-              const wins = winsOf(p.id);
-              return (
-                <li
-                  key={p.id}
-                  className={`tv-player${isMe ? " is-me" : ""}${scores && p.answered && room.phase === "playing" ? " is-answered" : ""}${p.spectator ? " is-spectator" : ""}${p.connected ? "" : " is-away"}${menuFor === p.id ? " is-open" : ""}${
-                    scores && !p.spectator && i < 3 ? ` is-top-${i + 1}` : ""
-                  }${showBoard && topWins > 0 && wins === topWins ? " is-leader" : ""}`}
-                  style={{ "--i": i }}
-                >
-                  <button
-                    type="button"
-                    className="tv-player-btn"
-                    aria-haspopup={display ? undefined : "menu"}
-                    aria-expanded={display ? undefined : menuFor === p.id}
-                    disabled={display}
-                    onClick={() => setMenuFor((cur) => (cur === p.id ? null : p.id))}
-                  >
-                    {scores && !p.spectator && <span className="tv-player-pos">{i + 1}</span>}
-                    {gameWins && scoreLook === "insignia" && p.wins > 0 ? (
-                      <span className="tv-player-face">
-                        <Avatar name={p.name} avatar={p.avatar} mood="neutral" />
-                        <span key={p.wins} className={`tv-player-badge is-${tone}`}>
-                          {tone === "neutro" && <Icon name="crown" size={13} strokeWidth={2.6} filled />}
-                          {p.wins}
-                        </span>
-                      </span>
-                    ) : (
-                      <Avatar name={p.name} avatar={p.avatar} mood="neutral" />
-                    )}
-                    <span className="tv-player-text">
-                      <span className="tv-player-name">
-                        {p.name}
-                      </span>
-                      {gameWins && scoreLook === "frase" && !p.spectator ? (
-                        <span className="tv-player-tagline">
-                          {scores ? (
-                            <MatchTag player={p} room={room} isMe={isMe} />
-                          ) : (
-                            <span className={`tv-player-tag${isHostPlayer ? " is-host" : ""}`}>{playerTag(p, { isHost: isHostPlayer })}</span>
-                          )}
-                          <WonLine room={room} player={p} />
-                        </span>
-                      ) : scores ? (
-                        <MatchTag player={p} room={room} isMe={isMe} />
-                      ) : (
-                        <span className={`tv-player-tag${isHostPlayer ? " is-host" : ""}`}>{playerTag(p, { isHost: isHostPlayer })}</span>
-                      )}
-                    </span>
-                    {!p.spectator && gameWins && scoreLook === "numeros" && (
-                      <span key={`w${p.wins}`} className={`tv-player-games${p.wins > 0 ? " is-on" : ""}`} aria-label={`${p.wins} juegos ganados`}>
-                        {p.wins}
-                      </span>
-                    )}
-                    {scores && !p.spectator && (
-                      <span key={p.score} className="tv-player-score">
-                        {formatElo(p.score || 0)}
-                      </span>
-                    )}
-                    {/* The host's crown, always last on the right. */}
-                    {isHostPlayer && !scores && <Icon name="crown" size={18} strokeWidth={1.5} filled className="tv-player-crown" />}
-                  </button>
-                  {menuFor === p.id && !display && (
-                    <PlayerMenu
-                      player={p}
-                      isMe={isMe}
-                      canManage={isHost && !isMe}
-                      inMatch={inMatch}
-                      onClose={() => setMenuFor(null)}
-                      onToast={onToast}
-                    />
-                  )}
-                </li>
-              );
-            })}
-          </ul>
-          {spectators.length > 0 && (
-            <>
-              <div className="tv-party-title">
-                <h2>Espectadores</h2>
-                <span>{spectators.length === 1 ? "1 espectador" : `${spectators.length} espectadores`}</span>
-              </div>
-              <ul className="tv-party-players tv-party-spectators" aria-label="Espectadores">
-                {spectators.map((p) => (
-                  <li key={p.id} className={`tv-player is-spectator${p.id === viewerId ? " is-me" : ""}${p.connected ? "" : " is-away"}`}>
-                    <div className="tv-player-btn">
-                      <Avatar name={p.name} avatar={p.avatar} mood="neutral" />
-                      <span className="tv-player-text">
-                        <span className="tv-player-name">{p.name}</span>
-                        <span className="tv-player-tag">{p.connected ? "Entra en la próxima partida" : "Reconectando…"}</span>
-                      </span>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            </>
-          )}
-        </div>
-      </div>
+      {people}
+
+      {/* Phones: the scoreboard is a strip under the game; a tap opens all of it. */}
+      {scores && (
+        <>
+          <ScoreStrip players={players} viewerId={viewerId} disabled={display} room={room} onOpen={() => setBoardOpen(true)} />
+          <Modal open={boardOpen} title="Marcador" size="sm" className="tv-score-modal" onClose={() => setBoardOpen(false)}>
+            <span className="tv-party-status-pill">{statusLine}</span>
+            {people}
+          </Modal>
+        </>
+      )}
     </aside>
   );
 }

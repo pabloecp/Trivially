@@ -67,8 +67,8 @@ export const PUBLIC_VARIANT = Object.fromEntries(PUBLIC_GAMES.map((game) => [gam
 // A group (game/groups.js) searches for a public match together, all in the same room: it fills up to one more than the
 // group, at least two and at most PUBLIC_GROUP_MAX players (always PUBLIC_GROUP_MAX while DUELS_OPEN is off).
 export const PUBLIC_GROUP_MAX = 5;
-// A sala (a group and its private match) holds at most this many players.
-export const SALA_MAX = 10;
+// A group, and a private match, hold at most this many players.
+export const GROUP_MAX = 10;
 export const groupMatchSize = (members) => (DUELS_OPEN ? Math.min(PUBLIC_GROUP_MAX, Math.max(2, members + 1)) : PUBLIC_GROUP_MAX);
 // Who "Vas a jugar" is for: people from anywhere ("Partida pública") or only you or your group ("Partida privada").
 export const AUDIENCES = ["grupo", "publica"];
@@ -110,7 +110,7 @@ export function cleanMatchRequest(input) {
   const size = input?.size == null ? (game && DUELS_OPEN ? 2 : 5) : Number(input.size);
   if (!kind) throw new Error("Elige el tipo de partida");
   if (!MATCH_KINDS_OPEN.includes(kind)) throw new Error("El modo Competitivo no está disponible por ahora");
-  if (game && !PUBLIC_GAMES.includes(game)) throw new Error("Ese juego solo se puede jugar con tu sala");
+  if (game && !PUBLIC_GAMES.includes(game)) throw new Error("Ese juego solo se puede jugar con tu grupo");
   if (!MATCH_SIZES.includes(size)) throw new Error("Elige Uno contra Uno o Todos contra Todos");
   return { kind, rounds: game ? ROUNDS_PER_GAME : MATCH_ROUNDS, size, game };
 }

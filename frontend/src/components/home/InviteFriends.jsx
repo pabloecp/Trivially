@@ -8,7 +8,7 @@ import Icon from "./Icon.jsx";
 const SHOWN = 4;
 
 /**
- * In "Tu sala", under its players (accounts only): "Invitar amigos", your friends who are online and not in the group,
+ * In "Tu grupo", under its players (accounts only): "Invitar amigos", your friends who are online and not in the group,
  * each with "Invitar" (they get a card with the group's code, friend:invite), which turns into "Invitado" for a while.
  * With nobody online it says so; with no friends yet, a button opens the friends sheet.
  */
@@ -52,7 +52,7 @@ export default function InviteFriends({ group, onToast }) {
 
   return (
     <div className="tv-invite-friends">
-      {/* Titled like "En la sala": the name, and on the right how many of your friends are online to invite. */}
+      {/* Titled like "En el grupo": the name, and on the right how many of your friends are online to invite. */}
       <div className="tv-party-title">
         <h2>Invitar amigos</h2>
         {online.length > 0 && <span>{online.length === 1 ? "1 conectado" : `${online.length} conectados`}</span>}
@@ -71,7 +71,7 @@ export default function InviteFriends({ group, onToast }) {
               <Avatar name={f.name} avatar={f.avatar} />
               <span className="tv-invite-friend-text">
                 <strong>{f.name}</strong>
-                <small>{f.room?.group ? "En otra sala" : f.room ? "Jugando" : "En línea"}</small>
+                <small>{f.room?.group ? "En otro grupo" : f.room ? "Jugando" : "En línea"}</small>
               </span>
               <button
                 type="button"

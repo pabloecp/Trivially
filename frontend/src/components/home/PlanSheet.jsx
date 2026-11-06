@@ -6,7 +6,8 @@ import Icon from "./Icon.jsx";
 import Modal from "./Modal.jsx";
 
 // "¿Qué quieren jugar?" ("¿Qué quieres jugar?" alone), from the "Vas a jugar" box: who it's for ("Partida pública": a
-// public match of the game, or "Partida privada": yours alone or your group's) and the game, as cards. "Clásico" goes
+// public match of the game, or "Partida privada": yours alone or your group's; the bar has no switch of its own, it's
+// only here) and the game, as cards. "Clásico" goes
 // first, above "Juego libre" (the games), on both sides: games drawn by the roulette until someone has won two, a
 // public match of them or your own. With people from anywhere, Rey de la colina and Farsante are locked (they need
 // people who know each other). Picking one closes it. `readOnly` (a player who isn't the leader or the host) only shows

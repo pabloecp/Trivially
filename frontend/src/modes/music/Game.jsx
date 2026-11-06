@@ -94,8 +94,8 @@ function GameScreen() {
 
   // Join room if disconnected or reloaded. Going back to the lobby is handled by RoomNavigator (App.jsx).
   useEffect(() => {
-    if (!room || room.code !== code) {
-      joinRoom(code).catch(() => nav("/"));
+    if (code && (!room || room.code !== code)) {
+      joinRoom(code).catch(() => nav("/", { replace: true }));
     }
   }, [code]);
 
@@ -452,7 +452,7 @@ function GameScreen() {
       return;
     }
     setConfirmHub(false);
-    restartGame().catch((e) => setErr(e.message || "No se pudo volver a la sala"));
+    restartGame().catch((e) => setErr(e.message || "No se pudo terminar la partida"));
   }
 
   if (!room) {
