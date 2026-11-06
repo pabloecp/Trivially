@@ -522,9 +522,14 @@ function GameScreen() {
             icon="music"
             dir={
               lyrics
-                ? closed
-                  ? "¿Qué palabra sigue? La canción se corta: elige la que completa la letra"
-                  : "¿Qué palabra sigue? La canción se corta: escribe la que completa la letra"
+                ? // While the lyrics are in the card this line asks the question; before them, the question is the card's own.
+                  lyricsInCard
+                  ? closed
+                    ? "¿Qué palabra sigue? Elige la que completa la letra"
+                    : "¿Qué palabra sigue? Escribe la que completa la letra"
+                  : closed
+                  ? "La canción se corta: elige la palabra que completa la letra"
+                  : "La canción se corta: escribe la palabra que completa la letra"
                 : closed
                 ? "Escucha el fragmento y elige qué canción es · más rápido, más puntos"
                 : "Escucha el fragmento y escribe su título · más rápido, más puntos"

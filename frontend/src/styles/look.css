@@ -2559,3 +2559,41 @@ html.tv-match-lock .tv-app .tv-match .tv-qc .tv-lyrics-gap { width: 72px; }
 .tv-app .tv-match .tv-rain-bar { justify-content: stretch; }
 .tv-app .tv-match .tv-rain-form { flex: 1 1 auto; max-width: none; }
 .tv-app .tv-match .tv-rain-stage > .tv-rain-hint { margin: 0; color: var(--tv-text-2); }
+
+/* ---------- Phones: fixes of the round screens ---------- */
+@media (max-width: 899px), (max-height: 500px) {
+  /* The question starts at the left, beside its image (not pushed to the middle of the card). */
+  html.tv-match-lock .tv-app .tv-qc-body { justify-content: flex-start; }
+  /* The song's bars: thicker and closer, as tall as the card lets them. */
+  html.tv-match-lock .tv-app .tv-qc-media .tv-qc-eq { width: 72px; gap: 3px; }
+  html.tv-match-lock .tv-app .tv-qc-media .tv-qc-eq i { max-width: none; }
+  /* The answer's card in a panel: in its middle, its lines centred. */
+  html.tv-match-lock .tv-app .tv-match .tv-mpanel:has(> .tv-acard) { justify-content: center; }
+  html.tv-match-lock .tv-app .tv-match .tv-mpanel .tv-acard:not(.is-floating):not(:has(.tv-acard-media)) { flex-direction: column; text-align: center; }
+  html.tv-match-lock .tv-app .tv-match .tv-mpanel .tv-acard:not(.is-floating):not(:has(.tv-acard-media)) .tv-acard-text { justify-items: center; }
+}
+/* The game's tutorial on a phone: the same as on a computer, one panel in the game's colour with its badge and name, the
+   three steps and the clock with its bar under them, in the middle of the room there is. */
+@media (max-width: 899px) and (min-height: 501px) {
+  html.tv-match-lock .tv-app .tv-mi-tutorial { justify-content: center; gap: 18px; padding: 22px 16px 18px; overflow: hidden; border-radius: var(--qc-radius); background: var(--c2); }
+  html.tv-match-lock .tv-app .tv-mi-tutorial.is-neutro { background: var(--tv-option-bg); }
+  html.tv-match-lock .tv-app .tv-mi-tut-head,
+  html.tv-match-lock .tv-app .rl-tut.is-neutro .tv-mi-tut-head { height: auto; padding: 0; border-radius: 0; background: none; }
+  html.tv-match-lock .tv-app .tv-mi-steps { flex: none; grid-auto-rows: auto; gap: 10px; }
+  html.tv-match-lock .tv-app .tv-mi-step { padding: 12px 14px; border-radius: 16px; background: rgba(255, 255, 255, 0.16); font-size: 15px; font-weight: 800; }
+  html.tv-match-lock .tv-app .tv-mi-tutorial.is-neutro .tv-mi-step { background: var(--tv-surface); }
+  html.tv-match-lock .tv-app .rl-tut.is-color .tv-mi-step-icon { background: #fff; color: var(--c2); }
+  html.tv-match-lock .tv-app .tv-mi-progress { position: static; display: flex; align-items: center; gap: 14px; }
+  html.tv-match-lock .tv-app .tv-mi-clock { display: grid; width: 52px; height: 52px; }
+  html.tv-match-lock .tv-app .tv-mi-tutorial.is-color .tv-mi-bar { background: rgba(255, 255, 255, 0.22); }
+}
+
+/* A guest's profile button (the person icon, "Entrar") keeps its button on a phone; only a Blob goes without one. */
+@media (max-width: 760px) {
+  .tv-app .tv-topbar .tv-chip--profile:has(> .tv-avatar--empty) { justify-content: center; width: 36px; padding: 0; background: var(--tv-neutral); box-shadow: 0 3px 0 var(--tv-neutral-edge); }
+  .tv-app .tv-topbar .tv-chip--profile:has(> .tv-avatar--empty):hover { transform: translateY(-2px); box-shadow: 0 5px 0 var(--tv-neutral-edge); }
+  .tv-app .tv-topbar .tv-chip--profile:has(> .tv-avatar--empty):active { transform: translateY(3px); box-shadow: 0 0 0 var(--tv-neutral-edge); }
+}
+@media (max-width: 340px) {
+  .tv-app .tv-topbar .tv-chip--profile:has(> .tv-avatar--empty) { width: 34px; }
+}
