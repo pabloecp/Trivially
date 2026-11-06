@@ -40,7 +40,7 @@ function CardDirection({ dir }) {
  * each always as tall: the normal one, and `small` for the games played on a map or a board, which need the room.
  * The text never changes at the reveal: only the result is added on the first row.
  */
-export function MatchCard({ room, label, icon, pills = null, dir, seconds, pct = 100, urgent = false, small = false, media = null, className = "", children }) {
+export function MatchCard({ room, label, icon, pills = null, dir, seconds, pct = 100, urgent = false, small = false, media = null, mark = null, className = "", children }) {
   const { color, icon: gameIcon } = gameLook(room);
   const counting = room.phase === "countdown";
   const classes = ["tv-qc", `tv-c-${color}`, small && "tv-qc--small", room.phase === "reveal" && "is-reveal", className].filter(Boolean).join(" ");
@@ -67,6 +67,8 @@ export function MatchCard({ room, label, icon, pills = null, dir, seconds, pct =
       </div>
       <div className="tv-qc-timer" aria-hidden="true">
         <i className={urgent ? "is-urgent" : ""} style={{ width: `${pct}%` }} />
+        {/* A small notch on the bar at a moment of the round (Letra: where the song is cut), with nothing written. */}
+        {mark != null && <b className="tv-qc-timer-mark" style={{ left: `${Math.max(0, Math.min(100, mark))}%` }} />}
       </div>
     </section>
   );
