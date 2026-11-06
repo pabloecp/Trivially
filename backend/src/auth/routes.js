@@ -1,4 +1,5 @@
 import { botPublicProfile } from "../game/bots.js";
+import { siteOrigin } from "../security.js";
 import { Router } from "express";
 import { hydrateSong } from "../catalog/catalogProvider.js";
 import { selectSongs } from "../catalog/songSelector.js";
@@ -366,7 +367,8 @@ export function createApiRouter({ catalog, store, friends = null, hub = null, so
     try {
       const returnTo = req.query.returnTo || "/";
       const purpose = req.query.purpose || "login";
-      const origin = req.query.origin || "";
+      // Only one of our own sites: the login comes back there with a ticket in the address.
+      const origin = siteOrigin(req.query.origin, "");
       res.json({ url: createGoogleAuthUrl(returnTo, purpose, origin, linkTicketFor(req, purpose)) });
     } catch (err) {
       res.status(400).json({ error: err.message });
@@ -381,8 +383,8 @@ export function handleGoogleRedirect(req, res) {
   const defaultOrigin = host.includes("127.0.0.1") || host.includes("localhost")
     ? (host.includes("127.0.0.1") ? "http://127.0.0.1:5173" : "http://localhost:5173")
     : "https://triviallyonline.vercel.app";
-  const originParam = req.query.origin || req.headers.referer || "";
-  const clientOrigin = originParam ? new URL(originParam, defaultOrigin).origin : defaultOrigin;
+  // Only one of our own sites (security.js): the login comes back there with a ticket in the address.
+  const clientOrigin = siteOrigin(req.query.origin || req.headers.referer, defaultOrigin);
   try {
     const returnTo = req.query.returnTo || "/";
     const purpose = req.query.purpose || "login";
@@ -407,7 +409,7 @@ export async function handleGoogleCallback(req, res, store) {
     const { profile, returnTo: stateReturnTo, purpose, origin: originFromState, linkTicket } = await exchangeGoogleCode(code, state);
     if (stateReturnTo) returnTo = safePath(stateReturnTo);
     if (originFromState) {
-      origin = originFromState.replace(/\/$/, "");
+      origin = siteOrigin(originFromState, defaultOrigin);
     } else {
       origin = (host.includes("localhost") || host.includes("127.0.0.1") ? defaultOrigin : process.env.CLIENT_ORIGIN || defaultOrigin).replace(/\/$/, "");
     }

@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect, useRef } from "react";
 import { Navigate, Route, Routes, useLocation, useNavigate, useNavigationType, useParams } from "react-router-dom";
+import { NotFound } from "./pages/ErrorPages.jsx";
 import Home from "./pages/Home.jsx";
 import Login from "./pages/Login.jsx";
 import Profile from "./pages/Profile.jsx";
@@ -193,6 +194,8 @@ export default function App() {
         <Route path="/login" element={<Login />} />
         {/* The leaderboard was removed: an old link to it goes to Inicio. */}
         <Route path="/leaderboard" element={<Navigate to="/" replace />} />
+        {/* Any other address: "Esta página no existe" (pages/ErrorPages.jsx). */}
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </>
   );

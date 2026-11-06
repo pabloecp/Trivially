@@ -9,6 +9,7 @@ import Segmented from "./Segmented.jsx";
 import { codeFromText } from "./useInvite.js";
 import { MATCH_KINDS, OPEN_SIZES, gamesFor } from "./matchInfo.js";
 import "../../styles/match.css";
+import useKeyboardFit from "../../lib/useKeyboardFit.js";
 
 // A room's code is five letters and numbers (ROOM_CODE_LENGTH on the server).
 const ROOM_CODE_LENGTH = 5;
@@ -70,27 +71,8 @@ export default function PlaySheet({ mode, joinCode, open, onClose, askName = fal
     }
   }, [open]);
 
-  // On phones the keyboard doesn't resize the page: it covers the bottom of it, and that's where this sheet sits.
-  // Keep the sheet inside the part of the screen the keyboard leaves visible.
-  useEffect(() => {
-    const vv = window.visualViewport;
-    const root = rootRef.current;
-    if (!open || !mounted || !vv || !root) return undefined;
-    function fit() {
-      root.style.setProperty("--tv-vv-h", `${vv.height}px`);
-      root.style.setProperty("--tv-vv-top", `${vv.offsetTop}px`);
-      // With the keyboard up, the screen's bottom edge (and its safe area) is under the keyboard.
-      root.classList.toggle("is-keyboard", window.innerHeight - vv.height > 120);
-    }
-    fit();
-    vv.addEventListener("resize", fit);
-    vv.addEventListener("scroll", fit);
-    return () => {
-      vv.removeEventListener("resize", fit);
-      vv.removeEventListener("scroll", fit);
-      root.classList.remove("is-keyboard");
-    };
-  }, [open, mounted]);
+  // The sheet stays above the phone's keyboard (lib/useKeyboardFit.js).
+  useKeyboardFit(rootRef, open && mounted);
 
   useEffect(() => {
     if (!open || !mounted) return;
