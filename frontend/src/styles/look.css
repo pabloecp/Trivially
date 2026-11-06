@@ -2538,10 +2538,11 @@
 /* The answer's card in a panel: no box of its own (the panel is the box), in the panel's middle. Over a map or a board
    it keeps its box. */
 .tv-app .tv-match .tv-mpanel .tv-acard:not(.is-floating) { width: auto; max-width: 100%; align-self: center; padding: 0; border: 0; background: none; }
-/* Campo de minas' card over the board: a panel over the page (no line, a soft drop shadow), the board darkened behind
-   it, fading in and out with it. */
-.tv-app .tv-match .tv-mines-burst { border-radius: 12px; background: rgba(0, 0, 0, 0.45); }
-.tv-app .tv-match .tv-mpanel .tv-mines-burst .tv-acard { padding: 16px 20px; border: 0; border-radius: 22px; background: var(--tv-surface); box-shadow: 0 20px 50px rgba(0, 0, 0, 0.55); }
+/* The answer's card over a map or a board (Encuentra el país, Campo de minas, Lluvia): a panel over the page (no line, a
+   soft drop shadow), the map or the board darkened behind it, fading in and out with it. */
+.tv-app .tv-match :is(.tv-mines-burst, .tv-acard-float) { border-radius: 12px; background: rgba(0, 0, 0, 0.45); }
+.tv-app .tv-match .tv-acard-float { border-radius: inherit; }
+.tv-app .tv-match :is(.tv-mines-burst, .tv-acard-float) .tv-acard { padding: 16px 20px; border: 0; border-radius: 22px; background: var(--tv-surface); box-shadow: 0 20px 50px rgba(0, 0, 0, 0.55); }
 .tv-app .tv-match .tv-play-card.tv-mpanel:has(> .tv-acard) { justify-content: center; }
 .tv-app .tv-match .tv-mpanel .tv-acard:not(.is-floating) .tv-acard-value { font-size: 40px; }
 @media (max-width: 899px) {
