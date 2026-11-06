@@ -795,6 +795,14 @@
 }
 .tv-sheet-root.is-closing .tv-sheet-backdrop { animation: tvFadeOut 0.22s ease-in forwards; }
 .tv-sheet-root.is-closing .tv-sheet { animation: tvSheetOut 0.24s ease-in forwards; }
+/* Phones with the keyboard up: no room left for the screen's bottom edge, and the strip between the sheet and the
+   keyboard (where the browser puts its address bar) takes the sheet's colour instead of showing the page. */
+@media (max-width: 639px) {
+  .tv-sheet-root.is-keyboard .tv-sheet {
+    padding-bottom: 14px;
+    box-shadow: 0 -12px 50px rgba(0, 0, 0, 0.3), 0 240px 0 var(--tv-sheet-bg);
+  }
+}
 
 .tv-sheet-grab {
   cursor: grab;
