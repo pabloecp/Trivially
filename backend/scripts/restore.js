@@ -32,9 +32,11 @@ if (!fs.existsSync(file)) {
   console.error(`No existe ${file}.`);
   process.exit(1);
 }
-// Generated columns (users.role, users.username) come from `data`: Supabase rejects writing them.
+// Before the accounts had their own columns, users.role and users.username were generated from `data` and Supabase
+// rejects writing them: a table like that gets the rows without them (they come back from `data` by themselves).
 const GENERATED = { users: ["role", "username"] };
-const rows = JSON.parse(fs.readFileSync(file, "utf8")).map((row) => {
+let rows = JSON.parse(fs.readFileSync(file, "utf8"));
+const withoutGenerated = (list) => list.map((row) => {
   const copy = { ...row };
   for (const column of GENERATED[table] || []) delete copy[column];
   return copy;
@@ -50,7 +52,11 @@ if (!supabaseEnabled()) {
 }
 const db = getSupabase();
 for (let i = 0; i < rows.length; i += 500) {
-  const { error } = await db.from(table).upsert(rows.slice(i, i + 500), { onConflict: spec.key.join(",") });
+  let { error } = await db.from(table).upsert(rows.slice(i, i + 500), { onConflict: spec.key.join(",") });
+  if (error && GENERATED[table] && /generated|non-DEFAULT/i.test(error.message)) {
+    rows = withoutGenerated(rows);
+    ({ error } = await db.from(table).upsert(rows.slice(i, i + 500), { onConflict: spec.key.join(",") }));
+  }
   if (error) {
     console.error(`Falló en las filas ${i + 1}-${Math.min(i + 500, rows.length)}: ${error.message}`);
     process.exit(1);
