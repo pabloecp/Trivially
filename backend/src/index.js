@@ -53,9 +53,8 @@ const groups = new GroupManager({ rooms });
 const friends = new Friendships({ store });
 await friends.init();
 const friendsHub = new FriendsHub({ store, friends, rooms, groups });
-// The default playlists (catalog/defaultPlaylists.js): Spotify's Top 50 read now and once a day, and the top 100 of Lynz
-// once a week (its songs are looked up in the background); put in every room.
-startDefaultPlaylists(() => rooms.applyDefaultPlaylists(), { resolver });
+// The default Spotify playlists (catalog/defaultPlaylists.js): read now and once a day, and put in every room.
+startDefaultPlaylists(() => rooms.applyDefaultPlaylists());
 // Spotify songs found in earlier games join the search box too.
 resolver.preloadSaved().catch((err) => console.warn(`[Spotify] No se pudieron precargar las canciones (${err.message})`));
 
