@@ -46,6 +46,30 @@ Antes de abrir el pull request:
 - `npm test --prefix backend` y `npm run build --prefix frontend` deben pasar.
 - No subas cambios en `backend/data/store.json` (los tests ya no lo tocan; si aparece modificado, restáuralo con `git checkout backend/data/store.json`).
 
+## Cómo se escribe el título del pull request
+
+```
+tipo(área): Qué cambia, en palabras simples
+```
+
+- **`tipo`** es el prefijo de la rama, en minúsculas: `feature`, `fix`, `chore`, `hotfix` o `release`.
+- **`(área)`** es opcional: el juego o la parte que cambia, en minúsculas y sin espacios (`trivia`, `cancion`, `mundo`, `rango`, `minas`, `lluvia`, `rey`, `farsante`, `grupos`, `perfil`, `lynz`, `tests`, `docs`…). Si toca varias partes, se omite.
+- **Después de los dos puntos**, en español, empezando con mayúscula y sin punto al final: qué va a notar alguien que juega, no qué archivo cambió. 72 caracteres como máximo en total.
+- **Nunca** se deja el título que GitHub pone solo (`Develop`, `Fix/grupos aparte de partidas`).
+
+| Pull request | Título |
+| --- | --- |
+| `feature/…` → `develop` | `feature(lluvia): Las palabras caen más rápido en el nivel difícil` |
+| `fix/…` → `develop` | `fix(grupos): El líder ya no se queda solo al cambiar de juego` |
+| `chore/…` → `develop` | `chore: Dependencias actualizadas` |
+| `hotfix/…` → `main` | `hotfix: La sala vuelve a abrir en celular` |
+| `develop` → `main` | `release: 2026-11-06, grupos aparte y partida a pantalla completa` |
+| `main` → `develop` | `chore: Develop al día con main después de la publicación #47` |
+
+Al fusionar, GitHub usa ese título para el commit de fusión, con el número del pull request al final, por ejemplo `fix(grupos): … (#41)`. Así el historial de `develop` y `main` se lee igual que la lista de pull requests.
+
+Los commits dentro de la rama siguen la regla de siempre (`CLAUDE.md`): título corto en español, sin `tipo:`.
+
 ## Publicar en producción (release)
 
 1. Cuando `develop` tiene lo que queremos publicar y está probado, se abre un pull request de `develop` hacia `main` (o de una rama `release/fecha` si hace falta preparar algo antes).
