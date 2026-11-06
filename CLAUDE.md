@@ -30,6 +30,7 @@ npm run history:upload --prefix backend     # Rango (history/events.js, figures.
 npm run mines:upload --prefix backend       # Campo de minas (mines/boards/)
 npm run lyrics:build --prefix backend       # Completa la letra, offline: rounds into private/lyric-rounds.json (local Whisper)
 npm run lyrics:upload --prefix backend      # that file to Supabase's lyric_rounds table (-- --check)
+npm run load:test --prefix backend          # many Trivia matches at once against a LOCAL server (-- --rooms 100 --players 8); never production
 ```
 
 Tests are standalone scripts using `node:assert/strict`, no runner: each prints `"<name> ok"`. A new test file must be appended to the `&&` chain in `backend/package.json` `scripts.test`.
