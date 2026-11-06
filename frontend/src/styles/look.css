@@ -2169,7 +2169,7 @@
   html.tv-match-lock .tv-app .tv-mbar .tv-mini-btn.is-on { width: auto; padding: 0 12px; }
   html.tv-match-lock .tv-app .tv-mbar .tv-mini-btn.is-on .tv-pause-label { display: inline; white-space: nowrap; }
 
-  /* The round's card: only what it says, the question in the middle of what's left, always whole (MatchQuestion). */
+  /* The round's card: only what it says, the question at the bottom, over the time bar, always whole (MatchQuestion). */
   html.tv-match-lock .tv-app .tv-qc { flex: none; gap: 6px; height: var(--qc-h); padding: 10px 14px 12px; border-radius: var(--qc-radius); }
   html.tv-match-lock .tv-app .tv-qc-mark { width: 130px; height: 130px; right: -22px; bottom: -28px; }
   html.tv-match-lock .tv-app .tv-qc-head { flex: none; gap: 4px 6px; }
@@ -2485,7 +2485,7 @@
 @media (max-width: 899px), (max-height: 500px) {
   html.tv-match-lock .tv-app .tv-qc.tv-qc--small { height: min(118px, var(--qc-h)); }
   html.tv-match-lock .tv-app .tv-qc--small .tv-qc-q { font-size: 21px; }
-  html.tv-match-lock .tv-app .tv-qc-body { align-items: center; gap: 10px; }
+  html.tv-match-lock .tv-app .tv-qc-body { align-items: flex-end; gap: 10px; }
   html.tv-match-lock .tv-app .tv-qc-media { max-height: 54px; }
   html.tv-match-lock .tv-app .tv-qc-media .tv-qc-eq { width: 84px; max-height: none; }
   html.tv-match-lock .tv-app .tv-qc-points,
