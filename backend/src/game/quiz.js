@@ -9,8 +9,6 @@ import { toGeoTrack } from "./geo.js";
 
 export const QUIZ_MODE = "opciones";
 export const QUIZ_LEVELS = ["facil", "media", "dificil"];
-// Older clients send one `difficulty`, "mixta" being all three.
-export const QUIZ_DIFFICULTIES = [...QUIZ_LEVELS, "mixta"];
 // The ways of answering, and the question types each one plays: choosing one of four ("opciones") or writing
 // ("escribir").
 export const QUIZ_FORMATS = ["opciones", "escribir"];

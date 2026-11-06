@@ -23,7 +23,6 @@
 .tv-results.is-playlist { justify-content: flex-start; gap: 18px; }
 .tv-results.is-playlist .tv-podium { margin-top: 18px; }
 
-
 /* "Tus playlists" (Adivina la canción): a fixed number of whole rows in sight (4), the rest scrolling with a thin bar
    without arrows, snapping to rows. Every row is the same height, so the list's height is exactly four of them. */
 .tv-saved-list {

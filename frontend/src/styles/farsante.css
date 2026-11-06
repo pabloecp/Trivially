@@ -29,10 +29,6 @@
 /* ---------- The match ---------- */
 .tv-fs-stage { display: grid; grid-template-columns: minmax(0, 1fr); align-content: start; gap: 14px; }
 
-/* The round's prompt. */
-.tv-fs-prompt { display: grid; gap: 10px; justify-items: center; text-align: center; }
-.tv-fs-prompt-text { margin: 0; font-size: clamp(20px, 3vw, 32px); font-weight: 800; line-height: 1.2; overflow-wrap: anywhere; text-wrap: balance; }
-
 /* The box to write the answer in, with its counter. */
 /* One column no wider than the screen, so on a phone "Enviar" and "Esperando a…" never go past its edge. */
 .tv-fs-write { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; }
@@ -64,7 +60,6 @@ button.tv-fs-option:disabled { cursor: default; box-shadow: none; }
 .tv-fs-option.is-voted { background: rgba(var(--tv-fs-rgb), 0.22); box-shadow: inset 0 0 0 2px var(--tv-fs); }
 .tv-fs-option.is-real { background: rgba(var(--tv-fs-rgb), 0.22); box-shadow: inset 0 0 0 2px var(--tv-fs); }
 .tv-fs-option-text { font-size: clamp(16px, 2.1vw, 21px); line-height: 1.25; }
-.tv-fs-option-note { font-size: 12px; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase; color: var(--tv-text-3); }
 
 /* The reveal's line under an option: who wrote it, who voted for it, its points. */
 .tv-fs-who { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; font-size: 14px; }

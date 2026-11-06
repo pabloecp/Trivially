@@ -46,17 +46,6 @@
 .tv-hist-stage > * { width: min(760px, 100%); }
 
 .tv-hist-event { display: grid; justify-items: center; gap: 10px; }
-.tv-hist-prompt {
-  margin: 0;
-  max-width: 30ch;
-  font-family: var(--tv-display);
-  font-weight: 600;
-  font-size: clamp(22px, 4.6vw, 32px);
-  line-height: 1.2;
-  color: var(--tv-text);
-  text-wrap: balance;
-  animation: tvRise 0.45s var(--tv-spring) 0.05s backwards;
-}
 .tv-hist-hint { min-height: 2.6em; max-width: 46ch; line-height: 1.3; }
 
 .tv-hist-slot { display: grid; place-items: center; height: 76px; }
@@ -287,38 +276,6 @@
 .tv-hist-next { text-align: center; }
 
 /* The end of a round: icon, what happened, the points. */
-.tv-hist-verdict {
-  position: relative;
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 10px;
-  width: min(100%, 520px);
-  min-height: 58px;
-  padding: 8px 12px 8px 8px;
-  border-radius: 18px;
-  background: var(--tv-option-bg);
-  text-align: left;
-  animation: tvPop 0.5s var(--tv-spring);
-}
-.tv-hist-verdict-icon {
-  display: grid;
-  place-items: center;
-  width: 42px;
-  height: 42px;
-  border-radius: 13px;
-  color: var(--p-ink);
-}
-.tv-hist-verdict-text { display: grid; min-width: 0; }
-.tv-hist-verdict-text strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: var(--tv-display); font-weight: 700; font-size: 20px; line-height: 1.15; color: var(--tv-text); }
-.tv-hist-verdict-text small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 700; font-size: 13px; color: var(--tv-text-2); }
-.tv-hist-verdict--ok { box-shadow: inset 0 0 0 2px var(--p-ok); }
-.tv-hist-verdict--ok .tv-hist-verdict-icon { background: var(--p-ok); box-shadow: 0 3px 0 var(--p-ok-edge); }
-.tv-hist-verdict--near { box-shadow: inset 0 0 0 2px var(--brand); }
-.tv-hist-verdict--near .tv-hist-verdict-icon { background: var(--brand); box-shadow: 0 3px 0 var(--brand-active); color: var(--on-brand); }
-.tv-hist-verdict--bad { box-shadow: inset 0 0 0 2px var(--p-bad); }
-.tv-hist-verdict--bad .tv-hist-verdict-icon { background: var(--p-bad); box-shadow: 0 3px 0 var(--p-bad-edge); color: #fff; }
-.tv-hist-verdict--timeout .tv-hist-verdict-icon { background: var(--p-accent-2); box-shadow: 0 3px 0 var(--p-accent-edge); }
 
 @media (max-width: 640px) {
   .tv-hist-stage { gap: 10px; }
@@ -328,25 +285,19 @@
   .tv-hist-year { font-size: 40px; }
   .tv-hist-year.is-number { font-size: 28px; }
   .tv-hist-line { padding: 46px 20px 0; }
-  .tv-hist-verdict-text strong { font-size: 18px; }
-}
+  }
 
 @media (prefers-reduced-motion: reduce) {
-  .tv-hist-prompt,
   .tv-hist-picker,
-  .tv-hist-thumb-dot,
-  .tv-hist-answer-stem,
-  .tv-hist-answer-flag,
-  .tv-hist-gap,
-  .tv-hist-mark,
-  .tv-hist-verdict,
-  .tv-hist-line.is-empty .tv-hist-rail { animation: none; }
+.tv-hist-thumb-dot,
+.tv-hist-answer-stem,
+.tv-hist-answer-flag,
+.tv-hist-gap,
+.tv-hist-mark,
+.tv-hist-line.is-empty .tv-hist-rail { animation: none; }
 }
 /* Phones: the verdict has the row to itself (its label would only repeat it) and its two lines wrap instead of being
    cut ("¡Se acabó el tiempo!", "No elegiste un número. Era 10 países."). */
 @media (max-width: 640px) {
   .tv-hist-slot:has(.tv-hist-verdict) > .tv-mpanel-label { display: none; }
-  .tv-hist-slot .tv-hist-verdict { flex: 1; min-width: 0; }
-  .tv-hist-verdict-text strong,
-  .tv-hist-verdict-text small { white-space: normal; }
-}
+    }

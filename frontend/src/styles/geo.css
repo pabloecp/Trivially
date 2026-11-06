@@ -67,7 +67,6 @@
   height: max(440px, calc(100vh - var(--geo-top, 80px) - 14px));
   height: max(440px, calc(100svh - var(--geo-top, 80px) - 14px));
 }
-.tv-geo-stage > .tv-game-top { flex: none; }
 .tv-geo-stage > .tv-geo-map-card { flex: 1 1 auto; min-height: 0; }
 /* A pinch or a double tap during the match never zooms the page (the map has its own zoom). */
 html.tv-geo-playing { touch-action: pan-x pan-y; }
@@ -77,25 +76,10 @@ html.tv-geo-playing { touch-action: pan-x pan-y; }
 }
 
 /* The top card: kicker, title and one hint, the same in every phase. */
-.tv-geo-find { display: grid; gap: 2px; }
-.tv-geo-country {
-  margin: 0;
-  overflow-wrap: anywhere;
-  font-family: var(--tv-display);
-  font-weight: 700;
-  font-size: clamp(22px, 6vw, 34px);
-  line-height: 1.1;
-  color: var(--tv-text);
-  animation: tvPop 0.5s var(--tv-spring);
-}
-.tv-geo-find .tv-hint { min-height: 2.6em; font-size: 13px; line-height: 1.3; }
 @media (max-width: 640px) {
   /* "Terminar" goes under the clock instead of taking a row of its own. */
-  .tv-geo-game .tv-game-top { grid-template-areas: "round clock" "round tools" "bar bar"; gap: 6px 12px; padding: 12px 14px; border-radius: 24px; }
-  .tv-geo-game .tv-game-tools:empty { display: none; }
-  .tv-geo-game .tv-clock { width: 54px; height: 54px; }
-  .tv-geo-find .tv-hint { font-size: 12px; }
-}
+      .tv-geo-game .tv-clock { width: 54px; height: 54px; }
+  }
 
 .tv-geo-map-card {
   display: flex;
@@ -133,18 +117,6 @@ html.tv-geo-playing { touch-action: pan-x pan-y; }
   .tv-geo-map { border-radius: 16px; }
 }
 /* "Respuesta enviada" line (Trivia's written answers use it too). */
-.tv-geo-sent {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  margin: 0;
-  font-family: var(--tv-display);
-  font-weight: 700;
-  font-size: 20px;
-  color: var(--tv-text);
-}
-.tv-geo-sent svg { color: var(--p-ok-text); }
-.tv-geo-sent.is-skipped svg { color: var(--tv-text-3); }
 .tv-geo-map > svg { display: block; width: 100%; height: 100%; touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent; cursor: grab; }
 .tv-geo-map.is-interactive > svg { cursor: crosshair; }
 .tv-geo-map > svg:active,
@@ -309,44 +281,10 @@ html.tv-geo-playing { touch-action: pan-x pan-y; }
 
 @media (prefers-reduced-motion: reduce) {
   .tv-geo-target-ring,
-  .tv-geo-pin > *,
-  .tv-geo-flag,
-  .tv-geo-country { animation: none; }
+.tv-geo-pin > *,
+.tv-geo-flag { animation: none; }
 }
 
-/* The end of a round, over the top of the map (the country it flies to stays in sight under it): an icon in the
-   verdict's colour, a short line ("Incorrecto. Era"), the right answer big, and the points. */
-.tv-geo-reveal { position: absolute; inset: 14px 14px auto; z-index: 6; display: flex; justify-content: center; pointer-events: none; }
-.tv-geo-reveal-card {
-  position: relative;
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  max-width: 100%;
-  padding: 12px 14px 12px 12px;
-  border-radius: 24px;
-  background: var(--tv-surface);
-  box-shadow: inset 0 0 0 3px var(--vc), 0 18px 50px rgba(0, 0, 0, 0.55);
-  animation: tvPopIn 0.45s var(--tv-spring) backwards;
-}
-.tv-geo-reveal-icon { display: grid; place-items: center; flex-shrink: 0; width: 52px; height: 52px; border-radius: 50%; background: var(--vc); color: var(--vc-on, #fff); }
-.tv-geo-reveal-text { display: grid; min-width: 0; text-align: left; }
-.tv-geo-reveal-text small { font-weight: 800; font-size: 14px; color: var(--tv-text-2); }
-.tv-geo-reveal-text strong { overflow: hidden; font-family: var(--tv-display); font-weight: 700; font-size: clamp(26px, 4vw, 38px); line-height: 1.1; color: var(--tv-text); text-overflow: ellipsis; white-space: nowrap; }
-.tv-geo-reveal-text em { font-style: normal; font-weight: 700; font-size: 13px; color: var(--tv-text-3); }
-.tv-geo-reveal .tv-tag { flex-shrink: 0; padding: 5px 14px; font-size: 16px; }
-.tv-geo-reveal--ok { --vc: var(--p-ok); --vc-on: var(--p-ink); }
-.tv-geo-reveal--bad { --vc: var(--p-bad); }
-.tv-geo-reveal--bad .tv-geo-reveal-card { animation: tvPopIn 0.45s var(--tv-spring) backwards, tvShake 0.5s ease 0.35s; }
-.tv-geo-reveal--timeout { --vc: #ffab00; --vc-on: #0a0a0a; }
-@media (max-width: 640px) {
-  .tv-geo-reveal { inset: 10px 10px auto; }
-  .tv-geo-reveal-card { gap: 10px; padding: 9px 10px 9px 9px; border-radius: 20px; }
-  .tv-geo-reveal-icon { width: 40px; height: 40px; }
-  .tv-geo-reveal-text small { font-size: 12px; }
-  .tv-geo-reveal-text strong { font-size: 24px; }
-}
-@media (prefers-reduced-motion: reduce) { .tv-geo-reveal-card { animation: none; } }
 /* "Sombra" and "Bandera" rounds: the country's silhouette or flag in a card at the bottom left of the map (the
    Pacific in the world view), while it's searched and at the reveal. It never takes a tap meant for the map. Its
    size follows the map's (the area over the map is a size container): a low map on a laptop gets a smaller card. */

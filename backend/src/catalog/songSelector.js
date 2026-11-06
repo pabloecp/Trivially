@@ -7,14 +7,3 @@ export function selectSongs(catalog, { playlistIds = [] } = {}) {
   const ids = new Set(lists.flatMap((p) => p.trackIds));
   return catalog.songs.filter((s) => ids.has(s.id));
 }
-
-export function pickRoundTracks(catalog, filters, rounds) {
-  const pool = selectSongs(catalog, filters);
-  if (!pool.length) return [];
-  const shuffled = [...pool].sort(() => Math.random() - 0.5);
-  const picked = [];
-  for (let i = 0; i < rounds; i += 1) {
-    picked.push(shuffled[i % shuffled.length]);
-  }
-  return picked;
-}

@@ -20,10 +20,6 @@ export const STYLES = [
   },
 ];
 
-export function findStyle(id) {
-  return STYLES.find((s) => s.id === id) || STYLES[0];
-}
-
 // The difficulties a match can mix (MINES_LEVELS on the server), any of them ticked. The harder, the deeper the mode's
 // colour (colours in styles/mines.css).
 export const DIFFICULTIES = [
