@@ -40,7 +40,16 @@ Tests (`*.test.js` run directly) save the store to a temp file, never to the tra
 
 - **`main` is production** (Vercel and Railway deploy from it) and **`develop` is integration**. Never commit or push directly to either.
 - Every change goes in its own branch cut from an up-to-date `develop` (`feature/…`, `fix/…`, `chore/…`) and enters `develop` through a pull request. Publishing is a pull request from `develop` into `main`, merged with a merge commit. An urgent fix in production is a `hotfix/…` cut from `main`, merged into `main` and then into `develop`.
-- Pull requests target `develop` unless they are a release or a hotfix. Old personal branches (`dani`, `pablo`, `jonathan`) are no longer worked on. CI (`.github/workflows/ci.yml`) runs the backend tests and the frontend build on every pull request to either branch.
+- Pull requests target `develop` unless they are a release or a hotfix. CI (`.github/workflows/ci.yml`) runs the backend tests and the frontend build on every pull request to either branch. Personal branches (`dani`, `pablo`, `jonathan`…) are not used: if a session starts on one, or on a branch with another kind of name, cut a properly named branch from `develop` for the work.
+
+**Checklist, every time:**
+
+1. **Before starting:** `git fetch origin`, then `git checkout develop && git pull origin develop`, then `git checkout -b <tipo>/<nombre-en-minusculas-con-guiones>`. Never reuse a branch whose pull request was already merged.
+2. **Before pushing:** `npm test --prefix backend` and `npm run build --prefix frontend` pass, and `git status` shows no change to `backend/data/store.json`.
+3. **Pull request:** to `develop` (to `main` only for `develop` or a `hotfix/…`), filling in `.github/pull_request_template.md`: "Qué cambia", "Cómo probarlo" and "Atención al fusionar" (manual steps such as SQL in Supabase, or "Nada"). **Title:** `tipo(área): Qué cambia` (`CONTRIBUTING.md`, "Cómo se escribe el título"): `tipo` is the branch prefix (`feature`, `fix`, `chore`, `hotfix`, `release`), `(área)` the game or part in lowercase and optional, then Spanish, capitalised, no final full stop, at most 72 characters. A release is `release: AAAA-MM-DD, resumen`; `main` into `develop` is `chore: Develop al día con main después de …`. Never GitHub's automatic title. Merge with a merge commit titled like the pull request plus ` (#n)`. Commits inside the branch keep the commit rules below, without `tipo:`.
+4. **Keep `main` and `develop` level.** Check `git log --oneline origin/main..origin/develop` (waiting to be published) and `origin/develop..origin/main` (in production but not in `develop`). After a release or a hotfix, bring `main` into `develop` with a pull request from `main` to `develop`. A release pull request is merged only once nothing else is still about to enter `develop`, or that work is left out of it.
+5. **Old branches:** a branch whose work is already in `develop` is deleted after its pull request is merged. Work left on a branch that never got a pull request is moved to a new branch cut from `develop` (`git cherry-pick`), not merged from the old branch.
+6. **GitHub settings** (only the owner can change them; remind them if they are wrong): `develop` is the default branch, and `main` and `develop` are protected (pull request required, the **CI** check required, no force push or deletion, one approval on `main`).
 
 ## Commits
 
