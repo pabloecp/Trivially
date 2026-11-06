@@ -608,7 +608,7 @@ function GameScreen() {
             {/* Completa la letra with Abiertas (and a phone beside the central device, whatever the way of answering): the
                 lyrics at the top of the panel, the box to write in (or the answer's card) under them. */}
             {lyrics && (controller || (showLyrics && !closed)) && <LyricsPanel lyrics={lyrics} position={lyricPos} reveal={room.phase === "reveal"} />}
-            {/* Título with Abiertas: the song's bars big, and how long it has been playing, over the box to write in. */}
+            {/* Título with Abiertas: the song's bars big over the box to write in. */}
             {bigBars && !controller && room.phase === "playing" && !locked && (
               <div className="tv-song-now" aria-hidden="true">
                 <div className={`tv-qc-eq tv-song-now-eq${!room.paused ? " is-on" : ""}`}>
@@ -616,7 +616,6 @@ function GameScreen() {
                     <i key={i} style={{ "--i": i }} />
                   ))}
                 </div>
-                <span className="tv-song-now-time">Suena desde hace {Math.max(0, Math.floor((totalMs - left) / 1000))} s</span>
               </div>
             )}
 

@@ -2529,12 +2529,11 @@ html.tv-match-lock .tv-app .tv-qc-timer-mark { top: -2px; bottom: -2px; width: 3
    same size whatever the lyrics. */
 .tv-app .tv-match .tv-lyrics-stage ~ .tv-play-card { flex: 1 1 0; min-height: 0; }
 
-/* Título with Abiertas: the song's bars big in the panel, how long it has played under them, then the box to write in;
+/* Título with Abiertas: the song's bars big in the panel, then the box to write in;
    the suggestions open upwards over the bars. */
 .tv-app .tv-match .tv-song-now { display: flex; flex-direction: column; align-items: center; gap: 10px; }
 .tv-app .tv-match .tv-song-now > .tv-song-now-eq { flex: none; width: 240px; height: 110px; max-height: none; gap: 8px; }
 .tv-app .tv-match .tv-song-now-eq i { max-width: none; background: var(--p-music-1); }
-.tv-app .tv-match .tv-song-now-time { font: 600 14px/1.2 var(--tv-small); color: var(--tv-text-3); font-variant-numeric: tabular-nums; }
 .tv-app .tv-match .tv-play-card:has(> .tv-song-now) .tv-search > .tv-suggest { top: auto; bottom: calc(100% + 8px); }
 .tv-app .tv-match .tv-play-card:has(> .tv-song-now) .tv-search > .tv-suggest .tv-suggest-list { max-height: calc(var(--suggest-max, 300px) - 48px); }
 
@@ -2547,7 +2546,6 @@ html.tv-match-lock .tv-app .tv-qc-timer-mark { top: -2px; bottom: -2px; width: 3
   html.tv-match-lock .tv-app .tv-room-main > .tv-lyrics-stage { flex: none; }
   html.tv-match-lock .tv-app .tv-room-main > .tv-lyrics-stage ~ .tv-play-card { flex: 1 1 0; }
   .tv-app .tv-match .tv-song-now > .tv-song-now-eq { width: 150px; height: 80px; gap: 5px; }
-  .tv-app .tv-match .tv-song-now-time { font-size: 12.5px; }
 }
 /* The keyboard up: the bars and the lyrics give way to the box. */
 html.tv-match-lock.tv-keyboard-up .tv-app .tv-match .tv-song-now { display: none; }
