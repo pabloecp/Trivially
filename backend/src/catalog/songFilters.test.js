@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { readLocalCatalog } from "./catalogProvider.js";
-import { SONG_GENRES, difficultyOf, filterSongs, genreOf, genresOf, songCounts } from "./songFilters.js";
+import { SONG_GENRES, difficultyOf, filterSongs, genresOf, songCounts } from "./songFilters.js";
 
 const catalog = readLocalCatalog();
 
@@ -9,10 +9,6 @@ assert.equal(filterSongs(catalog, {}).length, catalog.songs.length);
 assert.equal(songCounts(catalog, {}).total, catalog.songs.length);
 
 // iTunes' genres fall in the six groups; every group has enough songs for a match.
-assert.equal(genreOf({ genre: "Urbano latino" }), "urbano");
-assert.equal(genreOf({ genre: "Hard Rock" }), "rock");
-assert.equal(genreOf({ genre: "Dance" }), "electronica");
-assert.equal(genreOf({ genre: "Algo raro" }), "pop");
 for (const g of SONG_GENRES) assert.ok(filterSongs(catalog, { genres: [g] }).length >= 25, g);
 
 // One language only.

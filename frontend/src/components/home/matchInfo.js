@@ -31,7 +31,6 @@ export const MATCH_KINDS = {
   },
 };
 
-export const ROUNDS_PER_GAME = 5;
 // How many players a room needs (MATCH_SIZES on the server): you against one, or five in all. "Uno contra Uno" isn't
 // offered for now (`hidden`, DUELS_OPEN on the server): OPEN_SIZES are the ones a player can pick.
 export const MATCH_SIZES = [
@@ -39,7 +38,6 @@ export const MATCH_SIZES = [
   { value: 5, label: "Todos contra Todos", hint: "5 Jugadores", icon: "users" },
 ];
 export const OPEN_SIZES = MATCH_SIZES.filter((o) => !o.hidden);
-export const sizeName = (size) => (size === 2 ? "Uno contra Uno" : "Todos contra Todos");
 // The games a public match draws from, in the roulette's order (gamesFor on the server): Trivia, Rango and Campo de
 // minas, in Casual and Competitivo alike.
 export const MATCH_GAMES = ["opciones", "historia", "minas"];
@@ -89,10 +87,6 @@ export const PRIVATE_MATCH = {
   farsante: "8 rondas · 45 s · Todos los tipos",
 };
 export const privateMatchLine = (game) => PRIVATE_MATCH[game] || "";
-export const gamesText = (rounds) => {
-  const n = Math.round(rounds / ROUNDS_PER_GAME);
-  return n === 1 ? "1 juego" : `${n} juegos`;
-};
 
 // What to do in each variant, short enough to read in the 5 s the tutorial lasts.
 export const VARIANT_TUTORIALS = {

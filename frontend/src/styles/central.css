@@ -286,28 +286,20 @@
   animation: tvPop 0.5s var(--tv-spring);
 }
 .tv-central-answer small { font-size: 0.5em; font-weight: 700; color: var(--tv-text-3); }
-.tv-quiz-answer .tv-central-answer { margin-bottom: 10px; }
 .tv-central-verdict { flex-wrap: wrap; }
 
 /* The central device is the screen everyone looks at: the round, the clock, the question and the answers it offers
    are all bigger, to be read from across the room. Sizes follow the screen's height too, so a 720p laptop and a
    1080p TV both show everything without scrolling. */
-.tv-game.is-central .tv-game-top { padding: 14px 22px; }
-.tv-game.is-central .tv-game-round .tv-card-title { font-size: clamp(24px, min(2.4vw, 4vh), 36px); }
 .tv-game.is-central .tv-clock { width: clamp(64px, min(7vw, 11vh), 108px); height: clamp(64px, min(7vw, 11vh), 108px); }
 .tv-game.is-central .tv-clock-num { font-size: clamp(26px, min(2.8vw, 4.4vh), 44px); }
 .tv-game.is-central .tv-timer { height: 16px; }
 .tv-game.is-central .tv-game-stage { padding: clamp(14px, 2.4vh, 28px); }
 .tv-game.is-central .tv-quiz-q { gap: clamp(8px, 1.4vh, 14px); padding: clamp(6px, 1.6vh, 26px) 20px; }
-.tv-game.is-central .tv-quiz-q-text,
-.tv-game.is-central .tv-hist-prompt { max-width: 34ch; font-size: clamp(26px, min(3.4vw, 4.6vh), 56px); }
 .tv-game.is-central .tv-quiz-opt { min-height: clamp(64px, 10vh, 140px); padding: 10px 20px 10px 12px; }
 .tv-game.is-central .tv-quiz-opt-letter { width: clamp(42px, min(4vw, 6vh), 60px); height: clamp(42px, min(4vw, 6vh), 60px); font-size: clamp(22px, min(2.2vw, 3.4vh), 30px); }
 .tv-game.is-central .tv-quiz-opt-text { font-size: clamp(19px, min(2.1vw, 3.4vh), 32px); }
-.tv-app .tv-game.is-central .tv-game-round .tv-mines-prompt { font-size: clamp(26px, min(3.2vw, 5vh), 46px); }
 .tv-game.is-central .tv-mines-cell-text { font-weight: 800; }
-.tv-game.is-central .tv-play-q { font-size: clamp(28px, min(3.4vw, 5.4vh), 50px); }
-.tv-game.is-central .tv-geo-country { font-size: clamp(28px, min(3.4vw, 5.4vh), 48px); }
 .tv-game.is-central .tv-geo-clue { width: clamp(120px, min(28cqw, 44cqh), 400px); padding: 10px; }
 .tv-game.is-central .tv-geo-clue img,
 .tv-game.is-central .tv-geo-clue svg { max-height: clamp(80px, 38cqh, 320px); }

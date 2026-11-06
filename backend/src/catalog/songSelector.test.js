@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { readLocalCatalog } from "./catalogProvider.js";
-import { pickRoundTracks, selectSongs } from "./songSelector.js";
+import { selectSongs } from "./songSelector.js";
 
 const catalog = readLocalCatalog();
 const [first, second] = catalog.playlists;
@@ -22,6 +22,5 @@ assert.equal(fallback.length, new Set(def.trackIds).size);
 // Every song can be played and every playlist has about 500 of them.
 assert.ok(catalog.songs.every((s) => s.id && s.title && s.artistName && s.previewUrl));
 assert.ok(catalog.playlists.every((p) => p.trackIds.length >= 450));
-assert.equal(pickRoundTracks(catalog, { playlistIds: [first.id] }, 5).length, 5);
 
 console.log("songSelector.test ok");

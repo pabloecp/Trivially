@@ -189,7 +189,6 @@
 
 /* Profile: the friend code card. */
 
-.tv-roomhead-players { position: relative; }
 @media (max-width: 520px) {
   .tv-fr-row { flex-wrap: wrap; }
   /* Face, text and the remove button share the first line; the join button goes under, at the right. */
@@ -219,7 +218,6 @@
 .tv-handle-status.is-ok { color: #22c55e; }
 .tv-handle-status.is-bad { color: #f87171; }
 .tv-handle { color: var(--tv-text-3); font-weight: 700; }
-.tv-profile-handle { margin: 0; font-size: 18px; }
 .tv-fr-handle { font-size: 13px; }
 
 /* The panel's content never wider than the sheet (long usernames, the search box). */
