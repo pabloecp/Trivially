@@ -12,7 +12,7 @@ import WaitingPill from "../../components/home/WaitingPill.jsx";
 import { ControllerBar, GetReady, PhoneHint } from "../../components/home/CentralBits.jsx";
 import { PauseButton, PauseVeil, ReportButton, SkipButton } from "../../components/home/PauseControls.jsx";
 import { resolveCode } from "../../lib/hiddenCode.js";
-import { MatchBar, MatchCard, MatchQuestion, topicIcon } from "../../components/home/MatchFrame.jsx";
+import { AnswerCard, MatchBar, MatchCard, MatchQuestion, RoundVerdict, topicIcon } from "../../components/home/MatchFrame.jsx";
 import { useApp, useRemainingMs, useView } from "../../lib/store.jsx";
 import { findDifficulty, pointsText, reyConfig } from "./reyInfo.js";
 import "../../styles/home.css";
@@ -270,7 +270,13 @@ function GameScreen() {
             room={room}
             label={!picking && question ? question.category : "El rey elige"}
             icon={!picking && question ? topicIcon(question.category) : "crown"}
-            pills={!picking && question && <span className="tv-qc-pill is-dark">{level.label} · {pointsText(level.points)}</span>}
+            pills={
+              reveal && question && !central && !spectator ? (
+                <ReyVerdict me={me} rey={rey} youWon={youWon} youAreRoundKing={youAreRoundKing} />
+              ) : (
+                !picking && question && <span className="tv-qc-pill is-dark">{level.label} · {pointsText(level.points)}</span>
+              )
+            }
             dir={
               playing && !youAreRoundKing
                 ? "Abiertas: acierta primero y quítale la corona; si nadie acierta, puntos para el rey"
@@ -300,12 +306,23 @@ function GameScreen() {
             {reveal && question && (
               <>
                 {rey.dethronedBy && <Confetti pieces={22} />}
-                <p className="tv-rey-answer">
-                  Respuesta: <strong>{question.answer}</strong>
-                </p>
-                {youWon && <p className="tv-rey-note is-win">¡Ahora eres el rey!</p>}
-                {youAreRoundKing && rey.dethronedBy && <p className="tv-rey-note is-lose">Te quitaron la corona</p>}
-                {youAreRoundKing && rey.survived && <p className="tv-rey-note is-win">+{rey.points}</p>}
+                {/* The answer takes the place of the box to write in, the same card as every game's. */}
+                <AnswerCard
+                  label="La respuesta"
+                  value={question.answer}
+                  mine={
+                    youWon
+                      ? "¡Ahora eres el rey!"
+                      : youAreRoundKing && rey.dethronedBy
+                      ? "Te quitaron la corona"
+                      : youAreRoundKing && rey.survived
+                      ? "Sigues siendo el rey"
+                      : !central && me?.lastAnswer?.text
+                      ? `Escribiste “${me.lastAnswer.text}”`
+                      : null
+                  }
+                  mineOk={youWon || (youAreRoundKing && rey.survived) || Boolean(me?.lastAnswer?.correct)}
+                />
               </>
             )}
             {playing && central && <PhoneHint room={room}>Escriban la respuesta en su teléfono</PhoneHint>}
@@ -367,6 +384,16 @@ function GameScreen() {
       )}
     </div>
   );
+}
+
+// How the round went for this player, on the card's first row (the same place as every game's result).
+function ReyVerdict({ me, rey, youWon, youAreRoundKing }) {
+  if (youWon) return <RoundVerdict tone="ok" icon="crown" label="¡Ahora eres el rey!" points={me?.lastPoints || null} />;
+  if (youAreRoundKing && rey.survived) return <RoundVerdict tone="ok" icon="crown" label="Sigues de rey" points={rey.points || null} />;
+  if (youAreRoundKing && rey.dethronedBy) return <RoundVerdict tone="bad" icon="crown" label="Perdiste la corona" />;
+  if (me?.lastAnswer?.correct) return <RoundVerdict tone="ok" label="¡Correcto!" points={me?.lastPoints || null} confetti={false} />;
+  if (me?.lastAnswer?.text) return <RoundVerdict tone="bad" label="Incorrecto" />;
+  return <RoundVerdict tone="timeout" label="Sin respuesta" />;
 }
 
 export default function Game() {

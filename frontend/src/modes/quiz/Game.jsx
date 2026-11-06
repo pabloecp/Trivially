@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import TvShell from "../../components/home/TvShell.jsx";
-import Confetti from "../../components/home/Confetti.jsx";
 import Icon from "../../components/home/Icon.jsx";
 import AnswerSkip from "../../components/home/AnswerSkip.jsx";
 import WaitingPill, { waitingNames } from "../../components/home/WaitingPill.jsx";
@@ -17,7 +16,7 @@ import { PauseButton, ReportButton, SkipButton, PauseVeil } from "../../componen
 import "../../styles/quiz.css";
 import "../../styles/geo.css";
 import { resolveCode } from "../../lib/hiddenCode.js";
-import { MatchBar, MatchCard, MatchQuestion, topicIcon } from "../../components/home/MatchFrame.jsx";
+import { AnswerCard, MatchBar, MatchCard, MatchQuestion, RoundVerdict, topicIcon } from "../../components/home/MatchFrame.jsx";
 
 const COUNTDOWN_MS = 3000;
 // Keys that pick an option while a question is open: 1–4 or A–D.
@@ -31,11 +30,12 @@ function Verdict({ me, answered }) {
   const skipped = Boolean(me?.lastAnswer?.skipped);
   const tone = isCorrect ? "ok" : answered ? "bad" : "timeout";
   return (
-    <span className={`tv-qc-verdict is-${tone}`} role="status">
-      {isCorrect && <Confetti pieces={18} />}
-      <Icon name={isCorrect ? "check" : answered ? "close" : "hash"} size={16} strokeWidth={3.2} />
-      {isCorrect ? `¡Correcto! +${me?.lastPoints || 0}` : answered ? "Incorrecto" : skipped ? "Te la saltaste" : "Se acabó el tiempo"}
-    </span>
+    <RoundVerdict
+      tone={tone}
+      label={isCorrect ? "¡Correcto!" : answered ? "Incorrecto" : skipped ? "Te la saltaste" : "Se acabó el tiempo"}
+      points={isCorrect ? me?.lastPoints || 0 : null}
+      streak={isCorrect ? me?.streak || 0 : 0}
+    />
   );
 }
 
@@ -334,17 +334,14 @@ function WriteRound({ room, question, me, answer, skipSong, seconds, clock, cent
             </span>
           </div>
         )}
+        {/* The answer takes the place of the box to write in. */}
         {reveal && (
-          <div className="tv-mreveal">
-            <span className="tv-mpanel-label">La respuesta</span>
-            <p className="tv-mreveal-answer">{question.answer}</p>
-            {!central && !spectator && (me?.lastAnswer?.text || skipped) && (
-              <p className={`tv-mreveal-mine ${me?.lastAnswer?.correct ? "is-ok" : "is-bad"}`}>
-                <Icon name={me?.lastAnswer?.correct ? "check" : "close"} size={16} strokeWidth={3} />
-                {skipped ? "Te la saltaste" : `Escribiste: ${me.lastAnswer.text}`}
-              </p>
-            )}
-          </div>
+          <AnswerCard
+            label="La respuesta"
+            value={question.answer}
+            mine={!central && !spectator && (me?.lastAnswer?.text || skipped) ? (skipped ? "Te la saltaste" : `Escribiste “${me.lastAnswer.text}”`) : null}
+            mineOk={Boolean(me?.lastAnswer?.correct)}
+          />
         )}
         {room.phase === "playing" && central && <PhoneHint room={room}>Escriban la respuesta en su teléfono</PhoneHint>}
         {room.phase === "playing" &&
@@ -371,6 +368,8 @@ function WriteRound({ room, question, me, answer, skipSong, seconds, clock, cent
                 <Icon name="send" size={20} strokeWidth={2.4} />
                 <span className="tv-mwrite-send-label">Enviar</span>
               </button>
+              {/* A player may still give up on the question, at the right end: the first tap asks, the second skips. */}
+              <AnswerSkip confirm={confirmSkip} onClick={skip} />
             </form>
           ) : (
             <p className={`tv-mwrite-sent${skipped ? " is-skipped" : ""}`}>
@@ -378,12 +377,6 @@ function WriteRound({ room, question, me, answer, skipSong, seconds, clock, cent
               {spectator ? "Estás viendo la partida" : skipped ? "Te la saltaste" : mySent?.text || me?.lastAnswer?.text || "Respuesta enviada"}
             </p>
           ))}
-        {room.phase === "playing" && !locked && !central && (
-          <div className="tv-mpanel-foot">
-            {/* A player may still give up on the question: the first tap asks, the second skips. */}
-            <AnswerSkip confirm={confirmSkip} onClick={skip} />
-          </div>
-        )}
       </div>
       {err && <p className="tv-lobby-error" role="alert">{err}</p>}
     </>

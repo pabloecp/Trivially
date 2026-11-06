@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import TvShell from "../../components/home/TvShell.jsx";
-import Confetti from "../../components/home/Confetti.jsx";
 import Icon from "../../components/home/Icon.jsx";
 import WaitingPill, { joinNames as joinWaiting, waitingNames } from "../../components/home/WaitingPill.jsx";
 import MatchResults from "../../components/home/MatchResults.jsx";
@@ -15,7 +14,7 @@ import "../../styles/quiz.css";
 import "../../styles/history.css";
 import { PauseButton, ReportButton, SkipButton, PauseVeil } from "../../components/home/PauseControls.jsx";
 import { resolveCode } from "../../lib/hiddenCode.js";
-import { MatchBar, MatchCard, MatchQuestion } from "../../components/home/MatchFrame.jsx";
+import { AnswerCard, MatchBar, MatchCard, MatchQuestion, RoundVerdict } from "../../components/home/MatchFrame.jsx";
 
 const COUNTDOWN_MS = 3000;
 // One colour per player for their year on the reveal's timeline (never the green and red of right and wrong).
@@ -390,6 +389,7 @@ function GameScreen() {
             seconds={seconds}
             pct={pct}
             urgent={urgent}
+            pills={reveal && !tiebreak && !spectator && !central ? <HistVerdict me={me} fmt={fmt} isNum={isNum} /> : null}
           >
             <MatchQuestion>{question?.prompt || "Cargando la pregunta…"}</MatchQuestion>
           </MatchCard>
@@ -408,7 +408,7 @@ function GameScreen() {
             {/* The answer's row, always as tall: "TU RESPUESTA" and, on the right, the countdown, the chosen number (or
                 year) big, or the verdict. */}
             <div className="tv-hist-slot">
-              {!controller && <span className="tv-mpanel-label">{reveal ? "Cómo te fue" : "Tu respuesta"}</span>}
+              {!controller && !reveal && <span className="tv-mpanel-label">Tu respuesta</span>}
               {phase === "countdown" && controller && <GetReady />}
               {phase === "countdown" && !controller && (
                 <span key={Math.max(1, seconds)} className="tv-quiz-count" aria-label={`Empieza en ${Math.max(1, seconds)}`}>
@@ -521,62 +521,52 @@ function closestText(room, fmt, isNum) {
 }
 
 // The end of a round: how far this player's year was (and the right one), or who won the tiebreak.
+// How this player's guess did, on the card's first row (the same place as every game's result).
+function HistVerdict({ me, fmt, isNum = false }) {
+  const answer = me?.lastAnswer;
+  const chose = Number.isInteger(isNum ? answer?.value : answer?.year);
+  const exact = Boolean(answer?.correct);
+  let label;
+  if (exact) label = isNum ? "¡Lo clavaste!" : "¡Año exacto!";
+  else if (!chose) label = "Se acabó el tiempo";
+  else if (isNum) label = `${answer.over ? "Te pasaste por" : "Te faltaron"} ${fmt(answer.diff)}`;
+  else label = `A ${yearsText(answer.diff)}`;
+  return <RoundVerdict tone={exact ? "ok" : chose ? "near" : "timeout"} label={label} points={chose ? me?.lastPoints || 0 : null} />;
+}
+
+// The answer, in the answer's row where the number was chosen (the same card as every game's): the right number or
+// year big and what this player chose, or who won the tiebreak.
 function Verdict({ room, me, user, tiebreak, tiedNames, iPlay, fmt, isNum = false }) {
   const answer = me?.lastAnswer;
   const year = isNum ? room.reveal.value : room.reveal.year;
-  let tone;
-  let icon;
-  let title;
-  let detail;
-  let won = false;
-  let points = false;
   if (tiebreak) {
     const winner = room.players.find((p) => p.id === tiebreak.winnerId);
-    won = Boolean(winner) && winner.id === user?.id;
-    tone = winner ? (won || !iPlay ? "ok" : "bad") : "timeout";
-    icon = winner ? "crown" : "hash";
-    title = winner ? (won ? "¡Ganaste el desempate!" : `¡${winner.name} gana el desempate!`) : "Nadie lo resolvió";
-    detail = winner
-      ? tiebreak.reason === "exacto"
-        ? `${won ? "Confirmaste" : "Confirmó"} ${fmt(year)} primero.`
-        : sentence(`Nadie lo clavó: ${won ? "tu" : "su"} ${isNum ? "número" : "año"} quedó más cerca de ${fmt(year)}`)
-      : `${joinNames(tiedNames)} siguen empatados.`;
-  } else if (isNum) {
-    const chose = Number.isInteger(answer?.value);
-    const exact = Boolean(answer?.correct);
-    won = exact;
-    points = chose;
-    tone = exact ? "ok" : chose ? "near" : "timeout";
-    icon = exact ? "check" : chose ? "target" : "hash";
-    title = exact ? "¡Lo clavaste!" : chose ? `${answer.over ? "Te pasaste por" : "Te faltaron"} ${fmt(answer.diff)}` : "¡Se acabó el tiempo!";
-    detail = exact
-      ? sentence(`Era ${fmt(year)}`)
-      : chose
-      ? `Era ${fmt(year)} · elegiste ${fmt(answer.value)}`
-      : sentence(`No elegiste un número. Era ${fmt(year)}`);
-  } else {
-    const chose = Number.isInteger(answer?.year);
-    const exact = Boolean(answer?.correct);
-    won = exact;
-    points = chose;
-    tone = exact ? "ok" : chose ? "near" : "timeout";
-    icon = exact ? "check" : chose ? "target" : "hash";
-    title = exact ? "¡Año exacto!" : chose ? `A ${yearsText(answer.diff)}` : "¡Se acabó el tiempo!";
-    detail = exact ? sentence(`Fue en ${fmt(year)}`) : chose ? `Fue en ${fmt(year)} · elegiste ${fmt(answer.year)}` : sentence(`No elegiste un año. Fue en ${fmt(year)}`);
+    const won = Boolean(winner) && winner.id === user?.id;
+    return (
+      <AnswerCard
+        icon={winner ? "crown" : "hash"}
+        iconTone={winner && (won || !iPlay) ? "ok" : null}
+        label="Desempate"
+        value={winner ? (won ? "¡Ganaste el desempate!" : `¡${winner.name} gana el desempate!`) : "Nadie lo resolvió"}
+        detail={
+          winner
+            ? tiebreak.reason === "exacto"
+              ? `${won ? "Confirmaste" : "Confirmó"} ${fmt(year)} primero.`
+              : sentence(`Nadie lo clavó: ${won ? "tu" : "su"} ${isNum ? "número" : "año"} quedó más cerca de ${fmt(year)}`)
+            : `${joinNames(tiedNames)} siguen empatados.`
+        }
+      />
+    );
   }
-  return (
-    <div className={`tv-hist-verdict tv-hist-verdict--${tone}`} role="status">
-      {won && <Confetti pieces={18} />}
-      <span className="tv-hist-verdict-icon">
-        <Icon name={icon} size={22} strokeWidth={tiebreak ? 2.6 : 3} />
-      </span>
-      <span className="tv-hist-verdict-text">
-        <strong>{title}</strong>
-        <small>{detail}</small>
-      </span>
-      {points && <span className="tv-tag tv-tag--points">+{me?.lastPoints || 0}</span>}
-    </div>
-  );
+  const chosen = isNum ? answer?.value : answer?.year;
+  const chose = Number.isInteger(chosen);
+  const exact = Boolean(answer?.correct);
+  let mine;
+  if (exact) mine = isNum ? "Lo clavaste" : "Año exacto";
+  else if (!chose) mine = isNum ? "No elegiste un número" : "No elegiste un año";
+  else if (isNum) mine = `Pusiste ${fmt(chosen)} · ${answer.over ? "te pasaste por" : "te faltaron"} ${fmt(answer.diff)}`;
+  else mine = `Pusiste ${fmt(chosen)} · a ${yearsText(answer.diff)}`;
+  return <AnswerCard label={isNum ? "La respuesta" : "Fue en"} value={fmt(year)} mine={mine} mineOk={exact} />;
 }
 
 export default function Game() {
