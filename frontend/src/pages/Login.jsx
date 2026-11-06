@@ -44,7 +44,9 @@ function LoginScreen() {
   const [loading, setLoading] = useState(false);
 
   const nav = useNavigate();
-  const returnTo = params.get("returnTo") || "/";
+  // Where to go after logging in: only a page of this site ("/…"), never another address ("//x.com", "/\x.com"),
+  // like safePath on the server.
+  const returnTo = safeReturnTo(params.get("returnTo"));
 
   function switchMode(mode) {
     setAccountMode(mode);
@@ -145,6 +147,9 @@ function LoginScreen() {
             <button className="tv-btn tv-btn--block tv-c-pink" type="submit" data-sound="none" disabled={loading || !loginIdentifier.trim() || !loginPassword}>
               {loading ? "Entrando…" : "Iniciar sesión"}
             </button>
+            <Link to="/restablecer" className="tv-auth-forgot">
+              ¿Olvidaste tu contraseña?
+            </Link>
           </form>
         ) : (
           <form key="register" onSubmit={onAccountRegister} className="tv-form">
@@ -189,6 +194,10 @@ function LoginScreen() {
       </p>
     </div>
   );
+}
+
+function safeReturnTo(path) {
+  return typeof path === "string" && path.startsWith("/") && !path.startsWith("//") && !path.includes("\\") ? path : "/";
 }
 
 export default function Login() {

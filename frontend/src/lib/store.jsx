@@ -549,6 +549,28 @@ export function AppProvider({ children }) {
         return res.user;
       },
 
+      // "¿Olvidaste tu contraseña?" (pages/ResetPassword.jsx): the email with the link, whether the link still works,
+      // and the new password (which also signs the account in).
+      async forgotPassword(email) {
+        await api("/api/auth/forgot", { method: "POST", body: { email } });
+      },
+
+      async checkResetToken(token) {
+        const res = await api("/api/auth/reset/check", { method: "POST", body: { token } });
+        return Boolean(res.valid);
+      },
+
+      async resetPassword(token, password) {
+        const res = await api("/api/auth/reset", { method: "POST", body: { token, password } });
+        if (res.user) {
+          localStorage.setItem(GUEST_NAME_KEY, res.user.name);
+          localStorage.removeItem(GUEST_ID_KEY);
+          applyUser(res.user);
+          reconnectSocket();
+        }
+        return res.user;
+      },
+
       async loginWithGoogle(returnTo = "/") {
         const origin = window.location.origin;
         try {
