@@ -1168,6 +1168,10 @@
 }
 .tv-match .tv-quiz-flag { display: flex; justify-content: center; }
 .tv-match .tv-quiz-flag .tv-geo-flag { max-height: 150px; width: auto; border-radius: 12px; }
+/* An "Imágenes" question's picture (a scene, a painting): wider than a flag, flat with a thin line (it isn't tapped). */
+.tv-match .tv-quiz-flag:has(.tv-quiz-credit) { flex-direction: column; align-items: center; gap: 6px; }
+.tv-match .tv-quiz-credit { margin: 0; max-width: min(100%, 480px); font-size: 12px; line-height: 1.3; color: var(--tv-text-3); text-align: center; overflow-wrap: anywhere; }
+.tv-match .tv-quiz-flag .tv-quiz-picture { max-width: min(100%, 480px); max-height: 220px; object-fit: contain; box-shadow: 0 0 0 2px var(--tv-line); }
 
 /* The scoreboard: "MARCADOR" and how the round goes, then one flat box per player (you with a yellow ring). The same
    during a game's roulette and tutorial (`.tv-room.is-intro`), so it doesn't change when the first round starts. */

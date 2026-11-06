@@ -12,6 +12,10 @@
 //   minefield        { "correct": ["España", …], "wrong": ["Marruecos", …] }   (Campo de minas: the 25 cells of the
 //                    board, the right answers and the mines)
 //   true_false       { "correct": true }
+// A multiple_choice or open question may also carry `data.image`, the https address of a picture that goes with it
+// (a film's scene, a painting...): it is asked in Trivia's "Imágenes" mode, never in "Clásico" (game/quiz.js). Players
+// never see the address, which could give the answer away (questions/images.js). `data.credit` (optional text) says
+// whose picture it is and its licence ("Autor · CC BY-SA 4.0"); it shows with the answer.
 // Geografía's questions (mode "mundo") also carry data.kind (capital, flag or location) and data.country (ISO code);
 // they are built from geo/countries.js (geo/geoQuestions.js). Historia's (mode "historia") from history/events.js, and
 // Campo de minas' (mode "minas") from mines/boards/ (mines/minesQuestions.js).
@@ -43,6 +47,7 @@ export function categoryName(id) {
 }
 
 const isText = (v) => typeof v === "string" && v.trim().length > 0;
+const isImageUrl = (v) => typeof v === "string" && /^https:\/\/\S+$/.test(v.trim());
 // How two answers compare when looking for repeats: no case, no accents.
 const plain = (v) => v.trim().toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
 
@@ -56,6 +61,10 @@ export function questionErrors(q) {
   if (!isText(q.language)) errors.push("falta language");
   if (!isText(q.prompt)) errors.push("falta prompt");
   if (q.mode != null && !isText(q.mode)) errors.push("mode debe ser texto o null");
+  if (q.data?.image != null && !(["multiple_choice", "open"].includes(q.type) && isImageUrl(q.data.image))) {
+    errors.push("data.image debe ser una dirección https, y solo en preguntas multiple_choice u open");
+  }
+  if (q.data?.credit != null && !(isText(q.data.credit) && q.data.image)) errors.push("data.credit debe ser texto, y solo con data.image");
   if (!q.data || typeof q.data !== "object") {
     errors.push("falta data");
   } else if (q.type === "multiple_choice") {

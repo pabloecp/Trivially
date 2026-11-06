@@ -22,7 +22,7 @@ const COUNTDOWN_MS = 3000;
 // Keys that pick an option while a question is open: 1–4 or A–D.
 const KEYS = { 1: 0, 2: 1, 3: 2, 4: 3, a: 0, b: 1, c: 2, d: 3 };
 
-const flagSrc = (path) => (path ? `${BACKEND_URL}${path}` : null);
+const imageSrc = (path) => (path ? `${BACKEND_URL}${path}` : null);
 
 // The end of a round, on the card's first row: right (and the points), wrong or out of time.
 function Verdict({ me, answered }) {
@@ -156,6 +156,9 @@ function ChoiceRound({ room, question, me, answer, seconds, clock, central, cont
         />
       )}
       {room.phase === "playing" && central && <PhoneHint room={room}>Respondan desde su teléfono</PhoneHint>}
+      {/* An "Imágenes" question: its picture between the question and the options (not on a phone beside the
+          room's central device, which shows it). */}
+      {question.pictured && !controller && <QuestionImage room={room} question={question} seconds={seconds} />}
 
       <div className={`tv-quiz-options${reveal ? " is-reveal" : ""}`} role="group" aria-label="Opciones">
         {OPTION_LETTERS.map((letter, i) => {
@@ -229,6 +232,40 @@ function Flag({ src }) {
   return <img key={src} className="tv-geo-flag" src={src} alt="Bandera de un país misterioso" onError={() => setFailed(true)} />;
 }
 
+// The picture of an "Imágenes" question (a film's scene, a painting...), like a flag's.
+function Picture({ src }) {
+  const [failed, setFailed] = useState(false);
+  useEffect(() => setFailed(false), [src]);
+  if (!src || failed) {
+    return (
+      <div className="tv-geo-flag is-missing" role="img" aria-label="Imagen de la pregunta">
+        <Icon name="eye" size={40} />
+        <span>No se pudo cargar la imagen</span>
+      </div>
+    );
+  }
+  return <img key={src} className="tv-geo-flag tv-quiz-picture" src={src} alt="Imagen de la pregunta" onError={() => setFailed(true)} />;
+}
+
+// Where a question's flag or picture goes: the image once the round is playing, the countdown's number in its place
+// before. With the answer, whose picture it is and its licence (`credit`), small under it.
+function QuestionImage({ room, question, seconds }) {
+  const isFlag = question.kind === "flag";
+  const src = imageSrc(isFlag ? question.flag : question.image);
+  return (
+    <div className="tv-quiz-flag">
+      {src ? (
+        isFlag ? <Flag src={src} /> : <Picture src={src} />
+      ) : room.phase === "countdown" ? (
+        <div className="tv-quiz-flag-wait">
+          <Count seconds={seconds} />
+        </div>
+      ) : null}
+      {src && question.credit && <p className="tv-quiz-credit">Imagen: {question.credit}</p>}
+    </div>
+  );
+}
+
 // A written answer (a capital, the country of a flag...), checked with some tolerance for typos. On the room's central
 // device the question (and the flag) shows while the players write on their phones, which (`controller`) have only the
 // box; the answer and how many got it show at the reveal.
@@ -253,6 +290,8 @@ function WriteRound({ room, question, me, answer, skipSong, seconds, clock, cent
   const locked = room.phase !== "playing" || Boolean(me?.answered) || Boolean(mySent) || spectator || central;
   const reveal = room.phase === "reveal";
   const isFlag = question.kind === "flag";
+  // A question with a picture: a flag, or an "Imágenes" one.
+  const pictured = isFlag || Boolean(question.pictured);
 
   useEffect(() => {
     setQuery("");
@@ -310,7 +349,7 @@ function WriteRound({ room, question, me, answer, skipSong, seconds, clock, cent
   const skipped = Boolean(mySent?.skipped || me?.lastAnswer?.skipped);
   const answered = Boolean(me?.lastAnswer?.text) && !skipped;
 
-  const showMarks = !isFlag && !controller && !central && room.phase === "playing";
+  const showMarks = !pictured && !controller && !central && room.phase === "playing";
 
   return (
     <>
@@ -322,21 +361,12 @@ function WriteRound({ room, question, me, answer, skipSong, seconds, clock, cent
           note={reveal && central ? <RoomVerdict room={room} /> : reveal && !spectator && !central ? <Verdict me={me} answered={answered} /> : null}
         />
       )}
-      {/* The answer's panel: the flag (a flag question), then the box to write in, or what was sent, or the answer. */}
+      {/* The answer's panel: the flag or the picture (if it has one), then the box to write in, or what was sent, or
+          the answer. */}
       <div className="tv-mpanel">
-        {isFlag && !controller && (
-          <div className="tv-quiz-flag">
-            {question.flag ? (
-              <Flag src={flagSrc(question.flag)} />
-            ) : room.phase === "countdown" ? (
-              <div className="tv-quiz-flag-wait">
-                <Count seconds={seconds} />
-              </div>
-            ) : null}
-          </div>
-        )}
+        {pictured && !controller && <QuestionImage room={room} question={question} seconds={seconds} />}
         {room.phase === "countdown" && controller && <GetReady />}
-        {/* While the question is open (not a flag one): a few still question marks, as big as the song's bars in
+        {/* While the question is open (without a picture): a few still question marks, as big as the song's bars in
             Adivina la canción, and the topic under them, so the panel isn't an empty space over the box. */}
         {showMarks && (
           <div className="tv-quiz-marks">
