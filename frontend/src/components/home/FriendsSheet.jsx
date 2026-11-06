@@ -7,6 +7,7 @@ import ConfirmDialog from "./ConfirmDialog.jsx";
 import Icon from "./Icon.jsx";
 import Segmented from "./Segmented.jsx";
 import "../../styles/friends.css";
+import useKeyboardFit from "../../lib/useKeyboardFit.js";
 
 // How a friend's line reads: where they are (playing, getting a match ready, in a group on Inicio) and with how many.
 export function statusOf(friend) {
@@ -91,8 +92,11 @@ export default function FriendsSheet() {
   const [removing, setRemoving] = useState(null); // the friend the dialog asks about
   const [copied, setCopied] = useState("");
   const sheetRef = useRef(null);
+  const rootRef = useRef(null);
   const [mounted, setMounted] = useState(false);
   const [closing, setClosing] = useState(false);
+  // The sheet stays above the phone's keyboard while searching for a friend (lib/useKeyboardFit.js).
+  useKeyboardFit(rootRef, f.open && mounted);
 
   useEffect(() => {
     if (f.open) {
@@ -178,7 +182,7 @@ export default function FriendsSheet() {
   return (
     // Inside .tv-app so the panel gets the page's text colour, fonts and button styles (the provider sits above it).
     <div className="tv-app tv-fr-overlay">
-      <div className={`tv-sheet-root ${closing ? "is-closing" : "is-open"}`}>
+      <div ref={rootRef} className={`tv-sheet-root ${closing ? "is-closing" : "is-open"}`}>
         <div className="tv-sheet-backdrop" onClick={() => f.setOpen(false)} />
         <div className="tv-sheet-pos">
           <div
