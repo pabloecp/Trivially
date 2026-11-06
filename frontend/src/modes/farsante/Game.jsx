@@ -66,7 +66,7 @@ function GameScreen() {
 
   // Join the room after a reload. Going back to the room screen is handled by RoomNavigator (App.jsx).
   useEffect(() => {
-    if (!room || room.code !== code) joinRoom(code).catch(() => nav("/"));
+    if (code && (!room || room.code !== code)) joinRoom(code).catch(() => nav("/", { replace: true }));
   }, [code]);
   useEffect(() => {
     if (!confirmHub) return undefined;

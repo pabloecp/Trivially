@@ -10,7 +10,8 @@ import ConfirmDialog from "./ConfirmDialog.jsx";
 import Icon from "./Icon.jsx";
 import ProfileChip from "./ProfileChip.jsx";
 import VolumeMenu from "./VolumeMenu.jsx";
-import { RoundSegments, gameLook, matchMode } from "./MatchFrame.jsx";
+import { IntroInfo, RoundSegments, gameLook, matchMode } from "./MatchFrame.jsx";
+import useMatchViewport from "../../lib/useMatchViewport.js";
 
 /** Where leaving a room goes: Inicio, which keeps the game and the side (lib/plan.js) the room was on. */
 export function exitPath() {
@@ -112,9 +113,10 @@ function MatchInfo({ room }) {
       </span>
       <span className="tv-topbar-round">
         <span className="tv-topbar-round-row">
-          <span>
-            {/* Phones have no room for the game's chip: its name goes here. */}
-            <span className="tv-topbar-round-game">{name} · </span>
+          {/* Phones have no room for the game's chip: its name goes here, the part cut with "…" when it doesn't fit. */}
+          <span className="tv-topbar-round-game">{name}</span>
+          <span className="tv-topbar-round-now">
+            <span className="tv-topbar-round-dot"> · </span>
             Ronda {Math.min(room.totalRounds, (room.currentRound || 0) + 1)} de {room.totalRounds}
           </span>
         </span>
@@ -157,6 +159,11 @@ export default function TvTopbar() {
   const [leaving, setLeaving] = useState(false);
   // A match's round on its own screen: the game's chip and the round's progress beside "Salir".
   const playing = inGame && ["countdown", "playing", "reveal"].includes(room?.phase) && Boolean(room?.totalRounds);
+  // The roulette and the tutorial before a game: on a phone, which game of the match this is goes in the same place.
+  const introHere = inGame && room?.phase === "intro" && Boolean(room?.intro);
+  // On a phone the match (and what comes before it) is exactly the screen, with nothing to scroll (not the central
+  // device's: it's a big screen, and nobody writes on it).
+  useMatchViewport((playing || introHere) && !isCentral);
 
   useEffect(() => {
     if (!modesErr) return undefined;
@@ -247,8 +254,9 @@ export default function TvTopbar() {
         <div className="tv-topbar-start">
           {shownButton}
           {playing && <MatchInfo room={room} />}
+          {introHere && <IntroInfo room={room} />}
           {/* Phones: your group, very short, put here by the group's bar (GroupBar's GroupMenu) where it is on screen. */}
-          {!playing && <span className="tv-topbar-sala" />}
+          {!playing && !introHere && <span className="tv-topbar-sala" />}
         </div>
         <div className="tv-topbar-end">
           {/* Owners only: the admin panel (the owner/user view, the test bot, the games forced in Casual). */}

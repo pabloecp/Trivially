@@ -4,6 +4,11 @@ import { REGIONS, countryAt, mainBounds, regionBounds, toLngLat } from "./worldD
 
 const MAX_ZOOM = 40;
 const OVERSHOOT = 0.3;
+// A tall frame (a phone) doesn't start on the whole world, which would be a thin strip across it with sea above and below:
+// it starts closer, the world as tall as START_FILL of the frame, at most START_ZOOM times. Dragging shows the rest, and
+// "−" or a pinch the whole world.
+const START_FILL = 0.72;
+const START_ZOOM = 1.9;
 // A press that moves less than this (in screen px) is a tap, not a drag. Fingers wobble more than a mouse.
 const TAP_SLOP = { mouse: 5, pen: 8, touch: 12 };
 // Two taps this close in time and place zoom in.
@@ -100,6 +105,9 @@ export default function WorldMap({
   // The widest view: the whole world, whole in both directions (a wide, low frame shows sea at its sides).
   const fullW = Math.max(W, H / aspect);
   const WORLD = { x: 0, y: 0, w: Infinity };
+  // Where every round starts: the whole world, or on a tall frame the middle of it, closer.
+  const startZoom = Math.min(START_ZOOM, Math.max(1, (aspect * W * START_FILL) / H));
+  const START = startZoom > 1 ? { x: (W - W / startZoom) / 2, y: 0, w: W / startZoom } : WORLD;
   const fitted = useRef(false);
 
   // The view may go a little past the edge of the map (OVERSHOOT of its size), so a region near an edge (Europe at
@@ -166,14 +174,14 @@ export default function WorldMap({
   }, []);
   useEffect(() => {
     if (!size.w) return;
-    // The first time the frame is measured, the whole world; after that a resize keeps what was in view.
-    show(fitted.current ? goal.current || viewRef.current : WORLD);
+    // The first time the frame is measured, where a round starts; after that a resize keeps what was in view.
+    show(fitted.current ? goal.current || viewRef.current : START);
     fitted.current = true;
   }, [size.w, size.h]);
   useEffect(() => () => cancelAnimationFrame(anim.current), []);
-  // A new round: back to the whole world, from wherever the last one left the view.
+  // A new round: back to where a round starts, from wherever the last one left the view.
   useEffect(() => {
-    if (fitted.current) animateTo(WORLD, 700);
+    if (fitted.current) animateTo(START, 700);
     lastTap.current = null;
   }, [resetKey]);
 
