@@ -1525,12 +1525,27 @@
 .tv-hist-barrow { display: flex; align-items: center; gap: 16px; min-width: 0; }
 .tv-hist-barrow > .tv-hist-line { flex: 1; min-width: 0; }
 
-/* Campo de minas: no counters over the board; the cells grey and tapped, a right one green and flat. */
+/* Campo de minas: no counters over the board; the cells grey and tapped. A taken one is like Trivia's options at the
+   reveal: a right one solid green and a mine red, each with its darker edge; in its corners a white square with the
+   check or the bomb, and the Blob of whoever took it. */
 .tv-app .tv-match .tv-mines-bar:has(.tv-mines-chips) { display: none; }
 .tv-app .tv-match .tv-mines-stage > .tv-mines-board { --row-gap: 10px; --col-gap: 10px; --press: 3px; }
 .tv-app .tv-match .tv-mines-cell { border-radius: 12px; background: var(--tv-surface-3); box-shadow: 0 3px 0 var(--tv-neutral-edge); color: #fff; font-family: var(--tv-small); font-weight: 700; }
-.tv-app .tv-match .tv-mines-cell.is-hit { background: rgba(31, 210, 74, 0.18); box-shadow: none; color: #7fe077; }
-.tv-app .tv-match .tv-mines-cell.is-mine { background: var(--p-bad); box-shadow: none; color: #fff; }
+.tv-app .tv-match .tv-mines-cell:is(.is-hit, .is-mine) { transform: none; }
+.tv-app .tv-match .tv-mines-cell.is-hit { background: #1fd24a; box-shadow: 0 3px 0 #12801f; color: #fff; }
+.tv-app .tv-match .tv-mines-cell.is-mine { background: var(--p-bad); box-shadow: 0 3px 0 var(--p-bad-edge); color: #fff; }
+.tv-app .tv-match .tv-mines-cell-mark { border-radius: 6px; background: #fff; color: #12801f; }
+.tv-app .tv-match .tv-mines-cell.is-mine .tv-mines-cell-mark { color: var(--p-bad); }
+.tv-app .tv-match .tv-mines-cell:is(.is-missed, .is-buried) .tv-mines-cell-mark { background: transparent; }
+.tv-app .tv-match .tv-mines-cell.is-missed .tv-mines-cell-mark { color: var(--p-ok-text); }
+.tv-app .tv-match .tv-mines-cell.is-buried .tv-mines-cell-mark { color: var(--p-bad-text); }
+.tv-app .tv-match .tv-mines-owner { min-width: 0; width: 22px; height: 22px; padding: 0; border-radius: 0; background: none; line-height: 0; }
+.tv-app .tv-match .tv-mines-owner .tv-avatar { display: block; width: 100%; height: 100%; }
+.tv-app .tv-match .tv-mines-owner .tv-avatar--blob .tv-blob { width: 100%; height: 100%; margin: 0; }
+@media (max-width: 640px) {
+  .tv-app .tv-match .tv-mines-cell-mark { border-radius: 4px; }
+  .tv-app .tv-match .tv-mines-owner { width: 16px; height: 16px; }
+}
 
 /* Rey de la colina: the king on the left, the challengers on the right. */
 .tv-rey-court { flex: 1; display: flex; gap: 22px; min-height: 0; }
@@ -2413,8 +2428,8 @@
 .tv-acard-media { flex: none; width: 96px; aspect-ratio: 1; overflow: hidden; border-radius: 12px; background: var(--tv-surface-3); }
 .tv-acard-media img { display: block; width: 100%; height: 100%; object-fit: cover; }
 .tv-acard-icon { flex: none; display: grid; place-items: center; width: 52px; height: 52px; border-radius: 14px; background: var(--tv-surface-3); color: var(--tv-text); }
-.tv-acard-icon.is-ok { background: var(--p-ok); color: var(--p-ink); }
-.tv-acard-icon.is-bad { background: var(--p-bad); color: #fff; }
+.tv-acard-icon.is-ok { background: var(--p-ok); box-shadow: 0 3px 0 var(--p-ok-edge); color: var(--p-ink); }
+.tv-acard-icon.is-bad { background: var(--p-bad); box-shadow: 0 3px 0 var(--p-bad-edge); color: #fff; }
 .tv-acard-text { display: grid; gap: 5px; min-width: 0; }
 .tv-acard-label { font: 700 12px/1 var(--tv-small); letter-spacing: 0.06em; text-transform: uppercase; color: var(--tv-text-3); }
 .tv-acard-value { font: 800 34px/1.05 var(--tv-title); letter-spacing: -0.03em; color: var(--tv-text); overflow-wrap: anywhere; }
@@ -2523,7 +2538,10 @@
 /* The answer's card in a panel: no box of its own (the panel is the box), in the panel's middle. Over a map or a board
    it keeps its box. */
 .tv-app .tv-match .tv-mpanel .tv-acard:not(.is-floating) { width: auto; max-width: 100%; align-self: center; padding: 0; border: 0; background: none; }
-.tv-app .tv-match .tv-mpanel .tv-mines-burst .tv-acard { padding: 16px 20px; border: 1px solid var(--tv-line); background: var(--tv-surface-2); }
+/* Campo de minas' card over the board: a panel over the page (no line, a soft drop shadow), the board darkened behind
+   it, fading in and out with it. */
+.tv-app .tv-match .tv-mines-burst { border-radius: 12px; background: rgba(0, 0, 0, 0.45); }
+.tv-app .tv-match .tv-mpanel .tv-mines-burst .tv-acard { padding: 16px 20px; border: 0; border-radius: 22px; background: var(--tv-surface); box-shadow: 0 20px 50px rgba(0, 0, 0, 0.55); }
 .tv-app .tv-match .tv-play-card.tv-mpanel:has(> .tv-acard) { justify-content: center; }
 .tv-app .tv-match .tv-mpanel .tv-acard:not(.is-floating) .tv-acard-value { font-size: 40px; }
 @media (max-width: 899px) {

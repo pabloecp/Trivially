@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import TvShell from "../../components/home/TvShell.jsx";
 import Confetti from "../../components/home/Confetti.jsx";
 import Icon from "../../components/home/Icon.jsx";
+import Avatar from "../../components/home/Avatar.jsx";
 import WaitingPill from "../../components/home/WaitingPill.jsx";
 import MatchResults from "../../components/home/MatchResults.jsx";
 import PartyPanel from "../../components/home/PartyPanel.jsx";
@@ -269,6 +270,7 @@ function GameScreen() {
   // The central device has no "you": every player's cells in their own colour.
   const colorOf = (id) => (id === viewerId ? MY_COLOR : PLAYER_COLORS[playerIndex(id) % PLAYER_COLORS.length]);
   const nameOf = (id) => room.players.find((p) => p.id === id)?.name || "Jugador";
+  const avatarOf = (id) => room.players.find((p) => p.id === id)?.avatar ?? null;
   const toFind = question ? question.total - question.found : 0;
   // 25 cells, or a tiebreak's few (one more than the tied players).
   const size = question?.size || CELLS;
@@ -484,7 +486,7 @@ function GameScreen() {
                         )}
                         {owned && (
                           <span className="tv-mines-owner" aria-hidden="true">
-                            {nameOf(c.by).slice(0, 1).toUpperCase()}
+                            <Avatar avatar={avatarOf(c.by)} />
                           </span>
                         )}
                       </button>
