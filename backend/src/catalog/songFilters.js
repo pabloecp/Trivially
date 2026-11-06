@@ -266,3 +266,8 @@ export function songCounts(catalog, config) {
   }
   return out;
 }
+
+/** The catalog changed (a song joined it, see catalogGrowth.js): difficulties are worked out again when next asked. */
+export function forgetDifficulty(catalog) {
+  levels.delete(catalog);
+}

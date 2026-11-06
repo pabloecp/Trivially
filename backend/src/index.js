@@ -9,6 +9,7 @@ import { Server } from "socket.io";
 import { loadCatalog } from "./catalog/catalogProvider.js";
 import { startDefaultPlaylists } from "./catalog/defaultPlaylists.js";
 import { TrackResolver } from "./catalog/trackResolver.js";
+import { CatalogGrowth } from "./catalog/catalogGrowth.js";
 import { ensureUsernames, flushStore, getSupabase, initStore, supabaseEnabled } from "./db/store.js";
 import { RoomManager } from "./game/roomManager.js";
 import { GroupManager } from "./game/groups.js";
@@ -47,7 +48,9 @@ const questions = await loadQuestions();
 // backend/private/lyric-rounds.json, and from Supabase's lyric_rounds table with LYRICS_DB=1.
 const lyricRounds = await loadLyricRounds({ db: process.env.LYRICS_DB === "1" && supabaseEnabled() ? getSupabase() : null });
 const resolver = new TrackResolver({ catalog });
-const rooms = new RoomManager({ catalog, store, questions, lyricRounds, resolver, tutorials: true });
+// Spotify songs people bring that are played a lot join the catalog (and Supabase's songs table).
+const catalogGrowth = new CatalogGrowth({ catalog });
+const rooms = new RoomManager({ catalog, store, questions, lyricRounds, resolver, catalogGrowth, tutorials: true });
 // The groups (players who go together from one match to the next), apart from the rooms (the matches).
 const groups = new GroupManager({ rooms });
 const friends = new Friendships({ store });

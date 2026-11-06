@@ -425,7 +425,7 @@ function publicPlayer(player, phase, room) {
 }
 
 export class RoomManager {
-  constructor({ catalog, store, questions = [], lyrics = new Map(), lyricRounds = new Map(), resolver = null, tutorials = false, reconnectGraceMs = RECONNECT_GRACE_MS }) {
+  constructor({ catalog, store, questions = [], lyrics = new Map(), lyricRounds = new Map(), resolver = null, catalogGrowth = null, tutorials = false, reconnectGraceMs = RECONNECT_GRACE_MS }) {
     this.catalog = catalog;
     // Whether a private match of one game starts with its tutorial (the server's; the tests go straight to the rounds).
     this.tutorials = tutorials;
@@ -450,6 +450,8 @@ export class RoomManager {
     // Farsante's "dato raro" rounds: the written questions that are not easy.
     this.datoQuestions = datoPool(this.quizQuestions);
     this.resolver = resolver;
+    // Spotify songs found on iTunes that are played a lot join the catalog (catalog/catalogGrowth.js).
+    this.catalogGrowth = catalogGrowth;
     this.store = store;
     this.reconnectGraceMs = reconnectGraceMs;
     this.rooms = new Map();
@@ -1810,7 +1812,10 @@ export class RoomManager {
           if (deep) entry.retried.add(spotifyId);
           // A pasted playlist's song was already playable with Spotify's preview (15–22 s); iTunes' (30 s, with the
           // album's cover and year) takes its place once found.
-          if (song) entry.songs.set(spotifyId, { ...song, artists: entry.tracks.find((t) => t.spotifyId === spotifyId)?.artists || song.artists });
+          const track = entry.tracks.find((t) => t.spotifyId === spotifyId);
+          if (song) entry.songs.set(spotifyId, { ...song, artists: track?.artists || song.artists });
+          // Not in the catalog yet and played 250 million times or more: it joins it, for every room.
+          if (song && track) this.catalogGrowth?.consider(track, song);
           this.progressChanged(room);
           // The first pass just finished: start the second one.
           if (!deep && entry.run === run && entry.done.size === entry.tracks.length) this.loadPlaylist(room, entry);
