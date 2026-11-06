@@ -232,6 +232,15 @@ function Flag({ src }) {
 // A written answer (a capital, the country of a flag...), checked with some tolerance for typos. On the room's central
 // device the question (and the flag) shows while the players write on their phones, which (`controller`) have only the
 // box; the answer and how many got it show at the reveal.
+// The question marks in the panel of a round to write in: their size (of the group's height), tilt and strength.
+const QUESTION_MARKS = [
+  { size: 0.55, rot: -12, op: 0.55 },
+  { size: 0.9, rot: 8, op: 0.85 },
+  { size: 0.65, rot: -4, op: 1 },
+  { size: 1, rot: 10, op: 0.7 },
+  { size: 0.5, rot: -14, op: 0.5 },
+];
+
 function WriteRound({ room, question, me, answer, skipSong, seconds, clock, central, controller }) {
   const round = room.currentRound;
   const [query, setQuery] = useState("");
@@ -301,6 +310,8 @@ function WriteRound({ room, question, me, answer, skipSong, seconds, clock, cent
   const skipped = Boolean(mySent?.skipped || me?.lastAnswer?.skipped);
   const answered = Boolean(me?.lastAnswer?.text) && !skipped;
 
+  const showMarks = !isFlag && !controller && !central && room.phase === "playing";
+
   return (
     <>
       {!controller && (
@@ -325,7 +336,19 @@ function WriteRound({ room, question, me, answer, skipSong, seconds, clock, cent
           </div>
         )}
         {room.phase === "countdown" && controller && <GetReady />}
-        {!controller && room.phase !== "reveal" && <span className="tv-mpanel-label">Tu respuesta</span>}
+        {/* While the question is open (not a flag one): a few still question marks, as big as the song's bars in
+            Adivina la canción, and the topic under them, so the panel isn't an empty space over the box. */}
+        {showMarks && (
+          <div className="tv-quiz-marks">
+            <span className="tv-quiz-marks-art" aria-hidden="true">
+              {QUESTION_MARKS.map((m, i) => (
+                <i key={i} style={{ "--s": m.size, "--r": `${m.rot}deg`, "--o": m.op }}>?</i>
+              ))}
+            </span>
+            <span className="tv-quiz-marks-note">{question.category ? `${question.category} · escribe la respuesta` : "Escribe la respuesta"}</span>
+          </div>
+        )}
+        {!controller && room.phase !== "reveal" && !showMarks && <span className="tv-mpanel-label">Tu respuesta</span>}
         {room.phase === "countdown" && !controller && (
           <div className="tv-mwrite is-off">
             <span className="tv-mwrite-box">
