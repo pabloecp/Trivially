@@ -425,7 +425,7 @@ function publicPlayer(player, phase, room) {
 }
 
 export class RoomManager {
-  constructor({ catalog, store, questions = [], lyrics = new Map(), lyricRounds = new Map(), resolver = null, tutorials = false, reconnectGraceMs = RECONNECT_GRACE_MS }) {
+  constructor({ catalog, store, questions = [], lyrics = new Map(), lyricRounds = new Map(), resolver = null, catalogGrowth = null, tutorials = false, reconnectGraceMs = RECONNECT_GRACE_MS }) {
     this.catalog = catalog;
     // Whether a private match of one game starts with its tutorial (the server's; the tests go straight to the rounds).
     this.tutorials = tutorials;
@@ -450,6 +450,8 @@ export class RoomManager {
     // Farsante's "dato raro" rounds: the written questions that are not easy.
     this.datoQuestions = datoPool(this.quizQuestions);
     this.resolver = resolver;
+    // Spotify songs found on iTunes that are played a lot join the catalog (catalog/catalogGrowth.js).
+    this.catalogGrowth = catalogGrowth;
     this.store = store;
     this.reconnectGraceMs = reconnectGraceMs;
     this.rooms = new Map();
@@ -1810,7 +1812,10 @@ export class RoomManager {
           if (deep) entry.retried.add(spotifyId);
           // A pasted playlist's song was already playable with Spotify's preview (15–22 s); iTunes' (30 s, with the
           // album's cover and year) takes its place once found.
-          if (song) entry.songs.set(spotifyId, { ...song, artists: entry.tracks.find((t) => t.spotifyId === spotifyId)?.artists || song.artists });
+          const track = entry.tracks.find((t) => t.spotifyId === spotifyId);
+          if (song) entry.songs.set(spotifyId, { ...song, artists: track?.artists || song.artists });
+          // Not in the catalog yet and played 250 million times or more: it joins it, for every room.
+          if (song && track) this.catalogGrowth?.consider(track, song);
           this.progressChanged(room);
           // The first pass just finished: start the second one.
           if (!deep && entry.run === run && entry.done.size === entry.tracks.length) this.loadPlaylist(room, entry);
@@ -1959,9 +1964,6 @@ export class RoomManager {
       cutMs: verse.cutMs,
       startMs: Math.max(0, verse.cutMs - LYRICS_LEAD_MS),
       answerEndMs: verse.answerEndMs,
-      // Quiet only while the answer is sung: back with the next word, until the line ends.
-      backMs: verse.backMs ?? verse.cutMs,
-      stopMs: verse.stopMs ?? verse.cutMs,
       revealFromMs,
       revealMs: verse.answerEndMs + LYRICS_TAIL_MS - revealFromMs,
       answer: verse.answer,
@@ -2226,6 +2228,13 @@ export class RoomManager {
       });
     }
 
+    // The songs this match is playing, wherever they came from: a song that plays must always be in the search box.
+    for (const s of room?.tracks || []) {
+      if (!s?.id || !s.title || seen.has(s.id)) continue;
+      seen.add(s.id);
+      allSongs.push({ id: s.id, title: s.title, artistName: s.artistName || "Artista", artists: artistLine(s) || "Artista" });
+    }
+
     // Every song of the Spotify playlists that play, found on iTunes yet or not.
     for (const entry of room ? this.activePlaylists(room) : []) {
       for (const t of entry.tracks) {
@@ -2365,11 +2374,10 @@ export class RoomManager {
     return (room.config.roundMs || ROUND_MS) + this.lyricLeadMs(room);
   }
 
-  /** Completa la letra: the time the song plays (to the cut, and the rest of the line after the gap), on top of the
-   *  round's seconds (0 otherwise). */
+  /** Completa la letra: the time the song plays (to the cut), on top of the round's seconds (0 otherwise). */
   lyricLeadMs(room) {
     const lyric = room.game === "musica" ? room.tracks[room.currentRound]?.lyric : null;
-    return lyric ? Math.max(lyric.cutMs, lyric.stopMs ?? 0) - lyric.startMs : 0;
+    return lyric ? lyric.cutMs - lyric.startMs : 0;
   }
 
   /** Lluvia's rounds: questions falling down the screen, answered by writing while they're on it. */
@@ -4176,8 +4184,6 @@ export class RoomManager {
           lines: lyric.lines || [{ atMs: lyric.startMs, text: lyric.line }],
           startMs: lyric.startMs,
           cutMs: lyric.cutMs,
-          backMs: lyric.backMs ?? lyric.cutMs,
-          stopMs: lyric.stopMs ?? lyric.cutMs,
           roundMs: this.roundMs(room),
           revealFromMs: lyric.revealFromMs ?? lyric.cutMs,
           answerEndMs: lyric.answerEndMs ?? lyric.cutMs,
