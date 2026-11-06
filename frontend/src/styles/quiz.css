@@ -285,12 +285,7 @@
 /* ---------- Preguntas: written answers and years ---------- */
 /* The verdict of a written answer says what it was. On narrow cards it may wrap onto a second line. */
 .tv-quiz-verdict-detail { font-weight: 700; font-size: 15px; color: var(--tv-text-2); }
-/* A flag question: the flag under the card, the answer box under it. */
-.tv-quiz-flag { display: grid; place-items: center; }
 .tv-quiz-stage.is-open { display: grid; justify-items: center; align-content: center; gap: 16px; }
-/* Written questions: the countdown, the answer box (or what was sent) and the verdict take turns in one row of
-   constant height under the card; a flag question keeps the flag's place even before the flag shows. */
-.tv-quiz-flag { min-height: 150px; }
 .tv-music-options { width: min(760px, 100%); }
 /* A song option: its title big, every artist smaller under it. */
 .tv-music-opt-text { display: grid; gap: 3px; }
@@ -300,13 +295,3 @@
 /* Written questions: the question sits as close to the answer box as the box to "Saltar", and "Saltar" looks as tall
    as the box (its 58 px plus its 4 px edge). */
 .tv-quiz-q:not(:has(.tv-quiz-slot)) { padding-bottom: 0; }
-/* A flag question's countdown: a card the shape of a flag, with the number in it, where the flag will appear. */
-.tv-quiz-flag-wait {
-  display: grid;
-  place-items: center;
-  width: 240px;
-  height: 150px;
-  border-radius: 12px;
-  background: var(--tv-option-bg);
-  box-shadow: inset 0 0 0 2px var(--tv-line);
-}
