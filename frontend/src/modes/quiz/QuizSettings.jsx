@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
 import OptionRow, { rangeOptions } from "../../components/home/OptionRow.jsx";
 import SettingsTabs, { countNote } from "../../components/home/SettingsTabs.jsx";
-import { FORMATS, LEVELS, QUESTIONS_LIMITS, SECONDS_LIMITS, TOPICS, quizConfig } from "./quizInfo.js";
+import { FORMATS, LEVELS, QUESTIONS_LIMITS, SECONDS_LIMITS, STYLES, TOPICS, quizConfig } from "./quizInfo.js";
 
-// Settings of a "Trivia" match, in the settings panel, in two tabs: "Partida" (the modes, closed or open questions,
+// Settings of a "Trivia" match, in the settings panel, in two tabs: "Partida" (the modes of play, Clásico and
+// Imágenes; closed or open questions,
 // how many questions and the seconds to answer each one) and "Preguntas" (the categories and the difficulties; tick
 // as many as you like). A choice with no questions with the other
 // settings (room.questionCounts) is greyed out and can't be ticked. Each list has "Seleccionar todos" / "Deseleccionar todos"; with one left empty the match can't start.
@@ -12,12 +13,12 @@ import { FORMATS, LEVELS, QUESTIONS_LIMITS, SECONDS_LIMITS, TOPICS, quizConfig }
 export default function QuizSettings({ room, updateConfig, onToast, children, readOnly = false }) {
   const saved = quizConfig(room);
   const [draft, setDraft] = useState(saved);
-  const counts = room.questionCounts || { categories: {}, formats: {}, difficulties: {} };
+  const counts = room.questionCounts || { categories: {}, formats: {}, difficulties: {}, styles: {} };
 
   // Another player with permission may change them too.
   useEffect(() => {
     setDraft(saved);
-  }, [saved.rounds, saved.roundMs, saved.difficulties.join(), saved.categories.join(), saved.formats.join()]);
+  }, [saved.rounds, saved.roundMs, saved.difficulties.join(), saved.categories.join(), saved.formats.join(), saved.styles.join()]);
 
   async function save(change) {
     if (readOnly) return;
@@ -46,6 +47,7 @@ export default function QuizSettings({ room, updateConfig, onToast, children, re
 
   const topicIds = TOPICS.map((t) => t.id);
   const formatIds = FORMATS.map((f) => f.id);
+  const styleIds = STYLES.map((st) => st.id);
   const levelIds = LEVELS.map((d) => d.id);
 
   const seconds = Math.round(draft.roundMs / 1000);
@@ -60,9 +62,18 @@ export default function QuizSettings({ room, updateConfig, onToast, children, re
           label: "Partida",
           icon: "hourglass",
           note: `${draft.rounds} rondas · ${seconds} s`,
-          alert: !draft.formats.length,
+          alert: !draft.formats.length || !draft.styles.length,
           content: (
             <>
+              <OptionRow
+                label="Modos de juego"
+                multi
+                wrap
+                options={STYLES.map(choice("styles", "styles"))}
+                value={draft.styles}
+                onChange={(id) => toggle("styles", styleIds, id)}
+                onSetAll={(list) => save({ styles: list })}
+              />
               <OptionRow
                 label="Tipo de respuestas"
                 multi

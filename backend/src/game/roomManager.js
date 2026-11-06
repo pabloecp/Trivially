@@ -144,6 +144,7 @@ import {
 } from "./matchmaking.js";
 import { categoryName } from "../questions/questionSchema.js";
 import { flagToken, flagUrl } from "../geo/flags.js";
+import { imageToken, imageUrl } from "../questions/images.js";
 import { shapeToken, shapeUrl } from "../geo/shapes.js";
 import { countryPoint, locate } from "../geo/worldMap.js";
 import { COUNTDOWN_MS, REVEAL_MS, ROUND_MS, scoreAnswer } from "./scoring.js";
@@ -320,6 +321,16 @@ const LYRICS_TAIL_MS = 1800;
 // Same limits as its settings on screen: 5–25 rounds, 15–35 seconds to guess.
 const MUSIC_LIMITS = { rounds: { min: 5, max: 25 }, roundMs: { min: 15000, max: 35000 } };
 const clampTo = (n, { min, max }, fallback) => Math.min(max, Math.max(min, Math.round(Number(n)) || fallback));
+
+// Trivia shows its flags and pictures ("Imágenes" questions) through a token, so the image's address doesn't give the
+// answer away (geo/flags.js, questions/images.js).
+function withQuizTokens(tracks) {
+  for (const t of tracks) {
+    if (t.flag) t.flagToken = flagToken(t.flag);
+    if (t.image) t.imageToken = imageToken(t.image);
+  }
+  return tracks;
+}
 
 // Encuentra el país shows a round's flag or silhouette through a token, so the image's address doesn't name the
 // country (geo/flags.js, geo/shapes.js).
@@ -1602,7 +1613,8 @@ export class RoomManager {
     if (item.game === QUIZ_GAME) {
       const quiz = mergeQuizConfig(config);
       if (!quiz.categories.length) return "Elige al menos una categoría.";
-      if (!quiz.formats.length) return "Elige al menos un modo de juego.";
+      if (!quiz.styles.length) return "Elige al menos un modo de juego.";
+      if (!quiz.formats.length) return "Elige al menos un tipo de respuesta.";
       if (!quiz.difficulties.length) return "Elige al menos una dificultad.";
       const n = exact ? pickQuizQuestions(this.quizQuestions, quiz).length : this.cachedCount(item, () => countQuestions(this.quizQuestions, quiz));
       return n < quiz.rounds ? short(n, "preguntas", quiz.rounds, "categorías") : null;
@@ -2104,8 +2116,7 @@ export class RoomManager {
       if (tracks.length < quiz.rounds) {
         throw new Error(`Solo hay ${tracks.length} preguntas distintas con esos ajustes. Baja el número de preguntas o elige más temas.`);
       }
-      // Flags are shown through a token, so the image's address doesn't name the country.
-      for (const t of tracks) if (t.flag) t.flagToken = flagToken(t.flag);
+      withQuizTokens(tracks);
       room.tracks = tracks;
       room.totalRounds = tracks.length;
     } else if (room.game === GEO_GAME) {
@@ -3035,8 +3046,7 @@ export class RoomManager {
     const draw = () => {
       if (item.game === QUIZ_GAME) {
         const tracks = pickQuizQuestions(this.quizQuestions, mergeQuizConfig(config.quiz));
-        for (const t of tracks) if (t.flag) t.flagToken = flagToken(t.flag);
-        return tracks;
+        return withQuizTokens(tracks);
       }
       if (item.game === GEO_GAME) return pickGeoQuestions(this.geoQuestions, mergeGeoConfig(config.geo)).map(withGeoTokens);
       if (item.game === HISTORY_GAME) return pickHistoryQuestions(this.historyQuestions, mergeHistoryConfig(config.history));
@@ -4472,12 +4482,17 @@ export class RoomManager {
       text: question.text,
       category: question.category,
       difficulty: question.difficulty,
+      // Whether a picture comes with it ("Imágenes"), so its place is kept from the countdown on.
+      pictured: Boolean(question.imageToken),
+      // Whose picture it is and its licence: with the answer (it may name it).
+      credit: showAnswer && question.imageToken ? question.credit || null : null,
     };
     if (question.type === "open") {
       return {
         ...base,
         kind: question.kind,
         flag: open && question.flagToken ? flagUrl(question.flagToken) : null,
+        image: open && question.imageToken ? imageUrl(question.imageToken) : null,
         answer: showAnswer ? question.answer : null,
       };
     }
@@ -4490,6 +4505,7 @@ export class RoomManager {
     return {
       ...base,
       options: open ? question.options : null,
+      image: open && question.imageToken ? imageUrl(question.imageToken) : null,
       answer: showAnswer ? question.answer : null,
       picks: showAnswer ? picks : null,
     };

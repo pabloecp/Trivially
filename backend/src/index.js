@@ -33,6 +33,7 @@ import { FriendsHub } from "./friends/friendsHub.js";
 import { createFriendsRouter } from "./friends/routes.js";
 import { getMedia, isCoverUrl, isPreviewUrl, isSpotifyPreviewUrl } from "./audio/mediaCache.js";
 import { flagForToken, getFlag } from "./geo/flags.js";
+import { getImage, imageForToken } from "./questions/images.js";
 import { countryShape, shapeForToken } from "./geo/shapes.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -183,6 +184,23 @@ app.get("/api/geo/flag/:token", async (req, res) => {
     res.setHeader("Cache-Control", "private, max-age=21600");
     res.setHeader("Access-Control-Allow-Origin", "*");
     res.send(image);
+  } catch (e) {
+    res.status(502).json({ error: e.message });
+  }
+});
+
+// The pictures of Trivia's "Imágenes" questions, by the token of the match's question (the address never says what
+// the picture is).
+app.get("/api/quiz/image/:token", async (req, res) => {
+  const url = imageForToken(req.params.token);
+  if (!url) return res.status(404).json({ error: "Imagen no encontrada" });
+  try {
+    const image = await getImage(url);
+    res.setHeader("Content-Type", image.type);
+    res.setHeader("Cache-Control", "private, max-age=21600");
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    res.setHeader("X-Content-Type-Options", "nosniff");
+    res.send(image.data);
   } catch (e) {
     res.status(502).json({ error: e.message });
   }

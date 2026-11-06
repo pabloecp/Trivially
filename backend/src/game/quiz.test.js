@@ -6,6 +6,8 @@ import { geoBank } from "./geo.js";
 import { isCorrectOpenAnswer } from "./openAnswers.js";
 import { countQuestions, mergeQuizConfig, pickQuizQuestions, questionCounts, quizPool } from "./quiz.js";
 import { RoomManager } from "./roomManager.js";
+import { rainPool } from "./rain.js";
+import { imageForToken } from "../questions/images.js";
 
 const bank = sampleQuestions();
 // Only the multiple-choice questions of the bank (Geografía's and Historia's join in quizPool, tested below).
@@ -39,8 +41,8 @@ for (const q of picked) {
 
 // Settings stay inside their limits.
 assert.deepEqual(
-  mergeQuizConfig(undefined, { rounds: 99, roundMs: 1000, difficulties: ["imposible", "media"], categories: ["cocina", "ciencia"], formats: ["dibujar", "escribir"] }),
-  { rounds: 25, roundMs: 15000, difficulties: ["media"], categories: ["ciencia"], formats: ["escribir"] }
+  mergeQuizConfig(undefined, { rounds: 99, roundMs: 1000, difficulties: ["imposible", "media"], categories: ["cocina", "ciencia"], formats: ["dibujar", "escribir"], styles: ["video", "imagenes"] }),
+  { rounds: 25, roundMs: 15000, difficulties: ["media"], categories: ["ciencia"], formats: ["escribir"], styles: ["imagenes"] }
 );
 // Everything is chosen by default; an older client's single difficulty still works.
 assert.deepEqual(mergeQuizConfig().difficulties, ["facil", "media", "dificil"]);
@@ -240,6 +242,71 @@ for (const r of [room, big, none, w]) clearTimeout(r.timer);
   const counts = questionCounts([{ category: "ciencia", difficulty: "facil", type: "open" }], { categories: [], difficulties: [], formats: [] });
   assert.equal(counts.categories.ciencia, 1);
   assert.equal(counts.difficulties.facil, 1);
+}
+
+// "Modos de juego": Clásico asks the questions without a picture, Imágenes those with one (a flag or data.image).
+{
+  const pic = (n, type = "multiple_choice") => ({
+    ...bank[0],
+    id: `pic-${type}-${n}`,
+    type,
+    data:
+      type === "open"
+        ? { answer: `Respuesta ${n}`, image: `https://ejemplo.com/escena-${n}.jpg` }
+        : { options: ["a", "b", "c", "d"], correct: 2, image: `https://ejemplo.com/escena-${n}.jpg`, credit: "Autora · CC BY 4.0" },
+  });
+  assert.deepEqual(questionErrors(pic(1)), []);
+  assert.deepEqual(questionErrors(pic(1, "open")), []);
+  assert.match(questionErrors({ ...pic(1), data: { ...pic(1).data, image: "http://ejemplo.com/a.jpg" } }).join(), /image/);
+  assert.match(questionErrors({ ...pic(1), type: "year", data: { year: 1990, image: "https://ejemplo.com/a.jpg" } }).join(), /image/);
+
+  const pics = [1, 2, 3, 4, 5, 6].map((n) => pic(n, n % 2 ? "multiple_choice" : "open"));
+  const pool = quizPool([...bank, ...pics]);
+  const images = { styles: ["imagenes"] };
+  // Each picture question once (a four-option one is also asked written, but a match never asks both).
+  assert.equal(countQuestions(pool, images), pics.length);
+  assert.equal(countQuestions(pool, { styles: ["clasico"] }), countQuestions(quizPool(bank), {}));
+  assert.equal(countQuestions(pool, { styles: [] }), 0);
+  assert.equal(questionCounts(pool, {}).styles.imagenes, pool.filter((q) => q.data.image).length);
+  assert.deepEqual(mergeQuizConfig({}).styles, ["clasico", "imagenes"]);
+  assert.deepEqual(mergeQuizConfig({ styles: ["imagenes"] }, { rounds: 10 }).styles, ["imagenes"]);
+  assert.deepEqual(mergeQuizConfig({}, { styles: ["imagenes", "otro"] }).styles, ["imagenes"]);
+  // A written copy of a four-option picture question keeps its picture.
+  assert.ok(pool.find((q) => q.id === "pic-multiple_choice-1:escribir").data.image);
+  // Lluvia (and Rey de la colina, Farsante) never ask a picture question: they show none.
+  assert.ok(rainPool(pool).every((q) => !q.data.image));
+
+  const tracks = pickQuizQuestions(pool, { ...images, rounds: 5 });
+  assert.equal(tracks.length, 5);
+  for (const t of tracks) assert.match(t.image, /^https:\/\/ejemplo\.com\//);
+
+  // Players see the picture through a token, never its address (which could give the answer away), and only once the
+  // round is playing.
+  const imgr = new RoomManager({ catalog: readLocalCatalog(), store: { users: {} }, questions: [...bank, ...[11, 12, 13, 14, 15, 16].map((n) => pic(n))] });
+  const ihost = { id: "img-1", name: "Host", socketId: "img-s1" };
+  const iroom = imgr.create({ host: ihost, mode: "multi", game: "opciones" });
+  imgr.updateConfig(iroom, ihost.id, { quiz: { styles: ["imagenes"], formats: ["opciones"] } });
+  imgr.start(iroom, ihost.id);
+  const track = iroom.tracks[0];
+  assert.ok(track.image && track.imageToken);
+  iroom.phase = "countdown";
+  assert.equal(imgr.publicQuestion(iroom, track).image, null);
+  iroom.phase = "playing";
+  const shown = imgr.publicQuestion(iroom, track).image;
+  assert.equal(shown, `/api/quiz/image/${track.imageToken}`);
+  assert.ok(!JSON.stringify(imgr.publicState(iroom, ihost.id)).includes("ejemplo.com"));
+  assert.equal(imageForToken(track.imageToken), track.image);
+  // Whose picture it is shows with the answer, not before (it may name it).
+  assert.equal(imgr.publicQuestion(iroom, track).credit, null);
+  iroom.phase = "reveal";
+  assert.equal(imgr.publicQuestion(iroom, track).credit, "Autora · CC BY 4.0");
+  assert.match(questionErrors({ ...pic(1), data: { ...pic(1).data, image: undefined } }).join(), /credit/);
+  clearTimeout(iroom.timer);
+
+  // Without a mode ticked the match can't start.
+  const eroom = imgr.create({ host: { id: "img-2", name: "Otro", socketId: "img-s2" }, mode: "multi", game: "opciones" });
+  imgr.updateConfig(eroom, "img-2", { quiz: { styles: [] } });
+  assert.throws(() => imgr.start(eroom, "img-2"));
 }
 
 // With tutorials on (the server), a private match of one game starts with its "Cómo se juega", then its rounds.
