@@ -349,6 +349,18 @@ export function registerWithPassword(store, { name, username, email, password, a
   return sanitizeUser(store.users[user.id]);
 }
 
+/** A new password for an account ("¿Olvidaste tu contraseña?", after its email link): same rule as registering. */
+export function setPassword(store, userId, password) {
+  const user = store.users[userId];
+  if (!user || user.isGuest) throw new Error("Esa cuenta ya no existe");
+  if (!password || password.length < 2) throw new Error("La contraseña debe tener al menos 2 caracteres");
+  const { salt, hash } = hashPassword(password);
+  user.passwordHash = hash;
+  user.passwordSalt = salt;
+  saveStore(store);
+  return sanitizeUser(user);
+}
+
 export function loginWithPassword(store, { identifier, password, guestId }) {
   if (!identifier || !identifier.trim()) throw new Error("Introduce tu correo o usuario");
   if (!password) throw new Error("Introduce tu contraseña");

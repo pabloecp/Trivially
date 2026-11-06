@@ -2568,3 +2568,7 @@ html.tv-match-lock.tv-keyboard-up .tv-app .tv-match .tv-mpanel .tv-lyrics { font
   .tv-app .tv-match .tv-quiz-marks-note { font-size: 12.5px; }
 }
 html.tv-match-lock.tv-keyboard-up .tv-app .tv-match .tv-quiz-marks { display: none; }
+
+/* "¿Olvidaste tu contraseña?" under the login form (and "Ya me acordé"): a quiet text button, centred, never underlined. */
+.tv-app .tv-auth-forgot { justify-self: center; padding: 4px 8px; color: var(--tv-text-2); font-weight: 700; font-size: 14px; text-decoration: none; }
+.tv-app .tv-auth-forgot:hover { color: var(--tv-text); }

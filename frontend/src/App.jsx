@@ -2,6 +2,7 @@ import { useEffect, useLayoutEffect, useRef } from "react";
 import { Navigate, Route, Routes, useLocation, useNavigate, useNavigationType, useParams } from "react-router-dom";
 import Home from "./pages/Home.jsx";
 import Login from "./pages/Login.jsx";
+import ResetPassword from "./pages/ResetPassword.jsx";
 import Profile from "./pages/Profile.jsx";
 import Game from "./modes/music/Game.jsx";
 import QuizGame from "./modes/quiz/Game.jsx";
@@ -191,6 +192,8 @@ export default function App() {
         <Route path="/play/*" element={<Navigate to="/" replace />} />
         <Route path="/musica" element={<Navigate to="/" replace />} />
         <Route path="/login" element={<Login />} />
+        {/* "¿Olvidaste tu contraseña?": ask for the email link, or (with its token) choose the new password. */}
+        <Route path="/restablecer" element={<ResetPassword />} />
         {/* The leaderboard was removed: an old link to it goes to Inicio. */}
         <Route path="/leaderboard" element={<Navigate to="/" replace />} />
       </Routes>

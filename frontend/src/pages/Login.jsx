@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useApp } from "../lib/store.jsx";
 import TvShell from "../components/home/TvShell.jsx";
 import AppIcon from "../components/home/AppIcon.jsx";
@@ -145,6 +145,9 @@ function LoginScreen() {
             <button className="tv-btn tv-btn--block tv-c-pink" type="submit" data-sound="none" disabled={loading || !loginIdentifier.trim() || !loginPassword}>
               {loading ? "Entrando…" : "Iniciar sesión"}
             </button>
+            <Link to="/restablecer" className="tv-auth-forgot">
+              ¿Olvidaste tu contraseña?
+            </Link>
           </form>
         ) : (
           <form key="register" onSubmit={onAccountRegister} className="tv-form">
