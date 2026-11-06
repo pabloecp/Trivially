@@ -34,7 +34,7 @@ npm run lyrics:upload --prefix backend      # that file to Supabase's lyric_roun
 
 Tests are standalone scripts using `node:assert/strict`, no runner: each prints `"<name> ok"`. A new test file must be appended to the `&&` chain in `backend/package.json` `scripts.test`.
 
-**Gotcha:** `saveStore()` always writes to the tracked `backend/data/store.json`, even in tests. After running the store tests, check `git diff backend/data/store.json` and restore it.
+Tests (`*.test.js` run directly) save the store to a temp file, never to the tracked `backend/data/store.json` (`TRIVIALLY_STORE_PATH` overrides the path). If `git diff` ever shows that file changed, restore it before committing.
 
 ## Branches (Git Flow, see `CONTRIBUTING.md`)
 
