@@ -1,7 +1,6 @@
-import { Fragment, useEffect, useMemo, useRef, useState } from "react";
+import { Fragment, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import TvShell from "../../components/home/TvShell.jsx";
-import Confetti from "../../components/home/Confetti.jsx";
 import Icon from "../../components/home/Icon.jsx";
 import AnswerSkip from "../../components/home/AnswerSkip.jsx";
 import WaitingPill, { waitingNames } from "../../components/home/WaitingPill.jsx";
@@ -17,7 +16,7 @@ import { createLyricPlayer } from "./lyricAudio.js";
 import "../../styles/quiz.css";
 import { PauseButton, ReportButton, SkipButton, PauseVeil } from "../../components/home/PauseControls.jsx";
 import { resolveCode } from "../../lib/hiddenCode.js";
-import { MatchBar, MatchCard, MatchQuestion } from "../../components/home/MatchFrame.jsx";
+import { AnswerCard, MatchBar, MatchCard, MatchQuestion, RoundVerdict } from "../../components/home/MatchFrame.jsx";
 
 // A closed round's four songs keep the same letters and colours as Trivia's options.
 const OPTION_LETTERS = ["A", "B", "C", "D"];
@@ -44,15 +43,6 @@ function joinArtists(list) {
   return names.length > 1 ? `${names.slice(0, -1).join(", ")} & ${names[names.length - 1]}` : names[0] || "";
 }
 
-// Shown under the result when the round didn't go your way; one per round, never the same twice in a row.
-const CHEERS = [
-  "¡Estuviste cerca!",
-  "¡La próxima es tuya!",
-  "¡Casi la tienes!",
-  "¡No te rindas, tú puedes!",
-  "¡Sigue así, vas mejorando!",
-];
-
 function GameScreen() {
   const { code: codeParam } = useParams();
   const { user, room, joinRoom, answer, skipSong, restartGame } = useApp();
@@ -66,7 +56,7 @@ function GameScreen() {
   const audioRef = useRef(null);
   const inputRef = useRef(null);
   const suggestionsListRef = useRef(null);
-  const cheerOffset = useRef(Math.floor(Math.random() * CHEERS.length));
+  const searchRef = useRef(null);
 
   const left = useRemainingMs(room);
   const [err, setErr] = useState("");
@@ -74,6 +64,16 @@ function GameScreen() {
   // Search & autocomplete state
   const [query, setQuery] = useState("");
   const [activeIndex, setActiveIndex] = useState(0);
+  // The suggestions open under the box over the panel: never further down than the panel's own bottom, so they
+  // never cover the bar under it (they scroll inside instead).
+  useLayoutEffect(() => {
+    const el = searchRef.current;
+    const panel = el?.closest(".tv-mpanel");
+    if (!el || !panel || !query.trim()) return;
+    const box = el.querySelector(".tv-search-box") || el;
+    const room = panel.getBoundingClientRect().bottom - box.getBoundingClientRect().bottom - 8 - 12;
+    el.style.setProperty("--suggest-max", `${Math.max(140, Math.round(room))}px`);
+  }, [query]);
   const [submittedSong, setSubmittedSong] = useState(null);
   // Round in which this player tapped "Saltar" (shown right away, before the server confirms).
   const [skippedRound, setSkippedRound] = useState(null);
@@ -83,14 +83,6 @@ function GameScreen() {
   const [confirmHub, setConfirmHub] = useState(false);
   // Skip works like "Terminar": the first tap warns that the round gives no points, the second one skips.
   const [confirmSkip, setConfirmSkip] = useState(false);
-  // The "Era la canción" card appears once its cover has loaded (or after 1.5 s, so a slow image never holds it).
-  const revealTitle = room?.phase === "reveal" ? room?.reveal?.title : null;
-  const [coverReadyFor, setCoverReadyFor] = useState(null);
-  useEffect(() => {
-    if (!revealTitle) return;
-    const t = setTimeout(() => setCoverReadyFor(revealTitle), 1500);
-    return () => clearTimeout(t);
-  }, [revealTitle]);
 
   // Join room if disconnected or reloaded. Going back to the lobby is handled by RoomNavigator (App.jsx).
   useEffect(() => {
@@ -497,6 +489,21 @@ function GameScreen() {
     </>
   );
 
+  // Completa la letra: the lyrics go in the card once the song plays (before it, the question).
+  const lyricsInCard = Boolean(lyrics) && (room.phase === "playing" || room.phase === "reveal") && (lyrics.lines || []).length > 0;
+
+  // How the round went for this player, on the card's first row at the reveal (the same in every game).
+  const isCorrect = Boolean(me?.lastAnswer?.correct);
+  const didAnswer = !skipped && (closed ? Number.isInteger(myChoice) : Boolean(me?.lastAnswer?.text || submittedSong));
+  const roundVerdict = (
+    <RoundVerdict
+      tone={isCorrect ? "ok" : didAnswer ? "bad" : "timeout"}
+      label={isCorrect ? "¡Correcto!" : didAnswer ? "Incorrecto" : skipped ? "Te la saltaste" : "Se acabó el tiempo"}
+      points={isCorrect ? me?.lastPoints || 0 : null}
+      streak={isCorrect ? me?.streak || 0 : 0}
+    />
+  );
+
   return (
     <div className={`tv-room tv-game tv-match${central ? " is-central" : ""}${controller ? " is-controller" : ""}`}>
       <audio ref={audioRef} preload="auto" playsInline />
@@ -515,9 +522,14 @@ function GameScreen() {
             icon="music"
             dir={
               lyrics
-                ? closed
-                  ? "La canción se corta: elige la palabra que sigue"
-                  : "La canción se corta: escribe la palabra que sigue"
+                ? // While the lyrics are in the card this line asks the question; before them, the question is the card's own.
+                  lyricsInCard
+                  ? closed
+                    ? "¿Qué palabra sigue? Elige la que completa la letra"
+                    : "¿Qué palabra sigue? Escribe la que completa la letra"
+                  : closed
+                  ? "La canción se corta: elige la palabra que completa la letra"
+                  : "La canción se corta: escribe la palabra que completa la letra"
                 : closed
                 ? "Escucha el fragmento y elige qué canción es · más rápido, más puntos"
                 : "Escucha el fragmento y escribe su título · más rápido, más puntos"
@@ -525,17 +537,23 @@ function GameScreen() {
             seconds={seconds}
             pct={pct}
             urgent={urgent}
+            pills={room.phase === "reveal" ? central ? <RoomVerdict room={room} /> : !spectator ? roundVerdict : null : null}
+            media={
+              lyricsInCard ? null : (
+                <div className={`tv-qc-eq${room.phase === "playing" && !room.paused ? " is-on" : ""}`} aria-hidden="true">
+                  {Array.from({ length: 12 }, (_, i) => (
+                    <i key={i} style={{ "--i": i }} />
+                  ))}
+                </div>
+              )
+            }
           >
-            {lyrics ? (
-              <MatchQuestion>{room.phase === "reveal" ? "Así seguía" : "¿Qué palabra sigue?"}</MatchQuestion>
-            ) : room.phase === "reveal" && room.reveal ? (
-              <MatchQuestion>{room.reveal.title}</MatchQuestion>
+            {/* Completa la letra: the lyrics are the question, in the card where every game's question goes (the last
+                four lines, the gap at the end, filled in its place at the reveal). The card's text never changes. */}
+            {lyricsInCard ? (
+              <LyricsPanel lyrics={lyrics} position={lyricPos} reveal={room.phase === "reveal"} />
             ) : (
-              <div className={`tv-qc-eq${room.phase === "playing" && !room.paused ? " is-on" : ""}`} aria-hidden="true">
-                {Array.from({ length: 30 }, (_, i) => (
-                  <i key={i} style={{ "--i": i }} />
-                ))}
-              </div>
+              <MatchQuestion>{lyrics ? "¿Qué palabra sigue?" : "¿Qué canción es?"}</MatchQuestion>
             )}
           </MatchCard>
         )}
@@ -571,34 +589,14 @@ function GameScreen() {
           </section>
         )}
 
-        {/* A closed round stays on this screen at the reveal, like Trivia: the right song ringed in green, a wrong
-            pick in red. */}
-        {(room.phase === "playing" || (room.phase === "reveal" && closed)) && (
+        {/* The round stays on this screen at the reveal: four options are marked in place (the right song green, a
+            wrong pick red), and the box to write in turns into the answer's card. */}
+        {(room.phase === "playing" || room.phase === "reveal") && (
           <section key={`p${room.currentRound}`} className={`tv-game-stage tv-play-card${closed ? "" : " tv-mpanel"}`}>
             <PauseVeil room={room} isHost={isHost} />
-            {/* Completa la letra: a small title and the lyrics following the song, like Spotify's. */}
-            {!controller && !lyrics && !closed && <span className="tv-mpanel-label">Tu respuesta</span>}
-            {lyrics && <LyricsPanel lyrics={lyrics} position={lyricPos} />}
-            {closed && room.phase === "reveal" && central && <RoomVerdict room={room} />}
-            {closed && room.phase === "reveal" && !central && (() => {
-              const isCorrect = Boolean(me?.lastAnswer?.correct);
-              const tone = isCorrect ? "ok" : Number.isInteger(myChoice) ? "bad" : "timeout";
-              return (
-                <div className={`tv-quiz-verdict tv-quiz-verdict--${tone} tv-music-verdict`} role="status">
-                  {isCorrect && <Confetti pieces={18} />}
-                  <span className="tv-quiz-verdict-icon">
-                    <Icon name={isCorrect ? "check" : Number.isInteger(myChoice) ? "close" : "hash"} size={22} strokeWidth={3.2} />
-                  </span>
-                  <strong className="tv-quiz-verdict-title">
-                    {spectator ? "Era esta" : isCorrect ? "¡Correcto!" : Number.isInteger(myChoice) ? "Incorrecto" : skipped ? "Te la saltaste" : "¡Se acabó el tiempo!"}
-                  </strong>
-                  <span className="tv-tags">
-                    {isCorrect && <span className="tv-tag tv-tag--points">+{me?.lastPoints || 0} pts</span>}
-                    {me?.streak > 1 && <span className="tv-tag tv-tag--streak">Racha de {me.streak}</span>}
-                  </span>
-                </div>
-              );
-            })()}
+            {!controller && !lyrics && !closed && room.phase === "playing" && <span className="tv-mpanel-label">Tu respuesta</span>}
+            {/* A phone beside the central device has no card: the lyrics go here. */}
+            {lyrics && controller && <LyricsPanel lyrics={lyrics} position={lyricPos} reveal={room.phase === "reveal"} />}
 
             {closed && room.phase === "playing" && central && <PhoneHint room={room}>Elijan desde su teléfono</PhoneHint>}
             {closed && room.phase === "playing" && !central && !spectator && Number.isInteger(myChoice) && (
@@ -606,6 +604,32 @@ function GameScreen() {
             )}
             {!closed && room.phase === "playing" && central ? (
               <PhoneHint room={room}>{lyrics ? "Escriban lo que falta en su teléfono" : "Escriban el título en su teléfono"}</PhoneHint>
+            ) : !closed && room.phase === "reveal" ? (
+              room.reveal && !controller ? (
+                <AnswerCard
+                  label={lyrics ? "La palabra" : "La canción"}
+                  value={lyrics ? lyrics.answer || room.reveal.title : room.reveal.title}
+                  detail={[
+                    lyrics ? room.reveal.title : null,
+                    joinArtists(room.reveal.artists) || room.reveal.artistName,
+                    room.reveal.year,
+                  ]
+                    .filter(Boolean)
+                    .join(" · ")}
+                  media={
+                    <img
+                      key={room.reveal.title}
+                      src={coverUrl(room.reveal.image)}
+                      alt={`Portada de ${room.reveal.title}`}
+                      onError={(e) => {
+                        e.currentTarget.src = "/logo.svg";
+                      }}
+                    />
+                  }
+                  mine={central || spectator ? null : skipped ? "Te la saltaste" : me?.lastAnswer?.text ? `Escribiste “${me.lastAnswer.text}”` : null}
+                  mineOk={Boolean(me?.lastAnswer?.correct)}
+                />
+              ) : null
             ) : closed && (room.phase === "reveal" || central || (!spectator && (!locked || Number.isInteger(myChoice)))) ? (
               <div className={`tv-quiz-options tv-music-options${room.phase === "reveal" ? " is-reveal" : ""}`} role="group" aria-label="Opciones">
                 {OPTION_LETTERS.map((letter, i) => {
@@ -664,7 +688,7 @@ function GameScreen() {
                 })}
               </div>
             ) : !locked ? (
-              <div className="tv-search">
+              <div className="tv-search" ref={searchRef}>
                 <div className="tv-search-row">
                 <div className="tv-search-box">
                   <Icon name="keyboard" size={22} className="tv-search-icon" />
@@ -701,11 +725,8 @@ function GameScreen() {
                   <Icon name="send" size={20} strokeWidth={2.4} />
                   <span className="tv-mwrite-send-label">Enviar</span>
                 </button>
-                </div>
-
-                {/* Hidden while typing, but it keeps its space so the answer box never moves. */}
-                <div className="tv-mpanel-foot">
-                  <AnswerSkip confirm={confirmSkip} onClick={handleSkip} hidden={Boolean(query.trim())} />
+                {/* "Saltar" at the right end, as wide as "Enviar": the first tap asks, the second skips. */}
+                <AnswerSkip confirm={confirmSkip} onClick={handleSkip} />
                 </div>
 
                 {query.trim().length > 0 && !lyrics && (
@@ -764,74 +785,6 @@ function GameScreen() {
           </section>
         )}
 
-        {room.phase === "reveal" && room.reveal && !closed && (() => {
-          const isCorrect = Boolean(me?.lastAnswer?.correct);
-          const didAnswer = !skipped && Boolean(me?.lastAnswer?.text || submittedSong);
-          const tone = isCorrect ? "ok" : didAnswer ? "bad" : "timeout";
-          return (
-            <section key={`r${room.currentRound}`} className="tv-game-stage tv-reveal tv-mpanel">
-              <PauseVeil room={room} isHost={isHost} />
-              {/* The central device says how the room did; each phone how its player did (the song is on the big screen). */}
-              {central && <RoomVerdict room={room} />}
-              {!spectator && !central && (
-              <div className={`tv-result tv-result--${tone}`} role="status">
-                {isCorrect && <Confetti pieces={18} />}
-                <span className="tv-result-icon">
-                  <Icon name={isCorrect ? "check" : didAnswer ? "lock" : skipped ? "close" : "hash"} size={30} strokeWidth={3} />
-                </span>
-                <h2 className="tv-result-title">
-                  {isCorrect ? "¡Correcto!" : didAnswer ? "Incorrecto" : skipped ? "No te la sabías" : "¡Se acabó el tiempo!"}
-                </h2>
-                {!isCorrect && (
-                  <p className="tv-result-cheer">{CHEERS[(room.currentRound + cheerOffset.current) % CHEERS.length]}</p>
-                )}
-                <div className="tv-tags tv-tags--center">
-                  {isCorrect && <span className="tv-tag tv-tag--points">+{me?.lastPoints || 0} pts</span>}
-                  {me?.streak > 1 && <span className="tv-tag tv-tag--streak">Racha de {me.streak}</span>}
-                </div>
-                {didAnswer && !isCorrect && me?.lastAnswer?.text && (
-                  <p className="tv-hint">{closed ? "Elegiste" : "Escribiste"} “{me.lastAnswer.text}”</p>
-                )}
-              </div>
-              )}
-
-              {/* Completa la letra: the whole verse, with the words that were missing, while the song goes on. */}
-              {lyrics && !controller && <LyricsPanel lyrics={lyrics} position={lyricPos} />}
-
-              {!controller && (
-                <div className={`tv-song${coverReadyFor === room.reveal.title ? "" : " is-waiting"}`}>
-                  {/* Flips in once the image has loaded, never half-drawn. */}
-                  <img
-                    key={room.reveal.title}
-                    className="tv-song-cover"
-                    src={coverUrl(room.reveal.image)}
-                    alt={`Portada de ${room.reveal.title}`}
-                    onLoad={(e) => {
-                      e.currentTarget.classList.add("is-loaded");
-                      setCoverReadyFor(room.reveal.title);
-                    }}
-                    onError={(e) => {
-                      e.currentTarget.src = "/logo.svg";
-                    }}
-                  />
-                  <div className="tv-song-text">
-                    <p className="tv-mono-label">Era la canción</p>
-                    <h3 className="tv-song-title">{room.reveal.title}</h3>
-                    <p className="tv-song-meta">
-                      {joinArtists(room.reveal.artists) || room.reveal.artistName}
-                      {room.reveal.albumName ? ` · ${room.reveal.albumName}` : ""}
-                      {room.reveal.year ? ` (${room.reveal.year})` : ""}
-                    </p>
-                  </div>
-                </div>
-              )}
-
-              <p className="tv-next">
-                {room.currentRound + 1 >= room.totalRounds ? "Calculando resultados" : "Siguiente canción en breve"}
-              </p>
-            </section>
-          );
-        })()}
       </div>
 
       {/* The scoreboard is the central device's, when there is one. */}
@@ -844,10 +797,10 @@ function GameScreen() {
 // Completa la letra's lyrics, line by line: every line is there from the start, in its place (nothing appears or
 // pushes the rest down); the one being sung is lit, the others dim. `position` is where the song is (seconds of its
 // preview). The last line ends in the gap: one long line, always as wide (it never tells how long the words are),
-// filled with them in the same place once the reveal's song gets to them.
-function LyricsPanel({ lyrics, position }) {
+// filled with them in the same place as soon as the round ends (`reveal`), so it never says "?" beside the answer.
+function LyricsPanel({ lyrics, position, reveal = false }) {
   const lines = lyrics.lines || [];
-  const filled = Boolean(lyrics.answer) && position >= lyrics.cutMs / 1000;
+  const filled = Boolean(lyrics.answer) && (reveal || position >= lyrics.cutMs / 1000);
   let current = -1;
   lines.forEach((l, i) => {
     if (l.atMs / 1000 <= position + 0.05) current = i;

@@ -79,6 +79,8 @@ export default function PlaySheet({ mode, joinCode, open, onClose, askName = fal
     function fit() {
       root.style.setProperty("--tv-vv-h", `${vv.height}px`);
       root.style.setProperty("--tv-vv-top", `${vv.offsetTop}px`);
+      // With the keyboard up, the screen's bottom edge (and its safe area) is under the keyboard.
+      root.classList.toggle("is-keyboard", window.innerHeight - vv.height > 120);
     }
     fit();
     vv.addEventListener("resize", fit);
@@ -86,6 +88,7 @@ export default function PlaySheet({ mode, joinCode, open, onClose, askName = fal
     return () => {
       vv.removeEventListener("resize", fit);
       vv.removeEventListener("scroll", fit);
+      root.classList.remove("is-keyboard");
     };
   }, [open, mounted]);
 

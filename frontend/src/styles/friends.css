@@ -203,7 +203,8 @@
    buttons, it never covers the page itself. */
 .tv-fr-overlay { position: fixed; inset: 0; z-index: 60; min-height: 0; background: none; pointer-events: none; overflow: visible; }
 .tv-fr-overlay > * { pointer-events: auto; }
-.tv-fr-retry { padding: 0; border: 0; background: none; color: var(--tv-text); font-weight: 800; text-decoration: underline; cursor: pointer; }
+.tv-fr-retry { padding: 0; border: 0; background: none; color: var(--tv-link); font-family: var(--tv-display); font-weight: 800; cursor: pointer; }
+.tv-fr-retry:hover { color: #8fb0ff; }
 
 /* Username fields: the "@" in front, and the free / taken line under it. */
 .tv-handle-box { position: relative; display: block; }

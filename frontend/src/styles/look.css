@@ -1525,12 +1525,27 @@
 .tv-hist-barrow { display: flex; align-items: center; gap: 16px; min-width: 0; }
 .tv-hist-barrow > .tv-hist-line { flex: 1; min-width: 0; }
 
-/* Campo de minas: no counters over the board; the cells grey and tapped, a right one green and flat. */
+/* Campo de minas: no counters over the board; the cells grey and tapped. A taken one is like Trivia's options at the
+   reveal: a right one solid green and a mine red, each with its darker edge; in its corners a white square with the
+   check or the bomb, and the Blob of whoever took it. */
 .tv-app .tv-match .tv-mines-bar:has(.tv-mines-chips) { display: none; }
 .tv-app .tv-match .tv-mines-stage > .tv-mines-board { --row-gap: 10px; --col-gap: 10px; --press: 3px; }
 .tv-app .tv-match .tv-mines-cell { border-radius: 12px; background: var(--tv-surface-3); box-shadow: 0 3px 0 var(--tv-neutral-edge); color: #fff; font-family: var(--tv-small); font-weight: 700; }
-.tv-app .tv-match .tv-mines-cell.is-hit { background: rgba(31, 210, 74, 0.18); box-shadow: none; color: #7fe077; }
-.tv-app .tv-match .tv-mines-cell.is-mine { background: var(--p-bad); box-shadow: none; color: #fff; }
+.tv-app .tv-match .tv-mines-cell:is(.is-hit, .is-mine) { transform: none; }
+.tv-app .tv-match .tv-mines-cell.is-hit { background: #1fd24a; box-shadow: 0 3px 0 #12801f; color: #fff; }
+.tv-app .tv-match .tv-mines-cell.is-mine { background: var(--p-bad); box-shadow: 0 3px 0 var(--p-bad-edge); color: #fff; }
+.tv-app .tv-match .tv-mines-cell-mark { border-radius: 6px; background: #fff; color: #12801f; }
+.tv-app .tv-match .tv-mines-cell.is-mine .tv-mines-cell-mark { color: var(--p-bad); }
+.tv-app .tv-match .tv-mines-cell:is(.is-missed, .is-buried) .tv-mines-cell-mark { background: transparent; }
+.tv-app .tv-match .tv-mines-cell.is-missed .tv-mines-cell-mark { color: var(--p-ok-text); }
+.tv-app .tv-match .tv-mines-cell.is-buried .tv-mines-cell-mark { color: var(--p-bad-text); }
+.tv-app .tv-match .tv-mines-owner { min-width: 0; width: 22px; height: 22px; padding: 0; border-radius: 0; background: none; line-height: 0; }
+.tv-app .tv-match .tv-mines-owner .tv-avatar { display: block; width: 100%; height: 100%; }
+.tv-app .tv-match .tv-mines-owner .tv-avatar--blob .tv-blob { width: 100%; height: 100%; margin: 0; }
+@media (max-width: 640px) {
+  .tv-app .tv-match .tv-mines-cell-mark { border-radius: 4px; }
+  .tv-app .tv-match .tv-mines-owner { width: 16px; height: 16px; }
+}
 
 /* Rey de la colina: the king on the left, the challengers on the right. */
 .tv-rey-court { flex: 1; display: flex; gap: 22px; min-height: 0; }
@@ -2169,7 +2184,7 @@
   html.tv-match-lock .tv-app .tv-mbar .tv-mini-btn.is-on { width: auto; padding: 0 12px; }
   html.tv-match-lock .tv-app .tv-mbar .tv-mini-btn.is-on .tv-pause-label { display: inline; white-space: nowrap; }
 
-  /* The round's card: only what it says, the question in the middle of what's left, always whole (MatchQuestion). */
+  /* The round's card: only what it says, the question at the bottom, over the time bar, always whole (MatchQuestion). */
   html.tv-match-lock .tv-app .tv-qc { flex: none; gap: 6px; height: var(--qc-h); padding: 10px 14px 12px; border-radius: var(--qc-radius); }
   html.tv-match-lock .tv-app .tv-qc-mark { width: 130px; height: 130px; right: -22px; bottom: -28px; }
   html.tv-match-lock .tv-app .tv-qc-head { flex: none; gap: 4px 6px; }
@@ -2351,4 +2366,256 @@
   html.tv-match-lock .tv-app .tv-mi-tut-head { flex: 0 0 38%; width: auto; height: auto; }
   html.tv-match-lock .tv-app .tv-mi-progress { top: auto; right: auto; bottom: 10px; left: 14px; width: calc(38% - 28px); }
   html.tv-match-lock .tv-app .tv-pstrip-chip { height: 38px; }
+}
+
+/* ---------- Round screens: one system for every game ----------
+   The card has two sizes (normal, and small for the games played on a map or a board); its text never changes at the
+   reveal, only the result is added on its first row (RoundVerdict). How you answer decides how the answer shows: options
+   are marked in place, a box to write in (or Rango's number) turns into the answer's card (AnswerCard) in the same place,
+   and on a map or a board the same card floats over it. See .claude/docs/diseno.md, "Pantallas de ronda". */
+
+/* The small card. */
+.tv-app .tv-qc.tv-qc--small { height: 150px; }
+.tv-app .tv-qc--small .tv-qc-dir { display: none; }
+.tv-app .tv-qc--small .tv-qc-q { font-size: 24px; }
+
+/* The question with an image on its left (a flag, a silhouette, the song's bars): the image takes the height left
+   between the first row and the clock, 84 px at most, so it never reaches the first row. */
+.tv-qc-body { flex-direction: row; align-items: flex-end; gap: 18px; }
+.tv-qc-body > .tv-qc-q { flex: 1 1 auto; min-width: 0; }
+.tv-qc-media { flex: none; align-self: flex-end; display: flex; align-items: flex-end; height: 100%; max-height: 84px; min-height: 0; }
+.tv-app .tv-qc-media .tv-qc-eq { width: 132px; height: 100%; }
+.tv-app .tv-qc-media .tv-geo-clue-area { display: flex; height: 100%; }
+.tv-app .tv-qc .tv-qc-media .tv-geo-clue { display: flex; align-items: center; justify-content: center; width: auto; height: 100%; }
+.tv-app .tv-qc .tv-qc-media .tv-geo-clue.is-bandera img { width: auto; height: 100%; aspect-ratio: 3 / 2; object-fit: cover; }
+.tv-app .tv-qc .tv-qc-media .tv-geo-clue.is-sombra { aspect-ratio: 4 / 3; padding: 6px 8px; }
+.tv-app .tv-qc .tv-qc-media .tv-geo-clue.is-sombra svg { width: auto; height: 100%; max-width: 100%; max-height: none; }
+.tv-app .tv-qc .tv-qc-media .tv-geo-clue-missing { font-size: 11px; }
+
+/* The round's result, on the card's first row: what happened, the points apart and the streak. */
+.tv-qc-points,
+.tv-qc-streak {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  height: 30px;
+  padding: 0 11px;
+  border-radius: 10px;
+  font: 800 15px/1 var(--tv-display);
+  white-space: nowrap;
+  color: #fff;
+}
+.tv-qc-points { background: rgba(0, 0, 0, 0.28); font-variant-numeric: tabular-nums; }
+.tv-qc-streak { background: rgba(255, 255, 255, 0.2); }
+.tv-qc-verdict.is-near { background: #fff; color: var(--edge); }
+.tv-qc-verdict .tv-confetti { position: absolute; }
+
+/* The answer's card: what it is, the answer big, a line under it and how it went for you; a cover on its left. */
+.tv-acard {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  width: 100%;
+  min-width: 0;
+  padding: 16px 20px;
+  border: 1px solid var(--tv-line);
+  border-radius: 18px;
+  background: var(--tv-surface-2);
+  text-align: left;
+  animation: tvPopIn 0.45s cubic-bezier(0.3, 1.7, 0.5, 1) backwards;
+}
+.tv-acard-media { flex: none; width: 96px; aspect-ratio: 1; overflow: hidden; border-radius: 12px; background: var(--tv-surface-3); }
+.tv-acard-media img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.tv-acard-icon { flex: none; display: grid; place-items: center; width: 52px; height: 52px; border-radius: 14px; background: var(--tv-surface-3); color: var(--tv-text); }
+.tv-acard-icon.is-ok { background: var(--p-ok); box-shadow: 0 3px 0 var(--p-ok-edge); color: var(--p-ink); }
+.tv-acard-icon.is-bad { background: var(--p-bad); box-shadow: 0 3px 0 var(--p-bad-edge); color: #fff; }
+.tv-acard-text { display: grid; gap: 5px; min-width: 0; }
+.tv-acard-label { font: 700 12px/1 var(--tv-small); letter-spacing: 0.06em; text-transform: uppercase; color: var(--tv-text-3); }
+.tv-acard-value { font: 800 34px/1.05 var(--tv-title); letter-spacing: -0.03em; color: var(--tv-text); overflow-wrap: anywhere; }
+.tv-acard-detail { font: 600 15px/1.3 var(--tv-small); color: var(--tv-text-2); }
+.tv-acard-mine { display: inline-flex; align-items: center; gap: 6px; font: 700 15px/1.25 var(--tv-small); }
+.tv-acard-mine svg { flex: none; }
+.tv-acard-mine.is-ok { color: var(--p-ok-text); }
+.tv-acard-mine.is-bad { color: var(--p-bad-text); }
+/* Over a map or a board: in its middle, the board still in sight around it. */
+.tv-acard-float { position: absolute; inset: 0; z-index: 6; display: grid; place-items: center; padding: 16px; pointer-events: none; }
+.tv-acard.is-floating { width: min(540px, 100%); pointer-events: auto; }
+/* Inside the over-the-board wrappers of Campo de minas and Lluvia, which only place and time it. */
+.tv-app .tv-mines-burst .tv-acard { width: min(480px, calc(100% - 28px)); }
+.tv-app .tv-mines-burst .tv-acard-value { font: 800 30px/1.05 var(--tv-title); color: var(--tv-text); }
+.tv-app .tv-mines-burst .tv-acard-detail { font: 600 14px/1.3 var(--tv-small); color: var(--tv-text-2); }
+/* Rango: the card in the answer's row. */
+.tv-app .tv-match .tv-hist-slot .tv-acard { width: 100%; }
+/* Where you write and, at the reveal, the answer's card (Trivia and Adivina la canción, Abiertas). */
+.tv-app .tv-match .tv-mslot { display: flex; flex-direction: column; justify-content: center; gap: 10px; min-height: 64px; }
+
+/* The writing bar, the same in every game: the box, a grey "Saltar" (only where you may skip) and the yellow "Enviar",
+   all 64 px tall on one row. On a phone the box gets its own row and "Saltar" and "Enviar" share the one under it. */
+.tv-app .tv-match :is(.tv-mwrite, .tv-search-row) { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: stretch; gap: 12px; }
+.tv-app .tv-match :is(.tv-mwrite, .tv-search-row):not(:has(> .tv-skipbtn)) { grid-template-columns: minmax(0, 1fr) auto; }
+.tv-app .tv-match :is(.tv-mwrite-box, .tv-search-row > .tv-search-box) { height: 64px; }
+.tv-app .tv-match :is(.tv-mwrite, .tv-search-row) > :is(.tv-mwrite-send, .tv-skipbtn) { width: auto; min-width: 0; height: 64px; min-height: 0; padding: 0 24px; border-radius: 14px; font-size: 18px; }
+.tv-app .tv-match .tv-mwrite-sent { height: 64px; }
+@media (max-width: 899px) {
+  .tv-app .tv-match :is(.tv-mwrite, .tv-search-row):has(> .tv-skipbtn) { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-rows: auto; gap: 8px; }
+  .tv-app .tv-match :is(.tv-mwrite, .tv-search-row):has(> .tv-skipbtn) > :first-child { grid-column: 1 / -1; }
+  .tv-app .tv-match :is(.tv-mwrite, .tv-search-row):has(> .tv-skipbtn) > :is(.tv-mwrite-send, .tv-skipbtn) { width: auto; height: 46px; padding: 0 12px; border-radius: 13px; font-size: 15px; }
+  .tv-app .tv-match :is(.tv-mwrite, .tv-search-row):has(> .tv-skipbtn) .tv-mwrite-send-label { position: static; width: auto; height: auto; overflow: visible; clip-path: none; }
+  /* Without "Saltar" (Lluvia, Rey de la colina): one row, "Enviar" only its icon beside the box. */
+  .tv-app .tv-match :is(.tv-mwrite, .tv-search-row):not(:has(> .tv-skipbtn)) > .tv-mwrite-send { width: 56px; height: 52px; padding: 0; }
+  .tv-app .tv-match :is(.tv-mwrite-box, .tv-search-row > .tv-search-box) { height: 52px; }
+  .tv-app .tv-match .tv-mwrite-sent { height: 52px; }
+  .tv-app .tv-qc.is-reveal:has(.tv-qc-verdict) :is(.tv-qc-topic, .tv-qc-streak) { display: none; }
+  .tv-acard { gap: 12px; padding: 12px 14px; border-radius: 16px; }
+  .tv-acard-media { width: 72px; }
+  .tv-acard-icon { width: 42px; height: 42px; border-radius: 12px; }
+  .tv-acard-value,
+  .tv-app .tv-mines-burst .tv-acard-value { font-size: 26px; }
+  .tv-acard-detail,
+  .tv-acard-mine { font-size: 13px; }
+  .tv-acard-label { font-size: 11px; }
+  .tv-acard-float { padding: 10px; }
+}
+
+/* Adivina la canción · Letra: the lyrics under the card in a space that is always as tall, four lines, those above
+   fading out; the gap at the end of the last one fills in its place at the reveal. */
+.tv-app .tv-match .tv-lyrics {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 2px;
+  height: calc(4 * 1.45em + 10px);
+  overflow: hidden;
+  font-size: 22px;
+  -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 1.2em);
+  mask-image: linear-gradient(180deg, transparent 0, #000 1.2em);
+}
+.tv-app .tv-match .tv-lyrics-line { flex: none; margin: 0; font-size: 1em; line-height: 1.45; }
+.tv-app .tv-match .tv-lyrics-line:last-child { margin-top: 0; }
+.tv-app .tv-match .tv-lyrics-gap { width: 130px; height: 1.35em; margin: 0 8px; font-size: 0.85em; line-height: calc(1.35em - 6px); }
+
+/* Phones. */
+@media (max-width: 899px), (max-height: 500px) {
+  html.tv-match-lock .tv-app .tv-qc.tv-qc--small { height: min(118px, var(--qc-h)); }
+  html.tv-match-lock .tv-app .tv-qc--small .tv-qc-q { font-size: 21px; }
+  html.tv-match-lock .tv-app .tv-qc-body { align-items: flex-end; gap: 10px; }
+  html.tv-match-lock .tv-app .tv-qc-media { max-height: 54px; }
+  html.tv-match-lock .tv-app .tv-qc-media .tv-qc-eq { width: 84px; max-height: none; }
+  html.tv-match-lock .tv-app .tv-qc-points,
+  html.tv-match-lock .tv-app .tv-qc-streak { height: 26px; padding: 0 9px; border-radius: 9px; font-size: 13.5px; }
+  html.tv-match-lock .tv-app .tv-match .tv-lyrics { font-size: 15px; height: calc(4 * 1.45em + 6px); }
+  html.tv-match-lock .tv-app .tv-match .tv-lyrics-gap { width: 80px; margin: 0 4px; }
+  html.tv-match-lock .tv-app .tv-match :is(.tv-mwrite, .tv-search-row):has(> .tv-skipbtn) > :is(.tv-mwrite-send, .tv-skipbtn) { width: auto; height: 46px; }
+}
+@media (max-height: 500px) {
+  html.tv-match-lock .tv-app .tv-qc.tv-qc--small { height: var(--qc-h); }
+}
+@media (max-width: 899px), (max-height: 500px) {
+  /* Encuentra el país: the flag or the silhouette within the small card's free height. */
+  html.tv-match-lock .tv-app .tv-qc .tv-qc-media :is(.tv-geo-clue, .tv-geo-clue img, .tv-geo-clue svg) { height: 100%; }
+  html.tv-match-lock .tv-app .tv-qc .tv-qc-media .tv-geo-clue.is-bandera img,
+  html.tv-match-lock .tv-app .tv-qc .tv-qc-media .tv-geo-clue.is-sombra { width: auto; }
+}
+/* The writing bar with "Saltar": "Enviar" and "Saltar" as wide as each other, "Saltar" at the right end. */
+.tv-app .tv-match :is(.tv-mwrite, .tv-search-row):has(> .tv-skipbtn) { grid-template-columns: minmax(0, 1fr) 150px 150px; }
+.tv-app .tv-match :is(.tv-mwrite, .tv-search-row):has(> .tv-skipbtn) > :is(.tv-mwrite-send, .tv-skipbtn) { width: 100%; padding: 0 12px; }
+@media (max-width: 899px) {
+  .tv-app .tv-match :is(.tv-mwrite, .tv-search-row):has(> .tv-skipbtn) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+/* What's in a panel to write in sits in its middle (on a phone too; with the keyboard up, at its top, over it). */
+@media (min-width: 900px) and (min-height: 501px) {
+  .tv-app .tv-match .tv-play-card.tv-mpanel { justify-content: center; padding-top: 26px; }
+}
+/* Adivina la canción's suggestions: under the box and exactly as wide, over the panel, never past its bottom
+   (`--suggest-max`, measured in Game.jsx); they scroll inside. */
+.tv-app .tv-match .tv-play-card .tv-search > .tv-suggest { top: calc(64px + 8px); right: calc(300px + 24px); }
+.tv-app .tv-match .tv-play-card .tv-search > .tv-suggest .tv-suggest-list { max-height: calc(var(--suggest-max, 300px) - 48px); }
+@media (max-width: 899px) {
+  .tv-app .tv-match .tv-play-card .tv-search > .tv-suggest { top: calc(52px + 8px); right: 0; }
+}
+/* The answer's card in a panel: no box of its own (the panel is the box), in the panel's middle. Over a map or a board
+   it keeps its box. */
+.tv-app .tv-match .tv-mpanel .tv-acard:not(.is-floating) { width: auto; max-width: 100%; align-self: center; padding: 0; border: 0; background: none; }
+/* The answer's card over a map or a board (Encuentra el país, Campo de minas, Lluvia): a panel over the page (no line, a
+   soft drop shadow), the map or the board darkened behind it, fading in and out with it. */
+.tv-app .tv-match :is(.tv-mines-burst, .tv-acard-float) { border-radius: 12px; background: rgba(0, 0, 0, 0.45); }
+.tv-app .tv-match .tv-acard-float { border-radius: inherit; }
+.tv-app .tv-match :is(.tv-mines-burst, .tv-acard-float) .tv-acard { padding: 16px 20px; border: 0; border-radius: 22px; background: var(--tv-surface); box-shadow: 0 20px 50px rgba(0, 0, 0, 0.55); }
+.tv-app .tv-match .tv-play-card.tv-mpanel:has(> .tv-acard) { justify-content: center; }
+.tv-app .tv-match .tv-mpanel .tv-acard:not(.is-floating) .tv-acard-value { font-size: 40px; }
+@media (max-width: 899px) {
+  .tv-app .tv-match .tv-mpanel .tv-acard:not(.is-floating) .tv-acard-value { font-size: 28px; }
+  .tv-app .tv-match .tv-mpanel .tv-mines-burst .tv-acard { padding: 12px 14px; }
+}
+html.tv-match-lock .tv-app .tv-match .tv-play-card.tv-mpanel:has(> .tv-acard) { justify-content: center; }
+
+/* Adivina la canción · Letra: the lyrics in the card, where the question goes (the last four lines, the ones above
+   fading out; the gap a white dashed box, filled white at the reveal). */
+.tv-app .tv-match .tv-qc .tv-lyrics {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 100%;
+  max-width: none;
+  gap: 0;
+  font-size: 24px;
+}
+/* Only the line being sung is lit; the rest, the gap's line too until the song gets to it, are dimmed. */
+.tv-app .tv-match .tv-qc .tv-lyrics-line { margin: 0; font: 800 1em/1.25 var(--tv-title); letter-spacing: -0.01em; color: #fff; }
+.tv-app .tv-match .tv-qc .tv-lyrics-line:is(.is-past, .is-next),
+.tv-app .tv-match .tv-qc .tv-lyrics-line.is-next:last-child { opacity: 0.5; }
+.tv-app .tv-match .tv-qc .tv-lyrics-line.is-current { opacity: 1; }
+.tv-app .tv-match .tv-qc .tv-lyrics-gap { width: 120px; height: 1.25em; margin: 0 4px; border: 3px dashed rgba(255, 255, 255, 0.9); border-radius: 8px; color: #fff; font: 800 0.85em/calc(1.25em - 6px) var(--tv-display); vertical-align: middle; }
+.tv-app .tv-match .tv-qc .tv-lyrics-gap.is-filled { width: auto; min-width: 0; padding: 0 10px; border: 3px solid #fff; background: #fff; color: var(--edge); }
+html.tv-match-lock .tv-app .tv-match .tv-qc .tv-lyrics { height: 100%; font-size: 16px; }
+html.tv-match-lock .tv-app .tv-match .tv-qc .tv-lyrics-gap:not(.is-filled) { width: 72px; }
+
+/* A song's artists under its title stay readable on the green and red of the reveal. */
+.tv-app .tv-match .tv-quiz-opt:is(.is-right, .is-wrong) .tv-music-opt-artists { color: inherit; opacity: 0.8; }
+
+/* Lluvia: the writing bar as wide as the stage, like every game's; what the last answer did right over it. */
+.tv-app .tv-match .tv-rain-bar { justify-content: stretch; }
+.tv-app .tv-match .tv-rain-form { flex: 1 1 auto; max-width: none; }
+.tv-app .tv-match .tv-rain-stage > .tv-rain-hint { margin: 0; color: var(--tv-text-2); }
+
+/* ---------- Phones: fixes of the round screens ---------- */
+@media (max-width: 899px), (max-height: 500px) {
+  /* The question starts at the left, beside its image (not pushed to the middle of the card). */
+  html.tv-match-lock .tv-app .tv-qc-body { justify-content: flex-start; }
+  /* The song's bars: thicker and closer, as tall as the card lets them. */
+  html.tv-match-lock .tv-app .tv-qc-media .tv-qc-eq { width: 72px; gap: 3px; }
+  html.tv-match-lock .tv-app .tv-qc-media .tv-qc-eq i { max-width: none; }
+  /* The answer's card in a panel: in its middle, its lines centred. */
+  html.tv-match-lock .tv-app .tv-match .tv-mpanel:has(> .tv-acard) { justify-content: center; }
+  /* The countdown and the box to write in, in the middle of their panel too; with the keyboard up they go back to its
+     top, over the keyboard. The board of Campo de minas fills its panel. */
+  html.tv-match-lock:not(.tv-keyboard-up) .tv-app .tv-match .tv-mpanel:not(.tv-mines-stage) { justify-content: safe center; }
+  html.tv-match-lock .tv-app .tv-match .tv-mpanel .tv-acard:not(.is-floating):not(:has(.tv-acard-media)) { flex-direction: column; text-align: center; }
+  html.tv-match-lock .tv-app .tv-match .tv-mpanel .tv-acard:not(.is-floating):not(:has(.tv-acard-media)) .tv-acard-text { justify-items: center; }
+}
+/* The game's tutorial on a phone: the same as on a computer, one panel in the game's colour with its badge and name, the
+   three steps and the clock with its bar under them, in the middle of the room there is. */
+@media (max-width: 899px) and (min-height: 501px) {
+  html.tv-match-lock .tv-app .tv-mi-tutorial { justify-content: center; gap: 18px; padding: 22px 16px 18px; overflow: hidden; border-radius: var(--qc-radius); background: var(--c2); }
+  html.tv-match-lock .tv-app .tv-mi-tutorial.is-neutro { background: var(--tv-option-bg); }
+  html.tv-match-lock .tv-app .tv-mi-tut-head,
+  html.tv-match-lock .tv-app .rl-tut.is-neutro .tv-mi-tut-head { height: auto; padding: 0; border-radius: 0; background: none; }
+  html.tv-match-lock .tv-app .tv-mi-steps { flex: none; grid-auto-rows: auto; gap: 10px; }
+  html.tv-match-lock .tv-app .tv-mi-step { padding: 12px 14px; border-radius: 16px; background: rgba(255, 255, 255, 0.16); font-size: 15px; font-weight: 800; }
+  html.tv-match-lock .tv-app .tv-mi-tutorial.is-neutro .tv-mi-step { background: var(--tv-surface); }
+  html.tv-match-lock .tv-app .rl-tut.is-color .tv-mi-step-icon { background: #fff; color: var(--c2); }
+  html.tv-match-lock .tv-app .tv-mi-progress { position: static; display: flex; align-items: center; gap: 14px; }
+  html.tv-match-lock .tv-app .tv-mi-clock { display: grid; width: 52px; height: 52px; }
+  html.tv-match-lock .tv-app .tv-mi-tutorial.is-color .tv-mi-bar { background: rgba(255, 255, 255, 0.22); }
+}
+
+/* A guest's profile button (the person icon, "Entrar") keeps its button on a phone; only a Blob goes without one. */
+@media (max-width: 760px) {
+  .tv-app .tv-topbar .tv-chip--profile:has(> .tv-avatar--empty) { justify-content: center; width: 36px; padding: 0; background: var(--tv-neutral); box-shadow: 0 3px 0 var(--tv-neutral-edge); }
+  .tv-app .tv-topbar .tv-chip--profile:has(> .tv-avatar--empty):hover { transform: translateY(-2px); box-shadow: 0 5px 0 var(--tv-neutral-edge); }
+  .tv-app .tv-topbar .tv-chip--profile:has(> .tv-avatar--empty):active { transform: translateY(3px); box-shadow: 0 0 0 var(--tv-neutral-edge); }
+}
+@media (max-width: 340px) {
+  .tv-app .tv-topbar .tv-chip--profile:has(> .tv-avatar--empty) { width: 34px; }
 }

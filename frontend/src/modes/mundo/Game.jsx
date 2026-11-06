@@ -1,7 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import TvShell from "../../components/home/TvShell.jsx";
-import Confetti from "../../components/home/Confetti.jsx";
 import Icon from "../../components/home/Icon.jsx";
 import WaitingPill, { waitingNames } from "../../components/home/WaitingPill.jsx";
 import MatchResults from "../../components/home/MatchResults.jsx";
@@ -16,7 +15,7 @@ import "../../styles/home.css";
 import "../../styles/geo.css";
 import { PauseButton, ReportButton, SkipButton, PauseVeil } from "../../components/home/PauseControls.jsx";
 import { resolveCode } from "../../lib/hiddenCode.js";
-import { MatchBar, MatchCard, MatchQuestion } from "../../components/home/MatchFrame.jsx";
+import { AnswerCard, MatchBar, MatchCard, MatchQuestion, RoundVerdict } from "../../components/home/MatchFrame.jsx";
 
 const COUNTDOWN_MS = 3000;
 // One colour per player for the pins on the reveal map (never the green and red of right and wrong).
@@ -303,14 +302,21 @@ function GameScreen() {
           seconds={seconds}
           pct={pct}
           urgent={urgent}
+          small
+          pills={phase === "reveal" && room.reveal && !spectator && !central && !tiebreak ? <PinVerdict me={me} /> : null}
+          /* The silhouette or the flag of the country to find, while it's searched and at the reveal. */
+          media={!byName && (phase === "playing" || phase === "reveal") ? <Clue question={question} /> : null}
         >
-          <div className="tv-qc-find">
-            {/* The silhouette or the flag of the country to find, while it's searched and at the reveal. */}
-            {!byName && (phase === "playing" || phase === "reveal") && <Clue question={question} />}
-            <MatchQuestion>
-              {phase === "countdown" ? title : phase === "reveal" ? room.reveal?.name || title : byName ? `Encuentra ${title}` : "Encuentra este país"}
-            </MatchQuestion>
-          </div>
+          {/* The question says which mode it is, and stays the same at the reveal: the answer shows on the map. */}
+          <MatchQuestion>
+            {phase === "countdown"
+              ? title
+              : byName
+              ? `Encuentra ${title}`
+              : style.id === "sombra"
+              ? "¿De qué país es esta silueta?"
+              : "¿De qué país es esta bandera?"}
+          </MatchQuestion>
         </MatchCard>
 
         {/* The same map for the whole match. Only what's on it changes, never its size. */}
@@ -460,56 +466,57 @@ function closestPin(room) {
   return `Más cerca: ${best.name}, a ${km(best.lastAnswer.distanceKm)}`;
 }
 
-// The end of a round, in a card over the top of the map (the country stays in sight under it): how far this player's
-// pin landed and the points, or who won the tiebreak.
+// How this player's pin did, on the card's first row (the same place as every game's result).
+function PinVerdict({ me }) {
+  const answer = me?.lastAnswer;
+  const inside = Boolean(answer?.inside);
+  const placed = Boolean(answer?.pin);
+  return (
+    <RoundVerdict
+      tone={inside ? "ok" : placed ? "near" : "timeout"}
+      label={inside ? "¡Dentro!" : placed ? `A ${km(answer.distanceKm)}` : "Se acabó el tiempo"}
+      points={placed ? me?.lastPoints || 0 : null}
+    />
+  );
+}
+
+// The end of a round, in the answer's card over the middle of the map (the country stays in sight around it): which
+// country it was and where this player's pin landed, or who won the tiebreak.
 function Verdict({ room, me, user, tiebreak, tiedNames, iPlay }) {
   const answer = me?.lastAnswer;
   const name = room.reveal.name;
-  let tone;
-  let icon;
-  let kicker;
-  let big;
-  let detail = null;
-  let won = false;
-  let points = false;
   if (tiebreak) {
     const winner = room.players.find((p) => p.id === tiebreak.winnerId);
-    won = Boolean(winner) && winner.id === user?.id;
-    tone = winner ? (won || !iPlay ? "ok" : "bad") : "timeout";
-    icon = winner ? "crown" : "hash";
-    kicker = "Desempate";
-    big = winner ? (won ? "¡Ganaste!" : `¡Gana ${winner.name}!`) : "Nadie lo resolvió";
-    detail = winner
-      ? tiebreak.reason === "dentro"
-        ? `${won ? "Confirmaste" : "Confirmó"} ${name} primero`
-        : `Nadie cayó dentro: ${won ? "tu" : "su"} pin quedó más cerca`
-      : `${joinNames(tiedNames)} siguen empatados`;
-  } else {
-    const inside = Boolean(answer?.inside);
-    const placed = Boolean(answer?.pin);
-    won = inside;
-    points = placed;
-    tone = inside ? "ok" : placed ? "bad" : "timeout";
-    icon = inside ? "check" : placed ? "pin" : "hash";
-    kicker = inside ? "¡Dentro!" : placed ? "Tu pin quedó" : "¡Se acabó el tiempo!";
-    big = inside ? name : placed ? `a ${km(answer.distanceKm)}` : name;
-    detail = inside ? null : placed ? `de ${name}` : "No pusiste tu pin a tiempo";
+    const won = Boolean(winner) && winner.id === user?.id;
+    return (
+      <AnswerCard
+        floating
+        icon={winner ? "crown" : "hash"}
+        label="Desempate"
+        value={winner ? (won ? "¡Ganaste!" : `¡Gana ${winner.name}!`) : "Nadie lo resolvió"}
+        detail={
+          winner
+            ? tiebreak.reason === "dentro"
+              ? `${won ? "Confirmaste" : "Confirmó"} ${name} primero`
+              : `Nadie cayó dentro: ${won ? "tu" : "su"} pin quedó más cerca de ${name}`
+            : `${joinNames(tiedNames)} siguen empatados`
+        }
+        mine={iPlay && winner ? (won ? "Ganaste el desempate" : "Esta vez no") : null}
+        mineOk={won}
+      />
+    );
   }
+  const inside = Boolean(answer?.inside);
+  const placed = Boolean(answer?.pin);
   return (
-    <div className={`tv-geo-reveal tv-geo-reveal--${tone}`} role="status">
-      <div className="tv-geo-reveal-card">
-        {won && <Confetti pieces={22} />}
-        <span className="tv-geo-reveal-icon">
-          <Icon name={icon} size={24} strokeWidth={tiebreak ? 2.6 : 3} />
-        </span>
-        <span className="tv-geo-reveal-text">
-          <small>{kicker}</small>
-          <strong>{big}</strong>
-          {detail && <em>{detail}</em>}
-        </span>
-        {points && <span className="tv-tag tv-tag--points">+{me?.lastPoints || 0}</span>}
-      </div>
-    </div>
+    <AnswerCard
+      floating
+      icon="pin"
+      label="La respuesta"
+      value={name}
+      mine={inside ? "Tu pin cayó dentro" : placed ? `Tu pin quedó a ${km(answer.distanceKm)}` : "No pusiste tu pin a tiempo"}
+      mineOk={inside}
+    />
   );
 }
 
