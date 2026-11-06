@@ -2223,6 +2223,13 @@ export class RoomManager {
       });
     }
 
+    // The songs this match is playing, wherever they came from: a song that plays must always be in the search box.
+    for (const s of room?.tracks || []) {
+      if (!s?.id || !s.title || seen.has(s.id)) continue;
+      seen.add(s.id);
+      allSongs.push({ id: s.id, title: s.title, artistName: s.artistName || "Artista", artists: artistLine(s) || "Artista" });
+    }
+
     // Every song of the Spotify playlists that play, found on iTunes yet or not.
     for (const entry of room ? this.activePlaylists(room) : []) {
       for (const t of entry.tracks) {
