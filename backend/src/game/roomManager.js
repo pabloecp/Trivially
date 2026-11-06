@@ -2246,11 +2246,14 @@ export class RoomManager {
   }
 
   /**
-   * What the room adds to the search box on top of globalSongList: custom tracks and the songs of its Spotify
-   * playlists not found on iTunes yet. Sent with the room during a round (small), so the list stays complete.
+   * What the room adds to the search box on top of the list players download once (GET /api/songs): custom tracks
+   * and the songs of its Spotify playlists. Sent with the room during a round (small), so the list stays complete.
+   * Only the fixed catalog is left out: it is in every download. A Spotify song found on iTunes *after* a player
+   * downloaded the list (globalSongList grows as playlists resolve) must still come here, or the round's own song
+   * would be missing from their search box ("Sin sugerencias").
    */
   roomSearchExtras(room) {
-    const global = new Set(this.globalSongList().flatMap((s) => [s.id, songKey(s)]));
+    const global = new Set((this.catalog.songs || []).flatMap((s) => [s.id, songKey(s)]));
     const allSongs = [];
     const seen = new Set();
 
