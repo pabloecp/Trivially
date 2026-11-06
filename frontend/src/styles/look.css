@@ -2509,7 +2509,7 @@
 @media (max-width: 899px) {
   .tv-app .tv-match :is(.tv-mwrite, .tv-search-row):has(> .tv-skipbtn) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
-/* What's in a panel to write in sits in its middle (on a phone, at its top, over the keyboard). */
+/* What's in a panel to write in sits in its middle (on a phone too; with the keyboard up, at its top, over it). */
 @media (min-width: 900px) and (min-height: 501px) {
   .tv-app .tv-match .tv-play-card.tv-mpanel { justify-content: center; padding-top: 26px; }
 }
@@ -2550,7 +2550,7 @@ html.tv-match-lock .tv-app .tv-match .tv-play-card.tv-mpanel:has(> .tv-acard) { 
 .tv-app .tv-match .tv-qc .tv-lyrics-gap { width: 120px; height: 1.25em; margin: 0 4px; border: 3px dashed rgba(255, 255, 255, 0.9); border-radius: 8px; color: #fff; font: 800 0.85em/calc(1.25em - 6px) var(--tv-display); vertical-align: middle; }
 .tv-app .tv-match .tv-qc .tv-lyrics-gap.is-filled { width: auto; min-width: 0; padding: 0 10px; border: 3px solid #fff; background: #fff; color: var(--edge); }
 html.tv-match-lock .tv-app .tv-match .tv-qc .tv-lyrics { height: 100%; font-size: 16px; }
-html.tv-match-lock .tv-app .tv-match .tv-qc .tv-lyrics-gap { width: 72px; }
+html.tv-match-lock .tv-app .tv-match .tv-qc .tv-lyrics-gap:not(.is-filled) { width: 72px; }
 
 /* A song's artists under its title stay readable on the green and red of the reveal. */
 .tv-app .tv-match .tv-quiz-opt:is(.is-right, .is-wrong) .tv-music-opt-artists { color: inherit; opacity: 0.8; }
@@ -2569,6 +2569,9 @@ html.tv-match-lock .tv-app .tv-match .tv-qc .tv-lyrics-gap { width: 72px; }
   html.tv-match-lock .tv-app .tv-qc-media .tv-qc-eq i { max-width: none; }
   /* The answer's card in a panel: in its middle, its lines centred. */
   html.tv-match-lock .tv-app .tv-match .tv-mpanel:has(> .tv-acard) { justify-content: center; }
+  /* The countdown and the box to write in, in the middle of their panel too; with the keyboard up they go back to its
+     top, over the keyboard. The board of Campo de minas fills its panel. */
+  html.tv-match-lock:not(.tv-keyboard-up) .tv-app .tv-match .tv-mpanel:not(.tv-mines-stage) { justify-content: safe center; }
   html.tv-match-lock .tv-app .tv-match .tv-mpanel .tv-acard:not(.is-floating):not(:has(.tv-acard-media)) { flex-direction: column; text-align: center; }
   html.tv-match-lock .tv-app .tv-match .tv-mpanel .tv-acard:not(.is-floating):not(:has(.tv-acard-media)) .tv-acard-text { justify-items: center; }
 }
