@@ -76,15 +76,6 @@ html.tv-geo-playing { touch-action: pan-x pan-y; }
   .tv-geo-side { position: sticky; top: 14px; max-height: calc(100vh - 28px); max-height: calc(100svh - 28px); overflow-y: auto; scrollbar-width: thin; }
 }
 
-/* Phones and tablets: the match takes the whole screen (no top bar), and the scoreboard is under it: scroll down to
-   see it. */
-@media (max-width: 899px) {
-  html.tv-geo-playing body { overscroll-behavior: none; }
-  html.tv-geo-playing .tv-topbar { display: none; }
-  html.tv-geo-playing .tv-main--page { padding-top: 10px; }
-  .tv-geo-stage { gap: 8px; height: max(400px, calc(100vh - var(--geo-top, 10px) - 10px)); height: max(400px, calc(100svh - var(--geo-top, 10px) - 10px)); }
-}
-
 /* The top card: kicker, title and one hint, the same in every phase. */
 .tv-geo-find { display: grid; gap: 2px; }
 .tv-geo-country {

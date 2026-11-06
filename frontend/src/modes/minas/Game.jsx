@@ -89,7 +89,7 @@ function GameScreen() {
 
   // Join the room after a reload. Going back to the room screen is handled by RoomNavigator (App.jsx).
   useEffect(() => {
-    if (!room || room.code !== code) joinRoom(code).catch(() => nav("/"));
+    if (code && (!room || room.code !== code)) joinRoom(code).catch(() => nav("/", { replace: true }));
   }, [code]);
 
   useEffect(() => {
@@ -236,7 +236,7 @@ function GameScreen() {
       return;
     }
     setConfirmHub(false);
-    restartGame().catch((e) => setErr(e.message || "No se pudo volver a la sala"));
+    restartGame().catch((e) => setErr(e.message || "No se pudo terminar la partida"));
   }
 
   if (!room) {

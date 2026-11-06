@@ -57,7 +57,7 @@ function GameScreen() {
 
   // Join the room after a reload. Going back to the room screen is handled by RoomNavigator (App.jsx).
   useEffect(() => {
-    if (!room || room.code !== code) joinRoom(code).catch(() => nav("/"));
+    if (code && (!room || room.code !== code)) joinRoom(code).catch(() => nav("/", { replace: true }));
   }, [code]);
 
   useEffect(() => {
@@ -87,7 +87,7 @@ function GameScreen() {
   useEffect(() => setErr(""), [round, room?.phase]);
 
   // The game is one frame that fills the screen under the top bar (see .tv-geo-stage); --geo-top is where it starts.
-  // On a phone the frame takes the whole screen (html.tv-geo-playing hides the top bar); the scoreboard is under it.
+  // On a phone that frame is every match's (look.css), with the map taking all it can.
   // Nor does the page zoom: a pinch is for the map (WorldMap takes the ones that start on it), and a zoomed page
   // would push the frame off the screen. maximum-scale also undoes a zoom from before the match.
   const hasGame = Boolean(room) && room.phase !== "finished";
@@ -155,7 +155,7 @@ function GameScreen() {
       return;
     }
     setConfirmHub(false);
-    restartGame().catch((e) => setErr(e.message || "No se pudo volver a la sala"));
+    restartGame().catch((e) => setErr(e.message || "No se pudo terminar la partida"));
   }
 
   if (!room) {
@@ -244,7 +244,7 @@ function GameScreen() {
   }
 
   // Someone who joined mid-match only watches: the same lines, without the instructions to answer.
-  if (spectator && phase !== "reveal") hint = "Estás viendo la partida. Entrarás a la sala cuando termine.";
+  if (spectator && phase !== "reveal") hint = "Estás viendo la partida. Entrarás a jugar cuando termine.";
   // The central device talks to the whole room: they put their pins from their phones.
   if (central && phase === "countdown" && !tiebreak) {
     hint = byName

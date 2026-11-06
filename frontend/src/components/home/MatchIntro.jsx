@@ -3,6 +3,7 @@ import { play } from "../../lib/sounds.js";
 import { findMode } from "../../modes/index.js";
 import Icon from "./Icon.jsx";
 import { MATCH_KINDS, TUTORIALS, VARIANT_TUTORIALS, findVariant, variantsFor } from "./matchInfo.js";
+import { introLine, variantsOf } from "./MatchFrame.jsx";
 import { useResultsLook } from "../../lib/ownerView.js";
 import { RetouchBetween } from "./ResultsLooks.jsx";
 import "../../styles/match.css";
@@ -37,9 +38,7 @@ function variantName(id) {
   return v.way ? `${name} ${v.way}` : name;
 }
 
-// The match's games in play order and the one now: each game with its one way ("trivia-cerradas"); an older server only
-// sends the games.
-const variantsOf = (intro) => intro.variants || intro.games;
+// The game now, with its way (an older server only sends the game).
 const variantNow = (intro) => intro.variant || intro.game;
 
 // The roulette: the games not played yet (each with its way; once every one has been, the draw starts over, never with
@@ -244,6 +243,8 @@ function PreviousGame({ intro, players, color = "site" }) {
  * column, so the top bar and the players stay in sight. The roulette's matches have no set number of games
  * (the first to win 2): its top line says which game this is, with a dot for each game it has so far (the two it always
  * plays, and one more each time nobody has won it).
+ * On a phone it has the same frame as the round after it (look.css): the panel in the place of the round's card, the
+ * tutorial's steps where the answers go, the scoreboard's strip under them.
  */
 export default function MatchIntro({ room }) {
   const intro = room?.phase === "intro" ? room.intro : null;
@@ -257,13 +258,8 @@ export default function MatchIntro({ room }) {
   const spinning = elapsed < intro.spinMs;
   const leftMs = intro.spinMs + intro.tutorialMs - elapsed;
   const kind = MATCH_KINDS[room.matchmaking?.kind];
-  // A Clásico of a private room: its name and colour instead of the public match's. The roulette's public match is
-  // the Clásico too; a game searched for by name, its kind's ("Partida casual").
   const classic = findMode(room.run?.classic);
-  const label = classic?.fullName || (intro.winsToWin ? "Clásico" : kind ? `Partida ${kind.name.toLowerCase()}` : null);
   const total = variantsOf(intro).length;
-  // Two or more who got to the games it takes to win at the same time: this game breaks the tie.
-  const tiebreak = Boolean(intro.winsToWin) && Math.max(0, ...room.players.map((p) => p.wins || 0)) >= intro.winsToWin;
   // The roulette and the tutorial in the game's colour, or dark ("neutro", an owner's choice).
   const { tone } = useResultsLook();
 
@@ -271,12 +267,7 @@ export default function MatchIntro({ room }) {
     <section className="tv-mcard tv-mi" aria-label="Siguiente juego">
       <div className="tv-mi-frame">
         <header className="tv-mi-head">
-          <p className="tv-mono-label">
-            {/* One game alone isn't "Juego 1 de 1": only what kind of match it is. */}
-            {total === 1 && !intro.winsToWin
-              ? label || "Partida privada"
-              : `${label ? `${label} · ` : ""}${tiebreak ? "Juego de desempate" : intro.winsToWin ? `Juego ${intro.index + 1}` : `Juego ${intro.index + 1} de ${total}`}`}
-          </p>
+          <p className="tv-mono-label">{introLine(room)}</p>
           {total > 1 && (
             <ol className="tv-mi-dots" aria-hidden="true">
               {variantsOf(intro).map((g, i) => {

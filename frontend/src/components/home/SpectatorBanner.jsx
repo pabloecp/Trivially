@@ -6,7 +6,7 @@ export default function SpectatorBanner() {
     <p className="tv-spectator" role="status">
       <Icon name="info" size={18} strokeWidth={2.6} />
       <span>
-        <strong>Estás viendo la partida.</strong> Entrarás a la sala cuando termine.
+        <strong>Estás viendo la partida.</strong> Entrarás a jugar cuando termine.
       </span>
     </p>
   );

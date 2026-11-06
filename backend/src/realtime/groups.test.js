@@ -65,7 +65,7 @@ const code = made.group.code;
 assert.equal(made.group.leaderId, "gst_ana");
 assert.deepEqual(made.group.plan, { game: "opciones", audience: "publica" });
 assert.equal(made.group.place, null, "on Inicio");
-assert.match((await ana.call("group:create", user("Ana"))).error, /Ya estás en una sala/);
+assert.match((await ana.call("group:create", user("Ana"))).error, /Ya estás en un grupo/);
 
 // Someone who closed the app keeps their place for a while, but making a new group (they came back without it) takes
 // them out of the old one instead of saying they're already in a group.
@@ -80,7 +80,7 @@ assert.equal(groups.groups.get(fedeOld), undefined, "the old group, empty, is go
 await fede2.call("group:leave", {});
 
 // Beto joins with the code (checked first); a wrong code says so.
-assert.match((await beto.call("group:check", "ZZZZZ")).error, /No hay ninguna sala/);
+assert.match((await beto.call("group:check", "ZZZZZ")).error, /No hay ningún grupo/);
 assert.equal((await beto.call("group:check", code)).ok, true);
 const joined = await beto.call("group:join", { ...user("Beto"), code });
 assert.equal(joined.ok, true);
@@ -172,7 +172,7 @@ assert.ok(again.players.has("gst_dani"), "Dani stays with his results");
 const extra = ["eva", "fede", "gabi"].map(connect);
 for (const s of extra) await s.call("group:join", { user: { name: s.id }, code });
 const tooMany = await ana.call("match:find", { ...user("Ana"), kind: "casual", game: "historia" });
-assert.match(tooMany.error, /5 como mucho y tu sala es de 6/);
+assert.match(tooMany.error, /5 como mucho y tu grupo es de 6/);
 assert.ok(next.players.get("gst_beto")?.connected, "Beto is still where he was");
 
 // The leader takes someone out (and out of the group's match), and someone leaves.
@@ -212,8 +212,8 @@ assert.equal(mati.last("group:left").reason, "sacado");
 {
   const uno = connect("uno");
   const dos = connect("dos");
-  const sala = (await uno.call("group:create", { ...user("Uno"), plan: { game: "opciones", audience: "grupo" } })).group.code;
-  await dos.call("group:join", { ...user("Dos"), code: sala });
+  const theirsToo = (await uno.call("group:create", { ...user("Uno"), plan: { game: "opciones", audience: "grupo" } })).group.code;
+  await dos.call("group:join", { ...user("Dos"), code: theirsToo });
   assert.equal((await dos.call("group:permission", "gst_uno")).ok, false, "only the leader");
   const given = await uno.call("group:permission", "gst_dos");
   assert.equal(given.granted, true);
@@ -224,10 +224,11 @@ assert.equal(mati.last("group:left").reason, "sacado");
   assert.equal(privada.coHosts.includes("gst_dos"), false);
 }
 
-// Leaving the group takes you out of its match too, the last one as well: no sala, no game chosen.
+// Leaving the group takes you out of its match too, but the last one keeps it as their own.
 await lia.call("group:leave", {});
 assert.equal(groups.get(theirs), undefined);
-assert.equal(rooms.socketToRoom.get("s-lia"), undefined, "Lía is out of the match");
+assert.ok(match.players.get("gst_lia")?.connected, "Lía plays alone now");
+assert.equal(match.groupCode, null);
 
 // A dropped connection keeps the place a while; past it, the player is out (the leader too: the next one leads).
 ana.drop();
@@ -236,6 +237,35 @@ await new Promise((r) => setTimeout(r, 60));
 assert.equal(groups.get(code).members.has("gst_ana"), false);
 assert.notEqual(groups.get(code).leaderId, "gst_ana");
 assert.ok(beto.last("group:state").leaderId !== "gst_ana", "the others hear it");
+
+// A leader who dropped and comes back soon leads again, so the group doesn't keep changing leaders.
+{
+  const group = groups.get(code);
+  assert.equal(group.formerLeader?.id, "gst_ana", "the group remembers who led it");
+  const ana2 = connect("ana");
+  const back = await ana2.call("group:join", { ...user("Ana"), code });
+  assert.equal(back.ok, true);
+  assert.equal(group.leaderId, "gst_ana", "Ana leads again");
+  assert.equal(back.group.leaderId, "gst_ana");
+  assert.equal(group.formerLeader, null, "only once");
+  assert.equal(beto.last("group:state").leaderId, "gst_ana", "the others hear it");
+
+  // If the group's leader was chosen by hand in the meantime, it stays like that.
+  ana2.drop();
+  await new Promise((r) => setTimeout(r, 60));
+  assert.equal(group.formerLeader?.id, "gst_ana");
+  const chosen = [...group.members.values()].find((m) => m.connected && m.id !== group.leaderId);
+  groups.setLeader(group, group.leaderId, chosen.id);
+  assert.equal(group.formerLeader, null);
+  await connect("ana").call("group:join", { ...user("Ana"), code });
+  assert.equal(group.leaderId, chosen.id, "the leader someone chose stays");
+
+  // And a leader who comes back too late is just another player.
+  group.formerLeader = { id: "gst_ana", until: Date.now() - 1 };
+  const before = group.leaderId;
+  await connect("ana").call("group:join", { ...user("Ana"), code });
+  assert.equal(group.leaderId, before, "too late");
+}
 
 for (const r of [...rooms.rooms.values()]) rooms.destroy(r);
 console.log("groups.test ok");

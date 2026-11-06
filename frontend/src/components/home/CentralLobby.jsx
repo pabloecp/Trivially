@@ -68,7 +68,7 @@ export default function CentralLobby({ room }) {
             </div>
           )}
 
-          <ul className="tv-central-faces" aria-label="Jugadores en la sala">
+          <ul className="tv-central-faces" aria-label="Jugadores en la partida">
             {players.map((p, i) => (
               <li key={p.id} style={{ "--i": i }}>
                 <Avatar name={p.name} avatar={p.avatar} />

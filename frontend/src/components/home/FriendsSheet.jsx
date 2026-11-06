@@ -12,11 +12,13 @@ import "../../styles/friends.css";
 export function statusOf(friend) {
   if (!friend.online) return "Desconectado";
   if (!friend.room) return "En línea";
+  // Alone in a group on Inicio is the same as having none: a group only shows once there is more than one in it.
+  if (friend.room.inRoom === false && friend.room.players <= 1) return "En línea";
   const mode = findMode(friend.room.game)?.name;
   const where = friend.room.inMatch
     ? `Jugando${mode ? ` ${mode}` : ""}`
     : friend.room.inRoom === false
-      ? "En una sala"
+      ? "En un grupo"
       : mode
         ? `Preparando ${mode}`
         : "Preparando una partida";
@@ -159,7 +161,7 @@ export default function FriendsSheet() {
       () => f.joinFriend(friend.id),
       (action) =>
         action === "requested"
-          ? `Le pediste a ${friend.room?.hostName || "el líder"} unirte a su sala. Esperando su respuesta…`
+          ? `Le pediste a ${friend.room?.hostName || "el líder"} unirte a su grupo. Esperando su respuesta…`
           : null,
     );
 

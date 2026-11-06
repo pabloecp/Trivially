@@ -37,7 +37,7 @@ function ResultsScreen() {
 
   // Join the room after a reload. Going back to the room screen is handled by RoomNavigator (App.jsx).
   useEffect(() => {
-    if (!room || room.code !== code) joinRoom(code).catch(() => nav("/"));
+    if (code && (!room || room.code !== code)) joinRoom(code).catch(() => nav("/", { replace: true }));
   }, [code]);
 
   if (!room) {
@@ -171,7 +171,7 @@ function ResultsScreen() {
                 <button
                   className="tv-btn tv-c-neutral tv-res-btn"
                   data-sound="back"
-                  aria-label={leadsGroup ? "Volver al inicio con tu sala" : "Salir"}
+                  aria-label={leadsGroup ? "Volver al inicio con tu grupo" : "Salir"}
                   onClick={() => {
                     if (leadsGroup) {
                       withSound(groupHome, null)

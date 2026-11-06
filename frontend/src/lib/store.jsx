@@ -426,7 +426,7 @@ export function AppProvider({ children }) {
     const onGroupLeft = ({ code } = {}) => {
       if (code !== groupCodeRef.current) return;
       clearGroup();
-      setKickedNotice("El líder te sacó de la sala");
+      setKickedNotice("El líder te sacó del grupo");
     };
     const onKicked = ({ code, reason } = {}) => {
       if (code !== roomCodeRef.current) return;
@@ -434,7 +434,7 @@ export function AppProvider({ children }) {
       setKickedNotice(
         reason === "inactivo"
           ? "Saliste de la partida por inactividad"
-          : "El anfitrión te sacó de la sala"
+          : "El anfitrión te sacó de la partida"
       );
     };
     s.on("room:state", onState);
@@ -633,7 +633,7 @@ export function AppProvider({ children }) {
       // `explicitUser` is for callers that just created the user and want to be sure it's the one sent.
       async createRoom(mode, config, game = "musica", explicitUser) {
         const current = explicitUser || userRef.current;
-        if (!current?.name) throw new Error("Debes identificarte antes de crear una sala");
+        if (!current?.name) throw new Error("Debes identificarte antes de crear una partida");
         const res = await emitAck("room:create", { user: current, mode, config, game });
         if (!res.ok) throw new Error(res.error);
         return enterRoom(res.state);
@@ -744,10 +744,15 @@ export function AppProvider({ children }) {
       // they were playing alone becomes the group's.
       async createGroup(plan, explicitUser) {
         const current = explicitUser || userRef.current;
-        if (!current?.name) throw new Error("Debes identificarte antes de crear una sala");
+        if (!current?.name) throw new Error("Debes identificarte antes de crear un grupo");
         const res = await emitAck("group:create", { user: current, plan });
         if (!res.ok) throw new Error(res.error);
         return enterGroup(res.group);
+      },
+
+      // A group the server made for this player (a friend asked to join them while they had none). Only if they still have none.
+      adoptGroup(state) {
+        if (state?.code && !groupCodeRef.current) enterGroup(state);
       },
 
       // Whether a code opens a group, before asking for a name.
@@ -772,7 +777,7 @@ export function AppProvider({ children }) {
         return res.group;
       },
 
-      // "Salir de la sala": out of it, and of its private match.
+      // "Salir del grupo": out of it, and of its private match.
       async leaveGroup() {
         const res = await emitAck("group:leave", {});
         clearGroup();

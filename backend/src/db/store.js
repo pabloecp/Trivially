@@ -4,6 +4,7 @@ import { hasLink, NAME_LINK_ERROR } from "../moderation/links.js";
 import { assignUsername, changeUsername, normalizeUsername, usernameError, usernameStatus } from "../auth/username.js";
 import crypto from "node:crypto";
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { createClient } from "@supabase/supabase-js";
@@ -11,7 +12,13 @@ import { effectiveRole } from "../auth/roles.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DATA_DIR = path.join(__dirname, "../../data");
-const STORE_PATH = path.join(DATA_DIR, "store.json");
+// Test scripts (*.test.js) only use fake users: they never touch Supabase, even when its variables are set, and
+// write to a throwaway file in the temp folder instead of the tracked data/store.json. TRIVIALLY_STORE_PATH overrides
+// the file.
+const RUNNING_TEST = /\.test\.js$/.test(process.argv[1] || "");
+const STORE_PATH =
+  process.env.TRIVIALLY_STORE_PATH ||
+  (RUNNING_TEST ? path.join(os.tmpdir(), `trivially-store-test-${process.pid}.json`) : path.join(DATA_DIR, "store.json"));
 
 const MAX_NAME_LENGTH = 24;
 export const DEFAULT_AVATAR = "#FF2D55";
@@ -133,9 +140,6 @@ let flushTimer = null;
 let flushing = Promise.resolve();
 let pendingStore = null;
 
-// Test scripts (*.test.js) never touch Supabase, even when its variables are set: they only use fake users.
-const RUNNING_TEST = /\.test\.js$/.test(process.argv[1] || "");
-
 export function supabaseEnabled() {
   return !RUNNING_TEST && Boolean(process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY);
 }
@@ -255,7 +259,7 @@ export function saveStore(store) {
     scheduleFlush(store);
     return;
   }
-  fs.mkdirSync(DATA_DIR, { recursive: true });
+  fs.mkdirSync(path.dirname(STORE_PATH), { recursive: true });
   fs.writeFileSync(STORE_PATH, JSON.stringify(store, null, 2));
 }
 

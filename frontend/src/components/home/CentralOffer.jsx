@@ -21,7 +21,7 @@ export default function CentralOffer() {
 
   const { isHost, hostName, status, error } = shown;
   const busy = status === "sending";
-  let title = "Ya estás en esta sala";
+  let title = "Ya estás en esta partida";
   let text = isHost
     ? "Tu cuenta ya juega aquí desde otro dispositivo. Usa este como pantalla de la partida (preguntas, sonidos y marcador) y responde desde el otro."
     : `Tu cuenta ya juega aquí desde otro dispositivo. Pídele a ${hostName} usar este como pantalla de la partida (preguntas, sonidos y marcador) y responde desde el otro.`;
