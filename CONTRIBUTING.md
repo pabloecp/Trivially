@@ -44,7 +44,7 @@ Después, en GitHub: **pull request de `feature/mi-cambio` hacia `develop`**. Cu
 Antes de abrir el pull request:
 
 - `npm test --prefix backend` y `npm run build --prefix frontend` deben pasar.
-- Si los tests tocan `backend/data/store.json`, restáuralo (`git checkout backend/data/store.json`).
+- No subas cambios en `backend/data/store.json` (los tests ya no lo tocan; si aparece modificado, restáuralo con `git checkout backend/data/store.json`).
 
 ## Publicar en producción (release)
 
