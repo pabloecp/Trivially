@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { endAtGap } from "./roundBuilder.js";
 
 // Completa la letra's rounds as the game reads them: worked out once, offline (`npm run lyrics:build`,
 // lyrics/roundBuilder.js), and loaded when the server starts; nothing is worked out or asked for while playing.
@@ -9,9 +10,9 @@ import { fileURLToPath } from "node:url";
 // live in the git-ignored file below and in Supabase's `lyric_rounds` table (RLS on, no policies), never in the repo.
 //
 // A row: { song_id, spotify_id, preview_url, preview_etag, data }, data being only the minimum:
-//   { lines: [{ at, text }] (the lines shown, each from the second it starts in the preview; the last one has "___"),
-//     cut (where the song goes quiet, right before the answer), back (where it comes back, with the next word), stop
-//     (where it stops, at the end of the line), end (until when the reveal plays), answer, wrong: [three] }
+//   { lines: [{ at, text }] (the lines shown, each from the second it starts in the preview; the last one ends in "___"),
+//     cut (where the song stops, right before the answer), end (until when the reveal plays), answer, wrong: [three] }
+// Rounds made before may have text after the gap and `back`/`stop` (the song used to play on): toVerse ignores them.
 // or null for a song that can't be made into a round (so it isn't tried again).
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -22,15 +23,12 @@ export const LYRIC_ROUNDS_TABLE = "lyric_rounds";
 export function toVerse(row) {
   const data = row?.data;
   if (!data?.lines?.length || !data.answer || data.wrong?.length !== 3) return null;
-  const lines = data.lines.map((l) => ({ atMs: Math.round(Number(l.at) * 1000), text: String(l.text) }));
+  const lines = data.lines.map((l) => ({ atMs: Math.round(Number(l.at) * 1000), text: endAtGap(String(l.text)) }));
   return {
     id: `${row.song_id}:${data.cut}`,
     lines,
     line: lines.at(-1).text,
     cutMs: Math.round(Number(data.cut) * 1000),
-    // Where the song comes back after the gap's word and where it stops (an older round: both at the cut).
-    backMs: Math.round(Number(data.back ?? data.cut) * 1000),
-    stopMs: Math.round(Number(data.stop ?? data.cut) * 1000),
     answerEndMs: Math.round(Number(data.end) * 1000),
     answer: data.answer,
     aliases: [],

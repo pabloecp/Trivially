@@ -4,7 +4,7 @@ import os from "node:os";
 import path from "node:path";
 import { readLocalCatalog } from "../catalog/catalogProvider.js";
 import { RoomManager } from "../game/roomManager.js";
-import { alignWords, lyricLines, pickRound, wrongAnswers } from "./roundBuilder.js";
+import { alignWords, endAtGap, lyricLines, pickRound, wrongAnswers } from "./roundBuilder.js";
 import { loadLyricRounds, toVerse, writeRoundsFile } from "./lyricRounds.js";
 
 // Adivina la canción's "Completa la letra". The lyrics here are made up: real lyrics never go in the repo.
@@ -36,17 +36,35 @@ const words = [
 const { matched } = alignWords(lines, words);
 assert.ok(matched >= 22, `matched ${matched}`);
 
-// The gap: a clear word, 8 s or more into the song, in the middle of a chorus line; the cut 80 ms before it starts;
+// The gap: a clear word, 8 s or more into the song, the last of a chorus line; the cut 80 ms before it starts;
 // the reveal until that line has been sung and a bit more; the lines before it from when each starts.
 const round = pickRound(lines, words, { length: 30, language: "es" });
-assert.equal(round.answer, "montañas");
-assert.equal(round.lines.at(-1).text, "Aquí viene la frase con ___ y ríos");
-assert.equal(round.cut, Math.round((11.1 + 5 * 0.33 - 0.08) * 100) / 100);
+assert.equal(round.answer, "ríos");
+assert.equal(round.lines.at(-1).text, "Aquí viene la frase con montañas y ___");
+assert.equal(round.cut, Math.round((11.1 + 7 * 0.33 - 0.08) * 100) / 100);
+assert.equal(round.back, undefined, "the song doesn't play on after the cut");
+assert.equal(round.stop, undefined);
 assert.equal(round.lines[0].text, "Primera línea de este verso inventado", "the real lyrics, not what Whisper heard");
 assert.equal(round.lines[0].at, 3);
 assert.ok(round.end > round.heard.end && round.end <= 30);
 assert.equal(round.wrong.length, 3);
 assert.ok(round.wrong.every((w) => !/montañas|frase|viene|ríos/i.test(w)), round.wrong.join());
+// When the last word doesn't fit (heard unclearly), one in the middle: the line still ends at the gap.
+const middle = pickRound(lines, words.map((w) => (w.word === "ríos" ? { ...w, prob: 0.3 } : w)), { length: 30, language: "es" });
+assert.ok(middle.lines.at(-1).text.endsWith("___"), middle.lines.at(-1).text);
+assert.notEqual(middle.answer, "ríos");
+assert.equal(endAtGap("Hoy tengo a una, ___ otra, ey"), "Hoy tengo a una, ___");
+assert.equal(endAtGap("Quédate aquí, ___, conmigo"), "Quédate aquí, ___");
+assert.equal(endAtGap("Una línea sin espacio"), "Una línea sin espacio");
+assert.equal(endAtGap('Me dice "no quiero que ___ hoy"'), "Me dice no quiero que ___");
+assert.equal(endAtGap('Dijo "sí" y luego ___'), 'Dijo "sí" y luego ___');
+assert.equal(endAtGap("¿Por qué no me ___?"), "Por qué no me ___");
+// A word the preview ends on is never the gap: its reveal wouldn't let it be heard.
+const lastWord = words.at(-1);
+const shortPreview = pickRound(lines, words, { length: lastWord.end + 0.1, language: "es" });
+assert.notEqual(shortPreview?.answer, lastWord.word);
+const noEarlier = pickRound(lines, words, { length: 11.1 + 7 * 0.33 + 0.3 + 0.2, language: "es" });
+assert.notEqual(noEarlier?.answer, "ríos", "ríos ends right where this preview does");
 // A chorus line sung twice in a row: its words are on screen in the line before, so the gap is never one of them.
 const twice = ["Aquí viene la frase con montañas y ríos", "Segunda línea que se canta después", "Aquí viene la frase con montañas y ríos"];
 const twiceHeard = [...heard(3, twice[0]), ...heard(8.5, twice[1]), ...heard(12, twice[2])];
@@ -66,13 +84,20 @@ const { heard: _, ...data } = round;
 writeRoundsFile({ [s1.id]: { preview_url: s1.previewUrl, preview_etag: "abc", data }, [s2.id]: { preview_url: s2.previewUrl, data: null } }, file);
 const loaded = await loadLyricRounds({ file, log: { log() {}, warn() {} } });
 assert.equal(loaded.size, 1);
-assert.equal(loaded.get(s1.id).verse.answer, "montañas");
+assert.equal(loaded.get(s1.id).verse.answer, "ríos");
 assert.equal(loaded.get(s1.id).verse.cutMs, Math.round(data.cut * 1000));
+// A round made before, with text after the gap and the song playing on: read as the line up to the gap, no more song.
+const older = toVerse({ song_id: "x", data: { lines: [{ at: 1, text: "Hoy tengo a una, ___ otra, ey" }], cut: 16.58, back: 17.29, stop: 18.74, end: 19.44, answer: "mañana", wrong: ["a", "b", "c"] } });
+assert.equal(older.line, "Hoy tengo a una, ___");
+assert.equal(older.lines[0].text, "Hoy tengo a una, ___");
+assert.equal(older.backMs, undefined);
+assert.equal(older.stopMs, undefined);
+assert.equal(older.answerEndMs, 19440, "the reveal still plays on");
 fs.rmSync(dir, { recursive: true, force: true });
 
 // A round only plays with the very audio it was measured on.
 const checked = new RoomManager({ catalog, store: { users: {} }, lyricRounds: loaded });
-assert.equal(checked.lyricFor(s1).answer, "montañas");
+assert.equal(checked.lyricFor(s1).answer, "ríos");
 assert.equal(checked.lyricFor({ ...s1, previewUrl: "https://audio-ssl.itunes.apple.com/otro.m4a" }), null, "another preview");
 
 // Rounds for the room's tests (made up).
@@ -127,6 +152,8 @@ assert.equal(state.lyrics.answer, null);
 assert.equal(state.lyrics.blanks, undefined, "nothing says how long the words are");
 assert.equal(state.lyrics.revealFromMs, track.lyric.cutMs - 3000);
 assert.equal(state.lyrics.startMs, track.lyric.cutMs - 10000);
+assert.equal(state.lyrics.backMs, undefined, "no song after the cut");
+assert.equal(state.lyrics.stopMs, undefined);
 // The round lasts the bit of song before the cut plus its seconds to answer.
 assert.equal(state.lyrics.roundMs, o.config.roundMs + 10000);
 assert.ok(!JSON.stringify(state).includes(track.lyric.answer), "the words never go out before the reveal");

@@ -14,8 +14,12 @@
 //   npm run lyrics:build --prefix backend -- --ids luis-fonsi-despacito,coldplay-yellow --redo
 //   npm run lyrics:build --prefix backend -- --retry          (the songs left out before, again)
 //   npm run lyrics:build --prefix backend -- --spotify https://open.spotify.com/playlist/... --no-catalog
+//   npm run lyrics:build --prefix backend -- --retry --engine alt   (another transcriber, for previews Whisper can't hear)
+//   npm run lyrics:build --prefix backend -- --redo-before 2026-11-05T00:00:00Z   (all of them again; stopped, it goes on)
 //
-// Needs backend/private/lyrics-tools/.venv with faster-whisper (see scripts/lyrics/transcribe.py).
+// Needs backend/private/lyrics-tools/.venv with faster-whisper (see scripts/lyrics/transcribe.py); `--engine alt`,
+// .venv-alt with torch, torchaudio and transformers (see scripts/lyrics/transcribe-alt.py): it separates the voice
+// from the music first, then transcribes it with wav2vec2, for previews where the music covers the singing.
 import { spawn } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
@@ -29,10 +33,14 @@ const { DEFAULT_SPOTIFY } = await import("../src/catalog/defaultPlaylists.js");
 const { displayTitle } = await import("../src/catalog/trackResolver.js");
 const { cleanEtag } = await import("../src/audio/mediaCache.js");
 const { LYRIC_ROUNDS_FILE, readRoundsFile, writeRoundsFile } = await import("../src/lyrics/lyricRounds.js");
-const { like, lyricLines, norm, pickRound } = await import("../src/lyrics/roundBuilder.js");
+const { alignWords, like, lyricLines, norm, pickRound } = await import("../src/lyrics/roundBuilder.js");
 
 const TOOLS = path.resolve(__dirname, "../private/lyrics-tools");
-const PYTHON = path.join(TOOLS, ".venv", "Scripts", "python.exe");
+// The transcriber: Whisper, or `--engine alt` (voice separated from the music, then wav2vec2). Both answer the same.
+const ENGINES = {
+  whisper: { name: "Whisper", venv: ".venv", script: "transcribe.py" },
+  alt: { name: "Voz separada + wav2vec2", venv: ".venv-alt", script: "transcribe-alt.py" },
+};
 const PREVIEWS = path.join(TOOLS, "previews");
 const USER_AGENT = "Trivially (https://github.com/pabloecp/Trivially)";
 
@@ -46,9 +54,21 @@ const onlyIds = opt("--ids") ? new Set(opt("--ids").split(",")) : null;
 const redo = args.includes("--redo");
 // Tries again the songs left out before (data null), not the ready ones.
 const retry = args.includes("--retry");
+// Every song not worked out since this moment (rows keep when they were built): a --redo that can be stopped and resumed.
+const redoBefore = opt("--redo-before");
+// With --retry: only the songs left out for this reason (e.g. --why "no se oye voz en el fragmento").
+const onlyWhy = opt("--why");
+const ENGINE = ENGINES[opt("--engine") || "whisper"];
+if (!ENGINE) {
+  console.error(`--engine es whisper o alt.`);
+  process.exit(1);
+}
+const PYTHON = path.join(TOOLS, ENGINE.venv, "Scripts", "python.exe");
+// Fewer words heard than this in the whole preview: there's no singing to cut (or the transcriber can't hear it).
+const MIN_HEARD_WORDS = 15;
 
 if (!fs.existsSync(PYTHON)) {
-  console.error(`Falta ${PYTHON}. Instálalo con las instrucciones de scripts/lyrics/transcribe.py.`);
+  console.error(`Falta ${PYTHON}. Instálalo con las instrucciones de scripts/lyrics/${ENGINE.script}.`);
   process.exit(1);
 }
 fs.mkdirSync(PREVIEWS, { recursive: true });
@@ -76,11 +96,28 @@ for (const target of spotifyTargets) {
 }
 
 const rows = readRoundsFile();
-const todo = songs.filter((s) => (!onlyIds || onlyIds.has(s.id)) && (redo || !(s.id in rows) || (retry && !rows[s.id]?.data))).slice(0, limit);
+// Doing them all again: also the songs that left the playlists since, read one by one from Spotify's page of each.
+if (redoBefore && !onlyIds) {
+  const known = new Set(songs.map((s) => s.id));
+  for (const [id, row] of Object.entries(rows)) {
+    if (known.has(id) || !id.startsWith("sp-") || !row?.spotify_id || row.built >= redoBefore) continue;
+    try {
+      const res = await fetch(`https://open.spotify.com/embed/track/${row.spotify_id}`, { headers: { "User-Agent": "Mozilla/5.0" } });
+      const page = (await res.text()).match(/<script id="__NEXT_DATA__"[^>]*>(.*?)<\/script>/s);
+      const entity = JSON.parse(page[1]).props.pageProps.state.data.entity;
+      songs.push({ id, spotifyId: row.spotify_id, title: displayTitle(entity.name), artists: entity.artists.map((x) => x.name), language: null, previewUrl: row.preview_url, durationMs: entity.duration });
+    } catch (err) {
+      console.warn(`No se pudo leer ${id} de Spotify: ${err.message}`);
+    }
+  }
+}
+const todo = songs
+  .filter((s) => (!onlyIds || onlyIds.has(s.id)) && (redo || !(s.id in rows) || (redoBefore && !(rows[s.id]?.built >= redoBefore)) || (retry && !rows[s.id]?.data && (!onlyWhy || rows[s.id]?.why === onlyWhy))))
+  .slice(0, limit);
 console.log(`${Object.values(rows).filter(Boolean).length} canciones ya listas; faltan ${todo.length}.`);
 
-// ---- Whisper, kept running ----
-const whisper = spawn(PYTHON, ["-I", "-W", "ignore", path.join(__dirname, "lyrics", "transcribe.py")], {
+// ---- The transcriber, kept running ----
+const whisper = spawn(PYTHON, ["-I", "-W", "ignore", path.join(__dirname, "lyrics", ENGINE.script)], {
   stdio: ["pipe", "pipe", "inherit"],
   // Hugging Face's notes about symlinks on Windows and anonymous downloads say nothing useful here.
   env: { ...process.env, HF_HUB_DISABLE_SYMLINKS_WARNING: "1", HF_HUB_DISABLE_IMPLICIT_TOKEN: "1", HF_HUB_VERBOSITY: "error" },
@@ -95,7 +132,7 @@ answers.on("line", (line) => {
     return;
   }
   if (msg.log) return console.log(`   (${msg.log})`);
-  if (msg.ready) return console.log(`Whisper listo: ${msg.ready}`), waiting.shift()?.(msg);
+  if (msg.ready) return console.log(`${ENGINE.name} listo: ${msg.ready}`), waiting.shift()?.(msg);
   waiting.shift()?.(msg);
 });
 const ask = (job) =>
@@ -125,10 +162,12 @@ async function lyricsOf(song) {
   const res = await fetch(url, { headers: { "User-Agent": USER_AGENT } });
   if (!res.ok) throw new Error(`LRCLIB: respuesta ${res.status}`);
   const found = (await res.json()).filter((r) => !r.instrumental && (r.syncedLyrics || r.plainLyrics));
-  // The same recording when the length is known (a Spotify song's), else the first with synced lyrics.
-  const close = song.durationMs ? found.filter((r) => Math.abs(r.duration * 1000 - song.durationMs) < 4000) : [];
-  const pick = close[0] || found.find((r) => r.syncedLyrics) || found[0];
-  return pick ? lyricLines(pick.syncedLyrics, pick.plainLyrics) : null;
+  // Every version LRCLIB has, each once (the original and a remix often share a name, and some are badly uploaded):
+  // measure() keeps the one that lines up best with what's heard.
+  const seen = new Set();
+  return found
+    .map((r) => lyricLines(r.syncedLyrics, r.plainLyrics))
+    .filter((lines) => lines.length && !seen.has(lines.join("\n")) && seen.add(lines.join("\n")));
 }
 
 const words = (msg) => (msg.words || []).map(([start, end, word, prob]) => ({ start, end, word, prob }));
@@ -151,12 +190,20 @@ async function build(song) {
 }
 
 async function measure(song, file, etag) {
-  const lines = await lyricsOf(song);
-  if (!lines?.length) return { row: null, why: "sin letra en LRCLIB" };
+  const versions = await lyricsOf(song);
+  if (!versions.length) return { row: null, why: "sin letra en LRCLIB" };
   const heard = await ask({ path: file, lang: song.language });
-  if (heard.error) throw new Error(`Whisper: ${heard.error}`);
-  const language = song.language || (/[áéíóúñ¿¡]/i.test(lines.join(" ")) ? "es" : "en");
-  const round = pickRound(lines, words(heard), { length: heard.duration, language });
+  if (heard.error) throw new Error(`${ENGINE.name}: ${heard.error}`);
+  // Next to nothing heard: the preview has no singing, or the music covers it (`--engine alt` separates the voice).
+  if (words(heard).length < MIN_HEARD_WORDS) return { row: null, why: "no se oye voz en el fragmento" };
+  // The version of the lyrics that lines up best with what's heard and gives a round.
+  let round = null;
+  let language = song.language;
+  for (const lines of versions.map((l) => ({ l, matched: alignWords(l, words(heard)).matched })).sort((a, b) => b.matched - a.matched).map((v) => v.l)) {
+    language = song.language || (/[áéíóúñ¿¡]/i.test(lines.join(" ")) ? "es" : "en");
+    round = pickRound(lines, words(heard), { length: heard.duration, language });
+    if (round) break;
+  }
   if (!round) return { row: null, why: "la letra no coincide con lo que se oye" };
   // The previous word of the gap's line (what should be the last thing heard).
   const gapWords = round.lines.at(-1).text.split(/\s+/);
@@ -174,22 +221,8 @@ async function measure(song, file, etag) {
   const after = await ask({ path: file, lang: language, start: Math.max(0, cut - 1.5), end: Math.min(heard.duration, cut + 2.5) });
   const next = words(after).filter((w) => w.start >= cut - 0.15).slice(0, 4);
   if (!next.some((w) => like(norm(w.word), norm(round.answer)))) return { row: null, why: "no se oye la respuesta justo después del corte" };
-  // Where the song comes back after the gap: nothing of the answer (nor its end) may be heard there; else a bit later,
-  // up to 3 times, and if it still is, the round stops at the cut as before (no "de mí" after the gap).
-  let { back, stop } = round;
-  const key = norm(round.answer);
-  for (let tries = 0; back < stop; tries += 1) {
-    const resumed = await ask({ path: file, lang: language, start: back, end: Math.min(stop, back + 2.5) });
-    const first = words(resumed).map((w) => norm(w.word)).filter(Boolean).slice(0, 2);
-    if (!first.some((t) => like(t, key) || (t.length >= 2 && key.endsWith(t)))) break;
-    if (tries === 3) {
-      back = stop = cut;
-      break;
-    }
-    back = Math.round((back + 0.08) * 100) / 100;
-  }
   const { heard: _, ...data } = round;
-  return { row: { spotify_id: song.spotifyId, preview_url: song.previewUrl, preview_etag: etag, data: { ...data, cut, back, stop } } };
+  return { row: { spotify_id: song.spotifyId, preview_url: song.previewUrl, preview_etag: etag, data: { ...data, cut } } };
 }
 
 // ---- All of them ----
@@ -202,7 +235,8 @@ for (const [i, song] of todo.entries()) {
   try {
     const { row, why } = await build(song);
     const onDisk = readRoundsFile();
-    onDisk[song.id] = row || { spotify_id: song.spotifyId, preview_url: song.previewUrl, data: null };
+    // A song left out keeps why (not uploaded; for `--why` and for looking at them).
+    onDisk[song.id] = { ...(row || { spotify_id: song.spotifyId, preview_url: song.previewUrl, data: null, why }), built: new Date().toISOString() };
     writeRoundsFile(onDisk);
     if (row) {
       ready += 1;
