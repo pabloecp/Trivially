@@ -30,6 +30,9 @@ npm run history:upload --prefix backend     # Rango (history/events.js, figures.
 npm run mines:upload --prefix backend       # Campo de minas (mines/boards/)
 npm run lyrics:build --prefix backend       # Completa la letra, offline: rounds into private/lyric-rounds.json (local Whisper)
 npm run lyrics:upload --prefix backend      # that file to Supabase's lyric_rounds table (-- --check)
+npm run load:test --prefix backend          # many Trivia matches at once against a LOCAL server (-- --rooms 100 --players 8); never production
+npm run db:backup --prefix backend           # copy of every Supabase table to backend/private/backups/<fecha>/ (free plan has no backups)
+npm run db:restore --prefix backend -- <fecha> <tabla> --confirmar   # write one table back from a copy (never deletes)
 ```
 
 Tests are standalone scripts using `node:assert/strict`, no runner: each prints `"<name> ok"`. A new test file must be appended to the `&&` chain in `backend/package.json` `scripts.test`.
@@ -62,6 +65,7 @@ Commit messages are in Spanish and written for someone who doesn't read code.
 ## Rules that always apply
 
 - **The server decides everything.** All room state lives in memory in `backend/src/game/roomManager.js` (a restart drops every room), and groups in `backend/src/game/groups.js`. `publicState(room, forUserId)` is the **only** serializer of a room sent to clients and where secrets are withheld (answers, other players' picks, question ids, the `bot` flag): any new room or player field must be added there deliberately. A group's is `publicGroup`.
+- **Accounts in Supabase are one column per field** (`users` table, `ACCOUNT_COLUMNS` in `backend/src/db/store.js`, `backend/supabase/schema.sql`). A new account field gets its column in both; until then it lands in `extra`. A row whose `data` is still filled was saved before the columns and is rewritten on the next start.
 - **Trivia's real questions must never be committed: the GitHub repo is public.** They live in the Supabase table `questions` (RLS on, no policies: never add a public read policy or an API route that lists questions) and in the git-ignored `backend/private/questions.json`.
 - **Scoring:** at most 1000 points a round in every game (`game/scoring.js`), except Lluvia and Rey de la colina (1, 3 or 5 by difficulty).
 - **One yellow button per screen** (`.tv-btn--primary`); the rest are grey (`.tv-btn--neutral`). Chosen options are the site's blue.
@@ -80,6 +84,7 @@ In `.claude/docs/`:
 - `grupos.md`: groups (who goes together) apart from rooms (the matches): the leader moves everyone, "Invitar", "Tu grupo", invite links.
 - `partidas-publicas.md` (Inicio and its bar, public matches by game, a group searching together, bots, rank), `clasico.md`.
 - `dispositivo-central.md`, `panel-owner.md`, `amigos-y-enlaces.md` (friends, @usernames, link filter).
+- `avisos-y-errores.md`: UptimeRobot and Sentry (knowing when the server is down or something fails).
 - `diseno.md`: the design rules: the look (`frontend/src/styles/look.css`, loaded last), layout, colours, type, pieces, panel motion, shadows.
 
 When a change alters how a part works, update its doc there, not this file.

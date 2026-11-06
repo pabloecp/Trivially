@@ -2,6 +2,8 @@ import assert from "node:assert/strict";
 import {
   deleteGuest,
   deleteUser,
+  fromRow,
+  toRow,
   ensureUsernames,
   linkGoogle,
   loginWithPassword,
@@ -118,5 +120,36 @@ testStore.users.old = { id: "old", name: "María José", isGuest: false, email: 
 assert.equal(ensureUsernames(testStore), 1);
 assert.equal(testStore.users.old.username, "maria_jose");
 assert.equal(ensureUsernames(testStore), 0);
+
+// Supabase keeps each account in columns (toRow) and brings it back the same (fromRow); a field without a column of its
+// own goes in `extra`, and an account still saved whole in `data` (from before the columns) is read from there.
+{
+  const account = {
+    id: "usr_cols",
+    name: "Columnas",
+    username: "columnas",
+    email: "c@trivially.test",
+    avatar: "#2F6BFF",
+    isGuest: false,
+    role: "owner",
+    passwordHash: "h",
+    passwordSalt: "s",
+    stats: { totalScore: 10, gamesPlayed: 1, artistHits: { a: 1 } },
+    elo: { opciones: { rating: 1010, games: 1, best: 1010 } },
+    history: [{ at: "2026-11-06T00:00:00.000Z", game: "opciones", position: 1 }],
+    dailyDone: 3,
+    usernameAuto: false,
+    friendCode: "ABC123",
+  };
+  const row = toRow(account);
+  assert.equal(row.username, "columnas");
+  assert.equal(row.password_hash, "h");
+  assert.equal(row.daily_done, 3);
+  assert.equal(row.spotify, null);
+  assert.deepEqual(row.extra, { friendCode: "ABC123" });
+  assert.equal(row.data, null);
+  assert.deepEqual(fromRow(row), account);
+  assert.equal(fromRow({ ...row, data: { id: "usr_cols", name: "Antes" } }).name, "Antes");
+}
 
 console.log("All store tests passed!");
