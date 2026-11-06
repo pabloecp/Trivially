@@ -30,6 +30,9 @@ npm run history:upload --prefix backend     # Rango (history/events.js, figures.
 npm run mines:upload --prefix backend       # Campo de minas (mines/boards/)
 npm run lyrics:build --prefix backend       # Completa la letra, offline: rounds into private/lyric-rounds.json (local Whisper)
 npm run lyrics:upload --prefix backend      # that file to Supabase's lyric_rounds table (-- --check)
+npm run load:test --prefix backend          # many Trivia matches at once against a LOCAL server (-- --rooms 100 --players 8); never production
+npm run db:backup --prefix backend           # copy of every Supabase table to backend/private/backups/<fecha>/ (free plan has no backups)
+npm run db:restore --prefix backend -- <fecha> <tabla> --confirmar   # write one table back from a copy (never deletes)
 ```
 
 Tests are standalone scripts using `node:assert/strict`, no runner: each prints `"<name> ok"`. A new test file must be appended to the `&&` chain in `backend/package.json` `scripts.test`.
@@ -81,6 +84,7 @@ In `.claude/docs/`:
 - `grupos.md`: groups (who goes together) apart from rooms (the matches): the leader moves everyone, "Invitar", "Tu grupo", invite links.
 - `partidas-publicas.md` (Inicio and its bar, public matches by game, a group searching together, bots, rank), `clasico.md`.
 - `dispositivo-central.md`, `panel-owner.md`, `amigos-y-enlaces.md` (friends, @usernames, link filter).
+- `avisos-y-errores.md`: UptimeRobot and Sentry (knowing when the server is down or something fails).
 - `diseno.md`: the design rules: the look (`frontend/src/styles/look.css`, loaded last), layout, colours, type, pieces, panel motion, shadows.
 
 When a change alters how a part works, update its doc there, not this file.

@@ -437,6 +437,12 @@ function ProfileScreen() {
             </div>
           </section>
         )}
+        {!isOtherUser && (
+          <nav className="tv-legal-links" aria-label="Información legal">
+            <Link to="/terminos">Términos de uso</Link>
+            <Link to="/privacidad">Aviso de privacidad</Link>
+          </nav>
+        )}
       </div>
     </div>
   );
