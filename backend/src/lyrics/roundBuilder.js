@@ -175,29 +175,52 @@ export function pickRound(lines, heard, { length = 30, language = "es" } = {}) {
   }
 }
 
-// Three believable wrong answers: other words of the same song about as long, else common ones of its language.
+// Three believable wrong answers: other words of the same song, else common ones of its language, the ones that sound
+// most like the answer first (trickyWrongAnswers).
 const FALLBACK = {
   es: ["corazón", "camino", "noche", "fuego", "tiempo", "cielo", "mirada", "verdad", "locura", "recuerdo", "silencio", "destino"],
   en: ["heart", "night", "fire", "time", "light", "dream", "away", "tonight", "forever", "together", "nothing", "inside"],
 };
 export function wrongAnswers(answer, lines, language = "es", avoid = new Set()) {
+  const pool = lines.flatMap((l) => l.replace(/\([^)]*\)/g, " ").split(/\s+/));
+  return trickyWrongAnswers(answer, [...pool, ...(FALLBACK[language] || FALLBACK.es)], { avoid });
+}
+
+/** How many letters two words share at their end (a rhyme: "pasajera" and "primavera" share 3), up to 5. */
+export function rhymeLength(a, b) {
+  let n = 0;
+  while (n < 5 && n < a.length && n < b.length && a[a.length - 1 - n] === b[b.length - 1 - n]) n += 1;
+  return n;
+}
+
+const VOWEL = /[aeiouy]/;
+const lastVowel = (k) => [...k].reverse().find((c) => VOWEL.test(c)) || "";
+
+/**
+ * Three wrong answers that are hard to tell from the right one, out of `pool` (any words; repeated, odd or too short
+ * ones are left out): first those that rhyme with it (they end like it, so they're often the same kind of word, "-ando",
+ * "-ción", "-ing", and they'd close the verse as well), then those as long, with a little chance so a song doesn't always
+ * get the same three. Never the answer itself, a word one letter away from it or with it inside, or one in `avoid`
+ * (normalized keys, e.g. the words already on screen). Written with the answer's capitals ("Ford" → "Fiat"; "dead" → "cold").
+ */
+export function trickyWrongAnswers(answer, pool, { avoid = new Set(), count = 3, random = Math.random } = {}) {
   const key = norm(answer);
   const seen = new Set([key, ...avoid]);
-  const pick = [];
-  const pool = [...new Set(lines.flatMap((l) => l.replace(/\([^)]*\)/g, " ").split(/\s+/)))]
-    .map((w) => w.replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, ""))
-    .filter((w) => {
-      const k = norm(w);
-      return k.length >= 3 && !STOPWORDS.has(k) && Math.abs(k.length - key.length) <= 3;
-    })
-    .sort(() => Math.random() - 0.5);
-  for (const w of [...pool, ...[...(FALLBACK[language] || FALLBACK.es)].sort(() => Math.random() - 0.5)]) {
+  const scored = [];
+  for (const raw of pool) {
+    const w = String(raw).replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, "");
     const k = norm(w);
-    if (seen.has(k) || editDistance(k, key) <= 1) continue;
+    if (k.length < 3 || STOPWORDS.has(k) || /\d/.test(k) || seen.has(k) || editDistance(k, key) <= 1) continue;
+    // Only Latin letters (a stray letter of another alphabet looks wrong), and not the answer inside a longer word or
+    // the other way round ("friend" and "boyfriend" would both fit).
+    if (!/^[\p{Script=Latin}'’-]+$/u.test(w) || k.includes(key) || key.includes(k)) continue;
     seen.add(k);
-    // Same capitals as the answer ("Ford" → "Fiat"; "dead" → "cold").
-    pick.push(/^\p{Lu}/u.test(answer) ? w[0].toUpperCase() + w.slice(1) : w.toLowerCase());
-    if (pick.length === 3) break;
+    const rhyme = rhymeLength(k, key);
+    const score = rhyme * 3 + (lastVowel(k) === lastVowel(key) ? 1 : 0) - Math.abs(k.length - key.length) * 0.4 + random() * 1.5;
+    scored.push({ w, score });
   }
-  return pick;
+  return scored
+    .sort((x, y) => y.score - x.score)
+    .slice(0, count)
+    .map(({ w }) => (/^\p{Lu}/u.test(answer) ? w[0].toUpperCase() + w.slice(1) : w.toLowerCase()));
 }
