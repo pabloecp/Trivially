@@ -14,6 +14,7 @@ import {
   registerWithPassword,
   sanitizeUser,
   sanitizeUserPublic,
+  setPassword,
   unlinkGoogle,
   unlinkSpotify,
   updateUserAvatar,
@@ -25,6 +26,8 @@ import {
 import { createGoogleAuthUrl, exchangeGoogleCode, googleConfigured } from "./google.js";
 import { exchangeSpotifyCode, spotifyAuthUrl, spotifyConfigured } from "./spotify.js";
 import { authRateLimit } from "./rateLimit.js";
+import { accountByEmail, consumeResetToken, createResetToken, resetTokenValid } from "./passwordReset.js";
+import { mailConfigured, resetEmail, sendMail } from "./mailer.js";
 import { hasRole } from "./roles.js";
 import { consumeTicket, createAuthToken, createSocketToken, createTicket } from "./socketToken.js";
 import crypto from "node:crypto";
@@ -138,6 +141,48 @@ export function createApiRouter({ catalog, store, friends = null, hub = null, so
       if (!password) return res.status(400).json({ error: "Introduce tu contraseña" });
       const safeUser = loginWithPassword(store, { identifier: loginId, password, guestId });
 
+      req.session.userId = safeUser.id;
+      res.json({ ok: true, user: safeUser, authToken: createAuthToken(safeUser.id) });
+    } catch (err) {
+      res.status(400).json({ error: err.message });
+    }
+  });
+
+  // "¿Olvidaste tu contraseña?": an email with a link to choose a new one (auth/passwordReset.js). The answer is the
+  // same whether the email has an account or not, so the form can't be used to find out who plays here.
+  router.post("/auth/forgot", authRateLimit, (req, res) => {
+    const email = String(req.body?.email || "").trim();
+    if (!email || !email.includes("@")) return res.status(400).json({ error: "Escribe el correo de tu cuenta" });
+    const site = (process.env.CLIENT_ORIGIN || "https://triviallyonline.vercel.app").replace(/\/$/, "");
+    const local = /localhost|127\.0\.0\.1/.test(site);
+    if (!mailConfigured() && !local) {
+      return res.status(503).json({ error: "Por ahora no podemos mandar correos. Escríbenos y te ayudamos a entrar." });
+    }
+    const user = accountByEmail(store, email);
+    const token = user ? createResetToken(user.id) : null;
+    // Sent without waiting: an answer that took longer when the account exists would give it away.
+    if (token) {
+      const link = `${site}/restablecer?token=${encodeURIComponent(token)}`;
+      sendMail({ to: user.email, ...resetEmail({ name: user.name, link }) }).catch((err) =>
+        console.warn(`[Correo] No se pudo mandar el cambio de contraseña (${err.message})`)
+      );
+    }
+    res.json({ ok: true });
+  });
+
+  // Whether a reset link still works, so its page can say so before asking for the new password.
+  router.post("/auth/reset/check", authRateLimit, (req, res) => {
+    res.json({ ok: true, valid: resetTokenValid(req.body?.token) });
+  });
+
+  // The new password, with the link's token: it's saved and the account is signed in.
+  router.post("/auth/reset", authRateLimit, (req, res) => {
+    const password = String(req.body?.password || "");
+    if (password.length < 2) return res.status(400).json({ error: "La contraseña debe tener al menos 2 caracteres" });
+    const userId = consumeResetToken(req.body?.token);
+    if (!userId) return res.status(400).json({ error: "El enlace ya no sirve: se usó o pasaron más de 30 minutos. Pide otro." });
+    try {
+      const safeUser = setPassword(store, userId, password);
       req.session.userId = safeUser.id;
       res.json({ ok: true, user: safeUser, authToken: createAuthToken(safeUser.id) });
     } catch (err) {
