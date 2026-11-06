@@ -8,8 +8,8 @@ import TvShell from "../components/home/TvShell.jsx";
 // ads), change it here too, and the date.
 
 const UPDATED = "6 de noviembre de 2026";
-// Where players write to see, correct or delete their data. Empty until the team picks a public address.
-const CONTACT_EMAIL = "";
+// Where players write to see, correct or delete their data (for now, a team member's own).
+const CONTACT_EMAIL = "pablo.ecpx@gmail.com";
 
 function Contact() {
   return CONTACT_EMAIL ? <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a> : <b>el correo de contacto de Trivially</b>;
