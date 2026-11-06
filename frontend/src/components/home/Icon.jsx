@@ -72,7 +72,6 @@ const PATHS = {
   ),
   moon: <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" />,
   chevron: <path d="m9 18 6-6-6-6" />,
-  swap: <path d="M17 3l4 4-4 4M21 7H8M7 21l-4-4 4-4M3 17h13" />,
   reset: (
     <>
       <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
@@ -267,10 +266,6 @@ const PATHS = {
       <path d="m21.85 2.15-10.94 10.94" />
     </>
   ),
-  // An arrow going up: send what was pasted (the Spotify playlist's link).
-  upload: <path d="M12 19V5M5 12l7-7 7 7" />,
-  // A bin: delete for good (a saved Spotify playlist).
-  trash: <path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3" />,
   volume: (
     <>
       <path d="M11 4.7a.7.7 0 0 0-1.2-.5L6.4 7.6A1.4 1.4 0 0 1 5.4 8H3a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2.4a1.4 1.4 0 0 1 1 .4l3.4 3.4a.7.7 0 0 0 1.2-.5Z" />

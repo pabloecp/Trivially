@@ -9,6 +9,7 @@ import { botProfile, pickBots } from "./bots.js";
 import { addTogether, applyElo, countsTogether, ELO_START, eloDeltas, eloOf, searchElo } from "./elo.js";
 import { isCorrectAnswer, normalizeAnswer, songKey } from "./answers.js";
 import { etagOf } from "../audio/mediaCache.js";
+import { norm as lyricKey, trickyWrongAnswers } from "../lyrics/roundBuilder.js";
 import {
   countQuestions,
   defaultQuizConfig,
@@ -143,6 +144,7 @@ import {
 } from "./matchmaking.js";
 import { categoryName } from "../questions/questionSchema.js";
 import { flagToken, flagUrl } from "../geo/flags.js";
+import { imageToken, imageUrl } from "../questions/images.js";
 import { shapeToken, shapeUrl } from "../geo/shapes.js";
 import { countryPoint, locate } from "../geo/worldMap.js";
 import { COUNTDOWN_MS, REVEAL_MS, ROUND_MS, scoreAnswer } from "./scoring.js";
@@ -312,10 +314,23 @@ const DEFAULT_MUSIC_STYLES = [...MUSIC_STYLES];
 // until the words have been sung, and LYRICS_TAIL_MS more.
 const LYRICS_LEAD_MS = 10000;
 const LYRICS_REPLAY_MS = 3000;
+// Common words that tell a verse's language when the catalog doesn't (Completa la letra's wrong options).
+const SPANISH_HINTS = new Set(["que", "el", "la", "de", "y", "en", "los", "las", "mi", "tu", "yo", "me", "te", "por", "para", "con", "una", "no", "lo", "pa", "como"]);
+const ENGLISH_HINTS = new Set(["the", "you", "and", "i", "me", "my", "your", "to", "in", "it", "is", "of", "on", "be", "we", "that", "so", "know", "love", "i'm"]);
 const LYRICS_TAIL_MS = 1800;
 // Same limits as its settings on screen: 5–25 rounds, 15–35 seconds to guess.
 const MUSIC_LIMITS = { rounds: { min: 5, max: 25 }, roundMs: { min: 15000, max: 35000 } };
 const clampTo = (n, { min, max }, fallback) => Math.min(max, Math.max(min, Math.round(Number(n)) || fallback));
+
+// Trivia shows its flags and pictures ("Imágenes" questions) through a token, so the image's address doesn't give the
+// answer away (geo/flags.js, questions/images.js).
+function withQuizTokens(tracks) {
+  for (const t of tracks) {
+    if (t.flag) t.flagToken = flagToken(t.flag);
+    if (t.image) t.imageToken = imageToken(t.image);
+  }
+  return tracks;
+}
 
 // Encuentra el país shows a round's flag or silhouette through a token, so the image's address doesn't name the
 // country (geo/flags.js, geo/shapes.js).
@@ -1598,7 +1613,8 @@ export class RoomManager {
     if (item.game === QUIZ_GAME) {
       const quiz = mergeQuizConfig(config);
       if (!quiz.categories.length) return "Elige al menos una categoría.";
-      if (!quiz.formats.length) return "Elige al menos un modo de juego.";
+      if (!quiz.styles.length) return "Elige al menos un modo de juego.";
+      if (!quiz.formats.length) return "Elige al menos un tipo de respuesta.";
       if (!quiz.difficulties.length) return "Elige al menos una dificultad.";
       const n = exact ? pickQuizQuestions(this.quizQuestions, quiz).length : this.cachedCount(item, () => countQuestions(this.quizQuestions, quiz));
       return n < quiz.rounds ? short(n, "preguntas", quiz.rounds, "categorías") : null;
@@ -1922,6 +1938,35 @@ export class RoomManager {
     return round.verse;
   }
 
+  /**
+   * Completa la letra's words of one language ("es", "en"): every round's answer and saved wrong options (real words of
+   * songs), worked out once. Where Letra's closed rounds draw their wrong options from.
+   */
+  lyricWordPool(language) {
+    if (!this._lyricPools) {
+      this._lyricPools = new Map();
+      for (const [songId, round] of this.lyricRounds) {
+        const verse = round?.verse;
+        if (!verse) continue;
+        const lang = this.lyricLanguage({ id: songId }, verse);
+        if (!this._lyricPools.has(lang)) this._lyricPools.set(lang, []);
+        this._lyricPools.get(lang).push(verse.answer, ...(verse.wrong || []));
+      }
+    }
+    return this._lyricPools.get(language) || [];
+  }
+
+  /** A song's language for its lyrics: the catalog's, else told by the verse's words (Spanish or English). */
+  lyricLanguage(song, verse) {
+    if (!this._songLanguage) this._songLanguage = new Map((this.catalog.songs || []).map((s) => [s.id, s.language]));
+    const known = song.language || this._songLanguage.get(song.id);
+    if (known === "es" || known === "en") return known;
+    const words = (verse?.lines || []).flatMap((l) => l.text.toLowerCase().split(/[^\p{L}']+/u));
+    const es = words.filter((w) => SPANISH_HINTS.has(w) || /[ñáéíóú¿¡]/.test(w)).length;
+    const en = words.filter((w) => ENGLISH_HINTS.has(w)).length;
+    return es >= en ? "es" : "en";
+  }
+
   /** How many different songs a match can draw: only those with their verse when Completa la letra is the only mode. */
   songsReady(room) {
     const pool = this.songPool(room);
@@ -1971,7 +2016,12 @@ export class RoomManager {
       wrong: verse.wrong,
     };
     if (this.nextFormat(room) !== "opciones") return { ...song, style: "letra", type: "open", lyric };
-    const options = [verse.answer, ...verse.wrong].sort(() => Math.random() - 0.5);
+    // The three wrong options, picked now: words of other songs in its language that rhyme with the answer and end like
+    // it (so they'd close the verse as well), never one already on screen; the ones saved with the round fill the gaps.
+    const onScreen = new Set(verse.lines.flatMap((l) => l.text.split(/\s+/)).map(lyricKey).filter(Boolean));
+    const tricky = trickyWrongAnswers(verse.answer, this.lyricWordPool(this.lyricLanguage(song, verse)), { avoid: onScreen });
+    lyric.wrong = [...tricky, ...verse.wrong.filter((w) => !tricky.some((t) => lyricKey(t) === lyricKey(w)))].slice(0, 3);
+    const options = [verse.answer, ...lyric.wrong].sort(() => Math.random() - 0.5);
     return { ...song, style: "letra", type: "choice", lyric, options, details: null, answer: options.indexOf(verse.answer) };
   }
 
@@ -2066,8 +2116,7 @@ export class RoomManager {
       if (tracks.length < quiz.rounds) {
         throw new Error(`Solo hay ${tracks.length} preguntas distintas con esos ajustes. Baja el número de preguntas o elige más temas.`);
       }
-      // Flags are shown through a token, so the image's address doesn't name the country.
-      for (const t of tracks) if (t.flag) t.flagToken = flagToken(t.flag);
+      withQuizTokens(tracks);
       room.tracks = tracks;
       room.totalRounds = tracks.length;
     } else if (room.game === GEO_GAME) {
@@ -2208,11 +2257,14 @@ export class RoomManager {
   }
 
   /**
-   * What the room adds to the search box on top of globalSongList: custom tracks and the songs of its Spotify
-   * playlists not found on iTunes yet. Sent with the room during a round (small), so the list stays complete.
+   * What the room adds to the search box on top of the list players download once (GET /api/songs): custom tracks
+   * and the songs of its Spotify playlists. Sent with the room during a round (small), so the list stays complete.
+   * Only the fixed catalog is left out: it is in every download. A Spotify song found on iTunes *after* a player
+   * downloaded the list (globalSongList grows as playlists resolve) must still come here, or the round's own song
+   * would be missing from their search box ("Sin sugerencias").
    */
   roomSearchExtras(room) {
-    const global = new Set(this.globalSongList().flatMap((s) => [s.id, songKey(s)]));
+    const global = new Set((this.catalog.songs || []).flatMap((s) => [s.id, songKey(s)]));
     const allSongs = [];
     const seen = new Set();
 
@@ -2997,8 +3049,7 @@ export class RoomManager {
     const draw = () => {
       if (item.game === QUIZ_GAME) {
         const tracks = pickQuizQuestions(this.quizQuestions, mergeQuizConfig(config.quiz));
-        for (const t of tracks) if (t.flag) t.flagToken = flagToken(t.flag);
-        return tracks;
+        return withQuizTokens(tracks);
       }
       if (item.game === GEO_GAME) return pickGeoQuestions(this.geoQuestions, mergeGeoConfig(config.geo)).map(withGeoTokens);
       if (item.game === HISTORY_GAME) return pickHistoryQuestions(this.historyQuestions, mergeHistoryConfig(config.history));
@@ -4434,12 +4485,17 @@ export class RoomManager {
       text: question.text,
       category: question.category,
       difficulty: question.difficulty,
+      // Whether a picture comes with it ("Imágenes"), so its place is kept from the countdown on.
+      pictured: Boolean(question.imageToken),
+      // Whose picture it is and its licence: with the answer (it may name it).
+      credit: showAnswer && question.imageToken ? question.credit || null : null,
     };
     if (question.type === "open") {
       return {
         ...base,
         kind: question.kind,
         flag: open && question.flagToken ? flagUrl(question.flagToken) : null,
+        image: open && question.imageToken ? imageUrl(question.imageToken) : null,
         answer: showAnswer ? question.answer : null,
       };
     }
@@ -4452,6 +4508,7 @@ export class RoomManager {
     return {
       ...base,
       options: open ? question.options : null,
+      image: open && question.imageToken ? imageUrl(question.imageToken) : null,
       answer: showAnswer ? question.answer : null,
       picks: showAnswer ? picks : null,
     };

@@ -4,17 +4,18 @@ import { toGeoTrack } from "./geo.js";
 // "Trivia", the main mode: its settings (config.quiz) and how a match draws its questions. A match mixes the two ways
 // of answering: four options and a written answer (capitals, flags...). The host picks the topics (`categories`), the
 // ways of answering (`formats`) and the difficulties (`difficulties`): each is a list of the chosen ones, all of them
-// by default. Every four-option question of the bank can also be asked written, without its options, so one added for
+// by default. Its "Modos de juego" (`styles`) change which questions are asked: "clasico" (the text ones) and
+// "imagenes" (the ones with a picture: Encuentra el país's flags and any question with `data.image`). Every four-option question of the bank can also be asked written, without its options, so one added for
 // "Opciones" shows up in "Escribir" too. (The years on a timeline are Línea del tiempo's, a mode of its own.)
 
 export const QUIZ_MODE = "opciones";
 export const QUIZ_LEVELS = ["facil", "media", "dificil"];
-// Older clients send one `difficulty`, "mixta" being all three.
-export const QUIZ_DIFFICULTIES = [...QUIZ_LEVELS, "mixta"];
 // The ways of answering, and the question types each one plays: choosing one of four ("opciones") or writing
 // ("escribir").
 export const QUIZ_FORMATS = ["opciones", "escribir"];
 const FORMAT_OF_TYPE = { multiple_choice: "opciones", open: "escribir" };
+// The modes of play ("Modos de juego"): the questions without a picture, and those with one.
+export const QUIZ_STYLES = ["clasico", "imagenes"];
 const TOPICS = Object.keys(QUESTION_CATEGORIES);
 // Same limits as the settings on screen (frontend/src/modes/quiz/quizInfo.js).
 export const QUIZ_LIMITS = {
@@ -25,7 +26,7 @@ export const QUIZ_LIMITS = {
 export { REVEAL_MS as QUIZ_REVEAL_MS } from "./scoring.js";
 
 export function defaultQuizConfig() {
-  return { rounds: 5, roundMs: 15000, difficulties: [...QUIZ_LEVELS], categories: [...TOPICS], formats: [...QUIZ_FORMATS] };
+  return { rounds: 5, roundMs: 15000, difficulties: [...QUIZ_LEVELS], categories: [...TOPICS], formats: [...QUIZ_FORMATS], styles: [...QUIZ_STYLES] };
 }
 
 const clamp = (n, { min, max }, fallback) => Math.min(max, Math.max(min, Math.round(Number(n)) || fallback));
@@ -49,6 +50,7 @@ export function mergeQuizConfig(current, change = {}) {
     difficulties,
     categories: pickList(change.categories, TOPICS, base.categories),
     formats,
+    styles: pickList(change.styles, QUIZ_STYLES, Array.isArray(base.styles) ? QUIZ_STYLES.filter((st) => base.styles.includes(st)) : [...QUIZ_STYLES]),
   };
 }
 
@@ -70,7 +72,7 @@ function asWritten(q) {
     baseId: q.id,
     type: "open",
     // Other right ways to write it (another language, a short form, initials), if the question has them.
-    data: { answer, aliases: q.data.aliases || [], reject: options.filter((_, i) => i !== correct) },
+    data: { answer, aliases: q.data.aliases || [], reject: options.filter((_, i) => i !== correct), image: q.data.image, credit: q.data.credit },
   };
 }
 
@@ -91,14 +93,18 @@ export const sameQuestion = (q) => (q.data?.country ? `country:${q.data.country}
 
 export const formatOf = (q) => FORMAT_OF_TYPE[q.type];
 
+/** A question's mode of play: "imagenes" when it comes with a picture (a flag or `data.image`), else "clasico". */
+export const styleOf = (q) => (q.data?.image || q.data?.flag ? "imagenes" : "clasico");
+
 /** The questions that match the settings. `ignore` leaves one filter out (to count what each chip would add). */
 function questionsFor(pool, config, ignore = null) {
-  const { difficulties, categories, formats } = mergeQuizConfig(config);
+  const { difficulties, categories, formats, styles } = mergeQuizConfig(config);
   return pool.filter(
     (q) =>
       (ignore === "difficulties" || difficulties.includes(q.difficulty)) &&
       (ignore === "categories" || categories.includes(q.category)) &&
-      (ignore === "formats" || formats.includes(formatOf(q)))
+      (ignore === "formats" || formats.includes(formatOf(q))) &&
+      (ignore === "styles" || styles.includes(styleOf(q)))
   );
 }
 
@@ -112,13 +118,14 @@ export function countQuestions(pool, config) {
  * settings.
  */
 export function questionCounts(pool, config) {
-  const { difficulties, categories, formats } = mergeQuizConfig(config);
+  const { difficulties, categories, formats, styles } = mergeQuizConfig(config);
   // A list left empty filters nothing here (like songCounts): otherwise, with two lists empty, nothing could be ticked again.
   const open = {
     ...config,
     difficulties: difficulties.length ? difficulties : QUIZ_LEVELS,
     categories: categories.length ? categories : TOPICS,
     formats: formats.length ? formats : QUIZ_FORMATS,
+    styles: styles.length ? styles : QUIZ_STYLES,
   };
   const tally = (ignore, key) => {
     const out = {};
@@ -128,6 +135,7 @@ export function questionCounts(pool, config) {
   return {
     categories: tally("categories", (q) => q.category),
     formats: tally("formats", formatOf),
+    styles: tally("styles", styleOf),
     difficulties: tally("difficulties", (q) => q.difficulty),
   };
 }
@@ -144,13 +152,13 @@ function shuffle(list) {
 /**
  * A question as a round of the room (these objects stay on the server; see RoomManager.publicQuestion). `type` says
  * how it's answered: "choice" (options shuffled, `answer` is the right one's position) or "open" (written, checked by
- * isCorrectOpenAnswer).
+ * isCorrectOpenAnswer). `image` is the picture's real address (an "Imágenes" question), shown through a token.
  */
 export function toQuizTrack(q) {
   const category = categoryName(q.category);
   if (q.type === "open") {
     const track = toGeoTrack(q);
-    return { ...track, type: "open", text: track.prompt, category };
+    return { ...track, type: "open", text: track.prompt, category, image: q.data.image || null, credit: q.data.credit || null };
   }
   const order = shuffle(q.data.options.map((_, i) => i));
   return {
@@ -161,6 +169,8 @@ export function toQuizTrack(q) {
     difficulty: q.difficulty,
     options: order.map((i) => q.data.options[i]),
     answer: order.indexOf(q.data.correct),
+    image: q.data.image || null,
+    credit: q.data.credit || null,
   };
 }
 

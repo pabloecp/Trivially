@@ -7,6 +7,7 @@ import MatchResults from "../../components/home/MatchResults.jsx";
 import PartyPanel from "../../components/home/PartyPanel.jsx";
 import SpectatorBanner from "../../components/home/SpectatorBanner.jsx";
 import { ControllerBar, GetReady, PhoneHint, joinNames } from "../../components/home/CentralBits.jsx";
+import { AnswerCard, MatchBar, MatchCard, MatchQuestion, RoundVerdict } from "../../components/home/MatchFrame.jsx";
 import { PauseButton, PauseVeil, SkipButton } from "../../components/home/PauseControls.jsx";
 import { resolveCode } from "../../lib/hiddenCode.js";
 import { useApp, useRemainingMs, useView } from "../../lib/store.jsx";
@@ -182,14 +183,14 @@ function AnswerBox({ room, open, inputRef, onResult }) {
     }
   }
 
+  // The writing bar of every game (the box and the yellow "Enviar"), without "Saltar": nothing to skip in the rain.
   return (
-    <form className="tv-search tv-rain-form" onSubmit={submit}>
-      <div ref={boxRef} className="tv-search-box tv-rain-box">
-        <Icon name="keyboard" size={22} className="tv-search-icon" />
+    <form className="tv-mwrite tv-rain-form" onSubmit={submit}>
+      <label ref={boxRef} className="tv-mwrite-box tv-rain-box">
+        <Icon name="keyboard" size={24} />
         <input
           ref={inputRef}
           type="text"
-          className="tv-search-input"
           placeholder={
             open ? "Tu respuesta…" : room.paused ? "En pausa" : room.phase === "reveal" ? "Fin de la ronda" : "Prepárate…"
           }
@@ -202,13 +203,18 @@ function AnswerBox({ room, open, inputRef, onResult }) {
           maxLength={80}
           aria-label="Tu respuesta"
         />
-        {text.trim() && open && (
-          // Pressing it doesn't take the keyboard away from the box.
-          <button type="submit" className="tv-btn tv-btn--sm tv-c-rain" data-sound="none" aria-label="Enviar" onMouseDown={(e) => e.preventDefault()}>
-            <Icon name="send" size={18} strokeWidth={2.6} />
-          </button>
-        )}
-      </div>
+      </label>
+      {/* Always there (off until something is typed); pressing it doesn't take the keyboard away from the box. */}
+      <button
+        type="submit"
+        className="tv-btn tv-btn--primary tv-mwrite-send"
+        data-sound="none"
+        disabled={!text.trim() || !open}
+        onMouseDown={(e) => e.preventDefault()}
+      >
+        <Icon name="send" size={20} strokeWidth={2.4} />
+        <span className="tv-mwrite-send-label">Enviar</span>
+      </button>
     </form>
   );
 }
@@ -352,15 +358,22 @@ function GameScreen() {
   const pct = phase === "playing" || phase === "countdown" ? Math.max(0, Math.min(100, (left / totalMs) * 100)) : 100;
   const urgent = phase === "playing" && left <= 5000;
 
-  // The top card's middle line, where other games put the question: what this round is about (and, at the reveal, who
-  // won it). This player's points of the round are beside the box under the rain (`score`).
+  // The card's question, the same through the round and its reveal (how the round went goes on the card's first row
+  // and in the card over the rain). This player's points of the round are on that first row too.
   let title;
   if (phase === "countdown") title = "¡Prepárate, va a llover!";
-  else if (outcome) title = outcome.title;
-  else if (reveal) title = lastRound ? "¡Se acabó la lluvia!" : "Fin de la ronda";
   else if (central) title = "¡Escriban las respuestas!";
   else if (spectator) title = "Estás viendo la partida";
-  else title = "Responde antes que nadie";
+  else title = "Responde lo que cae antes que nadie";
+  const outcomeTone = { win: "ok", tie: "ok", other: "timeout", none: "timeout" };
+  const cardPills =
+    reveal && outcome && canWrite ? (
+      <RoundVerdict tone={outcomeTone[outcome.tone] || "timeout"} icon={outcome.icon} label={outcome.title} points={myPoints} confetti={false} />
+    ) : canWrite && phase === "playing" ? (
+      <span className="tv-qc-points" role="status" aria-label={`${pointsText(myPoints)} en esta ronda`}>
+        {pointsText(myPoints)}
+      </span>
+    ) : null;
 
   // Its last line: what to do now, or what the last answer did (with an icon, green for a hit, red for a miss).
   let hint;
@@ -439,20 +452,20 @@ function GameScreen() {
   );
   const burstCard = burst && (
     <div key={burst.key} className={`tv-mines-burst tv-rain-burst is-${burst.tone}`} role="alert">
-      <span className="tv-mines-burst-card">
-        {burst.confetti && <Confetti pieces={28} />}
-        <span className="tv-mines-burst-icon">
-          <Icon name={burst.icon} size={30} strokeWidth={2.6} filled={burst.icon === "crown"} />
-        </span>
-        <strong>{burst.title}</strong>
-        {burst.detail && <small>{burst.detail}</small>}
-        {!central && !spectator && myPoints > 0 && <span className="tv-tag tv-tag--points">+{myPoints}</span>}
-      </span>
+      {burst.confetti && <Confetti pieces={28} />}
+      {/* The answer's card, the same as every game's, over the rain. */}
+      <AnswerCard
+        icon={burst.icon}
+        iconTone={burst.tone === "win" ? "ok" : null}
+        label={!central && !spectator && myPoints > 0 ? `+${myPoints} en esta ronda` : "La ronda"}
+        value={burst.title}
+        detail={burst.detail}
+      />
     </div>
   );
 
   return (
-    <div className={`tv-room tv-game tv-rain${central ? " is-central" : ""}${controller ? " is-controller" : ""}`}>
+    <div className={`tv-room tv-game tv-match tv-rain${central ? " is-central" : ""}${controller ? " is-controller" : ""}`}>
       <div ref={frameRef} className="tv-room-main tv-game-main tv-rain-frame">
         {spectator && <SpectatorBanner />}
         {controller ? (
@@ -460,31 +473,10 @@ function GameScreen() {
             {tools}
           </ControllerBar>
         ) : (
-          <section className="tv-game-top">
-            <div className="tv-game-round tv-mines-find">
-              <p className="tv-mono-label">
-                Ronda {round + 1} de {room.totalRounds} · Lluvia
-              </p>
-              <h1 key={`${round}-${title}`} className="tv-card-title tv-mines-prompt tv-rain-title">
-                {title}
-              </h1>
-              {hintLine}
-            </div>
-
-            <div className={`tv-clock${urgent ? " is-urgent" : ""}`} role="timer" aria-label={`${seconds} segundos`}>
-              <svg viewBox="0 0 44 44" aria-hidden="true">
-                <circle className="tv-clock-track" cx="22" cy="22" r="19" />
-                <circle className="tv-clock-fill" cx="22" cy="22" r="19" style={{ strokeDashoffset: 119.4 * (1 - pct / 100) }} />
-              </svg>
-              <span key={seconds} className="tv-clock-num">{seconds}</span>
-            </div>
-
-            <div className="tv-game-tools">{tools}</div>
-
-            <div className="tv-timer" aria-hidden="true">
-              <span className={`tv-timer-fill${urgent ? " is-urgent" : ""}`} style={{ width: `${pct}%` }} />
-            </div>
-          </section>
+          // The small card of the games played on a board: the round, its points and the question; the clock under it.
+          <MatchCard room={room} label={`Ronda ${round + 1}`} icon="rain" small pills={cardPills} seconds={seconds} pct={pct} urgent={urgent}>
+            <MatchQuestion>{title}</MatchQuestion>
+          </MatchCard>
         )}
 
         {question ? (
@@ -528,22 +520,12 @@ function GameScreen() {
               </Sky>
             )}
 
+            {/* What the last answer did (or what to do now), right over the box. */}
+            {hintLine}
             {(canWrite || central) && (
               <div className="tv-rain-bar">
                 {canWrite ? (
-                  <>
-                    <AnswerBox room={room} open={open} inputRef={inputRef} onResult={onResult} />
-                    {/* This player's points in the round, beside where they're won; the number pops with each one. */}
-                    <span className="tv-rain-score" role="status" aria-label={`${pointsText(myPoints)} en esta ronda`} title="Tus puntos en esta ronda">
-                      <span className="tv-rain-score-icon" aria-hidden="true">
-                        <Icon name="star" size={18} strokeWidth={2.6} filled />
-                      </span>
-                      <span className="tv-rain-score-text" aria-hidden="true">
-                        <strong key={myPoints}>{myPoints}</strong>
-                        <small>{myPoints === 1 ? "punto" : "puntos"}</small>
-                      </span>
-                    </span>
-                  </>
+                  <AnswerBox room={room} open={open} inputRef={inputRef} onResult={onResult} />
                 ) : (
                   <PhoneHint>Escriban las respuestas en su teléfono</PhoneHint>
                 )}
@@ -563,6 +545,7 @@ function GameScreen() {
 
       {/* The scoreboard is the central device's, when there is one. */}
       {!controller && <PartyPanel room={room} scores display={central} onToast={setErr} status={`Ronda ${round + 1}`} />}
+      {!controller && !central && <MatchBar room={room} viewerId={viewerId} tools={tools} line={phase === "playing" ? "" : undefined} />}
     </div>
   );
 }

@@ -183,11 +183,6 @@ export function genresOf(song) {
   return Array.isArray(found) ? found : [found];
 }
 
-/** The song's first genre group. */
-export function genreOf(song) {
-  return genresOf(song)[0];
-}
-
 /** The song's language, "es" or "en" (anything else counts as English). */
 export function languageOf(song) {
   return song?.language === "es" ? "es" : "en";

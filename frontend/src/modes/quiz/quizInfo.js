@@ -32,6 +32,13 @@ export const FORMATS = [
   { id: "escribir", label: "Abiertas", hint: "Escribe la respuesta" },
 ];
 
+// The modes of play, "Modos de juego" (QUIZ_STYLES on the server): they change which questions are asked. Clásico, the
+// text ones; Imágenes, those that come with a picture (the flags, a film's scene...). Both ticked by default.
+export const STYLES = [
+  { id: "clasico", label: "Clásico", hint: "Preguntas de texto" },
+  { id: "imagenes", label: "Imágenes", hint: "Cada pregunta trae una imagen" },
+];
+
 // The difficulties a match can mix (QUIZ_LEVELS on the server), any of them ticked.
 export const LEVELS = DIFFICULTIES.filter((d) => d.id !== "mixta");
 
@@ -47,6 +54,7 @@ export function quizConfig(room) {
     difficulties: quiz.difficulties || LEVELS.map((d) => d.id),
     categories: quiz.categories || TOPICS.map((t) => t.id),
     formats: quiz.formats || FORMATS.map((f) => f.id),
+    styles: quiz.styles || STYLES.map((st) => st.id),
   };
 }
 

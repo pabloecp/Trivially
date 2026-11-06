@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import TvShell from "../../components/home/TvShell.jsx";
 import Avatar from "../../components/home/Avatar.jsx";
-import Confetti from "../../components/home/Confetti.jsx";
 import Icon from "../../components/home/Icon.jsx";
 import MatchResults from "../../components/home/MatchResults.jsx";
 import PartyPanel from "../../components/home/PartyPanel.jsx";
@@ -11,7 +10,7 @@ import WaitingPill from "../../components/home/WaitingPill.jsx";
 import { ControllerBar, GetReady, PhoneHint } from "../../components/home/CentralBits.jsx";
 import { PauseButton, PauseVeil, ReportButton, SkipButton } from "../../components/home/PauseControls.jsx";
 import { resolveCode } from "../../lib/hiddenCode.js";
-import { MatchBar, MatchCard, MatchQuestion } from "../../components/home/MatchFrame.jsx";
+import { MatchBar, MatchCard, MatchQuestion, RoundVerdict } from "../../components/home/MatchFrame.jsx";
 import { useApp, useRemainingMs, useView } from "../../lib/store.jsx";
 import { MAX_CHARS, findKind, sameText } from "./farsanteInfo.js";
 import "../../styles/home.css";
@@ -198,18 +197,27 @@ function GameScreen() {
             room={room}
             label={null}
             pills={
-              <span className="tv-qc-steps">
-                {[
-                  ["Escribir", "pencil", countdown || writing],
-                  ["Votar", "check", voting],
-                  ["Revelar", "eye", reveal],
-                ].map(([name, icon, on]) => (
-                  <span key={name} className={`tv-qc-pill${on ? " is-on" : " is-dark"}`}>
-                    <Icon name={icon} size={16} strokeWidth={2.6} />
-                    {name}
-                  </span>
-                ))}
-              </span>
+              // At the reveal, how the round went for this player, the same as every game's result.
+              reveal && !central && !spectator ? (
+                (me?.lastPoints || 0) > 0 ? (
+                  <RoundVerdict tone="ok" label="¡Sumaste!" points={me.lastPoints} />
+                ) : (
+                  <RoundVerdict tone="timeout" icon="close" label="Esta ronda no sumaste" />
+                )
+              ) : (
+                <span className="tv-qc-steps">
+                  {[
+                    ["Escribir", "pencil", countdown || writing],
+                    ["Votar", "check", voting],
+                    ["Revelar", "eye", reveal],
+                  ].map(([name, icon, on]) => (
+                    <span key={name} className={`tv-qc-pill${on ? " is-on" : " is-dark"}`}>
+                      <Icon name={icon} size={16} strokeWidth={2.6} />
+                      {name}
+                    </span>
+                  ))}
+                </span>
+              )
             }
             dir={
               voting && fs?.kind === "dato"
@@ -296,10 +304,6 @@ function GameScreen() {
           )}
           {voting && central && <PhoneHint room={room}>Voten en su teléfono</PhoneHint>}
           {voting && !central && !spectator && voted != null && <WaitingPill room={room} userId={me?.id} />}
-          {reveal && !central && !spectator && (me?.lastPoints || 0) > 0 && <Confetti pieces={20} />}
-          {reveal && !central && !spectator && (
-            <p className="tv-fs-sent">{me?.lastPoints > 0 ? `+${me.lastPoints} puntos` : "Esta ronda no sumaste"}</p>
-          )}
           {err && <p className="tv-lobby-error" role="alert">{err}</p>}
         </section>
       </div>

@@ -66,9 +66,12 @@ export function mergeRainConfig(current, change = {}) {
   };
 }
 
-/** The questions Lluvia can ask: Trivia's written ones (game/quiz.js quizPool), but not the flags (they're images). */
+/**
+ * The questions Lluvia can ask: Trivia's written ones (game/quiz.js quizPool), but not those with a picture (the flags,
+ * Trivia's "Imágenes" questions): they make no sense without it.
+ */
 export function rainPool(quizQuestions = []) {
-  return quizQuestions.filter((q) => q.type === "open" && q.data?.kind !== "flag");
+  return quizQuestions.filter((q) => q.type === "open" && q.data?.kind !== "flag" && !q.data?.image);
 }
 
 /** The questions that match the settings. `ignore` leaves one filter out (to count what each chip would add). */

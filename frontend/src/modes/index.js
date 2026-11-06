@@ -253,9 +253,6 @@ export const GAME_MODES = [
 export const isGameTile = (mode) => mode.kind === "main" || mode.kind === "extra";
 
 
-// The grey, locked tile that closes the grid when a row would be left half empty: more are on the way.
-export const SOON_TILE = { id: "soon", name: "Más juegos pronto", color: "soon", icon: "lock", placeholder: true };
-
 export function findMode(id) {
   return GAME_MODES.find((m) => m.id === id) || null;
 }

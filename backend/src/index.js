@@ -1,8 +1,11 @@
+// First: Sentry, so it sees every failure (only on with SENTRY_DSN).
+import { Sentry, sentryOn } from "./instrument.js";
 import dotenv from "dotenv";
 import http from "node:http";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import cors from "cors";
+import helmet from "helmet";
 import express from "express";
 import cookieSession from "cookie-session";
 import { Server } from "socket.io";
@@ -23,12 +26,14 @@ import {
   handleSpotifyCallback,
 } from "./auth/routes.js";
 import { verifyAuthToken } from "./auth/socketToken.js";
+import { originChecker, sessionSecret } from "./security.js";
 import { attachSockets } from "./realtime/sockets.js";
 import { Friendships } from "./friends/friendships.js";
 import { FriendsHub } from "./friends/friendsHub.js";
 import { createFriendsRouter } from "./friends/routes.js";
 import { getMedia, isCoverUrl, isPreviewUrl, isSpotifyPreviewUrl } from "./audio/mediaCache.js";
 import { flagForToken, getFlag } from "./geo/flags.js";
+import { getImage, imageForToken } from "./questions/images.js";
 import { countryShape, shapeForToken } from "./geo/shapes.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -70,6 +75,11 @@ const clientOrigin = (process.env.CLIENT_ORIGIN || "https://triviallyonline.verc
 // On localhost, always use lax/insecure so dev works without HTTPS.
 const isLocalhost = clientOrigin.includes("localhost") || clientOrigin.includes("127.0.0.1");
 const isCrossSite = !isLocalhost && clientOrigin.startsWith("https://");
+// Production is any server whose site isn't on localhost: there it refuses to start without its own secret.
+const secret = sessionSecret(process.env, { production: !isLocalhost });
+// The web pages that may use this server (security.js): ours, Vercel's previews of it and localhost; the own domain
+// goes in ALLOWED_ORIGINS. Any other page is refused, so it can't act with a player's session.
+const isAllowedOrigin = originChecker(clientOrigin, process.env.ALLOWED_ORIGINS);
 
 // Google must send users back through the site's own domain (Vercel rewrites /auth to this server). If the
 // callback lands on the Railway domain instead, the session cookie belongs to that domain and phones block it.
@@ -81,29 +91,21 @@ if (!isLocalhost && process.env.GOOGLE_REDIRECT_URI) {
   } catch {}
 }
 
+// Security headers. Pictures, audio and covers are loaded by the site from another address, so they may be read
+// cross-origin; this server only answers JSON and media, so no page rules (CSP) are needed beyond helmet's default.
+app.use(helmet({ crossOriginResourcePolicy: { policy: "cross-origin" } }));
 app.use(
   cors({
-    origin: (origin, callback) => {
-      if (!origin) return callback(null, true);
-      // Permitir el origen configurado de Vercel, localhost y subdominios
-      if (
-        origin === clientOrigin ||
-        origin.endsWith(".vercel.app") ||
-        origin.includes("localhost") ||
-        origin.includes("127.0.0.1")
-      ) {
-        return callback(null, true);
-      }
-      return callback(null, true);
-    },
+    origin: (origin, callback) => callback(null, isAllowedOrigin(origin)),
     credentials: true,
   })
 );
-app.use(express.json());
+// Nothing the site sends is bigger than a few KB: anything over this is refused before it's read.
+app.use(express.json({ limit: "100kb" }));
 app.use(
   cookieSession({
     name: "yoavlly",
-    secret: process.env.SESSION_SECRET || "trivially-dev-secret",
+    secret,
     httpOnly: true,
     maxAge: 30 * 24 * 60 * 60 * 1000, // stay signed in for 30 days
     sameSite: isCrossSite ? "none" : "lax",
@@ -187,6 +189,23 @@ app.get("/api/geo/flag/:token", async (req, res) => {
   }
 });
 
+// The pictures of Trivia's "Imágenes" questions, by the token of the match's question (the address never says what
+// the picture is).
+app.get("/api/quiz/image/:token", async (req, res) => {
+  const url = imageForToken(req.params.token);
+  if (!url) return res.status(404).json({ error: "Imagen no encontrada" });
+  try {
+    const image = await getImage(url);
+    res.setHeader("Content-Type", image.type);
+    res.setHeader("Cache-Control", "private, max-age=21600");
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    res.setHeader("X-Content-Type-Options", "nosniff");
+    res.send(image.data);
+  } catch (e) {
+    res.status(502).json({ error: e.message });
+  }
+});
+
 // Encuentra el país's silhouettes ("Sombra" rounds), by the token of the match's round: only the shape to draw, never
 // the country's name.
 app.get("/api/geo/shape/:token", (req, res) => {
@@ -218,12 +237,19 @@ app.get("*", (req, res, next) => {
   });
 });
 
+// After every route: an error none of them handled goes to Sentry (when it's on), then to Express's own answer.
+if (sentryOn) Sentry.setupExpressErrorHandler(app);
+
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: (origin, callback) => callback(null, true),
+    origin: (origin, callback) => callback(null, isAllowedOrigin(origin)),
     credentials: true,
   },
+  // CORS only covers the polling requests: a WebSocket from another page is refused here too.
+  allowRequest: (req, callback) => callback(null, isAllowedOrigin(req.headers.origin)),
+  // A message is a few KB at most (an answer, a chat line, the settings).
+  maxHttpBufferSize: 256 * 1024,
 });
 attachSockets(io, rooms, { friends, hub: friendsHub, groups });
 

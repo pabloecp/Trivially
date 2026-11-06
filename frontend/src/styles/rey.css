@@ -77,8 +77,3 @@ button.tv-rey-offer:active:not(:disabled) { transform: translateY(2px); box-shad
 .tv-rey-offer-text { font-size: clamp(15px, 2vw, 19px); font-weight: 800; line-height: 1.25; overflow-wrap: anywhere; }
 @media (max-width: 720px) { .tv-rey-offers { grid-template-columns: minmax(0, 1fr); } }
 
-.tv-rey-answer { margin: 0; font-size: clamp(16px, 2.2vw, 22px); font-weight: 700; text-align: center; }
-.tv-rey-answer strong { color: var(--tv-ry-text); }
-.tv-rey-note { margin: 6px 0 0; text-align: center; font-weight: 800; }
-.tv-rey-note.is-win { color: var(--p-ok); }
-.tv-rey-note.is-lose { color: var(--p-bad); }

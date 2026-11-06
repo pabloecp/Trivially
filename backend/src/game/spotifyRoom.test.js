@@ -60,6 +60,14 @@ assert.equal(search.length, mgr.catalog.songs.length + 6);
 assert.equal(mgr.globalSongList().length, mgr.catalog.songs.length);
 assert.deepEqual(mgr.roomSearchExtras(room).map((s) => s.id).sort(), playlist.tracks.map((t) => `sp-${t.spotifyId}`).sort());
 
+// A Spotify song found on iTunes after a player downloaded the list joins globalSongList, but that player doesn't have
+// it: it must keep coming with the room, or the round's own song wouldn't show in their search box.
+resolver.known = new Map([["t0", song(0)]]);
+assert.equal(mgr.globalSongList().length, mgr.catalog.songs.length + 1);
+assert.ok(mgr.roomSearchExtras(room).some((s) => s.id === "sp-t0"), "a song found later still comes with the room");
+assert.equal(mgr.roomSearchExtras(room).length, 6);
+delete resolver.known;
+
 // The catalog turned off: only the ticked playlists play, whatever the filters say.
 mgr.updateConfig(room, "owner", { languages: ["es", "en"], useCatalog: false });
 assert.equal(room.config.useCatalog, false);

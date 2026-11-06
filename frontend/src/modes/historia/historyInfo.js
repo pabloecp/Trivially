@@ -40,12 +40,6 @@ export function yearLabel(year, { crossesZero = false } = {}) {
   return crossesZero ? `${year} d. C.` : String(year);
 }
 
-/** Years between two years: there is no year 0 (from 1 a. C. to 1 d. C. is one year). */
-export function yearsApart(a, b) {
-  const gap = Math.abs(a - b);
-  return a < 0 !== b < 0 ? gap - 1 : gap;
-}
-
 /** How a figure of Cifras reads: "8849 m", "42.195 m", "3.333.360 puntos" (like figureLabel on the server). */
 export function figureLabel(value, unit = "") {
   const text = Number(value).toLocaleString("es-ES", { useGrouping: Math.abs(value) >= 10000 });

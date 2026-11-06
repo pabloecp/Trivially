@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import TvShell from "../../components/home/TvShell.jsx";
 import Confetti from "../../components/home/Confetti.jsx";
 import Icon from "../../components/home/Icon.jsx";
+import Avatar from "../../components/home/Avatar.jsx";
 import WaitingPill from "../../components/home/WaitingPill.jsx";
 import MatchResults from "../../components/home/MatchResults.jsx";
 import PartyPanel from "../../components/home/PartyPanel.jsx";
@@ -15,7 +16,7 @@ import "../../styles/quiz.css";
 import "../../styles/mines.css";
 import { PauseButton, ReportButton, SkipButton, PauseVeil } from "../../components/home/PauseControls.jsx";
 import { resolveCode } from "../../lib/hiddenCode.js";
-import { MatchBar, MatchCard, MatchQuestion } from "../../components/home/MatchFrame.jsx";
+import { AnswerCard, MatchBar, MatchCard, MatchQuestion, RoundVerdict } from "../../components/home/MatchFrame.jsx";
 
 const COUNTDOWN_MS = 3000;
 const CELLS = 25;
@@ -269,6 +270,7 @@ function GameScreen() {
   // The central device has no "you": every player's cells in their own colour.
   const colorOf = (id) => (id === viewerId ? MY_COLOR : PLAYER_COLORS[playerIndex(id) % PLAYER_COLORS.length]);
   const nameOf = (id) => room.players.find((p) => p.id === id)?.name || "Jugador";
+  const avatarOf = (id) => room.players.find((p) => p.id === id)?.avatar ?? null;
   const toFind = question ? question.total - question.found : 0;
   // 25 cells, or a tiebreak's few (one more than the tied players).
   const size = question?.size || CELLS;
@@ -398,6 +400,8 @@ function GameScreen() {
             seconds={seconds}
             pct={pct}
             urgent={urgent}
+            small
+            pills={reveal && question && !tiebreak && me && !spectator && !central ? <MinesVerdict me={me} question={question} /> : null}
           >
             <MatchQuestion>{question?.prompt || "Prepárate…"}</MatchQuestion>
           </MatchCard>
@@ -482,7 +486,7 @@ function GameScreen() {
                         )}
                         {owned && (
                           <span className="tv-mines-owner" aria-hidden="true">
-                            {nameOf(c.by).slice(0, 1).toUpperCase()}
+                            <Avatar avatar={avatarOf(c.by)} />
                           </span>
                         )}
                       </button>
@@ -508,15 +512,15 @@ function GameScreen() {
               )}
               {burst && (
                 <div key={burst.key} className={`tv-mines-burst is-${burst.tone}${burst.long ? " is-long" : ""}${burst.final ? " is-final" : ""}`} role="alert">
-                  <span className="tv-mines-burst-card">
-                    {burst.confetti && <Confetti pieces={28} />}
-                    <span className="tv-mines-burst-icon">
-                      <Icon name={burst.icon} size={30} strokeWidth={2.8} />
-                    </span>
-                    <strong>{burst.title}</strong>
-                    {burst.detail && <small>{burst.detail}</small>}
-                    {burst.points > 0 && <span className="tv-tag tv-tag--points">+{burst.points}</span>}
-                  </span>
+                  {burst.confetti && <Confetti pieces={28} />}
+                  {/* The answer's card, the same as every game's, over the board. */}
+                  <AnswerCard
+                    icon={burst.icon}
+                    iconTone={BURST_TONES[burst.tone] || null}
+                    label={burst.points > 0 ? `+${burst.points} puntos` : null}
+                    value={burst.title}
+                    detail={burst.detail}
+                  />
                 </div>
               )}
             </div>
@@ -560,6 +564,16 @@ function roundPoints(hits = 0) {
 }
 
 // The card over the board at the reveal: how this player's round went, and a party when the whole board was found.
+// The colour of the answer card's icon for each kind of burst (green, red, or the grey of the rest).
+const BURST_TONES = { ok: "ok", win: "ok", mina: "bad", tiempo: "bad" };
+
+// This player's round on the card's first row at the reveal: how it ended and its points.
+function MinesVerdict({ me, question }) {
+  const b = roundBurst(me, question);
+  const tone = b.tone === "mina" ? "bad" : b.tone === "tiempo" ? "timeout" : "ok";
+  return <RoundVerdict tone={tone} icon={b.icon} label={b.title} points={b.points} confetti={false} />;
+}
+
 function roundBurst(me, question, live = null) {
   const answer = live || me?.lastAnswer;
   const hits = answer?.hits || 0;

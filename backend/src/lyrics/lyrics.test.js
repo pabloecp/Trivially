@@ -4,7 +4,7 @@ import os from "node:os";
 import path from "node:path";
 import { readLocalCatalog } from "../catalog/catalogProvider.js";
 import { RoomManager } from "../game/roomManager.js";
-import { alignWords, endAtGap, lyricLines, pickRound, wrongAnswers } from "./roundBuilder.js";
+import { alignWords, endAtGap, lyricLines, pickRound, rhymeLength, trickyWrongAnswers, wrongAnswers } from "./roundBuilder.js";
 import { loadLyricRounds, toVerse, writeRoundsFile } from "./lyricRounds.js";
 
 // Adivina la canción's "Completa la letra". The lyrics here are made up: real lyrics never go in the repo.
@@ -218,5 +218,20 @@ assert.ok(letra >= 1 && letra <= 3, `${letra} rounds of Completa la letra`);
 assert.equal(b.tracks.length, 10);
 assert.equal(new Set(b.tracks.map((t) => t.id)).size, 10);
 clearTimeout(b.timer);
+
+// Letra's wrong options sound like the answer: those that rhyme with it first, never the answer, a near copy of it or a
+// word on screen, with the answer's capitals.
+assert.equal(rhymeLength("pasajera", "primavera"), 3);
+assert.equal(rhymeLength("noche", "fuego"), 0);
+{
+  const pool = ["primavera", "cualquiera", "corazón", "noche", "bandera", "pasajeras", "fuego", "de", "espera"];
+  const noChance = () => 0;
+  const picked = trickyWrongAnswers("pasajera", pool, { random: noChance, avoid: new Set(["espera"]) });
+  assert.equal(picked.length, 3);
+  assert.ok(picked.every((w) => w.endsWith("era")), picked.join(","));
+  assert.ok(!picked.includes("pasajeras") && !picked.includes("espera") && !picked.includes("de"));
+  assert.deepEqual(trickyWrongAnswers("Lima", ["roma", "cama", "luna"], { random: noChance }).map((w) => w[0]), ["R", "C", "L"]);
+  assert.deepEqual(trickyWrongAnswers("friend", ["boyfriend", "weekend", "spend", "bеnd"], { random: noChance }), ["weekend", "spend"]);
+}
 
 console.log("lyrics.test ok");

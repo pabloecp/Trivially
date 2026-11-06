@@ -117,83 +117,9 @@
   100% { transform: scale(1); }
 }
 
-.tv-ml-headline { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 12px; }
-/* How full it is (or the seconds left once full), in a pill of the kind's colour beside the title. */
-.tv-ml-pill {
-  display: inline-grid;
-  place-items: center;
-  min-width: 52px;
-  height: 36px;
-  padding: 0 12px;
-  border-radius: 12px;
-  background: var(--c2);
-  color: var(--on);
-  font-family: var(--tv-display);
-  font-weight: 600;
-  font-size: 19px;
-  font-variant-numeric: tabular-nums;
-}
-.tv-ml-pill.is-count { animation: tvMlPop 0.4s var(--tv-spring); }
-
-/* A seat per player: an empty dashed circle until someone sits, who pops in. */
-.tv-ml-seats {
-  display: flex;
-  justify-content: center;
-  gap: 10px;
-  width: 100%;
-  max-width: 560px;
-  margin: 14px 0 6px;
-  padding: 0;
-  list-style: none;
-}
-.tv-ml-seat {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  flex: 0 1 100px;
-  min-width: 0;
-}
-.tv-ml-seat .tv-avatar { width: 58px; height: 58px; font-size: 22px; }
-.tv-ml-seat.is-taken { animation: tvMlSeat 0.5s var(--tv-spring) backwards; animation-delay: calc(var(--i) * 40ms); }
-@keyframes tvMlSeat {
-  0% { transform: scale(0.4); opacity: 0; }
-  100% { transform: scale(1); opacity: 1; }
-}
-.tv-ml-empty {
-  display: grid;
-  place-items: center;
-  width: 58px;
-  height: 58px;
-  border-radius: 50%;
-  border: 2px dashed var(--tv-line-strong, rgba(255, 255, 255, 0.18));
-  color: var(--tv-text-3);
-  animation: tvMlBreathe 1.8s ease-in-out infinite;
-  animation-delay: calc(var(--i) * 0.2s);
-}
-@keyframes tvMlBreathe {
-  0%, 100% { opacity: 0.5; }
-  50% { opacity: 1; }
-}
-.tv-ml-name {
-  max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-weight: 800;
-  font-size: 14px;
-  color: var(--tv-text);
-}
-.tv-ml-name.is-waiting { font-weight: 700; color: var(--tv-text-3); }
-/* The same size whether it says "Cancelar búsqueda" or "Salir", so nothing moves when the room fills. */
-
 @media (max-width: 520px) {
   .tv-mcard { padding: 22px 14px 20px; }
-  .tv-ml-seats { gap: 6px; }
-  .tv-ml-seat .tv-avatar,
-  .tv-ml-empty { width: 48px; height: 48px; }
-  .tv-ml-name { font-size: 12px; }
-}
+      }
 
 /* ---------- Before each game: the roulette, then how it's played (MatchIntro.jsx) ---------- */
 .tv-mi-frame {
@@ -225,98 +151,11 @@
 .tv-mi-dot.is-now { transform: scale(1.15); }
 
 /* The reel: wide cards going past a fixed marker in the middle, faded at both ends. */
-.tv-mi-roulette {
-  display: grid;
-  justify-items: center;
-  gap: 22px;
-  width: 100%;
-  /* Coming from the lobby's small roulette (MatchLobby): it grows from there into this one. */
-  animation: tvMiGrow 0.9s cubic-bezier(0.2, 0.9, 0.3, 1.05) backwards;
-}
 @keyframes tvMiGrow {
   from { opacity: 0.3; transform: translateY(90px) scale(0.48); }
 }
 .tv-mi-head { animation: tvFade 0.5s ease-out 0.25s backwards; }
-.tv-mi-window {
-  position: relative;
-  width: 100%;
-  /* Room above and below the cards for the arrows, even once the picked card grows (scale 1.1). */
-  height: 260px;
-  overflow: hidden;
-  -webkit-mask-image: linear-gradient(90deg, transparent, #000 22%, #000 78%, transparent);
-  mask-image: linear-gradient(90deg, transparent, #000 22%, #000 78%, transparent);
-}
-.tv-mi-track {
-  position: absolute;
-  top: 46px;
-  left: 50%;
-  display: flex;
-  gap: 14px;
-  will-change: transform;
-}
-.tv-mi-card {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  flex: 0 0 168px;
-  width: 168px;
-  height: 168px;
-  border-radius: 28px;
-  background: var(--c2);
-  box-shadow: 0 5px 0 var(--edge);
-  color: var(--on);
-  transition: transform 0.45s var(--tv-spring), opacity 0.3s ease;
-}
-.tv-mi-roulette.is-landed .tv-mi-card:not(.is-picked) { opacity: 0.25; transform: scale(0.88); }
-.tv-mi-card.is-picked { transform: scale(1.1); }
-.tv-mi-card-icon {
-  display: grid;
-  place-items: center;
-  width: 86px;
-  height: 86px;
-  border-radius: 26px;
-  background: rgba(255, 255, 255, 0.18);
-}
-/* The game's way, smaller still, under its name ("Cerradas"). */
-.tv-mi-card-way { margin-top: -8px; padding: 0 8px; font-weight: 700; font-size: 11px; line-height: 1.1; text-align: center; white-space: nowrap; opacity: 0.8; }
-/* The game's name, small, under the icon. */
-.tv-mi-card-name {
-  padding: 0 10px;
-  font-weight: 800;
-  font-size: 13px;
-  line-height: 1.1;
-  text-align: center;
-  white-space: nowrap;
-  opacity: 0.9;
-}
-/* The marker: a soft arrow above and below the middle card (ReelMarker), drawn with round joins so its corners are
-   rounded, in the colour of the match's kind. */
-.tv-mi-marker {
-  position: absolute;
-  inset: 0 auto 0 50%;
-  z-index: 1;
-  width: 0;
-  pointer-events: none;
-}
-.tv-mi-pin {
-  position: absolute;
-  left: -14px;
-  width: 28px;
-  height: 18px;
-  overflow: visible;
-  fill: var(--marker, var(--tv-text));
-  stroke: var(--marker, var(--tv-text));
-  stroke-width: 4;
-  stroke-linejoin: round;
-  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.35));
-}
-.tv-mi-pin.is-top { top: 0; }
-.tv-mi-pin.is-bottom { bottom: 0; transform: rotate(180deg); }
 /* The marker in the colour of the match's kind (its cards keep their games' colours). */
-.tv-reel-music { --marker: var(--p-music-2); }
-.tv-reel-amber { --marker: var(--p-culture-2); }
 .tv-mi-caption {
   margin: 0;
   font-family: var(--tv-display);
@@ -324,7 +163,6 @@
   font-size: clamp(26px, 5vw, 38px);
   color: var(--tv-text);
 }
-.tv-mi-roulette.is-landed .tv-mi-caption { animation: tvMlPop 0.45s var(--tv-spring); }
 
 /* The tutorial: the game's badge and name, its three steps coming in one by one, and a bar that fills in 5 s. */
 .tv-mi-tutorial {
@@ -397,114 +235,12 @@
 
 @media (prefers-reduced-motion: reduce) {
   .tv-pm-panel,
-  .tv-pm-body,
-  .tv-mi-card { transition: none; }
-  .tv-ml-empty { animation: none; }
-  .tv-mi-step,
-  .tv-mi-roulette,
-  .tv-mi-tutorial { animation: none; }
+.tv-pm-body { transition: none; }
+    .tv-mi-step,
+.tv-mi-tutorial { animation: none; }
 }
 
 /* ---------- "¿Cómo quieres jugar?" as a page (PlayPage.jsx, /jugar) ---------- */
-/* Two big tiles (Pública and Privada), like the games in "Elige el juego"; one per row on phones. */
-.tv-play-grid {
-  flex: 1;
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16px;
-  align-content: stretch;
-}
-.tv-mode.tv-play-tile { height: auto; min-height: 260px; padding: 22px; }
-.tv-play-tile-text { display: grid; gap: 6px; }
-.tv-play-tile .tv-mode-name { font-size: clamp(26px, 2.6vw, 34px); }
-.tv-play-tile-blurb { font-weight: 800; font-size: 15px; line-height: 1.3; opacity: 0.85; }
-.tv-play-tile .tv-mode-watermark { width: 170px; height: 170px; right: -28px; bottom: -30px; }
-
-/* Inicio is this page: the big logo over the tiles (--k scales every measure of it), the tiles straight on the page on
-   wider screens, with no panel behind them and no title (only for screen readers), all in the middle of the screen.
-   Phones: the same, one tile per row under a smaller logo. */
-.tv-play-menu { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 14px; }
-.tv-play-menu > .tv-play-picker { align-self: stretch; }
-.tv-logo.tv-play-logo { --k: 0.5; display: flex; flex-shrink: 0; animation: var(--tv-box-in); }
-.tv-logo.tv-play-logo.is-leaving { pointer-events: none; animation: var(--tv-box-out); }
-.tv-play-logo .tv-appicon { --s: calc(150px * var(--k)); height: calc(166px * var(--k)); }
-.tv-play-logo .tv-appicon-shadow { left: calc(50% - 42px * var(--k)); width: calc(84px * var(--k)); height: calc(12px * var(--k)); filter: blur(calc(5px * var(--k))); }
-.tv-play-logo .tv-appicon-tile { --bob: calc(-9px * var(--k)); }
-/* The tiles straight on the page, with no panel behind them and no title (only for screen readers): they say it
-   themselves. */
-.tv-picker.tv-play-picker {
-  flex: none;
-  width: 100%;
-  max-width: 1240px;
-  padding: 0;
-  border-radius: 0;
-  background: none;
-  box-shadow: none;
-  /* The tiles rise on hover: nothing cuts them. */
-  overflow: visible;
-}
-.tv-play-picker .tv-picker-head { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
-/* Computers: the logo on the left and the two options one above the other on the right, the pair in the middle of the
-   screen. */
-@media (min-width: 761px) {
-  .tv-play-menu { flex-direction: row; align-items: center; justify-content: center; gap: clamp(48px, 8vw, 140px); }
-  .tv-logo.tv-play-logo { --k: 0.55; }
-  .tv-play-menu > .tv-play-picker { align-self: center; flex: 0 1 640px; width: auto; min-width: 0; }
-  .tv-play-grid { grid-template-columns: 1fr; flex: none; gap: 28px; }
-  .tv-mode.tv-play-tile { min-height: 0; height: 176px; flex-direction: row; align-items: center; justify-content: flex-start; gap: 26px; padding: 0 36px; border-radius: 34px; }
-  .tv-play-tile .tv-mode-badge { flex-shrink: 0; width: 72px; height: 72px; border-radius: 22px; }
-  .tv-play-tile .tv-mode-badge svg { width: 36px; height: 36px; }
-  .tv-play-tile-text { gap: 10px; }
-  .tv-play-tile .tv-mode-name { font-size: clamp(32px, 3vw, 44px); }
-  .tv-play-tile-blurb { font-size: 18px; }
-  .tv-play-tile .tv-mode-watermark { width: 210px; height: 210px; right: -30px; bottom: -44px; }
-}
-@media (min-width: 1100px) {
-  .tv-logo.tv-play-logo { --k: 0.9; }
-}
-/* Shorter windows: smaller tiles and logo, so it all still fits. */
-@media (min-width: 761px) and (max-height: 820px) {
-  .tv-logo.tv-play-logo { --k: 0.65; }
-  .tv-play-grid { gap: 20px; }
-  .tv-mode.tv-play-tile { height: 136px; padding: 0 28px; }
-  .tv-play-tile .tv-mode-badge { width: 58px; height: 58px; border-radius: 18px; }
-  .tv-play-tile .tv-mode-badge svg { width: 30px; height: 30px; }
-  .tv-play-tile .tv-mode-watermark { width: 170px; height: 170px; }
-}
-
-/* Privada's line under the code while a friend's host answers (PlayPage; the rest of an option's page is lobby.css). */
-.tv-play-note { margin: 0; font-weight: 700; font-size: 14px; color: var(--tv-text-3); }
-
-
-.tv-play-rooms .tv-invite-friend { padding: 8px 8px 8px 10px; }
-.tv-play-rooms .tv-avatar { width: 36px; height: 36px; }
-.tv-play-rooms .tv-invite-friend-text small { color: var(--tv-text-3); }
-.tv-play-rooms-game { width: 30px; height: 30px; border-radius: 10px; box-shadow: 0 3px 0 var(--edge); }
-
-/* The player's column (PlaySide.jsx), where a room's own column goes: who plays, friends online, the friends sheet. */
-.tv-play-me { gap: 14px; }
-.tv-play-me-row { display: flex; align-items: center; gap: 12px; min-width: 0; }
-.tv-play-me-text { display: grid; gap: 2px; min-width: 0; }
-.tv-play-me-text strong { overflow: hidden; font-family: var(--tv-display); font-weight: 800; font-size: 20px; color: var(--tv-text); text-overflow: ellipsis; white-space: nowrap; }
-.tv-play-me-text small { font-weight: 700; font-size: 13px; color: var(--tv-text-3); }
-.tv-play-me-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; margin: 0; }
-.tv-play-me-stats > div { display: grid; gap: 2px; min-width: 0; padding: 8px 10px; border-radius: 12px; background: rgba(255, 255, 255, 0.05); }
-.tv-play-me-stats dt { overflow: hidden; font-weight: 700; font-size: 11px; color: var(--tv-text-3); text-overflow: ellipsis; white-space: nowrap; }
-.tv-play-me-stats dd { margin: 0; font-family: var(--tv-display); font-weight: 800; font-size: 20px; color: var(--tv-text); }
-.tv-play-me-guest { display: grid; gap: 10px; }
-.tv-play-me-guest p { margin: 0; font-weight: 700; font-size: 13px; line-height: 1.35; color: var(--tv-text-2); }
-.tv-play-me-links { display: flex; align-items: center; gap: 12px; }
-.tv-play-me-links .tv-btn { text-decoration: none; }
-.tv-play-me-login { font-weight: 800; font-size: 14px; color: var(--tv-text-2); text-decoration: none; }
-.tv-play-me-login:hover { color: var(--tv-text); }
-
-@media (max-width: 760px) {
-  /* The panel with its three tiles sits in the middle of the screen, not stuck to the top (from the top when it's too tall). */
-  .tv-play-menu { justify-content: center; }
-  .tv-picker.tv-play-picker { flex: none; }
-  .tv-play-grid { grid-template-columns: 1fr; flex: none; }
-  .tv-mode.tv-play-tile { min-height: 120px; flex-direction: row; align-items: center; justify-content: flex-start; gap: 16px; }
-}
 
 /* Where the page scrolls instead of fitting the window (phones, small tablets), the options' menu is as tall as the
    screen under the top bar, so what it holds can sit in the middle of it. */
@@ -517,54 +253,6 @@
   .tv-main.is-room.is-playpage { padding-top: 14px; padding-bottom: calc(24px + env(safe-area-inset-bottom)); }
 }
 
-
-/* Competitivo: the player's rank in their column (PlaySide's RankCard), in its tier's colour (--rank). */
-.tv-play-rank { display: grid; gap: 10px; }
-.tv-play-rank-row { display: flex; align-items: center; gap: 12px; min-width: 0; }
-.tv-play-rank-badge {
-  display: grid;
-  place-items: center;
-  flex-shrink: 0;
-  width: 44px;
-  height: 44px;
-  border-radius: 14px;
-  background: var(--rank);
-  box-shadow: 0 3px 0 color-mix(in srgb, var(--rank) 60%, #000);
-  color: #1b1b1f;
-}
-.tv-play-rank-text { display: grid; flex: 1; gap: 1px; min-width: 0; }
-.tv-play-rank-text small { font-weight: 700; font-size: 12px; color: var(--tv-text-3); }
-.tv-play-rank-text strong { overflow: hidden; font-family: var(--tv-display); font-weight: 800; font-size: 22px; line-height: 1.1; color: var(--rank); text-overflow: ellipsis; white-space: nowrap; }
-.tv-play-rank-pts { display: grid; justify-items: end; flex-shrink: 0; }
-.tv-play-rank-pts strong { font-family: var(--tv-display); font-weight: 800; font-size: 20px; line-height: 1.1; color: var(--tv-text); }
-.tv-play-rank-pts small { font-weight: 700; font-size: 12px; color: var(--tv-text-3); }
-.tv-play-rank-bar { overflow: hidden; height: 8px; border-radius: 999px; background: rgba(255, 255, 255, 0.08); }
-.tv-play-rank-bar span { display: block; height: 100%; border-radius: inherit; background: var(--rank); transition: width 0.6s var(--tv-ease-out); }
-
-
-/* The history in /jugar's column: "Ver todas (n)" at the end of its title's row. */
-.tv-history-more--head { justify-self: auto; padding: 0; font-size: 13px; color: var(--tv-text-3); }
-
-/* "Amigos conectados" in Privada's settings: how many are online, beside the title. */
-.tv-play-online-count { margin-left: 8px; padding: 1px 8px; border-radius: 10px; font-size: 12px; background: rgba(255, 255, 255, 0.08); }
-
-
 /* ---------- The game before, at the start of a public match's intro (MatchIntro's PreviousGame) ---------- */
 .tv-mi-prev { display: grid; gap: 14px; width: min(100%, 460px); margin: 0 auto; text-align: center; animation: tvSwap 0.45s var(--tv-ease-out) backwards; }
-.tv-mi-prev-title { margin: 0; font-family: var(--tv-display); font-weight: 800; font-size: clamp(30px, 4vw, 44px); line-height: 1; color: var(--tv-text); }
-.tv-mi-prev-list { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
-.tv-mi-prev-row { display: flex; align-items: center; gap: 12px; padding: 10px 14px; border-radius: 18px; background: var(--tv-option-bg); text-align: left; }
-/* The winner is framed by the logo's five coloured slices (like the search's clock), turning slowly. */
-.tv-mi-prev-row { border: 3px solid transparent; }
-.tv-mi-prev-row.is-winner {
-  background:
-    linear-gradient(var(--tv-option-bg), var(--tv-option-bg)) padding-box,
-    conic-gradient(from var(--ml-turn, 0deg), var(--logo-1) 0 72deg, var(--logo-2) 72deg 144deg, var(--logo-3) 144deg 216deg, var(--logo-4) 216deg 288deg, var(--logo-5) 288deg 360deg) border-box;
-  animation: tvFrameTurn 2.4s linear infinite;
-}
-.tv-mi-prev-name { flex: 1; min-width: 0; display: grid; font-weight: 800; font-size: 16px; color: var(--tv-text); }
-.tv-mi-prev-name small { font-weight: 700; font-size: 12px; color: var(--tv-text-3); }
-.tv-mi-prev-points { font-family: var(--tv-display); font-weight: 800; font-size: 24px; font-variant-numeric: tabular-nums; color: var(--tv-text); }
-.tv-mi-prev-note { margin: 0; font-weight: 700; font-size: 13px; color: var(--tv-text-3); }
 
-.tv-mi-prev-wins { flex-shrink: 0; font-family: var(--tv-display); font-weight: 800; font-size: 15px; color: var(--p-culture-text, #ff9d29); }

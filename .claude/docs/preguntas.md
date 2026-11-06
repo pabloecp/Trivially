@@ -3,8 +3,9 @@
 - Supabase table `questions`, loaded once at boot by `questions/questionBank.js` `loadQuestions()` (active rows; else `backend/private/questions.json`; else the fake `sampleQuestions.js`) and passed to `RoomManager`. Each game filters by `mode`.
 - Trivia's real questions are never committed (public repo). The table has RLS and no policies: only the service-role key reads it.
 - Row (`questionSchema.js`, `supabase/schema.sql`): `id, type, mode, category, difficulty, language, prompt, data, active, created_at`.
-  - `multiple_choice`: `{ options: [4], correct }`
-  - `open`: `{ answer, aliases, reject }` (+ `flag`)
+  - `multiple_choice`: `{ options: [4], correct }` (+ `image`)
+  - `open`: `{ answer, aliases, reject }` (+ `flag`, `image`)
+  - `image` (optional, `multiple_choice` and `open` only): the https address of the question's picture (a film's scene, a painting…). Those questions are Trivia's "Imágenes" mode, never "Clásico" (see `sala-y-partida.md`). Write the prompt so it needs the picture ("¿De qué película es esta escena?"), and use pictures you may use (own, public domain or freely licensed).
   - `location`: `{ name, map }` · `year`: `{ year }` (negative is BC, never 0) · `number`: `{ value, unit }`
   - `minefield`: `{ correct, wrong }`, 25 cells, 8–17 right. `true_false` is reserved.
   - New types need the `questions_type_check` constraint from `schema.sql`.

@@ -6,6 +6,7 @@ import { readSpotifyPlaylist } from "../catalog/spotifyLibrary.js";
 import { saveQuestionReport } from "../db/reports.js";
 import { forgetSpotifyLink, playerAvatar, saveSpotifyLink, savedSpotifyLinks } from "../db/store.js";
 import { prefetchFlags } from "../geo/flags.js";
+import { prefetchImages } from "../questions/images.js";
 import { isAccount } from "../auth/username.js";
 import { hasRole } from "../auth/roles.js";
 import { GroupManager } from "../game/groups.js";
@@ -30,6 +31,7 @@ export function attachSockets(io, rooms, { friends = null, hub = null, groups = 
   // A full public room started by itself (RoomManager.checkMatchFull): like room:start, without anyone pressing it.
   rooms.onMatchStart = (room) => {
     prefetchFlags(room.tracks);
+    prefetchImages(room.tracks);
     watchRoom(io, rooms, room);
   };
 
@@ -870,6 +872,7 @@ export function attachSockets(io, rooms, { friends = null, hub = null, groups = 
         // Download every round's preview and cover (or flag) now, so nothing waits for iTunes once the match runs.
         prefetchMedia(room.tracks);
         prefetchFlags(room.tracks);
+        prefetchImages(room.tracks);
         watchRoom(io, rooms, room);
         ack?.({ ok: true });
         io.to(room.code).emit("room:state", rooms.publicState(room));
@@ -953,6 +956,7 @@ export function attachSockets(io, rooms, { friends = null, hub = null, groups = 
         rooms.replay(room, ref.userId);
         prefetchMedia(room.tracks);
         prefetchFlags(room.tracks);
+        prefetchImages(room.tracks);
         watchRoom(io, rooms, room);
         ack?.({ ok: true });
       } catch (err) {

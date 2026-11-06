@@ -1,5 +1,6 @@
 import { useLayoutEffect, useRef } from "react";
 import Avatar from "./Avatar.jsx";
+import Confetti from "./Confetti.jsx";
 import Icon from "./Icon.jsx";
 import { joinNames, waitingNames } from "./WaitingPill.jsx";
 import { MATCH_KINDS } from "./matchInfo.js";
@@ -34,14 +35,17 @@ function CardDirection({ dir }) {
 
 /**
  * The round's card, in the game's colour: on its first row the round's mode or topic (`label`, with its `icon`), any
- * `pills`, and under them what to do (`dir`); the question (children) and the clock's bar under it. One fixed height for
- * every game and round (`.tv-qc`), so the card never changes size.
+ * `pills` (the round's result goes there too: `RoundVerdict`), and under them what to do (`dir`); the question
+ * (children), with `media` beside it (a flag, a silhouette, the song's bars), and the clock's bar under it. Two sizes,
+ * each always as tall: the normal one, and `small` for the games played on a map or a board, which need the room.
+ * The text never changes at the reveal: only the result is added on the first row.
  */
-export function MatchCard({ room, label, icon, pills = null, dir, seconds, pct = 100, urgent = false, className = "", children }) {
+export function MatchCard({ room, label, icon, pills = null, dir, seconds, pct = 100, urgent = false, small = false, media = null, mark = null, className = "", children }) {
   const { color, icon: gameIcon } = gameLook(room);
   const counting = room.phase === "countdown";
+  const classes = ["tv-qc", `tv-c-${color}`, small && "tv-qc--small", room.phase === "reveal" && "is-reveal", className].filter(Boolean).join(" ");
   return (
-    <section className={`tv-qc tv-c-${color} ${className}`.trim()}>
+    <section className={classes}>
       <Icon name={gameIcon} size={220} strokeWidth={1.5} className="tv-qc-mark" />
       <div className="tv-qc-head">
         {label && (
@@ -57,12 +61,70 @@ export function MatchCard({ room, label, icon, pills = null, dir, seconds, pct =
         </span>
         {dir && <CardDirection dir={dir} />}
       </div>
-      <div className="tv-qc-body">{children}</div>
+      <div className="tv-qc-body">
+        {media && <div className="tv-qc-media">{media}</div>}
+        {children}
+      </div>
       <div className="tv-qc-timer" aria-hidden="true">
         <i className={urgent ? "is-urgent" : ""} style={{ width: `${pct}%` }} />
+        {/* A small notch on the bar at a moment of the round (Letra: where the song is cut), with nothing written. */}
+        {mark != null && <b className="tv-qc-timer-mark" style={{ left: `${Math.max(0, Math.min(100, mark))}%` }} />}
       </div>
     </section>
   );
+}
+
+const VERDICT_ICONS = { ok: "check", near: "target", bad: "close", timeout: "hash" };
+
+/**
+ * How the round went for this player, on the card's first row (MatchCard `pills`), the same in every game: what happened
+ * ("¡Correcto!", in white with green letters; red when wrong) and, apart, the points ("+900") and the streak. On a
+ * phone the topic and the streak step aside at the reveal so this never gets cut (look.css).
+ */
+export function RoundVerdict({ tone = "ok", label, points = null, streak = 0, icon, confetti = tone === "ok" }) {
+  return (
+    <>
+      <span className={`tv-qc-verdict is-${tone}`} role="status">
+        {confetti && <Confetti pieces={18} />}
+        <Icon name={icon || VERDICT_ICONS[tone] || "check"} size={16} strokeWidth={3.2} />
+        {label}
+      </span>
+      {points != null && <span className="tv-qc-points">{typeof points === "number" ? `+${points}` : points}</span>}
+      {streak > 1 && <span className="tv-qc-streak">Racha de {streak}</span>}
+    </>
+  );
+}
+
+/**
+ * The answer at the end of a round, one card for every game: what it is (`label`: "La respuesta", "La canción"), the
+ * answer big (`value`), an optional line under it (`detail`) and how it went for this player (`mine`, green or red).
+ * `media` goes on its left (a song's cover). It takes the place of the box to write in, of the number, or floats over a
+ * map or a board (`floating`).
+ */
+export function AnswerCard({ label, value, detail = null, media = null, mine = null, mineOk = false, icon = null, iconTone = null, floating = false }) {
+  const tone = iconTone || (mine ? (mineOk ? "ok" : "bad") : "");
+  const card = (
+    <div className={`tv-acard${floating ? " is-floating" : ""}`} role="status">
+      {media && <span className="tv-acard-media">{media}</span>}
+      {!media && icon && (
+        <span className={`tv-acard-icon${tone ? ` is-${tone}` : ""}`}>
+          <Icon name={icon} size={24} strokeWidth={2.8} />
+        </span>
+      )}
+      <span className="tv-acard-text">
+        {label && <span className="tv-acard-label">{label}</span>}
+        <strong className="tv-acard-value">{value}</strong>
+        {detail && <span className="tv-acard-detail">{detail}</span>}
+        {mine && (
+          <span className={`tv-acard-mine ${mineOk ? "is-ok" : "is-bad"}`}>
+            <Icon name={mineOk ? "check" : "close"} size={15} strokeWidth={3} />
+            {mine}
+          </span>
+        )}
+      </span>
+    </div>
+  );
+  return floating ? <div className="tv-acard-float">{card}</div> : card;
 }
 
 // The smallest a question gets to fit its card (px).
