@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useApp } from "../lib/store.jsx";
 import TvShell from "../components/home/TvShell.jsx";
 import AppIcon from "../components/home/AppIcon.jsx";
@@ -183,6 +183,10 @@ function LoginScreen() {
           </form>
         )}
       </section>
+
+      <p className="tv-legal-note">
+        Al entrar aceptas los <Link to="/terminos">Términos de uso</Link> y el <Link to="/privacidad">Aviso de privacidad</Link>.
+      </p>
     </div>
   );
 }
