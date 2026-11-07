@@ -38,8 +38,8 @@ const ResetPassword = lazy(() => import("./pages/ResetPassword.jsx"));
 const Terms = lazy(() => import("./pages/Legal.jsx").then((m) => ({ default: m.Terms })));
 const Privacy = lazy(() => import("./pages/Legal.jsx").then((m) => ({ default: m.Privacy })));
 
-// The tab's title (and what search engines show) for each page; Inicio's says what the site is.
-const HOME_TITLE = "Trivially: trivia en vivo, solo o con amigos";
+// The tab's title for each page, always "<página> - Trivially"; Inicio's is just "Trivially".
+const HOME_TITLE = "Trivially";
 const PAGE_TITLES = [
   [/^\/login/, "Entrar"],
   [/^\/restablecer/, "Cambiar contraseña"],
@@ -55,7 +55,7 @@ function PageTitle() {
   const { pathname } = useLocation();
   useEffect(() => {
     const match = PAGE_TITLES.find(([re]) => re.test(pathname));
-    document.title = match ? `${match[1]} · Trivially` : KNOWN_PAGE.test(pathname) ? HOME_TITLE : "Página no encontrada · Trivially";
+    document.title = match ? `${match[1]} - Trivially` : KNOWN_PAGE.test(pathname) ? HOME_TITLE : "Página no encontrada - Trivially";
   }, [pathname]);
   return null;
 }
