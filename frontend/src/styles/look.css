@@ -1180,8 +1180,6 @@
 .tv-app .tv-quiz-media img { display: block; width: auto; height: auto; max-width: min(260px, 38vw); max-height: 100%; border: 3px solid #fff; border-radius: 12px; }
 .tv-app .tv-quiz-media.is-flag img { height: 100%; aspect-ratio: 3 / 2; object-fit: cover; }
 .tv-app .tv-quiz-media-missing { display: grid; place-items: center; gap: 4px; width: 120px; height: 100%; padding: 6px; border: 3px solid #fff; border-radius: 12px; font-size: 11px; font-weight: 700; line-height: 1.2; text-align: center; }
-/* Whose picture it is, under the card once the answer shows (its line is always there, so nothing moves). */
-.tv-match .tv-quiz-credit { flex: none; height: 16px; margin: -2px 0 0; overflow: hidden; font-size: 12px; line-height: 16px; color: var(--tv-text-3); text-align: center; white-space: nowrap; text-overflow: ellipsis; }
 
 /* The scoreboard: "MARCADOR" and how the round goes, then one flat box per player (you with a yellow ring). The same
    during a game's roulette and tutorial (`.tv-room.is-intro`), so it doesn't change when the first round starts. */

@@ -4487,8 +4487,6 @@ export class RoomManager {
       difficulty: question.difficulty,
       // Whether a picture comes with it ("Imágenes"), so its place is kept from the countdown on.
       pictured: Boolean(question.imageToken),
-      // Whose picture it is and its licence: with the answer (it may name it).
-      credit: showAnswer && question.imageToken ? question.credit || null : null,
     };
     if (question.type === "open") {
       return {

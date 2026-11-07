@@ -5,18 +5,10 @@ Título: tipo(área): Qué cambia, en palabras simples
   Ejemplos: fix(grupos): El líder ya no se queda solo al cambiar de juego
             release: 2026-11-06, grupos aparte y partida a pantalla completa
   Rama de trabajo → `develop`. Solo `develop` → `main` (o `hotfix/`) va hacia `main`.
+
+Descripción: solo puntos cortos con lo importante que cambia, en palabras simples (lo que se nota, no qué archivo).
+Si hay algo que los demás deben saber o hacer (SQL en Supabase, variables en Railway o Vercel, probar en un celular…),
+una línea al final que empiece con "⚠️ Atención:". Si no hay nada, no se pone.
 -->
 
-## Qué cambia
-
 - 
-
-## Cómo probarlo
-
-- 
-
-## Atención al fusionar
-
-<!-- Pasos manuales (SQL en Supabase, variables de entorno…) o "Nada". -->
-
-- Nada
