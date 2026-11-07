@@ -198,6 +198,34 @@ create table if not exists public.question_reports (
 create index if not exists question_reports_created_idx on public.question_reports (created_at desc);
 alter table public.question_reports enable row level security;
 
+-- Cómo le va a cada pregunta en las partidas (backend/src/game/questionStats.js y db/questionStats.js): una fila por
+-- juego, pregunta y variante (Trivia: opciones / escribir; Adivina la canción: titulo:opciones…; Encuentra el país: su
+-- modo; Rango: su tipo; Campo de minas: turnos / carrera). Solo cuentan personas, nunca bots ni desempates. Los
+-- números solo crecen: el servidor los suma cada minuto. Sirve para revisar más adelante si la dificultad de una
+-- pregunta es la que le toca. Solo el backend (service_role) la lee y escribe: RLS activado y sin políticas.
+create table if not exists public.question_stats (
+  game         text not null,                           -- opciones, musica, mundo, historia, minas, lluvia, rey, farsante
+  question_id  text not null,                           -- id de la pregunta, canción, verso o tablero
+  variant      text not null default '',
+  prompt       text,                                    -- el texto, para leerla sin buscarla
+  difficulty   text,                                    -- la dificultad que tenía cuando se jugó
+  category     text,
+  seen         integer not null default 0,              -- veces que salió
+  players      integer not null default 0,              -- personas que la tuvieron delante (suma de todas las veces)
+  correct      integer not null default 0,              -- acertaron
+  wrong        integer not null default 0,              -- fallaron
+  skipped      integer not null default 0,              -- la saltaron ("Saltar")
+  blank        integer not null default 0,              -- se acabó el tiempo sin responder
+  points       bigint not null default 0,               -- puntos que dio, sumados
+  correct_ms   bigint not null default 0,               -- milisegundos que tardaron los aciertos, sumados
+  extra        jsonb not null default '{}'::jsonb,      -- lo propio de cada juego (opciones elegidas, km, casillas…)
+  first_seen   timestamptz not null default now(),
+  last_seen    timestamptz,
+  updated_at   timestamptz not null default now(),
+  primary key (game, question_id, variant)
+);
+alter table public.question_stats enable row level security;
+
 -- La tabla shared_playlists (las playlists de juegos compartidas por código) ya no se usa: se quitó el juego Playlist.
 drop table if exists public.shared_playlists;
 
