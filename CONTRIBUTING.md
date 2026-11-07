@@ -66,6 +66,8 @@ tipo(área): Qué cambia, en palabras simples
 | `develop` → `main` | `release: 2026-11-06, grupos aparte y partida a pantalla completa` |
 | `main` → `develop` | `chore: Develop al día con main después de la publicación #47` |
 
+La descripción son solo puntos cortos con lo importante que cambia, en palabras simples, como la de un commit; sin secciones. Si los demás deben saber o hacer algo, una última línea que empiece con "⚠️ Atención:" (si no, nada).
+
 Al fusionar, GitHub usa ese título para el commit de fusión, con el número del pull request al final, por ejemplo `fix(grupos): … (#41)`. Así el historial de `develop` y `main` se lee igual que la lista de pull requests.
 
 Los commits dentro de la rama llevan la misma forma, siempre: `tipo(área): Qué cambia`, con el `tipo` de la rama (`CLAUDE.md`, "Commits"). Traer `develop` a una rama es `chore: Develop al día en la rama …`. Ningún commit va sin `tipo:`, para que GitHub y Vercel muestren todo igual.
@@ -75,7 +77,7 @@ Los commits dentro de la rama llevan la misma forma, siempre: `tipo(área): Qué
 1. Cuando `develop` tiene lo que queremos publicar y está probado, se abre un pull request de `develop` hacia `main` (o de una rama `release/fecha` si hace falta preparar algo antes).
 2. Se fusiona con un **merge commit** (no squash), para que `main` conserve el historial.
 3. Vercel y Railway despliegan solos desde `main`.
-4. Si la publicación necesita algo manual (por ejemplo, ejecutar SQL en Supabase), va escrito en la descripción del pull request.
+4. Si la publicación necesita algo manual (por ejemplo, ejecutar SQL en Supabase), va en la descripción del pull request, en una línea final que empieza con "⚠️ Atención:".
 
 ## Arreglos urgentes (hotfix)
 
