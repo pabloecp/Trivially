@@ -293,7 +293,7 @@ function GameScreen() {
   // A closed round ("Preguntas Cerradas"): four songs to choose from instead of the search box.
   const choice = room?.choice || null;
   const closed = choice?.type === "choice";
-  const myChoice = Number.isInteger(me?.lastAnswer?.choice) ? me.lastAnswer.choice : pickedChoice?.round === room?.currentRound ? pickedChoice.index : null;
+  const myChoice = Number.isInteger(me?.lastAnswer?.choice) ? me.lastAnswer.choice : pickedChoice && pickedChoice.round === room?.currentRound ? pickedChoice.index : null;
 
   async function handleChoose(index) {
     if (locked || isSubmittingRef.current || !choice?.options?.[index]) return;
