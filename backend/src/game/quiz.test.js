@@ -296,10 +296,10 @@ for (const r of [room, big, none, w]) clearTimeout(r.timer);
   assert.equal(shown, `/api/quiz/image/${track.imageToken}`);
   assert.ok(!JSON.stringify(imgr.publicState(iroom, ihost.id)).includes("ejemplo.com"));
   assert.equal(imageForToken(track.imageToken), track.image);
-  // Whose picture it is shows with the answer, not before (it may name it).
-  assert.equal(imgr.publicQuestion(iroom, track).credit, null);
+  // Whose picture it is stays in the question's data, never on screen: not even with the answer.
+  assert.equal(imgr.publicQuestion(iroom, track).credit, undefined);
   iroom.phase = "reveal";
-  assert.equal(imgr.publicQuestion(iroom, track).credit, "Autora · CC BY 4.0");
+  assert.equal(imgr.publicQuestion(iroom, track).credit, undefined);
   assert.match(questionErrors({ ...pic(1), data: { ...pic(1).data, image: undefined } }).join(), /credit/);
   clearTimeout(iroom.timer);
 

@@ -33,7 +33,7 @@ git checkout -b feature/mi-cambio
 
 # 2. Trabajar y hacer commits (en español, ver CLAUDE.md)
 git add -A
-git commit -m "Título corto" -m "- Qué cambió, en palabras simples"
+git commit -m "feature(área): Qué cambia" -m "- Qué cambió, en palabras simples"
 
 # 3. Subir la rama y abrir un pull request hacia develop
 git push -u origin feature/mi-cambio
@@ -66,16 +66,18 @@ tipo(área): Qué cambia, en palabras simples
 | `develop` → `main` | `release: 2026-11-06, grupos aparte y partida a pantalla completa` |
 | `main` → `develop` | `chore: Develop al día con main después de la publicación #47` |
 
+La descripción son solo puntos cortos con lo importante que cambia, en palabras simples, como la de un commit; sin secciones. Si los demás deben saber o hacer algo, una última línea que empiece con "⚠️ Atención:" (si no, nada).
+
 Al fusionar, GitHub usa ese título para el commit de fusión, con el número del pull request al final, por ejemplo `fix(grupos): … (#41)`. Así el historial de `develop` y `main` se lee igual que la lista de pull requests.
 
-Los commits dentro de la rama siguen la regla de siempre (`CLAUDE.md`): título corto en español, sin `tipo:`.
+Los commits dentro de la rama llevan la misma forma, siempre: `tipo(área): Qué cambia`, con el `tipo` de la rama (`CLAUDE.md`, "Commits"). Traer `develop` a una rama es `chore: Develop al día en la rama …`. Ningún commit va sin `tipo:`, para que GitHub y Vercel muestren todo igual.
 
 ## Publicar en producción (release)
 
 1. Cuando `develop` tiene lo que queremos publicar y está probado, se abre un pull request de `develop` hacia `main` (o de una rama `release/fecha` si hace falta preparar algo antes).
 2. Se fusiona con un **merge commit** (no squash), para que `main` conserve el historial.
 3. Vercel y Railway despliegan solos desde `main`.
-4. Si la publicación necesita algo manual (por ejemplo, ejecutar SQL en Supabase), va escrito en la descripción del pull request.
+4. Si la publicación necesita algo manual (por ejemplo, ejecutar SQL en Supabase), va en la descripción del pull request, en una línea final que empieza con "⚠️ Atención:".
 
 ## Arreglos urgentes (hotfix)
 

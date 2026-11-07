@@ -46,11 +46,7 @@ Además:
    npm run install:all
    ```
 
-2. **Variables de entorno:** copiar los ejemplos.
-   ```bash
-   cp backend/.env.example backend/.env
-   cp frontend/.env.example frontend/.env
-   ```
+2. **Variables de entorno:** crear `backend/.env` (y, si hace falta, `frontend/.env`) con las variables de [`.claude/docs/variables.md`](.claude/docs/variables.md).
    En local, `VITE_API_URL` se deja vacío: Vite pasa las llamadas al servidor en `http://127.0.0.1:8080`. Google, Spotify y Supabase son opcionales; sin Supabase, las preguntas salen de archivos locales.
 
 3. **Arrancar:**

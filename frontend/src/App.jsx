@@ -1,20 +1,8 @@
-import { useEffect, useLayoutEffect, useRef } from "react";
+import { lazy, Suspense, useEffect, useLayoutEffect, useRef } from "react";
 import { Navigate, Route, Routes, useLocation, useNavigate, useNavigationType, useParams } from "react-router-dom";
 import { NotFound } from "./pages/ErrorPages.jsx";
 import Home from "./pages/Home.jsx";
 import Login from "./pages/Login.jsx";
-import ResetPassword from "./pages/ResetPassword.jsx";
-import { Privacy, Terms } from "./pages/Legal.jsx";
-import Profile from "./pages/Profile.jsx";
-import Game from "./modes/music/Game.jsx";
-import QuizGame from "./modes/quiz/Game.jsx";
-import GeoGame from "./modes/mundo/Game.jsx";
-import HistoryGame from "./modes/historia/Game.jsx";
-import MinesGame from "./modes/minas/Game.jsx";
-import RainGame from "./modes/lluvia/Game.jsx";
-import ReyGame from "./modes/rey/Game.jsx";
-import FarsanteGame from "./modes/farsante/Game.jsx";
-import PlaylistResults from "./modes/playlist/Results.jsx";
 import { useApp } from "./lib/store.jsx";
 import RoomSounds from "./lib/RoomSounds.jsx";
 import CentralOffer from "./components/home/CentralOffer.jsx";
@@ -22,6 +10,60 @@ import CentralRequests from "./components/home/CentralRequests.jsx";
 import StillThere from "./components/home/StillThere.jsx";
 import { isInlineMatch, roomPath } from "./modes/index.js";
 import { HIDDEN_SLUG, useHiddenCode } from "./lib/hiddenCode.js";
+
+// Each game's screen, and the pages few people open, are downloaded only when needed: Inicio and "Entra a Trivially"
+// come in the first download, a game when its match starts (preloaded as soon as the room is on that game, see
+// RoomScreen), so the first visit doesn't carry the eight games.
+const GAME_LOADERS = {
+  opciones: () => import("./modes/quiz/Game.jsx"),
+  musica: () => import("./modes/music/Game.jsx"),
+  mundo: () => import("./modes/mundo/Game.jsx"),
+  historia: () => import("./modes/historia/Game.jsx"),
+  minas: () => import("./modes/minas/Game.jsx"),
+  lluvia: () => import("./modes/lluvia/Game.jsx"),
+  rey: () => import("./modes/rey/Game.jsx"),
+  farsante: () => import("./modes/farsante/Game.jsx"),
+};
+const QuizGame = lazy(GAME_LOADERS.opciones);
+const Game = lazy(GAME_LOADERS.musica);
+const GeoGame = lazy(GAME_LOADERS.mundo);
+const HistoryGame = lazy(GAME_LOADERS.historia);
+const MinesGame = lazy(GAME_LOADERS.minas);
+const RainGame = lazy(GAME_LOADERS.lluvia);
+const ReyGame = lazy(GAME_LOADERS.rey);
+const FarsanteGame = lazy(GAME_LOADERS.farsante);
+const PlaylistResults = lazy(() => import("./modes/playlist/Results.jsx"));
+const Profile = lazy(() => import("./pages/Profile.jsx"));
+const ResetPassword = lazy(() => import("./pages/ResetPassword.jsx"));
+const Terms = lazy(() => import("./pages/Legal.jsx").then((m) => ({ default: m.Terms })));
+const Privacy = lazy(() => import("./pages/Legal.jsx").then((m) => ({ default: m.Privacy })));
+
+// The tab's title (and what search engines show) for each page; Inicio's says what the site is.
+const HOME_TITLE = "Trivially: trivia en vivo, solo o con amigos";
+const PAGE_TITLES = [
+  [/^\/login/, "Entrar"],
+  [/^\/restablecer/, "Cambiar contraseña"],
+  [/^\/terminos/, "Términos de uso"],
+  [/^\/privacidad/, "Aviso de privacidad"],
+  [/^\/profile/, "Perfil"],
+  [/^\/playlist\//, "Resultados"],
+  [/^\/(?:game|quiz|mundo|historia|minas|lluvia|rey|farsante|partida)\//, "Partida"],
+];
+const KNOWN_PAGE = /^\/(?:$|grupo\/|sala\/|jugar|lobby\/)/;
+
+function PageTitle() {
+  const { pathname } = useLocation();
+  useEffect(() => {
+    const match = PAGE_TITLES.find(([re]) => re.test(pathname));
+    document.title = match ? `${match[1]} · Trivially` : KNOWN_PAGE.test(pathname) ? HOME_TITLE : "Página no encontrada · Trivially";
+  }, [pathname]);
+  return null;
+}
+
+// While a screen downloads (a moment, once): the page's own background, nothing that jumps.
+function ScreenWait() {
+  return <div className="tv-app" aria-busy="true" />;
+}
 
 // Screens tied to one room, e.g. /game/XOTRIV.
 const ROOM_SCREEN = /^\/(?:lobby|game|quiz|mundo|historia|minas|lluvia|rey|farsante|playlist|partida)\/([^/]+)/;
@@ -48,6 +90,10 @@ const GAME_SCREENS = {
 // between them (its seam animations depend on it).
 function RoomScreen() {
   const { room } = useApp();
+  // The room's game is downloaded as soon as the room is on it, so the match doesn't wait for it when it starts.
+  useEffect(() => {
+    GAME_LOADERS[room?.game]?.().catch(() => {});
+  }, [room?.game]);
   const Screen = isInlineMatch(room) && room.phase !== "lobby" && room.phase !== "intro" ? GAME_SCREENS[room.game] : null;
   return Screen ? <Screen /> : <Home />;
 }
@@ -161,6 +207,7 @@ export default function App() {
   return (
     <>
       <RoomNavigator />
+      <PageTitle />
       <RoomSounds />
       {/* Opening a room this account already plays in from another device: it can be the room's central device. */}
       <CentralOffer />
@@ -168,6 +215,7 @@ export default function App() {
       <CentralRequests />
       {/* A public match asks an idle player if they are still there. */}
       <StillThere />
+      <Suspense fallback={<ScreenWait />}>
       <Routes>
         <Route path="/" element={<RoomScreen />} />
         <Route path="/partida/:code" element={<RoomScreen />} />
@@ -203,6 +251,7 @@ export default function App() {
         {/* Any other address: "Esta página no existe" (pages/ErrorPages.jsx). */}
         <Route path="*" element={<NotFound />} />
       </Routes>
+      </Suspense>
     </>
   );
 }
