@@ -2,7 +2,12 @@
   <img src="frontend/public/logo.svg" alt="Logo de Trivially" width="120" />
 </p>
 
-<h1 align="center">Trivially</h1>
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset=".github/wordmark-dark.svg" />
+    <img src=".github/wordmark-light.svg" alt="Trivially" height="64" />
+  </picture>
+</p>
 
 <p align="center">
   Trivia en vivo para jugar solo o con amigos.<br />
