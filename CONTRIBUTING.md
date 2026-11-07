@@ -33,7 +33,7 @@ git checkout -b feature/mi-cambio
 
 # 2. Trabajar y hacer commits (en español, ver CLAUDE.md)
 git add -A
-git commit -m "Título corto" -m "- Qué cambió, en palabras simples"
+git commit -m "feature(área): Qué cambia" -m "- Qué cambió, en palabras simples"
 
 # 3. Subir la rama y abrir un pull request hacia develop
 git push -u origin feature/mi-cambio
@@ -68,7 +68,7 @@ tipo(área): Qué cambia, en palabras simples
 
 Al fusionar, GitHub usa ese título para el commit de fusión, con el número del pull request al final, por ejemplo `fix(grupos): … (#41)`. Así el historial de `develop` y `main` se lee igual que la lista de pull requests.
 
-Los commits dentro de la rama siguen la regla de siempre (`CLAUDE.md`): título corto en español, sin `tipo:`.
+Los commits dentro de la rama llevan la misma forma, siempre: `tipo(área): Qué cambia`, con el `tipo` de la rama (`CLAUDE.md`, "Commits"). Traer `develop` a una rama es `chore: Develop al día en la rama …`. Ningún commit va sin `tipo:`, para que GitHub y Vercel muestren todo igual.
 
 ## Publicar en producción (release)
 
