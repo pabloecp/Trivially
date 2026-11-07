@@ -9,7 +9,6 @@ import { botProfile, pickBots } from "./bots.js";
 import { addTogether, applyElo, countsTogether, ELO_START, eloDeltas, eloOf, searchElo } from "./elo.js";
 import { isCorrectAnswer, normalizeAnswer, songKey } from "./answers.js";
 import { etagOf } from "../audio/mediaCache.js";
-import { norm as lyricKey, trickyWrongAnswers } from "../lyrics/roundBuilder.js";
 import {
   countQuestions,
   defaultQuizConfig,
@@ -315,9 +314,6 @@ const DEFAULT_MUSIC_STYLES = [...MUSIC_STYLES];
 // until the words have been sung, and LYRICS_TAIL_MS more.
 const LYRICS_LEAD_MS = 10000;
 const LYRICS_REPLAY_MS = 3000;
-// Common words that tell a verse's language when the catalog doesn't (Completa la letra's wrong options).
-const SPANISH_HINTS = new Set(["que", "el", "la", "de", "y", "en", "los", "las", "mi", "tu", "yo", "me", "te", "por", "para", "con", "una", "no", "lo", "pa", "como"]);
-const ENGLISH_HINTS = new Set(["the", "you", "and", "i", "me", "my", "your", "to", "in", "it", "is", "of", "on", "be", "we", "that", "so", "know", "love", "i'm"]);
 const LYRICS_TAIL_MS = 1800;
 // Same limits as its settings on screen: 5–25 rounds, 15–35 seconds to guess.
 const MUSIC_LIMITS = { rounds: { min: 5, max: 25 }, roundMs: { min: 15000, max: 35000 } };
@@ -1960,35 +1956,6 @@ export class RoomManager {
     return round.verse;
   }
 
-  /**
-   * Completa la letra's words of one language ("es", "en"): every round's answer and saved wrong options (real words of
-   * songs), worked out once. Where Letra's closed rounds draw their wrong options from.
-   */
-  lyricWordPool(language) {
-    if (!this._lyricPools) {
-      this._lyricPools = new Map();
-      for (const [songId, round] of this.lyricRounds) {
-        const verse = round?.verse;
-        if (!verse) continue;
-        const lang = this.lyricLanguage({ id: songId }, verse);
-        if (!this._lyricPools.has(lang)) this._lyricPools.set(lang, []);
-        this._lyricPools.get(lang).push(verse.answer, ...(verse.wrong || []));
-      }
-    }
-    return this._lyricPools.get(language) || [];
-  }
-
-  /** A song's language for its lyrics: the catalog's, else told by the verse's words (Spanish or English). */
-  lyricLanguage(song, verse) {
-    if (!this._songLanguage) this._songLanguage = new Map((this.catalog.songs || []).map((s) => [s.id, s.language]));
-    const known = song.language || this._songLanguage.get(song.id);
-    if (known === "es" || known === "en") return known;
-    const words = (verse?.lines || []).flatMap((l) => l.text.toLowerCase().split(/[^\p{L}']+/u));
-    const es = words.filter((w) => SPANISH_HINTS.has(w) || /[ñáéíóú¿¡]/.test(w)).length;
-    const en = words.filter((w) => ENGLISH_HINTS.has(w)).length;
-    return es >= en ? "es" : "en";
-  }
-
   /** How many different songs a match can draw: only those with their verse when Completa la letra is the only mode. */
   songsReady(room) {
     const pool = this.songPool(room);
@@ -2038,11 +2005,8 @@ export class RoomManager {
       wrong: verse.wrong,
     };
     if (this.nextFormat(room) !== "opciones") return { ...song, style: "letra", type: "open", lyric };
-    // The three wrong options, picked now: words of other songs in its language that rhyme with the answer and end like
-    // it (so they'd close the verse as well), never one already on screen; the ones saved with the round fill the gaps.
-    const onScreen = new Set(verse.lines.flatMap((l) => l.text.split(/\s+/)).map(lyricKey).filter(Boolean));
-    const tricky = trickyWrongAnswers(verse.answer, this.lyricWordPool(this.lyricLanguage(song, verse)), { avoid: onScreen });
-    lyric.wrong = [...tricky, ...verse.wrong.filter((w) => !tricky.some((t) => lyricKey(t) === lyricKey(w)))].slice(0, 3);
+    // The three wrong options are the round's own (lyricRounds.js): written to fit the line, the same kind of word as
+    // the answer ("Y es que me ___": "quedé", "enamoré", "olvidé" for "cansé"), never rhymes picked from other songs.
     const options = [verse.answer, ...lyric.wrong].sort(() => Math.random() - 0.5);
     return { ...song, style: "letra", type: "choice", lyric, options, details: null, answer: options.indexOf(verse.answer) };
   }
