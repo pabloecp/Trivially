@@ -1,0 +1,24 @@
+# Trivially: Google y los demás buscadores pueden ver la página de inicio y las páginas públicas.
+# Las partidas, los grupos y los perfiles son de cada jugador y cambian todo el tiempo: no se muestran en buscadores.
+User-agent: *
+Allow: /
+Disallow: /partida/
+Disallow: /grupo/
+Disallow: /sala/
+Disallow: /jugar/
+Disallow: /lobby/
+Disallow: /game/
+Disallow: /quiz/
+Disallow: /mundo/
+Disallow: /historia/
+Disallow: /minas/
+Disallow: /lluvia/
+Disallow: /rey/
+Disallow: /farsante/
+Disallow: /playlist/
+Disallow: /profile
+Disallow: /restablecer
+Disallow: /api/
+Disallow: /auth/
+
+Sitemap: https://triviallyonline.vercel.app/sitemap.xml
