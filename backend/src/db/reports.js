@@ -15,8 +15,44 @@ function saveLocally(report) {
   fs.appendFileSync(LOCAL_PATH, `${JSON.stringify(report)}\n`);
 }
 
+/**
+ * What a report adds when it's saved, to help tell what was wrong (`report.context`): how many times the same question
+ * was reported before (and when the last one was), and how it has done so far in every match (`stats`, from
+ * question_stats: db/questionStats.js), e.g. a "fácil" question almost nobody gets right. Never throws.
+ */
+export async function reportContext(report, { stats = null, db = supabaseEnabled() ? getSupabase() : null } = {}) {
+  const context = { earlierReports: null, lastReportAt: null, stats: null };
+  const questionId = report.question?.id ?? null;
+  if (db && questionId != null) {
+    try {
+      const { data, count, error } = await db
+        .from("question_reports")
+        .select("created_at", { count: "exact" })
+        .eq("game", report.game)
+        .eq("question_id", questionId)
+        .order("created_at", { ascending: false })
+        .limit(1);
+      if (!error) {
+        context.earlierReports = count ?? 0;
+        context.lastReportAt = data?.[0]?.created_at ?? null;
+      }
+    } catch {
+      // Without the table yet: nothing to add.
+    }
+  }
+  if (stats && report.statsKey) {
+    try {
+      context.stats = await stats.lookup(report.statsKey.game, report.statsKey.questionId);
+    } catch {
+      context.stats = null;
+    }
+  }
+  return context;
+}
+
 /** Keeps a report. Never throws for the storage itself: a failed insert falls back to the local file. */
-export async function saveQuestionReport(report) {
+export async function saveQuestionReport(report, { stats = null } = {}) {
+  if (report.kind !== "partida") report.context = await reportContext(report, { stats });
   if (supabaseEnabled()) {
     const { error } = await getSupabase()
       .from("question_reports")

@@ -927,8 +927,10 @@ export function attachSockets(io, rooms, { friends = null, hub = null, groups = 
     socket.on("room:report", async (ack) => {
       try {
         const { room, userId } = requireRoom(rooms, socket);
-        const report = rooms.questionReport(room, userId, { verified: socket.data.userId === userId });
-        await saveQuestionReport(report);
+        const headers = socket.handshake?.headers || {};
+        const client = { userAgent: String(headers["user-agent"] || "").slice(0, 300) || null, language: String(headers["accept-language"] || "").slice(0, 60) || null };
+        const report = rooms.questionReport(room, userId, { verified: socket.data.userId === userId, client });
+        await saveQuestionReport(report, { stats: rooms.questionStats });
         ack?.({ ok: true });
       } catch (err) {
         ack?.({ ok: false, error: err.message });

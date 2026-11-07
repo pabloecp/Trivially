@@ -14,6 +14,7 @@ import { startDefaultPlaylists } from "./catalog/defaultPlaylists.js";
 import { TrackResolver } from "./catalog/trackResolver.js";
 import { CatalogGrowth } from "./catalog/catalogGrowth.js";
 import { ensureUsernames, flushStore, getSupabase, initStore, supabaseEnabled } from "./db/store.js";
+import { QuestionStats } from "./db/questionStats.js";
 import { RoomManager } from "./game/roomManager.js";
 import { GroupManager } from "./game/groups.js";
 import { loadQuestions } from "./questions/questionBank.js";
@@ -55,7 +56,11 @@ const lyricRounds = await loadLyricRounds({ db: process.env.LYRICS_DB === "1" &&
 const resolver = new TrackResolver({ catalog });
 // Spotify songs people bring that are played a lot join the catalog (and Supabase's songs table).
 const catalogGrowth = new CatalogGrowth({ catalog });
-const rooms = new RoomManager({ catalog, store, questions, lyricRounds, resolver, catalogGrowth, tutorials: true });
+// How each question does (hits, misses, times played), counted at every reveal and saved in Supabase's
+// question_stats every minute (db/questionStats.js). QUESTION_STATS=0 counts nothing (load tests).
+const questionStats = process.env.QUESTION_STATS === "0" ? null : new QuestionStats({ db: supabaseEnabled() ? getSupabase() : null });
+questionStats?.start();
+const rooms = new RoomManager({ catalog, store, questions, lyricRounds, resolver, catalogGrowth, tutorials: true, questionStats });
 // The groups (players who go together from one match to the next), apart from the rooms (the matches).
 const groups = new GroupManager({ rooms });
 const friends = new Friendships({ store });
@@ -256,7 +261,7 @@ attachSockets(io, rooms, { friends, hub: friendsHub, groups });
 // Make sure the last stats reach the database when the host stops the server (Railway sends SIGTERM on deploy).
 for (const signal of ["SIGTERM", "SIGINT"]) {
   process.on(signal, () => {
-    flushStore().finally(() => process.exit(0));
+    Promise.allSettled([flushStore(), questionStats?.stop()]).finally(() => process.exit(0));
   });
 }
 
