@@ -75,7 +75,7 @@ Los commits dentro de la rama llevan la misma forma, siempre: `tipo(área): Qué
 ## Publicar en producción (release)
 
 1. Cuando `develop` tiene lo que queremos publicar y está probado, se abre un pull request de `develop` hacia `main` (o de una rama `release/fecha` si hace falta preparar algo antes).
-2. Se fusiona con un **merge commit** (no squash), para que `main` conserve el historial.
+2. Lo fusiona **una persona, a mano, desde GitHub**, con un **merge commit** (no squash), para que `main` conserve el historial. Claude puede abrir el pull request, pero nunca lo fusiona: avisa de que está listo y lo deja para ustedes.
 3. Vercel y Railway despliegan solos desde `main`.
 4. Si la publicación necesita algo manual (por ejemplo, ejecutar SQL en Supabase), va en la descripción del pull request, en una línea final que empieza con "⚠️ Atención:".
 
@@ -90,7 +90,7 @@ git checkout -b hotfix/descripcion
 # arreglar, commit, push
 ```
 
-Pull request hacia `main`. Una vez fusionado, hay que **llevar el mismo arreglo a `develop`** (un pull request de `main` hacia `develop`, o `git merge origin/main` en una rama de trabajo) para que no se pierda en la siguiente publicación.
+Pull request hacia `main`, que también fusiona una persona a mano (nunca Claude). Una vez fusionado, hay que **llevar el mismo arreglo a `develop`** (un pull request de `main` hacia `develop`, o `git merge origin/main` en una rama de trabajo) para que no se pierda en la siguiente publicación.
 
 ## Ramas personales antiguas
 
