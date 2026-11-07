@@ -1,7 +1,7 @@
 // Who may use this server from a browser, and the secret that signs sessions. Kept apart from index.js so they can
 // be tested (security.test.js).
 
-// The secrets written in the public code or in .env.example: fine on a developer's computer, never in production
+// The secrets written in the public code (and in the old .env.example files): fine on a developer's computer, never in production
 // (with them anyone could sign a session or a socket token and pass for another player).
 const KNOWN_SECRETS = ["trivially-dev-secret", "trivially-dev-secret-key"];
 export const DEV_SECRET = KNOWN_SECRETS[0];

@@ -152,7 +152,6 @@ function ChoiceRound({ room, question, me, answer, seconds, clock, central, cont
         />
       )}
       {room.phase === "playing" && central && <PhoneHint room={room}>Respondan desde su teléfono</PhoneHint>}
-      {question.pictured && !controller && <PictureCredit room={room} question={question} />}
 
       <div className={`tv-quiz-options${reveal ? " is-reveal" : ""}`} role="group" aria-label="Opciones">
         {OPTION_LETTERS.map((letter, i) => {
@@ -231,17 +230,6 @@ function CardPicture({ question }) {
         <img key={src} src={src} alt={isFlag ? "Bandera de un país misterioso" : "Imagen de la pregunta"} onError={() => setFailed(true)} />
       )}
     </figure>
-  );
-}
-
-// Whose picture it is and its licence, small under the card, once the answer shows. Its line is there from the start
-// (empty), so nothing under the card moves at the reveal.
-function PictureCredit({ room, question }) {
-  if (!question.image) return null;
-  return (
-    <p className="tv-quiz-credit" aria-hidden={room.phase !== "reveal" || !question.credit}>
-      {room.phase === "reveal" && question.credit ? `Imagen: ${question.credit}` : " "}
-    </p>
   );
 }
 
@@ -338,7 +326,6 @@ function WriteRound({ room, question, me, answer, skipSong, seconds, clock, cent
           note={reveal && central ? <RoomVerdict room={room} /> : reveal && !spectator && !central ? <Verdict me={me} answered={answered} /> : null}
         />
       )}
-      {question.pictured && !controller && <PictureCredit room={room} question={question} />}
       {/* The answer's panel: the flag or the picture (if it has one), then the box to write in, or what was sent, or
           the answer. */}
       <div className="tv-mpanel">
