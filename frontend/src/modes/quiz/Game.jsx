@@ -94,7 +94,7 @@ function ChoiceRound({ room, question, me, answer, seconds, clock, central, cont
   const [picked, setPicked] = useState(null);
   const [err, setErr] = useState("");
   const sending = useRef(false);
-  const localChoice = picked?.round === round ? picked.choice : null;
+  const localChoice = picked && picked.round === round ? picked.choice : null;
   const myChoice = Number.isInteger(me?.lastAnswer?.choice) ? me.lastAnswer.choice : localChoice;
   const spectator = Boolean(me?.spectator);
   const locked = room.phase !== "playing" || Boolean(me?.answered) || Number.isInteger(localChoice) || spectator || central;
