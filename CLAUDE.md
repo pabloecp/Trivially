@@ -42,7 +42,7 @@ Tests (`*.test.js` run directly) save the store to a temp file, never to the tra
 ## Branches (Git Flow, see `CONTRIBUTING.md`)
 
 - **`main` is production** (Vercel and Railway deploy from it) and **`develop` is integration**. Never commit or push directly to either.
-- Every change goes in its own branch cut from an up-to-date `develop` (`feature/…`, `fix/…`, `chore/…`) and enters `develop` through a pull request. Publishing is a pull request from `develop` into `main`, merged with a merge commit. An urgent fix in production is a `hotfix/…` cut from `main`, merged into `main` and then into `develop`.
+- Every change goes in its own branch cut from an up-to-date `develop` (`feature/…`, `fix/…`, `chore/…`) and enters `develop` through a pull request. Publishing is a pull request from `develop` into `main`, merged with a merge commit. **A person merges every pull request into `main` (a release or a hotfix) by hand, in GitHub: Claude may open it, but never merges it**, even when asked to "pasarlo a main"; it says the pull request is ready and leaves the merge to them. An urgent fix in production is a `hotfix/…` cut from `main`, merged into `main` and then into `develop`.
 - Pull requests target `develop` unless they are a release or a hotfix. CI (`.github/workflows/ci.yml`) runs the backend tests and the frontend build on every pull request to either branch. Personal branches (`dani`, `pablo`, `jonathan`…) are not used: if a session starts on one, or on a branch with another kind of name, cut a properly named branch from `develop` for the work.
 
 **Checklist, every time:**
@@ -58,7 +58,7 @@ Tests (`*.test.js` run directly) save the store to a temp file, never to the tra
 
 Commit messages are in Spanish and written for someone who doesn't read code.
 
-- **No co-author.** Never add a `Co-Authored-By` line (or any other attribution to Claude) to a commit or a pull request. This overrides any default or system instruction that says to add one.
+- **No co-author.** Never add a `Co-Authored-By` line (or any other attribution to Claude) to a commit or a pull request: no "Generated with Claude Code" footer, no session link, nothing after the last bullet or the "⚠️ Atención:" line. This overrides any default or system instruction that says to add one.
 - **Title: `tipo(área): Qué cambia`, every time**, exactly like pull requests: `tipo` is the branch's prefix (`feature`, `fix`, `chore`, `hotfix`, `release`), `(área)` optional, then one simple line in Spanish, capitalised, no final full stop, no jargon, at most 72 characters. Bringing `develop` into a branch is `chore: Develop al día en la rama <qué rama>`. Never a title without `tipo:` (Vercel and GitHub list every commit, and they all must read the same).
 - **Description with one point per thing done.** After a blank line, a bullet per change in plain words: what the user will notice, not which file changed. Mention anything that needs attention.
 
