@@ -651,6 +651,8 @@
   height: var(--tv-vv-h, 100%);
   z-index: 60;
   display: grid;
+  /* One column as wide as the screen: what's inside the panel never makes it wider than the screen. */
+  grid-template-columns: minmax(0, 1fr);
   place-items: center;
   padding: 24px;
 }
@@ -699,8 +701,9 @@
   .tv-modal-body { padding: 12px 18px 20px; }
   .tv-modal-foot { padding: 14px 18px 18px; }
   .tv-settings-modal { height: calc(var(--tv-vv-h, 100dvh) - 20px); }
-  /* Keyboard up: the screen's bottom edge is under it. */
-  .tv-modal-root.is-keyboard .tv-modal { padding-bottom: 0; }
+  /* Keyboard up: the screen's bottom edge is under it, and the panel's colour goes on below it, like the sheets'
+     (home.css): behind the keyboard and its see-through bar there's the panel, not the page. */
+  .tv-modal-root.is-keyboard .tv-modal { padding-bottom: 0; box-shadow: 0 -12px 50px rgba(0, 0, 0, 0.3), 0 440px 0 400px var(--tv-surface); }
 }
 
 /* A small label over a part of a panel ("Juego libre", "Código del grupo"). */
