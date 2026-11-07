@@ -66,7 +66,17 @@ tipo(área): Qué cambia, en palabras simples
 | `develop` → `main` | `release: 2026-11-06, grupos aparte y partida a pantalla completa` |
 | `main` → `develop` | `chore: Develop al día con main después de la publicación #47` |
 
-La descripción son solo puntos cortos con lo importante que cambia, en palabras simples, como la de un commit; sin secciones. Si los demás deben saber o hacer algo, una última línea que empiece con "⚠️ Atención:" (si no, nada).
+La descripción son solo puntos (`- `), uno por cada cosa que cambia: frases completas, en palabras simples y con punto final, que cuentan lo que se va a ver o notar, con los detalles que importan (nombres de botones y pantallas entre comillas, ejemplos). Nada de nombres de archivos, código ni números de pull request; sin secciones y sin emojis. Si los demás deben saber o hacer algo, una línea en blanco y una última línea que empiece con "Atención:" (si no, nada). Después no va nada más, ni firmas: GitHub copia la descripción en el commit de fusión, así que antes de fusionar hay que revisar que ninguna herramienta haya añadido una al final.
+
+Por ejemplo:
+
+```
+- "Tu partida" ahora muestra el juego con su color, cinco rondas a la vez con flechas, y colores claros: verde si ganaste, amarillo si sumaste, rojo si perdiste y gris si no respondiste o saltaste.
+- Se arregló que al desmarcar una opción de ajustes ya no se podía volver a marcar.
+- Al salir de una sala siempre vuelves a "Elige un juego".
+
+Atención: los botones "Añadir amigo" y "Usar pantalla como central" se quitaron por ahora y quedaron pendientes en Trello.
+```
 
 Al fusionar, GitHub usa ese título para el commit de fusión, con el número del pull request al final, por ejemplo `fix(grupos): … (#41)`. Así el historial de `develop` y `main` se lee igual que la lista de pull requests.
 
@@ -77,7 +87,7 @@ Los commits dentro de la rama llevan la misma forma, siempre: `tipo(área): Qué
 1. Cuando `develop` tiene lo que queremos publicar y está probado, se abre un pull request de `develop` hacia `main` (o de una rama `release/fecha` si hace falta preparar algo antes).
 2. Lo fusiona **una persona, a mano, desde GitHub**, con un **merge commit** (no squash), para que `main` conserve el historial. Claude puede abrir el pull request, pero nunca lo fusiona: avisa de que está listo y lo deja para ustedes.
 3. Vercel y Railway despliegan solos desde `main`.
-4. Si la publicación necesita algo manual (por ejemplo, ejecutar SQL en Supabase), va en la descripción del pull request, en una línea final que empieza con "⚠️ Atención:".
+4. Si la publicación necesita algo manual (por ejemplo, ejecutar SQL en Supabase), va en la descripción del pull request, en una línea final que empieza con "Atención:".
 
 ## Arreglos urgentes (hotfix)
 
