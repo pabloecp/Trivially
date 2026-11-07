@@ -37,11 +37,29 @@ assert.equal(report.players.length, 2);
 assert.equal(report.reporter.name, "Owner");
 assert.equal(report.reporter.verified, true);
 
+// More to tell what was wrong: the clock, what the reporter's screen had, the rounds before, where its counts are.
+mgr.addPlayer(room, { id: "late", name: "Late", socketId: "s3" });
+const full = mgr.questionReport(room, "late", { client: { userAgent: "Mozilla/5.0 Prueba" } });
+assert.equal(full.version, 2);
+assert.equal(full.reporter.client.userAgent, "Mozilla/5.0 Prueba");
+assert.equal(full.timing.phaseStartedAt, room.phaseStartedAt);
+assert.ok(full.timing.roundMs > 0);
+assert.equal(full.players.find((p) => p.id === "late").spectator, true, "joined mid-match: watching, but can report");
+assert.equal(full.seen.code, room.code, "what the reporter's screen received");
+assert.equal(full.seen.question?.answer, undefined, "and only that: not the answer before the reveal");
+assert.deepEqual(full.match.earlierRounds, []);
+assert.deepEqual(full.statsKey, { game: "musica", questionId: track.lyric?.id || track.id, variant: `${track.lyric ? "letra" : "titulo"}:${track.type === "choice" ? "opciones" : "escribir"}` });
+assert.equal(full.players.find((p) => p.id === "user").playing, true);
+assert.equal(full.players.find((p) => p.id === "user").bot, false);
+assert.ok(full.server.uptimeS >= 0);
+
 // Once per round; the next round can be reported again.
 assert.throws(() => mgr.questionReport(room, "owner"), /Ya reportaste/);
 mgr.advance(room);
 clearTimeout(room.timer);
-assert.equal(mgr.questionReport(room, "owner").round, 2);
+const second = mgr.questionReport(room, "owner");
+assert.equal(second.round, 2);
+assert.equal(second.match.earlierRounds.length, 1, "the rounds already played");
 
 mgr.destroy(room);
 console.log("questionReport.test ok");

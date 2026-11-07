@@ -1,5 +1,5 @@
 import { cachedDefaultPlaylists, defaultSourceOf } from "../catalog/defaultPlaylists.js";
-import { SONG_DIFFICULTIES, SONG_GENRES, SONG_LANGUAGES, filterSongs, songCounts } from "../catalog/songFilters.js";
+import { SONG_DIFFICULTIES, SONG_GENRES, SONG_LANGUAGES, difficultyOf, filterSongs, songCounts } from "../catalog/songFilters.js";
 import { hasRole } from "../auth/roles.js";
 import { hasLink, NAME_LINK_ERROR } from "../moderation/links.js";
 import { hydrateSong } from "../catalog/catalogProvider.js";
@@ -9,7 +9,6 @@ import { botProfile, pickBots } from "./bots.js";
 import { addTogether, applyElo, countsTogether, ELO_START, eloDeltas, eloOf, searchElo } from "./elo.js";
 import { isCorrectAnswer, normalizeAnswer, songKey } from "./answers.js";
 import { etagOf } from "../audio/mediaCache.js";
-import { norm as lyricKey, trickyWrongAnswers } from "../lyrics/roundBuilder.js";
 import {
   countQuestions,
   defaultQuizConfig,
@@ -19,7 +18,7 @@ import {
   QUIZ_REVEAL_MS,
   quizPool,
 } from "./quiz.js";
-import { isCorrectOpenAnswer } from "./openAnswers.js";
+import { editDistance, isCorrectOpenAnswer, normalizeOpen } from "./openAnswers.js";
 import {
   countGeoQuestions,
   defaultGeoConfig,
@@ -148,6 +147,7 @@ import { imageToken, imageUrl } from "../questions/images.js";
 import { shapeToken, shapeUrl } from "../geo/shapes.js";
 import { countryPoint, locate } from "../geo/worldMap.js";
 import { COUNTDOWN_MS, REVEAL_MS, ROUND_MS, scoreAnswer } from "./scoring.js";
+import { questionKey, roundStats } from "./questionStats.js";
 
 const CODE_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 // A room's code: this many characters of CODE_CHARS (no I, O, 0 or 1, easy to confuse), ~33 million codes.
@@ -314,9 +314,6 @@ const DEFAULT_MUSIC_STYLES = [...MUSIC_STYLES];
 // until the words have been sung, and LYRICS_TAIL_MS more.
 const LYRICS_LEAD_MS = 10000;
 const LYRICS_REPLAY_MS = 3000;
-// Common words that tell a verse's language when the catalog doesn't (Completa la letra's wrong options).
-const SPANISH_HINTS = new Set(["que", "el", "la", "de", "y", "en", "los", "las", "mi", "tu", "yo", "me", "te", "por", "para", "con", "una", "no", "lo", "pa", "como"]);
-const ENGLISH_HINTS = new Set(["the", "you", "and", "i", "me", "my", "your", "to", "in", "it", "is", "of", "on", "be", "we", "that", "so", "know", "love", "i'm"]);
 const LYRICS_TAIL_MS = 1800;
 // Same limits as its settings on screen: 5–25 rounds, 15–35 seconds to guess.
 const MUSIC_LIMITS = { rounds: { min: 5, max: 25 }, roundMs: { min: 15000, max: 35000 } };
@@ -439,9 +436,30 @@ function publicPlayer(player, phase, room) {
   };
 }
 
+/**
+ * For a report: how a written answer was checked (openAnswers.js), to see why it was taken or not. What was written
+ * and the answer's forms, as they're compared (no capitals, accents or punctuation), whether it was one of the
+ * answers turned down on purpose (`reject`), and the closest accepted form with how many letters apart it is.
+ */
+export function openAnswerCheck(text, question) {
+  const written = normalizeOpen(text);
+  const accepted = [...new Set([question.answer, ...(question.aliases || [])].map(normalizeOpen).filter(Boolean))];
+  const closest = accepted.map((form) => ({ form, distance: editDistance(written, form) })).sort((a, b) => a.distance - b.distance)[0] || null;
+  return {
+    written,
+    accepted,
+    answerType: question.answerType || null,
+    rejected: (question.reject || []).map(normalizeOpen).includes(written),
+    closest,
+    taken: isCorrectOpenAnswer(text, question),
+  };
+}
+
 export class RoomManager {
-  constructor({ catalog, store, questions = [], lyrics = new Map(), lyricRounds = new Map(), resolver = null, catalogGrowth = null, tutorials = false, reconnectGraceMs = RECONNECT_GRACE_MS }) {
+  constructor({ catalog, store, questions = [], lyrics = new Map(), lyricRounds = new Map(), resolver = null, catalogGrowth = null, tutorials = false, reconnectGraceMs = RECONNECT_GRACE_MS, questionStats = null }) {
     this.catalog = catalog;
+    // How each question does, counted at every reveal (db/questionStats.js; the server's, the tests go without it).
+    this.questionStats = questionStats;
     // Whether a private match of one game starts with its tutorial (the server's; the tests go straight to the rounds).
     this.tutorials = tutorials;
     // Completa la letra's rounds, loaded when the server starts (lyrics/lyricRounds.js): by song id, { previewUrl,
@@ -1938,35 +1956,6 @@ export class RoomManager {
     return round.verse;
   }
 
-  /**
-   * Completa la letra's words of one language ("es", "en"): every round's answer and saved wrong options (real words of
-   * songs), worked out once. Where Letra's closed rounds draw their wrong options from.
-   */
-  lyricWordPool(language) {
-    if (!this._lyricPools) {
-      this._lyricPools = new Map();
-      for (const [songId, round] of this.lyricRounds) {
-        const verse = round?.verse;
-        if (!verse) continue;
-        const lang = this.lyricLanguage({ id: songId }, verse);
-        if (!this._lyricPools.has(lang)) this._lyricPools.set(lang, []);
-        this._lyricPools.get(lang).push(verse.answer, ...(verse.wrong || []));
-      }
-    }
-    return this._lyricPools.get(language) || [];
-  }
-
-  /** A song's language for its lyrics: the catalog's, else told by the verse's words (Spanish or English). */
-  lyricLanguage(song, verse) {
-    if (!this._songLanguage) this._songLanguage = new Map((this.catalog.songs || []).map((s) => [s.id, s.language]));
-    const known = song.language || this._songLanguage.get(song.id);
-    if (known === "es" || known === "en") return known;
-    const words = (verse?.lines || []).flatMap((l) => l.text.toLowerCase().split(/[^\p{L}']+/u));
-    const es = words.filter((w) => SPANISH_HINTS.has(w) || /[ñáéíóú¿¡]/.test(w)).length;
-    const en = words.filter((w) => ENGLISH_HINTS.has(w)).length;
-    return es >= en ? "es" : "en";
-  }
-
   /** How many different songs a match can draw: only those with their verse when Completa la letra is the only mode. */
   songsReady(room) {
     const pool = this.songPool(room);
@@ -2016,11 +2005,8 @@ export class RoomManager {
       wrong: verse.wrong,
     };
     if (this.nextFormat(room) !== "opciones") return { ...song, style: "letra", type: "open", lyric };
-    // The three wrong options, picked now: words of other songs in its language that rhyme with the answer and end like
-    // it (so they'd close the verse as well), never one already on screen; the ones saved with the round fill the gaps.
-    const onScreen = new Set(verse.lines.flatMap((l) => l.text.split(/\s+/)).map(lyricKey).filter(Boolean));
-    const tricky = trickyWrongAnswers(verse.answer, this.lyricWordPool(this.lyricLanguage(song, verse)), { avoid: onScreen });
-    lyric.wrong = [...tricky, ...verse.wrong.filter((w) => !tricky.some((t) => lyricKey(t) === lyricKey(w)))].slice(0, 3);
+    // The three wrong options are the round's own (lyricRounds.js): written to fit the line, the same kind of word as
+    // the answer ("Y es que me ___": "quedé", "enamoré", "olvidé" for "cansé"), never rhymes picked from other songs.
     const options = [verse.answer, ...lyric.wrong].sort(() => Math.random() - 0.5);
     return { ...song, style: "letra", type: "choice", lyric, options, details: null, answer: options.indexOf(verse.answer) };
   }
@@ -2490,7 +2476,7 @@ export class RoomManager {
    * `reporterId` is the player's seat; `verified` says whether the socket's signed account is that same one. Each
    * player reports a round once.
    */
-  questionReport(room, reporterId, { verified = false } = {}) {
+  questionReport(room, reporterId, { verified = false, client = null } = {}) {
     const seat = room.players.get(reporterId);
     if (!seat) throw new Error("Solo los jugadores de la sala pueden reportar preguntas");
     const reporter = this.store?.users?.[reporterId] || seat;
@@ -2524,9 +2510,16 @@ export class RoomManager {
       playlistIds: room.config.playlistIds,
     };
     const players = [...room.players.values()];
+    const now = Date.now();
+    const clone = (value) => (value == null ? null : JSON.parse(JSON.stringify(value)));
+    const key = room.game === RAIN_GAME ? null : questionKey(room, track);
+    // What a written answer was checked against, to see why it was taken or not (Trivia, Rey, Completa la letra).
+    const asked = track.lyric || (track.type === "open" && typeof track.answer === "string" ? track : null);
     return {
+      // Version 2 adds the players' details, the reporter's device, timing, match, seen, statsKey and server.
+      version: 2,
       game: room.game,
-      prompt: track.prompt || (track.title ? `${track.title} - ${track.artistName || ""}`.trim() : null),
+      prompt: track.prompt || track.text || (track.title ? `${track.title} - ${track.artistName || ""}`.trim() : null),
       question: JSON.parse(JSON.stringify(track)),
       round: room.currentRound + 1,
       totalRounds: room.totalRounds,
@@ -2538,16 +2531,67 @@ export class RoomManager {
         players: players.length,
         connected: players.filter((p) => p.connected).length,
         spectators: players.filter((p) => p.spectator).length,
+        bots: players.filter((p) => p.bot).length,
       },
       players: players.map((p) => ({
         id: p.id,
         name: p.name,
         connected: p.connected,
         spectator: Boolean(p.spectator),
+        bot: Boolean(p.bot),
+        playing: this.isPlaying(room, p.id),
         score: p.score,
+        points: p.lastPoints ?? null,
+        streak: p.streak ?? null,
         answer: p.lastAnswer ?? null,
+        // How long after the question opened they answered (ms).
+        answerMs: p.lastAnswer?.at && room.phase !== "countdown" ? Math.max(0, p.lastAnswer.at - (room.phase === "reveal" ? room.answeringStartedAt || room.phaseStartedAt : room.phaseStartedAt)) : null,
+        // A pin, year or number placed but not confirmed yet; a Campo de minas board or a Lluvia round so far.
+        pending: clone(p.pin || p.guess || null),
+        minefield: clone(p.minefield),
+        rain: p.rain ? { sent: p.rain.sent, hits: p.rain.hits, points: p.rain.points } : null,
+        checked: asked && p.lastAnswer?.text && !Number.isInteger(p.lastAnswer.choice) ? openAnswerCheck(p.lastAnswer.text, asked) : null,
       })),
-      reporter: { id: reporterId, name: reporter.name, verified: Boolean(verified) },
+      reporter: {
+        id: reporterId,
+        name: reporter.name,
+        verified: Boolean(verified),
+        // Their device (browser and system), as their connection said it.
+        client: client ? clone(client) : null,
+      },
+      // The clock of the phase reported: when it started and ends, how far into it, and whether it was paused.
+      timing: {
+        now,
+        phaseStartedAt: room.phaseStartedAt ?? null,
+        phaseEndsAt: room.phaseEndsAt ?? null,
+        msIntoPhase: room.phaseStartedAt ? now - room.phaseStartedAt : null,
+        msLeft: room.phaseEndsAt ? room.phaseEndsAt - now : null,
+        roundMs: this.roundMs(room),
+        paused: clone(room.paused ? { at: room.paused.at, remainingMs: room.paused.remainingMs } : null),
+      },
+      // The match around it: public or not, Clásico, central device, and the rounds already played (a repeated
+      // question shows here).
+      match: {
+        public: Boolean(room.matchmaking),
+        kind: room.matchmaking?.kind || null,
+        classic: Boolean(room.run?.classic),
+        // A public match or Clásico: which of its games this is (its roulette and scores are in `seen`).
+        runGame: clone(room.run?.current ?? null),
+        central: Boolean(room.central),
+        earlierRounds: room.tracks.slice(0, room.currentRound).map((t) => ({
+          id: t?.id ?? null,
+          prompt: t?.prompt || t?.text || t?.lyric?.line || t?.title || null,
+        })),
+      },
+      // Exactly what the reporter's screen had received from the server (publicState) when they reported.
+      seen: clone(this.publicState(room, reporterId)),
+      // Where its counts are in question_stats (game/questionStats.js); db/reports.js adds them when saving.
+      statsKey: key ? { game: key.game, questionId: key.questionId, variant: key.variant } : null,
+      server: {
+        commit: process.env.RAILWAY_GIT_COMMIT_SHA || process.env.VERCEL_GIT_COMMIT_SHA || null,
+        uptimeS: Math.round(process.uptime()),
+        rooms: this.rooms?.size ?? null,
+      },
       createdAt: new Date().toISOString(),
     };
   }
@@ -2630,6 +2674,8 @@ export class RoomManager {
       }
       this.clearBotMoves(room);
     }
+    // How each question does: a question an owner skips counts only as skipped (it was usually wrong).
+    if (room.phase !== "reveal" && room.tracks[room.currentRound]) room.tracks[room.currentRound].ownerSkipped = true;
     if (room.phase !== "reveal") this.beginReveal(room);
     if (room.timer) clearTimeout(room.timer);
     this.advance(room);
@@ -2660,6 +2706,8 @@ export class RoomManager {
 
   beginReveal(room) {
     const track = room.tracks[room.currentRound];
+    // When this round's answering started (for a report made during the reveal).
+    room.answeringStartedAt = room.phaseStartedAt;
     const now = Date.now();
     const duration = this.roundMs(room);
     if (this.isChoiceRound(room)) this.gradeQuiz(room, track);
@@ -2679,6 +2727,7 @@ export class RoomManager {
       }
     });
     this.recordRound(room, track);
+    this.countQuestion(room, track);
     let revealMs = REVEAL_MS;
     if (this.isMapRound(room)) revealMs = LOCATION_REVEAL_MS;
     else if (this.isYearRound(room)) revealMs = HISTORY_REVEAL_MS;
@@ -2733,6 +2782,19 @@ export class RoomManager {
       const status = correct ? "ok" : points > 0 ? "near" : !yours || timedOut || answer?.gaveUp ? "none" : "bad";
       // `questionId` stays on the server (a report names the question; players never see ids).
       (player.rounds ||= []).push({ round: room.currentRound + 1, game: room.game, ...(style ? { style } : {}), questionId: track.id ?? null, prompt, answer: right, yours, points, status });
+    }
+  }
+
+  /** The round, in how each question does (game/questionStats.js). Never stops the match if it fails. */
+  countQuestion(room, track) {
+    if (!this.questionStats) return;
+    try {
+      const entries = roundStats(this, room, track);
+      // A song's difficulty isn't on it: it comes from its place in the ranking (catalog/songFilters.js).
+      if (room.game === "musica") for (const e of entries) e.difficulty ||= difficultyOf(this.catalog, track) || null;
+      this.questionStats.add(entries);
+    } catch (err) {
+      console.warn(`[Estadísticas] No se pudo contar la ronda (${err.message})`);
     }
   }
 

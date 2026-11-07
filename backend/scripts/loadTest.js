@@ -4,6 +4,7 @@
 //
 // Only against a server we run (on this computer, or a test copy): it signs the players' tokens with that server's
 // SESSION_SECRET (read from backend/.env), so it can't be pointed at production. Never run it against Railway's.
+// Start that server with QUESTION_STATS=0: its fake players' random answers must not count in question_stats.
 //
 //   npm run load:test --prefix backend                                   (20 matches of 6 against localhost:8080)
 //   npm run load:test --prefix backend -- --rooms 100 --players 8 --rounds 5 --url http://localhost:8080

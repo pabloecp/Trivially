@@ -11,7 +11,8 @@ import { endAtGap } from "./roundBuilder.js";
 //
 // A row: { song_id, spotify_id, preview_url, preview_etag, data }, data being only the minimum:
 //   { lines: [{ at, text }] (the lines shown, each from the second it starts in the preview; the last one ends in "___"),
-//     cut (where the song stops, right before the answer), end (until when the reveal plays), answer, wrong: [three] }
+//     cut (where the song stops, right before the answer), end (until when the reveal plays), answer, wrong: [three],
+//     wrongChecked (true once the three were written by hand to fit the line; Cerradas shows them as they are) }
 // Rounds made before may have text after the gap and `back`/`stop` (the song used to play on): toVerse ignores them.
 // or null for a song that can't be made into a round (so it isn't tried again).
 

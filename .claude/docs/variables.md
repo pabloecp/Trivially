@@ -30,6 +30,7 @@ El servidor lee `backend/.env` y, si existe, también un `.env` en la raíz del 
 | `SPOTIFY_REDIRECT_URI` | opcional | opcional | A dónde vuelve Spotify al conectar una cuenta (si no, se calcula). |
 | `LYNZ_API_URL` | opcional | la de la API de Lynz | El top 100 de Lynz como playlist. Sin ella no aparece. |
 | `LYRICS_DB` | opcional | `1` | Lee las rondas de "Letra" de Supabase. |
+| `QUESTION_STATS` | `0` al hacer pruebas de carga | (vacía) | Con `0` no se cuentan los aciertos y fallos de cada pregunta (`question_stats`). Vacía: se cuentan. |
 | `SENTRY_DSN` | vacía | la del proyecto `trivially-servidor` | Errores del servidor a Sentry. Vacía: no se manda nada. |
 | `RESEND_API_KEY` / `EMAIL_FROM` | vacías | solo con dominio propio verificado en Resend | Correos de "¿Olvidaste tu contraseña?". Sin ellas, en local el enlace sale en la consola y en producción la página avisa que no puede mandar correos. `EMAIL_FROM` tiene que ser del dominio verificado (no sirve una dirección de Gmail). |
 
