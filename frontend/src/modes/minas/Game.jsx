@@ -542,6 +542,8 @@ function GameScreen() {
           room={room}
           viewerId={viewerId}
           tools={tools}
+          // What the player has to know right now (an error, a mine stepped on, a tiebreak), in place of who is missing.
+          line={phase === "playing" && (err || out || tiebreak) ? hint : undefined}
         />}
     </div>
   );

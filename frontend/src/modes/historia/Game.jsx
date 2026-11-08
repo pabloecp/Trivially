@@ -479,7 +479,8 @@ function GameScreen() {
 
       {/* The scoreboard is the central device's, when there is one. */}
       {!controller && <PartyPanel room={room} scores display={central} onToast={setErr} />}
-      {!controller && !central && <MatchBar room={room} viewerId={viewerId} tools={tools} />}
+      {/* A tiebreak's rules (who plays it, how it's won) or an error, in place of who is missing. */}
+      {!controller && !central && <MatchBar room={room} viewerId={viewerId} tools={tools} line={err || (tiebreak && phase !== "reveal" ? hint : undefined)} />}
     </div>
   );
 }
