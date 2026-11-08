@@ -377,15 +377,7 @@ function GameScreen() {
         ) : (
           <MatchCard
             room={room}
-            label={tiebreak ? `Desempate${tiebreak.round > 1 ? ` ${tiebreak.round}` : ""}` : isNum ? "Cifras" : "Año"}
-            icon="hourglass"
-            dir={
-              reveal || tiebreak || !iPlay
-                ? hint
-                : isNum
-                ? "Mueve la barra hasta la cifra real y fíjala · exacto 1000, más cerca, más puntos"
-                : "Mueve la barra hasta el año y fíjalo · exacto 1000, más cerca, más puntos"
-            }
+            tag={tiebreak ? `Desempate${tiebreak.round > 1 ? ` ${tiebreak.round}` : ""}` : null}
             seconds={seconds}
             pct={pct}
             urgent={urgent}

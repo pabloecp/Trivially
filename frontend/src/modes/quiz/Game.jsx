@@ -16,7 +16,7 @@ import { PauseButton, ReportButton, SkipButton, PauseVeil } from "../../componen
 import "../../styles/quiz.css";
 import "../../styles/geo.css";
 import { resolveCode } from "../../lib/hiddenCode.js";
-import { AnswerCard, MatchBar, MatchCard, MatchQuestion, RoundVerdict, topicIcon } from "../../components/home/MatchFrame.jsx";
+import { AnswerCard, MatchBar, MatchCard, MatchQuestion, RoundVerdict } from "../../components/home/MatchFrame.jsx";
 
 const COUNTDOWN_MS = 3000;
 // Keys that pick an option while a question is open: 1–4 or A–D.
@@ -39,11 +39,6 @@ function Verdict({ me, answered }) {
   );
 }
 
-// What to do, under the card's first row.
-const DIRECTIONS = {
-  choice: "Cerradas: elige una de las cuatro · más rápido, más puntos",
-  open: "Abiertas: escribe la respuesta · más rápido, más puntos",
-};
 
 // The question's card (MatchCard): its topic, what to do and the time; the question at the bottom. `note` goes on its
 // first row (the verdict at the end of the round). An "Imágenes" question (a picture or a flag) has it inside the card,
@@ -54,10 +49,7 @@ function QuestionCard({ room, question, clock, note }) {
   return (
     <MatchCard
       room={room}
-      label={question.category}
-      icon={topicIcon(question.category)}
       pills={note}
-      dir={DIRECTIONS[question.type] || DIRECTIONS.choice}
       media={media}
       className={pictured ? "tv-qc--pictured" : ""}
       {...clock}
