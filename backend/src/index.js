@@ -19,6 +19,7 @@ import { RoomManager } from "./game/roomManager.js";
 import { GroupManager } from "./game/groups.js";
 import { loadQuestions } from "./questions/questionBank.js";
 import { loadLyricRounds } from "./lyrics/lyricRounds.js";
+import { LyricQueue } from "./lyrics/lyricQueue.js";
 import {
   createApiRouter,
   handleGoogleCallback,
@@ -60,7 +61,9 @@ const catalogGrowth = new CatalogGrowth({ catalog });
 // question_stats every minute (db/questionStats.js). QUESTION_STATS=0 counts nothing (load tests).
 const questionStats = process.env.QUESTION_STATS === "0" ? null : new QuestionStats({ db: supabaseEnabled() ? getSupabase() : null });
 questionStats?.start();
-const rooms = new RoomManager({ catalog, store, questions, lyricRounds, resolver, catalogGrowth, tutorials: true, questionStats });
+// The Spotify songs played without a round for "Letra", written down in Supabase's lyric_queue for the next build.
+const lyricQueue = new LyricQueue({ db: supabaseEnabled() ? getSupabase() : null });
+const rooms = new RoomManager({ catalog, store, questions, lyricRounds, lyricQueue, resolver, catalogGrowth, tutorials: true, questionStats });
 // The groups (players who go together from one match to the next), apart from the rooms (the matches).
 const groups = new GroupManager({ rooms });
 const friends = new Friendships({ store });

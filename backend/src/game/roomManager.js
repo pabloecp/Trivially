@@ -456,7 +456,7 @@ export function openAnswerCheck(text, question) {
 }
 
 export class RoomManager {
-  constructor({ catalog, store, questions = [], lyrics = new Map(), lyricRounds = new Map(), resolver = null, catalogGrowth = null, tutorials = false, reconnectGraceMs = RECONNECT_GRACE_MS, questionStats = null }) {
+  constructor({ catalog, store, questions = [], lyrics = new Map(), lyricRounds = new Map(), lyricQueue = null, resolver = null, catalogGrowth = null, tutorials = false, reconnectGraceMs = RECONNECT_GRACE_MS, questionStats = null }) {
     this.catalog = catalog;
     // How each question does, counted at every reveal (db/questionStats.js; the server's, the tests go without it).
     this.questionStats = questionStats;
@@ -466,6 +466,9 @@ export class RoomManager {
     // etag, verse }. `lyrics` (song id → [verse]) gives rounds straight, without their audio's checks (tests).
     this.lyrics = lyrics;
     this.lyricRounds = lyricRounds;
+    // The Spotify songs played here with no round for their audio are written down for the next offline build
+    // (lyrics/lyricQueue.js).
+    this.lyricQueue = lyricQueue;
     // The trivia question bank (backend/src/questions/questionBank.js loadQuestions).
     this.questions = questions;
     // Geografía's part of it (filled in from geo/countries.js for any kind the bank lacks).
@@ -1850,6 +1853,9 @@ export class RoomManager {
           if (song) entry.songs.set(spotifyId, { ...song, artists: track?.artists || song.artists });
           // Not in the catalog yet and played 250 million times or more: it joins it, for every room.
           if (song && track) this.catalogGrowth?.consider(track, song);
+          // The audio it plays now (iTunes' once found, else Spotify's) has no round for "Letra": it waits for one.
+          const playing = entry.songs.get(spotifyId);
+          if (playing && this.lyricQueue && !this.lyricFor(playing)) this.lyricQueue.add(playing);
           this.progressChanged(room);
           // The first pass just finished: start the second one.
           if (!deep && entry.run === run && entry.done.size === entry.tracks.length) this.loadPlaylist(room, entry);

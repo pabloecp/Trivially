@@ -3,7 +3,7 @@
 // (preview_url, preview_etag), with only the minimum in data (null for a song that can't be a round). Rows are upserted
 // by song id; nothing is deleted. Wrong options already corrected in the table (`wrongChecked`, written by hand to fit
 // the line) are kept when the file has the same round (same answer and cut): the file's are made by the build and
-// often make no sense in the sentence.
+// often make no sense in the sentence. Then the songs of `lyric_queue` uploaded with the same audio leave the queue.
 //
 //   npm run lyrics:upload --prefix backend
 //   npm run lyrics:upload --prefix backend -- --check     (only reads the file)
@@ -67,3 +67,21 @@ for (let i = 0; i < rows.length; i += 500) {
   }
 }
 console.log(`Subidas ${rows.length} canciones a la tabla ${LYRIC_ROUNDS_TABLE}.`);
+
+// The songs of the queue now in the table with the same audio (ready or left out) leave it (lyrics/lyricQueue.js).
+const { LYRIC_QUEUE_TABLE } = await import("../src/lyrics/lyricQueue.js");
+const uploaded = new Map(rows.map((r) => [r.song_id, r.preview_url]));
+const { data: waiting, error: queueError } = await db.from(LYRIC_QUEUE_TABLE).select("song_id, preview_url");
+if (queueError) {
+  console.warn(`No se pudo leer la cola ${LYRIC_QUEUE_TABLE}: ${queueError.message}`);
+} else {
+  const done = waiting.filter((q) => uploaded.get(q.song_id) === q.preview_url).map((q) => q.song_id);
+  for (let i = 0; i < done.length; i += 200) {
+    const { error } = await db.from(LYRIC_QUEUE_TABLE).delete().in("song_id", done.slice(i, i + 200));
+    if (error) {
+      console.warn(`No se pudieron quitar de la cola: ${error.message}`);
+      break;
+    }
+  }
+  console.log(`${done.length} canciones salen de la cola; quedan ${waiting.length - done.length} esperando.`);
+}
