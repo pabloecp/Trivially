@@ -253,7 +253,8 @@ export default function MatchIntro({ room }) {
   if (!intro) return null;
   // From the second game on, the intro starts with the result of the game before (`resultMs`), then the roulette.
   const resultMs = intro.previous ? intro.resultMs || 0 : 0;
-  const showingResult = now - room.phaseStartedAt < resultMs;
+  // Only with a game before to show (a clock a little behind the server's would otherwise ask for one in the first game).
+  const showingResult = Boolean(intro.previous) && now - room.phaseStartedAt < resultMs;
   const elapsed = now - room.phaseStartedAt - resultMs;
   const spinning = elapsed < intro.spinMs;
   const leftMs = intro.spinMs + intro.tutorialMs - elapsed;
