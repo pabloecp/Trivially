@@ -20,4 +20,5 @@ export const BACKUP_TABLES = [
   { table: "lyric_rounds", key: ["song_id"] },
   { table: "lyric_queue", key: ["song_id"] },
   { table: "feed_cache", key: ["key"] },
+  { table: "question_stats", key: ["game", "question_id", "variant"] },
 ];
