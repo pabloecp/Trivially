@@ -1752,7 +1752,7 @@
 @keyframes tvGrow { from { transform: scaleY(0); } }
 @keyframes tvConfetti {
   0% { opacity: 1; transform: translate3d(0, 0, 0) rotate(0); }
-  100% { opacity: 0; transform: translate3d(calc(var(--r) / 12 - 15px), 105vh, 0) rotate(calc(var(--r) * 3)); }
+  100% { opacity: 0; transform: translate3d(var(--dx, 0px), 105vh, 0) rotate(calc(var(--r) * 3)); }
 }
 @media (prefers-reduced-motion: reduce) {
   .tv-confetti { display: none; }

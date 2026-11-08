@@ -1,7 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import TvShell from "../../components/home/TvShell.jsx";
-import Confetti from "../../components/home/Confetti.jsx";
 import Icon from "../../components/home/Icon.jsx";
 import MatchResults from "../../components/home/MatchResults.jsx";
 import PartyPanel from "../../components/home/PartyPanel.jsx";
@@ -192,7 +191,7 @@ function AnswerBox({ room, open, inputRef, onResult }) {
           ref={inputRef}
           type="text"
           placeholder={
-            open ? "Tu respuesta…" : room.paused ? "En pausa" : room.phase === "reveal" ? "Fin de la ronda" : "Prepárate…"
+            open ? "Escribe tu respuesta…" : room.paused ? "En pausa" : room.phase === "reveal" ? "Fin de la ronda" : "Escribe tu respuesta…"
           }
           value={text}
           onChange={(e) => setText(e.target.value)}
@@ -368,7 +367,7 @@ function GameScreen() {
   const outcomeTone = { win: "ok", tie: "ok", other: "timeout", none: "timeout" };
   const cardPills =
     reveal && outcome && canWrite ? (
-      <RoundVerdict tone={outcomeTone[outcome.tone] || "timeout"} icon={outcome.icon} label={outcome.title} points={myPoints} confetti={false} />
+      <RoundVerdict tone={outcomeTone[outcome.tone] || "timeout"} icon={outcome.icon} label={outcome.title} points={myPoints} />
     ) : canWrite && phase === "playing" ? (
       <span className="tv-qc-points" role="status" aria-label={`${pointsText(myPoints)} en esta ronda`}>
         {pointsText(myPoints)}
@@ -439,7 +438,6 @@ function GameScreen() {
   ));
   const burstCard = burst && (
     <div key={burst.key} className={`tv-mines-burst tv-rain-burst is-${burst.tone}`} role="alert">
-      {burst.confetti && <Confetti pieces={28} />}
       {/* The answer's card, the same as every game's, over the rain. */}
       <AnswerCard
         icon={burst.icon}
