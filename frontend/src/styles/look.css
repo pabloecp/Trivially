@@ -2536,9 +2536,6 @@ html.tv-match-lock .tv-app .tv-qc-timer-mark { top: -2px; bottom: -2px; width: 5
 .tv-app .tv-match .tv-mpanel .tv-lyrics-line { flex: none; margin: 0; padding: 4px 0; font: 800 1em/1.2 var(--tv-title); letter-spacing: -0.02em; color: var(--tv-text-3); opacity: 1; transition: color 0.25s ease; }
 .tv-app .tv-match .tv-mpanel .tv-lyrics-line.is-current { color: #fff; }
 .tv-app .tv-match .tv-mpanel .tv-lyrics-gap { display: inline-block; box-sizing: border-box; overflow: hidden; white-space: nowrap; width: 140px; height: 1.2em; margin: 0 6px; border: 0; border-bottom: 4px solid var(--p-music-1); border-radius: 8px 8px 2px 2px; background: color-mix(in srgb, var(--p-music-1) 22%, transparent); color: #fff; font: 800 0.8em/calc(1.2em - 4px) var(--tv-display); text-align: center; vertical-align: middle; }
-.tv-app .tv-match .tv-mpanel .tv-lyrics-line.is-current .tv-lyrics-gap:not(.is-filled) { animation: tvLyricSlot 1.2s ease-in-out infinite; }
-@keyframes tvLyricSlot { 50% { background: color-mix(in srgb, var(--p-music-1) 40%, transparent); } }
-@media (prefers-reduced-motion: reduce) { .tv-app .tv-match .tv-mpanel .tv-lyrics-line.is-current .tv-lyrics-gap { animation: none; } }
 .tv-app .tv-match .tv-mpanel .tv-lyrics-gap.is-filled { width: auto; min-width: 0; padding: 0 12px; border-bottom-color: var(--p-music-2); border-radius: 8px; background: var(--p-music-1); color: #fff; }
 /* With Abiertas the lyrics and the box to write in share the panel: the lyrics on top, the box (or the answer) under. */
 .tv-app .tv-match .tv-play-card.tv-mpanel:has(> .tv-lyrics) { justify-content: space-between; padding-top: 22px; }
