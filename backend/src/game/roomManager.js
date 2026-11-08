@@ -4110,8 +4110,10 @@ export class RoomManager {
     // Kept so a paused phase can start its clock again (resume).
     room.phaseOnEnd = onEnd;
     room.phase = phase;
-    room.phaseStartedAt = Date.now();
-    room.phaseEndsAt = Date.now() + duration;
+    // One reading of the clock for both: two could fall a millisecond apart and make the phase 1 ms longer.
+    const now = Date.now();
+    room.phaseStartedAt = now;
+    room.phaseEndsAt = now + duration;
     this.onPhaseChange?.(room);
     room.timer = setTimeout(() => {
       onEnd();
