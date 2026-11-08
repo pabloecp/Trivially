@@ -360,7 +360,6 @@ function GameScreen() {
           scores
           display={central}
           onToast={setErr}
-          status={`En juego: ${room.players.filter((p) => !p.spectator && p.connected).length}`}
         />
       )}
       {!controller && !central && (
@@ -368,7 +367,6 @@ function GameScreen() {
           room={room}
           viewerId={viewerId}
           tools={tools}
-          line={playing && roundKing ? `Nadie le ha quitado la corona a ${viewerId === roundKing.id ? "ti" : roundKing.name} todavía` : undefined}
         />
       )}
     </div>
