@@ -18,7 +18,8 @@ import { QuestionStats } from "./db/questionStats.js";
 import { RoomManager } from "./game/roomManager.js";
 import { GroupManager } from "./game/groups.js";
 import { loadQuestions } from "./questions/questionBank.js";
-import { loadLyricRounds } from "./lyrics/lyricRounds.js";
+import { loadLyricRounds, watchLyricRounds } from "./lyrics/lyricRounds.js";
+import { LyricQueue } from "./lyrics/lyricQueue.js";
 import {
   createApiRouter,
   handleGoogleCallback,
@@ -52,7 +53,9 @@ if (assigned) console.log(`[Usuarios] ${assigned} cuentas recibieron un nombre d
 const questions = await loadQuestions();
 // Completa la letra's rounds, worked out offline (npm run lyrics:build) and only read here: from
 // backend/private/lyric-rounds.json, and from Supabase's lyric_rounds table with LYRICS_DB=1.
-const lyricRounds = await loadLyricRounds({ db: process.env.LYRICS_DB === "1" && supabaseEnabled() ? getSupabase() : null });
+const lyricsDb = process.env.LYRICS_DB === "1" && supabaseEnabled() ? getSupabase() : null;
+const lyricsSeen = {};
+const lyricRounds = await loadLyricRounds({ db: lyricsDb, seen: lyricsSeen });
 const resolver = new TrackResolver({ catalog });
 // Spotify songs people bring that are played a lot join the catalog (and Supabase's songs table).
 const catalogGrowth = new CatalogGrowth({ catalog });
@@ -60,7 +63,12 @@ const catalogGrowth = new CatalogGrowth({ catalog });
 // question_stats every minute (db/questionStats.js). QUESTION_STATS=0 counts nothing (load tests).
 const questionStats = process.env.QUESTION_STATS === "0" ? null : new QuestionStats({ db: supabaseEnabled() ? getSupabase() : null });
 questionStats?.start();
-const rooms = new RoomManager({ catalog, store, questions, lyricRounds, resolver, catalogGrowth, tutorials: true, questionStats });
+// The Spotify songs played without a round for "Letra", written down in Supabase's lyric_queue for the next build.
+const lyricQueue = new LyricQueue({ db: supabaseEnabled() ? getSupabase() : null });
+const rooms = new RoomManager({ catalog, store, questions, lyricRounds, lyricQueue, resolver, catalogGrowth, tutorials: true, questionStats });
+// Rounds uploaded later (npm run lyrics:queue or lyrics:upload) are read every 2 minutes: no restart needed, and the
+// lobbies of Adivina la canción count them at once.
+if (lyricsDb) watchLyricRounds({ rounds: lyricRounds, db: lyricsDb, since: lyricsSeen.latest, onChange: () => rooms.lyricsChanged() });
 // The groups (players who go together from one match to the next), apart from the rooms (the matches).
 const groups = new GroupManager({ rooms });
 const friends = new Friendships({ store });

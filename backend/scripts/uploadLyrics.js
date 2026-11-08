@@ -3,10 +3,15 @@
 // (preview_url, preview_etag), with only the minimum in data (null for a song that can't be a round). Rows are upserted
 // by song id; nothing is deleted. Wrong options already corrected in the table (`wrongChecked`, written by hand to fit
 // the line) are kept when the file has the same round (same answer and cut): the file's are made by the build and
-// often make no sense in the sentence.
+// often make no sense in the sentence. Then the songs of `lyric_queue` uploaded with the same audio leave the queue.
 //
 //   npm run lyrics:upload --prefix backend
 //   npm run lyrics:upload --prefix backend -- --check     (only reads the file)
+//
+// At the end it says which rounds still have their wrong options unchecked (they play only with Abiertas until then)
+// and writes them all to backend/private/lyrics-por-revisar.txt. Checking one: in lyric-rounds.json, rewrite its
+// "wrong" so the three fit the line and add "wrongChecked": true; then upload again.
+import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import dotenv from "dotenv";
@@ -67,3 +72,42 @@ for (let i = 0; i < rows.length; i += 500) {
   }
 }
 console.log(`Subidas ${rows.length} canciones a la tabla ${LYRIC_ROUNDS_TABLE}.`);
+
+// The songs of the queue now in the table with the same audio (ready or left out) leave it (lyrics/lyricQueue.js).
+const { LYRIC_QUEUE_TABLE } = await import("../src/lyrics/lyricQueue.js");
+const uploaded = new Map(rows.map((r) => [r.song_id, r.preview_url]));
+const { data: waiting, error: queueError } = await db.from(LYRIC_QUEUE_TABLE).select("song_id, preview_url");
+if (queueError) {
+  console.warn(`No se pudo leer la cola ${LYRIC_QUEUE_TABLE}: ${queueError.message}`);
+} else {
+  const done = waiting.filter((q) => uploaded.get(q.song_id) === q.preview_url).map((q) => q.song_id);
+  for (let i = 0; i < done.length; i += 200) {
+    const { error } = await db.from(LYRIC_QUEUE_TABLE).delete().in("song_id", done.slice(i, i + 200));
+    if (error) {
+      console.warn(`No se pudieron quitar de la cola: ${error.message}`);
+      break;
+    }
+  }
+  console.log(`${done.length} canciones salen de la cola; quedan ${waiting.length - done.length} esperando.`);
+}
+
+// ---- What's left to check ----
+// Rounds whose three wrong options nobody checked (the build proposes rhymes that often don't fit the sentence): they
+// play only with Abiertas until they are. Newest first, so the ones just made come first.
+const uploadedData = new Map(rows.map((row) => [row.song_id, row.data]));
+const unchecked = Object.entries(saved)
+  .filter(([id, r]) => r?.data && !uploadedData.get(id)?.wrongChecked)
+  .sort(([, a], [, b]) => String(b.built || "").localeCompare(String(a.built || "")));
+const REVIEW_FILE = path.resolve(__dirname, "../private/lyrics-por-revisar.txt");
+if (!unchecked.length) {
+  fs.rmSync(REVIEW_FILE, { force: true });
+  console.log("\nNo te falta ninguna por revisar: todas las rondas tienen sus opciones de Cerradas revisadas.");
+} else {
+  const lineOf = ([id, r]) => `${id}  «${String(r.data.lines.at(-1).text)}» → ${r.data.answer}  (incorrectas: ${(r.data.wrong || []).join(", ")})`;
+  fs.writeFileSync(REVIEW_FILE, `${unchecked.map(lineOf).join("\n")}\n`);
+  console.log(`\nTe faltan ${unchecked.length} canciones por revisar: solo salen con Abiertas hasta que sus opciones de Cerradas estén revisadas.`);
+  for (const entry of unchecked.slice(0, 15)) console.log(`  ${lineOf(entry)}`);
+  if (unchecked.length > 15) console.log(`  … y ${unchecked.length - 15} más.`);
+  console.log(`La lista completa está en ${path.relative(process.cwd(), REVIEW_FILE)}.`);
+  console.log(`Para revisar una: en ${path.relative(process.cwd(), LYRIC_ROUNDS_FILE)} cambia su "wrong" para que las tres tengan sentido en la frase, agrega "wrongChecked": true y vuelve a correr npm run lyrics:upload.`);
+}

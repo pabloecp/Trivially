@@ -179,6 +179,22 @@ create table if not exists public.lyric_rounds (
 create index if not exists lyric_rounds_spotify_idx on public.lyric_rounds (spotify_id);
 alter table public.lyric_rounds enable row level security;
 
+-- Canciones esperando su ronda de "Letra": las de playlists de Spotify que se jugaron sin ronda para su audio (el
+-- fragmento de iTunes o el de Spotify). La siguiente `npm run lyrics:build -- --queue` las procesa (las más pedidas
+-- primero) y `npm run lyrics:upload` las saca de aquí. Solo el backend (service_role): RLS activado y sin políticas.
+create table if not exists public.lyric_queue (
+  song_id       text primary key,                        -- sp-<id de Spotify>, como en lyric_rounds
+  spotify_id    text,
+  title         text not null,
+  artists       text[] not null default '{}',
+  preview_url   text not null,                           -- el audio con el que se juega
+  requests      integer not null default 1,              -- cuántas veces se pidió (como mucho una por hora y servidor)
+  created_at    timestamptz not null default now(),
+  requested_at  timestamptz not null default now()
+);
+create index if not exists lyric_queue_requests_idx on public.lyric_queue (requests desc, requested_at desc);
+alter table public.lyric_queue enable row level security;
+
 -- ---------------------------------------------------------------------------
 -- Reportes de preguntas: un owner toca "Reportar" durante una partida y aquí queda la pregunta tal como se jugó
 -- (con su respuesta), los ajustes de la partida y quiénes estaban en la sala, para revisarla después. Solo el backend

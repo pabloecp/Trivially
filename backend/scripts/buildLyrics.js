@@ -16,6 +16,9 @@
 //   npm run lyrics:build --prefix backend -- --spotify https://open.spotify.com/playlist/... --no-catalog
 //   npm run lyrics:build --prefix backend -- --retry --engine alt   (another transcriber, for previews Whisper can't hear)
 //   npm run lyrics:build --prefix backend -- --redo-before 2026-11-05T00:00:00Z   (all of them again; stopped, it goes on)
+//   npm run lyrics:build --prefix backend -- --queue     (only the songs people played without a round, most asked first:
+//                                                         Supabase's lyric_queue; then lyrics:upload takes them off it.
+//                                                         `npm run lyrics:queue` does both)
 //
 // Needs backend/private/lyrics-tools/.venv with faster-whisper (see scripts/lyrics/transcribe.py); `--engine alt`,
 // .venv-alt with torch, torchaudio and transformers (see scripts/lyrics/transcribe-alt.py): it separates the voice
@@ -25,8 +28,11 @@ import fs from "node:fs";
 import path from "node:path";
 import readline from "node:readline";
 import { fileURLToPath } from "node:url";
+import dotenv from "dotenv";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+dotenv.config({ path: path.resolve(__dirname, "../.env") });
+dotenv.config({ path: path.resolve(__dirname, "../../.env") });
 const { readLocalCatalog } = await import("../src/catalog/catalogProvider.js");
 const { readPublicSpotify, spotifyLinkFrom } = await import("../src/catalog/spotifyEmbed.js");
 const { DEFAULT_SPOTIFY } = await import("../src/catalog/defaultPlaylists.js");
@@ -58,6 +64,8 @@ const retry = args.includes("--retry");
 const redoBefore = opt("--redo-before");
 // With --retry: only the songs left out for this reason (e.g. --why "no se oye voz en el fragmento").
 const onlyWhy = opt("--why");
+// Only the songs waiting in Supabase's lyric_queue (lyrics/lyricQueue.js), with the audio rooms play them with.
+const fromQueue = args.includes("--queue");
 const ENGINE = ENGINES[opt("--engine") || "whisper"];
 if (!ENGINE) {
   console.error(`--engine es whisper o alt.`);
@@ -75,12 +83,37 @@ fs.mkdirSync(PREVIEWS, { recursive: true });
 
 // ---- The songs ----
 const songs = [];
-if (!args.includes("--no-catalog")) {
+if (fromQueue) {
+  const { getSupabase, supabaseEnabled } = await import("../src/db/store.js");
+  const { LYRIC_QUEUE_TABLE } = await import("../src/lyrics/lyricQueue.js");
+  if (!supabaseEnabled()) {
+    console.error("Faltan SUPABASE_URL y SUPABASE_SERVICE_ROLE_KEY para leer la cola.");
+    process.exit(1);
+  }
+  for (let from = 0; ; from += 1000) {
+    const { data, error } = await getSupabase()
+      .from(LYRIC_QUEUE_TABLE)
+      .select("song_id, spotify_id, title, artists, preview_url, requests")
+      .order("requests", { ascending: false })
+      .order("requested_at", { ascending: false })
+      .range(from, from + 999);
+    if (error) {
+      console.error(`No se pudo leer la tabla ${LYRIC_QUEUE_TABLE}: ${error.message}`);
+      process.exit(1);
+    }
+    for (const r of data) {
+      songs.push({ id: r.song_id, spotifyId: r.spotify_id, title: r.title, artists: r.artists || [], language: null, previewUrl: r.preview_url, queued: true });
+    }
+    if (data.length < 1000) break;
+  }
+  console.log(`${songs.length} canciones esperan en la cola.`);
+}
+if (!fromQueue && !args.includes("--no-catalog")) {
   for (const s of readLocalCatalog().songs) {
     if (s.previewUrl) songs.push({ id: s.id, spotifyId: s.spotifyId || null, title: s.title, artists: s.artists?.length ? s.artists : [s.artistName], language: s.language || null, previewUrl: s.previewUrl });
   }
 }
-const spotifyTargets = [...DEFAULT_SPOTIFY.map((p) => ({ kind: p.kind, id: p.id }))];
+const spotifyTargets = fromQueue ? [] : [...DEFAULT_SPOTIFY.map((p) => ({ kind: p.kind, id: p.id }))];
 for (const link of (opt("--spotify") || "").split(",").filter(Boolean)) spotifyTargets.push(await spotifyLinkFrom(link));
 for (const target of spotifyTargets) {
   try {
@@ -112,9 +145,12 @@ if (redoBefore && !onlyIds) {
   }
 }
 const todo = songs
-  .filter((s) => (!onlyIds || onlyIds.has(s.id)) && (redo || !(s.id in rows) || (redoBefore && !(rows[s.id]?.built >= redoBefore)) || (retry && !rows[s.id]?.data && (!onlyWhy || rows[s.id]?.why === onlyWhy))))
+  // A song of the queue is done again when its row was measured on other audio (Spotify's, now iTunes').
+  .filter((s) => (!onlyIds || onlyIds.has(s.id)) && (redo || !(s.id in rows) || (s.queued && rows[s.id]?.preview_url !== s.previewUrl) || (redoBefore && !(rows[s.id]?.built >= redoBefore)) || (retry && !rows[s.id]?.data && (!onlyWhy || rows[s.id]?.why === onlyWhy))))
   .slice(0, limit);
 console.log(`${Object.values(rows).filter(Boolean).length} canciones ya listas; faltan ${todo.length}.`);
+// Nothing to do: Whisper isn't even started (lyrics:queue then only uploads and says what's left to check).
+if (!todo.length) process.exit(0);
 
 // ---- The transcriber, kept running ----
 const whisper = spawn(PYTHON, ["-I", "-W", "ignore", path.join(__dirname, "lyrics", ENGINE.script)], {
