@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { readLocalCatalog } from "../catalog/catalogProvider.js";
 import { RoomManager } from "../game/roomManager.js";
-import { toVerse, watchLyricRounds } from "./lyricRounds.js";
+import { rowsToUpload, stableJson, toVerse, watchLyricRounds } from "./lyricRounds.js";
 import { LyricQueue, queueRows } from "./lyricQueue.js";
 
 const ITUNES = "https://audio-ssl.itunes.apple.com/a.m4a";
@@ -123,6 +123,26 @@ clearTimeout(room.progressTimer);
   assert.equal(rounds.has("sp-new"), false);
   assert.deepEqual(changes, [1, 1]);
   watch.stop();
+}
+
+// Uploading sends only what's new or changed: the table gives jsonb back with its keys in another order, which is the
+// same round.
+assert.equal(stableJson({ b: 1, a: [2, { d: 3, c: null }] }), stableJson({ a: [2, { c: null, d: 3 }], b: 1 }));
+{
+  const round = { lines: [{ at: 1, text: "x ___" }], cut: 10.5, end: 11, answer: "a", wrong: ["b", "c", "d"] };
+  const file = [
+    { song_id: "same", spotify_id: "s", preview_url: ITUNES, preview_etag: "e", data: round },
+    { song_id: "new", spotify_id: null, preview_url: ITUNES, preview_etag: null, data: null },
+    { song_id: "cut", spotify_id: "s", preview_url: ITUNES, preview_etag: "e", data: { ...round, cut: 10.4 } },
+    { song_id: "audio", spotify_id: "s", preview_url: SPOTIFY, preview_etag: "e", data: round },
+  ];
+  const reordered = { wrong: ["b", "c", "d"], answer: "a", end: 11, cut: 10.5, lines: [{ text: "x ___", at: 1 }] };
+  const table = new Map(
+    ["same", "cut", "audio"].map((id) => [id, { song_id: id, spotify_id: "s", preview_url: ITUNES, preview_etag: "e", data: reordered }])
+  );
+  const diff = rowsToUpload(file, table);
+  assert.deepEqual(diff.rows.map((r) => r.song_id), ["new", "cut", "audio"]);
+  assert.deepEqual([diff.added, diff.changed, diff.same], [1, 2, 1]);
 }
 
 console.log("lyricQueue.test ok");

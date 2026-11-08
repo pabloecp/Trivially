@@ -52,6 +52,40 @@ export function writeRoundsFile(rows, file = LYRIC_ROUNDS_FILE) {
   fs.writeFileSync(file, `{\n${body.join(",\n")}\n}\n`);
 }
 
+/** A value as JSON with its keys in order (Supabase gives jsonb back with them reordered), to compare two rounds. */
+export function stableJson(value) {
+  if (Array.isArray(value)) return `[${value.map(stableJson).join(",")}]`;
+  if (value && typeof value === "object") {
+    return `{${Object.keys(value)
+      .filter((k) => value[k] !== undefined)
+      .sort()
+      .map((k) => `${JSON.stringify(k)}:${stableJson(value[k])}`)
+      .join(",")}}`;
+  }
+  return JSON.stringify(value ?? null);
+}
+
+/**
+ * The rows to upload (`npm run lyrics:upload`): those not in the table yet, and those whose audio or round differ from
+ * the table's (`table`: song id → its row). The others are left as they are, so their `updated_at` keeps saying when
+ * they last changed and the server (watchLyricRounds) reads only what's new. Returns { rows, added, changed, same }.
+ */
+export function rowsToUpload(rows, table) {
+  const key = (r) => stableJson([r.spotify_id || null, r.preview_url || null, r.preview_etag || null, r.data ?? null]);
+  const out = { rows: [], added: 0, changed: 0, same: 0 };
+  for (const row of rows) {
+    const before = table.get(row.song_id);
+    if (!before) out.added += 1;
+    else if (key(before) !== key(row)) out.changed += 1;
+    else {
+      out.same += 1;
+      continue;
+    }
+    out.rows.push(row);
+  }
+  return out;
+}
+
 /** Puts a row of the table (or the file) in `rounds`, or takes its song out when it can't be a round. */
 export function applyRow(rounds, row) {
   const verse = toVerse(row);
