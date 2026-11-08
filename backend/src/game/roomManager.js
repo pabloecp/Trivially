@@ -338,12 +338,14 @@ function withGeoTokens(track) {
 }
 
 // A new room plays the whole catalog (`useCatalog`, every language, genre and difficulty ticked) and no Spotify
-// playlists; `playlistIds` are the ticked Spotify ones ("sp:<id>"). With `useCatalog` false only those play.
+// playlists; `playlistIds` are the ticked Spotify ones ("sp:<id>"). With `useCatalog` false only those play; with
+// `usePlaylists` false ("Tus playlists"' switch) none of them does, though they stay ticked for when it's on again.
 function defaultConfig() {
   return {
     rounds: 5,
     roundMs: ROUND_MS,
     useCatalog: true,
+    usePlaylists: true,
     languages: [...SONG_LANGUAGES],
     genres: [...SONG_GENRES],
     difficulties: [...SONG_DIFFICULTIES],
@@ -372,7 +374,7 @@ const introSpinMs = (room) => (room.matchmaking ? (room.matchmaking.game ? 0 : I
 
 // The part of the room's settings that belongs to `game`, as in a new room ("Restablecer"). Adivina la canción's are the
 // settings at the top level.
-const MUSIC_KEYS = ["rounds", "roundMs", "useCatalog", "languages", "genres", "difficulties", "playlistIds", "formats", "styles"];
+const MUSIC_KEYS = ["rounds", "roundMs", "useCatalog", "usePlaylists", "languages", "genres", "difficulties", "playlistIds", "formats", "styles"];
 const CONFIG_KEYS = { opciones: "quiz", mundo: "geo", historia: "history", minas: "mines", lluvia: "rain", rey: "rey", farsante: "farsante" };
 function gameDefaults(game) {
   const base = defaultConfig();
@@ -456,7 +458,7 @@ export function openAnswerCheck(text, question) {
 }
 
 export class RoomManager {
-  constructor({ catalog, store, questions = [], lyrics = new Map(), lyricRounds = new Map(), resolver = null, catalogGrowth = null, tutorials = false, reconnectGraceMs = RECONNECT_GRACE_MS, questionStats = null }) {
+  constructor({ catalog, store, questions = [], lyrics = new Map(), lyricRounds = new Map(), lyricQueue = null, resolver = null, catalogGrowth = null, tutorials = false, reconnectGraceMs = RECONNECT_GRACE_MS, questionStats = null }) {
     this.catalog = catalog;
     // How each question does, counted at every reveal (db/questionStats.js; the server's, the tests go without it).
     this.questionStats = questionStats;
@@ -466,6 +468,9 @@ export class RoomManager {
     // etag, verse }. `lyrics` (song id → [verse]) gives rounds straight, without their audio's checks (tests).
     this.lyrics = lyrics;
     this.lyricRounds = lyricRounds;
+    // The Spotify songs played here with no round for their audio are written down for the next offline build
+    // (lyrics/lyricQueue.js).
+    this.lyricQueue = lyricQueue;
     // The trivia question bank (backend/src/questions/questionBank.js loadQuestions).
     this.questions = questions;
     // Geografía's part of it (filled in from geo/countries.js for any kind the bank lacks).
@@ -1561,6 +1566,8 @@ export class RoomManager {
     if (Array.isArray(config?.styles)) next.styles = MUSIC_STYLES.filter((s) => config.styles.includes(s));
     // The catalog on or off (off: only the ticked Spotify playlists play). Missing in an older room means on.
     if (config?.useCatalog != null) next.useCatalog = config.useCatalog !== false;
+    // "Tus playlists" on or off (off: none of the ticked ones plays). Missing in an older room means on.
+    if (config?.usePlaylists != null) next.usePlaylists = config.usePlaylists !== false;
     // The catalog's filters; any list may be left empty (only the Spotify playlists then play, if any).
     if (Array.isArray(config?.languages)) next.languages = SONG_LANGUAGES.filter((v) => config.languages.includes(v));
     if (Array.isArray(config?.genres)) next.genres = SONG_GENRES.filter((v) => config.genres.includes(v));
@@ -1575,8 +1582,9 @@ export class RoomManager {
     this.syncPlaylists(room);
   }
 
-  /** The room's Spotify playlists that play: the ticked ones. */
+  /** The room's Spotify playlists that play: the ticked ones, while "Tus playlists" is on. */
   activePlaylists(room) {
+    if (room.config.usePlaylists === false) return [];
     return (room.config.playlistIds || []).map((id) => room.customPlaylists?.[id]).filter(Boolean);
   }
 
@@ -1611,6 +1619,7 @@ export class RoomManager {
       formats: pick(change.formats, MUSIC_FORMATS, base.formats),
       styles: pick(change.styles, MUSIC_STYLES, base.styles),
       useCatalog: change.useCatalog != null ? change.useCatalog !== false : base.useCatalog,
+      usePlaylists: change.usePlaylists != null ? change.usePlaylists !== false : base.usePlaylists,
       languages: pick(change.languages, SONG_LANGUAGES, base.languages),
       genres: pick(change.genres, SONG_GENRES, base.genres),
       difficulties: pick(change.difficulties, SONG_DIFFICULTIES, base.difficulties),
@@ -1665,7 +1674,7 @@ export class RoomManager {
     // playlists (whose songs may still be loading).
     if (!config.formats?.length) return "Elige al menos un tipo de respuesta.";
     if (config.styles && !config.styles.length) return "Elige al menos un modo de juego.";
-    if (config.useCatalog === false && !config.playlistIds?.length) return "Activa el catálogo o elige una playlist.";
+    if (config.useCatalog === false && (config.usePlaylists === false || !config.playlistIds?.length)) return "Activa el catálogo o elige una playlist.";
     const n = this.songsReady({ ...room, config: configWithItem(base, item) });
     return n < config.rounds ? short(n, "canciones", config.rounds, "idiomas, géneros o dificultades") : null;
   }
@@ -1787,6 +1796,11 @@ export class RoomManager {
     }
   }
 
+  /** New Completa la letra rounds arrived (lyrics/lyricRounds.js watchLyricRounds): the lobbies of the game count them again. */
+  lyricsChanged() {
+    for (const room of this.rooms.values()) if (room.phase === "lobby" && room.game === "musica") this.progressChanged(room);
+  }
+
   /** Every room gets the default playlists just read (catalog/defaultPlaylists.js calls it). */
   applyDefaultPlaylists() {
     for (const room of this.rooms.values()) this.ensureDefaultPlaylists(room);
@@ -1807,6 +1821,8 @@ export class RoomManager {
     // Adding one ticks it, and Trivially's own catalog stops playing (it can be switched on again in the settings).
     const ids = room.config.playlistIds || [];
     if (!ids.includes(id)) room.config = { ...room.config, useCatalog: false, playlistIds: [...ids, id] };
+    // ...and switches "Tus playlists" on, if it was off.
+    room.config = { ...room.config, usePlaylists: true };
     entry.active = true;
     this.loadPlaylist(room, entry);
     return entry;
@@ -1850,6 +1866,9 @@ export class RoomManager {
           if (song) entry.songs.set(spotifyId, { ...song, artists: track?.artists || song.artists });
           // Not in the catalog yet and played 250 million times or more: it joins it, for every room.
           if (song && track) this.catalogGrowth?.consider(track, song);
+          // The audio it plays now (iTunes' once found, else Spotify's) has no round for "Letra": it waits for one.
+          const playing = entry.songs.get(spotifyId);
+          if (playing && this.lyricQueue && !this.lyricFor(playing)) this.lyricQueue.add(playing);
           this.progressChanged(room);
           // The first pass just finished: start the second one.
           if (!deep && entry.run === run && entry.done.size === entry.tracks.length) this.loadPlaylist(room, entry);
@@ -1905,7 +1924,7 @@ export class RoomManager {
       // Completa la letra draws from the songs with their verse; when none is left and "titulo" is ticked too, the
       // round guesses the title instead.
       let style = this.nextStyle(room);
-      let songs = style === "letra" ? this.lyricPool(pool) : pool;
+      let songs = style === "letra" ? this.lyricPool(pool, room) : pool;
       if (style === "letra" && !songs.some((s) => !used.has(s.id)) && this.musicStyles(room).includes("titulo")) {
         style = "titulo";
         songs = pool;
@@ -1935,9 +1954,16 @@ export class RoomManager {
     return Array.isArray(room.config.styles) ? room.config.styles : DEFAULT_MUSIC_STYLES;
   }
 
-  /** The songs of a pool that have a verse for Completa la letra. */
-  lyricPool(pool) {
-    return pool.filter((s) => this.lyricFor(s));
+  /**
+   * The songs of a pool that have a verse for Completa la letra. With only Cerradas ticked, only those whose wrong
+   * options were checked by hand (`checked`): the others play only open (withLyric).
+   */
+  lyricPool(pool, room = null) {
+    const openOk = !room || this.musicFormats(room).includes("escribir");
+    return pool.filter((s) => {
+      const verse = this.lyricFor(s);
+      return verse && (openOk || verse.checked);
+    });
   }
 
   /**
@@ -1956,10 +1982,14 @@ export class RoomManager {
     return round.verse;
   }
 
-  /** How many different songs a match can draw: only those with their verse when Completa la letra is the only mode. */
+  /**
+   * How many different songs a match can draw: only those with their verse when Completa la letra is the only mode.
+   * With no mode ticked, all of them (the match can't start then, and "Canciones" counts what the playlists have).
+   */
   songsReady(room) {
     const pool = this.songPool(room);
-    return this.musicStyles(room).includes("titulo") ? pool.length : this.lyricPool(pool).length;
+    const styles = this.musicStyles(room);
+    return !styles.length || styles.includes("titulo") ? pool.length : this.lyricPool(pool, room).length;
   }
 
   // The less used of the ticked choices so far (a tie drawn at random), so the rounds are shared evenly.
@@ -2004,7 +2034,9 @@ export class RoomManager {
       aliases: verse.aliases,
       wrong: verse.wrong,
     };
-    if (this.nextFormat(room) !== "opciones") return { ...song, style: "letra", type: "open", lyric };
+    // A round whose wrong options nobody checked yet (made by `npm run lyrics:queue`) is only played open: its proposed
+    // options often don't fit the sentence.
+    if (this.nextFormat(room) !== "opciones" || !verse.checked) return { ...song, style: "letra", type: "open", lyric };
     // The three wrong options are the round's own (lyricRounds.js): written to fit the line, the same kind of word as
     // the answer ("Y es que me ___": "quedé", "enamoré", "olvidé" for "cansé"), never rhymes picked from other songs.
     const options = [verse.answer, ...lyric.wrong].sort(() => Math.random() - 0.5);
@@ -2179,6 +2211,9 @@ export class RoomManager {
       const lyricsOnly = !this.musicStyles(room).includes("titulo");
       const available = this.songsReady(room);
       // Completa la letra alone, and no song that plays has its round.
+      if (lyricsOnly && !available && this.lyricPool(this.songPool(room)).length) {
+        throw new Error("Esas canciones aún no tienen sus opciones de «Cerradas» revisadas: marca también «Abiertas»");
+      }
       if (lyricsOnly && !available && this.songPool(room).length) {
         throw new Error("Ninguna de esas canciones tiene su letra lista para el modo «Letra»");
       }
@@ -2504,6 +2539,7 @@ export class RoomManager {
       formats: room.config.formats,
       styles: room.config.styles,
       useCatalog: room.config.useCatalog !== false,
+      usePlaylists: room.config.usePlaylists !== false,
       languages: room.config.languages,
       genres: room.config.genres,
       difficulties: room.config.difficulties,
@@ -4074,8 +4110,10 @@ export class RoomManager {
     // Kept so a paused phase can start its clock again (resume).
     room.phaseOnEnd = onEnd;
     room.phase = phase;
-    room.phaseStartedAt = Date.now();
-    room.phaseEndsAt = Date.now() + duration;
+    // One reading of the clock for both: two could fall a millisecond apart and make the phase 1 ms longer.
+    const now = Date.now();
+    room.phaseStartedAt = now;
+    room.phaseEndsAt = now + duration;
     this.onPhaseChange?.(room);
     room.timer = setTimeout(() => {
       onEnd();
@@ -4111,7 +4149,7 @@ export class RoomManager {
           : undefined,
       // Adivina la canción, in the lobby: how many of those songs have their verse for Completa la letra.
       lyricsReady:
-        room.phase === "lobby" && room.game === "musica" ? this.lyricPool(this.songPool(room)).length : undefined,
+        room.phase === "lobby" && room.game === "musica" ? this.lyricPool(this.songPool(room), room).length : undefined,
       // Opción múltiple, Geografía and Historia, in the lobby: how many different questions the chosen settings have
       // (one per round).
       questionsReady: room.phase === "lobby" ? this.questionsReady(room) : undefined,

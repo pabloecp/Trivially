@@ -34,6 +34,8 @@ export function toVerse(row) {
     answer: data.answer,
     aliases: [],
     wrong: data.wrong,
+    // The three wrong options were checked by hand: only then is it played with Cerradas.
+    checked: data.wrongChecked === true,
   };
 }
 
@@ -50,16 +52,59 @@ export function writeRoundsFile(rows, file = LYRIC_ROUNDS_FILE) {
   fs.writeFileSync(file, `{\n${body.join(",\n")}\n}\n`);
 }
 
+/** A value as JSON with its keys in order (Supabase gives jsonb back with them reordered), to compare two rounds. */
+export function stableJson(value) {
+  if (Array.isArray(value)) return `[${value.map(stableJson).join(",")}]`;
+  if (value && typeof value === "object") {
+    return `{${Object.keys(value)
+      .filter((k) => value[k] !== undefined)
+      .sort()
+      .map((k) => `${JSON.stringify(k)}:${stableJson(value[k])}`)
+      .join(",")}}`;
+  }
+  return JSON.stringify(value ?? null);
+}
+
+/**
+ * The rows to upload (`npm run lyrics:upload`): those not in the table yet, and those whose audio or round differ from
+ * the table's (`table`: song id → its row). The others are left as they are, so their `updated_at` keeps saying when
+ * they last changed and the server (watchLyricRounds) reads only what's new. Returns { rows, added, changed, same }.
+ */
+export function rowsToUpload(rows, table) {
+  const key = (r) => stableJson([r.spotify_id || null, r.preview_url || null, r.preview_etag || null, r.data ?? null]);
+  const out = { rows: [], added: 0, changed: 0, same: 0 };
+  for (const row of rows) {
+    const before = table.get(row.song_id);
+    if (!before) out.added += 1;
+    else if (key(before) !== key(row)) out.changed += 1;
+    else {
+      out.same += 1;
+      continue;
+    }
+    out.rows.push(row);
+  }
+  return out;
+}
+
+/** Puts a row of the table (or the file) in `rounds`, or takes its song out when it can't be a round. */
+export function applyRow(rounds, row) {
+  const verse = toVerse(row);
+  if (verse) rounds.set(row.song_id, { previewUrl: row.preview_url || null, etag: row.preview_etag || null, spotifyId: row.spotify_id || null, verse });
+  else rounds.delete(row.song_id);
+}
+
+const COLUMNS = "song_id, spotify_id, preview_url, preview_etag, data, updated_at";
+
 /**
  * Every round, by song id: { previewUrl, etag, verse }. From the local file, and from Supabase's table when `db` is
- * given (the server does it with LYRICS_DB=1); the table's row wins for the same song.
+ * given (the server does it with LYRICS_DB=1); the table's row wins for the same song. `seen.latest` gets the newest
+ * `updated_at` read, where watchLyricRounds goes on from.
  */
-export async function loadLyricRounds({ db = null, file = LYRIC_ROUNDS_FILE, log = console } = {}) {
+export async function loadLyricRounds({ db = null, file = LYRIC_ROUNDS_FILE, log = console, seen = {} } = {}) {
   const rounds = new Map();
   const add = (row) => {
-    const verse = toVerse(row);
-    if (verse) rounds.set(row.song_id, { previewUrl: row.preview_url || null, etag: row.preview_etag || null, spotifyId: row.spotify_id || null, verse });
-    else rounds.delete(row.song_id);
+    applyRow(rounds, row);
+    if (row.updated_at && (!seen.latest || row.updated_at > seen.latest)) seen.latest = row.updated_at;
   };
   try {
     for (const [song_id, row] of Object.entries(readRoundsFile(file))) add({ ...row, song_id });
@@ -69,7 +114,7 @@ export async function loadLyricRounds({ db = null, file = LYRIC_ROUNDS_FILE, log
   if (db) {
     try {
       for (let from = 0; ; from += 1000) {
-        const { data, error } = await db.from(LYRIC_ROUNDS_TABLE).select("song_id, spotify_id, preview_url, preview_etag, data").range(from, from + 999);
+        const { data, error } = await db.from(LYRIC_ROUNDS_TABLE).select(COLUMNS).range(from, from + 999);
         if (error) throw new Error(error.message);
         data.forEach(add);
         if (data.length < 1000) break;
@@ -80,4 +125,52 @@ export async function loadLyricRounds({ db = null, file = LYRIC_ROUNDS_FILE, log
   }
   log.log?.(`[Letras] ${rounds.size} canciones listas para el modo «Letra»`);
   return rounds;
+}
+
+/**
+ * Reads, every `everyMs`, the rows of the table changed after `since` (an `updated_at`), so rounds uploaded with
+ * `npm run lyrics:upload` (or `lyrics:queue`) play without restarting the server; `onChange(n)` when any arrived.
+ * `tick()` reads at once (tests) and returns how many; `stop()` ends it.
+ */
+export function watchLyricRounds({ rounds, db, since = null, everyMs = 2 * 60 * 1000, onChange = null, log = console }) {
+  let latest = since || new Date().toISOString();
+  let busy = false;
+  async function tick() {
+    if (busy) return 0;
+    busy = true;
+    let changed = 0;
+    let newest = latest;
+    try {
+      for (let from = 0; ; from += 1000) {
+        const { data, error } = await db
+          .from(LYRIC_ROUNDS_TABLE)
+          .select(COLUMNS)
+          .gt("updated_at", latest)
+          .order("updated_at", { ascending: true })
+          .order("song_id", { ascending: true })
+          .range(from, from + 999);
+        if (error) throw new Error(error.message);
+        for (const row of data) {
+          applyRow(rounds, row);
+          if (row.updated_at > newest) newest = row.updated_at;
+        }
+        changed += data.length;
+        if (data.length < 1000) break;
+      }
+      latest = newest;
+    } catch (err) {
+      changed = 0;
+      log.warn?.(`[Letras] No se pudieron leer las rondas nuevas (${err.message})`);
+    } finally {
+      busy = false;
+    }
+    if (changed) {
+      log.log?.(`[Letras] ${changed} canciones nuevas o cambiadas para el modo «Letra»`);
+      onChange?.(changed);
+    }
+    return changed;
+  }
+  const timer = setInterval(tick, everyMs);
+  timer.unref?.();
+  return { tick, stop: () => clearInterval(timer) };
 }

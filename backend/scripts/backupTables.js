@@ -18,5 +18,6 @@ export const BACKUP_TABLES = [
   { table: "songs", key: ["id"] },
   { table: "spotify_songs", key: ["spotify_id"] },
   { table: "lyric_rounds", key: ["song_id"] },
+  { table: "lyric_queue", key: ["song_id"] },
   { table: "feed_cache", key: ["key"] },
 ];
