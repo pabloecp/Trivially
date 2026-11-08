@@ -268,12 +268,14 @@ let fs = mgr.publicState(fig, "f2");
 assert.equal(fs.question.kind, "cifras");
 assert.equal(fs.question.unit, "m");
 assert.equal(fs.question.min, null, "the bar only comes with the round");
-assert.ok(!JSON.stringify(fs.question).includes("8849"));
+// The number on its own, not inside a time in milliseconds that happens to carry those digits.
+const holdsAnswer = (state) => /(?<![\d.])8849(?![\d.])/.test(JSON.stringify(state));
+assert.ok(!holdsAnswer(fs.question));
 mgr.beginPlaying(fig);
 stop(fig);
 fs = mgr.publicState(fig, "f2");
 assert.deepEqual([fs.question.min, fs.question.max, fs.question.snap], [6000, 26000, 20]);
-assert.ok(!JSON.stringify(fs).includes("8849"), "the answer stays on the server");
+assert.ok(!holdsAnswer(fs), "the answer stays on the server");
 assert.throws(() => mgr.placeYear(fig, "f2", { value: 5000 }), /barra/, "outside the bar");
 assert.throws(() => mgr.placeYear(fig, "f2", { value: 9000.5 }), /barra/);
 mgr.placeYear(fig, "f2", { value: 8900 });
