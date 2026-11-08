@@ -17,7 +17,8 @@
 //   npm run lyrics:build --prefix backend -- --retry --engine alt   (another transcriber, for previews Whisper can't hear)
 //   npm run lyrics:build --prefix backend -- --redo-before 2026-11-05T00:00:00Z   (all of them again; stopped, it goes on)
 //   npm run lyrics:build --prefix backend -- --queue     (only the songs people played without a round, most asked first:
-//                                                         Supabase's lyric_queue; then lyrics:upload takes them off it)
+//                                                         Supabase's lyric_queue; then lyrics:upload takes them off it.
+//                                                         `npm run lyrics:queue` does both)
 //
 // Needs backend/private/lyrics-tools/.venv with faster-whisper (see scripts/lyrics/transcribe.py); `--engine alt`,
 // .venv-alt with torch, torchaudio and transformers (see scripts/lyrics/transcribe-alt.py): it separates the voice
@@ -148,6 +149,8 @@ const todo = songs
   .filter((s) => (!onlyIds || onlyIds.has(s.id)) && (redo || !(s.id in rows) || (s.queued && rows[s.id]?.preview_url !== s.previewUrl) || (redoBefore && !(rows[s.id]?.built >= redoBefore)) || (retry && !rows[s.id]?.data && (!onlyWhy || rows[s.id]?.why === onlyWhy))))
   .slice(0, limit);
 console.log(`${Object.values(rows).filter(Boolean).length} canciones ya listas; faltan ${todo.length}.`);
+// Nothing to do: Whisper isn't even started (lyrics:queue then only uploads and says what's left to check).
+if (!todo.length) process.exit(0);
 
 // ---- The transcriber, kept running ----
 const whisper = spawn(PYTHON, ["-I", "-W", "ignore", path.join(__dirname, "lyrics", ENGINE.script)], {

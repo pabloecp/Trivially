@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { readLocalCatalog } from "../catalog/catalogProvider.js";
 import { RoomManager } from "../game/roomManager.js";
-import { toVerse } from "./lyricRounds.js";
+import { toVerse, watchLyricRounds } from "./lyricRounds.js";
 import { LyricQueue, queueRows } from "./lyricQueue.js";
 
 const ITUNES = "https://audio-ssl.itunes.apple.com/a.m4a";
@@ -84,5 +84,45 @@ job.onResult("t1", song("sp-t1"));
 job.onResult("t2", null);
 assert.deepEqual(added, ["sp-t1"], "only the song played without its round (one not found isn't played)");
 clearTimeout(room.progressTimer);
+
+// The server reads the rounds uploaded after it started (watchLyricRounds): only those changed after the last read;
+// a song that can't be a round any more leaves.
+{
+  const data = (answer, checked) => ({ lines: [{ at: 1, text: "Una línea que termina en ___" }], cut: 10, end: 11, answer, wrong: ["uno", "dos", "tres"], wrongChecked: checked });
+  const table = [
+    { song_id: "sp-old", preview_url: ITUNES, data: data("vieja", true), updated_at: "2026-11-01T00:00:00.000Z" },
+    { song_id: "sp-new", preview_url: ITUNES, data: data("nueva", false), updated_at: "2026-11-08T10:00:00.000Z" },
+  ];
+  const asked = [];
+  const db = {
+    from: () => {
+      let since = "";
+      const q = {
+        select: () => q,
+        gt: (_col, value) => ((since = value), q),
+        order: () => q,
+        range: async (from, to) => {
+          asked.push(since);
+          const rows = table.filter((r) => r.updated_at > since).sort((a, b) => a.updated_at.localeCompare(b.updated_at));
+          return { data: rows.slice(from, to + 1), error: null };
+        },
+      };
+      return q;
+    },
+  };
+  const rounds = new Map();
+  const changes = [];
+  const watch = watchLyricRounds({ rounds, db, since: "2026-11-05T00:00:00.000Z", onChange: (n) => changes.push(n), log: {} });
+  assert.equal(await watch.tick(), 1);
+  assert.deepEqual([...rounds.keys()], ["sp-new"]);
+  assert.equal(rounds.get("sp-new").verse.checked, false, "not checked: only open");
+  assert.equal(await watch.tick(), 0, "nothing new");
+  assert.equal(asked.at(-1), "2026-11-08T10:00:00.000Z", "goes on from the newest read");
+  table.push({ song_id: "sp-new", preview_url: ITUNES, data: null, updated_at: "2026-11-08T11:00:00.000Z" });
+  assert.equal(await watch.tick(), 1);
+  assert.equal(rounds.has("sp-new"), false);
+  assert.deepEqual(changes, [1, 1]);
+  watch.stop();
+}
 
 console.log("lyricQueue.test ok");

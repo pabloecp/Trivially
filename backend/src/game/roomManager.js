@@ -1790,6 +1790,11 @@ export class RoomManager {
     }
   }
 
+  /** New Completa la letra rounds arrived (lyrics/lyricRounds.js watchLyricRounds): the lobbies of the game count them again. */
+  lyricsChanged() {
+    for (const room of this.rooms.values()) if (room.phase === "lobby" && room.game === "musica") this.progressChanged(room);
+  }
+
   /** Every room gets the default playlists just read (catalog/defaultPlaylists.js calls it). */
   applyDefaultPlaylists() {
     for (const room of this.rooms.values()) this.ensureDefaultPlaylists(room);
@@ -1911,7 +1916,7 @@ export class RoomManager {
       // Completa la letra draws from the songs with their verse; when none is left and "titulo" is ticked too, the
       // round guesses the title instead.
       let style = this.nextStyle(room);
-      let songs = style === "letra" ? this.lyricPool(pool) : pool;
+      let songs = style === "letra" ? this.lyricPool(pool, room) : pool;
       if (style === "letra" && !songs.some((s) => !used.has(s.id)) && this.musicStyles(room).includes("titulo")) {
         style = "titulo";
         songs = pool;
@@ -1941,9 +1946,16 @@ export class RoomManager {
     return Array.isArray(room.config.styles) ? room.config.styles : DEFAULT_MUSIC_STYLES;
   }
 
-  /** The songs of a pool that have a verse for Completa la letra. */
-  lyricPool(pool) {
-    return pool.filter((s) => this.lyricFor(s));
+  /**
+   * The songs of a pool that have a verse for Completa la letra. With only Cerradas ticked, only those whose wrong
+   * options were checked by hand (`checked`): the others play only open (withLyric).
+   */
+  lyricPool(pool, room = null) {
+    const openOk = !room || this.musicFormats(room).includes("escribir");
+    return pool.filter((s) => {
+      const verse = this.lyricFor(s);
+      return verse && (openOk || verse.checked);
+    });
   }
 
   /**
@@ -1965,7 +1977,7 @@ export class RoomManager {
   /** How many different songs a match can draw: only those with their verse when Completa la letra is the only mode. */
   songsReady(room) {
     const pool = this.songPool(room);
-    return this.musicStyles(room).includes("titulo") ? pool.length : this.lyricPool(pool).length;
+    return this.musicStyles(room).includes("titulo") ? pool.length : this.lyricPool(pool, room).length;
   }
 
   // The less used of the ticked choices so far (a tie drawn at random), so the rounds are shared evenly.
@@ -2010,7 +2022,9 @@ export class RoomManager {
       aliases: verse.aliases,
       wrong: verse.wrong,
     };
-    if (this.nextFormat(room) !== "opciones") return { ...song, style: "letra", type: "open", lyric };
+    // A round whose wrong options nobody checked yet (made by `npm run lyrics:queue`) is only played open: its proposed
+    // options often don't fit the sentence.
+    if (this.nextFormat(room) !== "opciones" || !verse.checked) return { ...song, style: "letra", type: "open", lyric };
     // The three wrong options are the round's own (lyricRounds.js): written to fit the line, the same kind of word as
     // the answer ("Y es que me ___": "quedé", "enamoré", "olvidé" for "cansé"), never rhymes picked from other songs.
     const options = [verse.answer, ...lyric.wrong].sort(() => Math.random() - 0.5);
@@ -2185,6 +2199,9 @@ export class RoomManager {
       const lyricsOnly = !this.musicStyles(room).includes("titulo");
       const available = this.songsReady(room);
       // Completa la letra alone, and no song that plays has its round.
+      if (lyricsOnly && !available && this.lyricPool(this.songPool(room)).length) {
+        throw new Error("Esas canciones aún no tienen sus opciones de «Cerradas» revisadas: marca también «Abiertas»");
+      }
       if (lyricsOnly && !available && this.songPool(room).length) {
         throw new Error("Ninguna de esas canciones tiene su letra lista para el modo «Letra»");
       }
@@ -4117,7 +4134,7 @@ export class RoomManager {
           : undefined,
       // Adivina la canción, in the lobby: how many of those songs have their verse for Completa la letra.
       lyricsReady:
-        room.phase === "lobby" && room.game === "musica" ? this.lyricPool(this.songPool(room)).length : undefined,
+        room.phase === "lobby" && room.game === "musica" ? this.lyricPool(this.songPool(room), room).length : undefined,
       // Opción múltiple, Geografía and Historia, in the lobby: how many different questions the chosen settings have
       // (one per round).
       questionsReady: room.phase === "lobby" ? this.questionsReady(room) : undefined,

@@ -101,7 +101,7 @@ assert.equal(checked.lyricFor(s1).answer, "ríos");
 assert.equal(checked.lyricFor({ ...s1, previewUrl: "https://audio-ssl.itunes.apple.com/otro.m4a" }), null, "another preview");
 
 // Rounds for the room's tests (made up).
-const row = (songId, i) =>
+const row = (songId, i, checked = true) =>
   toVerse({
     song_id: songId,
     data: {
@@ -113,6 +113,7 @@ const row = (songId, i) =>
       end: 15 + i,
       answer: `palabra secreta ${i}`,
       wrong: [`otra cosa ${i}`, `algo distinto ${i}`, `nada que ver ${i}`],
+      wrongChecked: checked,
     },
   });
 const bank = new Map([s1, s2, s3].map((s, i) => [s.id, [row(s.id, i + 1)]]));
@@ -204,6 +205,25 @@ clearTimeout(c.timer);
 assert.equal(c.phase, "reveal");
 assert.equal(c.players.get("c-1").lastAnswer.correct, true);
 clearTimeout(c.timer);
+
+// Wrong options nobody checked yet (a round made from the queue): played only open. With only Cerradas ticked those
+// songs don't count, and the match says why.
+const raw = new RoomManager({ catalog, store: { users: {} }, lyrics: new Map([s1, s2, s3].map((s, i) => [s.id, [row(s.id, i + 1, false)]])) });
+const u = raw.create({ host: { id: "u-1", name: "U", socketId: "s8" }, mode: "multi", game: "musica" });
+raw.updateConfig(u, "u-1", { styles: ["letra"], formats: ["opciones"] });
+u.config.rounds = 3;
+assert.equal(raw.publicState(u).songsReady, 0);
+assert.equal(raw.publicState(u).lyricsReady, 0);
+assert.throws(() => raw.start(u, "u-1"), /opciones de «Cerradas» revisadas/);
+raw.updateConfig(u, "u-1", { styles: ["letra"], formats: ["opciones", "escribir"] });
+assert.equal(raw.publicState(u).songsReady, 3);
+raw.start(u, "u-1");
+while (u.tracks.length < u.totalRounds) {
+  u.currentRound = u.tracks.length - 1;
+  raw.pickAhead(u);
+}
+assert.ok(u.tracks.every((t) => t.style === "letra" && t.type === "open"), "never closed");
+clearTimeout(u.timer);
 
 // Both modes: the rounds are shared, and with no verse left a round guesses the title.
 const b = lyricOnly.create({ host: { id: "b-1", name: "B", socketId: "s7" }, mode: "multi", game: "musica" });
