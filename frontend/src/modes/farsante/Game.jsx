@@ -195,7 +195,6 @@ function GameScreen() {
         ) : (
           <MatchCard
             room={room}
-            label={null}
             pills={
               // At the reveal, how the round went for this player, the same as every game's result.
               reveal && !central && !spectator ? (
@@ -218,13 +217,6 @@ function GameScreen() {
                   ))}
                 </span>
               )
-            }
-            dir={
-              voting && fs?.kind === "dato"
-                ? "Dato: vota la respuesta real, no las que inventaron"
-                : hint
-                ? `${kind.label}: ${hint}`
-                : `${kind.label}: ${title}`
             }
             seconds={seconds}
             pct={pct}

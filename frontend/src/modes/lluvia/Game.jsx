@@ -474,7 +474,7 @@ function GameScreen() {
           </ControllerBar>
         ) : (
           // The small card of the games played on a board: the round, its points and the question; the clock under it.
-          <MatchCard room={room} label={`Ronda ${round + 1}`} icon="rain" small pills={cardPills} seconds={seconds} pct={pct} urgent={urgent}>
+          <MatchCard room={room} small pills={cardPills} seconds={seconds} pct={pct} urgent={urgent}>
             <MatchQuestion>{title}</MatchQuestion>
           </MatchCard>
         )}

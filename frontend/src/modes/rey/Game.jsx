@@ -12,7 +12,7 @@ import WaitingPill from "../../components/home/WaitingPill.jsx";
 import { ControllerBar, GetReady, PhoneHint } from "../../components/home/CentralBits.jsx";
 import { PauseButton, PauseVeil, ReportButton, SkipButton } from "../../components/home/PauseControls.jsx";
 import { resolveCode } from "../../lib/hiddenCode.js";
-import { AnswerCard, MatchBar, MatchCard, MatchQuestion, RoundVerdict, topicIcon } from "../../components/home/MatchFrame.jsx";
+import { AnswerCard, MatchBar, MatchCard, MatchQuestion, RoundVerdict } from "../../components/home/MatchFrame.jsx";
 import { useApp, useRemainingMs, useView } from "../../lib/store.jsx";
 import { findDifficulty, pointsText, reyConfig } from "./reyInfo.js";
 import "../../styles/home.css";
@@ -268,21 +268,12 @@ function GameScreen() {
         ) : (
           <MatchCard
             room={room}
-            label={!picking && question ? question.category : "El rey elige"}
-            icon={!picking && question ? topicIcon(question.category) : "crown"}
             pills={
               reveal && question && !central && !spectator ? (
                 <ReyVerdict me={me} rey={rey} youWon={youWon} youAreRoundKing={youAreRoundKing} />
               ) : (
                 !picking && question && <span className="tv-qc-pill is-dark">{level.label} · {pointsText(level.points)}</span>
               )
-            }
-            dir={
-              playing && !youAreRoundKing
-                ? "Abiertas: acierta primero y quítale la corona; si nadie acierta, puntos para el rey"
-                : picking
-                ? hint
-                : [title, hint].filter(Boolean).join(" · ")
             }
             seconds={seconds}
             pct={pct}
