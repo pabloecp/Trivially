@@ -16,8 +16,7 @@ import { createLyricPlayer } from "./lyricAudio.js";
 import "../../styles/quiz.css";
 import { PauseButton, ReportButton, SkipButton, PauseVeil } from "../../components/home/PauseControls.jsx";
 import { resolveCode } from "../../lib/hiddenCode.js";
-import { useLyricsView } from "../../lib/ownerView.js";
-import { AnswerCard, MatchBar, MatchCard, MatchQuestion, RoundCountdown, RoundVerdict } from "../../components/home/MatchFrame.jsx";
+import { AnswerCard, MatchBar, MatchCard, MatchQuestion, RoundVerdict } from "../../components/home/MatchFrame.jsx";
 
 // A closed round's four songs keep the same letters and colours as Trivia's options.
 const OPTION_LETTERS = ["A", "B", "C", "D"];
@@ -53,8 +52,6 @@ function GameScreen() {
   // With a central device in the room, the song plays there and shows the round; the players' phones only have the
   // options or the search box (and say how their round went).
   const { central, controller, viewerId } = useView(room);
-  // An owner can try Letra with the options as big as Trivia's (the admin panel's "Letra (Cerradas)").
-  const lyricsView = useLyricsView();
 
   const audioRef = useRef(null);
   const inputRef = useRef(null);
@@ -504,9 +501,6 @@ function GameScreen() {
     lyrics && room.phase === "playing" && lyrics.cutMs != null && lyrics.startMs != null
       ? Math.round((1 - (lyrics.cutMs - lyrics.startMs) / totalMs) * 1000) / 10
       : null;
-  // Cerradas: the four options on a dark grey panel, as in every game (Letra's lyrics on it too, over them); not on a
-  // central device or a phone beside one.
-  const optPanel = closed && !central && !controller;
   // Título with Abiertas: the song's bars go big in the panel, over the box to write in, instead of in the card.
   const bigBars = !lyrics && !closed && !central;
 
@@ -536,15 +530,26 @@ function GameScreen() {
         ) : (
           <MatchCard
             room={room}
+            label={`${lyrics ? "Letra" : "Título"} · ${closed ? "Cerradas" : "Abiertas"}`}
+            icon="music"
             small={Boolean(lyrics)}
             mark={cutMark}
+            dir={
+              lyrics
+                ? closed
+                  ? "La canción se corta: elige la palabra que completa la letra"
+                  : "La canción se corta: escribe la palabra que completa la letra"
+                : closed
+                ? "Escucha el fragmento y elige qué canción es · más rápido, más puntos"
+                : "Escucha el fragmento y escribe su título · más rápido, más puntos"
+            }
             seconds={seconds}
             pct={pct}
             urgent={urgent}
             pills={room.phase === "reveal" ? central ? <RoomVerdict room={room} /> : !spectator ? roundVerdict : null : null}
           >
             {/* The card's text never changes, at the reveal either. */}
-            <MatchQuestion>{lyrics ? "¿Qué palabra sigue?" : closed ? "¿Qué canción suena?" : "¿Qué canción suena? Escribe el título"}</MatchQuestion>
+            <MatchQuestion>{lyrics ? "¿Qué palabra sigue?" : "¿Qué canción es?"}</MatchQuestion>
           </MatchCard>
         )}
 
@@ -554,9 +559,12 @@ function GameScreen() {
             {controller ? (
               <GetReady />
             ) : (
-              <RoundCountdown room={room} seconds={seconds} />
+              <>
+                <p className="tv-mono-label">Prepárate para escuchar</p>
+                <span key={Math.max(1, seconds)} className="tv-countdown-num">{Math.max(1, seconds)}</span>
+              </>
             )}
-            {(central || controller) && <p className="tv-hint">
+            <p className="tv-hint">
               {lyrics
                 ? `${central ? "La canción se corta: completen" : "La canción se corta: completa"} lo que sigue en la letra${
                     closed ? " entre cuatro opciones" : ""
@@ -572,19 +580,25 @@ function GameScreen() {
                 : closed
                 ? "Elige la canción entre cuatro opciones."
                 : "Escribe el título en cuanto reconozcas la canción."}
-            </p>}
+            </p>
+          </section>
+        )}
+
+        {/* Completa la letra with Cerradas: the lyrics in a panel of their own, big, over the four options. */}
+        {showLyrics && closed && (
+          <section key={`l${room.currentRound}`} className="tv-game-stage tv-mpanel tv-lyrics-stage">
+            <LyricsPanel lyrics={lyrics} position={lyricPos} reveal={room.phase === "reveal"} />
           </section>
         )}
 
         {/* The round stays on this screen at the reveal: four options are marked in place (the right song green, a
             wrong pick red), and the box to write in turns into the answer's card. */}
         {(room.phase === "playing" || room.phase === "reveal") && (
-          <section key={`p${room.currentRound}`} className={`tv-game-stage tv-play-card${!closed || optPanel ? " tv-mpanel" : ""}${optPanel ? " tv-opt-panel" : ""}${optPanel && showLyrics ? ` tv-lyrics-choice${lyricsView === "grandes" ? " is-big-options" : ""}` : ""}`}>
+          <section key={`p${room.currentRound}`} className={`tv-game-stage tv-play-card${closed ? "" : " tv-mpanel"}`}>
             <PauseVeil room={room} isHost={isHost} />
-            {/* Completa la letra (and a phone beside the central device, whatever the way of answering): the lyrics at
-                the top of the panel, and under them, in the same panel, the four options (Cerradas) or the box to write
-                in (Abiertas; the answer's card at the reveal). */}
-            {lyrics && (controller || showLyrics) && <LyricsPanel lyrics={lyrics} position={lyricPos} reveal={room.phase === "reveal"} />}
+            {/* Completa la letra with Abiertas (and a phone beside the central device, whatever the way of answering): the
+                lyrics at the top of the panel, the box to write in (or the answer's card) under them. */}
+            {lyrics && (controller || (showLyrics && !closed)) && <LyricsPanel lyrics={lyrics} position={lyricPos} reveal={room.phase === "reveal"} />}
             {/* Título with Abiertas: the song's bars big over the box to write in. */}
             {bigBars && !controller && room.phase === "playing" && !locked && (
               <div className="tv-song-now" aria-hidden="true">
@@ -694,7 +708,7 @@ function GameScreen() {
                     ref={inputRef}
                     type="text"
                     className="tv-search-input"
-                    placeholder={lyrics ? "Escribe tu respuesta…" : "Escribe el título…"}
+                    placeholder={lyrics ? "Escribe lo que falta…" : "Escribe el título…"}
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
                     onKeyDown={handleKeyDown}
@@ -795,7 +809,7 @@ function GameScreen() {
 // Completa la letra's lyrics, line by line: every line is there from the start, in its place (nothing appears or
 // pushes the rest down); the one being sung is lit, the others dim. `position` is where the song is (seconds of its
 // preview). The last line ends in the gap: one long line, always as wide (it never tells how long the words are),
-// filled with them in the same place as soon as the round ends (`reveal`). Empty until then: a slot, no "?".
+// filled with them in the same place as soon as the round ends (`reveal`), so it never says "?" beside the answer.
 function LyricsPanel({ lyrics, position, reveal = false }) {
   const lines = lyrics.lines || [];
   const filled = Boolean(lyrics.answer) && (reveal || position >= lyrics.cutMs / 1000);
@@ -816,7 +830,7 @@ function LyricsPanel({ lyrics, position, reveal = false }) {
               <>
                 {line.text.slice(0, gapAt)}
                 <span className={`tv-lyrics-gap${filled ? " is-filled" : ""}`} aria-label={filled ? undefined : "espacio en blanco"}>
-                  {filled ? lyrics.answer : null}
+                  {filled ? lyrics.answer : "?"}
                 </span>
               </>
             )}

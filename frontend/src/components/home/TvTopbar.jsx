@@ -10,7 +10,7 @@ import ConfirmDialog from "./ConfirmDialog.jsx";
 import Icon from "./Icon.jsx";
 import ProfileChip from "./ProfileChip.jsx";
 import VolumeMenu from "./VolumeMenu.jsx";
-import { IntroInfo, RoundSegments } from "./MatchFrame.jsx";
+import { IntroInfo, RoundSegments, gameLook, matchMode } from "./MatchFrame.jsx";
 import useMatchViewport from "../../lib/useMatchViewport.js";
 
 /** Where leaving a room goes: Inicio, which keeps the game and the side (lib/plan.js) the room was on. */
@@ -100,18 +100,29 @@ export function useRoomExit({ onRoomScreen = true, onError } = {}) {
   return { toMenu, inGame, asking, leadsGroup, press, leaveNow, endToMenu, cancelAsk: () => setLeaveAsk(false) };
 }
 
-// In a match, beside "Salir": "RONDA 4 DE 10" and one segment per round. The game and how the round is played are on
-// the round's card (MatchCard), not here.
+// In a match, beside "Salir": the game and how this round is played on a chip in its colour, then "RONDA 4 DE 10" and one
+// segment per round.
 function MatchInfo({ room }) {
+  const { color, icon, name } = gameLook(room);
+  const mode = matchMode(room);
   return (
-    <span className="tv-topbar-round">
-      <span className="tv-topbar-round-row">
-        <span className="tv-topbar-round-now">
-          Ronda {Math.min(room.totalRounds, (room.currentRound || 0) + 1)} de {room.totalRounds}
-        </span>
+    <>
+      <span className={`tv-chip tv-chip--game tv-c-${color}`}>
+        <Icon name={icon} size={20} strokeWidth={2.4} />
+        <span className="tv-chip-name">{mode ? `${name} · ${mode}` : name}</span>
       </span>
-      <RoundSegments room={room} />
-    </span>
+      <span className="tv-topbar-round">
+        <span className="tv-topbar-round-row">
+          {/* Phones have no room for the game's chip: its name goes here, the part cut with "…" when it doesn't fit. */}
+          <span className="tv-topbar-round-game">{name}</span>
+          <span className="tv-topbar-round-now">
+            <span className="tv-topbar-round-dot"> · </span>
+            Ronda {Math.min(room.totalRounds, (room.currentRound || 0) + 1)} de {room.totalRounds}
+          </span>
+        </span>
+        <RoundSegments room={room} />
+      </span>
+    </>
   );
 }
 

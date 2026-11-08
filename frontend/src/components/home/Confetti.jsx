@@ -12,8 +12,6 @@ export default function Confetti({ pieces = 28 }) {
             "--x": `${(i * 37) % 100}%`,
             "--d": `${(i % 7) * 90}ms`,
             "--r": `${(i * 53) % 360}deg`,
-            // How far it drifts sideways while it falls (a length: the angle above can't be used for it).
-            "--dx": `${((i * 53) % 360) / 12 - 15}px`,
             "--dur": `${1.6 + (i % 5) * 0.25}s`,
             background: COLORS[i % COLORS.length],
           }}
