@@ -229,10 +229,10 @@ function roundBurst(room, question, viewerId) {
   if (!winners.length) return { tone: "none", icon: "rain", title: "Nadie sumó puntos", detail: "¡Que no se escapen en la próxima!" };
   if (winners.length > 1) {
     const iWon = winners.some((p) => p.id === viewerId);
-    return { tone: iWon ? "win" : "tie", icon: "crown", title: iWon ? "¡Empate en cabeza!" : "¡Empate!", detail: `${joinNames(winners.map((p) => p.name))}, con ${best}`, confetti: iWon };
+    return { tone: iWon ? "win" : "tie", icon: "crown", title: iWon ? "¡Empate en cabeza!" : "¡Empate!", detail: `${joinNames(winners.map((p) => p.name))}, con ${best}` };
   }
   const [winner] = winners;
-  if (winner.id === viewerId) return { tone: "win", icon: "crown", title: "¡Ganaste la ronda!", detail: `Con ${best}`, confetti: true };
+  if (winner.id === viewerId) return { tone: "win", icon: "crown", title: "¡Ganaste la ronda!", detail: `Con ${best}` };
   return { tone: "other", icon: "crown", title: `${winner.name} ganó la ronda`, detail: mine || `Con ${best}` };
 }
 
