@@ -1956,10 +1956,14 @@ export class RoomManager {
     return round.verse;
   }
 
-  /** How many different songs a match can draw: only those with their verse when Completa la letra is the only mode. */
+  /**
+   * How many different songs a match can draw: only those with their verse when Completa la letra is the only mode.
+   * With no mode ticked, all of them (the match can't start then, and "Canciones" counts what the playlists have).
+   */
   songsReady(room) {
     const pool = this.songPool(room);
-    return this.musicStyles(room).includes("titulo") ? pool.length : this.lyricPool(pool).length;
+    const styles = this.musicStyles(room);
+    return !styles.length || styles.includes("titulo") ? pool.length : this.lyricPool(pool).length;
   }
 
   // The less used of the ticked choices so far (a tie drawn at random), so the rounds are shared evenly.
