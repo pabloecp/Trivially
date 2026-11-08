@@ -16,7 +16,7 @@ import { createLyricPlayer } from "./lyricAudio.js";
 import "../../styles/quiz.css";
 import { PauseButton, ReportButton, SkipButton, PauseVeil } from "../../components/home/PauseControls.jsx";
 import { resolveCode } from "../../lib/hiddenCode.js";
-import { AnswerCard, MatchBar, MatchCard, MatchQuestion, RoundVerdict } from "../../components/home/MatchFrame.jsx";
+import { AnswerCard, MatchBar, MatchCard, MatchQuestion, RoundCountdown, RoundVerdict } from "../../components/home/MatchFrame.jsx";
 
 // A closed round's four songs keep the same letters and colours as Trivia's options.
 const OPTION_LETTERS = ["A", "B", "C", "D"];
@@ -551,12 +551,9 @@ function GameScreen() {
             {controller ? (
               <GetReady />
             ) : (
-              <>
-                <p className="tv-mono-label">Prepárate para escuchar</p>
-                <span key={Math.max(1, seconds)} className="tv-countdown-num">{Math.max(1, seconds)}</span>
-              </>
+              <RoundCountdown room={room} seconds={seconds} />
             )}
-            <p className="tv-hint">
+            {(central || controller) && <p className="tv-hint">
               {lyrics
                 ? `${central ? "La canción se corta: completen" : "La canción se corta: completa"} lo que sigue en la letra${
                     closed ? " entre cuatro opciones" : ""
@@ -572,7 +569,7 @@ function GameScreen() {
                 : closed
                 ? "Elige la canción entre cuatro opciones."
                 : "Escribe el título en cuanto reconozcas la canción."}
-            </p>
+            </p>}
           </section>
         )}
 
