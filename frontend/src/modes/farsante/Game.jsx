@@ -229,7 +229,6 @@ function GameScreen() {
         <section key={round} className={`tv-game-stage tv-fs-stage${voting || reveal ? "" : " tv-mpanel"}`}>
           <PauseVeil room={room} isHost={isHost} />
 
-          {!controller && (countdown || writing) && <span className="tv-mpanel-label">Tu respuesta</span>}
           {countdown && controller && <GetReady />}
           {!controller && <RoundCountdown room={room} seconds={seconds} />}
 

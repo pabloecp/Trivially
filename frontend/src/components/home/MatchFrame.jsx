@@ -1,7 +1,5 @@
 import { useLayoutEffect, useRef } from "react";
-import { createPortal } from "react-dom";
 import Avatar from "./Avatar.jsx";
-import Confetti from "./Confetti.jsx";
 import Icon from "./Icon.jsx";
 import { joinNames, waitingNames } from "./WaitingPill.jsx";
 import { MATCH_KINDS } from "./matchInfo.js";
@@ -85,16 +83,14 @@ const VERDICT_ICONS = { ok: "check", near: "target", bad: "close", timeout: "has
 
 /**
  * How the round went for this player, on the card's first row (MatchCard `pills`), the same in every game: what happened
- * ("¡Correcto!", in white with green letters; red when wrong) and, apart, the points ("+900") and the streak (confetti
- * only from a streak of 3 on, so it still means something). On a
+ * ("¡Correcto!", in white with green letters; red when wrong) and, apart, the points ("+900") and the streak (no
+ * confetti here: it is kept for the end of the match). On a
  * phone the topic and the streak step aside at the reveal so this never gets cut (look.css).
  */
-export function RoundVerdict({ tone = "ok", label, points = null, streak = 0, icon, confetti = tone === "ok" && streak >= 3 }) {
+export function RoundVerdict({ tone = "ok", label, points = null, streak = 0, icon }) {
   return (
     <>
       <span className={`tv-qc-verdict is-${tone}`} role="status">
-        {/* Over the whole screen, outside the card (which would clip it). */}
-        {confetti && createPortal(<Confetti pieces={28} className="is-screen" />, document.body)}
         <Icon name={icon || VERDICT_ICONS[tone] || "check"} size={16} strokeWidth={3.2} />
         {label}
       </span>
