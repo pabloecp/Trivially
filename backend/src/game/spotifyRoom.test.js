@@ -292,4 +292,24 @@ mgr.destroy(removable);
   assert.ok(room.customPlaylists[id].songs.has(lynzSongId("Uno", "Ana, Beto")), "a song that stays keeps being playable");
 }
 
+// "Tus playlists" switched off: none of them plays (with the catalog off too, nothing does), but they stay ticked; on
+// again, they play again. Adding one switches it on.
+{
+  const sw = mgr.create({ host: { id: "owner", name: "Owner", socketId: "s20" }, game: "musica" });
+  mgr.addSpotifyPlaylist(sw, "owner", { ...playlist, id: "sw" });
+  waiting.at(-1).job.onResult("t0", song(0));
+  waiting.at(-1).job.onResult("t1", song(1));
+  assert.equal(mgr.publicState(sw).songsReady, 2);
+  mgr.updateConfig(sw, "owner", { usePlaylists: false });
+  assert.equal(mgr.publicState(sw).songsReady, 0);
+  assert.deepEqual(sw.config.playlistIds, ["sp:sw"], "still ticked");
+  assert.throws(() => mgr.start(sw, "owner"), /Activa el catálogo o elige una playlist/);
+  mgr.updateConfig(sw, "owner", { usePlaylists: true });
+  assert.equal(mgr.publicState(sw).songsReady, 2);
+  mgr.updateConfig(sw, "owner", { usePlaylists: false });
+  mgr.addSpotifyPlaylist(sw, "owner", { ...playlist, id: "sw2" });
+  assert.equal(sw.config.usePlaylists, true);
+  clearTimeout(sw.progressTimer);
+}
+
 console.log("spotifyRoom.test ok");
