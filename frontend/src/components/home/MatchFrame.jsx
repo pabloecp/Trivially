@@ -10,56 +10,39 @@ import { findMode } from "../../modes/index.js";
 // (`MatchCard`), the bar at the bottom (`MatchBar`: who's in, who's still missing and the match's tools) and
 // what goes on the top bar (`matchTitle`, the game and its mode). The scoreboard is PartyPanel's (`scores`).
 
-// Each topic's icon on a card's pill (Trivia's, Rey's).
-const TOPIC_ICONS = { geografía: "landmark", historia: "scroll", música: "music", "películas y series": "film", deportes: "target", ciencia: "bolt", arte: "pencil", literatura: "scroll", videojuegos: "grid", cultura: "bulb" };
-export const topicIcon = (category) => TOPIC_ICONS[String(category || "").toLowerCase()] || "bulb";
-
 /** The game's colour class (`tv-c-*`) and icon, from the room's game. */
 export function gameLook(room) {
   const mode = findMode(room?.game) || {};
   return { color: mode.color || "quiz", icon: mode.icon || "bulb", name: mode.name || "" };
 }
 
-/** What to do in the round. What comes after a " · " (how the points go) is the first thing to go where there's little
- * room: phones show only the first part (look.css), so the line is never cut. */
-function CardDirection({ dir }) {
-  if (typeof dir !== "string" || !dir.includes(" · ")) return <span className="tv-qc-dir">{dir}</span>;
-  const [first, ...rest] = dir.split(" · ");
-  return (
-    <span className="tv-qc-dir">
-      {first}
-      <span className="tv-qc-dir-more"> · {rest.join(" · ")}</span>
-    </span>
-  );
-}
-
 /**
- * The round's card, in the game's colour: on its first row the round's mode or topic (`label`, with its `icon`), any
- * `pills` (the round's result goes there too: `RoundVerdict`), and under them what to do (`dir`); the question
- * (children), with `media` beside it (a flag, a silhouette, the song's bars), and the clock's bar under it. Two sizes,
- * each always as tall: the normal one, and `small` for the games played on a map or a board, which need the room.
- * The text never changes at the reveal: only the result is added on the first row.
+ * The round's card, in the game's colour: on its first row the game and how this round is played ("Trivia · Abiertas",
+ * on a pill with the game's icon; the top bar doesn't say it), a tiebreak's `tag` ("Desempate") and any `pills` (the
+ * round's result goes there too: `RoundVerdict`); the question (children), with `media` beside it (a flag, a
+ * silhouette, the song's bars), and the clock's bar under it. No line saying what to do: the question and the answers
+ * say it. Two sizes, each always as tall: the normal one, and `small` for the games played on a map or a board, which
+ * need the room. The text never changes at the reveal: only the result is added on the first row.
  */
-export function MatchCard({ room, label, icon, pills = null, dir, seconds, pct = 100, urgent = false, small = false, media = null, mark = null, className = "", children }) {
-  const { color, icon: gameIcon } = gameLook(room);
+export function MatchCard({ room, tag = null, pills = null, seconds, pct = 100, urgent = false, small = false, media = null, mark = null, className = "", children }) {
+  const { color, icon: gameIcon, name } = gameLook(room);
+  const mode = matchMode(room);
   const counting = room.phase === "countdown";
   const classes = ["tv-qc", `tv-c-${color}`, small && "tv-qc--small", room.phase === "reveal" && "is-reveal", className].filter(Boolean).join(" ");
   return (
     <section className={classes}>
       <Icon name={gameIcon} size={220} strokeWidth={1.5} className="tv-qc-mark" />
       <div className="tv-qc-head">
-        {label && (
-          <span className="tv-qc-pill tv-qc-topic">
-            {icon && <Icon name={icon} size={16} strokeWidth={2.6} />}
-            <span className="tv-qc-topic-text">{label}</span>
-          </span>
-        )}
+        <span className="tv-qc-pill tv-qc-topic">
+          <Icon name={gameIcon} size={16} strokeWidth={2.6} />
+          <span className="tv-qc-topic-text">{mode ? `${name} · ${mode}` : name}</span>
+        </span>
+        {tag && <span className="tv-qc-pill is-dark">{tag}</span>}
         {pills}
         {/* On screen the time is only the bar under the card; screen readers can still ask for it. */}
         <span className="tv-sr-only" role="timer">
           {counting ? `Empieza en ${Math.max(1, seconds)}` : room.phase === "reveal" ? "Respuesta" : `${seconds} segundos`}
         </span>
-        {dir && <CardDirection dir={dir} />}
       </div>
       <div className="tv-qc-body">
         {media && <div className="tv-qc-media">{media}</div>}

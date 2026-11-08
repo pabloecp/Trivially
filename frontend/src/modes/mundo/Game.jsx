@@ -290,15 +290,7 @@ function GameScreen() {
       <div className="tv-room-main tv-game-main tv-geo-stage">
         <MatchCard
           room={room}
-          label={tiebreak ? "Desempate" : style.label}
-          icon="pin"
-          dir={
-            phase === "playing" && iPlay && !tiebreak && !pinLocked
-              ? byName
-                ? "Pon tu pin dentro del país y confírmalo · más cerca, más puntos"
-                : `Pon tu pin en el país de esta ${style.id === "sombra" ? "silueta" : "bandera"} y confírmalo · más cerca, más puntos`
-              : hint
-          }
+          tag={tiebreak ? "Desempate" : null}
           seconds={seconds}
           pct={pct}
           urgent={urgent}
