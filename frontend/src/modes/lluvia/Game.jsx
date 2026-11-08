@@ -7,12 +7,12 @@ import MatchResults from "../../components/home/MatchResults.jsx";
 import PartyPanel from "../../components/home/PartyPanel.jsx";
 import SpectatorBanner from "../../components/home/SpectatorBanner.jsx";
 import { ControllerBar, GetReady, PhoneHint, joinNames } from "../../components/home/CentralBits.jsx";
-import { AnswerCard, MatchBar, MatchCard, MatchQuestion, RoundVerdict } from "../../components/home/MatchFrame.jsx";
+import { AnswerCard, MatchBar, MatchCard, MatchQuestion, RoundCountdown, RoundVerdict } from "../../components/home/MatchFrame.jsx";
 import { PauseButton, PauseVeil, SkipButton } from "../../components/home/PauseControls.jsx";
 import { resolveCode } from "../../lib/hiddenCode.js";
 import { useApp, useRemainingMs, useView } from "../../lib/store.jsx";
 import { play } from "../../lib/sounds.js";
-import { DIFFICULTIES, findDifficulty, hitsText, pointsText, rainConfig } from "./rainInfo.js";
+import { findDifficulty, hitsText, pointsText, rainConfig } from "./rainInfo.js";
 import "../../styles/home.css";
 import "../../styles/quiz.css";
 import "../../styles/rain.css";
@@ -429,27 +429,14 @@ function GameScreen() {
       <span>{hint}</span>
     </p>
   );
-  const levels = rainConfig(room).difficulties;
-  const countdown = phase === "countdown" && (
+  // Before the round: the same countdown as every game (the number alone); a phone beside the central device gets ready.
+  const countdown = phase === "countdown" && (controller ? (
     <div className="tv-rain-countdown">
-      {controller ? (
-        <GetReady />
-      ) : (
-        <>
-          <span key={Math.max(1, seconds)} className="tv-quiz-count" aria-label={`Empieza en ${Math.max(1, seconds)}`}>
-            {Math.max(1, seconds)}
-          </span>
-          <span className="tv-rain-legend" aria-hidden="true">
-            {DIFFICULTIES.filter((d) => levels.includes(d.id)).map((d) => (
-              <span key={d.id} className={`tv-rain-legend-chip is-${d.id}`}>
-                {d.label} <strong>+{d.points}</strong>
-              </span>
-            ))}
-          </span>
-        </>
-      )}
+      <GetReady />
     </div>
-  );
+  ) : (
+    <RoundCountdown room={room} seconds={seconds} />
+  ));
   const burstCard = burst && (
     <div key={burst.key} className={`tv-mines-burst tv-rain-burst is-${burst.tone}`} role="alert">
       {burst.confetti && <Confetti pieces={28} />}

@@ -14,7 +14,7 @@ import "../../styles/quiz.css";
 import "../../styles/history.css";
 import { PauseButton, ReportButton, SkipButton, PauseVeil } from "../../components/home/PauseControls.jsx";
 import { resolveCode } from "../../lib/hiddenCode.js";
-import { AnswerCard, MatchBar, MatchCard, MatchQuestion, RoundVerdict } from "../../components/home/MatchFrame.jsx";
+import { AnswerCard, MatchBar, MatchCard, MatchQuestion, RoundCountdown, RoundVerdict } from "../../components/home/MatchFrame.jsx";
 
 const COUNTDOWN_MS = 3000;
 // One colour per player for their year on the reveal's timeline (never the green and red of right and wrong).
@@ -390,6 +390,7 @@ function GameScreen() {
         {question ? (
           <section key={round} className="tv-game-stage tv-hist-stage tv-mpanel">
             <PauseVeil room={room} isHost={isHost} />
+            {!controller && <RoundCountdown room={room} seconds={seconds} />}
             {controller && (
               <div className="tv-hist-event">
                 <p className="tv-hint tv-hist-hint" aria-live="polite">
@@ -402,11 +403,6 @@ function GameScreen() {
             <div className="tv-hist-slot">
               {!controller && !reveal && <span className="tv-mpanel-label">Tu respuesta</span>}
               {phase === "countdown" && controller && <GetReady />}
-              {phase === "countdown" && !controller && (
-                <span key={Math.max(1, seconds)} className="tv-quiz-count" aria-label={`Empieza en ${Math.max(1, seconds)}`}>
-                  {Math.max(1, seconds)}
-                </span>
-              )}
               {phase === "playing" && central && <PhoneHint room={room}>Respondan desde su teléfono</PhoneHint>}
               {reveal && central && !tiebreak && (
                 <p className="tv-central-answer">

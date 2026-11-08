@@ -16,7 +16,7 @@ import "../../styles/quiz.css";
 import "../../styles/mines.css";
 import { PauseButton, ReportButton, SkipButton, PauseVeil } from "../../components/home/PauseControls.jsx";
 import { resolveCode } from "../../lib/hiddenCode.js";
-import { AnswerCard, MatchBar, MatchCard, MatchQuestion, RoundVerdict } from "../../components/home/MatchFrame.jsx";
+import { AnswerCard, MatchBar, MatchCard, MatchQuestion, RoundCountdown, RoundVerdict } from "../../components/home/MatchFrame.jsx";
 
 const COUNTDOWN_MS = 3000;
 const CELLS = 25;
@@ -491,17 +491,12 @@ function GameScreen() {
                     );
                   })
                 : Array.from({ length: size }, (_, i) => <div key={i} className="tv-mines-cell is-waiting" style={{ "--i": i }} aria-hidden="true" />)}
-              {phase === "countdown" && (
+              {phase === "countdown" && controller && (
                 <div className="tv-mines-countdown">
-                  {controller ? (
-                    <GetReady />
-                  ) : (
-                    <span key={Math.max(1, seconds)} className="tv-quiz-count" aria-label={`Empieza en ${Math.max(1, seconds)}`}>
-                      {Math.max(1, seconds)}
-                    </span>
-                  )}
+                  <GetReady />
                 </div>
               )}
+              {!controller && <RoundCountdown room={room} seconds={seconds} />}
               {/* By turns, once this player picked (or is out), who the turn still waits for, over the board. */}
               {!burst && phase === "playing" && !race && !spectator && !watching && (pickedThisTurn || out) && waitingFor.length > 0 && (
                 <div className="tv-mines-wait" role="status">
