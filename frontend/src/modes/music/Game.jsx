@@ -541,7 +541,7 @@ function GameScreen() {
             pills={room.phase === "reveal" ? central ? <RoomVerdict room={room} /> : !spectator ? roundVerdict : null : null}
           >
             {/* The card's text never changes, at the reveal either. */}
-            <MatchQuestion>{lyrics ? "¿Qué palabra sigue?" : "¿Qué canción es?"}</MatchQuestion>
+            <MatchQuestion>{lyrics ? "¿Qué palabra sigue?" : closed ? "¿Qué canción suena?" : "¿Qué canción suena? Escribe el título"}</MatchQuestion>
           </MatchCard>
         )}
 
