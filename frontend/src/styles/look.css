@@ -1022,7 +1022,7 @@
 .tv-qc-q {
   flex: none;
   margin: 0;
-  font: 800 28px/1.14 var(--tv-title);
+  font: 800 36px/1.14 var(--tv-title);
   letter-spacing: -0.03em;
   overflow-wrap: anywhere;
 }
@@ -2261,7 +2261,7 @@
 /* The small card. */
 .tv-app .tv-qc.tv-qc--small { height: 150px; }
 .tv-app .tv-qc--small .tv-qc-dir { display: none; }
-.tv-app .tv-qc--small .tv-qc-q { font-size: 24px; }
+.tv-app .tv-qc--small .tv-qc-q { font-size: 30px; }
 
 /* The question with an image on its left (a flag, a silhouette, the song's bars): the image takes the height left
    between the first row and the clock, 84 px at most, so it never reaches the first row. */

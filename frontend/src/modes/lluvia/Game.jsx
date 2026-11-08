@@ -364,7 +364,7 @@ function GameScreen() {
   if (phase === "countdown") title = "¡Prepárate, va a llover!";
   else if (central) title = "¡Escriban las respuestas!";
   else if (spectator) title = "Estás viendo la partida";
-  else title = "Responde lo que cae antes que nadie";
+  else title = "Responde cualquier pregunta antes que nadie";
   const outcomeTone = { win: "ok", tie: "ok", other: "timeout", none: "timeout" };
   const cardPills =
     reveal && outcome && canWrite ? (
