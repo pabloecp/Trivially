@@ -16,7 +16,7 @@ import { PauseButton, ReportButton, SkipButton, PauseVeil } from "../../componen
 import "../../styles/quiz.css";
 import "../../styles/geo.css";
 import { resolveCode } from "../../lib/hiddenCode.js";
-import { AnswerCard, MatchBar, MatchCard, MatchQuestion, RoundVerdict } from "../../components/home/MatchFrame.jsx";
+import { AnswerCard, MatchBar, MatchCard, MatchQuestion, RoundCountdown, RoundVerdict } from "../../components/home/MatchFrame.jsx";
 
 const COUNTDOWN_MS = 3000;
 // Keys that pick an option while a question is open: 1–4 or A–D.
@@ -148,6 +148,7 @@ function ChoiceRound({ room, question, me, answer, seconds, clock, central, cont
       {/* The four options sit on a dark grey panel, like every game's Cerradas (not beside a central device). */}
       <OptionsPanel on={!controller && !central}>
       {veil}
+      {!controller && <RoundCountdown room={room} seconds={seconds} />}
       <div className={`tv-quiz-options${reveal ? " is-reveal" : ""}`} role="group" aria-label="Opciones">
         {OPTION_LETTERS.map((letter, i) => {
           const text = question.options?.[i];
@@ -331,6 +332,7 @@ function WriteRound({ room, question, me, answer, skipSong, seconds, clock, cent
           the answer. */}
       <div className="tv-mpanel">
         {veil}
+        {!controller && <RoundCountdown room={room} seconds={seconds} />}
         {room.phase === "countdown" && controller && <GetReady />}
         {/* While the question is open (without a picture): a few still question marks, as big as the song's bars in
             Adivina la canción, and the topic under them, so the panel isn't an empty space over the box. */}

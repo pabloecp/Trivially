@@ -10,7 +10,7 @@ import WaitingPill from "../../components/home/WaitingPill.jsx";
 import { ControllerBar, GetReady, PhoneHint } from "../../components/home/CentralBits.jsx";
 import { PauseButton, PauseVeil, ReportButton, SkipButton } from "../../components/home/PauseControls.jsx";
 import { resolveCode } from "../../lib/hiddenCode.js";
-import { MatchBar, MatchCard, MatchQuestion, RoundVerdict } from "../../components/home/MatchFrame.jsx";
+import { MatchBar, MatchCard, MatchQuestion, RoundCountdown, RoundVerdict } from "../../components/home/MatchFrame.jsx";
 import { useApp, useRemainingMs, useView } from "../../lib/store.jsx";
 import { MAX_CHARS, findKind, sameText } from "./farsanteInfo.js";
 import "../../styles/home.css";
@@ -231,6 +231,7 @@ function GameScreen() {
 
           {!controller && (countdown || writing) && <span className="tv-mpanel-label">Tu respuesta</span>}
           {countdown && controller && <GetReady />}
+          {!controller && <RoundCountdown room={room} seconds={seconds} />}
 
           {writing && central && <PhoneHint room={room}>Escriban en su teléfono ({fs.written}/{players})</PhoneHint>}
           {writing && !central && !spectator && (

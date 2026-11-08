@@ -65,6 +65,21 @@ export function MatchCard({ room, tag = null, pills = null, seconds, pct = 100, 
   );
 }
 
+/**
+ * The countdown before a round, the same in every game: only the number, big, in the game's colour, in the middle of
+ * the panel where the round is answered (over its options, box, map, board or sky, already in their place), with no
+ * words around it. The card's clock already tells screen readers ("Empieza en 3").
+ */
+export function RoundCountdown({ room, seconds }) {
+  if (room?.phase !== "countdown") return null;
+  const n = Math.max(1, seconds);
+  return (
+    <div className={`tv-round-count tv-c-${gameLook(room).color}`} aria-hidden="true">
+      <span key={n} className="tv-round-count-num">{n}</span>
+    </div>
+  );
+}
+
 const VERDICT_ICONS = { ok: "check", near: "target", bad: "close", timeout: "hash" };
 
 /**

@@ -15,7 +15,7 @@ import "../../styles/home.css";
 import "../../styles/geo.css";
 import { PauseButton, ReportButton, SkipButton, PauseVeil } from "../../components/home/PauseControls.jsx";
 import { resolveCode } from "../../lib/hiddenCode.js";
-import { AnswerCard, MatchBar, MatchCard, MatchQuestion, RoundVerdict } from "../../components/home/MatchFrame.jsx";
+import { AnswerCard, MatchBar, MatchCard, MatchQuestion, RoundCountdown, RoundVerdict } from "../../components/home/MatchFrame.jsx";
 
 const COUNTDOWN_MS = 3000;
 // One colour per player for the pins on the reveal map (never the green and red of right and wrong).
@@ -333,15 +333,7 @@ function GameScreen() {
                   : "Mapamundi"
               }
             >
-              {phase === "countdown" && (
-                <div className="tv-geo-countdown" aria-hidden="true">
-                  <p className="tv-mono-label tv-geo-kind-kicker">
-                    <Icon name={style.icon} size={16} strokeWidth={2.6} />
-                    {tiebreak ? "Desempate" : style.label}
-                  </p>
-                  <span key={Math.max(1, seconds)} className="tv-countdown-num">{Math.max(1, seconds)}</span>
-                </div>
-              )}
+              <RoundCountdown room={room} seconds={seconds} />
 
 
               {/* How the round went, in a card over the map: this player's, or on the central device who won a
