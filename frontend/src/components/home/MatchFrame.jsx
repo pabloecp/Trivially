@@ -1,4 +1,5 @@
 import { useLayoutEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import Avatar from "./Avatar.jsx";
 import Confetti from "./Confetti.jsx";
 import Icon from "./Icon.jsx";
@@ -92,7 +93,8 @@ export function RoundVerdict({ tone = "ok", label, points = null, streak = 0, ic
   return (
     <>
       <span className={`tv-qc-verdict is-${tone}`} role="status">
-        {confetti && <Confetti pieces={18} />}
+        {/* Over the whole screen, outside the card (which would clip it). */}
+        {confetti && createPortal(<Confetti pieces={28} className="is-screen" />, document.body)}
         <Icon name={icon || VERDICT_ICONS[tone] || "check"} size={16} strokeWidth={3.2} />
         {label}
       </span>

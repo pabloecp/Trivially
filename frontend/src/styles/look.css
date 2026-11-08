@@ -2292,7 +2292,9 @@
 .tv-qc-points { background: rgba(0, 0, 0, 0.28); font-variant-numeric: tabular-nums; }
 .tv-qc-streak { background: rgba(255, 255, 255, 0.2); }
 .tv-qc-verdict.is-near { background: #fff; color: var(--edge); }
-.tv-qc-verdict .tv-confetti { position: absolute; }
+/* A streak's confetti (RoundVerdict) falls over the whole screen, like the results' (inside the card it was clipped and
+   could hardly be seen). */
+.tv-confetti.is-screen { position: fixed; inset: 0; z-index: 35; }
 
 /* The answer's card: what it is, the answer big, a line under it and how it went for you; a cover on its left. */
 .tv-acard {
