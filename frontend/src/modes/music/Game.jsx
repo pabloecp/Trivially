@@ -16,6 +16,7 @@ import { createLyricPlayer } from "./lyricAudio.js";
 import "../../styles/quiz.css";
 import { PauseButton, ReportButton, SkipButton, PauseVeil } from "../../components/home/PauseControls.jsx";
 import { resolveCode } from "../../lib/hiddenCode.js";
+import { useLyricsView } from "../../lib/ownerView.js";
 import { AnswerCard, MatchBar, MatchCard, MatchQuestion, RoundCountdown, RoundVerdict } from "../../components/home/MatchFrame.jsx";
 
 // A closed round's four songs keep the same letters and colours as Trivia's options.
@@ -52,6 +53,8 @@ function GameScreen() {
   // With a central device in the room, the song plays there and shows the round; the players' phones only have the
   // options or the search box (and say how their round went).
   const { central, controller, viewerId } = useView(room);
+  // An owner can try Letra with the options as big as Trivia's (the admin panel's "Letra (Cerradas)").
+  const lyricsView = useLyricsView();
 
   const audioRef = useRef(null);
   const inputRef = useRef(null);
@@ -576,7 +579,7 @@ function GameScreen() {
         {/* The round stays on this screen at the reveal: four options are marked in place (the right song green, a
             wrong pick red), and the box to write in turns into the answer's card. */}
         {(room.phase === "playing" || room.phase === "reveal") && (
-          <section key={`p${room.currentRound}`} className={`tv-game-stage tv-play-card${!closed || optPanel ? " tv-mpanel" : ""}${optPanel ? " tv-opt-panel" : ""}${optPanel && showLyrics ? " tv-lyrics-choice" : ""}`}>
+          <section key={`p${room.currentRound}`} className={`tv-game-stage tv-play-card${!closed || optPanel ? " tv-mpanel" : ""}${optPanel ? " tv-opt-panel" : ""}${optPanel && showLyrics ? ` tv-lyrics-choice${lyricsView === "grandes" ? " is-big-options" : ""}` : ""}`}>
             <PauseVeil room={room} isHost={isHost} />
             {/* Completa la letra (and a phone beside the central device, whatever the way of answering): the lyrics at
                 the top of the panel, and under them, in the same panel, the four options (Cerradas) or the box to write
