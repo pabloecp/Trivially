@@ -2611,3 +2611,7 @@ html.tv-match-lock.tv-keyboard-up .tv-app .tv-match .tv-quiz-marks { display: no
   .tv-legal-body { padding: 20px 18px; font-size: 15px; }
   .tv-legal-body h2 { font-size: 19px; }
 }
+
+/* From the second round of a match on (MatchCard, html.tv-round-next): the card and the panels under it don't fly in
+   again; they are already in their place and only fade in, quickly, with their new content. */
+html.tv-round-next .tv-app .tv-match :is(.tv-qc, .tv-game-stage.tv-mpanel, .tv-opt-panel, .tv-quiz-opt, .tv-card) { animation: tvFade 0.25s ease-out backwards; }

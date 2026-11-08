@@ -582,7 +582,7 @@ function roundBurst(me, question, live = null) {
   if (answer?.out === "mina") return { tone: "mina", shake: true, icon: "bomb", title: "¡Pisaste una mina!", detail: hits ? `Te llevas ${hitsText(hits)}` : "Suerte en la próxima", points };
   if (answer?.out === "tiempo") return { tone: "tiempo", icon: "hourglass", title: "¡Se te acabó el tiempo!", detail: hits ? `Te llevas ${hitsText(hits)}` : "Suerte en la próxima", points };
   if (cleared) return { tone: "win", icon: "star", title: "¡Tablero limpio!", detail: hits ? `Encontraste ${hitsText(hits)}` : "Encontraron todas las correctas", points, confetti: true, long: true };
-  return { tone: "ok", icon: "check", title: "¡Sobreviviste!", detail: hits ? `Encontraste ${hitsText(hits)}` : "Sin aciertos esta vez", points, confetti: hits > 0 };
+  return { tone: "ok", icon: "check", title: "¡Sobreviviste!", detail: hits ? `Encontraste ${hitsText(hits)}` : "Sin aciertos esta vez", points };
 }
 
 // The card over the board at a tiebreak's reveal, for the whole room: who won it (and how), who goes on to another

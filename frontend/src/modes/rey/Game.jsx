@@ -3,7 +3,6 @@ import { useNavigate, useParams } from "react-router-dom";
 import TvShell from "../../components/home/TvShell.jsx";
 import Avatar from "../../components/home/Avatar.jsx";
 import Blob from "../../components/home/Blob.jsx";
-import Confetti from "../../components/home/Confetti.jsx";
 import Icon from "../../components/home/Icon.jsx";
 import MatchResults from "../../components/home/MatchResults.jsx";
 import PartyPanel from "../../components/home/PartyPanel.jsx";
@@ -305,7 +304,6 @@ function GameScreen() {
           <div className="tv-rey-answerbox">
             {reveal && question && (
               <>
-                {rey.dethronedBy && <Confetti pieces={22} />}
                 {/* The answer takes the place of the box to write in, the same card as every game's. */}
                 <AnswerCard
                   label="La respuesta"

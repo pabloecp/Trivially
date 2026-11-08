@@ -41,6 +41,14 @@ function CardDirection({ dir }) {
  * The text never changes at the reveal: only the result is added on the first row.
  */
 export function MatchCard({ room, label, icon, pills = null, dir, seconds, pct = 100, urgent = false, small = false, media = null, mark = null, className = "", children }) {
+  // From the second round on nothing flies in again: the card and the panels under it stay where they are and only
+  // their content fades in (look.css, html.tv-round-next). The first round of a match keeps the full entrance.
+  const nextRound = (room.currentRound || 0) > 0;
+  useLayoutEffect(() => {
+    const root = document.documentElement;
+    root.classList.toggle("tv-round-next", nextRound);
+    return () => root.classList.remove("tv-round-next");
+  }, [nextRound]);
   const { color, icon: gameIcon } = gameLook(room);
   const counting = room.phase === "countdown";
   const classes = ["tv-qc", `tv-c-${color}`, small && "tv-qc--small", room.phase === "reveal" && "is-reveal", className].filter(Boolean).join(" ");
@@ -78,10 +86,11 @@ const VERDICT_ICONS = { ok: "check", near: "target", bad: "close", timeout: "has
 
 /**
  * How the round went for this player, on the card's first row (MatchCard `pills`), the same in every game: what happened
- * ("¡Correcto!", in white with green letters; red when wrong) and, apart, the points ("+900") and the streak. On a
+ * ("¡Correcto!", in white with green letters; red when wrong) and, apart, the points ("+900") and the streak (confetti
+ * only from a streak of 3 on, so it still means something). On a
  * phone the topic and the streak step aside at the reveal so this never gets cut (look.css).
  */
-export function RoundVerdict({ tone = "ok", label, points = null, streak = 0, icon, confetti = tone === "ok" }) {
+export function RoundVerdict({ tone = "ok", label, points = null, streak = 0, icon, confetti = tone === "ok" && streak >= 3 }) {
   return (
     <>
       <span className={`tv-qc-verdict is-${tone}`} role="status">
