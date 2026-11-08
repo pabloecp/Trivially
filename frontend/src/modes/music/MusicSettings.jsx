@@ -52,6 +52,7 @@ function configKey(config) {
     config?.formats,
     config?.styles,
     config?.useCatalog,
+    config?.usePlaylists,
     config?.languages,
     config?.genres,
     config?.difficulties,
@@ -121,13 +122,18 @@ export default function MusicSettings({ room, updateConfig, onToast, children, r
   const roomIdOf = (item) => `sp:${item.kind === "album" ? `album:${item.id}` : item.id}`;
   // The ticked Spotify playlists (only those show).
   const selected = (draft?.playlistIds || []).filter((id) => custom.some((p) => p.id === id));
-  const chosenCustom = custom.filter((p) => selected.includes(p.id));
   const rounds = draft?.rounds || 5;
   const seconds = Math.round((draft?.roundMs || 15000) / 1000);
   // A list missing (an older room) means everything ticked.
   const listOf = (key) => draft?.[key] ?? FILTERS[key].map((o) => o.id);
   // The catalog's switch; missing (an older room) means on.
   const useCatalog = draft?.useCatalog !== false;
+  // "Tus playlists"' switch; missing (an older room) means on. Off, none plays, but the ticked ones are remembered:
+  // switching it on again plays them.
+  const usePlaylists = draft?.usePlaylists !== false;
+  // The ones that play now (shown ticked, "En la partida").
+  const playing = usePlaylists ? selected : [];
+  const chosenCustom = custom.filter((p) => playing.includes(p.id));
 
   async function onAddLink(event) {
     event.preventDefault();
@@ -170,7 +176,7 @@ export default function MusicSettings({ room, updateConfig, onToast, children, r
   // settings the server already ticked it).
   async function tickInItem(roomId) {
     if (!inItem || !roomId) return;
-    await save({ useCatalog: false, playlistIds: [...selected.filter((id) => id !== roomId), roomId] });
+    await save({ useCatalog: false, usePlaylists: true, playlistIds: [...selected.filter((id) => id !== roomId), roomId] });
   }
 
   async function addSaved(item) {
@@ -248,6 +254,7 @@ export default function MusicSettings({ room, updateConfig, onToast, children, r
         formats: next.formats ?? formats,
         styles: next.styles ?? styles,
         useCatalog: next.useCatalog ?? useCatalog,
+        usePlaylists: next.usePlaylists ?? usePlaylists,
         languages: next.languages ?? listOf("languages"),
         genres: next.genres ?? listOf("genres"),
         difficulties: next.difficulties ?? listOf("difficulties"),
@@ -299,12 +306,25 @@ export default function MusicSettings({ room, updateConfig, onToast, children, r
   const lyricsOnly = styles.length === 1 && styles[0] === "letra";
 
   function togglePlaylist(id) {
-    if (selected.includes(id)) {
+    // With the switch off, its + switches it on with this one ticked (and the others ticked before).
+    if (!usePlaylists) {
+      save({ useCatalog: false, usePlaylists: true, playlistIds: [...selected.filter((x) => x !== id), id] });
+    } else if (selected.includes(id)) {
       save({ playlistIds: selected.filter((x) => x !== id) });
     } else {
       // Ticking one (the +) switches Trivially's catalog off, as adding one does; it can be switched on again.
       save({ useCatalog: false, playlistIds: [...selected, id] });
     }
+  }
+
+  // "Tus playlists"' switch. Switching it on with none ticked says how to choose one.
+  function switchPlaylists(on) {
+    if (on && !selected.length) {
+      if (!usePlaylists) save({ usePlaylists: true });
+      onToast?.("Elige una playlist con el +");
+      return;
+    }
+    save({ usePlaylists: on });
   }
 
   // "Tus playlists": one list, each row with its cover, name and songs. The ticked ones go first and stand out (tinted,
@@ -325,7 +345,7 @@ export default function MusicSettings({ room, updateConfig, onToast, children, r
             name: inRoom?.name || p.name,
             kind: p.kind,
             total: inRoom?.total,
-            on: selected.includes(defaultRoomId(p)),
+            on: playing.includes(defaultRoomId(p)),
             fixed: true,
             onToggle: () => toggleDefault(p),
           };
@@ -336,7 +356,7 @@ export default function MusicSettings({ room, updateConfig, onToast, children, r
           name: p.name,
           kind: "playlist",
           total: p.total,
-          on: selected.includes(p.id),
+          on: playing.includes(p.id),
           fixed: true,
           from: p.defaultFrom,
           onToggle: () => togglePlaylist(p.id),
@@ -347,7 +367,7 @@ export default function MusicSettings({ room, updateConfig, onToast, children, r
           name: p.name,
           kind: p.id.startsWith("sp:album:") ? "album" : "playlist",
           total: p.total,
-          on: selected.includes(p.id),
+          on: playing.includes(p.id),
           inRoom: true,
           onToggle: () => togglePlaylist(p.id),
           savedItem: savedOf(p.id),
@@ -568,7 +588,8 @@ export default function MusicSettings({ room, updateConfig, onToast, children, r
             {
               id: "playlists",
               label: "Tus playlists",
-              note: selected.length ? String(selected.length) : null,
+              // On only while one of them plays: with none ticked there's nothing to switch on yet.
+              toggle: { on: playing.length > 0, onChange: switchPlaylists, label: "Usar tus playlists", disabled: readOnly },
               content: playlists,
             },
           ],

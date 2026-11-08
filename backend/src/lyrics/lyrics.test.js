@@ -133,6 +133,9 @@ mgr.updateConfig(r, "l-1", { styles: ["letra"], formats: ["escribir"], rounds: 5
 assert.equal(mgr.publicState(r).songsReady, 3);
 assert.throws(() => mgr.start(r, "l-1"), /Solo hay 3 canciones listas con su letra para 5 rondas/);
 mgr.updateConfig(r, "l-1", { styles: [] });
+// No mode ticked: "Canciones" counts every song, not only those with their verse.
+assert.equal(mgr.publicState(r).songsReady, mgr.songPool(r).length);
+assert.ok(mgr.publicState(r).songsReady > 3);
 
 assert.throws(() => mgr.start(r, "l-1"), /al menos un modo de juego/);
 
