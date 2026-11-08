@@ -2646,3 +2646,8 @@ html.tv-round-next .tv-app .tv-match :is(.tv-qc, .tv-game-stage.tv-mpanel, .tv-o
 .tv-round-count { position: absolute; inset: 0; z-index: 7; display: grid; place-items: center; border-radius: inherit; pointer-events: none; }
 .tv-round-count-num { font: 700 120px/1 var(--tv-display); color: var(--c2); text-shadow: 0 8px 0 var(--edge); animation: tvCount 0.9s var(--tv-spring); }
 html.tv-match-lock .tv-round-count-num { font-size: 88px; text-shadow: 0 6px 0 var(--edge); }
+
+/* Letra with Cerradas, "Opciones grandes" (an owner's choice in the admin panel): only the last two lines of lyrics, so
+   the four options take the same room as Trivia's (the small card is 90 px shorter: 74 px of lyrics and the gap). */
+.tv-app .tv-match .tv-play-card.tv-lyrics-choice.is-big-options > .tv-lyrics { height: 74px; font-size: 22px; }
+html.tv-match-lock .tv-app .tv-match .tv-play-card.tv-lyrics-choice.is-big-options > .tv-lyrics { height: calc(var(--qc-h) - min(118px, var(--qc-h)) - 10px); font-size: 16px; }
