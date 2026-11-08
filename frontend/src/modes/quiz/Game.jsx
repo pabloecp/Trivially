@@ -89,7 +89,7 @@ function Hint({ icon, sent, children }) {
 
 // Four options, A to D (tap, or the keys 1–4 / A–D). On the room's central device they only show (with how many picked
 // each at the reveal); on a player's phone beside it (`controller`) only the options are there, not the question.
-function ChoiceRound({ room, question, me, answer, seconds, clock, central, controller }) {
+function ChoiceRound({ room, question, me, answer, seconds, clock, central, controller, veil = null }) {
   const round = room.currentRound;
   const [picked, setPicked] = useState(null);
   const [err, setErr] = useState("");
@@ -153,6 +153,9 @@ function ChoiceRound({ room, question, me, answer, seconds, clock, central, cont
       )}
       {room.phase === "playing" && central && <PhoneHint room={room}>Respondan desde su teléfono</PhoneHint>}
 
+      {/* The four options sit on a dark grey panel, like every game's Cerradas (not beside a central device). */}
+      <OptionsPanel on={!controller && !central}>
+      {veil}
       <div className={`tv-quiz-options${reveal ? " is-reveal" : ""}`} role="group" aria-label="Opciones">
         {OPTION_LETTERS.map((letter, i) => {
           const text = question.options?.[i];
@@ -206,9 +209,15 @@ function ChoiceRound({ room, question, me, answer, seconds, clock, central, cont
           );
         })}
       </div>
+      </OptionsPanel>
       {err && <p className="tv-lobby-error" role="alert">{err}</p>}
     </>
   );
+}
+
+// The dark grey panel under a round's four options (`on`), or nothing around them.
+function OptionsPanel({ on, children }) {
+  return on ? <div className="tv-opt-panel">{children}</div> : children;
 }
 
 // The picture of an "Imágenes" question (a painting, a monument, a flag...), inside the question's card on the left of
@@ -245,7 +254,7 @@ const QUESTION_MARKS = [
   { size: 0.5, rot: -14, op: 0.5 },
 ];
 
-function WriteRound({ room, question, me, answer, skipSong, seconds, clock, central, controller }) {
+function WriteRound({ room, question, me, answer, skipSong, seconds, clock, central, controller, veil = null }) {
   const round = room.currentRound;
   const [query, setQuery] = useState("");
   const [sent, setSent] = useState(null);
@@ -329,6 +338,7 @@ function WriteRound({ room, question, me, answer, skipSong, seconds, clock, cent
       {/* The answer's panel: the flag or the picture (if it has one), then the box to write in, or what was sent, or
           the answer. */}
       <div className="tv-mpanel">
+        {veil}
         {room.phase === "countdown" && controller && <GetReady />}
         {/* While the question is open (without a picture): a few still question marks, as big as the song's bars in
             Adivina la canción, and the topic under them, so the panel isn't an empty space over the box. */}
@@ -473,7 +483,11 @@ function GameScreen() {
   const seconds = Math.max(0, Math.ceil(left / 1000));
   const urgent = room.phase === "playing" && left <= 4000;
   const clock = { seconds, pct, urgent, left };
-  const props = { room, question, me, answer, skipSong, seconds, clock, central, controller };
+  // The paused round's veil covers only the answers' dark grey panel (Cerradas' options, Abiertas' box), as in every
+  // game; beside a central device (or on it) the whole stage.
+  const panelVeil = !controller && !central;
+  const veil = <PauseVeil room={room} isHost={isHost} />;
+  const props = { room, question, me, answer, skipSong, seconds, clock, central, controller, veil: panelVeil ? veil : null };
   // The host's controls of the match: in the round's card, or in the thin bar of a phone beside a central device.
   const tools = (
     <>
@@ -505,7 +519,7 @@ function GameScreen() {
 
         {question ? (
           <section key={round} className={`tv-game-stage tv-quiz-stage is-${type}`}>
-            <PauseVeil room={room} isHost={isHost} />
+            {!panelVeil && veil}
             {/* Every kind of round draws itself from the countdown on (empty option tiles, an empty answer box), so
                 nothing jumps when the round opens. */}
             {type === "choice" && <ChoiceRound {...props} />}

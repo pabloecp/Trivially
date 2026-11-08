@@ -2504,16 +2504,16 @@ html.tv-match-lock .tv-app .tv-match .tv-qc .tv-lyrics-gap:not(.is-filled) { wid
 }
 
 /* ---------- Adivina la canción: Letra in the panel, Título's bars big ---------- */
-/* A notch on the card's time bar where the song is cut (Letra), nothing written; a little taller than the bar. */
+/* A notch on the card's time bar where the song is cut (Letra), nothing written; a little taller than the bar, in the
+   game's darker colour with no outline: seen on the white bar and on the empty part, without standing out. */
 .tv-qc-timer:has(> .tv-qc-timer-mark) { overflow: visible; }
-.tv-qc-timer-mark { position: absolute; top: -3px; bottom: -3px; width: 4px; margin-left: -2px; border-radius: 2px; background: #fff; box-shadow: 0 0 0 2px var(--edge, rgba(0, 0, 0, 0.35)); }
-html.tv-match-lock .tv-app .tv-qc-timer-mark { top: -2px; bottom: -2px; width: 3px; margin-left: -1.5px; box-shadow: 0 0 0 1.5px var(--edge, rgba(0, 0, 0, 0.35)); }
+.tv-qc-timer-mark { position: absolute; top: -3px; bottom: -3px; width: 7px; margin-left: -3.5px; border-radius: 3px; background: var(--edge, rgba(0, 0, 0, 0.35)); }
+html.tv-match-lock .tv-app .tv-qc-timer-mark { top: -2px; bottom: -2px; width: 5px; margin-left: -2.5px; border-radius: 2px; }
 
-/* Letra: the lyrics in a panel under the small card, every line the same size as the card's "¿Qué palabra sigue?": the
-   one being sung white, the others grey, the gap a pink dashed box (filled pink at the reveal). The panel is always as
-   tall (five lines), whatever the song: the lines sit in its middle, and when they don't fit, at its bottom (the gap
-   always in sight), those above fading out. */
-.tv-app .tv-match .tv-lyrics-stage { flex: none; height: 216px; justify-content: center; min-height: 0; padding: 20px 28px; }
+/* Letra: the lyrics in the panel under the small card, every line the same size as the card's "¿Qué palabra sigue?":
+   the one being sung white, the others grey, the gap an empty pink slot (filled pink with the word at the reveal). The
+   lines sit in the middle of their space, and when they don't fit, at its bottom (the gap always in sight), those above
+   fading out. */
 .tv-app .tv-match .tv-mpanel .tv-lyrics {
   flex: 1 1 auto;
   display: flex;
@@ -2534,8 +2534,11 @@ html.tv-match-lock .tv-app .tv-qc-timer-mark { top: -2px; bottom: -2px; width: 3
 .tv-app .tv-match .tv-mpanel .tv-lyrics::after { content: ""; flex: 1 1 0; min-height: 0; }
 .tv-app .tv-match .tv-mpanel .tv-lyrics-line { flex: none; margin: 0; padding: 4px 0; font: 800 1em/1.2 var(--tv-title); letter-spacing: -0.02em; color: var(--tv-text-3); opacity: 1; transition: color 0.25s ease; }
 .tv-app .tv-match .tv-mpanel .tv-lyrics-line.is-current { color: #fff; }
-.tv-app .tv-match .tv-mpanel .tv-lyrics-gap { display: inline-block; box-sizing: border-box; overflow: hidden; white-space: nowrap; width: 140px; height: 1.2em; margin: 0 6px; border: 3px dashed var(--p-music-1); border-radius: 10px; color: var(--p-music-1); font: 800 0.8em/calc(1.2em - 6px) var(--tv-display); text-align: center; vertical-align: middle; }
-.tv-app .tv-match .tv-mpanel .tv-lyrics-gap.is-filled { width: auto; min-width: 0; padding: 0 12px; border-style: solid; background: var(--p-music-1); color: #fff; }
+.tv-app .tv-match .tv-mpanel .tv-lyrics-gap { display: inline-block; box-sizing: border-box; overflow: hidden; white-space: nowrap; width: 140px; height: 1.2em; margin: 0 6px; border: 0; border-bottom: 4px solid var(--p-music-1); border-radius: 8px 8px 2px 2px; background: color-mix(in srgb, var(--p-music-1) 22%, transparent); color: #fff; font: 800 0.8em/calc(1.2em - 4px) var(--tv-display); text-align: center; vertical-align: middle; }
+.tv-app .tv-match .tv-mpanel .tv-lyrics-line.is-current .tv-lyrics-gap:not(.is-filled) { animation: tvLyricSlot 1.2s ease-in-out infinite; }
+@keyframes tvLyricSlot { 50% { background: color-mix(in srgb, var(--p-music-1) 40%, transparent); } }
+@media (prefers-reduced-motion: reduce) { .tv-app .tv-match .tv-mpanel .tv-lyrics-line.is-current .tv-lyrics-gap { animation: none; } }
+.tv-app .tv-match .tv-mpanel .tv-lyrics-gap.is-filled { width: auto; min-width: 0; padding: 0 12px; border-bottom-color: var(--p-music-2); border-radius: 8px; background: var(--p-music-1); color: #fff; }
 /* With Abiertas the lyrics and the box to write in share the panel: the lyrics on top, the box (or the answer) under. */
 .tv-app .tv-match .tv-play-card.tv-mpanel:has(> .tv-lyrics) { justify-content: space-between; padding-top: 22px; }
 .tv-app .tv-match .tv-play-card.tv-mpanel:has(> .tv-lyrics) > .tv-acard { flex: none; }
@@ -2544,9 +2547,11 @@ html.tv-match-lock .tv-app .tv-qc-timer-mark { top: -2px; bottom: -2px; width: 3
 .tv-app .tv-match .tv-play-card.tv-mpanel:has(> .tv-lyrics):has(> .tv-acard) { justify-content: center; gap: 26px; }
 .tv-app .tv-match .tv-play-card.tv-mpanel:has(> .tv-lyrics) > .tv-acard { order: -1; align-self: center; }
 .tv-app .tv-match .tv-play-card.tv-mpanel:has(> .tv-acard) > .tv-lyrics { flex: 0 1 auto; align-self: stretch; }
-/* With Cerradas the four options take all the room left under the lyrics, laid out as in Trivia, so they're always the
-   same size whatever the lyrics. */
-.tv-app .tv-match .tv-lyrics-stage ~ .tv-play-card { flex: 1 1 0; min-height: 0; }
+/* With Cerradas the lyrics and the four options share one panel: the lyrics on top in a space always as tall (three
+   lines), the options laid out as in Trivia in all the room left under them. */
+.tv-app .tv-match .tv-play-card.tv-lyrics-choice { gap: 14px; }
+.tv-app .tv-match .tv-play-card.tv-lyrics-choice > .tv-lyrics { flex: none; height: calc(3 * (1.2em + 8px)); }
+.tv-app .tv-match .tv-play-card.tv-lyrics-choice > .tv-quiz-options { flex: 1 1 0; }
 
 /* Título with Abiertas: the song's bars big in the panel, then the box to write in;
    the suggestions open upwards over the bars. */
@@ -2557,13 +2562,12 @@ html.tv-match-lock .tv-app .tv-qc-timer-mark { top: -2px; bottom: -2px; width: 3
 .tv-app .tv-match .tv-play-card:has(> .tv-song-now) .tv-search > .tv-suggest .tv-suggest-list { max-height: calc(var(--suggest-max, 300px) - 48px); }
 
 @media (max-width: 899px), (max-height: 500px) {
-  .tv-app .tv-match .tv-lyrics-stage { height: 178px; padding: 14px 16px; }
   .tv-app .tv-match .tv-mpanel .tv-lyrics { font-size: 21px; }
   .tv-app .tv-match .tv-mpanel .tv-lyrics-line { padding: 3px 0; }
-  .tv-app .tv-match .tv-mpanel .tv-lyrics-gap { width: 84px; margin: 0 4px; border-width: 2px; border-radius: 8px; line-height: calc(1.2em - 4px); }
+  .tv-app .tv-match .tv-mpanel .tv-lyrics-gap { width: 84px; margin: 0 4px; border-bottom-width: 3px; border-radius: 6px 6px 2px 2px; line-height: calc(1.2em - 3px); }
   .tv-app .tv-match .tv-mpanel .tv-lyrics-gap.is-filled { width: auto; }
-  html.tv-match-lock .tv-app .tv-room-main > .tv-lyrics-stage { flex: none; }
-  html.tv-match-lock .tv-app .tv-room-main > .tv-lyrics-stage ~ .tv-play-card { flex: 1 1 0; }
+  html.tv-match-lock .tv-app .tv-match .tv-play-card.tv-lyrics-choice { gap: 10px; }
+  html.tv-match-lock .tv-app .tv-match .tv-play-card.tv-lyrics-choice > .tv-lyrics { font-size: 19px; }
   .tv-app .tv-match .tv-song-now > .tv-song-now-eq { width: 150px; height: 80px; gap: 5px; }
 }
 /* The keyboard up: the bars and the lyrics give way to the box. */
@@ -2611,3 +2615,20 @@ html.tv-match-lock.tv-keyboard-up .tv-app .tv-match .tv-quiz-marks { display: no
   .tv-legal-body { padding: 20px 18px; font-size: 15px; }
   .tv-legal-body h2 { font-size: 19px; }
 }
+
+/* Cerradas, in every game (Trivia, Adivina la canción): the four options on a dark grey panel, so they read as one
+   block under the card; Letra's lyrics share it, over them. A paused round's veil keeps the panel's corners. */
+.tv-app .tv-match :is(.tv-opt-panel, .tv-game-stage.tv-opt-panel) { flex: 1 1 0; display: flex; flex-direction: column; gap: 14px; min-height: 0; padding: 18px 20px 22px; border-radius: 22px; background: var(--tv-surface); animation: var(--tv-box-in); }
+.tv-app .tv-match .tv-opt-panel > .tv-quiz-options { flex: 1 1 0; }
+.tv-app .tv-match :is(.tv-opt-panel, .tv-mpanel):has(> .tv-pause-veil) { position: relative; }
+html.tv-match-lock .tv-app .tv-match :is(.tv-opt-panel, .tv-game-stage.tv-opt-panel) { gap: 10px; padding: 12px 12px 14px; overflow: hidden; border-radius: 18px; }
+
+/* A paused round, in every game: the veil covers only the dark grey panel where the round is answered (the card stays
+   in sight), with the panel's round corners, over everything on it (the map's "Confirmar pin" and zoom too). */
+.tv-app .tv-match .tv-pause-veil { z-index: 8; }
+/* Campo de minas: the board's cells inside their dark grey panel with the same room around them as Cerradas' options. */
+.tv-app .tv-match .tv-mines-stage.tv-mpanel { padding: 18px 20px 22px; }
+html.tv-match-lock .tv-app .tv-match .tv-mines-stage.tv-mpanel { padding: 12px 12px 14px; }
+/* Lluvia: the sky and its hint on a dark grey panel like every game's answers (phones already had one). */
+.tv-app .tv-match .tv-rain-frame > .tv-rain-stage { border-radius: 22px; background: var(--tv-surface); padding: 18px 20px 20px; }
+html.tv-match-lock .tv-app .tv-match .tv-rain-frame > .tv-rain-stage { border-radius: 18px; padding: 8px; }
