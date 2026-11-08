@@ -293,9 +293,9 @@ export default function MusicSettings({ room, updateConfig, onToast, children, r
     save({ formats: FORMAT_IDS.filter((f) => (f === id ? !on : formats.includes(f))) });
   }
 
-  // "Modos de juego": a missing list (an older room) means only the title. Completa la letra can't be ticked when none
-  // of the songs that play has its verse (but can be unticked).
-  const styles = draft?.styles ?? ["titulo"];
+  // "Modos de juego": a missing list (an older room) means both, as on the server (DEFAULT_MUSIC_STYLES). Completa la
+  // letra can't be ticked when none of the songs that play has its verse (but can be unticked).
+  const styles = draft?.styles ?? STYLE_IDS;
   function toggleStyle(id) {
     const on = styles.includes(id);
     save({ styles: STYLE_IDS.filter((s) => (s === id ? !on : styles.includes(s))) });
