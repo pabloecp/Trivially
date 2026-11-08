@@ -2633,3 +2633,7 @@ html.tv-match-lock .tv-app .tv-match .tv-mines-stage.tv-mpanel { padding: 12px 1
 /* Lluvia: the sky and its hint on a dark grey panel like every game's answers (phones already had one). */
 .tv-app .tv-match .tv-rain-frame > .tv-rain-stage { border-radius: 22px; background: var(--tv-surface); padding: 18px 20px 20px; }
 html.tv-match-lock .tv-app .tv-match .tv-rain-frame > .tv-rain-stage { border-radius: 18px; padding: 8px; }
+
+/* From the second round of a match on (MatchCard, html.tv-round-next): the card and the panels under it don't fly in
+   again; they are already in their place and only fade in, quickly, with their new content. */
+html.tv-round-next .tv-app .tv-match :is(.tv-qc, .tv-game-stage.tv-mpanel, .tv-opt-panel, .tv-quiz-opt, .tv-card) { animation: tvFade 0.25s ease-out backwards; }
