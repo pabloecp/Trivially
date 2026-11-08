@@ -401,7 +401,7 @@ function GameScreen() {
             small
             pills={reveal && question && !tiebreak && me && !spectator && !central ? <MinesVerdict me={me} question={question} /> : null}
           >
-            <MatchQuestion>{question?.prompt || "Prepárate…"}</MatchQuestion>
+            <MatchQuestion>{question?.prompt ? minesQuestion(question.prompt) : "Prepárate…"}</MatchQuestion>
           </MatchCard>
         )}
 
@@ -562,6 +562,13 @@ function roundPoints(hits = 0) {
 }
 
 // The card over the board at the reveal: how this player's round went, and a party when the whole board was found.
+// The board's consigna as a question on the card ("Pintores" → "¿Cuáles son pintores?"); the few that already say
+// what happened ("Ocurrió en el siglo XV") become "¿Qué ocurrió en el siglo XV?".
+function minesQuestion(prompt) {
+  const text = prompt.charAt(0).toLowerCase() + prompt.slice(1);
+  return /^ocurri/.test(text) ? `¿Qué ${text}?` : `¿Cuáles son ${text}?`;
+}
+
 // The colour of the answer card's icon for each kind of burst (green, red, or the grey of the rest).
 const BURST_TONES = { ok: "ok", win: "ok", mina: "bad", tiempo: "bad" };
 
