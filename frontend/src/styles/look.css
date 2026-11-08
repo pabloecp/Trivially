@@ -356,6 +356,149 @@
   .tv-stage-card.has-swap .tv-stage-lines li { animation: none; }
 }
 
+/* ---------- The search for a public match (SearchBoard) ---------- */
+/* Under the game's name: how it goes and its clock, and one flat seat per player. A free seat is lighter, with a dashed
+   Blob; a taken one is darker, with the Blob that dropped into it. Once full the Blobs jump one after another and the
+   bar at the card's foot runs out, like a round's clock. Nothing here is tapped: no edges. */
+.tv-stage-card.is-searching { justify-content: flex-start; }
+/* The game's faint icon goes to the top corner, so it isn't seen through the free seats. */
+.tv-stage-card.is-searching .tv-stage-mark { top: -150px; right: -50px; bottom: auto; }
+.tv-finding { flex: 1; display: flex; flex-direction: column; gap: 16px; min-height: 0; }
+.tv-finding-status { position: relative; display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; margin-top: auto; min-width: 0; }
+.tv-finding-title { min-width: 0; }
+.tv-finding-title h3 { display: flex; align-items: baseline; margin: 0; font-family: var(--tv-title); font-weight: 800; font-size: clamp(24px, 2.6vw, 36px); line-height: 1.1; letter-spacing: -0.03em; color: #fff; }
+.tv-finding-title p { margin: 6px 0 0; font-family: var(--tv-small); font-weight: 600; font-size: 15px; line-height: 1.3; color: #fff; }
+.tv-finding-title b { font-family: var(--tv-title); font-weight: 800; font-variant-numeric: tabular-nums; }
+.tv-finding-dots { display: inline-flex; gap: 4px; margin-left: 6px; }
+.tv-finding-dots i { width: 6px; height: 6px; border-radius: 50%; background: #fff; animation: tvFindingDot 1.2s ease-in-out calc(var(--d, 0) * 0.16s) infinite; }
+.tv-finding-dots i:nth-child(2) { --d: 1; }
+.tv-finding-dots i:nth-child(3) { --d: 2; }
+@keyframes tvFindingDot {
+  0%, 60%, 100% { opacity: 0.45; transform: none; }
+  30% { opacity: 1; transform: translateY(-5px); }
+}
+/* The clock: in one place, up while it searches and down once it's full. */
+.tv-finding-clock { display: flex; flex-direction: column; align-items: flex-end; flex-shrink: 0; gap: 2px; }
+.tv-finding-clock span { font-family: var(--tv-small); font-weight: 700; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: #fff; }
+.tv-finding-clock strong { font-family: var(--tv-title); font-weight: 900; font-size: clamp(30px, 3.2vw, 46px); line-height: 1; letter-spacing: -0.03em; font-variant-numeric: tabular-nums; color: #fff; }
+.tv-finding-clock strong.is-count { transform-origin: 100% 50%; animation: tvFindingTick 0.4s var(--tv-ease-out); }
+@keyframes tvFindingTick { from { transform: scale(1.5); } }
+
+.tv-finding-seats { position: relative; flex: 1 1 150px; display: grid; grid-template-columns: repeat(var(--seats, 5), minmax(0, 1fr)); gap: 12px; min-height: 124px; max-height: 300px; margin: 0; padding: 0; list-style: none; }
+.tv-seat { position: relative; min-width: 0; border-radius: 18px; background: rgba(255, 255, 255, 0.1); container-type: size; transition: background-color 0.2s ease; }
+.tv-seat.is-taken { background: rgba(0, 0, 0, 0.2); }
+.tv-seat-who { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; height: 100%; padding: 10px 8px; }
+/* As big as the seat lets it be, leaving room for the two lines of text. */
+.tv-seat-face { flex: none; width: min(66cqw, calc(100cqh - 76px)); aspect-ratio: 1; transform-origin: 50% 100%; }
+.tv-seat-face .tv-blob,
+.tv-blob-ghost { display: block; width: 100%; height: 100%; overflow: visible; }
+.tv-seat-text { display: flex; flex-direction: column; align-items: center; gap: 1px; width: 100%; min-width: 0; min-height: 36px; }
+.tv-seat-name { max-width: 100%; overflow: hidden; padding-bottom: 1px; font-family: var(--tv-display); font-weight: 800; font-size: 16px; line-height: 1.15; color: #fff; white-space: nowrap; text-overflow: ellipsis; }
+.tv-seat-tag { font-family: var(--tv-small); font-weight: 600; font-size: 12px; line-height: 1.2; color: rgba(255, 255, 255, 0.9); }
+.tv-seat-who.is-empty .tv-seat-name { font-weight: 700; font-size: 14px; color: rgba(255, 255, 255, 0.9); }
+.tv-blob-ghost-line { fill: rgba(255, 255, 255, 0.07); stroke: rgba(255, 255, 255, 0.8); stroke-width: 3.5; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 8 10; animation: tvGhostLine 1.4s linear infinite; }
+.tv-blob-ghost-mark { fill: #fff; font-family: var(--tv-title); font-weight: 800; font-size: 44px; animation: tvGhostMark 1.8s ease-in-out calc(var(--i, 0) * 0.22s) infinite; }
+@keyframes tvGhostLine { to { stroke-dashoffset: -18; } }
+@keyframes tvGhostMark {
+  0%, 100% { opacity: 0.35; }
+  50% { opacity: 0.85; }
+}
+/* Someone comes: the seat lights up and their Blob drops into it, squashing as it lands. */
+.tv-seat-who:not(.is-empty)::before { content: ""; position: absolute; inset: 0; border-radius: inherit; background: #fff; opacity: 0; pointer-events: none; animation: tvSeatFlash 0.5s ease-out; }
+.tv-seat-who:not(.is-empty) .tv-seat-face { animation: tvSeatDrop 0.55s cubic-bezier(0.3, 0.9, 0.5, 1) backwards; }
+.tv-seat-who:not(.is-empty) .tv-seat-text { animation: tvSeatText 0.35s var(--tv-ease-out) 0.12s backwards; }
+@keyframes tvSeatFlash { from { opacity: 0.3; } }
+@keyframes tvSeatDrop {
+  0% { opacity: 0; transform: translateY(-55%) scale(0.84, 1.14); }
+  55% { opacity: 1; transform: translateY(0) scale(1.18, 0.8); }
+  78% { transform: translateY(-7%) scale(0.96, 1.05); }
+  100% { transform: none; }
+}
+@keyframes tvSeatText { from { opacity: 0; transform: translateY(8px); } }
+/* Someone goes: their Blob shrinks away, and the free seat is back. */
+.tv-seat.is-leaving { background: rgba(255, 255, 255, 0.1); }
+.tv-seat.is-leaving .tv-seat-who { animation: tvSeatOut 0.26s ease-in forwards; }
+@keyframes tvSeatOut { to { opacity: 0; transform: scale(0.7); } }
+/* Looking for players: rings going out from the middle of the card, under everything. */
+.tv-finding-rings { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+.tv-finding-rings i { position: absolute; top: 50%; left: 50%; width: 220px; height: 220px; margin: -110px 0 0 -110px; border: 2px solid #fff; border-radius: 50%; opacity: 0; animation: tvFindingRing 3.6s ease-out infinite; }
+.tv-finding-rings i:nth-child(2) { animation-delay: 1.2s; }
+.tv-finding-rings i:nth-child(3) { animation-delay: 2.4s; }
+@keyframes tvFindingRing {
+  0% { opacity: 0; transform: scale(0.3); }
+  15% { opacity: 0.22; }
+  100% { opacity: 0; transform: scale(4.4); }
+}
+/* Full: no more rings; the Blobs jump one after another (the last one lands first). */
+.tv-finding.is-full .tv-finding-rings { display: none; }
+.tv-finding.is-full .tv-seat-who:not(.is-empty) .tv-seat-face { animation: tvSeatDrop 0.55s cubic-bezier(0.3, 0.9, 0.5, 1) backwards, tvSeatHop 1.15s ease-in-out calc(0.55s + var(--i, 0) * 0.09s) infinite; }
+@keyframes tvSeatHop {
+  0%, 52%, 100% { transform: none; }
+  8% { transform: scale(1.08, 0.9); }
+  24% { transform: translateY(-16%) scale(0.95, 1.07); }
+  42% { transform: scale(1.07, 0.92); }
+}
+/* How long is left once it's full: at the card's foot, moving nothing. */
+.tv-finding-bar { position: absolute; right: 36px; bottom: 12px; left: 36px; height: 8px; overflow: hidden; border-radius: 4px; background: rgba(0, 0, 0, 0.2); }
+.tv-finding-bar i { display: block; height: 100%; border-radius: 4px; background: #fff; transform-origin: 0 50%; animation: tvFindingBar 3s linear forwards; }
+@keyframes tvFindingBar { to { transform: scaleX(0); } }
+/* It comes in with the search, once the card is in place (a reload in the middle of a search comes in with the panel). */
+.tv-lobby-stage.is-settled .tv-finding-status,
+.tv-lobby-stage.is-settled .tv-finding-seats { animation: tvSwap 0.45s var(--tv-ease-out) backwards; }
+.tv-lobby-stage.is-settled .tv-finding-seats { animation-delay: 0.08s; }
+.tv-lobby-stage:not(.is-settled) .tv-seat-who::before,
+.tv-lobby-stage:not(.is-settled) .tv-seat-who .tv-seat-text,
+.tv-lobby-stage:not(.is-settled) .tv-seat-who:not(.is-empty) .tv-seat-face { animation: none; }
+.tv-finding.is-still .tv-seat-who:not(.is-empty) .tv-seat-face { animation: none; }
+.tv-stage-card.is-classic .tv-seat { background: rgba(255, 255, 255, 0.06); }
+.tv-stage-card.is-classic .tv-seat.is-taken { background: rgba(255, 255, 255, 0.11); }
+.tv-stage-card.is-classic .tv-finding-bar { background: rgba(255, 255, 255, 0.12); }
+@media (prefers-reduced-motion: reduce) {
+  .tv-finding-dots i,
+  .tv-blob-ghost-line,
+  .tv-blob-ghost-mark,
+  .tv-seat-who::before,
+  .tv-seat-who:not(.is-empty) .tv-seat-face,
+  .tv-seat-who:not(.is-empty) .tv-seat-text,
+  .tv-finding.is-full .tv-seat-who:not(.is-empty) .tv-seat-face,
+  .tv-finding-clock strong.is-count,
+  .tv-lobby-stage.is-settled .tv-finding-status,
+  .tv-lobby-stage.is-settled .tv-finding-seats { animation: none; }
+  .tv-finding-rings { display: none; }
+}
+/* Phones: three seats over two, so names fit, each with only its name. No faint icon: it would go behind the words. */
+@media (max-width: 760px) {
+  .tv-stage-card.is-searching .tv-stage-mark { display: none; }
+  .tv-finding { gap: 10px; }
+  .tv-finding-title h3 { font-size: 22px; }
+  .tv-finding-title p { margin-top: 3px; font-size: 13px; }
+  .tv-finding-clock strong { font-size: 28px; }
+  .tv-finding-clock span { font-size: 10px; }
+  .tv-finding-seats { flex: 1 1 110px; gap: 8px; min-height: 100px; max-height: 250px; }
+  .tv-finding-seats[data-seats="5"] { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+  .tv-finding-seats[data-seats="5"] .tv-seat { grid-column: span 2; }
+  .tv-finding-seats[data-seats="5"] .tv-seat:nth-child(4) { grid-column: 2 / span 2; }
+  .tv-seat { border-radius: 14px; }
+  .tv-seat-who { gap: 4px; padding: 6px 4px; }
+  .tv-seat-face { width: min(70cqw, calc(100cqh - 34px)); }
+  .tv-seat-text { min-height: 0; }
+  .tv-seat-name { font-size: 13px; }
+  .tv-seat-who.is-empty .tv-seat-name { font-size: 12px; }
+  .tv-seat-tag { display: none; }
+  .tv-finding-bar { right: 18px; bottom: 6px; left: 18px; height: 5px; }
+}
+/* A short phone: no room for two rows, so the five in one, and a free seat is only its dashed Blob. */
+@media (max-width: 760px) and (max-height: 740px) {
+  .tv-finding-seats { gap: 6px; min-height: 84px; max-height: 110px; }
+  .tv-finding-seats[data-seats="5"] { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+  .tv-finding-seats[data-seats="5"] .tv-seat,
+  .tv-finding-seats[data-seats="5"] .tv-seat:nth-child(4) { grid-column: auto; }
+  .tv-seat-who { padding: 4px 2px; }
+  .tv-seat-face { width: min(78cqw, calc(100cqh - 26px)); }
+  .tv-seat-name { font-size: 11px; }
+  .tv-seat-who.is-empty .tv-seat-text { display: none; }
+}
+
 /* Not wide enough for both: the card across the top, the boxes side by side under it. */
 @media (max-width: 860px) {
   .tv-stage,
@@ -1184,9 +1327,8 @@
 .tv-app .tv-quiz-media.is-flag img { height: 100%; aspect-ratio: 3 / 2; object-fit: cover; }
 .tv-app .tv-quiz-media-missing { display: grid; place-items: center; gap: 4px; width: 120px; height: 100%; padding: 6px; border: 3px solid #fff; border-radius: 12px; font-size: 11px; font-weight: 700; line-height: 1.2; text-align: center; }
 
-/* The scoreboard: "MARCADOR" and how the round goes, then one flat box per player (you with a yellow ring). The same
-   during a game's roulette and tutorial (`.tv-room.is-intro`), so it doesn't change when the first round starts. */
-.tv-app :is(.tv-match, .tv-room.is-intro, .tv-score-modal) .tv-party {
+/* The scoreboard: "MARCADOR" and how the round goes, then one flat box per player (you with a yellow ring). */
+.tv-app :is(.tv-match, .tv-score-modal) .tv-party {
   gap: 10px;
   padding: 12px;
   border-radius: 18px;
@@ -1194,8 +1336,8 @@
   box-shadow: none;
   overflow-y: auto;
 }
-.tv-app :is(.tv-match, .tv-room.is-intro, .tv-score-modal) .tv-party-title { display: flex; align-items: center; justify-content: space-between; margin: 0; }
-.tv-app :is(.tv-match, .tv-room.is-intro, .tv-score-modal) .tv-party-title h2 { font: 700 11px/1 var(--tv-small); letter-spacing: 0.02em; text-transform: uppercase; color: var(--tv-text-3); }
+.tv-app :is(.tv-match, .tv-score-modal) .tv-party-title { display: flex; align-items: center; justify-content: space-between; margin: 0; }
+.tv-app :is(.tv-match, .tv-score-modal) .tv-party-title h2 { font: 700 11px/1 var(--tv-small); letter-spacing: 0.02em; text-transform: uppercase; color: var(--tv-text-3); }
 .tv-party-status-pill {
   display: inline-flex;
   align-items: center;
@@ -1207,22 +1349,22 @@
   color: #fff;
   white-space: nowrap;
 }
-.tv-app :is(.tv-match, .tv-room.is-intro, .tv-score-modal) .tv-party-players { display: flex; flex-direction: column; gap: 10px; }
-.tv-app :is(.tv-match, .tv-room.is-intro, .tv-score-modal) .tv-player-btn {
+.tv-app :is(.tv-match, .tv-score-modal) .tv-party-players { display: flex; flex-direction: column; gap: 10px; }
+.tv-app :is(.tv-match, .tv-score-modal) .tv-player-btn {
   gap: 10px;
   padding: 10px;
   border-radius: 14px;
   background: var(--tv-surface-2);
   box-shadow: none;
 }
-.tv-app :is(.tv-match, .tv-room.is-intro, .tv-score-modal) .tv-player-pos { width: 16px; background: none; box-shadow: none; color: #fff; font: 800 16px/1 var(--tv-display); }
-.tv-app :is(.tv-match, .tv-room.is-intro, .tv-score-modal) .tv-player-name { font: 700 14px/1.2 var(--tv-small); }
-.tv-app :is(.tv-match, .tv-room.is-intro, .tv-score-modal) .tv-player-score { font: 800 17px/1 var(--tv-display); color: #fff; }
-.tv-app :is(.tv-match, .tv-room.is-intro, .tv-score-modal) .tv-player .tv-avatar { width: 36px; height: 36px; }
+.tv-app :is(.tv-match, .tv-score-modal) .tv-player-pos { width: 16px; background: none; box-shadow: none; color: #fff; font: 800 16px/1 var(--tv-display); }
+.tv-app :is(.tv-match, .tv-score-modal) .tv-player-name { font: 700 14px/1.2 var(--tv-small); }
+.tv-app :is(.tv-match, .tv-score-modal) .tv-player-score { font: 800 17px/1 var(--tv-display); color: #fff; }
+.tv-app :is(.tv-match, .tv-score-modal) .tv-player .tv-avatar { width: 36px; height: 36px; }
 /* A big match (7 players or more): tighter rows, so everyone fits in the column without scrolling. */
-.tv-app :is(.tv-match, .tv-room.is-intro, .tv-score-modal) .tv-party-players:has(> li:nth-child(7)) { gap: 6px; }
-.tv-app :is(.tv-match, .tv-room.is-intro, .tv-score-modal) .tv-party-players:has(> li:nth-child(7)) .tv-player-btn { padding: 6px 10px; }
-.tv-app :is(.tv-match, .tv-room.is-intro, .tv-score-modal) .tv-party-players:has(> li:nth-child(7)) .tv-avatar { width: 30px; height: 30px; }
+.tv-app :is(.tv-match, .tv-score-modal) .tv-party-players:has(> li:nth-child(7)) { gap: 6px; }
+.tv-app :is(.tv-match, .tv-score-modal) .tv-party-players:has(> li:nth-child(7)) .tv-player-btn { padding: 6px 10px; }
+.tv-app :is(.tv-match, .tv-score-modal) .tv-party-players:has(> li:nth-child(7)) .tv-avatar { width: 30px; height: 30px; }
 
 .tv-mbar {
   display: flex;
@@ -1431,8 +1573,8 @@
   background: #1fd24a;
   border: 3px solid var(--tv-surface-2);
 }
-.tv-app :is(.tv-match, .tv-room.is-intro, .tv-score-modal) .tv-player-tag { padding: 0; background: none; font: 600 12px/1.2 var(--tv-small); color: var(--tv-text-3); }
-.tv-app :is(.tv-match, .tv-room.is-intro, .tv-score-modal) .tv-player-tag svg { display: none; }
+.tv-app :is(.tv-match, .tv-score-modal) .tv-player-tag { padding: 0; background: none; font: 600 12px/1.2 var(--tv-small); color: var(--tv-text-3); }
+.tv-app :is(.tv-match, .tv-score-modal) .tv-player-tag svg { display: none; }
 .tv-app :is(.tv-match, .tv-score-modal) .tv-player-tag.is-king { color: var(--p-accent-2, #ffd60a); }
 .tv-app :is(.tv-match, .tv-score-modal) .tv-player-answer.is-wrong { color: var(--p-bad); }
 .tv-app :is(.tv-match, .tv-score-modal) .tv-player-answer.is-right { color: #7fe077; }
@@ -1896,8 +2038,8 @@
 /* Under the player's row and as wide as it, its buttons sharing the width equally, with no box around them. */
 .tv-app .tv-player-menu { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 6px; width: 100%; margin: 6px 0 0; padding: 0 0 3px; border-radius: 0; background: none; box-shadow: none; }
 .tv-app .tv-player-menu .tv-iconbtn { display: flex; align-items: center; justify-content: center; gap: 6px; width: 100%; height: 38px; font-family: var(--tv-display); font-weight: 700; font-size: 14px; text-decoration: none; white-space: nowrap; }
-.tv-app :is(.tv-match, .tv-room.is-intro, .tv-score-modal) .tv-player,
-.tv-app :is(.tv-match, .tv-room.is-intro, .tv-score-modal) .tv-player:hover { background: none; }
+.tv-app :is(.tv-match, .tv-score-modal) .tv-player,
+.tv-app :is(.tv-match, .tv-score-modal) .tv-player:hover { background: none; }
 .tv-iconbtn.is-on { background: var(--tv-pick); box-shadow: 0 3px 0 var(--tv-pick-edge); color: #fff; }
 .tv-iconbtn.is-on:hover { box-shadow: 0 5px 0 var(--tv-pick-edge); }
 .tv-player-menu a.tv-iconbtn { color: var(--tv-neutral-on); }
@@ -1964,7 +2106,7 @@
 .tv-app .tv-pf-icon.is-danger,
 .tv-app .tv-pf-icon.is-danger:hover { background: var(--p-bad); box-shadow: 0 3px 0 var(--p-bad-edge); }
 /* The scoreboard: your row with its background, like "Tu grupo"'s; the others' with none. */
-.tv-app :is(.tv-match, .tv-room.is-intro, .tv-score-modal) .tv-player:not(.is-me) .tv-player-btn { background: none; }
+.tv-app :is(.tv-match, .tv-score-modal) .tv-player:not(.is-me) .tv-player-btn { background: none; }
 
 /* The results on a phone: the card's title and "Ver tus respuestas" on one row, "0 victorias" whole on its step, and in the
    ranking the name is what gets cut when it doesn't fit beside the points. */
@@ -1982,9 +2124,8 @@
 /* useMatchViewport (html.tv-match-lock) makes the app exactly the part of the screen the player sees, keyboard up or not:
    nothing scrolls. Top to bottom: the top bar ("Salir", which game and round), the round's card (--qc-h, the same place and
    size in every round and game), the game's answers taking all that's left, and at the foot the scoreboard as a strip of
-   chips (a tap opens all of it) with the match's tools as icons beside it. The intro uses the same places: its panel where the
-   card goes, the tutorial's steps where the answers go. Short screens (a phone on its side): the card beside the answers. */
-.tv-topbar-round--intro,
+   chips (a tap opens all of it) with the match's tools as icons beside it. The intro is the game's card and its faces under it,
+   in the same frame (match.css, MatchIntro). Short screens (a phone on its side): the card beside the answers. */
 .tv-topbar-round-dot,
 .tv-pstrip { display: none; }
 .tv-app .tv-score-modal .tv-party-status-pill { flex: none; width: fit-content; }
@@ -2013,10 +2154,10 @@
   html.tv-match-lock .tv-app .tv-topbar .tv-chip--friends { display: none; }
   html.tv-match-lock .tv-app .tv-topbar .tv-chip--leave { width: auto; padding: 0 12px 0 0; }
   html.tv-match-lock .tv-app .tv-topbar .tv-chip--leave .tv-chip-long { display: inline; }
-  html.tv-match-lock .tv-app .tv-topbar-round--intro { display: flex; }
   html.tv-match-lock .tv-app .tv-topbar-round { gap: 6px; padding: 0 2px; }
   html.tv-match-lock .tv-app .tv-topbar-round-row { justify-content: flex-start; gap: 0; min-width: 0; }
-  html.tv-match-lock .tv-app .tv-topbar-round-game { display: block; flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+  /* Its padding is the room for the accent of a capital ("CLÁSICO"), which the cut would take off. */
+  html.tv-match-lock .tv-app .tv-topbar-round-game { display: block; flex: 0 1 auto; min-width: 0; margin-top: -3px; padding-top: 3px; overflow: hidden; text-overflow: ellipsis; }
   html.tv-match-lock .tv-app .tv-topbar-round-now { flex: none; }
   html.tv-match-lock .tv-app .tv-topbar-round-dot { display: inline; white-space: pre; }
 
@@ -2195,39 +2336,8 @@
   html.tv-match-lock .tv-app .tv-rain-bar { flex: none; gap: 8px; }
     html.tv-match-lock .tv-app .tv-rain-bar .tv-search-box { height: 50px; }
 
-  /* The intro: nothing around it, the panel where the round's card goes. */
-  html.tv-match-lock .tv-app .tv-room .tv-mi.tv-mcard { flex: 1; align-items: stretch; justify-content: flex-start; min-height: 0; padding: 0; overflow: hidden; border-radius: 0; background: none; box-shadow: none; text-align: left; animation: none; }
-  html.tv-match-lock .tv-app .tv-mi-frame { display: flex; flex: 1; flex-direction: column; gap: 8px; width: 100%; max-width: none; min-height: 0; }
-  html.tv-match-lock .tv-app .tv-mi-head { display: none; }
-  /* The roulette: the panel as the card, what's going on under it. */
-  html.tv-match-lock .tv-app .rl-spin { display: flex; flex: 1; flex-direction: column; gap: 8px; min-height: 0; animation: none; }
-  html.tv-match-lock .tv-app .rl-spin-panel { flex: none; width: 100%; height: var(--qc-h); padding: 0 14px; gap: 12px; border-radius: var(--qc-radius); }
-  html.tv-match-lock .tv-app .rl-spin-icons { flex-basis: 66px; }
-  html.tv-match-lock .tv-app .rl-spin-icon { width: 58px; height: 58px; border-radius: 16px; }
-  html.tv-match-lock .tv-app .rl-spin-row b { font-size: 26px; }
-  html.tv-match-lock .tv-app .tv-mi-caption { display: grid; flex: 1; place-items: center; width: 100%; min-height: 0; border-radius: 18px; background: var(--tv-surface); font-size: 24px; text-align: center; }
-  /* The tutorial: the game's name in the card (its clock is the card's bar), the steps where the answers will be. */
-  html.tv-match-lock .tv-app .tv-mi-tutorial { position: relative; display: flex; flex: 1; flex-direction: column; gap: 8px; max-width: none; min-height: 0; padding: 0; border-radius: 0; background: none; animation: none; }
-  html.tv-match-lock .tv-app .tv-mi-tut-head { flex: none; align-items: center; gap: 12px; height: var(--qc-h); padding: 10px 14px 26px; border-radius: var(--qc-radius); background: var(--c2); color: #fff; }
-  html.tv-match-lock .tv-app .rl-tut.is-neutro .tv-mi-tut-head { background: var(--tv-surface-3); }
-  html.tv-match-lock .tv-app .tv-mi-tut-head > div { min-width: 0; }
-  html.tv-match-lock .tv-app .tv-mi-tut-badge { flex: none; width: 56px; height: 56px; border-radius: 16px; }
-  html.tv-match-lock .tv-app .tv-mi-tut-name { font-size: 25px; overflow-wrap: anywhere; }
-  html.tv-match-lock .tv-app .tv-mi-progress { position: absolute; top: calc(var(--qc-h) - 20px); right: 14px; left: 14px; }
-  html.tv-match-lock .tv-app .tv-mi-clock { display: none; }
-  html.tv-match-lock .tv-app .tv-mi-bar { height: 8px; background: rgba(0, 0, 0, 0.2); }
-  html.tv-match-lock .tv-app .tv-mi-bar span { background: #fff; }
-  html.tv-match-lock .tv-app .tv-mi-steps { flex: 1 1 0; grid-auto-rows: minmax(0, 1fr); gap: 8px; min-height: 0; }
-  html.tv-match-lock .tv-app .tv-mi-step { gap: 10px; min-height: 0; padding: 4px 12px; overflow: hidden; border-radius: 14px; background: var(--tv-surface-3); color: #fff; font-size: 15px; line-height: 1.2; animation: none; }
-  html.tv-match-lock .tv-app .tv-mi-step-icon { flex: none; width: 34px; height: 34px; border-radius: 10px; }
-  html.tv-match-lock .tv-app .rl-tut.is-color .tv-mi-step-icon { background: var(--c2); color: #fff; }
-  /* The game before: its panel fills the place, and scrolls inside if the list is long. */
-  html.tv-match-lock .tv-app .tv-mi-prev { flex: 1; align-content: start; width: 100%; min-height: 0; overflow-y: auto; animation: none; }
-  html.tv-match-lock .tv-app .tv-mi-prev .rl-nb { width: 100%; padding: 14px 12px; border-radius: var(--qc-radius); }
-  html.tv-match-lock .tv-app .tv-mi-prev .rl-nrow { padding: 6px 8px 6px 10px; }
-
-  /* From the intro to the first round: only what changes fades in, nothing rises (the card stays in its place). */
-  html.tv-match-lock.tv-seamless .tv-app .tv-room-main { animation: tvFade 0.3s ease-out backwards; }
+  /* From the intro's stage to the first round: nothing here has an entrance of its own, so the round fades in. */
+  html.tv-match-lock.tv-seamless .tv-app .tv-room { animation: tvFade 0.3s ease-out backwards; }
   /* Between rounds nothing comes in from below either. */
   html.tv-match-lock .tv-app .tv-match :is(.tv-qc, .tv-mpanel, .tv-quiz-opt) { animation: none; }
 }
@@ -2243,12 +2353,6 @@
   html.tv-match-lock .tv-app .tv-room-main > .tv-qc,
   html.tv-match-lock .tv-app .tv-game-stage > .tv-qc { flex: 0 0 38%; }
   html.tv-match-lock .tv-app .tv-match :is(.tv-quiz-options, .tv-fs-options) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  html.tv-match-lock .tv-app .tv-mi-frame,
-  html.tv-match-lock .tv-app .rl-spin,
-  html.tv-match-lock .tv-app .tv-mi-tutorial { flex-direction: row; }
-  html.tv-match-lock .tv-app .rl-spin-panel,
-  html.tv-match-lock .tv-app .tv-mi-tut-head { flex: 0 0 38%; width: auto; height: auto; }
-  html.tv-match-lock .tv-app .tv-mi-progress { top: auto; right: auto; bottom: 10px; left: 14px; width: calc(38% - 28px); }
   html.tv-match-lock .tv-app .tv-pstrip-chip { height: 38px; }
 }
 
@@ -2433,6 +2537,14 @@
   .tv-app .tv-match .tv-mpanel .tv-mines-burst .tv-acard { padding: 12px 14px; }
 }
 html.tv-match-lock .tv-app .tv-match .tv-play-card.tv-mpanel:has(> .tv-acard) { justify-content: center; }
+/* Campo de minas' board is inside a panel, but its card over the board keeps its box (the "no box" above is for the card
+   that takes the panel's place): solid, with its shadow, the same size as over a map. */
+.tv-app .tv-match .tv-mpanel .tv-mines-burst .tv-acard:not(.is-floating) { width: min(480px, calc(100% - 28px)); max-width: none; align-self: auto; padding: 16px 20px; border-radius: 22px; background: var(--tv-surface); box-shadow: 0 20px 50px rgba(0, 0, 0, 0.55); }
+.tv-app .tv-match .tv-mpanel .tv-mines-burst .tv-acard:not(.is-floating) .tv-acard-value { font-size: 30px; }
+@media (max-width: 899px) {
+  .tv-app .tv-match .tv-mpanel .tv-mines-burst .tv-acard:not(.is-floating) { padding: 12px 14px; }
+  .tv-app .tv-match .tv-mpanel .tv-mines-burst .tv-acard:not(.is-floating) .tv-acard-value { font-size: 26px; }
+}
 
 /* Adivina la canción · Letra: the lyrics in the card, where the question goes (the last four lines, the ones above
    fading out; the gap a white dashed box, filled white at the reveal). */
@@ -2477,22 +2589,6 @@ html.tv-match-lock .tv-app .tv-match .tv-qc .tv-lyrics-gap:not(.is-filled) { wid
   html.tv-match-lock .tv-app .tv-match .tv-mpanel .tv-acard:not(.is-floating):not(:has(.tv-acard-media)) { flex-direction: column; text-align: center; }
   html.tv-match-lock .tv-app .tv-match .tv-mpanel .tv-acard:not(.is-floating):not(:has(.tv-acard-media)) .tv-acard-text { justify-items: center; }
 }
-/* The game's tutorial on a phone: the same as on a computer, one panel in the game's colour with its badge and name, the
-   three steps and the clock with its bar under them, in the middle of the room there is. */
-@media (max-width: 899px) and (min-height: 501px) {
-  html.tv-match-lock .tv-app .tv-mi-tutorial { justify-content: center; gap: 18px; padding: 22px 16px 18px; overflow: hidden; border-radius: var(--qc-radius); background: var(--c2); }
-  html.tv-match-lock .tv-app .tv-mi-tutorial.is-neutro { background: var(--tv-option-bg); }
-  html.tv-match-lock .tv-app .tv-mi-tut-head,
-  html.tv-match-lock .tv-app .rl-tut.is-neutro .tv-mi-tut-head { height: auto; padding: 0; border-radius: 0; background: none; }
-  html.tv-match-lock .tv-app .tv-mi-steps { flex: none; grid-auto-rows: auto; gap: 10px; }
-  html.tv-match-lock .tv-app .tv-mi-step { padding: 12px 14px; border-radius: 16px; background: rgba(255, 255, 255, 0.16); font-size: 15px; font-weight: 800; }
-  html.tv-match-lock .tv-app .tv-mi-tutorial.is-neutro .tv-mi-step { background: var(--tv-surface); }
-  html.tv-match-lock .tv-app .rl-tut.is-color .tv-mi-step-icon { background: #fff; color: var(--c2); }
-  html.tv-match-lock .tv-app .tv-mi-progress { position: static; display: flex; align-items: center; gap: 14px; }
-  html.tv-match-lock .tv-app .tv-mi-clock { display: grid; width: 52px; height: 52px; }
-  html.tv-match-lock .tv-app .tv-mi-tutorial.is-color .tv-mi-bar { background: rgba(255, 255, 255, 0.22); }
-}
-
 /* A guest's profile button (the person icon, "Entrar") keeps its button on a phone; only a Blob goes without one. */
 @media (max-width: 760px) {
   .tv-app .tv-topbar .tv-chip--profile:has(> .tv-avatar--empty) { justify-content: center; width: 36px; padding: 0; background: var(--tv-neutral); box-shadow: 0 3px 0 var(--tv-neutral-edge); }

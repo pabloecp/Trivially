@@ -9,7 +9,6 @@ import TvTopbar from "../components/home/TvTopbar.jsx";
 import CentralLobby from "../components/home/CentralLobby.jsx";
 import HomeFrame from "../components/home/HomeFrame.jsx";
 import MatchIntro from "../components/home/MatchIntro.jsx";
-import PartyPanel from "../components/home/PartyPanel.jsx";
 import PlaySheet from "../components/home/PlaySheet.jsx";
 import "../styles/home.css";
 import { HIDDEN_SLUG, resolveCode } from "../lib/hiddenCode.js";
@@ -24,8 +23,8 @@ const OPTION_AUDIENCE = { casual: "publica", competitivo: "publica", privada: "g
 // /grupo/CODE is a group's invite link, and /sala/CODE from links of a while ago). Inicio, a private match while it
 // waits and the search for a public match are
 // the same frame (HomeFrame): the game's card in the middle and the
-// group's bar at the bottom. Before each game of a public match or a Clásico, its roulette and tutorial (MatchIntro)
-// take the card's place beside the scoreboard. The room's central device shows its own big waiting screen
+// group's bar at the bottom. Before each game of a public match or a Clásico, its roulette and tutorial use the same
+// card and boxes (MatchIntro). The room's central device shows its own big waiting screen
 // (CentralLobby).
 export default function Home() {
   const { user, room, group, isCentral, joinRoom, joinGroup, kickedNotice, setKickedNotice } = useApp();
@@ -162,17 +161,16 @@ export default function Home() {
       <TvTopbar />
 
       <main className={`tv-main is-room${centralScreen ? " is-central" : ""}${intro ? "" : " is-lobby"}`}>
-        {centralScreen ? (
-          // A Clásico's roulette and tutorial show on the central device too.
-          intro ? <MatchIntro room={room} /> : <CentralLobby room={room} />
-        ) : intro ? (
-          // Before each game of a public match or a Clásico: the roulette and how it's played, beside the scoreboard.
-          <div className="tv-room is-intro">
-            <div className="tv-room-main">
+        {intro ? (
+          // Before each game of a public match or a Clásico: the game before, the roulette and how it's played, with the pieces
+          // of Inicio and of the search (the game's card and the boxes beside it). On the central device too.
+          <div className={`tv-room tv-game tv-match is-intro${centralScreen ? " is-central" : ""}`}>
+            <div className="tv-room-main tv-game-main">
               <MatchIntro room={room} />
             </div>
-            <PartyPanel room={room} onToast={showToast} scores />
           </div>
+        ) : centralScreen ? (
+          <CentralLobby room={room} />
         ) : (
           <HomeFrame room={room} Lobby={room?.matchmaking ? null : roomMode?.Lobby || null} onToast={showToast} />
         )}

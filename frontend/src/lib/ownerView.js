@@ -104,7 +104,7 @@ export function useForcedGames() {
 // The "_2" keys start the owners over on the new defaults (what they had picked before is left behind).
 const STYLE_KEY = "trivially_results_retouch_2";
 const TONE_KEY = "trivially_results_tone_2";
-// The results screens (between games and at the end) and the intro's roulette and tutorial: everyone sees the "barras"
+// The results screen at the end, and the tone of the card before each game (MatchIntro): everyone sees the "barras"
 // style (a bar as long as the points) in the "color" tone (all in the match's colour); an owner can try "panel" (each
 // player's points under the name) and the "neutro" tone (dark rows, the winners ringed in the match's colour).
 export const RESULTS_STYLES = ["panel", "barras"];

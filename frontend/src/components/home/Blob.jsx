@@ -7,6 +7,19 @@ const LOOK_EVERY_MS = [5000, 10000];
 
 const BODY = "M50 9 C80 9 96 28 96 52 C96 77 79 91 50 91 C21 91 4 77 4 52 C4 28 20 9 50 9 Z";
 
+// A place for a Blob still to come (a free seat in the search for a match, SearchBoard): its shape, dashed, with a "?".
+// It takes the colour around it; look.css moves the line and the "?".
+export function BlobGhost() {
+  return (
+    <svg className="tv-blob-ghost" viewBox="0 0 100 100" aria-hidden="true">
+      <path className="tv-blob-ghost-line" d={BODY} />
+      <text className="tv-blob-ghost-mark" x="50" y="67" textAnchor="middle">
+        ?
+      </text>
+    </svg>
+  );
+}
+
 // Blob, the player's character and everyone's face: a soft round body, a little wider at the top, with a thick black
 // line and two black oval eyes. `color` is the body's (lib/blobColors.js, white by default).
 // Its skin is drawn in layers, all inside the line: the colour, a shadow inside (the body itself shifted up and to the
