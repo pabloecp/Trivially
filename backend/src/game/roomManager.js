@@ -338,12 +338,14 @@ function withGeoTokens(track) {
 }
 
 // A new room plays the whole catalog (`useCatalog`, every language, genre and difficulty ticked) and no Spotify
-// playlists; `playlistIds` are the ticked Spotify ones ("sp:<id>"). With `useCatalog` false only those play.
+// playlists; `playlistIds` are the ticked Spotify ones ("sp:<id>"). With `useCatalog` false only those play; with
+// `usePlaylists` false ("Tus playlists"' switch) none of them does, though they stay ticked for when it's on again.
 function defaultConfig() {
   return {
     rounds: 5,
     roundMs: ROUND_MS,
     useCatalog: true,
+    usePlaylists: true,
     languages: [...SONG_LANGUAGES],
     genres: [...SONG_GENRES],
     difficulties: [...SONG_DIFFICULTIES],
@@ -372,7 +374,7 @@ const introSpinMs = (room) => (room.matchmaking ? (room.matchmaking.game ? 0 : I
 
 // The part of the room's settings that belongs to `game`, as in a new room ("Restablecer"). Adivina la canción's are the
 // settings at the top level.
-const MUSIC_KEYS = ["rounds", "roundMs", "useCatalog", "languages", "genres", "difficulties", "playlistIds", "formats", "styles"];
+const MUSIC_KEYS = ["rounds", "roundMs", "useCatalog", "usePlaylists", "languages", "genres", "difficulties", "playlistIds", "formats", "styles"];
 const CONFIG_KEYS = { opciones: "quiz", mundo: "geo", historia: "history", minas: "mines", lluvia: "rain", rey: "rey", farsante: "farsante" };
 function gameDefaults(game) {
   const base = defaultConfig();
@@ -1561,6 +1563,8 @@ export class RoomManager {
     if (Array.isArray(config?.styles)) next.styles = MUSIC_STYLES.filter((s) => config.styles.includes(s));
     // The catalog on or off (off: only the ticked Spotify playlists play). Missing in an older room means on.
     if (config?.useCatalog != null) next.useCatalog = config.useCatalog !== false;
+    // "Tus playlists" on or off (off: none of the ticked ones plays). Missing in an older room means on.
+    if (config?.usePlaylists != null) next.usePlaylists = config.usePlaylists !== false;
     // The catalog's filters; any list may be left empty (only the Spotify playlists then play, if any).
     if (Array.isArray(config?.languages)) next.languages = SONG_LANGUAGES.filter((v) => config.languages.includes(v));
     if (Array.isArray(config?.genres)) next.genres = SONG_GENRES.filter((v) => config.genres.includes(v));
@@ -1575,8 +1579,9 @@ export class RoomManager {
     this.syncPlaylists(room);
   }
 
-  /** The room's Spotify playlists that play: the ticked ones. */
+  /** The room's Spotify playlists that play: the ticked ones, while "Tus playlists" is on. */
   activePlaylists(room) {
+    if (room.config.usePlaylists === false) return [];
     return (room.config.playlistIds || []).map((id) => room.customPlaylists?.[id]).filter(Boolean);
   }
 
@@ -1611,6 +1616,7 @@ export class RoomManager {
       formats: pick(change.formats, MUSIC_FORMATS, base.formats),
       styles: pick(change.styles, MUSIC_STYLES, base.styles),
       useCatalog: change.useCatalog != null ? change.useCatalog !== false : base.useCatalog,
+      usePlaylists: change.usePlaylists != null ? change.usePlaylists !== false : base.usePlaylists,
       languages: pick(change.languages, SONG_LANGUAGES, base.languages),
       genres: pick(change.genres, SONG_GENRES, base.genres),
       difficulties: pick(change.difficulties, SONG_DIFFICULTIES, base.difficulties),
@@ -1665,7 +1671,7 @@ export class RoomManager {
     // playlists (whose songs may still be loading).
     if (!config.formats?.length) return "Elige al menos un tipo de respuesta.";
     if (config.styles && !config.styles.length) return "Elige al menos un modo de juego.";
-    if (config.useCatalog === false && !config.playlistIds?.length) return "Activa el catálogo o elige una playlist.";
+    if (config.useCatalog === false && (config.usePlaylists === false || !config.playlistIds?.length)) return "Activa el catálogo o elige una playlist.";
     const n = this.songsReady({ ...room, config: configWithItem(base, item) });
     return n < config.rounds ? short(n, "canciones", config.rounds, "idiomas, géneros o dificultades") : null;
   }
@@ -1807,6 +1813,8 @@ export class RoomManager {
     // Adding one ticks it, and Trivially's own catalog stops playing (it can be switched on again in the settings).
     const ids = room.config.playlistIds || [];
     if (!ids.includes(id)) room.config = { ...room.config, useCatalog: false, playlistIds: [...ids, id] };
+    // ...and switches "Tus playlists" on, if it was off.
+    room.config = { ...room.config, usePlaylists: true };
     entry.active = true;
     this.loadPlaylist(room, entry);
     return entry;
@@ -2504,6 +2512,7 @@ export class RoomManager {
       formats: room.config.formats,
       styles: room.config.styles,
       useCatalog: room.config.useCatalog !== false,
+      usePlaylists: room.config.usePlaylists !== false,
       languages: room.config.languages,
       genres: room.config.genres,
       difficulties: room.config.difficulties,
