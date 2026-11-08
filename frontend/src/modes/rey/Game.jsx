@@ -378,7 +378,7 @@ function ReyVerdict({ me, rey, youWon, youAreRoundKing }) {
   if (youWon) return <RoundVerdict tone="ok" icon="crown" label="¡Ahora eres el rey!" points={me?.lastPoints || null} />;
   if (youAreRoundKing && rey.survived) return <RoundVerdict tone="ok" icon="crown" label="Sigues de rey" points={rey.points || null} />;
   if (youAreRoundKing && rey.dethronedBy) return <RoundVerdict tone="bad" icon="crown" label="Perdiste la corona" />;
-  if (me?.lastAnswer?.correct) return <RoundVerdict tone="ok" label="¡Correcto!" points={me?.lastPoints || null} confetti={false} />;
+  if (me?.lastAnswer?.correct) return <RoundVerdict tone="ok" label="¡Correcto!" points={me?.lastPoints || null} />;
   if (me?.lastAnswer?.text) return <RoundVerdict tone="bad" label="Incorrecto" />;
   return <RoundVerdict tone="timeout" label="Sin respuesta" />;
 }

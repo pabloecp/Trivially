@@ -258,7 +258,6 @@ function WriteRound({ room, question, me, answer, skipSong, seconds, clock, cent
   const spectator = Boolean(me?.spectator);
   const locked = room.phase !== "playing" || Boolean(me?.answered) || Boolean(mySent) || spectator || central;
   const reveal = room.phase === "reveal";
-  const isFlag = question.kind === "flag";
 
   useEffect(() => {
     setQuery("");
@@ -346,12 +345,11 @@ function WriteRound({ room, question, me, answer, skipSong, seconds, clock, cent
             <span className="tv-quiz-marks-note">{question.category ? `${question.category} · escribe la respuesta` : "Escribe la respuesta"}</span>
           </div>
         )}
-        {!controller && room.phase !== "reveal" && !showMarks && <span className="tv-mpanel-label">Tu respuesta</span>}
         {room.phase === "countdown" && !controller && (
           <div className="tv-mwrite is-off">
             <span className="tv-mwrite-box">
               <Icon name="keyboard" size={24} />
-              <span className="tv-mwrite-ph">Escribe cuando empiece la pregunta…</span>
+              <span className="tv-mwrite-ph">Escribe tu respuesta…</span>
             </span>
           </div>
         )}
@@ -374,7 +372,7 @@ function WriteRound({ room, question, me, answer, skipSong, seconds, clock, cent
                 <input
                   ref={inputRef}
                   type="text"
-                  placeholder={isFlag ? "Escribe el país…" : "Escribe tu respuesta…"}
+                  placeholder="Escribe tu respuesta…"
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   autoComplete="off"

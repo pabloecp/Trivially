@@ -1,7 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import TvShell from "../../components/home/TvShell.jsx";
-import Confetti from "../../components/home/Confetti.jsx";
 import Icon from "../../components/home/Icon.jsx";
 import Avatar from "../../components/home/Avatar.jsx";
 import WaitingPill from "../../components/home/WaitingPill.jsx";
@@ -505,7 +504,6 @@ function GameScreen() {
               )}
               {burst && (
                 <div key={burst.key} className={`tv-mines-burst is-${burst.tone}${burst.long ? " is-long" : ""}${burst.final ? " is-final" : ""}`} role="alert">
-                  {burst.confetti && <Confetti pieces={28} />}
                   {/* The answer's card, the same as every game's, over the board. */}
                   <AnswerCard
                     icon={burst.icon}
@@ -569,7 +567,7 @@ const BURST_TONES = { ok: "ok", win: "ok", mina: "bad", tiempo: "bad" };
 function MinesVerdict({ me, question }) {
   const b = roundBurst(me, question);
   const tone = b.tone === "mina" ? "bad" : b.tone === "tiempo" ? "timeout" : "ok";
-  return <RoundVerdict tone={tone} icon={b.icon} label={b.title} points={b.points} confetti={false} />;
+  return <RoundVerdict tone={tone} icon={b.icon} label={b.title} points={b.points} />;
 }
 
 function roundBurst(me, question, live = null) {
@@ -579,7 +577,7 @@ function roundBurst(me, question, live = null) {
   const cleared = question.total > 0 && question.found >= question.total;
   if (answer?.out === "mina") return { tone: "mina", shake: true, icon: "bomb", title: "¡Pisaste una mina!", detail: hits ? `Te llevas ${hitsText(hits)}` : "Suerte en la próxima", points };
   if (answer?.out === "tiempo") return { tone: "tiempo", icon: "hourglass", title: "¡Se te acabó el tiempo!", detail: hits ? `Te llevas ${hitsText(hits)}` : "Suerte en la próxima", points };
-  if (cleared) return { tone: "win", icon: "star", title: "¡Tablero limpio!", detail: hits ? `Encontraste ${hitsText(hits)}` : "Encontraron todas las correctas", points, confetti: true, long: true };
+  if (cleared) return { tone: "win", icon: "star", title: "¡Tablero limpio!", detail: hits ? `Encontraste ${hitsText(hits)}` : "Encontraron todas las correctas", points, long: true };
   return { tone: "ok", icon: "check", title: "¡Sobreviviste!", detail: hits ? `Encontraste ${hitsText(hits)}` : "Sin aciertos esta vez", points };
 }
 
@@ -589,7 +587,7 @@ function tiebreakBurst(tiebreak, players, viewerId) {
   const nameOf = (id) => players.find((p) => p.id === id)?.name || "Jugador";
   if (tiebreak.winnerId) {
     const how = tiebreak.reason === "solo" ? "Nadie más eligió una casilla" : "Encontró la respuesta correcta";
-    if (tiebreak.winnerId === viewerId) return { tone: "win", icon: "crown", title: "¡Ganaste el desempate!", detail: how, confetti: true, final: true };
+    if (tiebreak.winnerId === viewerId) return { tone: "win", icon: "crown", title: "¡Ganaste el desempate!", detail: how, final: true };
     return { tone: "other", icon: "crown", title: `${nameOf(tiebreak.winnerId)} gana el desempate`, detail: how, final: true };
   }
   if (tiebreak.survivors) {

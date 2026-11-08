@@ -691,7 +691,7 @@ function GameScreen() {
                     ref={inputRef}
                     type="text"
                     className="tv-search-input"
-                    placeholder={lyrics ? "Escribe lo que falta…" : "Escribe el título…"}
+                    placeholder={lyrics ? "Escribe tu respuesta…" : "Escribe el título…"}
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
                     onKeyDown={handleKeyDown}

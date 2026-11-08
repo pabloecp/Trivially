@@ -401,7 +401,6 @@ function GameScreen() {
             {/* The answer's row, always as tall: "TU RESPUESTA" and, on the right, the countdown, the chosen number (or
                 year) big, or the verdict. */}
             <div className="tv-hist-slot">
-              {!controller && !reveal && <span className="tv-mpanel-label">Tu respuesta</span>}
               {phase === "countdown" && controller && <GetReady />}
               {phase === "playing" && central && <PhoneHint room={room}>Respondan desde su teléfono</PhoneHint>}
               {reveal && central && !tiebreak && (
