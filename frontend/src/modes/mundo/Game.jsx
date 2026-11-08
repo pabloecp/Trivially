@@ -364,6 +364,8 @@ function GameScreen() {
         <MatchBar
           room={room}
           viewerId={viewerId}
+          // A tiebreak's rules (who plays it, how it's won) or an error, in place of who is missing.
+          line={err || (tiebreak && phase !== "reveal" ? hint : undefined)}
           tools={
             <>
               <ReportButton room={room} onError={setErr} />
