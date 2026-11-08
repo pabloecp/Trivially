@@ -214,9 +214,8 @@
 .tv-mines-cell.is-mine { transform: translateY(var(--press)); }
 .tv-mines-cell.is-pending {
   box-shadow: 0 0 0 3px var(--tv-surface), 0 0 0 6px #ffffff;
-  animation: tvMinesPress 0.35s var(--tv-spring), tvMinesPulse 0.9s ease-in-out 0.35s infinite alternate;
+  animation: tvMinesPress 0.35s var(--tv-spring);
 }
-@keyframes tvMinesPulse { to { filter: brightness(1.25); } }
 
 /* Picked cells: green with a check, or red with a bomb, ringed in the colour of whoever picked it (white for this
    player, Game.jsx). */

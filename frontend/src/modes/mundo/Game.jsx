@@ -15,7 +15,7 @@ import "../../styles/home.css";
 import "../../styles/geo.css";
 import { PauseButton, ReportButton, SkipButton, PauseVeil } from "../../components/home/PauseControls.jsx";
 import { resolveCode } from "../../lib/hiddenCode.js";
-import { AnswerCard, MatchBar, MatchCard, MatchQuestion, RoundVerdict } from "../../components/home/MatchFrame.jsx";
+import { AnswerCard, MatchBar, MatchCard, MatchQuestion, RoundCountdown, RoundVerdict } from "../../components/home/MatchFrame.jsx";
 
 const COUNTDOWN_MS = 3000;
 // One colour per player for the pins on the reveal map (never the green and red of right and wrong).
@@ -277,8 +277,8 @@ function GameScreen() {
           <WaitingPill names={waiting} inline />
         ) : (
           <>
-            <Icon name={pinLocked ? "check" : "pin"} size={20} strokeWidth={2.6} />
-            {pinLocked ? "Pin confirmado" : "Confirmar pin"}
+            <Icon name={pinLocked ? "check" : "send"} size={20} strokeWidth={2.6} />
+            {pinLocked ? "Enviado" : "Enviar"}
           </>
         )}
       </button>
@@ -290,15 +290,7 @@ function GameScreen() {
       <div className="tv-room-main tv-game-main tv-geo-stage">
         <MatchCard
           room={room}
-          label={tiebreak ? "Desempate" : style.label}
-          icon="pin"
-          dir={
-            phase === "playing" && iPlay && !tiebreak && !pinLocked
-              ? byName
-                ? "Pon tu pin dentro del país y confírmalo · más cerca, más puntos"
-                : `Pon tu pin en el país de esta ${style.id === "sombra" ? "silueta" : "bandera"} y confírmalo · más cerca, más puntos`
-              : hint
-          }
+          tag={tiebreak ? "Desempate" : null}
           seconds={seconds}
           pct={pct}
           urgent={urgent}
@@ -312,7 +304,7 @@ function GameScreen() {
             {phase === "countdown"
               ? title
               : byName
-              ? `Encuentra ${title}`
+              ? `¿Dónde está ${title}?`
               : style.id === "sombra"
               ? "¿De qué país es esta silueta?"
               : "¿De qué país es esta bandera?"}
@@ -341,15 +333,7 @@ function GameScreen() {
                   : "Mapamundi"
               }
             >
-              {phase === "countdown" && (
-                <div className="tv-geo-countdown" aria-hidden="true">
-                  <p className="tv-mono-label tv-geo-kind-kicker">
-                    <Icon name={style.icon} size={16} strokeWidth={2.6} />
-                    {tiebreak ? "Desempate" : style.label}
-                  </p>
-                  <span key={Math.max(1, seconds)} className="tv-countdown-num">{Math.max(1, seconds)}</span>
-                </div>
-              )}
+              <RoundCountdown room={room} seconds={seconds} />
 
 
               {/* How the round went, in a card over the map: this player's, or on the central device who won a
@@ -375,12 +359,13 @@ function GameScreen() {
       </div>
 
       {/* The scoreboard is the central device's, when there is one. */}
-      {!controller && <PartyPanel room={room} scores display={central} className="tv-geo-side" status={confirmedLine(room)} />}
+      {!controller && <PartyPanel room={room} scores display={central} className="tv-geo-side" />}
       {!controller && !central && (
         <MatchBar
           room={room}
           viewerId={viewerId}
-          verb="confirmar"
+          // A tiebreak's rules (who plays it, how it's won) or an error, in place of who is missing.
+          line={err || (tiebreak && phase !== "reveal" ? hint : undefined)}
           tools={
             <>
               <ReportButton room={room} onError={setErr} />
@@ -399,12 +384,6 @@ function GameScreen() {
   );
 }
 
-// The scoreboard's pill while a round is open: "Confirmaron 2/4".
-function confirmedLine(room) {
-  if (room.phase !== "playing") return undefined;
-  const inRound = room.players.filter((p) => !p.spectator && p.connected && !p.idle && p.status !== "mirando");
-  return `Confirmaron ${inRound.filter((p) => p.answered).length}/${inRound.length}`;
-}
 
 // The country to find in a "Sombra" or "Bandera" round: its silhouette or its flag, in a card at the bottom left of the
 // map (over the Pacific in the world view, where there is nothing to look for). Both come from an address that never

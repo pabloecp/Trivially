@@ -10,7 +10,7 @@ import WaitingPill from "../../components/home/WaitingPill.jsx";
 import { ControllerBar, GetReady, PhoneHint } from "../../components/home/CentralBits.jsx";
 import { PauseButton, PauseVeil, ReportButton, SkipButton } from "../../components/home/PauseControls.jsx";
 import { resolveCode } from "../../lib/hiddenCode.js";
-import { MatchBar, MatchCard, MatchQuestion, RoundVerdict } from "../../components/home/MatchFrame.jsx";
+import { MatchBar, MatchCard, MatchQuestion, RoundCountdown, RoundVerdict } from "../../components/home/MatchFrame.jsx";
 import { useApp, useRemainingMs, useView } from "../../lib/store.jsx";
 import { MAX_CHARS, findKind, sameText } from "./farsanteInfo.js";
 import "../../styles/home.css";
@@ -195,7 +195,6 @@ function GameScreen() {
         ) : (
           <MatchCard
             room={room}
-            label={null}
             pills={
               // At the reveal, how the round went for this player, the same as every game's result.
               reveal && !central && !spectator ? (
@@ -219,13 +218,6 @@ function GameScreen() {
                 </span>
               )
             }
-            dir={
-              voting && fs?.kind === "dato"
-                ? "Dato: vota la respuesta real, no las que inventaron"
-                : hint
-                ? `${kind.label}: ${hint}`
-                : `${kind.label}: ${title}`
-            }
             seconds={seconds}
             pct={pct}
             urgent={urgent}
@@ -237,8 +229,8 @@ function GameScreen() {
         <section key={round} className={`tv-game-stage tv-fs-stage${voting || reveal ? "" : " tv-mpanel"}`}>
           <PauseVeil room={room} isHost={isHost} />
 
-          {!controller && (countdown || writing) && <span className="tv-mpanel-label">Tu respuesta</span>}
           {countdown && controller && <GetReady />}
+          {!controller && <RoundCountdown room={room} seconds={seconds} />}
 
           {writing && central && <PhoneHint room={room}>Escriban en su teléfono ({fs.written}/{players})</PhoneHint>}
           {writing && !central && !spectator && (
@@ -318,7 +310,8 @@ function GameScreen() {
           status={writing ? `Escribieron ${fs?.written || 0}/${players}` : voting ? `Votaron ${room.players.filter((p) => p.answered).length}/${players}` : undefined}
         />
       )}
-      {!controller && !central && <MatchBar room={room} viewerId={viewerId} tools={tools} verb={voting ? "votar" : "escribir"} />}
+      {/* What to do in this step ("Que parezca la verdad…", "Vota la que más te guste…"), in place of who is missing. */}
+      {!controller && !central && <MatchBar room={room} viewerId={viewerId} tools={tools} line={(writing || voting) && hint ? hint : undefined} />}
     </div>
   );
 }

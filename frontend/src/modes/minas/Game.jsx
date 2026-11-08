@@ -1,7 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import TvShell from "../../components/home/TvShell.jsx";
-import Confetti from "../../components/home/Confetti.jsx";
 import Icon from "../../components/home/Icon.jsx";
 import Avatar from "../../components/home/Avatar.jsx";
 import WaitingPill from "../../components/home/WaitingPill.jsx";
@@ -16,7 +15,7 @@ import "../../styles/quiz.css";
 import "../../styles/mines.css";
 import { PauseButton, ReportButton, SkipButton, PauseVeil } from "../../components/home/PauseControls.jsx";
 import { resolveCode } from "../../lib/hiddenCode.js";
-import { AnswerCard, MatchBar, MatchCard, MatchQuestion, RoundVerdict } from "../../components/home/MatchFrame.jsx";
+import { AnswerCard, MatchBar, MatchCard, MatchQuestion, RoundCountdown, RoundVerdict } from "../../components/home/MatchFrame.jsx";
 
 const COUNTDOWN_MS = 3000;
 const CELLS = 25;
@@ -394,16 +393,14 @@ function GameScreen() {
         ) : (
           <MatchCard
             room={room}
-            label={tiebreak ? `Desempate${tiebreak.round > 1 ? ` ${tiebreak.round}` : ""}` : "Carrera"}
-            icon="bomb"
-            dir={phase === "playing" && !tiebreak && !me?.out ? "Toca todas las casillas que cumplen · 100 por acierto, una mina y quedas fuera" : hint}
+            tag={tiebreak ? `Desempate${tiebreak.round > 1 ? ` ${tiebreak.round}` : ""}` : null}
             seconds={seconds}
             pct={pct}
             urgent={urgent}
             small
             pills={reveal && question && !tiebreak && me && !spectator && !central ? <MinesVerdict me={me} question={question} /> : null}
           >
-            <MatchQuestion>{question?.prompt || "Prepárate…"}</MatchQuestion>
+            <MatchQuestion>{question?.prompt ? minesQuestion(question.prompt) : "Prepárate…"}</MatchQuestion>
           </MatchCard>
         )}
 
@@ -493,17 +490,12 @@ function GameScreen() {
                     );
                   })
                 : Array.from({ length: size }, (_, i) => <div key={i} className="tv-mines-cell is-waiting" style={{ "--i": i }} aria-hidden="true" />)}
-              {phase === "countdown" && (
+              {phase === "countdown" && controller && (
                 <div className="tv-mines-countdown">
-                  {controller ? (
-                    <GetReady />
-                  ) : (
-                    <span key={Math.max(1, seconds)} className="tv-quiz-count" aria-label={`Empieza en ${Math.max(1, seconds)}`}>
-                      {Math.max(1, seconds)}
-                    </span>
-                  )}
+                  <GetReady />
                 </div>
               )}
+              {!controller && <RoundCountdown room={room} seconds={seconds} />}
               {/* By turns, once this player picked (or is out), who the turn still waits for, over the board. */}
               {!burst && phase === "playing" && !race && !spectator && !watching && (pickedThisTurn || out) && waitingFor.length > 0 && (
                 <div className="tv-mines-wait" role="status">
@@ -512,7 +504,6 @@ function GameScreen() {
               )}
               {burst && (
                 <div key={burst.key} className={`tv-mines-burst is-${burst.tone}${burst.long ? " is-long" : ""}${burst.final ? " is-final" : ""}`} role="alert">
-                  {burst.confetti && <Confetti pieces={28} />}
                   {/* The answer's card, the same as every game's, over the board. */}
                   <AnswerCard
                     icon={burst.icon}
@@ -551,8 +542,8 @@ function GameScreen() {
           room={room}
           viewerId={viewerId}
           tools={tools}
-          verb="elegir"
-          line={phase === "playing" && fallen.length ? `${fallen[fallen.length - 1].name} quedó fuera de esta ronda` : undefined}
+          // What the player has to know right now (an error, a mine stepped on, a tiebreak), in place of who is missing.
+          line={phase === "playing" && (err || out || tiebreak) ? hint : undefined}
         />}
     </div>
   );
@@ -564,6 +555,13 @@ function roundPoints(hits = 0) {
 }
 
 // The card over the board at the reveal: how this player's round went, and a party when the whole board was found.
+// The board's consigna as a question on the card ("Pintores" → "¿Cuáles son pintores?"); the few that already say
+// what happened ("Ocurrió en el siglo XV") become "¿Qué ocurrió en el siglo XV?".
+function minesQuestion(prompt) {
+  const text = prompt.charAt(0).toLowerCase() + prompt.slice(1);
+  return /^ocurri/.test(text) ? `¿Qué ${text}?` : `¿Cuáles son ${text}?`;
+}
+
 // The colour of the answer card's icon for each kind of burst (green, red, or the grey of the rest).
 const BURST_TONES = { ok: "ok", win: "ok", mina: "bad", tiempo: "bad" };
 
@@ -571,7 +569,7 @@ const BURST_TONES = { ok: "ok", win: "ok", mina: "bad", tiempo: "bad" };
 function MinesVerdict({ me, question }) {
   const b = roundBurst(me, question);
   const tone = b.tone === "mina" ? "bad" : b.tone === "tiempo" ? "timeout" : "ok";
-  return <RoundVerdict tone={tone} icon={b.icon} label={b.title} points={b.points} confetti={false} />;
+  return <RoundVerdict tone={tone} icon={b.icon} label={b.title} points={b.points} />;
 }
 
 function roundBurst(me, question, live = null) {
@@ -581,8 +579,8 @@ function roundBurst(me, question, live = null) {
   const cleared = question.total > 0 && question.found >= question.total;
   if (answer?.out === "mina") return { tone: "mina", shake: true, icon: "bomb", title: "¡Pisaste una mina!", detail: hits ? `Te llevas ${hitsText(hits)}` : "Suerte en la próxima", points };
   if (answer?.out === "tiempo") return { tone: "tiempo", icon: "hourglass", title: "¡Se te acabó el tiempo!", detail: hits ? `Te llevas ${hitsText(hits)}` : "Suerte en la próxima", points };
-  if (cleared) return { tone: "win", icon: "star", title: "¡Tablero limpio!", detail: hits ? `Encontraste ${hitsText(hits)}` : "Encontraron todas las correctas", points, confetti: true, long: true };
-  return { tone: "ok", icon: "check", title: "¡Sobreviviste!", detail: hits ? `Encontraste ${hitsText(hits)}` : "Sin aciertos esta vez", points, confetti: hits > 0 };
+  if (cleared) return { tone: "win", icon: "star", title: "¡Tablero limpio!", detail: hits ? `Encontraste ${hitsText(hits)}` : "Encontraron todas las correctas", points, long: true };
+  return { tone: "ok", icon: "check", title: "¡Sobreviviste!", detail: hits ? `Encontraste ${hitsText(hits)}` : "Sin aciertos esta vez", points };
 }
 
 // The card over the board at a tiebreak's reveal, for the whole room: who won it (and how), who goes on to another
@@ -591,7 +589,7 @@ function tiebreakBurst(tiebreak, players, viewerId) {
   const nameOf = (id) => players.find((p) => p.id === id)?.name || "Jugador";
   if (tiebreak.winnerId) {
     const how = tiebreak.reason === "solo" ? "Nadie más eligió una casilla" : "Encontró la respuesta correcta";
-    if (tiebreak.winnerId === viewerId) return { tone: "win", icon: "crown", title: "¡Ganaste el desempate!", detail: how, confetti: true, final: true };
+    if (tiebreak.winnerId === viewerId) return { tone: "win", icon: "crown", title: "¡Ganaste el desempate!", detail: how, final: true };
     return { tone: "other", icon: "crown", title: `${nameOf(tiebreak.winnerId)} gana el desempate`, detail: how, final: true };
   }
   if (tiebreak.survivors) {

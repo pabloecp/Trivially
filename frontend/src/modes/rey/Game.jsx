@@ -3,7 +3,6 @@ import { useNavigate, useParams } from "react-router-dom";
 import TvShell from "../../components/home/TvShell.jsx";
 import Avatar from "../../components/home/Avatar.jsx";
 import Blob from "../../components/home/Blob.jsx";
-import Confetti from "../../components/home/Confetti.jsx";
 import Icon from "../../components/home/Icon.jsx";
 import MatchResults from "../../components/home/MatchResults.jsx";
 import PartyPanel from "../../components/home/PartyPanel.jsx";
@@ -12,7 +11,7 @@ import WaitingPill from "../../components/home/WaitingPill.jsx";
 import { ControllerBar, GetReady, PhoneHint } from "../../components/home/CentralBits.jsx";
 import { PauseButton, PauseVeil, ReportButton, SkipButton } from "../../components/home/PauseControls.jsx";
 import { resolveCode } from "../../lib/hiddenCode.js";
-import { AnswerCard, MatchBar, MatchCard, MatchQuestion, RoundVerdict, topicIcon } from "../../components/home/MatchFrame.jsx";
+import { AnswerCard, MatchBar, MatchCard, MatchQuestion, RoundVerdict } from "../../components/home/MatchFrame.jsx";
 import { useApp, useRemainingMs, useView } from "../../lib/store.jsx";
 import { findDifficulty, pointsText, reyConfig } from "./reyInfo.js";
 import "../../styles/home.css";
@@ -268,21 +267,12 @@ function GameScreen() {
         ) : (
           <MatchCard
             room={room}
-            label={!picking && question ? question.category : "El rey elige"}
-            icon={!picking && question ? topicIcon(question.category) : "crown"}
             pills={
               reveal && question && !central && !spectator ? (
                 <ReyVerdict me={me} rey={rey} youWon={youWon} youAreRoundKing={youAreRoundKing} />
               ) : (
                 !picking && question && <span className="tv-qc-pill is-dark">{level.label} · {pointsText(level.points)}</span>
               )
-            }
-            dir={
-              playing && !youAreRoundKing
-                ? "Abiertas: acierta primero y quítale la corona; si nadie acierta, puntos para el rey"
-                : picking
-                ? hint
-                : [title, hint].filter(Boolean).join(" · ")
             }
             seconds={seconds}
             pct={pct}
@@ -305,7 +295,6 @@ function GameScreen() {
           <div className="tv-rey-answerbox">
             {reveal && question && (
               <>
-                {rey.dethronedBy && <Confetti pieces={22} />}
                 {/* The answer takes the place of the box to write in, the same card as every game's. */}
                 <AnswerCard
                   label="La respuesta"
@@ -371,7 +360,6 @@ function GameScreen() {
           scores
           display={central}
           onToast={setErr}
-          status={`En juego: ${room.players.filter((p) => !p.spectator && p.connected).length}`}
         />
       )}
       {!controller && !central && (
@@ -379,7 +367,8 @@ function GameScreen() {
           room={room}
           viewerId={viewerId}
           tools={tools}
-          line={playing && roundKing ? `Nadie le ha quitado la corona a ${viewerId === roundKing.id ? "ti" : roundKing.name} todavía` : undefined}
+          // While the king picks, and for the king while the others answer: what happens now.
+          line={picking || (playing && youAreRoundKing) ? hint : undefined}
         />
       )}
     </div>
@@ -391,7 +380,7 @@ function ReyVerdict({ me, rey, youWon, youAreRoundKing }) {
   if (youWon) return <RoundVerdict tone="ok" icon="crown" label="¡Ahora eres el rey!" points={me?.lastPoints || null} />;
   if (youAreRoundKing && rey.survived) return <RoundVerdict tone="ok" icon="crown" label="Sigues de rey" points={rey.points || null} />;
   if (youAreRoundKing && rey.dethronedBy) return <RoundVerdict tone="bad" icon="crown" label="Perdiste la corona" />;
-  if (me?.lastAnswer?.correct) return <RoundVerdict tone="ok" label="¡Correcto!" points={me?.lastPoints || null} confetti={false} />;
+  if (me?.lastAnswer?.correct) return <RoundVerdict tone="ok" label="¡Correcto!" points={me?.lastPoints || null} />;
   if (me?.lastAnswer?.text) return <RoundVerdict tone="bad" label="Incorrecto" />;
   return <RoundVerdict tone="timeout" label="Sin respuesta" />;
 }

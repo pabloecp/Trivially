@@ -26,9 +26,9 @@ export const GAME_MODES = [
     id: "opciones",
     name: "Trivia",
     // Under its name on its card in "¿Qué quieren jugar?".
-    tagline: "Más rápido, más puntos",
+    tagline: "Acierta rápido",
     // Under its name on Inicio's card: what the game is, in one or two lines.
-    description: "Responde preguntas de todo tipo. Cuanto más rápido aciertas, más puntos sumas.",
+    description: "Responde preguntas de todos los temas.",
     kind: "main",
     // Sky blue (styles/quiz.css); its answers have their own four colours.
     color: "quiz",
@@ -46,8 +46,8 @@ export const GAME_MODES = [
   {
     id: "musica",
     name: "Adivina la canción",
-    tagline: "Escucha y adivina el título",
-    description: "Suena un fragmento de una canción: adivina cuál es antes que los demás.",
+    tagline: "Acierta rápido",
+    description: "Escucha la canción y adivina el título o la letra.",
     kind: "extra",
     color: "music",
     icon: "music",
@@ -68,8 +68,8 @@ export const GAME_MODES = [
   {
     id: "mundo",
     name: "Encuentra el país",
-    tagline: "Ponle tu pin en el mapa",
-    description: "Mira qué país te piden y ponle tu pin en el mapa. Cuanto más cerca, más puntos.",
+    tagline: "El pin más cercano gana",
+    description: "Busca el país en el mapa y ponle tu pin.",
     kind: "extra",
     color: "world",
     icon: "globe",
@@ -88,8 +88,8 @@ export const GAME_MODES = [
     // Rango: get as close as you can on a range. Its steps are general, in case it gets other ways of playing. The id is the old one on purpose (see GAME_IDS on the server).
     id: "historia",
     name: "Rango",
-    tagline: "Más cerca, más puntos",
-    description: "Mueve la barra hasta la cifra real. Exacto vale 1000; cuanto más cerca, más puntos.",
+    tagline: "El más cercano gana",
+    description: "Adivina la cifra o el año moviendo la barra.",
     kind: "extra",
     // Terracotta (styles/history.css).
     color: "history",
@@ -108,8 +108,8 @@ export const GAME_MODES = [
   {
     id: "minas",
     name: "Campo de minas",
-    tagline: "No pises la mina",
-    description: "Toca todas las casillas que cumplen la consigna. Si pisas una mina, quedas fuera.",
+    tagline: "Acierta sin pisar minas",
+    description: "Toca solo las casillas que cumplen la consigna.",
     kind: "extra",
     // The site's violet (styles/mines.css).
     color: "mines",
@@ -126,8 +126,8 @@ export const GAME_MODES = [
     // Lluvia: questions fall down the screen for a whole round; each one is for whoever writes its answer first.
     id: "lluvia",
     name: "Lluvia",
-    tagline: "Las preguntas caen",
-    description: "Las preguntas caen por la pantalla: escribe la respuesta antes que nadie y te la llevas.",
+    tagline: "Responde primero",
+    description: "Escribe la respuesta de lo que va cayendo.",
     kind: "extra",
     // Rain blue (styles/rain.css); the questions fall in green, yellow or red by difficulty.
     color: "rain",
@@ -150,8 +150,8 @@ export const GAME_MODES = [
     // Rey de la colina: the king picks the question, the first to answer it takes the crown.
     id: "rey",
     name: "Rey de la colina",
-    tagline: "Destrona al rey",
-    description: "El rey elige la pregunta. Acierta antes que los demás y le quitas la corona.",
+    tagline: "Quédate con la corona",
+    description: "Responde antes que nadie para ser el rey.",
     kind: "extra",
     // Crown gold (styles/rey.css).
     color: "rey",
@@ -175,8 +175,8 @@ export const GAME_MODES = [
     // Farsante: everyone invents an answer, then votes for the real one (or the best one); a game for a call with friends.
     id: "farsante",
     name: "Farsante",
-    tagline: "Inventa y engaña",
-    description: "Cada uno inventa una respuesta falsa. Vota la verdadera y engaña a los demás con la tuya.",
+    tagline: "Engaña y acierta",
+    description: "Inventa una respuesta falsa y adivina la real.",
     kind: "extra",
     // Leafy green (styles/farsante.css).
     color: "farsante",
