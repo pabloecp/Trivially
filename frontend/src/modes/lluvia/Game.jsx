@@ -544,8 +544,8 @@ function GameScreen() {
       </div>
 
       {/* The scoreboard is the central device's, when there is one. */}
-      {!controller && <PartyPanel room={room} scores display={central} onToast={setErr} status={`Ronda ${round + 1}`} />}
-      {!controller && !central && <MatchBar room={room} viewerId={viewerId} tools={tools} line={phase === "playing" ? "" : undefined} />}
+      {!controller && <PartyPanel room={room} scores display={central} onToast={setErr} status={phase === "playing" ? `Acertaron ${room.players.filter((p) => !p.spectator && (p.hits || 0) > 0).length}/${room.players.filter((p) => !p.spectator).length}` : undefined} />}
+      {!controller && !central && <MatchBar room={room} viewerId={viewerId} tools={tools} line={phase === "playing" ? "Respondan antes que nadie" : undefined} />}
     </div>
   );
 }
