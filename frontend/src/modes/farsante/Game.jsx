@@ -310,7 +310,8 @@ function GameScreen() {
           status={writing ? `Escribieron ${fs?.written || 0}/${players}` : voting ? `Votaron ${room.players.filter((p) => p.answered).length}/${players}` : undefined}
         />
       )}
-      {!controller && !central && <MatchBar room={room} viewerId={viewerId} tools={tools} />}
+      {/* What to do in this step ("Que parezca la verdad…", "Vota la que más te guste…"), in place of who is missing. */}
+      {!controller && !central && <MatchBar room={room} viewerId={viewerId} tools={tools} line={(writing || voting) && hint ? hint : undefined} />}
     </div>
   );
 }

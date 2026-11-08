@@ -367,6 +367,8 @@ function GameScreen() {
           room={room}
           viewerId={viewerId}
           tools={tools}
+          // While the king picks, and for the king while the others answer: what happens now.
+          line={picking || (playing && youAreRoundKing) ? hint : undefined}
         />
       )}
     </div>
