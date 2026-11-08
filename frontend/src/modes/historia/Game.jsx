@@ -340,8 +340,8 @@ function GameScreen() {
           <WaitingPill names={waiting} inline />
         ) : (
           <>
-            <Icon name="check" size={20} strokeWidth={2.6} />
-            {confirmed ? words.done : "Fijar respuesta"}
+            <Icon name={confirmed ? "check" : "send"} size={20} strokeWidth={2.6} />
+            {confirmed ? "Enviado" : "Enviar"}
           </>
         )}
       </button>
@@ -483,18 +483,12 @@ function GameScreen() {
       </div>
 
       {/* The scoreboard is the central device's, when there is one. */}
-      {!controller && <PartyPanel room={room} scores display={central} onToast={setErr} status={fixedLine(room)} />}
-      {!controller && !central && <MatchBar room={room} viewerId={viewerId} tools={tools} verb="fijar" />}
+      {!controller && <PartyPanel room={room} scores display={central} onToast={setErr} />}
+      {!controller && !central && <MatchBar room={room} viewerId={viewerId} tools={tools} />}
     </div>
   );
 }
 
-// The scoreboard's pill while a round is open: "Fijaron 2/4".
-function fixedLine(room) {
-  if (room.phase !== "playing") return undefined;
-  const inRound = room.players.filter((p) => !p.spectator && p.connected && !p.idle && p.status !== "mirando");
-  return `Fijaron ${inRound.filter((p) => p.answered).length}/${inRound.length}`;
-}
 
 // At the reveal, with more than one player: who came closest this round (or got the exact year or number).
 function closestText(room, fmt, isNum) {

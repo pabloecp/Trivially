@@ -549,8 +549,6 @@ function GameScreen() {
           room={room}
           viewerId={viewerId}
           tools={tools}
-          verb="elegir"
-          line={phase === "playing" && fallen.length ? `${fallen[fallen.length - 1].name} quedó fuera de esta ronda` : undefined}
         />}
     </div>
   );

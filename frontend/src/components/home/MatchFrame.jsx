@@ -159,16 +159,16 @@ export function MatchQuestion({ children }) {
   );
 }
 
-/** "Falta Lynz por responder", "Faltan Pablo y Lynz por confirmar", "Faltan 3 por responder" (you by your name too).
- * `verb` is the game's ("responder", "confirmar", "fijar", "votar"…). */
-function missingLine(room, verb) {
+/** "Falta Lynz por responder", "Faltan Pablo y Lynz por responder", "Faltan 3 por responder" (you by your name too):
+ * the same words in every game. */
+function missingLine(room) {
   if (room.phase === "countdown") return "Prepárense: la ronda empieza en un momento";
   if (room.phase === "reveal") return "Mira cómo les fue a todos";
   if (room.phase !== "playing") return "";
   const names = waitingNames(room, null);
   if (!names.length) return "Ya respondieron todos";
-  if (names.length > 2) return `Faltan ${names.length} por ${verb}`;
-  return `${names.length === 1 ? "Falta" : "Faltan"} ${joinNames(names)} por ${verb}`;
+  if (names.length > 2) return `Faltan ${names.length} por responder`;
+  return `${names.length === 1 ? "Falta" : "Faltan"} ${joinNames(names)} por responder`;
 }
 
 /**
@@ -176,9 +176,9 @@ function missingLine(room, verb) {
  * and the match's tools (Reportar, Saltar, Pausar, Terminar: `tools`). `line` replaces the waiting line for a
  * game that says it its own way.
  */
-export function MatchBar({ room, viewerId, tools, verb = "responder", line }) {
+export function MatchBar({ room, viewerId, tools, line }) {
   const players = room.players.filter((p) => !p.spectator);
-  const text = line ?? missingLine(room, verb);
+  const text = line ?? missingLine(room);
   return (
     <div className="tv-mbar">
       <div className="tv-mbar-who">

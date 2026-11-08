@@ -277,8 +277,8 @@ function GameScreen() {
           <WaitingPill names={waiting} inline />
         ) : (
           <>
-            <Icon name={pinLocked ? "check" : "pin"} size={20} strokeWidth={2.6} />
-            {pinLocked ? "Pin confirmado" : "Confirmar pin"}
+            <Icon name={pinLocked ? "check" : "send"} size={20} strokeWidth={2.6} />
+            {pinLocked ? "Enviado" : "Enviar"}
           </>
         )}
       </button>
@@ -367,12 +367,11 @@ function GameScreen() {
       </div>
 
       {/* The scoreboard is the central device's, when there is one. */}
-      {!controller && <PartyPanel room={room} scores display={central} className="tv-geo-side" status={confirmedLine(room)} />}
+      {!controller && <PartyPanel room={room} scores display={central} className="tv-geo-side" />}
       {!controller && !central && (
         <MatchBar
           room={room}
           viewerId={viewerId}
-          verb="confirmar"
           tools={
             <>
               <ReportButton room={room} onError={setErr} />
@@ -391,12 +390,6 @@ function GameScreen() {
   );
 }
 
-// The scoreboard's pill while a round is open: "Confirmaron 2/4".
-function confirmedLine(room) {
-  if (room.phase !== "playing") return undefined;
-  const inRound = room.players.filter((p) => !p.spectator && p.connected && !p.idle && p.status !== "mirando");
-  return `Confirmaron ${inRound.filter((p) => p.answered).length}/${inRound.length}`;
-}
 
 // The country to find in a "Sombra" or "Bandera" round: its silhouette or its flag, in a card at the bottom left of the
 // map (over the Pacific in the world view, where there is nothing to look for). Both come from an address that never

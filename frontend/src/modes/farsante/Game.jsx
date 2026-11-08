@@ -310,7 +310,7 @@ function GameScreen() {
           status={writing ? `Escribieron ${fs?.written || 0}/${players}` : voting ? `Votaron ${room.players.filter((p) => p.answered).length}/${players}` : undefined}
         />
       )}
-      {!controller && !central && <MatchBar room={room} viewerId={viewerId} tools={tools} verb={voting ? "votar" : "escribir"} />}
+      {!controller && !central && <MatchBar room={room} viewerId={viewerId} tools={tools} />}
     </div>
   );
 }
