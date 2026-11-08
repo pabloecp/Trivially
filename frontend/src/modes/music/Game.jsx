@@ -530,19 +530,8 @@ function GameScreen() {
         ) : (
           <MatchCard
             room={room}
-            label={`${lyrics ? "Letra" : "Título"} · ${closed ? "Cerradas" : "Abiertas"}`}
-            icon="music"
             small={Boolean(lyrics)}
             mark={cutMark}
-            dir={
-              lyrics
-                ? closed
-                  ? "La canción se corta: elige la palabra que completa la letra"
-                  : "La canción se corta: escribe la palabra que completa la letra"
-                : closed
-                ? "Escucha el fragmento y elige qué canción es · más rápido, más puntos"
-                : "Escucha el fragmento y escribe su título · más rápido, más puntos"
-            }
             seconds={seconds}
             pct={pct}
             urgent={urgent}

@@ -394,9 +394,7 @@ function GameScreen() {
         ) : (
           <MatchCard
             room={room}
-            label={tiebreak ? `Desempate${tiebreak.round > 1 ? ` ${tiebreak.round}` : ""}` : "Carrera"}
-            icon="bomb"
-            dir={phase === "playing" && !tiebreak && !me?.out ? "Toca todas las casillas que cumplen · 100 por acierto, una mina y quedas fuera" : hint}
+            tag={tiebreak ? `Desempate${tiebreak.round > 1 ? ` ${tiebreak.round}` : ""}` : null}
             seconds={seconds}
             pct={pct}
             urgent={urgent}
