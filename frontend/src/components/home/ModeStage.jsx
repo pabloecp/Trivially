@@ -20,8 +20,8 @@ import { statusOf } from "./FriendsSheet.jsx";
 //    privada") over the game's name (always one line); under them three short lines: how it's played (the game's
 //    tagline), the match's settings (`settings.summary`, a private match's only once they're its own) and, last, how
 //    many are playing the game now; in a private match that last line is the "Ajustes" button (`settings.onOpen`) or
-//    who chooses them (`settings.note`). The search for a public match has its rows of how it goes there instead (`steps`:
-//    "1:04 buscando"…). The game's icon, big and faint, is cut by the corner.
+//    who chooses them (`settings.note`). While a public match is searched for, everything under the name is the search
+//    (`search`, SearchBoard: its seats with who has come). The game's icon, big and faint, is cut by the corner.
 //  - Beside it: "Elo en" the game ("Tu elo" before one is chosen) with your character (Blob, white with a black line) in
 //    its empty side; then, on phones only, the "Reto del día" (wide screens have the challenge in the bar below); last,
 //    one box for your people (SocialBox, not on phones): the title "Tu grupo" always on top, you and who is with you,
@@ -35,7 +35,7 @@ import { statusOf } from "./FriendsSheet.jsx";
 // sweeping across it again while its lines come in anew.
 const AUDIENCE_ICONS = { publica: "globe", grupo: "lock" };
 
-export default function ModeStage({ mode, room = null, audience = null, title = null, steps = null, extra = null, settings = null, swapKey = null, children }) {
+export default function ModeStage({ mode, room = null, audience = null, title = null, search = null, extra = null, settings = null, swapKey = null, children }) {
   const classic = mode.kind === "classic";
   const who = audience || (room ? (room.matchmaking ? "publica" : "grupo") : null);
   const key = swapKey ?? `${mode.id}:${who}`;
@@ -45,7 +45,7 @@ export default function ModeStage({ mode, room = null, audience = null, title = 
 
   return (
     <section className="tv-stage has-aside" aria-label={mode.name}>
-      <div className={`tv-stage-card ${classic ? "is-classic" : `tv-c-${mode.color}`}${swapKey != null ? " has-swap" : ""}`}>
+      <div className={`tv-stage-card ${classic ? "is-classic" : `tv-c-${mode.color}`}${swapKey != null ? " has-swap" : ""}${search ? " is-searching" : ""}`}>
         <span key={`flash-${key}`} className="tv-mstage-flash" aria-hidden="true" />
         {!classic && (
           <span className="tv-stage-mark" aria-hidden="true">
@@ -74,70 +74,61 @@ export default function ModeStage({ mode, room = null, audience = null, title = 
           </div>
           {extra}
         </div>
-        {mode.description && (
-          <p key={`intro-${key}`} className="tv-stage-intro">
-            {mode.description}
-          </p>
-        )}
+        {search || (
+          <>
+            {mode.description && (
+              <p key={`intro-${key}`} className="tv-stage-intro">
+                {mode.description}
+              </p>
+            )}
 
-        <div className="tv-stage-bottom">
-        <ul key={`lines-${key}`} className="tv-stage-lines">
-          {steps ? (
-            steps.map((step, i) => (
-              <li key={i} style={{ "--i": i }}>
-                <span className="tv-stage-line-icon">
-                  <Icon name={step.icon} size={20} strokeWidth={2.4} />
-                </span>
-                {step.text}
-              </li>
-            ))
-          ) : (
-            <>
-              {how && (
-                <li style={{ "--i": 0 }}>
-                  <span className="tv-stage-line-icon">
-                    <Icon name={classic ? "star" : mode.icon} size={20} strokeWidth={2.4} />
-                  </span>
-                  {how}
-                </li>
-              )}
-              {settings?.summary && (
-                <li style={{ "--i": 1 }}>
-                  <span className="tv-stage-line-icon">
-                    <Icon name="sliders" size={20} strokeWidth={2.4} />
-                  </span>
-                  <span className="tv-stage-line-text">{settings.summary}</span>
-                </li>
-              )}
-              {settings?.onOpen ? (
-                // A private match: its settings, where a public one says how many are playing.
-                <li style={{ "--i": 2 }}>
-                  <button type="button" className="tv-stage-settings" aria-haspopup="dialog" disabled={settings.disabled} onClick={settings.onOpen}>
-                    <Icon name="sliders" size={18} strokeWidth={2.4} />
-                    Ajustes
-                  </button>
-                </li>
-              ) : settings?.note ? (
-                <li style={{ "--i": 2 }}>
-                  <span className="tv-stage-line-icon">
-                    <Icon name="lock" size={18} strokeWidth={2.6} />
-                  </span>
-                  {settings.note}
-                </li>
-              ) : stats && (
-                <li style={{ "--i": 2 }}>
-                  <span className="tv-stage-line-icon">
-                    <span className="tv-stage-live" aria-hidden="true" />
-                  </span>
-                  <span>
-                    <b>{stats.online.toLocaleString("es-ES")}</b> jugando ahora
-                  </span>
-                </li>
-              )}
-            </>
-          )}
-        </ul>
-        </div>
+            <div className="tv-stage-bottom">
+              <ul key={`lines-${key}`} className="tv-stage-lines">
+                {how && (
+                  <li style={{ "--i": 0 }}>
+                    <span className="tv-stage-line-icon">
+                      <Icon name={classic ? "star" : mode.icon} size={20} strokeWidth={2.4} />
+                    </span>
+                    {how}
+                  </li>
+                )}
+                {settings?.summary && (
+                  <li style={{ "--i": 1 }}>
+                    <span className="tv-stage-line-icon">
+                      <Icon name="sliders" size={20} strokeWidth={2.4} />
+                    </span>
+                    <span className="tv-stage-line-text">{settings.summary}</span>
+                  </li>
+                )}
+                {settings?.onOpen ? (
+                  // A private match: its settings, where a public one says how many are playing.
+                  <li style={{ "--i": 2 }}>
+                    <button type="button" className="tv-stage-settings" aria-haspopup="dialog" disabled={settings.disabled} onClick={settings.onOpen}>
+                      <Icon name="sliders" size={18} strokeWidth={2.4} />
+                      Ajustes
+                    </button>
+                  </li>
+                ) : settings?.note ? (
+                  <li style={{ "--i": 2 }}>
+                    <span className="tv-stage-line-icon">
+                      <Icon name="lock" size={18} strokeWidth={2.6} />
+                    </span>
+                    {settings.note}
+                  </li>
+                ) : stats && (
+                  <li style={{ "--i": 2 }}>
+                    <span className="tv-stage-line-icon">
+                      <span className="tv-stage-live" aria-hidden="true" />
+                    </span>
+                    <span>
+                      <b>{stats.online.toLocaleString("es-ES")}</b> jugando ahora
+                    </span>
+                  </li>
+                )}
+              </ul>
+            </div>
+          </>
+        )}
         {children}
       </div>
 

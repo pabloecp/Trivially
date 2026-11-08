@@ -126,6 +126,8 @@ function GameScreen() {
   const burstTimer = useRef(null);
   const outShown = useRef(null);
   const othersOut = useRef({ round: null, ids: new Set() });
+  const [notice, setNotice] = useState(null);
+  const noticeTimer = useRef(null);
   function showBurst(next, ms) {
     clearTimeout(burstTimer.current);
     setBurst(next);
@@ -161,19 +163,13 @@ function GameScreen() {
     const fresh = fallen.filter((p) => !othersOut.current.ids.has(p.id));
     fresh.forEach((p) => othersOut.current.ids.add(p.id));
     if (!fresh.length || phase !== "playing") return;
-    setBurst((current) => {
-      if (current?.mine) return current;
-      clearTimeout(burstTimer.current);
-      burstTimer.current = setTimeout(() => setBurst(null), 1800);
-      return {
-        key: `${round}:${fresh.map((p) => p.id).join(",")}`,
-        tone: "other",
-        icon: "bomb",
-        title: fresh.length === 1 ? `${fresh[0].name} pisó una mina` : `${joinNames(fresh.map((p) => p.name))} pisaron una mina`,
-        detail: fresh.length === 1 ? "Queda fuera de esta ronda" : "Quedan fuera de esta ronda",
-      };
-    });
+    // Only a notice: it takes the place of the top card's last line for a moment, nothing over the board.
+    clearTimeout(noticeTimer.current);
+    setNotice(fresh.length === 1 ? `${fresh[0].name} pisó una mina` : `${joinNames(fresh.map((p) => p.name))} pisaron una mina`);
+    noticeTimer.current = setTimeout(() => setNotice(null), 2200);
   }, [fallenKey, round, phase]);
+  useEffect(() => () => clearTimeout(noticeTimer.current), []);
+  useEffect(() => setNotice(null), [round, phase]);
   useEffect(() => {
     if (phase !== "reveal") {
       if (phase !== "playing") setBurst(null);
