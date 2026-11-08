@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { useApp } from "../../lib/store.jsx";
-import { setBlobStyle, setBlobsStill, useBlobsStillChoice, setForcedGames, setOwnerView, useBlobStyleChoice, setResultsStyle, setResultsTone, setScoreboardBadge, setScoreboardLook, useForcedGames, useOwnerView, useResultsChoice, useScoreboardBadgeChoice, useScoreboardChoice } from "../../lib/ownerView.js";
+import { setBlobStyle, setBlobsStill, useBlobsStillChoice, setForcedGames, setOwnerView, useBlobStyleChoice, setResultsStyle, setResultsTone, setScoreboardBadge, setScoreboardLook, setLyricsView, useLyricsViewChoice, useForcedGames, useOwnerView, useResultsChoice, useScoreboardBadgeChoice, useScoreboardChoice } from "../../lib/ownerView.js";
 import { findMode } from "../../modes/index.js";
 import Icon from "./Icon.jsx";
 import Segmented from "./Segmented.jsx";
@@ -25,6 +25,7 @@ export default function AdminPanel({ open, onClose }) {
   const results = useResultsChoice();
   const scoreboard = useScoreboardChoice();
   const badge = useScoreboardBadgeChoice();
+  const lyricsView = useLyricsViewChoice();
   const [mounted, setMounted] = useState(open);
   const [msg, setMsg] = useState("");
   const [busy, setBusy] = useState(false);
@@ -257,6 +258,21 @@ export default function AdminPanel({ open, onClose }) {
                   />
                 )}
                 <p className="tv-admin-hint">Los juegos ganados en una partida pública. Los jugadores ven «Insignia» con corona.</p>
+              </div>
+
+              {/* Adivina la canción · Letra with Cerradas: more lyrics, or options as big as Trivia's (lib/ownerView.js). */}
+              <div className="tv-admin-block is-half">
+                <h3>Letra (Cerradas)</h3>
+                <Segmented
+                  label="Letra (Cerradas)"
+                  value={lyricsView}
+                  onChange={setLyricsView}
+                  options={[
+                    { value: "normal", label: "Normal" },
+                    { value: "grandes", label: "Opciones grandes" },
+                  ]}
+                />
+                <p className="tv-admin-hint">«Opciones grandes»: las 4 opciones del tamaño de las de Trivia, con menos letra a la vista. Los jugadores ven «Normal».</p>
               </div>
         </div>
       </section>

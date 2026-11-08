@@ -60,6 +60,15 @@ const STILL_KEY = "trivially_blobs_still";
 export const setBlobsStill = (still) => write(STILL_KEY, still ? "1" : "0");
 export const useBlobsStillChoice = () => useSyncExternalStore(subscribe, () => read(STILL_KEY, "0") === "1", () => false);
 
+// Adivina la canción · Letra with Cerradas: everyone sees "normal" (three lines of lyrics over the options); an owner,
+// in debug view, can try "grandes" (only the last two lines, so the four options are as big as Trivia's), from the
+// admin panel. Only on this device.
+const LYRICS_VIEW_KEY = "trivially_lyrics_view";
+const getLyricsView = () => (read(LYRICS_VIEW_KEY, "normal") === "grandes" ? "grandes" : "normal");
+export const setLyricsView = (view) => write(LYRICS_VIEW_KEY, view === "grandes" ? "grandes" : "normal");
+/** The admin panel's own choice, whatever the view. */
+export const useLyricsViewChoice = () => useSyncExternalStore(subscribe, getLyricsView, () => "normal");
+
 /** Whether this account is an owner. */
 export function useIsOwner() {
   const { user } = useApp();
@@ -166,6 +175,13 @@ export function useBlobStyle() {
   const debug = useOwnerDebug();
   const style = useBlobStyleChoice();
   return debug ? style : "sombra";
+}
+
+/** Letra with Cerradas on this screen: the owner's choice in debug view, "normal" for everyone else. */
+export function useLyricsView() {
+  const debug = useOwnerDebug();
+  const choice = useLyricsViewChoice();
+  return debug ? choice : "normal";
 }
 
 /** Whether the Blobs stay still on this screen: only for an owner who turned on "Reducir movimiento". */
