@@ -1,17 +1,18 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import TvShell from "../../components/home/TvShell.jsx";
+import Confetti from "../../components/home/Confetti.jsx";
 import Icon from "../../components/home/Icon.jsx";
 import MatchResults from "../../components/home/MatchResults.jsx";
 import PartyPanel from "../../components/home/PartyPanel.jsx";
 import SpectatorBanner from "../../components/home/SpectatorBanner.jsx";
 import { ControllerBar, GetReady, PhoneHint, joinNames } from "../../components/home/CentralBits.jsx";
-import { AnswerCard, MatchBar, MatchCard, MatchQuestion, RoundCountdown, RoundVerdict } from "../../components/home/MatchFrame.jsx";
+import { AnswerCard, MatchBar, MatchCard, MatchQuestion, RoundVerdict } from "../../components/home/MatchFrame.jsx";
 import { PauseButton, PauseVeil, SkipButton } from "../../components/home/PauseControls.jsx";
 import { resolveCode } from "../../lib/hiddenCode.js";
 import { useApp, useRemainingMs, useView } from "../../lib/store.jsx";
 import { play } from "../../lib/sounds.js";
-import { findDifficulty, hitsText, pointsText, rainConfig } from "./rainInfo.js";
+import { DIFFICULTIES, findDifficulty, hitsText, pointsText, rainConfig } from "./rainInfo.js";
 import "../../styles/home.css";
 import "../../styles/quiz.css";
 import "../../styles/rain.css";
@@ -191,7 +192,7 @@ function AnswerBox({ room, open, inputRef, onResult }) {
           ref={inputRef}
           type="text"
           placeholder={
-            open ? "Escribe tu respuesta…" : room.paused ? "En pausa" : room.phase === "reveal" ? "Fin de la ronda" : "Escribe tu respuesta…"
+            open ? "Tu respuesta…" : room.paused ? "En pausa" : room.phase === "reveal" ? "Fin de la ronda" : "Prepárate…"
           }
           value={text}
           onChange={(e) => setText(e.target.value)}
@@ -228,10 +229,10 @@ function roundBurst(room, question, viewerId) {
   if (!winners.length) return { tone: "none", icon: "rain", title: "Nadie sumó puntos", detail: "¡Que no se escapen en la próxima!" };
   if (winners.length > 1) {
     const iWon = winners.some((p) => p.id === viewerId);
-    return { tone: iWon ? "win" : "tie", icon: "crown", title: iWon ? "¡Empate en cabeza!" : "¡Empate!", detail: `${joinNames(winners.map((p) => p.name))}, con ${best}` };
+    return { tone: iWon ? "win" : "tie", icon: "crown", title: iWon ? "¡Empate en cabeza!" : "¡Empate!", detail: `${joinNames(winners.map((p) => p.name))}, con ${best}`, confetti: iWon };
   }
   const [winner] = winners;
-  if (winner.id === viewerId) return { tone: "win", icon: "crown", title: "¡Ganaste la ronda!", detail: `Con ${best}` };
+  if (winner.id === viewerId) return { tone: "win", icon: "crown", title: "¡Ganaste la ronda!", detail: `Con ${best}`, confetti: true };
   return { tone: "other", icon: "crown", title: `${winner.name} ganó la ronda`, detail: mine || `Con ${best}` };
 }
 
@@ -363,11 +364,11 @@ function GameScreen() {
   if (phase === "countdown") title = "¡Prepárate, va a llover!";
   else if (central) title = "¡Escriban las respuestas!";
   else if (spectator) title = "Estás viendo la partida";
-  else title = "Responde cualquier pregunta antes que nadie";
+  else title = "Responde lo que cae antes que nadie";
   const outcomeTone = { win: "ok", tie: "ok", other: "timeout", none: "timeout" };
   const cardPills =
     reveal && outcome && canWrite ? (
-      <RoundVerdict tone={outcomeTone[outcome.tone] || "timeout"} icon={outcome.icon} label={outcome.title} points={myPoints} />
+      <RoundVerdict tone={outcomeTone[outcome.tone] || "timeout"} icon={outcome.icon} label={outcome.title} points={myPoints} confetti={false} />
     ) : canWrite && phase === "playing" ? (
       <span className="tv-qc-points" role="status" aria-label={`${pointsText(myPoints)} en esta ronda`}>
         {pointsText(myPoints)}
@@ -428,16 +429,30 @@ function GameScreen() {
       <span>{hint}</span>
     </p>
   );
-  // Before the round: the same countdown as every game (the number alone); a phone beside the central device gets ready.
-  const countdown = phase === "countdown" && (controller ? (
+  const levels = rainConfig(room).difficulties;
+  const countdown = phase === "countdown" && (
     <div className="tv-rain-countdown">
-      <GetReady />
+      {controller ? (
+        <GetReady />
+      ) : (
+        <>
+          <span key={Math.max(1, seconds)} className="tv-quiz-count" aria-label={`Empieza en ${Math.max(1, seconds)}`}>
+            {Math.max(1, seconds)}
+          </span>
+          <span className="tv-rain-legend" aria-hidden="true">
+            {DIFFICULTIES.filter((d) => levels.includes(d.id)).map((d) => (
+              <span key={d.id} className={`tv-rain-legend-chip is-${d.id}`}>
+                {d.label} <strong>+{d.points}</strong>
+              </span>
+            ))}
+          </span>
+        </>
+      )}
     </div>
-  ) : (
-    <RoundCountdown room={room} seconds={seconds} />
-  ));
+  );
   const burstCard = burst && (
     <div key={burst.key} className={`tv-mines-burst tv-rain-burst is-${burst.tone}`} role="alert">
+      {burst.confetti && <Confetti pieces={28} />}
       {/* The answer's card, the same as every game's, over the rain. */}
       <AnswerCard
         icon={burst.icon}
@@ -459,7 +474,7 @@ function GameScreen() {
           </ControllerBar>
         ) : (
           // The small card of the games played on a board: the round, its points and the question; the clock under it.
-          <MatchCard room={room} small pills={cardPills} seconds={seconds} pct={pct} urgent={urgent}>
+          <MatchCard room={room} label={`Ronda ${round + 1}`} icon="rain" small pills={cardPills} seconds={seconds} pct={pct} urgent={urgent}>
             <MatchQuestion>{title}</MatchQuestion>
           </MatchCard>
         )}
@@ -529,8 +544,8 @@ function GameScreen() {
       </div>
 
       {/* The scoreboard is the central device's, when there is one. */}
-      {!controller && <PartyPanel room={room} scores display={central} onToast={setErr} status={phase === "playing" ? `Acertaron ${room.players.filter((p) => !p.spectator && (p.hits || 0) > 0).length}/${room.players.filter((p) => !p.spectator).length}` : undefined} />}
-      {!controller && !central && <MatchBar room={room} viewerId={viewerId} tools={tools} line={phase === "playing" ? "Respondan antes que nadie" : undefined} />}
+      {!controller && <PartyPanel room={room} scores display={central} onToast={setErr} status={`Ronda ${round + 1}`} />}
+      {!controller && !central && <MatchBar room={room} viewerId={viewerId} tools={tools} line={phase === "playing" ? "" : undefined} />}
     </div>
   );
 }
