@@ -954,7 +954,7 @@
 }
 
 /* A stage that is itself the answer's panel (Rango, Campo de minas, Rey, Farsante's writing, the song's rounds). */
-.tv-app .tv-match .tv-game-stage.tv-mpanel { gap: 18px; padding: 26px 28px; border-radius: 22px; background: var(--tv-surface); animation: var(--tv-box-in); }
+.tv-app .tv-match .tv-game-stage.tv-mpanel { gap: 18px; padding: 18px 20px 22px; border-radius: 22px; background: var(--tv-surface); animation: var(--tv-box-in); }
 
 /* The top bar in a match: "Salir", the game's chip and the round's progress. */
 .tv-app .tv-topbar-start:has(.tv-topbar-round) { flex: 1; min-width: 0; gap: 10px; }
@@ -1052,7 +1052,7 @@
   justify-content: center;
   gap: 18px;
   min-height: 0;
-  padding: 26px 28px;
+  padding: 18px 20px 22px;
   border-radius: 22px;
   background: var(--tv-surface);
   text-align: left;
@@ -2113,7 +2113,7 @@
   /* What a round's stage holds: the card (Trivia's) and the answers, or the answers alone. */
   html.tv-match-lock .tv-app .tv-room-main > .tv-game-stage { flex: 1 1 0; gap: 8px; min-height: 0; overflow: hidden; }
   html.tv-match-lock .tv-app .tv-game-stage.tv-mpanel,
-  html.tv-match-lock .tv-app .tv-mpanel { flex: 1 1 0; gap: 10px; justify-content: flex-start; min-height: 0; padding: 12px; overflow-y: auto; border-radius: 18px; }
+  html.tv-match-lock .tv-app .tv-mpanel { flex: 1 1 0; gap: 10px; justify-content: flex-start; min-height: 0; padding: 12px 12px 14px; overflow-y: auto; border-radius: 18px; }
 
   /* Four answers: all the height there is, one under the other (side by side from where two fit). */
   html.tv-match-lock .tv-app .tv-match :is(.tv-quiz-options, .tv-fs-options) { flex: 1 1 0; grid-template-columns: minmax(0, 1fr); grid-auto-rows: minmax(0, 1fr); gap: 8px; min-height: 0; padding-bottom: 3px; }
@@ -2628,8 +2628,8 @@ html.tv-match-lock .tv-app .tv-match :is(.tv-opt-panel, .tv-game-stage.tv-opt-pa
 .tv-app .tv-match .tv-mines-stage.tv-mpanel { padding: 18px 20px 22px; }
 html.tv-match-lock .tv-app .tv-match .tv-mines-stage.tv-mpanel { padding: 12px 12px 14px; }
 /* Lluvia: the sky and its hint on a dark grey panel like every game's answers (phones already had one). */
-.tv-app .tv-match .tv-rain-frame > .tv-rain-stage { border-radius: 22px; background: var(--tv-surface); padding: 18px 20px 20px; }
-html.tv-match-lock .tv-app .tv-match .tv-rain-frame > .tv-rain-stage { border-radius: 18px; padding: 8px; }
+.tv-app .tv-match .tv-rain-frame > .tv-rain-stage { border-radius: 22px; background: var(--tv-surface); padding: 18px 20px 22px; }
+html.tv-match-lock .tv-app .tv-match .tv-rain-frame > .tv-rain-stage { border-radius: 18px; padding: 12px 12px 14px; }
 
 /* From the second round of a match on (MatchCard, html.tv-round-next): the card and the panels under it don't fly in
    again; they are already in their place and only fade in, quickly, with their new content. */
