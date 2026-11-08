@@ -312,7 +312,7 @@ function GameScreen() {
             {phase === "countdown"
               ? title
               : byName
-              ? `Encuentra ${title}`
+              ? `¿Dónde está ${title}?`
               : style.id === "sombra"
               ? "¿De qué país es esta silueta?"
               : "¿De qué país es esta bandera?"}
