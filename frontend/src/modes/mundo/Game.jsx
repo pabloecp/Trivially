@@ -277,8 +277,8 @@ function GameScreen() {
           <WaitingPill names={waiting} inline />
         ) : (
           <>
-            <Icon name={pinLocked ? "check" : "pin"} size={20} strokeWidth={2.6} />
-            {pinLocked ? "Pin confirmado" : "Confirmar pin"}
+            <Icon name={pinLocked ? "check" : "send"} size={20} strokeWidth={2.6} />
+            {pinLocked ? "Enviado" : "Enviar"}
           </>
         )}
       </button>

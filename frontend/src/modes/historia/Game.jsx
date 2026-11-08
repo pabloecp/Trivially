@@ -340,8 +340,8 @@ function GameScreen() {
           <WaitingPill names={waiting} inline />
         ) : (
           <>
-            <Icon name="check" size={20} strokeWidth={2.6} />
-            {confirmed ? words.done : "Fijar respuesta"}
+            <Icon name={confirmed ? "check" : "send"} size={20} strokeWidth={2.6} />
+            {confirmed ? "Enviado" : "Enviar"}
           </>
         )}
       </button>
