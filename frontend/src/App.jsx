@@ -141,20 +141,16 @@ function RoomNavigator() {
   const lastPath = useRef(pathname);
   const lastPhase = useRef(null);
 
-  // A public match's intro (roulette and tutorial) and its games share the room's address, but each is a screen that
-  // mounts anew (RoomScreen). The room's column stays as it is (its entrance is cut, `html.tv-seamless-side`) and only
-  // the left side changes: the game's screen fades in over the intro (`html.tv-seamless`, which also cuts what's
-  // inside it from flying in on its own).
+  // A match's intro (MatchIntro) and its games share the room's address. On a computer a round's panels have
+  // their own entrance; on a phone they don't, so the round fades in over the intro (`html.tv-seamless`, look.css).
   useLayoutEffect(() => {
     const phase = room?.phase ?? null;
     const before = lastPhase.current;
     lastPhase.current = phase;
-    if (!room?.matchmaking && !room?.run?.classic && before !== "intro" && phase !== "intro") return;
-    const cls = before === "intro" && phase !== "intro" ? "tv-seamless" : phase === "intro" && before !== "intro" ? "tv-seamless-side" : null;
-    if (!cls) return;
+    if (before !== "intro" || phase === "intro") return;
     const root = document.documentElement;
-    root.classList.add(cls);
-    setTimeout(() => root.classList.remove(cls), 1400);
+    root.classList.add("tv-seamless");
+    setTimeout(() => root.classList.remove("tv-seamless"), 400);
   }, [room?.phase]);
 
   // A layout effect, so a Back that lands on Home is turned around before anything is painted.

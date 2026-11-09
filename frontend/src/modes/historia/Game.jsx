@@ -14,7 +14,7 @@ import "../../styles/quiz.css";
 import "../../styles/history.css";
 import { PauseButton, ReportButton, SkipButton, PauseVeil } from "../../components/home/PauseControls.jsx";
 import { resolveCode } from "../../lib/hiddenCode.js";
-import { AnswerCard, MatchBar, MatchCard, MatchQuestion, RoundVerdict } from "../../components/home/MatchFrame.jsx";
+import { AnswerCard, MatchBar, MatchCard, MatchQuestion, RoundCountdown, RoundVerdict } from "../../components/home/MatchFrame.jsx";
 
 const COUNTDOWN_MS = 3000;
 // One colour per player for their year on the reveal's timeline (never the green and red of right and wrong).
@@ -340,8 +340,8 @@ function GameScreen() {
           <WaitingPill names={waiting} inline />
         ) : (
           <>
-            <Icon name="check" size={20} strokeWidth={2.6} />
-            {confirmed ? words.done : "Fijar respuesta"}
+            <Icon name={confirmed ? "check" : "send"} size={20} strokeWidth={2.6} />
+            {confirmed ? "Enviado" : "Enviar"}
           </>
         )}
       </button>
@@ -377,15 +377,7 @@ function GameScreen() {
         ) : (
           <MatchCard
             room={room}
-            label={tiebreak ? `Desempate${tiebreak.round > 1 ? ` ${tiebreak.round}` : ""}` : isNum ? "Cifras" : "Año"}
-            icon="hourglass"
-            dir={
-              reveal || tiebreak || !iPlay
-                ? hint
-                : isNum
-                ? "Mueve la barra hasta la cifra real y fíjala · exacto 1000, más cerca, más puntos"
-                : "Mueve la barra hasta el año y fíjalo · exacto 1000, más cerca, más puntos"
-            }
+            tag={tiebreak ? `Desempate${tiebreak.round > 1 ? ` ${tiebreak.round}` : ""}` : null}
             seconds={seconds}
             pct={pct}
             urgent={urgent}
@@ -398,6 +390,7 @@ function GameScreen() {
         {question ? (
           <section key={round} className="tv-game-stage tv-hist-stage tv-mpanel">
             <PauseVeil room={room} isHost={isHost} />
+            {!controller && <RoundCountdown room={room} seconds={seconds} />}
             {controller && (
               <div className="tv-hist-event">
                 <p className="tv-hint tv-hist-hint" aria-live="polite">
@@ -408,13 +401,7 @@ function GameScreen() {
             {/* The answer's row, always as tall: "TU RESPUESTA" and, on the right, the countdown, the chosen number (or
                 year) big, or the verdict. */}
             <div className="tv-hist-slot">
-              {!controller && !reveal && <span className="tv-mpanel-label">Tu respuesta</span>}
               {phase === "countdown" && controller && <GetReady />}
-              {phase === "countdown" && !controller && (
-                <span key={Math.max(1, seconds)} className="tv-quiz-count" aria-label={`Empieza en ${Math.max(1, seconds)}`}>
-                  {Math.max(1, seconds)}
-                </span>
-              )}
               {phase === "playing" && central && <PhoneHint room={room}>Respondan desde su teléfono</PhoneHint>}
               {reveal && central && !tiebreak && (
                 <p className="tv-central-answer">
@@ -491,18 +478,13 @@ function GameScreen() {
       </div>
 
       {/* The scoreboard is the central device's, when there is one. */}
-      {!controller && <PartyPanel room={room} scores display={central} onToast={setErr} status={fixedLine(room)} />}
-      {!controller && !central && <MatchBar room={room} viewerId={viewerId} tools={tools} verb="fijar" />}
+      {!controller && <PartyPanel room={room} scores display={central} onToast={setErr} />}
+      {/* A tiebreak's rules (who plays it, how it's won) or an error, in place of who is missing. */}
+      {!controller && !central && <MatchBar room={room} viewerId={viewerId} tools={tools} line={err || (tiebreak && phase !== "reveal" ? hint : undefined)} />}
     </div>
   );
 }
 
-// The scoreboard's pill while a round is open: "Fijaron 2/4".
-function fixedLine(room) {
-  if (room.phase !== "playing") return undefined;
-  const inRound = room.players.filter((p) => !p.spectator && p.connected && !p.idle && p.status !== "mirando");
-  return `Fijaron ${inRound.filter((p) => p.answered).length}/${inRound.length}`;
-}
 
 // At the reveal, with more than one player: who came closest this round (or got the exact year or number).
 function closestText(room, fmt, isNum) {

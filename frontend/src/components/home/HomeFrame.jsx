@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
 import { findMode } from "../../modes/index.js";
@@ -11,6 +11,7 @@ import ConfirmDialog from "./ConfirmDialog.jsx";
 import ModeStage from "./ModeStage.jsx";
 import PlanSheet from "./PlanSheet.jsx";
 import PlaySheet from "./PlaySheet.jsx";
+import SearchBoard from "./SearchBoard.jsx";
 import { OpenSettingsContext } from "./SettingsPanel.jsx";
 import { useStartGame } from "./ModeStart.jsx";
 import { privateMatchLine, publicMatchLine } from "./matchInfo.js";
@@ -36,8 +37,8 @@ const CHOOSE = { id: "none", name: "Elige un juego", icon: "grid", color: "neutr
 //    private match (picking a game for it, or JUGAR, which also starts it), and the group goes into it.
 //  - In a private match, while it waits: the game's own lobby (ModeStage and its settings), which only its host (the
 //    group's leader) changes. Switching it to "Partida pública" goes back to Inicio (the whole group) to search.
-//  - Searching (a public room that waits): the card says how the search goes and the leader's button cancels it (the
-//    whole group goes back to Inicio).
+//  - Searching (a public room that waits): under its name the card shows the seats with who has come (SearchBoard) and
+//    the leader's button cancels it (the whole group goes back to Inicio).
 //  - A group's player away from it (they went back alone, or came in while it plays a public match): "Ir con el grupo"
 //    when they can go into its private match, otherwise they wait for it.
 // Without a name (a guest's first time), the name is asked first (PlaySheet) and then it does what was asked.
@@ -395,48 +396,10 @@ export default function HomeFrame({ room = null, onToast, Lobby = null, leaving 
   );
 }
 
-// The chosen game's card on Inicio, and the same one while a public room fills (`searchRoom`): nothing on it moves or
-// changes when the search starts (the same component stays, with the same keys), only its lines say for how long, the
-// game's queue and how many were found; once full, that it starts. The roulette's (the Clásico's) has no game: its card
-// is the Clásico's.
+// The chosen game's card on Inicio, and the same one while a public room fills (`searchRoom`): the card stays (its colour,
+// its name, the boxes beside it) and everything under its name turns into the search (SearchBoard), with the card's sweep
+// of light. The roulette's (the Clásico's) has no game: its card is the Clásico's.
 function GameStage({ searchRoom = null, mode, audience, settings }) {
-  const steps = useSearchSteps(searchRoom, mode);
-  return <ModeStage mode={mode} audience={audience} swapKey={`${mode.id}:${audience}`} settings={settings} steps={steps} />;
-}
-
-function useSearchSteps(room, mode) {
-  const info = room?.matchmaking || null;
-  const full = Boolean(info?.startsAt);
-  const since = useMemo(() => (room ? searchStart(room.code) : 0), [room?.code]);
-  const [now, setNow] = useState(() => Date.now());
-  useEffect(() => {
-    if (!info) return undefined;
-    setNow(Date.now());
-    const id = setInterval(() => setNow(Date.now()), full ? 200 : 500);
-    return () => clearInterval(id);
-  }, [Boolean(info), full]);
-  if (!info) return null;
-  const found = room.players.filter((p) => p.connected).length;
-  const waited = Math.max(0, Math.floor((now - since) / 1000));
-  const clock = `${Math.floor(waited / 60)}:${String(waited % 60).padStart(2, "0")}`;
-  const startsIn = full ? Math.max(1, Math.ceil((info.startsAt - (now + (room.clockOffset || 0))) / 1000)) : null;
-  return [
-    { icon: "hourglass", text: full ? `Empieza en ${startsIn}` : `${clock} buscando` },
-    { icon: "grid", text: info.game ? `Fila de ${mode.name} · ${publicMatchLine(info.game)}` : "Juegos al azar · gana el primero en ganar 2" },
-    { icon: "users", text: `Jugadores encontrados: ${found} de ${info.size}` },
-  ];
-}
-
-// When this device started searching in a room (sessionStorage, so a reload keeps counting from the same moment).
-function searchStart(code) {
-  const key = `trivially_search_since_${code}`;
-  try {
-    const saved = Number(sessionStorage.getItem(key));
-    if (saved > 0) return saved;
-    const t = Date.now();
-    sessionStorage.setItem(key, String(t));
-    return t;
-  } catch {
-    return Date.now();
-  }
+  const swapKey = `${mode.id}:${audience}:${searchRoom ? "search" : "plan"}`;
+  return <ModeStage mode={mode} audience={audience} swapKey={swapKey} settings={settings} search={searchRoom && <SearchBoard room={searchRoom} />} />;
 }
