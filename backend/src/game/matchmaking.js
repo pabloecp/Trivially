@@ -97,6 +97,12 @@ export const cleanForced = (list) => (Array.isArray(list) ? list.filter((id) => 
 // (as if people were arriving), and play by themselves (RoomManager.scheduleBots). Competitivo waits for people.
 export const BOT_WAIT_MS = 1000;
 export const BOT_GAP_MS = [700, 1600];
+
+// "Revancha" (Casual only, once a match is over): a new match in the same room, with whoever is still there, when all of
+// them ask for it. The bots in it ask by themselves after a moment (REMATCH_BOT_MS); if someone never asks, the offer
+// lapses after REMATCH_WAIT_MS.
+export const REMATCH_WAIT_MS = 30000;
+export const REMATCH_BOT_MS = [1500, 6000];
 // (The bots themselves, with their names, colours and elo, are in bots.js.)
 
 /**

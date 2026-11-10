@@ -114,6 +114,8 @@ import {
 import {
   BOT_GAP_MS,
   BOT_WAIT_MS,
+  REMATCH_BOT_MS,
+  REMATCH_WAIT_MS,
   cleanMatchRequest,
   CLASSIC_NAMES,
   CLASSIC_WINS,
@@ -831,6 +833,73 @@ export class RoomManager {
     }
   }
 
+  /** Who a rematch waits for: everyone still in the finished match (people connected and not out of it, and the bots). */
+  rematchPlayers(room) {
+    return [...room.players.values()].filter((p) => !p.spectator && !p.forfeit && (p.connected || p.bot) && room.participants?.has(p.id));
+  }
+
+  /**
+   * "Revancha", at the end of a Casual match: `userId` asks for another match in this room. When everyone still in it has
+   * asked (the bots do it by themselves a few seconds after the first person), the room goes back to waiting as a new
+   * match of the same kind, with the same players, and starts as any public room does. It lapses if someone never asks.
+   */
+  requestRematch(room, userId) {
+    if (room.matchmaking?.kind !== "casual") throw new Error("Esta partida no tiene revancha");
+    if (room.phase !== "finished") throw new Error("La partida aún no ha terminado");
+    const player = room.players.get(userId);
+    if (!player || player.spectator || player.forfeit || !room.participants?.has(userId)) throw new Error("No jugaste esta partida");
+    if (!player.connected) throw new Error("Ya saliste de esta partida");
+    if (!room.rematch) {
+      room.rematch = { ids: new Set(), timer: null, botTimers: [] };
+      room.rematch.timer = setTimeout(() => this.cancelRematch(room, true), REMATCH_WAIT_MS);
+      room.rematch.timer.unref?.();
+      // The bots answer like anyone would: each after a moment of its own.
+      for (const bot of this.rematchPlayers(room).filter((p) => p.bot)) {
+        const [min, max] = REMATCH_BOT_MS;
+        const timer = setTimeout(() => {
+          if (!room.rematch) return;
+          room.rematch.ids.add(bot.id);
+          this.checkRematch(room);
+          this.onPhaseChange?.(room);
+        }, min + Math.random() * (max - min));
+        timer.unref?.();
+        room.rematch.botTimers.push(timer);
+      }
+    }
+    room.rematch.ids.add(userId);
+    this.checkRematch(room);
+  }
+
+  /** Starts the rematch when every player still in the match has asked for it. */
+  checkRematch(room) {
+    if (!room.rematch || room.phase !== "finished") return;
+    const waiting = this.rematchPlayers(room);
+    if (!waiting.length || !waiting.every((p) => room.rematch.ids.has(p.id))) return;
+    this.cancelRematch(room, false);
+    this.stopRun(room);
+    this.resetMatch(room);
+    const info = room.matchmaking;
+    clearTimeout(info.timer);
+    clearTimeout(info.botTimer);
+    info.timer = null;
+    info.games = null;
+    info.startsAt = null;
+    // Free seats are taken by whoever searches meanwhile, or by bots after a moment; once full it starts by itself.
+    this.scheduleBotArrival(room, BOT_WAIT_MS);
+    this.checkMatchFull(room);
+    this.onPhaseChange?.(room);
+  }
+
+  /** The rematch offer is over (it started, or it lapsed because someone didn't ask): nobody has asked any more. */
+  cancelRematch(room, notify) {
+    const offer = room.rematch;
+    if (!offer) return;
+    clearTimeout(offer.timer);
+    offer.botTimers.forEach((t) => clearTimeout(t));
+    room.rematch = null;
+    if (notify) this.onPhaseChange?.(room);
+  }
+
   /**
    * Starts a full public room. A game searched for by name is that game alone, in its public way (the points decide
    * it). The roulette's ("Clásico") is won by the first to win MATCH_WINS games: they're all drawn now (all different
@@ -1200,6 +1269,7 @@ export class RoomManager {
     this.checkMinesTurn(room);
     // A public room about to start isn't full any more.
     this.checkMatchFull(room);
+    this.checkRematch(room);
     return { room };
   }
 
@@ -1228,6 +1298,7 @@ export class RoomManager {
     }
     this.checkMinesTurn(room);
     this.checkMatchFull(room);
+    this.checkRematch(room);
     return { room, left: true };
   }
 
@@ -1271,6 +1342,7 @@ export class RoomManager {
 
   destroy(room) {
     if (room.timer) clearTimeout(room.timer);
+    this.cancelRematch(room, false);
     clearTimeout(room.matchmaking?.timer);
     clearTimeout(room.matchmaking?.botTimer);
     this.clearBotMoves(room);
@@ -3260,6 +3332,7 @@ export class RoomManager {
 
   resetMatch(room) {
     if (room.timer) clearTimeout(room.timer);
+    this.cancelRematch(room, false);
     room.paused = null;
     room.timer = null;
     room.phase = "lobby";
@@ -4217,6 +4290,8 @@ export class RoomManager {
       players: [...room.players.values()].map((p) => publicPlayer(p, room.phase, room)),
       // A public match ("Casual" or "Competitivo"): its kind and length, how full it is, its games once drawn.
       matchmaking: room.matchmaking ? publicMatchmaking(room.matchmaking, this.connectedCount(room)) : null,
+      // "Revancha" at the end of a Casual match: who has asked for it so far, and how many it waits for (null: no one has).
+      rematch: room.rematch && room.phase === "finished" ? { asked: [...room.rematch.ids], total: this.rematchPlayers(room).length } : null,
       // Before each game of a public match: the roulette lands on `variant` (the game with its one way, "Trivia
       // Cerradas"; `index` in `variants`, the match's in play order), then its tutorial. `game`/`games` are their games.
       intro:

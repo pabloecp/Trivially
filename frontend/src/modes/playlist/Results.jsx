@@ -25,7 +25,7 @@ import { findVariant } from "../../components/home/matchInfo.js";
 // middle: go back to its panel or play the playlist again (shuffled again if it's random).
 function ResultsScreen() {
   const { code: codeParam } = useParams();
-  const { user, room, group, isCentral, joinRoom, replayGame, restartGame, leaveRoom, findMatch, groupHome } = useApp();
+  const { user, room, group, isCentral, joinRoom, replayGame, restartGame, leaveRoom, findMatch, groupHome, requestRematch } = useApp();
   const [searching, setSearching] = useState(false);
   // The address's code ("oculta" while it's hidden: this tab's room, lib/hiddenCode.js).
   const code = resolveCode(codeParam, room);
@@ -78,6 +78,10 @@ function ResultsScreen() {
   const pointsText = (p) => `${p.points.toLocaleString("es-ES")} pts`;
   // This player's rounds of every game, numbered one after another (none on the central device).
   const me = isCentral ? null : standings.find((p) => p.id === user?.id) || null;
+  // "Revancha" (Casual only): for whoever played the match and is still in it; it starts when everyone still here asks.
+  const mePlayer = room.players.find((p) => p.id === user?.id);
+  const rematchOpen = publicMatch?.kind === "casual" && Boolean(me) && !mePlayer?.forfeit && !mePlayer?.spectator && !isCentral;
+  const rematchAsked = Boolean(room.rematch?.asked?.includes(user?.id));
   const myRounds = (me?.rounds || []).map((r, i) => ({ ...r, round: i + 1 }));
   let hint = null;
   if (mixed && winner) hint = `${pointsText(winner)} en ${run.total === 1 ? "1 juego" : `${run.total} juegos`}${run.order === "aleatorio" ? " mezclados" : ""}`;
@@ -187,6 +191,17 @@ function ResultsScreen() {
                   <Icon name={leadsGroup ? "back" : "logout"} size={18} />
                   <span className="tv-res-btn-label">{leadsGroup ? "Volver" : "Salir"}</span>
                 </button>
+                {rematchOpen && (
+                  <button
+                    className="tv-btn tv-btn--neutral tv-res-btn"
+                    disabled={rematchAsked}
+                    onClick={() => requestRematch().catch((e) => setErr(e.message || "No se pudo pedir la revancha"))}
+                    type="button"
+                  >
+                    <Icon name="reset" size={18} strokeWidth={2.4} />
+                    {rematchAsked ? `Revancha ${room.rematch.asked.length}/${room.rematch.total}` : "Revancha"}
+                  </button>
+                )}
                 <button
                   className="tv-btn tv-btn--primary tv-res-btn"
                   data-sound="none"

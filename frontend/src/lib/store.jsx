@@ -944,6 +944,8 @@ export function AppProvider({ children }) {
       async startGame() { const res = await emitAck("room:start"); if (!res.ok) throw new Error(res.error); },
       async restartGame() { const res = await emitAck("room:restart"); if (!res.ok) throw new Error(res.error); },
       async replayGame() { const res = await emitAck("room:replay"); if (!res.ok) throw new Error(res.error); },
+      // "Revancha" at the end of a Casual match: asks for another one in this room with the same players.
+      async requestRematch() { const res = await emitAck("room:rematch"); if (!res.ok) throw new Error(res.error); },
       async endGame() { await emitAck("room:end"); },
       async pauseGame(paused) { const res = await emitAck("room:pause", paused); if (!res.ok) throw new Error(res.error); },
 
