@@ -948,6 +948,25 @@ export function attachSockets(io, rooms, { friends = null, hub = null, groups = 
       }
     });
 
+    // "Revancha" at the end of a Casual match (RoomManager.requestRematch). A group's leader asks for the whole group
+    // (the others only wait for them, as they do for everything else in a public match).
+    socket.on("room:rematch", (ack) => {
+      let room = null;
+      try {
+        const ref = requireRoom(rooms, socket);
+        room = ref.room;
+        rooms.requestRematch(room, ref.userId);
+        const group = groups.ofUser(ref.userId);
+        if (group && group.leaderId === ref.userId && group.roomCode === room.code) {
+          for (const id of group.members.keys()) if (id !== ref.userId && room.players.has(id)) rooms.requestRematch(room, id);
+        }
+        ack?.({ ok: true });
+      } catch (err) {
+        ack?.({ ok: false, error: err.message });
+      }
+      if (room) io.to(room.code).emit("room:state", rooms.publicState(room));
+    });
+
     // "Volver a jugar": a new match straight away (RoomManager.replay). If it can't start, everyone is back in the
     // game's lobby.
     socket.on("room:replay", (ack) => {

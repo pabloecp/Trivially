@@ -19,6 +19,10 @@
 - **Intro** before each game: phase `intro` (`INTRO_MS`: roulette + tutorial, `VARIANT_TUTORIALS` in `matchInfo.js`); from the second game, the previous game's result first (`INTRO_RESULT_MS`, `run.lastGame`, `PreviousGame`).
 - `publicPlayer` sends `score` as this game's points (`score - run.gameBase`) and `wins`.
 
+## Revancha (Casual only)
+- At the end of a Casual match each player who is still in it has a grey "Revancha" beside "Buscar otra partida" (`Results.jsx`, socket `room:rematch`, `RoomManager.requestRematch`). When everyone still in the match has asked, the room goes back to waiting as a new match of the same kind with the same players (`checkRematch`: `stopRun`, `resetMatch`, then the usual `scheduleBotArrival` and `checkMatchFull`), so free seats go to strangers or bots and it starts by itself.
+- The bots ask by themselves, each after `REMATCH_BOT_MS`; the offer lapses after `REMATCH_WAIT_MS` (30 s) if someone never asks. Someone who leaves doesn't count. A group's leader asks for the whole group. `publicState.rematch` = `{ asked, total }` (null when nobody has asked). Competitivo has none. Test `game/rematch.test.js`.
+
 ## Rank (Competitivo)
 `game/rank.js`: `user.rank` `{ points, matches, wins, best }` moved by place (`PLACE_POINTS`), never below 0. Tiers `RANK_TIERS` (Bronce 0 … Maestro 1500, divisions of `DIVISION_POINTS` 100), mirrored in `frontend/src/lib/rank.js`. Tests `rank.test.js`.
 
