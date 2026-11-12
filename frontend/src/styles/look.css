@@ -2695,8 +2695,16 @@ html.tv-match-lock.tv-keyboard-up .tv-app .tv-match .tv-quiz-marks { display: no
 .tv-legal-body ul { margin: 0 0 10px; padding-left: 22px; display: grid; gap: 6px; }
 .tv-legal-body b, .tv-legal-body a { color: var(--tv-text); }
 .tv-legal-foot, .tv-legal-links { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 18px; }
-.tv-legal-foot a, .tv-legal-links a { font-family: var(--tv-small); font-weight: 700; font-size: 14px; color: var(--tv-text-2); text-decoration: none; }
-.tv-legal-foot a:hover, .tv-legal-links a:hover { color: var(--tv-text); }
+.tv-legal-foot a, .tv-legal-links a, .tv-legal-links button { font-family: var(--tv-small); font-weight: 700; font-size: 14px; color: var(--tv-text-2); text-decoration: none; }
+.tv-legal-foot a:hover, .tv-legal-links a:hover, .tv-legal-links button:hover { color: var(--tv-text); }
+/* "Borrar cuenta" beside them on the profile: a text button like the links (never underlined). */
+.tv-legal-links button { padding: 0; border: 0; background: none; cursor: pointer; }
+/* Its panel (Profile's DeleteAccount): what is lost, the boxes to confirm, and Cancelar / Borrar cuenta at the foot. */
+.tv-delete-text { margin: 0; font-family: var(--tv-small); font-weight: 600; font-size: 15px; line-height: 1.5; color: var(--tv-text-2); }
+.tv-delete-form { display: grid; gap: 12px; }
+.tv-delete-form .tv-lobby-error { margin: 0; }
+.tv-app .tv-delete-modal .tv-modal-foot { gap: 10px; }
+.tv-app .tv-delete-modal .tv-modal-foot .tv-btn { flex: 1 1 0; }
 .tv-legal-note { margin: 0; text-align: center; font-family: var(--tv-small); font-weight: 600; font-size: 13px; line-height: 1.5; color: var(--tv-text-3); }
 .tv-legal-note a { color: var(--tv-text-2); font-weight: 700; text-decoration: none; }
 .tv-legal-note a:hover { color: var(--tv-text); }

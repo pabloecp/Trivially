@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, Navigate, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { api } from "../lib/api.js";
 import UsernameField, { useUsernameCheck } from "../components/home/UsernameField.jsx";
@@ -11,6 +11,7 @@ import CountUp from "../components/home/CountUp.jsx";
 import GoogleIcon from "../components/home/GoogleIcon.jsx";
 import SpotifyIcon from "../components/home/SpotifyIcon.jsx";
 import Icon from "../components/home/Icon.jsx";
+import Modal from "../components/home/Modal.jsx";
 import { BLOB_COLORS, HOW_TO_GET, blobColor, canUseColor } from "../lib/blobColors.js";
 
 // Only what matters: how many matches you won, how many questions you got right and how many daily challenges you completed.
@@ -31,6 +32,92 @@ function Notice({ tone, icon, children }) {
       <Icon name={icon} size={18} strokeWidth={2.6} filled={icon === "star"} />
       {children}
     </p>
+  );
+}
+
+// "Borrar cuenta": a panel that says what is lost and asks for the account's name and, when it has one, its password
+// (an account that only enters with Google has none). The red button stays off until both are written.
+function DeleteAccount({ open, name, needsPassword, onClose, onDelete }) {
+  const [typed, setTyped] = useState("");
+  const [password, setPassword] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  // Opened again, it starts empty.
+  useEffect(() => {
+    if (!open) return;
+    setTyped("");
+    setPassword("");
+    setError("");
+    setBusy(false);
+  }, [open]);
+  const ready = typed.trim() === name && (!needsPassword || password.length > 0);
+
+  async function submit(e) {
+    e?.preventDefault();
+    if (!ready || busy) return;
+    setBusy(true);
+    setError("");
+    try {
+      await onDelete(typed.trim(), needsPassword ? password : undefined);
+    } catch (err) {
+      setError(err.message || "No se pudo borrar tu cuenta. Inténtalo otra vez.");
+      setBusy(false);
+    }
+  }
+
+  return (
+    <Modal
+      open={open}
+      onClose={busy ? () => {} : onClose}
+      title="Borrar tu cuenta"
+      size="sm"
+      className="tv-delete-modal"
+      foot={
+        <>
+          <button type="button" className="tv-btn tv-btn--neutral" data-sound="back" onClick={onClose} disabled={busy}>
+            Cancelar
+          </button>
+          <button type="button" className="tv-btn tv-btn--bad" data-sound="back" onClick={submit} disabled={!ready || busy} aria-busy={busy}>
+            {busy ? "Borrando…" : "Borrar cuenta"}
+          </button>
+        </>
+      }
+    >
+      <p className="tv-delete-text">
+        Se borra para siempre: tu @usuario, tus estadísticas, tu elo y tu rango, tus últimas partidas y tus amigos. No se puede deshacer.
+      </p>
+      <form onSubmit={submit} className="tv-delete-form">
+        <label className="tv-form-row">
+          <span className="tv-label">Escribe tu nombre para confirmar</span>
+          <input
+            className="tv-field tv-field--sm"
+            value={typed}
+            onChange={(e) => setTyped(e.target.value)}
+            placeholder={name}
+            maxLength={24}
+            autoComplete="off"
+            disabled={busy}
+          />
+        </label>
+        {needsPassword && (
+          <label className="tv-form-row">
+            <span className="tv-label">Tu contraseña</span>
+            <input
+              className="tv-field tv-field--sm"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="La de tu cuenta"
+              autoComplete="current-password"
+              disabled={busy}
+            />
+          </label>
+        )}
+        {/* Enter in a box sends it too. */}
+        <button type="submit" hidden />
+        {error && <p className="tv-lobby-error" role="alert">{error}</p>}
+      </form>
+    </Modal>
   );
 }
 
@@ -103,9 +190,12 @@ function handleLabel(info) {
 }
 
 function ProfileScreen() {
-  const { user: currentUser, updateUsername, changeHandle, updateAvatar, linkGoogle, connectSpotify, unlinkSpotify, linkingStatus, logout } =
+  const { user: currentUser, updateUsername, changeHandle, updateAvatar, linkGoogle, connectSpotify, unlinkSpotify, linkingStatus, logout, deleteAccount } =
     useApp();
   const [spotifyBusy, setSpotifyBusy] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  // The account was just deleted: this page goes to Inicio, not to the login it sends a signed-out visitor to.
+  const deleted = useRef(false);
   // "Activo" on Spotify: the first tap turns it into "Desconectar", the second one disconnects.
   const [confirmUnlink, setConfirmUnlink] = useState(false);
   useEffect(() => {
@@ -239,7 +329,7 @@ function ProfileScreen() {
   }
 
   if (!isOtherUser && !currentUser) {
-    return <Navigate to="/login?returnTo=/profile" replace />;
+    return <Navigate to={deleted.current ? "/" : "/login?returnTo=/profile"} replace />;
   }
 
   if (isOtherUser && notFound) {
@@ -441,7 +531,29 @@ function ProfileScreen() {
           <nav className="tv-legal-links" aria-label="Información legal">
             <Link to="/terminos">Términos de uso</Link>
             <Link to="/privacidad">Aviso de privacidad</Link>
+            {!isGuest && (
+              <button type="button" onClick={() => setDeleteOpen(true)}>
+                Borrar cuenta
+              </button>
+            )}
           </nav>
+        )}
+        {!isOtherUser && !isGuest && (
+          <DeleteAccount
+            open={deleteOpen}
+            name={activeUser?.name || ""}
+            needsPassword={Boolean(linkingStatus?.hasPassword)}
+            onClose={() => setDeleteOpen(false)}
+            onDelete={async (typedName, password) => {
+              deleted.current = true;
+              try {
+                await deleteAccount(typedName, password);
+              } catch (err) {
+                deleted.current = false;
+                throw err;
+              }
+            }}
+          />
         )}
       </div>
     </div>
