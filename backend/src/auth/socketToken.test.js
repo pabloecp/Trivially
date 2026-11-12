@@ -32,4 +32,11 @@ assert.equal(verifyAuthToken(createAuthToken("usr_3")), "usr_3");
 assert.equal(verifyAuthToken(createSocketToken("usr_3")), null, "a socket token is not a session");
 assert.equal(verifyAuthToken(createTicket("usr_3", "login")), null, "a ticket is not a session");
 assert.equal(verifyAuthToken(createAuthToken("usr_3", Date.now() - 31 * 24 * 60 * 60 * 1000)), null, "expired");
+
+// A token says when it was made, so an account that signs out everywhere can leave the older ones behind.
+import { readAuthToken, readSocketToken } from "./socketToken.js";
+assert.deepEqual(readAuthToken(createAuthToken("usr_4", 5000), 6000), { uid: "usr_4", iat: 5000 });
+assert.deepEqual(readSocketToken(createSocketToken("usr_4", 5000), 6000), { uid: "usr_4", iat: 5000 });
+assert.equal(readAuthToken(createSocketToken("usr_4")), null);
+assert.equal(readAuthToken("nope"), null);
 console.log("auth tokens ok");

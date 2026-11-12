@@ -11,6 +11,7 @@ import {
   linkGoogle,
   linkSpotify,
   loginWithPassword,
+  MIN_PASSWORD_LENGTH,
   registerWithPassword,
   sanitizeUser,
   sanitizeUserPublic,
@@ -25,7 +26,7 @@ import {
 } from "../db/store.js";
 import { createGoogleAuthUrl, exchangeGoogleCode, googleConfigured } from "./google.js";
 import { exchangeSpotifyCode, spotifyAuthUrl, spotifyConfigured } from "./spotify.js";
-import { authRateLimit } from "./rateLimit.js";
+import { authRateLimit, loginFailed, loginLocked, loginSucceeded, usernameCheckLimit } from "./rateLimit.js";
 import { accountByEmail, consumeResetToken, createResetToken, resetTokenValid } from "./passwordReset.js";
 import { mailConfigured, resetEmail, sendMail } from "./mailer.js";
 import { hasRole } from "./roles.js";
@@ -57,19 +58,13 @@ function safePath(path) {
   return typeof path === "string" && path.startsWith("/") && !path.startsWith("//") && !path.includes("\\") ? path : "/";
 }
 
-// Checking usernames as you type is cheap but could be used to list them: a per-address limit.
-const checks = new Map();
-function usernameCheckLimit(req, res, next) {
-  const ip = req.ip || "unknown";
-  const now = Date.now();
-  const recent = (checks.get(ip) || []).filter((t) => now - t < 60_000);
-  if (recent.length >= 60) return res.status(429).json({ error: "Demasiadas comprobaciones. Espera un momento." });
-  recent.push(now);
-  checks.set(ip, recent);
-  next();
+/** Opens this browser's session as `userId`, noting when: an account that signs out everywhere ends the older ones. */
+function signIn(req, userId) {
+  req.session.userId = userId;
+  req.session.at = Date.now();
 }
 
-export function createApiRouter({ catalog, store, friends = null, hub = null, songList = () => [] }) {
+export function createApiRouter({ catalog, store, friends = null, hub = null, songList = () => [], playing = () => ({}) }) {
   const router = Router();
 
   // Starts (or refreshes) the session of a guest, or of a registered user who is already signed in.
@@ -100,7 +95,7 @@ export function createApiRouter({ catalog, store, friends = null, hub = null, so
     const taken = existing && req.session?.userId !== id;
     const guestId = taken ? `gst_${crypto.randomBytes(5).toString("hex")}` : id;
     const user = upsertUser(store, { id: guestId, name, avatar, isGuest: true });
-    req.session.userId = user.id;
+    signIn(req, user.id);
     res.json({
       user: sanitizeUser(user),
       authToken: createAuthToken(user.id),
@@ -125,7 +120,7 @@ export function createApiRouter({ catalog, store, friends = null, hub = null, so
       if (!password) return res.status(400).json({ error: "Contraseña requerida" });
       const safeUser = registerWithPassword(store, { name, username, email, password, avatar, guestId });
 
-      req.session.userId = safeUser.id;
+      signIn(req, safeUser.id);
       res.json({ ok: true, user: safeUser, authToken: createAuthToken(safeUser.id) });
     } catch (err) {
       res.status(400).json({ error: err.message });
@@ -139,9 +134,20 @@ export function createApiRouter({ catalog, store, friends = null, hub = null, so
       if (!loginId) return res.status(400).json({ error: "Introduce tu correo o usuario" });
 
       if (!password) return res.status(400).json({ error: "Introduce tu contraseña" });
-      const safeUser = loginWithPassword(store, { identifier: loginId, password, guestId });
+      // Too many wrong passwords for this account, from anywhere: it waits (auth/rateLimit.js).
+      if (loginLocked(loginId)) {
+        return res.status(429).json({ error: "Demasiados intentos con esta cuenta. Espera unos minutos y vuelve a intentar." });
+      }
+      let safeUser;
+      try {
+        safeUser = loginWithPassword(store, { identifier: loginId, password, guestId });
+      } catch (err) {
+        if (err.wrongPassword) loginFailed(loginId);
+        throw err;
+      }
+      loginSucceeded(loginId);
 
-      req.session.userId = safeUser.id;
+      signIn(req, safeUser.id);
       res.json({ ok: true, user: safeUser, authToken: createAuthToken(safeUser.id) });
     } catch (err) {
       res.status(400).json({ error: err.message });
@@ -178,12 +184,14 @@ export function createApiRouter({ catalog, store, friends = null, hub = null, so
   // The new password, with the link's token: it's saved and the account is signed in.
   router.post("/auth/reset", authRateLimit, (req, res) => {
     const password = String(req.body?.password || "");
-    if (password.length < 2) return res.status(400).json({ error: "La contraseña debe tener al menos 2 caracteres" });
+    if (password.length < MIN_PASSWORD_LENGTH) {
+      return res.status(400).json({ error: `La contraseña debe tener al menos ${MIN_PASSWORD_LENGTH} caracteres` });
+    }
     const userId = consumeResetToken(req.body?.token);
     if (!userId) return res.status(400).json({ error: "El enlace ya no sirve: se usó o pasaron más de 30 minutos. Pide otro." });
     try {
       const safeUser = setPassword(store, userId, password);
-      req.session.userId = safeUser.id;
+      signIn(req, safeUser.id);
       res.json({ ok: true, user: safeUser, authToken: createAuthToken(safeUser.id) });
     } catch (err) {
       res.status(400).json({ error: err.message });
@@ -197,7 +205,7 @@ export function createApiRouter({ catalog, store, friends = null, hub = null, so
     if (!user) return res.status(400).json({ error: "El inicio de sesión con Google expiró. Inténtalo otra vez." });
     const previous = req.session?.userId;
     if (previous && previous !== user.id) claimGuestStats(store, user.id, previous);
-    req.session.userId = user.id;
+    signIn(req, user.id);
     res.json({ ok: true, user: sanitizeUser(user), authToken: createAuthToken(user.id) });
   });
 
@@ -360,6 +368,12 @@ export function createApiRouter({ catalog, store, friends = null, hub = null, so
     res.json({ songs: songList() });
   });
 
+  // How many people are playing each game right now (the game's card on Inicio): only numbers, by game.
+  router.get("/playing", (_req, res) => {
+    res.set("Cache-Control", "public, max-age=15");
+    res.json({ games: playing() });
+  });
+
   router.get("/catalog", (req, res) => {
     const images = new Map(catalog.songs.map((s) => [s.id, s.image]));
     res.json({
@@ -476,7 +490,7 @@ export async function handleGoogleCallback(req, res, store) {
       // Default: login / create account
       const guestId = req.session?.userId || null;
       const user = upsertGoogleUser(store, profile, guestId);
-      req.session.userId = user.id;
+      signIn(req, user.id);
       // The site finishes the login itself with POST /api/auth/google/finish, so the session cookie is set by a
       // plain same-site request on its own domain (phones drop cookies set on the other domain or mid-redirect).
       const ticket = createTicket(user.id, "login");
@@ -497,7 +511,7 @@ export function handleGoogleFinish(req, res) {
     res.redirect(`/login?google=error&msg=${encodeURIComponent("El enlace de inicio de sesión expiró. Inténtalo otra vez.")}`);
     return;
   }
-  req.session.userId = userId;
+  signIn(req, userId);
   res.redirect(`${returnTo}${returnTo.includes("?") ? "&" : "?"}google=success`);
 }
 

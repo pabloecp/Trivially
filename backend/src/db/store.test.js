@@ -21,10 +21,10 @@ const testStore = { users: {} };
 
 // Test 1: Minimum password length (2 chars is allowed, 1 char fails)
 assert.throws(() => {
-  registerWithPassword(testStore, { name: "A", username: "usuario_a", email: "a@b.com", password: "1" });
-}, /al menos 2 caracteres/);
+  registerWithPassword(testStore, { name: "A", username: "usuario_a", email: "a@b.com", password: "1234567" });
+}, /al menos 8 caracteres/);
 
-const user1 = registerWithPassword(testStore, { name: "User 2Chars", username: "user_2chars", email: "2c@trivially.test", password: "ab" });
+const user1 = registerWithPassword(testStore, { name: "User 2Chars", username: "user_2chars", email: "2c@trivially.test", password: "abcd1234" });
 assert.equal(user1.name, "User 2Chars");
 assert.equal(user1.email, "2c@trivially.test");
 assert.equal(typeof user1.id, "string");
@@ -61,7 +61,7 @@ assert.equal(testStore.users[user1.id], undefined);
 upsertUser(testStore, { id: "gst_test01", name: "Invitado", isGuest: true });
 assert.equal(deleteGuest(testStore, "gst_test01"), true);
 assert.equal(testStore.users.gst_test01, undefined);
-const user2 = registerWithPassword(testStore, { name: "Registrado", username: "registrado", email: "r@trivially.test", password: "ab" });
+const user2 = registerWithPassword(testStore, { name: "Registrado", username: "registrado", email: "r@trivially.test", password: "abcd1234" });
 assert.equal(deleteGuest(testStore, user2.id), false);
 assert.ok(testStore.users[user2.id]);
 
@@ -100,18 +100,18 @@ assert.equal(playerAvatar({ isGuest: false, role: "user", avatar: "#FFA6D2" }), 
 deleteGuest(testStore, "gst_fake01");
 
 // Usernames ("@pepe"): needed to register, unique, and the way to sign in (names for the games aren't unique).
-assert.throws(() => registerWithPassword(testStore, { name: "Otro", username: "ab", email: "o@trivially.test", password: "ab" }), /al menos 3/);
-assert.throws(() => registerWithPassword(testStore, { name: "Otro", username: "@Registrado", email: "o@trivially.test", password: "ab" }), /en uso/);
-const pepe = registerWithPassword(testStore, { name: "Pepe", username: "@Pepe_23", email: "pepe@trivially.test", password: "ab" });
+assert.throws(() => registerWithPassword(testStore, { name: "Otro", username: "ab", email: "o@trivially.test", password: "abcd1234" }), /al menos 3/);
+assert.throws(() => registerWithPassword(testStore, { name: "Otro", username: "@Registrado", email: "o@trivially.test", password: "abcd1234" }), /en uso/);
+const pepe = registerWithPassword(testStore, { name: "Pepe", username: "@Pepe_23", email: "pepe@trivially.test", password: "abcd1234" });
 assert.equal(pepe.username, "pepe_23");
 assert.equal(sanitizeUserPublic(testStore.users[pepe.id]).username, "pepe_23");
 assert.equal(pepe.usernameInfo.changesLeft, 3);
 assert.equal("usernameHistory" in pepe, false);
-assert.equal(loginWithPassword(testStore, { identifier: "@PEPE_23", password: "ab" }).id, pepe.id);
-assert.equal(loginWithPassword(testStore, { identifier: "pepe@trivially.test", password: "ab" }).id, pepe.id);
-assert.throws(() => loginWithPassword(testStore, { identifier: "Pepe", password: "ab" }), /no encontrado/, "the game name doesn't identify anyone");
+assert.equal(loginWithPassword(testStore, { identifier: "@PEPE_23", password: "abcd1234" }).id, pepe.id);
+assert.equal(loginWithPassword(testStore, { identifier: "pepe@trivially.test", password: "abcd1234" }).id, pepe.id);
+assert.throws(() => loginWithPassword(testStore, { identifier: "Pepe", password: "abcd1234" }), /no encontrado/, "the game name doesn't identify anyone");
 // Another Pepe for the games is fine: only usernames are unique.
-const otherPepe = registerWithPassword(testStore, { name: "Pepe", username: "pepe_24", email: "pepe2@trivially.test", password: "ab" });
+const otherPepe = registerWithPassword(testStore, { name: "Pepe", username: "pepe_24", email: "pepe2@trivially.test", password: "abcd1234" });
 assert.notEqual(otherPepe.id, pepe.id);
 assert.equal(updateUsername(testStore, pepe.id, "pepe_cool").username, "pepe_cool");
 assert.throws(() => updateUsername(testStore, pepe.id, "pepe_24"), /en uso/);
@@ -150,6 +150,55 @@ assert.equal(ensureUsernames(testStore), 0);
   assert.equal(row.data, null);
   assert.deepEqual(fromRow(row), account);
   assert.equal(fromRow({ ...row, data: { id: "usr_cols", name: "Antes" } }).name, "Antes");
+}
+
+// A new password signs the account out everywhere else: sessions and tokens from before it stop counting.
+{
+  const { endSessions, sanitizeUser, sessionStillValid, setPassword, sweepGuests, touchGuest, upsertGoogleUser, upsertUser, loginWithPassword: login } = await import("./store.js");
+  const s = { users: {} };
+  const ana = registerWithPassword(s, { name: "Ana", username: "ana_sesiones", email: "ana@trivially.test", password: "abcd1234" });
+  const before = Date.now() - 1000;
+  assert.equal(sessionStillValid(s.users[ana.id], before), true, "nothing ended yet");
+  assert.equal(sessionStillValid(s.users[ana.id], undefined), true, "an old cookie with no date still counts");
+  assert.throws(() => setPassword(s, ana.id, "corta"), /al menos 8 caracteres/);
+  setPassword(s, ana.id, "otra-clave-larga");
+  assert.equal(sessionStillValid(s.users[ana.id], before), false);
+  assert.equal(sessionStillValid(s.users[ana.id], undefined), false);
+  assert.equal(sessionStillValid(s.users[ana.id], Date.now()), true, "the session opened after it counts");
+  assert.equal(sanitizeUser(s.users[ana.id]).sessionsAfter, undefined, "never sent to the browser");
+  assert.equal(sessionStillValid(undefined, 0), true, "a guest nobody saved has nothing to end");
+
+  // Someone registers another person's email with a password; the real owner enters with Google: the password and
+  // the impostor's session are gone.
+  const fake = registerWithPassword(s, { name: "Impostor", username: "impostor_1", email: "victima@trivially.test", password: "clave-del-impostor" });
+  const stolenAt = Date.now() - 1000;
+  const real = upsertGoogleUser(s, { email: "victima@trivially.test", name: "Víctima", googleId: "g-1" }, null);
+  assert.equal(real.id, fake.id);
+  assert.equal(s.users[fake.id].passwordHash, undefined);
+  assert.equal(sessionStillValid(s.users[fake.id], stolenAt), false);
+  assert.throws(() => login(s, { identifier: "victima@trivially.test", password: "clave-del-impostor" }), /Google/);
+  // Entering with Google again changes nothing more.
+  const ended = s.users[fake.id].sessionsAfter;
+  upsertGoogleUser(s, { email: "victima@trivially.test", name: "Víctima", googleId: "g-1" }, null);
+  assert.equal(s.users[fake.id].sessionsAfter, ended);
+  endSessions(s.users[fake.id]);
+  assert.ok(s.users[fake.id].sessionsAfter >= ended);
+
+  // Guests nobody has seen for a while leave the memory, but those still in a match; accounts never do.
+  const now = Date.now();
+  upsertUser(s, { id: "gst_viejo", name: "Viejo", isGuest: true });
+  upsertUser(s, { id: "gst_jugando", name: "Jugando", isGuest: true });
+  upsertUser(s, { id: "gst_nuevo", name: "Nuevo", isGuest: true });
+  const later = now + 49 * 60 * 60 * 1000;
+  const realNow = Date.now;
+  Date.now = () => later;
+  touchGuest(s, "gst_nuevo");
+  touchGuest(s, ana.id);
+  Date.now = realNow;
+  const gone = sweepGuests(s, { olderThanMs: 48 * 60 * 60 * 1000, keep: (id) => id === "gst_jugando", now: later });
+  assert.equal(gone, 1);
+  assert.equal(s.users.gst_viejo, undefined);
+  assert.ok(s.users.gst_jugando && s.users.gst_nuevo && s.users[ana.id]);
 }
 
 console.log("All store tests passed!");

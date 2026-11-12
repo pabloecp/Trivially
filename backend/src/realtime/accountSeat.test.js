@@ -87,4 +87,25 @@ const tabE = connect("f1", "usr_3");
 assert.equal((await tabE.call("room:create", { user: me("Eva"), game: null })).ok, true);
 
 for (const code of [...rooms.rooms.keys()]) rooms.destroy(rooms.get(code));
+// A connection that floods the server: past the limit its messages are refused, and a script is cut off.
+{
+  const { EVENTS_PER_SECOND, floodGuard } = await import("./sockets.js");
+  let time = 0;
+  let cut = false;
+  const guard = floodGuard({ disconnect: () => (cut = true) }, () => time);
+  let passed = 0;
+  const refused = [];
+  const send = () => guard(["game:answer", "x", (res) => refused.push(res)], () => (passed += 1));
+  for (let i = 0; i < EVENTS_PER_SECOND + 5; i++) send();
+  assert.equal(passed, EVENTS_PER_SECOND);
+  assert.equal(refused.length, 5);
+  assert.equal(refused[0].ok, false);
+  time = 1000;
+  send();
+  assert.equal(passed, EVENTS_PER_SECOND + 1, "the next second it goes on");
+  assert.equal(cut, false);
+  for (let i = 0; i < EVENTS_PER_SECOND * 10; i++) send();
+  assert.equal(cut, true);
+}
+
 console.log("accountSeat.test ok");

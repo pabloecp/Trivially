@@ -445,7 +445,9 @@ export function AppProvider({ children }) {
       setKickedNotice(
         reason === "inactivo"
           ? "Saliste de la partida por inactividad"
-          : "El anfitrión te sacó de la partida"
+          : reason === "error"
+            ? "La partida se cerró por un error nuestro. Ya nos avisaron: puedes empezar otra."
+            : "El anfitrión te sacó de la partida"
       );
     };
     s.on("room:state", onState);

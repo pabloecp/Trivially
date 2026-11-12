@@ -15,7 +15,7 @@ function sign(payload) {
 }
 
 export function createSocketToken(userId, now = Date.now()) {
-  const payload = Buffer.from(JSON.stringify({ uid: userId, exp: now + TTL_MS })).toString("base64url");
+  const payload = Buffer.from(JSON.stringify({ uid: userId, iat: now, exp: now + TTL_MS })).toString("base64url");
   return `${payload}.${sign(payload)}`;
 }
 
@@ -66,6 +66,12 @@ function readToken(token, now) {
   }
 }
 
+/** `{ uid, iat }` of a valid, unexpired socket token (`iat`: when it was made, 0 for the older ones), otherwise null. */
+export function readSocketToken(token, now = Date.now()) {
+  const data = readToken(token, now);
+  return data ? { uid: data.uid, iat: Number(data.iat) || 0 } : null;
+}
+
 /** Returns the user id inside a valid, unexpired token, otherwise null. */
 export function verifySocketToken(token, now = Date.now()) {
   return readToken(token, now)?.uid || null;
@@ -77,8 +83,14 @@ export function verifySocketToken(token, now = Date.now()) {
 const AUTH_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 
 export function createAuthToken(userId, now = Date.now()) {
-  const payload = Buffer.from(JSON.stringify({ uid: userId, kind: "auth", exp: now + AUTH_TTL_MS })).toString("base64url");
+  const payload = Buffer.from(JSON.stringify({ uid: userId, kind: "auth", iat: now, exp: now + AUTH_TTL_MS })).toString("base64url");
   return `${payload}.${sign(payload)}`;
+}
+
+/** `{ uid, iat }` of a valid session token (never a socket token or a ticket), otherwise null. */
+export function readAuthToken(token, now = Date.now()) {
+  const data = readToken(token, now);
+  return data?.kind === "auth" ? { uid: data.uid, iat: Number(data.iat) || 0 } : null;
 }
 
 /** Returns the user id of a valid session token (never a socket token or a ticket), otherwise null. */

@@ -13,7 +13,7 @@ import { loadCatalog } from "./catalog/catalogProvider.js";
 import { startDefaultPlaylists } from "./catalog/defaultPlaylists.js";
 import { TrackResolver } from "./catalog/trackResolver.js";
 import { CatalogGrowth } from "./catalog/catalogGrowth.js";
-import { ensureUsernames, flushStore, getSupabase, initStore, supabaseEnabled } from "./db/store.js";
+import { ensureUsernames, flushStore, getSupabase, initStore, sessionStillValid, supabaseEnabled, sweepGuests, touchGuest } from "./db/store.js";
 import { QuestionStats } from "./db/questionStats.js";
 import { RoomManager } from "./game/roomManager.js";
 import { GroupManager } from "./game/groups.js";
@@ -27,7 +27,7 @@ import {
   handleGoogleRedirect,
   handleSpotifyCallback,
 } from "./auth/routes.js";
-import { verifyAuthToken } from "./auth/socketToken.js";
+import { readAuthToken } from "./auth/socketToken.js";
 import { originChecker, sessionSecret } from "./security.js";
 import { attachSockets } from "./realtime/sockets.js";
 import { Friendships } from "./friends/friendships.js";
@@ -121,17 +121,29 @@ app.use(
     secret,
     httpOnly: true,
     maxAge: 30 * 24 * 60 * 60 * 1000, // stay signed in for 30 days
-    sameSite: isCrossSite ? "none" : "lax",
+    // The site talks to this server through its own address (Vercel passes /api and /auth on), so the cookie never
+    // needs to travel from another site: "lax" keeps other pages from acting with a player's session.
+    sameSite: "lax",
     secure: isCrossSite,
   })
 );
 
 // Fallback for browsers that drop the session cookie (mostly phones): the site also sends the token it got at
 // login, and a valid one decides who the request belongs to.
+// Either one stops counting when the account signed out everywhere after it was made (a new password).
 app.use((req, _res, next) => {
+  if (req.session.userId && !sessionStillValid(store.users[req.session.userId], req.session.at)) {
+    delete req.session.userId;
+    delete req.session.at;
+  }
   const match = /^Bearer (.+)$/.exec(req.headers.authorization || "");
-  const userId = match ? verifyAuthToken(match[1]) : null;
-  if (userId && store.users[userId] && req.session.userId !== userId) req.session.userId = userId;
+  const token = match ? readAuthToken(match[1]) : null;
+  const user = token ? store.users[token.uid] : null;
+  if (user && sessionStillValid(user, token.iat) && req.session.userId !== user.id) {
+    req.session.userId = user.id;
+    req.session.at = token.iat;
+  }
+  if (req.session.userId) touchGuest(store, req.session.userId);
   next();
 });
 
@@ -233,7 +245,7 @@ app.get("/api/geo/shape/:token", (req, res) => {
 });
 
 app.use("/api/friends", createFriendsRouter({ store, friends, hub: friendsHub, rooms }));
-app.use("/api", createApiRouter({ catalog, store, friends, hub: friendsHub, songList: () => rooms.globalSongList() }));
+app.use("/api", createApiRouter({ catalog, store, friends, hub: friendsHub, songList: () => rooms.globalSongList(), playing: () => rooms.playingByGame() }));
 app.get("/auth/google", handleGoogleRedirect);
 app.get("/auth/google/callback", (req, res) => handleGoogleCallback(req, res, store));
 app.get("/auth/google/finish", handleGoogleFinish);
@@ -266,6 +278,18 @@ const io = new Server(server, {
 });
 attachSockets(io, rooms, { friends, hub: friendsHub, groups });
 
+// A match that failed was closed by itself (RoomManager.guard): the error goes to Sentry like any other.
+rooms.onError = (err) => {
+  if (sentryOn) Sentry.captureException(err);
+};
+
+// Guests live only in memory: the ones nobody has seen for two days, and who aren't in a match or a group, are let go.
+const GUEST_KEPT_MS = 48 * 60 * 60 * 1000;
+setInterval(() => {
+  const gone = sweepGuests(store, { olderThanMs: GUEST_KEPT_MS, keep: (id) => Boolean(rooms.roomOfUser(id) || groups.ofUser(id)) });
+  if (gone) console.log(`[Invitados] ${gone} invitados que no volvieron salieron de la memoria`);
+}, 60 * 60 * 1000).unref();
+
 // Make sure the last stats reach the database when the host stops the server (Railway sends SIGTERM on deploy).
 for (const signal of ["SIGTERM", "SIGINT"]) {
   process.on(signal, () => {
@@ -276,3 +300,12 @@ for (const signal of ["SIGTERM", "SIGINT"]) {
 server.listen(PORT, () => {
   console.log(`Trivially API en http://localhost:${PORT}`);
 });
+
+// The last net, once the server is up: an error nothing caught (a timer, a promise nobody waited for) is written down
+// and sent to Sentry, and the server goes on. Without this, one such error stops it and every open match is lost.
+for (const event of ["uncaughtException", "unhandledRejection"]) {
+  process.on(event, (err) => {
+    console.error("[Servidor] Error que nadie atrapó:", err);
+    if (sentryOn) Sentry.captureException(err);
+  });
+}
