@@ -9,9 +9,12 @@ import AppIcon from "./AppIcon.jsx";
 import Avatar from "./Avatar.jsx";
 import Blob from "./Blob.jsx";
 import Confetti from "./Confetti.jsx";
+import CountUp from "./CountUp.jsx";
 import Icon from "./Icon.jsx";
 import { TUTORIALS, VARIANT_TUTORIALS, findVariant, variantsFor } from "./matchInfo.js";
 import { isTiebreak, variantsOf } from "./MatchFrame.jsx";
+import RankBox from "./RankBox.jsx";
+import { RatingDelta } from "./Ratings.jsx";
 import { GamesWon } from "./ResultsLooks.jsx";
 import "../../styles/match.css";
 
@@ -276,6 +279,15 @@ function PreviousGame({ intro, players, leftMs, viewerId }) {
                   <span className="tv-seat-text">
                     <b className="tv-seat-name">{r.name}</b>
                     <span className="tv-seat-tag">{formatElo(r.points)} pts</span>
+                    {r.elo && (
+                      <span className="tv-seat-delta">
+                        <span className="tv-seat-elo">
+                          <Icon name="star" size={11} filled strokeWidth={1.5} />
+                          <CountUp value={r.elo.after} start={r.elo.before} delay={500 + i * 110} duration={900} format={formatElo} />
+                        </span>
+                        <RatingDelta delta={r.elo.delta} unit="elo" style={{ "--pop": `${500 + i * 110}ms` }} />
+                      </span>
+                    )}
                   </span>
                 </div>
               </li>
@@ -318,19 +330,22 @@ function IntroBoxes({ room, viewerId, showResult }) {
   });
   return (
     <div className="tv-stage-aside tv-mi-aside">
-      {viewerId && (
-        <div className="tv-stage-box tv-stage-elo">
-          <div className="tv-stage-elo-text">
-            <span className="tv-stage-label">
-              Elo en
-              <br />
-              {classic ? "Clásico" : findMode(room.game)?.name}
-            </span>
-            <strong className="tv-stage-elo-num">{formatElo(eloIn(user, classic ? "clasico" : room.game))}</strong>
+      {viewerId &&
+        (classic ? (
+          <RankBox user={user} />
+        ) : (
+          <div className="tv-stage-box tv-stage-elo">
+            <div className="tv-stage-elo-text">
+              <span className="tv-stage-label">
+                Elo en
+                <br />
+                {findMode(room.game)?.name}
+              </span>
+              <strong className="tv-stage-elo-num">{formatElo(eloIn(user, room.game))}</strong>
+            </div>
+            <Blob className="tv-stage-blob" color={blobColor(user?.avatar)} mood="neutral" />
           </div>
-          <Blob className="tv-stage-blob" color={blobColor(user?.avatar)} mood="neutral" />
-        </div>
-      )}
+        ))}
       <div className="tv-stage-box tv-stage-friends tv-stage-social">
         <span className="tv-stage-label">{goal ? "Juegos ganados" : "Jugadores"}</span>
         <ul className="tv-party-players" aria-label="Jugadores de la partida">

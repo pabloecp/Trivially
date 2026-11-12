@@ -17,6 +17,7 @@ import "../../styles/playlist.css";
 import { resolveCode, urlCode } from "../../lib/hiddenCode.js";
 import { useResultsLook } from "../../lib/ownerView.js";
 import { GamesWon, RetouchCard } from "../../components/home/ResultsLooks.jsx";
+import { RatingBox, rowChanges } from "../../components/home/Ratings.jsx";
 import { findVariant } from "../../components/home/matchInfo.js";
 
 // The end of a playlist (route /playlist/:code), in the same frame as a match's end (MatchResults): the title, the
@@ -139,9 +140,12 @@ function ResultsScreen() {
                 winners={winners}
                 retouch={style}
                 tone={tone}
+                changes={rowChanges(room.ratings)}
               />
             </div>
           )}
+
+          <RatingBox ratings={room.ratings} me={me ? { id: me.id, avatar: user?.avatar } : null} gameName={findMode(publicMatch?.game)?.name} />
 
           {err && <p className="tv-lobby-error" role="alert">{err}</p>}
 

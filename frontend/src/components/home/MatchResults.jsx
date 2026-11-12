@@ -9,6 +9,7 @@ import { withSound } from "../../lib/sounds.js";
 import { findMode } from "../../modes/index.js";
 import { useResultsLook } from "../../lib/ownerView.js";
 import { RetouchCard } from "./ResultsLooks.jsx";
+import { RatingBox, rowChanges } from "./Ratings.jsx";
 
 // Kept here too for the screens that imported it from this file.
 export { Podium };
@@ -76,8 +77,11 @@ function MatchEnd({ room }) {
               winners={winners}
               retouch={style}
               tone={tone}
+              changes={rowChanges(room.ratings)}
             />
           </div>
+
+          <RatingBox ratings={room.ratings} me={mine ? { id: mine.id, avatar: user?.avatar } : null} gameName={mode?.name} />
 
           {err && <p className="tv-lobby-error" role="alert">{err}</p>}
 
