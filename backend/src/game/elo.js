@@ -1,5 +1,5 @@
-// Elo of every game, moved by each finished game of a public match (a single game's queue or one of a Clásico). Kept in
-// `user.elo[game]` ({ rating, games, best }), saved with the rest of the user; guests have none (they play as ELO_START
+// Elo of every game, moved by each finished game of a match, public or private (a single game or one of a Clásico). Kept
+// in `user.elo[game]` ({ rating, games, best }), saved with the rest of the user; guests have none (they play as ELO_START
 // and nothing is saved). Everyone starts at 500 and climbs fast at first, evenly from 2500 and slowly from 5000.
 // The matchmaking looks for rivals with a close elo (roomManager.js eloFits) and the bots' difficulty follows theirs (bots.js).
 
@@ -10,10 +10,11 @@ export const ELO_MIN = 0;
 export const ELO_GAMES = ["opciones", "historia", "minas", "musica", "mundo", "lluvia"];
 export const CLASSIC_ELO_GAMES = ["opciones", "historia", "minas"];
 
-// Two accounts that have played this many public matches together stop counting for each other: neither their elo nor
-// their rank moves because of the other (it stops people boosting each other). Their matches still play normally.
+// Two accounts stop counting for each other once this many matches between them have counted in the last
+// TOGETHER_WINDOW_MS, in public and private matches alike: neither their elo nor their rank moves because of the other
+// until the oldest of those matches is that old (it stops friends boosting each other). Their matches still play normally.
 export const TOGETHER_LIMIT = 5;
-const TOGETHER_KEPT = 300;
+export const TOGETHER_WINDOW_MS = 24 * 60 * 60 * 1000;
 
 /** Someone's rating in a game (a user, or a bot's profile with the same `elo` field). */
 export function eloOf(who, game) {
@@ -68,7 +69,7 @@ export function placePoints(s, rating) {
 
 /**
  * How many elo points each player of a finished game gets. `entries` are `{ id, rating, points }`; `counts(a, b)` says
- * whether two of them count against each other (not when they have played TOGETHER_LIMIT matches together already).
+ * whether two of them count against each other (not when TOGETHER_LIMIT matches between them counted in the window).
  * Each player is placed among the rivals that count for them (equal points share a place); the place is worth
  * placePoints at their rating, more when the rivals' elo is higher than theirs (and less to lose against weaker ones).
  * Returns a Map from id to the change (0 when nobody counts).
@@ -98,19 +99,23 @@ export function applyElo(who, game, delta) {
   return current;
 }
 
-/** Whether two accounts still count against each other (`together` is each user's `{ rivalId: matches }`). */
-export function countsTogether(a, b) {
-  return (a?.together?.[b?.id] || 0) < TOGETHER_LIMIT && (b?.together?.[a?.id] || 0) < TOGETHER_LIMIT;
+// A rival's matches still inside the window (accounts from before the window kept a plain count: it no longer means anything).
+const recentTimes = (times, now) => (Array.isArray(times) ? times.filter((at) => now - at < TOGETHER_WINDOW_MS) : []);
+
+/** Whether two accounts still count against each other (`together` is each user's `{ rivalId: [when, ...] }`). */
+export function countsTogether(a, b, now = Date.now()) {
+  return recentTimes(a?.together?.[b?.id], now).length < TOGETHER_LIMIT && recentTimes(b?.together?.[a?.id], now).length < TOGETHER_LIMIT;
 }
 
-/** Adds one match played against each of `rivalIds` to an account's count (the oldest rivals are forgotten). */
-export function addTogether(user, rivalIds) {
-  const together = (user.together ||= {});
-  for (const id of rivalIds) together[id] = (together[id] || 0) + 1;
-  const ids = Object.keys(together);
-  if (ids.length > TOGETHER_KEPT) {
-    ids.sort((x, y) => together[y] - together[x]).slice(TOGETHER_KEPT).forEach((id) => delete together[id]);
+/** Adds a match that counted against each of `rivalIds` to an account's record (what left the window is forgotten). */
+export function addTogether(user, rivalIds, now = Date.now()) {
+  const together = {};
+  for (const [id, times] of Object.entries(user.together || {})) {
+    const left = recentTimes(times, now);
+    if (left.length) together[id] = left;
   }
+  for (const id of rivalIds) together[id] = [...(together[id] || []), now];
+  user.together = together;
 }
 
 /** What a rating asks of a bot: its chance of a right answer, from 0.12 (elo 300 or less) to 0.8 (elo 5000 or more). */

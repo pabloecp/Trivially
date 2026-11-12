@@ -1,6 +1,7 @@
 import Avatar from "./Avatar.jsx";
 import Icon from "./Icon.jsx";
 import PlayerName from "./PlayerName.jsx";
+import { RowChange } from "./Ratings.jsx";
 import { useFiveRows } from "./ResultsParts.jsx";
 import "../../styles/resultsLooks.css";
 
@@ -45,8 +46,9 @@ export function GamesWon({ items }) {
  * The ranking card at the end of a match, like RankingCard (its head and "Ver tus respuestas"):
  * each player with their points under the name (in "barras", beside it with a bar under) and their games won on the
  * right (`wins(p)`, or their points when the match was one game). `tone` "color" puts the card in the match's colour.
+ * `changes` (Ratings.jsx rowChanges): what the match moved for each player, at the end of their row.
  */
-export function RetouchCard({ icon = "play", color = "neutral", title, players, meId = null, onOpen = null, points, wins = null, winners = [], retouch = "panel", tone = "color" }) {
+export function RetouchCard({ icon = "play", color = "neutral", title, players, meId = null, onOpen = null, points, wins = null, winners = [], retouch = "panel", tone = "color", changes = null }) {
   const max = Math.max(1, ...players.map(points));
   const [listRef, five] = useFiveRows(players.length);
   return (
@@ -69,6 +71,7 @@ export function RetouchCard({ icon = "play", color = "neutral", title, players, 
         {players.map((p, i) => {
           const win = winners.includes(p.id);
           const pts = `${points(p).toLocaleString("es-ES")} pts`;
+          const change = changes?.get(p.id);
           return (
             <li key={p.id} className={`tv-res-row rl-rankrow${p.id === meId ? " is-me" : ""}${win ? " is-win" : ""}`} style={{ "--i": i }}>
               <span className="tv-res-row-pos">{i + 1}</span>
@@ -91,6 +94,7 @@ export function RetouchCard({ icon = "play", color = "neutral", title, players, 
                   </>
                 )}
               </span>
+              {change ? <RowChange change={change} index={i} /> : changes && p.isGuest && <span className="tv-rowchange tv-rowchange--none">Sin cuenta</span>}
               {wins ? <GamesDigit n={wins(p)} lit={win} /> : <span className="tv-res-row-points">{pts}</span>}
             </li>
           );

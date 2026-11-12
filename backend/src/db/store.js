@@ -632,14 +632,15 @@ export const MATCH_HISTORY_LIMIT = 10;
  * (`user.history`): which game, when, the place they finished in, how many played, their points, who they played
  * against, the room and their rounds (each question with its answer, for "Reportar partida": reportHistoryMatch).
  * `players` come in final position (a tiebreak's winner first); `game` is the game's id ("playlist" for a playlist).
- * `public` is a public match (for "Reto del día"). `rank` ({ rounds, winnerId, discount }) only for a Competitivo match: each account's rank points move by its place
- * (game/rank.js), and the history entry keeps how many (`rank`).
+ * `public` is a public match (for "Reto del día"). `rank` ({ rounds, winnerId, discount }) only for a match that moves the
+ * rank (a Clásico, Competitivo): each account's rank points move by its place (game/rank.js), and the history entry keeps
+ * how many (`rank`). Returns those points per player (a Map), or null.
  */
 export function applyMatchStats(store, players, { game = null, at = new Date().toISOString(), room = null, rank = null, public: isPublic = false } = {}) {
   const ranked = [...players].sort((a, b) => b.score - a.score);
   const order = players.map((p) => p.id);
-  const deltas = rank ? rankDeltas(players, rank) : null;
-  // Rivals that no longer count (game/elo.js TOGETHER_LIMIT) take their share off an account's points.
+  const deltas = rank ? rankDeltas(rank.counts ? players.filter(rank.counts) : players, rank) : null;
+  // Rivals that don't count right now (game/elo.js TOGETHER_LIMIT) take their share off an account's points.
   if (deltas && rank.discount) for (const [id, share] of rank.discount) deltas.set(id, Math.round((deltas.get(id) || 0) * share));
   const [first, second] = players;
   const soleWinner = first && second && (first.score > second.score || first.id === rank?.winnerId) ? first.id : null;
@@ -688,6 +689,7 @@ export function applyMatchStats(store, players, { game = null, at = new Date().t
     }
   });
   saveStore(store);
+  return deltas;
 }
 
 // Spotify playlists and albums an account added with their link (the "Agregar de Spotify" box of Adivina la canción),

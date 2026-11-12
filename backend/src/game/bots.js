@@ -48,7 +48,10 @@ function buildRoster(random = Math.random) {
       elo[game] = { rating, games: 20 + Math.floor(random() * 200), best: rating };
     }
     const id = isGuest ? `gst_${hex(5)}` : `usr_${Date.now()}_${hex(6)}`;
-    profiles.set(id, { id, name, username: isGuest ? null : `${fold(name)}${Math.floor(random() * 90) + 10}`, avatar, isGuest, bot: true, elo });
+    // Like an account, one that looks like one has a rank in the Clásico; like a guest, one that looks like one has none.
+    const points = Math.round(Math.max(0, base - BOT_ELO_RANGE[0]) * 0.3);
+    const rank = isGuest ? null : { points, matches: 20 + Math.floor(random() * 200), wins: 5 + Math.floor(random() * 80), best: points };
+    profiles.set(id, { id, name, username: isGuest ? null : `${fold(name)}${Math.floor(random() * 90) + 10}`, avatar, isGuest, bot: true, elo, rank });
   }
   return profiles;
 }
@@ -93,7 +96,7 @@ export function botPublicProfile(id) {
     avatar: b.avatar,
     isGuest: false,
     stats: { totalScore: 0, bestScore: 0, gamesPlayed: b.elo.opciones.games, wins: Math.round(b.elo.opciones.games * 0.4), bestStreak: 0, correctAnswers: 0, artistHits: {} },
-    rank: null,
+    rank: b.rank,
     elo: b.elo,
     history: [],
     googleLinked: false,

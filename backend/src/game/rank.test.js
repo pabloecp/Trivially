@@ -38,6 +38,7 @@ applyRank(user, -5, false);
 assert.deepEqual(user.rank, { points: 25, matches: 3, wins: 1, best: 30 });
 
 // The tiers go up from 0.
+assert.deepEqual(RANK_TIERS.map((t) => t.name), ["Bronce", "Plata", "Oro", "Diamante", "Maestro", "Leyenda"]);
 assert.equal(RANK_TIERS[0].min, 0);
 assert.ok(RANK_TIERS.every((t, i) => i === 0 || t.min > RANK_TIERS[i - 1].min));
 

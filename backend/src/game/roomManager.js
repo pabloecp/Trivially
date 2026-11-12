@@ -7,6 +7,7 @@ import { cleanTitle, displayTitle } from "../catalog/trackResolver.js";
 import { applyMatchStats, saveStore } from "../db/store.js";
 import { botProfile, pickBots } from "./bots.js";
 import { addTogether, applyElo, countsTogether, ELO_START, eloDeltas, eloOf, searchElo } from "./elo.js";
+import { applyRank } from "./rank.js";
 import { isCorrectAnswer, normalizeAnswer, songKey } from "./answers.js";
 import { etagOf } from "../audio/mediaCache.js";
 import {
@@ -213,6 +214,9 @@ export const IDLE_ROUNDS = 3;
 // picking a cell...): they are out of the match and finish last.
 export const PUBLIC_KICK_ROUNDS = 5;
 // When a bot answers, counted from the start of the round: anywhere between these two.
+// Two accounts as one key, whichever comes first.
+const pairKey = (a, b) => (a < b ? `${a}|${b}` : `${b}|${a}`);
+
 // A public search is put with a room whose players' elo is at most this far from the player's; the longer the room has
 // waited, the wider it gets.
 export const ELO_WINDOW = 300;
@@ -980,32 +984,66 @@ export class RoomManager {
     };
     // Every game's winners, in play order: the end of the match shows each game with whoever won it.
     run.gameResults = [...(run.gameResults || []), { variant: run.lastGame.variant, winners: run.lastGame.winners }];
-    // Each game moves its own elo (the Clásico's too: every game of it counts for that game).
-    this.rateGame(room, item?.game, players, points);
+    // Each game moves its own elo (the Clásico's too: every game of it counts for that game, whoever wins the match), and
+    // the next game's intro tells how much (publicState's intro.previous).
+    const changes = this.rateGame(room, item?.game, players, points, item?.variant);
+    if (changes) for (const r of run.lastGame.ranking) r.elo = changes.find((c) => c.id === r.id) || null;
     run.gameBase = Object.fromEntries(players.map((p) => [p.id, p.score || 0]));
   }
 
   /**
-   * A finished game of a public match moves the elo of `game` of everyone who played it: bots (their profile) and accounts
-   * (saved with them); a guest plays as the starting elo and keeps nothing. Two accounts that have already played
-   * TOGETHER_LIMIT matches together don't count against each other.
+   * A finished game moves the elo of `game` of everyone who played it: bots (their profile) and accounts (saved with them);
+   * a guest plays as the starting elo and keeps nothing. In a private match only accounts count against each other (with
+   * a guest anybody could make wins out of nothing), so it takes two accounts. Returns what changed for each player who
+   * has an elo to show (a bot that looks like a guest, like a guest, has none), kept in `room.ratings`; null if nothing was rated.
    */
-  rateGame(room, game, players, points) {
-    if (!room.matchmaking || !game || players.length < 2) return;
+  rateGame(room, game, everyone, points, variant = null) {
+    // Only who has an account counts: the others are left out, as if they hadn't played.
+    const players = everyone.filter((p) => this.hasAccount(p));
+    if (!game || players.length < 2) return null;
     const whoIs = (p) => (p.bot ? botProfile(p.id) : this.accountOf(p.id));
     const byId = new Map(players.map((p) => [p.id, p]));
     const entries = players.map((p) => ({ id: p.id, rating: eloOf(whoIs(p), game), points: points(p) }));
-    const counts = (a, b) => {
-      const ua = this.accountOf(a);
-      const ub = this.accountOf(b);
-      return !ua || !ub || countsTogether(ua, ub);
-    };
-    const deltas = eloDeltas(entries, counts);
-    for (const [id, delta] of deltas) {
+    const blocked = this.matchPairs(room, players);
+    const deltas = eloDeltas(entries, (a, b) => this.pairCounts(room, blocked, a, b));
+    const changes = [];
+    for (const { id, rating } of entries) {
       const who = whoIs(byId.get(id));
-      if (who) applyElo(who, game, delta);
+      if (!who) continue;
+      const after = applyElo(who, game, deltas.get(id)).rating;
+      if (who.isGuest) continue;
+      const limited = players.some((p) => p.id !== id && blocked.has(pairKey(id, p.id)));
+      changes.push({ id, before: rating, after, delta: after - rating, limited });
     }
     saveStore(this.store);
+    room.ratings ||= { games: [], rank: null };
+    room.ratings.games.push({ game, variant, changes });
+    return changes;
+  }
+
+  /**
+   * The pairs of accounts in this match that don't count for each other: those with TOGETHER_LIMIT matches between them
+   * inside the window. Decided once, when its first game is rated (so a Clásico counts as one match, all its games the
+   * same way, and leaving it halfway has counted too), and that's when the pairs that count add this match to their record.
+   */
+  matchPairs(room, players) {
+    if (room.matchPairs) return room.matchPairs;
+    const accounts = players.map((p) => this.accountOf(p.id)).filter(Boolean);
+    const blocked = new Set();
+    for (const a of accounts) for (const b of accounts) if (a.id < b.id && !countsTogether(a, b)) blocked.add(pairKey(a.id, b.id));
+    for (const me of accounts) addTogether(me, accounts.filter((u) => u.id !== me.id && !blocked.has(pairKey(me.id, u.id))).map((u) => u.id));
+    room.matchPairs = blocked;
+    return blocked;
+  }
+
+  /** Whether a player counts for the elo and the rank: an account, or a bot that looks like one (never a guest). */
+  hasAccount(player) {
+    return player.bot ? Boolean(botProfile(player.id) && !botProfile(player.id).isGuest) : Boolean(this.accountOf(player.id));
+  }
+
+  /** Whether two players with an account count for each other: unless they're blocked (a bot keeps no record, so it always counts). */
+  pairCounts(room, blocked, a, b) {
+    return !blocked.has(pairKey(a, b));
   }
 
   /** Whether a match of the roulette has its winner: one player alone has won the most games, `run.winsToWin` or more. */
@@ -3061,17 +3099,26 @@ export class RoomManager {
     if (!room.statsApplied) {
       room.statsApplied = true;
       const ranked = this.rankedPlayers(room);
-      const rated = this.rankedMatch(room);
-      const discount = rated ? this.rivalDiscount(ranked) : null;
-      if (room.matchmaking) this.countTogether(ranked);
-      applyMatchStats(this.store, ranked, {
+      // A private match of one game moves its elo here, if it was played to its end (the others, game by game: scoreMatchGame).
+      if (!room.run && !room.matchmaking && !room.stoppedEarly) {
+        const tiebreakWinner = room.tiebreak?.winnerId;
+        this.rateGame(room, room.game, ranked.filter((p) => room.participants?.has(p.id)), (p) => (p.score || 0) + (p.id === tiebreakWinner ? 0.5 : 0));
+      }
+      const rated = this.rankedMatch(room, ranked);
+      if (room.matchmaking) this.matchPairs(room, ranked);
+      const discount = rated ? this.rivalDiscount(room, ranked) : null;
+      const winnerId = rated ? this.matchWinner(room, ranked) : null;
+      const before = rated ? new Map(ranked.map((p) => [p.id, this.rankHolder(p)?.rank?.points || 0])) : null;
+      const deltas = applyMatchStats(this.store, ranked, {
         // A public match is kept as its kind ("casual"), never as a playlist.
         game: room.matchmaking ? room.matchmaking.kind : room.run?.mixed ? room.run.classic || PLAYLIST_GAME : room.game,
         room: room.code,
         public: Boolean(room.matchmaking),
-        // Competitivo moves each account's rank by its place (game/rank.js).
-        rank: rated ? { rounds: room.matchmaking.rounds, winnerId: room.tiebreak?.winnerId || null, discount } : null,
+        // A Clásico or Competitivo moves each account's rank by its place (game/rank.js).
+        // Places among those with an account only (a guest is left out, as if it hadn't played).
+        rank: rated ? { rounds: room.matchmaking?.rounds, winnerId, discount, counts: (p) => this.hasAccount(p) } : null,
       });
+      if (rated) this.reportRank(room, ranked, { before, deltas, discount, winnerId });
       // A game of a playlist: its winner adds a win to the playlist's tally.
       if (room.run && !room.run.finished && ranked.length) {
         recordGame(room.run, room.run.mixed ? room.run.classic || PLAYLIST_GAME : room.game, ranked, this.matchWinner(room, ranked));
@@ -3081,36 +3128,51 @@ export class RoomManager {
     if (room.run?.mixed && !room.run.finished) this.endRun(room);
   }
 
-  /** Whether a finished match moves the rank: the Casual's Clásico (a public match with no game picked), and Competitivo. */
-  rankedMatch(room) {
+  /**
+   * Whether a finished match moves the rank: the Clásico (a public match with no game picked, or a private one played to
+   * its end between at least two accounts), and Competitivo.
+   */
+  rankedMatch(room, ranked) {
     const info = room.matchmaking;
-    return Boolean(info) && (info.kind === "competitivo" || (info.kind === "casual" && !info.game));
+    if (info) return info.kind === "competitivo" || (info.kind === "casual" && !info.game);
+    return Boolean(room.run?.classic) && !room.stoppedEarly && ranked.filter((p) => this.accountOf(p.id)).length >= 2;
+  }
+
+  /** Who has a rank in a match: an account, or a bot that looks like one (a guest, or a bot that looks like one, has none). */
+  rankHolder(player) {
+    if (!player.bot) return this.accountOf(player.id);
+    const bot = botProfile(player.id);
+    return bot?.rank ? bot : null;
   }
 
   /**
-   * For each account in a finished public match, the share of its rivals that count for its rank (1 when all of them):
-   * the rivals it has already played TOGETHER_LIMIT matches with don't, and its points are scaled by that share.
+   * For each account in a finished match that moves the rank, the share of its rivals that count for it (1 when all of
+   * them): matchPairs and pairCounts say which, and its points are scaled by that share.
    */
-  rivalDiscount(ranked) {
+  rivalDiscount(room, ranked) {
+    const blocked = this.matchPairs(room, ranked);
     const out = new Map();
     for (const p of ranked) {
-      const me = this.accountOf(p.id);
-      if (!me) continue;
-      const rivals = ranked.filter((q) => q.id !== p.id);
+      if (!this.accountOf(p.id)) continue;
+      const rivals = ranked.filter((q) => q.id !== p.id && this.hasAccount(q));
       if (!rivals.length) continue;
-      const counting = rivals.filter((q) => {
-        const other = this.accountOf(q.id);
-        return !other || countsTogether(me, other);
-      }).length;
-      out.set(p.id, counting / rivals.length);
+      out.set(p.id, rivals.filter((q) => this.pairCounts(room, blocked, p.id, q.id)).length / rivals.length);
     }
     return out;
   }
 
-  /** A finished public match: each account adds one match played with each other account that was in it. */
-  countTogether(ranked) {
-    const accounts = ranked.map((p) => this.accountOf(p.id)).filter(Boolean);
-    for (const me of accounts) addTogether(me, accounts.filter((u) => u.id !== me.id).map((u) => u.id));
+  /** What a match did to everyone's rank, for its results (`room.ratings.rank`); a bot's moves here, an account's has already. */
+  reportRank(room, ranked, { before, deltas, discount, winnerId }) {
+    const report = [];
+    for (const p of ranked) {
+      const holder = this.rankHolder(p);
+      if (!holder) continue;
+      if (p.bot) applyRank(holder, deltas.get(p.id) || 0, p.id === winnerId);
+      const after = holder.rank?.points || 0;
+      report.push({ id: p.id, before: before.get(p.id), after, delta: after - before.get(p.id), limited: (discount.get(p.id) ?? 1) < 1 });
+    }
+    room.ratings ||= { games: [], rank: null };
+    room.ratings.rank = report;
   }
 
   /** Who won a finished match: first place with points; a tie for first is nobody's unless a tiebreak settled it. */
@@ -3128,6 +3190,8 @@ export class RoomManager {
 
   endByHost(room, userId) {
     if (room.hostId !== userId) throw new Error("Solo el Host puede finalizar");
+    // Ended before its time: it can't move anyone's elo or rank (the games of a Clásico already finished have).
+    if (room.phase !== "finished") room.stoppedEarly = true;
     this.finish(room);
   }
 
@@ -3344,6 +3408,9 @@ export class RoomManager {
     room.currentTrackId = null;
     room.answers = {};
     room.statsApplied = false;
+    room.stoppedEarly = false;
+    room.ratings = null;
+    room.matchPairs = null;
     room.tiebreak = null;
     room.participants = null;
     room.turn = 0;
@@ -4292,6 +4359,8 @@ export class RoomManager {
       matchmaking: room.matchmaking ? publicMatchmaking(room.matchmaking, this.connectedCount(room)) : null,
       // "Revancha" at the end of a Casual match: who has asked for it so far, and how many it waits for (null: no one has).
       rematch: room.rematch && room.phase === "finished" ? { asked: [...room.rematch.ids], total: this.rematchPlayers(room).length } : null,
+      // Once it's over, what the match moved for each player: every game's elo and a Clásico's rank (null when nothing moved).
+      ratings: room.phase === "finished" && (room.ratings?.games.length || room.ratings?.rank) ? room.ratings : null,
       // Before each game of a public match: the roulette lands on `variant` (the game with its one way, "Trivia
       // Cerradas"; `index` in `variants`, the match's in play order), then its tutorial. `game`/`games` are their games.
       intro:

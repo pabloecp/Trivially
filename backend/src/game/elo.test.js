@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readLocalCatalog } from "../catalog/catalogProvider.js";
 import { BLOB_ACCOUNT, BLOB_WHITE } from "../db/store.js";
 import { botRoster, pickBots } from "./bots.js";
-import { addTogether, applyElo, countsTogether, eloDeltas, ELO_START, searchElo, skillFor, TOGETHER_LIMIT } from "./elo.js";
+import { addTogether, applyElo, countsTogether, eloDeltas, ELO_START, searchElo, skillFor, TOGETHER_LIMIT, TOGETHER_WINDOW_MS } from "./elo.js";
 import { RoomManager } from "./roomManager.js";
 
 // Elo by place. A lobby of five at each stretch: fast (500), balanced (3500), slow (6000).
@@ -29,14 +29,24 @@ applyElo(who, "opciones", -5000);
 assert.equal(who.elo.opciones.rating, 0, "never below the minimum");
 assert.equal(searchElo(null, "musica"), ELO_START);
 
-// More than TOGETHER_LIMIT matches together: they stop counting.
+// TOGETHER_LIMIT matches inside the window: they stop counting, and count again as the old ones leave it.
 const x = { id: "x" };
 const y = { id: "y" };
+const start = 1_000_000;
 for (let i = 0; i < TOGETHER_LIMIT; i += 1) {
-  assert.ok(countsTogether(x, y), `match ${i + 1} counts`);
-  addTogether(x, ["y"]);
+  assert.ok(countsTogether(x, y, start + i), `match ${i + 1} counts`);
+  addTogether(x, ["y"], start + i);
 }
-assert.ok(!countsTogether(x, y), "the next one doesn't");
+assert.ok(!countsTogether(x, y, start + TOGETHER_LIMIT), "the next one doesn't");
+assert.ok(!countsTogether(y, x, start + TOGETHER_LIMIT), "for neither of them");
+assert.ok(countsTogether(x, y, start + TOGETHER_WINDOW_MS), "the first has left the window: it counts again");
+addTogether(x, ["z"], start + TOGETHER_WINDOW_MS + TOGETHER_LIMIT);
+assert.deepEqual(Object.keys(x.together), ["z"], "what left the window is forgotten");
+// Accounts saved with the old plain counts start again from nothing.
+const legacy = { id: "l", together: { m: 40 } };
+assert.ok(countsTogether(legacy, { id: "m" }));
+addTogether(legacy, [], start);
+assert.deepEqual(legacy.together, {});
 assert.ok(skillFor(500) < skillFor(2500) && skillFor(2500) < skillFor(5000), "stronger elo, stronger bot");
 
 // Bots: guests are white; accounts use white or an account colour; they come close to the asked elo.
@@ -74,11 +84,16 @@ const pts = (p) => (p.id === "alice" ? 800 : 100);
 mgr.rateGame(room, "opciones", players.filter((p) => !p.bot), pts);
 assert.ok(store.users.alice.elo.opciones.rating > 1000, "the winner gains");
 assert.ok(store.users.bob.elo.opciones.rating < 1000, "the loser loses");
+// (That was one match: it counted once, however many of its games are rated.)
+assert.equal(store.users.alice.together.bob.length, 1);
+mgr.rateGame(room, "opciones", players.filter((p) => !p.bot), pts);
+assert.equal(store.users.alice.together.bob.length, 1, "a second game of the same match isn't another match");
+room.matchPairs = null;
 for (let i = 0; i < TOGETHER_LIMIT; i += 1) addTogether(store.users.alice, ["bob"]);
 const before = store.users.alice.elo.opciones.rating;
 mgr.rateGame(room, "opciones", players.filter((p) => !p.bot), pts);
 assert.equal(store.users.alice.elo.opciones.rating, before, "after too many matches together it no longer moves");
-const discount = mgr.rivalDiscount(players.filter((p) => !p.bot));
+const discount = mgr.rivalDiscount(room, players.filter((p) => !p.bot));
 assert.equal(discount.get("alice"), 0, "and neither does the rank");
 for (const r of [...mgr.rooms.values()]) mgr.destroy(r);
 console.log("elo ok");

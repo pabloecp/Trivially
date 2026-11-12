@@ -12,6 +12,7 @@ import Blob from "./Blob.jsx";
 import { blobColor } from "../../lib/blobColors.js";
 import Icon from "./Icon.jsx";
 import GroupMemberMenu from "./GroupMemberMenu.jsx";
+import RankBox from "./RankBox.jsx";
 import { statusOf } from "./FriendsSheet.jsx";
 
 // The stage in the middle of Inicio and of a private match's lobby: the game's card in its colour, and beside it your
@@ -22,8 +23,8 @@ import { statusOf } from "./FriendsSheet.jsx";
 //    many are playing the game now; in a private match that last line is the "Ajustes" button (`settings.onOpen`) or
 //    who chooses them (`settings.note`). While a public match is searched for, everything under the name is the search
 //    (`search`, SearchBoard: its seats with who has come). The game's icon, big and faint, is cut by the corner.
-//  - Beside it: "Elo en" the game ("Tu elo" before one is chosen) with your character (Blob, white with a black line) in
-//    its empty side; then, on phones only, the "Reto del día" (wide screens have the challenge in the bar below); last,
+//  - Beside it: "Elo en" the game ("Tu elo" before one is chosen; in the Clásico your rank, RankBox) with your character
+//    (Blob, white with a black line) in its empty side; then, on phones only, the "Reto del día" (wide screens have the challenge in the bar below); last,
 //    one box for your people (SocialBox, not on phones): the title "Tu grupo" always on top, you and who is with you,
 //    "Invitar" (and "Salir del grupo" beside it, with others in it) and under them your friends online. The group's
 //    code is never here: only in "Tu grupo", the window "Invitar" opens.
@@ -132,9 +133,9 @@ export default function ModeStage({ mode, room = null, audience = null, title = 
         {children}
       </div>
 
-      {/* The Clásico has the same boxes as a game: its elo is the general one, as before a game is chosen. */}
+      {/* The Clásico has the same boxes as a game, with your rank where a game has your elo. */}
       {classic ? (
-        <Boxes game="clasico" gameName={mode.name} color="neutral" stats={gameStats("clasico")} />
+        <Boxes game="clasico" gameName={mode.name} color="neutral" stats={gameStats("clasico")} ranked />
       ) : stats ? (
         <Boxes game={mode.id} gameName={mode.name} color={mode.color} stats={stats} />
       ) : (
@@ -308,7 +309,7 @@ function SocialBox({ group, user, canCreate = true, busy = "", onInvite, onMakeG
 
 // Beside the card: your elo in the game, with your character in the box's empty side; the day's challenge (phones; on
 // wide screens it is in the bar); and the box of your people (SocialBox).
-function Boxes({ game, gameName = "", color, stats: example }) {
+function Boxes({ game, gameName = "", color, stats: example, ranked = false }) {
   const { user, group } = useApp();
   // Inicio and a private match's lobby give the group's actions (HomeFrame). The challenge goes down to the bar on wide
   // screens; on phones it stays here.
@@ -318,30 +319,34 @@ function Boxes({ game, gameName = "", color, stats: example }) {
   const stats = { ...example, elo: eloIn(user, game), week: 0 };
   return (
     <div key={game} className={`tv-stage-aside tv-c-${color}`}>
-      <div className="tv-stage-box tv-stage-elo">
-        <div className="tv-stage-elo-text">
-          <span className="tv-stage-label">
-            {gameName ? (
-              <>
-                Elo en
-                <br />
-                {gameName}
-              </>
-            ) : (
-              "Tu elo"
-            )}
-          </span>
-          <strong className="tv-stage-elo-num">{formatElo(stats.elo)}</strong>
-          {stats.week !== 0 && (
-            <span className={`tv-stage-elo-week${stats.week < 0 ? " is-down" : ""}`}>
-              {stats.week > 0 ? "+" : "−"}
-              {Math.abs(stats.week)} esta semana
+      {ranked ? (
+        <RankBox user={user} />
+      ) : (
+        <div className="tv-stage-box tv-stage-elo">
+          <div className="tv-stage-elo-text">
+            <span className="tv-stage-label">
+              {gameName ? (
+                <>
+                  Elo en
+                  <br />
+                  {gameName}
+                </>
+              ) : (
+                "Tu elo"
+              )}
             </span>
-          )}
+            <strong className="tv-stage-elo-num">{formatElo(stats.elo)}</strong>
+            {stats.week !== 0 && (
+              <span className={`tv-stage-elo-week${stats.week < 0 ? " is-down" : ""}`}>
+                {stats.week > 0 ? "+" : "−"}
+                {Math.abs(stats.week)} esta semana
+              </span>
+            )}
+          </div>
+          {/* Your character: "Blob". */}
+          <Blob className="tv-stage-blob" color={blobColor(user?.avatar)} mood="neutral" />
         </div>
-        {/* Your character: "Blob". */}
-        <Blob className="tv-stage-blob" color={blobColor(user?.avatar)} mood="neutral" />
-      </div>
+      )}
 
       {(!groupActions || phone) && <DailyBox daily={user?.daily} />}
       {/* Not on phones: there the group is in the top bar and the friends in "Amigos". */}

@@ -351,6 +351,17 @@ export function AppProvider({ children }) {
     }
   }, []);
 
+  // A match just ended: the account's elo, rank and day's challenge are others now, and Inicio shows them.
+  const finishedRoom = room?.phase === "finished" ? room.code : null;
+  useEffect(() => {
+    if (!finishedRoom || !userRef.current || userRef.current.isGuest) return;
+    api("/api/me")
+      .then((d) => {
+        if (d.user && !d.user.isGuest && d.user.id === userRef.current?.id) applyUser(d.user);
+      })
+      .catch(() => {});
+  }, [finishedRoom]);
+
   useEffect(() => {
     const s = getSocket();
     const onState = (state) => {
