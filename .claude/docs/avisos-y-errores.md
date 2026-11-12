@@ -24,7 +24,9 @@ Two free services, set up outside the code. Neither sees players' personal data.
 
 - **Limits by player, not by Vercel** (`auth/rateLimit.js`): the site's requests arrive through Vercel, so the address the server sees is Vercel's. `clientAddress` reads the player's own from `x-vercel-forwarded-for` (else `x-forwarded-for`): 10 tries a minute of entering, registering or recovering, 60 username checks. A second, higher limit by the address the server really sees (300 and 1500) stops someone who talks to Railway directly writing a new address each time.
 - **Wrong passwords for one account:** 10 in 10 minutes, from anywhere, and that account waits (`loginLocked`).
-- **Passwords:** 8 characters at least for new accounts and new passwords (`MIN_PASSWORD_LENGTH`, `db/store.js`); older accounts keep theirs.
+- **Passwords:** 2 characters at least (`MIN_PASSWORD_LENGTH`, `db/store.js`).
+- **A login that fails says one thing** (`LOGIN_FAILED`), whether the account doesn't exist, the password is wrong or the account only enters with Google, and takes as long in all of them: the form doesn't tell whose email has an account. Registering still says when an email is taken.
+- **Deleting an account** (`DELETE /api/auth/delete-account`) asks for its name and, when it has one, its password. No screen offers it yet (the privacy page says to write to us).
 - **Signing out everywhere** (`endSessions`, `sessionStillValid`): a new password sets `sessionsAfter` on the account, and every cookie, session token and socket token made before it stops counting (each one says when it was made: `session.at`, `iat`). `sessionsAfter` has no column of its own: it's saved in `extra`.
 - **An email nobody proved:** an account made with an email and a password, entered with Google for the first time, loses the password (and its open sessions): Google proved whose email it is, the registration never did. From then on it's entered with Google.
 - **The session cookie is `SameSite=Lax`:** the site talks to the server through its own address, so another page can't act with a player's session.

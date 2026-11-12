@@ -21,8 +21,8 @@ const testStore = { users: {} };
 
 // Test 1: Minimum password length (2 chars is allowed, 1 char fails)
 assert.throws(() => {
-  registerWithPassword(testStore, { name: "A", username: "usuario_a", email: "a@b.com", password: "1234567" });
-}, /al menos 8 caracteres/);
+  registerWithPassword(testStore, { name: "A", username: "usuario_a", email: "a@b.com", password: "1" });
+}, /al menos 2 caracteres/);
 
 const user1 = registerWithPassword(testStore, { name: "User 2Chars", username: "user_2chars", email: "2c@trivially.test", password: "abcd1234" });
 assert.equal(user1.name, "User 2Chars");
@@ -54,7 +54,10 @@ assert.throws(() => {
   deleteUser(testStore, user1.id, "Wrong Name");
 }, /no coincide/);
 
-deleteUser(testStore, user1.id, "User 2Chars");
+// An account with a password asks for it too.
+assert.throws(() => deleteUser(testStore, user1.id, "User 2Chars"), /Escribe tu contraseña/);
+assert.throws(() => deleteUser(testStore, user1.id, "User 2Chars", "otra-clave"), /no es correcta/);
+deleteUser(testStore, user1.id, "User 2Chars", "abcd1234");
 assert.equal(testStore.users[user1.id], undefined);
 
 // Test 6: Guests are removed on sign-out; registered accounts never are
@@ -109,7 +112,22 @@ assert.equal(pepe.usernameInfo.changesLeft, 3);
 assert.equal("usernameHistory" in pepe, false);
 assert.equal(loginWithPassword(testStore, { identifier: "@PEPE_23", password: "abcd1234" }).id, pepe.id);
 assert.equal(loginWithPassword(testStore, { identifier: "pepe@trivially.test", password: "abcd1234" }).id, pepe.id);
-assert.throws(() => loginWithPassword(testStore, { identifier: "Pepe", password: "abcd1234" }), /no encontrado/, "the game name doesn't identify anyone");
+assert.throws(() => loginWithPassword(testStore, { identifier: "Pepe", password: "abcd1234" }), /incorrectos/, "the game name doesn't identify anyone");
+// A login that fails says the same whatever the reason: no such account, a wrong password.
+{
+  const messageOf = (credentials) => {
+    try {
+      loginWithPassword(testStore, credentials);
+    } catch (err) {
+      return err.message;
+    }
+    return null;
+  };
+  const noAccount = messageOf({ identifier: "nadie@trivially.test", password: "abcd1234" });
+  const wrong = messageOf({ identifier: "pepe@trivially.test", password: "no-es-esta" });
+  assert.ok(noAccount && noAccount === wrong);
+  assert.doesNotMatch(noAccount, /no encontrado|no existe/);
+}
 // Another Pepe for the games is fine: only usernames are unique.
 const otherPepe = registerWithPassword(testStore, { name: "Pepe", username: "pepe_24", email: "pepe2@trivially.test", password: "abcd1234" });
 assert.notEqual(otherPepe.id, pepe.id);
@@ -160,7 +178,7 @@ assert.equal(ensureUsernames(testStore), 0);
   const before = Date.now() - 1000;
   assert.equal(sessionStillValid(s.users[ana.id], before), true, "nothing ended yet");
   assert.equal(sessionStillValid(s.users[ana.id], undefined), true, "an old cookie with no date still counts");
-  assert.throws(() => setPassword(s, ana.id, "corta"), /al menos 8 caracteres/);
+  assert.throws(() => setPassword(s, ana.id, "x"), /al menos 2 caracteres/);
   setPassword(s, ana.id, "otra-clave-larga");
   assert.equal(sessionStillValid(s.users[ana.id], before), false);
   assert.equal(sessionStillValid(s.users[ana.id], undefined), false);
@@ -176,7 +194,7 @@ assert.equal(ensureUsernames(testStore), 0);
   assert.equal(real.id, fake.id);
   assert.equal(s.users[fake.id].passwordHash, undefined);
   assert.equal(sessionStillValid(s.users[fake.id], stolenAt), false);
-  assert.throws(() => login(s, { identifier: "victima@trivially.test", password: "clave-del-impostor" }), /Google/);
+  assert.throws(() => login(s, { identifier: "victima@trivially.test", password: "clave-del-impostor" }), /incorrectos/);
   // Entering with Google again changes nothing more.
   const ended = s.users[fake.id].sessionsAfter;
   upsertGoogleUser(s, { email: "victima@trivially.test", name: "Víctima", googleId: "g-1" }, null);

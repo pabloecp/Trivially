@@ -634,8 +634,9 @@ export function AppProvider({ children }) {
       },
 
 
-      async deleteAccount(confirmName) {
-        await api("/api/auth/delete-account", { method: "DELETE", body: { confirmName } });
+      // The account's name and, when it has one, its password.
+      async deleteAccount(confirmName, password) {
+        await api("/api/auth/delete-account", { method: "DELETE", body: { confirmName, password } });
         forgetUser();
       },
 

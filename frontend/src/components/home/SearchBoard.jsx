@@ -42,12 +42,6 @@ export default function SearchBoard({ room }) {
 
   return (
     <div className={`tv-finding${full ? " is-full" : ""}${still ? " is-still" : ""}`}>
-      <div className="tv-finding-rings" aria-hidden="true">
-        <i />
-        <i />
-        <i />
-      </div>
-
       <div className="tv-finding-status">
         <div className="tv-finding-title" role="status">
           <h3>

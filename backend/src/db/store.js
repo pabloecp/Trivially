@@ -21,8 +21,8 @@ const STORE_PATH =
   (RUNNING_TEST ? path.join(os.tmpdir(), `trivially-store-test-${process.pid}.json`) : path.join(DATA_DIR, "store.json"));
 
 const MAX_NAME_LENGTH = 24;
-// The shortest password a new account (or a new password) may have. Older accounts keep the one they had.
-export const MIN_PASSWORD_LENGTH = 8;
+// The shortest password an account may have.
+export const MIN_PASSWORD_LENGTH = 2;
 const PASSWORD_TOO_SHORT = `La contraseña debe tener al menos ${MIN_PASSWORD_LENGTH} caracteres`;
 export const DEFAULT_AVATAR = "#FF2D55";
 const HEX_COLOR = /^#[0-9a-f]{6}$/i;
@@ -124,6 +124,11 @@ export function hashPassword(password, salt = crypto.randomBytes(16).toString("h
   const hash = crypto.scryptSync(password, salt, 64).toString("hex");
   return { salt, hash };
 }
+
+// What a login that fails says, whatever the reason (loginWithPassword).
+export const LOGIN_FAILED = "Correo, usuario o contraseña incorrectos. Si creaste tu cuenta con Google, entra con «Continuar con Google».";
+// A password nobody has, to check against when there is no account (or it has no password): it takes as long.
+const NOBODY = hashPassword(crypto.randomBytes(16).toString("hex"));
 
 export function verifyPassword(password, salt, hash) {
   if (!salt || !hash) return false;
@@ -463,21 +468,15 @@ export function loginWithPassword(store, { identifier, password, guestId }) {
     (u) => !u.isGuest && ((u.email && u.email.toLowerCase() === clean) || (u.username && u.username === asUsername))
   );
 
-  if (!user) {
-    throw new Error("Usuario o correo no encontrado. ¿Deseas crear una cuenta?");
-  }
-
-  if (user.passwordHash && user.passwordSalt) {
-    const valid = verifyPassword(password, user.passwordSalt, user.passwordHash);
-    if (!valid) {
-      const err = new Error("Contraseña incorrecta");
-      err.wrongPassword = true;
-      throw err;
-    }
-  } else if (user.googleId) {
-    throw new Error("Esta cuenta fue creada con Google. Por favor usa 'Continuar con Google'.");
-  } else {
-    throw new Error("Esta cuenta no tiene contraseña. Crea una cuenta nueva o entra con Google.");
+  // One answer for every way it can fail (no such account, a wrong password, an account that only enters with
+  // Google), and as slow in all of them (the password is always checked against something): the form can't be used
+  // to find out whose email or username has an account here.
+  const hasPassword = Boolean(user?.passwordHash && user?.passwordSalt);
+  const valid = hasPassword ? verifyPassword(password, user.passwordSalt, user.passwordHash) : verifyPassword(password, NOBODY.salt, NOBODY.hash);
+  if (!hasPassword || !valid) {
+    const err = new Error(LOGIN_FAILED);
+    err.wrongPassword = true;
+    throw err;
   }
 
   if (guestId && guestId !== user.id) {
@@ -604,11 +603,19 @@ export function unlinkGoogle(store, userId) {
 }
 
 /** Delete user account permanently */
-export function deleteUser(store, userId, confirmName) {
+/**
+ * Deletes an account for good. Its name has to be typed, and its password too when it has one (an account that only
+ * enters with Google has none to ask for): an open session alone, on a borrowed phone, isn't enough.
+ */
+export function deleteUser(store, userId, confirmName, password) {
   const user = store.users[userId];
   if (!user) throw new Error("Usuario no encontrado");
   if (!confirmName || confirmName.trim() !== user.name) {
     throw new Error("El nombre de confirmación no coincide. Escribe tu nombre de usuario exacto para confirmar.");
+  }
+  if (user.passwordHash && user.passwordSalt) {
+    if (!password) throw new Error("Escribe tu contraseña para borrar tu cuenta");
+    if (!verifyPassword(String(password), user.passwordSalt, user.passwordHash)) throw new Error("La contraseña no es correcta");
   }
 
   delete store.users[userId];

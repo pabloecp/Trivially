@@ -272,12 +272,12 @@ export function createApiRouter({ catalog, store, friends = null, hub = null, so
 
   // --- Delete Account ---
 
-  router.delete("/auth/delete-account", (req, res) => {
+  router.delete("/auth/delete-account", authRateLimit, (req, res) => {
     try {
       const userId = req.session.userId;
       if (!userId) return res.status(401).json({ error: "No autenticado" });
-      const { confirmName } = req.body || {};
-      deleteUser(store, userId, confirmName);
+      const { confirmName, password } = req.body || {};
+      deleteUser(store, userId, confirmName, password);
       // Their friendships go too, and their friends' lists update.
       const others = friends?.removeAllOf(userId) || [];
       hub?.refresh(...others);

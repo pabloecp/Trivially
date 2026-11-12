@@ -56,8 +56,8 @@ function LoginScreen() {
   async function onAccountRegister(e) {
     e.preventDefault();
     if (!accName.trim() || !handleOk || !email.trim() || !password) return;
-    if (password.length < 8) {
-      setMsg("La contraseña debe tener al menos 8 caracteres");
+    if (password.length < 2) {
+      setMsg("La contraseña debe tener al menos 2 caracteres");
       return;
     }
     setLoading(true);
@@ -177,7 +177,7 @@ function LoginScreen() {
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="Mínimo 8 caracteres"
+              placeholder="Mínimo 2 caracteres"
               autoComplete="new-password"
               required
             />

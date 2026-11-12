@@ -131,7 +131,7 @@ function NewPassword({ token }) {
           type="password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          placeholder="Mínimo 8 caracteres"
+          placeholder="Mínimo 2 caracteres"
           autoComplete="new-password"
           required
           autoFocus
@@ -146,7 +146,7 @@ function NewPassword({ token }) {
           required
         />
         {msg && <p className="tv-lobby-error" role="alert">{msg}</p>}
-        <button className="tv-btn tv-btn--block tv-c-pink" type="submit" disabled={loading || password.length < 8 || !again}>
+        <button className="tv-btn tv-btn--block tv-c-pink" type="submit" disabled={loading || password.length < 2 || !again}>
           {loading ? "Guardando…" : "Guardar y entrar"}
         </button>
       </form>
