@@ -236,6 +236,25 @@
 .tv-stage-heading { min-width: 0; }
 /* Who the match is for: a small glass label over the name. */
 .tv-stage-aud { display: flex; align-items: center; gap: 6px; width: max-content; height: 28px; margin: 0 0 8px; padding: 0 10px; border-radius: 10px; background: rgba(255, 255, 255, 0.2); font-family: var(--tv-small); font-weight: 700; font-size: 12px; line-height: 1; color: #fff; }
+/* On Inicio the same label is a switch: a glass track with two choices, the chosen one white with the card's colour on its
+   text. Flat, same height and place as the label. */
+.tv-stage-aud.is-switch { gap: 2px; padding: 2px; border-radius: 10px; }
+.tv-stage-aud.is-switch button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 24px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  font: inherit;
+  color: rgba(255, 255, 255, 0.85);
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+.tv-stage-aud.is-switch button:hover:not([aria-checked="true"]) { background: rgba(255, 255, 255, 0.18); color: #fff; }
+.tv-stage-aud.is-switch button[aria-checked="true"] { background: #fff; color: #14161a; cursor: default; }
 /* The name on one line, as big as fits ("…" when even that doesn't). */
 .tv-stage-name { margin: 0; overflow: hidden; font-size: clamp(30px, 4vw, 60px); line-height: 1.05; color: #fff; white-space: nowrap; text-overflow: ellipsis; }
 .tv-stage-name.is-long { font-size: clamp(22px, 2.4vw, 32px); }

@@ -2,7 +2,7 @@ import { useContext, useEffect, useState } from "react";
 import GuestFriends from "./GuestFriends.jsx";
 import { GroupBoxContext, useNarrow } from "./GroupBar.jsx";
 import { isGameTile } from "../../modes/index.js";
-import { audienceName } from "../../lib/plan.js";
+import { AUDIENCES, audienceName } from "../../lib/plan.js";
 import { eloIn, formatElo, gameStats } from "../../lib/gameStats.js";
 import { usePlaying } from "../../lib/playing.js";
 import { useApp } from "../../lib/store.jsx";
@@ -37,7 +37,7 @@ import { statusOf } from "./FriendsSheet.jsx";
 // sweeping across it again while its lines come in anew.
 const AUDIENCE_ICONS = { publica: "globe", grupo: "lock" };
 
-export default function ModeStage({ mode, room = null, audience = null, title = null, search = null, extra = null, settings = null, swapKey = null, children }) {
+export default function ModeStage({ mode, room = null, audience = null, title = null, search = null, extra = null, settings = null, swapKey = null, onAudience = null, children }) {
   const classic = mode.kind === "classic";
   const who = audience || (room ? (room.matchmaking ? "publica" : "grupo") : null);
   const key = swapKey ?? `${mode.id}:${who}`;
@@ -67,7 +67,19 @@ export default function ModeStage({ mode, room = null, audience = null, title = 
             </span>
           )}
           <div className="tv-stage-heading">
-            {who && (
+            {who && onAudience && (
+              // Inicio: the label is two choices in the same place (a glass track, the chosen one white), so
+              // changing between a public and a private match needs no other screen.
+              <div className="tv-stage-aud is-switch" role="radiogroup" aria-label="Con quién juegan">
+                {AUDIENCES.map((a) => (
+                  <button key={a.value} type="button" role="radio" aria-checked={who === a.value} onClick={() => who !== a.value && onAudience(a.value)}>
+                    <Icon name={AUDIENCE_ICONS[a.value]} size={16} strokeWidth={2.6} />
+                    {a.label}
+                  </button>
+                ))}
+              </div>
+            )}
+            {who && !onAudience && (
               <p className="tv-stage-aud">
                 <Icon name={AUDIENCE_ICONS[who]} size={16} strokeWidth={2.6} />
                 {audienceName(who)}
