@@ -35,7 +35,7 @@
 - `game:answer` takes a track id or free text (`isCorrectAnswer` in `game/answers.js`: accents, parentheticals, Levenshtein, substrings).
 - `game/scoring.js`: a right answer 500 + up to 500 for speed; closeness rounds 1000 exact, less when near (`locationPoints`, `yearPoints`, `figurePoints`). Streaks are stats only.
 - **Inactive:** `markIdle` counts rounds without an answer (`idleRounds`); after `IDLE_ROUNDS` (3) the player is `idle`: not waited for, "Inactivo" on the board. Any answer resets it.
-- **Spectators:** joining mid-match sets `player.spectator`: they see rounds, can't answer (`assertNotSpectator`), are never waited for (`isPlaying`), and are out of ranking, stats and tiebreaks. `resetMatch()` clears it.
+- **Spectators:** joining mid-match sets `player.spectator`: they see rounds, can't answer (`assertNotSpectator`), are never waited for (`isPlaying`), and are out of ranking, stats and tiebreaks. `resetMatch()` clears it. A player who is "Reconectando…" when the host starts (`reconnectingPlayers`: dropped, seat still held by `dropTimer`) is added to `room.participants`, so coming back within the grace period lets them play; only someone who wasn't in the room at the start watches.
 
 ## After a match
 - `applyMatchStats` writes per-user stats; `matchWinner`: first place with points, a tie counts for nobody unless a tiebreak settled it.

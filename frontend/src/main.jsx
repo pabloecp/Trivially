@@ -13,6 +13,15 @@ import "./styles/palettes.css";
 // Last: the look over everything else (see the file).
 import "./styles/look.css";
 
+// On a phone, tapping "Enviar" or "Saltar" with the keyboard open used to take the focus off the box: the keyboard
+// closed, the page moved under the finger and the tap was lost. Keeping the focus where it is lets the tap go through.
+document.addEventListener("mousedown", (e) => {
+  const active = document.activeElement;
+  if (active && (active.tagName === "INPUT" || active.tagName === "TEXTAREA") && e.target.closest?.(".tv-mwrite-send, .tv-skipbtn")) {
+    e.preventDefault();
+  }
+});
+
 // Errors to Sentry, when the site is built with its key (lib/monitoring.js).
 startMonitoring();
 
