@@ -6,6 +6,7 @@ import { useApp } from "../../lib/store.jsx";
 import { CLASSIC, isPublicGame, rememberPlan, useLocalPlan } from "../../lib/plan.js";
 import { withSound } from "../../lib/sounds.js";
 import GroupBar, { GroupBoxContext, useNarrow } from "./GroupBar.jsx";
+import { AdBanner, AdSides } from "./AdSlot.jsx";
 import GroupSheet from "./GroupSheet.jsx";
 import ConfirmDialog from "./ConfirmDialog.jsx";
 import ModeStage from "./ModeStage.jsx";
@@ -281,7 +282,8 @@ export default function HomeFrame({ room = null, onToast, Lobby = null, leaving 
       : { summary: privateMatchLine(mode.id), note: away ? "Tu grupo ya está jugando" : `Los elige ${leaderName}` };
 
   // The same element choosing a game and searching with it, so the card stays as it is when the search starts.
-  const gameStage = mode && <GameStage searchRoom={searching ? room : null} mode={mode} audience={plan.audience} settings={cardSettings} />;
+  // Ads only on Inicio itself: not while a match is searched for, nor while a private one waits.
+  const gameStage = mode && <GameStage searchRoom={searching ? room : null} mode={mode} audience={plan.audience} settings={cardSettings} ad={room ? null : <AdBanner />} />;
 
   // The group's faces: dimmed whoever isn't with it now (or is reconnecting).
   const members = group ? group.members.map((m) => ({ ...m, connected: m.connected && m.here })) : [];
@@ -318,6 +320,8 @@ export default function HomeFrame({ room = null, onToast, Lobby = null, leaving 
           )}
         </div>
       </GroupBoxContext.Provider>
+
+      {!room && <AdSides />}
 
       <GroupBar
         members={members}
@@ -399,7 +403,7 @@ export default function HomeFrame({ room = null, onToast, Lobby = null, leaving 
 // The chosen game's card on Inicio, and the same one while a public room fills (`searchRoom`): the card stays (its colour,
 // its name, the boxes beside it) and everything under its name turns into the search (SearchBoard), with the card's sweep
 // of light. The roulette's (the Clásico's) has no game: its card is the Clásico's.
-function GameStage({ searchRoom = null, mode, audience, settings }) {
+function GameStage({ searchRoom = null, mode, audience, settings, ad = null }) {
   const swapKey = `${mode.id}:${audience}:${searchRoom ? "search" : "plan"}`;
-  return <ModeStage mode={mode} audience={audience} swapKey={swapKey} settings={settings} search={searchRoom && <SearchBoard room={searchRoom} />} />;
+  return <ModeStage mode={mode} audience={audience} swapKey={swapKey} settings={settings} ad={ad} search={searchRoom && <SearchBoard room={searchRoom} />} />;
 }

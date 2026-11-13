@@ -43,3 +43,7 @@ Railway pone solo `RAILWAY_ENVIRONMENT_NAME`; `SENTRY_ENVIRONMENT` es opcional.
 |---|---|---|---|
 | `VITE_API_URL` | (vacía) | (vacía) | Vacía, la página llama a `/api` y `/auth` en su propia dirección: en local Vite las pasa al servidor (`8080`) y en Vercel lo hace `vercel.json`. Solo se llena para apuntar a otro servidor. |
 | `VITE_SENTRY_DSN` | vacía | la del proyecto `trivially-pagina` | Errores de la página a Sentry. No es secreta (va dentro de la página). |
+| `VITE_ADSENSE_CLIENT` | vacía | el identificador de editor de AdSense (`ca-pub-…`) | Anuncios de Google en Inicio (`lib/ads.js`, `AdSlot.jsx`). Vacía: no se carga nada de Google y no aparece ningún espacio. No es secreta. |
+| `VITE_ADSENSE_SLOT_LEFT`, `VITE_ADSENSE_SLOT_RIGHT` | vacías | el número (`data-ad-slot`) de cada bloque de anuncios | Las dos barras a los lados de la página en computadoras (ventana de 1760 px de ancho o más). Un lado sin número no aparece. |
+| `VITE_ADSENSE_SLOT_PHONE` | vacía | el número del bloque de anuncios del celular | La barra de 320 × 50 bajo la tarjeta del juego, en celulares. |
+| `VITE_ADS_PREVIEW` | `1` para ver los espacios vacíos | nunca | Muestra los espacios de anuncios con su tamaño escrito, sin anuncios, para ver dónde van. Solo en local. |
