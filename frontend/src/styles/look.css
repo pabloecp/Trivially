@@ -419,18 +419,7 @@
 .tv-seat.is-leaving { background: rgba(255, 255, 255, 0.1); }
 .tv-seat.is-leaving .tv-seat-who { animation: tvSeatOut 0.26s ease-in forwards; }
 @keyframes tvSeatOut { to { opacity: 0; transform: scale(0.7); } }
-/* Looking for players: rings going out from the middle of the card, under everything. */
-.tv-finding-rings { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
-.tv-finding-rings i { position: absolute; top: 50%; left: 50%; width: 220px; height: 220px; margin: -110px 0 0 -110px; border: 2px solid #fff; border-radius: 50%; opacity: 0; animation: tvFindingRing 3.6s ease-out infinite; }
-.tv-finding-rings i:nth-child(2) { animation-delay: 1.2s; }
-.tv-finding-rings i:nth-child(3) { animation-delay: 2.4s; }
-@keyframes tvFindingRing {
-  0% { opacity: 0; transform: scale(0.3); }
-  15% { opacity: 0.22; }
-  100% { opacity: 0; transform: scale(4.4); }
-}
-/* Full: no more rings; the Blobs jump one after another (the last one lands first). */
-.tv-finding.is-full .tv-finding-rings { display: none; }
+/* Full: the Blobs jump one after another (the last one lands first). */
 .tv-finding.is-full .tv-seat-who:not(.is-empty) .tv-seat-face { animation: tvSeatDrop 0.55s cubic-bezier(0.3, 0.9, 0.5, 1) backwards, tvSeatHop 1.15s ease-in-out calc(0.55s + var(--i, 0) * 0.09s) infinite; }
 @keyframes tvSeatHop {
   0%, 52%, 100% { transform: none; }
@@ -459,7 +448,6 @@
   .tv-finding-clock strong.is-count,
   .tv-lobby-stage.is-settled .tv-finding-status,
   .tv-lobby-stage.is-settled .tv-finding-seats { animation: none; }
-  .tv-finding-rings { display: none; }
 }
 /* Phones: three seats over two, so names fit, each with only its name. No faint icon: it would go behind the words. */
 @media (max-width: 760px) {
