@@ -819,7 +819,7 @@
   animation: var(--tv-box-in);
 }
 .tv-modal--sm { max-width: 460px; }
-.tv-modal--md { }
+.tv-modal--md { max-width: 640px; }
 .tv-modal--lg { max-width: 900px; }
 
 .tv-modal-root.is-leaving { pointer-events: none; }
