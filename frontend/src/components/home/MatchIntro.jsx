@@ -1,7 +1,7 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { blobColor } from "../../lib/blobColors.js";
 import { eloIn, formatElo } from "../../lib/gameStats.js";
-import { useBlobsStill, useResultsLook } from "../../lib/ownerView.js";
+import { useBlobsStill } from "../../lib/ownerView.js";
 import { play } from "../../lib/sounds.js";
 import { useApp } from "../../lib/store.jsx";
 import { findMode } from "../../modes/index.js";
@@ -370,7 +370,6 @@ export default function MatchIntro({ room }) {
   const { user, isCentral } = useApp();
   const { stage, resultLeftMs, tutorialLeftMs } = useIntroStage(room);
   // The card in the game's colour, or dark ("neutro", an owner's choice).
-  const { tone } = useResultsLook();
   const still = useBlobsStill();
   const intro = room.intro;
   const viewerId = isCentral ? null : user?.id;
@@ -381,7 +380,7 @@ export default function MatchIntro({ room }) {
   const mode = stage === "result" ? modeOf(variantBefore(intro)) : findMode(intro.game);
 
   return (
-    <section className={`tv-stage has-aside tv-mi is-${tone}${still ? " is-still" : ""}`} aria-label="Siguiente juego">
+    <section className={`tv-stage has-aside tv-mi is-color${still ? " is-still" : ""}`} aria-label="Siguiente juego">
       <div className={`tv-stage-card tv-mi-card ${spinning && !landed ? "is-classic" : `tv-c-${mode.color}`}${landed ? " is-landing" : ""}`}>
         {(!spinning || landed) && (
           <span className="tv-stage-mark" aria-hidden="true">

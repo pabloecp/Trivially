@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useApp } from "../../lib/store.jsx";
-import { setOwnerView, setResultsStyle, setResultsTone, setScoreboardBadge, setScoreboardLook, setLyricsView, useLyricsViewChoice, useOwnerView, useResultsChoice, useScoreboardBadgeChoice, useScoreboardChoice } from "../../lib/ownerView.js";
+import { setOwnerView, setLyricsView, useLyricsViewChoice, useOwnerView } from "../../lib/ownerView.js";
 import Icon from "./Icon.jsx";
 import Modal from "./Modal.jsx";
 import Segmented from "./Segmented.jsx";
@@ -15,9 +15,6 @@ import "../../styles/admin.css";
 export default function AdminPanel({ open, onClose }) {
   const { room, isCentral, addTestBot } = useApp();
   const view = useOwnerView();
-  const results = useResultsChoice();
-  const scoreboard = useScoreboardChoice();
-  const badge = useScoreboardBadgeChoice();
   const lyricsView = useLyricsViewChoice();
   const [msg, setMsg] = useState("");
   const [busy, setBusy] = useState(false);
@@ -73,56 +70,6 @@ export default function AdminPanel({ open, onClose }) {
                 <SoundPacks />
               </div>
 
-
-              <div className="tv-admin-block is-half">
-                <h3>Pantalla de resultados</h3>
-                <Segmented
-                  label="Estilo"
-                  value={results.style}
-                  onChange={setResultsStyle}
-                  options={[
-                    { value: "panel", label: "Panel" },
-                    { value: "barras", label: "Barras" },
-                  ]}
-                />
-                <Segmented
-                  label="Color de la pantalla"
-                  value={results.tone}
-                  onChange={setResultsTone}
-                  options={[
-                    { value: "color", label: "En color" },
-                    { value: "neutro", label: "Neutra" },
-                  ]}
-                />
-                <p className="tv-admin-hint">Entre juegos, la ruleta, el tutorial y el final. Los jugadores ven «Barras» y «En color».</p>
-              </div>
-
-              {/* How the scoreboard of a public match says who already won a game (lib/ownerView.js). */}
-              <div className="tv-admin-block is-half">
-                <h3>Marcador</h3>
-                <Segmented
-                  label="Marcador"
-                  value={scoreboard}
-                  onChange={setScoreboardLook}
-                  options={[
-                    { value: "frase", label: "Frase" },
-                    { value: "numeros", label: "Números" },
-                    { value: "insignia", label: "Insignia" },
-                  ]}
-                />
-                {scoreboard === "insignia" && (
-                  <Segmented
-                    label="Color de la insignia"
-                    value={badge}
-                    onChange={setScoreboardBadge}
-                    options={[
-                      { value: "color", label: "En caja" },
-                      { value: "neutro", label: "Con corona" },
-                    ]}
-                  />
-                )}
-                <p className="tv-admin-hint">Los juegos ganados en una partida pública. Los jugadores ven «Insignia» con corona.</p>
-              </div>
 
               {/* Adivina la canción · Letra with Cerradas: more lyrics, or options as big as Trivia's (lib/ownerView.js). */}
               <div className="tv-admin-block is-half">

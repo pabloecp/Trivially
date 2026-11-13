@@ -113,8 +113,6 @@
 .tv-mi-card .tv-stage-mark { top: -150px; right: -50px; bottom: auto; }
 /* A line may take two rows here ("Valeria y Daniela empataron…"), and is never cut. */
 .tv-mi-card .tv-stage-name { overflow: visible; font-size: clamp(30px, 3.6vw, 52px); white-space: normal; }
-.tv-mi.is-neutro .tv-mi-card:not(.is-classic) { background: var(--tv-surface); }
-.tv-mi.is-neutro .tv-stage-badge { background: var(--c2); color: #fff; box-shadow: none; }
 
 /* The chip of a Clásico on the top bar, in the logo's look. */
 .tv-app .tv-chip--game.is-classic { --edge: var(--tv-logo-shadow); padding-left: 8px; background: #000; }
@@ -153,7 +151,6 @@
    it holds (its faint icon too). */
 .tv-mi-card.is-landing { background: var(--tv-surface); }
 .tv-mi-flood { position: absolute; inset: 0; z-index: -1; background: var(--c2); pointer-events: none; animation: tvMiFlood 0.6s cubic-bezier(0.3, 0.7, 0.2, 1) both; }
-.tv-mi.is-neutro .tv-mi-flood { display: none; }
 @keyframes tvMiFlood {
   from { clip-path: circle(0 at 50% 58%); }
   to { clip-path: circle(130% at 50% 58%); }

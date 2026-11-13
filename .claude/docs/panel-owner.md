@@ -6,6 +6,5 @@ Everyone (not the central device) gets a gear (`TvTopbar.jsx`) opening "Ajustes"
 
 - **Vista:** "Owner (debug)" | "Usuario normal" (`trivially_owner_view`). In normal view the owner sees the site like anyone (no "Saltar").
 - **Tipo de sonido:** the sets of `lib/sounds.js` (`trivially_sound_pack_v2`); everyone else hears Madera.
-- **Pantalla de resultados** and **Marcador:** look variants only for the owner in debug view (`useResultsLook`, `useScoreboardLook`); everyone else sees the defaults: results "Barras" + "En color", scoreboard "Insignia" with a crown (`useScoreboardBadge`, its own setting apart from the results tone).
 - **Letra (Cerradas):** "Normal" (what everyone sees: three lines of lyrics over the four options) or "Opciones grandes" (only the last two lines, so the options are as big as Trivia's), only on the owner's device and in debug view (`useLyricsView`, `trivially_lyrics_view`; the play panel gets `is-big-options`).
 - **Bot de prueba:** `room:addTestBot`, private lobby only.

@@ -1652,8 +1652,7 @@
   .tv-app .tv-match .tv-party-title,
   .tv-app .tv-match .tv-party-spectators,
   .tv-app .tv-match .tv-party .tv-player-crown,
-  .tv-app .tv-match .tv-party .tv-player-badge,
-  .tv-app .tv-match .tv-party .tv-player-games { display: none; }
+  .tv-app .tv-match .tv-party .tv-player-badge { display: none; }
   .tv-app .tv-match .tv-party-players { flex-direction: row; justify-content: space-between; gap: 6px; overflow-x: auto; scrollbar-width: none; }
   .tv-app .tv-match .tv-player-btn { gap: 6px; padding: 0; background: none; }
   .tv-app .tv-match .tv-player.is-me .tv-player-btn { outline: none; }
@@ -1786,7 +1785,7 @@
 
 /* Scoreboards and lists of players come in with no animation (the room's list, "Tu grupo", a match's scoreboard, its games
    won): they only change. The final results screen (the podium) keeps its own. */
-.tv-app :is(.tv-player, .tv-player-score, .tv-player-won, .tv-player-games, .tv-player-badge, .tv-mbar-face, .tv-stage-friends-list li) { animation: none; }
+.tv-app :is(.tv-player, .tv-player-score, .tv-player-badge, .tv-mbar-face, .tv-stage-friends-list li) { animation: none; }
 
 
 /* In a match the answers never go see-through nor sink out of their box: the chosen, right and wrong ones stay where they
