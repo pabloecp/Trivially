@@ -2129,18 +2129,10 @@ button.tv-badge-item:disabled { cursor: default; }
 .tv-app .tv-pf-blob .tv-seg { flex: none; width: 176px; padding: 3px; }
 .tv-app .tv-pf-blob .tv-seg-thumb { top: 3px; bottom: 3px; left: 3px; width: calc((100% - 6px) / var(--count)); }
 .tv-app .tv-pf-blob .tv-seg-btn { height: 36px; font-size: 14px; }
-.tv-app .tv-pf-blob .tv-blob-opts.is-skins {
-  height: calc(4 * 72px + 3 * 8px + 12px);
-  margin: -4px -4px -8px;
-  padding: 4px 4px 8px;
-  overflow-y: auto;
-  scrollbar-width: thin;
-  -webkit-mask-image: linear-gradient(#000 calc(100% - 28px), transparent);
-  mask-image: linear-gradient(#000 calc(100% - 28px), transparent);
-}
-@media (max-width: 1000px) {
-  .tv-app .tv-pf-blob .tv-blob-opts.is-skins { height: calc(2.5 * 72px + 2 * 8px + 12px); }
-}
+/* The skins, eight at a time like the colours; at the card's foot which ones show and the arrows (the same as a match's
+   history, .tv-summary-where / .tv-summary-nav). How to get a locked one sits over the skins, above the arrows. */
+.tv-blob-pager { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: auto; }
+.tv-app .tv-pf-blob .has-pages .tv-pf-blobnote { bottom: 76px; }
 /* Spotify, one tap away from disconnecting: red, with its own edge. */
 .tv-app .tv-pf-icon.is-danger,
 .tv-app .tv-pf-icon.is-danger:hover { background: var(--p-bad); box-shadow: 0 3px 0 var(--p-bad-edge); }

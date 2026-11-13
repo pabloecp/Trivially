@@ -129,19 +129,26 @@ function DeleteAccount({ open, name, needsPassword, onClose, onDelete }) {
 
 // "Tu Blob": every colour and every skin, like an inventory, in two tabs ("Colores", "Skins"; it opens on the one you
 // wear). The ones you can use are tapped to wear them (the one you wear in the site's blue); the others are dimmed with
-// a lock, and a tap says how to get them (lib/blobColors.js, lib/blobSkins.js). The skins scroll inside the same box.
+// a lock, and a tap says how to get them (lib/blobColors.js, lib/blobSkins.js). The skins come SKIN_PAGE at a time, in
+// the colours' box, with which ones show and the arrows to move through them at the foot (like a match's history,
+// MatchSummarySheet); it opens on the page of the one you wear.
 const BLOB_TABS = [
   { value: "colores", label: "Colores" },
   { value: "skins", label: "Skins" },
 ];
 const ALL_LOOKS = [...BLOB_COLORS, ...BLOB_SKINS];
+const SKIN_PAGE = 8;
+const SKIN_PAGES = Math.ceil(BLOB_SKINS.length / SKIN_PAGE);
 
 function BlobColors({ user, onPick }) {
   const [info, setInfo] = useState(null);
   const [busy, setBusy] = useState("");
   const current = blobColor(user?.avatar);
   const [tab, setTab] = useState(() => (isBlobSkin(current) ? "skins" : "colores"));
-  const list = tab === "skins" ? BLOB_SKINS : BLOB_COLORS;
+  const [page, setPage] = useState(() => Math.max(0, Math.floor(BLOB_SKINS.findIndex((s) => s.id === current) / SKIN_PAGE)));
+  const skins = tab === "skins";
+  const from = page * SKIN_PAGE;
+  const list = skins ? BLOB_SKINS.slice(from, from + SKIN_PAGE) : BLOB_COLORS;
   const shown = ALL_LOOKS.find((c) => c.id === (info || current));
   const locked = shown && !canUseColor(user, shown);
 
@@ -161,12 +168,12 @@ function BlobColors({ user, onPick }) {
   }
 
   return (
-    <div className="tv-blob-colors">
+    <div className={`tv-blob-colors${skins ? " has-pages" : ""}`}>
       <div className="tv-card-head">
         <h2 className="tv-card-title">Tu Blob</h2>
         <Segmented options={BLOB_TABS} value={tab} onChange={(v) => { setTab(v); setInfo(null); }} label="Colores o skins" />
       </div>
-      <div className={`tv-blob-opts${tab === "skins" ? " is-skins" : ""}`} role="radiogroup" aria-label={tab === "skins" ? "Skin de tu Blob" : "Color de tu Blob"}>
+      <div className="tv-blob-opts" role="radiogroup" aria-label={skins ? "Skin de tu Blob" : "Color de tu Blob"}>
         {list.map((c) => {
           const ok = canUseColor(user, c);
           return (
@@ -190,6 +197,25 @@ function BlobColors({ user, onPick }) {
           );
         })}
       </div>
+      {skins && (
+        <div className="tv-blob-pager">
+          <span className="tv-summary-where">
+            Skins{" "}
+            <b>
+              {from + 1}–{from + list.length}
+            </b>{" "}
+            de {BLOB_SKINS.length}
+          </span>
+          <span className="tv-summary-nav">
+            <button type="button" className="tv-iconbtn tv-summary-prev" aria-label="Skins anteriores" disabled={page <= 0} onClick={() => { setPage(page - 1); setInfo(null); }}>
+              <Icon name="chevron" size={20} strokeWidth={3} />
+            </button>
+            <button type="button" className="tv-iconbtn" aria-label="Skins siguientes" disabled={page >= SKIN_PAGES - 1} onClick={() => { setPage(page + 1); setInfo(null); }}>
+              <Icon name="chevron" size={20} strokeWidth={3} />
+            </button>
+          </span>
+        </div>
+      )}
       {/* Over the colours, so saying it moves nothing. */}
       {locked && (
         <p className="tv-pf-blobnote" aria-live="polite">
