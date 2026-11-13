@@ -115,7 +115,7 @@
 .tv-mi-card .tv-stage-name { overflow: visible; font-size: clamp(30px, 3.6vw, 52px); white-space: normal; }
 
 /* The chip of a Clásico on the top bar, in the logo's look. */
-.tv-app .tv-chip--game.is-classic { --edge: var(--tv-logo-shadow); padding-left: 8px; background: #000; }
+.tv-app .tv-chip--game.is-classic { --edge: #030303; padding-left: 8px; background: #000; }
 .tv-chip--game.is-classic .tv-appicon { --s: 26px; flex: none; }
 
 /* The reel: a window in the middle with a mark on each side, and the games going up behind it, dim and fading out of it. As
