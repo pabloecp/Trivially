@@ -30,6 +30,7 @@ export default function PlanSheet({ open, onClose, plan, onAudience, onGame, inG
 
   return (
     <Modal open={open} onClose={onClose} title={inGroup ? "¿Qué quieren jugar?" : "¿Qué quieres jugar?"} size="lg" className="tv-plan">
+      <h3 className="tv-section-label">Tipo de partida</h3>
       <div className="tv-aud" role="radiogroup" aria-label="Con quién juegan">
         {AUDIENCES.map((a) => (
           <button
