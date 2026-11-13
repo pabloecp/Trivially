@@ -335,5 +335,3 @@
   .tv-mines-cell-text { padding-inline: 1px; }
 }
 
-/* By turns, after picking: who the turn still waits for, in the shared pill (.tv-wait-pill) over the board. */
-.tv-mines-wait { position: absolute; inset: 0; z-index: 4; display: grid; place-items: center; pointer-events: none; }

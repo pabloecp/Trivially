@@ -3,7 +3,6 @@ import { useNavigate, useParams } from "react-router-dom";
 import TvShell from "../../components/home/TvShell.jsx";
 import Icon from "../../components/home/Icon.jsx";
 import Avatar from "../../components/home/Avatar.jsx";
-import WaitingPill from "../../components/home/WaitingPill.jsx";
 import MatchResults from "../../components/home/MatchResults.jsx";
 import PartyPanel from "../../components/home/PartyPanel.jsx";
 import SpectatorBanner from "../../components/home/SpectatorBanner.jsx";
@@ -300,12 +299,12 @@ function GameScreen() {
       hintIcon = "check";
     } else if (central || watching || spectator) {
       hintIcon = central ? "phone" : "info";
-      hint = waitingFor.length ? `Desempate entre ${tiedNames}. Esperando a ${joinNames(waitingFor)}…` : `Desempate entre ${tiedNames}.`;
+      hint = `Desempate entre ${tiedNames}.`;
     } else if (out) {
       hint = "Pisaste una mina. Si nadie acierta, vuelves a intentarlo.";
       hintTone = " is-out";
     } else if (pickedThisTurn) {
-      hint = waitingFor.length ? `Elegiste. Esperando a ${joinNames(waitingFor)}…` : "Elegiste…";
+      hint = "Elegiste…";
       hintIcon = "check";
       hintTone = " is-sent";
     } else {
@@ -328,7 +327,7 @@ function GameScreen() {
     // The central device talks to the whole room: they pick on their phones.
     hintIcon = "phone";
     if (race) hint = "¡Carrera! Elijan en su teléfono las correctas antes que los demás.";
-    else hint = waitingFor.length ? `Turno ${turn}: esperando a ${joinNames(waitingFor)}…` : `Turno ${turn}: siguiente turno…`;
+    else hint = waitingFor.length ? `Turno ${turn}.` : `Turno ${turn}: siguiente turno…`;
   } else if (spectator) {
     hint = "Estás viendo la partida. Jugarás en la siguiente.";
     hintIcon = "info";
@@ -343,7 +342,7 @@ function GameScreen() {
       hintTone = " is-sent";
     }
   } else if (pickedThisTurn) {
-    hint = waitingFor.length ? `Elegiste. Esperando a ${joinNames(waitingFor)}…` : "Elegiste. Siguiente turno…";
+    hint = waitingFor.length ? "Elegiste." : "Elegiste. Siguiente turno…";
     hintIcon = "check";
     hintTone = " is-sent";
   } else {
@@ -492,12 +491,6 @@ function GameScreen() {
                 </div>
               )}
               {!controller && <RoundCountdown room={room} seconds={seconds} />}
-              {/* By turns, once this player picked (or is out), who the turn still waits for, over the board. */}
-              {!burst && phase === "playing" && !race && !spectator && !watching && (pickedThisTurn || out) && waitingFor.length > 0 && (
-                <div className="tv-mines-wait" role="status">
-                  <WaitingPill names={waitingFor} className="is-float" />
-                </div>
-              )}
               {burst && (
                 <div key={burst.key} className={`tv-mines-burst is-${burst.tone}${burst.long ? " is-long" : ""}${burst.final ? " is-final" : ""}`} role="alert">
                   {/* The answer's card, the same as every game's, over the board. */}

@@ -6,7 +6,6 @@ import Icon from "../../components/home/Icon.jsx";
 import MatchResults from "../../components/home/MatchResults.jsx";
 import PartyPanel from "../../components/home/PartyPanel.jsx";
 import SpectatorBanner from "../../components/home/SpectatorBanner.jsx";
-import WaitingPill from "../../components/home/WaitingPill.jsx";
 import { ControllerBar, GetReady, PhoneHint } from "../../components/home/CentralBits.jsx";
 import { PauseButton, PauseVeil, ReportButton, SkipButton } from "../../components/home/PauseControls.jsx";
 import { resolveCode } from "../../lib/hiddenCode.js";
@@ -266,7 +265,6 @@ function GameScreen() {
                   Enviada: {sent}
                 </p>
               )}
-              {sent && <WaitingPill room={room} userId={me?.id} />}
             </form>
           )}
 
@@ -295,7 +293,6 @@ function GameScreen() {
             </div>
           )}
           {voting && central && <PhoneHint room={room}>Voten en su teléfono</PhoneHint>}
-          {voting && !central && !spectator && voted != null && <WaitingPill room={room} userId={me?.id} />}
           {err && <p className="tv-lobby-error" role="alert">{err}</p>}
         </section>
       </div>

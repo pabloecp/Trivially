@@ -7,7 +7,6 @@ import Icon from "../../components/home/Icon.jsx";
 import MatchResults from "../../components/home/MatchResults.jsx";
 import PartyPanel from "../../components/home/PartyPanel.jsx";
 import SpectatorBanner from "../../components/home/SpectatorBanner.jsx";
-import WaitingPill from "../../components/home/WaitingPill.jsx";
 import { ControllerBar, GetReady, PhoneHint } from "../../components/home/CentralBits.jsx";
 import { PauseButton, PauseVeil, ReportButton, SkipButton } from "../../components/home/PauseControls.jsx";
 import { resolveCode } from "../../lib/hiddenCode.js";
@@ -340,13 +339,10 @@ function GameScreen() {
               </form>
             )}
             {playing && !central && locked && !spectator && (
-              <>
-                <p className="tv-mwrite-sent">
-                  <Icon name={isKing ? "crown" : "check"} size={18} strokeWidth={3} filled={isKing} />
-                  {isKing ? "Eres el rey. A ver si alguien te la quita…" : sent?.text || me?.lastAnswer?.text || "Respuesta enviada"}
-                </p>
-                {!isKing && <WaitingPill room={room} userId={me?.id} />}
-              </>
+              <p className="tv-mwrite-sent">
+                <Icon name={isKing ? "crown" : "check"} size={18} strokeWidth={3} filled={isKing} />
+                {isKing ? "Eres el rey. A ver si alguien te la quita…" : sent?.text || me?.lastAnswer?.text || "Respuesta enviada"}
+              </p>
             )}
           </div>
           {err && <p className="tv-lobby-error" role="alert">{err}</p>}

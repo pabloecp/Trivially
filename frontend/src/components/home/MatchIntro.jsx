@@ -56,17 +56,6 @@ function useIntroStage(room) {
   return { stage, resultLeftMs: -elapsed, tutorialLeftMs: intro.spinMs + intro.tutorialMs - elapsed };
 }
 
-/** The bar at the card's foot, as when the search is full: it runs out with the time left. */
-function TimeBar({ leftMs, totalMs }) {
-  // Told only once, when it appears: the clock's ticks must not restart it.
-  const [delay] = useState(() => Math.min(0, leftMs - totalMs));
-  return (
-    <span className="tv-finding-bar" aria-hidden="true">
-      <i style={{ animationDuration: `${totalMs}ms`, animationDelay: `${delay}ms` }} />
-    </span>
-  );
-}
-
 /** The card's head, the same as on Inicio and in the search: the game's icon (or the logo), a small label over the name. */
 function CardHead({ badge, icon, label, name }) {
   return (
@@ -204,7 +193,7 @@ function Roulette({ room, startedAt, kind, onLand }) {
 }
 
 // The picked game on its own card, as on Inicio, with what to do in it for exactly `tutorialMs` (5 s): the head where the
-// roulette left it, the three steps where the search has its seats, and its clock and bar running out.
+// roulette left it, the three steps where the search has its seats, and its clock running out.
 function Tutorial({ intro, leftMs }) {
   const m = findMode(intro.game);
   const steps = VARIANT_TUTORIALS[intro.variant] || TUTORIALS[intro.game] || m.steps || [];
@@ -232,7 +221,6 @@ function Tutorial({ intro, leftMs }) {
           ))}
         </ol>
       </div>
-      <TimeBar leftMs={leftMs} totalMs={intro.tutorialMs} />
     </>
   );
 }
@@ -295,7 +283,6 @@ function PreviousGame({ intro, players, leftMs, viewerId }) {
           })}
         </ul>
       </div>
-      <TimeBar leftMs={leftMs} totalMs={intro.resultMs} />
     </>
   );
 }

@@ -1,5 +1,5 @@
-// "Esperando a Ana y Luis": who a round (or a turn of Campo de minas) still waits for, the same in every game. It
-// shows once this player answered, picked or confirmed, until the round goes on.
+// Who a round still waits for, the same in every game. Only the match's bottom bar says it ("Falta Ana por responder"):
+// no notice of its own comes up in the round's panel once this player answered, so nothing there moves.
 
 /** "Ana", "Ana y Luis", "Ana, Luis y Eva". */
 export function joinNames(names) {
@@ -16,28 +16,4 @@ export function waitingNames(room, userId) {
   return room.players
     .filter((p) => p.id !== userId && p.id !== room.rey?.kingId && p.connected && !p.spectator && !p.idle && p.status !== "mirando" && !p.out && !p.answered)
     .map((p) => p.name);
-}
-
-/**
- * The pill itself (with a pulsing dot). `names` can be given (Campo de minas works them out its own way); otherwise
- * they come from `room`. With nobody to wait for it shows `fallback`, if any. `inline` drops the pill's own box, for
- * a place that already has one (a button, a hint line).
- */
-export default function WaitingPill({ room, userId, names = null, fallback = null, inline = false, className = "" }) {
-  const list = names || waitingNames(room, userId);
-  if (!list.length) return fallback;
-  const text = (
-    <>
-      <span className="tv-pulse" aria-hidden="true" />
-      <span className="tv-wait-text">
-        Esperando a <strong>{joinNames(list)}</strong>
-      </span>
-    </>
-  );
-  if (inline) return text;
-  return (
-    <span className={`tv-wait-pill ${className}`} role="status">
-      {text}
-    </span>
-  );
 }
