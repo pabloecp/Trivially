@@ -6,11 +6,28 @@ import Segmented from "./Segmented.jsx";
 import { VolumeRows } from "./VolumeMenu.jsx";
 import "../../styles/admin.css";
 
+// One setting as a row, like the settings of a phone: its icon and name on the left, its choice (a small switch, with
+// icons when they say it better than words) on the right.
+function SettingRow({ icon, label, children }) {
+  return (
+    <div className="tv-setting-row">
+      <span className="tv-setting-name">
+        <Icon name={icon} size={18} strokeWidth={2.4} />
+        {label}
+      </span>
+      {children}
+    </div>
+  );
+}
+
+const ICON = (name) => <Icon name={name} size={17} strokeWidth={2.5} />;
+
 /**
- * "Ajustes", the gear in the top bar, for everyone: the volume, the language (only Spanish for now, English is greyed
- * out), the theme (lib/theme.js) and the animations, in the same window as every other panel. There is no chat filter
- * because the rooms have no chat. Owners also get "Panel de owner" at its foot (`onOwner`), which closes this window and opens the owner panel
- * (AdminPanel.jsx) with their tools.
+ * "Ajustes", the gear in the top bar, for everyone: the volume (the songs' and the sounds' bars), then a list of rows:
+ * the language (ES, EN greyed out until it comes), the theme (system, light or dark, as icons; lib/theme.js) and the
+ * animations (moving or still, as play and pause). No descriptions: each choice says its name when hovered and to screen
+ * readers. There is no chat filter because the rooms have no chat. Owners also get "Panel de owner" at its foot
+ * (`onOwner`), which closes this window and opens the owner panel (AdminPanel.jsx) with their tools.
  */
 export default function AppSettings({ open, onClose, onOwner = null }) {
   const still = useBlobsStillChoice();
@@ -32,48 +49,43 @@ export default function AppSettings({ open, onClose, onOwner = null }) {
       }
     >
       <div className="tv-admin-block">
-        <h3>Volumen</h3>
         <VolumeRows />
       </div>
-      <div className="tv-admin-block">
-        <h3>Idioma</h3>
-        <Segmented
-          label="Idioma"
-          value="es"
-          onChange={() => {}}
-          options={[
-            { value: "es", label: "Español" },
-            { value: "en", label: "English", disabled: true },
-          ]}
-        />
-        <p className="tv-admin-hint">El inglés llegará pronto.</p>
-      </div>
-      <div className="tv-admin-block">
-        <h3>Tema</h3>
-        <Segmented
-          label="Tema"
-          value={theme}
-          onChange={setThemeChoice}
-          options={[
-            { value: "sistema", label: "Sistema" },
-            { value: "claro", label: "Claro" },
-            { value: "oscuro", label: "Oscuro" },
-          ]}
-        />
-        <p className="tv-admin-hint">{theme === "sistema" ? "Usa el tema de tu dispositivo." : theme === "claro" ? "Fondo claro, siempre." : "Fondo oscuro, siempre."}</p>
-      </div>
-      <div className="tv-admin-block">
-        <h3>Animaciones</h3>
-        <Segmented
-          label="Animaciones"
-          value={still ? "si" : "no"}
-          onChange={(v) => setBlobsStill(v === "si")}
-          options={[
-            { value: "no", label: "Con movimiento" },
-            { value: "si", label: "Quietos" },
-          ]}
-        />
-        <p className="tv-admin-hint">{still ? "Los Blobs no saltan ni miran a los lados en esta pantalla." : "Los Blobs saltan en el podio y miran a los lados en los marcadores."}</p>
+      <div className="tv-admin-block tv-setting-list">
+        <SettingRow icon="globe" label="Idioma">
+          <Segmented
+            label="Idioma"
+            value="es"
+            onChange={() => {}}
+            options={[
+              { value: "es", label: "ES", title: "Español" },
+              { value: "en", label: "EN", title: "English (pronto)", disabled: true },
+            ]}
+          />
+        </SettingRow>
+        <SettingRow icon={theme === "claro" ? "sun" : theme === "oscuro" ? "moon" : "phone"} label="Tema">
+          <Segmented
+            label="Tema"
+            value={theme}
+            onChange={setThemeChoice}
+            options={[
+              { value: "sistema", label: ICON("phone"), title: "Como tu dispositivo" },
+              { value: "claro", label: ICON("sun"), title: "Claro" },
+              { value: "oscuro", label: ICON("moon"), title: "Oscuro" },
+            ]}
+          />
+        </SettingRow>
+        <SettingRow icon="bolt" label="Animaciones">
+          <Segmented
+            label="Animaciones"
+            value={still ? "si" : "no"}
+            onChange={(v) => setBlobsStill(v === "si")}
+            options={[
+              { value: "no", label: ICON("play"), title: "Con movimiento" },
+              { value: "si", label: ICON("pause"), title: "Quietos" },
+            ]}
+          />
+        </SettingRow>
       </div>
     </Modal>
   );

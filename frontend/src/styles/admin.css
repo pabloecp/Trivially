@@ -15,6 +15,15 @@
 .tv-admin-block { display: grid; gap: 10px; padding: 16px; border-radius: 20px; background: var(--tv-option-bg); }
 .tv-admin-block h3 { margin: 0; font-family: var(--tv-display); font-weight: 800; font-size: 18px; }
 .tv-admin-block .tv-btn { justify-self: start; }
+/* "Ajustes" (AppSettings.jsx): the settings as rows, each its icon and name on the left and a small switch on the right. */
+.tv-setting-list { gap: 0; padding-block: 6px; }
+.tv-setting-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 52px; }
+.tv-setting-row + .tv-setting-row { border-top: 1px solid var(--tv-surface-3); }
+.tv-setting-name { display: inline-flex; align-items: center; gap: 10px; font-family: var(--tv-display); font-weight: 800; font-size: 16px; color: var(--tv-text); }
+.tv-setting-name svg { color: var(--tv-text-3); }
+.tv-setting-row .tv-seg { flex: none; padding: 3px; }
+.tv-setting-row .tv-seg-thumb { top: 3px; bottom: 3px; left: 3px; width: calc((100% - 6px) / var(--count)); }
+.tv-setting-row .tv-seg-btn { display: grid; place-items: center; width: 48px; height: 34px; font-size: 14px; }
 .tv-admin-hint { margin: 0; font-weight: 700; font-size: 13px; line-height: 1.35; color: var(--tv-text-3); }
 .tv-admin-msg { margin: 0; font-weight: 800; font-size: 13px; color: var(--p-music-text, #5be08a); }
 /* "Tipo de sonido": the chosen set between ‹ and ›, small square buttons with their edge (grey, like the site's neutral
