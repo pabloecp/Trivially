@@ -1,9 +1,9 @@
-import { useEffect, useState } from "react";
-import { createPortal } from "react-dom";
+import { useState } from "react";
 import { useApp } from "../../lib/store.jsx";
 import { setBlobStyle, setBlobsStill, useBlobsStillChoice, setForcedGames, setOwnerView, useBlobStyleChoice, setResultsStyle, setResultsTone, setScoreboardBadge, setScoreboardLook, setLyricsView, useLyricsViewChoice, useForcedGames, useOwnerView, useResultsChoice, useScoreboardBadgeChoice, useScoreboardChoice } from "../../lib/ownerView.js";
 import { findMode } from "../../modes/index.js";
 import Icon from "./Icon.jsx";
+import Modal from "./Modal.jsx";
 import Segmented from "./Segmented.jsx";
 import { SoundPacks, VolumeRows } from "./VolumeMenu.jsx";
 import { findVariant, variantsFor } from "./matchInfo.js";
@@ -26,29 +26,8 @@ export default function AdminPanel({ open, onClose, isOwner = false }) {
   const scoreboard = useScoreboardChoice();
   const badge = useScoreboardBadgeChoice();
   const lyricsView = useLyricsViewChoice();
-  const [mounted, setMounted] = useState(open);
   const [msg, setMsg] = useState("");
   const [busy, setBusy] = useState(false);
-
-  useEffect(() => {
-    if (open) {
-      setMounted(true);
-      setMsg("");
-      return undefined;
-    }
-    // Closing: it goes once its way out has played (0.3 s, --tv-box-out); the animations are on its backdrop and card,
-    // not on the root, so it doesn't wait for an animationend that never comes there.
-    const t = setTimeout(() => setMounted(false), 310);
-    return () => clearTimeout(t);
-  }, [open]);
-  useEffect(() => {
-    if (!open) return undefined;
-    const onKey = (e) => e.key === "Escape" && onClose();
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [open, onClose]);
-
-  if (!mounted) return null;
 
   const debug = view === "debug";
   const canBot = Boolean(room) && room.phase === "lobby" && !room.matchmaking && !isCentral;
@@ -71,23 +50,8 @@ export default function AdminPanel({ open, onClose, isOwner = false }) {
     }
   }
 
-  return createPortal(
-    <div className={`tv-admin-root ${open ? "is-open" : "is-closing"}`}>
-      <div className="tv-admin-backdrop" onClick={onClose} />
-      <section className={`tv-admin${isOwner ? "" : " is-user"}`} role="dialog" aria-modal="true" aria-labelledby="tv-admin-title">
-        <header className="tv-admin-head">
-          <span className="tv-badge tv-c-coral" aria-hidden="true">
-            <Icon name="settings" size={24} strokeWidth={2.2} />
-          </span>
-          <div>
-            <p className="tv-mono-label">{isOwner ? "Owner" : "Esta pantalla"}</p>
-            <h2 id="tv-admin-title" className="tv-admin-title">Ajustes</h2>
-          </div>
-          <button type="button" className="tv-fr-x tv-admin-x" onClick={onClose} aria-label="Cerrar">
-            <Icon name="close" size={18} strokeWidth={3} />
-          </button>
-        </header>
-
+  return (
+    <Modal open={open} onClose={onClose} title="Ajustes" size={isOwner ? "lg" : "sm"} className="tv-admin">
         <div className="tv-admin-body">
           {/* The Blobs' jumps and looks (Blob.jsx): anyone can stop them, on this device. */}
           <div className="tv-admin-block is-half">
@@ -280,8 +244,6 @@ export default function AdminPanel({ open, onClose, isOwner = false }) {
             </>
           )}
         </div>
-      </section>
-    </div>,
-    document.querySelector(".tv-app") || document.body
+    </Modal>
   );
 }

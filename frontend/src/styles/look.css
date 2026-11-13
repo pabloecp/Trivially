@@ -770,10 +770,6 @@
 }
 
 /* The friends' panel: its close is the grey one of every panel (never a black edge), its title in Outfit. */
-.tv-app .tv-fr-close { background: var(--tv-neutral); color: var(--tv-neutral-on); box-shadow: 0 3px 0 var(--tv-neutral-edge); }
-.tv-app .tv-fr-close:hover { box-shadow: 0 4px 0 var(--tv-neutral-edge); }
-.tv-app .tv-fr-close:active { box-shadow: 0 0 0 var(--tv-neutral-edge); }
-.tv-app .tv-fr-sheet .tv-sheet-title { font-family: var(--tv-title); font-weight: 800; letter-spacing: -0.03em; }
 
 /* ---------- Panels over the page ---------- */
 .tv-modal-root {
@@ -975,7 +971,6 @@
 /* "Amigos" without an account: the image, what an account gives, the two buttons. */
 .tv-fr-guest { display: flex; flex-direction: column; align-items: center; gap: 16px; text-align: center; }
 .tv-fr-guest > * { flex-shrink: 0; }
-.tv-app .tv-fr-sheet .tv-fr-guest { max-height: none; overflow: visible; }
 .tv-fr-guest-art { display: grid; place-items: center; width: 100%; min-height: clamp(72px, 18vh, 140px); color: var(--tv-text-3); }
 .tv-fr-guest-art img { display: block; max-width: 100%; max-height: clamp(72px, 22vh, 180px); object-fit: contain; }
 .tv-fr-guest .tv-stage-login { width: 100%; }
@@ -1796,18 +1791,6 @@
    won): they only change. The final results screen (the podium) keeps its own. */
 .tv-app :is(.tv-player, .tv-player-score, .tv-player-won, .tv-player-games, .tv-player-badge, .tv-mbar-face, .tv-stage-friends-list li) { animation: none; }
 
-/* "Amigos" looks like the other windows ("Tu grupo"): the title alone at 32 px with the close square beside it, the same
-   margins and corners. */
-.tv-app .tv-fr-sheet { padding: 0 0 calc(26px + env(safe-area-inset-bottom)); border-radius: 24px; }
-.tv-app .tv-fr-head { padding: 26px 28px 6px; }
-.tv-app .tv-fr-sheet .tv-sheet-title { font-size: 32px; line-height: 1.1; }
-.tv-app .tv-fr-sheet .tv-sheet-body { padding: 16px 28px 0; }
-@media (max-width: 640px) {
-  .tv-app .tv-fr-sheet { border-radius: 24px 24px 0 0; }
-  .tv-app .tv-fr-head { padding: 20px 18px 4px; }
-  .tv-app .tv-fr-sheet .tv-sheet-title { font-size: 26px; }
-  .tv-app .tv-fr-sheet .tv-sheet-body { padding: 14px 18px 0; }
-}
 
 /* In a match the answers never go see-through nor sink out of their box: the chosen, right and wrong ones stay where they
    are (with their edge in their own colour), and the others are plain grey tiles with dimmed text. */
