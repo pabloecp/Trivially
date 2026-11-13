@@ -20,6 +20,9 @@
 }
 .tv-admin-root.is-closing .tv-admin { animation: var(--tv-box-out); }
 @media (prefers-reduced-motion: reduce) { .tv-admin, .tv-admin-backdrop, .tv-admin-root.is-closing .tv-admin, .tv-admin-root.is-closing .tv-admin-backdrop { animation: none; } }
+.tv-admin.is-user { width: min(100%, 520px); }
+.tv-admin.is-user .tv-admin-block.is-half { grid-column: 1 / -1; }
+.tv-admin-section { grid-column: 1 / -1; margin: 8px 0 0; }
 .tv-admin-head { display: flex; align-items: center; gap: 14px; padding: 22px 22px 14px; }
 .tv-admin-head > div { flex: 1; min-width: 0; }
 .tv-admin-title { margin: 0; font-family: var(--tv-display); font-weight: 800; font-size: 26px; line-height: 1; }

@@ -238,7 +238,7 @@ export default function TvTopbar() {
 
   return (
     <>
-      {isOwner && <AdminPanel open={adminOpen} onClose={() => setAdminOpen(false)} />}
+      {!isCentral && <AdminPanel open={adminOpen} onClose={() => setAdminOpen(false)} isOwner={isOwner} />}
       <header className={`tv-topbar${backAnim ? ` is-back-${backAnim}` : ""}`}>
         <div className="tv-topbar-start">
           {shownButton}
@@ -248,12 +248,12 @@ export default function TvTopbar() {
           {!playing && !introHere && <span className="tv-topbar-sala" />}
         </div>
         <div className="tv-topbar-end">
-          {/* Owners only: the admin panel (the owner/user view, the test bot, the games forced in Casual). */}
-          {isOwner && !isCentral && (
+          {/* Everyone: "Ajustes" (volume, animations); owners find their tools there too (the owner/user view, the test bot...). */}
+          {!isCentral && (
             <button
               type="button"
               className="tv-chip tv-chip--icon"
-              aria-label="Panel de owner"
+              aria-label="Ajustes"
               aria-haspopup="dialog"
               onClick={(e) => {
                 e.currentTarget.blur();
@@ -265,7 +265,7 @@ export default function TvTopbar() {
               </span>
             </button>
           )}
-          <VolumeMenu inOwnerPanel={isOwner && !isCentral} />
+          <VolumeMenu inOwnerPanel={!isCentral} />
           {!isCentral && (
             <button
               type="button"

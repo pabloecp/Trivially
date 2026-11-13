@@ -1,12 +1,11 @@
-# Owner panel (the gear in the top bar)
+# Ajustes and the owner panel (the gear in the top bar)
 
 Two roles only (`auth/roles.js`): "user" and "owner", the account ids in the env var `OWNER_IDS` (a role saved on an account counts for nothing). Every owner power is checked on the socket's **verified** account.
 
-Owners get a gear (`TvTopbar.jsx`, `useIsOwner` in `lib/ownerView.js`) opening `AdminPanel.jsx` (styles `styles/admin.css`):
+Everyone (not the central device) gets a gear (`TvTopbar.jsx`) opening "Ajustes" (`AdminPanel.jsx`, styles `styles/admin.css`). A player sees a narrow panel with **Animaciones** ("Con movimiento" | "Quietos": `useBlobsStill`, any player, this device) and, on phones only, **Volumen** (the top bar's volume button is hidden on phones for everyone, `VolumeMenu inOwnerPanel`). Owners (`useIsOwner`) see the same plus, under "Solo owners", their tools:
 
 - **Vista:** "Owner (debug)" | "Usuario normal" (`trivially_owner_view`). In normal view the owner sees the site like anyone (no "Saltar", forced games not sent).
 - **Tipo de sonido:** the sets of `lib/sounds.js` (`trivially_sound_pack_v2`); everyone else hears Madera.
-- **Reducir movimiento:** the Blobs stay still (no jumps nor looks) on the owner's device (`useBlobsStill`); nobody else can turn their animations off.
 - **Estilo de los Blobs:** "Plano", "Sombra" (what everyone sees) or "Luz y sombra", only on the owner's device and in debug view (`lib/ownerView.js`, `useBlobStyle`).
 - **Pantalla de resultados** and **Marcador:** look variants only for the owner in debug view (`useResultsLook`, `useScoreboardLook`); everyone else sees the defaults: results "Barras" + "En color", scoreboard "Insignia" with a crown (`useScoreboardBadge`, its own setting apart from the results tone).
 - **Letra (Cerradas):** "Normal" (what everyone sees: three lines of lyrics over the four options) or "Opciones grandes" (only the last two lines, so the options are as big as Trivia's), only on the owner's device and in debug view (`useLyricsView`, `trivially_lyrics_view`; the play panel gets `is-big-options`).

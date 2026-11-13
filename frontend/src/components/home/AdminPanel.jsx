@@ -16,7 +16,7 @@ const MAX_FORCED = 5;
  * and the site as any player sees it; the test bot (it used to sit under the players of a room); and the games of this
  * owner's own public matches, in the order they choose instead of the random draw.
  */
-export default function AdminPanel({ open, onClose }) {
+export default function AdminPanel({ open, onClose, isOwner = false }) {
   const blobStyle = useBlobStyleChoice();
   const blobsStill = useBlobsStillChoice();
   const { room, isCentral, addTestBot } = useApp();
@@ -74,14 +74,14 @@ export default function AdminPanel({ open, onClose }) {
   return createPortal(
     <div className={`tv-admin-root ${open ? "is-open" : "is-closing"}`}>
       <div className="tv-admin-backdrop" onClick={onClose} />
-      <section className="tv-admin" role="dialog" aria-modal="true" aria-labelledby="tv-admin-title">
+      <section className={`tv-admin${isOwner ? "" : " is-user"}`} role="dialog" aria-modal="true" aria-labelledby="tv-admin-title">
         <header className="tv-admin-head">
           <span className="tv-badge tv-c-coral" aria-hidden="true">
             <Icon name="settings" size={24} strokeWidth={2.2} />
           </span>
           <div>
-            <p className="tv-mono-label">Solo owners</p>
-            <h2 id="tv-admin-title" className="tv-admin-title">Panel de owner</h2>
+            <p className="tv-mono-label">{isOwner ? "Owner" : "Esta pantalla"}</p>
+            <h2 id="tv-admin-title" className="tv-admin-title">Ajustes</h2>
           </div>
           <button type="button" className="tv-fr-x tv-admin-x" onClick={onClose} aria-label="Cerrar">
             <Icon name="close" size={18} strokeWidth={3} />
@@ -89,6 +89,30 @@ export default function AdminPanel({ open, onClose }) {
         </header>
 
         <div className="tv-admin-body">
+          {/* The Blobs' jumps and looks (Blob.jsx): anyone can stop them, on this device. */}
+          <div className="tv-admin-block is-half">
+            <h3>Animaciones</h3>
+            <Segmented
+              label="Animaciones"
+              value={blobsStill ? "si" : "no"}
+              onChange={(v) => setBlobsStill(v === "si")}
+              options={[
+                { value: "no", label: "Con movimiento" },
+                { value: "si", label: "Quietos" },
+              ]}
+            />
+            <p className="tv-admin-hint">{blobsStill ? "Los Blobs no saltan ni miran a los lados en esta pantalla." : "Los Blobs saltan en el podio y miran a los lados en los marcadores."}</p>
+          </div>
+
+          {/* On phones the top bar has no volume button: it's here (VolumeMenu `inOwnerPanel`). */}
+          <div className="tv-admin-block is-half tv-admin-volume">
+            <h3>Volumen</h3>
+            <VolumeRows />
+          </div>
+
+          {isOwner && (
+            <>
+              <p className="tv-mono-label tv-admin-section">Solo owners</p>
           {/* How the Blobs are drawn on this device (lib/ownerView.js): everyone else sees "Sombra interior". */}
           <div className="tv-admin-block is-third">
             <h3>Estilo de los Blobs</h3>
@@ -105,27 +129,6 @@ export default function AdminPanel({ open, onClose }) {
             <p className="tv-admin-hint">
               {blobStyle === "sombra" ? "El que ven todos: su color con una sombra por dentro." : "Solo lo ves tú, en la vista de owner. Los demás ven «Sombra»."}
             </p>
-          </div>
-
-          {/* The Blobs' jumps and looks (Blob.jsx): only an owner can stop them, on this device. */}
-          <div className="tv-admin-block is-third">
-            <h3>Reducir movimiento</h3>
-            <Segmented
-              label="Reducir movimiento"
-              value={blobsStill ? "si" : "no"}
-              onChange={(v) => setBlobsStill(v === "si")}
-              options={[
-                { value: "no", label: "Con movimiento" },
-                { value: "si", label: "Quietos" },
-              ]}
-            />
-            <p className="tv-admin-hint">{blobsStill ? "Los Blobs no saltan ni miran a los lados en esta pantalla." : "Los Blobs saltan en el podio y miran a los lados en los marcadores."}</p>
-          </div>
-
-          {/* On phones the owners' top bar has no volume button: it's here (VolumeMenu `inOwnerPanel`). */}
-          <div className="tv-admin-block is-third tv-admin-volume">
-            <h3>Volumen</h3>
-            <VolumeRows />
           </div>
 
           <div className="tv-admin-block is-third">
@@ -274,6 +277,8 @@ export default function AdminPanel({ open, onClose }) {
                 />
                 <p className="tv-admin-hint">«Opciones grandes»: las 4 opciones del tamaño de las de Trivia, con menos letra a la vista. Los jugadores ven «Normal».</p>
               </div>
+            </>
+          )}
         </div>
       </section>
     </div>,

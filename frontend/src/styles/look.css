@@ -1783,7 +1783,7 @@
   62%, 82% { transform: translate(0, 10px) scaleY(0.4); }
 }
 /* Neutral (the scoreboards, a group's list, the big one beside your elo): only the eyes look left and right now and
-   then, each Blob at its own moment (--blob-delay). Only an owner can keep them still ("Reducir movimiento", Blob.jsx). */
+   then, each Blob at its own moment (--blob-delay). Anyone can keep them still ("Animaciones", Ajustes, Blob.jsx). */
 /* The neutral Blob's eyes are moved by Blob.jsx, at random moments of its own. */
 
 /* A code always takes the width of "WWWWW" (an invisible copy sizes it), shown or hidden, so the boxes around it don't move. */
