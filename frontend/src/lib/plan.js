@@ -15,8 +15,8 @@ export const isPublicGame = (game) => PUBLIC_GAMES.includes(game) || game === CL
 const plannable = (game) => game === CLASSIC || isGameTile(findMode(game) || {});
 
 export const AUDIENCES = [
-  { value: "publica", label: "Partida pública", icon: "globe", short: "Pública" },
-  { value: "grupo", label: "Partida privada", icon: "users", short: "Privada" },
+  { value: "publica", label: "Partida pública", icon: "globe", short: "Pública", hint: "Con todo el mundo" },
+  { value: "grupo", label: "Partida privada", icon: "users", short: "Privada", hint: "Solo o con tu grupo" },
 ];
 export const audienceOf = (audience) => AUDIENCES.find((a) => a.value === audience) || AUDIENCES[1];
 export const audienceName = (audience) => audienceOf(audience).label;

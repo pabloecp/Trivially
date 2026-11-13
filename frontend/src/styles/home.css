@@ -275,7 +275,7 @@
   animation: tvBob 3.4s ease-in-out infinite;
 }
 .has-edge .tv-appicon-tile { height: calc(var(--s) * 1.06); }
-.tv-appicon-bg { fill: var(--tv-surface); }
+.tv-appicon-bg { fill: #141517; }
 .tv-appicon-edge { fill: var(--tv-logo-shadow); }
 .tv-appicon-shadow {
   position: absolute;
