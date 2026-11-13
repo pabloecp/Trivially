@@ -2092,8 +2092,9 @@
 .tv-badges-count { font-family: var(--tv-small); font-weight: 700; font-size: 14px; color: var(--tv-text-3); white-space: nowrap; }
 .tv-badges-count b { font-family: var(--tv-display); font-weight: 800; font-size: 18px; color: var(--tv-text); }
 .tv-badges-hint { margin: -6px 0 2px; font-family: var(--tv-small); font-weight: 600; font-size: 14px; line-height: 1.4; color: var(--tv-text-3); }
-/* As many columns as fit (four in the wide profile, two in someone else's, one on a phone). */
-.tv-badges-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 200px), 1fr)); gap: 10px; }
+/* Two even rows of four in the wide profile; two columns in someone else's and on a tablet, one on a phone. */
+.tv-badges-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+.tv-pf.is-other .tv-badges-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 /* Each badge: its tag (and, if won, "Ponértela" or "La llevas"), what it asks, and its bar with "64 / 100". The won ones
    are buttons, grey with their edge, the one worn in the site's blue; the others are flat. */
 .tv-badge-item { display: flex; flex-direction: column; align-items: stretch; gap: 10px; min-width: 0; padding: 14px; border: 0; border-radius: 16px; background: var(--tv-surface-2); color: var(--tv-text); font: inherit; text-align: left; }
@@ -2113,9 +2114,12 @@ button.tv-badge-item:disabled { cursor: default; }
 .tv-badge-num { flex: none; font-family: var(--tv-display); font-weight: 700; font-size: 13px; color: var(--tv-text-3); font-variant-numeric: tabular-nums; }
 .tv-badge-item.is-on :is(.tv-badge-state, .tv-badge-how, .tv-badge-num) { color: #fff; }
 .tv-badge-item.is-on .tv-badge-bar { background: rgba(0, 0, 0, 0.25); }
+@media (max-width: 1000px) {
+  .tv-badges-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
 @media (max-width: 560px) {
   .tv-app .tv-pf > .tv-pf-badges { padding: 16px; }
-  .tv-badges-grid { gap: 8px; }
+  .tv-badges-grid, .tv-pf.is-other .tv-badges-grid { grid-template-columns: minmax(0, 1fr); gap: 8px; }
   .tv-badge-item { gap: 8px; padding: 12px; }
 }
 /* "Tu Blob": the title and its two tabs ("Colores", "Skins") on one line. The skins take the colours' box (four rows of
