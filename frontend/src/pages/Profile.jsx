@@ -168,7 +168,7 @@ function BlobColors({ user, onPick }) {
   }
 
   return (
-    <div className={`tv-blob-colors${skins ? " has-pages" : ""}`}>
+    <div className="tv-blob-colors has-pages">
       <div className="tv-card-head">
         <h2 className="tv-card-title">Tu Blob</h2>
         <Segmented options={BLOB_TABS} value={tab} onChange={(v) => { setTab(v); setInfo(null); }} label="Colores o skins" />
@@ -197,25 +197,23 @@ function BlobColors({ user, onPick }) {
           );
         })}
       </div>
-      {skins && (
-        <div className="tv-blob-pager">
-          <span className="tv-summary-where">
-            Skins{" "}
-            <b>
-              {from + 1}–{from + list.length}
-            </b>{" "}
-            de {BLOB_SKINS.length}
-          </span>
-          <span className="tv-summary-nav">
-            <button type="button" className="tv-iconbtn tv-summary-prev" aria-label="Skins anteriores" disabled={page <= 0} onClick={() => { setPage(page - 1); setInfo(null); }}>
-              <Icon name="chevron" size={20} strokeWidth={3} />
-            </button>
-            <button type="button" className="tv-iconbtn" aria-label="Skins siguientes" disabled={page >= SKIN_PAGES - 1} onClick={() => { setPage(page + 1); setInfo(null); }}>
-              <Icon name="chevron" size={20} strokeWidth={3} />
-            </button>
-          </span>
-        </div>
-      )}
+      <div className="tv-blob-pager">
+        <span className="tv-summary-where">
+          {skins ? "Skins" : "Colores"}{" "}
+          <b>
+            {skins ? from + 1 : 1}–{skins ? from + list.length : list.length}
+          </b>{" "}
+          de {skins ? BLOB_SKINS.length : BLOB_COLORS.length}
+        </span>
+        <span className="tv-summary-nav">
+          <button type="button" className="tv-iconbtn tv-summary-prev" aria-label={skins ? "Skins anteriores" : "Colores anteriores"} disabled={!skins || page <= 0} onClick={() => { setPage(page - 1); setInfo(null); }}>
+            <Icon name="chevron" size={20} strokeWidth={3} />
+          </button>
+          <button type="button" className="tv-iconbtn" aria-label={skins ? "Skins siguientes" : "Colores siguientes"} disabled={!skins || page >= SKIN_PAGES - 1} onClick={() => { setPage(page + 1); setInfo(null); }}>
+            <Icon name="chevron" size={20} strokeWidth={3} />
+          </button>
+        </span>
+      </div>
       {/* Over the colours, so saying it moves nothing. */}
       {locked && (
         <p className="tv-pf-blobnote" aria-live="polite">
