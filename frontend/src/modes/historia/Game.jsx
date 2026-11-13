@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import TvShell from "../../components/home/TvShell.jsx";
 import Icon from "../../components/home/Icon.jsx";
-import { joinNames as joinWaiting, waitingNames } from "../../components/home/WaitingPill.jsx";
 import MatchResults from "../../components/home/MatchResults.jsx";
 import PartyPanel from "../../components/home/PartyPanel.jsx";
 import { ControllerBar, GetReady, PhoneHint } from "../../components/home/CentralBits.jsx";
@@ -82,8 +81,6 @@ function GameScreen() {
     : room?.me;
   const myGuess = guess?.round === round ? guess : null;
   const confirmed = Boolean(myGuess?.locked) || Boolean(me?.answered);
-  // Who the round still waits for, once this player confirmed.
-  const waiting = waitingNames(room, user?.id);
   const open = phase === "playing" && iPlay && !confirmed && question?.min != null;
   const min = question?.min ?? null;
   const max = question?.max ?? null;
@@ -275,8 +272,6 @@ function GameScreen() {
   else if (confirmed)
     hint = tiebreak
       ? `${words.done}. Si es ${words.exact} y fuiste el primero, ganas.`
-      : waiting.length
-      ? `${words.done}. Esperando a ${joinWaiting(waiting)}…`
       : `${words.done}.`;
   else if (myGuess) hint = `Ajusta con los botones${touch ? "" : " o las flechas"} y confirma.`;
   else hint = touch ? `Toca ${words.line} para elegir ${words.pick}.` : `Haz clic en ${words.line} o usa las flechas del teclado.`;

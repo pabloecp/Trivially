@@ -299,12 +299,12 @@ function GameScreen() {
       hintIcon = "check";
     } else if (central || watching || spectator) {
       hintIcon = central ? "phone" : "info";
-      hint = waitingFor.length ? `Desempate entre ${tiedNames}. Esperando a ${joinNames(waitingFor)}…` : `Desempate entre ${tiedNames}.`;
+      hint = `Desempate entre ${tiedNames}.`;
     } else if (out) {
       hint = "Pisaste una mina. Si nadie acierta, vuelves a intentarlo.";
       hintTone = " is-out";
     } else if (pickedThisTurn) {
-      hint = waitingFor.length ? `Elegiste. Esperando a ${joinNames(waitingFor)}…` : "Elegiste…";
+      hint = "Elegiste…";
       hintIcon = "check";
       hintTone = " is-sent";
     } else {
@@ -327,7 +327,7 @@ function GameScreen() {
     // The central device talks to the whole room: they pick on their phones.
     hintIcon = "phone";
     if (race) hint = "¡Carrera! Elijan en su teléfono las correctas antes que los demás.";
-    else hint = waitingFor.length ? `Turno ${turn}: esperando a ${joinNames(waitingFor)}…` : `Turno ${turn}: siguiente turno…`;
+    else hint = waitingFor.length ? `Turno ${turn}.` : `Turno ${turn}: siguiente turno…`;
   } else if (spectator) {
     hint = "Estás viendo la partida. Jugarás en la siguiente.";
     hintIcon = "info";
@@ -342,7 +342,7 @@ function GameScreen() {
       hintTone = " is-sent";
     }
   } else if (pickedThisTurn) {
-    hint = waitingFor.length ? `Elegiste. Esperando a ${joinNames(waitingFor)}…` : "Elegiste. Siguiente turno…";
+    hint = waitingFor.length ? "Elegiste." : "Elegiste. Siguiente turno…";
     hintIcon = "check";
     hintTone = " is-sent";
   } else {
