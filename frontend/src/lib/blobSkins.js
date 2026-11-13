@@ -229,25 +229,13 @@ const SKINS = {
     name: "Oro",
     draw: (u, small) => ({
       defs: `
-        <radialGradient id="${u}g" cx=".36" cy=".28" r=".85"><stop offset="0" stop-color="#FFF4C4"/><stop offset=".22" stop-color="#FFD94A"/><stop offset=".52" stop-color="#E0A611"/><stop offset=".8" stop-color="#A86F00"/><stop offset="1" stop-color="#6E4600"/></radialGradient>
-        <filter id="${u}f" x="-10%" y="-10%" width="120%" height="120%"><feGaussianBlur stdDeviation=".7"/></filter>
-        ${mask(u + "s", -7, -9)}${mask(u + "b", 0, -9)}${mask(u + "e", 2.6, 3)}`,
+        <radialGradient id="${u}g" cx=".36" cy=".3" r=".8"><stop offset="0" stop-color="#FFF1B0"/><stop offset=".35" stop-color="#FFD23F"/><stop offset=".75" stop-color="#E0A000"/><stop offset="1" stop-color="#B07800"/></radialGradient>
+        ${mask(u + "s", -7, -9)}`,
       layers: `
         <path d="${BODY}" fill="url(#${u}g)"/>
-        <path d="${BODY}" fill="#FFB23F" opacity=".55" mask="url(#${u}b)"/>
-        <g filter="url(#${u}f)">
-          <path d="M-5 52 C25 43 75 43 105 52 L105 55 C75 47 25 47 -5 55 Z" fill="#FFF6D0" opacity=".7"/>
-          <path d="M-5 56 C25 48 75 48 105 56 L105 63 C75 55 25 55 -5 63 Z" fill="#6E4300" opacity=".5"/>
-        </g>
-        <path d="${BODY}" fill="#5A3A00" opacity=".42" mask="url(#${u}s)"/>
-        <path d="${BODY}" fill="#FFFBEA" opacity=".9" mask="url(#${u}e)"/>
-        <g>
-          <g transform="rotate(25 50 50)"><rect x="34" y="-30" width="8" height="160" fill="#FFFBEA" opacity=".55"/><rect x="46" y="-30" width="3" height="160" fill="#FFFBEA" opacity=".4"/></g>
-          ${anim(`<animateTransform attributeName="transform" type="translate" values="-90 0;-90 0;90 0" keyTimes="0;.6;1" dur="5s" repeatCount="indefinite"/>`)}
-        </g>
-        <ellipse cx="29" cy="24" rx="${small ? 13 : 11}" ry="${small ? 5.5 : 4.5}" transform="rotate(-28 29 24)" fill="#fff" opacity=".92"/>
-        <circle cx="45" cy="17" r="${small ? 2.8 : 2.1}" fill="#fff" opacity=".92"/>
-        ${sparkle(79, 25, small ? 7 : 5.5, 0.4)}${small ? "" : sparkle(22, 72, 3.2, 1.7)}`,
+        <path d="${BODY}" fill="#8A5A00" opacity=".4" mask="url(#${u}s)"/>
+        <ellipse cx="29" cy="24" rx="${small ? 13 : 11}" ry="${small ? 5.5 : 4.5}" transform="rotate(-28 29 24)" fill="#fff" opacity=".9"/>
+        ${sparkle(78, 26, small ? 7 : 5.5, 0.4)}`,
     }),
   },
 
@@ -463,33 +451,25 @@ const SKINS = {
     },
   },
 
-  circuito: {
-    name: "Circuito",
+  hamburguesa: {
+    name: "Hamburguesa",
+    // The top bun is the face (the eyes sit on it); under it lettuce, cheese that drips, the meat and the bottom bun.
     draw: (u, small) => {
-      const traces = [
-        ["M50 9 V22 L58 30 H74", 74, 30],
-        ["M4 56 H16 L24 64 V80", 24, 80],
-        ["M96 60 H86 L80 66 V72", 80, 72],
-        ["M30 92 V86 L40 76 H50", 50, 76],
-        ["M10 30 L20 22 H34", 34, 22],
-        ["M90 24 L82 18 H74", 74, 18],
-        ["M66 92 V82", 66, 82],
-      ].slice(0, small ? 4 : 7);
+      const seeds = [[30, 20, -20], [50, 15, 0], [70, 20, 20], [20, 32, -40], [80, 32, 40], [42, 26, -10], [60, 27, 15]].slice(0, small ? 3 : 7);
       return {
         defs: `
-          <radialGradient id="${u}g" cx=".5" cy=".45" r=".65"><stop offset="0" stop-color="#22A35C"/><stop offset="1" stop-color="#0B5A30"/></radialGradient>
-          <filter id="${u}f" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="1.4"/></filter>
-          ${mask(u + "s", -7, -9)}`,
+          <radialGradient id="${u}b" cx=".45" cy=".25" r=".8"><stop offset="0" stop-color="#FFD08A"/><stop offset=".6" stop-color="#F2A54A"/><stop offset="1" stop-color="#D9822B"/></radialGradient>`,
         layers: `
-          <path d="${BODY}" fill="url(#${u}g)"/>
-          <path d="${BODY}" fill="#03301A" opacity=".45" mask="url(#${u}s)"/>
-          <g fill="none" stroke="#D9A441" stroke-width="${small ? 2.8 : 1.7}" stroke-linecap="round" stroke-linejoin="round">${traces.map(([d]) => `<path d="${d}"/>`).join("")}</g>
-          <g fill="#D9A441" stroke="#7A5310" stroke-width=".6">${traces.map(([, x, y]) => `<circle cx="${x}" cy="${y}" r="${small ? 3.2 : 2.4}"/>`).join("")}</g>
-          <g fill="#0B5A30">${traces.map(([, x, y]) => `<circle cx="${x}" cy="${y}" r="${small ? 1.2 : 0.9}"/>`).join("")}</g>
-          ${small ? "" : `<rect x="56" y="74" width="7" height="4" rx=".6" fill="#1A1A1A"/><rect x="38" y="20" width="4" height="7" rx=".6" fill="#1A1A1A"/>`}
-          <g fill="none" stroke="#FFF3B0" stroke-width="${small ? 2.8 : 1.7}" stroke-linecap="round" filter="url(#${u}f)">
-            ${traces.map(([d], i) => `<path d="${d}" pathLength="100" stroke-dasharray="12 100" stroke-dashoffset="${RM ? 0 : 112}">${anim(`<animate attributeName="stroke-dashoffset" values="112;0" dur="2.4s" begin="-${(i * 0.7).toFixed(1)}s" repeatCount="indefinite"/>`)}</path>`).join("")}
-          </g>`,
+          <path d="${BODY}" fill="#E38B32"/>
+          <rect x="0" y="66" width="100" height="14" fill="#6B3412"/>
+          ${small ? "" : `<g fill="#4A220A"><circle cx="24" cy="72" r="1.1"/><circle cx="46" cy="75" r="1"/><circle cx="68" cy="71" r="1.2"/><circle cx="84" cy="75" r=".9"/></g>`}
+          <path d="M-2 62 H102 V66 L94 66 L90 74 L86 66 L60 66 L55 76 L50 66 L22 66 L17 73 L12 66 L-2 66 Z" fill="#FFC21F" stroke-linejoin="round"/>
+          <path d="M-2 58 Q4 64 10 59 T22 59 T34 59 T46 59 T58 59 T70 59 T82 59 T94 59 T106 59 V64 H-2 Z" fill="#3DBE4A"/>
+          <path d="M-5 -5 H105 V56 C100 60 90 61 50 61 C10 61 0 60 -5 56 Z" fill="url(#${u}b)"/>
+          <path d="M-5 54 C10 58 30 59 50 59 C70 59 90 58 105 54 V57 C90 61 70 62 50 62 C30 62 10 61 -5 57 Z" fill="#B8651C" opacity=".5"/>
+          <path d="M-5 84 H105" stroke="#B8651C" stroke-width="${small ? 2 : 1.2}" opacity=".6"/>
+          <g fill="#FFF6DD">${seeds.map(([x, y, r]) => `<ellipse cx="${x}" cy="${y}" rx="${small ? 2.6 : 1.8}" ry="${small ? 1.4 : 1}" transform="rotate(${r} ${x} ${y})"/>`).join("")}</g>
+          <ellipse cx="30" cy="22" rx="${small ? 11 : 9}" ry="${small ? 4.4 : 3.6}" transform="rotate(-24 30 22)" fill="#fff" opacity=".4"/>`,
       };
     },
   },
@@ -575,43 +555,22 @@ const SKINS = {
 
   casino: {
     name: "Casino",
-    draw: (u, small) => {
-      // The four suits, drawn around 0 0 and about 8 units tall.
-      const suit = {
-        heart: `<path d="M0 3.6 C-4.6 0.2 -5.4 -2.2 -3.8 -3.7 C-2.3 -5 -0.4 -4.1 0 -2.4 C0.4 -4.1 2.3 -5 3.8 -3.7 C5.4 -2.2 4.6 0.2 0 3.6 Z" fill="#E8203A"/>`,
-        diamond: `<path d="M0 -4.4 L3.2 0 L0 4.4 L-3.2 0 Z" fill="#E8203A"/>`,
-        spade: `<path d="M0 -4.2 C-4.6 -0.8 -5.4 1.6 -3.8 3 C-2.4 4.1 -0.8 3.4 -0.3 2.2 L-1.6 4.6 H1.6 L0.3 2.2 C0.8 3.4 2.4 4.1 3.8 3 C5.4 1.6 4.6 -0.8 0 -4.2 Z" fill="#141414"/>`,
-        club: `<g fill="#141414"><circle cx="0" cy="-2.3" r="2"/><circle cx="-2.3" cy="1" r="2"/><circle cx="2.3" cy="1" r="2"/><path d="M-0.5 0.5 L-1.6 4.6 H1.6 L0.5 0.5 Z"/></g>`,
-      };
-      const suits = [["spade", 22, 70, -12], ["heart", 40, 80, -4], ["diamond", 60, 80, 4], ["club", 78, 70, 12]];
-      // A poker chip: red with white marks round its edge and a dashed ring.
-      const chip = (x, y, r) => {
-        let marks = "";
-        for (let a = 0; a < 360; a += 60) marks += `<rect x="${-r * 0.2}" y="${-r}" width="${r * 0.4}" height="${r * 0.26}" fill="#fff" transform="rotate(${a})"/>`;
-        return `<g transform="translate(${x} ${y})"><circle r="${r}" fill="#C8102E" stroke="#5A0010" stroke-width=".7"/>${marks}<circle r="${r * 0.62}" fill="none" stroke="#fff" stroke-width="${r * 0.08}" stroke-dasharray="${r * 0.3} ${r * 0.2}"/><circle r="${r * 0.42}" fill="#E8203A"/></g>`;
-      };
-      return {
-        defs: `
-          <radialGradient id="${u}g" cx=".5" cy=".42" r=".7"><stop offset="0" stop-color="#2FB86A"/><stop offset=".65" stop-color="#11804A"/><stop offset="1" stop-color="#075430"/></radialGradient>
-          <filter id="${u}n"><feTurbulence type="fractalNoise" baseFrequency="1.2" numOctaves="2" seed="3"/><feColorMatrix type="saturate" values="0"/></filter>
-          ${mask(u + "s", -7, -9)}`,
-        layers: `
-          <path d="${BODY}" fill="url(#${u}g)"/>
-          ${small ? "" : `<rect width="100" height="100" filter="url(#${u}n)" opacity=".08"/>`}
-          <path d="M8 60 Q50 ${small ? 50 : 52} 92 60" fill="none" stroke="#F2C94C" stroke-width="${small ? 2.4 : 1.4}"/>
-          ${small ? "" : `<path d="M10 64.5 Q50 56.5 90 64.5" fill="none" stroke="#F2C94C" stroke-width=".6" opacity=".7"/>`}
-          ${suits.slice(small ? 1 : 0, small ? 3 : 4).map(([n, x, y, a]) => `<g transform="translate(${x} ${y}) rotate(${a}) scale(${small ? 1.6 : 1.15})"><rect x="-6" y="-7.5" width="12" height="15" rx="1.6" fill="#FFFDF5" stroke="#B9B9B0" stroke-width=".5"/>${suit[n]}</g>`).join("")}
-          ${chip(small ? 80 : 84, small ? 30 : 32, small ? 9 : 7)}
-          ${small ? "" : chip(16, 34, 5.5)}
-          <path d="${BODY}" fill="#02301A" opacity=".45" mask="url(#${u}s)"/>
-          <path d="${BODY}" fill="none" stroke="#F2C94C" stroke-width="${small ? 8 : 6.5}"/>
-          ${sparkle(30, 20, small ? 6 : 4.2, 0.3)}${small ? "" : sparkle(68, 18, 3, 1.4)}`,
-      };
-    },
+    // A poker chip: red, six white marks round its edge and a white ring inside.
+    draw: (u, small) => ({
+      defs: `
+        <radialGradient id="${u}g" cx=".45" cy=".38" r=".75"><stop offset="0" stop-color="#FF4A5E"/><stop offset=".65" stop-color="#E01E37"/><stop offset="1" stop-color="#A80F24"/></radialGradient>
+        ${mask(u + "s", -7, -9)}`,
+      layers: `
+        <path d="${BODY}" fill="url(#${u}g)"/>
+        <path d="${BODY}" fill="none" stroke="#fff" stroke-width="${small ? 16 : 14}" pathLength="240" stroke-dasharray="14 26" stroke-dashoffset="7"/>
+        <path d="${BODY}" transform="translate(50 52) scale(.7) translate(-50 -52)" fill="none" stroke="#fff" stroke-width="${small ? 4 : 2.6}"/>
+        <path d="${BODY}" fill="#5A0010" opacity=".35" mask="url(#${u}s)"/>
+        <ellipse cx="30" cy="25" rx="${small ? 11 : 9}" ry="${small ? 4.5 : 3.6}" transform="rotate(-28 30 25)" fill="#fff" opacity=".45"/>`,
+    }),
   },
 };
 
-const ORDER = ["gomita", "galaxia", "holo", "magma", "oro", "lava", "vitral", "sandia", "dona", "escarcha", "cielo", "mar", "atardecer", "vaca", "mezclilla", "pinata", "cuaderno", "mapa", "disco", "circuito", "tigre", "panal", "aurora", "casino"];
+const ORDER = ["gomita", "galaxia", "holo", "magma", "oro", "lava", "vitral", "sandia", "dona", "escarcha", "cielo", "mar", "atardecer", "vaca", "mezclilla", "pinata", "cuaderno", "mapa", "disco", "hamburguesa", "tigre", "panal", "aurora", "casino"];
 
 /** The skins in the profile's order: { id, name, needs }. */
 export const BLOB_SKINS = ORDER.map((id) => ({ id, name: SKINS[id].name, needs: "account", how: "skin" }));
