@@ -433,10 +433,6 @@
   24% { transform: translateY(-16%) scale(0.95, 1.07); }
   42% { transform: scale(1.07, 0.92); }
 }
-/* How long is left once it's full: at the card's foot, moving nothing. */
-.tv-finding-bar { position: absolute; right: 36px; bottom: 12px; left: 36px; height: 8px; overflow: hidden; border-radius: 4px; background: rgba(0, 0, 0, 0.2); }
-.tv-finding-bar i { display: block; height: 100%; border-radius: 4px; background: #fff; transform-origin: 0 50%; animation: tvFindingBar 3s linear forwards; }
-@keyframes tvFindingBar { to { transform: scaleX(0); } }
 /* It comes in with the search, once the card is in place (a reload in the middle of a search comes in with the panel). */
 .tv-lobby-stage.is-settled .tv-finding-status,
 .tv-lobby-stage.is-settled .tv-finding-seats { animation: tvSwap 0.45s var(--tv-ease-out) backwards; }
@@ -447,7 +443,6 @@
 .tv-finding.is-still .tv-seat-who:not(.is-empty) .tv-seat-face { animation: none; }
 .tv-stage-card.is-classic .tv-seat { --seat-taken: rgba(255, 255, 255, 0.11); background-color: rgba(255, 255, 255, 0.06); }
 .tv-stage-card.is-classic .tv-seat.is-taken { background-color: transparent; }
-.tv-stage-card.is-classic .tv-finding-bar { background: rgba(255, 255, 255, 0.12); }
 @media (prefers-reduced-motion: reduce) {
   .tv-finding-dots i,
   .tv-blob-ghost-line,
@@ -481,7 +476,6 @@
   .tv-seat-name { font-size: 13px; }
   .tv-seat-who.is-empty .tv-seat-name { font-size: 12px; }
   .tv-seat-tag { display: none; }
-  .tv-finding-bar { right: 18px; bottom: 6px; left: 18px; height: 5px; }
 }
 /* A short phone: no room for two rows, so the five in one, and a free seat is only its dashed Blob. */
 @media (max-width: 760px) and (max-height: 740px) {

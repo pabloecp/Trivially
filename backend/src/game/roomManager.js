@@ -2217,6 +2217,11 @@ export class RoomManager {
   }
 
 
+  /** Players whose connection dropped but whose seat is still held (the "Reconectando…" ones). */
+  reconnectingPlayers(room) {
+    return [...room.players.values()].filter((p) => !p.connected && !p.bot && !p.spectator && !p.forfeit && p.dropTimer);
+  }
+
   start(room, userId) {
     if (room.hostId !== userId) throw new Error("Solo el Host puede iniciar");
     if (!room.game) throw new Error("Elige un juego antes de empezar");
@@ -2232,7 +2237,9 @@ export class RoomManager {
       return;
     }
     // Who is in this match: anyone else who shows up while it runs only watches it.
-    room.participants = new Set(connected.map((p) => p.id));
+    // Someone "Reconectando…" (their seat is still held) is in the match too: they come back to play, not to watch.
+    const reconnecting = this.reconnectingPlayers(room);
+    room.participants = new Set([...connected, ...reconnecting].map((p) => p.id));
     room.currentRound = 0;
     if (room.game === QUIZ_GAME) {
       const quiz = mergeQuizConfig(room.config.quiz);
@@ -2345,7 +2352,7 @@ export class RoomManager {
         );
       }
     }
-    connected.forEach((p) => {
+    [...connected, ...reconnecting].forEach((p) => {
       p.score = 0;
       p.correct = 0;
       p.streak = 0;
@@ -2354,7 +2361,7 @@ export class RoomManager {
       p.rounds = [];
       p.idleRounds = 0;
       p.idle = false;
-      p.status = "jugando";
+      if (p.connected) p.status = "jugando";
     });
     // A private match of one game: first its tutorial ("intro"), with nothing to draw, like a game searched for by name.
     if (this.tutorials) {
@@ -3245,9 +3252,10 @@ export class RoomManager {
     const music = room.tracks.filter((t) => run.items[t.playlistItem].game === "musica");
     if (music.length) this.onNewTracks?.(music);
     const connected = [...room.players.values()].filter((p) => p.connected);
-    room.participants = new Set(connected.map((p) => p.id));
+    const reconnecting = this.reconnectingPlayers(room);
+    room.participants = new Set([...connected, ...reconnecting].map((p) => p.id));
     room.currentRound = 0;
-    connected.forEach((p) => {
+    [...connected, ...reconnecting].forEach((p) => {
       p.score = 0;
       p.correct = 0;
       p.streak = 0;
@@ -3256,7 +3264,7 @@ export class RoomManager {
       p.rounds = [];
       p.idleRounds = 0;
       p.idle = false;
-      p.status = "jugando";
+      if (p.connected) p.status = "jugando";
     });
     this.beginCountdown(room);
   }

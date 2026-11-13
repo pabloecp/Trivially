@@ -3,7 +3,6 @@ import { useNavigate, useParams } from "react-router-dom";
 import TvShell from "../../components/home/TvShell.jsx";
 import Icon from "../../components/home/Icon.jsx";
 import AnswerSkip from "../../components/home/AnswerSkip.jsx";
-import WaitingPill, { waitingNames } from "../../components/home/WaitingPill.jsx";
 import SpectatorBanner from "../../components/home/SpectatorBanner.jsx";
 import MatchResults from "../../components/home/MatchResults.jsx";
 import PartyPanel from "../../components/home/PartyPanel.jsx";
@@ -128,7 +127,7 @@ function ChoiceRound({ room, question, me, answer, seconds, clock, central, cont
           {room.phase === "countdown" && <GetReady />}
           {room.phase === "playing" && (
             <Hint key={spectator ? "watch" : locked ? "sent" : "pick"} icon={spectator ? "info" : locked ? "check" : "bolt"} sent={locked}>
-              {spectator ? "Estás viendo la partida" : locked ? <WaitingPill room={room} userId={me?.id} inline fallback="Respuesta enviada" /> : "Toca una opción"}
+              {spectator ? "Estás viendo la partida" : locked ? "Respuesta enviada" : "Toca una opción"}
             </Hint>
           )}
           {reveal && !spectator && <Verdict me={me} answered={Number.isInteger(myChoice)} />}

@@ -2,7 +2,6 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import TvShell from "../../components/home/TvShell.jsx";
 import Icon from "../../components/home/Icon.jsx";
-import WaitingPill, { waitingNames } from "../../components/home/WaitingPill.jsx";
 import MatchResults from "../../components/home/MatchResults.jsx";
 import PartyPanel from "../../components/home/PartyPanel.jsx";
 import { PhoneHint, RoomVerdict, roundPlayers } from "../../components/home/CentralBits.jsx";
@@ -189,9 +188,6 @@ function GameScreen() {
   const tiedNames = tiebreak ? tiebreak.playerIds.map((id) => room.players.find((p) => p.id === id)?.name || "Jugador") : [];
   const colorOf = (id) => PIN_COLORS[Math.max(0, room.players.findIndex((p) => p.id === id)) % PIN_COLORS.length];
   const pinLocked = Boolean(myPin?.locked) || Boolean(me?.answered);
-  // Who the round still waits for, once this player answered: on the button under the map and in the top card.
-  const waiting = waitingNames(room, user?.id);
-  const waitLine = (done) => (waiting.length ? `${done}. Esperando a ${joinNames(waiting)}…` : `${done}.`);
 
   // Everyone's pins at the reveal (only the tied players' in a tiebreak).
   const revealPins =
@@ -237,7 +233,7 @@ function GameScreen() {
     title = question?.name || room.reveal?.name || "¿Qué país es?";
     if (phase === "reveal") hint = nextText;
     else if (!iPlay) hint = `Solo juegan ${joinNames(tiedNames)}: gana el primero que confirme su pin dentro del país.`;
-    else if (pinLocked) hint = tiebreak ? "Pin confirmado. Si cayó dentro y fuiste el primero, ganas." : waitLine("Pin confirmado");
+    else if (pinLocked) hint = tiebreak ? "Pin confirmado. Si cayó dentro y fuiste el primero, ganas." : "Pin confirmado.";
     else if (myPin) hint = `Arrástralo o ${touch ? "toca" : "haz clic en"} otro sitio para moverlo, y confirma.`;
     else hint = touch ? "Toca para poner tu pin. Doble toque o pellizca para acercar." : "Haz clic para poner tu pin. Rueda, doble clic o arrastra para moverte.";
   }
@@ -273,14 +269,8 @@ function GameScreen() {
   } else {
     action = (
       <button type="button" className="tv-btn tv-btn--primary tv-geo-confirm" onClick={confirmPin} disabled={phase !== "playing" || !myPin || pinLocked} aria-live="polite">
-        {pinLocked && !tiebreak && waiting.length ? (
-          <WaitingPill names={waiting} inline />
-        ) : (
-          <>
-            <Icon name={pinLocked ? "check" : "send"} size={20} strokeWidth={2.6} />
-            {pinLocked ? "Enviado" : "Enviar"}
-          </>
-        )}
+        <Icon name={pinLocked ? "check" : "send"} size={20} strokeWidth={2.6} />
+        {pinLocked ? "Enviado" : "Enviar"}
       </button>
     );
   }
