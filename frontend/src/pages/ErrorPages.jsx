@@ -35,7 +35,7 @@ function Crashed() {
         <header className="tv-auth-head">
           <AppIcon />
           <h1 className="tv-page-title">Algo salió mal</h1>
-          <p className="tv-page-sub">La página tuvo un problema. Recárgala para seguir; si estabas en una partida, vuelves a ella.</p>
+          <p className="tv-page-sub">La página tuvo un problema. Recárgala para seguir. Si estabas en una partida, vuelves a ella.</p>
         </header>
         <button type="button" className="tv-btn tv-btn--primary tv-btn--block" onClick={() => window.location.reload()}>
           Recargar

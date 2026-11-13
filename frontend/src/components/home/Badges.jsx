@@ -19,7 +19,7 @@ const fmt = (n) => n.toLocaleString("es-MX");
 
 // "Insignias", the profile's third column: the ten badges in two columns of small boxes, each its tag and, on your own
 // profile, how far you are (a thin bar and "608 / 1,000"), or "Ganada" / "La llevas". Any box is tapped to read at the
-// foot what it asks; one you won is also worn with that tap beside your name (the one you wear in the site's blue;
+// foot what it asks (the foot keeps the height of two lines, whatever it says); one you won is also worn with that tap beside your name (the one you wear in the site's blue;
 // tapped again, it comes off). Someone else's profile shows the same boxes without the progress; a guest sees them all
 // locked, and the foot says to make an account.
 export default function BadgesCard({ user, worn = null, own = false, guest = false, onWear }) {
@@ -43,15 +43,7 @@ export default function BadgesCard({ user, worn = null, own = false, guest = fal
 
   let note;
   if (shown) {
-    const state = !mine
-      ? shown.earned
-        ? " La ganó."
-        : ""
-      : shown.earned
-        ? worn === shown.id
-          ? " La llevas junto a tu nombre; tócala otra vez para quitártela."
-          : " Ya es tuya."
-        : ` Llevas ${fmt(shown.have)} de ${fmt(shown.goal)}${shown.unit ? ` ${shown.unit}` : ""}.`;
+    const state = !mine && shown.earned ? " La ganó." : "";
     note = (
       <>
         <b>{shown.name}</b> · {shown.how}

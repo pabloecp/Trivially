@@ -10,7 +10,7 @@ export const BADGES = [
   { id: "campeon", name: "Campeón", icon: "crown", color: "#FFD60A", edge: "#9E8400", ink: "#0a0b0c", how: "Gana 100 partidas.", goal: 100, progress: (u) => u.stats?.wins || 0 },
   { id: "enciclopedia", name: "Enciclopedia", icon: "bulb", color: "#2F6BFF", edge: "#1A3C99", ink: "#ffffff", how: "Llega a 1000 aciertos.", goal: 1000, progress: (u) => u.stats?.correctAnswers || 0 },
   { id: "imparable", name: "Imparable", icon: "flame", color: "#FF5A1F", edge: "#B32F00", ink: "#0a0b0c", how: "Acierta 15 seguidas en una partida.", goal: 15, progress: (u) => u.stats?.bestStreak || 0 },
-  { id: "veterano", name: "Veterano", icon: "hourglass", color: "#00A2FF", edge: "#0A62A8", ink: "#0a0b0c", how: "Juega 300 partidas.", goal: 300, progress: (u) => u.stats?.gamesPlayed || 0 },
+  { id: "veterano", name: "Veterano", icon: "hourglass", color: "#00A2FF", edge: "#0A62A8", ink: "#0a0b0c", how: "Juega 100 partidas.", goal: 100, progress: (u) => u.stats?.gamesPlayed || 0 },
   { id: "constante", name: "Constante", icon: "calendar", color: "#1FD24A", edge: "#12801F", ink: "#0a0b0c", how: "Completa 30 retos del día.", goal: 30, progress: (u) => u.dailyDone || 0 },
   {
     id: "todoterreno",
@@ -31,11 +31,11 @@ export const BADGES = [
     color: "#FFFFFF",
     edge: "#AEB3BF",
     ink: "#0a0b0c",
-    how: "Termina sin fallar una partida de 10 rondas o más de Trivia o Adivina la canción.",
+    how: "Acierta todas las rondas de un Clásico.",
     goal: 1,
     progress: (u) => u.stats?.perfectGames || 0,
   },
-  { id: "record", name: "Récord", icon: "target", color: "#FF3D5E", edge: "#A3122F", ink: "#ffffff", how: "Haz 14,000 puntos en una sola partida.", goal: 14000, unit: "puntos", progress: (u) => u.stats?.bestScore || 0 },
+  { id: "record", name: "Récord", icon: "target", color: "#FF3D5E", edge: "#A3122F", ink: "#ffffff", how: "Haz 15,000 puntos en una sola partida.", goal: 15000, unit: "puntos", progress: (u) => u.stats?.bestScore || 0 },
   {
     id: "melomano",
     name: "Melómano",

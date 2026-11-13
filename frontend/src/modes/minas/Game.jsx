@@ -292,8 +292,8 @@ function GameScreen() {
     if (phase === "countdown") {
       hint =
         central || watching || spectator
-          ? `Desempate entre ${tiedNames}: una casilla cada uno. Quien acierte, sigue; quien pise una mina o no elija, fuera.`
-          : "Desempate: elige una casilla. Si aciertas, sigues; si pisas una mina o no eliges, quedas fuera.";
+          ? `Desempate entre ${tiedNames}: una casilla cada uno. Quien acierte, sigue. Quien pise una mina o no elija, fuera.`
+          : "Desempate: elige una casilla. Si aciertas, sigues. Si pisas una mina o no eliges, quedas fuera.";
     } else if (reveal) {
       hint = tiebreak.survivors ? "Otro desempate en breve…" : "Calculando resultados…";
       hintIcon = "check";

@@ -22,8 +22,8 @@ ana.dailyDone = 30;
 ana.rank = { points: 900, matches: 80, wins: 30, best: 1500 };
 assert.deepEqual(earnedBadges(ana), ["campeon", "constante", "leyenda"]);
 
-// "Récord" (14,000 points in one match) and "Melómano" (500 songs guessed, all artists together).
-const rec = { id: "rec", stats: { bestScore: 14000, artistHits: { a: 300, b: 199 } } };
+// "Récord" (15,000 points in one match) and "Melómano" (500 songs guessed, all artists together).
+const rec = { id: "rec", stats: { bestScore: 15000, artistHits: { a: 300, b: 199 } } };
 assert.deepEqual(earnedBadges(rec), ["record"]);
 rec.stats.artistHits.b = 200;
 assert.deepEqual(earnedBadges(rec), ["record", "melomano"]);
@@ -42,16 +42,17 @@ ana.badge = "veterano";
 assert.equal(wornBadge(ana), null);
 assert.equal(sanitizeUser(ana).badge, null);
 
-// "Perfección": Trivia or Adivina la canción, at least 10 rounds, all right.
+// "Perfección": only a Clásico played to its end, every round right.
 const ok = (n) => Array.from({ length: n }, (_, i) => ({ round: i + 1, status: "ok" }));
-assert.equal(isPerfectMatch("opciones", ok(10)), true);
-assert.equal(isPerfectMatch("musica", ok(15)), true);
-assert.equal(isPerfectMatch("opciones", ok(5)), false, "too short");
-assert.equal(isPerfectMatch("mundo", ok(10)), false, "only Trivia and Adivina la canción");
-assert.equal(isPerfectMatch("opciones", [...ok(9), { round: 10, status: "near" }]), false);
+assert.equal(isPerfectMatch(true, ok(12)), true);
+assert.equal(isPerfectMatch(false, ok(12)), false, "only in a Clásico");
+assert.equal(isPerfectMatch(true, []), false, "with no rounds");
+assert.equal(isPerfectMatch(true, [...ok(9), { round: 10, status: "near" }]), false);
 
 // A finished match counts the game won (against someone) and a perfect match.
 applyMatchStats(store, [{ id: "luis", name: "Luis", score: 9000, rounds: ok(10) }, { id: "ana", name: "Ana", score: 100, rounds: [] }], { game: "opciones" });
+assert.equal(store.users.luis.stats.perfectGames, undefined, "a perfect match outside a Clásico doesn't count");
+applyMatchStats(store, [{ id: "luis", name: "Luis", score: 9000, rounds: ok(10) }, { id: "ana", name: "Ana", score: 100, rounds: [] }], { game: "clasico", classic: true });
 assert.equal(store.users.luis.stats.winsByGame.opciones, 1);
 assert.equal(store.users.luis.stats.perfectGames, 1);
 assert.equal(store.users.ana.stats.winsByGame, undefined, "the one who lost wins nothing");
