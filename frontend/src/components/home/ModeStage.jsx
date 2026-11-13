@@ -72,9 +72,9 @@ export default function ModeStage({ mode, room = null, audience = null, title = 
               // changing between a public and a private match needs no other screen.
               <div className="tv-stage-aud is-switch" role="radiogroup" aria-label="Con quién juegan">
                 {AUDIENCES.map((a) => (
-                  <button key={a.value} type="button" role="radio" aria-checked={who === a.value} onClick={() => who !== a.value && onAudience(a.value)}>
+                  <button key={a.value} type="button" role="radio" aria-label={a.label} aria-checked={who === a.value} onClick={() => who !== a.value && onAudience(a.value)}>
                     <Icon name={AUDIENCE_ICONS[a.value]} size={16} strokeWidth={2.6} />
-                    {a.label}
+                    {a.short}
                   </button>
                 ))}
               </div>
