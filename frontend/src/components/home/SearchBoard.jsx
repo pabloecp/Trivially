@@ -13,7 +13,7 @@ const LEAVE_MS = 260;
 // match. Who has come shows their Blob and name; a free seat is a dashed Blob with a "?". A player keeps their seat
 // while the room fills, so nobody slides when someone comes or goes: you are in the first one, then your group, then
 // whoever arrives. Over the seats, how it goes and a clock in one place: counting up while it searches and down
-// ("Empieza en 3") once it's full, when the Blobs jump one after another and the card's bar runs out. Who comes sounds
+// ("Empieza en 3") once it's full, when the Blobs jump one after another. Who comes sounds
 // soft, and the room filling sounds like a right answer. Bots come like anyone: nothing here tells them apart.
 export default function SearchBoard({ room }) {
   const { user, group } = useApp();
@@ -30,8 +30,6 @@ export default function SearchBoard({ room }) {
   const waited = Math.max(0, Math.floor((now - since) / 1000));
   const serverNow = now + (room.clockOffset || 0);
   const startsIn = full ? Math.max(1, Math.ceil((info.startsAt - serverNow) / 1000)) : null;
-  // Fixed when it fills, so the bar isn't told a new length every time the clock ticks.
-  const barMs = useMemo(() => (full ? Math.max(0, info.startsAt - (Date.now() + (room.clockOffset || 0))) : 0), [info.startsAt]);
 
   const count = here.length;
   const before = useRef(count);
@@ -95,12 +93,6 @@ export default function SearchBoard({ room }) {
           <Seat key={i} index={i} player={player} meId={meId} groupIds={groupIds} />
         ))}
       </ul>
-
-      {full && (
-        <span className="tv-finding-bar" aria-hidden="true">
-          <i style={{ animationDuration: `${barMs}ms` }} />
-        </span>
-      )}
     </div>
   );
 }
