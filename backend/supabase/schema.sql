@@ -60,6 +60,7 @@ alter table public.users
   add column if not exists username_history  jsonb,
   add column if not exists username_changes  jsonb,
   add column if not exists username_auto     boolean,
+  add column if not exists badge             text,
   add column if not exists extra             jsonb not null default '{}'::jsonb;
 alter table public.users alter column data drop not null;
 

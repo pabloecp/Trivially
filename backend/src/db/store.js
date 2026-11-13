@@ -1,3 +1,4 @@
+import { badgeError, isPerfectMatch, wornBadge } from "../game/badges.js";
 import { applyDaily, dailyView } from "../game/daily.js";
 import { applyRank, rankDeltas } from "../game/rank.js";
 import { hasLink, NAME_LINK_ERROR } from "../moderation/links.js";
@@ -87,6 +88,8 @@ export function sanitizeUser(user) {
     daily: dailyView(user),
     spotify: publicSpotify(spotify),
     role: effectiveRole(user),
+    // The badge it wears, only while it still has it (game/badges.js).
+    badge: wornBadge(user),
     ...(user.isGuest ? {} : { usernameInfo: usernameStatus(user) }),
   };
 }
@@ -121,6 +124,8 @@ export function sanitizeUserPublic(user) {
     elo: user.elo || {},
     // How many daily challenges the account has completed.
     dailyDone: user.dailyDone || 0,
+    // The badge it wears beside its name (game/badges.js), or null.
+    badge: wornBadge(user),
     // The last matches, like the stats: shown on the profile.
     history: publicHistory(user.history),
     googleLinked: Boolean(user.googleId),
@@ -195,6 +200,7 @@ export const ACCOUNT_COLUMNS = [
   ["usernameHistory", "username_history"],
   ["usernameChanges", "username_changes"],
   ["usernameAuto", "username_auto"],
+  ["badge", "badge"],
 ];
 const COLUMN_FIELDS = new Set(["id", "isGuest", ...ACCOUNT_COLUMNS.map(([field]) => field)]);
 
@@ -660,6 +666,18 @@ export function updateUserAvatar(store, userId, choice) {
   return sanitizeUser(user);
 }
 
+/** Wears badge `id` beside the name on the profile (null takes it off). Only one the account has won. */
+export function updateUserBadge(store, userId, id) {
+  const user = store.users[userId];
+  if (!user || user.isGuest) throw new Error("Crea una cuenta para tener insignias");
+  const choice = id == null || id === "" ? null : String(id);
+  const problem = badgeError(user, choice);
+  if (problem) throw new Error(problem);
+  user.badge = choice;
+  saveStore(store);
+  return sanitizeUser(user);
+}
+
 export function updateUserName(store, userId, newName) {
   const user = store.users[userId];
   if (!user) throw new Error("Usuario no encontrado");
@@ -752,6 +770,12 @@ export function applyMatchStats(store, players, { game = null, at = new Date().t
     s.correctAnswers += player.correct || 0;
     if (index === 0 && ranked.length > 1) s.wins += 1;
     if (index === 0 && ranked.length === 1 && player.score > 0) s.wins += 1;
+    // For the badges (game/badges.js): the games won against someone, and the perfect matches.
+    if (index === 0 && ranked.length > 1 && game) {
+      s.winsByGame = s.winsByGame || {};
+      s.winsByGame[game] = (s.winsByGame[game] || 0) + 1;
+    }
+    if (isPerfectMatch(game, player.rounds)) s.perfectGames = (s.perfectGames || 0) + 1;
 
     if (player.artistHits) {
       s.artistHits = s.artistHits || {};
