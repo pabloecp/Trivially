@@ -722,11 +722,11 @@ export const MATCH_HISTORY_LIMIT = 10;
  * (`user.history`): which game, when, the place they finished in, how many played, their points, who they played
  * against, the room and their rounds (each question with its answer, for "Reportar partida": reportHistoryMatch).
  * `players` come in final position (a tiebreak's winner first); `game` is the game's id ("playlist" for a playlist).
- * `public` is a public match (for "Reto del día"). `rank` ({ rounds, winnerId, discount }) only for a match that moves the
+ * `public` is a public match (for "Reto del día"). `classic` is a Clásico played to its end (for "Perfección"). `rank` ({ rounds, winnerId, discount }) only for a match that moves the
  * rank (a Clásico, Competitivo): each account's rank points move by its place (game/rank.js), and the history entry keeps
  * how many (`rank`). Returns those points per player (a Map), or null.
  */
-export function applyMatchStats(store, players, { game = null, at = new Date().toISOString(), room = null, rank = null, public: isPublic = false } = {}) {
+export function applyMatchStats(store, players, { game = null, at = new Date().toISOString(), room = null, rank = null, public: isPublic = false, classic = false } = {}) {
   const ranked = [...players].sort((a, b) => b.score - a.score);
   const order = players.map((p) => p.id);
   const deltas = rank ? rankDeltas(rank.counts ? players.filter(rank.counts) : players, rank) : null;
@@ -775,7 +775,7 @@ export function applyMatchStats(store, players, { game = null, at = new Date().t
       s.winsByGame = s.winsByGame || {};
       s.winsByGame[game] = (s.winsByGame[game] || 0) + 1;
     }
-    if (isPerfectMatch(game, player.rounds)) s.perfectGames = (s.perfectGames || 0) + 1;
+    if (isPerfectMatch(classic, player.rounds)) s.perfectGames = (s.perfectGames || 0) + 1;
 
     if (player.artistHits) {
       s.artistHits = s.artistHits || {};

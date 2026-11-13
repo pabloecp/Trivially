@@ -2165,7 +2165,7 @@
 .tv-badge-bar > span { display: block; height: 100%; border-radius: 3px; background: var(--tv-text-3); }
 .tv-badge-num { flex: none; font-family: var(--tv-display); font-weight: 700; font-size: 12px; line-height: 1; color: var(--tv-text-3); font-variant-numeric: tabular-nums; }
 /* At the foot, what the tapped badge asks (and how far you are), or how the box works. */
-.tv-badges-note { min-height: 2.7em; margin: 0; padding: 10px 12px; border-radius: 12px; background: var(--tv-surface-2); font-family: var(--tv-small); font-weight: 600; font-size: 13px; line-height: 1.35; color: var(--tv-text-2); }
+.tv-badges-note { box-sizing: border-box; flex: none; height: calc(2.7em + 20px); overflow: hidden; margin: 0; padding: 10px 12px; border-radius: 12px; background: var(--tv-surface-2); font-family: var(--tv-small); font-weight: 600; font-size: 13px; line-height: 1.35; color: var(--tv-text-2); }
 .tv-badges-note b { color: var(--tv-text); }
 /* "Tu Blob": the title and its two tabs ("Colores", "Skins") on one line. The skins take the colours' box (four rows of
    two; on a phone two rows of four) and scroll inside it, fading at the foot so it shows there are more. */

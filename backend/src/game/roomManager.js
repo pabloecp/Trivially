@@ -2722,6 +2722,8 @@ export class RoomManager {
       // question shows here).
       match: {
         public: Boolean(room.matchmaking),
+        // A Clásico played to its end, public (the roulette's casual match) or private: only there is "Perfección" won.
+        classic: !room.stoppedEarly && (room.matchmaking ? room.matchmaking.kind === "casual" && !room.matchmaking.game : Boolean(room.run?.classic)),
         kind: room.matchmaking?.kind || null,
         classic: Boolean(room.run?.classic),
         // A public match or Clásico: which of its games this is (its roulette and scores are in `seen`).

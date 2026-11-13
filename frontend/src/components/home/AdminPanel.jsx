@@ -66,7 +66,7 @@ export default function AdminPanel({ open, onClose }) {
 
               <div className="tv-admin-block is-third">
                 <h3>Tipo de sonido</h3>
-                <p className="tv-admin-hint">Solo en este navegador; los jugadores escuchan Madera.</p>
+                <p className="tv-admin-hint">Solo en este navegador. Los jugadores escuchan Madera.</p>
                 <SoundPacks />
               </div>
 

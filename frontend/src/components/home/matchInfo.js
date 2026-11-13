@@ -118,7 +118,7 @@ export const VARIANT_TUTORIALS = {
   pais: [
     { icon: "globe", text: "Te diremos un país, su sombra o su bandera" },
     { icon: "pin", text: "Pon tu pin en el mapa y confírmalo" },
-    { icon: "star", text: "Dentro del país vale 1000; más cerca, más puntos" },
+    { icon: "star", text: "Dentro del país vale 1000, y más cerca, más puntos" },
   ],
   lluvia: [
     { icon: "rain", text: "Caen preguntas por la pantalla" },
@@ -152,7 +152,7 @@ export const TUTORIALS = {
   mundo: [
     { icon: "globe", text: "Te diremos un país, su sombra o su bandera" },
     { icon: "pin", text: "Pon tu pin en el mapa y confírmalo" },
-    { icon: "star", text: "Dentro del país vale 1000; más cerca, más puntos" },
+    { icon: "star", text: "Dentro del país vale 1000, y más cerca, más puntos" },
   ],
   lluvia: [
     { icon: "rain", text: "Caen preguntas por la pantalla" },
