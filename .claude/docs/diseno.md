@@ -88,3 +88,4 @@ The look comes from the "Trivially rediseño" canvas (1 · Inicio, 2 · ¿Qué q
 - **Flat:** boxes to write in (a coloured ring on focus), pills and tabs (the chosen one a lighter fill, `rgba(255, 255, 255, 0.08)`, or a line), cards and rows, labels, avatars, covers.
 - **Never** an inset shadow at the top (`inset 0 3px 0 …`).
 - Text buttons and profile links are never underlined: they brighten on hover.
+- **Two themes** (Ajustes → Tema, `lib/theme.js`): the page is dark by default and has a light one (`styles/light.css`, only colour tokens under `:root[data-theme="light"]`). Colours of their own (the games' cards, coloured buttons) are the same in both; a new piece that needs white-on-dark or black-on-light must use the `--tv-*` tokens, never a loose white or black, so it flips with the theme. Check new screens in both.

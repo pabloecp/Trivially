@@ -1,0 +1,41 @@
+/* The light theme (Ajustes → Tema, lib/theme.js): the page's greys and the text flip; the vivid colours of the site and of
+   every game stay, with their "as text" shades darkened so they read on white. Loaded after look.css. Everything that is
+   a colour of its own (a game's card, a coloured button) is the same in both themes. */
+:root:root[data-theme="light"] {
+  color-scheme: light;
+  --tv-bg: #eef0f4;
+  --tv-surface: #ffffff;
+  --tv-sheet-bg: #ffffff;
+  --tv-surface-2: #f1f2f6;
+  --tv-surface-3: #e3e5ea;
+  --tv-option-bg: #f1f2f6;
+  --tv-option-edge: #dcdee4;
+  --tv-line: rgba(20, 22, 26, 0.1);
+  --tv-edge: #c9ccd3;
+  --tv-text: #14161a;
+  --tv-text-2: #454852;
+  --tv-text-3: #6b6f7a;
+  --tv-ink: #14161a;
+  --tv-handle: rgba(20, 22, 26, 0.22);
+  --tv-logo-shadow: #cfd2d9;
+  --tv-neutral: #e3e5ea;
+  --tv-neutral-2: #e3e5ea;
+  --tv-neutral-edge: #c4c7ce;
+  --tv-neutral-on: #14161a;
+  --tv-toast-bg: #14161a;
+  --tv-toast-fg: #ffffff;
+  --tv-scrim: rgba(20, 22, 26, 0.45);
+  --tv-page-bg: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E %3Cg fill='none' stroke='rgba(20,22,26,0.06)' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E %3Cpath d='M20 26l11-5 2 12z'/%3E %3Ccircle cx='118' cy='30' r='6'/%3E %3Cpath d='M58 80q5-8 10 0t10 0'/%3E %3Cpath d='M126 92l8 8M134 92l-8 8'/%3E %3Cpath d='M26 120l8 8M34 120l-8 8'/%3E %3Cpath d='M88 132l12-4-3 12z'/%3E %3Ccircle cx='64' cy='22' r='4'/%3E %3Cpath d='M128 142q4-6 8 0t8 0'/%3E %3C/g%3E%3C/svg%3E");
+  --p-site-text: #1f55e0;
+  --p-accent-text: #8a6d00;
+  --p-music-text: #c4118f;
+  --p-culture-text: #b85f00;
+  --p-cinema-text: #7f1fd1;
+  --p-world-text: #00857b;
+  --p-ok-text: #138a32;
+  --p-bad-text: #d1163f;
+}
+
+/* Pieces drawn with white on dark in the other file. */
+:root:root[data-theme="light"] .tv-seg-thumb { background: #ffffff; box-shadow: 0 0 0 1px var(--tv-option-edge); }
+:root:root[data-theme="light"] .tv-volume-field input[type="range"] { background: linear-gradient(to right, var(--p-cinema-1, #a63dff) var(--fill), rgba(20, 22, 26, 0.14) var(--fill)); }

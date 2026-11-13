@@ -1067,6 +1067,7 @@
 }
 .tv-app .tv-seg-btn { color: var(--tv-text-3); }
 .tv-app .tv-seg-btn[aria-selected="true"] { color: var(--tv-text); }
+.tv-seg-btn:disabled { opacity: 0.45; cursor: default; }
 
 /* Buttons */
 .tv-btn--google { --c1: #ffffff; --c2: #ffffff; --edge: #b4b4b4; --on: #111111; }

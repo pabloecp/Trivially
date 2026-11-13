@@ -2,7 +2,7 @@
 
 Two roles only (`auth/roles.js`): "user" and "owner", the account ids in the env var `OWNER_IDS` (a role saved on an account counts for nothing). Every owner power is checked on the socket's **verified** account.
 
-Everyone (not the central device) gets a gear (`TvTopbar.jsx`) opening "Ajustes" (`AppSettings.jsx`, in `Modal`): **Volumen** (`VolumeRows`) and **Animaciones** ("Con movimiento" | "Quietos": `useBlobsStill`, any player, this device). Language, light/dark theme and chat filter are not there yet (the site only has Spanish and a dark theme). Owners (`useIsOwner`) get one more button at the foot of "Ajustes", **"Panel de owner"**, which closes it and opens `AdminPanel.jsx` (styles `styles/admin.css`) with their tools:
+Everyone (not the central device) gets a gear (`TvTopbar.jsx`) opening "Ajustes" (`AppSettings.jsx`, in `Modal`): **Volumen** (`VolumeRows`), **Idioma** (only Español; English is greyed out until the page is translated), **Tema** ("Sistema" | "Claro" | "Oscuro": `lib/theme.js`, saved in `trivially_theme_choice`; `data-theme` on `<html>` switches the tokens of `styles/palettes.css` (dark) and `styles/light.css` (light, loaded last), "Sistema" follows the device) and **Animaciones** ("Con movimiento" | "Quietos": `useBlobsStill`, this device). There is no chat filter because the rooms have no chat. Owners (`useIsOwner`) get one more button at the foot of "Ajustes", **"Panel de owner"**, which closes it and opens `AdminPanel.jsx` (styles `styles/admin.css`) with their tools:
 
 - **Vista:** "Owner (debug)" | "Usuario normal" (`trivially_owner_view`). In normal view the owner sees the site like anyone (no "Saltar").
 - **Tipo de sonido:** the sets of `lib/sounds.js` (`trivially_sound_pack_v2`); everyone else hears Madera.
