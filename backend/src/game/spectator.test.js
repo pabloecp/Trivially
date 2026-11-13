@@ -58,17 +58,22 @@ assert.equal(room.players.get("late-3").status, "conectado");
 assert.equal(mgr.publicState(room, "late-3").me.spectator, false);
 assert.equal(room.phase, "lobby");
 
-// Someone who was in the room but away when the match started (not a participant) also only watches when they return.
+// Someone "Reconectando…" (dropped, seat still held) when the match starts is in it: they come back to play.
 const room2 = mgr.create({ host: { id: "h-5", name: "Host", socketId: "s5" }, mode: "multi", game: "musica" });
 mgr.addPlayer(room2, { id: "away-6", name: "Dani", socketId: "s6" });
 mgr.addPlayer(room2, { id: "stay-7", name: "Eva", socketId: "s7" });
-room2.players.get("away-6").connected = false; // dropped just before the start
+mgr.disconnect("s6"); // dropped just before the start
 mgr.start(room2, "h-5");
 mgr.beginPlaying(room2);
 assert.equal(room2.players.get("stay-7").spectator, undefined);
+assert.ok(room2.participants.has("away-6"));
 mgr.addPlayer(room2, { id: "away-6", name: "Dani", socketId: "s6b" });
-assert.equal(room2.players.get("away-6").spectator, true);
-assert.equal(mgr.publicState(room2, "away-6").me.spectator, true);
+assert.notEqual(room2.players.get("away-6").spectator, true);
+assert.equal(room2.players.get("away-6").status, "jugando");
+assert.equal(mgr.publicState(room2, "away-6").me.spectator, false);
+// Someone who was never in the room when it started only watches.
+mgr.addPlayer(room2, { id: "new-8", name: "Fer", socketId: "s8" });
+assert.equal(room2.players.get("new-8").spectator, true);
 // A participant who drops and comes back keeps playing.
 room2.players.get("stay-7").connected = false;
 mgr.addPlayer(room2, { id: "stay-7", name: "Eva", socketId: "s7b" });
