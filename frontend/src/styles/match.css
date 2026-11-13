@@ -173,6 +173,7 @@
 .tv-mi-note { position: relative; margin: -6px 0 0; font: 600 clamp(15px, 1.4vw, 18px)/1.3 var(--tv-small); color: #fff; }
 .tv-mi-result .tv-finding-seats { margin-top: auto; }
 .tv-mi-card .tv-seat.is-win { background: #fff; }
+.tv-mi-card .tv-seat.is-win::before { display: none; }
 .tv-mi-card .tv-seat.is-win .tv-seat-name,
 .tv-mi-card .tv-seat.is-win .tv-seat-tag { color: var(--c2); }
 .tv-mi-card .tv-seat.is-win .tv-seat-who .tv-seat-face { animation: tvSeatDrop 0.55s cubic-bezier(0.3, 0.9, 0.5, 1) backwards, tvSeatHop 1.15s ease-in-out 0.55s infinite; }

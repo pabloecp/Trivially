@@ -4,6 +4,7 @@ import { GroupBoxContext, useNarrow } from "./GroupBar.jsx";
 import { isGameTile } from "../../modes/index.js";
 import { audienceName } from "../../lib/plan.js";
 import { eloIn, formatElo, gameStats } from "../../lib/gameStats.js";
+import { usePlaying } from "../../lib/playing.js";
 import { useApp } from "../../lib/store.jsx";
 import { useFriends } from "../../lib/friends.jsx";
 import AppIcon from "./AppIcon.jsx";
@@ -41,6 +42,7 @@ export default function ModeStage({ mode, room = null, audience = null, title = 
   const who = audience || (room ? (room.matchmaking ? "publica" : "grupo") : null);
   const key = swapKey ?? `${mode.id}:${who}`;
   const stats = isGameTile(mode) ? gameStats(mode.id) : null;
+  const playing = usePlaying(mode.id);
   const name = title || mode.name;
   const how = mode.tagline || mode.subtitle;
 
@@ -122,7 +124,7 @@ export default function ModeStage({ mode, room = null, audience = null, title = 
                       <span className="tv-stage-live" aria-hidden="true" />
                     </span>
                     <span>
-                      <b>{stats.online.toLocaleString("es-ES")}</b> jugando ahora
+                      <b>{playing.toLocaleString("es-ES")}</b> jugando ahora
                     </span>
                   </li>
                 )}

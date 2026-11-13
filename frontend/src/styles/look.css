@@ -385,9 +385,13 @@
 @keyframes tvFindingTick { from { transform: scale(1.5); } }
 
 .tv-finding-seats { position: relative; flex: 1 1 150px; display: grid; grid-template-columns: repeat(var(--seats, 5), minmax(0, 1fr)); gap: 12px; min-height: 124px; max-height: 300px; margin: 0; padding: 0; list-style: none; }
-.tv-seat { position: relative; min-width: 0; border-radius: 18px; background: rgba(255, 255, 255, 0.1); container-type: size; transition: background-color 0.2s ease; }
-.tv-seat.is-taken { background: rgba(0, 0, 0, 0.2); }
-.tv-seat-who { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; height: 100%; padding: 10px 8px; }
+.tv-seat { position: relative; min-width: 0; border-radius: 18px; background-color: rgba(255, 255, 255, 0.1); container-type: size; transition: background-color 0.3s ease-out; }
+/* A taken seat's darker fill is a layer of its own, cut to the seat's rounded edge: it grows into place when someone
+   comes and shrinks away when they go, while the free seat's lighter one fades under it. */
+.tv-seat::before { content: ""; position: absolute; inset: 0; border-radius: inherit; background: var(--seat-taken, rgba(0, 0, 0, 0.2)); opacity: 0; transform: scale(0.8); pointer-events: none; transition: opacity 0.3s ease-out, transform 0.3s var(--tv-ease-out); }
+.tv-seat.is-taken { background-color: transparent; }
+.tv-seat.is-taken::before { opacity: 1; transform: none; }
+.tv-seat-who { position: relative; isolation: isolate; border-radius: inherit; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; height: 100%; padding: 10px 8px; }
 /* As big as the seat lets it be, leaving room for the two lines of text. */
 .tv-seat-face { flex: none; width: min(66cqw, calc(100cqh - 76px)); aspect-ratio: 1; transform-origin: 50% 100%; }
 .tv-seat-face .tv-blob,
@@ -403,8 +407,9 @@
   0%, 100% { opacity: 0.35; }
   50% { opacity: 0.85; }
 }
-/* Someone comes: the seat lights up and their Blob drops into it, squashing as it lands. */
-.tv-seat-who:not(.is-empty)::before { content: ""; position: absolute; inset: 0; border-radius: inherit; background: #fff; opacity: 0; pointer-events: none; animation: tvSeatFlash 0.5s ease-out; }
+/* Someone comes: the seat lights up (to its own rounded edge, behind the Blob and the name) and their Blob drops into
+   it, squashing as it lands. */
+.tv-seat-who:not(.is-empty)::before { content: ""; position: absolute; z-index: -1; inset: 0; border-radius: inherit; background: #fff; opacity: 0; pointer-events: none; animation: tvSeatFlash 0.5s ease-out; }
 .tv-seat-who:not(.is-empty) .tv-seat-face { animation: tvSeatDrop 0.55s cubic-bezier(0.3, 0.9, 0.5, 1) backwards; }
 .tv-seat-who:not(.is-empty) .tv-seat-text { animation: tvSeatText 0.35s var(--tv-ease-out) 0.12s backwards; }
 @keyframes tvSeatFlash { from { opacity: 0.3; } }
@@ -416,7 +421,8 @@
 }
 @keyframes tvSeatText { from { opacity: 0; transform: translateY(8px); } }
 /* Someone goes: their Blob shrinks away, and the free seat is back. */
-.tv-seat.is-leaving { background: rgba(255, 255, 255, 0.1); }
+.tv-seat.is-leaving { background-color: rgba(255, 255, 255, 0.1); }
+.tv-seat.is-leaving::before { opacity: 0; transform: scale(0.8); }
 .tv-seat.is-leaving .tv-seat-who { animation: tvSeatOut 0.26s ease-in forwards; }
 @keyframes tvSeatOut { to { opacity: 0; transform: scale(0.7); } }
 /* Full: the Blobs jump one after another (the last one lands first). */
@@ -435,8 +441,8 @@
 .tv-lobby-stage:not(.is-settled) .tv-seat-who .tv-seat-text,
 .tv-lobby-stage:not(.is-settled) .tv-seat-who:not(.is-empty) .tv-seat-face { animation: none; }
 .tv-finding.is-still .tv-seat-who:not(.is-empty) .tv-seat-face { animation: none; }
-.tv-stage-card.is-classic .tv-seat { background: rgba(255, 255, 255, 0.06); }
-.tv-stage-card.is-classic .tv-seat.is-taken { background: rgba(255, 255, 255, 0.11); }
+.tv-stage-card.is-classic .tv-seat { --seat-taken: rgba(255, 255, 255, 0.11); background-color: rgba(255, 255, 255, 0.06); }
+.tv-stage-card.is-classic .tv-seat.is-taken { background-color: transparent; }
 @media (prefers-reduced-motion: reduce) {
   .tv-finding-dots i,
   .tv-blob-ghost-line,
@@ -448,6 +454,8 @@
   .tv-finding-clock strong.is-count,
   .tv-lobby-stage.is-settled .tv-finding-status,
   .tv-lobby-stage.is-settled .tv-finding-seats { animation: none; }
+  .tv-seat,
+  .tv-seat::before { transition: none; }
 }
 /* Phones: three seats over two, so names fit, each with only its name. No faint icon: it would go behind the words. */
 @media (max-width: 760px) {
@@ -2681,8 +2689,16 @@ html.tv-match-lock.tv-keyboard-up .tv-app .tv-match .tv-quiz-marks { display: no
 .tv-legal-body ul { margin: 0 0 10px; padding-left: 22px; display: grid; gap: 6px; }
 .tv-legal-body b, .tv-legal-body a { color: var(--tv-text); }
 .tv-legal-foot, .tv-legal-links { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 18px; }
-.tv-legal-foot a, .tv-legal-links a { font-family: var(--tv-small); font-weight: 700; font-size: 14px; color: var(--tv-text-2); text-decoration: none; }
-.tv-legal-foot a:hover, .tv-legal-links a:hover { color: var(--tv-text); }
+.tv-legal-foot a, .tv-legal-links a, .tv-legal-links button { font-family: var(--tv-small); font-weight: 700; font-size: 14px; color: var(--tv-text-2); text-decoration: none; }
+.tv-legal-foot a:hover, .tv-legal-links a:hover, .tv-legal-links button:hover { color: var(--tv-text); }
+/* "Borrar cuenta" beside them on the profile: a text button like the links (never underlined). */
+.tv-legal-links button { padding: 0; border: 0; background: none; cursor: pointer; }
+/* Its panel (Profile's DeleteAccount): what is lost, the boxes to confirm, and Cancelar / Borrar cuenta at the foot. */
+.tv-delete-text { margin: 0; font-family: var(--tv-small); font-weight: 600; font-size: 15px; line-height: 1.5; color: var(--tv-text-2); }
+.tv-delete-form { display: grid; gap: 12px; }
+.tv-delete-form .tv-lobby-error { margin: 0; }
+.tv-app .tv-delete-modal .tv-modal-foot { gap: 10px; }
+.tv-app .tv-delete-modal .tv-modal-foot .tv-btn { flex: 1 1 0; }
 .tv-legal-note { margin: 0; text-align: center; font-family: var(--tv-small); font-weight: 600; font-size: 13px; line-height: 1.5; color: var(--tv-text-3); }
 .tv-legal-note a { color: var(--tv-text-2); font-weight: 700; text-decoration: none; }
 .tv-legal-note a:hover { color: var(--tv-text); }

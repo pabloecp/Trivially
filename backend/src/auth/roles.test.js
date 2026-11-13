@@ -4,9 +4,9 @@ import { claimGuestStats, registerWithPassword, sanitizeUser } from "../db/store
 
 const store = { users: {} };
 
-const owner = registerWithPassword(store, { name: "Boss", username: "boss_user", email: "boss@trivially.test", password: "pw" });
-const alice = registerWithPassword(store, { name: "Alice", username: "alice_user", email: "alice@trivially.test", password: "pw" });
-const bob = registerWithPassword(store, { name: "Bob", username: "bob_user", email: "bob@trivially.test", password: "pw" });
+const owner = registerWithPassword(store, { name: "Boss", username: "boss_user", email: "boss@trivially.test", password: "pw-de-prueba" });
+const alice = registerWithPassword(store, { name: "Alice", username: "alice_user", email: "alice@trivially.test", password: "pw-de-prueba" });
+const bob = registerWithPassword(store, { name: "Bob", username: "bob_user", email: "bob@trivially.test", password: "pw-de-prueba" });
 
 // New accounts are plain users; OWNER_IDS makes the owner (by id, not by name or email).
 assert.equal(owner.role, "user");

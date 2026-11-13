@@ -2778,8 +2778,10 @@ export class RoomManager {
     room.phaseEndsAt = Date.now() + remainingMs;
     const onEnd = room.phaseOnEnd;
     room.timer = setTimeout(() => {
-      onEnd?.();
-      this.onPhaseChange?.(room);
+      this.guard(room, () => {
+        onEnd?.();
+        this.onPhaseChange?.(room);
+      });
     }, remainingMs);
     // Campo de minas: someone may have left during the pause, and the turn was only waiting for them.
     this.checkMinesTurn(room);
@@ -3387,6 +3389,48 @@ export class RoomManager {
   }
 
   /** The room a player is in right now (not just reconnecting), or null. Used to show friends where someone plays. */
+  /**
+   * Runs what a room's timer does when a phase ends. If it fails, only that match is closed (`closeBroken`) and the
+   * error is told (`onError`): the server and every other match go on.
+   */
+  guard(room, fn) {
+    try {
+      fn();
+    } catch (err) {
+      console.error(`[Sala ${room.code}] La partida falló (${room.game}, ${room.phase}) y se cerró:`, err);
+      try {
+        this.onError?.(err, room);
+      } catch {}
+      this.closeBroken(room);
+    }
+  }
+
+  /** Closes a match that can't go on: its players' screens leave it with a notice (onKicked, reason "error"). */
+  closeBroken(room) {
+    if (this.rooms.get(room.code) !== room) return;
+    try {
+      for (const player of room.players.values()) {
+        if (player.socketId && !player.bot) this.onKicked?.(player.socketId, { code: room.code, reason: "error" });
+      }
+      this.destroy(room);
+    } catch (err) {
+      console.error(`[Sala ${room.code}] No se pudo cerrar bien:`, err);
+      this.rooms.delete(room.code);
+    }
+  }
+
+  /** How many people (not bots) are in a room of each game right now: `{ opciones: 12, musica: 3 }`. */
+  playingByGame() {
+    const games = {};
+    for (const room of this.rooms.values()) {
+      if (!room.game) continue;
+      let people = 0;
+      for (const p of room.players.values()) if (p.connected && !p.bot) people += 1;
+      if (people) games[room.game] = (games[room.game] || 0) + people;
+    }
+    return games;
+  }
+
   roomOfUser(userId) {
     for (const room of this.rooms.values()) {
       if (room.players.get(userId)?.connected) return room;
@@ -4264,8 +4308,10 @@ export class RoomManager {
     room.phaseEndsAt = now + duration;
     this.onPhaseChange?.(room);
     room.timer = setTimeout(() => {
-      onEnd();
-      this.onPhaseChange?.(room);
+      this.guard(room, () => {
+        onEnd();
+        this.onPhaseChange?.(room);
+      });
     }, duration);
     if (room.botTimers?.length || phase === "playing") this.scheduleBots(room);
   }

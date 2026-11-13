@@ -21,6 +21,9 @@ const STORE_PATH =
   (RUNNING_TEST ? path.join(os.tmpdir(), `trivially-store-test-${process.pid}.json`) : path.join(DATA_DIR, "store.json"));
 
 const MAX_NAME_LENGTH = 24;
+// The shortest password an account may have.
+export const MIN_PASSWORD_LENGTH = 2;
+const PASSWORD_TOO_SHORT = `La contraseña debe tener al menos ${MIN_PASSWORD_LENGTH} caracteres`;
 export const DEFAULT_AVATAR = "#FF2D55";
 const HEX_COLOR = /^#[0-9a-f]{6}$/i;
 // The Blob's colours on the profile (frontend lib/blobColors.js): white for everyone and, for accounts, the colours of
@@ -66,7 +69,7 @@ function publicSpotify(spotify) {
 export function sanitizeUser(user) {
   if (!user) return null;
   // The username's history (which reserves old ones) and change dates stay on the server; the account sees the count.
-  const { passwordHash, passwordSalt, spotify, usernameHistory, usernameChanges, usernameAuto, friendCode, together, ...safe } = user;
+  const { passwordHash, passwordSalt, sessionsAfter, spotify, usernameHistory, usernameChanges, usernameAuto, friendCode, together, ...safe } = user;
   return {
     ...safe,
     // The account's own: each match with what it answered (its "Ver respuestas").
@@ -121,6 +124,11 @@ export function hashPassword(password, salt = crypto.randomBytes(16).toString("h
   const hash = crypto.scryptSync(password, salt, 64).toString("hex");
   return { salt, hash };
 }
+
+// What a login that fails says, whatever the reason (loginWithPassword).
+export const LOGIN_FAILED = "Correo, usuario o contraseña incorrectos. Si creaste tu cuenta con Google, entra con «Continuar con Google».";
+// A password nobody has, to check against when there is no account (or it has no password): it takes as long.
+const NOBODY = hashPassword(crypto.randomBytes(16).toString("hex"));
 
 export function verifyPassword(password, salt, hash) {
   if (!salt || !hash) return false;
@@ -354,6 +362,7 @@ export function upsertUser(store, user) {
   if (user.passwordSalt) current.passwordSalt = user.passwordSalt;
   if (user.googleId) current.googleId = user.googleId;
   store.users[user.id] = current;
+  if (current.isGuest) guestSeen.set(current.id, Date.now());
   saveStore(store);
   return current;
 }
@@ -365,7 +374,7 @@ export function registerWithPassword(store, { name, username, email, password, a
   const usernameProblem = usernameError(store, cleanUsername);
   if (usernameProblem) throw new Error(usernameProblem);
   if (!cleanEmail) throw new Error("Correo electrónico requerido");
-  if (!password || password.length < 2) throw new Error("La contraseña debe tener al menos 2 caracteres");
+  if (!password || password.length < MIN_PASSWORD_LENGTH) throw new Error(PASSWORD_TOO_SHORT);
 
   // Check if email already registered
   const existing = Object.values(store.users).find(
@@ -400,12 +409,52 @@ export function registerWithPassword(store, { name, username, email, password, a
 export function setPassword(store, userId, password) {
   const user = store.users[userId];
   if (!user || user.isGuest) throw new Error("Esa cuenta ya no existe");
-  if (!password || password.length < 2) throw new Error("La contraseña debe tener al menos 2 caracteres");
+  if (!password || password.length < MIN_PASSWORD_LENGTH) throw new Error(PASSWORD_TOO_SHORT);
   const { salt, hash } = hashPassword(password);
   user.passwordHash = hash;
   user.passwordSalt = salt;
+  // Whoever was signed in with the old password (another phone, someone who knew it) is signed out.
+  endSessions(user);
   saveStore(store);
   return sanitizeUser(user);
+}
+
+/**
+ * Signs the account out everywhere: every session and token made before now stops working (`sessionStillValid`).
+ * The caller opens the new session afterwards.
+ */
+export function endSessions(user) {
+  user.sessionsAfter = Date.now();
+}
+
+/** Whether a session (or token) made at `issuedAt` still stands: false once the account ended its sessions after it. */
+export function sessionStillValid(user, issuedAt) {
+  return !user?.sessionsAfter || (Number(issuedAt) || 0) >= user.sessionsAfter;
+}
+
+// Guests live only in memory: when each one was last seen, so the ones who never came back can be let go.
+const guestSeen = new Map();
+
+/** A guest is still around (any request of theirs). */
+export function touchGuest(store, userId) {
+  if (store.users[userId]?.isGuest) guestSeen.set(userId, Date.now());
+}
+
+/**
+ * Lets go of the guests nobody has seen for `olderThanMs` (but those `keep` says are still in a match or a group), so
+ * the memory doesn't grow with every visitor until the next restart. Returns how many went.
+ */
+export function sweepGuests(store, { olderThanMs, keep = () => false, now = Date.now() }) {
+  let gone = 0;
+  for (const user of Object.values(store.users)) {
+    if (!user.isGuest) continue;
+    if (!guestSeen.has(user.id)) guestSeen.set(user.id, now);
+    if (now - guestSeen.get(user.id) < olderThanMs || keep(user.id)) continue;
+    delete store.users[user.id];
+    gone += 1;
+  }
+  for (const id of guestSeen.keys()) if (!store.users[id]) guestSeen.delete(id);
+  return gone;
 }
 
 export function loginWithPassword(store, { identifier, password, guestId }) {
@@ -419,17 +468,15 @@ export function loginWithPassword(store, { identifier, password, guestId }) {
     (u) => !u.isGuest && ((u.email && u.email.toLowerCase() === clean) || (u.username && u.username === asUsername))
   );
 
-  if (!user) {
-    throw new Error("Usuario o correo no encontrado. ¿Deseas crear una cuenta?");
-  }
-
-  if (user.passwordHash && user.passwordSalt) {
-    const valid = verifyPassword(password, user.passwordSalt, user.passwordHash);
-    if (!valid) throw new Error("Contraseña incorrecta");
-  } else if (user.googleId) {
-    throw new Error("Esta cuenta fue creada con Google. Por favor usa 'Continuar con Google'.");
-  } else {
-    throw new Error("Esta cuenta no tiene contraseña. Crea una cuenta nueva o entra con Google.");
+  // One answer for every way it can fail (no such account, a wrong password, an account that only enters with
+  // Google), and as slow in all of them (the password is always checked against something): the form can't be used
+  // to find out whose email or username has an account here.
+  const hasPassword = Boolean(user?.passwordHash && user?.passwordSalt);
+  const valid = hasPassword ? verifyPassword(password, user.passwordSalt, user.passwordHash) : verifyPassword(password, NOBODY.salt, NOBODY.hash);
+  if (!hasPassword || !valid) {
+    const err = new Error(LOGIN_FAILED);
+    err.wrongPassword = true;
+    throw err;
   }
 
   if (guestId && guestId !== user.id) {
@@ -450,6 +497,14 @@ export function upsertGoogleUser(store, { id, email, name, avatar, googleId }, g
     // The Google photo becomes the avatar the first time; after that it only refreshes it if the player is
     // still using the photo (a color they picked is kept).
     const usingPhoto = !existing.googleId || !HEX_COLOR.test(existing.avatar || "");
+    // An account made with this email and a password, entered with Google for the first time: nobody ever proved the
+    // email was theirs when it was made, and Google just did. The password goes (and whoever was signed in with it),
+    // so someone who registered another person's email can't stay inside their account. They enter with Google.
+    if (!existing.googleId && existing.passwordHash) {
+      delete existing.passwordHash;
+      delete existing.passwordSalt;
+      endSessions(existing);
+    }
     existing.googleId = googleId;
     if (avatar) {
       existing.googlePhoto = avatar;
@@ -548,11 +603,19 @@ export function unlinkGoogle(store, userId) {
 }
 
 /** Delete user account permanently */
-export function deleteUser(store, userId, confirmName) {
+/**
+ * Deletes an account for good. Its name has to be typed, and its password too when it has one (an account that only
+ * enters with Google has none to ask for): an open session alone, on a borrowed phone, isn't enough.
+ */
+export function deleteUser(store, userId, confirmName, password) {
   const user = store.users[userId];
   if (!user) throw new Error("Usuario no encontrado");
   if (!confirmName || confirmName.trim() !== user.name) {
     throw new Error("El nombre de confirmación no coincide. Escribe tu nombre de usuario exacto para confirmar.");
+  }
+  if (user.passwordHash && user.passwordSalt) {
+    if (!password) throw new Error("Escribe tu contraseña para borrar tu cuenta");
+    if (!verifyPassword(String(password), user.passwordSalt, user.passwordHash)) throw new Error("La contraseña no es correcta");
   }
 
   delete store.users[userId];

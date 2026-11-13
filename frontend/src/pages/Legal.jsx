@@ -116,8 +116,8 @@ export function Privacy() {
       <h2>Tus derechos</h2>
       <p>
         Puedes pedir ver tus datos, corregirlos, borrarlos o que dejemos de usarlos. Tu nombre, tu @usuario y tu foto
-        los cambias tú mismo en tu perfil. Para todo lo demás, incluido borrar tu cuenta, escríbenos a <Contact /> desde
-        el correo de tu cuenta.
+        los cambias tú mismo en tu perfil, y ahí también puedes borrar tu cuenta ("Borrar cuenta"). Para todo lo demás,
+        escríbenos a <Contact /> desde el correo de tu cuenta.
       </p>
 
       <h2>Menores de edad</h2>
