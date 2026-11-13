@@ -493,9 +493,125 @@ const SKINS = {
       };
     },
   },
+
+  tigre: {
+    name: "Tigre",
+    draw: (u, small) => {
+      // Stripes come in from the edges, tapering, and never reach the eyes.
+      const stripes = [
+        "M-2 26 C8 26 18 29 25 33 C17 33 8 32 -2 32 Z",
+        "M-2 46 C6 44 15 46 21 50 C14 51 6 52 -2 53 Z",
+        "M-2 66 C8 63 18 64 26 68 C18 70 8 72 -2 73 Z",
+        "M102 26 C92 26 82 29 75 33 C83 33 92 32 102 32 Z",
+        "M102 46 C94 44 85 46 79 50 C86 51 94 52 102 53 Z",
+        "M102 66 C92 63 82 64 74 68 C82 70 92 72 102 73 Z",
+        "M44 6 C44 14 46 21 49 26 C50 20 50 13 50 6 Z",
+        "M58 6 C57 12 56 18 54 22 C58 18 61 12 63 6 Z",
+        "M34 7 C35 12 37 16 40 19 C40 14 40 10 39 7 Z",
+      ];
+      return {
+        defs: `
+          <radialGradient id="${u}g" cx=".45" cy=".35" r=".75"><stop offset="0" stop-color="#FFB347"/><stop offset=".6" stop-color="#FF8A00"/><stop offset="1" stop-color="#D45A00"/></radialGradient>
+          <filter id="${u}f" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="3"/></filter>
+          ${mask(u + "s", -7, -9)}`,
+        layers: `
+          <path d="${BODY}" fill="url(#${u}g)"/>
+          <ellipse cx="50" cy="86" rx="${small ? 30 : 26}" ry="18" fill="#FFF4E0" filter="url(#${u}f)"/>
+          <g fill="#1A1008">${stripes.slice(0, small ? 6 : 9).map((d) => `<path d="${d}"/>`).join("")}</g>
+          <path d="${BODY}" fill="#7A2E00" opacity=".35" mask="url(#${u}s)"/>
+          <ellipse cx="28" cy="22" rx="8" ry="3.2" transform="rotate(-24 28 22)" fill="#fff" opacity=".35"/>`,
+      };
+    },
+  },
+
+  panal: {
+    name: "Panal",
+    draw: (u, small) => {
+      // Honey that drips from the top, three drops long; the middle one stops between the eyes.
+      const honey = "M-5 -5 H105 V26 C100 26 98 30 96 34 C94 40 88 40 87 34 C86 28 82 26 78 28 C74 30 72 30 70 26 C68 23 62 23 60 28 C58 34 58 40 54 40 C50 40 50 33 48 28 C46 24 40 24 38 28 C36 30 34 31 30 29 C26 26 20 26 18 32 C16 40 15 50 11 50 C7 50 7 42 6 34 C5 28 0 26 -5 26 Z";
+      return {
+        defs: `
+          <pattern id="${u}p" width="8.66" height="15" patternUnits="userSpaceOnUse" patternTransform="translate(2 3)"><path d="M4.33 0 L8.66 2.5 V7.5 L4.33 10 L0 7.5 V2.5 Z M4.33 10 V15" fill="none" stroke="#C77A00" stroke-width="1"/></pattern>
+          <radialGradient id="${u}g" cx=".5" cy=".6" r=".7"><stop offset="0" stop-color="#FFE58A"/><stop offset=".7" stop-color="#FFC93C"/><stop offset="1" stop-color="#F0A500"/></radialGradient>
+          <linearGradient id="${u}h" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#C96A00"/><stop offset="1" stop-color="#F59A00"/></linearGradient>
+          ${mask(u + "s", -7, -9)}`,
+        layers: `
+          <path d="${BODY}" fill="url(#${u}g)"/>
+          ${small ? "" : `<rect width="100" height="100" fill="url(#${u}p)" opacity=".55"/>`}
+          <path d="${BODY}" fill="#8A4A00" opacity=".35" mask="url(#${u}s)"/>
+          <path d="${honey}" transform="translate(0 2.4)" fill="#8A4A00" opacity=".3"/>
+          <path d="${honey}" fill="url(#${u}h)"/>
+          <path d="M14 14 C30 10 46 10 62 12" fill="none" stroke="#FFE9B0" stroke-width="${small ? 3.4 : 2.4}" stroke-linecap="round" opacity=".8"/>
+          <ellipse cx="11" cy="44" rx="${small ? 1.6 : 1.2}" ry="${small ? 3 : 2.4}" fill="#FFE9B0" opacity=".8"/>
+          ${small ? "" : `<ellipse cx="54" cy="35" rx="1" ry="2" fill="#FFE9B0" opacity=".8"/><ellipse cx="91" cy="31" rx=".9" ry="1.8" fill="#FFE9B0" opacity=".8"/>`}`,
+      };
+    },
+  },
+
+  aurora: {
+    name: "Aurora",
+    draw: (u, small) => {
+      const curtains = [
+        ["M-10 40 C10 20 30 34 50 22 C70 10 90 26 110 14 L110 38 C90 50 70 34 50 46 C30 58 10 44 -10 62 Z", "#3CFFB0", ".75", "8s"],
+        ["M-10 28 C14 12 34 22 54 12 C74 2 92 14 110 4 L110 22 C92 32 74 22 54 32 C34 42 14 32 -10 46 Z", "#A63DFF", ".6", "11s"],
+        ["M-10 58 C12 44 32 54 52 44 C72 34 92 46 110 36 L110 52 C92 62 72 50 52 60 C32 70 12 60 -10 72 Z", "#00D1C1", ".55", "9.5s"],
+      ];
+      return {
+        defs: `
+          <linearGradient id="${u}g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0B1440"/><stop offset=".6" stop-color="#1B2A6B"/><stop offset="1" stop-color="#2E4A8F"/></linearGradient>
+          <filter id="${u}f" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="${small ? 3 : 4}"/></filter>`,
+        layers: `
+          <path d="${BODY}" fill="url(#${u}g)"/>
+          ${small ? "" : `<g fill="#fff">${STARS.slice(0, 14).map(([x, y, r, o]) => `<circle cx="${x}" cy="${(y * 0.7).toFixed(1)}" r="${(r * 0.8).toFixed(2)}" opacity="${o}"/>`).join("")}</g>`}
+          <g filter="url(#${u}f)">
+            ${curtains.map(([d, c, o, dur]) => `<path d="${d}" fill="${c}" opacity="${o}">${anim(`<animateTransform attributeName="transform" type="translate" values="-6 0;6 3;-6 0" dur="${dur}" repeatCount="indefinite"/><animate attributeName="opacity" values="${o};${(o * 0.5).toFixed(2)};${o}" dur="${dur}" repeatCount="indefinite"/>`)}</path>`).join("")}
+          </g>
+          <path d="M-5 100 L-5 80 L14 68 L24 74 L38 62 L52 76 L64 66 L78 76 L90 70 L105 80 L105 100 Z" fill="#0A1030"/>
+          <path d="M14 68 L19 71 L16 73 L11 70 Z M38 62 L44 67 L40 68 L36 66 L33 66 Z M64 66 L70 70 L66 71 L62 69 L59 70 Z" fill="#E6F7FF"/>
+          ${sparkle(78, 22, small ? 5.5 : 3.6, 0.6)}`,
+      };
+    },
+  },
+
+  casino: {
+    name: "Casino",
+    draw: (u, small) => {
+      // The four suits, drawn around 0 0 and about 8 units tall.
+      const suit = {
+        heart: `<path d="M0 3.6 C-4.6 0.2 -5.4 -2.2 -3.8 -3.7 C-2.3 -5 -0.4 -4.1 0 -2.4 C0.4 -4.1 2.3 -5 3.8 -3.7 C5.4 -2.2 4.6 0.2 0 3.6 Z" fill="#E8203A"/>`,
+        diamond: `<path d="M0 -4.4 L3.2 0 L0 4.4 L-3.2 0 Z" fill="#E8203A"/>`,
+        spade: `<path d="M0 -4.2 C-4.6 -0.8 -5.4 1.6 -3.8 3 C-2.4 4.1 -0.8 3.4 -0.3 2.2 L-1.6 4.6 H1.6 L0.3 2.2 C0.8 3.4 2.4 4.1 3.8 3 C5.4 1.6 4.6 -0.8 0 -4.2 Z" fill="#141414"/>`,
+        club: `<g fill="#141414"><circle cx="0" cy="-2.3" r="2"/><circle cx="-2.3" cy="1" r="2"/><circle cx="2.3" cy="1" r="2"/><path d="M-0.5 0.5 L-1.6 4.6 H1.6 L0.5 0.5 Z"/></g>`,
+      };
+      const suits = [["spade", 22, 70, -12], ["heart", 40, 80, -4], ["diamond", 60, 80, 4], ["club", 78, 70, 12]];
+      // A poker chip: red with white marks round its edge and a dashed ring.
+      const chip = (x, y, r) => {
+        let marks = "";
+        for (let a = 0; a < 360; a += 60) marks += `<rect x="${-r * 0.2}" y="${-r}" width="${r * 0.4}" height="${r * 0.26}" fill="#fff" transform="rotate(${a})"/>`;
+        return `<g transform="translate(${x} ${y})"><circle r="${r}" fill="#C8102E" stroke="#5A0010" stroke-width=".7"/>${marks}<circle r="${r * 0.62}" fill="none" stroke="#fff" stroke-width="${r * 0.08}" stroke-dasharray="${r * 0.3} ${r * 0.2}"/><circle r="${r * 0.42}" fill="#E8203A"/></g>`;
+      };
+      return {
+        defs: `
+          <radialGradient id="${u}g" cx=".5" cy=".42" r=".7"><stop offset="0" stop-color="#2FB86A"/><stop offset=".65" stop-color="#11804A"/><stop offset="1" stop-color="#075430"/></radialGradient>
+          <filter id="${u}n"><feTurbulence type="fractalNoise" baseFrequency="1.2" numOctaves="2" seed="3"/><feColorMatrix type="saturate" values="0"/></filter>
+          ${mask(u + "s", -7, -9)}`,
+        layers: `
+          <path d="${BODY}" fill="url(#${u}g)"/>
+          ${small ? "" : `<rect width="100" height="100" filter="url(#${u}n)" opacity=".08"/>`}
+          <path d="M8 60 Q50 ${small ? 50 : 52} 92 60" fill="none" stroke="#F2C94C" stroke-width="${small ? 2.4 : 1.4}"/>
+          ${small ? "" : `<path d="M10 64.5 Q50 56.5 90 64.5" fill="none" stroke="#F2C94C" stroke-width=".6" opacity=".7"/>`}
+          ${suits.slice(small ? 1 : 0, small ? 3 : 4).map(([n, x, y, a]) => `<g transform="translate(${x} ${y}) rotate(${a}) scale(${small ? 1.6 : 1.15})"><rect x="-6" y="-7.5" width="12" height="15" rx="1.6" fill="#FFFDF5" stroke="#B9B9B0" stroke-width=".5"/>${suit[n]}</g>`).join("")}
+          ${chip(small ? 80 : 84, small ? 30 : 32, small ? 9 : 7)}
+          ${small ? "" : chip(16, 34, 5.5)}
+          <path d="${BODY}" fill="#02301A" opacity=".45" mask="url(#${u}s)"/>
+          <path d="${BODY}" fill="none" stroke="#F2C94C" stroke-width="${small ? 8 : 6.5}"/>
+          ${sparkle(30, 20, small ? 6 : 4.2, 0.3)}${small ? "" : sparkle(68, 18, 3, 1.4)}`,
+      };
+    },
+  },
 };
 
-const ORDER = ["gomita", "galaxia", "holo", "magma", "oro", "lava", "vitral", "sandia", "dona", "escarcha", "cielo", "mar", "atardecer", "vaca", "mezclilla", "pinata", "cuaderno", "mapa", "disco", "circuito"];
+const ORDER = ["gomita", "galaxia", "holo", "magma", "oro", "lava", "vitral", "sandia", "dona", "escarcha", "cielo", "mar", "atardecer", "vaca", "mezclilla", "pinata", "cuaderno", "mapa", "disco", "circuito", "tigre", "panal", "aurora", "casino"];
 
 /** The skins in the profile's order: { id, name, needs }. */
 export const BLOB_SKINS = ORDER.map((id) => ({ id, name: SKINS[id].name, needs: "account", how: "skin" }));

@@ -36,7 +36,7 @@ export const BLOB_ACCOUNT = ["#2F6BFF", "#FF2FC0", "#00D1C1", "#00A2FF", "#FF5A1
 const BLOB_RENAMED = { "#8FD3FF": "#2F6BFF", "#FFA6D2": "#FF2FC0", "#8EF0B0": "#00D1C1", "#FFD60A": "#FF5A1F", "#FF8A00": "#FF5A1F" };
 // The Blob's skins (frontend lib/blobSkins.js, same ids): drawings instead of a plain colour, for accounts too. Saved
 // as their id in lowercase, in the same `avatar` as a colour.
-export const BLOB_SKINS = ["gomita", "galaxia", "holo", "magma", "oro", "lava", "vitral", "sandia", "dona", "escarcha", "cielo", "mar", "atardecer", "vaca", "mezclilla", "pinata", "cuaderno", "mapa", "disco", "circuito"];
+export const BLOB_SKINS = ["gomita", "galaxia", "holo", "magma", "oro", "lava", "vitral", "sandia", "dona", "escarcha", "cielo", "mar", "atardecer", "vaca", "mezclilla", "pinata", "cuaderno", "mapa", "disco", "circuito", "tigre", "panal", "aurora", "casino"];
 const isSkin = (value) => BLOB_SKINS.includes(String(value || "").toLowerCase());
 // A Google photo saved as the avatar: anything that is neither a colour nor a skin.
 const isPhoto = (value) => Boolean(value) && !HEX_COLOR.test(value) && !isSkin(value);
