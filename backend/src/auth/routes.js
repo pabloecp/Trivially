@@ -19,6 +19,7 @@ import {
   unlinkGoogle,
   unlinkSpotify,
   updateUserAvatar,
+  updateUserBadge,
   updateUserName,
   updateUsername,
   upsertGoogleUser,
@@ -346,6 +347,19 @@ export function createApiRouter({ catalog, store, friends = null, hub = null, so
     const username = normalizeUsername(req.query.u);
     const error = usernameError(store, username, req.session?.userId || null);
     res.json({ available: !error, username, reason: error });
+  });
+
+  // The badge worn beside the name on the profile (game/badges.js): one already won, or null to take it off.
+  router.patch("/users/:id/badge", (req, res) => {
+    try {
+      if (req.session?.userId !== req.params.id) {
+        return res.status(403).json({ error: "No tienes permiso para modificar este usuario" });
+      }
+      const user = updateUserBadge(store, req.params.id, req.body?.badge ?? null);
+      res.json({ ok: true, user });
+    } catch (err) {
+      res.status(400).json({ error: err.message });
+    }
   });
 
   router.patch("/users/:id/avatar", (req, res) => {

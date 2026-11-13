@@ -15,12 +15,19 @@ import Modal from "../components/home/Modal.jsx";
 import { BLOB_COLORS, HOW_TO_GET, blobColor, canUseColor } from "../lib/blobColors.js";
 import { BLOB_SKINS, isBlobSkin } from "../lib/blobSkins.js";
 import Segmented from "../components/home/Segmented.jsx";
+import BadgesCard, { BadgeTag } from "../components/home/Badges.jsx";
+import { BADGES, badgeById, badgeProgress } from "../lib/badges.js";
 
 // Only what matters: how many matches you won, how many questions you got right and how many daily challenges you completed.
+// The stats, six small boxes (two or three columns, look.css): what a player wants to compare.
+// "Insignias" is how many badges they won of the eight (components/home/Badges.jsx).
 const STATS = [
-  { key: "wins", label: "Victorias", color: "amber" },
-  { key: "correctAnswers", label: "Aciertos", color: "green" },
-  { key: "dailyDone", label: "Retos", color: "pink" },
+  { key: "wins", label: "Victorias" },
+  { key: "gamesPlayed", label: "Partidas" },
+  { key: "correctAnswers", label: "Aciertos" },
+  { key: "bestStreak", label: "Mejor racha" },
+  { key: "dailyDone", label: "Retos" },
+  { key: "badges", label: "Insignias", of: BADGES.length },
 ];
 
 // Badge shown on the profile for owners (plain users get none).
@@ -202,7 +209,7 @@ function handleLabel(info) {
 }
 
 function ProfileScreen() {
-  const { user: currentUser, updateUsername, changeHandle, updateAvatar, linkGoogle, connectSpotify, unlinkSpotify, linkingStatus, logout, deleteAccount } =
+  const { user: currentUser, updateUsername, changeHandle, updateAvatar, updateBadge, linkGoogle, connectSpotify, unlinkSpotify, linkingStatus, logout, deleteAccount } =
     useApp();
   const [spotifyBusy, setSpotifyBusy] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
@@ -292,6 +299,16 @@ function ProfileScreen() {
     }
   }
 
+  // A badge is worn (or taken off) as soon as it's tapped (BadgesCard).
+  async function onWearBadge(id) {
+    setErr("");
+    try {
+      await updateBadge(id);
+    } catch (e) {
+      setErr(e.message || "No se pudo cambiar tu insignia");
+    }
+  }
+
   // One button saves whatever was edited: the name, the @username, or both.
   async function onSaveProfile(e) {
     e?.preventDefault();
@@ -365,6 +382,11 @@ function ProfileScreen() {
   const handleChanged = newHandle.length >= USERNAME_MIN && newHandle !== activeUser?.username && handleCheck.state !== "bad";
   const canSave = nameChanged || handleChanged;
   const roleTag = ROLE_TAGS[activeUser?.role];
+  // The badges' progress comes from the freshest copy of the account (the profile's own request), the badge worn from
+  // the account itself, so wearing one shows at once.
+  const badgeUser = isOtherUser ? profileData : profileData || currentUser;
+  const wornBadge = badgeById(isOtherUser ? profileData?.badge : currentUser?.badge);
+  const badgesWon = badgeProgress(badgeUser).filter((b) => b.earned).length;
   const googleNotice = searchParams.get("google");
   const hasSpotify = Boolean(activeUser?.spotify || activeUser?.spotifyLinked);
   // Only owners (the ones with the tag) see the Spotify button for now.
@@ -443,16 +465,21 @@ function ProfileScreen() {
                 {roleTag.label}
               </span>
             )}
+            {wornBadge && <BadgeTag badge={wornBadge} />}
           </div>
           <div className="tv-pf-stats" aria-busy={statsLoading} aria-label="Estadísticas">
-            {STATS.map((s) => (
-              <div key={s.key} className="tv-pf-stat">
-                <span className="tv-pf-label">{s.label}</span>
-                <span className="tv-pf-num">
-                  {statsLoading ? <span className="tv-skeleton" aria-hidden="true" /> : stats ? <CountUp value={stats[s.key] || 0} /> : 0}
-                </span>
-              </div>
-            ))}
+            {STATS.map((s) => {
+              const value = s.key === "badges" ? badgesWon : stats?.[s.key] || 0;
+              return (
+                <div key={s.key} className="tv-pf-stat">
+                  <span className="tv-pf-label">{s.label}</span>
+                  <span className="tv-pf-num">
+                    {statsLoading ? <span className="tv-skeleton" aria-hidden="true" /> : <CountUp value={value} />}
+                    {s.of && !statsLoading && <small> / {s.of}</small>}
+                  </span>
+                </div>
+              );
+            })}
           </div>
         </section>
 
@@ -538,6 +565,9 @@ function ProfileScreen() {
               )}
             </div>
           </section>
+        )}
+        {!isGuest && badgeUser && (
+          <BadgesCard user={badgeUser} worn={wornBadge?.id || null} own={!isOtherUser} onWear={onWearBadge} />
         )}
         {!isOtherUser && (
           <nav className="tv-legal-links" aria-label="Información legal">

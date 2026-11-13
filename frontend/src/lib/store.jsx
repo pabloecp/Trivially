@@ -653,6 +653,14 @@ export function AppProvider({ children }) {
         }
       },
 
+      // The badge worn beside the name on the profile (lib/badges.js); null takes it off.
+      async updateBadge(badge) {
+        const current = userRef.current;
+        if (!current) throw new Error("No autenticado");
+        const res = await api(`/api/users/${current.id}/badge`, { method: "PATCH", body: { badge } });
+        applyUser({ ...current, ...(res.user || {}), badge: res.user?.badge ?? null });
+      },
+
       async updatePlayer(data) {
         const current = userRef.current;
         if (!current) return;
