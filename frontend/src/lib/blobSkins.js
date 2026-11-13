@@ -383,24 +383,26 @@ const SKINS = {
     },
   },
 
-  mezclilla: {
-    name: "Mezclilla",
-    draw: (u, small) => ({
-      defs: `
-        <pattern id="${u}p" width="3" height="3" patternUnits="userSpaceOnUse" patternTransform="rotate(-38)"><rect width="3" height="3" fill="#3E5F9A"/><rect width="3" height="1.3" fill="#5677B3"/><rect y="2.2" width="3" height=".5" fill="#2E4A7D"/></pattern>
-        <radialGradient id="${u}w" cx=".45" cy=".45" r=".5"><stop offset="0" stop-color="#B8CBEB" stop-opacity=".45"/><stop offset="1" stop-color="#B8CBEB" stop-opacity="0"/></radialGradient>
-        <radialGradient id="${u}r" cx=".35" cy=".35" r=".7"><stop offset="0" stop-color="#F5C08A"/><stop offset="1" stop-color="#8A4A1A"/></radialGradient>
-        <filter id="${u}n"><feTurbulence type="fractalNoise" baseFrequency=".9" numOctaves="2" seed="6"/><feColorMatrix type="saturate" values="0"/></filter>
-        ${mask(u + "s", -7, -9)}`,
-      layers: `
-        <path d="${BODY}" fill="${small ? "#4A6BA6" : `url(#${u}p)`}"/>
-        <path d="${BODY}" fill="url(#${u}w)"/>
-        ${small ? "" : `<rect width="100" height="100" filter="url(#${u}n)" opacity=".1"/>`}
-        <path d="${BODY}" fill="#142540" opacity=".45" mask="url(#${u}s)"/>
-        <path d="${BODY}" transform="translate(50 52) scale(.84) translate(-50 -52)" fill="none" stroke="#FFB23F" stroke-width="${small ? 2.4 : 1.4}" stroke-dasharray="${small ? "4.5 3" : "3 2.2"}" stroke-linecap="round"/>
-        <circle cx="79" cy="70" r="${small ? 4.2 : 3.4}" fill="url(#${u}r)" stroke="#5A2E0E" stroke-width=".9"/>
-        <circle cx="78" cy="69" r="1" fill="#fff" opacity=".7"/>`,
-    }),
+  arcoiris: {
+    name: "Arcoíris",
+    // A blue sky with a rainbow low on the body, under the eyes, rising from two clouds.
+    draw: (u, small) => {
+      const bands = ["#FF3D5E", "#FF8A00", "#FFD60A", "#1FD24A", "#2F8BFF", "#A63DFF"];
+      const w = small ? 5 : 4.4;
+      const cloud = (x, y, k) => `<g transform="translate(${x} ${y}) scale(${k})" fill="#fff"><circle cx="-7" cy="2" r="6"/><circle cx="0" cy="-2" r="8"/><circle cx="8" cy="2" r="6"/><rect x="-13" y="2" width="27" height="7" rx="3.5"/></g>`;
+      return {
+        defs: `
+          <linearGradient id="${u}g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9FDCFF"/><stop offset="1" stop-color="#5CB8FF"/></linearGradient>
+          ${mask(u + "s", -7, -9)}`,
+        layers: `
+          <path d="${BODY}" fill="url(#${u}g)"/>
+          <g fill="none" stroke-width="${w + 0.3}">${bands.map((c, i) => { const r = 34 - i * w; return `<path d="M${50 - r} 88 A${r} ${r} 0 0 1 ${50 + r} 88" stroke="${c}"/>`; }).join("")}</g>
+          ${cloud(19, 81, small ? 1.4 : 1.2)}${cloud(81, 81, small ? 1.4 : 1.2)}
+          <path d="${BODY}" fill="#1E6FB8" opacity=".3" mask="url(#${u}s)"/>
+          <ellipse cx="29" cy="23" rx="${small ? 11 : 9}" ry="${small ? 4.4 : 3.6}" transform="rotate(-24 29 23)" fill="#fff" opacity=".55"/>
+          ${sparkle(76, 24, small ? 6 : 4.5, 0.5)}`,
+      };
+    },
   },
 
   cielo: {
@@ -555,22 +557,25 @@ const SKINS = {
 
   casino: {
     name: "Casino",
-    // A poker chip: red, six white marks round its edge and a white ring inside.
-    draw: (u, small) => ({
-      defs: `
-        <radialGradient id="${u}g" cx=".45" cy=".38" r=".75"><stop offset="0" stop-color="#FF4A5E"/><stop offset=".65" stop-color="#E01E37"/><stop offset="1" stop-color="#A80F24"/></radialGradient>
-        ${mask(u + "s", -7, -9)}`,
-      layers: `
-        <path d="${BODY}" fill="url(#${u}g)"/>
-        <path d="${BODY}" fill="none" stroke="#fff" stroke-width="${small ? 16 : 14}" pathLength="240" stroke-dasharray="14 26" stroke-dashoffset="7"/>
-        <path d="${BODY}" transform="translate(50 52) scale(.7) translate(-50 -52)" fill="none" stroke="#fff" stroke-width="${small ? 4 : 2.6}"/>
-        <path d="${BODY}" fill="#5A0010" opacity=".35" mask="url(#${u}s)"/>
-        <ellipse cx="30" cy="25" rx="${small ? 11 : 9}" ry="${small ? 4.5 : 3.6}" transform="rotate(-28 30 25)" fill="#fff" opacity=".45"/>`,
-    }),
+    // The ace of spades: a white card with a thin red line inside its edge, "A" and a spade in two corners, and a big
+    // spade under the eyes.
+    draw: (u, small) => {
+      const spade = `<path d="M0 -10 C-11 -2 -13 4 -9 7.4 C-5.8 10 -2 8.4 -0.8 5.4 L-3.8 11 H3.8 L0.8 5.4 C2 8.4 5.8 10 9 7.4 C13 4 11 -2 0 -10 Z" fill="#141414"/>`;
+      const corner = (x, y, r) => `<g transform="translate(${x} ${y}) rotate(${r})"><text x="0" y="0" text-anchor="middle" font-family="Baloo 2, Arial, sans-serif" font-weight="800" font-size="${small ? 15 : 12}" fill="#141414">A</text><g transform="translate(0 ${small ? 7 : 6}) scale(${small ? 0.5 : 0.4})">${spade}</g></g>`;
+      return {
+        defs: mask(u + "s", -7, -9),
+        layers: `
+          <path d="${BODY}" fill="#FFFDF7"/>
+          <path d="${BODY}" transform="translate(50 52) scale(.86) translate(-50 -52)" fill="none" stroke="#D7192F" stroke-width="${small ? 2.6 : 1.4}"/>
+          ${corner(small ? 25 : 25, small ? 37 : 35, 0)}${small ? "" : corner(75, 69, 180)}
+          <g transform="translate(50 ${small ? 72 : 70}) scale(${small ? 1.2 : 1.05})">${spade}</g>
+          <path d="${BODY}" fill="#AEB3BF" opacity=".45" mask="url(#${u}s)"/>`,
+      };
+    },
   },
 };
 
-const ORDER = ["gomita", "galaxia", "holo", "magma", "oro", "lava", "vitral", "sandia", "dona", "escarcha", "cielo", "mar", "atardecer", "vaca", "mezclilla", "pinata", "cuaderno", "mapa", "disco", "hamburguesa", "tigre", "panal", "aurora", "casino"];
+const ORDER = ["gomita", "galaxia", "holo", "magma", "oro", "lava", "vitral", "sandia", "dona", "escarcha", "cielo", "mar", "atardecer", "vaca", "arcoiris", "pinata", "cuaderno", "mapa", "disco", "hamburguesa", "tigre", "panal", "aurora", "casino"];
 
 /** The skins in the profile's order: { id, name, needs }. */
 export const BLOB_SKINS = ORDER.map((id) => ({ id, name: SKINS[id].name, needs: "account", how: "skin" }));
