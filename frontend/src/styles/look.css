@@ -612,7 +612,7 @@
 /* The Clásico's, in the logo's look like its tile (.tv-ccard): black in the logo's coloured frame, the logo where a
    game's icon goes. The frame takes 4 px, so the padding is that much less. */
 .tv-gcard.tv-gbar-plan.is-classic {
-  --edge: var(--tv-logo-shadow);
+  --edge: #030303;
   padding: 6px 10px 6px 6px;
   border: 4px solid transparent;
   background:
@@ -798,7 +798,7 @@
   animation: var(--tv-box-in);
 }
 .tv-modal--sm { max-width: 460px; }
-.tv-modal--md { max-width: 640px; }
+.tv-modal--md { }
 .tv-modal--lg { max-width: 900px; }
 
 .tv-modal-root.is-leaving { pointer-events: none; }
@@ -841,31 +841,40 @@
   color: var(--tv-text);
 }
 
-/* Two flat pills, the chosen one lighter ("Partida pública" / "Partida privada"). */
-.tv-pills { display: flex; flex-wrap: wrap; gap: 6px; }
-.tv-pill {
-  display: inline-flex;
+/* Who the match is for: one flat box with two options to choose between (radio dot, icon, name and what it means), the
+   chosen row in the site's blue. It sits beside the Clásico's tile so the top of the window has no empty half. */
+.tv-plan-top { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; align-items: stretch; }
+.tv-plan-top .tv-ccard { width: 100%; height: auto; }
+.tv-aud { display: flex; flex-direction: column; gap: 4px; padding: 6px; border-radius: 16px; background: var(--tv-surface-2); }
+.tv-aud-opt {
+  flex: 1;
+  display: flex;
   align-items: center;
-  gap: 8px;
-  height: 40px;
-  padding: 0 14px;
+  gap: 12px;
+  min-width: 0;
+  padding: 8px 14px 8px 12px;
   border: 0;
-  border-radius: 10px;
+  border-radius: 12px;
   background: none;
-  font-family: var(--tv-display);
-  font-weight: 700;
-  font-size: 15px;
   color: var(--tv-text);
+  text-align: left;
   cursor: pointer;
-  transition: background-color 0.25s ease;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
-.tv-pill[aria-checked="true"] { background: rgba(255, 255, 255, 0.08); }
-.tv-pill:disabled { cursor: default; }
-.tv-pill:disabled[aria-checked="false"] { opacity: 0.45; }
-@media (max-width: 420px) {
-  .tv-pills { flex-wrap: nowrap; gap: 4px; }
-  .tv-pill { flex: 1 1 auto; justify-content: center; padding: 0 10px; font-size: 14px; white-space: nowrap; }
-  .tv-pill svg { display: none; }
+.tv-aud-opt:hover:not(:disabled):not([aria-checked="true"]) { background: rgba(127, 127, 127, 0.12); }
+.tv-aud-opt[aria-checked="true"] { background: var(--tv-pick); color: #fff; }
+.tv-aud-opt:disabled { cursor: default; }
+.tv-aud-opt:disabled[aria-checked="false"] { opacity: 0.45; }
+.tv-aud-dot { flex: none; width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--tv-text-3); transition: border-color 0.2s ease, background-color 0.2s ease; }
+.tv-aud-opt[aria-checked="true"] .tv-aud-dot { border-color: #fff; background: radial-gradient(#fff 0 38%, transparent 42%); }
+.tv-aud-icon { flex: none; display: grid; place-items: center; }
+.tv-aud-text { display: flex; flex-direction: column; min-width: 0; }
+.tv-aud-name { font-family: var(--tv-display); font-weight: 800; font-size: 17px; line-height: 1.15; }
+.tv-aud-sub { font-family: var(--tv-small); font-weight: 600; font-size: 13px; line-height: 1.25; color: var(--tv-text-3); }
+.tv-aud-opt[aria-checked="true"] .tv-aud-sub { color: rgba(255, 255, 255, 0.82); }
+@media (max-width: 700px) {
+  .tv-plan-top { grid-template-columns: 1fr; }
+  .tv-aud-opt { padding: 12px; }
 }
 .tv-plan-note { display: inline-flex; align-items: center; gap: 8px; margin: 0; font-family: var(--tv-small); font-weight: 600; font-size: 14px; color: var(--tv-text-3); }
 
@@ -924,7 +933,7 @@
    around the middle), its name and tagline at the top left and the logo itself big, tilted and cut by the bottom right
    corner. Tapped, so it has its edge. */
 .tv-ccard {
-  --edge: var(--tv-logo-shadow);
+  --edge: #030303;
   position: relative;
   overflow: hidden;
   overflow: clip;
@@ -952,7 +961,7 @@
 /* The text stops short of the logo, so a long tagline wraps instead of running under it. */
 .tv-ccard-text { position: relative; display: grid; gap: 6px; max-width: calc(100% - 100px); }
 .tv-ccard-name { font-family: var(--tv-display); font-weight: 800; font-size: clamp(24px, 2.4vw, 32px); line-height: 1; }
-.tv-ccard-sub { font-family: var(--tv-small); font-weight: 800; font-size: 14px; line-height: 1.25; color: var(--tv-text-3); }
+.tv-ccard-sub { font-family: var(--tv-small); font-weight: 800; font-size: 14px; line-height: 1.25; color: rgba(255, 255, 255, 0.62); }
 .tv-ccard-logo { position: absolute; right: -14px; bottom: -22px; rotate: -14deg; pointer-events: none; }
 .tv-ccard-logo .tv-appicon { --s: 118px; }
 .tv-ccard:hover:not(:disabled) .tv-ccard-logo { animation: tvWiggle 0.5s ease; }
@@ -1870,7 +1879,7 @@
 }
 
 /* ---------- "Tu partida" (MatchSummarySheet): the game's card, five rows at a time, arrows at the foot ---------- */
-.tv-app .tv-modal.tv-summary-modal { max-width: 520px; }
+.tv-app .tv-modal.tv-summary-modal { }
 .tv-app .tv-summary-modal .tv-modal-head { padding: 20px 22px 2px; }
 .tv-app .tv-summary-modal .tv-modal-title { font-size: 26px; }
 .tv-app .tv-summary-modal .tv-modal-body { gap: 10px; padding: 12px 22px 18px; }
