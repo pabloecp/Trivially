@@ -30,20 +30,21 @@ export default function PlanSheet({ open, onClose, plan, onAudience, onGame, inG
 
   return (
     <Modal open={open} onClose={onClose} title={inGroup ? "¿Qué quieren jugar?" : "¿Qué quieres jugar?"} size="lg" className="tv-plan">
-      <h3 className="tv-section-label">Tipo de partida</h3>
+      <div className="tv-plan-top">
       <div className="tv-aud" role="radiogroup" aria-label="Con quién juegan">
         {AUDIENCES.map((a) => (
           <button
             key={a.value}
             type="button"
             role="radio"
-            className="tv-aud-btn"
+            className="tv-aud-opt"
             aria-checked={plan.audience === a.value}
             disabled={readOnly}
             onClick={() => plan.audience !== a.value && onAudience(a.value)}
           >
+            <span className="tv-aud-dot" aria-hidden="true" />
             <span className="tv-aud-icon">
-              <Icon name={a.icon} size={22} strokeWidth={2.6} />
+              <Icon name={a.icon} size={20} strokeWidth={2.6} />
             </span>
             <span className="tv-aud-text">
               <span className="tv-aud-name">{a.label}</span>
@@ -73,6 +74,7 @@ export default function PlanSheet({ open, onClose, plan, onAudience, onGame, inG
           <span className="tv-ccard-sub">Primero en ganar dos juegos</span>
         </span>
       </button>
+      </div>
       <h3 className="tv-section-label">Juego libre</h3>
       <div className="tv-gcard-grid">
         {games.map((mode, i) => (
