@@ -82,7 +82,7 @@ assert.equal(updateUserAvatar(testStore, user2.id, "#1fd24a").avatar, "#1FD24A")
 // The skins go in the same avatar, saved in lowercase; an unknown one is refused.
 assert.equal(updateUserAvatar(testStore, user2.id, "Oro").avatar, "oro");
 assert.equal(playerAvatar(testStore.users[user2.id]), "oro");
-assert.throws(() => updateUserAvatar(testStore, user2.id, "arcoiris"), /no válido/);
+assert.throws(() => updateUserAvatar(testStore, user2.id, "mezclilla"), /no válido/, "a skin that was removed");
 assert.equal(updateUserAvatar(testStore, user2.id, "#FFFFFF").avatar, "#FFFFFF");
 const gUser = upsertGoogleUser(testStore, { name: "G", email: "g@trivially.test", avatar: "https://photo.test/g.jpg", googleId: "g_1" });
 assert.equal(gUser.avatar, "https://photo.test/g.jpg");

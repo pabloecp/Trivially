@@ -557,7 +557,7 @@ const SKINS = {
 
   casino: {
     name: "Casino",
-    // The ace of spades: a white card with a thin red line inside its edge, "A" and a spade in two corners, and a big
+    // The ace of spades: a white card with "A" and a spade in two corners, and a big
     // spade under the eyes.
     draw: (u, small) => {
       const spade = `<path d="M0 -10 C-11 -2 -13 4 -9 7.4 C-5.8 10 -2 8.4 -0.8 5.4 L-3.8 11 H3.8 L0.8 5.4 C2 8.4 5.8 10 9 7.4 C13 4 11 -2 0 -10 Z" fill="#141414"/>`;
@@ -566,7 +566,6 @@ const SKINS = {
         defs: mask(u + "s", -7, -9),
         layers: `
           <path d="${BODY}" fill="#FFFDF7"/>
-          <path d="${BODY}" transform="translate(50 52) scale(.86) translate(-50 -52)" fill="none" stroke="#D7192F" stroke-width="${small ? 2.6 : 1.4}"/>
           ${corner(small ? 25 : 25, small ? 37 : 35, 0)}${small ? "" : corner(75, 69, 180)}
           <g transform="translate(50 ${small ? 72 : 70}) scale(${small ? 1.2 : 1.05})">${spade}</g>
           <path d="${BODY}" fill="#AEB3BF" opacity=".45" mask="url(#${u}s)"/>`,
