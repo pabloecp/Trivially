@@ -15,7 +15,6 @@ import { withSound } from "../../lib/sounds.js";
 import "../../styles/home.css";
 import "../../styles/playlist.css";
 import { resolveCode, urlCode } from "../../lib/hiddenCode.js";
-import { useResultsLook } from "../../lib/ownerView.js";
 import { GamesWon, RetouchCard } from "../../components/home/ResultsLooks.jsx";
 import { RatingBox, rowChanges } from "../../components/home/Ratings.jsx";
 import { findVariant } from "../../components/home/matchInfo.js";
@@ -33,8 +32,6 @@ function ResultsScreen() {
   const nav = useNavigate();
   const [err, setErr] = useState("");
   const [showSummary, setShowSummary] = useState(false);
-  // The results' style and tone (everyone: "panel" in colour; an owner can try others).
-  const { style, tone } = useResultsLook();
 
   // Join the room after a reload. Going back to the room screen is handled by RoomNavigator (App.jsx).
   useEffect(() => {
@@ -122,7 +119,7 @@ function ResultsScreen() {
           </header>
 
           {run && (
-            <div className={`tv-res-cards tv-res-cards--pair rl-cards tv-c-${kindColor} is-${tone}`}>
+            <div className={`tv-res-cards tv-res-cards--pair rl-cards tv-c-${kindColor} is-color`}>
               <PodiumCard
                 meta={`${countText(standings.length, "jugador", "jugadores")} · ${countText(run.total, "juego", "juegos")}`}
               >
@@ -138,8 +135,6 @@ function ResultsScreen() {
                 points={(p) => p.points}
                 wins={mixed ? null : (p) => p.wins}
                 winners={winners}
-                retouch={style}
-                tone={tone}
                 changes={rowChanges(room.ratings)}
               />
             </div>

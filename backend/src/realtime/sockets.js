@@ -8,7 +8,6 @@ import { forgetSpotifyLink, playerAvatar, saveSpotifyLink, savedSpotifyLinks, se
 import { prefetchFlags } from "../geo/flags.js";
 import { prefetchImages } from "../questions/images.js";
 import { isAccount } from "../auth/username.js";
-import { hasRole } from "../auth/roles.js";
 import { GroupManager } from "../game/groups.js";
 import { cleanMatchRequest, PUBLIC_GROUP_MAX } from "../game/matchmaking.js";
 
@@ -564,12 +563,9 @@ export function attachSockets(io, rooms, { friends = null, hub = null, groups = 
         if (party.length + 1 > PUBLIC_GROUP_MAX) throw new Error(`Una partida pública es de ${PUBLIC_GROUP_MAX} como mucho y tu grupo es de ${party.length + 1}`);
         leaveCurrentRoom(io, rooms, socket);
         for (const { socket: other } of party) leaveCurrentRoom(io, rooms, other);
-        // Only an owner's account (checked here, never the client's word) can force the games of its own match.
-        const owner = rooms.store.users[socket.data.userId];
-        const force = owner && hasRole(owner, "owner") ? payload?.force : null;
         let room;
         try {
-          room = rooms.findMatch(user, { ...payload, force }, party.map(({ member }) => asUser(member)));
+          room = rooms.findMatch(user, payload, party.map(({ member }) => asUser(member)));
         } catch (err) {
           for (const { socket: other } of party) tellMoved(other, null);
           throw err;

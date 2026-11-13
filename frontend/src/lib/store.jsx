@@ -2,7 +2,6 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import { api, setAuthToken } from "./api.js";
 import { emitAck, emitAckWithin, getSocket, reconnectSocket, setSocketTokenProvider } from "./socket.js";
 import { BACKEND_URL } from "./config.js";
-import { getForcedGames, getOwnerView } from "./ownerView.js";
 
 const AppContext = createContext(null);
 
@@ -683,9 +682,7 @@ export function AppProvider({ children }) {
       async findMatch(kind, size = 5, explicitUser, game = null) {
         const current = explicitUser || userRef.current;
         if (!current?.name) throw new Error("Debes identificarte antes de buscar partida");
-        // An owner in debug view can force the games of its match (the admin panel); the server checks the account.
-        const force = !game && current.role === "owner" && getOwnerView() === "debug" ? getForcedGames() : [];
-        const res = await emitAck("match:find", { user: current, kind, ...(game ? { game } : { size }), ...(force.length ? { force } : {}) });
+        const res = await emitAck("match:find", { user: current, kind, ...(game ? { game } : { size }), });
         if (!res.ok) throw new Error(res.error);
         return enterRoom(res.state);
       },

@@ -1,4 +1,5 @@
-// Two-or-more option switch with a sliding highlight (used for "Crear cuenta / Iniciar sesión").
+// Two-or-more option switch with a sliding highlight (used for "Crear cuenta / Iniciar sesión"). An option can be
+// `disabled` (greyed, it can't be chosen).
 export default function Segmented({ options, value, onChange, label }) {
   const index = Math.max(0, options.findIndex((o) => o.value === value));
   return (
@@ -15,6 +16,7 @@ export default function Segmented({ options, value, onChange, label }) {
           type="button"
           role="tab"
           aria-selected={o.value === value}
+          disabled={o.disabled}
           className="tv-seg-btn"
           onClick={() => onChange(o.value)}
         >

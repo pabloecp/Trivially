@@ -1,62 +1,26 @@
-import { useEffect, useState } from "react";
-import { createPortal } from "react-dom";
+import { useState } from "react";
 import { useApp } from "../../lib/store.jsx";
-import { setBlobStyle, setBlobsStill, useBlobsStillChoice, setForcedGames, setOwnerView, useBlobStyleChoice, setResultsStyle, setResultsTone, setScoreboardBadge, setScoreboardLook, setLyricsView, useLyricsViewChoice, useForcedGames, useOwnerView, useResultsChoice, useScoreboardBadgeChoice, useScoreboardChoice } from "../../lib/ownerView.js";
-import { findMode } from "../../modes/index.js";
+import { setOwnerView, setLyricsView, useLyricsViewChoice, useOwnerView } from "../../lib/ownerView.js";
 import Icon from "./Icon.jsx";
+import Modal from "./Modal.jsx";
 import Segmented from "./Segmented.jsx";
-import { SoundPacks, VolumeRows } from "./VolumeMenu.jsx";
-import { findVariant, variantsFor } from "./matchInfo.js";
+import { SoundPacks } from "./VolumeMenu.jsx";
 import "../../styles/admin.css";
 
-const MAX_FORCED = 5;
-
 /**
- * The owners' panel (the gear in the top bar, owners only): for debugging. "Vista" switches between the owner's tools
- * and the site as any player sees it; the test bot (it used to sit under the players of a room); and the games of this
- * owner's own public matches, in the order they choose instead of the random draw.
+ * The owner panel (opened from "Panel de owner" inside "Ajustes", owners only): for debugging. "Vista" switches between the
+ * owner's tools and the site as any player sees it, the test bot, the sound sets and the looks of the results, the
+ * scoreboard and the lyrics.
  */
 export default function AdminPanel({ open, onClose }) {
-  const blobStyle = useBlobStyleChoice();
-  const blobsStill = useBlobsStillChoice();
   const { room, isCentral, addTestBot } = useApp();
   const view = useOwnerView();
-  const forced = useForcedGames();
-  const results = useResultsChoice();
-  const scoreboard = useScoreboardChoice();
-  const badge = useScoreboardBadgeChoice();
   const lyricsView = useLyricsViewChoice();
-  const [mounted, setMounted] = useState(open);
   const [msg, setMsg] = useState("");
   const [busy, setBusy] = useState(false);
 
-  useEffect(() => {
-    if (open) {
-      setMounted(true);
-      setMsg("");
-      return undefined;
-    }
-    // Closing: it goes once its way out has played (0.3 s, --tv-box-out); the animations are on its backdrop and card,
-    // not on the root, so it doesn't wait for an animationend that never comes there.
-    const t = setTimeout(() => setMounted(false), 310);
-    return () => clearTimeout(t);
-  }, [open]);
-  useEffect(() => {
-    if (!open) return undefined;
-    const onKey = (e) => e.key === "Escape" && onClose();
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [open, onClose]);
-
-  if (!mounted) return null;
-
   const debug = view === "debug";
   const canBot = Boolean(room) && room.phase === "lobby" && !room.matchmaking && !isCentral;
-  // The variants a Casual match can draw, by id ("trivia-cerradas").
-  const options = variantsFor("casual").map((v) => v.id);
-  // A tap adds the game at the end of the order; another tap takes it out (the ones after it move up).
-  const toggle = (id) => setForcedGames(forced.includes(id) ? forced.filter((g) => g !== id) : [...forced, id]);
-
   async function bot() {
     if (busy) return;
     setBusy(true);
@@ -71,63 +35,9 @@ export default function AdminPanel({ open, onClose }) {
     }
   }
 
-  return createPortal(
-    <div className={`tv-admin-root ${open ? "is-open" : "is-closing"}`}>
-      <div className="tv-admin-backdrop" onClick={onClose} />
-      <section className="tv-admin" role="dialog" aria-modal="true" aria-labelledby="tv-admin-title">
-        <header className="tv-admin-head">
-          <span className="tv-badge tv-c-coral" aria-hidden="true">
-            <Icon name="settings" size={24} strokeWidth={2.2} />
-          </span>
-          <div>
-            <p className="tv-mono-label">Solo owners</p>
-            <h2 id="tv-admin-title" className="tv-admin-title">Panel de owner</h2>
-          </div>
-          <button type="button" className="tv-fr-x tv-admin-x" onClick={onClose} aria-label="Cerrar">
-            <Icon name="close" size={18} strokeWidth={3} />
-          </button>
-        </header>
-
+  return (
+    <Modal open={open} onClose={onClose} title="Panel de owner" size="lg" className="tv-admin">
         <div className="tv-admin-body">
-          {/* How the Blobs are drawn on this device (lib/ownerView.js): everyone else sees "Sombra interior". */}
-          <div className="tv-admin-block is-third">
-            <h3>Estilo de los Blobs</h3>
-            <Segmented
-              label="Estilo de los Blobs"
-              value={blobStyle}
-              onChange={setBlobStyle}
-              options={[
-                { value: "plano", label: "Plano" },
-                { value: "sombra", label: "Sombra" },
-                { value: "luz", label: "Luz y sombra" },
-              ]}
-            />
-            <p className="tv-admin-hint">
-              {blobStyle === "sombra" ? "El que ven todos: su color con una sombra por dentro." : "Solo lo ves tú, en la vista de owner. Los demás ven «Sombra»."}
-            </p>
-          </div>
-
-          {/* The Blobs' jumps and looks (Blob.jsx): only an owner can stop them, on this device. */}
-          <div className="tv-admin-block is-third">
-            <h3>Reducir movimiento</h3>
-            <Segmented
-              label="Reducir movimiento"
-              value={blobsStill ? "si" : "no"}
-              onChange={(v) => setBlobsStill(v === "si")}
-              options={[
-                { value: "no", label: "Con movimiento" },
-                { value: "si", label: "Quietos" },
-              ]}
-            />
-            <p className="tv-admin-hint">{blobsStill ? "Los Blobs no saltan ni miran a los lados en esta pantalla." : "Los Blobs saltan en el podio y miran a los lados en los marcadores."}</p>
-          </div>
-
-          {/* On phones the owners' top bar has no volume button: it's here (VolumeMenu `inOwnerPanel`). */}
-          <div className="tv-admin-block is-third tv-admin-volume">
-            <h3>Volumen</h3>
-            <VolumeRows />
-          </div>
-
           <div className="tv-admin-block is-third">
             <h3>Vista</h3>
             <Segmented
@@ -140,7 +50,7 @@ export default function AdminPanel({ open, onClose }) {
               ]}
             />
             <p className="tv-admin-hint">
-              {debug ? "Ves tus herramientas: «Saltar» en las partidas, el bot de prueba y los juegos forzados." : "Ves el sitio igual que cualquier jugador: sin «Saltar» y las partidas públicas salen al azar."}
+              {debug ? "Ves tus herramientas: «Saltar» en las partidas y el bot de prueba." : "Ves el sitio igual que cualquier jugador: sin «Saltar»."}
             </p>
           </div>
 
@@ -160,105 +70,6 @@ export default function AdminPanel({ open, onClose }) {
                 <SoundPacks />
               </div>
 
-              <div className="tv-admin-block is-full">
-                {/* The way back to random sits beside the title and keeps its place while hidden: nothing moves when it shows. */}
-                <div className="tv-admin-block-head">
-                  <h3>Juegos de Casual</h3>
-                  <button
-                    type="button"
-                    className={`tv-optrow-action tv-admin-clear${forced.length ? "" : " is-hidden"}`}
-                    onClick={() => setForcedGames([])}
-                    disabled={!forced.length}
-                    aria-hidden={!forced.length}
-                  >
-                    Quitar el orden y jugar al azar
-                  </button>
-                </div>
-                <p className="tv-admin-hint">
-                  Elige qué juegos salen en tus partidas públicas y en qué orden. Se juegan en una partida solo tuya (con bots) y solo con tu cuenta. Sin nada elegido, salen al azar.
-                </p>
-                {!debug && <p className="tv-admin-warn">Solo se usan en la vista «Owner (debug)»: cámbiala arriba para jugarlos.</p>}
-                {/* Every way of playing, the same size: the chosen ones carry their place in the order. */}
-                <div className="tv-admin-games" role="group" aria-label="Juegos de tus partidas">
-                  {options.map((id) => {
-                    const v = findVariant(id);
-                    const m = findMode(v?.game);
-                    const place = forced.indexOf(id) + 1;
-                    return (
-                      <button
-                        key={id}
-                        type="button"
-                        className={`tv-admin-game${place ? " is-on" : ""}`}
-                        aria-pressed={Boolean(place)}
-                        disabled={!place && forced.length >= MAX_FORCED}
-                        onClick={() => toggle(id)}
-                      >
-                        {m && (
-                          <span className={`tv-admin-dot tv-c-${m.color}`} aria-hidden="true">
-                            <Icon name={m.icon} size={15} strokeWidth={2.6} />
-                          </span>
-                        )}
-                        <span className="tv-admin-game-name">
-                          {m?.name}
-                          {v?.way && <small>{v.way}</small>}
-                        </span>
-                        {place > 0 && <span className="tv-admin-num">{place}</span>}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* The results screens this owner sees, to try the new looks in real matches (lib/ownerView.js). */}
-              <div className="tv-admin-block is-half">
-                <h3>Pantalla de resultados</h3>
-                <Segmented
-                  label="Estilo"
-                  value={results.style}
-                  onChange={setResultsStyle}
-                  options={[
-                    { value: "panel", label: "Panel" },
-                    { value: "barras", label: "Barras" },
-                  ]}
-                />
-                <Segmented
-                  label="Color de la pantalla"
-                  value={results.tone}
-                  onChange={setResultsTone}
-                  options={[
-                    { value: "color", label: "En color" },
-                    { value: "neutro", label: "Neutra" },
-                  ]}
-                />
-                <p className="tv-admin-hint">Entre juegos, la ruleta, el tutorial y el final. Los jugadores ven «Barras» y «En color».</p>
-              </div>
-
-              {/* How the scoreboard of a public match says who already won a game (lib/ownerView.js). */}
-              <div className="tv-admin-block is-half">
-                <h3>Marcador</h3>
-                <Segmented
-                  label="Marcador"
-                  value={scoreboard}
-                  onChange={setScoreboardLook}
-                  options={[
-                    { value: "frase", label: "Frase" },
-                    { value: "numeros", label: "Números" },
-                    { value: "insignia", label: "Insignia" },
-                  ]}
-                />
-                {scoreboard === "insignia" && (
-                  <Segmented
-                    label="Color de la insignia"
-                    value={badge}
-                    onChange={setScoreboardBadge}
-                    options={[
-                      { value: "color", label: "En caja" },
-                      { value: "neutro", label: "Con corona" },
-                    ]}
-                  />
-                )}
-                <p className="tv-admin-hint">Los juegos ganados en una partida pública. Los jugadores ven «Insignia» con corona.</p>
-              </div>
 
               {/* Adivina la canción · Letra with Cerradas: more lyrics, or options as big as Trivia's (lib/ownerView.js). */}
               <div className="tv-admin-block is-half">
@@ -275,8 +86,6 @@ export default function AdminPanel({ open, onClose }) {
                 <p className="tv-admin-hint">«Opciones grandes»: las 4 opciones del tamaño de las de Trivia, con menos letra a la vista. Los jugadores ven «Normal».</p>
               </div>
         </div>
-      </section>
-    </div>,
-    document.querySelector(".tv-app") || document.body
+    </Modal>
   );
 }

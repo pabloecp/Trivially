@@ -714,13 +714,9 @@
   .tv-app .tv-gbar-go.is-waiting:disabled { opacity: 1; cursor: progress; }
   .tv-gbar-note { flex: 1; }
 }
-/* Phones: the top bar keeps every button (Volver, your group, the volume or the owners' gear, Amigos, your
+/* Phones: the top bar keeps every button (Volver, your group, the "Ajustes" gear, Amigos, your
    Blob) in one row, never squeezed: 36 px buttons, the group's chip without its arrow. Narrower still, the gaps close up. */
-/* The owners' panel only shows the volume on phones, where their top bar has no volume button. */
-.tv-admin-volume { display: none; }
 @media (max-width: 760px) {
-  .tv-volume--owner { display: none; }
-  .tv-admin-volume { display: grid; }
   /* Amigos is only its icon (its requests keep their red badge) and your profile only your Blob. */
   .tv-app .tv-topbar .tv-chip--friends { width: 36px; padding: 0; }
   .tv-app .tv-topbar .tv-chip--friends > .tv-avatar--empty { width: 36px; margin: 0; }
@@ -770,10 +766,6 @@
 }
 
 /* The friends' panel: its close is the grey one of every panel (never a black edge), its title in Outfit. */
-.tv-app .tv-fr-close { background: var(--tv-neutral); color: var(--tv-neutral-on); box-shadow: 0 3px 0 var(--tv-neutral-edge); }
-.tv-app .tv-fr-close:hover { box-shadow: 0 4px 0 var(--tv-neutral-edge); }
-.tv-app .tv-fr-close:active { box-shadow: 0 0 0 var(--tv-neutral-edge); }
-.tv-app .tv-fr-sheet .tv-sheet-title { font-family: var(--tv-title); font-weight: 800; letter-spacing: -0.03em; }
 
 /* ---------- Panels over the page ---------- */
 .tv-modal-root {
@@ -975,7 +967,6 @@
 /* "Amigos" without an account: the image, what an account gives, the two buttons. */
 .tv-fr-guest { display: flex; flex-direction: column; align-items: center; gap: 16px; text-align: center; }
 .tv-fr-guest > * { flex-shrink: 0; }
-.tv-app .tv-fr-sheet .tv-fr-guest { max-height: none; overflow: visible; }
 .tv-fr-guest-art { display: grid; place-items: center; width: 100%; min-height: clamp(72px, 18vh, 140px); color: var(--tv-text-3); }
 .tv-fr-guest-art img { display: block; max-width: 100%; max-height: clamp(72px, 22vh, 180px); object-fit: contain; }
 .tv-fr-guest .tv-stage-login { width: 100%; }
@@ -1660,8 +1651,7 @@
   .tv-app .tv-match .tv-party-title,
   .tv-app .tv-match .tv-party-spectators,
   .tv-app .tv-match .tv-party .tv-player-crown,
-  .tv-app .tv-match .tv-party .tv-player-badge,
-  .tv-app .tv-match .tv-party .tv-player-games { display: none; }
+  .tv-app .tv-match .tv-party .tv-player-badge { display: none; }
   .tv-app .tv-match .tv-party-players { flex-direction: row; justify-content: space-between; gap: 6px; overflow-x: auto; scrollbar-width: none; }
   .tv-app .tv-match .tv-player-btn { gap: 6px; padding: 0; background: none; }
   .tv-app .tv-match .tv-player.is-me .tv-player-btn { outline: none; }
@@ -1783,7 +1773,7 @@
   62%, 82% { transform: translate(0, 10px) scaleY(0.4); }
 }
 /* Neutral (the scoreboards, a group's list, the big one beside your elo): only the eyes look left and right now and
-   then, each Blob at its own moment (--blob-delay). Only an owner can keep them still ("Reducir movimiento", Blob.jsx). */
+   then, each Blob at its own moment (--blob-delay). Anyone can keep them still ("Animaciones", Ajustes, Blob.jsx). */
 /* The neutral Blob's eyes are moved by Blob.jsx, at random moments of its own. */
 
 /* A code always takes the width of "WWWWW" (an invisible copy sizes it), shown or hidden, so the boxes around it don't move. */
@@ -1794,20 +1784,8 @@
 
 /* Scoreboards and lists of players come in with no animation (the room's list, "Tu grupo", a match's scoreboard, its games
    won): they only change. The final results screen (the podium) keeps its own. */
-.tv-app :is(.tv-player, .tv-player-score, .tv-player-won, .tv-player-games, .tv-player-badge, .tv-mbar-face, .tv-stage-friends-list li) { animation: none; }
+.tv-app :is(.tv-player, .tv-player-score, .tv-player-badge, .tv-mbar-face, .tv-stage-friends-list li) { animation: none; }
 
-/* "Amigos" looks like the other windows ("Tu grupo"): the title alone at 32 px with the close square beside it, the same
-   margins and corners. */
-.tv-app .tv-fr-sheet { padding: 0 0 calc(26px + env(safe-area-inset-bottom)); border-radius: 24px; }
-.tv-app .tv-fr-head { padding: 26px 28px 6px; }
-.tv-app .tv-fr-sheet .tv-sheet-title { font-size: 32px; line-height: 1.1; }
-.tv-app .tv-fr-sheet .tv-sheet-body { padding: 16px 28px 0; }
-@media (max-width: 640px) {
-  .tv-app .tv-fr-sheet { border-radius: 24px 24px 0 0; }
-  .tv-app .tv-fr-head { padding: 20px 18px 4px; }
-  .tv-app .tv-fr-sheet .tv-sheet-title { font-size: 26px; }
-  .tv-app .tv-fr-sheet .tv-sheet-body { padding: 14px 18px 0; }
-}
 
 /* In a match the answers never go see-through nor sink out of their box: the chosen, right and wrong ones stay where they
    are (with their edge in their own colour), and the others are plain grey tiles with dimmed text. */

@@ -7,7 +7,6 @@ import Modal from "./Modal.jsx";
 import PlayerMenu from "./PlayerMenu.jsx";
 import { useInvite } from "./useInvite.js";
 import { shownCode, useHiddenCode } from "../../lib/hiddenCode.js";
-import { useScoreboardBadge, useScoreboardLook } from "../../lib/ownerView.js";
 import { findVariant } from "./matchInfo.js";
 import { findMode } from "../../modes/index.js";
 import { formatElo } from "../../lib/gameStats.js";
@@ -72,25 +71,6 @@ function MatchTag({ player, room, isMe = false }) {
   if (room.phase === "playing" && player.idle) return <span className="tv-player-tag">Inactivo</span>;
   if (player.streak > 1) return <span className="tv-player-tag is-streak">Racha de {player.streak}</span>;
   return <span className="tv-player-tag">{room.phase === "playing" ? (room.game === "mundo" ? "Buscando…" : "Pensando…") : room.phase === "countdown" ? "Preparándose…" : "Conectado"}</span>;
-}
-
-// The games a player already won in a public match (`run.results`: each game's variant and winners), by name: "Trivia
-// Cerradas". An older server sends only how many (`wins`).
-function wonGames(room, player) {
-  const games = (room.run?.results || []).filter((g) => g.winners?.includes(player.id));
-  return games.map((g) => {
-    const v = findVariant(g.variant);
-    const name = findMode(v?.game)?.name || "";
-    return v?.way ? `${name} ${v.way}` : name;
-  });
-}
-
-// "· Ganó Trivia Cerradas" (or "· Ganó 2 juegos"), after how their round is going: the "frase" scoreboard.
-function WonLine({ room, player }) {
-  const names = wonGames(room, player);
-  const n = player.wins || names.length;
-  if (!n) return null;
-  return <b className="tv-player-won">&nbsp;· Ganó {n === 1 && names[0] ? names[0] : n === 1 ? "1 juego" : `${n} juegos`}</b>;
 }
 
 // The scoreboard's pill while a round is open: "Respondieron 3/4" (those still playing it); between rounds, the round.
@@ -177,12 +157,8 @@ export default function PartyPanel({ room, onToast, scores = false, display = fa
     ? [...room.players].sort((a, b) => winsOf(b.id) - winsOf(a.id))
     : room.players;
   const spectators = scores ? room.players.filter((p) => p.spectator) : [];
-  // The games each player already won, in the match's scoreboard and in the column once it's over: in words under the
-  // name ("frase", everyone's), in a box on the right ("numeros") or on the face ("insignia"); the last two only for an
-  // owner trying them.
-  const scoreLook = useScoreboardLook();
-  // The "insignia": a gold box with the number, or with the owner's "neutro" tone a small crown and the number.
-  const tone = useScoreboardBadge();
+  // The games each player already won, in the match's scoreboard and in the column once it's over: a small crown and
+  // the number on the face.
   const gameWins = hasWins && (scores ? room.phase !== "finished" : showBoard);
 
   const inMatch = room.phase !== "lobby";
@@ -218,11 +194,11 @@ export default function PartyPanel({ room, onToast, scores = false, display = fa
                   onClick={() => setMenuFor((cur) => (cur === p.id ? null : p.id))}
                 >
                   {scores && !p.spectator && <span className="tv-player-pos">{i + 1}</span>}
-                  {gameWins && scoreLook === "insignia" && p.wins > 0 ? (
+                  {gameWins && p.wins > 0 ? (
                     <span className="tv-player-face">
                       <Avatar name={p.name} avatar={p.avatar} mood="neutral" />
-                      <span key={p.wins} className={`tv-player-badge is-${tone}`}>
-                        {tone === "neutro" && <Icon name="crown" size={13} strokeWidth={2.6} filled />}
+                      <span key={p.wins} className="tv-player-badge is-neutro">
+                        <Icon name="crown" size={13} strokeWidth={2.6} filled />
                         {p.wins}
                       </span>
                     </span>
@@ -233,26 +209,12 @@ export default function PartyPanel({ room, onToast, scores = false, display = fa
                     <span className="tv-player-name">
                       {p.name}
                     </span>
-                    {gameWins && scoreLook === "frase" && !p.spectator ? (
-                      <span className="tv-player-tagline">
-                        {scores ? (
-                          <MatchTag player={p} room={room} isMe={isMe} />
-                        ) : (
-                          <span className={`tv-player-tag${isHostPlayer ? " is-host" : ""}`}>{playerTag(p, { isHost: isHostPlayer })}</span>
-                        )}
-                        <WonLine room={room} player={p} />
-                      </span>
-                    ) : scores ? (
+                    {scores ? (
                       <MatchTag player={p} room={room} isMe={isMe} />
                     ) : (
                       <span className={`tv-player-tag${isHostPlayer ? " is-host" : ""}`}>{playerTag(p, { isHost: isHostPlayer })}</span>
                     )}
                   </span>
-                  {!p.spectator && gameWins && scoreLook === "numeros" && (
-                    <span key={`w${p.wins}`} className={`tv-player-games${p.wins > 0 ? " is-on" : ""}`} aria-label={`${p.wins} juegos ganados`}>
-                      {p.wins}
-                    </span>
-                  )}
                   {scores && !p.spectator && (
                     <span key={p.score} className="tv-player-score">
                       {formatElo(p.score || 0)}
