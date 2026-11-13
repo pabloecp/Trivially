@@ -1,4 +1,4 @@
-// The profile's badges ("Insignias"): eight, hard to get, each won by a feat from what the account already keeps (its
+// The profile's badges ("Insignias"): ten, hard to get, each won by a feat from what the account already keeps (its
 // stats, daily challenges and Clásico rank). The ids, goals and rules are the server's (backend game/badges.js), which
 // checks them again before a badge is worn; here is how each one looks (a tag, like "Owner", in its own colour and
 // icon) and how it's told. A won badge can be worn beside the name, one at a time.
@@ -28,12 +28,24 @@ export const BADGES = [
     id: "perfeccion",
     name: "Perfección",
     icon: "check",
-    color: "#FF2FC0",
-    edge: "#A3157A",
+    color: "#FFFFFF",
+    edge: "#AEB3BF",
     ink: "#0a0b0c",
     how: "Termina sin fallar una partida de 10 rondas o más de Trivia o Adivina la canción.",
     goal: 1,
     progress: (u) => u.stats?.perfectGames || 0,
+  },
+  { id: "record", name: "Récord", icon: "target", color: "#FF3D5E", edge: "#A3122F", ink: "#ffffff", how: "Haz 14,000 puntos en una sola partida.", goal: 14000, unit: "puntos", progress: (u) => u.stats?.bestScore || 0 },
+  {
+    id: "melomano",
+    name: "Melómano",
+    icon: "music",
+    color: "#FF2FC0",
+    edge: "#A3157A",
+    ink: "#0a0b0c",
+    how: "Adivina 500 canciones en Adivina la canción.",
+    goal: 500,
+    progress: (u) => Object.values(u.stats?.artistHits || {}).reduce((sum, n) => sum + (Number(n) || 0), 0),
   },
 ];
 

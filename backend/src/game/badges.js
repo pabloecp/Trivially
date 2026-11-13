@@ -1,4 +1,4 @@
-// The profile's badges ("Insignias"): eight, hard to get, each won by a feat that comes from what the account already
+// The profile's badges ("Insignias"): ten, hard to get, each won by a feat that comes from what the account already
 // keeps (its stats, its daily challenges, its Clásico rank). Once a badge's progress reaches its goal it's won for good
 // (the numbers only grow). An account wears at most one, beside its name on the profile (`user.badge`, chosen there).
 // The frontend (lib/badges.js) has the same ids, goals and rules to draw the progress; the server checks them again
@@ -9,6 +9,8 @@ export const BADGE_GAMES = ["opciones", "musica", "mundo", "historia", "minas", 
 // "Perfección": a match of at least this many rounds of Trivia or Adivina la canción with every round right.
 export const PERFECT_ROUNDS = 10;
 export const PERFECT_GAMES = ["opciones", "musica"];
+// "Melómano": the songs guessed in Adivina la canción, all artists together (`stats.artistHits`).
+const songsGuessed = (u) => Object.values(u.stats?.artistHits || {}).reduce((sum, n) => sum + (Number(n) || 0), 0);
 
 export const BADGES = [
   { id: "campeon", goal: 100, progress: (u) => u.stats?.wins || 0 },
@@ -19,6 +21,8 @@ export const BADGES = [
   { id: "todoterreno", goal: BADGE_GAMES.length, progress: (u) => BADGE_GAMES.filter((g) => (u.stats?.winsByGame?.[g] || 0) > 0).length },
   { id: "leyenda", goal: 1500, progress: (u) => u.rank?.best || 0 },
   { id: "perfeccion", goal: 1, progress: (u) => u.stats?.perfectGames || 0 },
+  { id: "record", goal: 14000, progress: (u) => u.stats?.bestScore || 0 },
+  { id: "melomano", goal: 500, progress: (u) => songsGuessed(u) },
 ];
 
 /** The ids of the badges `user` has won. */

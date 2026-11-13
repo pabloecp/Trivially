@@ -15,7 +15,7 @@ export function BadgeTag({ badge, locked = false }) {
   );
 }
 
-// "Insignias", under the profile's three boxes: the eight badges with what each asks and how far you are (a bar and
+// "Insignias", under the profile's three boxes: the ten badges with what each asks and how far you are (a bar and
 // "64 / 100"). The ones you won are tapped to wear them beside your name (the one you wear in the site's blue, "La
 // llevas"; tapped again, it comes off); the others are flat and dimmed, with a lock. On someone else's profile only the
 // ones they won show, without progress.

@@ -2,8 +2,8 @@ import assert from "node:assert/strict";
 import { BADGES, BADGE_GAMES, badgeError, earnedBadges, isPerfectMatch, wornBadge } from "./badges.js";
 import { applyMatchStats, sanitizeUser, sanitizeUserPublic, updateUserBadge } from "../db/store.js";
 
-// The profile's badges: eight, each won when its progress reaches its goal, and one of them worn beside the name.
-assert.equal(BADGES.length, 8);
+// The profile's badges: ten, each won when its progress reaches its goal, and one of them worn beside the name.
+assert.equal(BADGES.length, 10);
 const stats = () => ({ gamesPlayed: 0, totalScore: 0, bestScore: 0, bestStreak: 0, correctAnswers: 0, wins: 0 });
 const store = {
   users: {
@@ -21,6 +21,12 @@ ana.stats.bestStreak = 14;
 ana.dailyDone = 30;
 ana.rank = { points: 900, matches: 80, wins: 30, best: 1500 };
 assert.deepEqual(earnedBadges(ana), ["campeon", "constante", "leyenda"]);
+
+// "Récord" (14,000 points in one match) and "Melómano" (500 songs guessed, all artists together).
+const rec = { id: "rec", stats: { bestScore: 14000, artistHits: { a: 300, b: 199 } } };
+assert.deepEqual(earnedBadges(rec), ["record"]);
+rec.stats.artistHits.b = 200;
+assert.deepEqual(earnedBadges(rec), ["record", "melomano"]);
 
 // Wearing one: only a won one, and null takes it off.
 assert.match(badgeError(ana, "imparable"), /Todavía no/);

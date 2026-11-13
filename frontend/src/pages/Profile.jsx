@@ -16,18 +16,15 @@ import { BLOB_COLORS, HOW_TO_GET, blobColor, canUseColor } from "../lib/blobColo
 import { BLOB_SKINS, isBlobSkin } from "../lib/blobSkins.js";
 import Segmented from "../components/home/Segmented.jsx";
 import BadgesCard, { BadgeTag } from "../components/home/Badges.jsx";
-import { BADGES, badgeById, badgeProgress } from "../lib/badges.js";
+import { badgeById } from "../lib/badges.js";
 
 // Only what matters: how many matches you won, how many questions you got right and how many daily challenges you completed.
-// The stats, six small boxes (two or three columns, look.css): what a player wants to compare.
-// "Insignias" is how many badges they won of the eight (components/home/Badges.jsx).
+// The stats, four small boxes (two by two, or four in a row when the box takes the whole width; look.css).
 const STATS = [
   { key: "wins", label: "Victorias" },
-  { key: "gamesPlayed", label: "Partidas" },
   { key: "correctAnswers", label: "Aciertos" },
   { key: "bestStreak", label: "Mejor racha" },
   { key: "dailyDone", label: "Retos" },
-  { key: "badges", label: "Insignias", of: BADGES.length },
 ];
 
 // Badge shown on the profile for owners (plain users get none).
@@ -386,7 +383,6 @@ function ProfileScreen() {
   // the account itself, so wearing one shows at once.
   const badgeUser = isOtherUser ? profileData : profileData || currentUser;
   const wornBadge = badgeById(isOtherUser ? profileData?.badge : currentUser?.badge);
-  const badgesWon = badgeProgress(badgeUser).filter((b) => b.earned).length;
   const googleNotice = searchParams.get("google");
   const hasSpotify = Boolean(activeUser?.spotify || activeUser?.spotifyLinked);
   // Only owners (the ones with the tag) see the Spotify button for now.
@@ -469,13 +465,12 @@ function ProfileScreen() {
           </div>
           <div className="tv-pf-stats" aria-busy={statsLoading} aria-label="Estadísticas">
             {STATS.map((s) => {
-              const value = s.key === "badges" ? badgesWon : stats?.[s.key] || 0;
+              const value = stats?.[s.key] || 0;
               return (
                 <div key={s.key} className="tv-pf-stat">
                   <span className="tv-pf-label">{s.label}</span>
                   <span className="tv-pf-num">
                     {statsLoading ? <span className="tv-skeleton" aria-hidden="true" /> : <CountUp value={value} />}
-                    {s.of && !statsLoading && <small> / {s.of}</small>}
                   </span>
                 </div>
               );
