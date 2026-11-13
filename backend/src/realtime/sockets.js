@@ -1,19 +1,41 @@
 import { isDefaultSpotify } from "../catalog/defaultPlaylists.js";
-import { verifySocketToken } from "../auth/socketToken.js";
+import { readSocketToken } from "../auth/socketToken.js";
 import { prefetchMedia } from "../audio/mediaCache.js";
 import { readPublicSpotify, spotifyLinkFrom } from "../catalog/spotifyEmbed.js";
 import { readSpotifyPlaylist } from "../catalog/spotifyLibrary.js";
 import { saveQuestionReport } from "../db/reports.js";
-import { forgetSpotifyLink, playerAvatar, saveSpotifyLink, savedSpotifyLinks } from "../db/store.js";
+import { forgetSpotifyLink, playerAvatar, saveSpotifyLink, savedSpotifyLinks, sessionStillValid } from "../db/store.js";
 import { prefetchFlags } from "../geo/flags.js";
 import { prefetchImages } from "../questions/images.js";
 import { isAccount } from "../auth/username.js";
-import { hasRole } from "../auth/roles.js";
 import { GroupManager } from "../game/groups.js";
 import { cleanMatchRequest, PUBLIC_GROUP_MAX } from "../game/matchmaking.js";
 
 // The same friend can be invited to a group again after this long (friend:invite).
 export const INVITE_GAP_MS = 15000;
+// The most messages one connection may send in a second before the rest are ignored (attachSockets).
+export const EVENTS_PER_SECOND = 40;
+
+/**
+ * Nobody playing sends more than a few messages a second: past EVENTS_PER_SECOND a connection's messages are ignored
+ * (answered with an error) until the second ends, and a connection that is plainly a script is cut off.
+ */
+export function floodGuard(socket, clock = Date.now) {
+  let windowStart = clock();
+  let inWindow = 0;
+  return (packet, next) => {
+    const now = clock();
+    if (now - windowStart >= 1000) {
+      windowStart = now;
+      inWindow = 0;
+    }
+    inWindow += 1;
+    if (inWindow <= EVENTS_PER_SECOND) return next();
+    if (inWindow > EVENTS_PER_SECOND * 10) return socket.disconnect(true);
+    const ack = packet[packet.length - 1];
+    if (typeof ack === "function") ack({ ok: false, error: "Vas demasiado rápido. Espera un momento." });
+  };
+}
 
 export function attachSockets(io, rooms, { friends = null, hub = null, groups = new GroupManager({ rooms }) } = {}) {
   hub?.attach(io);
@@ -21,7 +43,9 @@ export function attachSockets(io, rooms, { friends = null, hub = null, groups = 
   const invitedAt = new Map();
   // Who this connection is comes only from the signed token, never from ids the client puts in payloads.
   io.use((socket, next) => {
-    socket.data.userId = verifySocketToken(socket.handshake.auth?.token);
+    const token = readSocketToken(socket.handshake.auth?.token);
+    // A token from before the account signed out everywhere (a new password) no longer says who this is.
+    socket.data.userId = token && sessionStillValid(rooms.store?.users?.[token.uid], token.iat) ? token.uid : null;
     next();
   });
 
@@ -222,6 +246,8 @@ export function attachSockets(io, rooms, { friends = null, hub = null, groups = 
   const touchGroupOf = (socket) => sendGroup(groups.ofSocket(socket.id));
 
   io.on("connection", (socket) => {
+    socket.use?.(floodGuard(socket));
+
     // Accounts get their friends tab: who is online, where, and the requests. Any event of theirs may change what their
     // friends see (they made, joined or left a room...), so the friends' views are refreshed after it.
     hub?.connect(socket);
@@ -537,12 +563,9 @@ export function attachSockets(io, rooms, { friends = null, hub = null, groups = 
         if (party.length + 1 > PUBLIC_GROUP_MAX) throw new Error(`Una partida pública es de ${PUBLIC_GROUP_MAX} como mucho y tu grupo es de ${party.length + 1}`);
         leaveCurrentRoom(io, rooms, socket);
         for (const { socket: other } of party) leaveCurrentRoom(io, rooms, other);
-        // Only an owner's account (checked here, never the client's word) can force the games of its own match.
-        const owner = rooms.store.users[socket.data.userId];
-        const force = owner && hasRole(owner, "owner") ? payload?.force : null;
         let room;
         try {
-          room = rooms.findMatch(user, { ...payload, force }, party.map(({ member }) => asUser(member)));
+          room = rooms.findMatch(user, payload, party.map(({ member }) => asUser(member)));
         } catch (err) {
           for (const { socket: other } of party) tellMoved(other, null);
           throw err;
@@ -946,6 +969,25 @@ export function attachSockets(io, rooms, { friends = null, hub = null, groups = 
       } catch (err) {
         ack?.({ ok: false, error: err.message });
       }
+    });
+
+    // "Revancha" at the end of a Casual match (RoomManager.requestRematch). A group's leader asks for the whole group
+    // (the others only wait for them, as they do for everything else in a public match).
+    socket.on("room:rematch", (ack) => {
+      let room = null;
+      try {
+        const ref = requireRoom(rooms, socket);
+        room = ref.room;
+        rooms.requestRematch(room, ref.userId);
+        const group = groups.ofUser(ref.userId);
+        if (group && group.leaderId === ref.userId && group.roomCode === room.code) {
+          for (const id of group.members.keys()) if (id !== ref.userId && room.players.has(id)) rooms.requestRematch(room, id);
+        }
+        ack?.({ ok: true });
+      } catch (err) {
+        ack?.({ ok: false, error: err.message });
+      }
+      if (room) io.to(room.code).emit("room:state", rooms.publicState(room));
     });
 
     // "Volver a jugar": a new match straight away (RoomManager.replay). If it can't start, everyone is back in the

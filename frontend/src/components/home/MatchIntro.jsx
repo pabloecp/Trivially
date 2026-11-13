@@ -1,7 +1,7 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { blobColor } from "../../lib/blobColors.js";
 import { eloIn, formatElo } from "../../lib/gameStats.js";
-import { useBlobsStill, useResultsLook } from "../../lib/ownerView.js";
+import { useBlobsStill } from "../../lib/ownerView.js";
 import { play } from "../../lib/sounds.js";
 import { useApp } from "../../lib/store.jsx";
 import { findMode } from "../../modes/index.js";
@@ -9,9 +9,12 @@ import AppIcon from "./AppIcon.jsx";
 import Avatar from "./Avatar.jsx";
 import Blob from "./Blob.jsx";
 import Confetti from "./Confetti.jsx";
+import CountUp from "./CountUp.jsx";
 import Icon from "./Icon.jsx";
 import { TUTORIALS, VARIANT_TUTORIALS, findVariant, variantsFor } from "./matchInfo.js";
 import { isTiebreak, variantsOf } from "./MatchFrame.jsx";
+import RankBox from "./RankBox.jsx";
+import { RatingDelta } from "./Ratings.jsx";
 import { GamesWon } from "./ResultsLooks.jsx";
 import "../../styles/match.css";
 
@@ -51,17 +54,6 @@ function useIntroStage(room) {
   // Only with a game before to show (a clock a little behind the server's would otherwise ask for one in the first game).
   const stage = elapsed < 0 && intro.previous ? "result" : elapsed < intro.spinMs - SETTLE_MS ? "spin" : elapsed < intro.spinMs ? "landed" : "tutorial";
   return { stage, resultLeftMs: -elapsed, tutorialLeftMs: intro.spinMs + intro.tutorialMs - elapsed };
-}
-
-/** The bar at the card's foot, as when the search is full: it runs out with the time left. */
-function TimeBar({ leftMs, totalMs }) {
-  // Told only once, when it appears: the clock's ticks must not restart it.
-  const [delay] = useState(() => Math.min(0, leftMs - totalMs));
-  return (
-    <span className="tv-finding-bar" aria-hidden="true">
-      <i style={{ animationDuration: `${totalMs}ms`, animationDelay: `${delay}ms` }} />
-    </span>
-  );
 }
 
 /** The card's head, the same as on Inicio and in the search: the game's icon (or the logo), a small label over the name. */
@@ -201,7 +193,7 @@ function Roulette({ room, startedAt, kind, onLand }) {
 }
 
 // The picked game on its own card, as on Inicio, with what to do in it for exactly `tutorialMs` (5 s): the head where the
-// roulette left it, the three steps where the search has its seats, and its clock and bar running out.
+// roulette left it, the three steps where the search has its seats, and its clock running out.
 function Tutorial({ intro, leftMs }) {
   const m = findMode(intro.game);
   const steps = VARIANT_TUTORIALS[intro.variant] || TUTORIALS[intro.game] || m.steps || [];
@@ -229,7 +221,6 @@ function Tutorial({ intro, leftMs }) {
           ))}
         </ol>
       </div>
-      <TimeBar leftMs={leftMs} totalMs={intro.tutorialMs} />
     </>
   );
 }
@@ -276,6 +267,15 @@ function PreviousGame({ intro, players, leftMs, viewerId }) {
                   <span className="tv-seat-text">
                     <b className="tv-seat-name">{r.name}</b>
                     <span className="tv-seat-tag">{formatElo(r.points)} pts</span>
+                    {r.elo && (
+                      <span className="tv-seat-delta">
+                        <span className="tv-seat-elo">
+                          <Icon name="star" size={11} filled strokeWidth={1.5} />
+                          <CountUp value={r.elo.after} start={r.elo.before} delay={500 + i * 110} duration={900} format={formatElo} />
+                        </span>
+                        <RatingDelta delta={r.elo.delta} unit="elo" style={{ "--pop": `${500 + i * 110}ms` }} />
+                      </span>
+                    )}
                   </span>
                 </div>
               </li>
@@ -283,7 +283,6 @@ function PreviousGame({ intro, players, leftMs, viewerId }) {
           })}
         </ul>
       </div>
-      <TimeBar leftMs={leftMs} totalMs={intro.resultMs} />
     </>
   );
 }
@@ -318,19 +317,22 @@ function IntroBoxes({ room, viewerId, showResult }) {
   });
   return (
     <div className="tv-stage-aside tv-mi-aside">
-      {viewerId && (
-        <div className="tv-stage-box tv-stage-elo">
-          <div className="tv-stage-elo-text">
-            <span className="tv-stage-label">
-              Elo en
-              <br />
-              {classic ? "Clásico" : findMode(room.game)?.name}
-            </span>
-            <strong className="tv-stage-elo-num">{formatElo(eloIn(user, classic ? "clasico" : room.game))}</strong>
+      {viewerId &&
+        (classic ? (
+          <RankBox user={user} />
+        ) : (
+          <div className="tv-stage-box tv-stage-elo">
+            <div className="tv-stage-elo-text">
+              <span className="tv-stage-label">
+                Elo en
+                <br />
+                {findMode(room.game)?.name}
+              </span>
+              <strong className="tv-stage-elo-num">{formatElo(eloIn(user, room.game))}</strong>
+            </div>
+            <Blob className="tv-stage-blob" color={blobColor(user?.avatar)} mood="neutral" />
           </div>
-          <Blob className="tv-stage-blob" color={blobColor(user?.avatar)} mood="neutral" />
-        </div>
-      )}
+        ))}
       <div className="tv-stage-box tv-stage-friends tv-stage-social">
         <span className="tv-stage-label">{goal ? "Juegos ganados" : "Jugadores"}</span>
         <ul className="tv-party-players" aria-label="Jugadores de la partida">
@@ -368,7 +370,6 @@ export default function MatchIntro({ room }) {
   const { user, isCentral } = useApp();
   const { stage, resultLeftMs, tutorialLeftMs } = useIntroStage(room);
   // The card in the game's colour, or dark ("neutro", an owner's choice).
-  const { tone } = useResultsLook();
   const still = useBlobsStill();
   const intro = room.intro;
   const viewerId = isCentral ? null : user?.id;
@@ -379,7 +380,7 @@ export default function MatchIntro({ room }) {
   const mode = stage === "result" ? modeOf(variantBefore(intro)) : findMode(intro.game);
 
   return (
-    <section className={`tv-stage has-aside tv-mi is-${tone}${still ? " is-still" : ""}`} aria-label="Siguiente juego">
+    <section className={`tv-stage has-aside tv-mi is-color${still ? " is-still" : ""}`} aria-label="Siguiente juego">
       <div className={`tv-stage-card tv-mi-card ${spinning && !landed ? "is-classic" : `tv-c-${mode.color}`}${landed ? " is-landing" : ""}`}>
         {(!spinning || landed) && (
           <span className="tv-stage-mark" aria-hidden="true">

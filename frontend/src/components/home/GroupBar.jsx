@@ -1,7 +1,7 @@
 import { createContext, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { findMode } from "../../modes/index.js";
-import { audienceName } from "../../lib/plan.js";
+import { audienceName, audienceOf } from "../../lib/plan.js";
 import { formatElo } from "../../lib/gameStats.js";
 import { useApp } from "../../lib/store.jsx";
 import AppIcon from "./AppIcon.jsx";
@@ -64,7 +64,7 @@ export default function GroupBar({ members = [], meId, inGroup = false, onGroup,
               {/* Who the match is for, changed in "¿Qué quieren jugar?" with the game. */}
               <span className="tv-gcard-sub tv-gbar-plan-aud">
                 <Icon name={plan.audience === "publica" ? "globe" : "lock"} size={13} strokeWidth={2.8} />
-                {audienceName(plan.audience)}
+                {audienceOf(plan.audience).short}
               </span>
               <span className="tv-gcard-name">{mode?.name || "Elige un juego"}</span>
             </span>

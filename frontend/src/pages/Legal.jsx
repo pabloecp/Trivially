@@ -90,7 +90,7 @@ export function Privacy() {
       </p>
 
       <h2>Quién más los guarda</h2>
-      <p>Usamos estos servicios para que Trivially funcione; cada uno guarda solo lo que necesita para su parte:</p>
+      <p>Usamos estos servicios para que Trivially funcione, y cada uno guarda solo lo que necesita para su parte:</p>
       <ul>
         <li>Supabase: la base de datos donde viven las cuentas.</li>
         <li>Railway: el servidor del juego.</li>
@@ -109,15 +109,15 @@ export function Privacy() {
 
       <h2>Cuánto tiempo</h2>
       <p>
-        Mientras tengas tu cuenta. Si la borras, se borra todo lo de arriba; puede quedar en nuestras copias de
+        Mientras tengas tu cuenta. Si la borras, se borra todo lo de arriba, aunque puede quedar en nuestras copias de
         seguridad por un tiempo, hasta que se reemplacen.
       </p>
 
       <h2>Tus derechos</h2>
       <p>
         Puedes pedir ver tus datos, corregirlos, borrarlos o que dejemos de usarlos. Tu nombre, tu @usuario y tu foto
-        los cambias tú mismo en tu perfil. Para todo lo demás, incluido borrar tu cuenta, escríbenos a <Contact /> desde
-        el correo de tu cuenta.
+        los cambias tú mismo en tu perfil, y ahí también puedes borrar tu cuenta ("Borrar cuenta"). Para todo lo demás,
+        escríbenos a <Contact /> desde el correo de tu cuenta.
       </p>
 
       <h2>Menores de edad</h2>
@@ -181,7 +181,7 @@ export function Terms() {
 
       <h2>Cambios</h2>
       <p>
-        Podemos cambiar estos términos; la fecha de arriba dice cuándo fue la última vez. Si sigues jugando después de
+        Podemos cambiar estos términos. La fecha de arriba dice cuándo fue la última vez. Si sigues jugando después de
         un cambio, lo aceptas.
       </p>
 

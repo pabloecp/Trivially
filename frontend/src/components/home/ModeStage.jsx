@@ -2,8 +2,9 @@ import { useContext, useEffect, useState } from "react";
 import GuestFriends from "./GuestFriends.jsx";
 import { GroupBoxContext, useNarrow } from "./GroupBar.jsx";
 import { isGameTile } from "../../modes/index.js";
-import { audienceName } from "../../lib/plan.js";
+import { AUDIENCES, audienceName } from "../../lib/plan.js";
 import { eloIn, formatElo, gameStats } from "../../lib/gameStats.js";
+import { usePlaying } from "../../lib/playing.js";
 import { useApp } from "../../lib/store.jsx";
 import { useFriends } from "../../lib/friends.jsx";
 import AppIcon from "./AppIcon.jsx";
@@ -12,6 +13,7 @@ import Blob from "./Blob.jsx";
 import { blobColor } from "../../lib/blobColors.js";
 import Icon from "./Icon.jsx";
 import GroupMemberMenu from "./GroupMemberMenu.jsx";
+import RankBox from "./RankBox.jsx";
 import { statusOf } from "./FriendsSheet.jsx";
 
 // The stage in the middle of Inicio and of a private match's lobby: the game's card in its colour, and beside it your
@@ -22,8 +24,8 @@ import { statusOf } from "./FriendsSheet.jsx";
 //    many are playing the game now; in a private match that last line is the "Ajustes" button (`settings.onOpen`) or
 //    who chooses them (`settings.note`). While a public match is searched for, everything under the name is the search
 //    (`search`, SearchBoard: its seats with who has come). The game's icon, big and faint, is cut by the corner.
-//  - Beside it: "Elo en" the game ("Tu elo" before one is chosen) with your character (Blob, white with a black line) in
-//    its empty side; then, on phones only, the "Reto del día" (wide screens have the challenge in the bar below); last,
+//  - Beside it: "Elo en" the game ("Tu elo" before one is chosen; in the Clásico your rank, RankBox) with your character
+//    (Blob, white with a black line) in its empty side; then, on phones only, the "Reto del día" (wide screens have the challenge in the bar below); last,
 //    one box for your people (SocialBox, not on phones): the title "Tu grupo" always on top, you and who is with you,
 //    "Invitar" (and "Salir del grupo" beside it, with others in it) and under them your friends online. The group's
 //    code is never here: only in "Tu grupo", the window "Invitar" opens.
@@ -35,11 +37,12 @@ import { statusOf } from "./FriendsSheet.jsx";
 // sweeping across it again while its lines come in anew.
 const AUDIENCE_ICONS = { publica: "globe", grupo: "lock" };
 
-export default function ModeStage({ mode, room = null, audience = null, title = null, search = null, extra = null, settings = null, swapKey = null, children }) {
+export default function ModeStage({ mode, room = null, audience = null, title = null, search = null, extra = null, settings = null, swapKey = null, onAudience = null, children }) {
   const classic = mode.kind === "classic";
   const who = audience || (room ? (room.matchmaking ? "publica" : "grupo") : null);
   const key = swapKey ?? `${mode.id}:${who}`;
   const stats = isGameTile(mode) ? gameStats(mode.id) : null;
+  const playing = usePlaying(mode.id);
   const name = title || mode.name;
   const how = mode.tagline || mode.subtitle;
 
@@ -64,7 +67,19 @@ export default function ModeStage({ mode, room = null, audience = null, title = 
             </span>
           )}
           <div className="tv-stage-heading">
-            {who && (
+            {who && onAudience && (
+              // Inicio: the label is two choices in the same place (a glass track, the chosen one white), so
+              // changing between a public and a private match needs no other screen.
+              <div className="tv-stage-aud is-switch" role="radiogroup" aria-label="Con quién juegan">
+                {AUDIENCES.map((a) => (
+                  <button key={a.value} type="button" role="radio" aria-label={a.label} aria-checked={who === a.value} onClick={() => who !== a.value && onAudience(a.value)}>
+                    <Icon name={AUDIENCE_ICONS[a.value]} size={16} strokeWidth={2.6} />
+                    {a.short}
+                  </button>
+                ))}
+              </div>
+            )}
+            {who && !onAudience && (
               <p className="tv-stage-aud">
                 <Icon name={AUDIENCE_ICONS[who]} size={16} strokeWidth={2.6} />
                 {audienceName(who)}
@@ -121,7 +136,7 @@ export default function ModeStage({ mode, room = null, audience = null, title = 
                       <span className="tv-stage-live" aria-hidden="true" />
                     </span>
                     <span>
-                      <b>{stats.online.toLocaleString("es-ES")}</b> jugando ahora
+                      <b>{playing.toLocaleString("es-ES")}</b> jugando ahora
                     </span>
                   </li>
                 )}
@@ -132,9 +147,9 @@ export default function ModeStage({ mode, room = null, audience = null, title = 
         {children}
       </div>
 
-      {/* The Clásico has the same boxes as a game: its elo is the general one, as before a game is chosen. */}
+      {/* The Clásico has the same boxes as a game, with your rank where a game has your elo. */}
       {classic ? (
-        <Boxes game="clasico" gameName={mode.name} color="neutral" stats={gameStats("clasico")} />
+        <Boxes game="clasico" gameName={mode.name} color="neutral" stats={gameStats("clasico")} ranked />
       ) : stats ? (
         <Boxes game={mode.id} gameName={mode.name} color={mode.color} stats={stats} />
       ) : (
@@ -308,7 +323,7 @@ function SocialBox({ group, user, canCreate = true, busy = "", onInvite, onMakeG
 
 // Beside the card: your elo in the game, with your character in the box's empty side; the day's challenge (phones; on
 // wide screens it is in the bar); and the box of your people (SocialBox).
-function Boxes({ game, gameName = "", color, stats: example }) {
+function Boxes({ game, gameName = "", color, stats: example, ranked = false }) {
   const { user, group } = useApp();
   // Inicio and a private match's lobby give the group's actions (HomeFrame). The challenge goes down to the bar on wide
   // screens; on phones it stays here.
@@ -318,30 +333,34 @@ function Boxes({ game, gameName = "", color, stats: example }) {
   const stats = { ...example, elo: eloIn(user, game), week: 0 };
   return (
     <div key={game} className={`tv-stage-aside tv-c-${color}`}>
-      <div className="tv-stage-box tv-stage-elo">
-        <div className="tv-stage-elo-text">
-          <span className="tv-stage-label">
-            {gameName ? (
-              <>
-                Elo en
-                <br />
-                {gameName}
-              </>
-            ) : (
-              "Tu elo"
-            )}
-          </span>
-          <strong className="tv-stage-elo-num">{formatElo(stats.elo)}</strong>
-          {stats.week !== 0 && (
-            <span className={`tv-stage-elo-week${stats.week < 0 ? " is-down" : ""}`}>
-              {stats.week > 0 ? "+" : "−"}
-              {Math.abs(stats.week)} esta semana
+      {ranked ? (
+        <RankBox user={user} />
+      ) : (
+        <div className="tv-stage-box tv-stage-elo">
+          <div className="tv-stage-elo-text">
+            <span className="tv-stage-label">
+              {gameName ? (
+                <>
+                  Elo en
+                  <br />
+                  {gameName}
+                </>
+              ) : (
+                "Tu elo"
+              )}
             </span>
-          )}
+            <strong className="tv-stage-elo-num">{formatElo(stats.elo)}</strong>
+            {stats.week !== 0 && (
+              <span className={`tv-stage-elo-week${stats.week < 0 ? " is-down" : ""}`}>
+                {stats.week > 0 ? "+" : "−"}
+                {Math.abs(stats.week)} esta semana
+              </span>
+            )}
+          </div>
+          {/* Your character: "Blob". */}
+          <Blob className="tv-stage-blob" color={blobColor(user?.avatar)} mood="neutral" />
         </div>
-        {/* Your character: "Blob". */}
-        <Blob className="tv-stage-blob" color={blobColor(user?.avatar)} mood="neutral" />
-      </div>
+      )}
 
       {(!groupActions || phone) && <DailyBox daily={user?.daily} />}
       {/* Not on phones: there the group is in the top bar and the friends in "Amigos". */}

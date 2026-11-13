@@ -1,3 +1,4 @@
+import { badgeError, isPerfectMatch, wornBadge } from "../game/badges.js";
 import { applyDaily, dailyView } from "../game/daily.js";
 import { applyRank, rankDeltas } from "../game/rank.js";
 import { hasLink, NAME_LINK_ERROR } from "../moderation/links.js";
@@ -21,6 +22,9 @@ const STORE_PATH =
   (RUNNING_TEST ? path.join(os.tmpdir(), `trivially-store-test-${process.pid}.json`) : path.join(DATA_DIR, "store.json"));
 
 const MAX_NAME_LENGTH = 24;
+// The shortest password an account may have.
+export const MIN_PASSWORD_LENGTH = 2;
+const PASSWORD_TOO_SHORT = `La contraseña debe tener al menos ${MIN_PASSWORD_LENGTH} caracteres`;
 export const DEFAULT_AVATAR = "#FF2D55";
 const HEX_COLOR = /^#[0-9a-f]{6}$/i;
 // The Blob's colours on the profile (frontend lib/blobColors.js): white for everyone and, for accounts, the colours of
@@ -30,15 +34,23 @@ export const BLOB_ACCOUNT = ["#2F6BFF", "#FF2FC0", "#00D1C1", "#00A2FF", "#FF5A1
 // The account colours the Blob had before (celeste, rosa, menta; then amarillo and naranja): saved ones count as their
 // new colour. The owners' gold is gone: saved, it shows white.
 const BLOB_RENAMED = { "#8FD3FF": "#2F6BFF", "#FFA6D2": "#FF2FC0", "#8EF0B0": "#00D1C1", "#FFD60A": "#FF5A1F", "#FF8A00": "#FF5A1F" };
+// The Blob's skins (frontend lib/blobSkins.js, same ids): drawings instead of a plain colour, for accounts too. Saved
+// as their id in lowercase, in the same `avatar` as a colour.
+export const BLOB_SKINS = ["gomita", "galaxia", "holo", "magma", "oro", "lava", "vitral", "sandia", "dona", "escarcha", "cielo", "mar", "atardecer", "vaca", "arcoiris", "pinata", "cuaderno", "mapa", "disco", "hamburguesa", "tigre", "panal", "aurora", "casino"];
+const isSkin = (value) => BLOB_SKINS.includes(String(value || "").toLowerCase());
+// A Google photo saved as the avatar: anything that is neither a colour nor a skin.
+const isPhoto = (value) => Boolean(value) && !HEX_COLOR.test(value) && !isSkin(value);
 const blobId = (color) => {
+  if (isSkin(color)) return String(color).toLowerCase();
   const id = String(color || "").toUpperCase();
   return BLOB_RENAMED[id] || id;
 };
 
-// Why `user` can't use the Blob colour `color`, or null when it can. Anything that isn't one of the Blob's colours (an
-// old colour, a Google photo) is drawn white, so it gives nothing away.
+// Why `user` can't use the Blob colour (or skin) `color`, or null when it can. Anything that isn't one of the Blob's
+// colours or skins (an old colour, a Google photo) is drawn white, so it gives nothing away.
 function blobColorError(user, color) {
   const id = blobId(color);
+  if (BLOB_SKINS.includes(id)) return user && !user.isGuest ? null : "Crea una cuenta para usar esa skin";
   if (BLOB_ACCOUNT.includes(id)) return user && !user.isGuest ? null : "Crea una cuenta para usar ese color";
   return null;
 }
@@ -49,7 +61,8 @@ function blobColorError(user, color) {
  */
 export function playerAvatar(user) {
   if (!user?.avatar || blobColorError(user, user.avatar)) return BLOB_WHITE;
-  // An old account colour as its new one; anything else as it was saved.
+  // An old account colour as its new one, a skin in lowercase; anything else as it was saved.
+  if (isSkin(user.avatar)) return String(user.avatar).toLowerCase();
   return BLOB_RENAMED[String(user.avatar).toUpperCase()] || user.avatar;
 }
 
@@ -66,7 +79,7 @@ function publicSpotify(spotify) {
 export function sanitizeUser(user) {
   if (!user) return null;
   // The username's history (which reserves old ones) and change dates stay on the server; the account sees the count.
-  const { passwordHash, passwordSalt, spotify, usernameHistory, usernameChanges, usernameAuto, friendCode, together, ...safe } = user;
+  const { passwordHash, passwordSalt, sessionsAfter, spotify, usernameHistory, usernameChanges, usernameAuto, friendCode, together, ...safe } = user;
   return {
     ...safe,
     // The account's own: each match with what it answered (its "Ver respuestas").
@@ -75,6 +88,8 @@ export function sanitizeUser(user) {
     daily: dailyView(user),
     spotify: publicSpotify(spotify),
     role: effectiveRole(user),
+    // The badge it wears, only while it still has it (game/badges.js).
+    badge: wornBadge(user),
     ...(user.isGuest ? {} : { usernameInfo: usernameStatus(user) }),
   };
 }
@@ -109,6 +124,8 @@ export function sanitizeUserPublic(user) {
     elo: user.elo || {},
     // How many daily challenges the account has completed.
     dailyDone: user.dailyDone || 0,
+    // The badge it wears beside its name (game/badges.js), or null.
+    badge: wornBadge(user),
     // The last matches, like the stats: shown on the profile.
     history: publicHistory(user.history),
     googleLinked: Boolean(user.googleId),
@@ -121,6 +138,11 @@ export function hashPassword(password, salt = crypto.randomBytes(16).toString("h
   const hash = crypto.scryptSync(password, salt, 64).toString("hex");
   return { salt, hash };
 }
+
+// What a login that fails says, whatever the reason (loginWithPassword).
+export const LOGIN_FAILED = "Correo, usuario o contraseña incorrectos. Si creaste tu cuenta con Google, entra con «Continuar con Google».";
+// A password nobody has, to check against when there is no account (or it has no password): it takes as long.
+const NOBODY = hashPassword(crypto.randomBytes(16).toString("hex"));
 
 export function verifyPassword(password, salt, hash) {
   if (!salt || !hash) return false;
@@ -178,6 +200,7 @@ export const ACCOUNT_COLUMNS = [
   ["usernameHistory", "username_history"],
   ["usernameChanges", "username_changes"],
   ["usernameAuto", "username_auto"],
+  ["badge", "badge"],
 ];
 const COLUMN_FIELDS = new Set(["id", "isGuest", ...ACCOUNT_COLUMNS.map(([field]) => field)]);
 
@@ -354,6 +377,7 @@ export function upsertUser(store, user) {
   if (user.passwordSalt) current.passwordSalt = user.passwordSalt;
   if (user.googleId) current.googleId = user.googleId;
   store.users[user.id] = current;
+  if (current.isGuest) guestSeen.set(current.id, Date.now());
   saveStore(store);
   return current;
 }
@@ -365,7 +389,7 @@ export function registerWithPassword(store, { name, username, email, password, a
   const usernameProblem = usernameError(store, cleanUsername);
   if (usernameProblem) throw new Error(usernameProblem);
   if (!cleanEmail) throw new Error("Correo electrónico requerido");
-  if (!password || password.length < 2) throw new Error("La contraseña debe tener al menos 2 caracteres");
+  if (!password || password.length < MIN_PASSWORD_LENGTH) throw new Error(PASSWORD_TOO_SHORT);
 
   // Check if email already registered
   const existing = Object.values(store.users).find(
@@ -400,12 +424,52 @@ export function registerWithPassword(store, { name, username, email, password, a
 export function setPassword(store, userId, password) {
   const user = store.users[userId];
   if (!user || user.isGuest) throw new Error("Esa cuenta ya no existe");
-  if (!password || password.length < 2) throw new Error("La contraseña debe tener al menos 2 caracteres");
+  if (!password || password.length < MIN_PASSWORD_LENGTH) throw new Error(PASSWORD_TOO_SHORT);
   const { salt, hash } = hashPassword(password);
   user.passwordHash = hash;
   user.passwordSalt = salt;
+  // Whoever was signed in with the old password (another phone, someone who knew it) is signed out.
+  endSessions(user);
   saveStore(store);
   return sanitizeUser(user);
+}
+
+/**
+ * Signs the account out everywhere: every session and token made before now stops working (`sessionStillValid`).
+ * The caller opens the new session afterwards.
+ */
+export function endSessions(user) {
+  user.sessionsAfter = Date.now();
+}
+
+/** Whether a session (or token) made at `issuedAt` still stands: false once the account ended its sessions after it. */
+export function sessionStillValid(user, issuedAt) {
+  return !user?.sessionsAfter || (Number(issuedAt) || 0) >= user.sessionsAfter;
+}
+
+// Guests live only in memory: when each one was last seen, so the ones who never came back can be let go.
+const guestSeen = new Map();
+
+/** A guest is still around (any request of theirs). */
+export function touchGuest(store, userId) {
+  if (store.users[userId]?.isGuest) guestSeen.set(userId, Date.now());
+}
+
+/**
+ * Lets go of the guests nobody has seen for `olderThanMs` (but those `keep` says are still in a match or a group), so
+ * the memory doesn't grow with every visitor until the next restart. Returns how many went.
+ */
+export function sweepGuests(store, { olderThanMs, keep = () => false, now = Date.now() }) {
+  let gone = 0;
+  for (const user of Object.values(store.users)) {
+    if (!user.isGuest) continue;
+    if (!guestSeen.has(user.id)) guestSeen.set(user.id, now);
+    if (now - guestSeen.get(user.id) < olderThanMs || keep(user.id)) continue;
+    delete store.users[user.id];
+    gone += 1;
+  }
+  for (const id of guestSeen.keys()) if (!store.users[id]) guestSeen.delete(id);
+  return gone;
 }
 
 export function loginWithPassword(store, { identifier, password, guestId }) {
@@ -419,17 +483,15 @@ export function loginWithPassword(store, { identifier, password, guestId }) {
     (u) => !u.isGuest && ((u.email && u.email.toLowerCase() === clean) || (u.username && u.username === asUsername))
   );
 
-  if (!user) {
-    throw new Error("Usuario o correo no encontrado. ¿Deseas crear una cuenta?");
-  }
-
-  if (user.passwordHash && user.passwordSalt) {
-    const valid = verifyPassword(password, user.passwordSalt, user.passwordHash);
-    if (!valid) throw new Error("Contraseña incorrecta");
-  } else if (user.googleId) {
-    throw new Error("Esta cuenta fue creada con Google. Por favor usa 'Continuar con Google'.");
-  } else {
-    throw new Error("Esta cuenta no tiene contraseña. Crea una cuenta nueva o entra con Google.");
+  // One answer for every way it can fail (no such account, a wrong password, an account that only enters with
+  // Google), and as slow in all of them (the password is always checked against something): the form can't be used
+  // to find out whose email or username has an account here.
+  const hasPassword = Boolean(user?.passwordHash && user?.passwordSalt);
+  const valid = hasPassword ? verifyPassword(password, user.passwordSalt, user.passwordHash) : verifyPassword(password, NOBODY.salt, NOBODY.hash);
+  if (!hasPassword || !valid) {
+    const err = new Error(LOGIN_FAILED);
+    err.wrongPassword = true;
+    throw err;
   }
 
   if (guestId && guestId !== user.id) {
@@ -449,7 +511,15 @@ export function upsertGoogleUser(store, { id, email, name, avatar, googleId }, g
   if (existing) {
     // The Google photo becomes the avatar the first time; after that it only refreshes it if the player is
     // still using the photo (a color they picked is kept).
-    const usingPhoto = !existing.googleId || !HEX_COLOR.test(existing.avatar || "");
+    const usingPhoto = !existing.googleId || !existing.avatar || isPhoto(existing.avatar);
+    // An account made with this email and a password, entered with Google for the first time: nobody ever proved the
+    // email was theirs when it was made, and Google just did. The password goes (and whoever was signed in with it),
+    // so someone who registered another person's email can't stay inside their account. They enter with Google.
+    if (!existing.googleId && existing.passwordHash) {
+      delete existing.passwordHash;
+      delete existing.passwordSalt;
+      endSessions(existing);
+    }
     existing.googleId = googleId;
     if (avatar) {
       existing.googlePhoto = avatar;
@@ -541,18 +611,26 @@ export function unlinkGoogle(store, userId) {
 
   delete user.googleId;
   delete user.googlePhoto;
-  if (!HEX_COLOR.test(user.avatar || "")) user.avatar = DEFAULT_AVATAR;
+  if (!user.avatar || isPhoto(user.avatar)) user.avatar = DEFAULT_AVATAR;
   store.users[userId] = user;
   saveStore(store);
   return sanitizeUser(user);
 }
 
 /** Delete user account permanently */
-export function deleteUser(store, userId, confirmName) {
+/**
+ * Deletes an account for good. Its name has to be typed, and its password too when it has one (an account that only
+ * enters with Google has none to ask for): an open session alone, on a borrowed phone, isn't enough.
+ */
+export function deleteUser(store, userId, confirmName, password) {
   const user = store.users[userId];
   if (!user) throw new Error("Usuario no encontrado");
   if (!confirmName || confirmName.trim() !== user.name) {
     throw new Error("El nombre de confirmación no coincide. Escribe tu nombre de usuario exacto para confirmar.");
+  }
+  if (user.passwordHash && user.passwordSalt) {
+    if (!password) throw new Error("Escribe tu contraseña para borrar tu cuenta");
+    if (!verifyPassword(String(password), user.passwordSalt, user.passwordHash)) throw new Error("La contraseña no es correcta");
   }
 
   delete store.users[userId];
@@ -574,16 +652,28 @@ export function updateUserAvatar(store, userId, choice) {
   const user = store.users[userId];
   if (!user) throw new Error("Usuario no encontrado");
   if (choice === "google") {
-    const photo = user.googlePhoto || (user.googleId && !HEX_COLOR.test(user.avatar || "") ? user.avatar : null);
+    const photo = user.googlePhoto || (user.googleId && isPhoto(user.avatar) ? user.avatar : null);
     if (!photo) throw new Error("Inicia sesión con Google para usar tu foto de perfil");
     user.avatar = photo;
   } else {
     const color = blobId(choice);
-    if (color !== BLOB_WHITE && !BLOB_ACCOUNT.includes(color)) throw new Error("Color no válido");
+    if (color !== BLOB_WHITE && !BLOB_ACCOUNT.includes(color) && !BLOB_SKINS.includes(color)) throw new Error("Color no válido");
     const problem = blobColorError(user, color);
     if (problem) throw new Error(problem);
     user.avatar = color;
   }
+  saveStore(store);
+  return sanitizeUser(user);
+}
+
+/** Wears badge `id` beside the name on the profile (null takes it off). Only one the account has won. */
+export function updateUserBadge(store, userId, id) {
+  const user = store.users[userId];
+  if (!user || user.isGuest) throw new Error("Crea una cuenta para tener insignias");
+  const choice = id == null || id === "" ? null : String(id);
+  const problem = badgeError(user, choice);
+  if (problem) throw new Error(problem);
+  user.badge = choice;
   saveStore(store);
   return sanitizeUser(user);
 }
@@ -632,14 +722,15 @@ export const MATCH_HISTORY_LIMIT = 10;
  * (`user.history`): which game, when, the place they finished in, how many played, their points, who they played
  * against, the room and their rounds (each question with its answer, for "Reportar partida": reportHistoryMatch).
  * `players` come in final position (a tiebreak's winner first); `game` is the game's id ("playlist" for a playlist).
- * `public` is a public match (for "Reto del día"). `rank` ({ rounds, winnerId, discount }) only for a Competitivo match: each account's rank points move by its place
- * (game/rank.js), and the history entry keeps how many (`rank`).
+ * `public` is a public match (for "Reto del día"). `classic` is a Clásico played to its end (for "Perfección"). `rank` ({ rounds, winnerId, discount }) only for a match that moves the
+ * rank (a Clásico, Competitivo): each account's rank points move by its place (game/rank.js), and the history entry keeps
+ * how many (`rank`). Returns those points per player (a Map), or null.
  */
-export function applyMatchStats(store, players, { game = null, at = new Date().toISOString(), room = null, rank = null, public: isPublic = false } = {}) {
+export function applyMatchStats(store, players, { game = null, at = new Date().toISOString(), room = null, rank = null, public: isPublic = false, classic = false } = {}) {
   const ranked = [...players].sort((a, b) => b.score - a.score);
   const order = players.map((p) => p.id);
-  const deltas = rank ? rankDeltas(players, rank) : null;
-  // Rivals that no longer count (game/elo.js TOGETHER_LIMIT) take their share off an account's points.
+  const deltas = rank ? rankDeltas(rank.counts ? players.filter(rank.counts) : players, rank) : null;
+  // Rivals that don't count right now (game/elo.js TOGETHER_LIMIT) take their share off an account's points.
   if (deltas && rank.discount) for (const [id, share] of rank.discount) deltas.set(id, Math.round((deltas.get(id) || 0) * share));
   const [first, second] = players;
   const soleWinner = first && second && (first.score > second.score || first.id === rank?.winnerId) ? first.id : null;
@@ -679,6 +770,12 @@ export function applyMatchStats(store, players, { game = null, at = new Date().t
     s.correctAnswers += player.correct || 0;
     if (index === 0 && ranked.length > 1) s.wins += 1;
     if (index === 0 && ranked.length === 1 && player.score > 0) s.wins += 1;
+    // For the badges (game/badges.js): the games won against someone, and the perfect matches.
+    if (index === 0 && ranked.length > 1 && game) {
+      s.winsByGame = s.winsByGame || {};
+      s.winsByGame[game] = (s.winsByGame[game] || 0) + 1;
+    }
+    if (isPerfectMatch(classic, player.rounds)) s.perfectGames = (s.perfectGames || 0) + 1;
 
     if (player.artistHits) {
       s.artistHits = s.artistHits || {};
@@ -688,6 +785,7 @@ export function applyMatchStats(store, players, { game = null, at = new Date().t
     }
   });
   saveStore(store);
+  return deltas;
 }
 
 // Spotify playlists and albums an account added with their link (the "Agregar de Spotify" box of Adivina la canción),

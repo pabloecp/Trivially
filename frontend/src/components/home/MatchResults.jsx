@@ -7,8 +7,8 @@ import { Podium, PodiumCard, ResultsFoot, countText } from "./ResultsParts.jsx";
 import { useApp } from "../../lib/store.jsx";
 import { withSound } from "../../lib/sounds.js";
 import { findMode } from "../../modes/index.js";
-import { useResultsLook } from "../../lib/ownerView.js";
 import { RetouchCard } from "./ResultsLooks.jsx";
+import { RatingBox, rowChanges } from "./Ratings.jsx";
 
 // Kept here too for the screens that imported it from this file.
 export { Podium };
@@ -39,9 +39,6 @@ function MatchEnd({ room }) {
   const rounds = mine?.rounds || [];
   const questions = Math.max(0, ...top.map((p) => (p.rounds || []).length));
   const mode = findMode(room.game);
-  // The results' style and tone (everyone: "panel" in colour; an owner can try others), and who is ringed in it: the
-  // winner, or everyone tied for first.
-  const { style, tone } = useResultsLook();
   const winners = top.length < 2 ? [] : tied ? top.filter((p) => p.score === winner.score).map((p) => p.id) : winner?.score > 0 ? [winner.id] : [];
 
   return (
@@ -59,7 +56,7 @@ function MatchEnd({ room }) {
             </div>
           </header>
 
-          <div className={`tv-res-cards tv-res-cards--pair rl-cards tv-c-${mode?.color || "site"} is-${tone}`}>
+          <div className={`tv-res-cards tv-res-cards--pair rl-cards tv-c-${mode?.color || "site"} is-color`}>
             <PodiumCard
               meta={`${countText(top.length, "jugador", "jugadores")}${questions ? ` · ${countText(questions, "pregunta", "preguntas")}` : ""}`}
             >
@@ -74,10 +71,11 @@ function MatchEnd({ room }) {
               onOpen={rounds.length ? () => setShowSummary(true) : null}
               points={(p) => p.score}
               winners={winners}
-              retouch={style}
-              tone={tone}
+              changes={rowChanges(room.ratings)}
             />
           </div>
+
+          <RatingBox ratings={room.ratings} me={mine ? { id: mine.id, avatar: user?.avatar } : null} gameName={mode?.name} />
 
           {err && <p className="tv-lobby-error" role="alert">{err}</p>}
 

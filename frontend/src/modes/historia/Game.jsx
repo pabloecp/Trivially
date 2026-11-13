@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import TvShell from "../../components/home/TvShell.jsx";
 import Icon from "../../components/home/Icon.jsx";
-import WaitingPill, { joinNames as joinWaiting, waitingNames } from "../../components/home/WaitingPill.jsx";
 import MatchResults from "../../components/home/MatchResults.jsx";
 import PartyPanel from "../../components/home/PartyPanel.jsx";
 import { ControllerBar, GetReady, PhoneHint } from "../../components/home/CentralBits.jsx";
@@ -82,18 +81,16 @@ function GameScreen() {
     : room?.me;
   const myGuess = guess?.round === round ? guess : null;
   const confirmed = Boolean(myGuess?.locked) || Boolean(me?.answered);
-  // Who the round still waits for, once this player confirmed.
-  const waiting = waitingNames(room, user?.id);
   const open = phase === "playing" && iPlay && !confirmed && question?.min != null;
   const min = question?.min ?? null;
   const max = question?.max ?? null;
-  // Cifras: a number on a bar (no future, no year 0), moving in steps of `snap`; the small buttons move a hundredth.
+  // Cifras: a number on a bar (no future, no year 0), placed on the bar in steps of `snap`; the small buttons always move 1, to land on the exact number.
   const isNum = question?.kind === "cifras";
   const unit = question?.unit || "";
   const snap = question?.snap || 1;
   const limit = max != null ? (isNum ? max : Math.min(max, new Date().getFullYear())) : null;
   const step = min != null ? (max - min) / 10 : 10;
-  const fine = isNum && min != null ? Math.max(snap, Math.round((max - min) / 100 / snap) * snap) : 1;
+  const fine = 1;
   const crossesZero = !isNum && min != null && min < 0 && max > 0;
   const fmt = (n) => (isNum ? figureLabel(n, unit) : yearLabel(n, { crossesZero }));
   // What a player answered, either way.
@@ -159,7 +156,7 @@ function GameScreen() {
     }
   }
 
-  // Keys while the round is open: ← → move a year (in Cifras a hundredth of the bar; with Shift, or ↑ ↓ and Re Pág / Av Pág, a tenth of the line),
+  // Keys while the round is open: ← → move a year (in Cifras, 1; with Shift, or ↑ ↓ and Re Pág / Av Pág, a tenth of the line),
   // Inicio / Fin go to the ends, Enter confirms.
   useEffect(() => {
     if (!open) return undefined;
@@ -275,8 +272,6 @@ function GameScreen() {
   else if (confirmed)
     hint = tiebreak
       ? `${words.done}. Si es ${words.exact} y fuiste el primero, ganas.`
-      : waiting.length
-      ? `${words.done}. Esperando a ${joinWaiting(waiting)}…`
       : `${words.done}.`;
   else if (myGuess) hint = `Ajusta con los botones${touch ? "" : " o las flechas"} y confirma.`;
   else hint = touch ? `Toca ${words.line} para elegir ${words.pick}.` : `Haz clic en ${words.line} o usa las flechas del teclado.`;
@@ -297,8 +292,8 @@ function GameScreen() {
       : "Elijan el año en la línea del tiempo de su teléfono.";
   }
 
-  // The two buttons on each side of the chosen number: a little (a year, a hundredth of the bar) and a lot (ten years, a
-  // tenth of it), the small one next to the number.
+  // The two buttons on each side of the chosen number: a little (a year, or 1 in Cifras) and a lot (ten years, a
+  // tenth of the bar), the small one next to the number.
   const stepButtons = (dir) => {
     const mark = dir < 0 ? "−" : "+";
     const sizes = dir < 0 ? [step, fine] : [fine, step];
@@ -336,14 +331,8 @@ function GameScreen() {
         disabled={!open || myGuess?.year == null}
         aria-live="polite"
       >
-        {confirmed && !tiebreak && phase === "playing" && waiting.length ? (
-          <WaitingPill names={waiting} inline />
-        ) : (
-          <>
-            <Icon name={confirmed ? "check" : "send"} size={20} strokeWidth={2.6} />
-            {confirmed ? "Enviado" : "Enviar"}
-          </>
-        )}
+        <Icon name={confirmed ? "check" : "send"} size={20} strokeWidth={2.6} />
+        {confirmed ? "Enviado" : "Enviar"}
       </button>
     );
   }

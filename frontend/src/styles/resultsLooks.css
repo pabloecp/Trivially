@@ -1,4 +1,4 @@
-/* The results screens of a match (components/home/ResultsLooks.jsx): "panel" and "barras", in colour or neutral. Flat like every card and row; the match's colour is --c2 (a tv-c-* class on the board, card or
+/* The results screens of a match (components/home/ResultsLooks.jsx): the ranking with a bar per player, in the match's colour. Flat like every card and row; the match's colour is --c2 (a tv-c-* class on the board, card or
    list), and whoever won is ringed in it. */
 
 /* Games won, in a small box like a scoreboard's; this game's winners lit in the match's colour, with a flip. */
@@ -16,7 +16,6 @@
 .rl-ntrack i { display: block; width: var(--w); height: 100%; border-radius: inherit; background: #4a4c53; transform-origin: left; animation: rlGrow 0.9s cubic-bezier(0.2, 0.9, 0.3, 1) 0.2s backwards; }
 /* The ranking card at the end: its rows with the points under the name and the games won on the right. */
 .rl-rankrow .tv-res-row-main { display: grid; gap: 1px; flex: 1; min-width: 0; }
-.rl-rank.is-neutro .rl-rankrow.is-win { box-shadow: inset 0 0 0 2px var(--c2); }
 .rl-rank .rl-digit { width: 30px; height: 32px; border-radius: 9px; }
 .rl-rank .rl-digit b { font-size: 18px; }
 .rl-rank.is-color { background: var(--c2); color: var(--on); box-shadow: none; }
@@ -51,10 +50,8 @@
 .rl-cards { --rl-accent: var(--c2); }
 .rl-cards .tv-podium-score, .rl-cards .tv-res-link { color: var(--rl-accent); }
 
-/* The two cards at the end each on a background of their own: grey in "neutro" (the rows darker on it), the match's
-   colour in "color" (the podium's names, wins and title white on it; its steps keep gold, silver and bronze). */
-.rl-cards.is-neutro .tv-res-card { background: var(--tv-option-bg); box-shadow: none; }
-.rl-cards.is-neutro .rl-rankrow { background: var(--tv-surface); }
+/* The two cards at the end in the match's colour (the podium's names, wins and title white on it; its steps keep gold,
+   silver and bronze). */
 .rl-cards.is-color .tv-res-podium { background: var(--c2); box-shadow: none; }
 .rl-cards.is-color .tv-res-podium .tv-res-card-title,
 .rl-cards.is-color .tv-res-podium .tv-podium-name,

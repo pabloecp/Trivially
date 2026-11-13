@@ -15,8 +15,8 @@ import { withSound } from "../../lib/sounds.js";
 import "../../styles/home.css";
 import "../../styles/playlist.css";
 import { resolveCode, urlCode } from "../../lib/hiddenCode.js";
-import { useResultsLook } from "../../lib/ownerView.js";
 import { GamesWon, RetouchCard } from "../../components/home/ResultsLooks.jsx";
+import { RatingBox, rowChanges } from "../../components/home/Ratings.jsx";
 import { findVariant } from "../../components/home/matchInfo.js";
 
 // The end of a playlist (route /playlist/:code), in the same frame as a match's end (MatchResults): the title, the
@@ -25,15 +25,13 @@ import { findVariant } from "../../components/home/matchInfo.js";
 // middle: go back to its panel or play the playlist again (shuffled again if it's random).
 function ResultsScreen() {
   const { code: codeParam } = useParams();
-  const { user, room, group, isCentral, joinRoom, replayGame, restartGame, leaveRoom, findMatch, groupHome } = useApp();
+  const { user, room, group, isCentral, joinRoom, replayGame, restartGame, leaveRoom, findMatch, groupHome, requestRematch } = useApp();
   const [searching, setSearching] = useState(false);
   // The address's code ("oculta" while it's hidden: this tab's room, lib/hiddenCode.js).
   const code = resolveCode(codeParam, room);
   const nav = useNavigate();
   const [err, setErr] = useState("");
   const [showSummary, setShowSummary] = useState(false);
-  // The results' style and tone (everyone: "panel" in colour; an owner can try others).
-  const { style, tone } = useResultsLook();
 
   // Join the room after a reload. Going back to the room screen is handled by RoomNavigator (App.jsx).
   useEffect(() => {
@@ -78,6 +76,10 @@ function ResultsScreen() {
   const pointsText = (p) => `${p.points.toLocaleString("es-ES")} pts`;
   // This player's rounds of every game, numbered one after another (none on the central device).
   const me = isCentral ? null : standings.find((p) => p.id === user?.id) || null;
+  // "Revancha" (Casual only): for whoever played the match and is still in it; it starts when everyone still here asks.
+  const mePlayer = room.players.find((p) => p.id === user?.id);
+  const rematchOpen = publicMatch?.kind === "casual" && Boolean(me) && !mePlayer?.forfeit && !mePlayer?.spectator && !isCentral;
+  const rematchAsked = Boolean(room.rematch?.asked?.includes(user?.id));
   const myRounds = (me?.rounds || []).map((r, i) => ({ ...r, round: i + 1 }));
   let hint = null;
   if (mixed && winner) hint = `${pointsText(winner)} en ${run.total === 1 ? "1 juego" : `${run.total} juegos`}${run.order === "aleatorio" ? " mezclados" : ""}`;
@@ -117,7 +119,7 @@ function ResultsScreen() {
           </header>
 
           {run && (
-            <div className={`tv-res-cards tv-res-cards--pair rl-cards tv-c-${kindColor} is-${tone}`}>
+            <div className={`tv-res-cards tv-res-cards--pair rl-cards tv-c-${kindColor} is-color`}>
               <PodiumCard
                 meta={`${countText(standings.length, "jugador", "jugadores")} · ${countText(run.total, "juego", "juegos")}`}
               >
@@ -133,11 +135,12 @@ function ResultsScreen() {
                 points={(p) => p.points}
                 wins={mixed ? null : (p) => p.wins}
                 winners={winners}
-                retouch={style}
-                tone={tone}
+                changes={rowChanges(room.ratings)}
               />
             </div>
           )}
+
+          <RatingBox ratings={room.ratings} me={me ? { id: me.id, avatar: user?.avatar } : null} gameName={findMode(publicMatch?.game)?.name} />
 
           {err && <p className="tv-lobby-error" role="alert">{err}</p>}
 
@@ -187,6 +190,17 @@ function ResultsScreen() {
                   <Icon name={leadsGroup ? "back" : "logout"} size={18} />
                   <span className="tv-res-btn-label">{leadsGroup ? "Volver" : "Salir"}</span>
                 </button>
+                {rematchOpen && (
+                  <button
+                    className="tv-btn tv-btn--neutral tv-res-btn"
+                    disabled={rematchAsked}
+                    onClick={() => requestRematch().catch((e) => setErr(e.message || "No se pudo pedir la revancha"))}
+                    type="button"
+                  >
+                    <Icon name="reset" size={18} strokeWidth={2.4} />
+                    {rematchAsked ? `Revancha ${room.rematch.asked.length}/${room.rematch.total}` : "Revancha"}
+                  </button>
+                )}
                 <button
                   className="tv-btn tv-btn--primary tv-res-btn"
                   data-sound="none"

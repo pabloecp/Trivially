@@ -112,10 +112,9 @@ export function SoundPacks() {
   );
 }
 
-// The volume button: a speaker (crossed out when the sounds are off) that opens the two sliders, in the top bar. With
-// `inOwnerPanel` (an owner's top bar) it's hidden on
-// phones: owners have it inside the owners' panel there, so the bar has room for everything else.
-export default function VolumeMenu({ inOwnerPanel = false }) {
+// The volume button: a speaker (crossed out when the sounds are off) that opens the two sliders. Only the central
+// device's top bar has it (it has no "Ajustes" gear); everyone else sets the volume in "Ajustes" (AppSettings.jsx).
+export default function VolumeMenu() {
   const [open, setOpen] = useState(false);
   const [, refresh] = useState(0);
   const rootRef = useRef(null);
@@ -143,7 +142,7 @@ export default function VolumeMenu({ inOwnerPanel = false }) {
   // Crossed out only when nothing makes a sound: neither the songs nor the effects.
   const silent = (!soundEnabled() || !soundVolume()) && songs.shown === 0;
   return (
-    <div className={`tv-volume${inOwnerPanel ? " tv-volume--owner" : ""}`} ref={rootRef}>
+    <div className="tv-volume" ref={rootRef}>
       <button
         type="button"
         className="tv-chip tv-chip--icon tv-chip--sound"

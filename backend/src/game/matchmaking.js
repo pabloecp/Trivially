@@ -88,15 +88,16 @@ export const INTRO_RESULT_MS = 4500;
 // A public match's player who does nothing for PUBLIC_KICK_ROUNDS rounds in a row is asked if they are still there; with no
 // answer in AFK_CONFIRM_MS they are taken out of the match (RoomManager.askStillThere and afkExpire).
 export const AFK_CONFIRM_MS = 15000;
-// An owner can force the games of their own match (the admin panel, for debugging): variant ids, played first in that
-// order (then drawn ones, while nobody has won the match).
-export const MAX_FORCED = 5;
-export const cleanForced = (list) => (Array.isArray(list) ? list.filter((id) => typeof id === "string" && MATCH_VARIANTS.some((v) => v.id === id)).slice(0, MAX_FORCED) : []);
-
 // Casual only: when the room hasn't filled after BOT_WAIT_MS, bots take the empty seats, one every BOT_GAP_MS or so
 // (as if people were arriving), and play by themselves (RoomManager.scheduleBots). Competitivo waits for people.
 export const BOT_WAIT_MS = 1000;
 export const BOT_GAP_MS = [700, 1600];
+
+// "Revancha" (Casual only, once a match is over): a new match in the same room, with whoever is still there, when all of
+// them ask for it. The bots in it ask by themselves after a moment (REMATCH_BOT_MS); if someone never asks, the offer
+// lapses after REMATCH_WAIT_MS.
+export const REMATCH_WAIT_MS = 30000;
+export const REMATCH_BOT_MS = [1500, 6000];
 // (The bots themselves, with their names, colours and elo, are in bots.js.)
 
 /**

@@ -6,6 +6,7 @@ import { useFriends } from "../../lib/friends.jsx";
 import { useIsOwner } from "../../lib/ownerView.js";
 import { useHiddenCode } from "../../lib/hiddenCode.js";
 import AdminPanel from "./AdminPanel.jsx";
+import AppSettings from "./AppSettings.jsx";
 import ConfirmDialog from "./ConfirmDialog.jsx";
 import Icon from "./Icon.jsx";
 import ProfileChip from "./ProfileChip.jsx";
@@ -129,6 +130,7 @@ export default function TvTopbar() {
   const friends = useFriends();
   const online = (friends.view?.friends || []).filter((f) => f.online).length;
   const isOwner = useIsOwner();
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const [adminOpen, setAdminOpen] = useState(false);
   const { pathname } = useLocation();
   const [codeHidden] = useHiddenCode();
@@ -238,7 +240,21 @@ export default function TvTopbar() {
 
   return (
     <>
-      {isOwner && <AdminPanel open={adminOpen} onClose={() => setAdminOpen(false)} />}
+      {!isCentral && (
+        <AppSettings
+          open={settingsOpen}
+          onClose={() => setSettingsOpen(false)}
+          onOwner={
+            isOwner
+              ? () => {
+                  setSettingsOpen(false);
+                  setAdminOpen(true);
+                }
+              : null
+          }
+        />
+      )}
+      {isOwner && !isCentral && <AdminPanel open={adminOpen} onClose={() => setAdminOpen(false)} />}
       <header className={`tv-topbar${backAnim ? ` is-back-${backAnim}` : ""}`}>
         <div className="tv-topbar-start">
           {shownButton}
@@ -248,16 +264,16 @@ export default function TvTopbar() {
           {!playing && !introHere && <span className="tv-topbar-sala" />}
         </div>
         <div className="tv-topbar-end">
-          {/* Owners only: the admin panel (the owner/user view, the test bot, the games forced in Casual). */}
-          {isOwner && !isCentral && (
+          {/* Everyone: "Ajustes" (volume, animations); owners find their tools there too (the owner/user view, the test bot...). */}
+          {!isCentral && (
             <button
               type="button"
               className="tv-chip tv-chip--icon"
-              aria-label="Panel de owner"
+              aria-label="Ajustes"
               aria-haspopup="dialog"
               onClick={(e) => {
                 e.currentTarget.blur();
-                setAdminOpen(true);
+                setSettingsOpen(true);
               }}
             >
               <span className="tv-avatar tv-avatar--empty">
@@ -265,7 +281,8 @@ export default function TvTopbar() {
               </span>
             </button>
           )}
-          <VolumeMenu inOwnerPanel={isOwner && !isCentral} />
+          {/* Everyone else has the volume in "Ajustes"; the central device (no gear) keeps its button. */}
+          {isCentral && <VolumeMenu />}
           {!isCentral && (
             <button
               type="button"

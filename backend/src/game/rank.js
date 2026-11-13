@@ -1,6 +1,6 @@
-// Competitivo's rank: every finished competitive match moves each account's rank points by its place (frontend
-// lib/rank.js has the same tiers to draw them). Kept in `user.rank` ({ points, matches, wins, best }), saved with the rest
-// of the user; guests and bots get none.
+// The rank of the Clásico (and of Competitivo, closed for now): every finished match moves each account's rank points by
+// its place (frontend lib/rank.js has the same tiers to draw them). Kept in `user.rank` ({ points, matches, wins, best }),
+// saved with the rest of the user; bots that look like accounts have one in memory (bots.js), guests have none.
 
 // Points by place, for how many finished the match (a room may end with fewer than it started with). The first gains
 // the most, the last loses; a match alone moves nothing.
@@ -20,9 +20,9 @@ export const RANK_TIERS = [
   { id: "bronce", name: "Bronce", min: 0 },
   { id: "plata", name: "Plata", min: 300 },
   { id: "oro", name: "Oro", min: 600 },
-  { id: "platino", name: "Platino", min: 900 },
-  { id: "diamante", name: "Diamante", min: 1200 },
-  { id: "maestro", name: "Maestro", min: 1500 },
+  { id: "diamante", name: "Diamante", min: 900 },
+  { id: "maestro", name: "Maestro", min: 1200 },
+  { id: "leyenda", name: "Leyenda", min: 1500 },
 ];
 
 export const emptyRank = () => ({ points: 0, matches: 0, wins: 0, best: 0 });

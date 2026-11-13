@@ -2,7 +2,6 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import { api, setAuthToken } from "./api.js";
 import { emitAck, emitAckWithin, getSocket, reconnectSocket, setSocketTokenProvider } from "./socket.js";
 import { BACKEND_URL } from "./config.js";
-import { getForcedGames, getOwnerView } from "./ownerView.js";
 
 const AppContext = createContext(null);
 
@@ -351,6 +350,17 @@ export function AppProvider({ children }) {
     }
   }, []);
 
+  // A match just ended: the account's elo, rank and day's challenge are others now, and Inicio shows them.
+  const finishedRoom = room?.phase === "finished" ? room.code : null;
+  useEffect(() => {
+    if (!finishedRoom || !userRef.current || userRef.current.isGuest) return;
+    api("/api/me")
+      .then((d) => {
+        if (d.user && !d.user.isGuest && d.user.id === userRef.current?.id) applyUser(d.user);
+      })
+      .catch(() => {});
+  }, [finishedRoom]);
+
   useEffect(() => {
     const s = getSocket();
     const onState = (state) => {
@@ -434,7 +444,9 @@ export function AppProvider({ children }) {
       setKickedNotice(
         reason === "inactivo"
           ? "Saliste de la partida por inactividad"
-          : "El anfitrión te sacó de la partida"
+          : reason === "error"
+            ? "La partida se cerró por un error nuestro. Ya nos avisaron: puedes empezar otra."
+            : "El anfitrión te sacó de la partida"
       );
     };
     s.on("room:state", onState);
@@ -621,8 +633,9 @@ export function AppProvider({ children }) {
       },
 
 
-      async deleteAccount(confirmName) {
-        await api("/api/auth/delete-account", { method: "DELETE", body: { confirmName } });
+      // The account's name and, when it has one, its password.
+      async deleteAccount(confirmName, password) {
+        await api("/api/auth/delete-account", { method: "DELETE", body: { confirmName, password } });
         forgetUser();
       },
 
@@ -638,6 +651,14 @@ export function AppProvider({ children }) {
           const ack = await emitAck("player:update", { avatar });
           if (ack?.state) setRoom(ack.state);
         }
+      },
+
+      // The badge worn beside the name on the profile (lib/badges.js); null takes it off.
+      async updateBadge(badge) {
+        const current = userRef.current;
+        if (!current) throw new Error("No autenticado");
+        const res = await api(`/api/users/${current.id}/badge`, { method: "PATCH", body: { badge } });
+        applyUser({ ...current, ...(res.user || {}), badge: res.user?.badge ?? null });
       },
 
       async updatePlayer(data) {
@@ -669,9 +690,7 @@ export function AppProvider({ children }) {
       async findMatch(kind, size = 5, explicitUser, game = null) {
         const current = explicitUser || userRef.current;
         if (!current?.name) throw new Error("Debes identificarte antes de buscar partida");
-        // An owner in debug view can force the games of its match (the admin panel); the server checks the account.
-        const force = !game && current.role === "owner" && getOwnerView() === "debug" ? getForcedGames() : [];
-        const res = await emitAck("match:find", { user: current, kind, ...(game ? { game } : { size }), ...(force.length ? { force } : {}) });
+        const res = await emitAck("match:find", { user: current, kind, ...(game ? { game } : { size }), });
         if (!res.ok) throw new Error(res.error);
         return enterRoom(res.state);
       },
@@ -944,6 +963,8 @@ export function AppProvider({ children }) {
       async startGame() { const res = await emitAck("room:start"); if (!res.ok) throw new Error(res.error); },
       async restartGame() { const res = await emitAck("room:restart"); if (!res.ok) throw new Error(res.error); },
       async replayGame() { const res = await emitAck("room:replay"); if (!res.ok) throw new Error(res.error); },
+      // "Revancha" at the end of a Casual match: asks for another one in this room with the same players.
+      async requestRematch() { const res = await emitAck("room:rematch"); if (!res.ok) throw new Error(res.error); },
       async endGame() { await emitAck("room:end"); },
       async pauseGame(paused) { const res = await emitAck("room:pause", paused); if (!res.ok) throw new Error(res.error); },
 

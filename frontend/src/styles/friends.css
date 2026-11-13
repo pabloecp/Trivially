@@ -1,23 +1,4 @@
 /* Friends: the panel opened from the top bar, the friend's code, the host's controls in the room card. */
-/* Room above the head (the sheet's own top padding is thin), and the close button in the head's row, centred on it. */
-.tv-fr-sheet { padding-top: 22px; }
-.tv-fr-head { position: relative; align-items: center; padding-bottom: 16px; }
-.tv-fr-close {
-  flex-shrink: 0;
-  margin-left: auto;
-  display: grid;
-  place-items: center;
-  /* The same close button as the other windows ("Tu partida", "Historial"): a rounded square, not a circle. */
-  width: 40px;
-  height: 40px;
-  border: 0;
-  border-radius: 12px;
-  background: var(--tv-option-bg, rgba(255, 255, 255, 0.08));
-  color: var(--tv-text-2);
-  cursor: pointer;
-}
-.tv-fr-close:hover { color: var(--tv-text); }
-.tv-fr-sheet .tv-sheet-body { display: grid; gap: 14px; max-height: min(70vh, 560px); overflow-y: auto; }
 .tv-fr-list { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
 .tv-fr-row {
   display: flex;
@@ -36,7 +17,7 @@
   width: 14px;
   height: 14px;
   border-radius: 50%;
-  border: 3px solid var(--tv-sheet-bg, #161616);
+  border: 3px solid var(--tv-surface);
   background: #6b7280;
 }
 .tv-fr-dot.is-on { background: #22c55e; }
@@ -60,7 +41,7 @@
 }
 .tv-fr-x:hover { color: var(--tv-text); }
 .tv-fr-x.is-confirm { background: #ef4444; color: #fff; }
-.tv-fr-sub { margin: 4px 0 0; font-size: 14px; font-weight: 800; color: var(--tv-text-3); }
+.tv-fr-sub { margin: 0; font-family: var(--tv-small); font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--tv-text-3); }
 .tv-fr-empty { display: grid; justify-items: center; gap: 12px; padding: 22px 0; text-align: center; font-weight: 700; color: var(--tv-text-3); }
 .tv-fr-empty p { margin: 0; }
 .tv-fr-msg {
@@ -76,16 +57,7 @@
 }
 .tv-fr-msg.is-ok svg { color: #22c55e; }
 .tv-fr-msg.is-bad svg { color: #f87171; }
-.tv-fr-add { display: grid; gap: 18px; }
-.tv-fr-mycode { display: grid; gap: 6px; padding: 14px; border-radius: 16px; background: var(--tv-option-bg, rgba(255, 255, 255, 0.06)); text-align: center; }
-.tv-fr-mycode .tv-sheet-kicker { margin: 0; }
-.tv-fr-code { margin: 0; font-family: var(--tv-display); font-weight: 700; font-size: 34px; letter-spacing: 0.12em; user-select: all; }
-.tv-fr-coderow { display: flex; align-items: center; justify-content: center; gap: 10px; min-width: 0; }
-.tv-fr-coderow .tv-fr-code { min-width: 0; }
-/* The same size as the sheet's other small buttons. */
-.tv-app .tv-fr-copy, .tv-fr-copy { flex-shrink: 0; width: 34px; height: 34px; padding: 0; border-radius: 11px; box-shadow: 0 3px 0 var(--edge); }
-.tv-fr-copy:hover { box-shadow: 0 4px 0 var(--edge); }
-.tv-fr-copy:active { box-shadow: 0 0 0 var(--edge); }
+.tv-fr-code { margin: 0; font-family: var(--tv-display); font-weight: 800; font-size: 20px; user-select: all; }
 .tv-fr-form { display: grid; gap: 8px; }
 .tv-fr-form .tv-sheet-kicker { margin: 0; }
 
@@ -198,21 +170,16 @@
 }
 .tv-fr-ask .tv-btn:last-child { padding: 0 12px; min-width: 0; }
 
-/* The panel lives above the page (outside the room's own .tv-app): the overlay only gives it .tv-app's text and
-   buttons, it never covers the page itself. */
-.tv-fr-overlay { position: fixed; inset: 0; z-index: 60; min-height: 0; background: none; pointer-events: none; overflow: visible; }
-.tv-fr-overlay > * { pointer-events: auto; }
 .tv-fr-retry { padding: 0; border: 0; background: none; color: var(--tv-link); font-family: var(--tv-display); font-weight: 800; cursor: pointer; }
 .tv-fr-retry:hover { color: #8fb0ff; }
 
 /* Username fields: the "@" in front, and the free / taken line under it. */
 .tv-handle-box { position: relative; display: block; }
 .tv-handle-box .tv-field { padding-left: 34px; }
-/* In the friends sheet the boxes sit in a scrolling body that would cut a ring drawn outside them: it goes inside. */
-.tv-fr-sheet .tv-field:focus-visible { outline-offset: -3px; }
-/* The boxes to write in the sheet: as tall as its rows, with the sheet's text size. */
-.tv-fr-sheet .tv-field { height: 48px; border-radius: 14px; font-size: 17px; }
-.tv-fr-sheet .tv-handle-box .tv-field { padding-left: 32px; }
+/* In the friends window the boxes sit in a scrolling body that would cut a ring drawn outside them: it goes inside. */
+.tv-friends .tv-field:focus-visible { outline-offset: -3px; }
+.tv-friends .tv-field { height: 48px; border-radius: 14px; font-size: 17px; }
+.tv-friends .tv-handle-box .tv-field { padding-left: 32px; }
 .tv-handle-at { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); font-weight: 800; color: var(--tv-text-3); pointer-events: none; }
 .tv-handle-status { display: inline-flex; align-items: center; gap: 6px; margin-top: 6px; font-size: 13px; font-weight: 700; color: var(--tv-text-3); }
 .tv-handle-status.is-ok { color: #22c55e; }
@@ -220,12 +187,12 @@
 .tv-handle { color: var(--tv-text-3); font-weight: 700; }
 .tv-fr-handle { font-size: 13px; }
 
-/* The panel's content never wider than the sheet (long usernames, the search box). */
-.tv-fr-sheet .tv-sheet-body { grid-template-columns: minmax(0, 1fr); }
-.tv-fr-add, .tv-fr-form, .tv-fr-mycode { min-width: 0; }
-.tv-fr-add { grid-template-columns: minmax(0, 1fr); }
+/* The window's content never wider than it (long usernames, the search box). */
+.tv-friends .tv-modal-body { grid-template-columns: minmax(0, 1fr); }
+.tv-fr-form, .tv-fr-group { min-width: 0; }
+.tv-fr-group { display: grid; gap: 8px; }
 /* Your username, a little bigger than a row's name, not a poster. */
-.tv-fr-code { max-width: 100%; font-size: 22px; letter-spacing: 0.02em; overflow-wrap: anywhere; }
+.tv-fr-code { min-width: 0; max-width: 100%; overflow-wrap: anywhere; }
 /* The friends panel's tabs: a little lower than the usual switch (Segmented's own style is flat everywhere). */
-.tv-fr-sheet .tv-seg-btn { height: 40px; white-space: nowrap; font-size: 14px; padding-inline: 4px; }
+.tv-friends .tv-seg-btn { height: 40px; white-space: nowrap; font-size: 14px; padding-inline: 4px; }
 .tv-fr-count { display: inline-block; min-width: 18px; margin-left: 6px; padding: 0 5px; border-radius: 999px; background: #ef4444; color: #fff; font-size: 12px; line-height: 18px; text-align: center; }

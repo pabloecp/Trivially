@@ -12,6 +12,8 @@ import "./styles/home.css";
 import "./styles/palettes.css";
 // Last: the look over everything else (see the file).
 import "./styles/look.css";
+// After it: the light theme only changes the colour tokens.
+import "./styles/light.css";
 
 // On a phone, tapping "Enviar" or "Saltar" with the keyboard open used to take the focus off the box: the keyboard
 // closed, the page moved under the finger and the tap was lost. Keeping the focus where it is lets the tap go through.

@@ -113,11 +113,9 @@
 .tv-mi-card .tv-stage-mark { top: -150px; right: -50px; bottom: auto; }
 /* A line may take two rows here ("Valeria y Daniela empataron…"), and is never cut. */
 .tv-mi-card .tv-stage-name { overflow: visible; font-size: clamp(30px, 3.6vw, 52px); white-space: normal; }
-.tv-mi.is-neutro .tv-mi-card:not(.is-classic) { background: var(--tv-surface); }
-.tv-mi.is-neutro .tv-stage-badge { background: var(--c2); color: #fff; box-shadow: none; }
 
 /* The chip of a Clásico on the top bar, in the logo's look. */
-.tv-app .tv-chip--game.is-classic { --edge: var(--tv-logo-shadow); padding-left: 8px; background: #000; }
+.tv-app .tv-chip--game.is-classic { --edge: #030303; padding-left: 8px; background: #000; }
 .tv-chip--game.is-classic .tv-appicon { --s: 26px; flex: none; }
 
 /* The reel: a window in the middle with a mark on each side, and the games going up behind it, dim and fading out of it. As
@@ -153,7 +151,6 @@
    it holds (its faint icon too). */
 .tv-mi-card.is-landing { background: var(--tv-surface); }
 .tv-mi-flood { position: absolute; inset: 0; z-index: -1; background: var(--c2); pointer-events: none; animation: tvMiFlood 0.6s cubic-bezier(0.3, 0.7, 0.2, 1) both; }
-.tv-mi.is-neutro .tv-mi-flood { display: none; }
 @keyframes tvMiFlood {
   from { clip-path: circle(0 at 50% 58%); }
   to { clip-path: circle(130% at 50% 58%); }
@@ -173,6 +170,7 @@
 .tv-mi-note { position: relative; margin: -6px 0 0; font: 600 clamp(15px, 1.4vw, 18px)/1.3 var(--tv-small); color: #fff; }
 .tv-mi-result .tv-finding-seats { margin-top: auto; }
 .tv-mi-card .tv-seat.is-win { background: #fff; }
+.tv-mi-card .tv-seat.is-win::before { display: none; }
 .tv-mi-card .tv-seat.is-win .tv-seat-name,
 .tv-mi-card .tv-seat.is-win .tv-seat-tag { color: var(--c2); }
 .tv-mi-card .tv-seat.is-win .tv-seat-who .tv-seat-face { animation: tvSeatDrop 0.55s cubic-bezier(0.3, 0.9, 0.5, 1) backwards, tvSeatHop 1.15s ease-in-out 0.55s infinite; }

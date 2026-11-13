@@ -3,7 +3,6 @@ import { useNavigate, useParams } from "react-router-dom";
 import TvShell from "../../components/home/TvShell.jsx";
 import Icon from "../../components/home/Icon.jsx";
 import AnswerSkip from "../../components/home/AnswerSkip.jsx";
-import WaitingPill, { waitingNames } from "../../components/home/WaitingPill.jsx";
 import PartyPanel from "../../components/home/PartyPanel.jsx";
 import SpectatorBanner from "../../components/home/SpectatorBanner.jsx";
 import MatchResults from "../../components/home/MatchResults.jsx";
@@ -597,9 +596,6 @@ function GameScreen() {
             )}
 
             {closed && room.phase === "playing" && central && <PhoneHint room={room}>Elijan desde su teléfono</PhoneHint>}
-            {closed && room.phase === "playing" && !central && !spectator && Number.isInteger(myChoice) && (
-              <WaitingPill room={room} userId={user?.id} />
-            )}
             {!closed && room.phase === "playing" && central ? (
               <PhoneHint room={room}>{lyrics ? "Escriban lo que falta en su teléfono" : "Escriban el título en su teléfono"}</PhoneHint>
             ) : !closed && room.phase === "reveal" ? (
@@ -774,7 +770,6 @@ function GameScreen() {
                 <p className="tv-locked-title">
                   {skipped ? "Te la saltaste" : submittedSong || me?.lastAnswer?.text || "Canción enviada"}
                 </p>
-                <WaitingPill room={room} userId={user?.id} fallback={<p className="tv-hint">Esperando al resto de jugadores…</p>} />
               </div>
               )
             )}
