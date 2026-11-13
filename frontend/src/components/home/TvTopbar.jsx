@@ -6,6 +6,7 @@ import { useFriends } from "../../lib/friends.jsx";
 import { useIsOwner } from "../../lib/ownerView.js";
 import { useHiddenCode } from "../../lib/hiddenCode.js";
 import AdminPanel from "./AdminPanel.jsx";
+import AppSettings from "./AppSettings.jsx";
 import ConfirmDialog from "./ConfirmDialog.jsx";
 import Icon from "./Icon.jsx";
 import ProfileChip from "./ProfileChip.jsx";
@@ -129,6 +130,7 @@ export default function TvTopbar() {
   const friends = useFriends();
   const online = (friends.view?.friends || []).filter((f) => f.online).length;
   const isOwner = useIsOwner();
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const [adminOpen, setAdminOpen] = useState(false);
   const { pathname } = useLocation();
   const [codeHidden] = useHiddenCode();
@@ -238,7 +240,21 @@ export default function TvTopbar() {
 
   return (
     <>
-      {!isCentral && <AdminPanel open={adminOpen} onClose={() => setAdminOpen(false)} isOwner={isOwner} />}
+      {!isCentral && (
+        <AppSettings
+          open={settingsOpen}
+          onClose={() => setSettingsOpen(false)}
+          onOwner={
+            isOwner
+              ? () => {
+                  setSettingsOpen(false);
+                  setAdminOpen(true);
+                }
+              : null
+          }
+        />
+      )}
+      {isOwner && !isCentral && <AdminPanel open={adminOpen} onClose={() => setAdminOpen(false)} />}
       <header className={`tv-topbar${backAnim ? ` is-back-${backAnim}` : ""}`}>
         <div className="tv-topbar-start">
           {shownButton}
@@ -257,7 +273,7 @@ export default function TvTopbar() {
               aria-haspopup="dialog"
               onClick={(e) => {
                 e.currentTarget.blur();
-                setAdminOpen(true);
+                setSettingsOpen(true);
               }}
             >
               <span className="tv-avatar tv-avatar--empty">

@@ -2,12 +2,10 @@
 
 Two roles only (`auth/roles.js`): "user" and "owner", the account ids in the env var `OWNER_IDS` (a role saved on an account counts for nothing). Every owner power is checked on the socket's **verified** account.
 
-Everyone (not the central device) gets a gear (`TvTopbar.jsx`) opening "Ajustes" (`AdminPanel.jsx`, styles `styles/admin.css`). A player sees a narrow panel with **Animaciones** ("Con movimiento" | "Quietos": `useBlobsStill`, any player, this device) and, on phones only, **Volumen** (the top bar's volume button is hidden on phones for everyone, `VolumeMenu inOwnerPanel`). Owners (`useIsOwner`) see the same plus, under "Solo owners", their tools:
+Everyone (not the central device) gets a gear (`TvTopbar.jsx`) opening "Ajustes" (`AppSettings.jsx`, in `Modal`): **Volumen** (`VolumeRows`) and **Animaciones** ("Con movimiento" | "Quietos": `useBlobsStill`, any player, this device). Language, light/dark theme and chat filter are not there yet (the site only has Spanish and a dark theme). Owners (`useIsOwner`) get one more button at the foot of "Ajustes", **"Panel de owner"**, which closes it and opens `AdminPanel.jsx` (styles `styles/admin.css`) with their tools:
 
-- **Vista:** "Owner (debug)" | "Usuario normal" (`trivially_owner_view`). In normal view the owner sees the site like anyone (no "Saltar", forced games not sent).
+- **Vista:** "Owner (debug)" | "Usuario normal" (`trivially_owner_view`). In normal view the owner sees the site like anyone (no "Saltar").
 - **Tipo de sonido:** the sets of `lib/sounds.js` (`trivially_sound_pack_v2`); everyone else hears Madera.
-- **Estilo de los Blobs:** "Plano", "Sombra" (what everyone sees) or "Luz y sombra", only on the owner's device and in debug view (`lib/ownerView.js`, `useBlobStyle`).
 - **Pantalla de resultados** and **Marcador:** look variants only for the owner in debug view (`useResultsLook`, `useScoreboardLook`); everyone else sees the defaults: results "Barras" + "En color", scoreboard "Insignia" with a crown (`useScoreboardBadge`, its own setting apart from the results tone).
 - **Letra (Cerradas):** "Normal" (what everyone sees: three lines of lyrics over the four options) or "Opciones grandes" (only the last two lines, so the options are as big as Trivia's), only on the owner's device and in debug view (`useLyricsView`, `trivially_lyrics_view`; the play panel gets `is-big-options`).
 - **Bot de prueba:** `room:addTestBot`, private lobby only.
-- **Juegos de Casual:** the owner picks variants and their order for their own public matches (`trivially_forced_games`, ≤ `MAX_FORCED` 5). Sent as `force` with `match:find` only in debug view; `findMatch`/`cleanForced` open a private-to-them room filled with bots, and `drawMatchItems(..., force)` plays those first, in that order (then drawn ones, while nobody has won two).

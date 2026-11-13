@@ -122,7 +122,6 @@ import {
   CLASSIC_WINS,
   isClassic,
   AFK_CONFIRM_MS,
-  cleanForced,
   INTRO_MS,
   INTRO_RESULT_MS,
   INTRO_SPIN_MS,
@@ -545,13 +544,10 @@ export class RoomManager {
     const ids = [user.id, ...party.map((p) => p.id)];
     // The elo this search is for (the group's average): it is put with rivals of a close one (eloFits).
     const mine = this.searchRating([user, ...party], game);
-    // An owner's forced games (already checked against their account by the socket): their own room, nobody else's.
-    const force = game ? [] : cleanForced(input?.force);
     // A game's queue fills any room searching for that game; the roulette's rooms go by how many play.
-    let room = force.length ? undefined : [...this.rooms.values()].find(
+    let room = [...this.rooms.values()].find(
       (r) =>
         r.matchmaking &&
-        !r.matchmaking.force &&
         r.phase === "lobby" &&
         !r.matchmaking.startsAt &&
         r.matchmaking.kind === kind &&
@@ -567,7 +563,7 @@ export class RoomManager {
       room = this.create({ host: user, game: null });
       room.hostId = null;
       // A group bigger than what MATCH_SIZE lets fill (trying it out alone) still fits.
-      room.matchmaking = { kind, rounds, game, versus: size, size: Math.max(roomSize(size), seats), createdAt: Date.now(), games: null, startsAt: null, timer: null, botTimer: null, force: force.length ? force : null };
+      room.matchmaking = { kind, rounds, game, versus: size, size: Math.max(roomSize(size), seats), createdAt: Date.now(), games: null, startsAt: null, timer: null, botTimer: null };
       if (kind === "casual") this.scheduleBotArrival(room, BOT_WAIT_MS);
     }
     for (const member of party) this.addPlayer(room, member);
@@ -916,7 +912,7 @@ export class RoomManager {
     const { kind, game } = room.matchmaking;
     const drawn = game
       ? [this.publicGameItem(room, kind, game)]
-      : this.drawMatchItems(room, kind, matchMaxGames(this.connectedCount(room)), room.matchmaking.force);
+      : this.drawMatchItems(room, kind, matchMaxGames(this.connectedCount(room)));
     const items = game ? drawn : drawn.slice(0, MATCH_WINS);
     // What everyone sees of it: its variants so far, in play order (one more joins with each game added).
     room.matchmaking.games = items.map((item) => item.variant);
@@ -1110,15 +1106,15 @@ export class RoomManager {
   /**
    * The `count` games of a public match of `kind` (or of a Clásico), each a variant with its settings, all different
    * while there are variants left. A match of the roulette asks for more games than there are variants: the draw then
-   * starts over, never with the variant it just played. The variants in `force` go first, in their order.
+   * starts over, never with the variant it just played.
    */
-  drawMatchItems(room, kind, count, force = null) {
+  drawMatchItems(room, kind, count) {
     const configFor = (game, variant, easy) => this.matchItemSettings(room, kind, game, variant, easy);
     const items = [];
     while (items.length < count) {
       const before = items.length;
       const random = pickMatchGames(null, Math.random, variantsFor(kind));
-      const order = !before && force?.length ? [...force, ...random.filter((v) => !force.includes(v))] : random;
+      const order = random;
       // Only the variants that can be played make the pass, so the one that opens it is never the one just played.
       const pass = [];
       for (const variant of order) {

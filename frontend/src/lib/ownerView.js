@@ -1,11 +1,9 @@
 import { useSyncExternalStore } from "react";
 import { useApp } from "./store.jsx";
 
-// What only owners have: the "Vista" switch of the admin panel (the owner's own tools, "debug", or the site as any
-// player sees it) and the games an owner forces on its own public match. Both live in this browser only; the server
-// checks the account before doing anything with them.
+// What only owners have: the "Vista" switch of the owner panel (the owner's own tools, "debug", or the site as any
+// player sees it). It lives in this browser only; the server checks the account before doing anything with it.
 const VIEW_KEY = "trivially_owner_view";
-const FORCED_KEY = "trivially_forced_games";
 const listeners = new Set();
 const emit = () => listeners.forEach((fn) => fn());
 const read = (key, fallback) => {
@@ -29,30 +27,6 @@ const subscribe = (fn) => {
 /** "debug" (the owner's tools show) or "usuario" (the site as a normal player sees it). */
 export const getOwnerView = () => (read(VIEW_KEY, "debug") === "usuario" ? "usuario" : "debug");
 export const setOwnerView = (view) => write(VIEW_KEY, view === "usuario" ? "usuario" : "debug");
-
-/** The variant ids forced for this owner's public matches, in order ([] means the usual random draw). */
-export function getForcedGames() {
-  try {
-    const list = JSON.parse(read(FORCED_KEY, "[]"));
-    return Array.isArray(list) ? list.filter((id) => typeof id === "string") : [];
-  } catch {
-    return [];
-  }
-}
-export const setForcedGames = (list) => write(FORCED_KEY, JSON.stringify(list.filter((id) => typeof id === "string")));
-
-// How the Blobs are drawn (their skin): everyone sees "sombra" (its colour with a shadow inside, low on the right); an
-// owner, in debug view, can try "plano" (only the colour) and "luz" (the shadow and a light high on the left), from the
-// admin panel. Only on this device.
-const BLOB_STYLE_KEY = "trivially_blob_style";
-export const BLOB_STYLES = ["plano", "sombra", "luz"];
-const getBlobStyle = () => {
-  const style = read(BLOB_STYLE_KEY, "sombra");
-  return BLOB_STYLES.includes(style) ? style : "sombra";
-};
-export const setBlobStyle = (style) => write(BLOB_STYLE_KEY, BLOB_STYLES.includes(style) ? style : "sombra");
-/** The owner's choice, whatever the view (the admin panel's switch). */
-export const useBlobStyleChoice = () => useSyncExternalStore(subscribe, getBlobStyle, () => "sombra");
 
 // "Animaciones" (Ajustes): the Blobs stay still (no jumps nor looks), for this device. Anyone can turn it on.
 const STILL_KEY = "trivially_blobs_still";
@@ -84,16 +58,6 @@ export function useOwnerDebug() {
 
 export function useOwnerView() {
   return useSyncExternalStore(subscribe, getOwnerView, () => "debug");
-}
-
-export function useForcedGames() {
-  const raw = useSyncExternalStore(subscribe, () => read(FORCED_KEY, "[]"), () => "[]");
-  try {
-    const list = JSON.parse(raw);
-    return Array.isArray(list) ? list.filter((id) => typeof id === "string") : [];
-  } catch {
-    return [];
-  }
 }
 
 // The results screens an owner sees (between games and at the end of a match), to try the new designs in real matches:
@@ -167,13 +131,6 @@ export function useScoreboardLook() {
   const debug = useOwnerDebug();
   const choice = useScoreboardChoice();
   return debug ? choice : "insignia";
-}
-
-/** The Blobs' skin on this screen: the owner's choice in debug view, "sombra" for everyone else. */
-export function useBlobStyle() {
-  const debug = useOwnerDebug();
-  const style = useBlobStyleChoice();
-  return debug ? style : "sombra";
 }
 
 /** Letra with Cerradas on this screen: the owner's choice in debug view, "normal" for everyone else. */

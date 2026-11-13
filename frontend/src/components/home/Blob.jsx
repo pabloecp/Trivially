@@ -1,6 +1,6 @@
 import { useEffect, useId, useRef } from "react";
 import { blobShade } from "../../lib/blobColors.js";
-import { useBlobStyle, useBlobsStill } from "../../lib/ownerView.js";
+import { useBlobsStill } from "../../lib/ownerView.js";
 
 // How long a neutral Blob waits between one look around and the next (drawn again every time, for each Blob).
 const LOOK_EVERY_MS = [5000, 10000];
@@ -23,20 +23,16 @@ export function BlobGhost() {
 // Blob, the player's character and everyone's face: a soft round body, a little wider at the top, with a thick black
 // line and two black oval eyes. `color` is the body's (lib/blobColors.js, white by default).
 // Its skin is drawn in layers, all inside the line: the colour, a shadow inside (the body itself shifted up and to the
-// left, cut away: what's left is a crescent low on the right, in the colour's darker tone), a light high on the left
-// (the same, the other way) and an empty layer for what may come (shines, reflections). Which layers show is the skin
-// (`useBlobStyle`: "sombra" for everyone; "plano" and "luz" only for an owner trying them).
+// left, cut away: what's left is a crescent low on the right, in the colour's darker tone), and an empty layer for what may come (shines, reflections). Which layers show is the skin
+// (always "sombra").
 // `mood` moves it (look.css, "The Blob's moods"): "victoria" (a jump now and then, looking up), "derrota" (it sinks a
 // little and its eyes look down, to the sides, and half close), "neutral" (only its eyes look left and right now and
 // then) or none, still. The neutral ones don't all look at once: each looks around at its own random moments, every
 // 5 to 10 s, drawn again each time (`LOOK_EVERY_MS`). An owner's "Reducir
 // movimiento" (the admin panel, `useBlobsStill`) keeps them all still.
 export default function Blob({ className = "", color = "#fff", mood: asked = null, ring = null }) {
-  const style = useBlobStyle();
   const mood = useBlobsStill() ? null : asked;
   const uid = useId().replace(/[^a-zA-Z0-9]/g, "");
-  const shade = style !== "plano";
-  const light = style === "luz";
   const eyes = useRef(null);
   useEffect(() => {
     if (mood !== "neutral") return undefined;
@@ -63,27 +59,16 @@ export default function Blob({ className = "", color = "#fff", mood: asked = nul
       viewBox="0 0 100 100"
       aria-hidden="true"
     >
-      {(shade || light) && (
-        <defs>
-          {shade && (
-            <mask id={`${uid}s`}>
-              <rect x="-10" y="-10" width="120" height="120" fill="#fff" />
-              <path d={BODY} transform="translate(-7 -9)" fill="#000" />
-            </mask>
-          )}
-          {light && (
-            <mask id={`${uid}l`}>
-              <rect x="-10" y="-10" width="120" height="120" fill="#fff" />
-              <path d={BODY} transform="translate(6 7)" fill="#000" />
-            </mask>
-          )}
-        </defs>
-      )}
+      <defs>
+        <mask id={`${uid}s`}>
+          <rect x="-10" y="-10" width="120" height="120" fill="#fff" />
+          <path d={BODY} transform="translate(-7 -9)" fill="#000" />
+        </mask>
+      </defs>
       {ring && <path d={BODY} fill="none" stroke={ring} strokeWidth="13" strokeLinejoin="round" />}
       <g className="tv-blob-skin">
         <path d={BODY} fill={color} />
-        {shade && <path className="tv-blob-shade" d={BODY} fill={blobShade(color)} mask={`url(#${uid}s)`} />}
-        {light && <path className="tv-blob-light" d={BODY} fill="#fff" mask={`url(#${uid}l)`} />}
+        <path className="tv-blob-shade" d={BODY} fill={blobShade(color)} mask={`url(#${uid}s)`} />
         <g className="tv-blob-fx" />
       </g>
       <path d={BODY} fill="none" stroke="#0a0b0c" strokeWidth="4.5" strokeLinejoin="round" />
