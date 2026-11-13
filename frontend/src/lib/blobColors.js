@@ -2,7 +2,10 @@
 // of the games (Trivia, Canción, Mundo, Lluvia, Rango, Farsante, Minas). Eight, so the profile shows them in two full
 // rows of four. Everyone sees them all on the profile; the ones you can't use are dimmed and say how to get them. Any
 // other avatar saved (the old colours, a Google photo, the owners' old gold) shows as white, but the old account
-// colours as their new ones. `shade` is the darker tone of each, for the skins that draw a shadow inside (Blob.jsx).
+// colours as their new ones. `shade` is the darker tone of each, for the shadow inside (Blob.jsx). Besides the colours
+// there are the skins (lib/blobSkins.js, also with an account): a saved skin's id is worn like a colour.
+import { isBlobSkin } from "./blobSkins.js";
+
 export const BLOB_COLORS = [
   { id: "#FFFFFF", name: "Blanco", shade: "#AEB3BF", needs: null },
   { id: "#2F6BFF", name: "Trivia", shade: "#1A3C99", needs: "account" },
@@ -18,10 +21,12 @@ const RENAMED = { "#8FD3FF": "#2F6BFF", "#FFA6D2": "#FF2FC0", "#8EF0B0": "#00D1C
 /** How to get a colour you can't use yet. */
 export const HOW_TO_GET = {
   account: "Crea una cuenta para desbloquear este color.",
+  skin: "Crea una cuenta para desbloquear esta skin.",
 };
 
-/** The colour a Blob is drawn in, from a player's `avatar`. */
+/** The colour a Blob is drawn in, from a player's `avatar`: one of the colours, or a skin's id (lib/blobSkins.js). */
 export function blobColor(avatar) {
+  if (isBlobSkin(avatar)) return String(avatar).toLowerCase();
   const raw = String(avatar || "").toUpperCase();
   const id = RENAMED[raw] || raw;
   return BLOB_COLORS.some((c) => c.id === id) ? id : BLOB_COLORS[0].id;
@@ -33,7 +38,7 @@ export function blobShade(color) {
   return (BLOB_COLORS.find((c) => c.id === id) || BLOB_COLORS[0]).shade;
 }
 
-/** Whether `user` can use colour `c`. */
+/** Whether `user` can use colour (or skin) `c`. */
 export function canUseColor(user, c) {
   if (c.needs === "account") return Boolean(user) && !user.isGuest;
   return true;
