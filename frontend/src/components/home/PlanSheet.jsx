@@ -30,19 +30,24 @@ export default function PlanSheet({ open, onClose, plan, onAudience, onGame, inG
 
   return (
     <Modal open={open} onClose={onClose} title={inGroup ? "¿Qué quieren jugar?" : "¿Qué quieres jugar?"} size="lg" className="tv-plan">
-      <div className="tv-pills" role="radiogroup" aria-label="Con quién juegan">
+      <div className="tv-aud" role="radiogroup" aria-label="Con quién juegan">
         {AUDIENCES.map((a) => (
           <button
             key={a.value}
             type="button"
             role="radio"
-            className="tv-pill"
+            className="tv-aud-btn"
             aria-checked={plan.audience === a.value}
             disabled={readOnly}
             onClick={() => plan.audience !== a.value && onAudience(a.value)}
           >
-            <Icon name={a.icon} size={18} strokeWidth={2.6} />
-            {a.label}
+            <span className="tv-aud-icon">
+              <Icon name={a.icon} size={22} strokeWidth={2.6} />
+            </span>
+            <span className="tv-aud-text">
+              <span className="tv-aud-name">{a.label}</span>
+              <span className="tv-aud-sub">{a.hint}</span>
+            </span>
           </button>
         ))}
       </div>
