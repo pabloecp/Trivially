@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import TvShell from "../../components/home/TvShell.jsx";
 import Icon from "../../components/home/Icon.jsx";
-import WaitingPill, { joinNames as joinWaiting, waitingNames } from "../../components/home/WaitingPill.jsx";
+import { joinNames as joinWaiting, waitingNames } from "../../components/home/WaitingPill.jsx";
 import MatchResults from "../../components/home/MatchResults.jsx";
 import PartyPanel from "../../components/home/PartyPanel.jsx";
 import { ControllerBar, GetReady, PhoneHint } from "../../components/home/CentralBits.jsx";
@@ -336,14 +336,8 @@ function GameScreen() {
         disabled={!open || myGuess?.year == null}
         aria-live="polite"
       >
-        {confirmed && !tiebreak && phase === "playing" && waiting.length ? (
-          <WaitingPill names={waiting} inline />
-        ) : (
-          <>
-            <Icon name={confirmed ? "check" : "send"} size={20} strokeWidth={2.6} />
-            {confirmed ? "Enviado" : "Enviar"}
-          </>
-        )}
+        <Icon name={confirmed ? "check" : "send"} size={20} strokeWidth={2.6} />
+        {confirmed ? "Enviado" : "Enviar"}
       </button>
     );
   }

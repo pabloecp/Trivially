@@ -2,7 +2,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import TvShell from "../../components/home/TvShell.jsx";
 import Icon from "../../components/home/Icon.jsx";
-import WaitingPill, { waitingNames } from "../../components/home/WaitingPill.jsx";
+import { waitingNames } from "../../components/home/WaitingPill.jsx";
 import MatchResults from "../../components/home/MatchResults.jsx";
 import PartyPanel from "../../components/home/PartyPanel.jsx";
 import { PhoneHint, RoomVerdict, roundPlayers } from "../../components/home/CentralBits.jsx";
@@ -273,14 +273,8 @@ function GameScreen() {
   } else {
     action = (
       <button type="button" className="tv-btn tv-btn--primary tv-geo-confirm" onClick={confirmPin} disabled={phase !== "playing" || !myPin || pinLocked} aria-live="polite">
-        {pinLocked && !tiebreak && waiting.length ? (
-          <WaitingPill names={waiting} inline />
-        ) : (
-          <>
-            <Icon name={pinLocked ? "check" : "send"} size={20} strokeWidth={2.6} />
-            {pinLocked ? "Enviado" : "Enviar"}
-          </>
-        )}
+        <Icon name={pinLocked ? "check" : "send"} size={20} strokeWidth={2.6} />
+        {pinLocked ? "Enviado" : "Enviar"}
       </button>
     );
   }
