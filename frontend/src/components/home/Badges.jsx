@@ -15,85 +15,99 @@ export function BadgeTag({ badge, locked = false }) {
   );
 }
 
-// "Insignias", under the profile's three boxes: the ten badges with what each asks and how far you are (a bar and
-// "64 / 100"). The ones you won are tapped to wear them beside your name (the one you wear in the site's blue, "La
-// llevas"; tapped again, it comes off); the others are flat and dimmed, with a lock. On someone else's profile only the
-// ones they won show, without progress.
-export default function BadgesCard({ user, worn = null, own = false, onWear }) {
-  const [busy, setBusy] = useState("");
-  const all = badgeProgress(user);
-  const won = all.filter((b) => b.earned);
-  const list = own ? all : won;
+const fmt = (n) => n.toLocaleString("es-MX");
 
-  async function wear(id) {
-    if (busy) return;
-    setBusy(id);
+// "Insignias", the profile's third column: the ten badges in two columns of small boxes, each its tag and, on your own
+// profile, how far you are (a thin bar and "608 / 1,000"), or "Ganada" / "La llevas". Any box is tapped to read at the
+// foot what it asks; one you won is also worn with that tap beside your name (the one you wear in the site's blue;
+// tapped again, it comes off). Someone else's profile shows the same boxes without the progress; a guest sees them all
+// locked, and the foot says to make an account.
+export default function BadgesCard({ user, worn = null, own = false, guest = false, onWear }) {
+  const [asked, setAsked] = useState(null);
+  const [busy, setBusy] = useState("");
+  const all = badgeProgress(guest ? null : user);
+  const won = all.filter((b) => b.earned);
+  const shown = all.find((b) => b.id === asked) || null;
+  const mine = own && !guest;
+
+  async function tap(b) {
+    setAsked(b.id);
+    if (!mine || !b.earned || busy) return;
+    setBusy(b.id);
     try {
-      await onWear(worn === id ? null : id);
+      await onWear(worn === b.id ? null : b.id);
     } finally {
       setBusy("");
     }
   }
 
+  let note;
+  if (shown) {
+    const state = !mine
+      ? shown.earned
+        ? " La ganó."
+        : ""
+      : shown.earned
+        ? worn === shown.id
+          ? " La llevas junto a tu nombre; tócala otra vez para quitártela."
+          : " Ya es tuya."
+        : ` Llevas ${fmt(shown.have)} de ${fmt(shown.goal)}${shown.unit ? ` ${shown.unit}` : ""}.`;
+    note = (
+      <>
+        <b>{shown.name}</b> · {shown.how}
+        {state}
+      </>
+    );
+  } else if (guest) {
+    note = "Crea una cuenta para ganar insignias.";
+  } else if (mine) {
+    note = won.length ? "Toca una para ver qué pide. Las que ganaste se llevan junto a tu nombre." : "Son difíciles a propósito. Toca una para ver qué pide.";
+  } else {
+    note = "Toca una para ver qué pide.";
+  }
+
   return (
-    <section className="tv-card tv-pf-badges" aria-labelledby="tv-badges-title">
+    <section className="tv-card tv-pf-card tv-pf-badges" aria-labelledby="tv-badges-title">
       <div className="tv-pf-head">
         <h2 id="tv-badges-title" className="tv-pf-title">Insignias</h2>
         <span className="tv-badges-count">
           <b>{won.length}</b> de {BADGES.length}
         </span>
       </div>
-      <p className="tv-badges-hint">
-        {!own
-          ? won.length
-            ? "Las que ganó jugando."
-            : "Todavía no gana ninguna."
-          : won.length
-            ? "Toca una de las que ganaste para llevarla junto a tu nombre."
-            : "Son difíciles a propósito: cada una pide algo grande. Aquí ves cuánto te falta."}
-      </p>
-      {list.length > 0 && (
-        <div className="tv-badges-grid">
-          {list.map((b) => {
-            const on = worn === b.id;
-            const body = (
-              <>
-                <span className="tv-badge-top">
-                  <BadgeTag badge={b} locked={!b.earned} />
-                  {own && b.earned && <span className="tv-badge-state">{on ? "La llevas" : "Ponértela"}</span>}
-                </span>
-                <span className="tv-badge-how">{b.how}</span>
-                {own && (
+      <div className="tv-badges-grid">
+        {all.map((b) => {
+          const on = worn === b.id;
+          return (
+            <button
+              key={b.id}
+              type="button"
+              className={`tv-badge-item${b.earned ? " is-earned" : " is-locked"}${on ? " is-on" : ""}${asked === b.id ? " is-asked" : ""}`}
+              aria-pressed={mine && b.earned ? on : undefined}
+              aria-label={`${b.name}${b.earned ? "" : " (bloqueada)"}`}
+              disabled={Boolean(busy)}
+              onClick={() => tap(b)}
+            >
+              <BadgeTag badge={b} locked={!b.earned} />
+              {mine &&
+                (b.earned ? (
+                  <span className="tv-badge-state">{on ? "La llevas" : "Ganada"}</span>
+                ) : (
                   <span className="tv-badge-progress">
                     <span className="tv-badge-bar" aria-hidden="true">
-                      <span style={{ width: `${Math.round((b.have / b.goal) * 100)}%`, ...(b.earned ? { background: b.color } : {}) }} />
+                      <span style={{ width: `${Math.round((b.have / b.goal) * 100)}%` }} />
                     </span>
                     <span className="tv-badge-num">
-                      {b.earned ? "Ganada" : `${b.have.toLocaleString("es-MX")} / ${b.goal.toLocaleString("es-MX")}${b.unit ? ` ${b.unit}` : ""}`}
+                      {fmt(b.have)} / {fmt(b.goal)}
                     </span>
                   </span>
-                )}
-              </>
-            );
-            return own && b.earned ? (
-              <button
-                key={b.id}
-                type="button"
-                className={`tv-badge-item is-earned${on ? " is-on" : ""}`}
-                aria-pressed={on}
-                disabled={Boolean(busy)}
-                onClick={() => wear(b.id)}
-              >
-                {body}
-              </button>
-            ) : (
-              <div key={b.id} className={`tv-badge-item${b.earned ? " is-earned" : " is-locked"}`}>
-                {body}
-              </div>
-            );
-          })}
-        </div>
-      )}
+                ))}
+            </button>
+          );
+        })}
+      </div>
+      <p className="tv-badges-note" aria-live="polite">
+        {note}
+      </p>
     </section>
   );
 }

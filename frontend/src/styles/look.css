@@ -2070,59 +2070,73 @@
   .tv-app .tv-pf > .tv-pf-card { min-height: 0; }
   .tv-pf-blobnote { position: static; }
 }
-/* The stats: four flat boxes, two by two (four in a row when the box takes the whole width, two by two again on a
-   narrow phone), the label over the number. */
-.tv-app .tv-pf-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
-.tv-app .tv-pf-stat { flex-direction: column; align-items: flex-start; justify-content: center; gap: 6px; height: 72px; padding: 0 14px; }
-.tv-pf-num small { font-size: 14px; color: var(--tv-text-3); }
+/* ---------- Profile, three columns that fit the screen (Profile.jsx) ---------- */
+/* Who you are, your stats and your account in the first box; your Blob; your badges. All three as tall as the tallest,
+   each filling it (no empty bands); someone else's profile, two (who they are, their badges); one column on a phone. */
+.tv-app .tv-pf > .tv-pf-card { min-height: 0; }
+.tv-pf.is-other { grid-template-columns: repeat(2, minmax(0, 1fr)); max-width: 980px; margin-inline: auto; }
+/* Someone else's has no account under the stats: they grow to fill their box, with bigger numbers. */
+.tv-app .tv-pf.is-other .tv-pf-stats { flex: 1; grid-auto-rows: minmax(62px, 1fr); }
+.tv-app .tv-pf.is-other .tv-pf-stat { height: auto; gap: 8px; padding: 14px 18px; }
+.tv-app .tv-pf.is-other .tv-pf-num { font-size: 34px; }
+.tv-app .tv-pf-stats { margin-top: 0; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.tv-app .tv-pf-stat { flex-direction: column; align-items: flex-start; justify-content: center; gap: 4px; height: 62px; padding: 0 14px; }
+/* "Tu cuenta" under the stats, after a thin line: its title with "Guardar", the name and the @username side by side, and
+   one row with the email (cut with "…") and its buttons. */
+.tv-pf-account { display: grid; gap: 12px; margin-top: auto; padding-top: 14px; border-top: 1px solid var(--tv-surface-3); min-width: 0; }
+.tv-app .tv-pf-account .tv-pf-form { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; }
+.tv-app .tv-pf-account .tv-pf-foot { display: flex; align-items: center; gap: 10px; margin-top: 0; }
+.tv-app .tv-pf-account .tv-pf-mail { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tv-app .tv-pf-account .tv-pf-actions { flex: none; }
+.tv-app .tv-pf-account .tv-pf-actions .tv-btn { flex: none; padding: 0 18px; }
+/* Your Blob: the colours' and skins' boxes grow to fill the column. */
+.tv-app .tv-pf-blob .tv-blob-opts { flex: 1; grid-auto-rows: minmax(66px, 1fr); }
+.tv-app .tv-pf-blob .tv-blob-opt { height: auto; min-height: 66px; }
+/* "Términos de uso", "Aviso de privacidad" and "Borrar cuenta", centred under all the columns. */
+.tv-app .tv-pf > .tv-legal-links { grid-column: 1 / -1; justify-content: center; }
 @media (max-width: 1000px) {
+  .tv-pf.is-other { grid-template-columns: minmax(0, 1fr); }
   .tv-app .tv-pf-stats { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 }
-@media (max-width: 420px) {
+@media (max-width: 560px) {
   .tv-app .tv-pf-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .tv-app .tv-pf-stat { height: 64px; }
+  .tv-app .tv-pf-account .tv-pf-form { grid-template-columns: minmax(0, 1fr); }
+  .tv-app .tv-pf-account .tv-pf-foot { flex-wrap: wrap; }
+  .tv-app .tv-pf-account .tv-pf-actions { flex: 1 1 100%; }
+  .tv-app .tv-pf-account .tv-pf-actions .tv-btn { flex: 1; }
 }
 
 /* ---------- Profile: "Insignias" (Badges.jsx, lib/badges.js) ---------- */
 /* A badge is a tag like "Owner", in its own colour; a locked one is grey with a lock. */
 .tv-app .tv-badge-tag { background: var(--badge); color: var(--badge-ink); }
 .tv-app .tv-badge-tag.is-locked { background: var(--tv-surface-3); color: var(--tv-text-3); }
-/* The box takes the row under the three columns (on a phone, under them in the one column). */
-.tv-app .tv-pf > .tv-pf-badges { grid-column: 1 / -1; display: grid; gap: 12px; min-width: 0; margin: 0; padding: 20px; border-radius: 24px; animation: var(--tv-box-in); }
+.tv-app .tv-pf-badges { display: flex; flex-direction: column; gap: 12px; }
 .tv-badges-count { font-family: var(--tv-small); font-weight: 700; font-size: 14px; color: var(--tv-text-3); white-space: nowrap; }
 .tv-badges-count b { font-family: var(--tv-display); font-weight: 800; font-size: 18px; color: var(--tv-text); }
-.tv-badges-hint { margin: -6px 0 2px; font-family: var(--tv-small); font-weight: 600; font-size: 14px; line-height: 1.4; color: var(--tv-text-3); }
-/* Two even rows of five in the wide profile (from 1200 px; five rows of two under that and in someone else's), one
-   column on a phone. */
-.tv-badges-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
-@media (min-width: 1200px) {
-  .tv-badges-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+/* Ten small boxes in two columns, growing to fill the column. Each is a button: its tag over its bar and "608 / 1,000"
+   (or "Ganada", "La llevas"); grey with its edge, the one you wear in the site's blue, the one you tapped outlined. */
+.tv-badges-grid { display: grid; flex: 1; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-rows: minmax(58px, 1fr); gap: 8px; }
+.tv-badge-item {
+  display: flex; flex-direction: column; justify-content: center; align-items: flex-start; gap: 8px; min-width: 0; padding: 8px 12px;
+  border: 0; border-radius: 14px; background: var(--tv-neutral); box-shadow: 0 3px 0 var(--tv-neutral-edge); color: var(--tv-text);
+  font: inherit; text-align: left; cursor: pointer; transition: transform 0.15s var(--tv-spring), box-shadow 0.15s ease;
 }
-.tv-pf.is-other .tv-badges-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-/* Each badge: its tag (and, if won, "Ponértela" or "La llevas"), what it asks, and its bar with "64 / 100". The won ones
-   are buttons, grey with their edge, the one worn in the site's blue; the others are flat. */
-.tv-badge-item { display: flex; flex-direction: column; align-items: stretch; gap: 10px; min-width: 0; padding: 14px; border: 0; border-radius: 16px; background: var(--tv-surface-2); color: var(--tv-text); font: inherit; text-align: left; }
-button.tv-badge-item { background: var(--tv-neutral); box-shadow: 0 3px 0 var(--tv-neutral-edge); cursor: pointer; transition: transform 0.15s var(--tv-spring), box-shadow 0.15s ease; }
-button.tv-badge-item:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 5px 0 var(--tv-neutral-edge); }
-button.tv-badge-item:active:not(:disabled) { transform: translateY(3px); box-shadow: 0 0 0 var(--tv-neutral-edge); }
-button.tv-badge-item.is-on { background: var(--tv-pick); box-shadow: 0 3px 0 var(--tv-pick-edge); }
-button.tv-badge-item.is-on:hover:not(:disabled) { box-shadow: 0 5px 0 var(--tv-pick-edge); }
-button.tv-badge-item:disabled { cursor: default; }
-.tv-badge-top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 8px; min-width: 0; }
-.tv-badge-state { font-family: var(--tv-display); font-weight: 800; font-size: 13px; color: var(--tv-text-2); white-space: nowrap; }
-.tv-badge-how { font-family: var(--tv-small); font-weight: 600; font-size: 13px; line-height: 1.35; color: var(--tv-text-2); }
-.tv-badge-item.is-locked .tv-badge-how { color: var(--tv-text-3); }
-.tv-badge-progress { display: flex; align-items: center; gap: 10px; margin-top: auto; }
-.tv-badge-bar { display: block; flex: 1; height: 8px; overflow: hidden; border-radius: 4px; background: var(--tv-option-bg); }
-.tv-badge-bar > span { display: block; height: 100%; border-radius: 4px; background: var(--tv-text-3); }
-.tv-badge-num { flex: none; font-family: var(--tv-display); font-weight: 700; font-size: 13px; color: var(--tv-text-3); font-variant-numeric: tabular-nums; }
-.tv-badge-item.is-on :is(.tv-badge-state, .tv-badge-how, .tv-badge-num) { color: #fff; }
-.tv-badge-item.is-on .tv-badge-bar { background: rgba(0, 0, 0, 0.25); }
-@media (max-width: 560px) {
-  .tv-app .tv-pf > .tv-pf-badges { padding: 16px; }
-  .tv-badges-grid, .tv-pf.is-other .tv-badges-grid { grid-template-columns: minmax(0, 1fr); gap: 8px; }
-  .tv-badge-item { gap: 8px; padding: 12px; }
-}
+.tv-badge-item:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 5px 0 var(--tv-neutral-edge); }
+.tv-badge-item:active:not(:disabled) { transform: translateY(3px); box-shadow: 0 0 0 var(--tv-neutral-edge); }
+.tv-badge-item.is-on { background: var(--tv-pick); box-shadow: 0 3px 0 var(--tv-pick-edge); }
+.tv-badge-item.is-on:hover:not(:disabled) { box-shadow: 0 5px 0 var(--tv-pick-edge); }
+.tv-badge-item.is-asked { outline: 2px solid var(--tv-text-3); outline-offset: 2px; }
+.tv-badge-item:disabled { cursor: default; }
+.tv-badge-item .tv-badge-tag { max-width: 100%; overflow: hidden; white-space: nowrap; }
+.tv-badge-state { font-family: var(--tv-display); font-weight: 800; font-size: 13px; line-height: 1; color: var(--tv-text-2); }
+.tv-badge-item.is-on .tv-badge-state { color: #fff; }
+.tv-badge-progress { display: flex; align-items: center; gap: 8px; width: 100%; }
+.tv-badge-bar { display: block; flex: 1; min-width: 24px; height: 6px; overflow: hidden; border-radius: 3px; background: var(--tv-option-bg); }
+.tv-badge-bar > span { display: block; height: 100%; border-radius: 3px; background: var(--tv-text-3); }
+.tv-badge-num { flex: none; font-family: var(--tv-display); font-weight: 700; font-size: 12px; line-height: 1; color: var(--tv-text-3); font-variant-numeric: tabular-nums; }
+/* At the foot, what the tapped badge asks (and how far you are), or how the box works. */
+.tv-badges-note { min-height: 2.7em; margin: 0; padding: 10px 12px; border-radius: 12px; background: var(--tv-surface-2); font-family: var(--tv-small); font-weight: 600; font-size: 13px; line-height: 1.35; color: var(--tv-text-2); }
+.tv-badges-note b { color: var(--tv-text); }
 /* "Tu Blob": the title and its two tabs ("Colores", "Skins") on one line. The skins take the colours' box (four rows of
    two; on a phone two rows of four) and scroll inside it, fading at the foot so it shows there are more. */
 .tv-app .tv-pf-blob .tv-card-head { justify-content: space-between; gap: 12px; }

@@ -467,8 +467,9 @@ function ProfileScreen() {
       {msg && <Notice tone="ok" icon="check">{msg}</Notice>}
       {err && <Notice tone="bad" icon="lock">{err}</Notice>}
 
-      {/* Three columns of the same width and height: who it is, the Blob's colour and the account. The same places with or
-          without an account, whatever the name's length (it's cut with "…"). Someone else's profile is only the first. */}
+      {/* Three columns of the same height that fit the screen: who you are with your stats and your account, your Blob, and
+          your badges. The same places with or without an account, whatever the name's length (it's cut with "…"). Someone
+          else's profile has two: who they are and their badges. On a phone, one column. */}
       <div className={`tv-pf${isOtherUser ? " is-other" : ""}`}>
         <section className="tv-card tv-pf-card" aria-label="Perfil">
           <div className="tv-pf-who">
@@ -502,6 +503,85 @@ function ProfileScreen() {
               );
             })}
           </div>
+          {/* Your account, in the same box as who you are: its title with "Guardar", the name and the @username side by
+              side, and at its foot your email, Google, Spotify and "Cerrar sesión". */}
+          {!isOtherUser && (
+            <div className="tv-pf-account" role="group" aria-labelledby="tv-account-title">
+              <div className="tv-pf-head">
+                <h2 id="tv-account-title" className="tv-pf-title">Tu cuenta</h2>
+                <button type="button" className="tv-btn tv-btn--primary" onClick={onSaveProfile} disabled={!canSave || saving} aria-busy={saving}>
+                  {saving ? "Guardando…" : "Guardar"}
+                </button>
+              </div>
+              <form onSubmit={onSaveProfile} className="tv-pf-form">
+                <label className="tv-form-row">
+                  <span className="tv-label">Nombre</span>
+                  <input
+                    className="tv-field tv-field--sm"
+                    value={newUserName}
+                    onChange={(e) => setNewUserName(e.target.value)}
+                    placeholder={activeUser?.name || "Tu nuevo nombre"}
+                    maxLength={24}
+                    disabled={saving}
+                  />
+                </label>
+                {isGuest ? (
+                  <label className="tv-form-row">
+                    <span className="tv-label">Usuario</span>
+                    <input className="tv-field tv-field--sm" placeholder="Crea una cuenta para tener uno" disabled />
+                  </label>
+                ) : (
+                  <UsernameField
+                    label={handleLabel(activeUser?.usernameInfo)}
+                    value={newHandle}
+                    onChange={setNewHandle}
+                    check={handleCheck}
+                    placeholder={activeUser?.username || "tu_usuario"}
+                    disabled={saving}
+                  />
+                )}
+              </form>
+              <div className="tv-pf-foot">
+                <p className="tv-pf-mail" title={isGuest ? undefined : activeUser?.email}>{isGuest ? "Sin cuenta" : activeUser?.email || ""}</p>
+                {isGuest ? (
+                  <div className="tv-pf-actions">
+                    <Link to="/login?mode=login&returnTo=/profile" className="tv-btn tv-btn--neutral">Iniciar sesión</Link>
+                    <Link to="/login?returnTo=/profile" className="tv-btn tv-btn--neutral">Crear cuenta</Link>
+                  </div>
+                ) : (
+                  <div className="tv-pf-actions">
+                    {canLinkGoogle && (
+                      <button type="button" className="tv-iconbtn tv-pf-icon" aria-label="Vincular Google" title="Vincular Google" onClick={() => linkGoogle("/profile")}>
+                        <GoogleIcon size={22} />
+                      </button>
+                    )}
+                    {canSpotify && (
+                      <button
+                        type="button"
+                        className={`tv-iconbtn tv-pf-icon${hasSpotify ? "" : " is-faint"}${confirmUnlink ? " is-danger" : ""}`}
+                        aria-label={confirmUnlink ? "Toca otra vez para desconectar Spotify" : hasSpotify ? "Spotify conectado. Toca para desconectarlo" : "Conectar Spotify"}
+                        title={confirmUnlink ? "Toca otra vez para desconectar" : hasSpotify ? activeUser.spotify?.displayName || "Spotify conectado" : "Conectar Spotify"}
+                        onClick={hasSpotify ? onSpotifyActive : onConnectSpotify}
+                        disabled={spotifyBusy}
+                      >
+                        <SpotifyIcon size={22} />
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      className="tv-btn tv-btn--bad"
+                      onClick={() => {
+                        logout();
+                        nav("/login");
+                      }}
+                    >
+                      Cerrar sesión
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </section>
 
         {!isOtherUser && (
@@ -510,86 +590,7 @@ function ProfileScreen() {
           </section>
         )}
 
-        {!isOtherUser && (
-          <section className="tv-card tv-pf-card" aria-labelledby="tv-account-title">
-            <div className="tv-pf-head">
-              <h2 id="tv-account-title" className="tv-pf-title">Tu cuenta</h2>
-              <button type="button" className="tv-btn tv-btn--primary" onClick={onSaveProfile} disabled={!canSave || saving} aria-busy={saving}>
-                {saving ? "Guardando…" : "Guardar"}
-              </button>
-            </div>
-            <form onSubmit={onSaveProfile} className="tv-pf-form">
-              <label className="tv-form-row">
-                <span className="tv-label">Nombre</span>
-                <input
-                  className="tv-field tv-field--sm"
-                  value={newUserName}
-                  onChange={(e) => setNewUserName(e.target.value)}
-                  placeholder={activeUser?.name || "Tu nuevo nombre"}
-                  maxLength={24}
-                  disabled={saving}
-                />
-              </label>
-              {isGuest ? (
-                <label className="tv-form-row">
-                  <span className="tv-label">Usuario</span>
-                  <input className="tv-field tv-field--sm" placeholder="Crea una cuenta para tener uno" disabled />
-                </label>
-              ) : (
-                <UsernameField
-                  label={handleLabel(activeUser?.usernameInfo)}
-                  value={newHandle}
-                  onChange={setNewHandle}
-                  check={handleCheck}
-                  placeholder={activeUser?.username || "tu_usuario"}
-                  disabled={saving}
-                />
-              )}
-            </form>
-            <div className="tv-pf-foot">
-              <p className="tv-pf-mail" title={isGuest ? undefined : activeUser?.email}>{isGuest ? "Sin cuenta" : activeUser?.email || ""}</p>
-              {isGuest ? (
-                <div className="tv-pf-actions">
-                  <Link to="/login?mode=login&returnTo=/profile" className="tv-btn tv-btn--neutral">Iniciar sesión</Link>
-                  <Link to="/login?returnTo=/profile" className="tv-btn tv-btn--neutral">Crear cuenta</Link>
-                </div>
-              ) : (
-                <div className="tv-pf-actions">
-                  {canLinkGoogle && (
-                    <button type="button" className="tv-iconbtn tv-pf-icon" aria-label="Vincular Google" title="Vincular Google" onClick={() => linkGoogle("/profile")}>
-                      <GoogleIcon size={22} />
-                    </button>
-                  )}
-                  {canSpotify && (
-                    <button
-                      type="button"
-                      className={`tv-iconbtn tv-pf-icon${hasSpotify ? "" : " is-faint"}${confirmUnlink ? " is-danger" : ""}`}
-                      aria-label={confirmUnlink ? "Toca otra vez para desconectar Spotify" : hasSpotify ? "Spotify conectado. Toca para desconectarlo" : "Conectar Spotify"}
-                      title={confirmUnlink ? "Toca otra vez para desconectar" : hasSpotify ? activeUser.spotify?.displayName || "Spotify conectado" : "Conectar Spotify"}
-                      onClick={hasSpotify ? onSpotifyActive : onConnectSpotify}
-                      disabled={spotifyBusy}
-                    >
-                      <SpotifyIcon size={22} />
-                    </button>
-                  )}
-                  <button
-                    type="button"
-                    className="tv-btn tv-btn--bad"
-                    onClick={() => {
-                      logout();
-                      nav("/login");
-                    }}
-                  >
-                    Cerrar sesión
-                  </button>
-                </div>
-              )}
-            </div>
-          </section>
-        )}
-        {!isGuest && badgeUser && (
-          <BadgesCard user={badgeUser} worn={wornBadge?.id || null} own={!isOtherUser} onWear={onWearBadge} />
-        )}
+        {badgeUser && <BadgesCard user={badgeUser} worn={wornBadge?.id || null} own={!isOtherUser} guest={isGuest} onWear={onWearBadge} />}
         {!isOtherUser && (
           <nav className="tv-legal-links" aria-label="Información legal">
             <Link to="/terminos">Términos de uso</Link>
