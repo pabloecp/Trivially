@@ -13,6 +13,8 @@ import SpotifyIcon from "../components/home/SpotifyIcon.jsx";
 import Icon from "../components/home/Icon.jsx";
 import Modal from "../components/home/Modal.jsx";
 import { BLOB_COLORS, HOW_TO_GET, blobColor, canUseColor } from "../lib/blobColors.js";
+import { BLOB_SKINS, isBlobSkin } from "../lib/blobSkins.js";
+import Segmented from "../components/home/Segmented.jsx";
 
 // Only what matters: how many matches you won, how many questions you got right and how many daily challenges you completed.
 const STATS = [
@@ -121,13 +123,22 @@ function DeleteAccount({ open, name, needsPassword, onClose, onDelete }) {
   );
 }
 
-// "Color de tu Blob": every colour, like an inventory. The ones you can use are tapped to wear them (the one you wear in
-// the site's blue); the others are dimmed with a lock, and a tap says how to get them (lib/blobColors.js).
+// "Tu Blob": every colour and every skin, like an inventory, in two tabs ("Colores", "Skins"; it opens on the one you
+// wear). The ones you can use are tapped to wear them (the one you wear in the site's blue); the others are dimmed with
+// a lock, and a tap says how to get them (lib/blobColors.js, lib/blobSkins.js). The skins scroll inside the same box.
+const BLOB_TABS = [
+  { value: "colores", label: "Colores" },
+  { value: "skins", label: "Skins" },
+];
+const ALL_LOOKS = [...BLOB_COLORS, ...BLOB_SKINS];
+
 function BlobColors({ user, onPick }) {
   const [info, setInfo] = useState(null);
   const [busy, setBusy] = useState("");
   const current = blobColor(user?.avatar);
-  const shown = BLOB_COLORS.find((c) => c.id === (info || current));
+  const [tab, setTab] = useState(() => (isBlobSkin(current) ? "skins" : "colores"));
+  const list = tab === "skins" ? BLOB_SKINS : BLOB_COLORS;
+  const shown = ALL_LOOKS.find((c) => c.id === (info || current));
   const locked = shown && !canUseColor(user, shown);
 
   async function choose(c) {
@@ -148,10 +159,11 @@ function BlobColors({ user, onPick }) {
   return (
     <div className="tv-blob-colors">
       <div className="tv-card-head">
-        <h2 className="tv-card-title">Color de tu Blob</h2>
+        <h2 className="tv-card-title">Tu Blob</h2>
+        <Segmented options={BLOB_TABS} value={tab} onChange={(v) => { setTab(v); setInfo(null); }} label="Colores o skins" />
       </div>
-      <div className="tv-blob-opts" role="radiogroup" aria-label="Color de tu Blob">
-        {BLOB_COLORS.map((c) => {
+      <div className={`tv-blob-opts${tab === "skins" ? " is-skins" : ""}`} role="radiogroup" aria-label={tab === "skins" ? "Skin de tu Blob" : "Color de tu Blob"}>
+        {list.map((c) => {
           const ok = canUseColor(user, c);
           return (
             <button
@@ -177,7 +189,7 @@ function BlobColors({ user, onPick }) {
       {/* Over the colours, so saying it moves nothing. */}
       {locked && (
         <p className="tv-pf-blobnote" aria-live="polite">
-          <b>{shown.name}</b> · {HOW_TO_GET[shown.needs]}
+          <b>{shown.name}</b> · {HOW_TO_GET[shown.how || shown.needs]}
         </p>
       )}
     </div>
@@ -276,7 +288,7 @@ function ProfileScreen() {
     try {
       await updateAvatar(color);
     } catch (e) {
-      setErr(e.message || "No se pudo cambiar el color");
+      setErr(e.message || "No se pudo cambiar tu Blob");
     }
   }
 
@@ -445,7 +457,7 @@ function ProfileScreen() {
         </section>
 
         {!isOtherUser && (
-          <section className="tv-card tv-pf-card tv-pf-blob" aria-label="Color de tu Blob">
+          <section className="tv-card tv-pf-card tv-pf-blob" aria-label="Tu Blob">
             <BlobColors user={currentUser} onPick={onPickColor} />
           </section>
         )}

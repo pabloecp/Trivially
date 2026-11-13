@@ -79,6 +79,10 @@ assert.equal(updateUserAvatar(testStore, user2.id, "#2f6bff").avatar, "#2F6BFF")
 assert.equal(updateUserAvatar(testStore, user2.id, "#8fd3ff").avatar, "#2F6BFF");
 assert.equal(updateUserAvatar(testStore, user2.id, "#FF8A00").avatar, "#FF5A1F");
 assert.equal(updateUserAvatar(testStore, user2.id, "#1fd24a").avatar, "#1FD24A");
+// The skins go in the same avatar, saved in lowercase; an unknown one is refused.
+assert.equal(updateUserAvatar(testStore, user2.id, "Oro").avatar, "oro");
+assert.equal(playerAvatar(testStore.users[user2.id]), "oro");
+assert.throws(() => updateUserAvatar(testStore, user2.id, "arcoiris"), /no válido/);
 assert.equal(updateUserAvatar(testStore, user2.id, "#FFFFFF").avatar, "#FFFFFF");
 const gUser = upsertGoogleUser(testStore, { name: "G", email: "g@trivially.test", avatar: "https://photo.test/g.jpg", googleId: "g_1" });
 assert.equal(gUser.avatar, "https://photo.test/g.jpg");
@@ -97,6 +101,9 @@ upsertUser(testStore, { id: "gst_fake01", name: "Falso", avatar: "#8FD3FF" });
 assert.notEqual(testStore.users.gst_fake01.avatar, "#8FD3FF", "nor an old account colour");
 assert.equal(playerAvatar(undefined), "#FFFFFF");
 assert.equal(playerAvatar({ isGuest: true, avatar: "#FFA6D2" }), "#FFFFFF");
+assert.equal(playerAvatar({ isGuest: true, avatar: "galaxia" }), "#FFFFFF", "a guest shows no skin");
+upsertUser(testStore, { id: "gst_fake01", name: "Falso", avatar: "galaxia" });
+assert.notEqual(testStore.users.gst_fake01.avatar, "galaxia", "nor saves one");
 assert.equal(playerAvatar({ isGuest: false, role: "user", avatar: "#00A2FF" }), "#00A2FF");
 assert.equal(playerAvatar({ isGuest: false, role: "user", avatar: "#FF8A00" }), "#FF5A1F");
 assert.equal(playerAvatar({ isGuest: false, role: "user", avatar: "#FFA6D2" }), "#FF2FC0", "an old colour shows as its new one");

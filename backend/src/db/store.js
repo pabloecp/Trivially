@@ -33,15 +33,23 @@ export const BLOB_ACCOUNT = ["#2F6BFF", "#FF2FC0", "#00D1C1", "#00A2FF", "#FF5A1
 // The account colours the Blob had before (celeste, rosa, menta; then amarillo and naranja): saved ones count as their
 // new colour. The owners' gold is gone: saved, it shows white.
 const BLOB_RENAMED = { "#8FD3FF": "#2F6BFF", "#FFA6D2": "#FF2FC0", "#8EF0B0": "#00D1C1", "#FFD60A": "#FF5A1F", "#FF8A00": "#FF5A1F" };
+// The Blob's skins (frontend lib/blobSkins.js, same ids): drawings instead of a plain colour, for accounts too. Saved
+// as their id in lowercase, in the same `avatar` as a colour.
+export const BLOB_SKINS = ["gomita", "galaxia", "holo", "magma", "oro", "lava", "vitral", "sandia", "dona", "escarcha", "cielo", "mar", "atardecer", "vaca", "mezclilla", "pinata", "cuaderno", "mapa", "disco", "circuito"];
+const isSkin = (value) => BLOB_SKINS.includes(String(value || "").toLowerCase());
+// A Google photo saved as the avatar: anything that is neither a colour nor a skin.
+const isPhoto = (value) => Boolean(value) && !HEX_COLOR.test(value) && !isSkin(value);
 const blobId = (color) => {
+  if (isSkin(color)) return String(color).toLowerCase();
   const id = String(color || "").toUpperCase();
   return BLOB_RENAMED[id] || id;
 };
 
-// Why `user` can't use the Blob colour `color`, or null when it can. Anything that isn't one of the Blob's colours (an
-// old colour, a Google photo) is drawn white, so it gives nothing away.
+// Why `user` can't use the Blob colour (or skin) `color`, or null when it can. Anything that isn't one of the Blob's
+// colours or skins (an old colour, a Google photo) is drawn white, so it gives nothing away.
 function blobColorError(user, color) {
   const id = blobId(color);
+  if (BLOB_SKINS.includes(id)) return user && !user.isGuest ? null : "Crea una cuenta para usar esa skin";
   if (BLOB_ACCOUNT.includes(id)) return user && !user.isGuest ? null : "Crea una cuenta para usar ese color";
   return null;
 }
@@ -52,7 +60,8 @@ function blobColorError(user, color) {
  */
 export function playerAvatar(user) {
   if (!user?.avatar || blobColorError(user, user.avatar)) return BLOB_WHITE;
-  // An old account colour as its new one; anything else as it was saved.
+  // An old account colour as its new one, a skin in lowercase; anything else as it was saved.
+  if (isSkin(user.avatar)) return String(user.avatar).toLowerCase();
   return BLOB_RENAMED[String(user.avatar).toUpperCase()] || user.avatar;
 }
 
@@ -496,7 +505,7 @@ export function upsertGoogleUser(store, { id, email, name, avatar, googleId }, g
   if (existing) {
     // The Google photo becomes the avatar the first time; after that it only refreshes it if the player is
     // still using the photo (a color they picked is kept).
-    const usingPhoto = !existing.googleId || !HEX_COLOR.test(existing.avatar || "");
+    const usingPhoto = !existing.googleId || !existing.avatar || isPhoto(existing.avatar);
     // An account made with this email and a password, entered with Google for the first time: nobody ever proved the
     // email was theirs when it was made, and Google just did. The password goes (and whoever was signed in with it),
     // so someone who registered another person's email can't stay inside their account. They enter with Google.
@@ -596,7 +605,7 @@ export function unlinkGoogle(store, userId) {
 
   delete user.googleId;
   delete user.googlePhoto;
-  if (!HEX_COLOR.test(user.avatar || "")) user.avatar = DEFAULT_AVATAR;
+  if (!user.avatar || isPhoto(user.avatar)) user.avatar = DEFAULT_AVATAR;
   store.users[userId] = user;
   saveStore(store);
   return sanitizeUser(user);
@@ -637,12 +646,12 @@ export function updateUserAvatar(store, userId, choice) {
   const user = store.users[userId];
   if (!user) throw new Error("Usuario no encontrado");
   if (choice === "google") {
-    const photo = user.googlePhoto || (user.googleId && !HEX_COLOR.test(user.avatar || "") ? user.avatar : null);
+    const photo = user.googlePhoto || (user.googleId && isPhoto(user.avatar) ? user.avatar : null);
     if (!photo) throw new Error("Inicia sesión con Google para usar tu foto de perfil");
     user.avatar = photo;
   } else {
     const color = blobId(choice);
-    if (color !== BLOB_WHITE && !BLOB_ACCOUNT.includes(color)) throw new Error("Color no válido");
+    if (color !== BLOB_WHITE && !BLOB_ACCOUNT.includes(color) && !BLOB_SKINS.includes(color)) throw new Error("Color no válido");
     const problem = blobColorError(user, color);
     if (problem) throw new Error(problem);
     user.avatar = color;
