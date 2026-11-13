@@ -281,7 +281,8 @@ export default function TvTopbar() {
               </span>
             </button>
           )}
-          <VolumeMenu inOwnerPanel={!isCentral} />
+          {/* Everyone else has the volume in "Ajustes"; the central device (no gear) keeps its button. */}
+          {isCentral && <VolumeMenu />}
           {!isCentral && (
             <button
               type="button"

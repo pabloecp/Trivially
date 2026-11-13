@@ -714,10 +714,9 @@
   .tv-app .tv-gbar-go.is-waiting:disabled { opacity: 1; cursor: progress; }
   .tv-gbar-note { flex: 1; }
 }
-/* Phones: the top bar keeps every button (Volver, your group, the volume or the owners' gear, Amigos, your
+/* Phones: the top bar keeps every button (Volver, your group, the "Ajustes" gear, Amigos, your
    Blob) in one row, never squeezed: 36 px buttons, the group's chip without its arrow. Narrower still, the gaps close up. */
 @media (max-width: 760px) {
-  .tv-volume--owner { display: none; }
   /* Amigos is only its icon (its requests keep their red badge) and your profile only your Blob. */
   .tv-app .tv-topbar .tv-chip--friends { width: 36px; padding: 0; }
   .tv-app .tv-topbar .tv-chip--friends > .tv-avatar--empty { width: 36px; margin: 0; }
