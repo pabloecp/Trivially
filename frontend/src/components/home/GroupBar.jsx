@@ -7,7 +7,9 @@ import { useApp } from "../../lib/store.jsx";
 import AppIcon from "./AppIcon.jsx";
 import Avatar from "./Avatar.jsx";
 import Icon from "./Icon.jsx";
+import { useT } from "../../lib/i18n.js";
 
+import { translate as tr } from "../../lib/i18n.js";
 /** What the group's box beside the game's card (ModeStage's SocialBox) needs, from HomeFrame:
  *  `{ canCreate, busy, onInvite, onMakeGroup, onGroup, onLeave, inviteBadge }`. */
 export const GroupBoxContext = createContext(null);
@@ -24,15 +26,16 @@ export const GroupBoxContext = createContext(null);
 // (GroupMenu: the faces and how many, a tap opens "Tu grupo"), and the rest stays at the foot of the screen, always in
 // sight: "Vas a jugar", the whole width, and the yellow button under it.
 export default function GroupBar({ members = [], meId, inGroup = false, onGroup, onInvite, onLeave, inviteOff = false, busy = "", inviteBadge = 0, plan, onPlan, planLocked = false, action = null, note = "" }) {
+  const t = useT();
   const mode = plan.game ? findMode(plan.game) : null;
   const classic = mode?.kind === "classic";
   const { user } = useApp();
   const faces = [...members].sort((a, b) => (b.id === meId) - (a.id === meId));
   const phone = useNarrow();
-  const cap = inGroup ? `Tu grupo · ${members.length}` : "Tu grupo";
+  const cap = inGroup ? t("Tu grupo · {n}", { n: members.length }) : t("Tu grupo");
 
   return (
-    <div className="tv-gbar" role="region" aria-label="Reto del día y la partida">
+    <div className="tv-gbar" role="region" aria-label={t("Reto del día y la partida")}>
       {phone ? (
         <GroupMenu members={faces} count={members.length} inGroup={inGroup} meId={meId} myAvatar={user?.avatar} onGroup={onGroup} onInvite={onInvite} onLeave={onLeave} inviteOff={inviteOff} busy={busy} cap={cap} badge={inviteBadge} />
       ) : (
@@ -40,13 +43,13 @@ export default function GroupBar({ members = [], meId, inGroup = false, onGroup,
       )}
 
       <div className="tv-gbar-zone tv-gbar-zone--plan">
-        <span className="tv-gbar-cap">Partida</span>
+        <span className="tv-gbar-cap">{t("Partida")}</span>
         <div className="tv-gbar-box tv-gbar-plan-row">
           <button
             type="button"
             className={`tv-gcard tv-gbar-plan ${classic ? "is-classic" : `tv-c-${mode?.color || "neutral"}`}`}
             aria-haspopup="dialog"
-            aria-label={`${audienceName(plan.audience)}: ${mode?.name || "elige un juego"}`}
+            aria-label={`${audienceName(plan.audience)}: ${mode?.name ? t(mode.name) : t("elige un juego")}`}
             onClick={onPlan}
             disabled={planLocked}
           >
@@ -66,7 +69,7 @@ export default function GroupBar({ members = [], meId, inGroup = false, onGroup,
                 <Icon name={plan.audience === "publica" ? "globe" : "lock"} size={13} strokeWidth={2.8} />
                 {audienceOf(plan.audience).short}
               </span>
-              <span className="tv-gcard-name">{mode?.name || "Elige un juego"}</span>
+              <span className="tv-gcard-name">{mode?.name ? t(mode.name) : t("Elige un juego")}</span>
             </span>
             {!planLocked && <Icon name="chevron" size={18} strokeWidth={3} className="tv-gbar-plan-chevron" />}
           </button>
@@ -75,7 +78,7 @@ export default function GroupBar({ members = [], meId, inGroup = false, onGroup,
 
       <div className="tv-gbar-zone tv-gbar-zone--go">
         {/* Hidden on phones and desktop alike: it only keeps the button level with the boxes beside it. */}
-        <span className="tv-gbar-cap" aria-hidden="true">Partida</span>
+        <span className="tv-gbar-cap" aria-hidden="true">{t("Partida")}</span>
         {action ? (
           <button
             type="button"
@@ -85,7 +88,7 @@ export default function GroupBar({ members = [], meId, inGroup = false, onGroup,
             disabled={action.disabled}
           >
             {action.play && <Icon name="play" size={18} strokeWidth={2.6} filled />}
-            {action.label}
+            {t(action.label)}
           </button>
         ) : (
           <p className="tv-gbar-note">{note}</p>
@@ -98,12 +101,13 @@ export default function GroupBar({ members = [], meId, inGroup = false, onGroup,
 // "Reto del día" in the bar: the flame, today's goal over its bar, and how far it is. Guests have none: one line says
 // what an account gives.
 function DailyZone({ daily }) {
+  const t = useT();
   const done = Boolean(daily?.done);
   const target = daily?.target || 1;
   const progress = Math.min(target, daily?.progress || 0);
   return (
     <div className="tv-gbar-zone tv-gbar-zone--group">
-      <span className="tv-gbar-cap">Reto del día</span>
+      <span className="tv-gbar-cap">{t("Reto del día")}</span>
       <div className={`tv-gbar-box tv-gbar-daily${done ? " is-done" : ""}`}>
         <span className="tv-stage-daily-icon">
           <Icon name={done ? "check" : "flame"} size={20} strokeWidth={2.4} />
@@ -111,8 +115,8 @@ function DailyZone({ daily }) {
         {daily ? (
           <>
             <span className="tv-gbar-daily-text">
-              <strong title={daily.goal}>{daily.goal}</strong>
-              <span className="tv-stage-daily-bar" role="progressbar" aria-valuemin={0} aria-valuemax={target} aria-valuenow={progress} aria-label="Avance del reto">
+              <strong title={t(daily.goal)}>{t(daily.goal)}</strong>
+              <span className="tv-stage-daily-bar" role="progressbar" aria-valuemin={0} aria-valuemax={target} aria-valuenow={progress} aria-label={t("Avance del reto")}>
                 <i style={{ width: `${Math.round((progress / target) * 100)}%` }} />
               </span>
             </span>
@@ -122,7 +126,7 @@ function DailyZone({ daily }) {
           </>
         ) : (
           <span className="tv-gbar-daily-text">
-            <span className="tv-stage-friends-empty">Con una cuenta tienes un reto distinto cada día y llevas la cuenta de los que completas.</span>
+            <span className="tv-stage-friends-empty">{t("Con una cuenta tienes un reto distinto cada día y llevas la cuenta de los que completas.")}</span>
           </span>
         )}
       </div>
@@ -151,6 +155,7 @@ export function useNarrow() {
 // container moves left to give room to "Salir del grupo" (`onLeave`, asks first), the same size and place as the
 // top bar's "Volver" on the other screens.
 function GroupMenu({ members, count, inGroup, meId, myAvatar, onGroup, onInvite, onLeave, inviteOff, busy, cap, badge }) {
+  const t = useT();
   const [slot, setSlot] = useState(null);
   const together = inGroup && count > 1;
 
@@ -162,7 +167,7 @@ function GroupMenu({ members, count, inGroup, meId, myAvatar, onGroup, onInvite,
   return createPortal(
     <div className="tv-sala">
       {together && (
-        <button type="button" className="tv-chip tv-chip--leave tv-sala-leave" data-sound="back" aria-label="Salir del grupo" title="Salir del grupo" onClick={() => onLeave?.()} disabled={Boolean(busy)}>
+        <button type="button" className="tv-chip tv-chip--leave tv-sala-leave" data-sound="back" aria-label={t("Salir del grupo")} title={t("Salir del grupo")} onClick={() => onLeave?.()} disabled={Boolean(busy)}>
           <span className="tv-avatar tv-avatar--empty">
             <Icon name="logout" size={20} strokeWidth={2.6} />
           </span>
@@ -173,12 +178,12 @@ function GroupMenu({ members, count, inGroup, meId, myAvatar, onGroup, onInvite,
         type="button"
         className="tv-chip tv-chip--sala"
         aria-haspopup="dialog"
-        aria-label={inGroup ? `${cap}: ver tu grupo` : "Grupo: abrir tu grupo"}
+        aria-label={inGroup ? t("{cap}: ver tu grupo", { cap }) : t("Grupo: abrir tu grupo")}
         data-sound="none"
         onClick={() => (inGroup ? onGroup?.() : onInvite?.())}
         disabled={!inGroup && (!onInvite || inviteOff || Boolean(busy))}
       >
-        <span className="tv-sala-title">Grupo</span>
+        <span className="tv-sala-title">{t("Grupo")}</span>
         <span className="tv-sala-faces">
           {inGroup ? (
             members.slice(0, 3).map((p) => (
@@ -197,14 +202,14 @@ function GroupMenu({ members, count, inGroup, meId, myAvatar, onGroup, onInvite,
           type="button"
           className={`tv-btn tv-btn--neutral tv-sala-invite${together ? " is-plus" : ""}`}
           aria-haspopup="dialog"
-          aria-label="Invitar"
-          title="Invitar"
+          aria-label={t("Invitar")}
+          title={tr("Invitar")}
           data-sound="none"
           onClick={onInvite}
           disabled={!inGroup && (inviteOff || Boolean(busy))}
         >
           <Icon name="plus" size={together ? 18 : 15} strokeWidth={3} />
-          {!together && (busy === "group" ? "Creando…" : "Invitar")}
+          {!together && (busy === "group" ? "Creando…" : tr("Invitar"))}
         </button>
       )}
     </div>,

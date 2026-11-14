@@ -5,6 +5,7 @@ import { feature } from "topojson-client";
 // the player saw. Loaded on demand: only Geografía needs it.
 import worldUrl from "world-atlas/countries-50m.json?url";
 
+import { translate as tr } from "../../lib/i18n.js";
 // The map is drawn in a 1000-unit-wide space; its height follows from the projection.
 export const MAP_WIDTH = 1000;
 // Countries whose main land is smaller than this (in map units, about 120 km) get a dot so they can be seen and hit.
@@ -12,15 +13,15 @@ const TINY_SIZE = 4;
 
 // Quick jumps of the map, as [west, south, east, north] in degrees.
 export const REGIONS = [
-  { id: "mundo", label: "Mundo" },
-  { id: "norte", label: "Norteamérica", box: [-168, 14, -52, 72] },
-  { id: "caribe", label: "Caribe", box: [-92, 7, -59, 27] },
-  { id: "sur", label: "Sudamérica", box: [-92, -56, -33, 13] },
-  { id: "europa", label: "Europa", box: [-25, 35, 42, 71] },
-  { id: "africa", label: "África", box: [-19, -36, 53, 38] },
-  { id: "oriente", label: "Oriente Medio", box: [25, 11, 63, 43] },
-  { id: "asia", label: "Asia", box: [60, -11, 150, 55] },
-  { id: "oceania", label: "Oceanía", box: [110, -48, 180, 12] },
+  { id: "mundo", get label() { return tr("Mundo"); } },
+  { id: "norte", get label() { return tr("Norteamérica"); }, box: [-168, 14, -52, 72] },
+  { id: "caribe", get label() { return tr("Caribe"); }, box: [-92, 7, -59, 27] },
+  { id: "sur", get label() { return tr("Sudamérica"); }, box: [-92, -56, -33, 13] },
+  { id: "europa", get label() { return tr("Europa"); }, box: [-25, 35, 42, 71] },
+  { id: "africa", get label() { return tr("África"); }, box: [-19, -36, 53, 38] },
+  { id: "oriente", get label() { return tr("Oriente Medio"); }, box: [25, 11, 63, 43] },
+  { id: "asia", get label() { return tr("Asia"); }, box: [60, -11, 150, 55] },
+  { id: "oceania", get label() { return tr("Oceanía"); }, box: [110, -48, 180, 12] },
 ];
 
 let loading = null;
@@ -100,7 +101,7 @@ export function useWorld() {
     let alive = true;
     loadWorld()
       .then((world) => alive && setState({ world, error: null }))
-      .catch(() => alive && setState({ world: null, error: "No se pudo cargar el mapa. Revisa tu conexión." }));
+      .catch(() => alive && setState({ world: null, error: tr("No se pudo cargar el mapa. Revisa tu conexión.") }));
     return () => {
       alive = false;
     };

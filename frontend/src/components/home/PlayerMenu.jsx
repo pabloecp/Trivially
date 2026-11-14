@@ -4,6 +4,7 @@ import { useApp } from "../../lib/store.jsx";
 import Icon from "./Icon.jsx";
 import { profilePath } from "./PlayerName.jsx";
 
+import { translate as tr } from "../../lib/i18n.js";
 // What tapping a player offers on a match's scoreboard, the same buttons and order as "Tu grupo" (GroupSheet), only their
 // icons: for the host, taking them out of the room (for good) and, only while the room waits (`inMatch` false), letting
 // them change the settings or not and making them the host (a second tap confirms it); and for everyone their profile
@@ -34,9 +35,9 @@ export default function PlayerMenu({ player, isMe, canManage, inMatch = false, o
     onClose();
     try {
       const res = await toggleConfigPermission(player.id);
-      onToast?.(res?.granted ? `${player.name} ya puede cambiar los ajustes` : `${player.name} ya no puede cambiar los ajustes`, "check");
+      onToast?.(res?.granted ? tr("{name} ya puede cambiar los ajustes", { name: player.name }) : tr("{name} ya no puede cambiar los ajustes", { name: player.name }), "check");
     } catch (err) {
-      onToast?.(err.message || "No se pudieron cambiar los permisos");
+      onToast?.(err.message || tr("No se pudieron cambiar los permisos"));
     }
   }
 
@@ -48,9 +49,9 @@ export default function PlayerMenu({ player, isMe, canManage, inMatch = false, o
     onClose();
     try {
       await giveHost(player.id);
-      onToast?.(`${player.name} ahora es el anfitrión`, "check");
+      onToast?.(tr("{name} ahora es el anfitrión", { name: player.name }), "check");
     } catch (err) {
-      onToast?.(err.message || "No se pudo pasar el anfitrión");
+      onToast?.(err.message || tr("No se pudo pasar el anfitrión"));
     }
   }
 
@@ -58,9 +59,9 @@ export default function PlayerMenu({ player, isMe, canManage, inMatch = false, o
     onClose();
     try {
       await kickPlayer(player.id);
-      onToast?.(`Sacaste a ${player.name} de la partida`, "check");
+      onToast?.(tr("Sacaste a {name} de la partida", { name: player.name }), "check");
     } catch (err) {
-      onToast?.(err.message || "No se pudo sacar al jugador");
+      onToast?.(err.message || tr("No se pudo sacar al jugador"));
     }
   }
 
@@ -74,17 +75,17 @@ export default function PlayerMenu({ player, isMe, canManage, inMatch = false, o
           type="button"
           role="menuitem"
           className={`tv-iconbtn tv-iconbtn--sm${player.canEditConfig ? " is-on" : ""}`}
-          aria-label={`${player.canEditConfig ? "Quitarle" : "Darle"} a ${player.name} permiso de ajustes`}
-          title={player.canEditConfig ? "Quitar permiso de ajustes" : "Dar permiso de ajustes"}
+          aria-label={tr("{v0} a {name} permiso de ajustes", { v0: player.canEditConfig ? tr("Quitarle") : tr("Darle"), name: player.name })}
+          title={player.canEditConfig ? tr("Quitar permiso de ajustes") : tr("Dar permiso de ajustes")}
           onClick={togglePermission}
         >
           <Icon name="sliders" size={16} strokeWidth={2.6} />
         </button>
       )}
       {canManage && (
-        <button type="button" role="menuitem" className="tv-iconbtn tv-iconbtn--sm" aria-label={`Sacar a ${player.name} de la partida`} title="Sacar de la partida" onClick={kick}>
+        <button type="button" role="menuitem" className="tv-iconbtn tv-iconbtn--sm" aria-label={tr("Sacar a {name} de la partida", { name: player.name })} title={tr("Sacar de la partida")} onClick={kick}>
           <Icon name="close" size={16} strokeWidth={2.8} />
-          {named && "Sacar"}
+          {named && tr("Sacar")}
         </button>
       )}
       {canManage && !inMatch && player.connected && (
@@ -93,23 +94,23 @@ export default function PlayerMenu({ player, isMe, canManage, inMatch = false, o
           role="menuitem"
           className={`tv-iconbtn tv-iconbtn--sm${confirmHost ? " is-on" : ""}`}
           data-sound={confirmHost ? "next" : undefined}
-          aria-label={confirmHost ? "¿Seguro? Toca otra vez" : `Hacer anfitrión a ${player.name}`}
-          title={confirmHost ? "¿Seguro? Toca otra vez" : "Hacer anfitrión"}
+          aria-label={confirmHost ? tr("¿Seguro? Toca otra vez") : tr("Hacer anfitrión a {name}", { name: player.name })}
+          title={confirmHost ? tr("¿Seguro? Toca otra vez") : tr("Hacer anfitrión")}
           onClick={makeHost}
         >
           <Icon name={confirmHost ? "check" : "crown"} size={16} strokeWidth={2.4} />
         </button>
       )}
       {player.isGuest ? (
-        <button type="button" role="menuitem" className="tv-iconbtn tv-iconbtn--sm is-none" aria-disabled="true" aria-label={`${player.name} juega como invitado: no tiene perfil`} title="Juega como invitado: no tiene perfil">
+        <button type="button" role="menuitem" className="tv-iconbtn tv-iconbtn--sm is-none" aria-disabled="true" aria-label={tr("{name} juega como invitado: no tiene perfil", { name: player.name })} title={tr("Juega como invitado: no tiene perfil")}>
           <Icon name="user" size={16} strokeWidth={2.6} />
-          {named && "Sin perfil"}
+          {named && tr("Sin perfil")}
         </button>
       ) : (
         // Same tab: the socket stays connected, so the seat is kept, and the profile has a way back to the room.
-        <Link role="menuitem" className="tv-iconbtn tv-iconbtn--sm" to={profilePath(player)} aria-label={isMe ? "Ver mi perfil" : `Ver el perfil de ${player.name}`} title={isMe ? "Ver mi perfil" : "Ver perfil"} onClick={onClose}>
+        <Link role="menuitem" className="tv-iconbtn tv-iconbtn--sm" to={profilePath(player)} aria-label={isMe ? tr("Ver mi perfil") : tr("Ver el perfil de {name}", { name: player.name })} title={isMe ? tr("Ver mi perfil") : tr("Ver perfil")} onClick={onClose}>
           <Icon name="user" size={16} strokeWidth={2.6} />
-          {named && (isMe ? "Mi perfil" : "Perfil")}
+          {named && (isMe ? tr("Mi perfil") : tr("Perfil"))}
         </Link>
       )}
     </div>

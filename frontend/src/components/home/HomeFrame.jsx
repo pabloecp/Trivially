@@ -6,6 +6,7 @@ import { useApp } from "../../lib/store.jsx";
 import { CLASSIC, isPublicGame, rememberPlan, useLocalPlan } from "../../lib/plan.js";
 import { withSound } from "../../lib/sounds.js";
 import GroupBar, { GroupBoxContext, useNarrow } from "./GroupBar.jsx";
+import { AdBanner, AdSides } from "./AdSlot.jsx";
 import GroupSheet from "./GroupSheet.jsx";
 import ConfirmDialog from "./ConfirmDialog.jsx";
 import ModeStage from "./ModeStage.jsx";
@@ -16,9 +17,11 @@ import { OpenSettingsContext } from "./SettingsPanel.jsx";
 import { useStartGame } from "./ModeStart.jsx";
 import { privateMatchLine, publicMatchLine } from "./matchInfo.js";
 import "../../styles/lobby.css";
+import { translate, useT } from "../../lib/i18n.js";
 
+import { translate as tr } from "../../lib/i18n.js";
 // The card of a private match before its host picks a game.
-const CHOOSE = { id: "none", name: "Elige un juego", icon: "grid", color: "neutral", steps: [] };
+const CHOOSE = { id: "none", get name() { return tr("Elige un juego"); }, icon: "grid", color: "neutral", steps: [] };
 
 // Inicio, a private match's lobby and the search for a public match are one screen: the game's big card in the middle
 // (its settings behind a summary at its bottom) with your boxes beside it (your elo, your group and who is in it), and
@@ -79,7 +82,7 @@ export default function HomeFrame({ room = null, onToast, Lobby = null, leaving 
   const mode = (plan.game && findMode(plan.game)) || (room ? null : findMode("opciones"));
   // The name is asked once: a guest who already gave theirs (making a group, joining one) isn't asked again.
   const needsName = !user?.name;
-  const leaderName = group?.leaderName || "el líder";
+  const leaderName = group?.leaderName || tr("el líder");
 
   // The host gave (or took back) permission to change the match's settings: say so, once, when it changes.
   const canSet = Boolean(room && user?.id && room.hostId !== user.id && room.coHosts?.includes(user.id));
@@ -88,8 +91,8 @@ export default function HomeFrame({ room = null, onToast, Lobby = null, leaving 
     const before = hadSet.current;
     hadSet.current = room ? canSet : null;
     if (!room || before === null || before === canSet) return;
-    if (canSet) onToast?.(`${room.hostName || "El anfitrión"} te dio permiso para cambiar los ajustes`, "sliders");
-    else onToast?.("Ya no puedes cambiar los ajustes de la partida", "lock");
+    if (canSet) onToast?.(tr("{v0} te dio permiso para cambiar los ajustes", { v0: room.hostName || tr("El anfitrión") }), "sliders");
+    else onToast?.(tr("Ya no puedes cambiar los ajustes de la partida"), "lock");
   }, [canSet, room?.code]);
 
   // The group passed to you: say so, once, like the settings' permission (not when you make one or come into one).
@@ -98,7 +101,7 @@ export default function HomeFrame({ room = null, onToast, Lobby = null, leaving 
   useEffect(() => {
     const before = ledBefore.current;
     ledBefore.current = { code: group?.code, leads: leadsNow };
-    if (group && before.code === group.code && !before.leads && leadsNow) onToast?.("Ahora eres el líder del grupo", "crown");
+    if (group && before.code === group.code && !before.leads && leadsNow) onToast?.(tr("Ahora eres el líder del grupo"), "crown");
   }, [group?.code, leadsNow]);
 
   // Leaving the match or the group later finds the same game and side on Inicio.
@@ -155,7 +158,7 @@ export default function HomeFrame({ room = null, onToast, Lobby = null, leaving 
       setSettingsAsked(false);
       // Already playing in that match from another device: CentralOffer asks about this one instead.
       if (err.offer) return null;
-      (forGroup ? setGroupError : setError)(err.message || (forGroup ? "No pudimos crear el grupo" : "Algo salió mal, inténtalo otra vez"));
+      (forGroup ? setGroupError : setError)(err.message || (forGroup ? tr("No pudimos crear el grupo") : tr("Algo salió mal, inténtalo otra vez")));
       return false;
     } finally {
       setBusyType("");
@@ -168,7 +171,7 @@ export default function HomeFrame({ room = null, onToast, Lobby = null, leaving 
     try {
       await withSound(fn);
     } catch (err) {
-      setError(err.message || "Algo salió mal, inténtalo otra vez");
+      setError(err.message || tr("Algo salió mal, inténtalo otra vez"));
     } finally {
       setBusyType("");
     }
@@ -188,9 +191,9 @@ export default function HomeFrame({ room = null, onToast, Lobby = null, leaving 
     try {
       await leaveGroup();
       setSheet(null);
-      onToast?.("Saliste del grupo", "logout");
+      onToast?.(tr("Saliste del grupo"), "logout");
     } catch (err) {
-      setError(err.message || "No se pudo salir del grupo");
+      setError(err.message || tr("No se pudo salir del grupo"));
     } finally {
       setBusyType("");
     }
@@ -238,19 +241,19 @@ export default function HomeFrame({ room = null, onToast, Lobby = null, leaving 
   let action = null;
   let note = "";
   if (searching) {
-    if (group && !isLeader) note = `Buscando con ${leaderName}…`;
-    else action = { label: "Cancelar", bad: true, sound: "back", onClick: cancelSearch, disabled: busy };
+    if (group && !isLeader) note = tr("Buscando con {leaderName}…", { leaderName: leaderName });
+    else action = { label: tr("Cancelar"), bad: true, sound: "back", onClick: cancelSearch, disabled: busy };
   } else if (room && !decides) {
-    action = { label: "Esperando", play: true, neutral: true, waiting: true, disabled: true };
+    action = { label: tr("Esperando"), play: true, neutral: true, waiting: true, disabled: true };
   } else if (away && !group.place.public) {
-    action = { label: busyType === "follow" ? "Entrando…" : "Ir con el grupo", sound: "none", disabled: busy, onClick: () => run({ type: "follow" }) };
+    action = { label: busyType === "follow" ? "Entrando…" : tr("Ir con el grupo"), sound: "none", disabled: busy, onClick: () => run({ type: "follow" }) };
   } else if (away && !isLeader) {
-    action = { label: "Esperando", play: true, neutral: true, waiting: true, disabled: true };
+    action = { label: tr("Esperando"), play: true, neutral: true, waiting: true, disabled: true };
   } else if (!decides) {
-    action = { label: "Esperando", play: true, neutral: true, waiting: true, disabled: true };
+    action = { label: tr("Esperando"), play: true, neutral: true, waiting: true, disabled: true };
   } else if (plan.audience === "publica") {
     action = {
-      label: busyType === "match" ? "Buscando…" : "Jugar",
+      label: busyType === "match" ? "Buscando…" : tr("Jugar"),
       play: busyType !== "match",
       sound: "none",
       // Only waiting (switching "Pública" / "Privada"…): it can't be pressed, but it doesn't dim for those seconds.
@@ -261,7 +264,7 @@ export default function HomeFrame({ room = null, onToast, Lobby = null, leaving 
   } else {
     action = {
       // "Jugar" on both sides: public or private, the button says the same.
-      label: busyType === "create" || start.busy ? "Empezando…" : "Jugar",
+      label: busyType === "create" || start.busy ? "Empezando…" : tr("Jugar"),
       play: !(busyType === "create" || start.busy),
       sound: "none",
       waiting: busy && (room ? start.canStart : true),
@@ -275,13 +278,14 @@ export default function HomeFrame({ room = null, onToast, Lobby = null, leaving 
     !mode || mode.kind === "classic"
       ? null
       : plan.audience === "publica"
-      ? { summary: publicMatchLine(mode.id) || "Sin partidas públicas por ahora", fixed: true }
+      ? { summary: publicMatchLine(mode.id) || tr("Sin partidas públicas por ahora"), fixed: true }
       : decides && !away
       ? { summary: privateMatchLine(mode.id), onOpen: () => run({ type: "setup", game: plan.game }), disabled: busy }
-      : { summary: privateMatchLine(mode.id), note: away ? "Tu grupo ya está jugando" : `Los elige ${leaderName}` };
+      : { summary: privateMatchLine(mode.id), note: away ? tr("Tu grupo ya está jugando") : translate("Los elige {name}", { name: leaderName }) };
 
   // The same element choosing a game and searching with it, so the card stays as it is when the search starts.
-  const gameStage = mode && <GameStage searchRoom={searching ? room : null} mode={mode} audience={plan.audience} settings={cardSettings} onAudience={decides && !searching ? chooseAudience : null} />;
+  // Ads only on Inicio itself: not while a match is searched for, nor while a private one waits.
+  const gameStage = mode && <GameStage searchRoom={searching ? room : null} mode={mode} audience={plan.audience} settings={cardSettings} onAudience={decides && !searching ? chooseAudience : null} ad={room ? null : <AdBanner />} />;
 
   // The group's faces: dimmed whoever isn't with it now (or is reconnecting).
   const members = group ? group.members.map((m) => ({ ...m, connected: m.connected && m.here })) : [];
@@ -312,12 +316,14 @@ export default function HomeFrame({ room = null, onToast, Lobby = null, leaving 
               </OpenSettingsContext.Provider>
             </div>
           ) : room ? (
-            <ModeStage mode={CHOOSE} title={decides ? "Elige un juego" : `${room.hostName || "El anfitrión"} está eligiendo`} />
+            <ModeStage mode={CHOOSE} title={decides ? tr("Elige un juego") : tr("{v0} está eligiendo", { v0: room.hostName || tr("El anfitrión") })} />
           ) : (
             gameStage
           )}
         </div>
       </GroupBoxContext.Provider>
+
+      {!room && <AdSides />}
 
       <GroupBar
         members={members}
@@ -380,10 +386,10 @@ export default function HomeFrame({ room = null, onToast, Lobby = null, leaving 
       {createPortal(
         <ConfirmDialog
           open={confirmLeave && Boolean(group)}
-          title="¿Seguro que quieres salir del grupo?"
-          text="Dejarás de jugar con tu grupo y, si están en su partida privada, saldrás de ella. Para volver tendrás que unirte otra vez con el código."
-          cancelLabel="Quedarme"
-          confirmLabel="Salir del grupo"
+          title={tr("¿Seguro que quieres salir del grupo?")}
+          text={tr("Dejarás de jugar con tu grupo y, si están en su partida privada, saldrás de ella. Para volver tendrás que unirte otra vez con el código.")}
+          cancelLabel={tr("Quedarme")}
+          confirmLabel={tr("Salir del grupo")}
           onCancel={() => setConfirmLeave(false)}
           onConfirm={() => {
             setConfirmLeave(false);
@@ -399,7 +405,7 @@ export default function HomeFrame({ room = null, onToast, Lobby = null, leaving 
 // The chosen game's card on Inicio, and the same one while a public room fills (`searchRoom`): the card stays (its colour,
 // its name, the boxes beside it) and everything under its name turns into the search (SearchBoard), with the card's sweep
 // of light. The roulette's (the Clásico's) has no game: its card is the Clásico's.
-function GameStage({ searchRoom = null, mode, audience, settings, onAudience = null }) {
+function GameStage({ searchRoom = null, mode, audience, settings, onAudience = null, ad = null }) {
   const swapKey = `${mode.id}:${audience}:${searchRoom ? "search" : "plan"}`;
-  return <ModeStage mode={mode} audience={audience} swapKey={swapKey} settings={settings} onAudience={onAudience} search={searchRoom && <SearchBoard room={searchRoom} />} />;
+  return <ModeStage mode={mode} audience={audience} swapKey={swapKey} settings={settings} onAudience={onAudience} ad={ad} search={searchRoom && <SearchBoard room={searchRoom} />} />;
 }

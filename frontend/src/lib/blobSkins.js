@@ -1,3 +1,4 @@
+import { translate as tr } from "../lib/i18n.js";
 // The Blob's skins (Blob.jsx): drawings that go inside its black line instead of a plain colour, each with a name.
 // With an account, like the colours (backend db/store.js BLOB_SKINS has the same ids). Each draw(u, small) gives SVG
 // markup for <defs> and for the skin's layers, with ids that start with `u` (one per Blob, so two never mix). `small`
@@ -32,7 +33,7 @@ const sparkle = (x, y, size, delay) =>
 
 const SKINS = {
   gomita: {
-    name: "Gomita",
+    get name() { return tr("Gomita"); },
     draw: (u, small) => ({
       defs: `
         <radialGradient id="${u}g" cx=".42" cy=".38" r=".72">
@@ -51,7 +52,7 @@ const SKINS = {
   },
 
   galaxia: {
-    name: "Galaxia",
+    get name() { return tr("Galaxia"); },
     draw: (u, small) => ({
       defs: `
         <radialGradient id="${u}g" cx=".5" cy=".42" r=".66">
@@ -74,7 +75,7 @@ const SKINS = {
   },
 
   holo: {
-    name: "Holográfico",
+    get name() { return tr("Holográfico"); },
     draw: (u, small) => ({
       defs: `
         <linearGradient id="${u}h" x1="0" y1="0" x2=".6" y2=".6" spreadMethod="reflect">
@@ -97,7 +98,7 @@ const SKINS = {
   },
 
   magma: {
-    name: "Magma",
+    get name() { return tr("Magma"); },
     draw: (u, small) => {
       const cracks = small
         ? ["M50 9 L47 21 L53 30", "M96 58 L82 60 L74 70 L64 72", "M5 60 L17 63 L24 74", "M50 92 L52 82 L46 76"]
@@ -127,7 +128,7 @@ const SKINS = {
   },
 
   vitral: {
-    name: "Vitral",
+    get name() { return tr("Vitral"); },
     draw: (u, small) => {
       const cells = [
         ["0,0 50,0 50,30 22,30 0,40", "#2F6BFF"],
@@ -152,7 +153,7 @@ const SKINS = {
   },
 
   sandia: {
-    name: "Sandía",
+    get name() { return tr("Sandía"); },
     draw: (u, small) => {
       const seeds = [[22, 62, 20], [40, 72, -10], [60, 72, 10], [78, 62, -20], [50, 26, 0], [26, 28, 30], [74, 28, -30]];
       return {
@@ -170,7 +171,7 @@ const SKINS = {
   },
 
   escarcha: {
-    name: "Escarcha",
+    get name() { return tr("Escarcha"); },
     draw: (u, small) => {
       const flakes = [[20, 0, 6], [44, 2.5, 8], [70, 1, 7], [86, 4, 9], [32, 5, 6.5], [58, 3.5, 7.5]];
       const flake = `<path d="M0 -3 V3 M-2.6 -1.5 L2.6 1.5 M-2.6 1.5 L2.6 -1.5" stroke="#fff" stroke-width=".9" stroke-linecap="round"/>`;
@@ -191,7 +192,7 @@ const SKINS = {
   },
 
   atardecer: {
-    name: "Atardecer",
+    get name() { return tr("Atardecer"); },
     draw: (u, small) => ({
       defs: `
         <linearGradient id="${u}k" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3B1E9E"/><stop offset=".45" stop-color="#C23BD4"/><stop offset=".72" stop-color="#FF5A8A"/></linearGradient>
@@ -210,7 +211,7 @@ const SKINS = {
   },
 
   vaca: {
-    name: "Vaca",
+    get name() { return tr("Vaca"); },
     draw: (u, small) => ({
       defs: mask(u + "s", -7, -9),
       layers: `
@@ -226,7 +227,7 @@ const SKINS = {
   },
 
   oro: {
-    name: "Oro",
+    get name() { return tr("Oro"); },
     draw: (u, small) => ({
       defs: `
         <radialGradient id="${u}g" cx=".36" cy=".3" r=".8"><stop offset="0" stop-color="#FFF1B0"/><stop offset=".35" stop-color="#FFD23F"/><stop offset=".75" stop-color="#E0A000"/><stop offset="1" stop-color="#B07800"/></radialGradient>
@@ -240,7 +241,7 @@ const SKINS = {
   },
 
   lava: {
-    name: "Lámpara de lava",
+    get name() { return tr("Lámpara de lava"); },
     draw: (u, small) => {
       // x, y from, y to, radius, seconds, horizontal drift
       const drops = [[30, 82, 22, 9, 14, 6], [66, 26, 80, 8, 17, -5], [46, 70, 16, 5.5, 11, 4], [76, 88, 40, 6.5, 19, -6], [20, 40, 86, 4.5, 13, 5], [58, 50, 12, 4, 15, -4]].slice(0, small ? 3 : 6);
@@ -271,7 +272,7 @@ const SKINS = {
     },
   },
   cuaderno: {
-    name: "Cuaderno",
+    get name() { return tr("Cuaderno"); },
     draw: (u, small) => {
       let lines = "";
       for (let y = 22; y < 100; y += small ? 12 : 8) lines += `M0 ${y} H100 `;
@@ -291,7 +292,7 @@ const SKINS = {
   },
 
   mapa: {
-    name: "Mapamundi",
+    get name() { return tr("Mapamundi"); },
     draw: (u, small) => ({
       defs: `<radialGradient id="${u}g" cx=".45" cy=".4" r=".7"><stop offset="0" stop-color="#3FE6D8"/><stop offset=".6" stop-color="#00D1C1"/><stop offset="1" stop-color="#007A71"/></radialGradient>${mask(u + "s", -7, -9)}`,
       layers: `
@@ -310,7 +311,7 @@ const SKINS = {
   },
 
   disco: {
-    name: "Disco",
+    get name() { return tr("Disco"); },
     draw: (u, small) => {
       let s = 11;
       const r = () => ((s = (s * 9301 + 49297) % 233280) / 233280);
@@ -335,7 +336,7 @@ const SKINS = {
     },
   },
   dona: {
-    name: "Dona",
+    get name() { return tr("Dona"); },
     draw: (u, small) => {
       const ice = "M-5 -5 H105 V52 C98 52 96 60 92 60 C88 60 88 54 84 54 C80 54 80 66 75 66 C70 66 71 56 66 57 C61 58 62 62 56 62 C50 62 52 54 46 55 C40 56 42 70 36 70 C30 70 32 58 26 58 C21 58 22 64 17 64 C12 64 12 54 6 54 C2 54 0 58 -5 58 Z";
       const bits = [[50, 20, 20, "#FFD60A"], [24, 24, -40, "#00D1C1"], [72, 20, 60, "#2F6BFF"], [86, 38, 10, "#1FD24A"], [14, 44, 80, "#FFFFFF"], [50, 34, -70, "#00D1C1"], [62, 14, -20, "#FFFFFF"], [36, 14, 50, "#1FD24A"], [80, 50, -50, "#FFD60A"], [52, 52, 30, "#2F6BFF"], [20, 34, 15, "#FFD60A"]];
@@ -356,7 +357,7 @@ const SKINS = {
   },
 
   mar: {
-    name: "Fondo del mar",
+    get name() { return tr("Fondo del mar"); },
     draw: (u, small) => {
       const bubbles = [[24, 7, 0, 1.8], [62, 9, 3, 2.4], [80, 6, 1.5, 1.4], [40, 8, 5, 1.6]];
       return {
@@ -384,7 +385,7 @@ const SKINS = {
   },
 
   arcoiris: {
-    name: "Arcoíris",
+    get name() { return tr("Arcoíris"); },
     // A blue sky with a rainbow low on the body, under the eyes, rising from two clouds.
     draw: (u, small) => {
       const bands = ["#FF3D5E", "#FF8A00", "#FFD60A", "#1FD24A", "#2F8BFF", "#A63DFF"];
@@ -406,7 +407,7 @@ const SKINS = {
   },
 
   cielo: {
-    name: "Cielo",
+    get name() { return tr("Cielo"); },
     draw: (u, small) => {
       const cloud = (s) => `<g transform="scale(${s})"><g fill="#CFE3F5" transform="translate(0 2)"><circle cx="0" cy="0" r="7"/><circle cx="8" cy="-3" r="9"/><circle cx="17" cy="0" r="6.5"/><rect x="0" y="0" width="17" height="6.5"/></g><g fill="#fff"><circle cx="0" cy="0" r="7"/><circle cx="8" cy="-3" r="9"/><circle cx="17" cy="0" r="6.5"/><rect x="0" y="0" width="17" height="6.5"/></g></g>`;
       const clouds = small ? [[18, 70, 1.4, 0, 0]] : [[0, 26, 0.9, 30, 0], [0, 64, 1.2, 38, 14], [0, 84, 0.8, 26, 9]];
@@ -425,7 +426,7 @@ const SKINS = {
   },
 
   pinata: {
-    name: "Piñata",
+    get name() { return tr("Piñata"); },
     draw: (u, small) => {
       const step = small ? 12 : 9;
       const cycle = ["#FF2FC0", "#A63DFF", "#2F6BFF", "#FF5A1F", "#1FD24A"];
@@ -454,7 +455,7 @@ const SKINS = {
   },
 
   hamburguesa: {
-    name: "Hamburguesa",
+    get name() { return tr("Hamburguesa"); },
     // The top bun is the face (the eyes sit on it); under it lettuce, cheese that drips, the meat and the bottom bun.
     draw: (u, small) => {
       const seeds = [[30, 20, -20], [50, 15, 0], [70, 20, 20], [20, 32, -40], [80, 32, 40], [42, 26, -10], [60, 27, 15]].slice(0, small ? 3 : 7);
@@ -477,7 +478,7 @@ const SKINS = {
   },
 
   tigre: {
-    name: "Tigre",
+    get name() { return tr("Tigre"); },
     draw: (u, small) => {
       // Stripes come in from the edges, tapering, and never reach the eyes.
       const stripes = [
@@ -507,7 +508,7 @@ const SKINS = {
   },
 
   panal: {
-    name: "Panal",
+    get name() { return tr("Panal"); },
     draw: (u, small) => {
       // Honey that drips from the top, three drops long; the middle one stops between the eyes.
       const honey = "M-5 -5 H105 V26 C100 26 98 30 96 34 C94 40 88 40 87 34 C86 28 82 26 78 28 C74 30 72 30 70 26 C68 23 62 23 60 28 C58 34 58 40 54 40 C50 40 50 33 48 28 C46 24 40 24 38 28 C36 30 34 31 30 29 C26 26 20 26 18 32 C16 40 15 50 11 50 C7 50 7 42 6 34 C5 28 0 26 -5 26 Z";
@@ -531,7 +532,7 @@ const SKINS = {
   },
 
   aurora: {
-    name: "Aurora",
+    get name() { return tr("Aurora"); },
     draw: (u, small) => {
       const curtains = [
         ["M-10 40 C10 20 30 34 50 22 C70 10 90 26 110 14 L110 38 C90 50 70 34 50 46 C30 58 10 44 -10 62 Z", "#3CFFB0", ".75", "8s"],
@@ -556,7 +557,7 @@ const SKINS = {
   },
 
   casino: {
-    name: "Casino",
+    get name() { return tr("Casino"); },
     // The ace of spades: a white card with "A" and a spade in two corners, and a big
     // spade under the eyes.
     draw: (u, small) => {

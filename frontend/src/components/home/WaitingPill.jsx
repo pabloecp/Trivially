@@ -1,10 +1,12 @@
+import { translate as tr } from "../../lib/i18n.js";
+
 // Who a round still waits for, the same in every game. Only the match's bottom bar says it ("Falta Ana por responder"):
 // no notice of its own comes up in the round's panel once this player answered, so nothing there moves.
 
 /** "Ana", "Ana y Luis", "Ana, Luis y Eva". */
 export function joinNames(names) {
   if (names.length < 2) return names[0] || "";
-  return `${names.slice(0, -1).join(", ")} y ${names[names.length - 1]}`;
+  return tr("{list} y {last}", { list: names.slice(0, -1).join(", "), last: names[names.length - 1] });
 }
 
 /**

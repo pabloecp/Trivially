@@ -15,6 +15,7 @@ import { PauseButton, ReportButton, SkipButton, PauseVeil } from "../../componen
 import { resolveCode } from "../../lib/hiddenCode.js";
 import { AnswerCard, MatchBar, MatchCard, MatchQuestion, RoundCountdown, RoundVerdict } from "../../components/home/MatchFrame.jsx";
 
+import { translate as tr } from "../../lib/i18n.js";
 const COUNTDOWN_MS = 3000;
 // One colour per player for their year on the reveal's timeline (never the green and red of right and wrong).
 const MARK_COLORS = ["#ffb52e", "#a58bff", "#2ea8ff", "#f2456b", "#14b8a6", "#ff9f1c", "#e879f9", "#7c80ff"];
@@ -28,7 +29,7 @@ const sentence = (text) => (text.endsWith(".") ? text : `${text}.`);
 // "Ana", "Ana y Luis", "Ana, Luis y Eva".
 function joinNames(names) {
   if (names.length < 2) return names[0] || "";
-  return `${names.slice(0, -1).join(", ")} y ${names[names.length - 1]}`;
+  return tr("{list} y {last}", { list: names.slice(0, -1).join(", "), last: names[names.length - 1] });
 }
 
 function GameScreen() {
@@ -117,7 +118,7 @@ function GameScreen() {
     if (year == null) return;
     pending.current = null;
     send(year, false).catch((e) => {
-      if (phaseRef.current === "playing") setErr(e.message || (isNum ? "No se pudo guardar tu número" : "No se pudo guardar tu año"));
+      if (phaseRef.current === "playing") setErr(e.message || (isNum ? tr("No se pudo guardar tu número") : tr("No se pudo guardar tu año")));
     });
   }
 
@@ -152,7 +153,7 @@ function GameScreen() {
       sending.current = false;
       if (phaseRef.current !== "playing") return;
       setGuess({ ...myGuess, locked: false });
-      setErr(e.message || (isNum ? "No se pudo confirmar tu número" : "No se pudo confirmar tu año"));
+      setErr(e.message || (isNum ? tr("No se pudo confirmar tu número") : tr("No se pudo confirmar tu año")));
     }
   }
 
@@ -199,7 +200,7 @@ function GameScreen() {
       return;
     }
     setConfirmHub(false);
-    restartGame().catch((e) => setErr(e.message || "No se pudo terminar la partida"));
+    restartGame().catch((e) => setErr(e.message || tr("No se pudo terminar la partida")));
   }
 
   if (!room) {
@@ -207,7 +208,7 @@ function GameScreen() {
       <div className="tv-card tv-lobby-guest">
         <p className="tv-party-status">
           <span className="tv-pulse" aria-hidden="true" />
-          Conectando a la partida…
+          {tr("Conectando a la partida…")}
         </p>
       </div>
     );
@@ -228,7 +229,7 @@ function GameScreen() {
   const level = findDifficulty(question?.difficulty);
   const reveal = phase === "reveal" ? room.reveal : null;
   const answerValue = reveal ? (isNum ? reveal.value : reveal.year) : null;
-  const tiedNames = tiebreak ? tiebreak.playerIds.map((id) => room.players.find((p) => p.id === id)?.name || "Jugador") : [];
+  const tiedNames = tiebreak ? tiebreak.playerIds.map((id) => room.players.find((p) => p.id === id)?.name || tr("Jugador")) : [];
   const colorOf = (id) => MARK_COLORS[Math.max(0, room.players.findIndex((p) => p.id === id)) % MARK_COLORS.length];
 
   // Everyone's year at the reveal (only the tied players' in a tiebreak).
@@ -246,50 +247,50 @@ function GameScreen() {
 
   const nextText = tiebreak
     ? tiebreak.winnerId
-      ? "Calculando resultados…"
+      ? tr("Calculando resultados…")
       : tiebreak.round >= 3
-      ? "Sigue el empate: calculando resultados…"
-      : "Nadie ganó: otro desempate en breve…"
+      ? tr("Sigue el empate: calculando resultados…")
+      : tr("Nadie ganó: otro desempate en breve…")
     : round + 1 >= room.totalRounds
-    ? "Calculando resultados…"
-    : "Siguiente pregunta en breve…";
+    ? tr("Calculando resultados…")
+    : tr("Siguiente pregunta en breve…");
 
   // The words of each way of playing.
   const words = isNum
-    ? { exact: "el número exacto", done: "Número confirmado", line: "la barra", pick: "un número" }
-    : { exact: "el año exacto", done: "Año confirmado", line: "la línea del tiempo", pick: "un año" };
+    ? { exact: tr("el número exacto"), done: tr("Número confirmado"), line: tr("la barra"), pick: tr("un número") }
+    : { exact: tr("el año exacto"), done: tr("Año confirmado"), line: tr("la línea del tiempo"), pick: tr("un año") };
 
   // Under the question: what to do now.
   let hint;
   if (phase === "countdown") {
     if (tiebreak) {
       hint = iPlay
-        ? `Desempate: gana el primero que confirme ${words.exact}. Si nadie lo clava, el más cercano.`
-        : "Solo juegan los empatados. Tú miras cómo lo resuelven.";
-    } else hint = isNum ? "¿Cuánto será? Prepárate para elegirlo en la barra." : "¿En qué año ocurrió? Prepárate para elegirlo en la línea del tiempo.";
+        ? tr("Desempate: gana el primero que confirme {exact}. Si nadie lo clava, el más cercano.", { exact: words.exact })
+        : tr("Solo juegan los empatados. Tú miras cómo lo resuelven.");
+    } else hint = isNum ? tr("¿Cuánto será? Prepárate para elegirlo en la barra.") : tr("¿En qué año ocurrió? Prepárate para elegirlo en la línea del tiempo.");
   } else if (phase === "reveal") hint = tiebreak ? "" : closestText(room, fmt, isNum);
-  else if (!iPlay) hint = `Solo juegan ${joinNames(tiedNames)}: gana el primero que confirme ${words.exact}.`;
+  else if (!iPlay) hint = tr("Solo juegan {v0}: gana el primero que confirme {exact}.", { v0: joinNames(tiedNames), exact: words.exact });
   else if (confirmed)
     hint = tiebreak
-      ? `${words.done}. Si es ${words.exact} y fuiste el primero, ganas.`
+      ? tr("{done}. Si es {exact} y fuiste el primero, ganas.", { done: words.done, exact: words.exact })
       : `${words.done}.`;
-  else if (myGuess) hint = `Ajusta con los botones${touch ? "" : " o las flechas"} y confirma.`;
-  else hint = touch ? `Toca ${words.line} para elegir ${words.pick}.` : `Haz clic en ${words.line} o usa las flechas del teclado.`;
+  else if (myGuess) hint = tr("Ajusta con los botones{v0} y confirma.", { v0: touch ? "" : tr(" o las flechas") });
+  else hint = touch ? tr("Toca {line} para elegir {pick}.", { line: words.line, pick: words.pick }) : tr("Haz clic en {line} o usa las flechas del teclado.", { line: words.line });
 
-  if (spectator && phase !== "reveal") hint = "Estás viendo la partida. Entrarás a jugar cuando termine.";
+  if (spectator && phase !== "reveal") hint = tr("Estás viendo la partida. Entrarás a jugar cuando termine.");
   // The central device talks to the whole room: they pick the year on their phones.
   if (central && phase === "countdown") {
     hint = tiebreak
-      ? `Desempate entre ${joinNames(tiedNames)}: gana el primero que confirme ${words.exact}.`
+      ? tr("Desempate entre {v0}: gana el primero que confirme {exact}.", { v0: joinNames(tiedNames), exact: words.exact })
       : isNum
-      ? "¿Cuánto será? Elíjanlo en su teléfono."
-      : "¿En qué año ocurrió? Elíjanlo en su teléfono.";
+      ? tr("¿Cuánto será? Elíjanlo en su teléfono.")
+      : tr("¿En qué año ocurrió? Elíjanlo en su teléfono.");
   } else if (central && phase === "playing") {
     hint = tiebreak
-      ? `Solo juegan ${joinNames(tiedNames)}.`
+      ? tr("Solo juegan {names}.", { names: joinNames(tiedNames) })
       : isNum
-      ? "Elijan el número en la barra de su teléfono."
-      : "Elijan el año en la línea del tiempo de su teléfono.";
+      ? tr("Elijan el número en la barra de su teléfono.")
+      : tr("Elijan el año en la línea del tiempo de su teléfono.");
   }
 
   // The two buttons on each side of the chosen number: a little (a year, or 1 in Cifras) and a lot (ten years, a
@@ -304,7 +305,7 @@ function GameScreen() {
         className="tv-hist-step"
         onClick={() => nudge(dir * n)}
         disabled={!open}
-        aria-label={`${dir < 0 ? "Restar" : "Sumar"} ${isNum ? figureLabel(n) : n === 1 ? "un año" : `${n} años`}`}
+        aria-label={`${dir < 0 ? tr("Restar") : tr("Sumar")} ${isNum ? figureLabel(n) : n === 1 ? tr("un año") : tr("{n} años", { n: n })}`}
       >
         {mark}
         {isNum ? figureLabel(n) : n}
@@ -315,13 +316,13 @@ function GameScreen() {
   // The row under the timeline, always the same height: confirm, or what's going on.
   let action;
   if (central) {
-    action = <p className="tv-hint tv-hist-next">{phase === "reveal" ? nextText : phase === "countdown" ? "Prepárense…" : ""}</p>;
+    action = <p className="tv-hint tv-hist-next">{phase === "reveal" ? nextText : phase === "countdown" ? tr("Prepárense…") : ""}</p>;
   } else if (spectator && phase !== "reveal") {
-    action = <p className="tv-hint tv-hist-next">Mira cómo responden los demás</p>;
+    action = <p className="tv-hint tv-hist-next">{tr("Mira cómo responden los demás")}</p>;
   } else if (phase === "reveal") {
     action = <p className="tv-hint tv-hist-next">{nextText}</p>;
   } else if (!iPlay) {
-    action = <p className="tv-hint tv-hist-next">Mira el desempate entre {joinNames(tiedNames)}</p>;
+    action = <p className="tv-hint tv-hist-next">{tr("Mira el desempate entre")} {joinNames(tiedNames)}</p>;
   } else {
     action = (
       <button
@@ -332,7 +333,7 @@ function GameScreen() {
         aria-live="polite"
       >
         <Icon name={confirmed ? "check" : "send"} size={20} strokeWidth={2.6} />
-        {confirmed ? "Enviado" : "Enviar"}
+        {confirmed ? tr("Enviado") : tr("Enviar")}
       </button>
     );
   }
@@ -349,7 +350,7 @@ function GameScreen() {
           className={`tv-mini-btn tv-end-btn${confirmHub ? " is-on" : ""}`}
           onClick={backToHub}
         >
-          {confirmHub ? "¿Seguro? Toca otra vez" : "Terminar"}
+          {confirmHub ? tr("¿Seguro? Toca otra vez") : tr("Terminar")}
         </button>
       )}
     </>
@@ -366,13 +367,13 @@ function GameScreen() {
         ) : (
           <MatchCard
             room={room}
-            tag={tiebreak ? `Desempate${tiebreak.round > 1 ? ` ${tiebreak.round}` : ""}` : null}
+            tag={tiebreak ? (tiebreak.round > 1 ? tr("Desempate {n}", { n: tiebreak.round }) : tr("Desempate")) : null}
             seconds={seconds}
             pct={pct}
             urgent={urgent}
             pills={reveal && !tiebreak && !spectator && !central ? <HistVerdict me={me} fmt={fmt} isNum={isNum} /> : null}
           >
-            <MatchQuestion>{question?.prompt || "Cargando la pregunta…"}</MatchQuestion>
+            <MatchQuestion>{question?.prompt || tr("Cargando la pregunta…")}</MatchQuestion>
           </MatchCard>
         )}
 
@@ -391,10 +392,10 @@ function GameScreen() {
                 year) big, or the verdict. */}
             <div className="tv-hist-slot">
               {phase === "countdown" && controller && <GetReady />}
-              {phase === "playing" && central && <PhoneHint room={room}>Respondan desde su teléfono</PhoneHint>}
+              {phase === "playing" && central && <PhoneHint room={room}>{tr("Respondan desde su teléfono")}</PhoneHint>}
               {reveal && central && !tiebreak && (
                 <p className="tv-central-answer">
-                  <small>{isNum ? "Era" : "Fue en"}</small> {fmt(answerValue)}
+                  <small>{isNum ? tr("Era") : tr("Fue en")}</small> {fmt(answerValue)}
                 </p>
               )}
               {reveal && central && tiebreak && (
@@ -442,7 +443,7 @@ function GameScreen() {
                 snap={snap}
                 scaleFormat={figureScale}
                 label={
-                  min == null ? (isNum ? "Barra" : "Línea del tiempo") : `${isNum ? "Barra" : "Línea del tiempo"} de ${fmt(min)} a ${fmt(max)}`
+                  min == null ? (isNum ? tr("Barra") : tr("Línea del tiempo")) : tr("{v0} de {v1} a {v2}", { v0: isNum ? tr("Barra") : tr("Línea del tiempo"), v1: fmt(min), v2: fmt(max) })
                 }
               />
             </div>
@@ -460,7 +461,7 @@ function GameScreen() {
             <PauseVeil room={room} isHost={isHost} />
             <p className="tv-party-status">
               <span className="tv-pulse" aria-hidden="true" />
-              Cargando la pregunta…
+              {tr("Cargando la pregunta…")}
             </p>
           </section>
         )}
@@ -479,16 +480,16 @@ function GameScreen() {
 function closestText(room, fmt, isNum) {
   const answers = room.players.filter((p) => Number.isInteger(p.lastAnswer?.diff));
   if (room.players.length < 2) return "";
-  if (!answers.length) return isNum ? "Nadie eligió un número a tiempo." : "Nadie eligió un año a tiempo.";
+  if (!answers.length) return isNum ? tr("Nadie eligió un número a tiempo.") : tr("Nadie eligió un año a tiempo.");
   const best = Math.min(...answers.map((p) => p.lastAnswer.diff));
   const closest = answers.filter((p) => p.lastAnswer.diff === best);
   const names = closest.map((p) => p.name);
   const who = joinNames(names);
   const label = who[0].toUpperCase() + who.slice(1);
   const exact = isNum ? closest.every((p) => p.lastAnswer.correct) : best === 0;
-  if (exact) return `¡${label} ${names.length > 1 ? "clavaron" : "clavó"} ${isNum ? "el número" : "el año"}!`;
-  if (isNum) return sentence(`Más cerca: ${label}, a ${fmt(best)} de ${fmt(room.reveal.value)}`);
-  return sentence(`Más cerca: ${label}, a ${yearsText(best)} de ${fmt(room.reveal.year)}`);
+  if (exact) return tr(names.length > 1 ? "¡{label} clavaron {what}!" : "¡{label} clavó {what}!", { label, what: isNum ? tr("el número") : tr("el año") });
+  if (isNum) return sentence(tr("Más cerca: {label}, a {v1} de {v2}", { label: label, v1: fmt(best), v2: fmt(room.reveal.value) }));
+  return sentence(tr("Más cerca: {label}, a {v1} de {v2}", { label: label, v1: yearsText(best), v2: fmt(room.reveal.year) }));
 }
 
 // The end of a round: how far this player's year was (and the right one), or who won the tiebreak.
@@ -498,10 +499,10 @@ function HistVerdict({ me, fmt, isNum = false }) {
   const chose = Number.isInteger(isNum ? answer?.value : answer?.year);
   const exact = Boolean(answer?.correct);
   let label;
-  if (exact) label = isNum ? "¡Lo clavaste!" : "¡Año exacto!";
-  else if (!chose) label = "Se acabó el tiempo";
-  else if (isNum) label = `${answer.over ? "Te pasaste por" : "Te faltaron"} ${fmt(answer.diff)}`;
-  else label = `A ${yearsText(answer.diff)}`;
+  if (exact) label = isNum ? tr("¡Lo clavaste!") : tr("¡Año exacto!");
+  else if (!chose) label = tr("Se acabó el tiempo");
+  else if (isNum) label = `${answer.over ? tr("Te pasaste por") : tr("Te faltaron")} ${fmt(answer.diff)}`;
+  else label = tr("A {years}", { years: yearsText(answer.diff) });
   return <RoundVerdict tone={exact ? "ok" : chose ? "near" : "timeout"} label={label} points={chose ? me?.lastPoints || 0 : null} />;
 }
 
@@ -517,14 +518,14 @@ function Verdict({ room, me, user, tiebreak, tiedNames, iPlay, fmt, isNum = fals
       <AnswerCard
         icon={winner ? "crown" : "hash"}
         iconTone={winner && (won || !iPlay) ? "ok" : null}
-        label="Desempate"
-        value={winner ? (won ? "¡Ganaste el desempate!" : `¡${winner.name} gana el desempate!`) : "Nadie lo resolvió"}
+        label={tr("Desempate")}
+        value={winner ? (won ? tr("¡Ganaste el desempate!") : tr("¡{name} gana el desempate!", { name: winner.name })) : tr("Nadie lo resolvió")}
         detail={
           winner
             ? tiebreak.reason === "exacto"
-              ? `${won ? "Confirmaste" : "Confirmó"} ${fmt(year)} primero.`
-              : sentence(`Nadie lo clavó: ${won ? "tu" : "su"} ${isNum ? "número" : "año"} quedó más cerca de ${fmt(year)}`)
-            : `${joinNames(tiedNames)} siguen empatados.`
+              ? won ? tr("Confirmaste {name} primero.", { name: fmt(year) }) : tr("Confirmó {name} primero.", { name: fmt(year) })
+              : sentence(tr("Nadie lo clavó: {v0} {v1} quedó más cerca de {v2}", { v0: won ? tr("tu") : tr("su"), v1: isNum ? tr("número") : tr("año"), v2: fmt(year) }))
+            : tr("{names} siguen empatados.", { names: joinNames(tiedNames) })
         }
       />
     );
@@ -533,11 +534,11 @@ function Verdict({ room, me, user, tiebreak, tiedNames, iPlay, fmt, isNum = fals
   const chose = Number.isInteger(chosen);
   const exact = Boolean(answer?.correct);
   let mine;
-  if (exact) mine = isNum ? "Lo clavaste" : "Año exacto";
-  else if (!chose) mine = isNum ? "No elegiste un número" : "No elegiste un año";
-  else if (isNum) mine = `Pusiste ${fmt(chosen)} · ${answer.over ? "te pasaste por" : "te faltaron"} ${fmt(answer.diff)}`;
-  else mine = `Pusiste ${fmt(chosen)} · a ${yearsText(answer.diff)}`;
-  return <AnswerCard label={isNum ? "La respuesta" : "Fue en"} value={fmt(year)} mine={mine} mineOk={exact} />;
+  if (exact) mine = isNum ? tr("Lo clavaste") : tr("Año exacto");
+  else if (!chose) mine = isNum ? tr("No elegiste un número") : tr("No elegiste un año");
+  else if (isNum) mine = tr("Pusiste {chosen} · {how} {diff}", { chosen: fmt(chosen), how: answer.over ? tr("te pasaste por") : tr("te faltaron"), diff: fmt(answer.diff) });
+  else mine = tr("Pusiste {chosen} · a {years}", { chosen: fmt(chosen), years: yearsText(answer.diff) });
+  return <AnswerCard label={isNum ? tr("La respuesta") : tr("Fue en")} value={fmt(year)} mine={mine} mineOk={exact} />;
 }
 
 export default function Game() {

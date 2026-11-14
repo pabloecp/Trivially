@@ -1,5 +1,6 @@
 import { useRef } from "react";
 
+import { translate as tr } from "../../lib/i18n.js";
 // How close (in % of the line) two names can sit on the same row at the reveal before one moves to the next row.
 const LABEL_GAP = 16;
 // How close (in % of the line) a year of the scale can be to the right year's label at the reveal and still show.
@@ -97,7 +98,7 @@ export default function Timeline({
       aria-valuemin={ready ? min : undefined}
       aria-valuemax={ready ? limit : undefined}
       aria-valuenow={shown ? value : undefined}
-      aria-valuetext={shown ? format(value) : numeric ? "Ningún número elegido" : "Ningún año elegido"}
+      aria-valuetext={shown ? format(value) : numeric ? tr("Ningún número elegido") : tr("Ningún año elegido")}
       aria-disabled={disabled || undefined}
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
@@ -107,7 +108,7 @@ export default function Timeline({
       <div className="tv-hist-rail" ref={railRef}>
         {ready && !numeric && max > today && (
           <span className="tv-hist-future" style={{ left: `${pct(today)}%` }}>
-            <span className="tv-hist-today">Hoy</span>
+            <span className="tv-hist-today">{tr("Hoy")}</span>
           </span>
         )}
         {ticks.map((year, i) => (

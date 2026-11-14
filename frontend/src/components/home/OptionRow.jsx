@@ -1,4 +1,5 @@
 import Icon from "./Icon.jsx";
+import { useT } from "../../lib/i18n.js";
 
 // One setting of the settings panel: its name, then its choices side by side; the chosen one is filled in.
 // `options` are { value, label, title?, disabled? }: `disabled` greys it out. With `multi`, `value` is a list, every chosen option is filled in and
@@ -8,21 +9,22 @@ import Icon from "./Icon.jsx";
 // go after the choices. `hint` is a short line under the name, for a setting whose meaning isn't obvious.
 // Inside a disabled fieldset nothing can be tapped.
 export default function OptionRow({ label, hint = null, options, value, onChange, multi = false, wrap = false, onSetAll = null, actions = null, children }) {
+  const t = useT();
   const isOn = (v) => (multi ? value.includes(v) : value === v);
   const allOn = multi && options.every((o) => value.includes(o.value));
   return (
-    <div className="tv-optrow" role="group" aria-label={label}>
+    <div className="tv-optrow" role="group" aria-label={t(label)}>
       <div className="tv-optrow-head">
         <span className="tv-optrow-name">
-          <span className="tv-optrow-label">{label}</span>
-          {hint && <small className="tv-optrow-hint">{hint}</small>}
+          <span className="tv-optrow-label">{t(label)}</span>
+          {hint && <small className="tv-optrow-hint">{t(hint)}</small>}
         </span>
         {(actions || (multi && onSetAll)) && (
           <span className="tv-optrow-actions">
             {actions}
             {multi && onSetAll && (
               <button type="button" className="tv-optrow-action" onClick={() => onSetAll(allOn ? [] : options.map((o) => o.value))}>
-                {allOn ? "Deseleccionar todos" : "Seleccionar todos"}
+                {allOn ? t("Deseleccionar todos") : t("Seleccionar todos")}
               </button>
             )}
           </span>
@@ -43,7 +45,7 @@ export default function OptionRow({ label, hint = null, options, value, onChange
                 {isOn(o.value) && <Icon name="check" size={12} strokeWidth={3.6} />}
               </span>
             )}
-            {o.label}
+            {t(o.label)}
           </button>
         ))}
         {children}

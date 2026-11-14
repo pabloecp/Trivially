@@ -1,3 +1,4 @@
+import { locale } from "../../lib/i18n.js";
 import { useEffect, useRef, useState } from "react";
 
 const reduceMotion = () =>
@@ -5,7 +6,7 @@ const reduceMotion = () =>
 
 // Animates a number from its previous value to `value` (stats, scores): the first time from `start` (0 by default), after
 // `delay` ms. `format` writes it (by default with the language's own separators).
-export default function CountUp({ value = 0, duration = 900, start: first = 0, delay = 0, format = (n) => n.toLocaleString("es") }) {
+export default function CountUp({ value = 0, duration = 900, start: first = 0, delay = 0, format = (n) => n.toLocaleString(locale()) }) {
   const target = Number(value) || 0;
   const [shown, setShown] = useState(reduceMotion() ? target : first);
   const from = useRef(shown);

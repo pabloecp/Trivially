@@ -1,11 +1,12 @@
+import { translate as tr } from "../../lib/i18n.js";
 // Farsante's settings and labels (same ids and limits as backend/src/game/farsante.js).
 
 // The kinds of round, in the order they show: what each one asks and how it scores.
 export const KINDS = [
-  { id: "dato", label: "Dato raro", icon: "bulb", how: "Inventa una respuesta falsa creíble para una pregunta real", short: "Dato raro" },
-  { id: "pelicula", label: "Película inventada", icon: "film", how: "Escribe de qué trata una película que no existe", short: "Película inventada" },
-  { id: "frase", label: "Frase a completar", icon: "keyboard", how: "Termina la frase con lo más gracioso que se te ocurra", short: "Frase a completar" },
-  { id: "noticia", label: "Noticia falsa", icon: "info", how: "Completa el titular de una noticia absurda", short: "Noticia falsa" },
+  { id: "dato", get label() { return tr("Dato raro"); }, icon: "bulb", get how() { return tr("Inventa una respuesta falsa creíble para una pregunta real"); }, get short() { return tr("Dato raro"); } },
+  { id: "pelicula", get label() { return tr("Película inventada"); }, icon: "film", get how() { return tr("Escribe de qué trata una película que no existe"); }, get short() { return tr("Película inventada"); } },
+  { id: "frase", get label() { return tr("Frase a completar"); }, icon: "keyboard", get how() { return tr("Termina la frase con lo más gracioso que se te ocurra"); }, get short() { return tr("Frase a completar"); } },
+  { id: "noticia", get label() { return tr("Noticia falsa"); }, icon: "info", get how() { return tr("Completa el titular de una noticia absurda"); }, get short() { return tr("Noticia falsa"); } },
 ];
 
 export function findKind(id) {

@@ -9,21 +9,22 @@ import Modal from "./Modal.jsx";
 import Segmented from "./Segmented.jsx";
 import "../../styles/friends.css";
 
+import { translate as tr } from "../../lib/i18n.js";
 // How a friend's line reads: where they are (playing, getting a match ready, in a group on Inicio) and with how many.
 export function statusOf(friend) {
-  if (!friend.online) return "Desconectado";
-  if (!friend.room) return "En línea";
+  if (!friend.online) return tr("Desconectado");
+  if (!friend.room) return tr("En línea");
   // Alone in a group on Inicio is the same as having none: a group only shows once there is more than one in it.
-  if (friend.room.inRoom === false && friend.room.players <= 1) return "En línea";
+  if (friend.room.inRoom === false && friend.room.players <= 1) return tr("En línea");
   const mode = findMode(friend.room.game)?.name;
   const where = friend.room.inMatch
-    ? `Jugando${mode ? ` ${mode}` : ""}`
+    ? (mode ? tr("Jugando {mode}", { mode: tr(mode) }) : tr("Jugando"))
     : friend.room.inRoom === false
-      ? "En un grupo"
+      ? tr("En un grupo")
       : mode
-        ? `Preparando ${mode}`
-        : "Preparando una partida";
-  return `${where} · ${friend.room.players === 1 ? "1 jugador" : `${friend.room.players} jugadores`}`;
+        ? tr("Preparando {mode}", { mode: tr(mode) })
+        : tr("Preparando una partida");
+  return `${where} · ${friend.room.players === 1 ? tr("1 jugador") : tr("{n} jugadores", { n: friend.room.players })}`;
 }
 
 // What you can do about a friend's group: join it, ask its leader, or nothing (only by invitation). A friend playing
@@ -34,22 +35,22 @@ export function JoinButton({ friend, onJoin, onCancel, busy }) {
   if (room.joinMode === "abierta") {
     return (
       <button type="button" className="tv-btn tv-btn--sm tv-c-green" onClick={() => onJoin(friend)} disabled={busy}>
-        Unirme
+        {tr("Unirme")}
       </button>
     );
   }
   if (room.joinMode === "solicitud") {
     return room.requested ? (
       <button type="button" className="tv-btn tv-btn--sm tv-c-neutral" onClick={() => onCancel(friend)}>
-        Esperando… <Icon name="close" size={14} strokeWidth={3} />
+        {tr("Esperando…")} <Icon name="close" size={14} strokeWidth={3} />
       </button>
     ) : (
       <button type="button" className="tv-btn tv-btn--sm tv-c-violet" onClick={() => onJoin(friend)} disabled={busy}>
-        Pedir unirme
+        {tr("Pedir unirme")}
       </button>
     );
   }
-  return <span className="tv-fr-note">Solo por invitación</span>;
+  return <span className="tv-fr-note">{tr("Solo por invitación")}</span>;
 }
 
 // One person in any of the lists: face (with a dot when online), name and @username, a line under it, and what you can do.
@@ -76,7 +77,7 @@ function FriendRow({ friend, onJoin, onCancel, onRemove, busy }) {
   return (
     <PersonRow person={friend} online={friend.online} status={statusOf(friend)}>
       <JoinButton friend={friend} onJoin={onJoin} onCancel={onCancel} busy={busy} />
-      <button type="button" className="tv-fr-x" aria-label={`Eliminar a ${friend.name} de tus amigos`} onClick={() => onRemove(friend)}>
+      <button type="button" className="tv-fr-x" aria-label={tr("Eliminar a {name} de tus amigos", { name: friend.name })} onClick={() => onRemove(friend)}>
         <Icon name="close" size={15} strokeWidth={3} />
       </button>
     </PersonRow>
@@ -113,7 +114,7 @@ export default function FriendsSheet() {
     const timer = setTimeout(() => {
       f.search(query)
         .then((list) => live && setResults(list))
-        .catch((err) => live && setMsg({ tone: "bad", text: err.message || "No se pudo buscar" }))
+        .catch((err) => live && setMsg({ tone: "bad", text: err.message || tr("No se pudo buscar") }))
         .finally(() => live && setSearching(false));
     }, 350);
     return () => {
@@ -133,7 +134,7 @@ export default function FriendsSheet() {
       if (okText) setMsg({ tone: "ok", text: typeof okText === "function" ? okText(res) : okText });
       return res;
     } catch (err) {
-      setMsg({ tone: "bad", text: err.message || "No se pudo completar" });
+      setMsg({ tone: "bad", text: err.message || tr("No se pudo completar") });
       return null;
     } finally {
       setBusy(false);
@@ -145,7 +146,7 @@ export default function FriendsSheet() {
       () => f.joinFriend(friend.id),
       (action) =>
         action === "requested"
-          ? `Le pediste a ${friend.room?.hostName || "el líder"} unirte a su grupo. Esperando su respuesta…`
+          ? tr("Le pediste a {v0} unirte a su grupo. Esperando su respuesta…", { v0: friend.room?.hostName || tr("el líder") })
           : null,
     );
 
@@ -155,7 +156,7 @@ export default function FriendsSheet() {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      setMsg({ tone: "bad", text: `Copia esto: @${view.username}` });
+      setMsg({ tone: "bad", text: tr("Copia esto: @{username}", { username: view.username }) });
     }
   }
 
@@ -171,19 +172,19 @@ export default function FriendsSheet() {
 
   return (
     <>
-      <Modal open={f.open} onClose={close} title="Amigos" size="md" className="tv-friends">
+      <Modal open={f.open} onClose={close} title={tr("Amigos")} size="md" className="tv-friends">
         {/* Your @username, in the same box as "Tu grupo"'s link, with a button that copies it. */}
         <div className="tv-codebox">
           <div className="tv-codebox-row">
-            <span className="tv-section-label tv-codebox-label">Tu usuario</span>
-            <span className="tv-fr-code">{view.username ? `@${view.username}` : f.failed ? "No disponible" : "…"}</span>
+            <span className="tv-section-label tv-codebox-label">{tr("Tu usuario")}</span>
+            <span className="tv-fr-code">{view.username ? `@${view.username}` : f.failed ? tr("No disponible") : "…"}</span>
             <div className="tv-codebox-btns">
               <button
                 type="button"
                 className="tv-btn tv-btn--neutral tv-codebox-copy"
                 disabled={!view.username}
-                aria-label={copied ? "Usuario copiado" : "Copiar usuario"}
-                title={copied ? "Copiado" : "Copiar usuario"}
+                aria-label={copied ? tr("Usuario copiado") : tr("Copiar usuario")}
+                title={copied ? tr("Copiado") : tr("Copiar usuario")}
                 onClick={copyUser}
               >
                 <Icon name={copied ? "check" : "copy"} size={18} strokeWidth={2.6} />
@@ -193,15 +194,15 @@ export default function FriendsSheet() {
         </div>
 
         <Segmented
-          label="Amigos"
+          label={tr("Amigos")}
           value={tab}
           onChange={(v) => {
             setTab(v);
             setMsg(null);
           }}
           options={[
-            { value: "amigos", label: `Amigos${view.friends.length ? ` (${view.friends.length})` : ""}` },
-            { value: "solicitudes", label: <>Solicitudes{f.pending > 0 && <span className="tv-fr-count">{f.pending}</span>}</> },
+            { value: "amigos", label: view.friends.length ? tr("Amigos ({n})", { n: view.friends.length }) : tr("Amigos") },
+            { value: "solicitudes", label: <>{tr("Solicitudes")}{f.pending > 0 && <span className="tv-fr-count">{f.pending}</span>}</> },
           ]}
         />
 
@@ -209,9 +210,9 @@ export default function FriendsSheet() {
           <p className="tv-fr-msg is-bad" role="alert">
             <Icon name="lock" size={16} strokeWidth={2.8} />
             <span>
-              No pudimos cargar tus amigos. Revisa tu conexión o inténtalo en un momento.{" "}
+              {tr("No pudimos cargar tus amigos. Revisa tu conexión o inténtalo en un momento.")}{" "}
               <button type="button" className="tv-fr-retry" onClick={f.reload}>
-                Reintentar
+                {tr("Reintentar")}
               </button>
             </span>
           </p>
@@ -229,7 +230,7 @@ export default function FriendsSheet() {
             {/* Always there: add someone by their @username. */}
             <div className="tv-fr-form">
               <label className="tv-fr-sub" htmlFor="tv-fr-search">
-                Añadir un amigo
+                {tr("Añadir un amigo")}
               </label>
               <span className="tv-handle-box">
                 <span className="tv-handle-at" aria-hidden="true">
@@ -240,7 +241,7 @@ export default function FriendsSheet() {
                   className="tv-field"
                   value={query}
                   onChange={(e) => setQuery(cleanUsername(e.target.value))}
-                  placeholder="Escribe su usuario"
+                  placeholder={tr("Escribe su usuario")}
                   autoComplete="off"
                   autoCapitalize="none"
                   autoCorrect="off"
@@ -248,10 +249,10 @@ export default function FriendsSheet() {
                   maxLength={40}
                 />
               </span>
-              {searching && <p className="tv-fr-note">Buscando…</p>}
-              {results && results.length === 0 && !searching && <p className="tv-fr-note">No encontramos a nadie con ese usuario.</p>}
+              {searching && <p className="tv-fr-note">{tr("Buscando…")}</p>}
+              {results && results.length === 0 && !searching && <p className="tv-fr-note">{tr("No encontramos a nadie con ese usuario.")}</p>}
               {results && results.length > 0 && (
-                <ul className="tv-fr-list" aria-label="Resultados">
+                <ul className="tv-fr-list" aria-label={tr("Resultados")}>
                   {results.map((p) => (
                     <PersonRow key={p.id} person={p}>
                       {p.relation === "none" && (
@@ -262,7 +263,7 @@ export default function FriendsSheet() {
                           onClick={async () => {
                             const res = await run(
                               () => f.requestByUsername(p.username),
-                              (r) => (r.status === "accepted" ? `¡Ahora ${p.name} y tú son amigos!` : `Solicitud enviada a ${p.name}`),
+                              (r) => (r.status === "accepted" ? tr("¡Ahora {name} y tú son amigos!", { name: p.name }) : tr("Solicitud enviada a {name}", { name: p.name })),
                             );
                             if (res)
                               setResults((list) =>
@@ -270,16 +271,16 @@ export default function FriendsSheet() {
                               );
                           }}
                         >
-                          Añadir
+                          {tr("Añadir")}
                         </button>
                       )}
                       {p.relation === "asking" && (
-                        <button type="button" className="tv-btn tv-btn--sm tv-c-green" disabled={busy} onClick={() => run(() => f.accept(p.id), `Ahora ${p.name} es tu amigo`)}>
-                          Aceptar
+                        <button type="button" className="tv-btn tv-btn--sm tv-c-green" disabled={busy} onClick={() => run(() => f.accept(p.id), tr("Ahora {name} es tu amigo", { name: p.name }))}>
+                          {tr("Aceptar")}
                         </button>
                       )}
-                      {p.relation === "asked" && <span className="tv-fr-note">Solicitud enviada</span>}
-                      {p.relation === "friends" && <span className="tv-fr-note">Ya son amigos</span>}
+                      {p.relation === "asked" && <span className="tv-fr-note">{tr("Solicitud enviada")}</span>}
+                      {p.relation === "friends" && <span className="tv-fr-note">{tr("Ya son amigos")}</span>}
                     </PersonRow>
                   ))}
                 </ul>
@@ -289,19 +290,19 @@ export default function FriendsSheet() {
             {view.friends.length === 0 ? (
               <div className="tv-fr-empty">
                 <Icon name="users" size={40} strokeWidth={2} />
-                <p>Aún no tienes amigos. Busca a alguien por su usuario o comparte el tuyo.</p>
+                <p>{tr("Aún no tienes amigos. Busca a alguien por su usuario o comparte el tuyo.")}</p>
               </div>
             ) : (
               <>
                 {online.length > 0 && (
                   <section className="tv-fr-group">
-                    <h3 className="tv-fr-sub">En línea · {online.length}</h3>
+                    <h3 className="tv-fr-sub">{tr("En línea ·")} {online.length}</h3>
                     {rows(online)}
                   </section>
                 )}
                 {offline.length > 0 && (
                   <section className="tv-fr-group">
-                    <h3 className="tv-fr-sub">Desconectados · {offline.length}</h3>
+                    <h3 className="tv-fr-sub">{tr("Desconectados ·")} {offline.length}</h3>
                     {rows(offline)}
                   </section>
                 )}
@@ -315,19 +316,19 @@ export default function FriendsSheet() {
             {view.incoming.length === 0 && view.outgoing.length === 0 && (
               <div className="tv-fr-empty">
                 <Icon name="check" size={40} strokeWidth={2} />
-                <p>No hay solicitudes.</p>
+                <p>{tr("No hay solicitudes.")}</p>
               </div>
             )}
             {view.incoming.length > 0 && (
               <section className="tv-fr-group">
-                <h3 className="tv-fr-sub">Te quieren como amigo · {view.incoming.length}</h3>
+                <h3 className="tv-fr-sub">{tr("Te quieren como amigo ·")} {view.incoming.length}</h3>
                 <ul className="tv-fr-list">
                   {view.incoming.map((p) => (
                     <PersonRow key={p.id} person={p}>
-                      <button type="button" className="tv-btn tv-btn--sm tv-c-green" disabled={busy} onClick={() => run(() => f.accept(p.id), `Ahora ${p.name} es tu amigo`)}>
-                        Aceptar
+                      <button type="button" className="tv-btn tv-btn--sm tv-c-green" disabled={busy} onClick={() => run(() => f.accept(p.id), tr("Ahora {name} es tu amigo", { name: p.name }))}>
+                        {tr("Aceptar")}
                       </button>
-                      <button type="button" className="tv-fr-x" aria-label={`Rechazar a ${p.name}`} disabled={busy} onClick={() => run(() => f.decline(p.id))}>
+                      <button type="button" className="tv-fr-x" aria-label={tr("Rechazar a {name}", { name: p.name })} disabled={busy} onClick={() => run(() => f.decline(p.id))}>
                         <Icon name="close" size={15} strokeWidth={3} />
                       </button>
                     </PersonRow>
@@ -337,12 +338,12 @@ export default function FriendsSheet() {
             )}
             {view.outgoing.length > 0 && (
               <section className="tv-fr-group">
-                <h3 className="tv-fr-sub">Enviadas · {view.outgoing.length}</h3>
+                <h3 className="tv-fr-sub">{tr("Enviadas ·")} {view.outgoing.length}</h3>
                 <ul className="tv-fr-list">
                   {view.outgoing.map((p) => (
-                    <PersonRow key={p.id} person={p} status="Esperando respuesta">
+                    <PersonRow key={p.id} person={p} status={tr("Esperando respuesta")}>
                       <button type="button" className="tv-btn tv-btn--sm tv-c-neutral" disabled={busy} onClick={() => run(() => f.remove(p.id))}>
-                        Cancelar
+                        {tr("Cancelar")}
                       </button>
                     </PersonRow>
                   ))}
@@ -355,15 +356,15 @@ export default function FriendsSheet() {
       <ConfirmDialog
         open={Boolean(removing)}
         icon="close"
-        title={`¿Eliminar a ${removing?.name || "este amigo"} de tus amigos?`}
-        text="Dejarán de verse en línea y tendrán que volver a agregarse para ser amigos."
-        cancelLabel="Cancelar"
-        confirmLabel="Eliminar"
+        title={tr("¿Eliminar a {v0} de tus amigos?", { v0: removing?.name || tr("este amigo") })}
+        text={tr("Dejarán de verse en línea y tendrán que volver a agregarse para ser amigos.")}
+        cancelLabel={tr("Cancelar")}
+        confirmLabel={tr("Eliminar")}
         onCancel={() => setRemoving(null)}
         onConfirm={() => {
           const x = removing;
           setRemoving(null);
-          run(() => f.remove(x.id), `${x.name} ya no está en tus amigos`);
+          run(() => f.remove(x.id), tr("{name} ya no está en tus amigos", { name: x.name }));
         }}
       />
     </>

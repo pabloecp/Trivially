@@ -10,37 +10,39 @@ import { shownCode, useHiddenCode } from "../../lib/hiddenCode.js";
 import { findVariant } from "./matchInfo.js";
 import { findMode } from "../../modes/index.js";
 import { formatElo } from "../../lib/gameStats.js";
+import { translate as tr, useT } from "../../lib/i18n.js";
 
 function playerTag(player, { isHost }) {
-  if (!player.connected) return "Reconectando…";
-  if (isHost) return "Anfitrión";
-  if (player.canEditConfig) return "Puede editar ajustes";
-  return "Conectado";
+  if (!player.connected) return tr("Reconectando…");
+  if (isHost) return tr("Anfitrión");
+  if (player.canEditConfig) return tr("Puede editar ajustes");
+  return tr("Conectado");
 }
 
 // What the line under a name says once they answered, in each game's words ("Respondió", "Confirmó", "Ya votó"…);
 // yours in the second person.
 function doneWord(room, isMe) {
-  if (room.game === "mundo") return isMe ? "Confirmaste" : "Confirmó";
-  if (room.game === "historia") return isMe ? "Fijaste tu respuesta" : "Fijó su respuesta";
-  if (room.game === "farsante") return room.farsante?.stage === "voting" ? (isMe ? "Ya votaste" : "Ya votó") : isMe ? "Ya escribiste" : "Ya escribió";
-  return isMe ? "Respondiste" : "Respondió";
+  if (room.game === "mundo") return isMe ? tr("Confirmaste") : tr("Confirmó");
+  if (room.game === "historia") return isMe ? tr("Fijaste tu respuesta") : tr("Fijó su respuesta");
+  if (room.game === "farsante") return room.farsante?.stage === "voting" ? (isMe ? tr("Ya votaste") : tr("Ya votó")) : isMe ? tr("Ya escribiste") : tr("Ya escribió");
+  return isMe ? tr("Respondiste") : tr("Respondió");
 }
 
 // During a match the line under each name says how their round is going. The server sends everyone's answer only
 // once the round is over (reveal), and at the end each player's totals (results).
 function MatchTag({ player, room, isMe = false }) {
-  if (player.spectator) return <span className="tv-player-tag">Espectador</span>;
-  if (!player.connected) return <span className="tv-player-tag">Reconectando…</span>;
+  const t = useT();
+  if (player.spectator) return <span className="tv-player-tag">{t("Espectador")}</span>;
+  if (!player.connected) return <span className="tv-player-tag">{t("Reconectando…")}</span>;
   if (room.phase === "finished") {
     const r = room.results?.find((x) => x.id === player.id);
-    if (!r) return <span className="tv-player-tag">Sin resultados</span>;
+    if (!r) return <span className="tv-player-tag">{t("Sin resultados")}</span>;
     // Only the right answers ("1 acierto", "6 aciertos").
-    return <span className="tv-player-tag">{r.correct === 1 ? "1 acierto" : `${r.correct || 0} aciertos`}</span>;
+    return <span className="tv-player-tag">{r.correct === 1 ? t("1 acierto") : t("{n} aciertos", { n: r.correct || 0 })}</span>;
   }
   if (room.phase === "reveal") {
     const a = player.lastAnswer;
-    if (!a || a.skipped || !a.text) return <span className="tv-player-tag">{a?.skipped ? "Se la saltó" : "Sin respuesta"}</span>;
+    if (!a || a.skipped || !a.text) return <span className="tv-player-tag">{a?.skipped ? t("Se la saltó") : t("Sin respuesta")}</span>;
     return (
       <span className={`tv-player-tag tv-player-answer ${a.correct ? "is-right" : "is-wrong"}`}>
         <Icon name={a.correct ? "check" : "close"} size={12} strokeWidth={3.2} />
@@ -53,37 +55,38 @@ function MatchTag({ player, room, isMe = false }) {
     return (
       <span className="tv-player-tag tv-player-answer is-wrong">
         <Icon name={player.out === "mina" ? "bomb" : "close"} size={12} strokeWidth={3.2} />
-        <span>{player.out === "mina" ? "Pisó una mina" : "Sin tiempo"}</span>
+        <span>{player.out === "mina" ? t("Pisó una mina") : t("Sin tiempo")}</span>
       </span>
     );
   }
   // Rey de la colina: who holds the crown, and who's trying to take it.
   if (room.game === "rey" && room.phase === "playing" && room.rey?.roundKingId) {
-    if (player.id === room.rey.roundKingId) return <span className="tv-player-tag is-king">Rey</span>;
-    if (!player.answered) return <span className="tv-player-tag">Retador</span>;
+    if (player.id === room.rey.roundKingId) return <span className="tv-player-tag is-king">{t("Rey")}</span>;
+    if (!player.answered) return <span className="tv-player-tag">{t("Retador")}</span>;
   }
   if (player.answered) return <span className="tv-player-tag is-done">{doneWord(room, isMe)}</span>;
   // Campo de minas: the right answers found so far in this round.
   if (room.phase === "playing" && player.hits > 0) {
-    return <span className="tv-player-tag is-streak">{player.hits === 1 ? "1 acierto" : `${player.hits} aciertos`}</span>;
+    return <span className="tv-player-tag is-streak">{player.hits === 1 ? t("1 acierto") : t("{n} aciertos", { n: player.hits })}</span>;
   }
   // Hasn't answered in a few rounds in a row: the rounds don't wait for them until they answer again.
-  if (room.phase === "playing" && player.idle) return <span className="tv-player-tag">Inactivo</span>;
-  if (player.streak > 1) return <span className="tv-player-tag is-streak">Racha de {player.streak}</span>;
-  return <span className="tv-player-tag">{room.phase === "playing" ? (room.game === "mundo" ? "Buscando…" : "Pensando…") : room.phase === "countdown" ? "Preparándose…" : "Conectado"}</span>;
+  if (room.phase === "playing" && player.idle) return <span className="tv-player-tag">{t("Inactivo")}</span>;
+  if (player.streak > 1) return <span className="tv-player-tag is-streak">{t("Racha de {n}", { n: player.streak })}</span>;
+  return <span className="tv-player-tag">{room.phase === "playing" ? (room.game === "mundo" ? t("Buscando…") : t("Pensando…")) : room.phase === "countdown" ? t("Preparándose…") : t("Conectado")}</span>;
 }
 
 // The scoreboard's pill while a round is open: "Respondieron 3/4" (those still playing it); between rounds, the round.
 function answeredLine(room, players) {
-  if (room.phase !== "playing") return `Ronda ${Math.min(room.totalRounds || 1, (room.currentRound || 0) + 1)}`;
+  if (room.phase !== "playing") return tr("Ronda {n}", { n: Math.min(room.totalRounds || 1, (room.currentRound || 0) + 1) });
   const inRound = players.filter((p) => p.connected && !p.idle && p.status !== "mirando");
-  return `Respondieron ${inRound.filter((p) => p.answered).length}/${inRound.length}`;
+  return tr("Respondieron {a}/{b}", { a: inRound.filter((p) => p.answered).length, b: inRound.length });
 }
 
 // A match's scoreboard on a phone, under the game: one chip per player in the order of the ranking (face, name and points,
 // a green dot once they answered, you with the yellow ring), sideways when they don't fit, always with you in sight. A tap
 // opens the whole scoreboard (`onOpen`).
 function ScoreStrip({ players, viewerId, disabled, room, onOpen }) {
+  const t = useT();
   const ref = useRef(null);
   const myPlace = players.findIndex((p) => p.id === viewerId);
   useEffect(() => {
@@ -95,7 +98,7 @@ function ScoreStrip({ players, viewerId, disabled, room, onOpen }) {
     }
   }, [myPlace, players.length]);
   return (
-    <div ref={ref} className="tv-pstrip" role="group" aria-label="Marcador">
+    <div ref={ref} className="tv-pstrip" role="group" aria-label={t("Marcador")}>
       {players.map((p, i) => {
         const done = p.answered && room.phase === "playing";
         return (
@@ -105,7 +108,7 @@ function ScoreStrip({ players, viewerId, disabled, room, onOpen }) {
             className={`tv-pstrip-chip${p.id === viewerId ? " is-me" : ""}${done ? " is-done" : ""}${p.connected ? "" : " is-away"}`}
             disabled={disabled}
             onClick={onOpen}
-            aria-label={`${i + 1}. ${p.name}, ${formatElo(p.score || 0)} puntos. Ver el marcador`}
+            aria-label={t("{n}. {name}, {score} puntos. Ver el marcador", { n: i + 1, name: p.name, score: formatElo(p.score || 0) })}
           >
             <span className="tv-pstrip-face">
               <Avatar name={p.name} avatar={p.avatar} />
@@ -133,6 +136,7 @@ function ScoreStrip({ players, viewerId, disabled, room, onOpen }) {
 // In a match (`scores`) the header says how the round goes (`status`: "Respondieron 3/4"; by default how many answered).
 export default function PartyPanel({ room, onToast, scores = false, display = false, className = "", status }) {
   const { user, isCentral } = useApp();
+  const t = useT();
   const [menuFor, setMenuFor] = useState(null);
   // Phones: the whole scoreboard, opened from its strip.
   const [boardOpen, setBoardOpen] = useState(false);
@@ -172,7 +176,7 @@ export default function PartyPanel({ room, onToast, scores = false, display = fa
     <div className="tv-party-people">
       <div>
         {showSpot && <CentralSpot room={room} canEdit={canCentral} onToast={onToast} />}
-        <ul className="tv-party-players" aria-label={scores ? "Marcador" : "Jugadores en la partida"}>
+        <ul className="tv-party-players" aria-label={scores ? t("Marcador") : t("Jugadores en la partida")}>
           {players.map((p, i) => {
             const isMe = p.id === viewerId;
             const isHostPlayer = p.id === room.hostId;
@@ -240,17 +244,17 @@ export default function PartyPanel({ room, onToast, scores = false, display = fa
         {spectators.length > 0 && (
           <>
             <div className="tv-party-title">
-              <h2>Espectadores</h2>
-              <span>{spectators.length === 1 ? "1 espectador" : `${spectators.length} espectadores`}</span>
+              <h2>{t("Espectadores")}</h2>
+              <span>{spectators.length === 1 ? t("1 espectador") : t("{n} espectadores", { n: spectators.length })}</span>
             </div>
-            <ul className="tv-party-players tv-party-spectators" aria-label="Espectadores">
+            <ul className="tv-party-players tv-party-spectators" aria-label={t("Espectadores")}>
               {spectators.map((p) => (
                 <li key={p.id} className={`tv-player is-spectator${p.id === viewerId ? " is-me" : ""}${p.connected ? "" : " is-away"}`}>
                   <div className="tv-player-btn">
                     <Avatar name={p.name} avatar={p.avatar} mood="neutral" />
                     <span className="tv-player-text">
                       <span className="tv-player-name">{p.name}</span>
-                      <span className="tv-player-tag">{p.connected ? "Entra en la próxima partida" : "Reconectando…"}</span>
+                      <span className="tv-player-tag">{p.connected ? t("Entra en la próxima partida") : t("Reconectando…")}</span>
                     </span>
                   </div>
                 </li>
@@ -265,33 +269,33 @@ export default function PartyPanel({ room, onToast, scores = false, display = fa
   return (
     <aside
       className={`tv-party${scores ? " is-scores" : ""}${display ? " is-display" : ""} ${className}`.trim()}
-      aria-label="La partida"
+      aria-label={t("La partida")}
     >
       {/* Only a group's private match has a code to share (the group's). Nobody joins a public match but by searching. The
           scoreboard of a match has none: only the scoreboard (the code is only here and in "Tu grupo"). */}
       {room.groupCode && !room.matchmaking && !scores && (
       <div className="tv-party-codebox">
         <div className="tv-party-codehead">
-          <p className="tv-mono-label">Código del grupo</p>
+          <p className="tv-mono-label">{t("Código del grupo")}</p>
           {/* Hides the code on this device's screens, for streaming. */}
           <button
             type="button"
             className={`tv-code-eye${codeHidden ? " is-on" : ""}`}
             onClick={toggleCode}
             aria-pressed={codeHidden}
-            aria-label={codeHidden ? "Mostrar el código" : "Ocultar el código"}
+            aria-label={codeHidden ? t("Mostrar el código") : t("Ocultar el código")}
           >
             <Icon name={codeHidden ? "eye-off" : "eye"} size={16} strokeWidth={2.4} />
-            <span>{codeHidden ? "Oculto" : "Ocultar"}</span>
+            <span>{codeHidden ? t("Oculto") : t("Ocultar")}</span>
           </button>
         </div>
         <p className={`tv-party-code${codeHidden ? " is-hidden" : ""}`}>{shownCode(room.groupCode, codeHidden)}</p>
         {display ? (
-          <p className="tv-party-joinhint">Entra a trivially y únete con este código</p>
+          <p className="tv-party-joinhint">{t("Entra a trivially y únete con este código")}</p>
         ) : (
-          <button type="button" className="tv-btn tv-c-violet tv-invite-btn tv-shine" onClick={copyInvite} aria-label="Invitar con enlace">
+          <button type="button" className="tv-btn tv-c-violet tv-invite-btn tv-shine" onClick={copyInvite} aria-label={t("Invitar con enlace")}>
             <Icon name={copied ? "check" : "link"} size={20} strokeWidth={2.6} />
-            {copied ? "¡Copiado!" : "Invitar"}
+            {copied ? t("¡Copiado!") : t("Invitar")}
           </button>
         )}
       </div>
@@ -299,11 +303,11 @@ export default function PartyPanel({ room, onToast, scores = false, display = fa
 
 
       <div className="tv-party-title">
-        <h2>{scores ? "Marcador" : "En la partida"}</h2>
+        <h2>{scores ? t("Marcador") : t("En la partida")}</h2>
         {scores ? (
           <span className="tv-party-status-pill">{statusLine}</span>
         ) : (
-          <span>{players.length === 1 ? "1 jugador" : `${players.length} jugadores`}</span>
+          <span>{players.length === 1 ? t("1 jugador") : t("{n} jugadores", { n: players.length })}</span>
         )}
       </div>
 
@@ -313,7 +317,7 @@ export default function PartyPanel({ room, onToast, scores = false, display = fa
       {scores && (
         <>
           <ScoreStrip players={players} viewerId={viewerId} disabled={display} room={room} onOpen={() => setBoardOpen(true)} />
-          <Modal open={boardOpen} title="Marcador" size="sm" className="tv-score-modal" onClose={() => setBoardOpen(false)}>
+          <Modal open={boardOpen} title={t("Marcador")} size="sm" className="tv-score-modal" onClose={() => setBoardOpen(false)}>
             <span className="tv-party-status-pill">{statusLine}</span>
             {people}
           </Modal>

@@ -1,10 +1,11 @@
+import { translate as tr } from "../../lib/i18n.js";
 // Difficulty levels of "Trivia" (same ids as QUIZ_DIFFICULTIES in backend/src/game/quiz.js). The harder, the
 // deeper the blue; mixed takes the butter accent (colours in styles/quiz.css).
 export const DIFFICULTIES = [
-  { id: "mixta", label: "Mixta", hint: "Las tres mezcladas", color: "quiz-accent", stars: 0 },
-  { id: "facil", label: "Fácil", hint: "Para calentar", color: "quiz-light", stars: 1 },
-  { id: "media", label: "Media", hint: "Un poco de todo", color: "quiz", stars: 2 },
-  { id: "dificil", label: "Difícil", hint: "Solo expertos", color: "quiz-deep", stars: 3 },
+  { id: "mixta", get label() { return tr("Mixta"); }, get hint() { return tr("Las tres mezcladas"); }, color: "quiz-accent", stars: 0 },
+  { id: "facil", get label() { return tr("Fácil"); }, get hint() { return tr("Para calentar"); }, color: "quiz-light", stars: 1 },
+  { id: "media", get label() { return tr("Media"); }, get hint() { return tr("Un poco de todo"); }, color: "quiz", stars: 2 },
+  { id: "dificil", get label() { return tr("Difícil"); }, get hint() { return tr("Solo expertos"); }, color: "quiz-deep", stars: 3 },
 ];
 
 export function findDifficulty(id) {
@@ -13,30 +14,30 @@ export function findDifficulty(id) {
 
 // The topics (QUESTION_CATEGORIES in backend/src/questions/questionSchema.js), in the order they show.
 export const TOPICS = [
-  { id: "cultura", label: "Cultura" },
-  { id: "ciencia", label: "Ciencia" },
-  { id: "historia", label: "Historia" },
-  { id: "geografia", label: "Geografía" },
-  { id: "literatura", label: "Literatura" },
-  { id: "arte", label: "Arte" },
-  { id: "musica", label: "Música" },
-  { id: "peliculas_series", label: "Películas y series" },
-  { id: "videojuegos", label: "Videojuegos" },
-  { id: "deportes", label: "Deportes" },
+  { id: "cultura", get label() { return tr("Cultura"); } },
+  { id: "ciencia", get label() { return tr("Ciencia"); } },
+  { id: "historia", get label() { return tr("Historia"); } },
+  { id: "geografia", get label() { return tr("Geografía"); } },
+  { id: "literatura", get label() { return tr("Literatura"); } },
+  { id: "arte", get label() { return tr("Arte"); } },
+  { id: "musica", get label() { return tr("Música"); } },
+  { id: "peliculas_series", get label() { return tr("Películas y series"); } },
+  { id: "videojuegos", get label() { return tr("Videojuegos"); } },
+  { id: "deportes", get label() { return tr("Deportes"); } },
 ];
 
 // The ways of answering, "Tipo de respuestas" (QUIZ_FORMATS on the server; not a modo de juego): closed questions, one of four to choose, or open ones,
 // the answer written. Adivina la canción uses the same two.
 export const FORMATS = [
-  { id: "opciones", label: "Cerradas", hint: "Elige una de cuatro opciones" },
-  { id: "escribir", label: "Abiertas", hint: "Escribe la respuesta" },
+  { id: "opciones", get label() { return tr("Cerradas"); }, get hint() { return tr("Elige una de cuatro opciones"); } },
+  { id: "escribir", get label() { return tr("Abiertas"); }, get hint() { return tr("Escribe la respuesta"); } },
 ];
 
 // The modes of play, "Modos de juego" (QUIZ_STYLES on the server): they change which questions are asked. Clásico, the
 // text ones; Imágenes, those that come with a picture (the flags, a film's scene...). Both ticked by default.
 export const STYLES = [
-  { id: "clasico", label: "Clásico", hint: "Preguntas de texto" },
-  { id: "imagenes", label: "Imágenes", hint: "Cada pregunta trae una imagen" },
+  { id: "clasico", get label() { return tr("Clásico"); }, get hint() { return tr("Preguntas de texto"); } },
+  { id: "imagenes", get label() { return tr("Imágenes"); }, get hint() { return tr("Cada pregunta trae una imagen"); } },
 ];
 
 // The difficulties a match can mix (QUIZ_LEVELS on the server), any of them ticked.

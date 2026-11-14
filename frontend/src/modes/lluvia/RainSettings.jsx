@@ -3,6 +3,7 @@ import OptionRow, { rangeOptions } from "../../components/home/OptionRow.jsx";
 import SettingsTabs, { countNote } from "../../components/home/SettingsTabs.jsx";
 import { CATEGORIES, DIFFICULTIES, MIN_QUESTIONS, ROUND_OPTIONS, SECONDS_LIMITS, rainConfig } from "./rainInfo.js";
 
+import { translate as tr } from "../../lib/i18n.js";
 // Settings of a Lluvia match, in the settings panel, in two tabs: "Partida" (how many rounds and how long it rains in
 // each) and "Preguntas" (which categories and difficulties the questions come from, tick as many as you like, like
 // Trivia's; each difficulty with its colour on screen and its points). A choice without questions with the other
@@ -28,7 +29,7 @@ export default function RainSettings({ room, updateConfig, onToast, children, re
       await updateConfig({ rain: next });
     } catch (err) {
       setDraft(saved);
-      onToast?.(err.message || "No se pudieron guardar los ajustes");
+      onToast?.(err.message || tr("No se pudieron guardar los ajustes"));
     }
   }
 
@@ -50,20 +51,20 @@ export default function RainSettings({ room, updateConfig, onToast, children, re
       tabs={[
         {
           id: "partida",
-          label: "Partida",
+          label: tr("Partida"),
           icon: "hourglass",
           note: `${draft.rounds} ${draft.rounds === 1 ? "ronda" : "rondas"} · ${seconds} s`,
           content: (
             <>
               <OptionRow
-                label="Rondas"
+                label={tr("Rondas")}
                 options={ROUND_OPTIONS.map((n) => ({ value: n, label: String(n) }))}
                 value={draft.rounds}
                 onChange={(n) => save({ rounds: n })}
               />
               <OptionRow
-                label="Segundos de lluvia"
-                hint="Lo que dura cada ronda"
+                label={tr("Segundos de lluvia")}
+                hint={tr("Lo que dura cada ronda")}
                 options={rangeOptions(SECONDS_LIMITS)}
                 value={seconds}
                 onChange={(n) => save({ roundMs: n * 1000 })}
@@ -73,14 +74,14 @@ export default function RainSettings({ room, updateConfig, onToast, children, re
         },
         {
           id: "preguntas",
-          label: "Preguntas",
+          label: tr("Preguntas"),
           icon: "bulb",
           note: countNote(draft.categories, CATEGORIES.length),
           alert: !draft.categories.length || !draft.difficulties.length || (room.questionsReady != null && room.questionsReady < MIN_QUESTIONS),
           content: (
             <>
               <OptionRow
-                label="Categorías"
+                label={tr("Categorías")}
                 multi
                 wrap
                 options={CATEGORIES.map((c) => ({ value: c.id, label: c.label, disabled: disabled("categories", c.id) }))}
@@ -89,8 +90,8 @@ export default function RainSettings({ room, updateConfig, onToast, children, re
                 onSetAll={(categories) => save({ categories })}
               />
               <OptionRow
-                label="Dificultad"
-                hint="Verde 1 punto, amarilla 3 y roja 5"
+                label={tr("Dificultad")}
+                hint={tr("Verde 1 punto, amarilla 3 y roja 5")}
                 multi
                 options={DIFFICULTIES.map((d) => ({
                   value: d.id,

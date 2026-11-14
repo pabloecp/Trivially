@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import Icon from "./Icon.jsx";
 import { useApp } from "../../lib/store.jsx";
 import { useOwnerDebug } from "../../lib/ownerView.js";
+import { useT } from "../../lib/i18n.js";
 
 // Every player: "Reportar", left of "Pausar", sends the question being played to be checked later (with its settings
 // and who was in the room; RoomManager.questionReport). The first tap turns it red to confirm, the second sends it, and
@@ -9,6 +10,7 @@ import { useOwnerDebug } from "../../lib/ownerView.js";
 export function ReportButton({ room, onError }) {
   const { isCentral, reportQuestion } = useApp();
   const [state, setState] = useState("idle");
+  const t = useT();
   const round = `${room?.currentRound}|${room?.tiebreak?.round ?? ""}`;
 
   // A new round can be reported again.
@@ -16,8 +18,8 @@ export function ReportButton({ room, onError }) {
   // Not confirmed in a few seconds: back to the start.
   useEffect(() => {
     if (state !== "confirm") return undefined;
-    const t = setTimeout(() => setState("idle"), 4000);
-    return () => clearTimeout(t);
+    const timer = setTimeout(() => setState("idle"), 4000);
+    return () => clearTimeout(timer);
   }, [state]);
 
   // Not on the room's central device: it only shows the match.
@@ -32,11 +34,11 @@ export function ReportButton({ room, onError }) {
       setState("sent");
     } catch (e) {
       setState("idle");
-      onError?.(e.message || "No se pudo enviar el reporte");
+      onError?.(e.message || t("No se pudo enviar el reporte"));
     }
   }
 
-  const label = { idle: "Reportar", confirm: "¿Enviar reporte?", sending: "Enviando…", sent: "Reportada" }[state];
+  const label = { idle: t("Reportar"), confirm: t("¿Enviar reporte?"), sending: t("Enviando…"), sent: t("Reportada") }[state];
   return (
     <button
       type="button"
@@ -58,6 +60,7 @@ export function SkipButton({ room, onError }) {
   const { isCentral, skipRound } = useApp();
   const debug = useOwnerDebug();
   const [busy, setBusy] = useState(false);
+  const t = useT();
   if (isCentral || !debug || !["countdown", "playing", "reveal"].includes(room?.phase)) return null;
 
   async function onClick() {
@@ -66,16 +69,16 @@ export function SkipButton({ room, onError }) {
     try {
       await skipRound();
     } catch (e) {
-      onError?.(e.message || "No se pudo saltar la pregunta");
+      onError?.(e.message || t("No se pudo saltar la pregunta"));
     } finally {
       setBusy(false);
     }
   }
 
   return (
-    <button type="button" className="tv-mini-btn tv-skip-btn" onClick={onClick} disabled={busy} aria-label="Saltar a la siguiente pregunta">
+    <button type="button" className="tv-mini-btn tv-skip-btn" onClick={onClick} disabled={busy} aria-label={t("Saltar a la siguiente pregunta")}>
       <Icon name="skip" size={13} filled strokeWidth={2.2} />
-      <span className="tv-pause-label">Saltar</span>
+      <span className="tv-pause-label">{t("Saltar")}</span>
     </button>
   );
 }
@@ -87,16 +90,17 @@ export function SkipButton({ room, onError }) {
 export function PauseButton({ room, isHost, onError }) {
   const { pauseGame, isCentral } = useApp();
   const debug = useOwnerDebug();
+  const t = useT();
   if (isCentral || !(isHost || debug) || !["countdown", "playing", "reveal"].includes(room?.phase)) return null;
   return (
     <button
       type="button"
       className={`tv-mini-btn tv-pause-btn${room.paused ? " is-on" : ""}`}
-      onClick={() => pauseGame(!room.paused).catch((e) => onError?.(e.message || "No se pudo pausar la partida"))}
-      aria-label={room.paused ? "Reanudar" : "Pausar"}
+      onClick={() => pauseGame(!room.paused).catch((e) => onError?.(e.message || t("No se pudo pausar la partida")))}
+      aria-label={room.paused ? t("Reanudar") : t("Pausar")}
     >
       <Icon name={room.paused ? "play" : "pause"} size={13} filled strokeWidth={0} />
-      <span className="tv-pause-label">{room.paused ? "Reanudar" : "Pausar"}</span>
+      <span className="tv-pause-label">{room.paused ? t("Reanudar") : t("Pausar")}</span>
     </button>
   );
 }
@@ -104,12 +108,13 @@ export function PauseButton({ room, isHost, onError }) {
 // Over a game's stage while the match is paused, so nobody tries to answer.
 export function PauseVeil({ room, isHost }) {
   const debug = useOwnerDebug();
+  const t = useT();
   if (!room?.paused) return null;
   return (
     <div className="tv-pause-veil" role="status">
       <Icon name="pause" size={30} filled strokeWidth={0} />
-      <strong>Partida en pausa</strong>
-      <span>{isHost || debug ? "Toca ▶ para seguir." : room.hostId ? "El anfitrión la reanudará en breve." : "La partida seguirá en breve."}</span>
+      <strong>{t("Partida en pausa")}</strong>
+      <span>{isHost || debug ? t("Toca ▶ para seguir.") : room.hostId ? t("El anfitrión la reanudará en breve.") : t("La partida seguirá en breve.")}</span>
     </div>
   );
 }

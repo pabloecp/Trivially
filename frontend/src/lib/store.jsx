@@ -3,6 +3,7 @@ import { api, setAuthToken } from "./api.js";
 import { emitAck, emitAckWithin, getSocket, reconnectSocket, setSocketTokenProvider } from "./socket.js";
 import { BACKEND_URL } from "./config.js";
 
+import { translate as tr } from "../lib/i18n.js";
 const AppContext = createContext(null);
 
 // The first one is the default. The profile adds an eighth option: the Google photo.
@@ -229,7 +230,7 @@ export function AppProvider({ children }) {
   // room's central device. The error that comes with it is marked (`offer`), so whoever was joining stays quiet:
   // CentralOffer says it.
   function offerCentral(code, res) {
-    setCentralOffer({ code, isHost: Boolean(res.isHost), hostName: res.hostName || "el anfitrión", status: "offer", error: "" });
+    setCentralOffer({ code, isHost: Boolean(res.isHost), hostName: res.hostName || tr("el anfitrión"), status: "offer", error: "" });
     const err = new Error(res.error);
     err.offer = true;
     return err;
@@ -317,10 +318,10 @@ export function AppProvider({ children }) {
             localStorage.removeItem(GUEST_ID_KEY);
             reconnectSocket();
           } else {
-            googleFailed("tu navegador no guardó la sesión. Permite cookies para este sitio e inténtalo otra vez.");
+            googleFailed(tr("tu navegador no guardó la sesión. Permite cookies para este sitio e inténtalo otra vez."));
           }
         })
-        .catch((e) => googleFailed(e.message || "no hubo respuesta del servidor. Inténtalo otra vez."))
+        .catch((e) => googleFailed(e.message || tr("no hubo respuesta del servidor. Inténtalo otra vez.")))
         .finally(() => googleDone.current.resolve());
 
       try {
@@ -373,7 +374,7 @@ export function AppProvider({ children }) {
     const rejoin = async () => {
       // A request to be a room's central device dies with the connection: it has to be asked again.
       const offer = offerRef.current;
-      if (offer?.status === "waiting") setCentralOffer({ ...offer, status: "offer", error: "Se cortó la conexión. Pídelo otra vez." });
+      if (offer?.status === "waiting") setCentralOffer({ ...offer, status: "offer", error: tr("Se cortó la conexión. Pídelo otra vez.") });
       const current = userRef.current;
       const central = roleRef.current === "central";
       const groupCode = groupCodeRef.current;
@@ -436,17 +437,17 @@ export function AppProvider({ children }) {
     const onGroupLeft = ({ code } = {}) => {
       if (code !== groupCodeRef.current) return;
       clearGroup();
-      setKickedNotice("El líder te sacó del grupo");
+      setKickedNotice(tr("El líder te sacó del grupo"));
     };
     const onKicked = ({ code, reason } = {}) => {
       if (code !== roomCodeRef.current) return;
       clearRoom();
       setKickedNotice(
         reason === "inactivo"
-          ? "Saliste de la partida por inactividad"
+          ? tr("Saliste de la partida por inactividad")
           : reason === "error"
-            ? "La partida se cerró por un error nuestro. Ya nos avisaron: puedes empezar otra."
-            : "El anfitrión te sacó de la partida"
+            ? tr("La partida se cerró por un error nuestro. Ya nos avisaron: puedes empezar otra.")
+            : tr("El anfitrión te sacó de la partida")
       );
     };
     s.on("room:state", onState);
@@ -474,7 +475,7 @@ export function AppProvider({ children }) {
     () => ({
       async saveGuest(name, avatar) {
         const cleanName = (name || "").trim();
-        if (!cleanName) throw new Error("Por favor introduce un nombre");
+        if (!cleanName) throw new Error(tr("Por favor introduce un nombre"));
         let guestId = localStorage.getItem(GUEST_ID_KEY);
         if (!guestId) {
           guestId = `gst_${Math.random().toString(36).slice(2, 10)}`;
@@ -504,9 +505,9 @@ export function AppProvider({ children }) {
 
       async updateUsername(newName) {
         const current = userRef.current;
-        if (!current) throw new Error("No autenticado");
+        if (!current) throw new Error(tr("No autenticado"));
         const clean = (newName || "").trim();
-        if (!clean) throw new Error("Por favor introduce un nombre de usuario");
+        if (!clean) throw new Error(tr("Por favor introduce un nombre de usuario"));
         const res = await api(`/api/users/${current.id}/name`, { method: "PATCH", body: { name: clean } });
         if (res.user) {
           localStorage.setItem(GUEST_NAME_KEY, res.user.name);
@@ -643,7 +644,7 @@ export function AppProvider({ children }) {
       // (guests and accounts alike) and in the current room.
       async updateAvatar(choice) {
         const current = userRef.current;
-        if (!current) throw new Error("No autenticado");
+        if (!current) throw new Error(tr("No autenticado"));
         const res = await api(`/api/users/${current.id}/avatar`, { method: "PATCH", body: { avatar: choice } });
         const avatar = res.user?.avatar || choice;
         applyUser({ ...current, ...(res.user || {}), avatar });
@@ -656,7 +657,7 @@ export function AppProvider({ children }) {
       // The badge worn beside the name on the profile (lib/badges.js); null takes it off.
       async updateBadge(badge) {
         const current = userRef.current;
-        if (!current) throw new Error("No autenticado");
+        if (!current) throw new Error(tr("No autenticado"));
         const res = await api(`/api/users/${current.id}/badge`, { method: "PATCH", body: { badge } });
         applyUser({ ...current, ...(res.user || {}), badge: res.user?.badge ?? null });
       },
@@ -676,7 +677,7 @@ export function AppProvider({ children }) {
       // `explicitUser` is for callers that just created the user and want to be sure it's the one sent.
       async createRoom(mode, config, game = "musica", explicitUser) {
         const current = explicitUser || userRef.current;
-        if (!current?.name) throw new Error("Debes identificarte antes de crear una partida");
+        if (!current?.name) throw new Error(tr("Debes identificarte antes de crear una partida"));
         const res = await emitAck("room:create", { user: current, mode, config, game });
         if (!res.ok) throw new Error(res.error);
         return enterRoom(res.state);
@@ -689,7 +690,7 @@ export function AppProvider({ children }) {
       // and the server picks its size (5). A group's leader searches for the whole group (the server seats everyone).
       async findMatch(kind, size = 5, explicitUser, game = null) {
         const current = explicitUser || userRef.current;
-        if (!current?.name) throw new Error("Debes identificarte antes de buscar partida");
+        if (!current?.name) throw new Error(tr("Debes identificarte antes de buscar partida"));
         const res = await emitAck("match:find", { user: current, kind, ...(game ? { game } : { size }), });
         if (!res.ok) throw new Error(res.error);
         return enterRoom(res.state);
@@ -699,7 +700,7 @@ export function AppProvider({ children }) {
       // through, and the join itself says what's wrong.
       async checkRoom(code) {
         const res = await emitAckWithin(6000, "room:check", code.toUpperCase());
-        if (!res.ok && res.error !== "El servidor no respondió. Inténtalo otra vez.") throw new Error(res.error);
+        if (!res.ok && res.error !== tr("El servidor no respondió. Inténtalo otra vez.")) throw new Error(res.error);
       },
 
       // Also coming back to the room after a reload, as what this tab was in it (a player or its central device).
@@ -707,7 +708,7 @@ export function AppProvider({ children }) {
       // whether to make this one its central device, so the caller shouldn't show the error itself.
       async joinRoom(code, explicitUser) {
         const current = explicitUser || userRef.current;
-        if (!current?.name) throw new Error("Debes identificarte antes de unirte");
+        if (!current?.name) throw new Error(tr("Debes identificarte antes de unirte"));
         const upper = code.toUpperCase();
         const central = roleRef.current === "central" && roomCodeRef.current === upper;
         const res = await emitAck("room:join", { user: current, code: upper, central });
@@ -722,7 +723,7 @@ export function AppProvider({ children }) {
         setCentralOffer({ ...offer, status: "sending", error: "" });
         const res = await emitAck("room:joinCentral", { user: userRef.current, code: offer.code });
         if (!res.ok) {
-          setCentralOffer({ ...offer, status: "offer", error: res.error || "No se pudo entrar como dispositivo central" });
+          setCentralOffer({ ...offer, status: "offer", error: res.error || tr("No se pudo entrar como dispositivo central") });
           return;
         }
         setCentralOffer(null);
@@ -736,7 +737,7 @@ export function AppProvider({ children }) {
         setCentralOffer({ ...offer, status: "sending", error: "" });
         const res = await emitAck("room:requestCentral", { user: userRef.current, code: offer.code });
         if (offerRef.current?.code !== offer.code || offerRef.current.status !== "sending") return;
-        if (!res.ok) setCentralOffer({ ...offer, status: "offer", error: res.error || "No se pudo enviar la solicitud" });
+        if (!res.ok) setCentralOffer({ ...offer, status: "offer", error: res.error || tr("No se pudo enviar la solicitud") });
         else setCentralOffer({ ...offer, status: "waiting", error: "" });
       },
 
@@ -785,7 +786,7 @@ export function AppProvider({ children }) {
       // they were playing alone becomes the group's.
       async createGroup(plan, explicitUser) {
         const current = explicitUser || userRef.current;
-        if (!current?.name) throw new Error("Debes identificarte antes de crear un grupo");
+        if (!current?.name) throw new Error(tr("Debes identificarte antes de crear un grupo"));
         const res = await emitAck("group:create", { user: current, plan });
         if (!res.ok) throw new Error(res.error);
         return enterGroup(res.group);
@@ -807,7 +808,7 @@ export function AppProvider({ children }) {
       // the central device of the group's private match (an error with `offer`, like joinRoom's).
       async joinGroup(code, explicitUser) {
         const current = explicitUser || userRef.current;
-        if (!current?.name) throw new Error("Debes identificarte antes de unirte");
+        if (!current?.name) throw new Error(tr("Debes identificarte antes de unirte"));
         const res = await emitAck("group:join", { user: current, code: code.toUpperCase() });
         if (!res.ok) {
           if (res.offerRoom) return actions.joinRoom(res.offerRoom, current);
@@ -880,7 +881,7 @@ export function AppProvider({ children }) {
         // An older server doesn't know this event and never answers: don't leave the player waiting in silence.
         const res = await Promise.race([
           emitAck("room:suggest", game),
-          new Promise((resolve) => setTimeout(() => resolve({ ok: false, error: "No pudimos enviar la sugerencia. Inténtalo de nuevo." }), 4000)),
+          new Promise((resolve) => setTimeout(() => resolve({ ok: false, error: tr("No pudimos enviar la sugerencia. Inténtalo de nuevo.") }), 4000)),
         ]);
         if (!res.ok) throw new Error(res.error);
       },

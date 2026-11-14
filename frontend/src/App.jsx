@@ -10,6 +10,7 @@ import CentralRequests from "./components/home/CentralRequests.jsx";
 import StillThere from "./components/home/StillThere.jsx";
 import { isInlineMatch, roomPath } from "./modes/index.js";
 import { HIDDEN_SLUG, useHiddenCode } from "./lib/hiddenCode.js";
+import { useLang, useT } from "./lib/i18n.js";
 
 // Each game's screen, and the pages few people open, are downloaded only when needed: Inicio and "Entra a Trivially"
 // come in the first download, a game when its match starts (preloaded as soon as the room is on that game, see
@@ -53,10 +54,12 @@ const KNOWN_PAGE = /^\/(?:$|grupo\/|sala\/|jugar|lobby\/)/;
 
 function PageTitle() {
   const { pathname } = useLocation();
+  const t = useT();
+  const [lang] = useLang();
   useEffect(() => {
     const match = PAGE_TITLES.find(([re]) => re.test(pathname));
-    document.title = match ? `${match[1]} - Trivially` : KNOWN_PAGE.test(pathname) ? HOME_TITLE : "Página no encontrada - Trivially";
-  }, [pathname]);
+    document.title = match ? `${t(match[1])} - Trivially` : KNOWN_PAGE.test(pathname) ? HOME_TITLE : `${t("Página no encontrada")} - Trivially`;
+  }, [pathname, t, lang]);
   return null;
 }
 
@@ -200,6 +203,8 @@ function RoomNavigator() {
 }
 
 export default function App() {
+  // Re-draws the whole site when the language changes (lib/i18n.js).
+  useT();
   return (
     <>
       <RoomNavigator />

@@ -2,6 +2,7 @@ import { memo, useEffect, useLayoutEffect, useMemo, useRef, useState } from "rea
 import Icon from "../../components/home/Icon.jsx";
 import { REGIONS, countryAt, mainBounds, regionBounds, toLngLat } from "./worldData.js";
 
+import { translate as tr } from "../../lib/i18n.js";
 const MAX_ZOOM = 40;
 const OVERSHOOT = 0.3;
 // A tall frame (a phone) doesn't start on the whole world, which would be a thin strip across it with sea above and below:
@@ -476,7 +477,7 @@ export default function WorldMap({
     <div className="tv-geo-mapbox">
       {/* Above the map, never over it: a region the map flies to is never hidden under a button. */}
       <div className="tv-geo-toolbar">
-        <div className="tv-geo-regions" role="toolbar" aria-label="Ir a una región del mapa">
+        <div className="tv-geo-regions" role="toolbar" aria-label={tr("Ir a una región del mapa")}>
           {REGIONS.map((r) => (
             <button key={r.id} type="button" onClick={() => goRegion(r)} disabled={!regions}>
               {r.id === "mundo" && <Icon name="globe" size={14} strokeWidth={2.6} />}
@@ -485,10 +486,10 @@ export default function WorldMap({
           ))}
         </div>
         <div className="tv-geo-zoom">
-          <button type="button" onClick={() => zoomCenter(1 / 1.8)} disabled={frozen || view.w >= fullW - 0.5} aria-label="Alejar">
+          <button type="button" onClick={() => zoomCenter(1 / 1.8)} disabled={frozen || view.w >= fullW - 0.5} aria-label={tr("Alejar")}>
             <Icon name="minus" size={20} strokeWidth={3} />
           </button>
-          <button type="button" onClick={() => zoomCenter(1.8)} disabled={frozen || zoom >= MAX_ZOOM - 0.01} aria-label="Acercar">
+          <button type="button" onClick={() => zoomCenter(1.8)} disabled={frozen || zoom >= MAX_ZOOM - 0.01} aria-label={tr("Acercar")}>
             <Icon name="plus" size={20} strokeWidth={3} />
           </button>
         </div>

@@ -6,6 +6,7 @@ import { joinNames, waitingNames } from "./WaitingPill.jsx";
 import { MATCH_KINDS } from "./matchInfo.js";
 import { findMode } from "../../modes/index.js";
 
+import { translate as tr } from "../../lib/i18n.js";
 // The pieces every game's match shares (the "Partidas" boards of the redesign): the round's card in the game's colour
 // (`MatchCard`), the bar at the bottom (`MatchBar`: who's in, who's still missing and the match's tools) and
 // what goes on the top bar (`matchTitle`, the game and its mode). The scoreboard is PartyPanel's (`scores`).
@@ -49,7 +50,7 @@ export function MatchCard({ room, tag = null, pills = null, seconds, pct = 100, 
         {pills}
         {/* On screen the time is only the bar under the card; screen readers can still ask for it. */}
         <span className="tv-sr-only" role="timer">
-          {counting ? `Empieza en ${Math.max(1, seconds)}` : room.phase === "reveal" ? "Respuesta" : `${seconds} segundos`}
+          {counting ? tr("Empieza en {v0}", { v0: Math.max(1, seconds) }) : room.phase === "reveal" ? tr("Respuesta") : tr("{n} segundos", { n: seconds })}
         </span>
       </div>
       <div className="tv-qc-body">
@@ -96,7 +97,7 @@ export function RoundVerdict({ tone = "ok", label, points = null, streak = 0, ic
         {label}
       </span>
       {points != null && <span className="tv-qc-points">{typeof points === "number" ? `+${points}` : points}</span>}
-      {streak > 1 && <span className="tv-qc-streak">Racha de {streak}</span>}
+      {streak > 1 && <span className="tv-qc-streak">{tr("Racha de")} {streak}</span>}
     </>
   );
 }
@@ -176,13 +177,13 @@ export function MatchQuestion({ children }) {
 /** "Falta Lynz por responder", "Faltan Pablo y Lynz por responder", "Faltan 3 por responder" (you by your name too):
  * the same words in every game. */
 function missingLine(room) {
-  if (room.phase === "countdown") return "Prepárense: la ronda empieza en un momento";
-  if (room.phase === "reveal") return "Mira cómo les fue a todos";
+  if (room.phase === "countdown") return tr("Prepárense: la ronda empieza en un momento");
+  if (room.phase === "reveal") return tr("Mira cómo les fue a todos");
   if (room.phase !== "playing") return "";
   const names = waitingNames(room, null);
-  if (!names.length) return "Ya respondieron todos";
-  if (names.length > 2) return `Faltan ${names.length} por responder`;
-  return `${names.length === 1 ? "Falta" : "Faltan"} ${joinNames(names)} por responder`;
+  if (!names.length) return tr("Ya respondieron todos");
+  if (names.length > 2) return tr("Faltan {length} por responder", { length: names.length });
+  return tr(names.length === 1 ? tr("Falta {names} por responder") : tr("Faltan {names} por responder"), { names: joinNames(names) });
 }
 
 /**
@@ -239,11 +240,11 @@ function introLine(room) {
   // A Clásico of a private room: its name and colour instead of the public match's. The roulette's public match is
   // the Clásico too; a game searched for by name, its kind's ("Partida casual").
   const classic = findMode(room.run?.classic);
-  const label = classic?.fullName || (intro.winsToWin ? "Clásico" : kind ? `Partida ${kind.name.toLowerCase()}` : null);
+  const label = classic?.fullName || (intro.winsToWin ? tr("Clásico") : kind ? tr("Partida {kind}", { kind: tr(kind.name).toLowerCase() }) : null);
   const total = variantsOf(intro).length;
   // One game alone isn't "Juego 1 de 1": only what kind of match it is.
-  if (total === 1 && !intro.winsToWin) return { label: null, now: label || "Partida privada" };
-  return { label, now: isTiebreak(room) ? "Juego de desempate" : intro.winsToWin ? `Juego ${intro.index + 1}` : `Juego ${intro.index + 1} de ${total}` };
+  if (total === 1 && !intro.winsToWin) return { label: null, now: label || tr("Partida privada") };
+  return { label, now: isTiebreak(room) ? tr("Juego de desempate") : intro.winsToWin ? tr("Juego {n}", { n: intro.index + 1 }) : tr("Juego {v0} de {total}", { v0: intro.index + 1, total: total }) };
 }
 
 /**
@@ -284,15 +285,15 @@ export function IntroInfo({ room }) {
 export function matchMode(room) {
   switch (room?.game) {
     case "opciones":
-      return !room.question ? "" : room.question.type === "open" ? "Abiertas" : "Cerradas";
+      return !room.question ? "" : room.question.type === "open" ? tr("Abiertas") : tr("Cerradas");
     case "musica":
-      return room.lyrics ? "Letra" : "Título";
+      return room.lyrics ? tr("Letra") : tr("Título");
     case "mundo":
-      return { nombre: "Nombre", sombra: "Sombra", bandera: "Bandera" }[room.question?.style] || "";
+      return { nombre: tr("Nombre"), sombra: tr("Sombra"), bandera: tr("Bandera") }[room.question?.style] || "";
     case "historia":
-      return "Cifras";
+      return tr("Cifras");
     case "minas":
-      return "Carrera";
+      return tr("Carrera");
     default:
       return "";
   }

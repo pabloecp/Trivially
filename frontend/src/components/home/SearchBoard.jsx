@@ -6,6 +6,7 @@ import { useApp } from "../../lib/store.jsx";
 import Blob, { BlobGhost } from "./Blob.jsx";
 import { publicMatchLine } from "./matchInfo.js";
 
+import { translate as tr } from "../../lib/i18n.js";
 // How long someone who left stays in their seat, going out (look.css, tvSeatOut).
 const LEAVE_MS = 260;
 
@@ -44,10 +45,10 @@ export default function SearchBoard({ room }) {
         <div className="tv-finding-title" role="status">
           <h3>
             {full ? (
-              "¡Partida lista!"
+              tr("¡Partida lista!")
             ) : (
               <>
-                Buscando jugadores
+                {tr("Buscando jugadores")}
                 <span className="tv-finding-dots" aria-hidden="true">
                   <i />
                   <i />
@@ -58,22 +59,22 @@ export default function SearchBoard({ room }) {
           </h3>
           <p>
             <b>
-              {count} de {info.size}
+              {count} {tr("de")} {info.size}
             </b>
-            <span> · {info.game ? publicMatchLine(info.game) : "Juegos al azar · gana el primero en ganar 2"}</span>
+            <span> · {info.game ? publicMatchLine(info.game) : tr("Juegos al azar · gana el primero en ganar 2")}</span>
           </p>
         </div>
         <div className="tv-finding-clock">
           {full ? (
             <>
-              <span>Empieza en</span>
+              <span>{tr("Empieza en")}</span>
               <strong key={startsIn} className="is-count">
                 {startsIn}
               </strong>
             </>
           ) : (
             <>
-              <span>Tiempo</span>
+              <span>{tr("Tiempo")}</span>
               <strong>
                 {Math.floor(waited / 60)}:{String(waited % 60).padStart(2, "0")}
               </strong>
@@ -82,7 +83,7 @@ export default function SearchBoard({ room }) {
         </div>
       </div>
 
-      <ul className="tv-finding-seats" data-seats={seats.length} style={{ "--seats": seats.length }} aria-label="Jugadores de la partida">
+      <ul className="tv-finding-seats" data-seats={seats.length} style={{ "--seats": seats.length }} aria-label={tr("Jugadores de la partida")}>
         {seats.map((player, i) => (
           <Seat key={i} index={i} player={player} meId={meId} groupIds={groupIds} />
         ))}
@@ -114,7 +115,7 @@ function Seat({ index, player, meId, groupIds }) {
           </span>
           <span className="tv-seat-text">
             <b className="tv-seat-name">{who.name}</b>
-            <span className="tv-seat-tag">{groupIds.has(who.id) ? "Tu grupo" : "Listo"}</span>
+            <span className="tv-seat-tag">{groupIds.has(who.id) ? tr("Tu grupo") : tr("Listo")}</span>
           </span>
         </div>
       ) : (
@@ -123,7 +124,7 @@ function Seat({ index, player, meId, groupIds }) {
             <BlobGhost />
           </span>
           <span className="tv-seat-text">
-            <b className="tv-seat-name">Buscando…</b>
+            <b className="tv-seat-name">{tr("Buscando…")}</b>
           </span>
         </div>
       )}

@@ -1,3 +1,4 @@
+import { translate as tr } from "../lib/i18n.js";
 // The site's few sounds, made with the Web Audio API (no files to download):
 //  - tap: any button or link;
 //  - next / back: moving forward (a big button, a game tile, a match starting) or back (Volver, Cancelar);
@@ -144,8 +145,8 @@ const N = {
 export const SOUND_PACKS = [
   {
     id: "madera",
-    label: "Madera",
-    hint: "Marimba cálida",
+    get label() { return tr("Madera"); },
+    get hint() { return tr("Marimba cálida"); },
     sounds: {
       tap: (ac) => note(ac, { freq: N.G4, dur: 0.12, attack: 0.005, gain: 0.1, partials: [[4, 0.25]] }),
       next: (ac) => seq(ac, { dur: 0.2, attack: 0.005, gain: 0.1, partials: [[4, 0.25]] }, [[N.C5, 0], [N.G5, 0.09]]),
@@ -158,8 +159,8 @@ export const SOUND_PACKS = [
   },
   {
     id: "burbuja",
-    label: "Burbuja",
-    hint: "Pops suaves que suben",
+    get label() { return tr("Burbuja"); },
+    get hint() { return tr("Pops suaves que suben"); },
     sounds: {
       tap: (ac) => note(ac, { freq: 420, to: 640, dur: 0.09, gain: 0.08 }),
       next: (ac) => seq(ac, { dur: 0.12, gain: 0.08 }, [[480, 0, { to: 720 }], [640, 0.07, { to: 960 }]]),
@@ -171,8 +172,8 @@ export const SOUND_PACKS = [
   },
   {
     id: "cristal",
-    label: "Cristal",
-    hint: "Campanitas claras",
+    get label() { return tr("Cristal"); },
+    get hint() { return tr("Campanitas claras"); },
     sounds: {
       tap: (ac) => note(ac, { freq: N.E6, dur: 0.18, gain: 0.035, partials: [[2.76, 0.2]] }),
       next: (ac) => seq(ac, { dur: 0.4, gain: 0.04, partials: [[2.76, 0.2]] }, [[N.A5, 0], [N.E6, 0.08]]),
@@ -185,8 +186,8 @@ export const SOUND_PACKS = [
   },
   {
     id: "nube",
-    label: "Nube",
-    hint: "Muy suave y lento",
+    get label() { return tr("Nube"); },
+    get hint() { return tr("Muy suave y lento"); },
     sounds: {
       tap: (ac) => note(ac, { freq: N.A4, dur: 0.18, attack: 0.03, gain: 0.06 }),
       next: (ac) => seq(ac, { dur: 0.4, attack: 0.05, gain: 0.05 }, [[N.D5, 0], [N.A5, 0.1]]),
@@ -199,8 +200,8 @@ export const SOUND_PACKS = [
   },
   {
     id: "kalimba",
-    label: "Kalimba",
-    hint: "Notas punteadas",
+    get label() { return tr("Kalimba"); },
+    get hint() { return tr("Notas punteadas"); },
     sounds: {
       tap: (ac) => note(ac, { freq: N.D5, dur: 0.16, attack: 0.004, gain: 0.07, partials: [[5.4, 0.12]] }),
       next: (ac) => seq(ac, { dur: 0.3, attack: 0.004, gain: 0.07, partials: [[5.4, 0.12]] }, [[N.D5, 0], [N.A5, 0.08]]),
@@ -213,8 +214,8 @@ export const SOUND_PACKS = [
   },
   {
     id: "gotas",
-    label: "Gotas",
-    hint: "Gotas de agua",
+    get label() { return tr("Gotas"); },
+    get hint() { return tr("Gotas de agua"); },
     sounds: {
       tap: (ac) => note(ac, { freq: 1400, to: 700, dur: 0.08, attack: 0.004, gain: 0.05 }),
       next: (ac) => seq(ac, { dur: 0.1, attack: 0.004, gain: 0.05 }, [[1100, 0, { to: 600 }], [1500, 0.08, { to: 800 }]]),
@@ -227,8 +228,8 @@ export const SOUND_PACKS = [
   },
   {
     id: "piano",
-    label: "Piano",
-    hint: "Teclas suaves",
+    get label() { return tr("Piano"); },
+    get hint() { return tr("Teclas suaves"); },
     sounds: {
       tap: (ac) => note(ac, { freq: N.C5, dur: 0.25, attack: 0.006, gain: 0.05, partials: [[2, 0.3], [3, 0.1]] }),
       next: (ac) => seq(ac, { dur: 0.45, attack: 0.006, gain: 0.05, partials: [[2, 0.3], [3, 0.1]] }, [[N.E5, 0], [N.A5, 0.1]]),
@@ -241,8 +242,8 @@ export const SOUND_PACKS = [
   },
   {
     id: "arpa",
-    label: "Arpa",
-    hint: "Cuerdas que brillan",
+    get label() { return tr("Arpa"); },
+    get hint() { return tr("Cuerdas que brillan"); },
     sounds: {
       tap: (ac) => note(ac, { freq: N.G5, dur: 0.3, attack: 0.003, gain: 0.04, partials: [[2, 0.4], [3, 0.2], [4, 0.1]] }),
       next: (ac) => seq(ac, { dur: 0.5, attack: 0.003, gain: 0.04, partials: [[2, 0.4], [3, 0.2]] }, [[N.C5, 0], [N.E5, 0.05], [N.G5, 0.1]]),
@@ -261,8 +262,8 @@ export const SOUND_PACKS = [
   },
   {
     id: "lofi",
-    label: "Lofi",
-    hint: "Cálido y apagado",
+    get label() { return tr("Lofi"); },
+    get hint() { return tr("Cálido y apagado"); },
     sounds: {
       // Two voices slightly out of tune, low and warm.
       tap: (ac) => note(ac, { freq: N.E4, dur: 0.14, attack: 0.01, gain: 0.08, type: "triangle", partials: [[1.006, 0.7]] }),
@@ -277,8 +278,8 @@ export const SOUND_PACKS = [
   },
   {
     id: "retro",
-    label: "Retro suave",
-    hint: "8 bits, sin chirridos",
+    get label() { return tr("Retro suave"); },
+    get hint() { return tr("8 bits, sin chirridos"); },
     sounds: {
       tap: (ac) => note(ac, { freq: N.C5, dur: 0.05, attack: 0.004, gain: 0.025, type: "square" }),
       next: (ac) => seq(ac, { dur: 0.07, attack: 0.004, gain: 0.025, type: "square" }, [[N.C5, 0], [N.G5, 0.06]]),
@@ -293,8 +294,8 @@ export const SOUND_PACKS = [
   // rubbery boing (Fall Guys) and synth sparkles (Celeste). Their melodies are original.
   {
     id: "ocarina",
-    label: "Ocarina",
-    hint: "Flauta de aventura",
+    get label() { return tr("Ocarina"); },
+    get hint() { return tr("Flauta de aventura"); },
     sounds: {
       tap: (ac) => note(ac, { freq: N.A5, dur: 0.12, attack: 0.02, gain: 0.05, partials: [[2, 0.08]] }),
       next: (ac) => seq(ac, { dur: 0.22, attack: 0.03, gain: 0.05, partials: [[2, 0.08]], vibrato: [5.5, 12] }, [[N.D5, 0], [N.A5, 0.12]]),
@@ -310,8 +311,8 @@ export const SOUND_PACKS = [
   },
   {
     id: "rhodes",
-    label: "Piano eléctrico",
-    hint: "Acordes de jazz",
+    get label() { return tr("Piano eléctrico"); },
+    get hint() { return tr("Acordes de jazz"); },
     sounds: {
       // A soft electric piano: a warm tone with a bell-like overtone and a slow tremolo.
       tap: (ac) => note(ac, { freq: N.E5, dur: 0.22, attack: 0.008, gain: 0.05, partials: [[2, 0.25], [7, 0.04]] }),
@@ -332,8 +333,8 @@ export const SOUND_PACKS = [
   },
   {
     id: "boing",
-    label: "Boing",
-    hint: "Saltitos de goma",
+    get label() { return tr("Boing"); },
+    get hint() { return tr("Saltitos de goma"); },
     sounds: {
       tap: (ac) => note(ac, { freq: 300, to: 520, dur: 0.1, attack: 0.005, gain: 0.07, glide: 0.06 }),
       next: (ac) => seq(ac, { dur: 0.12, attack: 0.005, gain: 0.07, glide: 0.07 }, [[300, 0, { to: 560 }], [420, 0.1, { to: 800 }]]),
@@ -348,8 +349,8 @@ export const SOUND_PACKS = [
   },
   {
     id: "brillos",
-    label: "Brillos",
-    hint: "Destellos de sintetizador",
+    get label() { return tr("Brillos"); },
+    get hint() { return tr("Destellos de sintetizador"); },
     sounds: {
       tap: (ac) => note(ac, { freq: N.B5, dur: 0.12, attack: 0.004, gain: 0.03, type: "triangle", partials: [[4, 0.15]] }),
       next: (ac) => seq(ac, { dur: 0.25, attack: 0.004, gain: 0.03, type: "triangle", partials: [[4, 0.15]] }, [[N.E5, 0], [N.B5, 0.06], [N.E6, 0.12]]),

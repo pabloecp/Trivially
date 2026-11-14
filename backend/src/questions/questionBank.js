@@ -47,12 +47,43 @@ async function loadFromSupabase() {
       .from("questions")
       .select("id, type, mode, category, difficulty, language, prompt, data, active")
       .eq("active", true)
+      // The English twins of the questions (loadTwinQuestions) are not questions of their own.
+      .neq("language", "en")
       .order("created_at")
       .range(from, from + pageSize - 1);
     if (error) throw new Error(error.message);
     rows.push(...data);
     if (data.length < pageSize) return rows;
   }
+}
+
+/**
+ * The English versions of Trivia's questions: one row per question with `language: "en"` and `data.translation_of` (the id
+ * of the Spanish row), the same options in the same order and the same `correct`. They are only read to show the question
+ * to English players (i18n/translations.js), so unlike the Spanish rows they count whether `active` or not.
+ */
+export async function loadTwinQuestions() {
+  const rows = [];
+  if (supabaseEnabled()) {
+    try {
+      const db = getSupabase();
+      const pageSize = 1000;
+      for (let from = 0; ; from += pageSize) {
+        const { data, error } = await db
+          .from("questions")
+          .select("id, type, mode, category, difficulty, language, prompt, data")
+          .eq("language", "en")
+          .order("id")
+          .range(from, from + pageSize - 1);
+        if (error) throw new Error(error.message);
+        rows.push(...data);
+        if (data.length < pageSize) break;
+      }
+    } catch (err) {
+      console.warn(`[Preguntas] No se pudieron leer las versiones en inglés de Supabase (${err.message})`);
+    }
+  }
+  return rows.filter((row) => row.data?.translation_of && typeof row.prompt === "string");
 }
 
 /** The bank, loaded once at boot: Supabase first, then the private file, then the placeholders. */

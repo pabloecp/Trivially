@@ -1,10 +1,12 @@
 import Icon from "./Icon.jsx";
+import { useT } from "../../lib/i18n.js";
 
 // A game's card in "¿Qué quieren jugar?": filled with the game's colour and its darker edge under it (it's tapped), its
 // icon on a white square in the top left, its name big and its tagline under it, and the icon again, huge and faint, cut
 // by the bottom right corner. The chosen one has a white ring. `locked` (Rey de la colina or Farsante with "Gente de
 // todas partes") greys it and says why instead of the tagline.
 export default function GameCard({ mode, selected = false, locked = false, lockedText = "", disabled = false, onPick, index = 0 }) {
+  const t = useT();
   return (
     <button
       type="button"
@@ -20,8 +22,8 @@ export default function GameCard({ mode, selected = false, locked = false, locke
         <Icon name={locked ? "lock" : mode.icon} size={22} strokeWidth={2.4} />
       </span>
       <span className="tv-gcard-text">
-        <span className="tv-gcard-name">{mode.name}</span>
-        <span className="tv-gcard-sub">{locked ? lockedText : mode.tagline || mode.subtitle}</span>
+        <span className="tv-gcard-name">{t(mode.name)}</span>
+        <span className="tv-gcard-sub">{locked ? lockedText : t(mode.tagline || mode.subtitle)}</span>
       </span>
     </button>
   );

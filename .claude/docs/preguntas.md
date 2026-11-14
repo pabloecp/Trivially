@@ -11,3 +11,4 @@
   - New types need the `questions_type_check` constraint from `schema.sql`.
 - Categories (`QUESTION_CATEGORIES`): `ciencia`, `historia`, `literatura`, `musica`, `arte`, `deportes`, `peliculas_series`, `videojuegos`, `geografia`, `cultura`.
 - `questions:upload` validates the private file (all or nothing) and upserts by id, writing uuids back. `-- --check` only validates; `-- --prune` deletes rows not in the file, except modes `mundo`, `historia` and `minas` (their own upload scripts own them).
+- `questions:upload-en` uploads the English twins of Trivia's questions (`backend/private/questions.en.json`, git-ignored) as new rows with `language: "en"`, `active: false` and `data.translation_of` (the Spanish row's id); the bank never plays them, they only give English players the text (see `idioma.md`). `questions:upload` ignores them and `--prune` never deletes them.
