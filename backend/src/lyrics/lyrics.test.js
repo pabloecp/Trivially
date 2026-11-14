@@ -168,11 +168,14 @@ assert.ok(!JSON.stringify(state).includes(track.lyric.answer));
 // Written like Trivia's open answers: accents and capitals don't matter, an alias counts, a wrong option doesn't.
 const n = Number(track.lyric.answer.split(" ").pop());
 lyricOnly.submitAnswer(o, "o-1", `PALABRA SECRÉTA ${n}`);
-assert.equal(o.players.get("o-1").lastAnswer.correct, true);
-assert.ok(o.players.get("o-1").score >= 500);
+// Nothing says whether it was right until the round is over: no points, no streak, no verdict.
+assert.equal(o.players.get("o-1").lastAnswer.correct, undefined);
+assert.equal(o.players.get("o-1").score, 0);
 lyricOnly.submitAnswer(o, "o-2", track.lyric.wrong[0]);
 clearTimeout(o.timer);
 assert.equal(o.phase, "reveal");
+assert.equal(o.players.get("o-1").lastAnswer.correct, true);
+assert.ok(o.players.get("o-1").score >= 500);
 assert.equal(o.players.get("o-2").lastAnswer.correct, false);
 state = lyricOnly.publicState(o);
 assert.equal(state.lyrics.answer, track.lyric.answer);
