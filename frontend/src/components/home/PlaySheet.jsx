@@ -10,6 +10,7 @@ import { codeFromText } from "./useInvite.js";
 import { MATCH_KINDS, OPEN_SIZES, gamesFor } from "./matchInfo.js";
 import "../../styles/match.css";
 import useKeyboardFit from "../../lib/useKeyboardFit.js";
+import { useT } from "../../lib/i18n.js";
 
 // A room's code is five letters and numbers (ROOM_CODE_LENGTH on the server).
 const ROOM_CODE_LENGTH = 5;
@@ -39,6 +40,7 @@ const TITLES = {
 // it asks for a name and then joins that room. Without an account, creating or joining always asks for the name
 // first, already filled in with the one used last time (and its colour), so a guest can keep it with one tap.
 export default function PlaySheet({ mode, joinCode, open, onClose, askName = false, onNamed = null }) {
+  const t = useT();
   const { user, saveGuest, createRoom, joinRoom, checkRoom, findMatch } = useApp();
   // Which row is open (null: none).
   const [kind, setKind] = useState(null);
@@ -167,7 +169,7 @@ export default function PlaySheet({ mode, joinCode, open, onClose, askName = fal
         onClose();
         return;
       }
-      setError(err.message || "Algo salió mal, inténtalo otra vez");
+      setError(err.message || t("Algo salió mal, inténtalo otra vez"));
       setBusy(false);
     }
   }
@@ -206,7 +208,7 @@ export default function PlaySheet({ mode, joinCode, open, onClose, askName = fal
     try {
       await withSound(() => checkRoom(code), asksName ? "next" : null);
     } catch (err) {
-      setError(err.message || "No hay ninguna sala con ese código");
+      setError(err.message || t("No hay ninguna sala con ese código"));
       setBusy(false);
       codeRef.current?.animate(
         [{ transform: "translateX(0)" }, { transform: "translateX(-7px)" }, { transform: "translateX(6px)" }, { transform: "translateX(-3px)" }, { transform: "translateX(0)" }],
@@ -252,7 +254,7 @@ export default function PlaySheet({ mode, joinCode, open, onClose, askName = fal
                   onPointerDown={(e) => e.stopPropagation()}
                   onClick={() => goTo("menu")}
                   disabled={busy}
-                  aria-label="Atrás"
+                  aria-label={t("Atrás")}
                 >
                   <Icon name="back" size={24} strokeWidth={2.6} />
                 </button>
@@ -261,15 +263,15 @@ export default function PlaySheet({ mode, joinCode, open, onClose, askName = fal
                 <Icon name={mode?.icon || "play"} size={26} />
               </span>
               <div>
-                <p className="tv-sheet-kicker">{mode?.name || "Jugar"}</p>
-                <h2 id="tv-sheet-title" className="tv-sheet-title">{TITLES[step]}</h2>
+                <p className="tv-sheet-kicker">{mode?.name ? t(mode.name) : t("Jugar")}</p>
+                <h2 id="tv-sheet-title" className="tv-sheet-title">{t(TITLES[step])}</h2>
               </div>
             </div>
           </div>
 
           <div className="tv-sheet-body">
             {step === "menu" && (
-              <nav className="tv-sheet-options tv-pm-list" aria-label="Formas de jugar">
+              <nav className="tv-sheet-options tv-pm-list" aria-label={t("Formas de jugar")}>
                 {PLAY_KINDS.map((k, i) => {
                   const expanded = kind === k.id;
                   const match = k.id !== "privada";
@@ -291,8 +293,8 @@ export default function PlaySheet({ mode, joinCode, open, onClose, askName = fal
                           <Icon name={k.icon} size={24} filled={k.icon !== "lock"} strokeWidth={k.icon === "lock" ? 2.4 : 1.6} />
                         </span>
                         <span className="tv-option-text">
-                          <strong>{k.name}</strong>
-                          <span>{k.blurb}</span>
+                          <strong>{t(k.name)}</strong>
+                          <span>{t(k.blurb)}</span>
                         </span>
                         <Icon name="chevron" size={22} className="tv-option-chevron" />
                       </button>
@@ -301,7 +303,7 @@ export default function PlaySheet({ mode, joinCode, open, onClose, askName = fal
                           {match ? (
                             <div className="tv-pm-body">
                               <div className="tv-pm-facts">
-                                <span className="tv-pm-games" aria-label="Juegos que pueden tocar">
+                                <span className="tv-pm-games" aria-label={t("Juegos que pueden tocar")}>
                                   {gamesFor(k.id).map((id) => {
                                     const m = findMode(id);
                                     return (
@@ -316,7 +318,7 @@ export default function PlaySheet({ mode, joinCode, open, onClose, askName = fal
                               {/* Only with more than one size to pick ("Uno contra Uno" is hidden for now). */}
                               {OPEN_SIZES.length > 1 && (
                                 <Segmented
-                                  label="Jugadores"
+                                  label={t("Jugadores")}
                                   value={size}
                                   onChange={setSize}
                                   options={OPEN_SIZES.map((o) => ({
@@ -338,7 +340,7 @@ export default function PlaySheet({ mode, joinCode, open, onClose, askName = fal
                                 disabled={busy}
                               >
                                 <Icon name="play" size={18} filled strokeWidth={1.5} />
-                                {busy ? "Buscando…" : "Buscar partida"}
+                                {busy ? t("Buscando…") : t("Buscar partida")}
                               </button>
                             </div>
                           ) : (
@@ -354,8 +356,8 @@ export default function PlaySheet({ mode, joinCode, open, onClose, askName = fal
                                   <Icon name="users" size={20} />
                                 </span>
                                 <span className="tv-option-text">
-                                  <strong>{busy ? "Creando sala…" : "Crear sala"}</strong>
-                                  <span>{mode ? "Juega solo o invita a tus amigos" : "Invita a tus amigos y elijan el juego"}</span>
+                                  <strong>{busy ? t("Creando sala…") : t("Crear sala")}</strong>
+                                  <span>{mode ? t("Juega solo o invita a tus amigos") : t("Invita a tus amigos y elijan el juego")}</span>
                                 </span>
                                 <Icon name="chevron" size={20} className="tv-option-chevron" />
                               </button>
@@ -364,8 +366,8 @@ export default function PlaySheet({ mode, joinCode, open, onClose, askName = fal
                                   <Icon name="hash" size={20} />
                                 </span>
                                 <span className="tv-option-text">
-                                  <strong>Tengo un código</strong>
-                                  <span>Entra a la sala de un amigo</span>
+                                  <strong>{t("Tengo un código")}</strong>
+                                  <span>{t("Entra a la sala de un amigo")}</span>
                                 </span>
                                 <Icon name="chevron" size={20} className="tv-option-chevron" />
                               </button>
@@ -382,7 +384,7 @@ export default function PlaySheet({ mode, joinCode, open, onClose, askName = fal
             {step === "code" && (
               <form className="tv-sheet-form" onSubmit={submitCode}>
                 <label className="tv-sr-only" htmlFor="tv-code">
-                  Código de sala
+                  {t("Código de sala")}
                 </label>
                 <input
                   ref={codeRef}
@@ -413,7 +415,7 @@ export default function PlaySheet({ mode, joinCode, open, onClose, askName = fal
                   <Avatar className="tv-avatar--lg" avatar={user?.avatar} />
                   <div className="tv-name-fields">
                     <label className="tv-sr-only" htmlFor="tv-name">
-                      Tu nombre
+                      {t("Tu nombre")}
                     </label>
                     <input
                       id="tv-name"
@@ -423,7 +425,7 @@ export default function PlaySheet({ mode, joinCode, open, onClose, askName = fal
                         setName(e.target.value);
                         setError("");
                       }}
-                      placeholder="Tu nombre o apodo"
+                      placeholder={t("Tu nombre o apodo")}
                       onFocus={(e) => e.target.select()}
                       maxLength={20}
                       autoComplete="nickname"
@@ -431,17 +433,17 @@ export default function PlaySheet({ mode, joinCode, open, onClose, askName = fal
                   </div>
                 </div>
                 <button type="submit" className="tv-btn tv-btn--block tv-btn--primary" data-sound="none" disabled={busy || !name.trim()}>
-                  {busy ? "Entrando…" : "Continuar"}
+                  {busy ? t("Entrando…") : t("Continuar")}
                 </button>
                 {/* Without an account nothing is kept: one quiet line, with its two ways in. */}
                 <div className="tv-sheet-account">
-                  <span>Guarda tus puntos con una cuenta</span>
+                  <span>{t("Guarda tus puntos con una cuenta")}</span>
                   <span className="tv-sheet-account-links">
                     <Link to="/login" className="tv-sheet-account-btn is-main" onClick={onClose}>
-                      Crear cuenta
+                      {t("Crear cuenta")}
                     </Link>
                     <Link to="/login?mode=login" className="tv-sheet-account-btn" onClick={onClose}>
-                      Iniciar sesión
+                      {t("Iniciar sesión")}
                     </Link>
                   </span>
                 </div>

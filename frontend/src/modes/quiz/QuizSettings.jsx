@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import OptionRow, { rangeOptions } from "../../components/home/OptionRow.jsx";
 import SettingsTabs, { countNote } from "../../components/home/SettingsTabs.jsx";
 import { FORMATS, LEVELS, QUESTIONS_LIMITS, SECONDS_LIMITS, STYLES, TOPICS, quizConfig } from "./quizInfo.js";
+import { useT } from "../../lib/i18n.js";
 
 // Settings of a "Trivia" match, in the settings panel, in two tabs: "Partida" (the modes of play, Clásico and
 // Imágenes; closed or open questions,
@@ -11,6 +12,7 @@ import { FORMATS, LEVELS, QUESTIONS_LIMITS, SECONDS_LIMITS, STYLES, TOPICS, quiz
 // Every tap is saved straight away for the whole room. With `readOnly` (players without permission) everything shows
 // but nothing can be tapped.
 export default function QuizSettings({ room, updateConfig, onToast, children, readOnly = false }) {
+  const t = useT();
   const saved = quizConfig(room);
   const [draft, setDraft] = useState(saved);
   const counts = room.questionCounts || { categories: {}, formats: {}, difficulties: {}, styles: {} };
@@ -28,7 +30,7 @@ export default function QuizSettings({ room, updateConfig, onToast, children, re
       await updateConfig({ quiz: next });
     } catch (err) {
       setDraft(saved);
-      onToast?.(err.message || "No se pudieron guardar los ajustes");
+      onToast?.(err.message || t("No se pudieron guardar los ajustes"));
     }
   }
 
