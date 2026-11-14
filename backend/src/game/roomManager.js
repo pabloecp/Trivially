@@ -2864,6 +2864,7 @@ export class RoomManager {
     const now = Date.now();
     const duration = this.roundMs(room);
     if (this.isChoiceRound(room)) this.gradeQuiz(room, track);
+    for (const p of room.players.values()) this.applyPendingGrade(room, p);
     if (this.isMapRound(room)) this.gradeMap(room, track);
     if (this.isYearRound(room)) this.gradeYears(room, track);
     if (this.isMinesRound(room)) this.gradeMines(room);
@@ -3540,9 +3541,22 @@ export class RoomManager {
     });
     player.lastAnswer = {
       text: questionGame ? String(answerText).slice(0, 80) : this.answerLabel(room, track, answerText, correct),
-      correct,
       at: Date.now(),
     };
+    // Whether it was right (and its points) is only known to the players once the round is over: until the reveal it
+    // waits here, so neither the scoreboard nor the answer's own ack says anything about it.
+    player.pendingGrade = { correct, scored, remainingMs, questionGame, track };
+    if (room.phase === "reveal") this.applyPendingGrade(room, player);
+    this.answered(room, player);
+  }
+
+  /** A written (or song) answer, once the round is over: its points, streak and right answer count (see submitAnswer). */
+  applyPendingGrade(room, player) {
+    const g = player.pendingGrade;
+    if (!g) return;
+    player.pendingGrade = null;
+    const { correct, scored, remainingMs, questionGame, track } = g;
+    if (player.lastAnswer) player.lastAnswer.correct = correct;
     player.lastPoints = scored.points;
     player.streak = scored.streak;
     player.bestStreak = Math.max(player.bestStreak, player.streak);
@@ -3556,7 +3570,6 @@ export class RoomManager {
         player.artistHits[artistKey] = (player.artistHits[artistKey] || 0) + 1;
       }
     }
-    this.answered(room, player);
   }
 
   /**
