@@ -262,6 +262,7 @@ export const EN = {
   "Partida privada": "Private match",
   "Pública": "Public",
   "Privada": "Private",
+  "Publicidad": "Advertising",
   "Con todo el mundo": "With everyone",
   "Solo o con tu grupo": "Alone or with your group",
   "Partida": "Match",

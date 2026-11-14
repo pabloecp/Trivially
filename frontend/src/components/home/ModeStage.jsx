@@ -31,6 +31,7 @@ import { translate as tr } from "../../lib/i18n.js";
 //    one box for your people (SocialBox, not on phones): the title "Tu grupo" always on top, you and who is with you,
 //    "Invitar" (and "Salir del grupo" beside it, with others in it) and under them your friends online. The group's
 //    code is never here: only in "Tu grupo", the window "Invitar" opens.
+// `ad` goes between the card and the boxes (Inicio's banner on a phone, AdSlot.jsx).
 // `room` gives who it's for (a public match, or a private one); `audience` says it without a room (Inicio). `title`
 // replaces the game's name. `extra` goes after the name, `children` at the end of
 // the card. A Clásico (Normal or Extendido) looks like the site's logo: dark with the logo's rainbow frame and the logo
@@ -39,7 +40,7 @@ import { translate as tr } from "../../lib/i18n.js";
 // sweeping across it again while its lines come in anew.
 const AUDIENCE_ICONS = { publica: "globe", grupo: "lock" };
 
-export default function ModeStage({ mode, room = null, audience = null, title = null, search = null, extra = null, settings = null, swapKey = null, onAudience = null, children }) {
+export default function ModeStage({ mode, room = null, audience = null, title = null, search = null, extra = null, settings = null, swapKey = null, onAudience = null, ad = null, children }) {
   const t = useT();
   const classic = mode.kind === "classic";
   const who = audience || (room ? (room.matchmaking ? "publica" : "grupo") : null);
@@ -150,6 +151,8 @@ export default function ModeStage({ mode, room = null, audience = null, title = 
         {children}
       </div>
 
+      {/* On Inicio, a phone's one ad: between the card and the boxes (AdSlot.jsx). */}
+      {ad}
       {/* The Clásico has the same boxes as a game, with your rank where a game has your elo. */}
       {classic ? (
         <Boxes game="clasico" gameName={t(mode.name)} color="neutral" stats={gameStats("clasico")} ranked />
