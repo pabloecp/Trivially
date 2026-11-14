@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { useApp } from "../../lib/store.jsx";
+import { useT } from "../../lib/i18n.js";
 import "../../styles/admin.css";
 
 /**
@@ -11,6 +12,7 @@ import "../../styles/admin.css";
 export default function StillThere() {
   const { room, user, isCentral, stillHere } = useApp();
   const [now, setNow] = useState(() => Date.now());
+  const t = useT();
   const me = room?.matchmaking && !isCentral ? room.players?.find((p) => p.id === user?.id) : null;
   const until = me?.afkUntil || 0;
 
@@ -28,12 +30,12 @@ export default function StillThere() {
     <div className="tv-afk-root" role="alertdialog" aria-modal="true" aria-labelledby="tv-afk-title">
       <div className="tv-afk-backdrop" />
       <div className="tv-afk">
-        <h2 id="tv-afk-title">¿Sigues ahí?</h2>
+        <h2 id="tv-afk-title">{t("¿Sigues ahí?")}</h2>
         <p>
-          Llevas varias rondas sin responder. Si no confirmas en <strong>{left} s</strong>, te sacamos de la partida.
+          {t("Llevas varias rondas sin responder. Si no confirmas en")} <strong>{left} s</strong>{t(", te sacamos de la partida.")}
         </p>
         <button type="button" className="tv-btn tv-btn--primary" data-sound="none" onClick={() => stillHere()} autoFocus>
-          Sigo aquí
+          {t("Sigo aquí")}
         </button>
       </div>
     </div>,

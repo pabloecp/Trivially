@@ -16,6 +16,7 @@ import { OpenSettingsContext } from "./SettingsPanel.jsx";
 import { useStartGame } from "./ModeStart.jsx";
 import { privateMatchLine, publicMatchLine } from "./matchInfo.js";
 import "../../styles/lobby.css";
+import { translate, useT } from "../../lib/i18n.js";
 
 // The card of a private match before its host picks a game.
 const CHOOSE = { id: "none", name: "Elige un juego", icon: "grid", color: "neutral", steps: [] };
@@ -278,7 +279,7 @@ export default function HomeFrame({ room = null, onToast, Lobby = null, leaving 
       ? { summary: publicMatchLine(mode.id) || "Sin partidas públicas por ahora", fixed: true }
       : decides && !away
       ? { summary: privateMatchLine(mode.id), onOpen: () => run({ type: "setup", game: plan.game }), disabled: busy }
-      : { summary: privateMatchLine(mode.id), note: away ? "Tu grupo ya está jugando" : `Los elige ${leaderName}` };
+      : { summary: privateMatchLine(mode.id), note: away ? "Tu grupo ya está jugando" : translate("Los elige {name}", { name: leaderName }) };
 
   // The same element choosing a game and searching with it, so the card stays as it is when the search starts.
   const gameStage = mode && <GameStage searchRoom={searching ? room : null} mode={mode} audience={plan.audience} settings={cardSettings} onAudience={decides && !searching ? chooseAudience : null} />;

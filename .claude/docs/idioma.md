@@ -1,0 +1,8 @@
+# Idioma (español / English)
+
+- The site's texts are written in Spanish in the code. `t("Texto en español")` (`frontend/src/lib/i18n.js`) gives the same text, or its English when the language is English and `frontend/src/lib/en.js` has it. A text with no entry stays in Spanish, so a part that isn't translated yet keeps working.
+- In a component: `const t = useT();` (it also re-renders the component when the language changes). Put the hook before any early `return`. Outside components (helpers, module constants) use `translate`; a constant that holds texts (`AUDIENCES` in `lib/plan.js`) uses getters, and a list of labels (`MODES` in `Login.jsx`, the games' `name`, `tagline`, `steps` in `modes/index.js`) is translated where it is drawn: `t(mode.name)`.
+- Gaps: `t("Tu grupo · {n}", { n })`. Never build a sentence by joining pieces; give the whole sentence an entry. Counts and lines like "5 rondas · 10 s · Cerradas" are put together part by part (`UNITS` in `i18n.js`, entries for each part).
+- The choice is in "Ajustes" (ES / EN), kept in `localStorage` (`trivially_lang`); first visit: the browser's language. `App` re-draws everything when it changes, and sets `<html lang>` and the tab's title.
+- Translated so far: Ajustes, the top bar, Inicio (games, boxes, group bar, "¿Qué quieren jugar?"), Login, the scoreboard (`PartyPanel`), pause/report/skip, "¿Sigues ahí?", the end of a match, and Trivia's round screen. Still in Spanish: the other games' screens, settings panels, profile, friends, legal pages, the messages the server sends (errors, daily challenge text) and the questions themselves.
+- A new text: write it in Spanish inside `t(...)`, then add its English to `en.js`.

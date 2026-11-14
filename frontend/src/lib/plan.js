@@ -1,3 +1,4 @@
+import { translate } from "./i18n.js";
 import { useCallback, useEffect, useState } from "react";
 import { findMode, isGameTile } from "../modes/index.js";
 
@@ -15,8 +16,9 @@ export const isPublicGame = (game) => PUBLIC_GAMES.includes(game) || game === CL
 const plannable = (game) => game === CLASSIC || isGameTile(findMode(game) || {});
 
 export const AUDIENCES = [
-  { value: "publica", label: "Partida pública", icon: "globe", short: "Pública", hint: "Con todo el mundo" },
-  { value: "grupo", label: "Partida privada", icon: "users", short: "Privada", hint: "Solo o con tu grupo" },
+  // The texts are read when used, so they follow the language (lib/i18n.js).
+  { value: "publica", icon: "globe", get label() { return translate("Partida pública"); }, get short() { return translate("Pública"); }, get hint() { return translate("Con todo el mundo"); } },
+  { value: "grupo", icon: "users", get label() { return translate("Partida privada"); }, get short() { return translate("Privada"); }, get hint() { return translate("Solo o con tu grupo"); } },
 ];
 export const audienceOf = (audience) => AUDIENCES.find((a) => a.value === audience) || AUDIENCES[1];
 export const audienceName = (audience) => audienceOf(audience).label;
