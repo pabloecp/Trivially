@@ -17,6 +17,7 @@ import "../../styles/home.css";
 import "../../styles/quiz.css";
 import "../../styles/rey.css";
 
+import { translate as tr } from "../../lib/i18n.js";
 const PICK_MS = 10000;
 const LEVEL_CLASS = { facil: "is-facil", media: "is-media", dificil: "is-dificil" };
 
@@ -26,9 +27,9 @@ function Court({ room, king, viewerId }) {
   const reveal = room.phase === "reveal";
   const challengers = room.players.filter((p) => !p.spectator && p.id !== king?.id);
   const status = (p) => {
-    if (reveal) return p.lastAnswer?.correct ? ["Acertó", "is-ok"] : p.lastAnswer?.text ? ["Falló", "is-bad"] : ["Sin respuesta", ""];
-    if (p.answered) return [p.id === viewerId ? "Respondiste" : "Respondió", ""];
-    return [p.id === viewerId ? "Tu turno" : "Pensando…", ""];
+    if (reveal) return p.lastAnswer?.correct ? [tr("Acertó"), "is-ok"] : p.lastAnswer?.text ? [tr("Falló"), "is-bad"] : [tr("Sin respuesta"), ""];
+    if (p.answered) return [p.id === viewerId ? tr("Respondiste") : tr("Respondió"), ""];
+    return [p.id === viewerId ? tr("Tu turno") : "Pensando…", ""];
   };
   return (
     <div className="tv-rey-court">
@@ -37,11 +38,11 @@ function Court({ room, king, viewerId }) {
         <span className="tv-rey-throne-blob">
           <Blob />
         </span>
-        <b>{king ? (king.id === viewerId ? "Tú" : king.name) : "Sin rey"}</b>
-        <span>{reveal && room.rey?.dethronedBy ? "Era el rey" : "El rey · eligió esta"}</span>
+        <b>{king ? (king.id === viewerId ? tr("Tú") : king.name) : tr("Sin rey")}</b>
+        <span>{reveal && room.rey?.dethronedBy ? tr("Era el rey") : tr("El rey · eligió esta")}</span>
       </div>
       <div className="tv-rey-challengers">
-        <span className="tv-mpanel-label">Retadores</span>
+        <span className="tv-mpanel-label">{tr("Retadores")}</span>
         {challengers.map((p) => {
           const [text, tone] = status(p);
           return (
@@ -69,8 +70,8 @@ function KingBar({ room, king, you }) {
       </span>
       <Avatar name={king.name} avatar={king.avatar} />
       <span className="tv-rey-king-text">
-        <small>{room.phase === "reveal" && room.rey?.dethronedBy ? "Era el rey" : "El rey"}</small>
-        <strong>{you ? "Tú" : king.name}</strong>
+        <small>{room.phase === "reveal" && room.rey?.dethronedBy ? tr("Era el rey") : tr("El rey")}</small>
+        <strong>{you ? tr("Tú") : king.name}</strong>
       </span>
       <span className="tv-rey-king-points">{pointsText(king.score || 0)}</span>
     </div>
@@ -81,7 +82,7 @@ function KingBar({ room, king, you }) {
 // Only the king can tap them; everyone else sees them, and who is choosing.
 function Offers({ offers, canPick, onPick, picked }) {
   return (
-    <div className="tv-rey-offers" role={canPick ? "group" : undefined} aria-label="Preguntas para elegir">
+    <div className="tv-rey-offers" role={canPick ? "group" : undefined} aria-label={tr("Preguntas para elegir")}>
       {offers.map((o) => {
         const level = findDifficulty(o.difficulty);
         const Tag = canPick ? "button" : "div";
@@ -163,7 +164,7 @@ function GameScreen() {
       return;
     }
     setConfirmHub(false);
-    restartGame().catch((e) => setErr(e.message || "No se pudo terminar la partida"));
+    restartGame().catch((e) => setErr(e.message || tr("No se pudo terminar la partida")));
   }
 
   if (!room) {
@@ -171,7 +172,7 @@ function GameScreen() {
       <div className="tv-card tv-lobby-guest">
         <p className="tv-party-status">
           <span className="tv-pulse" aria-hidden="true" />
-          Conectando a la partida…
+          {tr("Conectando a la partida…")}
         </p>
       </div>
     );
@@ -184,7 +185,7 @@ function GameScreen() {
   const picking = room.phase === "countdown";
   const spectator = Boolean(me?.spectator);
   const isHost = !central && room.hostId === user?.id;
-  const nameOf = (id) => room.players.find((p) => p.id === id)?.name || "Otro jugador";
+  const nameOf = (id) => room.players.find((p) => p.id === id)?.name || tr("Otro jugador");
   const roundKing = room.players.find((p) => p.id === rey.roundKingId) || null;
   const king = room.players.find((p) => p.id === (reveal ? rey.roundKingId : kingId)) || null;
   const youAreRoundKing = !central && viewerId === rey.roundKingId;
@@ -203,7 +204,7 @@ function GameScreen() {
       await kingPick(index);
     } catch (e) {
       setPicked(null);
-      setErr(e.message || "No se pudo elegir la pregunta");
+      setErr(e.message || tr("No se pudo elegir la pregunta"));
     }
   }
 
@@ -219,26 +220,26 @@ function GameScreen() {
     } catch (e2) {
       sending.current = false;
       setSent(null);
-      setErr(e2.message || "No se pudo enviar tu respuesta");
+      setErr(e2.message || tr("No se pudo enviar tu respuesta"));
     }
   }
 
   // The round's middle line: what is going on.
   let title;
-  if (picking) title = kingPicking ? "Elige una pregunta" : `${king ? (viewerId === king.id ? "Tú eliges" : `${king.name} elige`) : "El rey elige"} la pregunta`;
+  if (picking) title = kingPicking ? tr("Elige una pregunta") : `${king ? (viewerId === king.id ? tr("Tú eliges") : `${king.name} elige`) : tr("El rey elige")} la pregunta`;
   else if (reveal) {
     title = rey.dethronedBy
-      ? `¡${nameOf(rey.dethronedBy)} se queda con la corona!`
-      : `¡${roundKing ? roundKing.name : "El rey"} sigue en el trono!`;
-  } else if (youAreRoundKing) title = "Eres el rey: resiste";
-  else if (spectator) title = "Estás viendo la partida";
-  else title = "Respóndela antes que nadie";
+      ? tr("¡{v0} se queda con la corona!", { v0: nameOf(rey.dethronedBy) })
+      : `¡${roundKing ? roundKing.name : tr("El rey")} sigue en el trono!`;
+  } else if (youAreRoundKing) title = tr("Eres el rey: resiste");
+  else if (spectator) title = tr("Estás viendo la partida");
+  else title = tr("Respóndela antes que nadie");
 
   let hint;
-  if (picking) hint = kingPicking ? "Cuanto más difícil, más puntos si nadie la acierta." : "El rey tiene unos segundos para elegir.";
-  else if (reveal) hint = rey.survived ? `${pointsText(rey.points)} para el rey.` : "";
-  else if (youAreRoundKing) hint = "Si alguien la acierta, te quita la corona.";
-  else hint = "El primero en acertar se convierte en el rey.";
+  if (picking) hint = kingPicking ? tr("Cuanto más difícil, más puntos si nadie la acierta.") : tr("El rey tiene unos segundos para elegir.");
+  else if (reveal) hint = rey.survived ? tr("{v0} para el rey.", { v0: pointsText(rey.points) }) : "";
+  else if (youAreRoundKing) hint = tr("Si alguien la acierta, te quita la corona.");
+  else hint = tr("El primero en acertar se convierte en el rey.");
 
   const tools = (
     <>
@@ -247,7 +248,7 @@ function GameScreen() {
       <PauseButton room={room} isHost={isHost} onError={setErr} />
       {isHost && (
         <button type="button" className={`tv-mini-btn tv-end-btn${confirmHub ? " is-on" : ""}`} onClick={backToHub}>
-          {confirmHub ? "¿Seguro? Toca otra vez" : "Terminar"}
+          {confirmHub ? tr("¿Seguro? Toca otra vez") : tr("Terminar")}
         </button>
       )}
     </>
@@ -296,15 +297,15 @@ function GameScreen() {
               <>
                 {/* The answer takes the place of the box to write in, the same card as every game's. */}
                 <AnswerCard
-                  label="La respuesta"
+                  label={tr("La respuesta")}
                   value={question.answer}
                   mine={
                     youWon
-                      ? "¡Ahora eres el rey!"
+                      ? tr("¡Ahora eres el rey!")
                       : youAreRoundKing && rey.dethronedBy
-                      ? "Te quitaron la corona"
+                      ? tr("Te quitaron la corona")
                       : youAreRoundKing && rey.survived
-                      ? "Sigues siendo el rey"
+                      ? tr("Sigues siendo el rey")
                       : !central && me?.lastAnswer?.text
                       ? `Escribiste “${me.lastAnswer.text}”`
                       : null
@@ -313,7 +314,7 @@ function GameScreen() {
                 />
               </>
             )}
-            {playing && central && <PhoneHint room={room}>Escriban la respuesta en su teléfono</PhoneHint>}
+            {playing && central && <PhoneHint room={room}>{tr("Escriban la respuesta en su teléfono")}</PhoneHint>}
             {playing && !central && !locked && (
               <form className="tv-mwrite" onSubmit={submit}>
                 <label className="tv-mwrite-box">
@@ -321,7 +322,7 @@ function GameScreen() {
                   <input
                     ref={inputRef}
                     type="text"
-                    placeholder="Escribe tu respuesta…"
+                    placeholder={tr("Escribe tu respuesta…")}
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
                     autoComplete="off"
@@ -329,19 +330,19 @@ function GameScreen() {
                     spellCheck="false"
                     enterKeyHint="send"
                     maxLength={80}
-                    aria-label="Tu respuesta"
+                    aria-label={tr("Tu respuesta")}
                   />
                 </label>
                 <button type="submit" className="tv-btn tv-btn--primary tv-mwrite-send" disabled={!query.trim()}>
                   <Icon name="send" size={20} strokeWidth={2.4} />
-                  <span className="tv-mwrite-send-label">Enviar</span>
+                  <span className="tv-mwrite-send-label">{tr("Enviar")}</span>
                 </button>
               </form>
             )}
             {playing && !central && locked && !spectator && (
               <p className="tv-mwrite-sent">
                 <Icon name={isKing ? "crown" : "check"} size={18} strokeWidth={3} filled={isKing} />
-                {isKing ? "Eres el rey. A ver si alguien te la quita…" : sent?.text || me?.lastAnswer?.text || "Respuesta enviada"}
+                {isKing ? tr("Eres el rey. A ver si alguien te la quita…") : sent?.text || me?.lastAnswer?.text || tr("Respuesta enviada")}
               </p>
             )}
           </div>
@@ -373,12 +374,12 @@ function GameScreen() {
 
 // How the round went for this player, on the card's first row (the same place as every game's result).
 function ReyVerdict({ me, rey, youWon, youAreRoundKing }) {
-  if (youWon) return <RoundVerdict tone="ok" icon="crown" label="¡Ahora eres el rey!" points={me?.lastPoints || null} />;
-  if (youAreRoundKing && rey.survived) return <RoundVerdict tone="ok" icon="crown" label="Sigues de rey" points={rey.points || null} />;
-  if (youAreRoundKing && rey.dethronedBy) return <RoundVerdict tone="bad" icon="crown" label="Perdiste la corona" />;
-  if (me?.lastAnswer?.correct) return <RoundVerdict tone="ok" label="¡Correcto!" points={me?.lastPoints || null} />;
-  if (me?.lastAnswer?.text) return <RoundVerdict tone="bad" label="Incorrecto" />;
-  return <RoundVerdict tone="timeout" label="Sin respuesta" />;
+  if (youWon) return <RoundVerdict tone="ok" icon="crown" label={tr("¡Ahora eres el rey!")} points={me?.lastPoints || null} />;
+  if (youAreRoundKing && rey.survived) return <RoundVerdict tone="ok" icon="crown" label={tr("Sigues de rey")} points={rey.points || null} />;
+  if (youAreRoundKing && rey.dethronedBy) return <RoundVerdict tone="bad" icon="crown" label={tr("Perdiste la corona")} />;
+  if (me?.lastAnswer?.correct) return <RoundVerdict tone="ok" label={tr("¡Correcto!")} points={me?.lastPoints || null} />;
+  if (me?.lastAnswer?.text) return <RoundVerdict tone="bad" label={tr("Incorrecto")} />;
+  return <RoundVerdict tone="timeout" label={tr("Sin respuesta")} />;
 }
 
 export default function Game() {

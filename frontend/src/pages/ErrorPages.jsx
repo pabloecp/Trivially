@@ -4,6 +4,7 @@ import TvShell from "../components/home/TvShell.jsx";
 import AppIcon from "../components/home/AppIcon.jsx";
 import { reportError } from "../lib/monitoring.js";
 
+import { translate as tr } from "../lib/i18n.js";
 // The two pages for when something isn't there: an address that doesn't exist ("Esta página no existe", the last
 // route of App.jsx), and the screen that takes the place of the whole site when it fails while drawing ("Algo salió
 // mal", ErrorBoundary in main.jsx), so a failure mid-match never leaves the screen blank.
@@ -15,11 +16,11 @@ export function NotFound() {
       <div className="tv-auth tv-errorpage">
         <header className="tv-auth-head">
           <AppIcon />
-          <h1 className="tv-page-title">Esta página no existe</h1>
-          <p className="tv-page-sub">Puede que el enlace esté mal escrito o que la partida ya haya terminado.</p>
+          <h1 className="tv-page-title">{tr("Esta página no existe")}</h1>
+          <p className="tv-page-sub">{tr("Puede que el enlace esté mal escrito o que la partida ya haya terminado.")}</p>
         </header>
         <Link to="/" className="tv-btn tv-btn--primary tv-btn--block">
-          Ir a Inicio
+          {tr("Ir a Inicio")}
         </Link>
       </div>
     </TvShell>
@@ -34,14 +35,14 @@ function Crashed() {
       <main className="tv-main tv-main--page tv-auth tv-errorpage">
         <header className="tv-auth-head">
           <AppIcon />
-          <h1 className="tv-page-title">Algo salió mal</h1>
-          <p className="tv-page-sub">La página tuvo un problema. Recárgala para seguir. Si estabas en una partida, vuelves a ella.</p>
+          <h1 className="tv-page-title">{tr("Algo salió mal")}</h1>
+          <p className="tv-page-sub">{tr("La página tuvo un problema. Recárgala para seguir. Si estabas en una partida, vuelves a ella.")}</p>
         </header>
         <button type="button" className="tv-btn tv-btn--primary tv-btn--block" onClick={() => window.location.reload()}>
-          Recargar
+          {tr("Recargar")}
         </button>
         <a href="/" className="tv-btn tv-btn--neutral tv-btn--block">
-          Ir a Inicio
+          {tr("Ir a Inicio")}
         </a>
       </main>
     </div>

@@ -9,6 +9,7 @@ import { rankInfo } from "../../lib/rank.js";
 import { findMode } from "../../modes/index.js";
 import "../../styles/ratings.css";
 
+import { translate as tr } from "../../lib/i18n.js";
 // What a match moved (the server's `room.ratings`: every game's elo, and a Clásico's rank), for the results screens: the
 // change beside each player, and how it went for you in a box of Inicio's under the cards. It all waits for the cards to
 // come in (ROW_DELAY) and goes by itself: the numbers roll, the change pops in, and the rank's bar fills.
@@ -111,7 +112,7 @@ function RankProgress({ change }) {
         ? 0
         : 1
       : after.progress;
-  const note = moved && crossed ? (up ? `¡Subiste a ${after.label}!` : `Bajaste a ${after.label}`) : after.toNext != null ? `Faltan ${formatElo(after.toNext)} para ${after.nextLabel}` : `${formatElo(after.points)} puntos`;
+  const note = moved && crossed ? (up ? tr("¡Subiste a {label}!", { label: after.label }) : `Bajaste a ${after.label}`) : after.toNext != null ? tr("Faltan {v0} para {nextLabel}", { v0: formatElo(after.toNext), nextLabel: after.nextLabel }) : `${formatElo(after.points)} puntos`;
 
   return (
     <div className="tv-ratingbox-rank">
@@ -122,7 +123,7 @@ function RankProgress({ change }) {
         </strong>
         <RatingDelta delta={change.delta} className="tv-ratingbox-delta" style={{ "--pop": `${BOX_DELAY + 500}ms` }} />
       </div>
-      <span className="tv-ratingbox-bar" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(after.progress * 100)} aria-label="Avance del rango" style={{ "--tier": shown.tier.color }}>
+      <span className="tv-ratingbox-bar" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(after.progress * 100)} aria-label={tr("Avance del rango")} style={{ "--tier": shown.tier.color }}>
         <i className={phase === "wrap" ? "is-jump" : ""} style={{ width: `${Math.round(width * 100)}%` }} />
       </span>
       <span className={`tv-ratingbox-note${moved && crossed ? " is-new" : ""}`}>{note}</span>
@@ -133,7 +134,7 @@ function RankProgress({ change }) {
 /** Each game of a Clásico with what it did to your elo in that game, whoever won the match. */
 function GameChips({ games }) {
   return (
-    <ul className="tv-ratingbox-games" aria-label="Elo en cada juego">
+    <ul className="tv-ratingbox-games" aria-label={tr("Elo en cada juego")}>
       {games.map((g, i) => {
         const mode = findMode(findVariant(g.variant)?.game || g.game);
         return (
@@ -143,7 +144,7 @@ function GameChips({ games }) {
             </span>
             <RatingDelta delta={g.change.delta} />
             <span className="tv-sr-only">
-              {mode?.name}: {deltaText(g.change.delta)} de elo
+              {mode?.name}: {deltaText(g.change.delta)} {tr("de elo")}
             </span>
           </li>
         );
@@ -154,7 +155,7 @@ function GameChips({ games }) {
 
 // The elo of a match of one game: the number rolling up to the new one, and how much in words.
 function EloProgress({ change, gameName }) {
-  const line = change.delta > 0 ? `Subiste ${change.delta} de elo` : change.delta < 0 ? `Bajaste ${Math.abs(change.delta)} de elo` : "Tu elo sigue igual";
+  const line = change.delta > 0 ? tr("Subiste {delta} de elo", { delta: change.delta }) : change.delta < 0 ? tr("Bajaste {v0} de elo", { v0: Math.abs(change.delta) }) : tr("Tu elo sigue igual");
   return (
     <div className="tv-ratingbox-elo">
       <div className="tv-ratingbox-tier">
@@ -164,7 +165,7 @@ function EloProgress({ change, gameName }) {
         </strong>
         <RatingDelta delta={change.delta} className="tv-ratingbox-delta" style={{ "--pop": `${BOX_DELAY + ROLL_MS}ms` }} />
       </div>
-      <span className="tv-ratingbox-note">{gameName ? `${line} en ${gameName}` : line}</span>
+      <span className="tv-ratingbox-note">{gameName ? tr("{line} en {gameName}", { line: line, gameName: gameName }) : line}</span>
     </div>
   );
 }
@@ -183,16 +184,16 @@ export function RatingBox({ ratings, me, gameName = "" }) {
   const mood = main.delta > 0 ? "victoria" : main.delta < 0 ? "derrota" : "neutral";
   const limited = main.delta === 0 && main.limited;
   return (
-    <section className="tv-stage-box tv-ratingbox" aria-label={rank ? "Tu rango" : "Tu elo"}>
+    <section className="tv-stage-box tv-ratingbox" aria-label={rank ? tr("Tu rango") : tr("Tu elo")}>
       <Blob className="tv-ratingbox-blob" color={blobColor(me.avatar)} mood={mood} />
       <div className="tv-ratingbox-main">
-        <span className="tv-stage-label">{rank ? "Rango en Clásico" : gameName ? `Elo en ${gameName}` : "Tu elo"}</span>
+        <span className="tv-stage-label">{rank ? tr("Rango en Clásico") : gameName ? tr("Elo en {gameName}", { gameName: gameName }) : tr("Tu elo")}</span>
         {rank ? <RankProgress change={rank} /> : <EloProgress change={only} gameName={gameName} />}
       </div>
       {limited ? (
         <p className="tv-ratingbox-limit">
           <Icon name="info" size={16} strokeWidth={2.6} />
-          Ya jugaron muchas veces entre ustedes en las últimas 24 horas: esta partida no cuenta.
+          {tr("Ya jugaron muchas veces entre ustedes en las últimas 24 horas: esta partida no cuenta.")}
         </p>
       ) : (
         rank && games.length > 0 && <GameChips games={games} />

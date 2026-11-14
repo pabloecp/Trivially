@@ -2,6 +2,7 @@ import Avatar from "./Avatar.jsx";
 import Icon from "./Icon.jsx";
 import "../../styles/central.css";
 
+import { translate as tr } from "../../lib/i18n.js";
 // Pieces the games' screens share when the room has a central device (lib/store.jsx useView): what the central device
 // says about the whole room instead of "you", and where a player's phone tells them to look.
 
@@ -18,9 +19,9 @@ export function roundPlayers(room) {
 }
 
 // While a round is played on the central device: how many have answered ("Respuestas: 2 de 4").
-export function answeredText(room, what = "Respuestas") {
+export function answeredText(room, what = tr("Respuestas")) {
   const players = roundPlayers(room);
-  return `${what}: ${players.filter((p) => p.answered).length} de ${players.length}`;
+  return tr("{what}: {length} de {length2}", { what: what, length: players.filter((p) => p.answered).length, length2: players.length });
 }
 
 /**
@@ -34,20 +35,20 @@ export function RoomVerdict({ room, right = (p) => Boolean(p.lastAnswer?.correct
   let title;
   let tone = "ok";
   if (!players.length) {
-    title = "Ronda terminada";
+    title = tr("Ronda terminada");
     tone = "timeout";
   } else if (players.length === 1) {
-    title = hits.length ? `¡${players[0].name} acertó!` : `${players[0].name} no acertó`;
+    title = hits.length ? tr("¡{name} acertó!", { name: players[0].name }) : tr("{name} no acertó", { name: players[0].name });
     if (!hits.length) tone = "bad";
   } else if (hits.length === players.length) {
-    title = "¡Todos acertaron!";
+    title = tr("¡Todos acertaron!");
   } else if (!hits.length) {
-    title = "Nadie acertó";
+    title = tr("Nadie acertó");
     tone = "bad";
   } else {
-    title = `${hits.length} de ${players.length} acertaron`;
+    title = tr("{length} de {length1} acertaron", { length: hits.length, length1: players.length });
   }
-  const who = hits.length && hits.length < players.length && players.length > 1 ? joinNames(names.slice(0, 4)) + (names.length > 4 ? " y más" : "") : "";
+  const who = hits.length && hits.length < players.length && players.length > 1 ? joinNames(names.slice(0, 4)) + (names.length > 4 ? tr(" y más") : "") : "";
   return (
     <div className={`tv-quiz-verdict tv-quiz-verdict--${tone} tv-central-verdict`} role="status">
       <span className="tv-quiz-verdict-icon">
@@ -70,7 +71,7 @@ export function ControllerBar({ seconds, pct, urgent = false, children }) {
     <div className="tv-ctrl-bar">
       <p className="tv-ctrl-look">
         <Icon name="tv" size={16} strokeWidth={2.4} />
-        Mira la pantalla central
+        {tr("Mira la pantalla central")}
       </p>
       <div className="tv-ctrl-tools">{children}</div>
       <div className={`tv-clock tv-ctrl-clock${urgent ? " is-urgent" : ""}`} role="timer" aria-label={`${seconds} segundos`}>
@@ -90,7 +91,7 @@ export function ControllerBar({ seconds, pct, urgent = false, children }) {
 }
 
 // A phone beside the central device while the round counts down there: no number, only that it's coming.
-export function GetReady({ children = "¡Prepárate!" }) {
+export function GetReady({ children = tr("¡Prepárate!") }) {
   return (
     <p className="tv-ctrl-ready" role="status">
       {children}

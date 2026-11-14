@@ -1,5 +1,6 @@
 import { TOPICS } from "../quiz/quizInfo.js";
 
+import { translate as tr } from "../../lib/i18n.js";
 // Rey de la colina's settings and labels (same ids and limits as backend/src/game/rey.js).
 
 // The ten categories of the question bank, in the same order and with the same names as Trivia's topics.
@@ -8,9 +9,9 @@ export const CATEGORIES = TOPICS;
 // The difficulties a match can mix, any of them ticked, each with what keeping the crown through a question of that
 // difficulty is worth (REY_POINTS on the server).
 export const DIFFICULTIES = [
-  { id: "facil", label: "Fácil", points: 1 },
-  { id: "media", label: "Media", points: 3 },
-  { id: "dificil", label: "Difícil", points: 5 },
+  { id: "facil", get label() { return tr("Fácil"); }, points: 1 },
+  { id: "media", get label() { return tr("Media"); }, points: 3 },
+  { id: "dificil", get label() { return tr("Difícil"); }, points: 5 },
 ];
 
 export function findDifficulty(id) {

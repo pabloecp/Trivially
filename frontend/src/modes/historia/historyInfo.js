@@ -1,16 +1,17 @@
 // Rango's settings and labels (same ids and limits as backend/src/game/history.js). Its categories are Trivia's.
 import { TOPICS } from "../quiz/quizInfo.js";
+import { translate as tr } from "../../lib/i18n.js";
 export { TOPICS };
 
 // Its way of playing (HISTORY_STYLES on the server): "Cifras", a question whose answer is a number, on a bar.
-export const STYLES = [{ id: "cifras", label: "Cifras", hint: "Elige el número en una barra" }];
+export const STYLES = [{ id: "cifras", get label() { return tr("Cifras"); }, get hint() { return tr("Elige el número en una barra"); } }];
 
 // The harder, the deeper the mode's colour; mixed takes the site's accent (colours in styles/history.css).
 export const DIFFICULTIES = [
-  { id: "mixta", label: "Mixta", color: "accent" },
-  { id: "facil", label: "Fácil", color: "history-light" },
-  { id: "media", label: "Media", color: "history" },
-  { id: "dificil", label: "Difícil", color: "history-deep" },
+  { id: "mixta", get label() { return tr("Mixta"); }, color: "accent" },
+  { id: "facil", get label() { return tr("Fácil"); }, color: "history-light" },
+  { id: "media", get label() { return tr("Media"); }, color: "history" },
+  { id: "dificil", get label() { return tr("Difícil"); }, color: "history-deep" },
 ];
 
 export function findDifficulty(id) {
@@ -55,5 +56,5 @@ export function figureScale(value) {
 
 /** "1 año", "12 años". */
 export function yearsText(n) {
-  return `${n.toLocaleString("es-ES")} ${n === 1 ? "año" : "años"}`;
+  return `${n.toLocaleString("es-ES")} ${n === 1 ? tr("año") : tr("años")}`;
 }

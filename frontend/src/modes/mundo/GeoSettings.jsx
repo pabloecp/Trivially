@@ -3,6 +3,7 @@ import OptionRow, { rangeOptions } from "../../components/home/OptionRow.jsx";
 import SettingsTabs from "../../components/home/SettingsTabs.jsx";
 import { DIFFICULTIES, ROUNDS_LIMITS, SECONDS_LIMITS, STYLES, geoConfig } from "./geoInfo.js";
 
+import { translate as tr } from "../../lib/i18n.js";
 // Settings of an Encuentra el país match, in the settings panel, in two tabs like every game's: "Partida" (how many
 // rounds and the seconds to put the pin, like Adivina la canción's) and "Preguntas" (how the country is given, "Modos
 // de juego": by its name, its silhouette or its flag; and the difficulties; tick as many as you like of each, all by
@@ -25,7 +26,7 @@ export default function GeoSettings({ room, updateConfig, onToast, children, rea
       await updateConfig({ geo: next });
     } catch (err) {
       setDraft(saved);
-      onToast?.(err.message || "No se pudieron guardar los ajustes");
+      onToast?.(err.message || tr("No se pudieron guardar los ajustes"));
     }
   }
 
@@ -38,10 +39,10 @@ export default function GeoSettings({ room, updateConfig, onToast, children, rea
 
   // "Sombra · Bandera" when not every way is ticked (all three need no word).
   const stylesNote =
-    draft.styles.length === STYLES.length ? "" : draft.styles.length ? STYLES.filter((st) => draft.styles.includes(st.id)).map((st) => st.label).join(" · ") : "Ningún modo";
+    draft.styles.length === STYLES.length ? "" : draft.styles.length ? STYLES.filter((st) => draft.styles.includes(st.id)).map((st) => st.label).join(" · ") : tr("Ningún modo");
   const levelsNote = draft.difficulties.length
     ? DIFFICULTIES.filter((d) => draft.difficulties.includes(d.id)).map((d) => d.label).join(" · ")
-    : "Ninguna dificultad";
+    : tr("Ninguna dificultad");
 
   return (
     <SettingsTabs
@@ -50,14 +51,14 @@ export default function GeoSettings({ room, updateConfig, onToast, children, rea
       tabs={[
         {
           id: "partida",
-          label: "Partida",
+          label: tr("Partida"),
           icon: "hourglass",
           note: `${draft.rounds} rondas · ${Math.round(draft.roundMs / 1000)} s`,
           content: (
             <>
-              <OptionRow label="Rondas" options={rangeOptions(ROUNDS_LIMITS)} value={draft.rounds} onChange={(n) => save({ rounds: n })} />
+              <OptionRow label={tr("Rondas")} options={rangeOptions(ROUNDS_LIMITS)} value={draft.rounds} onChange={(n) => save({ rounds: n })} />
               <OptionRow
-                label="Segundos por ronda"
+                label={tr("Segundos por ronda")}
                 options={rangeOptions(SECONDS_LIMITS)}
                 value={Math.round(draft.roundMs / 1000)}
                 onChange={(n) => save({ roundMs: n * 1000 })}
@@ -67,14 +68,14 @@ export default function GeoSettings({ room, updateConfig, onToast, children, rea
         },
         {
           id: "preguntas",
-          label: "Preguntas",
+          label: tr("Preguntas"),
           icon: "globe",
           note: [stylesNote, levelsNote].filter(Boolean).join(" · "),
           alert: !draft.styles.length || !draft.difficulties.length,
           content: (
             <>
               <OptionRow
-                label="Modos de juego"
+                label={tr("Modos de juego")}
                 multi
                 options={STYLES.map((st) => ({ value: st.id, label: st.label, title: st.hint }))}
                 value={draft.styles}
@@ -82,7 +83,7 @@ export default function GeoSettings({ room, updateConfig, onToast, children, rea
                 onSetAll={(styles) => save({ styles })}
               />
               <OptionRow
-                label="Dificultad"
+                label={tr("Dificultad")}
                 multi
                 options={DIFFICULTIES.map((d) => ({ value: d.id, label: d.label, title: d.hint }))}
                 value={draft.difficulties}

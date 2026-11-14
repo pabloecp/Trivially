@@ -18,6 +18,7 @@ import { resolveCode } from "../../lib/hiddenCode.js";
 import { useT } from "../../lib/i18n.js";
 import { AnswerCard, MatchBar, MatchCard, MatchQuestion, RoundCountdown, RoundVerdict } from "../../components/home/MatchFrame.jsx";
 
+import { translate as tr } from "../../lib/i18n.js";
 const COUNTDOWN_MS = 3000;
 // Keys that pick an option while a question is open: 1–4 or A–D.
 const KEYS = { 1: 0, 2: 1, 3: 2, 4: 3, a: 0, b: 1, c: 2, d: 3 };
@@ -151,7 +152,7 @@ function ChoiceRound({ room, question, me, answer, seconds, clock, central, cont
       <OptionsPanel on={!controller && !central}>
       {veil}
       {!controller && <RoundCountdown room={room} seconds={seconds} />}
-      <div className={`tv-quiz-options${reveal ? " is-reveal" : ""}`} role="group" aria-label="Opciones">
+      <div className={`tv-quiz-options${reveal ? " is-reveal" : ""}`} role="group" aria-label={tr("Opciones")}>
         {OPTION_LETTERS.map((letter, i) => {
           const text = question.options?.[i];
           if (text == null) {
@@ -188,7 +189,7 @@ function ChoiceRound({ room, question, me, answer, seconds, clock, central, cont
             >
               <span className="tv-quiz-opt-letter">{letter}</span>
               <span className="tv-quiz-opt-text">{text}</span>
-              {isMine && !reveal && <span className="tv-quiz-opt-mine">Tu respuesta</span>}
+              {isMine && !reveal && <span className="tv-quiz-opt-mine">{tr("Tu respuesta")}</span>}
               {reveal && (isRight || isMine) && (
                 <span className="tv-quiz-opt-mark">
                   <Icon name={isRight ? "check" : "close"} size={18} strokeWidth={3.4} />
@@ -346,7 +347,7 @@ function WriteRound({ room, question, me, answer, skipSong, seconds, clock, cent
                 <i key={i} style={{ "--s": m.size, "--r": `${m.rot}deg`, "--o": m.op }}>?</i>
               ))}
             </span>
-            <span className="tv-quiz-marks-note">{question.category ? `${question.category} · escribe la respuesta` : "Escribe la respuesta"}</span>
+            <span className="tv-quiz-marks-note">{question.category ? tr("{category} · escribe la respuesta", { category: tr(question.category) }) : tr("Escribe la respuesta")}</span>
           </div>
         )}
         {room.phase === "countdown" && !controller && (
@@ -450,7 +451,7 @@ function GameScreen() {
       <div className="tv-card tv-lobby-guest">
         <p className="tv-party-status">
           <span className="tv-pulse" aria-hidden="true" />
-          Conectando a la partida…
+          {tr("Conectando a la partida…")}
         </p>
       </div>
     );

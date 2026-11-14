@@ -12,6 +12,7 @@ import "../../styles/match.css";
 import useKeyboardFit from "../../lib/useKeyboardFit.js";
 import { useT } from "../../lib/i18n.js";
 
+import { translate as tr } from "../../lib/i18n.js";
 // A room's code is five letters and numbers (ROOM_CODE_LENGTH on the server).
 const ROOM_CODE_LENGTH = 5;
 
@@ -21,7 +22,7 @@ const FOCUSABLE = "a[href], button:not([disabled]), input:not([disabled])";
 // size to pick, then search; Competitivo is disabled for now) and "Privada" (create a room or join one with a code).
 const PLAY_KINDS = [
   MATCH_KINDS.casual,
-  { id: "privada", name: "Privada", color: "blue", icon: "lock", blurb: "Crea una sala o entra con un código" },
+  { id: "privada", get name() { return tr("Privada"); }, color: "blue", icon: "lock", get blurb() { return tr("Crea una sala o entra con un código"); } },
 ];
 
 // A row's panel is only reachable (tab, screen reader) while it's open.
@@ -30,9 +31,9 @@ const inertUnless = (shown) => (el) => {
 };
 
 const TITLES = {
-  menu: "¿Cómo quieres jugar?",
+  get menu() { return tr("¿Cómo quieres jugar?"); },
   code: "Escribe el código",
-  name: "¿Cómo te llamas?",
+  get name() { return tr("¿Cómo te llamas?"); },
 };
 
 // Bottom sheet to create or join a room. With `mode`, a new room goes straight into that game; without it the
@@ -403,7 +404,7 @@ export default function PlaySheet({ mode, joinCode, open, onClose, askName = fal
                   spellCheck="false"
                 />
                 <button type="submit" className="tv-btn tv-btn--block tv-btn--primary" data-sound="none" disabled={busy || code.length < ROOM_CODE_LENGTH}>
-                  Entrar a la sala
+                  {tr("Entrar a la sala")}
                 </button>
               </form>
             )}

@@ -1,13 +1,14 @@
+import { translate as tr } from "../lib/i18n.js";
 // The Clásico's rank as the screens draw it. The tiers are the server's (backend/src/game/rank.js: RANK_TIERS and
 // DIVISION_POINTS), plus each one's colour; every tier but the last has three divisions, III → II → I.
 export const DIVISION_POINTS = 100;
 export const RANK_TIERS = [
-  { id: "bronce", name: "Bronce", min: 0, color: "#d0874f", edge: "#8e5427" },
-  { id: "plata", name: "Plata", min: 300, color: "#b9c6d3", edge: "#7b8a99" },
-  { id: "oro", name: "Oro", min: 600, color: "#f5b82e", edge: "#b07d06" },
-  { id: "diamante", name: "Diamante", min: 900, color: "#6aa8ff", edge: "#2f65c4" },
-  { id: "maestro", name: "Maestro", min: 1200, color: "#c56bff", edge: "#8233c0" },
-  { id: "leyenda", name: "Leyenda", min: 1500, color: "#ff5d73", edge: "#c02a42" },
+  { id: "bronce", get name() { return tr("Bronce"); }, min: 0, color: "#d0874f", edge: "#8e5427" },
+  { id: "plata", get name() { return tr("Plata"); }, min: 300, color: "#b9c6d3", edge: "#7b8a99" },
+  { id: "oro", get name() { return tr("Oro"); }, min: 600, color: "#f5b82e", edge: "#b07d06" },
+  { id: "diamante", get name() { return tr("Diamante"); }, min: 900, color: "#6aa8ff", edge: "#2f65c4" },
+  { id: "maestro", get name() { return tr("Maestro"); }, min: 1200, color: "#c56bff", edge: "#8233c0" },
+  { id: "leyenda", get name() { return tr("Leyenda"); }, min: 1500, color: "#ff5d73", edge: "#c02a42" },
 ];
 const DIVISIONS = ["III", "II", "I"];
 

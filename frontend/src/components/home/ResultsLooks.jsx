@@ -5,6 +5,7 @@ import { RowChange } from "./Ratings.jsx";
 import { useFiveRows } from "./ResultsParts.jsx";
 import "../../styles/resultsLooks.css";
 
+import { translate as tr } from "../../lib/i18n.js";
 // The results screen at the end of a match: a bar as long as the points for each player, in the match's colour. The games
 // won are on the right and whoever won (all of them on a tie) is ringed in the match's colour.
 
@@ -23,7 +24,7 @@ export function GamesDigit({ n, lit }) {
  */
 export function GamesWon({ items }) {
   return (
-    <ol className="rl-won" aria-label="Quién ganó cada juego">
+    <ol className="rl-won" aria-label={tr("Quién ganó cada juego")}>
       {items.map((g, i) => (
         <li key={i} className="rl-won-game" style={{ "--i": i }}>
           <span className={`rl-won-icon tv-c-${g.color}`} aria-hidden="true">
@@ -32,7 +33,7 @@ export function GamesWon({ items }) {
           {g.winners.length ? (
             g.winners.map((p) => <Avatar key={p.id} name={p.name} avatar={p.avatar} />)
           ) : (
-            <span className="rl-won-empty" aria-label="Nadie lo ganó" />
+            <span className="rl-won-empty" aria-label={tr("Nadie lo ganó")} />
           )}
         </li>
       ))}
@@ -60,7 +61,7 @@ export function RetouchCard({ icon = "play", color = "neutral", title, players, 
         </h2>
         {onOpen && (
           <button type="button" className="tv-res-link" onClick={onOpen}>
-            Ver tus respuestas
+            {tr("Ver tus respuestas")}
             <Icon name="chevron" size={14} strokeWidth={2.6} />
           </button>
         )}
@@ -83,7 +84,7 @@ export function RetouchCard({ icon = "play", color = "neutral", title, players, 
                   <i style={{ "--w": `${(points(p) / max) * 100}%` }} />
                 </span>
               </span>
-              {change ? <RowChange change={change} index={i} /> : changes && p.isGuest && <span className="tv-rowchange tv-rowchange--none">Sin cuenta</span>}
+              {change ? <RowChange change={change} index={i} /> : changes && p.isGuest && <span className="tv-rowchange tv-rowchange--none">{tr("Sin cuenta")}</span>}
               {wins ? <GamesDigit n={wins(p)} lit={win} /> : <span className="tv-res-row-points">{pts}</span>}
             </li>
           );

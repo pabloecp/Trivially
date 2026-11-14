@@ -3,6 +3,7 @@ import Icon from "./Icon.jsx";
 import { useSettingsStacked, useSettingsSummary } from "./SettingsPanel.jsx";
 import { translate, useT } from "../../lib/i18n.js";
 
+import { translate as tr } from "../../lib/i18n.js";
 // Every game's settings, split in tabs so each view fits the panel without scrolling. The usual two: "Partida" (how
 // it's played and how long: ways of answering, modes, rounds, seconds) and what comes up ("Preguntas", "Canciones",
 // "Eventos", "Tableros": topics, difficulty).
@@ -15,7 +16,7 @@ import { translate, useT } from "../../lib/i18n.js";
 // between visits. (`storageKey` is still accepted, unused.) `children` go under the tabs.
 // In the "Ajustes de …" panel (SettingsPanel) every tab's settings show one after another, under the tabs, which stay
 // on top: a tap scrolls to that tab's part, and the one in view is the one underlined.
-export default function SettingsTabs({ tabs, readOnly = false, storageKey = null, label = "Ajustes", children }) {
+export default function SettingsTabs({ tabs, readOnly = false, storageKey = null, label = tr("Ajustes"), children }) {
   useT();
   const list = tabs.filter(Boolean);
   const [open, setOpen] = useState(() => list[0].id);
@@ -174,7 +175,7 @@ function TabRow({ tabs, value, onChange, label, panelId, sub = false }) {
 }
 
 /** A list's summary for a tab's note, `noun` being a feminine plural: "Todas las categorías", "Sin categorías", "3 de 10 categorías". */
-export function countNote(chosen, total, noun = "categorías") {
+export function countNote(chosen, total, noun = tr("categorías")) {
   const n = translate(noun);
   if (!chosen.length) return translate("Sin {noun}", { noun: n });
   if (chosen.length >= total) return translate("Todas las {noun}", { noun: n });

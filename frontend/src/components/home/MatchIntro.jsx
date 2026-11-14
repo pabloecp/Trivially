@@ -18,6 +18,7 @@ import { RatingDelta } from "./Ratings.jsx";
 import { GamesWon } from "./ResultsLooks.jsx";
 import "../../styles/match.css";
 
+import { translate as tr } from "../../lib/i18n.js";
 // Rows the reel goes through at the least before it stops, however many games it has: more games, fewer laps.
 const REEL_ROWS = 28;
 // Rows drawn before where the reel starts and after where it stops, so it never shows an end.
@@ -164,7 +165,7 @@ function Roulette({ room, startedAt, kind, onLand }) {
       {landed && <span className="tv-mstage-flash" aria-hidden="true" />}
       <div className="tv-mi-part">
         {landed ? (
-          <CardHead badge={gameBadge(modeOf(now))} icon="check" label="¡Este es!" name={variantName(now)} />
+          <CardHead badge={gameBadge(modeOf(now))} icon="check" label={tr("¡Este es!")} name={variantName(now)} />
         ) : (
           <CardHead
             badge={
@@ -173,7 +174,7 @@ function Roulette({ room, startedAt, kind, onLand }) {
               </span>
             }
             icon="shuffle"
-            label="Eligiendo el juego…"
+            label={tr("Eligiendo el juego…")}
             name={tiebreak ? "Juego de desempate" : `Juego ${intro.index + 1}`}
           />
         )}
@@ -202,9 +203,9 @@ function Tutorial({ intro, leftMs }) {
     <>
       <div className="tv-mi-part tv-mi-tutorial">
         <div className="tv-mi-top">
-          <CardHead badge={gameBadge(m)} icon="info" label="Cómo se juega" name={variantName(variantNow(intro))} />
-          <div className="tv-finding-clock" role="timer" aria-label={`Empieza en ${seconds} segundos`}>
-            <span>Empieza en</span>
+          <CardHead badge={gameBadge(m)} icon="info" label={tr("Cómo se juega")} name={variantName(variantNow(intro))} />
+          <div className="tv-finding-clock" role="timer" aria-label={tr("Empieza en {seconds} segundos", { seconds: seconds })}>
+            <span>{tr("Empieza en")}</span>
             <strong key={seconds} className="is-count">
               {seconds}
             </strong>
@@ -236,16 +237,16 @@ function PreviousGame({ intro, players, leftMs, viewerId }) {
   // Nobody scored: the server gives the game to nobody, and it doesn't count towards winning the match.
   const winners = prev.ranking.filter((r) => prev.winners.includes(r.id));
   const line = !winners.length
-    ? `Nadie ganó el juego ${intro.index}`
+    ? tr("Nadie ganó el juego {index}", { index: intro.index })
     : winners.length === 1
-    ? `${firstName(winners[0].name)} ganó el juego ${intro.index}`
+    ? tr("{v0} ganó el juego {index}", { v0: firstName(winners[0].name), index: intro.index })
     : winners.length === 2
-    ? `${winners.map((w) => firstName(w.name)).join(" y ")} empataron el juego ${intro.index}`
-    : `Empate en el juego ${intro.index}`;
+    ? tr("{v0} empataron el juego {index}", { v0: winners.map((w) => firstName(w.name)).join(" y "), index: intro.index })
+    : tr("Empate en el juego {index}", { index: intro.index });
   const note = intro.winsToWin
     ? topWins >= intro.winsToWin
       ? `Empate a ${topWins} juegos ganados: otro juego desempata`
-      : `Gana la partida el primero en ganar ${intro.winsToWin} juegos`
+      : tr("Gana la partida el primero en ganar {winsToWin} juegos", { winsToWin: intro.winsToWin })
     : null;
   const seats = prev.ranking.length;
   return (
@@ -255,7 +256,7 @@ function PreviousGame({ intro, players, leftMs, viewerId }) {
       <div className="tv-mi-part tv-mi-result">
         <CardHead badge={gameBadge(mode)} icon={mode.icon} label={`Juego ${intro.index} · ${variantName(variant)}`} name={line} />
         {note && <p className="tv-mi-note">{note}</p>}
-        <ul className={`tv-finding-seats${seats > 6 ? " is-many" : ""}`} data-seats={seats} style={{ "--seats": seats }} aria-label="Puntos de cada jugador en ese juego">
+        <ul className={`tv-finding-seats${seats > 6 ? " is-many" : ""}`} data-seats={seats} style={{ "--seats": seats }} aria-label={tr("Puntos de cada jugador en ese juego")}>
           {prev.ranking.map((r, i) => {
             const me = r.id === viewerId;
             return (
@@ -324,7 +325,7 @@ function IntroBoxes({ room, viewerId, showResult }) {
           <div className="tv-stage-box tv-stage-elo">
             <div className="tv-stage-elo-text">
               <span className="tv-stage-label">
-                Elo en
+                {tr("Elo en")}
                 <br />
                 {findMode(room.game)?.name}
               </span>
@@ -334,15 +335,15 @@ function IntroBoxes({ room, viewerId, showResult }) {
           </div>
         ))}
       <div className="tv-stage-box tv-stage-friends tv-stage-social">
-        <span className="tv-stage-label">{goal ? "Juegos ganados" : "Jugadores"}</span>
-        <ul className="tv-party-players" aria-label="Jugadores de la partida">
+        <span className="tv-stage-label">{goal ? tr("Juegos ganados") : tr("Jugadores")}</span>
+        <ul className="tv-party-players" aria-label={tr("Jugadores de la partida")}>
           {players.map((p) => (
             <li key={p.id} className={`tv-player${p.id === viewerId ? " is-me" : ""}${p.connected ? "" : " is-away"}`}>
               <div className="tv-player-btn">
                 <Avatar avatar={p.avatar} mood="neutral" />
                 <span className="tv-player-text">
                   <span className="tv-player-name">{p.name}</span>
-                  <span className="tv-player-tag">{p.connected ? "Listo" : "Reconectando…"}</span>
+                  <span className="tv-player-tag">{p.connected ? tr("Listo") : "Reconectando…"}</span>
                 </span>
                 {goal > 0 && <GamesDots n={p.wins || 0} of={goal} lit={showResult && Boolean(intro.previous?.winners.includes(p.id))} />}
               </div>
@@ -351,7 +352,7 @@ function IntroBoxes({ room, viewerId, showResult }) {
         </ul>
         {played.length > 0 && (
           <div className="tv-stage-social-friends">
-            <span className="tv-stage-label">Juegos jugados</span>
+            <span className="tv-stage-label">{tr("Juegos jugados")}</span>
             <GamesWon items={played} />
           </div>
         )}
@@ -380,7 +381,7 @@ export default function MatchIntro({ room }) {
   const mode = stage === "result" ? modeOf(variantBefore(intro)) : findMode(intro.game);
 
   return (
-    <section className={`tv-stage has-aside tv-mi is-color${still ? " is-still" : ""}`} aria-label="Siguiente juego">
+    <section className={`tv-stage has-aside tv-mi is-color${still ? " is-still" : ""}`} aria-label={tr("Siguiente juego")}>
       <div className={`tv-stage-card tv-mi-card ${spinning && !landed ? "is-classic" : `tv-c-${mode.color}`}${landed ? " is-landing" : ""}`}>
         {(!spinning || landed) && (
           <span className="tv-stage-mark" aria-hidden="true">

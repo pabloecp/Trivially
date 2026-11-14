@@ -4,6 +4,7 @@ import { blobColor } from "../../lib/blobColors.js";
 import { formatElo } from "../../lib/gameStats.js";
 import { rankInfo } from "../../lib/rank.js";
 
+import { translate as tr } from "../../lib/i18n.js";
 // Beside the Clásico's card (Inicio, before each of its games): your rank, where every game has your elo. The name with
 // its division, the way to the next one, and your Blob in the box's empty side.
 export default function RankBox({ user }) {
@@ -12,18 +13,18 @@ export default function RankBox({ user }) {
     <div className="tv-stage-box tv-stage-elo tv-stage-rank">
       <div className="tv-stage-elo-text">
         <span className="tv-stage-label">
-          Rango en
+          {tr("Rango en")}
           <br />
-          Clásico
+          {tr("Clásico")}
         </span>
         <strong className="tv-stage-rank-name" style={{ color: info.tier.color }}>
           <RankMark info={info} size={26} />
           {info.label}
         </strong>
-        <span className="tv-stage-rank-bar" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(info.progress * 100)} aria-label="Avance del rango" style={{ "--tier": info.tier.color }}>
+        <span className="tv-stage-rank-bar" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(info.progress * 100)} aria-label={tr("Avance del rango")} style={{ "--tier": info.tier.color }}>
           <i style={{ width: `${Math.round(info.progress * 100)}%` }} />
         </span>
-        <span className="tv-stage-rank-next">{info.toNext != null ? `Faltan ${formatElo(info.toNext)} para ${info.nextLabel}` : `${formatElo(info.points)} puntos`}</span>
+        <span className="tv-stage-rank-next">{info.toNext != null ? tr("Faltan {v0} para {nextLabel}", { v0: formatElo(info.toNext), nextLabel: info.nextLabel }) : `${formatElo(info.points)} puntos`}</span>
       </div>
       <Blob className="tv-stage-blob" color={blobColor(user?.avatar)} mood="neutral" />
     </div>

@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import Icon from "./Icon.jsx";
 import useKeyboardFit from "../../lib/useKeyboardFit.js";
 
+import { translate as tr } from "../../lib/i18n.js";
 // A big panel over the page ("¿Qué quieren jugar?", a game's "Ajustes", "Tu grupo"): a dark card in the middle
 // with the page darkened behind it, and on phones a sheet that takes the whole screen. It comes in and goes out whole,
 // like every big panel (--tv-box-in / --tv-box-out). Escape, the X and a tap outside close it. `foot` is a row of
@@ -68,7 +69,7 @@ export default function Modal({ open, title, onClose, foot = null, size = "md", 
           <h2 id={titleId} className="tv-modal-title">
             {title}
           </h2>
-          <button type="button" className="tv-iconbtn" aria-label="Cerrar" data-sound="back" onClick={() => onCloseRef.current?.()}>
+          <button type="button" className="tv-iconbtn" aria-label={tr("Cerrar")} data-sound="back" onClick={() => onCloseRef.current?.()}>
             <Icon name="close" size={20} strokeWidth={2.8} />
           </button>
         </header>

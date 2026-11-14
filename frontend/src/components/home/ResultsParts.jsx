@@ -6,6 +6,7 @@ import Icon from "./Icon.jsx";
 import PlayerName from "./PlayerName.jsx";
 import { usePhone } from "../../lib/usePhone.js";
 
+import { translate as tr } from "../../lib/i18n.js";
 // The pieces of the results screens (MatchResults, the playlist's intermission and its final screen, all in the same
 // frame): the podium in its card, the ranking in its card beside it, and a player's rounds as dots.
 
@@ -42,7 +43,7 @@ export function useFiveRows(count) {
 export function RoundDots({ rounds = [] }) {
   const hits = rounds.filter((r) => r.status === "ok").length;
   return (
-    <span className="tv-res-dots" role="img" aria-label={`${hits} de ${rounds.length} acertadas`}>
+    <span className="tv-res-dots" role="img" aria-label={tr("{hits} de {length} acertadas", { hits: hits, length: rounds.length })}>
       {rounds.map((r) => (
         <span key={`${r.round}-${r.game}`} className={`tv-res-dot is-${r.status}`} />
       ))}
@@ -60,7 +61,7 @@ export function Podium({ players, score = (p) => <><CountUp value={p.score} /> p
   const podium = [players[1], players[0], players[2]]; // 2nd, 1st, 3rd
   const rank = (p) => (tied > 1 && players.indexOf(p) < tied ? 1 : players.indexOf(p) + 1);
   return (
-    <div className="tv-podium" role="list" aria-label="Podio">
+    <div className="tv-podium" role="list" aria-label={tr("Podio")}>
       {podium.map((p, i) => {
         const slot = i === 1 ? 1 : i === 0 ? 2 : 3;
         if (!p) return <div key={slot} className="tv-podium-spot is-empty" aria-hidden="true" />;
@@ -110,7 +111,7 @@ export function PodiumCard({ meta, children }) {
   return (
     <section className="tv-res-card tv-res-podium" aria-labelledby="tv-res-podium-title">
       <div className="tv-res-card-head">
-        <h2 id="tv-res-podium-title" className="tv-res-card-title">Podio</h2>
+        <h2 id="tv-res-podium-title" className="tv-res-card-title">{tr("Podio")}</h2>
         {meta && <span className="tv-res-meta">{meta}</span>}
       </div>
       {children}
@@ -136,7 +137,7 @@ export function RankingCard({ icon = "play", color = "neutral", title, players, 
         </h2>
         {onOpen && (
           <button type="button" className="tv-res-link" onClick={onOpen}>
-            Ver tus respuestas
+            {tr("Ver tus respuestas")}
             <Icon name="chevron" size={14} strokeWidth={2.6} />
           </button>
         )}

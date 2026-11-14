@@ -12,6 +12,7 @@ import {
 import { setVolume, toggleMute, useVolume } from "../../lib/volume.js";
 import Icon from "./Icon.jsx";
 
+import { translate as tr } from "../../lib/i18n.js";
 // The volume rows: "Canciones" (the songs of Adivina la canción and any other <audio>, lib/volume.js) and "Sonidos"
 // (the taps and results, lib/sounds.js). In each the icon turns it off and on and the slider sets how loud (kept in this
 // browser). The sounds' tap plays at the new volume when the slider is let go. Also in the owners' panel (AdminPanel.jsx),
@@ -27,7 +28,7 @@ export function VolumeRows() {
   const rows = [
     {
       id: "songs",
-      label: "Canciones",
+      label: tr("Canciones"),
       on: !songs.muted,
       value: Math.round(songs.level * 100),
       icon: songs.shown === 0 ? "mute" : "volume",
@@ -37,7 +38,7 @@ export function VolumeRows() {
     },
     {
       id: "sound",
-      label: "Sonidos",
+      label: tr("Sonidos"),
       on: soundEnabled(),
       value: soundVolume(),
       icon: soundEnabled() ? "volume" : "mute",
@@ -64,7 +65,7 @@ export function VolumeRows() {
           <label className="tv-volume-field" data-sound="none">
             <span className="tv-volume-label">
               <strong>{r.label}</strong>
-              <span>{r.on ? `${r.value}%` : "Apagado"}</span>
+              <span>{r.on ? `${r.value}%` : tr("Apagado")}</span>
             </span>
             <input
               type="range"
@@ -74,7 +75,7 @@ export function VolumeRows() {
               value={r.value}
               disabled={!r.on}
               style={{ "--fill": `${r.value}%` }}
-              aria-label={`Volumen de ${r.label.toLowerCase()}`}
+              aria-label={tr("Volumen de {v0}", { v0: r.label.toLowerCase() })}
               onChange={(e) => r.change(e.target.value)}
               onPointerUp={(e) => r.release(e.currentTarget.value)}
               onKeyUp={(e) => r.release(e.currentTarget.value)}
@@ -96,7 +97,7 @@ export function SoundPacks() {
   const step = (by) => setSoundPack(SOUND_PACKS[(index + by + SOUND_PACKS.length) % SOUND_PACKS.length].id);
   return (
     <div className="tv-sound-pick">
-      <button type="button" className="tv-sound-step" data-sound="none" aria-label="Sonido anterior" onClick={() => step(-1)}>
+      <button type="button" className="tv-sound-step" data-sound="none" aria-label={tr("Sonido anterior")} onClick={() => step(-1)}>
         <Icon name="chevron" size={18} strokeWidth={3} className="is-back" />
       </button>
       <span key={pack.id} className="tv-sound-now" aria-live="polite">
@@ -105,7 +106,7 @@ export function SoundPacks() {
           {pack.hint} · {index + 1} de {SOUND_PACKS.length}
         </small>
       </span>
-      <button type="button" className="tv-sound-step" data-sound="none" aria-label="Sonido siguiente" onClick={() => step(1)}>
+      <button type="button" className="tv-sound-step" data-sound="none" aria-label={tr("Sonido siguiente")} onClick={() => step(1)}>
         <Icon name="chevron" size={18} strokeWidth={3} />
       </button>
     </div>
@@ -148,7 +149,7 @@ export default function VolumeMenu() {
         className="tv-chip tv-chip--icon tv-chip--sound"
         aria-haspopup="dialog"
         aria-expanded={open}
-        aria-label="Volumen"
+        aria-label={tr("Volumen")}
         onClick={() => setOpen((v) => !v)}
       >
         <span className="tv-avatar tv-avatar--empty">
@@ -156,7 +157,7 @@ export default function VolumeMenu() {
         </span>
       </button>
       {open && (
-        <div className="tv-volume-panel" role="dialog" aria-label="Volumen">
+        <div className="tv-volume-panel" role="dialog" aria-label={tr("Volumen")}>
           <VolumeRows />
         </div>
       )}

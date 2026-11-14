@@ -10,33 +10,34 @@ import { useApp } from "../../lib/store.jsx";
 import { forgetLocalSpotify, loadLocalSpotify, saveLocalSpotify } from "../../lib/localSpotify.js";
 import { withSound } from "../../lib/sounds.js";
 
+import { translate as tr } from "../../lib/i18n.js";
 const FORMAT_IDS = FORMATS.map((f) => f.id);
 // Its "Modos de juego" (MUSIC_STYLES on the server): guess the title, or the words that come next in the song (only
 // the songs with their verse ready). A new room plays only the title.
 const STYLES = [
-  { id: "titulo", label: "Título", hint: "Adivina qué canción es" },
-  { id: "letra", label: "Letra", hint: "Di lo que sigue en la canción" },
+  { id: "titulo", get label() { return tr("Título"); }, get hint() { return tr("Adivina qué canción es"); } },
+  { id: "letra", get label() { return tr("Letra"); }, get hint() { return tr("Di lo que sigue en la canción"); } },
 ];
 const STYLE_IDS = STYLES.map((s) => s.id);
 // The catalog's filters (SONG_LANGUAGES, SONG_GENRES and SONG_DIFFICULTIES on the server).
 const LANGUAGES = [
-  { id: "es", label: "Español" },
-  { id: "en", label: "Inglés" },
+  { id: "es", get label() { return tr("Español"); } },
+  { id: "en", get label() { return tr("Inglés"); } },
 ];
 const GENRES = [
-  { id: "pop", label: "Pop" },
-  { id: "urbano", label: "Reguetón & Urbano" },
-  { id: "rock", label: "Rock" },
-  { id: "mexicana", label: "Regional mexicano" },
-  { id: "hiphop", label: "Hip-Hop & Rap" },
-  { id: "electronica", label: "Electrónica" },
+  { id: "pop", get label() { return tr("Pop"); } },
+  { id: "urbano", get label() { return tr("Reguetón & Urbano"); } },
+  { id: "rock", get label() { return tr("Rock"); } },
+  { id: "mexicana", get label() { return tr("Regional mexicano"); } },
+  { id: "hiphop", get label() { return tr("Hip-Hop & Rap"); } },
+  { id: "electronica", get label() { return tr("Electrónica"); } },
 ];
 const FILTERS = { languages: LANGUAGES, genres: GENRES, difficulties: LEVELS };
 // The Spotify playlists every room offers in "Tus playlists" (DEFAULT_SPOTIFY on the server): always listed first,
 // they can't be deleted, and the server keeps them loaded in every room (read once a day), so ticking one is instant.
 // So are the others the server puts in the room with `defaultFrom` (the top 100 of Lynz, read once a week): they are
 // listed right after, and only once the server has them.
-const DEFAULT_PLAYLISTS = [{ kind: "playlist", id: "37i9dQZEVXbMDoHDwVN2tF", name: "Top 50: Global" }];
+const DEFAULT_PLAYLISTS = [{ kind: "playlist", id: "37i9dQZEVXbMDoHDwVN2tF", get name() { return tr("Top 50: Global"); } }];
 const defaultRoomId = (p) => `sp:${p.kind === "album" ? `album:${p.id}` : p.id}`;
 const DEFAULT_IDS = new Set(DEFAULT_PLAYLISTS.map(defaultRoomId));
 
@@ -147,7 +148,7 @@ export default function MusicSettings({ room, updateConfig, onToast, children, r
       setLink("");
       setLinkOpen(false);
     } catch (err) {
-      onToast?.(err.message || "No se pudo añadir esa playlist");
+      onToast?.(err.message || tr("No se pudo añadir esa playlist"));
     } finally {
       setLinkBusy(false);
     }
@@ -166,7 +167,7 @@ export default function MusicSettings({ room, updateConfig, onToast, children, r
       await addSpotifyLink(`spotify:${p.kind}:${p.id}`);
       await tickInItem(roomId);
     } catch (err) {
-      onToast?.(err.message || "No se pudo leer la playlist de Spotify");
+      onToast?.(err.message || tr("No se pudo leer la playlist de Spotify"));
     } finally {
       setSavedBusy("");
     }
@@ -190,7 +191,7 @@ export default function MusicSettings({ room, updateConfig, onToast, children, r
       await tickInItem(roomId);
       if (list) setSaved(list);
     } catch (err) {
-      onToast?.(err.message || "No se pudo agregar");
+      onToast?.(err.message || tr("No se pudo agregar"));
     } finally {
       setSavedBusy("");
     }
@@ -207,7 +208,7 @@ export default function MusicSettings({ room, updateConfig, onToast, children, r
       if (row.inRoom) await removePlaylist(row.key);
       if (row.savedItem) setSaved(hasAccount ? await forgetSavedSpotify(row.savedItem.key) : forgetLocalSpotify(row.savedItem.key));
     } catch (err) {
-      onToast?.(err.message || "No se pudo borrar");
+      onToast?.(err.message || tr("No se pudo borrar"));
     }
   }
 
@@ -216,7 +217,7 @@ export default function MusicSettings({ room, updateConfig, onToast, children, r
     try {
       setSpotifyLists(await listSpotifyPlaylists());
     } catch (err) {
-      onToast?.(err.message || "No se pudieron leer tus playlists de Spotify");
+      onToast?.(err.message || tr("No se pudieron leer tus playlists de Spotify"));
     } finally {
       setSpotifyBusy("");
     }
@@ -231,7 +232,7 @@ export default function MusicSettings({ room, updateConfig, onToast, children, r
       await addSpotifyPlaylist(id);
       await tickInItem(`sp:${id}`);
     } catch (err) {
-      onToast?.(err.message || "No se pudo añadir la playlist");
+      onToast?.(err.message || tr("No se pudo añadir la playlist"));
     } finally {
       setSavedBusy("");
     }
@@ -261,7 +262,7 @@ export default function MusicSettings({ room, updateConfig, onToast, children, r
       });
     } catch (err) {
       setDraft(room.config);
-      onToast?.(err.message || "No se pudieron guardar los ajustes");
+      onToast?.(err.message || tr("No se pudieron guardar los ajustes"));
     }
   }
 
@@ -321,7 +322,7 @@ export default function MusicSettings({ room, updateConfig, onToast, children, r
   function switchPlaylists(on) {
     if (on && !selected.length) {
       if (!usePlaylists) save({ usePlaylists: true });
-      onToast?.("Elige una playlist con el +");
+      onToast?.(tr("Elige una playlist con el +"));
       return;
     }
     save({ usePlaylists: on });
@@ -389,8 +390,8 @@ export default function MusicSettings({ room, updateConfig, onToast, children, r
         <span className="tv-saved-text">
           <strong>{row.name}</strong>
           <small>
-            {row.on && <span className="tv-saved-on">En la partida · </span>}
-            {row.fixed ? row.from || "Spotify" : row.kind === "album" ? "Álbum" : row.kind === "spotify" ? "Tu Spotify" : "Playlist"}
+            {row.on && <span className="tv-saved-on">{tr("En la partida ·")} </span>}
+            {row.fixed ? row.from || tr("Spotify") : row.kind === "album" ? tr("Álbum") : row.kind === "spotify" ? tr("Tu Spotify") : tr("Playlist")}
             {row.total ? ` · ${row.total} canciones` : ""}
           </small>
         </span>
@@ -402,7 +403,7 @@ export default function MusicSettings({ room, updateConfig, onToast, children, r
             onBlur={() => asking && setConfirmForget("")}
             aria-label={asking ? `Confirmar: borrar ${row.name}` : `Borrar ${row.name}`}
           >
-            {asking ? "¿Borrar?" : <Icon name="trash" size={18} strokeWidth={2.4} />}
+            {asking ? tr("¿Borrar?") : <Icon name="trash" size={18} strokeWidth={2.4} />}
           </button>
         )}
         {!readOnly && (
@@ -412,7 +413,7 @@ export default function MusicSettings({ room, updateConfig, onToast, children, r
             onClick={row.onToggle}
             disabled={Boolean(savedBusy)}
             aria-pressed={Boolean(row.on)}
-            aria-label={row.on ? `Quitar ${row.name} de la partida` : `Agregar ${row.name}`}
+            aria-label={row.on ? tr("Quitar {name} de la partida", { name: row.name }) : `Agregar ${row.name}`}
             aria-busy={busy}
           >
             {busy ? (
@@ -434,9 +435,9 @@ export default function MusicSettings({ room, updateConfig, onToast, children, r
   const catalog = (
     // Its on/off switch is on the "Catálogo" tab itself (below), so it takes no row of its own.
     <SettingsSection sub off={!useCatalog}>
-      {filterRow("languages", "Idioma")}
-      {filterRow("genres", "Género")}
-      {filterRow("difficulties", "Dificultad")}
+      {filterRow("languages", tr("Idioma"))}
+      {filterRow("genres", tr("Género"))}
+      {filterRow("difficulties", tr("Dificultad"))}
     </SettingsSection>
   );
 
@@ -448,7 +449,7 @@ export default function MusicSettings({ room, updateConfig, onToast, children, r
         <div className="tv-optrow-opts is-wrap">
           <button type="button" className="tv-optrow-btn is-add tv-spotify-open" onClick={() => setLinkOpen(true)} aria-expanded={false}>
             <SpotifyIcon size={18} />
-            Agregar de Spotify
+            {tr("Agregar de Spotify")}
           </button>
         </div>
       )}
@@ -463,8 +464,8 @@ export default function MusicSettings({ room, updateConfig, onToast, children, r
               inputMode="url"
               value={link}
               onChange={(e) => setLink(e.target.value)}
-              placeholder="Link de playlist o álbum"
-              aria-label="Link de una playlist o un álbum de Spotify"
+              placeholder={tr("Link de playlist o álbum")}
+              aria-label={tr("Link de una playlist o un álbum de Spotify")}
               disabled={linkBusy}
               autoFocus
             />
@@ -474,7 +475,7 @@ export default function MusicSettings({ room, updateConfig, onToast, children, r
               className="tv-btn tv-btn--sm tv-c-music tv-spotify-link-send"
               data-sound="none"
               disabled={linkBusy || !link.trim()}
-              aria-label={linkBusy ? "Leyendo de Spotify" : "Agregar de Spotify"}
+              aria-label={linkBusy ? tr("Leyendo de Spotify") : tr("Agregar de Spotify")}
               aria-busy={linkBusy}
             >
               {linkBusy ? <span className="tv-spinner" aria-hidden="true" /> : <Icon name="upload" size={20} strokeWidth={3} />}
@@ -488,7 +489,7 @@ export default function MusicSettings({ room, updateConfig, onToast, children, r
                 setLink("");
               }}
               disabled={linkBusy}
-              aria-label="Cancelar"
+              aria-label={tr("Cancelar")}
             >
               <Icon name="close" size={18} strokeWidth={3} />
             </button>
@@ -501,21 +502,21 @@ export default function MusicSettings({ room, updateConfig, onToast, children, r
               the playlists. */}
           <Icon name="info" size={16} strokeWidth={2.6} />
           <p className="tv-note-text">
-            <span>La playlist tiene que ser pública.</span> <span>Se usan hasta 100 canciones.</span>
+            <span>{tr("La playlist tiene que ser pública.")}</span> <span>{tr("Se usan hasta 100 canciones.")}</span>
             {!hasAccount && (
               <span className="tv-note-account">
-                <Link to="/login">Crear cuenta</Link> o <Link to="/login?mode=login">Iniciar sesión</Link> para guardarla.
+                <Link to="/login">{tr("Crear cuenta")}</Link> o <Link to="/login?mode=login">{tr("Iniciar sesión")}</Link> {tr("para guardarla.")}
               </span>
             )}
           </p>
         </div>
       )}
       {(rows.length > 0 || (!readOnly && hasAccount)) && (
-        <section className="tv-saved" aria-label="Tus playlists">
+        <section className="tv-saved" aria-label={tr("Tus playlists")}>
           {rows.length > 0 && <ul className="tv-saved-list">{rows.map(playlistRow)}</ul>}
-          {!readOnly && hasAccount && saved === null && <p className="tv-saved-empty">Cargando…</p>}
-          {!readOnly && rows.length === 0 && saved !== null && <p className="tv-saved-empty">Aún no tienes playlists guardadas.</p>}
-          {isOwnerEditor && spotifyLinked && spotifyBusy === "list" && <p className="tv-saved-empty">Cargando tus playlists de Spotify…</p>}
+          {!readOnly && hasAccount && saved === null && <p className="tv-saved-empty">{tr("Cargando…")}</p>}
+          {!readOnly && rows.length === 0 && saved !== null && <p className="tv-saved-empty">{tr("Aún no tienes playlists guardadas.")}</p>}
+          {isOwnerEditor && spotifyLinked && spotifyBusy === "list" && <p className="tv-saved-empty">{tr("Cargando tus playlists de Spotify…")}</p>}
         </section>
       )}
     </>
@@ -528,20 +529,20 @@ export default function MusicSettings({ room, updateConfig, onToast, children, r
       tabs={[
         {
           id: "partida",
-          label: "Partida",
+          label: tr("Partida"),
           icon: "hourglass",
-          note: `${lyricsOnly ? "Letra · " : ""}${rounds} rondas · ${seconds} s`,
+          note: `${lyricsOnly ? tr("Letra · ") : ""}${rounds} rondas · ${seconds} s`,
           alert: !formats.length || !styles.length,
           content: (
             <>
               <OptionRow
-                label="Modos de juego"
+                label={tr("Modos de juego")}
                 multi
                 wrap
                 options={STYLES.map((s) => ({
                   value: s.id,
                   label: s.label,
-                  title: s.id === "letra" && noLyrics ? "No hay canciones con su letra lista" : s.hint,
+                  title: s.id === "letra" && noLyrics ? tr("No hay canciones con su letra lista") : s.hint,
                   disabled: s.id === "letra" && noLyrics && !styles.includes(s.id),
                 }))}
                 value={styles}
@@ -549,21 +550,21 @@ export default function MusicSettings({ room, updateConfig, onToast, children, r
                 onSetAll={(list) => save({ styles: list })}
               />
               <OptionRow
-                label="Tipo de respuestas"
+                label={tr("Tipo de respuestas")}
                 multi
                 wrap
                 options={FORMATS.map((f) => ({
                   value: f.id,
                   label: f.label,
-                  title: f.id === "opciones" ? "Elige entre cuatro opciones" : lyricsOnly ? "Escribe lo que falta" : "Escribe el título",
+                  title: f.id === "opciones" ? tr("Elige entre cuatro opciones") : lyricsOnly ? tr("Escribe lo que falta") : tr("Escribe el título"),
                 }))}
                 value={formats}
                 onChange={toggleFormat}
                 onSetAll={(list) => save({ formats: list })}
               />
-              <OptionRow label="Rondas" options={rangeOptions(ROUNDS)} value={rounds} onChange={(n) => save({ rounds: n })} />
+              <OptionRow label={tr("Rondas")} options={rangeOptions(ROUNDS)} value={rounds} onChange={(n) => save({ rounds: n })} />
               <OptionRow
-                label="Segundos por ronda"
+                label={tr("Segundos por ronda")}
                 options={rangeOptions(SECONDS)}
                 value={seconds}
                 onChange={(n) => save({ roundMs: n * 1000 })}
@@ -573,23 +574,23 @@ export default function MusicSettings({ room, updateConfig, onToast, children, r
         },
         {
           id: "canciones",
-          label: "Canciones",
+          label: tr("Canciones"),
           icon: "music",
-          note: songsReady != null ? `${songsReady} ${songsReady === 1 ? "canción" : "canciones"}` : null,
+          note: songsReady != null ? `${songsReady} ${songsReady === 1 ? tr("canción") : "canciones"}` : null,
           alert: songsReady === 0 && !chosenCustom.some((p) => p.loading),
           content: catalog,
           sub: showPlaylists && [
             {
               id: "catalogo",
-              label: "Catálogo",
+              label: tr("Catálogo"),
               content: catalog,
-              toggle: { on: useCatalog, onChange: (on) => save({ useCatalog: on }), label: "Usar el catálogo de Trivially", disabled: readOnly },
+              toggle: { on: useCatalog, onChange: (on) => save({ useCatalog: on }), label: tr("Usar el catálogo de Trivially"), disabled: readOnly },
             },
             {
               id: "playlists",
-              label: "Tus playlists",
+              label: tr("Tus playlists"),
               // On only while one of them plays: with none ticked there's nothing to switch on yet.
-              toggle: { on: playing.length > 0, onChange: switchPlaylists, label: "Usar tus playlists", disabled: readOnly },
+              toggle: { on: playing.length > 0, onChange: switchPlaylists, label: tr("Usar tus playlists"), disabled: readOnly },
               content: playlists,
             },
           ],

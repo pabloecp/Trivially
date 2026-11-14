@@ -2,13 +2,14 @@ import Icon from "../../components/home/Icon.jsx";
 import { findMode } from "../index.js";
 import "../../styles/playlist.css";
 
+import { translate as tr } from "../../lib/i18n.js";
 export const winsText = (n) => `${n} ${n === 1 ? "victoria" : "victorias"}`;
 
 // The playlist's games, small, in the kicker's line of its results: each game's icon in its colour, with a tick once
 // the playlist is over (it's one match, so every game was played). Their names are only read out to screen readers.
 export function PlaylistProgress({ run }) {
   return (
-    <ol className="tv-pl-mini" aria-label="Juegos de la playlist">
+    <ol className="tv-pl-mini" aria-label={tr("Juegos de la playlist")}>
       {run.games.map((game, i) => {
         const mode = findMode(game);
         return (

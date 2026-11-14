@@ -7,6 +7,7 @@ import Segmented from "./Segmented.jsx";
 import { SoundPacks } from "./VolumeMenu.jsx";
 import "../../styles/admin.css";
 
+import { translate as tr } from "../../lib/i18n.js";
 /**
  * The owner panel (opened from "Panel de owner" inside "Ajustes", owners only): for debugging. "Vista" switches between the
  * owner's tools and the site as any player sees it, the test bot, the sound sets and the looks of the results, the
@@ -27,63 +28,63 @@ export default function AdminPanel({ open, onClose }) {
     setMsg("");
     try {
       await addTestBot();
-      setMsg("Bot añadido a la partida");
+      setMsg(tr("Bot añadido a la partida"));
     } catch (e) {
-      setMsg(e.message || "No se pudo añadir el bot");
+      setMsg(e.message || tr("No se pudo añadir el bot"));
     } finally {
       setBusy(false);
     }
   }
 
   return (
-    <Modal open={open} onClose={onClose} title="Panel de owner" size="lg" className="tv-admin">
+    <Modal open={open} onClose={onClose} title={tr("Panel de owner")} size="lg" className="tv-admin">
         <div className="tv-admin-body">
           <div className="tv-admin-block is-third">
-            <h3>Vista</h3>
+            <h3>{tr("Vista")}</h3>
             <Segmented
-              label="Vista"
+              label={tr("Vista")}
               value={view}
               onChange={setOwnerView}
               options={[
-                { value: "debug", label: "Owner (debug)" },
-                { value: "usuario", label: "Usuario normal" },
+                { value: "debug", label: tr("Owner (debug)") },
+                { value: "usuario", label: tr("Usuario normal") },
               ]}
             />
             <p className="tv-admin-hint">
-              {debug ? "Ves tus herramientas: «Saltar» en las partidas y el bot de prueba." : "Ves el sitio igual que cualquier jugador: sin «Saltar»."}
+              {debug ? tr("Ves tus herramientas: «Saltar» en las partidas y el bot de prueba.") : tr("Ves el sitio igual que cualquier jugador: sin «Saltar».")}
             </p>
           </div>
 
               <div className="tv-admin-block is-third">
-                <h3>Bot de prueba</h3>
+                <h3>{tr("Bot de prueba")}</h3>
                 <button type="button" className="tv-btn tv-btn--sm tv-c-coral" onClick={bot} disabled={!canBot || busy}>
                   <Icon name="plus" size={16} strokeWidth={3} />
-                  Añadir bot de prueba
+                  {tr("Añadir bot de prueba")}
                 </button>
-                <p className="tv-admin-hint">{canBot ? "Se suma a tu sala y juega solo (hasta 5)." : "Disponible en el lobby de una sala privada, antes de empezar."}</p>
+                <p className="tv-admin-hint">{canBot ? tr("Se suma a tu sala y juega solo (hasta 5).") : tr("Disponible en el lobby de una sala privada, antes de empezar.")}</p>
                 {msg && <p className="tv-admin-msg" role="status">{msg}</p>}
               </div>
 
               <div className="tv-admin-block is-third">
-                <h3>Tipo de sonido</h3>
-                <p className="tv-admin-hint">Solo en este navegador. Los jugadores escuchan Madera.</p>
+                <h3>{tr("Tipo de sonido")}</h3>
+                <p className="tv-admin-hint">{tr("Solo en este navegador. Los jugadores escuchan Madera.")}</p>
                 <SoundPacks />
               </div>
 
 
               {/* Adivina la canción · Letra with Cerradas: more lyrics, or options as big as Trivia's (lib/ownerView.js). */}
               <div className="tv-admin-block is-half">
-                <h3>Letra (Cerradas)</h3>
+                <h3>{tr("Letra (Cerradas)")}</h3>
                 <Segmented
-                  label="Letra (Cerradas)"
+                  label={tr("Letra (Cerradas)")}
                   value={lyricsView}
                   onChange={setLyricsView}
                   options={[
-                    { value: "normal", label: "Normal" },
-                    { value: "grandes", label: "Opciones grandes" },
+                    { value: "normal", label: tr("Normal") },
+                    { value: "grandes", label: tr("Opciones grandes") },
                   ]}
                 />
-                <p className="tv-admin-hint">«Opciones grandes»: las 4 opciones del tamaño de las de Trivia, con menos letra a la vista. Los jugadores ven «Normal».</p>
+                <p className="tv-admin-hint">{tr("«Opciones grandes»: las 4 opciones del tamaño de las de Trivia, con menos letra a la vista. Los jugadores ven «Normal».")}</p>
               </div>
         </div>
     </Modal>

@@ -12,7 +12,7 @@ Trivially is a real-time trivia game, played alone or with a group (the players 
 - **Modo de juego** ("Modos de juego", `styles` in the config): a variant that changes the game's questions or rules. Only Trivia (Clásico / Imágenes), Encuentra el país (nombre / sombra / bandera) and Adivina la canción (Título / Letra, called "Completa la letra" in code comments and older docs) have more than one; Rango (only Cifras) and Campo de minas (only carrera) keep a single one in `styles` and show no "Modos de juego". "Línea del tiempo" and "Por turnos" were removed as modes (see their docs).
 - **Tipo de respuestas** ("Tipo de respuestas", `formats` in the config): only how a player answers, Cerradas (four options) or Abiertas (writing). Trivia and Adivina la canción have it. Never called a "modo de juego".
 
-All UI copy and server error messages are in Spanish, Latin American (ustedes, never vosotros). Don't rename the session cookie (`backend/src/index.js`) or change `SESSION_SECRET`: either logs every account out. Don't rename the `localStorage` identity keys (`trivially_user`, `trivially_guest_id`, `trivially_guest_name`) without a migration in `lib/store.jsx`.
+All UI copy and server error messages are written in Spanish, Latin American (ustedes, never vosotros), and the site also has an English version (`idioma.md`: every text goes through `tr()`). Don't rename the session cookie (`backend/src/index.js`) or change `SESSION_SECRET`: either logs every account out. Don't rename the `localStorage` identity keys (`trivially_user`, `trivially_guest_id`, `trivially_guest_name`) without a migration in `lib/store.jsx`.
 
 ## Commands
 
@@ -87,7 +87,7 @@ In `.claude/docs/`:
 - `dispositivo-central.md`, `panel-owner.md`, `amigos-y-enlaces.md` (friends, @usernames, link filter).
 - `avisos-y-errores.md`: UptimeRobot and Sentry (knowing when the server is down or something fails).
 - `variables.md`: every environment variable, where it goes (`backend/.env`, `frontend/.env`, Railway, Vercel) and what it does. There are no `.env.example` files: a new variable goes in that doc.
-- `idioma.md`: the English version of the site (`t()`, `en.js`, what is translated so far).
+- `idioma.md`: the English version of the site (`tr()`, `en.js`, how the server's messages are translated).
 - `diseno.md`: the design rules: the look (`frontend/src/styles/look.css`, loaded last), layout, colours, type, pieces, panel motion, shadows.
 
 When a change alters how a part works, update its doc there, not this file.

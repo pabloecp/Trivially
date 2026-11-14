@@ -3,22 +3,23 @@ import Icon from "./Icon.jsx";
 import Modal from "./Modal.jsx";
 import { findMode } from "../../modes/index.js";
 
+import { translate as tr } from "../../lib/i18n.js";
 // How many rounds show at once; the arrows at the foot move on to the next ones.
 const PAGE = 5;
 
 // How each round went (RoomManager.recordRound): green won it all, yellow scored without winning, red lost with no points,
 // grey no points and nothing answered (or a board the time ran out on).
 const STATUS = {
-  ok: { label: "Acertaste" },
-  near: { label: "Cerca" },
-  bad: { label: "Fallaste" },
-  none: { label: "Sin responder" },
+  ok: { get label() { return tr("Acertaste"); } },
+  near: { get label() { return tr("Cerca"); } },
+  bad: { get label() { return tr("Fallaste"); } },
+  none: { get label() { return tr("Sin responder"); } },
 };
 // What the card counts as "won", in each game's own words.
-const WON = { historia: "exactas", minas: "superados", lluvia: "con aciertos" };
+const WON = { historia: "exactas", minas: "superados", get lluvia() { return tr("con aciertos"); } };
 // The modes of play a round can come from (Encuentra el país's and Adivina la canción's): named in its row only when the
 // match had more than one.
-const STYLES = { nombre: "Nombre", sombra: "Sombra", bandera: "Bandera", titulo: "Título", letra: "Letra" };
+const STYLES = { get nombre() { return tr("Nombre"); }, get sombra() { return tr("Sombra"); }, get bandera() { return tr("Bandera"); }, get titulo() { return tr("Título"); }, get letra() { return tr("Letra"); } };
 
 // The whole match round by round for this player (results[].rounds), in the same panel as every other one (Modal):
 //  - the game's card on top, in its colour (or "Varios juegos", in a playlist or a Clásico, whose rows then say their
@@ -26,7 +27,7 @@ const STYLES = { nombre: "Nombre", sombra: "Sombra", bandera: "Bandera", titulo:
 //  - the rounds, PAGE at a time, one row each: its number in a square coloured by how it went, the question, what they
 //    answered (and the right answer after an arrow when they missed it) and the points;
 //  - at the foot, which rounds are showing and the arrows to move through them.
-export default function MatchSummarySheet({ open, rounds, onClose, title = "Tu partida" }) {
+export default function MatchSummarySheet({ open, rounds, onClose, title = tr("Tu partida") }) {
   const [page, setPage] = useState(0);
   useEffect(() => {
     if (open) setPage(0);
@@ -54,17 +55,17 @@ export default function MatchSummarySheet({ open, rounds, onClose, title = "Tu p
       foot={
         <>
           <span className="tv-summary-where">
-            Rondas{" "}
+            {tr("Rondas")}{" "}
             <b>
               {rounds.length ? from + 1 : 0}–{from + shown.length}
             </b>{" "}
             de {rounds.length}
           </span>
           <span className="tv-summary-nav">
-            <button type="button" className="tv-iconbtn tv-summary-prev" aria-label="Rondas anteriores" disabled={at <= 0} onClick={() => setPage(at - 1)}>
+            <button type="button" className="tv-iconbtn tv-summary-prev" aria-label={tr("Rondas anteriores")} disabled={at <= 0} onClick={() => setPage(at - 1)}>
               <Icon name="chevron" size={20} strokeWidth={3} />
             </button>
-            <button type="button" className="tv-iconbtn" aria-label="Rondas siguientes" disabled={at >= pages - 1} onClick={() => setPage(at + 1)}>
+            <button type="button" className="tv-iconbtn" aria-label={tr("Rondas siguientes")} disabled={at >= pages - 1} onClick={() => setPage(at + 1)}>
               <Icon name="chevron" size={20} strokeWidth={3} />
             </button>
           </span>
@@ -76,7 +77,7 @@ export default function MatchSummarySheet({ open, rounds, onClose, title = "Tu p
           <Icon name={single?.icon || "playlist"} size={28} strokeWidth={2.4} />
         </span>
         <span className="tv-summary-hero-text">
-          <b>{single?.name || "Varios juegos"}</b>
+          <b>{single?.name || tr("Varios juegos")}</b>
           <small>{sub}</small>
         </span>
         <span className="tv-summary-hero-score">
@@ -92,7 +93,7 @@ export default function MatchSummarySheet({ open, rounds, onClose, title = "Tu p
           return (
             <li key={`${r.round}-${r.game}-${r.prompt}`} className={`tv-summary-round is-${r.status}`}>
               <span className="tv-summary-mark" title={status.label}>
-                <span className="tv-sr-only">{status.label}, ronda </span>
+                <span className="tv-sr-only">{status.label}{tr(", ronda")} </span>
                 {r.round}
               </span>
               <div className="tv-summary-body">

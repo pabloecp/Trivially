@@ -4,6 +4,7 @@ import Avatar from "./Avatar.jsx";
 import GuestFriends from "./GuestFriends.jsx";
 import Icon from "./Icon.jsx";
 
+import { translate as tr } from "../../lib/i18n.js";
 // How many friends show at once (the friends sheet has them all).
 const SHOWN = 4;
 
@@ -29,7 +30,7 @@ export default function InviteFriends({ group, onToast }) {
     return (
       <div className="tv-invite-friends">
         <div className="tv-party-title">
-          <h2>Invitar amigos</h2>
+          <h2>{tr("Invitar amigos")}</h2>
         </div>
         <GuestFriends />
       </div>
@@ -46,7 +47,7 @@ export default function InviteFriends({ group, onToast }) {
       setSent((s) => ({ ...s, [friend.id]: true }));
       onToast?.(`Invitaste a ${friend.name}`, "check");
     } catch (err) {
-      onToast?.(err.message || "No se pudo invitar");
+      onToast?.(err.message || tr("No se pudo invitar"));
     }
   }
 
@@ -54,16 +55,16 @@ export default function InviteFriends({ group, onToast }) {
     <div className="tv-invite-friends">
       {/* Titled like "En el grupo": the name, and on the right how many of your friends are online to invite. */}
       <div className="tv-party-title">
-        <h2>Invitar amigos</h2>
+        <h2>{tr("Invitar amigos")}</h2>
         {online.length > 0 && <span>{online.length === 1 ? "1 conectado" : `${online.length} conectados`}</span>}
       </div>
       {!all.length ? (
         <button type="button" className="tv-invite-friends-empty" onClick={() => friends.setOpen(true)}>
           <Icon name="users" size={16} strokeWidth={2.4} />
-          Añade amigos para invitarlos
+          {tr("Añade amigos para invitarlos")}
         </button>
       ) : !online.length ? (
-        <p className="tv-invite-friends-none">Ninguno de tus amigos está conectado ahora</p>
+        <p className="tv-invite-friends-none">{tr("Ninguno de tus amigos está conectado ahora")}</p>
       ) : (
         <ul className="tv-invite-friends-list">
           {online.slice(0, SHOWN).map((f) => (
@@ -71,7 +72,7 @@ export default function InviteFriends({ group, onToast }) {
               <Avatar name={f.name} avatar={f.avatar} />
               <span className="tv-invite-friend-text">
                 <strong>{f.name}</strong>
-                <small>{f.room?.group ? "En otro grupo" : f.room ? "Jugando" : "En línea"}</small>
+                <small>{f.room?.group ? tr("En otro grupo") : f.room ? tr("Jugando") : tr("En línea")}</small>
               </span>
               <button
                 type="button"
@@ -80,7 +81,7 @@ export default function InviteFriends({ group, onToast }) {
                 disabled={Boolean(sent[f.id])}
               >
                 {sent[f.id] ? <Icon name="check" size={14} strokeWidth={3} /> : null}
-                {sent[f.id] ? "Invitado" : "Invitar"}
+                {sent[f.id] ? tr("Invitado") : tr("Invitar")}
               </button>
             </li>
           ))}

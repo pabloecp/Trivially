@@ -4,6 +4,7 @@ import { useApp } from "../../lib/store.jsx";
 import { withSound } from "../../lib/sounds.js";
 import { findMode } from "../../modes/index.js";
 
+import { translate as tr } from "../../lib/i18n.js";
 // Starting the room's match, shared by the button on the game's card and the phone's bottom bar (RoomDock).
 // `canStart` is false while nothing is picked, nobody is connected or the game isn't ready yet (not enough songs or
 // questions: the mode's `ready`; the server checks too).
@@ -39,7 +40,7 @@ export default function ModeStart({ room }) {
   if (!isHost) {
     return (
       <p className="tv-mstage-wait">
-        Esperando a que {room.hostName || "el anfitrión"} comience la partida
+        {tr("Esperando a que")} {room.hostName || tr("el anfitrión")} {tr("comience la partida")}
       </p>
     );
   }
@@ -49,7 +50,7 @@ export default function ModeStart({ room }) {
       {err && <p className="tv-lobby-error">{err}</p>}
       <button className="tv-mstage-start tv-shine" onClick={start} disabled={!canStart} type="button" data-sound="none">
         <Icon name="play" size={22} filled strokeWidth={1.5} />
-        {busy ? "Empezando…" : "Comenzar partida"}
+        {busy ? "Empezando…" : tr("Comenzar partida")}
       </button>
     </>
   );

@@ -3,11 +3,12 @@ import { useFriends } from "../../lib/friends.jsx";
 import Avatar from "./Avatar.jsx";
 import Icon from "./Icon.jsx";
 
+import { translate as tr } from "../../lib/i18n.js";
 // What the leader's friends can do from the friends tab, and what each choice means.
 const MODES = [
-  { value: "abierta", label: "Unirse", hint: "Entran directo" },
-  { value: "solicitud", label: "Pedir entrar", hint: "Te piden permiso" },
-  { value: "invitacion", label: "Solo invitación", hint: "Solo con el código" },
+  { value: "abierta", get label() { return tr("Unirse"); }, get hint() { return tr("Entran directo"); } },
+  { value: "solicitud", get label() { return tr("Pedir entrar"); }, get hint() { return tr("Te piden permiso"); } },
+  { value: "invitacion", get label() { return tr("Solo invitación"); }, get hint() { return tr("Solo con el código"); } },
 ];
 
 // In "Tu grupo", for its leader (when their account has friends): one line, "Tus amigos pueden: Pedir entrar ▾", whose
@@ -42,16 +43,16 @@ export default function FriendsRoomControls({ group, onToast }) {
     try {
       await friends.setJoinMode(mode);
     } catch (err) {
-      onToast?.(err.message || "No se pudo cambiar");
+      onToast?.(err.message || tr("No se pudo cambiar"));
     }
   }
 
   async function answer(request, accept) {
     try {
       await friends.answerJoin(request.userId, accept);
-      onToast?.(accept ? `${request.name} está entrando…` : `Rechazaste a ${request.name}`, accept ? "check" : "lock");
+      onToast?.(accept ? tr("{name} está entrando…", { name: request.name }) : `Rechazaste a ${request.name}`, accept ? "check" : "lock");
     } catch (err) {
-      onToast?.(err.message || "No se pudo responder");
+      onToast?.(err.message || tr("No se pudo responder"));
     }
   }
 
@@ -61,10 +62,10 @@ export default function FriendsRoomControls({ group, onToast }) {
         <div key={r.userId} className="tv-fr-ask" role="group" aria-label={`${r.name} quiere unirse`}>
           <Avatar name={r.name} avatar={r.avatar} />
           <p className="tv-fr-ask-text">
-            <strong>{r.name}</strong> quiere unirse
+            <strong>{r.name}</strong> {tr("quiere unirse")}
           </p>
           <button type="button" className="tv-btn tv-c-green" onClick={() => answer(r, true)}>
-            Aceptar
+            {tr("Aceptar")}
           </button>
           <button type="button" className="tv-btn tv-c-neutral" onClick={() => answer(r, false)} aria-label={`Rechazar a ${r.name}`}>
             ×
@@ -80,14 +81,14 @@ export default function FriendsRoomControls({ group, onToast }) {
           aria-expanded={open}
           onClick={() => setOpen((v) => !v)}
         >
-          <span className="tv-fr-mode-label">Tus amigos pueden</span>
+          <span className="tv-fr-mode-label">{tr("Tus amigos pueden")}</span>
           <span className="tv-fr-mode-value">
             {current.label}
             <Icon name="chevron" size={14} strokeWidth={2.8} className="tv-fr-mode-caret" />
           </span>
         </button>
         {open && (
-          <ul className="tv-fr-mode-menu" role="listbox" aria-label="Qué pueden hacer tus amigos">
+          <ul className="tv-fr-mode-menu" role="listbox" aria-label={tr("Qué pueden hacer tus amigos")}>
             {MODES.map((m) => (
               <li key={m.value}>
                 <button

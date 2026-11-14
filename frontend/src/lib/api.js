@@ -1,5 +1,6 @@
 import { BACKEND_URL } from "./config.js";
 
+import { translate as tr } from "../lib/i18n.js";
 // Session token handed out at every login (see backend socketToken.js). Phones that drop our session cookie
 // still stay signed in because every request carries it.
 const AUTH_KEY = "trivially_auth";
@@ -33,7 +34,7 @@ export async function api(path, options = {}) {
     body: options.body ? JSON.stringify(options.body) : undefined,
   });
   const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data.error || "Error de red");
+  if (!res.ok) throw new Error(data.error ? tr(data.error) : tr("Error de red"));
   if (data.authToken) setAuthToken(data.authToken);
   return data;
 }

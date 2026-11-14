@@ -19,6 +19,7 @@ import { GamesWon, RetouchCard } from "../../components/home/ResultsLooks.jsx";
 import { RatingBox, rowChanges } from "../../components/home/Ratings.jsx";
 import { findVariant } from "../../components/home/matchInfo.js";
 
+import { translate as tr } from "../../lib/i18n.js";
 // The end of a playlist (route /playlist/:code), in the same frame as a match's end (MatchResults): the title, the
 // podium (games won, or points when it was played mixed) and the ranking side by side (everyone's games won and points,
 // a dot per round of every game; this player's answers a tap away), and the host's two buttons, the same size, in the
@@ -43,7 +44,7 @@ function ResultsScreen() {
       <div className="tv-card tv-lobby-guest">
         <p className="tv-party-status">
           <span className="tv-pulse" aria-hidden="true" />
-          Conectando a la sala…
+          {tr("Conectando a la sala…")}
         </p>
       </div>
     );
@@ -63,10 +64,10 @@ function ResultsScreen() {
   // So is a Clásico of a private room (Normal or Extendido): its host still decides what comes next.
   const classic = findMode(run?.classic);
   const what = "partida";
-  let title = `¡Fin de la ${what}!`;
-  if (winner && !solo) title = `¡${winner.name} gana la ${what}!`;
+  let title = tr("¡Fin de la {what}!", { what: what });
+  if (winner && !solo) title = tr("¡{name} gana la {what}!", { name: winner.name, what: what });
   // Nobody won: the same points (in a playlist, also when nobody scored at all) or the same games won.
-  else if (!winner && standings.length > 1 && (run?.mixed || standings[0]?.wins > 0 || run?.bestOf)) title = "¡Empate!";
+  else if (!winner && standings.length > 1 && (run?.mixed || standings[0]?.wins > 0 || run?.bestOf)) title = tr("¡Empate!");
   // Every playlist is one match now (`mixed`; "aleatorio" also shuffles its rounds): the most points win. A public
   // match (`bestOf`) is won by games won instead, its points breaking a tie.
   const mixed = Boolean(run?.mixed) && !run?.bestOf;
@@ -82,12 +83,12 @@ function ResultsScreen() {
   const rematchAsked = Boolean(room.rematch?.asked?.includes(user?.id));
   const myRounds = (me?.rounds || []).map((r, i) => ({ ...r, round: i + 1 }));
   let hint = null;
-  if (mixed && winner) hint = `${pointsText(winner)} en ${run.total === 1 ? "1 juego" : `${run.total} juegos`}${run.order === "aleatorio" ? " mezclados" : ""}`;
-  else if (mixed && standings[0]?.wins > 0) hint = "Mismos puntos";
-  else if (winner && solo && !run.bestOf) hint = `Ganaste ${run.played.filter((g) => g.winnerId === winner.id).length} de ${run.total} juegos`;
-  else if (winner) hint = `Ganó ${winner.wins} de ${run.total} ${run.total === 1 ? "juego" : "juegos"}`;
-  else if (run?.bestOf && standings.length > 1) hint = "Nadie ganó: terminaron con las mismas victorias";
-  else if (standings[0]?.wins > 0) hint = "Mismos juegos ganados y mismos puntos";
+  if (mixed && winner) hint = tr("{v0} en {v1}{v2}", { v0: pointsText(winner), v1: run.total === 1 ? "1 juego" : `${run.total} juegos`, v2: run.order === "aleatorio" ? " mezclados" : "" });
+  else if (mixed && standings[0]?.wins > 0) hint = tr("Mismos puntos");
+  else if (winner && solo && !run.bestOf) hint = tr("Ganaste {length} de {total} juegos", { length: run.played.filter((g) => g.winnerId === winner.id).length, total: run.total });
+  else if (winner) hint = tr("Ganó {wins} de {total} {v2}", { wins: winner.wins, total: run.total, v2: run.total === 1 ? "juego" : "juegos" });
+  else if (run?.bestOf && standings.length > 1) hint = tr("Nadie ganó: terminaron con las mismas victorias");
+  else if (standings[0]?.wins > 0) hint = tr("Mismos juegos ganados y mismos puntos");
   // Who is ringed in the new looks: the winner, or everyone who tied for first.
   const winners = winner && !solo ? [winner.id] : tied > 1 ? standings.slice(0, tied).map((p) => p.id) : [];
   const kindColor = classic?.color || (publicMatch && MATCH_KINDS[publicMatch.kind]?.color) || "playlist";
@@ -110,7 +111,7 @@ function ResultsScreen() {
           <header className="tv-res-head">
             <div className="tv-res-heading">
               <div className="tv-res-kicker">
-                <p className="tv-mono-label">Partida terminada{run ? ` · ${run.name}` : ""}</p>
+                <p className="tv-mono-label">{tr("Partida terminada")}{run ? ` · ${run.name}` : ""}</p>
                 {run && !gamesWon.length && <PlaylistProgress run={run} />}
               </div>
               <h1 className="tv-page-title tv-results-title">{title}</h1>
@@ -152,7 +153,7 @@ function ResultsScreen() {
                 <button
                   className="tv-btn tv-c-neutral tv-res-btn"
                   data-sound="back"
-                  aria-label="Volver al inicio"
+                  aria-label={tr("Volver al inicio")}
                   onClick={() => {
                     leaveRoom();
                     nav(exitPath(room), { replace: true });
@@ -160,11 +161,11 @@ function ResultsScreen() {
                   type="button"
                 >
                   <Icon name="back" size={18} />
-                  <span className="tv-res-btn-label">Volver</span>
+                  <span className="tv-res-btn-label">{tr("Volver")}</span>
                 </button>
                 <p className="tv-res-wait">
                   <span className="tv-pulse" aria-hidden="true" />
-                  Esperando a {group.leaderName}
+                  {tr("Esperando a")} {group.leaderName}
                 </p>
               </>
             ) : publicMatch && !isCentral ? (
@@ -174,12 +175,12 @@ function ResultsScreen() {
                 <button
                   className="tv-btn tv-c-neutral tv-res-btn"
                   data-sound="back"
-                  aria-label={leadsGroup ? "Volver al inicio con tu grupo" : "Salir"}
+                  aria-label={leadsGroup ? tr("Volver al inicio con tu grupo") : tr("Salir")}
                   onClick={() => {
                     if (leadsGroup) {
                       withSound(groupHome, null)
                         .then(() => nav(exitPath(room), { replace: true }))
-                        .catch((e) => setErr(e.message || "No se pudo volver al inicio"));
+                        .catch((e) => setErr(e.message || tr("No se pudo volver al inicio")));
                       return;
                     }
                     leaveRoom();
@@ -188,17 +189,17 @@ function ResultsScreen() {
                   type="button"
                 >
                   <Icon name={leadsGroup ? "back" : "logout"} size={18} />
-                  <span className="tv-res-btn-label">{leadsGroup ? "Volver" : "Salir"}</span>
+                  <span className="tv-res-btn-label">{leadsGroup ? tr("Volver") : tr("Salir")}</span>
                 </button>
                 {rematchOpen && (
                   <button
                     className="tv-btn tv-btn--neutral tv-res-btn"
                     disabled={rematchAsked}
-                    onClick={() => requestRematch().catch((e) => setErr(e.message || "No se pudo pedir la revancha"))}
+                    onClick={() => requestRematch().catch((e) => setErr(e.message || tr("No se pudo pedir la revancha")))}
                     type="button"
                   >
                     <Icon name="reset" size={18} strokeWidth={2.4} />
-                    {rematchAsked ? `Revancha ${room.rematch.asked.length}/${room.rematch.total}` : "Revancha"}
+                    {rematchAsked ? `Revancha ${room.rematch.asked.length}/${room.rematch.total}` : tr("Revancha")}
                   </button>
                 )}
                 <button
@@ -211,14 +212,14 @@ function ResultsScreen() {
                       // This address is the old room's, which RoomNavigator leaves alone: go to the new one's screen.
                       .then((next) => nav(`/partida/${urlCode(next.code)}`, { replace: true }))
                       .catch((e) => {
-                        setErr(e.message || "No se pudo buscar otra partida");
+                        setErr(e.message || tr("No se pudo buscar otra partida"));
                         setSearching(false);
                       });
                   }}
                   type="button"
                 >
                   <Icon name="play" size={18} filled strokeWidth={1.5} />
-                  {searching ? "Buscando…" : "Buscar otra partida"}
+                  {searching ? "Buscando…" : tr("Buscar otra partida")}
                 </button>
               </>
             ) : isHost ? (
@@ -226,35 +227,35 @@ function ResultsScreen() {
                 <button
                   className="tv-btn tv-c-neutral tv-res-btn"
                   data-sound="back"
-                  aria-label={classic ? "Volver al lobby" : "Volver a la playlist"}
-                  onClick={() => restartGame().catch((e) => setErr(e.message || "No se pudo volver al lobby"))}
+                  aria-label={classic ? tr("Volver al lobby") : tr("Volver a la playlist")}
+                  onClick={() => restartGame().catch((e) => setErr(e.message || tr("No se pudo volver al lobby")))}
                   type="button"
                 >
                   <Icon name="back" size={18} />
-                  <span className="tv-res-btn-label">{classic ? "Volver al lobby" : "Volver a la playlist"}</span>
+                  <span className="tv-res-btn-label">{classic ? tr("Volver al lobby") : tr("Volver a la playlist")}</span>
                 </button>
                 {run && (
                   <button
                     className="tv-btn tv-btn--primary tv-res-btn"
-                    onClick={() => replayGame().catch((e) => setErr(e.message || "No se pudo empezar otra vez la playlist"))}
+                    onClick={() => replayGame().catch((e) => setErr(e.message || tr("No se pudo empezar otra vez la playlist")))}
                     type="button"
                   >
                     <Icon name={run.order === "aleatorio" ? "shuffle" : "play"} size={20} strokeWidth={2.6} />
-                    Jugar otra vez
+                    {tr("Jugar otra vez")}
                   </button>
                 )}
               </>
             ) : (
               <p className="tv-res-wait">
                 <span className="tv-pulse" aria-hidden="true" />
-                Esperando a que el anfitrión decida qué jugar
+                {tr("Esperando a que el anfitrión decida qué jugar")}
               </p>
             )}
           </ResultsFoot>
         </section>
       </div>
       <PartyPanel room={room} display={isCentral} onToast={setErr} />
-      <MatchSummarySheet open={showSummary} rounds={myRounds} title={classic || publicMatch ? "Tu partida" : "Tu playlist"} onClose={() => setShowSummary(false)} />
+      <MatchSummarySheet open={showSummary} rounds={myRounds} title={classic || publicMatch ? tr("Tu partida") : tr("Tu playlist")} onClose={() => setShowSummary(false)} />
     </div>
   );
 }

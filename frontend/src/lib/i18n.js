@@ -49,8 +49,35 @@ const UNITS = [
   [/^(\d+) lluvias?$/, (n) => `${n} ${n === "1" ? "rain" : "rains"}`],
 ];
 
+// Messages the server builds with numbers or names in them.
+const NOUNS = { preguntas: "questions", "preguntas distintas": "different questions", tableros: "boards", rondas: "rounds", "categorías": "categories", dificultades: "difficulties", temas: "topics", "categorías o dificultades": "categories or difficulties" };
+const noun = (x) => NOUNS[x] || EN[x] || x;
+const PATTERNS = [
+  [/^Solo hay (\d+) (preguntas distintas|preguntas|tableros) con esos ajustes para (\d+) rondas\. Baja las rondas o elige más (.+)\.$/, (m) => `There are only ${m[1]} ${noun(m[2])} with those settings for ${m[3]} rounds. Lower the rounds or pick more ${noun(m[4])}.`],
+  [/^Solo hay (\d+) (preguntas distintas|preguntas) con esos ajustes\. Baja el número de preguntas o elige más temas\.$/, (m) => `There are only ${m[1]} ${noun(m[2])} with those settings. Lower the number of questions or pick more topics.`],
+  [/^Solo hay (\d+) preguntas con esos ajustes y hacen falta al menos (\d+)\. Elige más categorías o dificultades\.$/, (m) => `There are only ${m[1]} questions with those settings and at least ${m[2]} are needed. Pick more categories or difficulties.`],
+  [/^Revisa el juego (\d+), (.+)\. No hay preguntas con esos ajustes\.$/, (m) => `Check game ${m[1]}, ${noun(m[2])}. There are no questions with those settings.`],
+  [/^No hay preguntas para jugar (.+) ahora$/, (m) => `There are no questions to play ${noun(m[1])} right now`],
+  [/^El grupo está lleno \(máximo (\d+) jugadores\)$/, (m) => `The group is full (maximum ${m[1]} players)`],
+  [/^La partida está llena \(máximo (\d+) jugadores\)$/, (m) => `The match is full (maximum ${m[1]} players)`],
+  [/^El nombre no puede superar (\d+) caracteres$/, (m) => `The name can't be longer than ${m[1]} characters`],
+  [/^La contraseña debe tener al menos (\d+) caracteres$/, (m) => `The password must be at least ${m[1]} characters long`],
+  [/^Espera (\d+) s para (pedirlo|sugerir) otra vez$/, (m) => `Wait ${m[1]} s to ${m[2] === "pedirlo" ? "ask" : "suggest"} again`],
+  [/^Ya lo invitaste: espera (\d+) s$/, (m) => `You already invited them: wait ${m[1]} s`],
+  [/^Máximo (\d+) caracteres$/, (m) => `At most ${m[1]} characters`],
+  [/^Máximo (\d+) bots de prueba$/, (m) => `At most ${m[1]} test bots`],
+  [/^Farsante necesita al menos (\d+) jugadores$/, (m) => `Impostor needs at least ${m[1]} players`],
+  [/^Una partida pública es de (\d+) como mucho y tu grupo es de (\d+)$/, (m) => `A public match takes at most ${m[1]} and your group has ${m[2]}`],
+  [/^Ya cambiaste tu usuario (\d+) veces este mes\. Podrás cambiarlo otra vez el (.+)\.$/, (m) => `You already changed your username ${m[1]} times this month. You can change it again on ${m[2]}.`],
+  [/^(.+) ya eligió esa casilla$/, (m) => `${m[1]} already picked that square`],
+];
+
 function inEnglish(es) {
   if (EN[es] !== undefined) return EN[es];
+  for (const [re, fn] of PATTERNS) {
+    const m = es.match(re);
+    if (m) return fn(m);
+  }
   if (es.includes(" · ")) return es.split(" · ").map(inEnglish).join(" · ");
   for (const [re, fn] of UNITS) {
     const m = es.match(re);
