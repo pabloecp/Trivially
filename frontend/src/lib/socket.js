@@ -1,8 +1,9 @@
 import { io } from "socket.io-client";
 import { BACKEND_URL } from "./config.js";
 
-import { translate as tr } from "../lib/i18n.js";
+import { getLang, onLangChange, translate as tr } from "../lib/i18n.js";
 let socket;
+let langHooked = false;
 // Supplies the signed token that tells the server who we are (set by AppProvider in store.jsx).
 let tokenProvider = async () => null;
 
@@ -22,10 +23,15 @@ export function getSocket() {
       // Called on every (re)connect, so the token always matches the current account.
       auth: (cb) => {
         tokenProvider()
-          .then((token) => cb({ token }))
-          .catch(() => cb({ token: null }));
+          .then((token) => cb({ token, lang: getLang() }))
+          .catch(() => cb({ token: null, lang: getLang() }));
       },
     });
+  }
+  // The language this person plays in: the server sends them the content (questions, boards...) in it.
+  if (!langHooked) {
+    langHooked = true;
+    onLangChange(() => socket?.emit("lang:set", getLang()));
   }
   return socket;
 }

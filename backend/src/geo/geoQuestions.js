@@ -14,6 +14,8 @@ export const GEO_KINDS = ["capital", "flag", "location"];
 const DIFFICULTY = { 1: "facil", 2: "media", 3: "dificil" };
 // Every flag question asks the same thing: the flag itself is the question (and the prompt never names the country).
 export const FLAG_PROMPT = "¿De qué país es esta bandera?";
+// The English versions of the prompts (the English questions are only read to be shown to English players).
+export const FLAG_PROMPT_EN = "Which country does this flag belong to?";
 
 /** A uuid that is always the same for the same key (shaped like a v5 uuid, so the uuid column accepts it). */
 export function stableId(key) {
@@ -22,14 +24,14 @@ export function stableId(key) {
   return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-5${hex.slice(13, 16)}-${variant}${hex.slice(17, 20)}-${hex.slice(20, 32)}`;
 }
 
-function row(kind, c, type, prompt, data) {
+function row(kind, c, type, prompt, data, language = "es") {
   return {
     id: stableId(`geo:${kind}:${c.code}`),
     type,
     mode: GEO_MODE,
     category: "geografia",
     difficulty: DIFFICULTY[c.levels[kind]],
-    language: "es",
+    language,
     prompt,
     data: { kind, country: c.code, name: c.label, ...data },
     active: true,
@@ -53,17 +55,19 @@ function rejectLookAlikes(rows) {
   }
 }
 
-export function buildGeoQuestions(countries = COUNTRIES) {
+export function buildGeoQuestions(countries = COUNTRIES, lang = "es") {
+  const en = lang === "en";
   const rows = [];
   for (const c of countries) {
     if (c.levels.capital) {
-      rows.push(row("capital", c, "open", `¿Cuál es la capital ${c.of}?`, { answer: c.capital, aliases: c.capitalAliases, reject: [] }));
+      const prompt = en ? `What is the capital of ${c.label}?` : `¿Cuál es la capital ${c.of}?`;
+      rows.push(row("capital", c, "open", prompt, { answer: c.capital, aliases: c.capitalAliases, reject: [] }, lang));
     }
     if (c.levels.flag) {
-      rows.push(row("flag", c, "open", FLAG_PROMPT, { flag: c.code.toLowerCase(), answer: c.name, aliases: c.aliases, reject: [] }));
+      rows.push(row("flag", c, "open", en ? FLAG_PROMPT_EN : FLAG_PROMPT, { flag: c.code.toLowerCase(), answer: c.name, aliases: c.aliases, reject: [] }, lang));
     }
     if (c.levels.location) {
-      rows.push(row("location", c, "location", `Ubica en el mapa: ${c.label}`, { map: c.map }));
+      rows.push(row("location", c, "location", en ? `Find on the map: ${c.label}` : `Ubica en el mapa: ${c.label}`, { map: c.map }, lang));
     }
   }
   rejectLookAlikes(rows);

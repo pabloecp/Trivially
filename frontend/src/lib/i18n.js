@@ -13,8 +13,9 @@ function read() {
     const saved = localStorage.getItem(KEY);
     if (LANGS.includes(saved)) return saved;
   } catch {}
-  // First visit: the browser's language, Spanish otherwise.
-  return typeof navigator !== "undefined" && /^en\b/i.test(navigator.language || "") ? "en" : "es";
+  // First visit: the device's language when the site has it (Spanish or English), English for any other.
+  const device = typeof navigator !== "undefined" ? navigator.languages?.[0] || navigator.language || "" : "";
+  return /^es\b/i.test(device) ? "es" : "en";
 }
 
 let current = read();
@@ -37,6 +38,12 @@ export function setLang(next) {
   } catch {}
   if (typeof document !== "undefined") document.documentElement.lang = next;
   listeners.forEach((fn) => fn());
+}
+
+/** Calls `fn` whenever the language changes (the connection tells the server, which sends the content in it). */
+export function onLangChange(fn) {
+  listeners.add(fn);
+  return () => listeners.delete(fn);
 }
 
 function subscribe(fn) {

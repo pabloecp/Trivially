@@ -17,7 +17,8 @@ import { ensureUsernames, flushStore, getSupabase, initStore, sessionStillValid,
 import { QuestionStats } from "./db/questionStats.js";
 import { RoomManager } from "./game/roomManager.js";
 import { GroupManager } from "./game/groups.js";
-import { loadQuestions } from "./questions/questionBank.js";
+import { loadQuestions, loadTwinQuestions } from "./questions/questionBank.js";
+import { loadTranslations } from "./i18n/translations.js";
 import { loadLyricRounds, watchLyricRounds } from "./lyrics/lyricRounds.js";
 import { LyricQueue } from "./lyrics/lyricQueue.js";
 import {
@@ -51,6 +52,8 @@ const store = await initStore();
 const assigned = ensureUsernames(store);
 if (assigned) console.log(`[Usuarios] ${assigned} cuentas recibieron un nombre de usuario`);
 const questions = await loadQuestions();
+// The same content in English, for the players who play in that language (their questions come out translated).
+loadTranslations(questions, await loadTwinQuestions());
 // Completa la letra's rounds, worked out offline (npm run lyrics:build) and only read here: from
 // backend/private/lyric-rounds.json, and from Supabase's lyric_rounds table with LYRICS_DB=1.
 const lyricsDb = process.env.LYRICS_DB === "1" && supabaseEnabled() ? getSupabase() : null;

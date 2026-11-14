@@ -19,7 +19,8 @@ import {
   QUIZ_REVEAL_MS,
   quizPool,
 } from "./quiz.js";
-import { editDistance, isCorrectOpenAnswer, normalizeOpen } from "./openAnswers.js";
+import { editDistance, isCorrectOpenAnswer as isCorrectInOneLanguage, normalizeOpen } from "./openAnswers.js";
+import { localize, mapFor, otherAnswers, globalMap } from "../i18n/content.js";
 import {
   countGeoQuestions,
   defaultGeoConfig,
@@ -224,8 +225,12 @@ export const ELO_WIDEN_BY = 250;
 export const BOT_MIN_MS = 3000;
 export const BOT_MAX_MS = 8000;
 
-export function publicRounds(rounds = []) {
-  return rounds.map(({ questionId, ...round }) => round);
+export function publicRounds(rounds = [], lang = "es") {
+  return rounds.map(({ questionId, ...round }) => {
+    if (lang === "es") return round;
+    const map = mapFor(questionId);
+    return localize(round, map);
+  });
 }
 
 export function createRoomCode(existing) {
@@ -448,6 +453,12 @@ function publicPlayer(player, phase, room) {
  * and the answer's forms, as they're compared (no capitals, accents or punctuation), whether it was one of the
  * answers turned down on purpose (`reject`), and the closest accepted form with how many letters apart it is.
  */
+/** A written answer is right in either language the question has: the Spanish one or its English one. */
+export function isCorrectOpenAnswer(guess, question) {
+  if (isCorrectInOneLanguage(guess, question)) return true;
+  return question?.id != null && otherAnswers(question.id).some((alt) => isCorrectInOneLanguage(guess, alt));
+}
+
 export function openAnswerCheck(text, question) {
   const written = normalizeOpen(text);
   const accepted = [...new Set([question.answer, ...(question.aliases || [])].map(normalizeOpen).filter(Boolean))];
@@ -4327,7 +4338,7 @@ export class RoomManager {
     if (room.botTimers?.length || phase === "playing") this.scheduleBots(room);
   }
 
-  publicState(room, forUserId) {
+  publicState(room, forUserId, lang = "es") {
     const track = room.tracks[room.currentRound];
     const host = room.players.get(room.hostId);
     const showTrack = room.phase === "reveal" || room.phase === "finished";
@@ -4410,7 +4421,7 @@ export class RoomManager {
       // A match of several games being played (a public match or a Clásico): its games, and how it's going (in play
       // order, which one is on, who won each one and the tally).
       playlist: room.run ? room.playlist : undefined,
-      run: room.run ? publicRun(room.run) : null,
+      run: room.run ? publicRun(room.run, lang) : null,
       // What the host is pointing at on the game menu (null once a game is picked).
       preview: room.game ? null : room.preview || null,
       // Games the other players suggested to the host, newest last (only while the room is on the menu).
@@ -4576,7 +4587,7 @@ export class RoomManager {
           : null,
         tiebreakWinner: p.id === room.tiebreak?.winnerId,
         // Every round of the match for this player, with the right answer and their points (recordRound).
-        rounds: publicRounds(p.rounds),
+        rounds: publicRounds(p.rounds, lang),
       }));
     }
     // Nothing of the next game's first round shows while its roulette and tutorial are on.
@@ -4604,7 +4615,30 @@ export class RoomManager {
           }
         : null;
     }
+    return lang === "es" ? payload : this.localizeState(room, payload, lang);
+  }
+
+  /**
+   * The state as a player who plays in another language reads it: the texts of the round's question (its prompt,
+   * options, answer, the flag's country, a board's cells...) swapped for their English versions, in what goes out and in
+   * what other players answered (the option they chose). The Spanish stays the original on the server.
+   */
+  localizeState(room, payload, lang) {
+    if (lang === "es") return payload;
+    const track = room.tracks[room.currentRound];
+    const maps = this.trackMaps(track);
+    const L = (value) => localize(value, ...maps);
+    for (const key of ["question", "reveal", "rey", "farsante", "choice"]) if (payload[key]) payload[key] = L(payload[key]);
+    payload.players = payload.players.map((p) => (p.lastAnswer ? { ...p, lastAnswer: L(p.lastAnswer) } : p));
+    if (payload.me?.lastAnswer) payload.me = { ...payload.me, lastAnswer: L(payload.me.lastAnswer) };
     return payload;
+  }
+
+  /** The Spanish-to-English maps of a round: of its question, or of each question it has (Lluvia's drops, Rey's offers...). */
+  trackMaps(track) {
+    if (!track) return [];
+    const ids = [track.id, track.question?.id, ...(track.drops || []).map((d) => d.question?.id), ...(track.offers || []).map((o) => o.id)];
+    return ids.filter((id) => id != null).map((id) => mapFor(id)).filter(Boolean);
   }
 
   /** In the lobby: how many different questions the room's settings can draw (a match needs one per round). */
