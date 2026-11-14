@@ -16,16 +16,17 @@ import { PauseButton, ReportButton, SkipButton, PauseVeil } from "../../componen
 import { resolveCode } from "../../lib/hiddenCode.js";
 import { AnswerCard, MatchBar, MatchCard, MatchQuestion, RoundCountdown, RoundVerdict } from "../../components/home/MatchFrame.jsx";
 
+import { locale, translate as tr } from "../../lib/i18n.js";
 const COUNTDOWN_MS = 3000;
 // One colour per player for the pins on the reveal map (never the green and red of right and wrong).
 const PIN_COLORS = ["#ffb52e", "#a58bff", "#ff6a55", "#2ea8ff", "#f2456b", "#14b8a6", "#ff9f1c", "#e879f9"];
 
-const km = (n) => `${Math.round(n).toLocaleString("es-ES")} km`;
+const km = (n) => `${Math.round(n).toLocaleString(locale())} km`;
 
 // "Ana", "Ana y Luis", "Ana, Luis y Eva".
 function joinNames(names) {
   if (names.length < 2) return names[0] || "";
-  return `${names.slice(0, -1).join(", ")} y ${names[names.length - 1]}`;
+  return tr("{list} y {last}", { list: names.slice(0, -1).join(", "), last: names[names.length - 1] });
 }
 
 function GameScreen() {
@@ -129,7 +130,7 @@ function GameScreen() {
     setPin({ round, lngLat: [lng, lat], locked: false });
     setErr("");
     placePin({ lng, lat }).catch((e) => {
-      if (phaseRef.current === "playing") setErr(e.message || "No se pudo poner tu pin");
+      if (phaseRef.current === "playing") setErr(e.message || tr("No se pudo poner tu pin"));
     });
   }
 
@@ -143,7 +144,7 @@ function GameScreen() {
       sending.current = false;
       if (phaseRef.current !== "playing") return;
       setPin({ ...myPin, locked: false });
-      setErr(e.message || "No se pudo confirmar tu pin");
+      setErr(e.message || tr("No se pudo confirmar tu pin"));
     }
   }
 
@@ -153,7 +154,7 @@ function GameScreen() {
       return;
     }
     setConfirmHub(false);
-    restartGame().catch((e) => setErr(e.message || "No se pudo terminar la partida"));
+    restartGame().catch((e) => setErr(e.message || tr("No se pudo terminar la partida")));
   }
 
   if (!room) {
@@ -161,7 +162,7 @@ function GameScreen() {
       <div className="tv-card tv-lobby-guest">
         <p className="tv-party-status">
           <span className="tv-pulse" aria-hidden="true" />
-          Conectando a la partida…
+          {tr("Conectando a la partida…")}
         </p>
       </div>
     );
@@ -185,7 +186,7 @@ function GameScreen() {
       ? Math.max(0, Math.min(100, (left / COUNTDOWN_MS) * 100))
       : 100;
   const urgent = phase === "playing" && left <= 3000;
-  const tiedNames = tiebreak ? tiebreak.playerIds.map((id) => room.players.find((p) => p.id === id)?.name || "Jugador") : [];
+  const tiedNames = tiebreak ? tiebreak.playerIds.map((id) => room.players.find((p) => p.id === id)?.name || tr("Jugador")) : [];
   const colorOf = (id) => PIN_COLORS[Math.max(0, room.players.findIndex((p) => p.id === id)) % PIN_COLORS.length];
   const pinLocked = Boolean(myPin?.locked) || Boolean(me?.answered);
 
@@ -205,72 +206,72 @@ function GameScreen() {
           }))
       : [];
 
-  const roundLabel = tiebreak ? `Desempate${tiebreak.round > 1 ? ` ${tiebreak.round}` : ""}` : `Ronda ${round + 1} de ${room.totalRounds}`;
+  const roundLabel = tiebreak ? (tiebreak.round > 1 ? tr("Desempate {n}", { n: tiebreak.round }) : tr("Desempate")) : tr("Ronda {v0} de {totalRounds}", { v0: round + 1, totalRounds: room.totalRounds });
   const nextText = tiebreak
     ? tiebreak.winnerId
-      ? "Calculando resultados…"
+      ? tr("Calculando resultados…")
       : tiebreak.round >= 3
-      ? "Sigue el empate: calculando resultados…"
-      : "Nadie ganó: otro desempate en breve…"
+      ? tr("Sigue el empate: calculando resultados…")
+      : tr("Nadie ganó: otro desempate en breve…")
     : round + 1 >= room.totalRounds
-    ? "Calculando resultados…"
-    : "Siguiente pregunta en breve…";
+    ? tr("Calculando resultados…")
+    : tr("Siguiente pregunta en breve…");
 
   // The top card: the same three lines (kicker, title, hint) in every phase, so nothing below it moves.
   let kicker = `${roundLabel} · ${style.label}`;
   let title;
   let hint;
   if (phase === "countdown") {
-    title = tiebreak ? `Desempate entre ${joinNames(tiedNames)}` : "Prepárate…";
+    title = tiebreak ? tr("Desempate entre {names}", { names: joinNames(tiedNames) }) : tr("Prepárate…");
     if (tiebreak) {
       hint = iPlay
-        ? "Pon tu pin y confírmalo: gana el primero que confirme dentro del país. Si nadie lo encuentra, el más cercano."
-        : "Solo juegan los empatados. Tú miras cómo lo resuelven.";
-    } else if (byName) hint = `Tendrás ${roundSeconds} segundos para poner tu pin en el mapa.`;
-    else hint = `Verás ${style.id === "sombra" ? "la forma" : "la bandera"} de un país: tendrás ${roundSeconds} segundos para poner tu pin en él.`;
+        ? tr("Pon tu pin y confírmalo: gana el primero que confirme dentro del país. Si nadie lo encuentra, el más cercano.")
+        : tr("Solo juegan los empatados. Tú miras cómo lo resuelven.");
+    } else if (byName) hint = tr("Tendrás {roundSeconds} segundos para poner tu pin en el mapa.", { roundSeconds: roundSeconds });
+    else hint = tr("Verás {v0} de un país: tendrás {roundSeconds} segundos para poner tu pin en él.", { v0: style.id === "sombra" ? tr("la forma") : tr("la bandera"), roundSeconds: roundSeconds });
   } else {
-    kicker = byName ? `${roundLabel} · ¿Dónde está…?` : `${roundLabel} · ${style.label}`;
-    title = question?.name || room.reveal?.name || "¿Qué país es?";
+    kicker = byName ? tr("{roundLabel} · ¿Dónde está…?", { roundLabel: roundLabel }) : `${roundLabel} · ${style.label}`;
+    title = question?.name || room.reveal?.name || tr("¿Qué país es?");
     if (phase === "reveal") hint = nextText;
-    else if (!iPlay) hint = `Solo juegan ${joinNames(tiedNames)}: gana el primero que confirme su pin dentro del país.`;
-    else if (pinLocked) hint = tiebreak ? "Pin confirmado. Si cayó dentro y fuiste el primero, ganas." : "Pin confirmado.";
-    else if (myPin) hint = `Arrástralo o ${touch ? "toca" : "haz clic en"} otro sitio para moverlo, y confirma.`;
-    else hint = touch ? "Toca para poner tu pin. Doble toque o pellizca para acercar." : "Haz clic para poner tu pin. Rueda, doble clic o arrastra para moverte.";
+    else if (!iPlay) hint = tr("Solo juegan {v0}: gana el primero que confirme su pin dentro del país.", { v0: joinNames(tiedNames) });
+    else if (pinLocked) hint = tiebreak ? tr("Pin confirmado. Si cayó dentro y fuiste el primero, ganas.") : tr("Pin confirmado.");
+    else if (myPin) hint = tr("Arrástralo o {v0} otro sitio para moverlo, y confirma.", { v0: touch ? tr("toca") : tr("haz clic en") });
+    else hint = touch ? tr("Toca para poner tu pin. Doble toque o pellizca para acercar.") : tr("Haz clic para poner tu pin. Rueda, doble clic o arrastra para moverte.");
   }
 
   // Someone who joined mid-match only watches: the same lines, without the instructions to answer.
-  if (spectator && phase !== "reveal") hint = "Estás viendo la partida. Entrarás a jugar cuando termine.";
+  if (spectator && phase !== "reveal") hint = tr("Estás viendo la partida. Entrarás a jugar cuando termine.");
   // The central device talks to the whole room: they put their pins from their phones.
   if (central && phase === "countdown" && !tiebreak) {
     hint = byName
-      ? `Tendrán ${roundSeconds} segundos para poner su pin desde su teléfono.`
-      : `Verán ${style.id === "sombra" ? "la forma" : "la bandera"} de un país: tendrán ${roundSeconds} segundos para ponerle su pin desde su teléfono.`;
+      ? tr("Tendrán {roundSeconds} segundos para poner su pin desde su teléfono.", { roundSeconds: roundSeconds })
+      : tr("Verán {v0} de un país: tendrán {roundSeconds} segundos para ponerle su pin desde su teléfono.", { v0: style.id === "sombra" ? tr("la forma") : tr("la bandera"), roundSeconds: roundSeconds });
   }
-  else if (central && phase === "countdown") hint = `Desempate entre ${joinNames(tiedNames)}: gana el primero que confirme su pin dentro del país.`;
-  else if (central && phase === "playing") hint = tiebreak ? `Solo juegan ${joinNames(tiedNames)}.` : "Pongan su pin en el mapa desde su teléfono.";
+  else if (central && phase === "countdown") hint = tr("Desempate entre {v0}: gana el primero que confirme su pin dentro del país.", { v0: joinNames(tiedNames) });
+  else if (central && phase === "playing") hint = tiebreak ? tr("Solo juegan {names}.", { names: joinNames(tiedNames) }) : tr("Pongan su pin en el mapa desde su teléfono.");
 
   // Under the map, always the same height: what to do now, or how the round went.
   let action;
   if (central && phase === "playing") {
-    action = <PhoneHint room={room}>Pongan su pin desde su teléfono</PhoneHint>;
+    action = <PhoneHint room={room}>{tr("Pongan su pin desde su teléfono")}</PhoneHint>;
   } else if (central && phase === "reveal" && room.reveal && !tiebreak) {
     action = <RoomVerdict room={room} right={(p) => Boolean(p.lastAnswer?.inside)} detail={closestPin(room)} />;
   } else if (central) {
-    action = <p className="tv-hint tv-geo-watch">{phase === "reveal" ? nextText : "Prepárense…"}</p>;
+    action = <p className="tv-hint tv-geo-watch">{phase === "reveal" ? nextText : tr("Prepárense…")}</p>;
   } else if (spectator && phase !== "reveal") {
-    action = <p className="tv-hint tv-geo-watch">Mira cómo responden los demás</p>;
+    action = <p className="tv-hint tv-geo-watch">{tr("Mira cómo responden los demás")}</p>;
   } else if (spectator && phase === "reveal") {
     action = <p className="tv-hint tv-geo-watch">{nextText}</p>;
   } else if (phase === "reveal" && room.reveal) {
     // How the round went shows over the map (Verdict); this row only says what comes next.
     action = <p className="tv-hint tv-geo-watch">{nextText}</p>;
   } else if (!iPlay) {
-    action = <p className="tv-hint tv-geo-watch">Mira el desempate entre {joinNames(tiedNames)}</p>;
+    action = <p className="tv-hint tv-geo-watch">{tr("Mira el desempate entre")} {joinNames(tiedNames)}</p>;
   } else {
     action = (
       <button type="button" className="tv-btn tv-btn--primary tv-geo-confirm" onClick={confirmPin} disabled={phase !== "playing" || !myPin || pinLocked} aria-live="polite">
         <Icon name={pinLocked ? "check" : "send"} size={20} strokeWidth={2.6} />
-        {pinLocked ? "Enviado" : "Enviar"}
+        {pinLocked ? tr("Enviado") : tr("Enviar")}
       </button>
     );
   }
@@ -280,7 +281,7 @@ function GameScreen() {
       <div className="tv-room-main tv-game-main tv-geo-stage">
         <MatchCard
           room={room}
-          tag={tiebreak ? "Desempate" : null}
+          tag={tiebreak ? tr("Desempate") : null}
           seconds={seconds}
           pct={pct}
           urgent={urgent}
@@ -294,10 +295,10 @@ function GameScreen() {
             {phase === "countdown"
               ? title
               : byName
-              ? `¿Dónde está ${title}?`
+              ? tr("¿Dónde está {title}?", { title: title })
               : style.id === "sombra"
-              ? "¿De qué país es esta silueta?"
-              : "¿De qué país es esta bandera?"}
+              ? tr("¿De qué país es esta silueta?")
+              : tr("¿De qué país es esta bandera?")}
           </MatchQuestion>
         </MatchCard>
 
@@ -317,10 +318,10 @@ function GameScreen() {
               regions={phase === "playing" && !central}
               label={
                 phase === "playing"
-                  ? `Mapamundi. Pon tu pin en ${question?.name || (style.id === "sombra" ? "el país de la silueta" : "el país de la bandera")}. Flechas para moverte, más y menos para acercar, Enter para poner el pin en el centro.`
+                  ? tr("Mapamundi. Pon tu pin en {v0}. Flechas para moverte, más y menos para acercar, Enter para poner el pin en el centro.", { v0: question?.name || (style.id === "sombra" ? tr("el país de la silueta") : tr("el país de la bandera")) })
                   : phase === "reveal"
-                  ? `Mapamundi con ${room.reveal?.name || "el país"} marcado`
-                  : "Mapamundi"
+                  ? tr("Mapamundi con {v0} marcado", { v0: room.reveal?.name || tr("el país") })
+                  : tr("Mapamundi")
               }
             >
               <RoundCountdown room={room} seconds={seconds} />
@@ -340,7 +341,7 @@ function GameScreen() {
             </WorldMap>
           ) : (
             <div className="tv-geo-map tv-geo-map--loading" role="status">
-              {mapError || "Cargando el mapa…"}
+              {mapError || tr("Cargando el mapa…")}
             </div>
           )}
 
@@ -363,7 +364,7 @@ function GameScreen() {
               <PauseButton room={room} isHost={isHost} onError={setErr} />
               {isHost && (
                 <button type="button" className={`tv-mini-btn tv-end-btn${confirmHub ? " is-on" : ""}`} onClick={backToHub}>
-                  {confirmHub ? "¿Seguro? Toca otra vez" : "Terminar"}
+                  {confirmHub ? tr("¿Seguro? Toca otra vez") : tr("Terminar")}
                 </button>
               )}
             </>
@@ -390,7 +391,7 @@ function Clue({ question }) {
     if (isFlag || !src) return undefined;
     let live = true;
     fetch(`${BACKEND_URL}${src}`)
-      .then((res) => (res.ok ? res.json() : Promise.reject(new Error("Sin silueta"))))
+      .then((res) => (res.ok ? res.json() : Promise.reject(new Error(tr("Sin silueta")))))
       .then((data) => live && setShape(data))
       .catch(() => live && setFailed(true));
     return () => {
@@ -404,20 +405,20 @@ function Clue({ question }) {
     content = (
       <span className="tv-geo-clue-missing">
         <Icon name={isFlag ? "flag" : "shape"} size={26} />
-        {isFlag ? "No se pudo cargar la bandera" : "No se pudo cargar la silueta"}
+        {isFlag ? tr("No se pudo cargar la bandera") : tr("No se pudo cargar la silueta")}
       </span>
     );
   } else if (isFlag) {
-    content = <img key={src} src={`${BACKEND_URL}${src}`} alt="Bandera del país que buscas" onError={() => setFailed(true)} />;
+    content = <img key={src} src={`${BACKEND_URL}${src}`} alt={tr("Bandera del país que buscas")} onError={() => setFailed(true)} />;
   } else if (shape) {
     const [, , w, h] = shape.viewBox.split(" ").map(Number);
     content = (
-      <svg viewBox={shape.viewBox} style={{ aspectRatio: `${w} / ${h}` }} role="img" aria-label="Silueta del país que buscas">
+      <svg viewBox={shape.viewBox} style={{ aspectRatio: `${w} / ${h}` }} role="img" aria-label={tr("Silueta del país que buscas")}>
         <path d={shape.d} fillRule="evenodd" />
       </svg>
     );
   } else {
-    content = <span className="tv-geo-clue-wait" aria-label="Cargando la silueta" />;
+    content = <span className="tv-geo-clue-wait" aria-label={tr("Cargando la silueta")} />;
   }
   return (
     <div className="tv-geo-clue-area">
@@ -430,9 +431,9 @@ function Clue({ question }) {
 function closestPin(room) {
   const pins = roundPlayers(room).filter((p) => p.lastAnswer?.distanceKm != null);
   if (pins.some((p) => p.lastAnswer.inside)) return "";
-  if (!pins.length) return "Nadie puso su pin a tiempo";
+  if (!pins.length) return tr("Nadie puso su pin a tiempo");
   const best = pins.reduce((a, b) => (b.lastAnswer.distanceKm < a.lastAnswer.distanceKm ? b : a));
-  return `Más cerca: ${best.name}, a ${km(best.lastAnswer.distanceKm)}`;
+  return tr("Más cerca: {name}, a {v1}", { name: best.name, v1: km(best.lastAnswer.distanceKm) });
 }
 
 // How this player's pin did, on the card's first row (the same place as every game's result).
@@ -443,7 +444,7 @@ function PinVerdict({ me }) {
   return (
     <RoundVerdict
       tone={inside ? "ok" : placed ? "near" : "timeout"}
-      label={inside ? "¡Dentro!" : placed ? `A ${km(answer.distanceKm)}` : "Se acabó el tiempo"}
+      label={inside ? tr("¡Dentro!") : placed ? `A ${km(answer.distanceKm)}` : tr("Se acabó el tiempo")}
       points={placed ? me?.lastPoints || 0 : null}
     />
   );
@@ -461,16 +462,16 @@ function Verdict({ room, me, user, tiebreak, tiedNames, iPlay }) {
       <AnswerCard
         floating
         icon={winner ? "crown" : "hash"}
-        label="Desempate"
-        value={winner ? (won ? "¡Ganaste!" : `¡Gana ${winner.name}!`) : "Nadie lo resolvió"}
+        label={tr("Desempate")}
+        value={winner ? (won ? tr("¡Ganaste!") : tr("¡Gana {name}!", { name: winner.name })) : tr("Nadie lo resolvió")}
         detail={
           winner
             ? tiebreak.reason === "dentro"
-              ? `${won ? "Confirmaste" : "Confirmó"} ${name} primero`
-              : `Nadie cayó dentro: ${won ? "tu" : "su"} pin quedó más cerca de ${name}`
-            : `${joinNames(tiedNames)} siguen empatados`
+              ? won ? tr("Confirmaste {name} primero", { name }) : tr("Confirmó {name} primero", { name })
+              : tr("Nadie cayó dentro: {v0} pin quedó más cerca de {name}", { v0: won ? tr("tu") : tr("su"), name: name })
+            : tr("{names} siguen empatados", { names: joinNames(tiedNames) })
         }
-        mine={iPlay && winner ? (won ? "Ganaste el desempate" : "Esta vez no") : null}
+        mine={iPlay && winner ? (won ? tr("Ganaste el desempate") : tr("Esta vez no")) : null}
         mineOk={won}
       />
     );
@@ -481,9 +482,9 @@ function Verdict({ room, me, user, tiebreak, tiedNames, iPlay }) {
     <AnswerCard
       floating
       icon="pin"
-      label="La respuesta"
+      label={tr("La respuesta")}
       value={name}
-      mine={inside ? "Tu pin cayó dentro" : placed ? `Tu pin quedó a ${km(answer.distanceKm)}` : "No pusiste tu pin a tiempo"}
+      mine={inside ? tr("Tu pin cayó dentro") : placed ? tr("Tu pin quedó a {v0}", { v0: km(answer.distanceKm) }) : tr("No pusiste tu pin a tiempo")}
       mineOk={inside}
     />
   );

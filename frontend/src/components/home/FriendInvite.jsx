@@ -6,6 +6,7 @@ import Avatar from "./Avatar.jsx";
 import Icon from "./Icon.jsx";
 import "../../styles/central.css";
 
+import { translate as tr } from "../../lib/i18n.js";
 // How long an invitation stays on screen if it isn't answered.
 const SHOW_MS = 20000;
 
@@ -38,19 +39,19 @@ export default function FriendInvite({ invite, onJoin, onClose }) {
   }
 
   return createPortal(
-    <div className="tv-central-requests" role="region" aria-label="Invitación de un amigo">
-      <div className="tv-central-request" role="group" aria-label={`Invitación de ${invite.fromName}`}>
+    <div className="tv-central-requests" role="region" aria-label={tr("Invitación de un amigo")}>
+      <div className="tv-central-request" role="group" aria-label={tr("Invitación de {fromName}", { fromName: invite.fromName })}>
         <span className="tv-central-request-face">
           <Avatar name={invite.fromName} avatar={invite.fromAvatar} />
         </span>
         <p>
-          <strong>{invite.fromName}</strong> te invita a su grupo{mode ? ` · ${mode.name}` : ""}
+          <strong>{invite.fromName}</strong> {tr("te invita a su grupo")}{mode ? ` · ${mode.name}` : ""}
         </p>
         <span className="tv-central-request-actions">
           <button type="button" className="tv-btn tv-btn--sm tv-c-green" onClick={join} disabled={busy} data-sound="none">
-            Unirme
+            {tr("Unirme")}
           </button>
-          <button type="button" className="tv-central-request-no" data-sound="back" onClick={onClose} aria-label="Ignorar la invitación">
+          <button type="button" className="tv-central-request-no" data-sound="back" onClick={onClose} aria-label={tr("Ignorar la invitación")}>
             <Icon name="close" size={16} strokeWidth={3} />
           </button>
         </span>

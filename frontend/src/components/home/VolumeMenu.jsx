@@ -12,6 +12,7 @@ import {
 import { setVolume, toggleMute, useVolume } from "../../lib/volume.js";
 import Icon from "./Icon.jsx";
 
+import { translate as tr } from "../../lib/i18n.js";
 // The volume rows: "Canciones" (the songs of Adivina la canción and any other <audio>, lib/volume.js) and "Sonidos"
 // (the taps and results, lib/sounds.js). In each the icon turns it off and on and the slider sets how loud (kept in this
 // browser). The sounds' tap plays at the new volume when the slider is let go. Also in the owners' panel (AdminPanel.jsx),
@@ -27,7 +28,7 @@ export function VolumeRows() {
   const rows = [
     {
       id: "songs",
-      label: "Canciones",
+      label: tr("Canciones"),
       on: !songs.muted,
       value: Math.round(songs.level * 100),
       icon: songs.shown === 0 ? "mute" : "volume",
@@ -37,7 +38,7 @@ export function VolumeRows() {
     },
     {
       id: "sound",
-      label: "Sonidos",
+      label: tr("Sonidos"),
       on: soundEnabled(),
       value: soundVolume(),
       icon: soundEnabled() ? "volume" : "mute",
@@ -56,7 +57,7 @@ export function VolumeRows() {
             className="tv-volume-toggle"
             data-sound="none"
             aria-pressed={!r.on}
-            aria-label={r.on ? `Quitar ${r.label.toLowerCase()}` : `Poner ${r.label.toLowerCase()}`}
+            aria-label={r.on ? tr("Quitar {v0}", { v0: tr(r.label).toLowerCase() }) : tr("Poner {v0}", { v0: tr(r.label).toLowerCase() })}
             onClick={r.toggle}
           >
             <Icon name={r.icon} size={18} strokeWidth={2.4} />
@@ -64,7 +65,7 @@ export function VolumeRows() {
           <label className="tv-volume-field" data-sound="none">
             <span className="tv-volume-label">
               <strong>{r.label}</strong>
-              <span>{r.on ? `${r.value}%` : "Apagado"}</span>
+              <span>{r.on ? `${r.value}%` : tr("Apagado")}</span>
             </span>
             <input
               type="range"
@@ -74,7 +75,7 @@ export function VolumeRows() {
               value={r.value}
               disabled={!r.on}
               style={{ "--fill": `${r.value}%` }}
-              aria-label={`Volumen de ${r.label.toLowerCase()}`}
+              aria-label={tr("Volumen de {v0}", { v0: r.label.toLowerCase() })}
               onChange={(e) => r.change(e.target.value)}
               onPointerUp={(e) => r.release(e.currentTarget.value)}
               onKeyUp={(e) => r.release(e.currentTarget.value)}
@@ -96,26 +97,25 @@ export function SoundPacks() {
   const step = (by) => setSoundPack(SOUND_PACKS[(index + by + SOUND_PACKS.length) % SOUND_PACKS.length].id);
   return (
     <div className="tv-sound-pick">
-      <button type="button" className="tv-sound-step" data-sound="none" aria-label="Sonido anterior" onClick={() => step(-1)}>
+      <button type="button" className="tv-sound-step" data-sound="none" aria-label={tr("Sonido anterior")} onClick={() => step(-1)}>
         <Icon name="chevron" size={18} strokeWidth={3} className="is-back" />
       </button>
       <span key={pack.id} className="tv-sound-now" aria-live="polite">
         <strong>{pack.label}</strong>
         <small>
-          {pack.hint} · {index + 1} de {SOUND_PACKS.length}
+          {pack.hint} · {index + 1} {tr("de")} {SOUND_PACKS.length}
         </small>
       </span>
-      <button type="button" className="tv-sound-step" data-sound="none" aria-label="Sonido siguiente" onClick={() => step(1)}>
+      <button type="button" className="tv-sound-step" data-sound="none" aria-label={tr("Sonido siguiente")} onClick={() => step(1)}>
         <Icon name="chevron" size={18} strokeWidth={3} />
       </button>
     </div>
   );
 }
 
-// The volume button: a speaker (crossed out when the sounds are off) that opens the two sliders, in the top bar. With
-// `inOwnerPanel` (an owner's top bar) it's hidden on
-// phones: owners have it inside the owners' panel there, so the bar has room for everything else.
-export default function VolumeMenu({ inOwnerPanel = false }) {
+// The volume button: a speaker (crossed out when the sounds are off) that opens the two sliders. Only the central
+// device's top bar has it (it has no "Ajustes" gear); everyone else sets the volume in "Ajustes" (AppSettings.jsx).
+export default function VolumeMenu() {
   const [open, setOpen] = useState(false);
   const [, refresh] = useState(0);
   const rootRef = useRef(null);
@@ -143,13 +143,13 @@ export default function VolumeMenu({ inOwnerPanel = false }) {
   // Crossed out only when nothing makes a sound: neither the songs nor the effects.
   const silent = (!soundEnabled() || !soundVolume()) && songs.shown === 0;
   return (
-    <div className={`tv-volume${inOwnerPanel ? " tv-volume--owner" : ""}`} ref={rootRef}>
+    <div className="tv-volume" ref={rootRef}>
       <button
         type="button"
         className="tv-chip tv-chip--icon tv-chip--sound"
         aria-haspopup="dialog"
         aria-expanded={open}
-        aria-label="Volumen"
+        aria-label={tr("Volumen")}
         onClick={() => setOpen((v) => !v)}
       >
         <span className="tv-avatar tv-avatar--empty">
@@ -157,7 +157,7 @@ export default function VolumeMenu({ inOwnerPanel = false }) {
         </span>
       </button>
       {open && (
-        <div className="tv-volume-panel" role="dialog" aria-label="Volumen">
+        <div className="tv-volume-panel" role="dialog" aria-label={tr("Volumen")}>
           <VolumeRows />
         </div>
       )}

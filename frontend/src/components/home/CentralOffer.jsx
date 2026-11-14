@@ -3,6 +3,7 @@ import { useApp } from "../../lib/store.jsx";
 import Icon from "./Icon.jsx";
 import Modal from "./Modal.jsx";
 
+import { translate as tr } from "../../lib/i18n.js";
 // Opening a room this account already plays in, from another device (the store's `centralOffer`): instead of joining,
 // this device can be the room's central device, the screen that shows the match while the answers come from the
 // phones. The host's account takes it straight away; anyone else asks the host and waits here for the answer. In the
@@ -21,35 +22,35 @@ export default function CentralOffer() {
 
   const { isHost, hostName, status, error } = shown;
   const busy = status === "sending";
-  let title = "Ya estás en esta partida";
+  let title = tr("Ya estás en esta partida");
   let text = isHost
-    ? "Tu cuenta ya juega aquí desde otro dispositivo. Usa este como pantalla de la partida (preguntas, sonidos y marcador) y responde desde el otro."
-    : `Tu cuenta ya juega aquí desde otro dispositivo. Pídele a ${hostName} usar este como pantalla de la partida (preguntas, sonidos y marcador) y responde desde el otro.`;
+    ? tr("Tu cuenta ya juega aquí desde otro dispositivo. Usa este como pantalla de la partida (preguntas, sonidos y marcador) y responde desde el otro.")
+    : tr("Tu cuenta ya juega aquí desde otro dispositivo. Pídele a {hostName} usar este como pantalla de la partida (preguntas, sonidos y marcador) y responde desde el otro.", { hostName });
   let foot;
   if (status === "waiting") {
-    title = `Esperando a ${hostName}`;
-    text = `Le pediste a ${hostName} usar este dispositivo como central. En cuanto acepte, aquí se verá la partida.`;
+    title = tr("Esperando a {hostName}", { hostName });
+    text = tr("Le pediste a {hostName} usar este dispositivo como central. En cuanto acepte, aquí se verá la partida.", { hostName: hostName });
     foot = (
       <button type="button" className="tv-btn tv-btn--neutral tv-central-offer-go" data-sound="back" onClick={dismissCentralOffer}>
-        Cancelar
+        {tr("Cancelar")}
       </button>
     );
   } else if (status === "denied") {
-    title = "No pudo ser";
-    text = error || `${hostName} no aceptó este dispositivo como central.`;
+    title = tr("No pudo ser");
+    text = error || tr("{hostName} no aceptó este dispositivo como central.", { hostName: hostName });
     foot = (
       <button type="button" className="tv-btn tv-btn--neutral tv-central-offer-go" data-sound="back" onClick={dismissCentralOffer}>
-        Cerrar
+        {tr("Cerrar")}
       </button>
     );
   } else {
     foot = (
       <>
         <button type="button" className="tv-btn tv-btn--neutral" data-sound="back" onClick={dismissCentralOffer} disabled={busy}>
-          Ahora no
+          {tr("Ahora no")}
         </button>
         <button type="button" className="tv-btn tv-btn--primary tv-central-offer-go" onClick={isHost ? joinAsCentral : requestCentral} disabled={busy}>
-          {busy ? (isHost ? "Entrando…" : "Enviando…") : isHost ? "Ser dispositivo central" : "Pedir ser dispositivo central"}
+          {busy ? (isHost ? "Entrando…" : "Enviando…") : isHost ? tr("Ser dispositivo central") : tr("Pedir ser dispositivo central")}
         </button>
       </>
     );

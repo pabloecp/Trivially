@@ -16,6 +16,7 @@ import "../../styles/home.css";
 import "../../styles/quiz.css";
 import "../../styles/rain.css";
 
+import { translate as tr } from "../../lib/i18n.js";
 const COUNTDOWN_MS = 3000;
 // One colour per player for the marks of who answered each question (never the green, yellow and red of the
 // questions themselves).
@@ -94,7 +95,7 @@ function Sky({ room, question, viewerId, nameOf, colorOf, onTap, children }) {
           >
             <div className={`tv-rain-card is-${level.id}`} aria-label={`${level.label}, ${pointsText(d.points)}: ${d.text}`}>
               <span className="tv-rain-card-top">
-                <span className="tv-rain-card-cat">{d.category}</span>
+                <span className="tv-rain-card-cat">{tr(d.category)}</span>
                 <span className="tv-rain-card-pts">+{d.points}</span>
               </span>
               <span className="tv-rain-card-text">{d.text}</span>
@@ -178,7 +179,7 @@ function AnswerBox({ room, open, inputRef, onResult }) {
       flash(Boolean(hit));
     } catch (err) {
       flash(false);
-      onResult({ error: err.message || "No se pudo enviar tu respuesta" });
+      onResult({ error: err.message || tr("No se pudo enviar tu respuesta") });
     }
   }
 
@@ -191,7 +192,7 @@ function AnswerBox({ room, open, inputRef, onResult }) {
           ref={inputRef}
           type="text"
           placeholder={
-            open ? "Escribe tu respuesta…" : room.paused ? "En pausa" : room.phase === "reveal" ? "Fin de la ronda" : "Escribe tu respuesta…"
+            open ? tr("Escribe tu respuesta…") : room.paused ? tr("En pausa") : room.phase === "reveal" ? tr("Fin de la ronda") : tr("Escribe tu respuesta…")
           }
           value={text}
           onChange={(e) => setText(e.target.value)}
@@ -200,7 +201,7 @@ function AnswerBox({ room, open, inputRef, onResult }) {
           spellCheck="false"
           enterKeyHint="send"
           maxLength={80}
-          aria-label="Tu respuesta"
+          aria-label={tr("Tu respuesta")}
         />
       </label>
       {/* Always there (off until something is typed); pressing it doesn't take the keyboard away from the box. */}
@@ -212,7 +213,7 @@ function AnswerBox({ room, open, inputRef, onResult }) {
         onMouseDown={(e) => e.preventDefault()}
       >
         <Icon name="send" size={20} strokeWidth={2.4} />
-        <span className="tv-mwrite-send-label">Enviar</span>
+        <span className="tv-mwrite-send-label">{tr("Enviar")}</span>
       </button>
     </form>
   );
@@ -223,16 +224,16 @@ function AnswerBox({ room, open, inputRef, onResult }) {
 function roundBurst(room, question, viewerId) {
   const winners = (question.winners || []).map((id) => room.players.find((p) => p.id === id)).filter(Boolean);
   const me = room.players.find((p) => p.id === viewerId);
-  const mine = me && !me.spectator ? `Tú: ${me.lastAnswer?.text?.toLowerCase() || "sin aciertos"}` : "";
+  const mine = me && !me.spectator ? tr("Tú: {v0}", { v0: me.lastAnswer?.text?.toLowerCase() || tr("sin aciertos") }) : "";
   const best = pointsText(question.best || 0);
-  if (!winners.length) return { tone: "none", icon: "rain", title: "Nadie sumó puntos", detail: "¡Que no se escapen en la próxima!" };
+  if (!winners.length) return { tone: "none", icon: "rain", title: tr("Nadie sumó puntos"), detail: tr("¡Que no se escapen en la próxima!") };
   if (winners.length > 1) {
     const iWon = winners.some((p) => p.id === viewerId);
-    return { tone: iWon ? "win" : "tie", icon: "crown", title: iWon ? "¡Empate en cabeza!" : "¡Empate!", detail: `${joinNames(winners.map((p) => p.name))}, con ${best}` };
+    return { tone: iWon ? "win" : "tie", icon: "crown", title: iWon ? tr("¡Empate en cabeza!") : tr("¡Empate!"), detail: tr("{v0}, con {best}", { v0: joinNames(winners.map((p) => p.name)), best: best }) };
   }
   const [winner] = winners;
-  if (winner.id === viewerId) return { tone: "win", icon: "crown", title: "¡Ganaste la ronda!", detail: `Con ${best}` };
-  return { tone: "other", icon: "crown", title: `${winner.name} ganó la ronda`, detail: mine || `Con ${best}` };
+  if (winner.id === viewerId) return { tone: "win", icon: "crown", title: tr("¡Ganaste la ronda!"), detail: tr("Con {best}", { best: best }) };
+  return { tone: "other", icon: "crown", title: tr("{name} ganó la ronda", { name: winner.name }), detail: mine || tr("Con {best}", { best: best }) };
 }
 
 function GameScreen() {
@@ -318,7 +319,7 @@ function GameScreen() {
       return;
     }
     setConfirmHub(false);
-    restartGame().catch((e) => setErr(e.message || "No se pudo terminar la partida"));
+    restartGame().catch((e) => setErr(e.message || tr("No se pudo terminar la partida")));
   }
 
   function onResult(result) {
@@ -331,7 +332,7 @@ function GameScreen() {
       <div className="tv-card tv-lobby-guest">
         <p className="tv-party-status">
           <span className="tv-pulse" aria-hidden="true" />
-          Conectando a la partida…
+          {tr("Conectando a la partida…")}
         </p>
       </div>
     );
@@ -347,7 +348,7 @@ function GameScreen() {
   const reveal = phase === "reveal";
   const playerIndex = (id) => Math.max(0, room.players.findIndex((p) => p.id === id));
   const colorOf = (id) => PLAYER_COLORS[playerIndex(id) % PLAYER_COLORS.length];
-  const nameOf = (id) => room.players.find((p) => p.id === id)?.name || "Otro jugador";
+  const nameOf = (id) => room.players.find((p) => p.id === id)?.name || tr("Otro jugador");
   const myPoints = me?.lastPoints || 0;
   const myHits = me?.hits || 0;
   const lastRound = round + 1 >= room.totalRounds;
@@ -360,16 +361,16 @@ function GameScreen() {
   // The card's question, the same through the round and its reveal (how the round went goes on the card's first row
   // and in the card over the rain). This player's points of the round are on that first row too.
   let title;
-  if (phase === "countdown") title = "¡Prepárate, va a llover!";
-  else if (central) title = "¡Escriban las respuestas!";
-  else if (spectator) title = "Estás viendo la partida";
-  else title = "Responde cualquier pregunta antes que nadie";
+  if (phase === "countdown") title = tr("¡Prepárate, va a llover!");
+  else if (central) title = tr("¡Escriban las respuestas!");
+  else if (spectator) title = tr("Estás viendo la partida");
+  else title = tr("Responde cualquier pregunta antes que nadie");
   const outcomeTone = { win: "ok", tie: "ok", other: "timeout", none: "timeout" };
   const cardPills =
     reveal && outcome && canWrite ? (
       <RoundVerdict tone={outcomeTone[outcome.tone] || "timeout"} icon={outcome.icon} label={outcome.title} points={myPoints} />
     ) : canWrite && phase === "playing" ? (
-      <span className="tv-qc-points" role="status" aria-label={`${pointsText(myPoints)} en esta ronda`}>
+      <span className="tv-qc-points" role="status" aria-label={tr("{v0} en esta ronda", { v0: pointsText(myPoints) })}>
         {pointsText(myPoints)}
       </span>
     ) : null;
@@ -387,27 +388,27 @@ function GameScreen() {
     hintIcon = "check";
     hintTone = " is-sent";
   } else if (last?.takenBy && phase === "playing") {
-    hint = `${last.takenBy} respondió «${last.answer}» antes que tú`;
+    hint = tr("{takenBy} respondió «{answer}» antes que tú", { takenBy: last.takenBy, answer: last.answer });
     hintIcon = "bolt";
     hintTone = " is-out";
   } else if ((last?.miss || last?.error) && phase === "playing") {
-    hint = last.error || `«${last.miss}» no es la respuesta de ninguna pregunta`;
+    hint = last.error || tr("«{miss}» no es la respuesta de ninguna pregunta", { miss: last.miss });
     hintIcon = "close";
     hintTone = " is-out";
   } else if (phase === "countdown") {
-    hint = "Verde 1 punto, amarilla 3 y roja 5. Cada pregunta es de quien la responda primero.";
+    hint = tr("Verde 1 punto, amarilla 3 y roja 5. Cada pregunta es de quien la responda primero.");
     hintIcon = "star";
   } else if (reveal) {
-    hint = lastRound ? "Calculando resultados…" : "Siguiente ronda en breve…";
+    hint = lastRound ? tr("Calculando resultados…") : tr("Siguiente ronda en breve…");
     hintIcon = "check";
   } else if (central) {
-    hint = "Cada uno escribe en su teléfono. Cada pregunta es de quien la responda primero.";
+    hint = tr("Cada uno escribe en su teléfono. Cada pregunta es de quien la responda primero.");
     hintIcon = "phone";
   } else if (spectator) {
-    hint = "Jugarás en la siguiente partida.";
+    hint = tr("Jugarás en la siguiente partida.");
     hintIcon = "info";
   } else {
-    hint = myHits ? `${hitsText(myHits)}. ¡Sigue, que no paran de caer!` : "Escribe la respuesta de cualquier pregunta y pulsa Enter.";
+    hint = myHits ? tr("{v0}. ¡Sigue, que no paran de caer!", { v0: hitsText(myHits) }) : tr("Escribe la respuesta de cualquier pregunta y pulsa Enter.");
   }
 
   // The host's controls of the match: in the top card, or in the thin bar of a phone beside a central device.
@@ -417,7 +418,7 @@ function GameScreen() {
       <PauseButton room={room} isHost={isHost} onError={setErr} />
       {isHost && (
         <button type="button" className={`tv-mini-btn tv-end-btn${confirmHub ? " is-on" : ""}`} onClick={backToHub}>
-          {confirmHub ? "¿Seguro? Toca otra vez" : "Terminar"}
+          {confirmHub ? tr("¿Seguro? Toca otra vez") : tr("Terminar")}
         </button>
       )}
     </>
@@ -442,7 +443,7 @@ function GameScreen() {
       <AnswerCard
         icon={burst.icon}
         iconTone={burst.tone === "win" ? "ok" : null}
-        label={!central && !spectator && myPoints > 0 ? `+${myPoints} en esta ronda` : "La ronda"}
+        label={!central && !spectator && myPoints > 0 ? tr("+{myPoints} en esta ronda", { myPoints: myPoints }) : tr("La ronda")}
         value={burst.title}
         detail={burst.detail}
       />
@@ -473,12 +474,12 @@ function GameScreen() {
                 {countdown}
                 {phase !== "countdown" && (
                   <>
-                    <p className="tv-rain-pad-label">{reveal ? "Tu ronda" : "Tus puntos en esta ronda"}</p>
+                    <p className="tv-rain-pad-label">{reveal ? tr("Tu ronda") : tr("Tus puntos en esta ronda")}</p>
                     <strong key={myPoints} className="tv-rain-pad-points">{myPoints}</strong>
                     {outcome ? (
                       <p className="tv-rain-pad-note">{outcome.title}</p>
                     ) : (
-                      <ul className="tv-rain-pad-log" aria-label="Tus últimos aciertos">
+                      <ul className="tv-rain-pad-log" aria-label={tr("Tus últimos aciertos")}>
                         {log.map((hit, i) => (
                           <li key={`${hit.drop}-${i}`}>
                             <span>+{hit.points}</span>
@@ -512,7 +513,7 @@ function GameScreen() {
                 {canWrite ? (
                   <AnswerBox room={room} open={open} inputRef={inputRef} onResult={onResult} />
                 ) : (
-                  <PhoneHint>Escriban las respuestas en su teléfono</PhoneHint>
+                  <PhoneHint>{tr("Escriban las respuestas en su teléfono")}</PhoneHint>
                 )}
               </div>
             )}
@@ -522,15 +523,15 @@ function GameScreen() {
             <PauseVeil room={room} isHost={isHost} />
             <p className="tv-party-status">
               <span className="tv-pulse" aria-hidden="true" />
-              Cargando la lluvia…
+              {tr("Cargando la lluvia…")}
             </p>
           </section>
         )}
       </div>
 
       {/* The scoreboard is the central device's, when there is one. */}
-      {!controller && <PartyPanel room={room} scores display={central} onToast={setErr} status={phase === "playing" ? `Acertaron ${room.players.filter((p) => !p.spectator && (p.hits || 0) > 0).length}/${room.players.filter((p) => !p.spectator).length}` : undefined} />}
-      {!controller && !central && <MatchBar room={room} viewerId={viewerId} tools={tools} line={phase === "playing" ? "Respondan antes que nadie" : undefined} />}
+      {!controller && <PartyPanel room={room} scores display={central} onToast={setErr} status={phase === "playing" ? tr("Acertaron {a}/{b}", { a: room.players.filter((p) => !p.spectator && (p.hits || 0) > 0).length, b: room.players.filter((p) => !p.spectator).length }) : undefined} />}
+      {!controller && !central && <MatchBar room={room} viewerId={viewerId} tools={tools} line={phase === "playing" ? tr("Respondan antes que nadie") : undefined} />}
     </div>
   );
 }

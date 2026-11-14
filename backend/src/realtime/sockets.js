@@ -1,19 +1,66 @@
 import { isDefaultSpotify } from "../catalog/defaultPlaylists.js";
-import { verifySocketToken } from "../auth/socketToken.js";
+import { readSocketToken } from "../auth/socketToken.js";
+import { normalizeLang } from "../i18n/content.js";
 import { prefetchMedia } from "../audio/mediaCache.js";
 import { readPublicSpotify, spotifyLinkFrom } from "../catalog/spotifyEmbed.js";
 import { readSpotifyPlaylist } from "../catalog/spotifyLibrary.js";
 import { saveQuestionReport } from "../db/reports.js";
-import { forgetSpotifyLink, playerAvatar, saveSpotifyLink, savedSpotifyLinks } from "../db/store.js";
+import { forgetSpotifyLink, playerAvatar, saveSpotifyLink, savedSpotifyLinks, sessionStillValid } from "../db/store.js";
 import { prefetchFlags } from "../geo/flags.js";
 import { prefetchImages } from "../questions/images.js";
 import { isAccount } from "../auth/username.js";
-import { hasRole } from "../auth/roles.js";
 import { GroupManager } from "../game/groups.js";
 import { cleanMatchRequest, PUBLIC_GROUP_MAX } from "../game/matchmaking.js";
 
 // The same friend can be invited to a group again after this long (friend:invite).
 export const INVITE_GAP_MS = 15000;
+// The most messages one connection may send in a second before the rest are ignored (attachSockets).
+export const EVENTS_PER_SECOND = 40;
+
+/**
+ * Nobody playing sends more than a few messages a second: past EVENTS_PER_SECOND a connection's messages are ignored
+ * (answered with an error) until the second ends, and a connection that is plainly a script is cut off.
+ */
+export function floodGuard(socket, clock = Date.now) {
+  let windowStart = clock();
+  let inWindow = 0;
+  return (packet, next) => {
+    const now = clock();
+    if (now - windowStart >= 1000) {
+      windowStart = now;
+      inWindow = 0;
+    }
+    inWindow += 1;
+    if (inWindow <= EVENTS_PER_SECOND) return next();
+    if (inWindow > EVENTS_PER_SECOND * 10) return socket.disconnect(true);
+    const ack = packet[packet.length - 1];
+    if (typeof ack === "function") ack({ ok: false, error: "Vas demasiado rápido. Espera un momento." });
+  };
+}
+
+/**
+ * The room's state to everyone in it, each one in their own language (the Spanish and the English of the content
+ * differ, the rest of the state doesn't): one message per language that is in the room.
+ */
+export function emitRoomState(io, rooms, room) {
+  if (!room?.code) return;
+  const ids = io.sockets?.adapter?.rooms?.get(room.code);
+  if (!ids) {
+    io.to(room.code).emit("room:state", rooms.publicState(room));
+    return;
+  }
+  const byLang = new Map();
+  for (const id of ids) {
+    const lang = io.sockets.sockets?.get(id)?.data?.lang || "es";
+    if (!byLang.has(lang)) byLang.set(lang, []);
+    byLang.get(lang).push(id);
+  }
+  if (byLang.size <= 1) {
+    io.to(room.code).emit("room:state", rooms.publicState(room, undefined, [...byLang.keys()][0] || "es"));
+    return;
+  }
+  for (const [lang, members] of byLang) io.to(members).emit("room:state", rooms.publicState(room, undefined, lang));
+}
 
 export function attachSockets(io, rooms, { friends = null, hub = null, groups = new GroupManager({ rooms }) } = {}) {
   hub?.attach(io);
@@ -21,9 +68,16 @@ export function attachSockets(io, rooms, { friends = null, hub = null, groups = 
   const invitedAt = new Map();
   // Who this connection is comes only from the signed token, never from ids the client puts in payloads.
   io.use((socket, next) => {
-    socket.data.userId = verifySocketToken(socket.handshake.auth?.token);
+    const token = readSocketToken(socket.handshake.auth?.token);
+    // A token from before the account signed out everywhere (a new password) no longer says who this is.
+    socket.data.userId = token && sessionStillValid(rooms.store?.users?.[token.uid], token.iat) ? token.uid : null;
+    // The language this person plays in (their device's, or what they picked): the content they get is in it.
+    socket.data.lang = normalizeLang(socket.handshake.auth?.lang);
     next();
   });
+
+  const emitState = (room) => emitRoomState(io, rooms, room);
+
 
   // Rounds are chosen a little ahead during the match; their audio and covers start downloading right then.
   rooms.onNewTracks = (tracks) => prefetchMedia(tracks);
@@ -45,7 +99,7 @@ export function attachSockets(io, rooms, { friends = null, hub = null, groups = 
 
   rooms.onPhaseChange = (room) => {
     if (room && room.code) {
-      io.to(room.code).emit("room:state", rooms.publicState(room));
+      emitState(room);
       hub?.touchRoom(room);
     }
   };
@@ -63,7 +117,7 @@ export function attachSockets(io, rooms, { friends = null, hub = null, groups = 
       code,
       role,
       notice: notice || null,
-      state: room ? rooms.publicState(room, role === "player" ? userId : undefined) : null,
+      state: room ? rooms.publicState(room, role === "player" ? userId : undefined, target.data.lang) : null,
     });
   };
 
@@ -85,7 +139,7 @@ export function attachSockets(io, rooms, { friends = null, hub = null, groups = 
     const missing = [...(group.settingsBy || [])].filter((id) => id !== room.hostId && !room.coHosts?.includes(id));
     if (!missing.length) return;
     room.coHosts = [...(room.coHosts || []), ...missing];
-    io.to(room.code).emit("room:state", rooms.publicState(room));
+    emitState(room);
   };
 
   // The leader is the host of the group's private match: when the group gets a new leader, the match gets a new host.
@@ -97,7 +151,7 @@ export function attachSockets(io, rooms, { friends = null, hub = null, groups = 
     room.coHosts = (room.coHosts || []).filter((id) => id !== group.leaderId);
     room.preview = null;
     room.suggestions = [];
-    io.to(room.code).emit("room:state", rooms.publicState(room));
+    emitState(room);
   };
 
   // A dropped player's place in the group ran out.
@@ -129,7 +183,7 @@ export function attachSockets(io, rooms, { friends = null, hub = null, groups = 
 
   // Tells a connection the group took it into another room (with the room as it is) or, with null, back to Inicio.
   const tellMoved = (socket, room, userId) =>
-    socket.emit("room:moved", room ? { code: room.code, state: rooms.publicState(room, userId) } : { code: null });
+    socket.emit("room:moved", room ? { code: room.code, state: rooms.publicState(room, userId, socket.data.lang) } : { code: null });
 
   // The group goes into `room` (the private match its leader made): every player it can take, from wherever they are.
   const moveGroupTo = (group, room, exceptUserId) => {
@@ -146,7 +200,7 @@ export function attachSockets(io, rooms, { friends = null, hub = null, groups = 
       tellMoved(socket, room, member.id);
     }
     group.roomCode = room.code;
-    io.to(room.code).emit("room:state", rooms.publicState(room));
+    emitState(room);
     sendGroup(group);
   };
 
@@ -162,7 +216,7 @@ export function attachSockets(io, rooms, { friends = null, hub = null, groups = 
         tellMoved(socket, null);
       } else if (room?.players.get(member.id) && !room.players.get(member.id).connected && rooms.rooms.get(room.code) === room) {
         const result = rooms.removePlayer(room, member.id);
-        if (result.room) io.to(room.code).emit("room:state", rooms.publicState(room));
+        if (result.room) emitState(room);
       }
     }
     group.roomCode = null;
@@ -182,7 +236,7 @@ export function attachSockets(io, rooms, { friends = null, hub = null, groups = 
         leaveCurrentRoom(io, rooms, socket, place.code);
         rooms.addPlayer(place, user);
         socket.join(place.code);
-        io.to(place.code).emit("room:state", rooms.publicState(place));
+        emitState(place);
         return place;
       } catch {
         return null;
@@ -212,7 +266,7 @@ export function attachSockets(io, rooms, { friends = null, hub = null, groups = 
       syncHost(left);
       sendGroup(left);
     } else if (place) {
-      io.to(place.code).emit("room:state", rooms.publicState(place));
+      emitState(place);
     }
     hub?.touch(userId);
     return leftRoom;
@@ -222,10 +276,21 @@ export function attachSockets(io, rooms, { friends = null, hub = null, groups = 
   const touchGroupOf = (socket) => sendGroup(groups.ofSocket(socket.id));
 
   io.on("connection", (socket) => {
+    socket.use?.(floodGuard(socket));
+
     // Accounts get their friends tab: who is online, where, and the requests. Any event of theirs may change what their
     // friends see (they made, joined or left a room...), so the friends' views are refreshed after it.
     hub?.connect(socket);
     socket.onAny?.(() => hub?.touch(socket.data.userId, ...(rooms.roomOfUser(socket.data.userId)?.players.keys() || [])));
+
+    // This person changed the language they play in: the room they are in is sent to them again in it.
+    socket.on("lang:set", (lang, ack) => {
+      socket.data.lang = normalizeLang(lang);
+      const ref = rooms.socketToRoom.get(socket.id);
+      const room = ref ? rooms.get(ref.code) : null;
+      if (room) socket.emit("room:state", rooms.publicState(room, ref.central ? undefined : ref.userId, socket.data.lang));
+      ack?.({ ok: true });
+    });
 
     // A friend joins the group of a friend, as its leader allows: straight in (with its code), or asking the leader first.
     socket.on("friend:join", (payload, ack) => {
@@ -346,7 +411,7 @@ export function attachSockets(io, rooms, { friends = null, hub = null, groups = 
         if (room && room.hostId === user.id && !room.groupCode) {
           room.groupCode = group.code;
           group.roomCode = room.code;
-          io.to(room.code).emit("room:state", rooms.publicState(room));
+          emitState(room);
         }
         ack?.({ ok: true, group: groups.publicGroup(group) });
         hub?.touch(user.id);
@@ -390,7 +455,7 @@ export function attachSockets(io, rooms, { friends = null, hub = null, groups = 
         const leadsAgain = groups.reclaimLeader(group, user.id);
         const room = follow(group, socket, user);
         if (leadsAgain) syncHost(group);
-        ack?.({ ok: true, group: groups.publicGroup(group), room: room ? rooms.publicState(room, user.id) : null });
+        ack?.({ ok: true, group: groups.publicGroup(group), room: room ? rooms.publicState(room, user.id, socket.data.lang) : null });
         sendGroup(group);
       } catch (err) {
         ack?.({ ok: false, error: err.message, busy: err.busy });
@@ -446,7 +511,7 @@ export function attachSockets(io, rooms, { friends = null, hub = null, groups = 
         const granted = groups.togglePermission(group, userId, target);
         if (!granted && room?.groupCode === group.code && room.coHosts?.includes(target)) {
           room.coHosts = room.coHosts.filter((id) => id !== target);
-          io.to(room.code).emit("room:state", rooms.publicState(room));
+          emitState(room);
         }
         sendGroup(group);
         ack?.({ ok: true, granted, group: groups.publicGroup(group) });
@@ -481,7 +546,7 @@ export function attachSockets(io, rooms, { friends = null, hub = null, groups = 
           const target = socketId && io.sockets.sockets.get(socketId);
           target?.leave(place.code);
           target?.emit("room:kicked", { code: place.code });
-          io.to(place.code).emit("room:state", rooms.publicState(place));
+          emitState(place);
         }
         if (member.socketId) io.to(member.socketId).emit("group:left", { code: group.code, reason: "sacado" });
         sendGroup(group);
@@ -515,9 +580,9 @@ export function attachSockets(io, rooms, { friends = null, hub = null, groups = 
           groupCode: group?.code || null,
         });
         socket.join(room.code);
-        ack?.({ ok: true, state: rooms.publicState(room, user.id) });
+        ack?.({ ok: true, state: rooms.publicState(room, user.id, socket.data.lang) });
         if (group) moveGroupTo(group, room, user.id);
-        else io.to(room.code).emit("room:state", rooms.publicState(room));
+        else emitState(room);
       } catch (err) {
         ack?.({ ok: false, error: err.message, busy: err.busy });
       }
@@ -537,12 +602,9 @@ export function attachSockets(io, rooms, { friends = null, hub = null, groups = 
         if (party.length + 1 > PUBLIC_GROUP_MAX) throw new Error(`Una partida pública es de ${PUBLIC_GROUP_MAX} como mucho y tu grupo es de ${party.length + 1}`);
         leaveCurrentRoom(io, rooms, socket);
         for (const { socket: other } of party) leaveCurrentRoom(io, rooms, other);
-        // Only an owner's account (checked here, never the client's word) can force the games of its own match.
-        const owner = rooms.store.users[socket.data.userId];
-        const force = owner && hasRole(owner, "owner") ? payload?.force : null;
         let room;
         try {
-          room = rooms.findMatch(user, { ...payload, force }, party.map(({ member }) => asUser(member)));
+          room = rooms.findMatch(user, payload, party.map(({ member }) => asUser(member)));
         } catch (err) {
           for (const { socket: other } of party) tellMoved(other, null);
           throw err;
@@ -556,8 +618,8 @@ export function attachSockets(io, rooms, { friends = null, hub = null, groups = 
           group.roomCode = room.code;
           sendGroup(group);
         }
-        ack?.({ ok: true, state: rooms.publicState(room, user.id) });
-        io.to(room.code).emit("room:state", rooms.publicState(room));
+        ack?.({ ok: true, state: rooms.publicState(room, user.id, socket.data.lang) });
+        emitState(room);
       } catch (err) {
         ack?.({ ok: false, error: err.message, busy: err.busy });
       }
@@ -576,16 +638,16 @@ export function attachSockets(io, rooms, { friends = null, hub = null, groups = 
           if (!isCentral) leaveCurrentRoom(io, rooms, socket);
           if (!rooms.reattachCentral(room, user)) throw new Error("Este dispositivo ya no es el dispositivo central de la sala");
           socket.join(room.code);
-          ack?.({ ok: true, role: "central", state: rooms.publicState(room) });
-          io.to(room.code).emit("room:state", rooms.publicState(room));
+          ack?.({ ok: true, role: "central", state: rooms.publicState(room, undefined, socket.data.lang) });
+          emitState(room);
           return;
         }
         await assertAccountFree(io, rooms, socket, user.id, room);
         leaveCurrentRoom(io, rooms, socket, room.code);
         rooms.addPlayer(room, user);
         socket.join(room.code);
-        ack?.({ ok: true, role: "player", state: rooms.publicState(room, user.id) });
-        io.to(room.code).emit("room:state", rooms.publicState(room));
+        ack?.({ ok: true, role: "player", state: rooms.publicState(room, user.id, socket.data.lang) });
+        emitState(room);
         touchGroupOf(socket);
       } catch (err) {
         ack?.({ ok: false, error: err.message, busy: err.busy, sameRoom: err.sameRoom, isHost: err.isHost, hostName: err.hostName });
@@ -603,8 +665,8 @@ export function attachSockets(io, rooms, { friends = null, hub = null, groups = 
         if (!(ref?.central && ref.code === room.code)) leaveCurrentRoom(io, rooms, socket);
         rooms.joinAsCentral(room, user);
         socket.join(room.code);
-        ack?.({ ok: true, role: "central", state: rooms.publicState(room) });
-        io.to(room.code).emit("room:state", rooms.publicState(room));
+        ack?.({ ok: true, role: "central", state: rooms.publicState(room, undefined, socket.data.lang) });
+        emitState(room);
       } catch (err) {
         ack?.({ ok: false, error: err.message });
       }
@@ -618,14 +680,14 @@ export function attachSockets(io, rooms, { friends = null, hub = null, groups = 
         if (!room) throw new Error("Sala no encontrada");
         const request = rooms.requestCentral(room, user);
         ack?.({ ok: true, requestId: request.id });
-        io.to(room.code).emit("room:state", rooms.publicState(room));
+        emitState(room);
       } catch (err) {
         ack?.({ ok: false, error: err.message });
       }
     });
 
     socket.on("room:cancelCentralRequest", (ack) => {
-      for (const room of rooms.dropCentralRequests(socket.id)) io.to(room.code).emit("room:state", rooms.publicState(room));
+      for (const room of rooms.dropCentralRequests(socket.id)) emitState(room);
       ack?.({ ok: true });
     });
 
@@ -634,8 +696,8 @@ export function attachSockets(io, rooms, { friends = null, hub = null, groups = 
       try {
         const { room, userId } = requireRoom(rooms, socket);
         const result = rooms.answerCentralRequest(room, userId, payload?.id, Boolean(payload?.accept));
-        ack?.({ ok: true, ...result, state: rooms.publicState(room, userId) });
-        io.to(room.code).emit("room:state", rooms.publicState(room));
+        ack?.({ ok: true, ...result, state: rooms.publicState(room, userId, socket.data.lang) });
+        emitState(room);
       } catch (err) {
         ack?.({ ok: false, error: err.message });
       }
@@ -646,8 +708,8 @@ export function attachSockets(io, rooms, { friends = null, hub = null, groups = 
       try {
         const { room, userId } = requireRoom(rooms, socket);
         const result = rooms.makeCentral(room, userId, targetUserId);
-        ack?.({ ok: true, ...result, state: rooms.publicState(room, userId) });
-        io.to(room.code).emit("room:state", rooms.publicState(room));
+        ack?.({ ok: true, ...result, state: rooms.publicState(room, userId, socket.data.lang) });
+        emitState(room);
       } catch (err) {
         ack?.({ ok: false, error: err.message });
       }
@@ -658,8 +720,8 @@ export function attachSockets(io, rooms, { friends = null, hub = null, groups = 
       try {
         const { room, userId } = requireRoom(rooms, socket);
         rooms.removeCentral(room, userId);
-        ack?.({ ok: true, state: rooms.publicState(room, userId) });
-        io.to(room.code).emit("room:state", rooms.publicState(room));
+        ack?.({ ok: true, state: rooms.publicState(room, userId, socket.data.lang) });
+        emitState(room);
       } catch (err) {
         ack?.({ ok: false, error: err.message });
       }
@@ -688,7 +750,7 @@ export function attachSockets(io, rooms, { friends = null, hub = null, groups = 
         const { room, userId } = requireRoom(rooms, socket);
         rooms.previewGame(room, userId, game);
         ack?.({ ok: true });
-        io.to(room.code).emit("room:state", rooms.publicState(room));
+        emitState(room);
       } catch (err) {
         ack?.({ ok: false, error: err.message });
       }
@@ -700,7 +762,7 @@ export function attachSockets(io, rooms, { friends = null, hub = null, groups = 
         const { room, userId } = requireRoom(rooms, socket);
         rooms.suggestGame(room, userId, game);
         ack?.({ ok: true });
-        io.to(room.code).emit("room:state", rooms.publicState(room));
+        emitState(room);
       } catch (err) {
         ack?.({ ok: false, error: err.message });
       }
@@ -710,8 +772,8 @@ export function attachSockets(io, rooms, { friends = null, hub = null, groups = 
       try {
         const { room, userId } = requireRoom(rooms, socket);
         rooms.setGame(room, userId, game);
-        ack?.({ ok: true, state: rooms.publicState(room, userId) });
-        io.to(room.code).emit("room:state", rooms.publicState(room));
+        ack?.({ ok: true, state: rooms.publicState(room, userId, socket.data.lang) });
+        emitState(room);
       } catch (err) {
         ack?.({ ok: false, error: err.message });
       }
@@ -721,8 +783,8 @@ export function attachSockets(io, rooms, { friends = null, hub = null, groups = 
       try {
         const { room, userId } = requireRoom(rooms, socket);
         rooms.updateConfig(room, userId, config);
-        ack?.({ ok: true, state: rooms.publicState(room, userId) });
-        io.to(room.code).emit("room:state", rooms.publicState(room));
+        ack?.({ ok: true, state: rooms.publicState(room, userId, socket.data.lang) });
+        emitState(room);
       } catch (err) {
         ack?.({ ok: false, error: err.message });
       }
@@ -736,8 +798,8 @@ export function attachSockets(io, rooms, { friends = null, hub = null, groups = 
         const playlist = await readSpotifyPlaylist(rooms.store, userId, String(playlistId || ""));
         if (!playlist.tracks.length) throw new Error("Esa playlist no tiene canciones que se puedan usar");
         rooms.addSpotifyPlaylist(room, userId, playlist);
-        ack?.({ ok: true, state: rooms.publicState(room, userId) });
-        io.to(room.code).emit("room:state", rooms.publicState(room));
+        ack?.({ ok: true, state: rooms.publicState(room, userId, socket.data.lang) });
+        emitState(room);
       } catch (err) {
         ack?.({ ok: false, error: err.message });
       }
@@ -748,8 +810,8 @@ export function attachSockets(io, rooms, { friends = null, hub = null, groups = 
       try {
         const { room, userId } = requireRoom(rooms, socket);
         rooms.removeSpotifyPlaylist(room, userId, String(playlistId || ""));
-        ack?.({ ok: true, state: rooms.publicState(room, userId) });
-        io.to(room.code).emit("room:state", rooms.publicState(room));
+        ack?.({ ok: true, state: rooms.publicState(room, userId, socket.data.lang) });
+        emitState(room);
       } catch (err) {
         ack?.({ ok: false, error: err.message });
       }
@@ -770,8 +832,8 @@ export function attachSockets(io, rooms, { friends = null, hub = null, groups = 
           ? savedSpotifyLinks(rooms.store, userId)
           : saveSpotifyLink(rooms.store, userId, { ...target, name: playlist.name, image: playlist.image, total: playlist.tracks.length });
         // `added`: the room's id of what was read, so a game of a playlist of games can tick it in its own settings.
-        ack?.({ ok: true, state: rooms.publicState(room, userId), saved, added: `sp:${playlist.id}` });
-        io.to(room.code).emit("room:state", rooms.publicState(room));
+        ack?.({ ok: true, state: rooms.publicState(room, userId, socket.data.lang), saved, added: `sp:${playlist.id}` });
+        emitState(room);
       } catch (err) {
         ack?.({ ok: false, error: err.message });
       }
@@ -805,8 +867,8 @@ export function attachSockets(io, rooms, { friends = null, hub = null, groups = 
           else group.settingsBy.delete(targetUserId);
           sendGroup(group);
         }
-        ack?.({ ok: true, ...result, state: rooms.publicState(room, userId) });
-        io.to(room.code).emit("room:state", rooms.publicState(room));
+        ack?.({ ok: true, ...result, state: rooms.publicState(room, userId, socket.data.lang) });
+        emitState(room);
       } catch (err) {
         ack?.({ ok: false, error: err.message });
       }
@@ -822,8 +884,8 @@ export function attachSockets(io, rooms, { friends = null, hub = null, groups = 
           group.leaderId = targetUserId;
           sendGroup(group);
         }
-        ack?.({ ok: true, state: rooms.publicState(room, userId) });
-        io.to(room.code).emit("room:state", rooms.publicState(room));
+        ack?.({ ok: true, state: rooms.publicState(room, userId, socket.data.lang) });
+        emitState(room);
       } catch (err) {
         ack?.({ ok: false, error: err.message });
       }
@@ -847,8 +909,8 @@ export function attachSockets(io, rooms, { friends = null, hub = null, groups = 
           if (member.socketId) io.to(member.socketId).emit("group:left", { code: group.code, reason: "sacado" });
           sendGroup(group);
         }
-        ack?.({ ok: true, state: rooms.publicState(room, userId) });
-        io.to(room.code).emit("room:state", rooms.publicState(room));
+        ack?.({ ok: true, state: rooms.publicState(room, userId, socket.data.lang) });
+        emitState(room);
       } catch (err) {
         ack?.({ ok: false, error: err.message });
       }
@@ -859,7 +921,7 @@ export function attachSockets(io, rooms, { friends = null, hub = null, groups = 
         const { room, userId } = requireRoom(rooms, socket);
         rooms.setReady(room, userId, ready);
         ack?.({ ok: true });
-        io.to(room.code).emit("room:state", rooms.publicState(room));
+        emitState(room);
       } catch (err) {
         ack?.({ ok: false, error: err.message });
       }
@@ -875,7 +937,7 @@ export function attachSockets(io, rooms, { friends = null, hub = null, groups = 
         prefetchImages(room.tracks);
         watchRoom(io, rooms, room);
         ack?.({ ok: true });
-        io.to(room.code).emit("room:state", rooms.publicState(room));
+        emitState(room);
       } catch (err) {
         ack?.({ ok: false, error: err.message });
       }
@@ -890,8 +952,8 @@ export function attachSockets(io, rooms, { friends = null, hub = null, groups = 
         if (group && !rooms.socketToRoom.has(socket.id)) return ack?.({ ok: true });
         const { room, userId } = requireRoom(rooms, socket);
         rooms.updatePlayer(room, userId, changes);
-        ack?.({ ok: true, state: rooms.publicState(room, userId) });
-        io.to(room.code).emit("room:state", rooms.publicState(room));
+        ack?.({ ok: true, state: rooms.publicState(room, userId, socket.data.lang) });
+        emitState(room);
       } catch (err) {
         ack?.({ ok: false, error: err.message });
       }
@@ -905,7 +967,7 @@ export function attachSockets(io, rooms, { friends = null, hub = null, groups = 
         if (paused) rooms.pause(room, userId, socket.data.userId);
         else rooms.resume(room, userId, socket.data.userId);
         ack?.({ ok: true });
-        io.to(room.code).emit("room:state", rooms.publicState(room));
+        emitState(room);
       } catch (err) {
         ack?.({ ok: false, error: err.message });
       }
@@ -917,7 +979,7 @@ export function attachSockets(io, rooms, { friends = null, hub = null, groups = 
         const { room } = requireRoom(rooms, socket);
         rooms.skipRound(room, socket.data.userId);
         ack?.({ ok: true });
-        io.to(room.code).emit("room:state", rooms.publicState(room));
+        emitState(room);
       } catch (err) {
         ack?.({ ok: false, error: err.message });
       }
@@ -942,7 +1004,7 @@ export function attachSockets(io, rooms, { friends = null, hub = null, groups = 
         const { room, userId } = requireRoom(rooms, socket);
         rooms.endByHost(room, userId);
         ack?.({ ok: true });
-        io.to(room.code).emit("room:state", rooms.publicState(room));
+        emitState(room);
       } catch (err) {
         ack?.({ ok: false, error: err.message });
       }
@@ -964,7 +1026,7 @@ export function attachSockets(io, rooms, { friends = null, hub = null, groups = 
       } catch (err) {
         ack?.({ ok: false, error: err.message });
       }
-      if (room) io.to(room.code).emit("room:state", rooms.publicState(room));
+      if (room) emitState(room);
     });
 
     // "Volver a jugar": a new match straight away (RoomManager.replay). If it can't start, everyone is back in the
@@ -983,7 +1045,7 @@ export function attachSockets(io, rooms, { friends = null, hub = null, groups = 
       } catch (err) {
         ack?.({ ok: false, error: err.message });
       }
-      if (room) io.to(room.code).emit("room:state", rooms.publicState(room));
+      if (room) emitState(room);
     });
 
     socket.on("room:restart", (ack) => {
@@ -991,7 +1053,7 @@ export function attachSockets(io, rooms, { friends = null, hub = null, groups = 
         const { room, userId } = requireRoom(rooms, socket);
         rooms.restart(room, userId);
         ack?.({ ok: true });
-        io.to(room.code).emit("room:state", rooms.publicState(room));
+        emitState(room);
       } catch (err) {
         ack?.({ ok: false, error: err.message });
       }
@@ -1002,8 +1064,8 @@ export function attachSockets(io, rooms, { friends = null, hub = null, groups = 
       try {
         const { room, userId } = requireRoom(rooms, socket);
         rooms.skip(room, userId);
-        ack?.({ ok: true, state: rooms.publicState(room, userId) });
-        io.to(room.code).emit("room:state", rooms.publicState(room));
+        ack?.({ ok: true, state: rooms.publicState(room, userId, socket.data.lang) });
+        emitState(room);
       } catch (err) {
         ack?.({ ok: false, error: err.message });
       }
@@ -1013,8 +1075,8 @@ export function attachSockets(io, rooms, { friends = null, hub = null, groups = 
       try {
         const { room, userId } = requireRoom(rooms, socket);
         rooms.submitAnswer(room, userId, text);
-        ack?.({ ok: true, state: rooms.publicState(room, userId) });
-        io.to(room.code).emit("room:state", rooms.publicState(room));
+        ack?.({ ok: true, state: rooms.publicState(room, userId, socket.data.lang) });
+        emitState(room);
       } catch (err) {
         ack?.({ ok: false, error: err.message });
       }
@@ -1026,8 +1088,8 @@ export function attachSockets(io, rooms, { friends = null, hub = null, groups = 
       try {
         const { room, userId } = requireRoom(rooms, socket);
         const locked = rooms.placePin(room, userId, pin);
-        ack?.({ ok: true, state: rooms.publicState(room, userId) });
-        if (locked) io.to(room.code).emit("room:state", rooms.publicState(room));
+        ack?.({ ok: true, state: rooms.publicState(room, userId, socket.data.lang) });
+        if (locked) emitState(room);
       } catch (err) {
         ack?.({ ok: false, error: err.message });
       }
@@ -1039,8 +1101,8 @@ export function attachSockets(io, rooms, { friends = null, hub = null, groups = 
       try {
         const { room, userId } = requireRoom(rooms, socket);
         const locked = rooms.placeYear(room, userId, value);
-        ack?.({ ok: true, state: rooms.publicState(room, userId) });
-        if (locked) io.to(room.code).emit("room:state", rooms.publicState(room));
+        ack?.({ ok: true, state: rooms.publicState(room, userId, socket.data.lang) });
+        if (locked) emitState(room);
       } catch (err) {
         ack?.({ ok: false, error: err.message });
       }
@@ -1051,8 +1113,8 @@ export function attachSockets(io, rooms, { friends = null, hub = null, groups = 
       try {
         const { room, userId } = requireRoom(rooms, socket);
         rooms.pickCell(room, userId, value);
-        ack?.({ ok: true, state: rooms.publicState(room, userId) });
-        io.to(room.code).emit("room:state", rooms.publicState(room));
+        ack?.({ ok: true, state: rooms.publicState(room, userId, socket.data.lang) });
+        emitState(room);
       } catch (err) {
         ack?.({ ok: false, error: err.message });
       }
@@ -1067,7 +1129,7 @@ export function attachSockets(io, rooms, { friends = null, hub = null, groups = 
         const result = rooms.rainAnswer(room, userId, text);
         const hit = result && !result.takenBy ? result : null;
         ack?.({ ok: true, hit, takenBy: result?.takenBy || null, answer: result?.answer || null });
-        if (hit) io.to(room.code).emit("room:state", rooms.publicState(room));
+        if (hit) emitState(room);
       } catch (err) {
         ack?.({ ok: false, error: err.message });
       }
@@ -1092,7 +1154,7 @@ export function attachSockets(io, rooms, { friends = null, hub = null, groups = 
         const { room } = requireRoom(rooms, socket);
         rooms.addTestBot(room, socket.data.userId);
         ack?.({ ok: true });
-        io.to(room.code).emit("room:state", rooms.publicState(room));
+        emitState(room);
       } catch (err) {
         ack?.({ ok: false, error: err.message });
       }
@@ -1105,7 +1167,7 @@ export function attachSockets(io, rooms, { friends = null, hub = null, groups = 
         const { room, userId } = requireRoom(rooms, socket);
         rooms.farsanteWrite(room, userId, text);
         ack?.({ ok: true });
-        io.to(room.code).emit("room:state", rooms.publicState(room));
+        emitState(room);
       } catch (err) {
         ack?.({ ok: false, error: err.message });
       }
@@ -1115,7 +1177,7 @@ export function attachSockets(io, rooms, { friends = null, hub = null, groups = 
         const { room, userId } = requireRoom(rooms, socket);
         rooms.farsanteVote(room, userId, index);
         ack?.({ ok: true });
-        io.to(room.code).emit("room:state", rooms.publicState(room));
+        emitState(room);
       } catch (err) {
         ack?.({ ok: false, error: err.message });
       }
@@ -1127,7 +1189,7 @@ export function attachSockets(io, rooms, { friends = null, hub = null, groups = 
         const { room, userId } = requireRoom(rooms, socket);
         rooms.reyPick(room, userId, index);
         ack?.({ ok: true });
-        io.to(room.code).emit("room:state", rooms.publicState(room));
+        emitState(room);
       } catch (err) {
         ack?.({ ok: false, error: err.message });
       }
@@ -1135,9 +1197,9 @@ export function attachSockets(io, rooms, { friends = null, hub = null, groups = 
 
     socket.on("disconnect", () => {
       hub?.disconnect(socket);
-      for (const room of rooms.dropCentralRequests(socket.id)) io.to(room.code).emit("room:state", rooms.publicState(room));
+      for (const room of rooms.dropCentralRequests(socket.id)) emitState(room);
       const result = rooms.disconnect(socket.id);
-      if (result?.room) io.to(result.room.code).emit("room:state", rooms.publicState(result.room));
+      if (result?.room) emitRoomState(io, rooms, result.room);
       sendGroup(groups.disconnect(socket.id));
     });
   });
@@ -1181,7 +1243,7 @@ function leaveCurrentRoom(io, rooms, socket, keepCode) {
   if (!ref || ref.code === keepCode) return;
   socket.leave(ref.code);
   const result = rooms.leave(socket.id);
-  if (result?.room) io.to(result.room.code).emit("room:state", rooms.publicState(result.room));
+  if (result?.room) emitRoomState(io, rooms, result.room);
 }
 
 // The player for this socket: the id comes from the verified token; the name from the saved account when there is one
@@ -1228,7 +1290,7 @@ function watchRoom(io, rooms, room) {
   room.watching = true;
   const tick = () => {
     if (rooms.rooms.get(room.code) !== room) return;
-    io.to(room.code).emit("room:state", rooms.publicState(room));
+    emitRoomState(io, rooms, room);
     // Stop once the match is over or the host sent everyone back to a lobby.
     if (["intro", "countdown", "playing", "reveal"].includes(room.phase)) {
       const wait = Math.max(250, (room.phaseEndsAt || Date.now()) - Date.now() + 30);

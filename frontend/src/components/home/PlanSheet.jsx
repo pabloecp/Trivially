@@ -4,6 +4,7 @@ import AppIcon from "./AppIcon.jsx";
 import GameCard from "./GameCard.jsx";
 import Icon from "./Icon.jsx";
 import Modal from "./Modal.jsx";
+import { useT } from "../../lib/i18n.js";
 
 // "¿Qué quieren jugar?" ("¿Qué quieres jugar?" alone), from the "Vas a jugar" box: who it's for ("Partida pública": a
 // public match of the game, or "Partida privada": yours alone or your group's; the bar has no switch of its own, it's
@@ -13,6 +14,7 @@ import Modal from "./Modal.jsx";
 // people who know each other). Picking one closes it. `readOnly` (a player who isn't the leader or the host) only shows
 // the choice, `hostName` says who makes it.
 export default function PlanSheet({ open, onClose, plan, onAudience, onGame, inGroup = false, readOnly = false, hostName = "" }) {
+  const t = useT();
   const games = GAME_MODES.filter(isGameTile);
   const publicSide = plan.audience === "publica";
 
@@ -29,27 +31,34 @@ export default function PlanSheet({ open, onClose, plan, onAudience, onGame, inG
   }
 
   return (
-    <Modal open={open} onClose={onClose} title={inGroup ? "¿Qué quieren jugar?" : "¿Qué quieres jugar?"} size="lg" className="tv-plan">
-      <div className="tv-pills" role="radiogroup" aria-label="Con quién juegan">
+    <Modal open={open} onClose={onClose} title={inGroup ? t("¿Qué quieren jugar?") : t("¿Qué quieres jugar?")} size="lg" className="tv-plan">
+      <div className="tv-plan-top">
+      <div className="tv-aud" role="radiogroup" aria-label={t("Con quién juegan")}>
         {AUDIENCES.map((a) => (
           <button
             key={a.value}
             type="button"
             role="radio"
-            className="tv-pill"
+            className="tv-aud-opt"
             aria-checked={plan.audience === a.value}
             disabled={readOnly}
             onClick={() => plan.audience !== a.value && onAudience(a.value)}
           >
-            <Icon name={a.icon} size={18} strokeWidth={2.6} />
-            {a.label}
+            <span className="tv-aud-dot" aria-hidden="true" />
+            <span className="tv-aud-icon">
+              <Icon name={a.icon} size={20} strokeWidth={2.6} />
+            </span>
+            <span className="tv-aud-text">
+              <span className="tv-aud-name">{a.label}</span>
+              <span className="tv-aud-sub">{a.hint}</span>
+            </span>
           </button>
         ))}
       </div>
       {readOnly && (
         <p className="tv-plan-note">
           <Icon name="crown" size={15} strokeWidth={2.4} filled />
-          Lo elige {hostName || "el anfitrión"}
+          {t("Lo elige {name}", { name: hostName || t("el anfitrión") })}
         </p>
       )}
       <button
@@ -63,11 +72,12 @@ export default function PlanSheet({ open, onClose, plan, onAudience, onGame, inG
           <AppIcon small />
         </span>
         <span className="tv-ccard-text">
-          <span className="tv-ccard-name">Clásico</span>
-          <span className="tv-ccard-sub">Primero en ganar dos juegos</span>
+          <span className="tv-ccard-name">{t("Clásico")}</span>
+          <span className="tv-ccard-sub">{t("Primero en ganar dos juegos")}</span>
         </span>
       </button>
-      <h3 className="tv-section-label">Juego libre</h3>
+      </div>
+      <h3 className="tv-section-label">{t("Juego libre")}</h3>
       <div className="tv-gcard-grid">
         {games.map((mode, i) => (
           <GameCard
@@ -76,7 +86,7 @@ export default function PlanSheet({ open, onClose, plan, onAudience, onGame, inG
             index={i}
             selected={plan.game === mode.id}
             locked={publicSide && !isPublicGame(mode.id)}
-            lockedText="Partida privada"
+            lockedText={t("Partida privada")}
             disabled={readOnly}
             onPick={pick}
           />

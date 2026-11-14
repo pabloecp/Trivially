@@ -6,6 +6,7 @@ import SpotifyIcon from "../../components/home/SpotifyIcon.jsx";
 import { useApp } from "../../lib/store.jsx";
 import { findMode } from "../index.js";
 
+import { translate as tr } from "../../lib/i18n.js";
 // The music mode's waiting room, shown inside the room screen on Home once the host picks this game: the mode's big
 // card (how it's played and the start button) and the match settings (filters, Spotify playlists, rounds, time) beside it.
 // Everyone sees the settings; players without permission see them locked.
@@ -58,16 +59,16 @@ export default function LobbyPanel({ room, onToast }) {
               <span>
                 {retrying > 0 ? (
                   <>
-                    <strong>{loadingReady} de {loadingTotal}</strong> listas. Buscando otra vez {retrying}{" "}
-                    {retrying === 1 ? "canción que no se encontró" : "canciones que no se encontraron"}.
+                    <strong>{loadingReady} {tr("de")} {loadingTotal}</strong> {tr("listas. Buscando otra vez")} {retrying}{" "}
+                    {retrying === 1 ? tr("canción que no se encontró") : tr("canciones que no se encontraron")}.
                   </>
                 ) : (
                   <>
-                    Cargando canciones de Spotify: <strong>{loadingReady} listas</strong>, {loadingChecked} de {loadingTotal}{" "}
-                    revisadas.
+                    {tr("Cargando canciones de Spotify:")} <strong>{loadingReady} {tr("listas")}</strong>, {loadingChecked} {tr("de")} {loadingTotal}{" "}
+                    {tr("revisadas.")}
                   </>
                 )}
-                {room.itunesSlow && " iTunes nos está haciendo esperar, sigue buscando."}
+                {room.itunesSlow && tr(" iTunes nos está haciendo esperar, sigue buscando.")}
               </span>
             </p>
           )}

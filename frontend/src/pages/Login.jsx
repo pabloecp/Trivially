@@ -9,13 +9,15 @@ import Segmented from "../components/home/Segmented.jsx";
 import UsernameField, { useUsernameCheck } from "../components/home/UsernameField.jsx";
 import { USERNAME_MIN } from "../lib/username.js";
 import { withSound } from "../lib/sounds.js";
+import { useT } from "../lib/i18n.js";
 
+import { translate as tr } from "../lib/i18n.js";
 // In-app browsers (Instagram, WhatsApp, Facebook, TikTok...) are blocked by Google for sign-in.
 const IN_APP_BROWSER = typeof navigator !== "undefined" && /Instagram|FBAN|FBAV|FB_IAB|WhatsApp|Line\/|TikTok|musical_ly|Snapchat|; wv\)/i.test(navigator.userAgent);
 
 const MODES = [
-  { value: "register", label: "Crear cuenta" },
-  { value: "login", label: "Iniciar sesión" },
+  { value: "register", get label() { return tr("Crear cuenta"); } },
+  { value: "login", get label() { return tr("Iniciar sesión"); } },
 ];
 
 function Field({ label, ...props }) {
@@ -28,6 +30,7 @@ function Field({ label, ...props }) {
 }
 
 function LoginScreen() {
+  const t = useT();
   const { registerAccount, loginAccount, loginWithGoogle } = useApp();
   const [params] = useSearchParams();
   // "/login?mode=login" opens on the sign-in tab (the profile's "Iniciar sesión" button).
@@ -57,7 +60,7 @@ function LoginScreen() {
     e.preventDefault();
     if (!accName.trim() || !handleOk || !email.trim() || !password) return;
     if (password.length < 2) {
-      setMsg("La contraseña debe tener al menos 2 caracteres");
+      setMsg(t("La contraseña debe tener al menos 2 caracteres"));
       return;
     }
     setLoading(true);
@@ -89,108 +92,108 @@ function LoginScreen() {
     <div className="tv-auth">
       <header className="tv-auth-head">
         <AppIcon />
-        <h1 className="tv-page-title">Entra a Trivially</h1>
-        <p className="tv-page-sub">Guarda tus puntos, rachas y récords en todas tus partidas.</p>
+        <h1 className="tv-page-title">{t("Entra a Trivially")}</h1>
+        <p className="tv-page-sub">{t("Guarda tus puntos, rachas y récords en todas tus partidas.")}</p>
       </header>
 
       {params.get("google") === "error" && (
         <p className="tv-notice tv-notice--bad" role="alert">
           <Icon name="lock" size={18} strokeWidth={2.6} />
-          Error al conectar con Google: {params.get("msg") || "intenta nuevamente"}
+          {t("Error al conectar con Google:")} {params.get("msg") || t("intenta nuevamente")}
         </p>
       )}
       {params.get("google") === "success" && (
         <p className="tv-notice tv-notice--ok" role="status">
           <Icon name="check" size={18} strokeWidth={2.8} />
-          Sesión con Google iniciada
+          {t("Sesión con Google iniciada")}
         </p>
       )}
 
       {IN_APP_BROWSER && (
         <p className="tv-notice tv-notice--brand" role="status">
           <Icon name="link" size={18} strokeWidth={2.6} />
-          Google no permite iniciar sesión desde este navegador. Abre la página en Safari o Chrome (menú ⋯ → Abrir en el navegador).
+          {t("Google no permite iniciar sesión desde este navegador. Abre la página en Safari o Chrome (menú ⋯ → Abrir en el navegador).")}
         </p>
       )}
 
       <section className="tv-card tv-auth-card">
         <button type="button" className="tv-btn tv-btn--block tv-btn--google" onClick={() => loginWithGoogle(returnTo)}>
           <GoogleIcon size={22} />
-          Continuar con Google
+          {tr("Continuar con Google")}
         </button>
 
-        <div className="tv-divider"><span>o con tu correo</span></div>
+        <div className="tv-divider"><span>{tr("o con tu correo")}</span></div>
 
-        <Segmented options={MODES} value={accountMode} onChange={switchMode} label="Tipo de acceso" />
+        <Segmented options={MODES.map((m) => ({ ...m, label: t(m.label) }))} value={accountMode} onChange={switchMode} label={t("Tipo de acceso")} />
 
         {accountMode === "login" ? (
           <form key="login" onSubmit={onAccountLogin} className="tv-form">
             <Field
-              label="Correo o @usuario"
+              label={t("Correo o @usuario")}
               value={loginIdentifier}
               onChange={(e) => setLoginIdentifier(e.target.value)}
-              placeholder="tu@correo.com"
+              placeholder={t("tu@correo.com")}
               autoComplete="username"
               required
               autoFocus
             />
             <Field
-              label="Contraseña"
+              label={t("Contraseña")}
               type="password"
               value={loginPassword}
               onChange={(e) => setLoginPassword(e.target.value)}
-              placeholder="Tu contraseña"
+              placeholder={t("Tu contraseña")}
               autoComplete="current-password"
               required
             />
             {msg && <p className="tv-lobby-error" role="alert">{msg}</p>}
             <button className="tv-btn tv-btn--block tv-c-pink" type="submit" data-sound="none" disabled={loading || !loginIdentifier.trim() || !loginPassword}>
-              {loading ? "Entrando…" : "Iniciar sesión"}
+              {loading ? t("Entrando…") : t("Iniciar sesión")}
             </button>
             <Link to="/restablecer" className="tv-auth-forgot">
-              ¿Olvidaste tu contraseña?
+              {t("¿Olvidaste tu contraseña?")}
             </Link>
           </form>
         ) : (
           <form key="register" onSubmit={onAccountRegister} className="tv-form">
             <Field
-              label="Tu nombre"
+              label={t("Tu nombre")}
               value={accName}
               onChange={(e) => setAccName(e.target.value)}
-              placeholder="Cómo te verán en las partidas"
+              placeholder={t("Cómo te verán en las partidas")}
               maxLength={24}
               autoComplete="nickname"
               required
             />
             <UsernameField value={handle} onChange={setHandle} check={handleCheck} required />
             <Field
-              label="Correo electrónico"
+              label={t("Correo electrónico")}
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="tu@correo.com"
+              placeholder={t("tu@correo.com")}
               autoComplete="email"
               required
             />
             <Field
-              label="Contraseña"
+              label={t("Contraseña")}
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="Mínimo 2 caracteres"
+              placeholder={t("Mínimo 2 caracteres")}
               autoComplete="new-password"
               required
             />
             {msg && <p className="tv-lobby-error" role="alert">{msg}</p>}
             <button className="tv-btn tv-btn--block tv-c-pink" type="submit" data-sound="none" disabled={loading || !accName.trim() || !handleOk || !email.trim() || !password}>
-              {loading ? "Creando cuenta…" : "Crear cuenta"}
+              {loading ? t("Creando cuenta…") : t("Crear cuenta")}
             </button>
           </form>
         )}
       </section>
 
       <p className="tv-legal-note">
-        Al entrar aceptas los <Link to="/terminos">Términos de uso</Link> y el <Link to="/privacidad">Aviso de privacidad</Link>.
+        {t("Al entrar aceptas los")} <Link to="/terminos">{t("Términos de uso")}</Link> {t("y el")} <Link to="/privacidad">{t("Aviso de privacidad")}</Link>.
       </p>
     </div>
   );

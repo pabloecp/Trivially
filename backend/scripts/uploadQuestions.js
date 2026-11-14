@@ -106,12 +106,13 @@ const OWN_SCRIPT_MODES = ["mundo", "historia", "minas"];
 const inFile = new Set(records.map((r) => r.id));
 const extra = [];
 for (let from = 0; ; from += 1000) {
-  const { data, error } = await db.from("questions").select("id, mode").range(from, from + 999);
+  const { data, error } = await db.from("questions").select("id, mode, language").range(from, from + 999);
   if (error) {
     console.error(`No se pudo comparar con la base de datos: ${error.message}`);
     process.exit(1);
   }
-  extra.push(...data.filter((r) => !OWN_SCRIPT_MODES.includes(r.mode) && !inFile.has(r.id)).map((r) => r.id));
+  // The English twins (language "en", see questions/questionBank.js loadTwinQuestions) come from their own file and script.
+  extra.push(...data.filter((r) => r.language !== "en" && !OWN_SCRIPT_MODES.includes(r.mode) && !inFile.has(r.id)).map((r) => r.id));
   if (data.length < 1000) break;
 }
 if (extra.length && prune) {

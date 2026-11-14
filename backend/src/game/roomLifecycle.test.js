@@ -65,4 +65,35 @@ assert.equal(room2.players.has("guest-2"), false);
 mgr.leave("sock-2b");
 assert.equal(mgr.get(room.code), undefined);
 
+// How many people are in a room of each game (the game's card on Inicio): people, never bots or who dropped.
+{
+  const m = new RoomManager({ catalog: fakeCatalog, store: {}, reconnectGraceMs: 20 });
+  assert.deepEqual(m.playingByGame(), {});
+  const a = m.create({ host: { id: "p-1", name: "Uno", socketId: "s-1" }, game: "opciones" });
+  m.addPlayer(a, { id: "p-2", name: "Dos", socketId: "s-2" });
+  m.create({ host: { id: "p-3", name: "Tres", socketId: "s-3" }, game: "mundo" });
+  m.create({ host: { id: "p-4", name: "Cuatro", socketId: "s-4" } });
+  a.players.get("p-2").bot = true;
+  assert.deepEqual(m.playingByGame(), { opciones: 1, mundo: 1 });
+
+  // A phase that fails when its time ends closes only that match: its players are told, the rest goes on.
+  const kicked = [];
+  const errors = [];
+  m.onKicked = (socketId, info) => kicked.push([socketId, info.reason]);
+  m.onError = (err, room) => errors.push([err.message, room.code]);
+  const realError = console.error;
+  console.error = () => {};
+  m.guard(a, () => {
+    throw new Error("fallo de prueba");
+  });
+  console.error = realError;
+  assert.equal(m.get(a.code), undefined, "the broken match is gone");
+  assert.deepEqual(kicked, [["s-1", "error"]], "its people hear it (not the bot)");
+  assert.deepEqual(errors, [["fallo de prueba", a.code]]);
+  assert.deepEqual(m.playingByGame(), { mundo: 1 }, "the other matches go on");
+  let ran = false;
+  m.guard(m.get([...m.rooms.keys()][0]), () => (ran = true));
+  assert.equal(ran, true);
+}
+
 console.log("roomLifecycle.test ok");

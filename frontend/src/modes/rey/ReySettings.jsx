@@ -3,6 +3,7 @@ import OptionRow, { rangeOptions } from "../../components/home/OptionRow.jsx";
 import SettingsTabs, { countNote } from "../../components/home/SettingsTabs.jsx";
 import { CATEGORIES, DIFFICULTIES, MIN_QUESTIONS, ROUND_LIMITS, SECONDS_LIMITS, reyConfig } from "./reyInfo.js";
 
+import { translate as tr } from "../../lib/i18n.js";
 // Settings of a Rey de la colina match, in the settings panel, in two tabs: "Partida" (rounds, and the seconds the
 // challengers have to answer) and "Preguntas" (which categories and difficulties the three offers come from).
 // A choice without questions with the other settings (room.questionCounts) can't be ticked. With a list left empty,
@@ -26,7 +27,7 @@ export default function ReySettings({ room, updateConfig, onToast, children, rea
       await updateConfig({ rey: next });
     } catch (err) {
       setDraft(saved);
-      onToast?.(err.message || "No se pudieron guardar los ajustes");
+      onToast?.(err.message || tr("No se pudieron guardar los ajustes"));
     }
   }
 
@@ -48,20 +49,20 @@ export default function ReySettings({ room, updateConfig, onToast, children, rea
       tabs={[
         {
           id: "partida",
-          label: "Partida",
+          label: tr("Partida"),
           icon: "hourglass",
           note: `${draft.rounds} rondas · ${seconds} s`,
           content: (
             <>
               <OptionRow
-                label="Rondas"
+                label={tr("Rondas")}
                 options={rangeOptions(ROUND_LIMITS)}
                 value={draft.rounds}
                 onChange={(n) => save({ rounds: n })}
               />
               <OptionRow
-                label="Segundos para responder"
-                hint="Lo que tienen los retadores"
+                label={tr("Segundos para responder")}
+                hint={tr("Lo que tienen los retadores")}
                 options={rangeOptions(SECONDS_LIMITS)}
                 value={seconds}
                 onChange={(n) => save({ roundMs: n * 1000 })}
@@ -71,14 +72,14 @@ export default function ReySettings({ room, updateConfig, onToast, children, rea
         },
         {
           id: "preguntas",
-          label: "Preguntas",
+          label: tr("Preguntas"),
           icon: "bulb",
           note: countNote(draft.categories, CATEGORIES.length),
           alert: !draft.categories.length || !draft.difficulties.length || (room.questionsReady != null && room.questionsReady < MIN_QUESTIONS),
           content: (
             <>
               <OptionRow
-                label="Categorías"
+                label={tr("Categorías")}
                 multi
                 wrap
                 options={CATEGORIES.map((c) => ({ value: c.id, label: c.label, disabled: disabled("categories", c.id) }))}
@@ -87,8 +88,8 @@ export default function ReySettings({ room, updateConfig, onToast, children, rea
                 onSetAll={(categories) => save({ categories })}
               />
               <OptionRow
-                label="Dificultad"
-                hint="El rey suma 1, 3 o 5 puntos según la que elija"
+                label={tr("Dificultad")}
+                hint={tr("El rey suma 1, 3 o 5 puntos según la que elija")}
                 multi
                 options={DIFFICULTIES.map((d) => ({ value: d.id, label: d.label, disabled: disabled("difficulties", d.id) }))}
                 value={draft.difficulties}

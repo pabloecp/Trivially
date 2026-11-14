@@ -19,7 +19,8 @@ import {
   QUIZ_REVEAL_MS,
   quizPool,
 } from "./quiz.js";
-import { editDistance, isCorrectOpenAnswer, normalizeOpen } from "./openAnswers.js";
+import { editDistance, isCorrectOpenAnswer as isCorrectInOneLanguage, normalizeOpen } from "./openAnswers.js";
+import { localize, mapFor, otherAnswers, globalMap } from "../i18n/content.js";
 import {
   countGeoQuestions,
   defaultGeoConfig,
@@ -122,7 +123,6 @@ import {
   CLASSIC_WINS,
   isClassic,
   AFK_CONFIRM_MS,
-  cleanForced,
   INTRO_MS,
   INTRO_RESULT_MS,
   INTRO_SPIN_MS,
@@ -225,8 +225,12 @@ export const ELO_WIDEN_BY = 250;
 export const BOT_MIN_MS = 3000;
 export const BOT_MAX_MS = 8000;
 
-export function publicRounds(rounds = []) {
-  return rounds.map(({ questionId, ...round }) => round);
+export function publicRounds(rounds = [], lang = "es") {
+  return rounds.map(({ questionId, ...round }) => {
+    if (lang === "es") return round;
+    const map = mapFor(questionId);
+    return localize(round, map);
+  });
 }
 
 export function createRoomCode(existing) {
@@ -449,6 +453,12 @@ function publicPlayer(player, phase, room) {
  * and the answer's forms, as they're compared (no capitals, accents or punctuation), whether it was one of the
  * answers turned down on purpose (`reject`), and the closest accepted form with how many letters apart it is.
  */
+/** A written answer is right in either language the question has: the Spanish one or its English one. */
+export function isCorrectOpenAnswer(guess, question) {
+  if (isCorrectInOneLanguage(guess, question)) return true;
+  return question?.id != null && otherAnswers(question.id).some((alt) => isCorrectInOneLanguage(guess, alt));
+}
+
 export function openAnswerCheck(text, question) {
   const written = normalizeOpen(text);
   const accepted = [...new Set([question.answer, ...(question.aliases || [])].map(normalizeOpen).filter(Boolean))];
@@ -545,13 +555,10 @@ export class RoomManager {
     const ids = [user.id, ...party.map((p) => p.id)];
     // The elo this search is for (the group's average): it is put with rivals of a close one (eloFits).
     const mine = this.searchRating([user, ...party], game);
-    // An owner's forced games (already checked against their account by the socket): their own room, nobody else's.
-    const force = game ? [] : cleanForced(input?.force);
     // A game's queue fills any room searching for that game; the roulette's rooms go by how many play.
-    let room = force.length ? undefined : [...this.rooms.values()].find(
+    let room = [...this.rooms.values()].find(
       (r) =>
         r.matchmaking &&
-        !r.matchmaking.force &&
         r.phase === "lobby" &&
         !r.matchmaking.startsAt &&
         r.matchmaking.kind === kind &&
@@ -567,7 +574,7 @@ export class RoomManager {
       room = this.create({ host: user, game: null });
       room.hostId = null;
       // A group bigger than what MATCH_SIZE lets fill (trying it out alone) still fits.
-      room.matchmaking = { kind, rounds, game, versus: size, size: Math.max(roomSize(size), seats), createdAt: Date.now(), games: null, startsAt: null, timer: null, botTimer: null, force: force.length ? force : null };
+      room.matchmaking = { kind, rounds, game, versus: size, size: Math.max(roomSize(size), seats), createdAt: Date.now(), games: null, startsAt: null, timer: null, botTimer: null };
       if (kind === "casual") this.scheduleBotArrival(room, BOT_WAIT_MS);
     }
     for (const member of party) this.addPlayer(room, member);
@@ -916,7 +923,7 @@ export class RoomManager {
     const { kind, game } = room.matchmaking;
     const drawn = game
       ? [this.publicGameItem(room, kind, game)]
-      : this.drawMatchItems(room, kind, matchMaxGames(this.connectedCount(room)), room.matchmaking.force);
+      : this.drawMatchItems(room, kind, matchMaxGames(this.connectedCount(room)));
     const items = game ? drawn : drawn.slice(0, MATCH_WINS);
     // What everyone sees of it: its variants so far, in play order (one more joins with each game added).
     room.matchmaking.games = items.map((item) => item.variant);
@@ -1110,15 +1117,15 @@ export class RoomManager {
   /**
    * The `count` games of a public match of `kind` (or of a Clásico), each a variant with its settings, all different
    * while there are variants left. A match of the roulette asks for more games than there are variants: the draw then
-   * starts over, never with the variant it just played. The variants in `force` go first, in their order.
+   * starts over, never with the variant it just played.
    */
-  drawMatchItems(room, kind, count, force = null) {
+  drawMatchItems(room, kind, count) {
     const configFor = (game, variant, easy) => this.matchItemSettings(room, kind, game, variant, easy);
     const items = [];
     while (items.length < count) {
       const before = items.length;
       const random = pickMatchGames(null, Math.random, variantsFor(kind));
-      const order = !before && force?.length ? [...force, ...random.filter((v) => !force.includes(v))] : random;
+      const order = random;
       // Only the variants that can be played make the pass, so the one that opens it is never the one just played.
       const pass = [];
       for (const variant of order) {
@@ -2726,6 +2733,8 @@ export class RoomManager {
       // question shows here).
       match: {
         public: Boolean(room.matchmaking),
+        // A Clásico played to its end, public (the roulette's casual match) or private: only there is "Perfección" won.
+        classic: !room.stoppedEarly && (room.matchmaking ? room.matchmaking.kind === "casual" && !room.matchmaking.game : Boolean(room.run?.classic)),
         kind: room.matchmaking?.kind || null,
         classic: Boolean(room.run?.classic),
         // A public match or Clásico: which of its games this is (its roulette and scores are in `seen`).
@@ -2778,8 +2787,10 @@ export class RoomManager {
     room.phaseEndsAt = Date.now() + remainingMs;
     const onEnd = room.phaseOnEnd;
     room.timer = setTimeout(() => {
-      onEnd?.();
-      this.onPhaseChange?.(room);
+      this.guard(room, () => {
+        onEnd?.();
+        this.onPhaseChange?.(room);
+      });
     }, remainingMs);
     // Campo de minas: someone may have left during the pause, and the turn was only waiting for them.
     this.checkMinesTurn(room);
@@ -2864,6 +2875,7 @@ export class RoomManager {
     const now = Date.now();
     const duration = this.roundMs(room);
     if (this.isChoiceRound(room)) this.gradeQuiz(room, track);
+    for (const p of room.players.values()) this.applyPendingGrade(room, p);
     if (this.isMapRound(room)) this.gradeMap(room, track);
     if (this.isYearRound(room)) this.gradeYears(room, track);
     if (this.isMinesRound(room)) this.gradeMines(room);
@@ -3387,6 +3399,48 @@ export class RoomManager {
   }
 
   /** The room a player is in right now (not just reconnecting), or null. Used to show friends where someone plays. */
+  /**
+   * Runs what a room's timer does when a phase ends. If it fails, only that match is closed (`closeBroken`) and the
+   * error is told (`onError`): the server and every other match go on.
+   */
+  guard(room, fn) {
+    try {
+      fn();
+    } catch (err) {
+      console.error(`[Sala ${room.code}] La partida falló (${room.game}, ${room.phase}) y se cerró:`, err);
+      try {
+        this.onError?.(err, room);
+      } catch {}
+      this.closeBroken(room);
+    }
+  }
+
+  /** Closes a match that can't go on: its players' screens leave it with a notice (onKicked, reason "error"). */
+  closeBroken(room) {
+    if (this.rooms.get(room.code) !== room) return;
+    try {
+      for (const player of room.players.values()) {
+        if (player.socketId && !player.bot) this.onKicked?.(player.socketId, { code: room.code, reason: "error" });
+      }
+      this.destroy(room);
+    } catch (err) {
+      console.error(`[Sala ${room.code}] No se pudo cerrar bien:`, err);
+      this.rooms.delete(room.code);
+    }
+  }
+
+  /** How many people (not bots) are in a room of each game right now: `{ opciones: 12, musica: 3 }`. */
+  playingByGame() {
+    const games = {};
+    for (const room of this.rooms.values()) {
+      if (!room.game) continue;
+      let people = 0;
+      for (const p of room.players.values()) if (p.connected && !p.bot) people += 1;
+      if (people) games[room.game] = (games[room.game] || 0) + people;
+    }
+    return games;
+  }
+
   roomOfUser(userId) {
     for (const room of this.rooms.values()) {
       if (room.players.get(userId)?.connected) return room;
@@ -3498,9 +3552,22 @@ export class RoomManager {
     });
     player.lastAnswer = {
       text: questionGame ? String(answerText).slice(0, 80) : this.answerLabel(room, track, answerText, correct),
-      correct,
       at: Date.now(),
     };
+    // Whether it was right (and its points) is only known to the players once the round is over: until the reveal it
+    // waits here, so neither the scoreboard nor the answer's own ack says anything about it.
+    player.pendingGrade = { correct, scored, remainingMs, questionGame, track };
+    if (room.phase === "reveal") this.applyPendingGrade(room, player);
+    this.answered(room, player);
+  }
+
+  /** A written (or song) answer, once the round is over: its points, streak and right answer count (see submitAnswer). */
+  applyPendingGrade(room, player) {
+    const g = player.pendingGrade;
+    if (!g) return;
+    player.pendingGrade = null;
+    const { correct, scored, remainingMs, questionGame, track } = g;
+    if (player.lastAnswer) player.lastAnswer.correct = correct;
     player.lastPoints = scored.points;
     player.streak = scored.streak;
     player.bestStreak = Math.max(player.bestStreak, player.streak);
@@ -3514,7 +3581,6 @@ export class RoomManager {
         player.artistHits[artistKey] = (player.artistHits[artistKey] || 0) + 1;
       }
     }
-    this.answered(room, player);
   }
 
   /**
@@ -4264,13 +4330,15 @@ export class RoomManager {
     room.phaseEndsAt = now + duration;
     this.onPhaseChange?.(room);
     room.timer = setTimeout(() => {
-      onEnd();
-      this.onPhaseChange?.(room);
+      this.guard(room, () => {
+        onEnd();
+        this.onPhaseChange?.(room);
+      });
     }, duration);
     if (room.botTimers?.length || phase === "playing") this.scheduleBots(room);
   }
 
-  publicState(room, forUserId) {
+  publicState(room, forUserId, lang = "es") {
     const track = room.tracks[room.currentRound];
     const host = room.players.get(room.hostId);
     const showTrack = room.phase === "reveal" || room.phase === "finished";
@@ -4353,7 +4421,7 @@ export class RoomManager {
       // A match of several games being played (a public match or a Clásico): its games, and how it's going (in play
       // order, which one is on, who won each one and the tally).
       playlist: room.run ? room.playlist : undefined,
-      run: room.run ? publicRun(room.run) : null,
+      run: room.run ? publicRun(room.run, lang) : null,
       // What the host is pointing at on the game menu (null once a game is picked).
       preview: room.game ? null : room.preview || null,
       // Games the other players suggested to the host, newest last (only while the room is on the menu).
@@ -4519,7 +4587,7 @@ export class RoomManager {
           : null,
         tiebreakWinner: p.id === room.tiebreak?.winnerId,
         // Every round of the match for this player, with the right answer and their points (recordRound).
-        rounds: publicRounds(p.rounds),
+        rounds: publicRounds(p.rounds, lang),
       }));
     }
     // Nothing of the next game's first round shows while its roulette and tutorial are on.
@@ -4547,7 +4615,30 @@ export class RoomManager {
           }
         : null;
     }
+    return lang === "es" ? payload : this.localizeState(room, payload, lang);
+  }
+
+  /**
+   * The state as a player who plays in another language reads it: the texts of the round's question (its prompt,
+   * options, answer, the flag's country, a board's cells...) swapped for their English versions, in what goes out and in
+   * what other players answered (the option they chose). The Spanish stays the original on the server.
+   */
+  localizeState(room, payload, lang) {
+    if (lang === "es") return payload;
+    const track = room.tracks[room.currentRound];
+    const maps = this.trackMaps(track);
+    const L = (value) => localize(value, ...maps);
+    for (const key of ["question", "reveal", "rey", "farsante", "choice"]) if (payload[key]) payload[key] = L(payload[key]);
+    payload.players = payload.players.map((p) => (p.lastAnswer ? { ...p, lastAnswer: L(p.lastAnswer) } : p));
+    if (payload.me?.lastAnswer) payload.me = { ...payload.me, lastAnswer: L(payload.me.lastAnswer) };
     return payload;
+  }
+
+  /** The Spanish-to-English maps of a round: of its question, or of each question it has (Lluvia's drops, Rey's offers...). */
+  trackMaps(track) {
+    if (!track) return [];
+    const ids = [track.id, track.question?.id, ...(track.drops || []).map((d) => d.question?.id), ...(track.offers || []).map((o) => o.id)];
+    return ids.filter((id) => id != null).map((id) => mapFor(id)).filter(Boolean);
   }
 
   /** In the lobby: how many different questions the room's settings can draw (a match needs one per round). */

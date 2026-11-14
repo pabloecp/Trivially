@@ -16,6 +16,7 @@ import "../../styles/home.css";
 import "../../styles/quiz.css";
 import "../../styles/farsante.css";
 
+import { translate as tr } from "../../lib/i18n.js";
 const COUNTDOWN_MS = 3000;
 const REVEAL_MS = 8000;
 
@@ -26,15 +27,15 @@ function Who({ option, room }) {
   return (
     <div className="tv-fs-who">
       {option.real ? (
-        <span className="tv-fs-real-tag">Respuesta real</span>
+        <span className="tv-fs-real-tag">{tr("Respuesta real")}</span>
       ) : (
         <span className="tv-fs-author">
           <Avatar name={author?.name || "?"} avatar={author?.avatar} />
-          {author?.name || "Alguien que se fue"}
+          {author?.name || tr("Alguien que se fue")}
         </span>
       )}
       {option.voters.length > 0 && (
-        <span className="tv-fs-voters" aria-label={`Votaron: ${option.voters.map((id) => person(id)?.name).filter(Boolean).join(", ")}`}>
+        <span className="tv-fs-voters" aria-label={tr("Votaron: {names}", { names: option.voters.map((id) => person(id)?.name).filter(Boolean).join(", ") })}>
           {option.voters.map((id) => (
             <Avatar key={id} name={person(id)?.name || "?"} avatar={person(id)?.avatar} />
           ))}
@@ -98,7 +99,7 @@ function GameScreen() {
       return;
     }
     setConfirmHub(false);
-    restartGame().catch((e) => setErr(e.message || "No se pudo terminar la partida"));
+    restartGame().catch((e) => setErr(e.message || tr("No se pudo terminar la partida")));
   }
 
   if (!room) {
@@ -106,7 +107,7 @@ function GameScreen() {
       <div className="tv-card tv-lobby-guest">
         <p className="tv-party-status">
           <span className="tv-pulse" aria-hidden="true" />
-          Conectando a la partida…
+          {tr("Conectando a la partida…")}
         </p>
       </div>
     );
@@ -120,7 +121,7 @@ function GameScreen() {
   const writing = room.phase === "playing" && stage === "writing";
   const voting = room.phase === "playing" && stage === "voting";
   const isHost = !central && room.hostId === user?.id;
-  const nameOf = (id) => room.players.find((p) => p.id === id)?.name || "Otro jugador";
+  const nameOf = (id) => room.players.find((p) => p.id === id)?.name || tr("Otro jugador");
 
   const totalMs = writing ? fs?.writeMs : voting ? fs?.voteMs : reveal ? REVEAL_MS : COUNTDOWN_MS;
   const seconds = Math.max(0, Math.ceil(left / 1000));
@@ -137,7 +138,7 @@ function GameScreen() {
       await farsanteWrite(value);
       setSent(value);
     } catch (e2) {
-      setErr(e2.message || "No se pudo enviar tu respuesta");
+      setErr(e2.message || tr("No se pudo enviar tu respuesta"));
     }
   }
 
@@ -149,7 +150,7 @@ function GameScreen() {
       await farsanteVote(id);
     } catch (e2) {
       setVoted(null);
-      setErr(e2.message || "No se pudo votar");
+      setErr(e2.message || tr("No se pudo votar"));
     }
   }
 
@@ -159,13 +160,13 @@ function GameScreen() {
     title = kind.label;
     hint = kind.how;
   } else if (writing) {
-    title = central ? "¡Escriban sus respuestas!" : spectator ? "Estás viendo la partida" : "Escribe tu respuesta";
-    hint = fs.kind === "dato" ? "Que parezca la verdad. No puede ser la respuesta real." : kind.how;
+    title = central ? tr("¡Escriban sus respuestas!") : spectator ? tr("Estás viendo la partida") : tr("Escribe tu respuesta");
+    hint = fs.kind === "dato" ? tr("Que parezca la verdad. No puede ser la respuesta real.") : kind.how;
   } else if (voting) {
-    title = "¡A votar!";
-    hint = fs.kind === "dato" ? "Encuentra la respuesta real. Si engañas a alguien, ganas puntos." : "Vota la que más te guste. La tuya no cuenta.";
+    title = tr("¡A votar!");
+    hint = fs.kind === "dato" ? tr("Encuentra la respuesta real. Si engañas a alguien, ganas puntos.") : tr("Vota la que más te guste. La tuya no cuenta.");
   } else if (reveal) {
-    title = fs?.options ? "Resultados" : "Nadie escribió nada";
+    title = fs?.options ? tr("Resultados") : tr("Nadie escribió nada");
   } else {
     title = "";
   }
@@ -177,7 +178,7 @@ function GameScreen() {
       <PauseButton room={room} isHost={isHost} onError={setErr} />
       {isHost && (
         <button type="button" className={`tv-mini-btn tv-end-btn${confirmHub ? " is-on" : ""}`} onClick={backToHub}>
-          {confirmHub ? "¿Seguro? Toca otra vez" : "Terminar"}
+          {confirmHub ? tr("¿Seguro? Toca otra vez") : tr("Terminar")}
         </button>
       )}
     </>
@@ -198,16 +199,16 @@ function GameScreen() {
               // At the reveal, how the round went for this player, the same as every game's result.
               reveal && !central && !spectator ? (
                 (me?.lastPoints || 0) > 0 ? (
-                  <RoundVerdict tone="ok" label="¡Sumaste!" points={me.lastPoints} />
+                  <RoundVerdict tone="ok" label={tr("¡Sumaste!")} points={me.lastPoints} />
                 ) : (
-                  <RoundVerdict tone="timeout" icon="close" label="Esta ronda no sumaste" />
+                  <RoundVerdict tone="timeout" icon="close" label={tr("Esta ronda no sumaste")} />
                 )
               ) : (
                 <span className="tv-qc-steps">
                   {[
-                    ["Escribir", "pencil", countdown || writing],
-                    ["Votar", "check", voting],
-                    ["Revelar", "eye", reveal],
+                    [tr("Escribir"), "pencil", countdown || writing],
+                    [tr("Votar"), "check", voting],
+                    [tr("Revelar"), "eye", reveal],
                   ].map(([name, icon, on]) => (
                     <span key={name} className={`tv-qc-pill${on ? " is-on" : " is-dark"}`}>
                       <Icon name={icon} size={16} strokeWidth={2.6} />
@@ -231,7 +232,7 @@ function GameScreen() {
           {countdown && controller && <GetReady />}
           {!controller && <RoundCountdown room={room} seconds={seconds} />}
 
-          {writing && central && <PhoneHint room={room}>Escriban en su teléfono ({fs.written}/{players})</PhoneHint>}
+          {writing && central && <PhoneHint room={room}>{tr("Escriban en su teléfono (")}{fs.written}/{players})</PhoneHint>}
           {writing && !central && !spectator && (
             <form className="tv-fs-write" onSubmit={submit}>
               <div className="tv-mwrite">
@@ -240,7 +241,7 @@ function GameScreen() {
                   <input
                     ref={inputRef}
                     type="text"
-                    placeholder={fs.kind === "dato" ? "Una respuesta que suene real…" : "Escribe lo más gracioso…"}
+                    placeholder={fs.kind === "dato" ? tr("Una respuesta que suene real…") : tr("Escribe lo más gracioso…")}
                     value={text}
                     onChange={(e) => setText(e.target.value.slice(0, MAX_CHARS))}
                     autoComplete="off"
@@ -248,12 +249,12 @@ function GameScreen() {
                     spellCheck="false"
                     enterKeyHint="send"
                     maxLength={MAX_CHARS}
-                    aria-label="Tu respuesta"
+                    aria-label={tr("Tu respuesta")}
                   />
                 </label>
                 <button type="submit" className="tv-btn tv-btn--primary tv-mwrite-send" disabled={!text.trim()}>
                   <Icon name="send" size={20} strokeWidth={2.4} />
-                  <span className="tv-mwrite-send-label">{sent ? "Cambiar" : "Enviar"}</span>
+                  <span className="tv-mwrite-send-label">{sent ? tr("Cambiar") : tr("Enviar")}</span>
                 </button>
               </div>
               <span className={`tv-fs-count${text.length >= MAX_CHARS ? " is-full" : ""}`}>
@@ -262,14 +263,14 @@ function GameScreen() {
               {sent && (
                 <p className="tv-fs-sent">
                   <Icon name="check" size={18} strokeWidth={3} />
-                  Enviada: {sent}
+                  {tr("Enviada:")} {sent}
                 </p>
               )}
             </form>
           )}
 
           {(voting || reveal) && fs?.options && (
-            <div className="tv-fs-options" role={voting && canAct ? "group" : undefined} aria-label="Respuestas">
+            <div className="tv-fs-options" role={voting && canAct ? "group" : undefined} aria-label={tr("Respuestas")}>
               {fs.options.map((o) => {
                 const mine = !central && sent && sameText(o.text, sent);
                 const interactive = voting && canAct;
@@ -284,15 +285,15 @@ function GameScreen() {
                   >
                     {mine && <Icon name="pencil" size={20} strokeWidth={2.4} />}
                     <span className="tv-fs-option-text">{o.text}</span>
-                    {mine && <span className="tv-mtag">La escribiste tú</span>}
-                    {voted === o.id && !reveal && <span className="tv-mtag">Tu voto</span>}
+                    {mine && <span className="tv-mtag">{tr("La escribiste tú")}</span>}
+                    {voted === o.id && !reveal && <span className="tv-mtag">{tr("Tu voto")}</span>}
                     {reveal && <Who option={o} room={room} />}
                   </Tag>
                 );
               })}
             </div>
           )}
-          {voting && central && <PhoneHint room={room}>Voten en su teléfono</PhoneHint>}
+          {voting && central && <PhoneHint room={room}>{tr("Voten en su teléfono")}</PhoneHint>}
           {err && <p className="tv-lobby-error" role="alert">{err}</p>}
         </section>
       </div>
@@ -304,7 +305,7 @@ function GameScreen() {
           scores
           display={central}
           onToast={setErr}
-          status={writing ? `Escribieron ${fs?.written || 0}/${players}` : voting ? `Votaron ${room.players.filter((p) => p.answered).length}/${players}` : undefined}
+          status={writing ? tr("Escribieron {a}/{b}", { a: fs?.written || 0, b: players }) : voting ? tr("Votaron {a}/{b}", { a: room.players.filter((p) => p.answered).length, b: players }) : undefined}
         />
       )}
       {/* What to do in this step ("Que parezca la verdad…", "Vota la que más te guste…"), in place of who is missing. */}

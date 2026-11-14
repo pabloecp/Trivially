@@ -236,6 +236,27 @@
 .tv-stage-heading { min-width: 0; }
 /* Who the match is for: a small glass label over the name. */
 .tv-stage-aud { display: flex; align-items: center; gap: 6px; width: max-content; height: 28px; margin: 0 0 8px; padding: 0 10px; border-radius: 10px; background: rgba(255, 255, 255, 0.2); font-family: var(--tv-small); font-weight: 700; font-size: 12px; line-height: 1; color: #fff; }
+/* On Inicio the same label is a switch: a glass track with two choices, the chosen one white with the card's colour on its
+   text. Flat, same height and place as the label. */
+.tv-stage-aud.is-switch { gap: 2px; padding: 2px; border-radius: 10px; }
+.tv-stage-aud.is-switch button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  justify-content: center;
+  min-width: 84px;
+  height: 24px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  font: inherit;
+  color: rgba(255, 255, 255, 0.85);
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+.tv-stage-aud.is-switch button:hover:not([aria-checked="true"]) { background: rgba(255, 255, 255, 0.18); color: #fff; }
+.tv-stage-aud.is-switch button[aria-checked="true"] { background: #fff; color: #14161a; cursor: default; }
 /* The name on one line, as big as fits ("…" when even that doesn't). */
 .tv-stage-name { margin: 0; overflow: hidden; font-size: clamp(30px, 4vw, 60px); line-height: 1.05; color: #fff; white-space: nowrap; text-overflow: ellipsis; }
 .tv-stage-name.is-long { font-size: clamp(22px, 2.4vw, 32px); }
@@ -385,9 +406,13 @@
 @keyframes tvFindingTick { from { transform: scale(1.5); } }
 
 .tv-finding-seats { position: relative; flex: 1 1 150px; display: grid; grid-template-columns: repeat(var(--seats, 5), minmax(0, 1fr)); gap: 12px; min-height: 124px; max-height: 300px; margin: 0; padding: 0; list-style: none; }
-.tv-seat { position: relative; min-width: 0; border-radius: 18px; background: rgba(255, 255, 255, 0.1); container-type: size; transition: background-color 0.2s ease; }
-.tv-seat.is-taken { background: rgba(0, 0, 0, 0.2); }
-.tv-seat-who { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; height: 100%; padding: 10px 8px; }
+.tv-seat { position: relative; min-width: 0; border-radius: 18px; background-color: rgba(255, 255, 255, 0.1); container-type: size; transition: background-color 0.3s ease-out; }
+/* A taken seat's darker fill is a layer of its own, cut to the seat's rounded edge: it grows into place when someone
+   comes and shrinks away when they go, while the free seat's lighter one fades under it. */
+.tv-seat::before { content: ""; position: absolute; inset: 0; border-radius: inherit; background: var(--seat-taken, rgba(0, 0, 0, 0.2)); opacity: 0; transform: scale(0.8); pointer-events: none; transition: opacity 0.3s ease-out, transform 0.3s var(--tv-ease-out); }
+.tv-seat.is-taken { background-color: transparent; }
+.tv-seat.is-taken::before { opacity: 1; transform: none; }
+.tv-seat-who { position: relative; isolation: isolate; border-radius: inherit; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; height: 100%; padding: 10px 8px; }
 /* As big as the seat lets it be, leaving room for the two lines of text. */
 .tv-seat-face { flex: none; width: min(66cqw, calc(100cqh - 76px)); aspect-ratio: 1; transform-origin: 50% 100%; }
 .tv-seat-face .tv-blob,
@@ -403,8 +428,9 @@
   0%, 100% { opacity: 0.35; }
   50% { opacity: 0.85; }
 }
-/* Someone comes: the seat lights up and their Blob drops into it, squashing as it lands. */
-.tv-seat-who:not(.is-empty)::before { content: ""; position: absolute; inset: 0; border-radius: inherit; background: #fff; opacity: 0; pointer-events: none; animation: tvSeatFlash 0.5s ease-out; }
+/* Someone comes: the seat lights up (to its own rounded edge, behind the Blob and the name) and their Blob drops into
+   it, squashing as it lands. */
+.tv-seat-who:not(.is-empty)::before { content: ""; position: absolute; z-index: -1; inset: 0; border-radius: inherit; background: #fff; opacity: 0; pointer-events: none; animation: tvSeatFlash 0.5s ease-out; }
 .tv-seat-who:not(.is-empty) .tv-seat-face { animation: tvSeatDrop 0.55s cubic-bezier(0.3, 0.9, 0.5, 1) backwards; }
 .tv-seat-who:not(.is-empty) .tv-seat-text { animation: tvSeatText 0.35s var(--tv-ease-out) 0.12s backwards; }
 @keyframes tvSeatFlash { from { opacity: 0.3; } }
@@ -416,7 +442,8 @@
 }
 @keyframes tvSeatText { from { opacity: 0; transform: translateY(8px); } }
 /* Someone goes: their Blob shrinks away, and the free seat is back. */
-.tv-seat.is-leaving { background: rgba(255, 255, 255, 0.1); }
+.tv-seat.is-leaving { background-color: rgba(255, 255, 255, 0.1); }
+.tv-seat.is-leaving::before { opacity: 0; transform: scale(0.8); }
 .tv-seat.is-leaving .tv-seat-who { animation: tvSeatOut 0.26s ease-in forwards; }
 @keyframes tvSeatOut { to { opacity: 0; transform: scale(0.7); } }
 /* Full: the Blobs jump one after another (the last one lands first). */
@@ -435,8 +462,8 @@
 .tv-lobby-stage:not(.is-settled) .tv-seat-who .tv-seat-text,
 .tv-lobby-stage:not(.is-settled) .tv-seat-who:not(.is-empty) .tv-seat-face { animation: none; }
 .tv-finding.is-still .tv-seat-who:not(.is-empty) .tv-seat-face { animation: none; }
-.tv-stage-card.is-classic .tv-seat { background: rgba(255, 255, 255, 0.06); }
-.tv-stage-card.is-classic .tv-seat.is-taken { background: rgba(255, 255, 255, 0.11); }
+.tv-stage-card.is-classic .tv-seat { --seat-taken: rgba(255, 255, 255, 0.11); background-color: rgba(255, 255, 255, 0.06); }
+.tv-stage-card.is-classic .tv-seat.is-taken { background-color: transparent; }
 @media (prefers-reduced-motion: reduce) {
   .tv-finding-dots i,
   .tv-blob-ghost-line,
@@ -448,6 +475,8 @@
   .tv-finding-clock strong.is-count,
   .tv-lobby-stage.is-settled .tv-finding-status,
   .tv-lobby-stage.is-settled .tv-finding-seats { animation: none; }
+  .tv-seat,
+  .tv-seat::before { transition: none; }
 }
 /* Phones: three seats over two, so names fit, each with only its name. No faint icon: it would go behind the words. */
 @media (max-width: 760px) {
@@ -604,7 +633,7 @@
 /* The Clásico's, in the logo's look like its tile (.tv-ccard): black in the logo's coloured frame, the logo where a
    game's icon goes. The frame takes 4 px, so the padding is that much less. */
 .tv-gcard.tv-gbar-plan.is-classic {
-  --edge: var(--tv-logo-shadow);
+  --edge: #030303;
   padding: 6px 10px 6px 6px;
   border: 4px solid transparent;
   background:
@@ -706,13 +735,9 @@
   .tv-app .tv-gbar-go.is-waiting:disabled { opacity: 1; cursor: progress; }
   .tv-gbar-note { flex: 1; }
 }
-/* Phones: the top bar keeps every button (Volver, your group, the volume or the owners' gear, Amigos, your
+/* Phones: the top bar keeps every button (Volver, your group, the "Ajustes" gear, Amigos, your
    Blob) in one row, never squeezed: 36 px buttons, the group's chip without its arrow. Narrower still, the gaps close up. */
-/* The owners' panel only shows the volume on phones, where their top bar has no volume button. */
-.tv-admin-volume { display: none; }
 @media (max-width: 760px) {
-  .tv-volume--owner { display: none; }
-  .tv-admin-volume { display: grid; }
   /* Amigos is only its icon (its requests keep their red badge) and your profile only your Blob. */
   .tv-app .tv-topbar .tv-chip--friends { width: 36px; padding: 0; }
   .tv-app .tv-topbar .tv-chip--friends > .tv-avatar--empty { width: 36px; margin: 0; }
@@ -762,10 +787,6 @@
 }
 
 /* The friends' panel: its close is the grey one of every panel (never a black edge), its title in Outfit. */
-.tv-app .tv-fr-close { background: var(--tv-neutral); color: var(--tv-neutral-on); box-shadow: 0 3px 0 var(--tv-neutral-edge); }
-.tv-app .tv-fr-close:hover { box-shadow: 0 4px 0 var(--tv-neutral-edge); }
-.tv-app .tv-fr-close:active { box-shadow: 0 0 0 var(--tv-neutral-edge); }
-.tv-app .tv-fr-sheet .tv-sheet-title { font-family: var(--tv-title); font-weight: 800; letter-spacing: -0.03em; }
 
 /* ---------- Panels over the page ---------- */
 .tv-modal-root {
@@ -841,31 +862,40 @@
   color: var(--tv-text);
 }
 
-/* Two flat pills, the chosen one lighter ("Partida pública" / "Partida privada"). */
-.tv-pills { display: flex; flex-wrap: wrap; gap: 6px; }
-.tv-pill {
-  display: inline-flex;
+/* Who the match is for: one flat box with two options to choose between (radio dot, icon, name and what it means), the
+   chosen row in the site's blue. It sits beside the Clásico's tile so the top of the window has no empty half. */
+.tv-plan-top { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; align-items: stretch; }
+.tv-plan-top .tv-ccard { width: 100%; height: auto; }
+.tv-aud { display: flex; flex-direction: column; gap: 4px; padding: 6px; border-radius: 16px; background: var(--tv-surface-2); }
+.tv-aud-opt {
+  flex: 1;
+  display: flex;
   align-items: center;
-  gap: 8px;
-  height: 40px;
-  padding: 0 14px;
+  gap: 12px;
+  min-width: 0;
+  padding: 8px 14px 8px 12px;
   border: 0;
-  border-radius: 10px;
+  border-radius: 12px;
   background: none;
-  font-family: var(--tv-display);
-  font-weight: 700;
-  font-size: 15px;
   color: var(--tv-text);
+  text-align: left;
   cursor: pointer;
-  transition: background-color 0.25s ease;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
-.tv-pill[aria-checked="true"] { background: rgba(255, 255, 255, 0.08); }
-.tv-pill:disabled { cursor: default; }
-.tv-pill:disabled[aria-checked="false"] { opacity: 0.45; }
-@media (max-width: 420px) {
-  .tv-pills { flex-wrap: nowrap; gap: 4px; }
-  .tv-pill { flex: 1 1 auto; justify-content: center; padding: 0 10px; font-size: 14px; white-space: nowrap; }
-  .tv-pill svg { display: none; }
+.tv-aud-opt:hover:not(:disabled):not([aria-checked="true"]) { background: rgba(127, 127, 127, 0.12); }
+.tv-aud-opt[aria-checked="true"] { background: var(--tv-pick); color: #fff; }
+.tv-aud-opt:disabled { cursor: default; }
+.tv-aud-opt:disabled[aria-checked="false"] { opacity: 0.45; }
+.tv-aud-dot { flex: none; width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--tv-text-3); transition: border-color 0.2s ease, background-color 0.2s ease; }
+.tv-aud-opt[aria-checked="true"] .tv-aud-dot { border-color: #fff; background: radial-gradient(#fff 0 38%, transparent 42%); }
+.tv-aud-icon { flex: none; display: grid; place-items: center; }
+.tv-aud-text { display: flex; flex-direction: column; min-width: 0; }
+.tv-aud-name { font-family: var(--tv-display); font-weight: 800; font-size: 17px; line-height: 1.15; }
+.tv-aud-sub { font-family: var(--tv-small); font-weight: 600; font-size: 13px; line-height: 1.25; color: var(--tv-text-3); }
+.tv-aud-opt[aria-checked="true"] .tv-aud-sub { color: rgba(255, 255, 255, 0.82); }
+@media (max-width: 700px) {
+  .tv-plan-top { grid-template-columns: 1fr; }
+  .tv-aud-opt { padding: 12px; }
 }
 .tv-plan-note { display: inline-flex; align-items: center; gap: 8px; margin: 0; font-family: var(--tv-small); font-weight: 600; font-size: 14px; color: var(--tv-text-3); }
 
@@ -924,7 +954,7 @@
    around the middle), its name and tagline at the top left and the logo itself big, tilted and cut by the bottom right
    corner. Tapped, so it has its edge. */
 .tv-ccard {
-  --edge: var(--tv-logo-shadow);
+  --edge: #030303;
   position: relative;
   overflow: hidden;
   overflow: clip;
@@ -952,7 +982,7 @@
 /* The text stops short of the logo, so a long tagline wraps instead of running under it. */
 .tv-ccard-text { position: relative; display: grid; gap: 6px; max-width: calc(100% - 100px); }
 .tv-ccard-name { font-family: var(--tv-display); font-weight: 800; font-size: clamp(24px, 2.4vw, 32px); line-height: 1; }
-.tv-ccard-sub { font-family: var(--tv-small); font-weight: 800; font-size: 14px; line-height: 1.25; color: var(--tv-text-3); }
+.tv-ccard-sub { font-family: var(--tv-small); font-weight: 800; font-size: 14px; line-height: 1.25; color: rgba(255, 255, 255, 0.62); }
 .tv-ccard-logo { position: absolute; right: -14px; bottom: -22px; rotate: -14deg; pointer-events: none; }
 .tv-ccard-logo .tv-appicon { --s: 118px; }
 .tv-ccard:hover:not(:disabled) .tv-ccard-logo { animation: tvWiggle 0.5s ease; }
@@ -967,7 +997,6 @@
 /* "Amigos" without an account: the image, what an account gives, the two buttons. */
 .tv-fr-guest { display: flex; flex-direction: column; align-items: center; gap: 16px; text-align: center; }
 .tv-fr-guest > * { flex-shrink: 0; }
-.tv-app .tv-fr-sheet .tv-fr-guest { max-height: none; overflow: visible; }
 .tv-fr-guest-art { display: grid; place-items: center; width: 100%; min-height: clamp(72px, 18vh, 140px); color: var(--tv-text-3); }
 .tv-fr-guest-art img { display: block; max-width: 100%; max-height: clamp(72px, 22vh, 180px); object-fit: contain; }
 .tv-fr-guest .tv-stage-login { width: 100%; }
@@ -1652,8 +1681,7 @@
   .tv-app .tv-match .tv-party-title,
   .tv-app .tv-match .tv-party-spectators,
   .tv-app .tv-match .tv-party .tv-player-crown,
-  .tv-app .tv-match .tv-party .tv-player-badge,
-  .tv-app .tv-match .tv-party .tv-player-games { display: none; }
+  .tv-app .tv-match .tv-party .tv-player-badge { display: none; }
   .tv-app .tv-match .tv-party-players { flex-direction: row; justify-content: space-between; gap: 6px; overflow-x: auto; scrollbar-width: none; }
   .tv-app .tv-match .tv-player-btn { gap: 6px; padding: 0; background: none; }
   .tv-app .tv-match .tv-player.is-me .tv-player-btn { outline: none; }
@@ -1775,7 +1803,7 @@
   62%, 82% { transform: translate(0, 10px) scaleY(0.4); }
 }
 /* Neutral (the scoreboards, a group's list, the big one beside your elo): only the eyes look left and right now and
-   then, each Blob at its own moment (--blob-delay). Only an owner can keep them still ("Reducir movimiento", Blob.jsx). */
+   then, each Blob at its own moment (--blob-delay). Anyone can keep them still ("Animaciones", Ajustes, Blob.jsx). */
 /* The neutral Blob's eyes are moved by Blob.jsx, at random moments of its own. */
 
 /* A code always takes the width of "WWWWW" (an invisible copy sizes it), shown or hidden, so the boxes around it don't move. */
@@ -1786,20 +1814,8 @@
 
 /* Scoreboards and lists of players come in with no animation (the room's list, "Tu grupo", a match's scoreboard, its games
    won): they only change. The final results screen (the podium) keeps its own. */
-.tv-app :is(.tv-player, .tv-player-score, .tv-player-won, .tv-player-games, .tv-player-badge, .tv-mbar-face, .tv-stage-friends-list li) { animation: none; }
+.tv-app :is(.tv-player, .tv-player-score, .tv-player-badge, .tv-mbar-face, .tv-stage-friends-list li) { animation: none; }
 
-/* "Amigos" looks like the other windows ("Tu grupo"): the title alone at 32 px with the close square beside it, the same
-   margins and corners. */
-.tv-app .tv-fr-sheet { padding: 0 0 calc(26px + env(safe-area-inset-bottom)); border-radius: 24px; }
-.tv-app .tv-fr-head { padding: 26px 28px 6px; }
-.tv-app .tv-fr-sheet .tv-sheet-title { font-size: 32px; line-height: 1.1; }
-.tv-app .tv-fr-sheet .tv-sheet-body { padding: 16px 28px 0; }
-@media (max-width: 640px) {
-  .tv-app .tv-fr-sheet { border-radius: 24px 24px 0 0; }
-  .tv-app .tv-fr-head { padding: 20px 18px 4px; }
-  .tv-app .tv-fr-sheet .tv-sheet-title { font-size: 26px; }
-  .tv-app .tv-fr-sheet .tv-sheet-body { padding: 14px 18px 0; }
-}
 
 /* In a match the answers never go see-through nor sink out of their box: the chosen, right and wrong ones stay where they
    are (with their edge in their own colour), and the others are plain grey tiles with dimmed text. */
@@ -1884,7 +1900,7 @@
 }
 
 /* ---------- "Tu partida" (MatchSummarySheet): the game's card, five rows at a time, arrows at the foot ---------- */
-.tv-app .tv-modal.tv-summary-modal { max-width: 520px; }
+.tv-app .tv-modal.tv-summary-modal { }
 .tv-app .tv-summary-modal .tv-modal-head { padding: 20px 22px 2px; }
 .tv-app .tv-summary-modal .tv-modal-title { font-size: 26px; }
 .tv-app .tv-summary-modal .tv-modal-body { gap: 10px; padding: 12px 22px 18px; }
@@ -2084,6 +2100,83 @@
   .tv-app .tv-pf > .tv-pf-card { min-height: 0; }
   .tv-pf-blobnote { position: static; }
 }
+/* ---------- Profile, three columns that fit the screen (Profile.jsx) ---------- */
+/* Who you are, your stats and your account in the first box; your Blob; your badges. All three as tall as the tallest,
+   each filling it (no empty bands); someone else's profile, two (who they are, their badges); one column on a phone. */
+.tv-app .tv-pf > .tv-pf-card { min-height: 0; }
+.tv-pf.is-other { grid-template-columns: repeat(2, minmax(0, 1fr)); max-width: 980px; margin-inline: auto; }
+/* Someone else's has no account under the stats: they grow to fill their box, with bigger numbers. */
+.tv-app .tv-pf.is-other .tv-pf-stats { flex: 1; grid-auto-rows: minmax(62px, 1fr); }
+.tv-app .tv-pf.is-other .tv-pf-stat { height: auto; gap: 8px; padding: 14px 18px; }
+.tv-app .tv-pf.is-other .tv-pf-num { font-size: 34px; }
+.tv-app .tv-pf-stats { margin-top: 0; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.tv-app .tv-pf-stat { flex-direction: column; align-items: flex-start; justify-content: center; gap: 4px; height: 62px; padding: 0 14px; }
+/* "Tu cuenta" under the stats, after a thin line: its title with "Guardar", the name and the @username side by side, and
+   one row with the email (cut with "…") and its buttons. */
+.tv-pf-account { display: grid; gap: 12px; margin-top: auto; padding-top: 14px; border-top: 1px solid var(--tv-surface-3); min-width: 0; }
+.tv-app .tv-pf-account .tv-pf-form { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; }
+.tv-app .tv-pf-account .tv-pf-foot { display: flex; align-items: center; gap: 10px; margin-top: 0; }
+.tv-app .tv-pf-account .tv-pf-mail { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tv-app .tv-pf-account .tv-pf-actions { flex: none; }
+.tv-app .tv-pf-account .tv-pf-actions .tv-btn { flex: none; padding: 0 18px; }
+/* Your Blob: the colours' and skins' boxes grow to fill the column. */
+.tv-app .tv-pf-blob .tv-blob-opts { flex: 1; grid-auto-rows: minmax(66px, 1fr); }
+.tv-app .tv-pf-blob .tv-blob-opt { height: auto; min-height: 66px; }
+/* "Términos de uso", "Aviso de privacidad" and "Borrar cuenta", centred under all the columns. */
+.tv-app .tv-pf > .tv-legal-links { grid-column: 1 / -1; justify-content: center; }
+@media (max-width: 1000px) {
+  .tv-pf.is-other { grid-template-columns: minmax(0, 1fr); }
+  .tv-app .tv-pf-stats { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+@media (max-width: 560px) {
+  .tv-app .tv-pf-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .tv-app .tv-pf-account .tv-pf-form { grid-template-columns: minmax(0, 1fr); }
+  .tv-app .tv-pf-account .tv-pf-foot { flex-wrap: wrap; }
+  .tv-app .tv-pf-account .tv-pf-actions { flex: 1 1 100%; }
+  .tv-app .tv-pf-account .tv-pf-actions .tv-btn { flex: 1; }
+}
+
+/* ---------- Profile: "Insignias" (Badges.jsx, lib/badges.js) ---------- */
+/* A badge is a tag like "Owner", in its own colour; a locked one is grey with a lock. */
+.tv-app .tv-badge-tag { background: var(--badge); color: var(--badge-ink); }
+.tv-app .tv-badge-tag.is-locked { background: var(--tv-surface-3); color: var(--tv-text-3); }
+.tv-app .tv-pf-badges { display: flex; flex-direction: column; gap: 12px; }
+.tv-badges-count { font-family: var(--tv-small); font-weight: 700; font-size: 14px; color: var(--tv-text-3); white-space: nowrap; }
+.tv-badges-count b { font-family: var(--tv-display); font-weight: 800; font-size: 18px; color: var(--tv-text); }
+/* Ten small boxes in two columns, growing to fill the column. Each is a button: its tag over its bar and "608 / 1,000"
+   (or "Ganada", "La llevas"); grey with its edge, the one you wear in the site's blue, the one you tapped outlined. */
+.tv-badges-grid { display: grid; flex: 1; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-rows: minmax(58px, 1fr); gap: 8px; }
+.tv-badge-item {
+  display: flex; flex-direction: column; justify-content: center; align-items: flex-start; gap: 8px; min-width: 0; padding: 8px 12px;
+  border: 0; border-radius: 14px; background: var(--tv-neutral); box-shadow: 0 3px 0 var(--tv-neutral-edge); color: var(--tv-text);
+  font: inherit; text-align: left; cursor: pointer; transition: transform 0.15s var(--tv-spring), box-shadow 0.15s ease;
+}
+.tv-badge-item:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 5px 0 var(--tv-neutral-edge); }
+.tv-badge-item:active:not(:disabled) { transform: translateY(3px); box-shadow: 0 0 0 var(--tv-neutral-edge); }
+.tv-badge-item.is-on { background: var(--tv-pick); box-shadow: 0 3px 0 var(--tv-pick-edge); }
+.tv-badge-item.is-on:hover:not(:disabled) { box-shadow: 0 5px 0 var(--tv-pick-edge); }
+.tv-badge-item.is-asked { outline: 2px solid var(--tv-text-3); outline-offset: 2px; }
+.tv-badge-item:disabled { cursor: default; }
+.tv-badge-item .tv-badge-tag { max-width: 100%; overflow: hidden; white-space: nowrap; }
+.tv-badge-state { font-family: var(--tv-display); font-weight: 800; font-size: 13px; line-height: 1; color: var(--tv-text-2); }
+.tv-badge-item.is-on .tv-badge-state { color: #fff; }
+.tv-badge-progress { display: flex; align-items: center; gap: 8px; width: 100%; }
+.tv-badge-bar { display: block; flex: 1; min-width: 24px; height: 6px; overflow: hidden; border-radius: 3px; background: var(--tv-option-bg); }
+.tv-badge-bar > span { display: block; height: 100%; border-radius: 3px; background: var(--tv-text-3); }
+.tv-badge-num { flex: none; font-family: var(--tv-display); font-weight: 700; font-size: 12px; line-height: 1; color: var(--tv-text-3); font-variant-numeric: tabular-nums; }
+/* At the foot, what the tapped badge asks (and how far you are), or how the box works. */
+.tv-badges-note { box-sizing: border-box; flex: none; height: calc(2.7em + 20px); overflow: hidden; margin: 0; padding: 10px 12px; border-radius: 12px; background: var(--tv-surface-2); font-family: var(--tv-small); font-weight: 600; font-size: 13px; line-height: 1.35; color: var(--tv-text-2); }
+.tv-badges-note b { color: var(--tv-text); }
+/* "Tu Blob": the title and its two tabs ("Colores", "Skins") on one line. The skins take the colours' box (four rows of
+   two; on a phone two rows of four) and scroll inside it, fading at the foot so it shows there are more. */
+.tv-app .tv-pf-blob .tv-card-head { justify-content: space-between; gap: 12px; }
+.tv-app .tv-pf-blob .tv-seg { flex: none; width: 176px; padding: 3px; }
+.tv-app .tv-pf-blob .tv-seg-thumb { top: 3px; bottom: 3px; left: 3px; width: calc((100% - 6px) / var(--count)); }
+.tv-app .tv-pf-blob .tv-seg-btn { height: 36px; font-size: 14px; }
+/* The skins, eight at a time like the colours; at the card's foot which ones show and the arrows (the same as a match's
+   history, .tv-summary-where / .tv-summary-nav). How to get a locked one sits over the skins, above the arrows. */
+.tv-blob-pager { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: auto; }
+.tv-app .tv-pf-blob .has-pages .tv-pf-blobnote { bottom: 76px; }
 /* Spotify, one tap away from disconnecting: red, with its own edge. */
 .tv-app .tv-pf-icon.is-danger,
 .tv-app .tv-pf-icon.is-danger:hover { background: var(--p-bad); box-shadow: 0 3px 0 var(--p-bad-edge); }
@@ -2681,8 +2774,16 @@ html.tv-match-lock.tv-keyboard-up .tv-app .tv-match .tv-quiz-marks { display: no
 .tv-legal-body ul { margin: 0 0 10px; padding-left: 22px; display: grid; gap: 6px; }
 .tv-legal-body b, .tv-legal-body a { color: var(--tv-text); }
 .tv-legal-foot, .tv-legal-links { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 18px; }
-.tv-legal-foot a, .tv-legal-links a { font-family: var(--tv-small); font-weight: 700; font-size: 14px; color: var(--tv-text-2); text-decoration: none; }
-.tv-legal-foot a:hover, .tv-legal-links a:hover { color: var(--tv-text); }
+.tv-legal-foot a, .tv-legal-links a, .tv-legal-links button { font-family: var(--tv-small); font-weight: 700; font-size: 14px; color: var(--tv-text-2); text-decoration: none; }
+.tv-legal-foot a:hover, .tv-legal-links a:hover, .tv-legal-links button:hover { color: var(--tv-text); }
+/* "Borrar cuenta" beside them on the profile: a text button like the links (never underlined). */
+.tv-legal-links button { padding: 0; border: 0; background: none; cursor: pointer; }
+/* Its panel (Profile's DeleteAccount): what is lost, the boxes to confirm, and Cancelar / Borrar cuenta at the foot. */
+.tv-delete-text { margin: 0; font-family: var(--tv-small); font-weight: 600; font-size: 15px; line-height: 1.5; color: var(--tv-text-2); }
+.tv-delete-form { display: grid; gap: 12px; }
+.tv-delete-form .tv-lobby-error { margin: 0; }
+.tv-app .tv-delete-modal .tv-modal-foot { gap: 10px; }
+.tv-app .tv-delete-modal .tv-modal-foot .tv-btn { flex: 1 1 0; }
 .tv-legal-note { margin: 0; text-align: center; font-family: var(--tv-small); font-weight: 600; font-size: 13px; line-height: 1.5; color: var(--tv-text-3); }
 .tv-legal-note a { color: var(--tv-text-2); font-weight: 700; text-decoration: none; }
 .tv-legal-note a:hover { color: var(--tv-text); }

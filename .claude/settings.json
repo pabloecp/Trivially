@@ -1,0 +1,15 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash|mcp__github__create_pull_request|mcp__github__update_pull_request|mcp__github__merge_pull_request|mcp__github__add_issue_comment",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/sin-firma.mjs\""
+          }
+        ]
+      }
+    ]
+  }
+}

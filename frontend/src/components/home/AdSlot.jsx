@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
+import { translate as tr } from "../../lib/i18n.js";
 import { adClient, adSlot, adsPreview, loadAds, requestAd } from "../../lib/ads.js";
 
 // The spaces for ads, only on Inicio (HomeFrame, with no match waiting or being searched for): flat grey boxes with
@@ -30,8 +31,8 @@ function Ad({ place, size }) {
   }, [slot]);
   if (!slot && !adsPreview) return null;
   return (
-    <aside className={`tv-ad tv-ad--${place}`} aria-label="Publicidad">
-      <span className="tv-ad-label">Publicidad</span>
+    <aside className={`tv-ad tv-ad--${place}`} aria-label={tr("Publicidad")}>
+      <span className="tv-ad-label">{tr("Publicidad")}</span>
       {slot ? (
         <ins className="adsbygoogle tv-ad-unit" data-ad-client={adClient} data-ad-slot={slot} />
       ) : (

@@ -1,20 +1,21 @@
+import { translate as tr } from "../../lib/i18n.js";
 // Encuentra el país's settings and labels (same ids and limits as backend/src/game/geo.js).
 
 // The ways of giving the country to find ("Modos de juego", GEO_STYLES on the server): every round is a pin on the
 // world map, and the country comes by its name, its silhouette or its flag. Any of them ticked (all by default): the
 // rounds are shared between them.
 export const STYLES = [
-  { id: "nombre", label: "Nombre", hint: "Te decimos qué país es", icon: "pin" },
-  { id: "sombra", label: "Sombra", hint: "Solo ves la forma del país", icon: "shape" },
-  { id: "bandera", label: "Bandera", hint: "Solo ves su bandera", icon: "flag" },
+  { id: "nombre", get label() { return tr("Nombre"); }, get hint() { return tr("Te decimos qué país es"); }, icon: "pin" },
+  { id: "sombra", get label() { return tr("Sombra"); }, get hint() { return tr("Solo ves la forma del país"); }, icon: "shape" },
+  { id: "bandera", get label() { return tr("Bandera"); }, get hint() { return tr("Solo ves su bandera"); }, icon: "flag" },
 ];
 
 // The difficulties a match can mix (GEO_LEVELS on the server), any of them ticked. The harder, the deeper the mode's
 // blue (colours in styles/geo.css).
 export const DIFFICULTIES = [
-  { id: "facil", label: "Fácil", hint: "Los más conocidos", color: "world-light", stars: 1 },
-  { id: "media", label: "Media", hint: "Un poco de todo", color: "world", stars: 2 },
-  { id: "dificil", label: "Difícil", hint: "Solo expertos", color: "world-deep", stars: 3 },
+  { id: "facil", get label() { return tr("Fácil"); }, get hint() { return tr("Los más conocidos"); }, color: "world-light", stars: 1 },
+  { id: "media", get label() { return tr("Media"); }, get hint() { return tr("Un poco de todo"); }, color: "world", stars: 2 },
+  { id: "dificil", get label() { return tr("Difícil"); }, get hint() { return tr("Solo expertos"); }, color: "world-deep", stars: 3 },
 ];
 
 export const ROUNDS_LIMITS = { min: 5, max: 25, step: 5 };

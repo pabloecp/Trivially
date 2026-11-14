@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, Navigate, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { api } from "../lib/api.js";
 import UsernameField, { useUsernameCheck } from "../components/home/UsernameField.jsx";
@@ -11,18 +11,26 @@ import CountUp from "../components/home/CountUp.jsx";
 import GoogleIcon from "../components/home/GoogleIcon.jsx";
 import SpotifyIcon from "../components/home/SpotifyIcon.jsx";
 import Icon from "../components/home/Icon.jsx";
+import Modal from "../components/home/Modal.jsx";
 import { BLOB_COLORS, HOW_TO_GET, blobColor, canUseColor } from "../lib/blobColors.js";
+import { BLOB_SKINS, isBlobSkin } from "../lib/blobSkins.js";
+import Segmented from "../components/home/Segmented.jsx";
+import BadgesCard, { BadgeTag } from "../components/home/Badges.jsx";
+import { badgeById } from "../lib/badges.js";
 
+import { translate as tr } from "../lib/i18n.js";
 // Only what matters: how many matches you won, how many questions you got right and how many daily challenges you completed.
+// The stats, four small boxes (two by two, or four in a row when the box takes the whole width; look.css).
 const STATS = [
-  { key: "wins", label: "Victorias", color: "amber" },
-  { key: "correctAnswers", label: "Aciertos", color: "green" },
-  { key: "dailyDone", label: "Retos", color: "pink" },
+  { key: "wins", get label() { return tr("Victorias"); } },
+  { key: "correctAnswers", get label() { return tr("Aciertos"); } },
+  { key: "bestStreak", get label() { return tr("Mejor racha"); } },
+  { key: "dailyDone", get label() { return tr("Retos"); } },
 ];
 
 // Badge shown on the profile for owners (plain users get none).
 const ROLE_TAGS = {
-  owner: { label: "Owner", icon: "star" },
+  owner: { get label() { return tr("Owner"); }, icon: "star" },
 };
 
 function Notice({ tone, icon, children }) {
@@ -34,13 +42,115 @@ function Notice({ tone, icon, children }) {
   );
 }
 
-// "Color de tu Blob": every colour, like an inventory. The ones you can use are tapped to wear them (the one you wear in
-// the site's blue); the others are dimmed with a lock, and a tap says how to get them (lib/blobColors.js).
+// "Borrar cuenta": a panel that says what is lost and asks for the account's name and, when it has one, its password
+// (an account that only enters with Google has none). The red button stays off until both are written.
+function DeleteAccount({ open, name, needsPassword, onClose, onDelete }) {
+  const [typed, setTyped] = useState("");
+  const [password, setPassword] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  // Opened again, it starts empty.
+  useEffect(() => {
+    if (!open) return;
+    setTyped("");
+    setPassword("");
+    setError("");
+    setBusy(false);
+  }, [open]);
+  const ready = typed.trim() === name && (!needsPassword || password.length > 0);
+
+  async function submit(e) {
+    e?.preventDefault();
+    if (!ready || busy) return;
+    setBusy(true);
+    setError("");
+    try {
+      await onDelete(typed.trim(), needsPassword ? password : undefined);
+    } catch (err) {
+      setError(err.message || tr("No se pudo borrar tu cuenta. Inténtalo otra vez."));
+      setBusy(false);
+    }
+  }
+
+  return (
+    <Modal
+      open={open}
+      onClose={busy ? () => {} : onClose}
+      title={tr("Borrar tu cuenta")}
+      size="sm"
+      className="tv-delete-modal"
+      foot={
+        <>
+          <button type="button" className="tv-btn tv-btn--neutral" data-sound="back" onClick={onClose} disabled={busy}>
+            {tr("Cancelar")}
+          </button>
+          <button type="button" className="tv-btn tv-btn--bad" data-sound="back" onClick={submit} disabled={!ready || busy} aria-busy={busy}>
+            {busy ? "Borrando…" : tr("Borrar cuenta")}
+          </button>
+        </>
+      }
+    >
+      <p className="tv-delete-text">
+        {tr("Se borra para siempre: tu @usuario, tus estadísticas, tu elo y tu rango, tus últimas partidas y tus amigos. No se puede deshacer.")}
+      </p>
+      <form onSubmit={submit} className="tv-delete-form">
+        <label className="tv-form-row">
+          <span className="tv-label">{tr("Escribe tu nombre para confirmar")}</span>
+          <input
+            className="tv-field tv-field--sm"
+            value={typed}
+            onChange={(e) => setTyped(e.target.value)}
+            placeholder={name}
+            maxLength={24}
+            autoComplete="off"
+            disabled={busy}
+          />
+        </label>
+        {needsPassword && (
+          <label className="tv-form-row">
+            <span className="tv-label">{tr("Tu contraseña")}</span>
+            <input
+              className="tv-field tv-field--sm"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder={tr("La de tu cuenta")}
+              autoComplete="current-password"
+              disabled={busy}
+            />
+          </label>
+        )}
+        {/* Enter in a box sends it too. */}
+        <button type="submit" hidden />
+        {error && <p className="tv-lobby-error" role="alert">{error}</p>}
+      </form>
+    </Modal>
+  );
+}
+
+// "Tu Blob": every colour and every skin, like an inventory, in two tabs ("Colores", "Skins"; it opens on the one you
+// wear). The ones you can use are tapped to wear them (the one you wear in the site's blue); the others are dimmed with
+// a lock, and a tap says how to get them (lib/blobColors.js, lib/blobSkins.js). The skins come SKIN_PAGE at a time, in
+// the colours' box, with which ones show and the arrows to move through them at the foot (like a match's history,
+// MatchSummarySheet); it opens on the page of the one you wear.
+const BLOB_TABS = [
+  { value: "colores", get label() { return tr("Colores"); } },
+  { value: "skins", get label() { return tr("Skins"); } },
+];
+const ALL_LOOKS = [...BLOB_COLORS, ...BLOB_SKINS];
+const SKIN_PAGE = 8;
+const SKIN_PAGES = Math.ceil(BLOB_SKINS.length / SKIN_PAGE);
+
 function BlobColors({ user, onPick }) {
   const [info, setInfo] = useState(null);
   const [busy, setBusy] = useState("");
   const current = blobColor(user?.avatar);
-  const shown = BLOB_COLORS.find((c) => c.id === (info || current));
+  const [tab, setTab] = useState(() => (isBlobSkin(current) ? "skins" : "colores"));
+  const [page, setPage] = useState(() => Math.max(0, Math.floor(BLOB_SKINS.findIndex((s) => s.id === current) / SKIN_PAGE)));
+  const skins = tab === "skins";
+  const from = page * SKIN_PAGE;
+  const list = skins ? BLOB_SKINS.slice(from, from + SKIN_PAGE) : BLOB_COLORS;
+  const shown = ALL_LOOKS.find((c) => c.id === (info || current));
   const locked = shown && !canUseColor(user, shown);
 
   async function choose(c) {
@@ -59,12 +169,13 @@ function BlobColors({ user, onPick }) {
   }
 
   return (
-    <div className="tv-blob-colors">
+    <div className="tv-blob-colors has-pages">
       <div className="tv-card-head">
-        <h2 className="tv-card-title">Color de tu Blob</h2>
+        <h2 className="tv-card-title">{tr("Tu Blob")}</h2>
+        <Segmented options={BLOB_TABS} value={tab} onChange={(v) => { setTab(v); setInfo(null); }} label={tr("Colores o skins")} />
       </div>
-      <div className="tv-blob-opts" role="radiogroup" aria-label="Color de tu Blob">
-        {BLOB_COLORS.map((c) => {
+      <div className="tv-blob-opts" role="radiogroup" aria-label={skins ? tr("Skin de tu Blob") : tr("Color de tu Blob")}>
+        {list.map((c) => {
           const ok = canUseColor(user, c);
           return (
             <button
@@ -87,10 +198,27 @@ function BlobColors({ user, onPick }) {
           );
         })}
       </div>
+      <div className="tv-blob-pager">
+        <span className="tv-summary-where">
+          {skins ? tr("Skins") : tr("Colores")}{" "}
+          <b>
+            {skins ? from + 1 : 1}–{skins ? from + list.length : list.length}
+          </b>{" "}
+          {tr("de")} {skins ? BLOB_SKINS.length : BLOB_COLORS.length}
+        </span>
+        <span className="tv-summary-nav">
+          <button type="button" className="tv-iconbtn tv-summary-prev" aria-label={skins ? tr("Skins anteriores") : tr("Colores anteriores")} disabled={!skins || page <= 0} onClick={() => { setPage(page - 1); setInfo(null); }}>
+            <Icon name="chevron" size={20} strokeWidth={3} />
+          </button>
+          <button type="button" className="tv-iconbtn" aria-label={skins ? tr("Skins siguientes") : tr("Colores siguientes")} disabled={!skins || page >= SKIN_PAGES - 1} onClick={() => { setPage(page + 1); setInfo(null); }}>
+            <Icon name="chevron" size={20} strokeWidth={3} />
+          </button>
+        </span>
+      </div>
       {/* Over the colours, so saying it moves nothing. */}
       {locked && (
         <p className="tv-pf-blobnote" aria-live="polite">
-          <b>{shown.name}</b> · {HOW_TO_GET[shown.needs]}
+          <b>{shown.name}</b> · {HOW_TO_GET[shown.how || shown.needs]}
         </p>
       )}
     </div>
@@ -99,13 +227,16 @@ function BlobColors({ user, onPick }) {
 
 // The username's label, with how many changes are left this month.
 function handleLabel(info) {
-  return info ? `Usuario · ${info.changesLeft} ${info.changesLeft === 1 ? "cambio" : "cambios"}` : "Usuario";
+  return info ? tr(info.changesLeft === 1 ? "Usuario · {n} cambio" : "Usuario · {n} cambios", { n: info.changesLeft }) : tr("Usuario");
 }
 
 function ProfileScreen() {
-  const { user: currentUser, updateUsername, changeHandle, updateAvatar, linkGoogle, connectSpotify, unlinkSpotify, linkingStatus, logout } =
+  const { user: currentUser, updateUsername, changeHandle, updateAvatar, updateBadge, linkGoogle, connectSpotify, unlinkSpotify, linkingStatus, logout, deleteAccount } =
     useApp();
   const [spotifyBusy, setSpotifyBusy] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  // The account was just deleted: this page goes to Inicio, not to the login it sends a signed-out visitor to.
+  const deleted = useRef(false);
   // "Activo" on Spotify: the first tap turns it into "Desconectar", the second one disconnects.
   const [confirmUnlink, setConfirmUnlink] = useState(false);
   useEffect(() => {
@@ -186,7 +317,17 @@ function ProfileScreen() {
     try {
       await updateAvatar(color);
     } catch (e) {
-      setErr(e.message || "No se pudo cambiar el color");
+      setErr(e.message || tr("No se pudo cambiar tu Blob"));
+    }
+  }
+
+  // A badge is worn (or taken off) as soon as it's tapped (BadgesCard).
+  async function onWearBadge(id) {
+    setErr("");
+    try {
+      await updateBadge(id);
+    } catch (e) {
+      setErr(e.message || tr("No se pudo cambiar tu insignia"));
     }
   }
 
@@ -207,7 +348,7 @@ function ProfileScreen() {
         await changeHandle(newHandle);
         setNewHandle("");
       }
-      setMsg(withName && withHandle ? "Perfil actualizado." : withName ? "Nombre actualizado." : "Nombre de usuario actualizado.");
+      setMsg(withName && withHandle ? tr("Perfil actualizado.") : withName ? tr("Nombre actualizado.") : tr("Nombre de usuario actualizado."));
     } catch (e) {
       // What was already saved is cleared above; the rest stays so it can be saved again.
       setErr(e.message);
@@ -232,24 +373,24 @@ function ProfileScreen() {
       <div className="tv-card tv-lobby-guest">
         <p className="tv-party-status">
           <span className="tv-pulse" aria-hidden="true" />
-          Cargando perfil…
+          {tr("Cargando perfil…")}
         </p>
       </div>
     );
   }
 
   if (!isOtherUser && !currentUser) {
-    return <Navigate to="/login?returnTo=/profile" replace />;
+    return <Navigate to={deleted.current ? "/" : "/login?returnTo=/profile"} replace />;
   }
 
   if (isOtherUser && notFound) {
     return (
       <div className="tv-card tv-lobby-guest">
-        <h1 className="tv-lobby-title">Perfil no encontrado</h1>
-        <p className="tv-lobby-sub">Este jugador no existe o borró su cuenta.</p>
+        <h1 className="tv-lobby-title">{tr("Perfil no encontrado")}</h1>
+        <p className="tv-lobby-sub">{tr("Este jugador no existe o borró su cuenta.")}</p>
         <Link to="/" className="tv-btn tv-btn--block tv-c-pink">
           <Icon name="home" size={18} />
-          Volver al inicio
+          {tr("Volver al inicio")}
         </Link>
       </div>
     );
@@ -263,6 +404,10 @@ function ProfileScreen() {
   const handleChanged = newHandle.length >= USERNAME_MIN && newHandle !== activeUser?.username && handleCheck.state !== "bad";
   const canSave = nameChanged || handleChanged;
   const roleTag = ROLE_TAGS[activeUser?.role];
+  // The badges' progress comes from the freshest copy of the account (the profile's own request), the badge worn from
+  // the account itself, so wearing one shows at once.
+  const badgeUser = isOtherUser ? profileData : profileData || currentUser;
+  const wornBadge = badgeById(isOtherUser ? profileData?.badge : currentUser?.badge);
   const googleNotice = searchParams.get("google");
   const hasSpotify = Boolean(activeUser?.spotify || activeUser?.spotifyLinked);
   // Only owners (the ones with the tag) see the Spotify button for now.
@@ -279,9 +424,9 @@ function ProfileScreen() {
     setSpotifyBusy(true);
     try {
       await unlinkSpotify();
-      setMsg("Spotify desconectado de tu perfil.");
+      setMsg(tr("Spotify desconectado de tu perfil."));
     } catch (e) {
-      setErr(e.message || "No se pudo desconectar Spotify");
+      setErr(e.message || tr("No se pudo desconectar Spotify"));
     } finally {
       setSpotifyBusy(false);
     }
@@ -293,7 +438,7 @@ function ProfileScreen() {
     try {
       await connectSpotify();
     } catch (e) {
-      setErr(e.message || "No se pudo conectar con Spotify");
+      setErr(e.message || tr("No se pudo conectar con Spotify"));
       setSpotifyBusy(false);
     }
   }
@@ -302,36 +447,37 @@ function ProfileScreen() {
   return (
     <div className="tv-page tv-page--wide">
       {searchParams.get("new") === "1" && (
-        <Notice tone="brand" icon="star">¡Tu cuenta está lista! Puedes cambiar tu nombre cuando quieras.</Notice>
+        <Notice tone="brand" icon="star">{tr("¡Tu cuenta está lista! Puedes cambiar tu nombre cuando quieras.")}</Notice>
       )}
       {(googleNotice === "success" || googleNotice === "link_success") && (
-        <Notice tone="ok" icon="check">Google conectado.</Notice>
+        <Notice tone="ok" icon="check">{tr("Google conectado.")}</Notice>
       )}
       {googleNotice === "link_error" && (
         <Notice tone="bad" icon="lock">
-          {searchParams.get("msg") || "No se pudo conectar con Google. Intenta de nuevo."}
+          {searchParams.get("msg") || tr("No se pudo conectar con Google. Intenta de nuevo.")}
         </Notice>
       )}
-      {spotifyNotice === "linked" && hasSpotify && <Notice tone="ok" icon="check">Spotify conectado a tu perfil.</Notice>}
+      {spotifyNotice === "linked" && hasSpotify && <Notice tone="ok" icon="check">{tr("Spotify conectado a tu perfil.")}</Notice>}
       {spotifyNotice === "error" && (
         <Notice tone="bad" icon="lock">
-          {searchParams.get("msg") || "No se pudo conectar con Spotify. Intenta de nuevo."}
+          {searchParams.get("msg") || tr("No se pudo conectar con Spotify. Intenta de nuevo.")}
         </Notice>
       )}
       {msg && <Notice tone="ok" icon="check">{msg}</Notice>}
       {err && <Notice tone="bad" icon="lock">{err}</Notice>}
 
-      {/* Three columns of the same width and height: who it is, the Blob's colour and the account. The same places with or
-          without an account, whatever the name's length (it's cut with "…"). Someone else's profile is only the first. */}
+      {/* Three columns of the same height that fit the screen: who you are with your stats and your account, your Blob, and
+          your badges. The same places with or without an account, whatever the name's length (it's cut with "…"). Someone
+          else's profile has two: who they are and their badges. On a phone, one column. */}
       <div className={`tv-pf${isOtherUser ? " is-other" : ""}`}>
-        <section className="tv-card tv-pf-card" aria-label="Perfil">
+        <section className="tv-card tv-pf-card" aria-label={tr("Perfil")}>
           <div className="tv-pf-who">
             <span className="tv-profile-avatar">
               <Avatar className="tv-avatar--xl" avatar={activeUser?.avatar} />
             </span>
             <div className="tv-pf-names">
-              <h1 className="tv-pf-name" title={activeUser?.name || "Jugador"}>{activeUser?.name || "Jugador"}</h1>
-              <p className="tv-pf-handle">{isGuest ? "Juega como invitado" : activeUser?.username ? `@${activeUser.username}` : ""}</p>
+              <h1 className="tv-pf-name" title={activeUser?.name || tr("Jugador")}>{activeUser?.name || tr("Jugador")}</h1>
+              <p className="tv-pf-handle">{isGuest ? tr("Juega como invitado") : activeUser?.username ? `@${activeUser.username}` : ""}</p>
             </div>
           </div>
           <div className="tv-pf-tags">
@@ -341,107 +487,136 @@ function ProfileScreen() {
                 {roleTag.label}
               </span>
             )}
+            {wornBadge && <BadgeTag badge={wornBadge} />}
           </div>
-          <div className="tv-pf-stats" aria-busy={statsLoading} aria-label="Estadísticas">
-            {STATS.map((s) => (
-              <div key={s.key} className="tv-pf-stat">
-                <span className="tv-pf-label">{s.label}</span>
-                <span className="tv-pf-num">
-                  {statsLoading ? <span className="tv-skeleton" aria-hidden="true" /> : stats ? <CountUp value={stats[s.key] || 0} /> : 0}
-                </span>
+          <div className="tv-pf-stats" aria-busy={statsLoading} aria-label={tr("Estadísticas")}>
+            {STATS.map((s) => {
+              const value = stats?.[s.key] || 0;
+              return (
+                <div key={s.key} className="tv-pf-stat">
+                  <span className="tv-pf-label">{s.label}</span>
+                  <span className="tv-pf-num">
+                    {statsLoading ? <span className="tv-skeleton" aria-hidden="true" /> : <CountUp value={value} />}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+          {/* Your account, in the same box as who you are: its title with "Guardar", the name and the @username side by
+              side, and at its foot your email, Google, Spotify and "Cerrar sesión". */}
+          {!isOtherUser && (
+            <div className="tv-pf-account" role="group" aria-labelledby="tv-account-title">
+              <div className="tv-pf-head">
+                <h2 id="tv-account-title" className="tv-pf-title">{tr("Tu cuenta")}</h2>
+                <button type="button" className="tv-btn tv-btn--primary" onClick={onSaveProfile} disabled={!canSave || saving} aria-busy={saving}>
+                  {saving ? "Guardando…" : tr("Guardar")}
+                </button>
               </div>
-            ))}
-          </div>
+              <form onSubmit={onSaveProfile} className="tv-pf-form">
+                <label className="tv-form-row">
+                  <span className="tv-label">{tr("Nombre")}</span>
+                  <input
+                    className="tv-field tv-field--sm"
+                    value={newUserName}
+                    onChange={(e) => setNewUserName(e.target.value)}
+                    placeholder={activeUser?.name || tr("Tu nuevo nombre")}
+                    maxLength={24}
+                    disabled={saving}
+                  />
+                </label>
+                {isGuest ? (
+                  <label className="tv-form-row">
+                    <span className="tv-label">{tr("Usuario")}</span>
+                    <input className="tv-field tv-field--sm" placeholder={tr("Crea una cuenta para tener uno")} disabled />
+                  </label>
+                ) : (
+                  <UsernameField
+                    label={handleLabel(activeUser?.usernameInfo)}
+                    value={newHandle}
+                    onChange={setNewHandle}
+                    check={handleCheck}
+                    placeholder={activeUser?.username || "tu_usuario"}
+                    disabled={saving}
+                  />
+                )}
+              </form>
+              <div className="tv-pf-foot">
+                <p className="tv-pf-mail" title={isGuest ? undefined : activeUser?.email}>{isGuest ? tr("Sin cuenta") : activeUser?.email || ""}</p>
+                {isGuest ? (
+                  <div className="tv-pf-actions">
+                    <Link to="/login?mode=login&returnTo=/profile" className="tv-btn tv-btn--neutral">{tr("Iniciar sesión")}</Link>
+                    <Link to="/login?returnTo=/profile" className="tv-btn tv-btn--neutral">{tr("Crear cuenta")}</Link>
+                  </div>
+                ) : (
+                  <div className="tv-pf-actions">
+                    {canLinkGoogle && (
+                      <button type="button" className="tv-iconbtn tv-pf-icon" aria-label={tr("Vincular Google")} title={tr("Vincular Google")} onClick={() => linkGoogle("/profile")}>
+                        <GoogleIcon size={22} />
+                      </button>
+                    )}
+                    {canSpotify && (
+                      <button
+                        type="button"
+                        className={`tv-iconbtn tv-pf-icon${hasSpotify ? "" : " is-faint"}${confirmUnlink ? " is-danger" : ""}`}
+                        aria-label={confirmUnlink ? tr("Toca otra vez para desconectar Spotify") : hasSpotify ? tr("Spotify conectado. Toca para desconectarlo") : tr("Conectar Spotify")}
+                        title={confirmUnlink ? tr("Toca otra vez para desconectar") : hasSpotify ? activeUser.spotify?.displayName || tr("Spotify conectado") : tr("Conectar Spotify")}
+                        onClick={hasSpotify ? onSpotifyActive : onConnectSpotify}
+                        disabled={spotifyBusy}
+                      >
+                        <SpotifyIcon size={22} />
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      className="tv-btn tv-btn--bad"
+                      onClick={() => {
+                        logout();
+                        nav("/login");
+                      }}
+                    >
+                      {tr("Cerrar sesión")}
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </section>
 
         {!isOtherUser && (
-          <section className="tv-card tv-pf-card tv-pf-blob" aria-label="Color de tu Blob">
+          <section className="tv-card tv-pf-card tv-pf-blob" aria-label={tr("Tu Blob")}>
             <BlobColors user={currentUser} onPick={onPickColor} />
           </section>
         )}
 
+        {badgeUser && <BadgesCard user={badgeUser} worn={wornBadge?.id || null} own={!isOtherUser} guest={isGuest} onWear={onWearBadge} />}
         {!isOtherUser && (
-          <section className="tv-card tv-pf-card" aria-labelledby="tv-account-title">
-            <div className="tv-pf-head">
-              <h2 id="tv-account-title" className="tv-pf-title">Tu cuenta</h2>
-              <button type="button" className="tv-btn tv-btn--primary" onClick={onSaveProfile} disabled={!canSave || saving} aria-busy={saving}>
-                {saving ? "Guardando…" : "Guardar"}
+          <nav className="tv-legal-links" aria-label={tr("Información legal")}>
+            <Link to="/terminos">{tr("Términos de uso")}</Link>
+            <Link to="/privacidad">{tr("Aviso de privacidad")}</Link>
+            {!isGuest && (
+              <button type="button" onClick={() => setDeleteOpen(true)}>
+                {tr("Borrar cuenta")}
               </button>
-            </div>
-            <form onSubmit={onSaveProfile} className="tv-pf-form">
-              <label className="tv-form-row">
-                <span className="tv-label">Nombre</span>
-                <input
-                  className="tv-field tv-field--sm"
-                  value={newUserName}
-                  onChange={(e) => setNewUserName(e.target.value)}
-                  placeholder={activeUser?.name || "Tu nuevo nombre"}
-                  maxLength={24}
-                  disabled={saving}
-                />
-              </label>
-              {isGuest ? (
-                <label className="tv-form-row">
-                  <span className="tv-label">Usuario</span>
-                  <input className="tv-field tv-field--sm" placeholder="Crea una cuenta para tener uno" disabled />
-                </label>
-              ) : (
-                <UsernameField
-                  label={handleLabel(activeUser?.usernameInfo)}
-                  value={newHandle}
-                  onChange={setNewHandle}
-                  check={handleCheck}
-                  placeholder={activeUser?.username || "tu_usuario"}
-                  disabled={saving}
-                />
-              )}
-            </form>
-            <div className="tv-pf-foot">
-              <p className="tv-pf-mail" title={isGuest ? undefined : activeUser?.email}>{isGuest ? "Sin cuenta" : activeUser?.email || ""}</p>
-              {isGuest ? (
-                <div className="tv-pf-actions">
-                  <Link to="/login?mode=login&returnTo=/profile" className="tv-btn tv-btn--neutral">Iniciar sesión</Link>
-                  <Link to="/login?returnTo=/profile" className="tv-btn tv-btn--neutral">Crear cuenta</Link>
-                </div>
-              ) : (
-                <div className="tv-pf-actions">
-                  {canLinkGoogle && (
-                    <button type="button" className="tv-iconbtn tv-pf-icon" aria-label="Vincular Google" title="Vincular Google" onClick={() => linkGoogle("/profile")}>
-                      <GoogleIcon size={22} />
-                    </button>
-                  )}
-                  {canSpotify && (
-                    <button
-                      type="button"
-                      className={`tv-iconbtn tv-pf-icon${hasSpotify ? "" : " is-faint"}${confirmUnlink ? " is-danger" : ""}`}
-                      aria-label={confirmUnlink ? "Toca otra vez para desconectar Spotify" : hasSpotify ? "Spotify conectado. Toca para desconectarlo" : "Conectar Spotify"}
-                      title={confirmUnlink ? "Toca otra vez para desconectar" : hasSpotify ? activeUser.spotify?.displayName || "Spotify conectado" : "Conectar Spotify"}
-                      onClick={hasSpotify ? onSpotifyActive : onConnectSpotify}
-                      disabled={spotifyBusy}
-                    >
-                      <SpotifyIcon size={22} />
-                    </button>
-                  )}
-                  <button
-                    type="button"
-                    className="tv-btn tv-btn--bad"
-                    onClick={() => {
-                      logout();
-                      nav("/login");
-                    }}
-                  >
-                    Cerrar sesión
-                  </button>
-                </div>
-              )}
-            </div>
-          </section>
-        )}
-        {!isOtherUser && (
-          <nav className="tv-legal-links" aria-label="Información legal">
-            <Link to="/terminos">Términos de uso</Link>
-            <Link to="/privacidad">Aviso de privacidad</Link>
+            )}
           </nav>
+        )}
+        {!isOtherUser && !isGuest && (
+          <DeleteAccount
+            open={deleteOpen}
+            name={activeUser?.name || ""}
+            needsPassword={Boolean(linkingStatus?.hasPassword)}
+            onClose={() => setDeleteOpen(false)}
+            onDelete={async (typedName, password) => {
+              deleted.current = true;
+              try {
+                await deleteAccount(typedName, password);
+              } catch (err) {
+                deleted.current = false;
+                throw err;
+              }
+            }}
+          />
         )}
       </div>
     </div>
