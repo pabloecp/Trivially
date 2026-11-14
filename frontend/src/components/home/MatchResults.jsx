@@ -4,6 +4,7 @@ import Icon from "./Icon.jsx";
 import MatchSummarySheet from "./MatchSummarySheet.jsx";
 import PartyPanel from "./PartyPanel.jsx";
 import { Podium, PodiumCard, ResultsFoot, countText } from "./ResultsParts.jsx";
+import { useT } from "../../lib/i18n.js";
 import { useApp } from "../../lib/store.jsx";
 import { withSound } from "../../lib/sounds.js";
 import { findMode } from "../../modes/index.js";
@@ -23,6 +24,7 @@ export default function MatchResults({ room }) {
 // the host's two buttons, the same size, in the middle: play again with the same settings, or back to the game's lobby.
 // Everyone's results are also in the room's column (PartyPanel). "Volver a jugar" is the screen's yellow button.
 function MatchEnd({ room }) {
+  const t = useT();
   const { user, isCentral, restartGame, replayGame } = useApp();
   const [err, setErr] = useState("");
   const [showSummary, setShowSummary] = useState(false);
@@ -48,11 +50,11 @@ function MatchEnd({ room }) {
           <Confetti />
           <header className="tv-res-head">
             <div className="tv-res-heading">
-              <p className="tv-mono-label">Partida terminada</p>
+              <p className="tv-mono-label">{t("Partida terminada")}</p>
               <h1 className="tv-page-title tv-results-title">
-                {tied ? "¡Empate!" : top.length > 1 ? `¡Ganó ${winner?.name}!` : "¡Fin de la partida!"}
+                {tied ? t("¡Empate!") : top.length > 1 ? t("¡Ganó {name}!", { name: winner?.name }) : t("¡Fin de la partida!")}
               </h1>
-              {winner?.tiebreakWinner && <p className="tv-hint">Ganó en el desempate</p>}
+              {winner?.tiebreakWinner && <p className="tv-hint">{t("Ganó en el desempate")}</p>}
             </div>
           </header>
 
@@ -65,7 +67,7 @@ function MatchEnd({ room }) {
             <RetouchCard
               icon={mode?.icon}
               color={mode?.color}
-              title={mode?.name || "Clasificación"}
+              title={mode?.name ? t(mode.name) : t("Clasificación")}
               players={top}
               meId={mine?.id}
               onOpen={rounds.length ? () => setShowSummary(true) : null}
@@ -86,26 +88,26 @@ function MatchEnd({ room }) {
                   type="button"
                   className="tv-btn tv-c-neutral tv-res-btn"
                   data-sound="back"
-                  aria-label="Volver al lobby"
-                  onClick={() => restartGame().catch((e) => setErr(e.message || "No se pudo volver al lobby"))}
+                  aria-label={t("Volver al lobby")}
+                  onClick={() => restartGame().catch((e) => setErr(e.message || t("No se pudo volver al lobby")))}
                 >
                   <Icon name="back" size={18} />
-                  <span className="tv-res-btn-label">Volver al lobby</span>
+                  <span className="tv-res-btn-label">{t("Volver al lobby")}</span>
                 </button>
                 <button
                   className="tv-btn tv-btn--primary tv-res-btn"
-                  onClick={() => withSound(replayGame).catch((e) => setErr(e.message || "No se pudo empezar otra partida"))}
+                  onClick={() => withSound(replayGame).catch((e) => setErr(e.message || t("No se pudo empezar otra partida")))}
                   type="button"
                   data-sound="none"
                 >
                   <Icon name="play" size={20} filled strokeWidth={1.5} />
-                  Volver a jugar
+                  {t("Volver a jugar")}
                 </button>
               </>
             ) : (
               <p className="tv-res-wait">
                 <span className="tv-pulse" aria-hidden="true" />
-                Esperando a que el anfitrión decida qué jugar
+                {t("Esperando a que el anfitrión decida qué jugar")}
               </p>
             )}
           </ResultsFoot>

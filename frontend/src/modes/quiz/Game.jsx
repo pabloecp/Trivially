@@ -15,6 +15,7 @@ import { PauseButton, ReportButton, SkipButton, PauseVeil } from "../../componen
 import "../../styles/quiz.css";
 import "../../styles/geo.css";
 import { resolveCode } from "../../lib/hiddenCode.js";
+import { useT } from "../../lib/i18n.js";
 import { AnswerCard, MatchBar, MatchCard, MatchQuestion, RoundCountdown, RoundVerdict } from "../../components/home/MatchFrame.jsx";
 
 const COUNTDOWN_MS = 3000;
@@ -25,13 +26,14 @@ const imageSrc = (path) => (path ? `${BACKEND_URL}${path}` : null);
 
 // The end of a round, on the card's first row: right (and the points), wrong or out of time.
 function Verdict({ me, answered }) {
+  const t = useT();
   const isCorrect = Boolean(me?.lastAnswer?.correct);
   const skipped = Boolean(me?.lastAnswer?.skipped);
   const tone = isCorrect ? "ok" : answered ? "bad" : "timeout";
   return (
     <RoundVerdict
       tone={tone}
-      label={isCorrect ? "¡Correcto!" : answered ? "Incorrecto" : skipped ? "Te la saltaste" : "Se acabó el tiempo"}
+      label={isCorrect ? t("¡Correcto!") : answered ? t("Incorrecto") : skipped ? t("Te la saltaste") : t("Se acabó el tiempo")}
       points={isCorrect ? me?.lastPoints || 0 : null}
       streak={isCorrect ? me?.streak || 0 : 0}
     />
@@ -81,6 +83,7 @@ function Hint({ icon, sent, children }) {
 // Four options, A to D (tap, or the keys 1–4 / A–D). On the room's central device they only show (with how many picked
 // each at the reveal); on a player's phone beside it (`controller`) only the options are there, not the question.
 function ChoiceRound({ room, question, me, answer, seconds, clock, central, controller, veil = null }) {
+  const t = useT();
   const round = room.currentRound;
   const [picked, setPicked] = useState(null);
   const [err, setErr] = useState("");
@@ -102,7 +105,7 @@ function ChoiceRound({ room, question, me, answer, seconds, clock, central, cont
     } catch (e) {
       sending.current = false;
       setPicked(null);
-      setErr(e.message || "No se pudo enviar tu respuesta");
+      setErr(e.message || t("No se pudo enviar tu respuesta"));
     }
   }
 
@@ -127,7 +130,7 @@ function ChoiceRound({ room, question, me, answer, seconds, clock, central, cont
           {room.phase === "countdown" && <GetReady />}
           {room.phase === "playing" && (
             <Hint key={spectator ? "watch" : locked ? "sent" : "pick"} icon={spectator ? "info" : locked ? "check" : "bolt"} sent={locked}>
-              {spectator ? "Estás viendo la partida" : locked ? "Respuesta enviada" : "Toca una opción"}
+              {spectator ? t("Estás viendo la partida") : locked ? t("Respuesta enviada") : t("Toca una opción")}
             </Hint>
           )}
           {reveal && !spectator && <Verdict me={me} answered={Number.isInteger(myChoice)} />}
@@ -142,7 +145,7 @@ function ChoiceRound({ room, question, me, answer, seconds, clock, central, cont
           }
         />
       )}
-      {room.phase === "playing" && central && <PhoneHint room={room}>Respondan desde su teléfono</PhoneHint>}
+      {room.phase === "playing" && central && <PhoneHint room={room}>{t("Respondan desde su teléfono")}</PhoneHint>}
 
       {/* The four options sit on a dark grey panel, like every game's Cerradas (not beside a central device). */}
       <OptionsPanel on={!controller && !central}>
@@ -181,7 +184,7 @@ function ChoiceRound({ room, question, me, answer, seconds, clock, central, cont
               onClick={() => choose(i)}
               disabled={locked}
               aria-pressed={isMine}
-              aria-label={`${letter}: ${text}${isRight ? " (correcta)" : ""}${isMine ? " (tu respuesta)" : ""}`}
+              aria-label={`${letter}: ${text}${isRight ? ` (${t("correcta")})` : ""}${isMine ? ` (${t("tu respuesta")})` : ""}`}
             >
               <span className="tv-quiz-opt-letter">{letter}</span>
               <span className="tv-quiz-opt-text">{text}</span>
@@ -215,6 +218,7 @@ function OptionsPanel({ on, children }) {
 // The picture of an "Imágenes" question (a painting, a monument, a flag...), inside the question's card on the left of
 // the question, as tall as the card lets it. Its address never names the answer (a token the server serves).
 function CardPicture({ question }) {
+  const t = useT();
   const isFlag = question.kind === "flag";
   const src = imageSrc(isFlag ? question.flag : question.image);
   const [failed, setFailed] = useState(false);
@@ -223,12 +227,12 @@ function CardPicture({ question }) {
   return (
     <figure className={`tv-quiz-media${isFlag ? " is-flag" : ""}`}>
       {failed ? (
-        <span className="tv-quiz-media-missing" role="img" aria-label={isFlag ? "Bandera" : "Imagen de la pregunta"}>
+        <span className="tv-quiz-media-missing" role="img" aria-label={isFlag ? t("Bandera") : t("Imagen de la pregunta")}>
           <Icon name={isFlag ? "flag" : "eye"} size={26} />
-          {isFlag ? "No se pudo cargar la bandera" : "No se pudo cargar la imagen"}
+          {isFlag ? t("No se pudo cargar la bandera") : t("No se pudo cargar la imagen")}
         </span>
       ) : (
-        <img key={src} src={src} alt={isFlag ? "Bandera de un país misterioso" : "Imagen de la pregunta"} onError={() => setFailed(true)} />
+        <img key={src} src={src} alt={isFlag ? t("Bandera de un país misterioso") : t("Imagen de la pregunta")} onError={() => setFailed(true)} />
       )}
     </figure>
   );
@@ -247,6 +251,7 @@ const QUESTION_MARKS = [
 ];
 
 function WriteRound({ room, question, me, answer, skipSong, seconds, clock, central, controller, veil = null }) {
+  const t = useT();
   const round = room.currentRound;
   const [query, setQuery] = useState("");
   const [sent, setSent] = useState(null);
@@ -285,15 +290,15 @@ function WriteRound({ room, question, me, answer, skipSong, seconds, clock, cent
     } catch (e2) {
       sending.current = false;
       setSent(null);
-      setErr(e2.message || "No se pudo enviar tu respuesta");
+      setErr(e2.message || t("No se pudo enviar tu respuesta"));
     }
   }
 
   const [confirmSkip, setConfirmSkip] = useState(false);
   useEffect(() => {
     if (!confirmSkip) return undefined;
-    const t = setTimeout(() => setConfirmSkip(false), 3000);
-    return () => clearTimeout(t);
+    const timer = setTimeout(() => setConfirmSkip(false), 3000);
+    return () => clearTimeout(timer);
   }, [confirmSkip]);
 
   // "Saltar", like Adivina la canción's: the first tap asks, the second skips.
@@ -307,7 +312,7 @@ function WriteRound({ room, question, me, answer, skipSong, seconds, clock, cent
     setSent({ round, skipped: true });
     skipSong().catch((e) => {
       setSent(null);
-      setErr(e.message || "No se pudo saltar la pregunta");
+      setErr(e.message || t("No se pudo saltar la pregunta"));
     });
   }
 
@@ -348,20 +353,20 @@ function WriteRound({ room, question, me, answer, skipSong, seconds, clock, cent
           <div className="tv-mwrite is-off">
             <span className="tv-mwrite-box">
               <Icon name="keyboard" size={24} />
-              <span className="tv-mwrite-ph">Escribe tu respuesta…</span>
+              <span className="tv-mwrite-ph">{t("Escribe tu respuesta…")}</span>
             </span>
           </div>
         )}
         {/* The answer takes the place of the box to write in. */}
         {reveal && (
           <AnswerCard
-            label="La respuesta"
+            label={t("La respuesta")}
             value={question.answer}
-            mine={!central && !spectator && (me?.lastAnswer?.text || skipped) ? (skipped ? "Te la saltaste" : `Escribiste “${me.lastAnswer.text}”`) : null}
+            mine={!central && !spectator && (me?.lastAnswer?.text || skipped) ? (skipped ? t("Te la saltaste") : t("Escribiste “{text}”", { text: me.lastAnswer.text })) : null}
             mineOk={Boolean(me?.lastAnswer?.correct)}
           />
         )}
-        {room.phase === "playing" && central && <PhoneHint room={room}>Escriban la respuesta en su teléfono</PhoneHint>}
+        {room.phase === "playing" && central && <PhoneHint room={room}>{t("Escriban la respuesta en su teléfono")}</PhoneHint>}
         {room.phase === "playing" &&
           !central &&
           (!locked ? (
@@ -371,7 +376,7 @@ function WriteRound({ room, question, me, answer, skipSong, seconds, clock, cent
                 <input
                   ref={inputRef}
                   type="text"
-                  placeholder="Escribe tu respuesta…"
+                  placeholder={t("Escribe tu respuesta…")}
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   autoComplete="off"
@@ -379,12 +384,12 @@ function WriteRound({ room, question, me, answer, skipSong, seconds, clock, cent
                   spellCheck="false"
                   enterKeyHint="send"
                   maxLength={80}
-                  aria-label="Tu respuesta"
+                  aria-label={t("Tu respuesta")}
                 />
               </label>
               <button type="submit" className="tv-btn tv-btn--primary tv-mwrite-send" disabled={!query.trim()}>
                 <Icon name="send" size={20} strokeWidth={2.4} />
-                <span className="tv-mwrite-send-label">Enviar</span>
+                <span className="tv-mwrite-send-label">{t("Enviar")}</span>
               </button>
               {/* A player may still give up on the question, at the right end: the first tap asks, the second skips. */}
               <AnswerSkip confirm={confirmSkip} onClick={skip} />
@@ -392,7 +397,7 @@ function WriteRound({ room, question, me, answer, skipSong, seconds, clock, cent
           ) : (
             <p className={`tv-mwrite-sent${skipped ? " is-skipped" : ""}`}>
               <Icon name={spectator ? "info" : skipped ? "close" : "check"} size={20} strokeWidth={3} />
-              {spectator ? "Estás viendo la partida" : skipped ? "Te la saltaste" : mySent?.text || me?.lastAnswer?.text || "Respuesta enviada"}
+              {spectator ? t("Estás viendo la partida") : skipped ? t("Te la saltaste") : mySent?.text || me?.lastAnswer?.text || t("Respuesta enviada")}
             </p>
           ))}
       </div>
@@ -402,6 +407,7 @@ function WriteRound({ room, question, me, answer, skipSong, seconds, clock, cent
 }
 
 function GameScreen() {
+  const t = useT();
   const { code: codeParam } = useParams();
   const { user, room, joinRoom, answer, skipSong, restartGame } = useApp();
   // The address's code ("oculta" while it's hidden: this tab's room, lib/hiddenCode.js).
@@ -424,8 +430,8 @@ function GameScreen() {
 
   useEffect(() => {
     if (!confirmHub) return;
-    const t = setTimeout(() => setConfirmHub(false), 3000);
-    return () => clearTimeout(t);
+    const timer = setTimeout(() => setConfirmHub(false), 3000);
+    return () => clearTimeout(timer);
   }, [confirmHub]);
 
   useEffect(() => setErr(""), [room?.currentRound]);
@@ -436,7 +442,7 @@ function GameScreen() {
       return;
     }
     setConfirmHub(false);
-    restartGame().catch((e) => setErr(e.message || "No se pudo terminar la partida"));
+    restartGame().catch((e) => setErr(e.message || t("No se pudo terminar la partida")));
   }
 
   if (!room) {
@@ -491,7 +497,7 @@ function GameScreen() {
           className={`tv-mini-btn tv-end-btn${confirmHub ? " is-on" : ""}`}
           onClick={backToHub}
         >
-          {confirmHub ? "¿Seguro? Toca otra vez" : "Terminar"}
+          {confirmHub ? t("¿Seguro? Toca otra vez") : t("Terminar")}
         </button>
       )}
     </>
@@ -522,7 +528,7 @@ function GameScreen() {
           <section className="tv-game-stage tv-countdown">
             <p className="tv-party-status">
               <span className="tv-pulse" aria-hidden="true" />
-              Cargando la pregunta…
+              {t("Cargando la pregunta…")}
             </p>
           </section>
         )}
