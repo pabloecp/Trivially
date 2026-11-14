@@ -18,6 +18,7 @@ import { resolveCode } from "../../lib/hiddenCode.js";
 import { useLyricsView } from "../../lib/ownerView.js";
 import { AnswerCard, MatchBar, MatchCard, MatchQuestion, RoundCountdown, RoundVerdict } from "../../components/home/MatchFrame.jsx";
 
+import { translate as tr } from "../../lib/i18n.js";
 // A closed round's four songs keep the same letters and colours as Trivia's options.
 const OPTION_LETTERS = ["A", "B", "C", "D"];
 // Keys that pick an option while a closed round is open: 1–4 or A–D.
@@ -307,7 +308,7 @@ function GameScreen() {
       await answer(index);
     } catch (e) {
       if (room?.phase === "playing") {
-        setErr(e.message || "Error al enviar respuesta");
+        setErr(e.message || tr("Error al enviar respuesta"));
         setSubmittedSong(null);
         setPickedChoice(null);
         isSubmittingRef.current = false;
@@ -340,7 +341,7 @@ function GameScreen() {
     setSkippedRound(room.currentRound);
     skipSong().catch((e) => {
       setSkippedRound(null);
-      setErr(e.message || "No se pudo saltar la canción");
+      setErr(e.message || tr("No se pudo saltar la canción"));
     });
   }
   // Completa la letra's round also has the bit of song before the cut.
@@ -413,7 +414,7 @@ function GameScreen() {
       await answer(valToSend);
     } catch (e) {
       if (room?.phase === "playing") {
-        setErr(e.message || "Error al enviar respuesta");
+        setErr(e.message || tr("Error al enviar respuesta"));
         setSubmittedSong(null);
         isSubmittingRef.current = false;
       }
@@ -450,7 +451,7 @@ function GameScreen() {
       return;
     }
     setConfirmHub(false);
-    restartGame().catch((e) => setErr(e.message || "No se pudo terminar la partida"));
+    restartGame().catch((e) => setErr(e.message || tr("No se pudo terminar la partida")));
   }
 
   if (!room) {
@@ -458,7 +459,7 @@ function GameScreen() {
       <div className="tv-card tv-lobby-guest">
         <p className="tv-party-status">
           <span className="tv-pulse" aria-hidden="true" />
-          Conectando a la partida…
+          {tr("Conectando a la partida…")}
         </p>
       </div>
     );
@@ -489,7 +490,7 @@ function GameScreen() {
           className={`tv-mini-btn tv-end-btn${confirmHub ? " is-on" : ""}`}
           onClick={() => backToHub({ confirm: true })}
         >
-          {confirmHub ? "¿Seguro? Toca otra vez" : "Terminar"}
+          {confirmHub ? tr("¿Seguro? Toca otra vez") : tr("Terminar")}
         </button>
       )}
     </>
@@ -515,7 +516,7 @@ function GameScreen() {
   const roundVerdict = (
     <RoundVerdict
       tone={isCorrect ? "ok" : didAnswer ? "bad" : "timeout"}
-      label={isCorrect ? "¡Correcto!" : didAnswer ? "Incorrecto" : skipped ? "Te la saltaste" : "Se acabó el tiempo"}
+      label={isCorrect ? tr("¡Correcto!") : didAnswer ? tr("Incorrecto") : skipped ? tr("Te la saltaste") : tr("Se acabó el tiempo")}
       points={isCorrect ? me?.lastPoints || 0 : null}
       streak={isCorrect ? me?.streak || 0 : 0}
     />
@@ -543,7 +544,7 @@ function GameScreen() {
             pills={room.phase === "reveal" ? central ? <RoomVerdict room={room} /> : !spectator ? roundVerdict : null : null}
           >
             {/* The card's text never changes, at the reveal either. */}
-            <MatchQuestion>{lyrics ? "¿Qué palabra sigue?" : closed ? "¿Qué canción suena?" : "¿Qué canción suena? Escribe el título"}</MatchQuestion>
+            <MatchQuestion>{lyrics ? tr("¿Qué palabra sigue?") : closed ? tr("¿Qué canción suena?") : tr("¿Qué canción suena? Escribe el título")}</MatchQuestion>
           </MatchCard>
         )}
 
@@ -557,20 +558,18 @@ function GameScreen() {
             )}
             {(central || controller) && <p className="tv-hint">
               {lyrics
-                ? `${central ? "La canción se corta: completen" : "La canción se corta: completa"} lo que sigue en la letra${
-                    closed ? " entre cuatro opciones" : ""
-                  }${central ? " desde su teléfono" : controller ? " desde aquí" : ""}.`
+                ? tr(`La canción se corta: ${central ? "completen" : "completa"} lo que sigue en la letra${closed ? " entre cuatro opciones" : ""} ${central ? "desde su teléfono" : "desde aquí"}.`.replace(" .", "."))
                 : central
                 ? closed
-                  ? "Elijan la canción en su teléfono entre cuatro opciones."
-                  : "Escriban el título en su teléfono en cuanto reconozcan la canción."
+                  ? tr("Elijan la canción en su teléfono entre cuatro opciones.")
+                  : tr("Escriban el título en su teléfono en cuanto reconozcan la canción.")
                 : controller
                 ? closed
-                  ? "Escucha la pantalla central y elige entre cuatro opciones."
-                  : "Escucha la pantalla central y escribe el título en cuanto la reconozcas."
+                  ? tr("Escucha la pantalla central y elige entre cuatro opciones.")
+                  : tr("Escucha la pantalla central y escribe el título en cuanto la reconozcas.")
                 : closed
-                ? "Elige la canción entre cuatro opciones."
-                : "Escribe el título en cuanto reconozcas la canción."}
+                ? tr("Elige la canción entre cuatro opciones.")
+                : tr("Escribe el título en cuanto reconozcas la canción.")}
             </p>}
           </section>
         )}
@@ -595,13 +594,13 @@ function GameScreen() {
               </div>
             )}
 
-            {closed && room.phase === "playing" && central && <PhoneHint room={room}>Elijan desde su teléfono</PhoneHint>}
+            {closed && room.phase === "playing" && central && <PhoneHint room={room}>{tr("Elijan desde su teléfono")}</PhoneHint>}
             {!closed && room.phase === "playing" && central ? (
-              <PhoneHint room={room}>{lyrics ? "Escriban lo que falta en su teléfono" : "Escriban el título en su teléfono"}</PhoneHint>
+              <PhoneHint room={room}>{lyrics ? tr("Escriban lo que falta en su teléfono") : tr("Escriban el título en su teléfono")}</PhoneHint>
             ) : !closed && room.phase === "reveal" ? (
               room.reveal && !controller ? (
                 <AnswerCard
-                  label={lyrics ? "La palabra" : "La canción"}
+                  label={lyrics ? tr("La palabra") : tr("La canción")}
                   value={lyrics ? lyrics.answer || room.reveal.title : room.reveal.title}
                   detail={[
                     lyrics ? room.reveal.title : null,
@@ -614,18 +613,18 @@ function GameScreen() {
                     <img
                       key={room.reveal.title}
                       src={coverUrl(room.reveal.image)}
-                      alt={`Portada de ${room.reveal.title}`}
+                      alt={tr("Portada de {title}", { title: room.reveal.title })}
                       onError={(e) => {
                         e.currentTarget.src = "/logo.svg";
                       }}
                     />
                   }
-                  mine={central || spectator ? null : skipped ? "Te la saltaste" : me?.lastAnswer?.text ? `Escribiste “${me.lastAnswer.text}”` : null}
+                  mine={central || spectator ? null : skipped ? tr("Te la saltaste") : me?.lastAnswer?.text ? tr("Escribiste “{text}”", { text: me.lastAnswer.text }) : null}
                   mineOk={Boolean(me?.lastAnswer?.correct)}
                 />
               ) : null
             ) : closed && (room.phase === "reveal" || central || (!spectator && (!locked || Number.isInteger(myChoice)))) ? (
-              <div className={`tv-quiz-options tv-music-options${room.phase === "reveal" ? " is-reveal" : ""}`} role="group" aria-label="Opciones">
+              <div className={`tv-quiz-options tv-music-options${room.phase === "reveal" ? " is-reveal" : ""}`} role="group" aria-label={tr("Opciones")}>
                 {OPTION_LETTERS.map((letter, i) => {
                   const text = choice?.options?.[i];
                   if (text == null) return null;
@@ -690,14 +689,14 @@ function GameScreen() {
                     ref={inputRef}
                     type="text"
                     className="tv-search-input"
-                    placeholder={lyrics ? "Escribe tu respuesta…" : "Escribe el título…"}
+                    placeholder={lyrics ? tr("Escribe tu respuesta…") : tr("Escribe el título…")}
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
                     onKeyDown={handleKeyDown}
                     autoComplete="off"
                     autoFocus
                     spellCheck="false"
-                    aria-label={lyrics ? "Lo que falta en la letra" : "Título de la canción"}
+                    aria-label={lyrics ? tr("Lo que falta en la letra") : tr("Título de la canción")}
                     aria-autocomplete={lyrics ? undefined : "list"}
                     aria-controls={lyrics ? undefined : "tv-suggest"}
                     maxLength={lyrics ? 100 : undefined}
@@ -717,7 +716,7 @@ function GameScreen() {
                   }}
                 >
                   <Icon name="send" size={20} strokeWidth={2.4} />
-                  <span className="tv-mwrite-send-label">Enviar</span>
+                  <span className="tv-mwrite-send-label">{tr("Enviar")}</span>
                 </button>
                 {/* "Saltar" at the right end, as wide as "Enviar": the first tap asks, the second skips. */}
                 <AnswerSkip confirm={confirmSkip} onClick={handleSkip} />
@@ -739,7 +738,7 @@ function GameScreen() {
                                 >
                                   <span className="tv-suggest-title">{song.title}</span>
                                   <span className="tv-suggest-artist">{song.artists || song.artistName}</span>
-                                  {index === activeIndex && <kbd className="tv-kbd">Enter</kbd>}
+                                  {index === activeIndex && <kbd className="tv-kbd">{tr("Enter")}</kbd>}
                                 </button>
                               </li>
                             </Fragment>
@@ -748,27 +747,27 @@ function GameScreen() {
                       </ul>
                     ) : (
                       <p className="tv-hint tv-suggest-empty">
-                        Sin sugerencias. Pulsa <kbd className="tv-kbd">Enter</kbd> para enviar “{query}”.
+                        {tr("Sin sugerencias. Pulsa")} <kbd className="tv-kbd">{tr("Enter")}</kbd> {tr("para enviar “")}{query}”.
                       </p>
                     )}
-                    <p className="tv-suggest-help">Usa ↑ ↓ y Enter para elegir</p>
+                    <p className="tv-suggest-help">{tr("Usa ↑ ↓ y Enter para elegir")}</p>
                   </div>
                 )}
               </div>
             ) : (
               spectator ? (
                 <div className="tv-locked">
-                  <p className="tv-mono-label">Espectador</p>
-                  <p className="tv-locked-title">Escucha y mira cómo responden los demás</p>
+                  <p className="tv-mono-label">{tr("Espectador")}</p>
+                  <p className="tv-locked-title">{tr("Escucha y mira cómo responden los demás")}</p>
                 </div>
               ) : (
               <div className={`tv-locked${skipped ? " is-skipped" : ""}`}>
                 <span className="tv-locked-check">
                   <Icon name={skipped ? "close" : "check"} size={28} strokeWidth={3.2} />
                 </span>
-                <p className="tv-mono-label">{skipped ? "Sin respuesta" : "Respuesta enviada"}</p>
+                <p className="tv-mono-label">{skipped ? tr("Sin respuesta") : tr("Respuesta enviada")}</p>
                 <p className="tv-locked-title">
-                  {skipped ? "Te la saltaste" : submittedSong || me?.lastAnswer?.text || "Canción enviada"}
+                  {skipped ? tr("Te la saltaste") : submittedSong || me?.lastAnswer?.text || tr("Canción enviada")}
                 </p>
               </div>
               )
@@ -810,7 +809,7 @@ function LyricsPanel({ lyrics, position, reveal = false }) {
             ) : (
               <>
                 {line.text.slice(0, gapAt)}
-                <span className={`tv-lyrics-gap${filled ? " is-filled" : ""}`} aria-label={filled ? undefined : "espacio en blanco"}>
+                <span className={`tv-lyrics-gap${filled ? " is-filled" : ""}`} aria-label={filled ? undefined : tr("espacio en blanco")}>
                   {filled ? lyrics.answer : null}
                 </span>
               </>

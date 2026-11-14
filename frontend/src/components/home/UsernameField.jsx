@@ -3,6 +3,7 @@ import { api } from "../../lib/api.js";
 import { USERNAME_MIN, cleanUsername } from "../../lib/username.js";
 import Icon from "./Icon.jsx";
 
+import { translate as tr } from "../../lib/i18n.js";
 // Asks the server (as it is typed) whether a username is free. `current`: the account's own, which needs no check.
 // Returns { state: "idle" | "checking" | "ok" | "bad", message }.
 export function useUsernameCheck(value, current = null) {
@@ -16,7 +17,7 @@ export function useUsernameCheck(value, current = null) {
     let live = true;
     const timer = setTimeout(() => {
       api(`/api/username/check?u=${encodeURIComponent(value)}`)
-        .then((res) => live && setResult(res.available ? { state: "ok", message: "Disponible" } : { state: "bad", message: res.reason || "No disponible" }))
+        .then((res) => live && setResult(res.available ? { state: "ok", message: tr("Disponible") } : { state: "bad", message: res.reason || tr("No disponible") }))
         .catch(() => live && setResult({ state: "idle", message: "" }));
     }, 350);
     return () => {
@@ -30,7 +31,7 @@ export function useUsernameCheck(value, current = null) {
 // The box for a username, with its "@" and the free / taken message under it (or, while there's none, `note`: a line
 // about the username, inside the row so it sits as close as any other row's note).
 export default function UsernameField({
-  label = "Nombre de usuario",
+  label = tr("Nombre de usuario"),
   value,
   onChange,
   check,

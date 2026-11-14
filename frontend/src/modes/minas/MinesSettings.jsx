@@ -3,6 +3,7 @@ import OptionRow, { rangeOptions } from "../../components/home/OptionRow.jsx";
 import SettingsTabs, { countNote } from "../../components/home/SettingsTabs.jsx";
 import { CATEGORIES, DIFFICULTIES, RACE_SECONDS_LIMITS, ROUND_OPTIONS, minesConfig } from "./minesInfo.js";
 
+import { translate as tr } from "../../lib/i18n.js";
 // Settings of a Campo de minas match, in the settings panel, in two tabs: "Partida" (how many rounds, one board each,
 // and the seconds of each round) and "Tableros" (which categories and difficulties the
 // boards come from, tick as many as you like, with "Seleccionar todos" / "Deseleccionar todos", like Trivia's). A category or difficulty without boards with
@@ -27,7 +28,7 @@ export default function MinesSettings({ room, updateConfig, onToast, children, r
       await updateConfig({ mines: next });
     } catch (err) {
       setDraft(saved);
-      onToast?.(err.message || "No se pudieron guardar los ajustes");
+      onToast?.(err.message || tr("No se pudieron guardar los ajustes"));
     }
   }
 
@@ -51,19 +52,19 @@ export default function MinesSettings({ room, updateConfig, onToast, children, r
       tabs={[
         {
           id: "partida",
-          label: "Partida",
+          label: tr("Partida"),
           icon: "hourglass",
           note: `${draft.rounds} rondas`,
           content: (
             <>
               <OptionRow
-                label="Rondas"
+                label={tr("Rondas")}
                 options={ROUND_OPTIONS.map((n) => ({ value: n, label: String(n) }))}
                 value={draft.rounds}
                 onChange={(n) => save({ rounds: n })}
               />
               <OptionRow
-                label="Segundos por ronda"
+                label={tr("Segundos por ronda")}
                 options={rangeOptions(RACE_SECONDS_LIMITS)}
                 value={Math.round(draft.roundMs / 1000)}
                 onChange={(n) => save({ roundMs: n * 1000 })}
@@ -73,14 +74,14 @@ export default function MinesSettings({ room, updateConfig, onToast, children, r
         },
         {
           id: "tableros",
-          label: "Tableros",
+          label: tr("Tableros"),
           icon: "grid",
           note: countNote(draft.categories, CATEGORIES.length),
           alert: !draft.categories.length || !draft.difficulties.length,
           content: (
             <>
               <OptionRow
-                label="Categorías"
+                label={tr("Categorías")}
                 multi
                 wrap
                 options={CATEGORIES.map(choice("categories"))}
@@ -89,7 +90,7 @@ export default function MinesSettings({ room, updateConfig, onToast, children, r
                 onSetAll={(categories) => save({ categories })}
               />
               <OptionRow
-                label="Dificultad"
+                label={tr("Dificultad")}
                 multi
                 options={DIFFICULTIES.map(choice("difficulties"))}
                 value={draft.difficulties}

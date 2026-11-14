@@ -6,6 +6,7 @@ import { api } from "./api.js";
 import { emitAck, getSocket } from "./socket.js";
 import { useApp } from "./store.jsx";
 
+import { translate as tr } from "../lib/i18n.js";
 // The friends tab: the list (who is online and where), the requests, the friend code, and what a friend can do about a
 // group (join it, or ask its leader). The server pushes the whole view (`friends:state`) whenever something about it
 // changes.
@@ -59,12 +60,12 @@ export function FriendsProvider({ children }) {
     const onApproved = async ({ code, hostName } = {}) => {
       try {
         await joinRef.current(code);
-        say(`${hostName || "El líder"} te dejó entrar a su grupo`);
+        say(tr("{v0} te dejó entrar a su grupo", { v0: hostName || tr("El líder") }));
       } catch (err) {
-        say(err.message || "No pudimos entrar al grupo", "lock");
+        say(err.message || tr("No pudimos entrar al grupo"), "lock");
       }
     };
-    const onDeclined = ({ hostName } = {}) => say(`${hostName || "El líder"} no te dejó entrar esta vez`, "lock");
+    const onDeclined = ({ hostName } = {}) => say(tr("{v0} no te dejó entrar esta vez", { v0: hostName || tr("El líder") }), "lock");
     // A friend invites this account to their group: a card with "Unirme".
     const onInvited = (data = {}) => data.code && setInvite({ ...data, id: Date.now() });
     // A friend asked to join this account, which had no group: the server made one, and it shows in "Tu grupo".
@@ -162,10 +163,10 @@ export function FriendsProvider({ children }) {
           try {
             await joinRef.current(inv.code);
             setInvite(null);
-            say(`Entraste al grupo de ${inv.fromName}`);
+            say(tr("Entraste al grupo de {fromName}", { fromName: inv.fromName }));
           } catch (err) {
             setInvite(null);
-            if (!err.offer) say(err.message || "No pudimos entrar al grupo", "lock");
+            if (!err.offer) say(err.message || tr("No pudimos entrar al grupo"), "lock");
           }
         }}
       />

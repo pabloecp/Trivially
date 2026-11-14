@@ -1,3 +1,4 @@
+import { translate as tr } from "../../lib/i18n.js";
 import { useEffect, useRef, useState } from "react";
 import { play } from "../../lib/sounds.js";
 
@@ -31,7 +32,7 @@ export function useInvite(code, onToast, { what = "link", done = "" } = {}) {
       clearTimeout(timer.current);
       timer.current = setTimeout(() => setCopied(false), 2000);
     } catch {
-      onToast?.(`Comparte este enlace: ${url}`, "link");
+      onToast?.(tr("Comparte este enlace: {url}", { url }), "link");
     }
   }
 

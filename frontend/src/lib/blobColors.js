@@ -6,22 +6,23 @@
 // there are the skins (lib/blobSkins.js, also with an account): a saved skin's id is worn like a colour.
 import { isBlobSkin } from "./blobSkins.js";
 
+import { translate as tr } from "../lib/i18n.js";
 export const BLOB_COLORS = [
-  { id: "#FFFFFF", name: "Blanco", shade: "#AEB3BF", needs: null },
-  { id: "#2F6BFF", name: "Trivia", shade: "#1A3C99", needs: "account" },
-  { id: "#FF2FC0", name: "Canción", shade: "#A3157A", needs: "account" },
-  { id: "#00D1C1", name: "Mundo", shade: "#007A71", needs: "account" },
-  { id: "#00A2FF", name: "Lluvia", shade: "#0A62A8", needs: "account" },
-  { id: "#FF5A1F", name: "Rango", shade: "#B32F00", needs: "account" },
-  { id: "#1FD24A", name: "Farsante", shade: "#12801F", needs: "account" },
-  { id: "#A63DFF", name: "Minas", shade: "#6418A8", needs: "account" },
+  { id: "#FFFFFF", get name() { return tr("Blanco"); }, shade: "#AEB3BF", needs: null },
+  { id: "#2F6BFF", get name() { return tr("Trivia"); }, shade: "#1A3C99", needs: "account" },
+  { id: "#FF2FC0", get name() { return tr("Canción"); }, shade: "#A3157A", needs: "account" },
+  { id: "#00D1C1", get name() { return tr("Mundo"); }, shade: "#007A71", needs: "account" },
+  { id: "#00A2FF", get name() { return tr("Lluvia"); }, shade: "#0A62A8", needs: "account" },
+  { id: "#FF5A1F", get name() { return tr("Rango"); }, shade: "#B32F00", needs: "account" },
+  { id: "#1FD24A", get name() { return tr("Farsante"); }, shade: "#12801F", needs: "account" },
+  { id: "#A63DFF", get name() { return tr("Minas"); }, shade: "#6418A8", needs: "account" },
 ];
 const RENAMED = { "#8FD3FF": "#2F6BFF", "#FFA6D2": "#FF2FC0", "#8EF0B0": "#00D1C1", "#FFD60A": "#FF5A1F", "#FF8A00": "#FF5A1F" };
 
 /** How to get a colour you can't use yet. */
 export const HOW_TO_GET = {
-  account: "Crea una cuenta para desbloquear este color.",
-  skin: "Crea una cuenta para desbloquear esta skin.",
+  get account() { return tr("Crea una cuenta para desbloquear este color."); },
+  get skin() { return tr("Crea una cuenta para desbloquear esta skin."); },
 };
 
 /** The colour a Blob is drawn in, from a player's `avatar`: one of the colours, or a skin's id (lib/blobSkins.js). */

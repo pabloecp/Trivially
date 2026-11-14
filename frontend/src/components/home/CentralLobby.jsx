@@ -6,6 +6,7 @@ import "../../styles/central.css";
 import { shownCode, useHiddenCode } from "../../lib/hiddenCode.js";
 import { useT } from "../../lib/i18n.js";
 
+import { translate as tr } from "../../lib/i18n.js";
 // The room screen on the room's central device, while the room waits: what everyone looks at before the match. How
 // to join (the address and the room's code, big), the game the host picked (or that they're choosing one) with how
 // it's played, who's in, and that the match starts from the host's phone. The only thing to tap is "Ocultar" beside the code (for streaming); the host controls the room.
@@ -13,23 +14,23 @@ export default function CentralLobby({ room }) {
   const t = useT();
   const [codeHidden, toggleCode] = useHiddenCode();
   const mode = findMode(room.game);
-  const host = room.hostName || "El anfitrión";
+  const host = room.hostName || tr("El anfitrión");
   const players = room.players.filter((p) => p.connected);
 
   return (
     <div className="tv-room tv-central-room">
       <div className="tv-room-main">
-        <section className="tv-central-lobby" aria-label="Pantalla central">
+        <section className="tv-central-lobby" aria-label={tr("Pantalla central")}>
           <p className="tv-mono-label tv-central-kicker">
             <Icon name="tv" size={16} strokeWidth={2.6} />
-            Dispositivo central
+            {tr("Dispositivo central")}
           </p>
 
           {/* A group's private match: its code brings more people into the group, and so into it. */}
           {room.groupCode && (
             <div className="tv-central-join">
               <p className="tv-central-join-text">
-                Entra en <strong>{window.location.host}</strong> y únete con el código
+                {tr("Entra en")} <strong>{window.location.host}</strong> {tr("y únete con el código")}
               </p>
               <p className="tv-central-join-code">{shownCode(room.groupCode, codeHidden)}</p>
               <button
@@ -37,10 +38,10 @@ export default function CentralLobby({ room }) {
                 className={`tv-code-eye${codeHidden ? " is-on" : ""}`}
                 onClick={toggleCode}
                 aria-pressed={codeHidden}
-                aria-label={codeHidden ? "Mostrar el código" : "Ocultar el código"}
+                aria-label={codeHidden ? tr("Mostrar el código") : tr("Ocultar el código")}
               >
                 <Icon name={codeHidden ? "eye-off" : "eye"} size={16} strokeWidth={2.4} />
-                <span>{codeHidden ? "Oculto" : "Ocultar"}</span>
+                <span>{codeHidden ? tr("Oculto") : tr("Ocultar")}</span>
               </button>
             </div>
           )}
@@ -66,11 +67,11 @@ export default function CentralLobby({ room }) {
           ) : (
             <div className="tv-central-game is-picking">
               <span className="tv-pulse" aria-hidden="true" />
-              <p>{host} está eligiendo el juego…</p>
+              <p>{host} {tr("está eligiendo el juego…")}</p>
             </div>
           )}
 
-          <ul className="tv-central-faces" aria-label="Jugadores en la partida">
+          <ul className="tv-central-faces" aria-label={tr("Jugadores en la partida")}>
             {players.map((p, i) => (
               <li key={p.id} style={{ "--i": i }}>
                 <Avatar name={p.name} avatar={p.avatar} />
@@ -81,7 +82,7 @@ export default function CentralLobby({ room }) {
 
           <p className="tv-mstage-wait tv-central-wait">
             <Icon name="phone" size={20} strokeWidth={2.4} />
-            {mode ? `${host} empieza la partida desde su teléfono` : "Se juega desde los teléfonos: esta pantalla muestra la partida"}
+            {mode ? tr("{host} empieza la partida desde su teléfono", { host: host }) : tr("Se juega desde los teléfonos: esta pantalla muestra la partida")}
           </p>
         </section>
       </div>

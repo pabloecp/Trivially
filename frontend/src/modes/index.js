@@ -12,6 +12,7 @@ import { MIN_QUESTIONS as RAIN_MIN_QUESTIONS } from "./lluvia/rainInfo.js";
 import { MIN_QUESTIONS as REY_MIN_QUESTIONS } from "./rey/reyInfo.js";
 import { urlCode } from "../lib/hiddenCode.js";
 
+import { translate as tr } from "../lib/i18n.js";
 // The games shown on the room screen ("Elige el juego"; a game may have its own "Modos de juego" in its settings,
 // variants that change its questions or rules, apart from its "Tipo de respuestas").
 // "Trivia" is the main one (`kind: "main"`, its tile as wide as two): questions of every topic, each answered its own
@@ -24,20 +25,20 @@ import { urlCode } from "../lib/hiddenCode.js";
 export const GAME_MODES = [
   {
     id: "opciones",
-    name: "Trivia",
+    get name() { return tr("Trivia"); },
     // Under its name on its card in "¿Qué quieren jugar?".
-    tagline: "Acierta rápido",
+    get tagline() { return tr("Acierta rápido"); },
     // Under its name on Inicio's card: what the game is, in one or two lines.
-    description: "Responde preguntas de todos los temas.",
+    get description() { return tr("Responde preguntas de todos los temas."); },
     kind: "main",
     // Sky blue (styles/quiz.css); its answers have their own four colours.
     color: "quiz",
     icon: "bulb",
     available: true,
     steps: [
-      { icon: "bulb", text: "Elige las categorías" },
-      { icon: "grid", text: "Responde como toque" },
-      { icon: "bolt", text: "Más rápido, más puntos" },
+      { icon: "bulb", get text() { return tr("Elige las categorías"); } },
+      { icon: "grid", get text() { return tr("Responde como toque"); } },
+      { icon: "bolt", get text() { return tr("Más rápido, más puntos"); } },
     ],
     ready: (room) => room.questionsReady == null || room.questionsReady >= (room.config?.quiz?.rounds || 5),
     Lobby: QuizLobbyPanel,
@@ -45,17 +46,17 @@ export const GAME_MODES = [
   },
   {
     id: "musica",
-    name: "Adivina la canción",
-    tagline: "Acierta rápido",
-    description: "Escucha la canción y adivina el título o la letra.",
+    get name() { return tr("Adivina la canción"); },
+    get tagline() { return tr("Acierta rápido"); },
+    get description() { return tr("Escucha la canción y adivina el título o la letra."); },
     kind: "extra",
     color: "music",
     icon: "music",
     available: true,
     steps: [
-      { icon: "music", text: "Escucha el fragmento" },
-      { icon: "keyboard", text: "Elige o escribe el título" },
-      { icon: "bolt", text: "Más rápido, más puntos" },
+      { icon: "music", get text() { return tr("Escucha el fragmento"); } },
+      { icon: "keyboard", get text() { return tr("Elige o escribe el título"); } },
+      { icon: "bolt", get text() { return tr("Más rápido, más puntos"); } },
     ],
     // A different song for every round (older servers don't send songsReady).
     ready: (room) =>
@@ -67,17 +68,17 @@ export const GAME_MODES = [
   },
   {
     id: "mundo",
-    name: "Encuentra el país",
-    tagline: "El pin más cercano gana",
-    description: "Busca el país en el mapa y ponle tu pin.",
+    get name() { return tr("Encuentra el país"); },
+    get tagline() { return tr("El pin más cercano gana"); },
+    get description() { return tr("Busca el país en el mapa y ponle tu pin."); },
     kind: "extra",
     color: "world",
     icon: "globe",
     available: true,
     steps: [
-      { icon: "globe", text: "Mira qué país te piden" },
-      { icon: "pin", text: "Ponle tu pin en el mapa" },
-      { icon: "target", text: "Más cerca, más puntos" },
+      { icon: "globe", get text() { return tr("Mira qué país te piden"); } },
+      { icon: "pin", get text() { return tr("Ponle tu pin en el mapa"); } },
+      { icon: "target", get text() { return tr("Más cerca, más puntos"); } },
     ],
     ready: (room) => room.questionsReady == null || room.questionsReady >= (room.config?.geo?.rounds || 5),
     Lobby: GeoLobbyPanel,
@@ -87,18 +88,18 @@ export const GAME_MODES = [
   {
     // Rango: get as close as you can on a range. Its steps are general, in case it gets other ways of playing. The id is the old one on purpose (see GAME_IDS on the server).
     id: "historia",
-    name: "Rango",
-    tagline: "El más cercano gana",
-    description: "Adivina la cifra o el año moviendo la barra.",
+    get name() { return tr("Rango"); },
+    get tagline() { return tr("El más cercano gana"); },
+    get description() { return tr("Adivina la cifra o el año moviendo la barra."); },
     kind: "extra",
     // Terracotta (styles/history.css).
     color: "history",
     icon: "hourglass",
     available: true,
     steps: [
-      { icon: "info", text: "Lee la pregunta" },
-      { icon: "target", text: "Elige en el rango" },
-      { icon: "star", text: "Más cerca, más puntos" },
+      { icon: "info", get text() { return tr("Lee la pregunta"); } },
+      { icon: "target", get text() { return tr("Elige en el rango"); } },
+      { icon: "star", get text() { return tr("Más cerca, más puntos"); } },
     ],
     ready: (room) => room.questionsReady == null || room.questionsReady >= (room.config?.history?.rounds || 5),
     Lobby: HistoryLobbyPanel,
@@ -107,9 +108,9 @@ export const GAME_MODES = [
   },
   {
     id: "minas",
-    name: "Campo de minas",
-    tagline: "Acierta sin pisar minas",
-    description: "Toca solo las casillas que cumplen la consigna.",
+    get name() { return tr("Campo de minas"); },
+    get tagline() { return tr("Acierta sin pisar minas"); },
+    get description() { return tr("Toca solo las casillas que cumplen la consigna."); },
     kind: "extra",
     // The site's violet (styles/mines.css).
     color: "mines",
@@ -125,18 +126,18 @@ export const GAME_MODES = [
   {
     // Lluvia: questions fall down the screen for a whole round; each one is for whoever writes its answer first.
     id: "lluvia",
-    name: "Lluvia",
-    tagline: "Responde primero",
-    description: "Escribe la respuesta de lo que va cayendo.",
+    get name() { return tr("Lluvia"); },
+    get tagline() { return tr("Responde primero"); },
+    get description() { return tr("Escribe la respuesta de lo que va cayendo."); },
     kind: "extra",
     // Rain blue (styles/rain.css); the questions fall in green, yellow or red by difficulty.
     color: "rain",
     icon: "rain",
     available: true,
     steps: [
-      { icon: "rain", text: "Las preguntas caen" },
-      { icon: "bolt", text: "Respóndelas antes que nadie" },
-      { icon: "star", text: "Verde 1, amarilla 3, roja 5" },
+      { icon: "rain", get text() { return tr("Las preguntas caen"); } },
+      { icon: "bolt", get text() { return tr("Respóndelas antes que nadie"); } },
+      { icon: "star", get text() { return tr("Verde 1, amarilla 3, roja 5"); } },
     ],
     ready: (room) =>
       room.config?.rain?.categories?.length !== 0 &&
@@ -149,18 +150,18 @@ export const GAME_MODES = [
   {
     // Rey de la colina: the king picks the question, the first to answer it takes the crown.
     id: "rey",
-    name: "Rey de la colina",
-    tagline: "Quédate con la corona",
-    description: "Responde antes que nadie para ser el rey.",
+    get name() { return tr("Rey de la colina"); },
+    get tagline() { return tr("Quédate con la corona"); },
+    get description() { return tr("Responde antes que nadie para ser el rey."); },
     kind: "extra",
     // Crown gold (styles/rey.css).
     color: "rey",
     icon: "crown",
     available: true,
     steps: [
-      { icon: "crown", text: "El rey elige la pregunta" },
-      { icon: "bolt", text: "El primero en acertar lo destrona" },
-      { icon: "star", text: "Si nadie acierta, el rey suma" },
+      { icon: "crown", get text() { return tr("El rey elige la pregunta"); } },
+      { icon: "bolt", get text() { return tr("El primero en acertar lo destrona"); } },
+      { icon: "star", get text() { return tr("Si nadie acierta, el rey suma"); } },
     ],
     ready: (room) =>
       room.config?.rey?.categories?.length !== 0 &&
@@ -174,18 +175,18 @@ export const GAME_MODES = [
   {
     // Farsante: everyone invents an answer, then votes for the real one (or the best one); a game for a call with friends.
     id: "farsante",
-    name: "Farsante",
-    tagline: "Engaña y acierta",
-    description: "Inventa una respuesta falsa y adivina la real.",
+    get name() { return tr("Farsante"); },
+    get tagline() { return tr("Engaña y acierta"); },
+    get description() { return tr("Inventa una respuesta falsa y adivina la real."); },
     kind: "extra",
     // Leafy green (styles/farsante.css).
     color: "farsante",
     icon: "mask",
     available: true,
     steps: [
-      { icon: "keyboard", text: "Inventa una respuesta" },
-      { icon: "mask", text: "Mézclala con las de los demás" },
-      { icon: "star", text: "Puntos por engañar o por acertar" },
+      { icon: "keyboard", get text() { return tr("Inventa una respuesta"); } },
+      { icon: "mask", get text() { return tr("Mézclala con las de los demás"); } },
+      { icon: "star", get text() { return tr("Puntos por engañar o por acertar"); } },
     ],
     ready: (room) =>
       room.config?.farsante?.kinds?.length !== 0 && (room.players?.filter((p) => !p.spectator).length ?? 3) >= 3,
@@ -197,7 +198,7 @@ export const GAME_MODES = [
     // Not a game: where a match of several games (a public match or a Clásico) ends, on its results (who won the most
     // games, modes/playlist/Results.jsx). Nobody picks it (the rooms' own "Playlist" was removed).
     id: "playlist",
-    name: "Partida",
+    get name() { return tr("Partida"); },
     kind: "playlist",
     color: "playlist",
     icon: "playlist",
@@ -210,10 +211,10 @@ export const GAME_MODES = [
   // reads out of the menu (the match history). "extendido", first to three, isn't offered anywhere for now.
   {
     id: "clasico",
-    name: "Clásico",
-    fullName: "Clásico",
+    get name() { return tr("Clásico"); },
+    get fullName() { return tr("Clásico"); },
     // Under its name, on its tile and its card.
-    subtitle: "Primero en ganar dos juegos",
+    get subtitle() { return tr("Primero en ganar dos juegos"); },
     kind: "classic",
     // Casual's colour and icon (components/home/matchInfo.js).
     color: "music",
@@ -221,18 +222,18 @@ export const GAME_MODES = [
     available: true,
     wins: 2,
     steps: [
-      { icon: "shuffle", text: "La ruleta elige cada juego al azar" },
-      { icon: "info", text: "Cada uno de 5 rondas, con su tutorial" },
-      { icon: "crown", text: "Gana el primero en ganar 2 juegos" },
+      { icon: "shuffle", get text() { return tr("La ruleta elige cada juego al azar"); } },
+      { icon: "info", get text() { return tr("Cada uno de 5 rondas, con su tutorial"); } },
+      { icon: "crown", get text() { return tr("Gana el primero en ganar 2 juegos"); } },
     ],
     Lobby: ClassicLobbyPanel,
     path: (room) => `/playlist/${urlCode(room.code)}`,
   },
   {
     id: "extendido",
-    name: "Extendido",
-    fullName: "Clásico extendido",
-    subtitle: "Primero en ganar tres juegos",
+    get name() { return tr("Extendido"); },
+    get fullName() { return tr("Clásico extendido"); },
+    get subtitle() { return tr("Primero en ganar tres juegos"); },
     kind: "classic",
     // Competitivo's colour.
     color: "amber",
@@ -240,9 +241,9 @@ export const GAME_MODES = [
     available: true,
     wins: 3,
     steps: [
-      { icon: "shuffle", text: "La ruleta elige cada juego al azar" },
-      { icon: "info", text: "Cada uno de 5 rondas, con su tutorial" },
-      { icon: "crown", text: "Gana el primero en ganar 3 juegos" },
+      { icon: "shuffle", get text() { return tr("La ruleta elige cada juego al azar"); } },
+      { icon: "info", get text() { return tr("Cada uno de 5 rondas, con su tutorial"); } },
+      { icon: "crown", get text() { return tr("Gana el primero en ganar 3 juegos"); } },
     ],
     Lobby: ClassicLobbyPanel,
     path: (room) => `/playlist/${urlCode(room.code)}`,

@@ -16,6 +16,7 @@ import { PauseButton, ReportButton, SkipButton, PauseVeil } from "../../componen
 import { resolveCode } from "../../lib/hiddenCode.js";
 import { AnswerCard, MatchBar, MatchCard, MatchQuestion, RoundCountdown, RoundVerdict } from "../../components/home/MatchFrame.jsx";
 
+import { translate as tr } from "../../lib/i18n.js";
 const COUNTDOWN_MS = 3000;
 const CELLS = 25;
 // One colour per player for the cells they picked (never the green and red of right and mine, nor the white of this
@@ -26,7 +27,7 @@ const MY_COLOR = "#ffffff";
 // "Ana", "Ana y Luis", "Ana, Luis y Eva".
 function joinNames(names) {
   if (names.length < 2) return names[0] || "";
-  return `${names.slice(0, -1).join(", ")} y ${names[names.length - 1]}`;
+  return tr("{list} y {last}", { list: names.slice(0, -1).join(", "), last: names[names.length - 1] });
 }
 
 // Long words get soft hyphens between their syllables (Ro·man·ti·cis·mo), so a narrow cell splits them where a person
@@ -139,7 +140,7 @@ function GameScreen() {
     if (!out || outShown.current === key) return;
     outShown.current = key;
     if (tiebreak) {
-      showBurst({ key: `${round}:${turn}:me`, mine: true, tone: "mina", shake: true, icon: "bomb", title: "¡Pisaste una mina!", detail: "Si nadie acierta, vuelves a intentarlo" }, 2600);
+      showBurst({ key: `${round}:${turn}:me`, mine: true, tone: "mina", shake: true, icon: "bomb", title: tr("¡Pisaste una mina!"), detail: tr("Si nadie acierta, vuelves a intentarlo") }, 2600);
       return;
     }
     showBurst({ key: `${round}:me`, mine: true, ...roundBurst({ ...me, lastPoints: roundPoints(me?.hits) }, question, { out, hits: me?.hits || 0 }) }, 2600);
@@ -149,7 +150,7 @@ function GameScreen() {
     if (!tiebreak || phase !== "playing" || !turn || tiebreak.revivedTurn !== turn) return;
     const back = room.players.filter((p) => tiebreak.playerIds.includes(p.id) && p.connected && !p.out).map((p) => p.name);
     showBurst(
-      { key: `${round}:${turn}:back`, tone: "other", icon: "users", title: "Nadie acertó", detail: `Vuelven ${joinNames(back)}. Las minas pisadas quedan a la vista.` },
+      { key: `${round}:${turn}:back`, tone: "other", icon: "users", title: tr("Nadie acertó"), detail: tr("Vuelven {v0}. Las minas pisadas quedan a la vista.", { v0: joinNames(back) }) },
       1800
     );
   }, [turn, tiebreak?.revivedTurn]);
@@ -164,7 +165,7 @@ function GameScreen() {
     if (!fresh.length || phase !== "playing") return;
     // Only a notice: it takes the place of the top card's last line for a moment, nothing over the board.
     clearTimeout(noticeTimer.current);
-    setNotice(fresh.length === 1 ? `${fresh[0].name} pisó una mina` : `${joinNames(fresh.map((p) => p.name))} pisaron una mina`);
+    setNotice(fresh.length === 1 ? tr("{name} pisó una mina", { name: fresh[0].name }) : tr("{v0} pisaron una mina", { v0: joinNames(fresh.map((p) => p.name)) }));
     noticeTimer.current = setTimeout(() => setNotice(null), 2200);
   }, [fallenKey, round, phase]);
   useEffect(() => () => clearTimeout(noticeTimer.current), []);
@@ -219,7 +220,7 @@ function GameScreen() {
       await pickCell({ cell: index, turn });
     } catch (e) {
       setPicked(null);
-      if (turnRef.current === turn) setErr(e.message || "No se pudo elegir la casilla");
+      if (turnRef.current === turn) setErr(e.message || tr("No se pudo elegir la casilla"));
     } finally {
       sending.current = false;
     }
@@ -231,7 +232,7 @@ function GameScreen() {
       return;
     }
     setConfirmHub(false);
-    restartGame().catch((e) => setErr(e.message || "No se pudo terminar la partida"));
+    restartGame().catch((e) => setErr(e.message || tr("No se pudo terminar la partida")));
   }
 
   if (!room) {
@@ -239,7 +240,7 @@ function GameScreen() {
       <div className="tv-card tv-lobby-guest">
         <p className="tv-party-status">
           <span className="tv-pulse" aria-hidden="true" />
-          Conectando a la partida…
+          {tr("Conectando a la partida…")}
         </p>
       </div>
     );
@@ -263,7 +264,7 @@ function GameScreen() {
   const playerIndex = (id) => Math.max(0, room.players.findIndex((p) => p.id === id));
   // The central device has no "you": every player's cells in their own colour.
   const colorOf = (id) => (id === viewerId ? MY_COLOR : PLAYER_COLORS[playerIndex(id) % PLAYER_COLORS.length]);
-  const nameOf = (id) => room.players.find((p) => p.id === id)?.name || "Jugador";
+  const nameOf = (id) => room.players.find((p) => p.id === id)?.name || tr("Jugador");
   const avatarOf = (id) => room.players.find((p) => p.id === id)?.avatar ?? null;
   const toFind = question ? question.total - question.found : 0;
   // 25 cells, or a tiebreak's few (one more than the tied players).
@@ -292,61 +293,61 @@ function GameScreen() {
     if (phase === "countdown") {
       hint =
         central || watching || spectator
-          ? `Desempate entre ${tiedNames}: una casilla cada uno. Quien acierte, sigue. Quien pise una mina o no elija, fuera.`
-          : "Desempate: elige una casilla. Si aciertas, sigues. Si pisas una mina o no eliges, quedas fuera.";
+          ? tr("Desempate entre {tiedNames}: una casilla cada uno. Quien acierte, sigue. Quien pise una mina o no elija, fuera.", { tiedNames: tiedNames })
+          : tr("Desempate: elige una casilla. Si aciertas, sigues. Si pisas una mina o no eliges, quedas fuera.");
     } else if (reveal) {
-      hint = tiebreak.survivors ? "Otro desempate en breve…" : "Calculando resultados…";
+      hint = tiebreak.survivors ? tr("Otro desempate en breve…") : tr("Calculando resultados…");
       hintIcon = "check";
     } else if (central || watching || spectator) {
       hintIcon = central ? "phone" : "info";
-      hint = `Desempate entre ${tiedNames}.`;
+      hint = tr("Desempate entre {tiedNames}.", { tiedNames });
     } else if (out) {
-      hint = "Pisaste una mina. Si nadie acierta, vuelves a intentarlo.";
+      hint = tr("Pisaste una mina. Si nadie acierta, vuelves a intentarlo.");
       hintTone = " is-out";
     } else if (pickedThisTurn) {
       hint = "Elegiste…";
       hintIcon = "check";
       hintTone = " is-sent";
     } else {
-      hint = tiebreak.revivedTurn === turn ? "Nadie acertó: otra oportunidad. Elige otra casilla." : "Elige una casilla antes de que se acabe el tiempo.";
+      hint = tiebreak.revivedTurn === turn ? tr("Nadie acertó: otra oportunidad. Elige otra casilla.") : tr("Elige una casilla antes de que se acabe el tiempo.");
     }
   } else if (phase === "countdown" && central) {
     hint = race
-      ? "Sin turnos: cada uno elige en su teléfono todas las correctas que pueda. Quien pise una mina, fuera."
-      : "Una casilla por turno, desde el teléfono. Quien pise una mina queda fuera hasta la próxima ronda.";
+      ? tr("Sin turnos: cada uno elige en su teléfono todas las correctas que pueda. Quien pise una mina, fuera.")
+      : tr("Una casilla por turno, desde el teléfono. Quien pise una mina queda fuera hasta la próxima ronda.");
     hintIcon = "bomb";
   } else if (phase === "countdown") {
     hint = race
-      ? "Sin turnos: elige todas las correctas que puedas. Si pisas una mina, fuera."
-      : "Una casilla por turno. Si pisas una mina, quedas fuera hasta la próxima ronda.";
+      ? tr("Sin turnos: elige todas las correctas que puedas. Si pisas una mina, fuera.")
+      : tr("Una casilla por turno. Si pisas una mina, quedas fuera hasta la próxima ronda.");
     hintIcon = "bomb";
   } else if (reveal) {
-    hint = `${question ? `${question.found} de ${question.total} encontrados. ` : ""}${last ? "Calculando resultados…" : "Siguiente ronda en breve…"}`;
+    hint = `${question ? tr("{found} de {total} encontrados. ", { found: question.found, total: question.total }) : ""}${last ? tr("Calculando resultados…") : tr("Siguiente ronda en breve…")}`;
     hintIcon = "check";
   } else if (central) {
     // The central device talks to the whole room: they pick on their phones.
     hintIcon = "phone";
-    if (race) hint = "¡Carrera! Elijan en su teléfono las correctas antes que los demás.";
-    else hint = waitingFor.length ? `Turno ${turn}.` : `Turno ${turn}: siguiente turno…`;
+    if (race) hint = tr("¡Carrera! Elijan en su teléfono las correctas antes que los demás.");
+    else hint = waitingFor.length ? tr("Turno {turn}.", { turn }) : tr("Turno {turn}: siguiente turno…", { turn });
   } else if (spectator) {
-    hint = "Estás viendo la partida. Jugarás en la siguiente.";
+    hint = tr("Estás viendo la partida. Jugarás en la siguiente.");
     hintIcon = "info";
   } else if (out) {
-    hint = out === "mina" ? "¡Pisaste una mina! Estás fuera hasta la próxima ronda." : "Se te acabó el tiempo. Estás fuera hasta la próxima ronda.";
+    hint = out === "mina" ? tr("¡Pisaste una mina! Estás fuera hasta la próxima ronda.") : tr("Se te acabó el tiempo. Estás fuera hasta la próxima ronda.");
     hintIcon = out === "mina" ? "bomb" : "close";
     hintTone = " is-out";
   } else if (race) {
-    hint = myHits ? `Llevas ${hitsText(myHits)}. ¡Sigue antes de que te las quiten!` : "¡Rápido! Elige todas las correctas que puedas.";
+    hint = myHits ? tr("Llevas {v0}. ¡Sigue antes de que te las quiten!", { v0: hitsText(myHits) }) : tr("¡Rápido! Elige todas las correctas que puedas.");
     if (myHits) {
       hintIcon = "check";
       hintTone = " is-sent";
     }
   } else if (pickedThisTurn) {
-    hint = waitingFor.length ? "Elegiste." : "Elegiste. Siguiente turno…";
+    hint = waitingFor.length ? "Elegiste." : tr("Elegiste. Siguiente turno…");
     hintIcon = "check";
     hintTone = " is-sent";
   } else {
-    hint = `Turno ${turn}: elige una casilla.`;
+    hint = tr("Turno {turn}: elige una casilla.", { turn: turn });
   }
 
   // The host's controls of the match: in the top card, or in the thin bar of a phone beside a central device.
@@ -361,7 +362,7 @@ function GameScreen() {
           className={`tv-mini-btn tv-end-btn${confirmHub ? " is-on" : ""}`}
           onClick={backToHub}
         >
-          {confirmHub ? "¿Seguro? Toca otra vez" : "Terminar"}
+          {confirmHub ? tr("¿Seguro? Toca otra vez") : tr("Terminar")}
         </button>
       )}
     </>
@@ -388,14 +389,14 @@ function GameScreen() {
         ) : (
           <MatchCard
             room={room}
-            tag={tiebreak ? `Desempate${tiebreak.round > 1 ? ` ${tiebreak.round}` : ""}` : null}
+            tag={tiebreak ? (tiebreak.round > 1 ? tr("Desempate {n}", { n: tiebreak.round }) : tr("Desempate")) : null}
             seconds={seconds}
             pct={pct}
             urgent={urgent}
             small
             pills={reveal && question && !tiebreak && me && !spectator && !central ? <MinesVerdict me={me} question={question} /> : null}
           >
-            <MatchQuestion>{question?.prompt ? minesQuestion(question.prompt) : "Prepárate…"}</MatchQuestion>
+            <MatchQuestion>{question?.prompt ? minesQuestion(question.prompt) : tr("Prepárate…")}</MatchQuestion>
           </MatchCard>
         )}
 
@@ -413,7 +414,7 @@ function GameScreen() {
                   {/* The board's counters, only an icon in its colour and a number (each says what it is to a screen
                       reader): right answers found out of the board's total, mines, and players still standing. The
                       numbers pop when they change. */}
-                  <span className={`tv-mines-stat is-left${toFind === 0 ? " is-done" : ""}`} aria-label={`${question.found} de ${question.total} encontradas`}>
+                  <span className={`tv-mines-stat is-left${toFind === 0 ? " is-done" : ""}`} aria-label={tr("{found} de {total} encontradas", { found: question.found, total: question.total })}>
                     <span className="tv-mines-stat-icon" aria-hidden="true">
                       <Icon name="check" size={16} strokeWidth={3.2} />
                     </span>
@@ -422,13 +423,13 @@ function GameScreen() {
                       <span className="tv-mines-stat-of">/{question.total}</span>
                     </strong>
                   </span>
-                  <span className="tv-mines-stat is-mines" aria-label={`${size - question.total} minas`}>
+                  <span className="tv-mines-stat is-mines" aria-label={tr("{n} minas", { n: size - question.total })}>
                     <span className="tv-mines-stat-icon" aria-hidden="true">
                       <Icon name="bomb" size={16} strokeWidth={2.6} />
                     </span>
                     <strong aria-hidden="true">{size - question.total}</strong>
                   </span>
-                  <span className="tv-mines-stat is-alive" aria-label={`${standing.length} en pie`}>
+                  <span className="tv-mines-stat is-alive" aria-label={tr("{length} en pie", { length: standing.length })}>
                     <span className="tv-mines-stat-icon" aria-hidden="true">
                       <Icon name="users" size={16} strokeWidth={2.6} />
                     </span>
@@ -444,7 +445,7 @@ function GameScreen() {
               className={`tv-mines-board${reveal ? " is-reveal" : ""}${burst?.shake ? " is-boom" : ""}${size !== CELLS ? " is-small" : ""}`}
               style={size !== CELLS ? { "--cols": cols, "--rows": rows } : undefined}
               role="group"
-              aria-label="Tablero"
+              aria-label={tr("Tablero")}
             >
               {cells
                 ? cells.map((c, i) => {
@@ -456,9 +457,9 @@ function GameScreen() {
                     else if (mine) state = " is-pending";
                     else if (!canPick && !spectator && !watching && !central) state = " is-locked";
                     const label = owned
-                      ? `${c.text}: ${c.correct ? "correcta" : "mina"}, de ${nameOf(c.by)}`
+                      ? tr("{text}: {v1}, de {v2}", { text: c.text, v1: c.correct ? tr("correcta") : tr("mina"), v2: nameOf(c.by) })
                       : reveal
-                      ? `${c.text}: ${c.correct ? "correcta, nadie la encontró" : "mina"}`
+                      ? `${c.text}: ${c.correct ? tr("correcta, nadie la encontró") : tr("mina")}`
                       : c.text;
                     return (
                       <button
@@ -497,7 +498,7 @@ function GameScreen() {
                   <AnswerCard
                     icon={burst.icon}
                     iconTone={BURST_TONES[burst.tone] || null}
-                    label={burst.points > 0 ? `+${burst.points} puntos` : null}
+                    label={burst.points > 0 ? tr("+{n} puntos", { n: burst.points }) : null}
                     value={burst.title}
                     detail={burst.detail}
                   />
@@ -511,7 +512,7 @@ function GameScreen() {
             <PauseVeil room={room} isHost={isHost} />
             <p className="tv-party-status">
               <span className="tv-pulse" aria-hidden="true" />
-              Cargando el tablero…
+              {tr("Cargando el tablero…")}
             </p>
           </section>
         )}
@@ -524,7 +525,7 @@ function GameScreen() {
           scores
           display={central}
           onToast={setErr}
-          status={phase === "playing" ? `Siguen ${standing.length}/${room.players.filter((p) => !p.spectator).length}` : undefined}
+          status={phase === "playing" ? tr("Siguen {a}/{b}", { a: standing.length, b: room.players.filter((p) => !p.spectator).length }) : undefined}
         />
       )}
       {!controller && !central && <MatchBar
@@ -548,7 +549,7 @@ function roundPoints(hits = 0) {
 // what happened ("Ocurrió en el siglo XV") become "¿Qué ocurrió en el siglo XV?".
 function minesQuestion(prompt) {
   const text = prompt.charAt(0).toLowerCase() + prompt.slice(1);
-  return /^ocurri/.test(text) ? `¿Qué ${text}?` : `¿Cuáles son ${text}?`;
+  return /^ocurri/.test(text) ? tr("¿Qué {text}?", { text: text }) : tr("¿Cuáles son {text}?", { text: text });
 }
 
 // The colour of the answer card's icon for each kind of burst (green, red, or the grey of the rest).
@@ -566,27 +567,27 @@ function roundBurst(me, question, live = null) {
   const hits = answer?.hits || 0;
   const points = me?.lastPoints || 0;
   const cleared = question.total > 0 && question.found >= question.total;
-  if (answer?.out === "mina") return { tone: "mina", shake: true, icon: "bomb", title: "¡Pisaste una mina!", detail: hits ? `Te llevas ${hitsText(hits)}` : "Suerte en la próxima", points };
-  if (answer?.out === "tiempo") return { tone: "tiempo", icon: "hourglass", title: "¡Se te acabó el tiempo!", detail: hits ? `Te llevas ${hitsText(hits)}` : "Suerte en la próxima", points };
-  if (cleared) return { tone: "win", icon: "star", title: "¡Tablero limpio!", detail: hits ? `Encontraste ${hitsText(hits)}` : "Encontraron todas las correctas", points, long: true };
-  return { tone: "ok", icon: "check", title: "¡Sobreviviste!", detail: hits ? `Encontraste ${hitsText(hits)}` : "Sin aciertos esta vez", points };
+  if (answer?.out === "mina") return { tone: "mina", shake: true, icon: "bomb", title: tr("¡Pisaste una mina!"), detail: hits ? tr("Te llevas {v0}", { v0: hitsText(hits) }) : tr("Suerte en la próxima"), points };
+  if (answer?.out === "tiempo") return { tone: "tiempo", icon: "hourglass", title: tr("¡Se te acabó el tiempo!"), detail: hits ? tr("Te llevas {v0}", { v0: hitsText(hits) }) : tr("Suerte en la próxima"), points };
+  if (cleared) return { tone: "win", icon: "star", title: tr("¡Tablero limpio!"), detail: hits ? tr("Encontraste {hits}", { hits: hitsText(hits) }) : tr("Encontraron todas las correctas"), points, long: true };
+  return { tone: "ok", icon: "check", title: tr("¡Sobreviviste!"), detail: hits ? tr("Encontraste {hits}", { hits: hitsText(hits) }) : tr("Sin aciertos esta vez"), points };
 }
 
 // The card over the board at a tiebreak's reveal, for the whole room: who won it (and how), who goes on to another
 // one, or that nobody picked and the tie stands.
 function tiebreakBurst(tiebreak, players, viewerId) {
-  const nameOf = (id) => players.find((p) => p.id === id)?.name || "Jugador";
+  const nameOf = (id) => players.find((p) => p.id === id)?.name || tr("Jugador");
   if (tiebreak.winnerId) {
-    const how = tiebreak.reason === "solo" ? "Nadie más eligió una casilla" : "Encontró la respuesta correcta";
-    if (tiebreak.winnerId === viewerId) return { tone: "win", icon: "crown", title: "¡Ganaste el desempate!", detail: how, final: true };
-    return { tone: "other", icon: "crown", title: `${nameOf(tiebreak.winnerId)} gana el desempate`, detail: how, final: true };
+    const how = tiebreak.reason === "solo" ? tr("Nadie más eligió una casilla") : tr("Encontró la respuesta correcta");
+    if (tiebreak.winnerId === viewerId) return { tone: "win", icon: "crown", title: tr("¡Ganaste el desempate!"), detail: how, final: true };
+    return { tone: "other", icon: "crown", title: tr("{v0} gana el desempate", { v0: nameOf(tiebreak.winnerId) }), detail: how, final: true };
   }
   if (tiebreak.survivors) {
     const others = tiebreak.survivors.filter((id) => id !== viewerId).map(nameOf);
-    if (tiebreak.survivors.includes(viewerId)) return { tone: "ok", icon: "check", title: "¡Sigues en el desempate!", detail: `Otro desempate contra ${joinNames(others)}`, final: true };
-    return { tone: "other", icon: "users", title: `Siguen ${joinNames(others)}`, detail: "Juegan otro desempate", final: true };
+    if (tiebreak.survivors.includes(viewerId)) return { tone: "ok", icon: "check", title: tr("¡Sigues en el desempate!"), detail: tr("Otro desempate contra {names}", { names: joinNames(others) }), final: true };
+    return { tone: "other", icon: "users", title: tr("Siguen {names}", { names: joinNames(others) }), detail: tr("Juegan otro desempate"), final: true };
   }
-  return { tone: "tiempo", icon: "hourglass", title: "Nadie eligió", detail: "El empate se queda", final: true };
+  return { tone: "tiempo", icon: "hourglass", title: tr("Nadie eligió"), detail: tr("El empate se queda"), final: true };
 }
 
 export default function Game() {

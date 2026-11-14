@@ -1,5 +1,6 @@
 import { TOPICS } from "../quiz/quizInfo.js";
 
+import { translate as tr } from "../../lib/i18n.js";
 // Lluvia's settings and labels (same ids and limits as backend/src/game/rain.js).
 
 // The ten categories of the question bank, in the same order and with the same names as Trivia's topics.
@@ -8,9 +9,9 @@ export const CATEGORIES = TOPICS;
 // The difficulties a match can mix (RAIN_LEVELS on the server), any of them ticked, each with its colour on the
 // falling questions (styles/rain.css: green, yellow and red) and what a right answer is worth (RAIN_POINTS).
 export const DIFFICULTIES = [
-  { id: "facil", label: "Fácil", points: 1 },
-  { id: "media", label: "Media", points: 3 },
-  { id: "dificil", label: "Difícil", points: 5 },
+  { id: "facil", get label() { return tr("Fácil"); }, points: 1 },
+  { id: "media", get label() { return tr("Media"); }, points: 3 },
+  { id: "dificil", get label() { return tr("Difícil"); }, points: 5 },
 ];
 
 export function findDifficulty(id) {
@@ -37,10 +38,10 @@ export function rainConfig(room) {
 
 /** "1 punto", "3 puntos". */
 export function pointsText(n) {
-  return `${n} ${n === 1 ? "punto" : "puntos"}`;
+  return n === 1 ? tr("1 punto") : tr("{n} puntos", { n });
 }
 
 /** "1 acierto", "3 aciertos". */
 export function hitsText(n) {
-  return `${n} ${n === 1 ? "acierto" : "aciertos"}`;
+  return n === 1 ? tr("1 acierto") : tr("{n} aciertos", { n });
 }

@@ -4,6 +4,7 @@ import { useApp } from "../../lib/store.jsx";
 import Icon from "./Icon.jsx";
 import { profilePath } from "./PlayerName.jsx";
 
+import { translate as tr } from "../../lib/i18n.js";
 // What tapping a player of "Tu grupo" (Inicio's box) unfolds under their name, the same as a match's scoreboard
 // (PlayerMenu), with the group's actions: for the leader, on the others, the settings' permission, taking them out of the
 // group and making them the leader (taking out and making the leader ask for a second tap); and for everyone their profile (faded and doing nothing on
@@ -39,7 +40,7 @@ export default function GroupMemberMenu({ member, isMe, canManage, onClose, onTo
       onToast?.(okText ?? text, "check");
     } catch (err) {
       setConfirm(null);
-      onToast?.(err.message || "No se pudo completar");
+      onToast?.(err.message || tr("No se pudo completar"));
     }
   }
 
@@ -52,9 +53,9 @@ export default function GroupMemberMenu({ member, isMe, canManage, onClose, onTo
           type="button"
           role="menuitem"
           className={`tv-iconbtn tv-iconbtn--sm${member.canEditConfig ? " is-on" : ""}`}
-          aria-label={`${member.canEditConfig ? "Quitarle" : "Darle"} a ${member.name} permiso de ajustes`}
-          title={member.canEditConfig ? "Quitar permiso de ajustes" : "Dar permiso de ajustes"}
-          onClick={() => (setConfirm(null), run(async () => ((await toggleGroupPermission(member.id)) ? `${member.name} ya puede cambiar los ajustes` : `${member.name} ya no puede cambiar los ajustes`)))}
+          aria-label={tr("{v0} a {name} permiso de ajustes", { v0: member.canEditConfig ? tr("Quitarle") : tr("Darle"), name: member.name })}
+          title={member.canEditConfig ? tr("Quitar permiso de ajustes") : tr("Dar permiso de ajustes")}
+          onClick={() => (setConfirm(null), run(async () => ((await toggleGroupPermission(member.id)) ? tr("{name} ya puede cambiar los ajustes", { name: member.name }) : tr("{name} ya no puede cambiar los ajustes", { name: member.name }))))}
         >
           <Icon name="sliders" size={16} strokeWidth={2.6} />
         </button>
@@ -65,9 +66,9 @@ export default function GroupMemberMenu({ member, isMe, canManage, onClose, onTo
           role="menuitem"
           className={`tv-iconbtn tv-iconbtn--sm${confirm === "kick" ? " is-on" : ""}`}
           data-sound={confirm === "kick" ? "next" : undefined}
-          aria-label={confirm === "kick" ? "¿Seguro? Toca otra vez" : `Sacar a ${member.name} del grupo`}
-          title={confirm === "kick" ? "¿Seguro? Toca otra vez" : "Sacar del grupo"}
-          onClick={() => (confirm === "kick" ? run(() => kickFromGroup(member.id), `Sacaste a ${member.name} del grupo`) : setConfirm("kick"))}
+          aria-label={confirm === "kick" ? tr("¿Seguro? Toca otra vez") : tr("Sacar a {name} del grupo", { name: member.name })}
+          title={confirm === "kick" ? tr("¿Seguro? Toca otra vez") : tr("Sacar del grupo")}
+          onClick={() => (confirm === "kick" ? run(() => kickFromGroup(member.id), tr("Sacaste a {name} del grupo", { name: member.name })) : setConfirm("kick"))}
         >
           <Icon name={confirm === "kick" ? "check" : "close"} size={16} strokeWidth={confirm === "kick" ? 2.4 : 2.8} />
         </button>
@@ -78,22 +79,22 @@ export default function GroupMemberMenu({ member, isMe, canManage, onClose, onTo
           role="menuitem"
           className={`tv-iconbtn tv-iconbtn--sm${confirm === "leader" ? " is-on" : ""}`}
           data-sound={confirm === "leader" ? "next" : undefined}
-          aria-label={confirm === "leader" ? "¿Seguro? Toca otra vez" : `Hacer líder a ${member.name}`}
-          title={confirm === "leader" ? "¿Seguro? Toca otra vez" : "Hacer líder"}
-          onClick={() => (confirm === "leader" ? run(() => giveLeader(member.id), `${member.name} es el líder ahora`) : setConfirm("leader"))}
+          aria-label={confirm === "leader" ? tr("¿Seguro? Toca otra vez") : tr("Hacer líder a {name}", { name: member.name })}
+          title={confirm === "leader" ? tr("¿Seguro? Toca otra vez") : tr("Hacer líder")}
+          onClick={() => (confirm === "leader" ? run(() => giveLeader(member.id), tr("{name} es el líder ahora", { name: member.name })) : setConfirm("leader"))}
         >
           <Icon name={confirm === "leader" ? "check" : "crown"} size={16} strokeWidth={2.4} />
         </button>
       )}
       {member.isGuest ? (
-        <button type="button" role="menuitem" className="tv-iconbtn tv-iconbtn--sm is-none" aria-disabled="true" aria-label={`${member.name} juega como invitado: no tiene perfil`} title="Juega como invitado: no tiene perfil">
+        <button type="button" role="menuitem" className="tv-iconbtn tv-iconbtn--sm is-none" aria-disabled="true" aria-label={tr("{name} juega como invitado: no tiene perfil", { name: member.name })} title={tr("Juega como invitado: no tiene perfil")}>
           <Icon name="user" size={16} strokeWidth={2.6} />
-          {named && "Sin perfil"}
+          {named && tr("Sin perfil")}
         </button>
       ) : (
-        <Link role="menuitem" className="tv-iconbtn tv-iconbtn--sm" to={profilePath(member)} aria-label={isMe ? "Ver mi perfil" : `Ver el perfil de ${member.name}`} title={isMe ? "Ver mi perfil" : "Ver perfil"} onClick={onClose}>
+        <Link role="menuitem" className="tv-iconbtn tv-iconbtn--sm" to={profilePath(member)} aria-label={isMe ? tr("Ver mi perfil") : tr("Ver el perfil de {name}", { name: member.name })} title={isMe ? tr("Ver mi perfil") : tr("Ver perfil")} onClick={onClose}>
           <Icon name="user" size={16} strokeWidth={2.6} />
-          {named && (isMe ? "Mi perfil" : "Perfil")}
+          {named && (isMe ? tr("Mi perfil") : tr("Perfil"))}
         </Link>
       )}
     </div>

@@ -11,12 +11,13 @@ import { USERNAME_MIN } from "../lib/username.js";
 import { withSound } from "../lib/sounds.js";
 import { useT } from "../lib/i18n.js";
 
+import { translate as tr } from "../lib/i18n.js";
 // In-app browsers (Instagram, WhatsApp, Facebook, TikTok...) are blocked by Google for sign-in.
 const IN_APP_BROWSER = typeof navigator !== "undefined" && /Instagram|FBAN|FBAV|FB_IAB|WhatsApp|Line\/|TikTok|musical_ly|Snapchat|; wv\)/i.test(navigator.userAgent);
 
 const MODES = [
-  { value: "register", label: "Crear cuenta" },
-  { value: "login", label: "Iniciar sesión" },
+  { value: "register", get label() { return tr("Crear cuenta"); } },
+  { value: "login", get label() { return tr("Iniciar sesión"); } },
 ];
 
 function Field({ label, ...props }) {
@@ -118,10 +119,10 @@ function LoginScreen() {
       <section className="tv-card tv-auth-card">
         <button type="button" className="tv-btn tv-btn--block tv-btn--google" onClick={() => loginWithGoogle(returnTo)}>
           <GoogleIcon size={22} />
-          Continuar con Google
+          {tr("Continuar con Google")}
         </button>
 
-        <div className="tv-divider"><span>o con tu correo</span></div>
+        <div className="tv-divider"><span>{tr("o con tu correo")}</span></div>
 
         <Segmented options={MODES.map((m) => ({ ...m, label: t(m.label) }))} value={accountMode} onChange={switchMode} label={t("Tipo de acceso")} />
 

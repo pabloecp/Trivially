@@ -1,5 +1,6 @@
 import { TOPICS } from "../quiz/quizInfo.js";
 
+import { translate as tr } from "../../lib/i18n.js";
 // Campo de minas' settings and labels (same ids and limits as backend/src/game/mines.js).
 
 // The ten categories of the question bank, in the same order and with the same names as Trivia's topics.
@@ -10,12 +11,12 @@ export const CATEGORIES = TOPICS;
 export const STYLES = [
   {
     id: "carrera",
-    label: "Carrera",
-    hint: "Sin turnos: elige todas las que puedas antes que los demás",
+    get label() { return tr("Carrera"); },
+    get hint() { return tr("Sin turnos: elige todas las que puedas antes que los demás"); },
     steps: [
-      { icon: "scroll", text: "Lee el tema" },
-      { icon: "bolt", text: "Elige sin esperar turno" },
-      { icon: "bomb", text: "Si pisas una mina, fuera" },
+      { icon: "scroll", get text() { return tr("Lee el tema"); } },
+      { icon: "bolt", get text() { return tr("Elige sin esperar turno"); } },
+      { icon: "bomb", get text() { return tr("Si pisas una mina, fuera"); } },
     ],
   },
 ];
@@ -23,9 +24,9 @@ export const STYLES = [
 // The difficulties a match can mix (MINES_LEVELS on the server), any of them ticked. The harder, the deeper the mode's
 // colour (colours in styles/mines.css).
 export const DIFFICULTIES = [
-  { id: "facil", label: "Fácil", color: "mines-light" },
-  { id: "media", label: "Media", color: "mines" },
-  { id: "dificil", label: "Difícil", color: "mines-deep" },
+  { id: "facil", get label() { return tr("Fácil"); }, color: "mines-light" },
+  { id: "media", get label() { return tr("Media"); }, color: "mines" },
+  { id: "dificil", get label() { return tr("Difícil"); }, color: "mines-deep" },
 ];
 
 export function findDifficulty(id) {
@@ -52,5 +53,5 @@ export function minesConfig(room) {
 
 /** "1 acierto", "3 aciertos". */
 export function hitsText(n) {
-  return `${n} ${n === 1 ? "acierto" : "aciertos"}`;
+  return n === 1 ? tr("1 acierto") : tr("{n} aciertos", { n });
 }

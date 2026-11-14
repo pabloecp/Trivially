@@ -15,8 +15,9 @@ import Icon from "./Icon.jsx";
 import GroupMemberMenu from "./GroupMemberMenu.jsx";
 import RankBox from "./RankBox.jsx";
 import { statusOf } from "./FriendsSheet.jsx";
-import { getLang, useT } from "../../lib/i18n.js";
+import { locale, useT } from "../../lib/i18n.js";
 
+import { translate as tr } from "../../lib/i18n.js";
 // The stage in the middle of Inicio and of a private match's lobby: the game's card in its colour, and beside it your
 // boxes.
 //  - The card: the game's icon and, in one row beside it, who the match is for ("Partida pública" or "Partida
@@ -72,7 +73,7 @@ export default function ModeStage({ mode, room = null, audience = null, title = 
             {who && onAudience && (
               // Inicio: the label is two choices in the same place (a glass track, the chosen one white), so
               // changing between a public and a private match needs no other screen.
-              <div className="tv-stage-aud is-switch" role="radiogroup" aria-label="Con quién juegan">
+              <div className="tv-stage-aud is-switch" role="radiogroup" aria-label={tr("Con quién juegan")}>
                 {AUDIENCES.map((a) => (
                   <button key={a.value} type="button" role="radio" aria-label={a.label} aria-checked={who === a.value} onClick={() => who !== a.value && onAudience(a.value)}>
                     <Icon name={AUDIENCE_ICONS[a.value]} size={16} strokeWidth={2.6} />
@@ -138,7 +139,7 @@ export default function ModeStage({ mode, room = null, audience = null, title = 
                       <span className="tv-stage-live" aria-hidden="true" />
                     </span>
                     <span>
-                      <b>{playing.toLocaleString(getLang() === "en" ? "en-US" : "es-ES")}</b> {t("jugando ahora")}
+                      <b>{playing.toLocaleString(locale())}</b> {t("jugando ahora")}
                     </span>
                   </li>
                 )}
@@ -185,7 +186,7 @@ function DailyBox({ daily }) {
         </span>
         <div className="tv-stage-daily-text">
           <span className="tv-stage-label">{t("Reto del día")}</span>
-          <strong>{daily.goal}</strong>
+          <strong>{t(daily.goal)}</strong>
         </div>
         <span className="tv-stage-daily-count">
           {formatElo(progress)}/{formatElo(target)}

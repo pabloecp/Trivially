@@ -9,6 +9,7 @@ import Avatar from "./Avatar.jsx";
 import Icon from "./Icon.jsx";
 import { useT } from "../../lib/i18n.js";
 
+import { translate as tr } from "../../lib/i18n.js";
 /** What the group's box beside the game's card (ModeStage's SocialBox) needs, from HomeFrame:
  *  `{ canCreate, busy, onInvite, onMakeGroup, onGroup, onLeave, inviteBadge }`. */
 export const GroupBoxContext = createContext(null);
@@ -114,7 +115,7 @@ function DailyZone({ daily }) {
         {daily ? (
           <>
             <span className="tv-gbar-daily-text">
-              <strong title={daily.goal}>{daily.goal}</strong>
+              <strong title={t(daily.goal)}>{t(daily.goal)}</strong>
               <span className="tv-stage-daily-bar" role="progressbar" aria-valuemin={0} aria-valuemax={target} aria-valuenow={progress} aria-label={t("Avance del reto")}>
                 <i style={{ width: `${Math.round((progress / target) * 100)}%` }} />
               </span>
@@ -202,13 +203,13 @@ function GroupMenu({ members, count, inGroup, meId, myAvatar, onGroup, onInvite,
           className={`tv-btn tv-btn--neutral tv-sala-invite${together ? " is-plus" : ""}`}
           aria-haspopup="dialog"
           aria-label={t("Invitar")}
-          title="Invitar"
+          title={tr("Invitar")}
           data-sound="none"
           onClick={onInvite}
           disabled={!inGroup && (inviteOff || Boolean(busy))}
         >
           <Icon name="plus" size={together ? 18 : 15} strokeWidth={3} />
-          {!together && (busy === "group" ? "Creando…" : "Invitar")}
+          {!together && (busy === "group" ? "Creando…" : tr("Invitar"))}
         </button>
       )}
     </div>,

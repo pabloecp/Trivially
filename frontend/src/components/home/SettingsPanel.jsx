@@ -3,6 +3,7 @@ import { useApp } from "../../lib/store.jsx";
 import { findMode } from "../../modes/index.js";
 import Icon from "./Icon.jsx";
 import Modal from "./Modal.jsx";
+import { useT } from "../../lib/i18n.js";
 
 // The game's settings, hidden behind a summary: at the bottom of the game's card (`card`, given `{ summary, onOpen }`
 // for ModeStage's `settings`), one line of what's chosen ("5 rondas · 15 s · Todas las categorías", the notes of its
@@ -30,6 +31,7 @@ export function useSettingsSummary(text) {
 export const useSettingsStacked = () => useContext(StackedContext);
 
 export default function SettingsPanel({ room, readOnly = false, actions = null, inline = false, card = null, children }) {
+  const t = useT();
   const { resetConfig } = useApp();
   const [open, setOpen] = useState(false);
   const [summary, setSummary] = useState("");
@@ -48,9 +50,9 @@ export default function SettingsPanel({ room, readOnly = false, actions = null, 
       <section className="tv-settings-card tv-settings-panel" aria-labelledby="tv-settings-title">
         <div className="tv-settings-head">
           <h2 id="tv-settings-title" className="tv-settings-title">
-            Ajustes
+            {t("Ajustes")}
           </h2>
-          {readOnly && <span className="tv-settings-who">Los elige {room.hostName || "el anfitrión"}</span>}
+          {readOnly && <span className="tv-settings-who">{t("Los elige {name}", { name: room.hostName || t("el anfitrión") })}</span>}
           {actions}
         </div>
         {children}
@@ -76,20 +78,20 @@ export default function SettingsPanel({ room, readOnly = false, actions = null, 
         open={open}
         keep
         onClose={() => setOpen(false)}
-        title={`Ajustes de ${mode?.name || "la partida"}`}
+        title={t("Ajustes de {name}", { name: mode?.name ? t(mode.name) : t("la partida") })}
         size="lg"
         className={`tv-settings-modal tv-c-${mode?.color || "neutral"}`}
         foot={
           <>
             {readOnly ? (
-              <span className="tv-settings-who">Los elige {room.hostName || "el anfitrión"}</span>
+              <span className="tv-settings-who">{t("Los elige {name}", { name: room.hostName || t("el anfitrión") })}</span>
             ) : (
-              <button type="button" className="tv-iconbtn tv-settings-reset" aria-label="Restablecer los ajustes" title="Restablecer los ajustes" disabled={busy || !room.settingsChanged} onClick={reset}>
+              <button type="button" className="tv-iconbtn tv-settings-reset" aria-label={t("Restablecer los ajustes")} title={t("Restablecer los ajustes")} disabled={busy || !room.settingsChanged} onClick={reset}>
                 <Icon name="reset" size={20} strokeWidth={2.6} />
               </button>
             )}
             <button type="button" className="tv-btn tv-btn--primary tv-btn--lg tv-settings-done" onClick={() => setOpen(false)}>
-              Listo
+              {t("Listo")}
             </button>
           </>
         }

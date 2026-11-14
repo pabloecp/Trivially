@@ -3,6 +3,7 @@ import OptionRow, { rangeOptions } from "../../components/home/OptionRow.jsx";
 import SettingsTabs, { countNote } from "../../components/home/SettingsTabs.jsx";
 import { LEVELS, ROUNDS_LIMITS, SECONDS_LIMITS, TOPICS, historyConfig } from "./historyInfo.js";
 
+import { translate as tr } from "../../lib/i18n.js";
 // Settings of a Rango match, in the settings panel, in two tabs: "Partida" (how many rounds and the seconds to
 // answer) and "Preguntas" (the
 // categories the questions come from and the difficulties, tick as many as you like). A choice with no questions with the other settings (room.questionCounts) is
@@ -27,7 +28,7 @@ export default function HistorySettings({ room, updateConfig, onToast, children,
       await updateConfig({ history: next });
     } catch (err) {
       setDraft(saved);
-      onToast?.(err.message || "No se pudieron guardar los ajustes");
+      onToast?.(err.message || tr("No se pudieron guardar los ajustes"));
     }
   }
 
@@ -56,14 +57,14 @@ export default function HistorySettings({ room, updateConfig, onToast, children,
       tabs={[
         {
           id: "partida",
-          label: "Partida",
+          label: tr("Partida"),
           icon: "hourglass",
           note: `${draft.rounds} rondas · ${seconds} s`,
           content: (
             <>
-              <OptionRow label="Rondas" options={rangeOptions(ROUNDS_LIMITS)} value={draft.rounds} onChange={(n) => save({ rounds: n })} />
+              <OptionRow label={tr("Rondas")} options={rangeOptions(ROUNDS_LIMITS)} value={draft.rounds} onChange={(n) => save({ rounds: n })} />
               <OptionRow
-                label="Segundos por ronda"
+                label={tr("Segundos por ronda")}
                 options={rangeOptions(SECONDS_LIMITS)}
                 value={seconds}
                 onChange={(n) => save({ roundMs: n * 1000 })}
@@ -73,14 +74,14 @@ export default function HistorySettings({ room, updateConfig, onToast, children,
         },
         {
           id: "eventos",
-          label: "Preguntas",
+          label: tr("Preguntas"),
           icon: "calendar",
           note: countNote(draft.categories, topicIds.length),
           alert: !draft.categories.length || !draft.difficulties.length,
           content: (
             <>
               <OptionRow
-                label="Categorías"
+                label={tr("Categorías")}
                 multi
                 wrap
                 options={TOPICS.map(choice("categories", "categories"))}
@@ -89,7 +90,7 @@ export default function HistorySettings({ room, updateConfig, onToast, children,
                 onSetAll={(list) => save({ categories: list })}
               />
               <OptionRow
-                label="Dificultad"
+                label={tr("Dificultad")}
                 multi
                 wrap
                 options={LEVELS.map(choice("difficulties", "difficulties"))}

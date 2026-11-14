@@ -6,6 +6,7 @@ import Avatar from "./Avatar.jsx";
 import Icon from "./Icon.jsx";
 import "../../styles/central.css";
 
+import { translate as tr } from "../../lib/i18n.js";
 // For the host, on every screen (the room, a match, its results): the players asking to use another device of theirs
 // as the room's central device, each as a card pinned under the top bar with Aceptar and an X to turn it down. A new
 // one sounds once. The room's column would hide them on a phone, and during a match.
@@ -36,16 +37,16 @@ export default function CentralRequests() {
     try {
       await answerCentralRequest(request.id, accept);
     } catch (e) {
-      setErr(e.message || "No se pudo responder");
+      setErr(e.message || tr("No se pudo responder"));
     } finally {
       setBusy(null);
     }
   }
 
   return createPortal(
-    <div className="tv-central-requests" role="region" aria-label="Solicitudes de dispositivo central">
+    <div className="tv-central-requests" role="region" aria-label={tr("Solicitudes de dispositivo central")}>
       {requests.map((r) => (
-        <div key={r.id} className="tv-central-request" role="group" aria-label={`Solicitud de ${r.name}`}>
+        <div key={r.id} className="tv-central-request" role="group" aria-label={tr("Solicitud de {name}", { name: r.name })}>
           <span className="tv-central-request-face">
             <Avatar name={r.name} avatar={r.avatar} />
             <span className="tv-central-spot-badge">
@@ -53,11 +54,11 @@ export default function CentralRequests() {
             </span>
           </span>
           <p>
-            <strong>{r.name}</strong> quiere usar otro dispositivo como pantalla central
+            <strong>{r.name}</strong> {tr("quiere usar otro dispositivo como pantalla central")}
           </p>
           <span className="tv-central-request-actions">
             <button type="button" className="tv-btn tv-btn--sm tv-c-green" onClick={() => answer(r, true)} disabled={busy === r.id}>
-              Aceptar
+              {tr("Aceptar")}
             </button>
             <button
               type="button"
@@ -65,7 +66,7 @@ export default function CentralRequests() {
               data-sound="back"
               onClick={() => answer(r, false)}
               disabled={busy === r.id}
-              aria-label={`Rechazar la solicitud de ${r.name}`}
+              aria-label={tr("Rechazar la solicitud de {name}", { name: r.name })}
             >
               <Icon name="close" size={16} strokeWidth={3} />
             </button>

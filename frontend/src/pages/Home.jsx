@@ -13,8 +13,9 @@ import PlaySheet from "../components/home/PlaySheet.jsx";
 import "../styles/home.css";
 import { HIDDEN_SLUG, resolveCode } from "../lib/hiddenCode.js";
 
+import { translate as tr } from "../lib/i18n.js";
 // How a choice of the menu reads in a sentence: "Trivia", "Clásico normal".
-const choiceName = (mode) => mode?.fullName || mode?.name || "un juego";
+const choiceName = (mode) => mode?.fullName || mode?.name || tr("un juego");
 
 // The old pages of "¿Cómo quieres jugar?" (/jugar/casual, /jugar/privada…) are Inicio now, on the side they named.
 const OPTION_AUDIENCE = { casual: "publica", competitivo: "publica", privada: "grupo" };
@@ -65,8 +66,8 @@ export default function Home() {
     const picked = findMode(game);
     // A public match has no host: its games come from the roulette, which says so itself.
     if (picked && !isHost && !room.matchmaking) {
-      const host = room.hostName || "El anfitrión";
-      showToast(`${host} eligió ${choiceName(picked)}`, "play");
+      const host = room.hostName || tr("El anfitrión");
+      showToast(tr("{host} eligió {v1}", { host: host, v1: choiceName(picked) }), "play");
     }
   }, [game, room?.code]);
 
@@ -79,7 +80,7 @@ export default function Home() {
       const key = `${r.userId}:${r.at}`;
       if (askedBefore.current.has(key)) continue;
       askedBefore.current.add(key);
-      showToast(`${r.name} quiere unirse a tu grupo`, "users");
+      showToast(tr("{name} quiere unirse a tu grupo", { name: r.name }), "users");
     }
   }, [group?.joinRequests, isLeader]);
 
@@ -89,7 +90,7 @@ export default function Home() {
     const before = lastLeader.current;
     lastLeader.current = { code: group?.code, leaderId: group?.leaderId };
     if (!group || before.code !== group.code || !before.leaderId || before.leaderId === group.leaderId) return;
-    showToast(group.leaderId === user?.id ? "Ahora eres el líder del grupo" : `${group.leaderName} es ahora el líder`, "users");
+    showToast(group.leaderId === user?.id ? tr("Ahora eres el líder del grupo") : tr("{leaderName} es ahora el líder", { leaderName: group.leaderName }), "users");
   }, [group?.code, group?.leaderId]);
 
   // A friend let you in, or turned you down.
@@ -124,8 +125,8 @@ export default function Home() {
       return;
     }
     joinGroup(groupInvite)
-      .then(() => showToast("Entraste al grupo", "users"))
-      .catch((err) => !err.offer && showToast(err.message || "No pudimos entrar a ese grupo"))
+      .then(() => showToast(tr("Entraste al grupo"), "users"))
+      .catch((err) => !err.offer && showToast(err.message || tr("No pudimos entrar a ese grupo")))
       .finally(() => nav("/", { replace: true }));
   }, [groupInvite, user?.name, askName]);
 
@@ -140,7 +141,7 @@ export default function Home() {
     }
     joinRoom(inviteCode).catch((err) => {
       // Already playing in it from another device: CentralOffer asks whether this one is its central device.
-      if (!err.offer) showToast(err.message || "No pudimos entrar a esa partida");
+      if (!err.offer) showToast(err.message || tr("No pudimos entrar a esa partida"));
       nav("/", { replace: true });
     });
   }, [inviteCode, user?.name]);

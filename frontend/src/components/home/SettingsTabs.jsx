@@ -1,7 +1,9 @@
 import { useEffect, useId, useRef, useState } from "react";
 import Icon from "./Icon.jsx";
 import { useSettingsStacked, useSettingsSummary } from "./SettingsPanel.jsx";
+import { translate, useT } from "../../lib/i18n.js";
 
+import { translate as tr } from "../../lib/i18n.js";
 // Every game's settings, split in tabs so each view fits the panel without scrolling. The usual two: "Partida" (how
 // it's played and how long: ways of answering, modes, rounds, seconds) and what comes up ("Preguntas", "Canciones",
 // "Eventos", "Tableros": topics, difficulty).
@@ -14,7 +16,8 @@ import { useSettingsStacked, useSettingsSummary } from "./SettingsPanel.jsx";
 // between visits. (`storageKey` is still accepted, unused.) `children` go under the tabs.
 // In the "Ajustes de …" panel (SettingsPanel) every tab's settings show one after another, under the tabs, which stay
 // on top: a tap scrolls to that tab's part, and the one in view is the one underlined.
-export default function SettingsTabs({ tabs, readOnly = false, storageKey = null, label = "Ajustes", children }) {
+export default function SettingsTabs({ tabs, readOnly = false, storageKey = null, label = tr("Ajustes"), children }) {
+  useT();
   const list = tabs.filter(Boolean);
   const [open, setOpen] = useState(() => list[0].id);
   const [subOpen, setSubOpen] = useState({});
@@ -71,7 +74,7 @@ export default function SettingsTabs({ tabs, readOnly = false, storageKey = null
           const parts = Array.isArray(t.sub) ? t.sub.filter(Boolean) : null;
           const part = parts?.find((s) => s.id === subOpen[t.id]) || parts?.[0];
           return (
-            <section key={t.id} ref={(el) => (sectionRefs.current[t.id] = el)} className="tv-settab-section" aria-label={t.label}>
+            <section key={t.id} ref={(el) => (sectionRefs.current[t.id] = el)} className="tv-settab-section" aria-label={translate(t.label)}>
               {parts && parts.length > 1 && (
                 <TabRow sub tabs={parts} value={part.id} onChange={(id) => chooseSub(t.id, id)} label={t.label} panelId={panelId} />
               )}
@@ -141,10 +144,10 @@ function TabRow({ tabs, value, onChange, label, panelId, sub = false }) {
         >
           <span className="tv-settab-label">
             {t.icon && <Icon name={t.icon} size={sub ? 15 : 17} strokeWidth={2.6} />}
-            {t.label}
-            {t.alert && <span className="tv-settab-alert" role="img" aria-label="Falta elegir algo" />}
+            {translate(t.label)}
+            {t.alert && <span className="tv-settab-alert" role="img" aria-label={translate("Falta elegir algo")} />}
           </span>
-          {t.note && <small className="tv-settab-note">{t.note}</small>}
+          {t.note && <small className="tv-settab-note">{translate(t.note)}</small>}
         </button>
         );
         if (!t.toggle) return tab;
@@ -172,8 +175,9 @@ function TabRow({ tabs, value, onChange, label, panelId, sub = false }) {
 }
 
 /** A list's summary for a tab's note, `noun` being a feminine plural: "Todas las categorías", "Sin categorías", "3 de 10 categorías". */
-export function countNote(chosen, total, noun = "categorías") {
-  if (!chosen.length) return `Sin ${noun}`;
-  if (chosen.length >= total) return `Todas las ${noun}`;
-  return `${chosen.length} de ${total} ${noun}`;
+export function countNote(chosen, total, noun = tr("categorías")) {
+  const n = translate(noun);
+  if (!chosen.length) return translate("Sin {noun}", { noun: n });
+  if (chosen.length >= total) return translate("Todas las {noun}", { noun: n });
+  return translate("{a} de {b} {noun}", { a: chosen.length, b: total, noun: n });
 }

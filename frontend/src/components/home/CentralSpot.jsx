@@ -4,6 +4,7 @@ import Avatar from "./Avatar.jsx";
 import Icon from "./Icon.jsx";
 import "../../styles/central.css";
 
+import { translate as tr } from "../../lib/i18n.js";
 /**
  * "Dispositivo central", at the top of the room's column while the room has one: whose screen shows the match while
  * the players answer from their phones (picked from a player's menu, "Usar su pantalla como central"). The host or a
@@ -33,9 +34,9 @@ export default function CentralSpot({ room, canEdit, onToast }) {
     setConfirmOff(false);
     try {
       await removeCentral();
-      onToast?.("Cada uno vuelve a jugar en su pantalla", "check");
+      onToast?.(tr("Cada uno vuelve a jugar en su pantalla"), "check");
     } catch (err) {
-      onToast?.(err.message || "No se pudo quitar el dispositivo central");
+      onToast?.(err.message || tr("No se pudo quitar el dispositivo central"));
     }
   }
 
@@ -48,8 +49,8 @@ export default function CentralSpot({ room, canEdit, onToast }) {
         </span>
       </span>
       <span className="tv-central-spot-text">
-        <strong>Dispositivo central</strong>
-        <span>{central.connected ? `Pantalla de ${central.name}` : `Pantalla de ${central.name} · Reconectando…`}</span>
+        <strong>{tr("Dispositivo central")}</strong>
+        <span>{central.connected ? tr("Pantalla de {name}", { name: central.name }) : tr("Pantalla de {name} · Reconectando…", { name: central.name })}</span>
       </span>
       {canEdit && (
         <button
@@ -57,9 +58,9 @@ export default function CentralSpot({ room, canEdit, onToast }) {
           className={`tv-central-spot-x${confirmOff ? " is-confirm" : ""}`}
           data-sound="back"
           onClick={takeOff}
-          aria-label={confirmOff ? "Toca otra vez para quitar el dispositivo central" : "Quitar el dispositivo central"}
+          aria-label={confirmOff ? tr("Toca otra vez para quitar el dispositivo central") : tr("Quitar el dispositivo central")}
         >
-          {confirmOff ? "¿Quitar?" : <Icon name="close" size={16} strokeWidth={3} />}
+          {confirmOff ? tr("¿Quitar?") : <Icon name="close" size={16} strokeWidth={3} />}
         </button>
       )}
     </div>

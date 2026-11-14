@@ -1,3 +1,4 @@
+import { translate as tr } from "../lib/i18n.js";
 // The Spotify playlists and albums a guest (no account) added by link, kept in this browser only: the server keeps
 // them for accounts (user.savedSpotify, "Mis playlists"), never for guests. Same shape as the server's list:
 // { key: "<kind>:<id>", kind, id, name, image, total, addedAt }, newest first, no repeats, at most 60.
@@ -29,7 +30,7 @@ export function saveLocalSpotify(playlist) {
   const kind = rest.startsWith("album:") ? "album" : "playlist";
   const id = kind === "album" ? rest.slice(6) : rest;
   const key = `${kind}:${id}`;
-  const entry = { key, kind, id, name: playlist.name || "Playlist", image: playlist.image || null, total: playlist.total || 0, addedAt: Date.now() };
+  const entry = { key, kind, id, name: playlist.name || tr("Playlist"), image: playlist.image || null, total: playlist.total || 0, addedAt: Date.now() };
   return store([entry, ...loadLocalSpotify().filter((p) => p.key !== key)].slice(0, MAX));
 }
 

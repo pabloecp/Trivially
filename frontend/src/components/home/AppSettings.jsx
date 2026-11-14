@@ -7,6 +7,7 @@ import Segmented from "./Segmented.jsx";
 import { VolumeRows } from "./VolumeMenu.jsx";
 import "../../styles/admin.css";
 
+import { translate as tr } from "../../lib/i18n.js";
 // One setting as a row, like the settings of a phone: its icon and name on the left, its choice (a small switch, with
 // icons when they say it better than words) on the right.
 function SettingRow({ icon, label, children }) {
@@ -61,8 +62,8 @@ export default function AppSettings({ open, onClose, onOwner = null }) {
             value={lang}
             onChange={setLang}
             options={[
-              { value: "es", label: "ES", title: "Español" },
-              { value: "en", label: "EN", title: "English" },
+              { value: "es", label: "ES", title: tr("Español") },
+              { value: "en", label: "EN", title: tr("English") },
             ]}
           />
         </SettingRow>

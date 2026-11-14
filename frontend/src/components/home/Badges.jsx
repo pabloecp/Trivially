@@ -2,6 +2,7 @@ import { useState } from "react";
 import Icon from "./Icon.jsx";
 import { BADGES, badgeProgress } from "../../lib/badges.js";
 
+import { translate as tr } from "../../lib/i18n.js";
 // A badge as a tag, like "Owner": its icon and name on its colour. A locked one is grey with a lock.
 export function BadgeTag({ badge, locked = false }) {
   return (
@@ -43,7 +44,7 @@ export default function BadgesCard({ user, worn = null, own = false, guest = fal
 
   let note;
   if (shown) {
-    const state = !mine && shown.earned ? " La ganó." : "";
+    const state = !mine && shown.earned ? tr(" La ganó.") : "";
     note = (
       <>
         <b>{shown.name}</b> · {shown.how}
@@ -51,19 +52,19 @@ export default function BadgesCard({ user, worn = null, own = false, guest = fal
       </>
     );
   } else if (guest) {
-    note = "Crea una cuenta para ganar insignias.";
+    note = tr("Crea una cuenta para ganar insignias.");
   } else if (mine) {
-    note = won.length ? "Toca una para ver qué pide. Las que ganaste se llevan junto a tu nombre." : "Son difíciles a propósito. Toca una para ver qué pide.";
+    note = won.length ? tr("Toca una para ver qué pide. Las que ganaste se llevan junto a tu nombre.") : tr("Son difíciles a propósito. Toca una para ver qué pide.");
   } else {
-    note = "Toca una para ver qué pide.";
+    note = tr("Toca una para ver qué pide.");
   }
 
   return (
     <section className="tv-card tv-pf-card tv-pf-badges" aria-labelledby="tv-badges-title">
       <div className="tv-pf-head">
-        <h2 id="tv-badges-title" className="tv-pf-title">Insignias</h2>
+        <h2 id="tv-badges-title" className="tv-pf-title">{tr("Insignias")}</h2>
         <span className="tv-badges-count">
-          <b>{won.length}</b> de {BADGES.length}
+          <b>{won.length}</b> {tr("de")} {BADGES.length}
         </span>
       </div>
       <div className="tv-badges-grid">
@@ -75,14 +76,14 @@ export default function BadgesCard({ user, worn = null, own = false, guest = fal
               type="button"
               className={`tv-badge-item${b.earned ? " is-earned" : " is-locked"}${on ? " is-on" : ""}${asked === b.id ? " is-asked" : ""}`}
               aria-pressed={mine && b.earned ? on : undefined}
-              aria-label={`${b.name}${b.earned ? "" : " (bloqueada)"}`}
+              aria-label={`${b.name}${b.earned ? "" : ` (${tr("bloqueada")})`}`}
               disabled={Boolean(busy)}
               onClick={() => tap(b)}
             >
               <BadgeTag badge={b} locked={!b.earned} />
               {mine &&
                 (b.earned ? (
-                  <span className="tv-badge-state">{on ? "La llevas" : "Ganada"}</span>
+                  <span className="tv-badge-state">{on ? tr("La llevas") : tr("Ganada")}</span>
                 ) : (
                   <span className="tv-badge-progress">
                     <span className="tv-badge-bar" aria-hidden="true">

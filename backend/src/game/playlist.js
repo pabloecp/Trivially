@@ -1,3 +1,5 @@
+import { localize, mapFor } from "../i18n/content.js";
+
 // A match of several games played as one (a public match or a Clásico): its games ("items", each a game id and that
 // game's settings) are kept in `room.playlist` when it starts, and `room.run` keeps them in play order, which one is on
 // and how many games each player won: whoever wins the most games wins (points across all of them break a tie). The
@@ -66,7 +68,7 @@ export function recordGame(run, game, ranked, winnerId) {
 }
 
 /** The run's tally by position: the most games won first, then the most points. */
-export function rankedStandings(run) {
+export function rankedStandings(run, lang = "es") {
   return Object.entries(run.standings)
     .map(([id, e]) => ({
       id,
@@ -76,7 +78,7 @@ export function rankedStandings(run) {
       wins: e.wins,
       points: e.points,
       played: e.played,
-      rounds: (e.rounds || []).map(({ questionId, ...round }) => round),
+      rounds: (e.rounds || []).map(({ questionId, ...round }) => (lang === "es" ? round : localize(round, mapFor(questionId)))),
       bestStreak: e.bestStreak || 0,
     }))
     .sort((a, b) => b.wins - a.wins || b.points - a.points);
@@ -105,8 +107,8 @@ function itemResults(run) {
 }
 
 /** How a run goes out to the players (its items' settings and the room's own ones stay on the server). */
-export function publicRun(run) {
-  const standings = rankedStandings(run);
+export function publicRun(run, lang = "es") {
+  const standings = rankedStandings(run, lang);
   return {
     name: run.name,
     order: run.order,

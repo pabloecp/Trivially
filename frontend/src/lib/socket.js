@@ -1,7 +1,9 @@
 import { io } from "socket.io-client";
 import { BACKEND_URL } from "./config.js";
 
+import { getLang, onLangChange, translate as tr } from "../lib/i18n.js";
 let socket;
+let langHooked = false;
 // Supplies the signed token that tells the server who we are (set by AppProvider in store.jsx).
 let tokenProvider = async () => null;
 
@@ -21,10 +23,15 @@ export function getSocket() {
       // Called on every (re)connect, so the token always matches the current account.
       auth: (cb) => {
         tokenProvider()
-          .then((token) => cb({ token }))
-          .catch(() => cb({ token: null }));
+          .then((token) => cb({ token, lang: getLang() }))
+          .catch(() => cb({ token: null, lang: getLang() }));
       },
     });
+  }
+  // The language this person plays in: the server sends them the content (questions, boards...) in it.
+  if (!langHooked) {
+    langHooked = true;
+    onLangChange(() => socket?.emit("lang:set", getLang()));
   }
   return socket;
 }
@@ -36,10 +43,15 @@ export function reconnectSocket() {
   socket.connect();
 }
 
+// The server writes its messages in Spanish: they reach the screens in the site's language.
+function localized(res) {
+  return res && typeof res.error === "string" ? { ...res, error: tr(res.error) } : res;
+}
+
 export function emitAck(event, ...args) {
   const s = getSocket();
   return new Promise((resolve) => {
-    s.emit(event, ...args, (res) => resolve(res || { ok: false, error: "Sin respuesta" }));
+    s.emit(event, ...args, (res) => resolve(localized(res) || { ok: false, error: tr("Sin respuesta") }));
   });
 }
 
@@ -48,7 +60,7 @@ export function emitAckWithin(ms, event, ...args) {
   const s = getSocket();
   return new Promise((resolve) => {
     s.timeout(ms).emit(event, ...args, (err, res) =>
-      resolve(err ? { ok: false, error: "El servidor no respondió. Inténtalo otra vez." } : res || { ok: false, error: "Sin respuesta" })
+      resolve(err ? { ok: false, error: tr("El servidor no respondió. Inténtalo otra vez.") } : localized(res) || { ok: false, error: tr("Sin respuesta") })
     );
   });
 }
