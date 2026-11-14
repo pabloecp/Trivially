@@ -15,7 +15,7 @@ import Icon from "./Icon.jsx";
 import GroupMemberMenu from "./GroupMemberMenu.jsx";
 import RankBox from "./RankBox.jsx";
 import { statusOf } from "./FriendsSheet.jsx";
-import { getLang, useT } from "../../lib/i18n.js";
+import { locale, useT } from "../../lib/i18n.js";
 
 import { translate as tr } from "../../lib/i18n.js";
 // The stage in the middle of Inicio and of a private match's lobby: the game's card in its colour, and beside it your
@@ -139,7 +139,7 @@ export default function ModeStage({ mode, room = null, audience = null, title = 
                       <span className="tv-stage-live" aria-hidden="true" />
                     </span>
                     <span>
-                      <b>{playing.toLocaleString(getLang() === "en" ? "en-US" : "es-ES")}</b> {t("jugando ahora")}
+                      <b>{playing.toLocaleString(locale())}</b> {t("jugando ahora")}
                     </span>
                   </li>
                 )}

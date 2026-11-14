@@ -558,9 +558,7 @@ function GameScreen() {
             )}
             {(central || controller) && <p className="tv-hint">
               {lyrics
-                ? `${central ? tr("La canción se corta: completen") : tr("La canción se corta: completa")} lo que sigue en la letra${
-                    closed ? " entre cuatro opciones" : ""
-                  }${central ? tr(" desde su teléfono") : controller ? tr(" desde aquí") : ""}.`
+                ? tr(`La canción se corta: ${central ? "completen" : "completa"} lo que sigue en la letra${closed ? " entre cuatro opciones" : ""} ${central ? "desde su teléfono" : "desde aquí"}.`.replace(" .", "."))
                 : central
                 ? closed
                   ? tr("Elijan la canción en su teléfono entre cuatro opciones.")
@@ -621,7 +619,7 @@ function GameScreen() {
                       }}
                     />
                   }
-                  mine={central || spectator ? null : skipped ? tr("Te la saltaste") : me?.lastAnswer?.text ? `Escribiste “${me.lastAnswer.text}”` : null}
+                  mine={central || spectator ? null : skipped ? tr("Te la saltaste") : me?.lastAnswer?.text ? tr("Escribiste “{text}”", { text: me.lastAnswer.text }) : null}
                   mineOk={Boolean(me?.lastAnswer?.correct)}
                 />
               ) : null

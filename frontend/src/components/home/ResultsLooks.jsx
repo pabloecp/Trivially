@@ -5,7 +5,7 @@ import { RowChange } from "./Ratings.jsx";
 import { useFiveRows } from "./ResultsParts.jsx";
 import "../../styles/resultsLooks.css";
 
-import { translate as tr } from "../../lib/i18n.js";
+import { locale, translate as tr } from "../../lib/i18n.js";
 // The results screen at the end of a match: a bar as long as the points for each player, in the match's colour. The games
 // won are on the right and whoever won (all of them on a tie) is ringed in the match's colour.
 
@@ -69,7 +69,7 @@ export function RetouchCard({ icon = "play", color = "neutral", title, players, 
       <ol ref={listRef} className={`tv-res-table${five}`}>
         {players.map((p, i) => {
           const win = winners.includes(p.id);
-          const pts = `${points(p).toLocaleString("es-ES")} pts`;
+          const pts = `${points(p).toLocaleString(locale())} pts`;
           const change = changes?.get(p.id);
           return (
             <li key={p.id} className={`tv-res-row rl-rankrow${p.id === meId ? " is-me" : ""}${win ? " is-win" : ""}`} style={{ "--i": i }}>

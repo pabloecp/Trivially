@@ -53,7 +53,7 @@ export default function GroupMemberMenu({ member, isMe, canManage, onClose, onTo
           type="button"
           role="menuitem"
           className={`tv-iconbtn tv-iconbtn--sm${member.canEditConfig ? " is-on" : ""}`}
-          aria-label={`${member.canEditConfig ? tr("Quitarle") : tr("Darle")} a ${member.name} permiso de ajustes`}
+          aria-label={tr("{v0} a {name} permiso de ajustes", { v0: member.canEditConfig ? tr("Quitarle") : tr("Darle"), name: member.name })}
           title={member.canEditConfig ? tr("Quitar permiso de ajustes") : tr("Dar permiso de ajustes")}
           onClick={() => (setConfirm(null), run(async () => ((await toggleGroupPermission(member.id)) ? tr("{name} ya puede cambiar los ajustes", { name: member.name }) : tr("{name} ya no puede cambiar los ajustes", { name: member.name }))))}
         >

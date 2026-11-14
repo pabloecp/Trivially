@@ -38,10 +38,10 @@ export function rainConfig(room) {
 
 /** "1 punto", "3 puntos". */
 export function pointsText(n) {
-  return `${n} ${n === 1 ? "punto" : "puntos"}`;
+  return n === 1 ? tr("1 punto") : tr("{n} puntos", { n });
 }
 
 /** "1 acierto", "3 aciertos". */
 export function hitsText(n) {
-  return `${n} ${n === 1 ? "acierto" : "aciertos"}`;
+  return n === 1 ? tr("1 acierto") : tr("{n} aciertos", { n });
 }

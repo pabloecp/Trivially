@@ -27,7 +27,7 @@ const MY_COLOR = "#ffffff";
 // "Ana", "Ana y Luis", "Ana, Luis y Eva".
 function joinNames(names) {
   if (names.length < 2) return names[0] || "";
-  return `${names.slice(0, -1).join(", ")} y ${names[names.length - 1]}`;
+  return tr("{list} y {last}", { list: names.slice(0, -1).join(", "), last: names[names.length - 1] });
 }
 
 // Long words get soft hyphens between their syllables (Ro·man·ti·cis·mo), so a narrow cell splits them where a person
@@ -300,7 +300,7 @@ function GameScreen() {
       hintIcon = "check";
     } else if (central || watching || spectator) {
       hintIcon = central ? "phone" : "info";
-      hint = `Desempate entre ${tiedNames}.`;
+      hint = tr("Desempate entre {tiedNames}.", { tiedNames });
     } else if (out) {
       hint = tr("Pisaste una mina. Si nadie acierta, vuelves a intentarlo.");
       hintTone = " is-out";
@@ -328,7 +328,7 @@ function GameScreen() {
     // The central device talks to the whole room: they pick on their phones.
     hintIcon = "phone";
     if (race) hint = tr("¡Carrera! Elijan en su teléfono las correctas antes que los demás.");
-    else hint = waitingFor.length ? `Turno ${turn}.` : `Turno ${turn}: siguiente turno…`;
+    else hint = waitingFor.length ? tr("Turno {turn}.", { turn }) : tr("Turno {turn}: siguiente turno…", { turn });
   } else if (spectator) {
     hint = tr("Estás viendo la partida. Jugarás en la siguiente.");
     hintIcon = "info";
@@ -389,7 +389,7 @@ function GameScreen() {
         ) : (
           <MatchCard
             room={room}
-            tag={tiebreak ? `Desempate${tiebreak.round > 1 ? ` ${tiebreak.round}` : ""}` : null}
+            tag={tiebreak ? (tiebreak.round > 1 ? tr("Desempate {n}", { n: tiebreak.round }) : tr("Desempate")) : null}
             seconds={seconds}
             pct={pct}
             urgent={urgent}
@@ -423,7 +423,7 @@ function GameScreen() {
                       <span className="tv-mines-stat-of">/{question.total}</span>
                     </strong>
                   </span>
-                  <span className="tv-mines-stat is-mines" aria-label={`${size - question.total} minas`}>
+                  <span className="tv-mines-stat is-mines" aria-label={tr("{n} minas", { n: size - question.total })}>
                     <span className="tv-mines-stat-icon" aria-hidden="true">
                       <Icon name="bomb" size={16} strokeWidth={2.6} />
                     </span>
@@ -457,9 +457,9 @@ function GameScreen() {
                     else if (mine) state = " is-pending";
                     else if (!canPick && !spectator && !watching && !central) state = " is-locked";
                     const label = owned
-                      ? tr("{text}: {v1}, de {v2}", { text: c.text, v1: c.correct ? "correcta" : "mina", v2: nameOf(c.by) })
+                      ? tr("{text}: {v1}, de {v2}", { text: c.text, v1: c.correct ? tr("correcta") : tr("mina"), v2: nameOf(c.by) })
                       : reveal
-                      ? `${c.text}: ${c.correct ? tr("correcta, nadie la encontró") : "mina"}`
+                      ? `${c.text}: ${c.correct ? tr("correcta, nadie la encontró") : tr("mina")}`
                       : c.text;
                     return (
                       <button
@@ -498,7 +498,7 @@ function GameScreen() {
                   <AnswerCard
                     icon={burst.icon}
                     iconTone={BURST_TONES[burst.tone] || null}
-                    label={burst.points > 0 ? `+${burst.points} puntos` : null}
+                    label={burst.points > 0 ? tr("+{n} puntos", { n: burst.points }) : null}
                     value={burst.title}
                     detail={burst.detail}
                   />
@@ -525,7 +525,7 @@ function GameScreen() {
           scores
           display={central}
           onToast={setErr}
-          status={phase === "playing" ? `Siguen ${standing.length}/${room.players.filter((p) => !p.spectator).length}` : undefined}
+          status={phase === "playing" ? tr("Siguen {a}/{b}", { a: standing.length, b: room.players.filter((p) => !p.spectator).length }) : undefined}
         />
       )}
       {!controller && !central && <MatchBar
@@ -569,8 +569,8 @@ function roundBurst(me, question, live = null) {
   const cleared = question.total > 0 && question.found >= question.total;
   if (answer?.out === "mina") return { tone: "mina", shake: true, icon: "bomb", title: tr("¡Pisaste una mina!"), detail: hits ? tr("Te llevas {v0}", { v0: hitsText(hits) }) : tr("Suerte en la próxima"), points };
   if (answer?.out === "tiempo") return { tone: "tiempo", icon: "hourglass", title: tr("¡Se te acabó el tiempo!"), detail: hits ? tr("Te llevas {v0}", { v0: hitsText(hits) }) : tr("Suerte en la próxima"), points };
-  if (cleared) return { tone: "win", icon: "star", title: tr("¡Tablero limpio!"), detail: hits ? `Encontraste ${hitsText(hits)}` : tr("Encontraron todas las correctas"), points, long: true };
-  return { tone: "ok", icon: "check", title: tr("¡Sobreviviste!"), detail: hits ? `Encontraste ${hitsText(hits)}` : tr("Sin aciertos esta vez"), points };
+  if (cleared) return { tone: "win", icon: "star", title: tr("¡Tablero limpio!"), detail: hits ? tr("Encontraste {hits}", { hits: hitsText(hits) }) : tr("Encontraron todas las correctas"), points, long: true };
+  return { tone: "ok", icon: "check", title: tr("¡Sobreviviste!"), detail: hits ? tr("Encontraste {hits}", { hits: hitsText(hits) }) : tr("Sin aciertos esta vez"), points };
 }
 
 // The card over the board at a tiebreak's reveal, for the whole room: who won it (and how), who goes on to another
@@ -584,8 +584,8 @@ function tiebreakBurst(tiebreak, players, viewerId) {
   }
   if (tiebreak.survivors) {
     const others = tiebreak.survivors.filter((id) => id !== viewerId).map(nameOf);
-    if (tiebreak.survivors.includes(viewerId)) return { tone: "ok", icon: "check", title: tr("¡Sigues en el desempate!"), detail: `Otro desempate contra ${joinNames(others)}`, final: true };
-    return { tone: "other", icon: "users", title: `Siguen ${joinNames(others)}`, detail: tr("Juegan otro desempate"), final: true };
+    if (tiebreak.survivors.includes(viewerId)) return { tone: "ok", icon: "check", title: tr("¡Sigues en el desempate!"), detail: tr("Otro desempate contra {names}", { names: joinNames(others) }), final: true };
+    return { tone: "other", icon: "users", title: tr("Siguen {names}", { names: joinNames(others) }), detail: tr("Juegan otro desempate"), final: true };
   }
   return { tone: "tiempo", icon: "hourglass", title: tr("Nadie eligió"), detail: tr("El empate se queda"), final: true };
 }

@@ -25,10 +25,10 @@ export default function CentralOffer() {
   let title = tr("Ya estás en esta partida");
   let text = isHost
     ? tr("Tu cuenta ya juega aquí desde otro dispositivo. Usa este como pantalla de la partida (preguntas, sonidos y marcador) y responde desde el otro.")
-    : `Tu cuenta ya juega aquí desde otro dispositivo. Pídele a ${hostName} usar este como pantalla de la partida (preguntas, sonidos y marcador) y responde desde el otro.`;
+    : tr("Tu cuenta ya juega aquí desde otro dispositivo. Pídele a {hostName} usar este como pantalla de la partida (preguntas, sonidos y marcador) y responde desde el otro.", { hostName });
   let foot;
   if (status === "waiting") {
-    title = `Esperando a ${hostName}`;
+    title = tr("Esperando a {hostName}", { hostName });
     text = tr("Le pediste a {hostName} usar este dispositivo como central. En cuanto acepte, aquí se verá la partida.", { hostName: hostName });
     foot = (
       <button type="button" className="tv-btn tv-btn--neutral tv-central-offer-go" data-sound="back" onClick={dismissCentralOffer}>

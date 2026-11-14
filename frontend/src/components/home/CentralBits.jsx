@@ -9,7 +9,7 @@ import { translate as tr } from "../../lib/i18n.js";
 // "Ana", "Ana y Luis", "Ana, Luis y Eva".
 export function joinNames(names) {
   if (names.length < 2) return names[0] || "";
-  return `${names.slice(0, -1).join(", ")} y ${names[names.length - 1]}`;
+  return tr("{list} y {last}", { list: names.slice(0, -1).join(", "), last: names[names.length - 1] });
 }
 
 // The players who answer this round: connected, not watching it (spectators) and, in a tiebreak, only the tied ones.
@@ -74,7 +74,7 @@ export function ControllerBar({ seconds, pct, urgent = false, children }) {
         {tr("Mira la pantalla central")}
       </p>
       <div className="tv-ctrl-tools">{children}</div>
-      <div className={`tv-clock tv-ctrl-clock${urgent ? " is-urgent" : ""}`} role="timer" aria-label={`${seconds} segundos`}>
+      <div className={`tv-clock tv-ctrl-clock${urgent ? " is-urgent" : ""}`} role="timer" aria-label={tr("{n} segundos", { n: seconds })}>
         <svg viewBox="0 0 44 44" aria-hidden="true">
           <circle className="tv-clock-track" cx="22" cy="22" r="19" />
           <circle className="tv-clock-fill" cx="22" cy="22" r="19" style={{ strokeDashoffset: 119.4 * (1 - pct / 100) }} />

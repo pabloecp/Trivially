@@ -95,7 +95,7 @@ function GroupMembers({ group, room, onToast, onClose }) {
       {room?.central && <CentralSpot room={room} canEdit={isLeader || Boolean(room.coHosts?.includes(user?.id))} onToast={onToast} />}
       <div className="tv-party-title">
         <h2>{tr("En el grupo")}</h2>
-        <span>{group.members.length === 1 ? "1 jugador" : `${group.members.length} jugadores`}</span>
+        <span>{group.members.length === 1 ? tr("1 jugador") : tr("{n} jugadores", { n: group.members.length })}</span>
       </div>
       <ul className="tv-party-players" aria-label={tr("Jugadores del grupo")}>
         {group.members.map((m) => {
@@ -118,7 +118,7 @@ function GroupMembers({ group, room, onToast, onClose }) {
                         type="button"
                         className={`tv-iconbtn tv-iconbtn--sm${m.canEditConfig ? " is-on" : ""}`}
                         aria-pressed={Boolean(m.canEditConfig)}
-                        aria-label={`${m.canEditConfig ? tr("Quitarle") : tr("Darle")} a ${m.name} permiso de ajustes`}
+                        aria-label={tr("{v0} a {name} permiso de ajustes", { v0: m.canEditConfig ? tr("Quitarle") : tr("Darle"), name: m.name })}
                         title={m.canEditConfig ? tr("Quitar permiso de ajustes") : tr("Dar permiso de ajustes")}
                         disabled={Boolean(busy)}
                         onClick={() =>

@@ -20,6 +20,11 @@ function read() {
 let current = read();
 if (typeof document !== "undefined") document.documentElement.lang = current;
 
+/** The locale for numbers and dates. */
+export function locale() {
+  return current === "en" ? "en-US" : "es-ES";
+}
+
 export function getLang() {
   return current;
 }

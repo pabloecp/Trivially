@@ -392,7 +392,7 @@ export default function MusicSettings({ room, updateConfig, onToast, children, r
           <small>
             {row.on && <span className="tv-saved-on">{tr("En la partida ·")} </span>}
             {row.fixed ? row.from || tr("Spotify") : row.kind === "album" ? tr("Álbum") : row.kind === "spotify" ? tr("Tu Spotify") : tr("Playlist")}
-            {row.total ? ` · ${row.total} canciones` : ""}
+            {row.total ? ` · ${tr("{n} canciones", { n: row.total })}` : ""}
           </small>
         </span>
         {!readOnly && !row.fixed && (row.inRoom || row.savedItem) && (
@@ -401,7 +401,7 @@ export default function MusicSettings({ room, updateConfig, onToast, children, r
             className={`tv-saved-forget${asking ? " is-asking" : ""}`}
             onClick={() => deleteRow(row)}
             onBlur={() => asking && setConfirmForget("")}
-            aria-label={asking ? `Confirmar: borrar ${row.name}` : `Borrar ${row.name}`}
+            aria-label={asking ? tr("Confirmar: borrar {name}", { name: row.name }) : tr("Borrar {name}", { name: row.name })}
           >
             {asking ? tr("¿Borrar?") : <Icon name="trash" size={18} strokeWidth={2.4} />}
           </button>
@@ -413,7 +413,7 @@ export default function MusicSettings({ room, updateConfig, onToast, children, r
             onClick={row.onToggle}
             disabled={Boolean(savedBusy)}
             aria-pressed={Boolean(row.on)}
-            aria-label={row.on ? tr("Quitar {name} de la partida", { name: row.name }) : `Agregar ${row.name}`}
+            aria-label={row.on ? tr("Quitar {name} de la partida", { name: row.name }) : tr("Agregar {name}", { name: row.name })}
             aria-busy={busy}
           >
             {busy ? (
@@ -576,7 +576,7 @@ export default function MusicSettings({ room, updateConfig, onToast, children, r
           id: "canciones",
           label: tr("Canciones"),
           icon: "music",
-          note: songsReady != null ? `${songsReady} ${songsReady === 1 ? tr("canción") : "canciones"}` : null,
+          note: songsReady != null ? `${songsReady} ${songsReady === 1 ? tr("canción") : tr("canciones")}` : null,
           alert: songsReady === 0 && !chosenCustom.some((p) => p.loading),
           content: catalog,
           sub: showPlaylists && [

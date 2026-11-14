@@ -57,7 +57,7 @@ export function VolumeRows() {
             className="tv-volume-toggle"
             data-sound="none"
             aria-pressed={!r.on}
-            aria-label={r.on ? `Quitar ${r.label.toLowerCase()}` : `Poner ${r.label.toLowerCase()}`}
+            aria-label={r.on ? tr("Quitar {v0}", { v0: tr(r.label).toLowerCase() }) : tr("Poner {v0}", { v0: tr(r.label).toLowerCase() })}
             onClick={r.toggle}
           >
             <Icon name={r.icon} size={18} strokeWidth={2.4} />
@@ -103,7 +103,7 @@ export function SoundPacks() {
       <span key={pack.id} className="tv-sound-now" aria-live="polite">
         <strong>{pack.label}</strong>
         <small>
-          {pack.hint} · {index + 1} de {SOUND_PACKS.length}
+          {pack.hint} · {index + 1} {tr("de")} {SOUND_PACKS.length}
         </small>
       </span>
       <button type="button" className="tv-sound-step" data-sound="none" aria-label={tr("Sonido siguiente")} onClick={() => step(1)}>

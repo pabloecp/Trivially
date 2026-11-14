@@ -18,13 +18,13 @@ export function statusOf(friend) {
   if (friend.room.inRoom === false && friend.room.players <= 1) return tr("En línea");
   const mode = findMode(friend.room.game)?.name;
   const where = friend.room.inMatch
-    ? `Jugando${mode ? ` ${mode}` : ""}`
+    ? (mode ? tr("Jugando {mode}", { mode: tr(mode) }) : tr("Jugando"))
     : friend.room.inRoom === false
       ? tr("En un grupo")
       : mode
-        ? `Preparando ${mode}`
+        ? tr("Preparando {mode}", { mode: tr(mode) })
         : tr("Preparando una partida");
-  return `${where} · ${friend.room.players === 1 ? "1 jugador" : `${friend.room.players} jugadores`}`;
+  return `${where} · ${friend.room.players === 1 ? tr("1 jugador") : tr("{n} jugadores", { n: friend.room.players })}`;
 }
 
 // What you can do about a friend's group: join it, ask its leader, or nothing (only by invitation). A friend playing
@@ -146,7 +146,7 @@ export default function FriendsSheet() {
       () => f.joinFriend(friend.id),
       (action) =>
         action === "requested"
-          ? `Le pediste a ${friend.room?.hostName || tr("el líder")} unirte a su grupo. Esperando su respuesta…`
+          ? tr("Le pediste a {v0} unirte a su grupo. Esperando su respuesta…", { v0: friend.room?.hostName || tr("el líder") })
           : null,
     );
 
@@ -156,7 +156,7 @@ export default function FriendsSheet() {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      setMsg({ tone: "bad", text: `Copia esto: @${view.username}` });
+      setMsg({ tone: "bad", text: tr("Copia esto: @{username}", { username: view.username }) });
     }
   }
 
@@ -201,7 +201,7 @@ export default function FriendsSheet() {
             setMsg(null);
           }}
           options={[
-            { value: "amigos", label: `Amigos${view.friends.length ? ` (${view.friends.length})` : ""}` },
+            { value: "amigos", label: view.friends.length ? tr("Amigos ({n})", { n: view.friends.length }) : tr("Amigos") },
             { value: "solicitudes", label: <>{tr("Solicitudes")}{f.pending > 0 && <span className="tv-fr-count">{f.pending}</span>}</> },
           ]}
         />
@@ -263,7 +263,7 @@ export default function FriendsSheet() {
                           onClick={async () => {
                             const res = await run(
                               () => f.requestByUsername(p.username),
-                              (r) => (r.status === "accepted" ? tr("¡Ahora {name} y tú son amigos!", { name: p.name }) : `Solicitud enviada a ${p.name}`),
+                              (r) => (r.status === "accepted" ? tr("¡Ahora {name} y tú son amigos!", { name: p.name }) : tr("Solicitud enviada a {name}", { name: p.name })),
                             );
                             if (res)
                               setResults((list) =>
@@ -328,7 +328,7 @@ export default function FriendsSheet() {
                       <button type="button" className="tv-btn tv-btn--sm tv-c-green" disabled={busy} onClick={() => run(() => f.accept(p.id), tr("Ahora {name} es tu amigo", { name: p.name }))}>
                         {tr("Aceptar")}
                       </button>
-                      <button type="button" className="tv-fr-x" aria-label={`Rechazar a ${p.name}`} disabled={busy} onClick={() => run(() => f.decline(p.id))}>
+                      <button type="button" className="tv-fr-x" aria-label={tr("Rechazar a {name}", { name: p.name })} disabled={busy} onClick={() => run(() => f.decline(p.id))}>
                         <Icon name="close" size={15} strokeWidth={3} />
                       </button>
                     </PersonRow>
@@ -356,7 +356,7 @@ export default function FriendsSheet() {
       <ConfirmDialog
         open={Boolean(removing)}
         icon="close"
-        title={tr("¿Eliminar a {v0} de tus amigos?", { v0: removing?.name || "este amigo" })}
+        title={tr("¿Eliminar a {v0} de tus amigos?", { v0: removing?.name || tr("este amigo") })}
         text={tr("Dejarán de verse en línea y tendrán que volver a agregarse para ser amigos.")}
         cancelLabel={tr("Cancelar")}
         confirmLabel={tr("Eliminar")}

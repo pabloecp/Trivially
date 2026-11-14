@@ -19,7 +19,7 @@ import { GamesWon, RetouchCard } from "../../components/home/ResultsLooks.jsx";
 import { RatingBox, rowChanges } from "../../components/home/Ratings.jsx";
 import { findVariant } from "../../components/home/matchInfo.js";
 
-import { translate as tr } from "../../lib/i18n.js";
+import { locale, translate as tr } from "../../lib/i18n.js";
 // The end of a playlist (route /playlist/:code), in the same frame as a match's end (MatchResults): the title, the
 // podium (games won, or points when it was played mixed) and the ranking side by side (everyone's games won and points,
 // a dot per round of every game; this player's answers a tap away), and the host's two buttons, the same size, in the
@@ -63,7 +63,7 @@ function ResultsScreen() {
   const leadsGroup = Boolean(group) && group.leaderId === user?.id && group.place?.code === room.code;
   // So is a Clásico of a private room (Normal or Extendido): its host still decides what comes next.
   const classic = findMode(run?.classic);
-  const what = "partida";
+  const what = tr("partida");
   let title = tr("¡Fin de la {what}!", { what: what });
   if (winner && !solo) title = tr("¡{name} gana la {what}!", { name: winner.name, what: what });
   // Nobody won: the same points (in a playlist, also when nobody scored at all) or the same games won.
@@ -73,8 +73,8 @@ function ResultsScreen() {
   const mixed = Boolean(run?.mixed) && !run?.bestOf;
   // A tie (nobody won): everyone with as much as first place shares the top step of the podium.
   const key = (p) => (mixed ? p.points : p.wins);
-  const tied = title === "¡Empate!" && standings.length > 1 ? standings.filter((p) => key(p) === key(standings[0])).length : 0;
-  const pointsText = (p) => `${p.points.toLocaleString("es-ES")} pts`;
+  const tied = title === tr("¡Empate!") && standings.length > 1 ? standings.filter((p) => key(p) === key(standings[0])).length : 0;
+  const pointsText = (p) => `${p.points.toLocaleString(locale())} pts`;
   // This player's rounds of every game, numbered one after another (none on the central device).
   const me = isCentral ? null : standings.find((p) => p.id === user?.id) || null;
   // "Revancha" (Casual only): for whoever played the match and is still in it; it starts when everyone still here asks.
@@ -83,10 +83,10 @@ function ResultsScreen() {
   const rematchAsked = Boolean(room.rematch?.asked?.includes(user?.id));
   const myRounds = (me?.rounds || []).map((r, i) => ({ ...r, round: i + 1 }));
   let hint = null;
-  if (mixed && winner) hint = tr("{v0} en {v1}{v2}", { v0: pointsText(winner), v1: run.total === 1 ? "1 juego" : `${run.total} juegos`, v2: run.order === "aleatorio" ? " mezclados" : "" });
+  if (mixed && winner) hint = tr("{points} en {games}{shuffled}", { points: pointsText(winner), games: run.total === 1 ? tr("1 juego") : tr("{n} juegos", { n: run.total }), shuffled: run.order === "aleatorio" ? tr(" mezclados") : "" });
   else if (mixed && standings[0]?.wins > 0) hint = tr("Mismos puntos");
   else if (winner && solo && !run.bestOf) hint = tr("Ganaste {length} de {total} juegos", { length: run.played.filter((g) => g.winnerId === winner.id).length, total: run.total });
-  else if (winner) hint = tr("Ganó {wins} de {total} {v2}", { wins: winner.wins, total: run.total, v2: run.total === 1 ? "juego" : "juegos" });
+  else if (winner) hint = tr("Ganó {wins} de {total} {games}", { wins: winner.wins, total: run.total, games: run.total === 1 ? tr("juego") : tr("juegos") });
   else if (run?.bestOf && standings.length > 1) hint = tr("Nadie ganó: terminaron con las mismas victorias");
   else if (standings[0]?.wins > 0) hint = tr("Mismos juegos ganados y mismos puntos");
   // Who is ringed in the new looks: the winner, or everyone who tied for first.
@@ -199,7 +199,7 @@ function ResultsScreen() {
                     type="button"
                   >
                     <Icon name="reset" size={18} strokeWidth={2.4} />
-                    {rematchAsked ? `Revancha ${room.rematch.asked.length}/${room.rematch.total}` : tr("Revancha")}
+                    {rematchAsked ? tr("Revancha {a}/{b}", { a: room.rematch.asked.length, b: room.rematch.total }) : tr("Revancha")}
                   </button>
                 )}
                 <button

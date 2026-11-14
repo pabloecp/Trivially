@@ -90,7 +90,7 @@ export default function HomeFrame({ room = null, onToast, Lobby = null, leaving 
     const before = hadSet.current;
     hadSet.current = room ? canSet : null;
     if (!room || before === null || before === canSet) return;
-    if (canSet) onToast?.(`${room.hostName || tr("El anfitrión")} te dio permiso para cambiar los ajustes`, "sliders");
+    if (canSet) onToast?.(tr("{v0} te dio permiso para cambiar los ajustes", { v0: room.hostName || tr("El anfitrión") }), "sliders");
     else onToast?.(tr("Ya no puedes cambiar los ajustes de la partida"), "lock");
   }, [canSet, room?.code]);
 
@@ -314,7 +314,7 @@ export default function HomeFrame({ room = null, onToast, Lobby = null, leaving 
               </OpenSettingsContext.Provider>
             </div>
           ) : room ? (
-            <ModeStage mode={CHOOSE} title={decides ? tr("Elige un juego") : `${room.hostName || tr("El anfitrión")} está eligiendo`} />
+            <ModeStage mode={CHOOSE} title={decides ? tr("Elige un juego") : tr("{v0} está eligiendo", { v0: room.hostName || tr("El anfitrión") })} />
           ) : (
             gameStage
           )}

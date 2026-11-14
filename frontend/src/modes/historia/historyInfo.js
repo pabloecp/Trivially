@@ -1,6 +1,6 @@
 // Rango's settings and labels (same ids and limits as backend/src/game/history.js). Its categories are Trivia's.
 import { TOPICS } from "../quiz/quizInfo.js";
-import { translate as tr } from "../../lib/i18n.js";
+import { locale, translate as tr } from "../../lib/i18n.js";
 export { TOPICS };
 
 // Its way of playing (HISTORY_STYLES on the server): "Cifras", a question whose answer is a number, on a bar.
@@ -43,18 +43,18 @@ export function yearLabel(year, { crossesZero = false } = {}) {
 
 /** How a figure of Cifras reads: "8849 m", "42.195 m", "3.333.360 puntos" (like figureLabel on the server). */
 export function figureLabel(value, unit = "") {
-  const text = Number(value).toLocaleString("es-ES", { useGrouping: Math.abs(value) >= 10000 });
+  const text = Number(value).toLocaleString(locale(), { useGrouping: Math.abs(value) >= 10000 });
   return unit ? `${text} ${unit}` : text;
 }
 
 /** A figure on the bar's scale, short: "20 mil", "1,5 M". */
 export function figureScale(value) {
-  if (value >= 1e6) return `${(value / 1e6).toLocaleString("es-ES", { maximumFractionDigits: 1 })} M`;
-  if (value >= 10000) return `${(value / 1000).toLocaleString("es-ES", { maximumFractionDigits: 1 })} mil`;
+  if (value >= 1e6) return `${(value / 1e6).toLocaleString(locale(), { maximumFractionDigits: 1 })} M`;
+  if (value >= 10000) return `${(value / 1000).toLocaleString(locale(), { maximumFractionDigits: 1 })} ${tr("mil")}`;
   return String(value);
 }
 
 /** "1 año", "12 años". */
 export function yearsText(n) {
-  return `${n.toLocaleString("es-ES")} ${n === 1 ? tr("año") : tr("años")}`;
+  return `${n.toLocaleString(locale())} ${n === 1 ? tr("año") : tr("años")}`;
 }

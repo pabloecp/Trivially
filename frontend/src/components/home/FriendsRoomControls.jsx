@@ -50,7 +50,7 @@ export default function FriendsRoomControls({ group, onToast }) {
   async function answer(request, accept) {
     try {
       await friends.answerJoin(request.userId, accept);
-      onToast?.(accept ? tr("{name} está entrando…", { name: request.name }) : `Rechazaste a ${request.name}`, accept ? "check" : "lock");
+      onToast?.(accept ? tr("{name} está entrando…", { name: request.name }) : tr("Rechazaste a {name}", { name: request.name }), accept ? "check" : "lock");
     } catch (err) {
       onToast?.(err.message || tr("No se pudo responder"));
     }
@@ -59,7 +59,7 @@ export default function FriendsRoomControls({ group, onToast }) {
   return (
     <div className="tv-fr-room">
       {requests.map((r) => (
-        <div key={r.userId} className="tv-fr-ask" role="group" aria-label={`${r.name} quiere unirse`}>
+        <div key={r.userId} className="tv-fr-ask" role="group" aria-label={tr("{name} quiere unirse", { name: r.name })}>
           <Avatar name={r.name} avatar={r.avatar} />
           <p className="tv-fr-ask-text">
             <strong>{r.name}</strong> {tr("quiere unirse")}
@@ -67,7 +67,7 @@ export default function FriendsRoomControls({ group, onToast }) {
           <button type="button" className="tv-btn tv-c-green" onClick={() => answer(r, true)}>
             {tr("Aceptar")}
           </button>
-          <button type="button" className="tv-btn tv-c-neutral" onClick={() => answer(r, false)} aria-label={`Rechazar a ${r.name}`}>
+          <button type="button" className="tv-btn tv-c-neutral" onClick={() => answer(r, false)} aria-label={tr("Rechazar a {name}", { name: r.name })}>
             ×
           </button>
         </div>

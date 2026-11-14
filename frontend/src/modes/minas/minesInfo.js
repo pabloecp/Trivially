@@ -53,5 +53,5 @@ export function minesConfig(room) {
 
 /** "1 acierto", "3 aciertos". */
 export function hitsText(n) {
-  return `${n} ${n === 1 ? "acierto" : "aciertos"}`;
+  return n === 1 ? tr("1 acierto") : tr("{n} aciertos", { n });
 }

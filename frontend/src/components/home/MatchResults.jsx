@@ -60,7 +60,7 @@ function MatchEnd({ room }) {
 
           <div className={`tv-res-cards tv-res-cards--pair rl-cards tv-c-${mode?.color || "site"} is-color`}>
             <PodiumCard
-              meta={`${countText(top.length, "jugador", "jugadores")}${questions ? ` · ${countText(questions, "pregunta", "preguntas")}` : ""}`}
+              meta={`${countText(top.length, t("jugador"), t("jugadores"))}${questions ? ` · ${countText(questions, t("pregunta"), t("preguntas"))}` : ""}`}
             >
               <Podium players={top} meId={mine?.id} tied={tied ? top.filter((p) => p.score === winner.score).length : 0} />
             </PodiumCard>

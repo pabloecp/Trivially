@@ -3,7 +3,7 @@ import Icon from "./Icon.jsx";
 import Modal from "./Modal.jsx";
 import { findMode } from "../../modes/index.js";
 
-import { translate as tr } from "../../lib/i18n.js";
+import { locale, translate as tr } from "../../lib/i18n.js";
 // How many rounds show at once; the arrows at the foot move on to the next ones.
 const PAGE = 5;
 
@@ -42,8 +42,8 @@ export default function MatchSummarySheet({ open, rounds, onClose, title = tr("T
   const at = Math.min(page, pages - 1);
   const from = at * PAGE;
   const shown = rounds.slice(from, from + PAGE);
-  const count = rounds.length === 1 ? "1 ronda" : `${rounds.length} rondas`;
-  const sub = single ? `${count} · ${won} ${WON[games[0]] || "acertadas"}` : `${count} · varios juegos`;
+  const count = rounds.length === 1 ? tr("1 ronda") : tr("{n} rondas", { n: rounds.length });
+  const sub = single ? `${count} · ${won} ${tr(WON[games[0]] || "acertadas")}` : tr("{count} · varios juegos", { count });
 
   return (
     <Modal
@@ -59,7 +59,7 @@ export default function MatchSummarySheet({ open, rounds, onClose, title = tr("T
             <b>
               {rounds.length ? from + 1 : 0}–{from + shown.length}
             </b>{" "}
-            de {rounds.length}
+            {tr("de")} {rounds.length}
           </span>
           <span className="tv-summary-nav">
             <button type="button" className="tv-iconbtn tv-summary-prev" aria-label={tr("Rondas anteriores")} disabled={at <= 0} onClick={() => setPage(at - 1)}>
@@ -81,8 +81,8 @@ export default function MatchSummarySheet({ open, rounds, onClose, title = tr("T
           <small>{sub}</small>
         </span>
         <span className="tv-summary-hero-score">
-          <b>{total.toLocaleString("es-ES")}</b>
-          <small>puntos</small>
+          <b>{total.toLocaleString(locale())}</b>
+          <small>{tr("puntos")}</small>
         </span>
       </div>
       <ol className="tv-summary">
@@ -111,7 +111,7 @@ export default function MatchSummarySheet({ open, rounds, onClose, title = tr("T
                   )}
                 </p>
               </div>
-              <span className="tv-summary-points">+{(r.points || 0).toLocaleString("es-ES")}</span>
+              <span className="tv-summary-points">+{(r.points || 0).toLocaleString(locale())}</span>
             </li>
           );
         })}

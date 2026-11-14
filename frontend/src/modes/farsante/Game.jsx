@@ -35,7 +35,7 @@ function Who({ option, room }) {
         </span>
       )}
       {option.voters.length > 0 && (
-        <span className="tv-fs-voters" aria-label={`Votaron: ${option.voters.map((id) => person(id)?.name).filter(Boolean).join(", ")}`}>
+        <span className="tv-fs-voters" aria-label={tr("Votaron: {names}", { names: option.voters.map((id) => person(id)?.name).filter(Boolean).join(", ") })}>
           {option.voters.map((id) => (
             <Avatar key={id} name={person(id)?.name || "?"} avatar={person(id)?.avatar} />
           ))}
@@ -305,7 +305,7 @@ function GameScreen() {
           scores
           display={central}
           onToast={setErr}
-          status={writing ? `Escribieron ${fs?.written || 0}/${players}` : voting ? `Votaron ${room.players.filter((p) => p.answered).length}/${players}` : undefined}
+          status={writing ? tr("Escribieron {a}/{b}", { a: fs?.written || 0, b: players }) : voting ? tr("Votaron {a}/{b}", { a: room.players.filter((p) => p.answered).length, b: players }) : undefined}
         />
       )}
       {/* What to do in this step ("Que parezca la verdad…", "Vota la que más te guste…"), in place of who is missing. */}

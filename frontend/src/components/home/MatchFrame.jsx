@@ -50,7 +50,7 @@ export function MatchCard({ room, tag = null, pills = null, seconds, pct = 100, 
         {pills}
         {/* On screen the time is only the bar under the card; screen readers can still ask for it. */}
         <span className="tv-sr-only" role="timer">
-          {counting ? tr("Empieza en {v0}", { v0: Math.max(1, seconds) }) : room.phase === "reveal" ? tr("Respuesta") : `${seconds} segundos`}
+          {counting ? tr("Empieza en {v0}", { v0: Math.max(1, seconds) }) : room.phase === "reveal" ? tr("Respuesta") : tr("{n} segundos", { n: seconds })}
         </span>
       </div>
       <div className="tv-qc-body">
@@ -183,7 +183,7 @@ function missingLine(room) {
   const names = waitingNames(room, null);
   if (!names.length) return tr("Ya respondieron todos");
   if (names.length > 2) return tr("Faltan {length} por responder", { length: names.length });
-  return tr(names.length === 1 ? "Falta {names} por responder" : "Faltan {names} por responder", { names: joinNames(names) });
+  return tr(names.length === 1 ? tr("Falta {names} por responder") : tr("Faltan {names} por responder"), { names: joinNames(names) });
 }
 
 /**
@@ -240,11 +240,11 @@ function introLine(room) {
   // A Clásico of a private room: its name and colour instead of the public match's. The roulette's public match is
   // the Clásico too; a game searched for by name, its kind's ("Partida casual").
   const classic = findMode(room.run?.classic);
-  const label = classic?.fullName || (intro.winsToWin ? tr("Clásico") : kind ? `Partida ${kind.name.toLowerCase()}` : null);
+  const label = classic?.fullName || (intro.winsToWin ? tr("Clásico") : kind ? tr("Partida {kind}", { kind: tr(kind.name).toLowerCase() }) : null);
   const total = variantsOf(intro).length;
   // One game alone isn't "Juego 1 de 1": only what kind of match it is.
   if (total === 1 && !intro.winsToWin) return { label: null, now: label || tr("Partida privada") };
-  return { label, now: isTiebreak(room) ? tr("Juego de desempate") : intro.winsToWin ? `Juego ${intro.index + 1}` : tr("Juego {v0} de {total}", { v0: intro.index + 1, total: total }) };
+  return { label, now: isTiebreak(room) ? tr("Juego de desempate") : intro.winsToWin ? tr("Juego {n}", { n: intro.index + 1 }) : tr("Juego {v0} de {total}", { v0: intro.index + 1, total: total }) };
 }
 
 /**

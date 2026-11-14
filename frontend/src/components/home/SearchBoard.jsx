@@ -59,7 +59,7 @@ export default function SearchBoard({ room }) {
           </h3>
           <p>
             <b>
-              {count} de {info.size}
+              {count} {tr("de")} {info.size}
             </b>
             <span> · {info.game ? publicMatchLine(info.game) : tr("Juegos al azar · gana el primero en ganar 2")}</span>
           </p>

@@ -75,7 +75,7 @@ export default function PlayerMenu({ player, isMe, canManage, inMatch = false, o
           type="button"
           role="menuitem"
           className={`tv-iconbtn tv-iconbtn--sm${player.canEditConfig ? " is-on" : ""}`}
-          aria-label={`${player.canEditConfig ? tr("Quitarle") : tr("Darle")} a ${player.name} permiso de ajustes`}
+          aria-label={tr("{v0} a {name} permiso de ajustes", { v0: player.canEditConfig ? tr("Quitarle") : tr("Darle"), name: player.name })}
           title={player.canEditConfig ? tr("Quitar permiso de ajustes") : tr("Dar permiso de ajustes")}
           onClick={togglePermission}
         >

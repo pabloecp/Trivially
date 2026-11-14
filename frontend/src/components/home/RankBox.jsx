@@ -24,7 +24,7 @@ export default function RankBox({ user }) {
         <span className="tv-stage-rank-bar" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(info.progress * 100)} aria-label={tr("Avance del rango")} style={{ "--tier": info.tier.color }}>
           <i style={{ width: `${Math.round(info.progress * 100)}%` }} />
         </span>
-        <span className="tv-stage-rank-next">{info.toNext != null ? tr("Faltan {v0} para {nextLabel}", { v0: formatElo(info.toNext), nextLabel: info.nextLabel }) : `${formatElo(info.points)} puntos`}</span>
+        <span className="tv-stage-rank-next">{info.toNext != null ? tr("Faltan {v0} para {nextLabel}", { v0: formatElo(info.toNext), nextLabel: info.nextLabel }) : tr("{n} puntos", { n: formatElo(info.points) })}</span>
       </div>
       <Blob className="tv-stage-blob" color={blobColor(user?.avatar)} mood="neutral" />
     </div>

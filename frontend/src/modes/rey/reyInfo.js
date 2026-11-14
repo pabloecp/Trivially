@@ -38,5 +38,5 @@ export function reyConfig(room) {
 
 /** "1 punto", "3 puntos". */
 export function pointsText(n) {
-  return `${n} ${n === 1 ? "punto" : "puntos"}`;
+  return n === 1 ? tr("1 punto") : tr("{n} puntos", { n });
 }

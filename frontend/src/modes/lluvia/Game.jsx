@@ -95,7 +95,7 @@ function Sky({ room, question, viewerId, nameOf, colorOf, onTap, children }) {
           >
             <div className={`tv-rain-card is-${level.id}`} aria-label={`${level.label}, ${pointsText(d.points)}: ${d.text}`}>
               <span className="tv-rain-card-top">
-                <span className="tv-rain-card-cat">{d.category}</span>
+                <span className="tv-rain-card-cat">{tr(d.category)}</span>
                 <span className="tv-rain-card-pts">+{d.points}</span>
               </span>
               <span className="tv-rain-card-text">{d.text}</span>
@@ -224,7 +224,7 @@ function AnswerBox({ room, open, inputRef, onResult }) {
 function roundBurst(room, question, viewerId) {
   const winners = (question.winners || []).map((id) => room.players.find((p) => p.id === id)).filter(Boolean);
   const me = room.players.find((p) => p.id === viewerId);
-  const mine = me && !me.spectator ? tr("Tú: {v0}", { v0: me.lastAnswer?.text?.toLowerCase() || "sin aciertos" }) : "";
+  const mine = me && !me.spectator ? tr("Tú: {v0}", { v0: me.lastAnswer?.text?.toLowerCase() || tr("sin aciertos") }) : "";
   const best = pointsText(question.best || 0);
   if (!winners.length) return { tone: "none", icon: "rain", title: tr("Nadie sumó puntos"), detail: tr("¡Que no se escapen en la próxima!") };
   if (winners.length > 1) {
@@ -530,7 +530,7 @@ function GameScreen() {
       </div>
 
       {/* The scoreboard is the central device's, when there is one. */}
-      {!controller && <PartyPanel room={room} scores display={central} onToast={setErr} status={phase === "playing" ? `Acertaron ${room.players.filter((p) => !p.spectator && (p.hits || 0) > 0).length}/${room.players.filter((p) => !p.spectator).length}` : undefined} />}
+      {!controller && <PartyPanel room={room} scores display={central} onToast={setErr} status={phase === "playing" ? tr("Acertaron {a}/{b}", { a: room.players.filter((p) => !p.spectator && (p.hits || 0) > 0).length, b: room.players.filter((p) => !p.spectator).length }) : undefined} />}
       {!controller && !central && <MatchBar room={room} viewerId={viewerId} tools={tools} line={phase === "playing" ? tr("Respondan antes que nadie") : undefined} />}
     </div>
   );

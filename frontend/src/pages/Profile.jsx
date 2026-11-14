@@ -204,7 +204,7 @@ function BlobColors({ user, onPick }) {
           <b>
             {skins ? from + 1 : 1}–{skins ? from + list.length : list.length}
           </b>{" "}
-          de {skins ? BLOB_SKINS.length : BLOB_COLORS.length}
+          {tr("de")} {skins ? BLOB_SKINS.length : BLOB_COLORS.length}
         </span>
         <span className="tv-summary-nav">
           <button type="button" className="tv-iconbtn tv-summary-prev" aria-label={skins ? tr("Skins anteriores") : tr("Colores anteriores")} disabled={!skins || page <= 0} onClick={() => { setPage(page - 1); setInfo(null); }}>
@@ -227,7 +227,7 @@ function BlobColors({ user, onPick }) {
 
 // The username's label, with how many changes are left this month.
 function handleLabel(info) {
-  return info ? `Usuario · ${info.changesLeft} ${info.changesLeft === 1 ? "cambio" : "cambios"}` : tr("Usuario");
+  return info ? tr(info.changesLeft === 1 ? "Usuario · {n} cambio" : "Usuario · {n} cambios", { n: info.changesLeft }) : tr("Usuario");
 }
 
 function ProfileScreen() {

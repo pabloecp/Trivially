@@ -45,7 +45,7 @@ export default function InviteFriends({ group, onToast }) {
     try {
       await friends.inviteFriend(friend.id);
       setSent((s) => ({ ...s, [friend.id]: true }));
-      onToast?.(`Invitaste a ${friend.name}`, "check");
+      onToast?.(tr("Invitaste a {name}", { name: friend.name }), "check");
     } catch (err) {
       onToast?.(err.message || tr("No se pudo invitar"));
     }
@@ -56,7 +56,7 @@ export default function InviteFriends({ group, onToast }) {
       {/* Titled like "En el grupo": the name, and on the right how many of your friends are online to invite. */}
       <div className="tv-party-title">
         <h2>{tr("Invitar amigos")}</h2>
-        {online.length > 0 && <span>{online.length === 1 ? "1 conectado" : `${online.length} conectados`}</span>}
+        {online.length > 0 && <span>{online.length === 1 ? tr("1 conectado") : tr("{n} conectados", { n: online.length })}</span>}
       </div>
       {!all.length ? (
         <button type="button" className="tv-invite-friends-empty" onClick={() => friends.setOpen(true)}>

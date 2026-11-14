@@ -59,12 +59,12 @@ export default function LobbyPanel({ room, onToast }) {
               <span>
                 {retrying > 0 ? (
                   <>
-                    <strong>{loadingReady} de {loadingTotal}</strong> {tr("listas. Buscando otra vez")} {retrying}{" "}
+                    <strong>{loadingReady} {tr("de")} {loadingTotal}</strong> {tr("listas. Buscando otra vez")} {retrying}{" "}
                     {retrying === 1 ? tr("canción que no se encontró") : tr("canciones que no se encontraron")}.
                   </>
                 ) : (
                   <>
-                    {tr("Cargando canciones de Spotify:")} <strong>{loadingReady} listas</strong>, {loadingChecked} de {loadingTotal}{" "}
+                    {tr("Cargando canciones de Spotify:")} <strong>{loadingReady} {tr("listas")}</strong>, {loadingChecked} {tr("de")} {loadingTotal}{" "}
                     {tr("revisadas.")}
                   </>
                 )}

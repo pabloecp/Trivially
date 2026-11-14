@@ -64,7 +64,7 @@ export default function BadgesCard({ user, worn = null, own = false, guest = fal
       <div className="tv-pf-head">
         <h2 id="tv-badges-title" className="tv-pf-title">{tr("Insignias")}</h2>
         <span className="tv-badges-count">
-          <b>{won.length}</b> de {BADGES.length}
+          <b>{won.length}</b> {tr("de")} {BADGES.length}
         </span>
       </div>
       <div className="tv-badges-grid">
@@ -76,7 +76,7 @@ export default function BadgesCard({ user, worn = null, own = false, guest = fal
               type="button"
               className={`tv-badge-item${b.earned ? " is-earned" : " is-locked"}${on ? " is-on" : ""}${asked === b.id ? " is-asked" : ""}`}
               aria-pressed={mine && b.earned ? on : undefined}
-              aria-label={`${b.name}${b.earned ? "" : " (bloqueada)"}`}
+              aria-label={`${b.name}${b.earned ? "" : ` (${tr("bloqueada")})`}`}
               disabled={Boolean(busy)}
               onClick={() => tap(b)}
             >

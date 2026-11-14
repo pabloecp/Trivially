@@ -112,7 +112,7 @@ function RankProgress({ change }) {
         ? 0
         : 1
       : after.progress;
-  const note = moved && crossed ? (up ? tr("¡Subiste a {label}!", { label: after.label }) : `Bajaste a ${after.label}`) : after.toNext != null ? tr("Faltan {v0} para {nextLabel}", { v0: formatElo(after.toNext), nextLabel: after.nextLabel }) : `${formatElo(after.points)} puntos`;
+  const note = moved && crossed ? (up ? tr("¡Subiste a {label}!", { label: after.label }) : tr("Bajaste a {label}", { label: after.label })) : after.toNext != null ? tr("Faltan {v0} para {nextLabel}", { v0: formatElo(after.toNext), nextLabel: after.nextLabel }) : tr("{n} puntos", { n: formatElo(after.points) });
 
   return (
     <div className="tv-ratingbox-rank">

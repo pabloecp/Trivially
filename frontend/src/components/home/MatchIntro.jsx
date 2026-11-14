@@ -34,7 +34,7 @@ const modeOf = (variant) => findMode(findVariant(variant).game);
 function variantName(id) {
   const v = findVariant(id);
   const name = findMode(v.game)?.name || "";
-  return v.way ? `${name} ${v.way}` : name;
+  return v.way ? `${tr(name)} ${tr(v.way)}` : tr(name);
 }
 
 // The game now, with its way (an older server only sends the game).
@@ -175,7 +175,7 @@ function Roulette({ room, startedAt, kind, onLand }) {
             }
             icon="shuffle"
             label={tr("Eligiendo el juego…")}
-            name={tiebreak ? "Juego de desempate" : `Juego ${intro.index + 1}`}
+            name={tiebreak ? tr("Juego de desempate") : tr("Juego {n}", { n: intro.index + 1 })}
           />
         )}
         <div className="tv-mi-reel-place">
@@ -245,7 +245,7 @@ function PreviousGame({ intro, players, leftMs, viewerId }) {
     : tr("Empate en el juego {index}", { index: intro.index });
   const note = intro.winsToWin
     ? topWins >= intro.winsToWin
-      ? `Empate a ${topWins} juegos ganados: otro juego desempata`
+      ? tr("Empate a {topWins} juegos ganados: otro juego desempata", { topWins })
       : tr("Gana la partida el primero en ganar {winsToWin} juegos", { winsToWin: intro.winsToWin })
     : null;
   const seats = prev.ranking.length;
@@ -254,7 +254,7 @@ function PreviousGame({ intro, players, leftMs, viewerId }) {
       <span className="tv-mstage-flash" aria-hidden="true" />
       {winners.some((w) => w.id === viewerId) && <Confetti pieces={28} />}
       <div className="tv-mi-part tv-mi-result">
-        <CardHead badge={gameBadge(mode)} icon={mode.icon} label={`Juego ${intro.index} · ${variantName(variant)}`} name={line} />
+        <CardHead badge={gameBadge(mode)} icon={mode.icon} label={tr("Juego {n} · {name}", { n: intro.index, name: variantName(variant) })} name={line} />
         {note && <p className="tv-mi-note">{note}</p>}
         <ul className={`tv-finding-seats${seats > 6 ? " is-many" : ""}`} data-seats={seats} style={{ "--seats": seats }} aria-label={tr("Puntos de cada jugador en ese juego")}>
           {prev.ranking.map((r, i) => {
@@ -291,7 +291,7 @@ function PreviousGame({ intro, players, leftMs, viewerId }) {
 /** A player's games won as dots, as many as it takes to win the match, the one just won with a small pop. */
 function GamesDots({ n, of, lit }) {
   return (
-    <span className="tv-mi-dots" role="img" aria-label={n === 1 ? "1 juego ganado" : `${n} juegos ganados`}>
+    <span className="tv-mi-dots" role="img" aria-label={n === 1 ? tr("1 juego ganado") : tr("{n} juegos ganados", { n })}>
       {Array.from({ length: of }, (_, i) => (
         <i key={i} className={i < n ? `is-on${lit && i === n - 1 ? " is-new" : ""}` : ""} />
       ))}

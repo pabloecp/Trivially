@@ -95,7 +95,7 @@ function Offers({ offers, canPick, onPick, picked }) {
             onClick={canPick ? () => onPick(o.index) : undefined}
           >
             <span className="tv-rey-offer-meta">
-              <span className="tv-match-chip">{o.category}</span>
+              <span className="tv-match-chip">{tr(o.category)}</span>
               <span className="tv-match-chip tv-rey-level">
                 {level.label} · +{o.points}
               </span>
@@ -226,11 +226,11 @@ function GameScreen() {
 
   // The round's middle line: what is going on.
   let title;
-  if (picking) title = kingPicking ? tr("Elige una pregunta") : `${king ? (viewerId === king.id ? tr("Tú eliges") : `${king.name} elige`) : tr("El rey elige")} la pregunta`;
+  if (picking) title = kingPicking ? tr("Elige una pregunta") : tr("{v0} la pregunta", { v0: king ? (viewerId === king.id ? tr("Tú eliges") : tr("{name} elige", { name: king.name })) : tr("El rey elige") });
   else if (reveal) {
     title = rey.dethronedBy
       ? tr("¡{v0} se queda con la corona!", { v0: nameOf(rey.dethronedBy) })
-      : `¡${roundKing ? roundKing.name : tr("El rey")} sigue en el trono!`;
+      : tr("¡{v0} sigue en el trono!", { v0: roundKing ? roundKing.name : tr("El rey") });
   } else if (youAreRoundKing) title = tr("Eres el rey: resiste");
   else if (spectator) title = tr("Estás viendo la partida");
   else title = tr("Respóndela antes que nadie");
@@ -307,7 +307,7 @@ function GameScreen() {
                       : youAreRoundKing && rey.survived
                       ? tr("Sigues siendo el rey")
                       : !central && me?.lastAnswer?.text
-                      ? `Escribiste “${me.lastAnswer.text}”`
+                      ? tr("Escribiste “{text}”", { text: me.lastAnswer.text })
                       : null
                   }
                   mineOk={youWon || (youAreRoundKing && rey.survived) || Boolean(me?.lastAnswer?.correct)}

@@ -16,17 +16,17 @@ import { PauseButton, ReportButton, SkipButton, PauseVeil } from "../../componen
 import { resolveCode } from "../../lib/hiddenCode.js";
 import { AnswerCard, MatchBar, MatchCard, MatchQuestion, RoundCountdown, RoundVerdict } from "../../components/home/MatchFrame.jsx";
 
-import { translate as tr } from "../../lib/i18n.js";
+import { locale, translate as tr } from "../../lib/i18n.js";
 const COUNTDOWN_MS = 3000;
 // One colour per player for the pins on the reveal map (never the green and red of right and wrong).
 const PIN_COLORS = ["#ffb52e", "#a58bff", "#ff6a55", "#2ea8ff", "#f2456b", "#14b8a6", "#ff9f1c", "#e879f9"];
 
-const km = (n) => `${Math.round(n).toLocaleString("es-ES")} km`;
+const km = (n) => `${Math.round(n).toLocaleString(locale())} km`;
 
 // "Ana", "Ana y Luis", "Ana, Luis y Eva".
 function joinNames(names) {
   if (names.length < 2) return names[0] || "";
-  return `${names.slice(0, -1).join(", ")} y ${names[names.length - 1]}`;
+  return tr("{list} y {last}", { list: names.slice(0, -1).join(", "), last: names[names.length - 1] });
 }
 
 function GameScreen() {
@@ -206,7 +206,7 @@ function GameScreen() {
           }))
       : [];
 
-  const roundLabel = tiebreak ? `Desempate${tiebreak.round > 1 ? ` ${tiebreak.round}` : ""}` : tr("Ronda {v0} de {totalRounds}", { v0: round + 1, totalRounds: room.totalRounds });
+  const roundLabel = tiebreak ? (tiebreak.round > 1 ? tr("Desempate {n}", { n: tiebreak.round }) : tr("Desempate")) : tr("Ronda {v0} de {totalRounds}", { v0: round + 1, totalRounds: room.totalRounds });
   const nextText = tiebreak
     ? tiebreak.winnerId
       ? tr("Calculando resultados…")
@@ -222,20 +222,20 @@ function GameScreen() {
   let title;
   let hint;
   if (phase === "countdown") {
-    title = tiebreak ? `Desempate entre ${joinNames(tiedNames)}` : tr("Prepárate…");
+    title = tiebreak ? tr("Desempate entre {names}", { names: joinNames(tiedNames) }) : tr("Prepárate…");
     if (tiebreak) {
       hint = iPlay
         ? tr("Pon tu pin y confírmalo: gana el primero que confirme dentro del país. Si nadie lo encuentra, el más cercano.")
         : tr("Solo juegan los empatados. Tú miras cómo lo resuelven.");
     } else if (byName) hint = tr("Tendrás {roundSeconds} segundos para poner tu pin en el mapa.", { roundSeconds: roundSeconds });
-    else hint = `Verás ${style.id === "sombra" ? tr("la forma") : tr("la bandera")} de un país: tendrás ${roundSeconds} segundos para poner tu pin en él.`;
+    else hint = tr("Verás {v0} de un país: tendrás {roundSeconds} segundos para poner tu pin en él.", { v0: style.id === "sombra" ? tr("la forma") : tr("la bandera"), roundSeconds: roundSeconds });
   } else {
     kicker = byName ? tr("{roundLabel} · ¿Dónde está…?", { roundLabel: roundLabel }) : `${roundLabel} · ${style.label}`;
     title = question?.name || room.reveal?.name || tr("¿Qué país es?");
     if (phase === "reveal") hint = nextText;
     else if (!iPlay) hint = tr("Solo juegan {v0}: gana el primero que confirme su pin dentro del país.", { v0: joinNames(tiedNames) });
     else if (pinLocked) hint = tiebreak ? tr("Pin confirmado. Si cayó dentro y fuiste el primero, ganas.") : tr("Pin confirmado.");
-    else if (myPin) hint = `Arrástralo o ${touch ? "toca" : tr("haz clic en")} otro sitio para moverlo, y confirma.`;
+    else if (myPin) hint = tr("Arrástralo o {v0} otro sitio para moverlo, y confirma.", { v0: touch ? tr("toca") : tr("haz clic en") });
     else hint = touch ? tr("Toca para poner tu pin. Doble toque o pellizca para acercar.") : tr("Haz clic para poner tu pin. Rueda, doble clic o arrastra para moverte.");
   }
 
@@ -245,10 +245,10 @@ function GameScreen() {
   if (central && phase === "countdown" && !tiebreak) {
     hint = byName
       ? tr("Tendrán {roundSeconds} segundos para poner su pin desde su teléfono.", { roundSeconds: roundSeconds })
-      : `Verán ${style.id === "sombra" ? tr("la forma") : tr("la bandera")} de un país: tendrán ${roundSeconds} segundos para ponerle su pin desde su teléfono.`;
+      : tr("Verán {v0} de un país: tendrán {roundSeconds} segundos para ponerle su pin desde su teléfono.", { v0: style.id === "sombra" ? tr("la forma") : tr("la bandera"), roundSeconds: roundSeconds });
   }
   else if (central && phase === "countdown") hint = tr("Desempate entre {v0}: gana el primero que confirme su pin dentro del país.", { v0: joinNames(tiedNames) });
-  else if (central && phase === "playing") hint = tiebreak ? `Solo juegan ${joinNames(tiedNames)}.` : tr("Pongan su pin en el mapa desde su teléfono.");
+  else if (central && phase === "playing") hint = tiebreak ? tr("Solo juegan {names}.", { names: joinNames(tiedNames) }) : tr("Pongan su pin en el mapa desde su teléfono.");
 
   // Under the map, always the same height: what to do now, or how the round went.
   let action;
@@ -318,9 +318,9 @@ function GameScreen() {
               regions={phase === "playing" && !central}
               label={
                 phase === "playing"
-                  ? `Mapamundi. Pon tu pin en ${question?.name || (style.id === "sombra" ? tr("el país de la silueta") : tr("el país de la bandera"))}. Flechas para moverte, más y menos para acercar, Enter para poner el pin en el centro.`
+                  ? tr("Mapamundi. Pon tu pin en {v0}. Flechas para moverte, más y menos para acercar, Enter para poner el pin en el centro.", { v0: question?.name || (style.id === "sombra" ? tr("el país de la silueta") : tr("el país de la bandera")) })
                   : phase === "reveal"
-                  ? `Mapamundi con ${room.reveal?.name || tr("el país")} marcado`
+                  ? tr("Mapamundi con {v0} marcado", { v0: room.reveal?.name || tr("el país") })
                   : tr("Mapamundi")
               }
             >
@@ -467,9 +467,9 @@ function Verdict({ room, me, user, tiebreak, tiedNames, iPlay }) {
         detail={
           winner
             ? tiebreak.reason === "dentro"
-              ? `${won ? tr("Confirmaste") : tr("Confirmó")} ${name} primero`
-              : tr("Nadie cayó dentro: {v0} pin quedó más cerca de {name}", { v0: won ? "tu" : "su", name: name })
-            : `${joinNames(tiedNames)} siguen empatados`
+              ? won ? tr("Confirmaste {name} primero", { name }) : tr("Confirmó {name} primero", { name })
+              : tr("Nadie cayó dentro: {v0} pin quedó más cerca de {name}", { v0: won ? tr("tu") : tr("su"), name: name })
+            : tr("{names} siguen empatados", { names: joinNames(tiedNames) })
         }
         mine={iPlay && winner ? (won ? tr("Ganaste el desempate") : tr("Esta vez no")) : null}
         mineOk={won}
